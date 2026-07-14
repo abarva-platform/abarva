@@ -22,11 +22,11 @@ Source semantic proof: datasets/tenant-inputs/generated/context-template-v3-sema
 
 | Output | Tenant | Module | Resolved catalog | Archetype | Profiles | Edges | Evidence | Audit claims | Claude leaked claims |
 | --- | --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| home-meridian-finance-analytics | meridian-health | home | meridian-health-finance-analytics | analytics_modernization | 26 | 25 | 5 | 2 | 0 |
-| moves-meridian-agent-assist-p2 | meridian-health | moves | meridian-health-agent-assist-member-service | customer_service_ai | 23 | 22 | 5 | 2 | 0 |
-| intelligence-harbortrust-fraud-copilot | harbortrust-bank | intelligence | harbortrust-bank-fraud-analyst-copilot | risk_ai_copilot | 23 | 22 | 5 | 2 | 0 |
-| tower-meridian-finance-analytics | meridian-health | tower | meridian-health-finance-analytics | analytics_modernization | 26 | 25 | 5 | 3 | 0 |
-| source-meridian-analytics-vendor-context | meridian-health | source | meridian-health-finance-analytics | analytics_modernization | 26 | 25 | 5 | 3 | 0 |
+| home-meridian-finance-analytics | meridian-health | home | meridian-health-finance-analytics | analytics_modernization | 36 | 35 | 5 | 2 | 0 |
+| moves-meridian-agent-assist-p2 | meridian-health | moves | meridian-health-agent-assist-member-service | customer_service_ai | 30 | 29 | 5 | 2 | 0 |
+| intelligence-harbortrust-fraud-copilot | harbortrust-bank | intelligence | harbortrust-bank-fraud-analyst-copilot | risk_ai_copilot | 30 | 29 | 5 | 2 | 0 |
+| tower-meridian-finance-analytics | meridian-health | tower | meridian-health-finance-analytics | analytics_modernization | 36 | 35 | 5 | 3 | 0 |
+| source-meridian-analytics-vendor-context | meridian-health | source | meridian-health-finance-analytics | analytics_modernization | 36 | 35 | 5 | 3 | 0 |
 
 ## Quality Assessment
 

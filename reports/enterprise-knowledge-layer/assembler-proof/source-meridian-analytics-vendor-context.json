@@ -78,13 +78,29 @@
     "mode": "synthetic_fixture",
     "truthStatus": "synthetic_review",
     "executiveSummary": "Finance Analytics context assembled for source (analytics_modernization): 5 evidence refs are available; all remain synthetic review evidence until tenant validation and promotion.",
-    "profileCount": 26,
+    "profileCount": 36,
     "profiles": [
+      {
+        "profileId": "meridian-health-finance-analytics-enterprise-meridian-health",
+        "entityType": "enterprise",
+        "entityName": "Meridian Health",
+        "businessMeaning": "Meridian Health is part of the Finance Analytics context for analytics_modernization.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
+      },
       {
         "profileId": "meridian-health-finance-analytics-function-finance-analytics",
         "entityType": "function",
         "entityName": "Finance Analytics",
         "businessMeaning": "Finance Analytics is part of the Finance Analytics context for analytics_modernization.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
+      },
+      {
+        "profileId": "meridian-health-finance-analytics-use_case-finance-close-managed-analytics-services-and-spend-analytics-modernization",
+        "entityType": "use_case",
+        "entityName": "Finance close, managed analytics services, and spend analytics modernization",
+        "businessMeaning": "Finance close, managed analytics services, and spend analytics modernization is part of the Finance Analytics context for analytics_modernization.",
         "moduleReadiness": "needs_review",
         "evidenceRefCount": 5
       },
@@ -233,6 +249,46 @@
         "evidenceRefCount": 5
       },
       {
+        "profileId": "meridian-health-finance-analytics-contract-oracle",
+        "entityType": "contract",
+        "entityName": "Oracle",
+        "businessMeaning": "Oracle is part of the Finance Analytics context for analytics_modernization.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
+      },
+      {
+        "profileId": "meridian-health-finance-analytics-contract-microsoft",
+        "entityType": "contract",
+        "entityName": "Microsoft",
+        "businessMeaning": "Microsoft is part of the Finance Analytics context for analytics_modernization.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
+      },
+      {
+        "profileId": "meridian-health-finance-analytics-contract-informatica",
+        "entityType": "contract",
+        "entityName": "Informatica",
+        "businessMeaning": "Informatica is part of the Finance Analytics context for analytics_modernization.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
+      },
+      {
+        "profileId": "meridian-health-finance-analytics-contract-databricks",
+        "entityType": "contract",
+        "entityName": "Databricks",
+        "businessMeaning": "Databricks is part of the Finance Analytics context for analytics_modernization.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
+      },
+      {
+        "profileId": "meridian-health-finance-analytics-contract-tableau",
+        "entityType": "contract",
+        "entityName": "Tableau",
+        "businessMeaning": "Tableau is part of the Finance Analytics context for analytics_modernization.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
+      },
+      {
         "profileId": "meridian-health-finance-analytics-metric-analytics-managed-services-spend",
         "entityType": "metric",
         "entityName": "analytics managed services spend",
@@ -287,25 +343,49 @@
         "businessMeaning": "slow close-window dashboards is part of the Finance Analytics context for analytics_modernization.",
         "moduleReadiness": "needs_review",
         "evidenceRefCount": 5
+      },
+      {
+        "profileId": "meridian-health-finance-analytics-process-analytics-managed-services",
+        "entityType": "process",
+        "entityName": "analytics managed services",
+        "businessMeaning": "analytics managed services is part of the Finance Analytics context for analytics_modernization.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
+      },
+      {
+        "profileId": "meridian-health-finance-analytics-process-bi-platform-contracts",
+        "entityType": "process",
+        "entityName": "BI platform contracts",
+        "businessMeaning": "BI platform contracts is part of the Finance Analytics context for analytics_modernization.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
+      },
+      {
+        "profileId": "meridian-health-finance-analytics-process-data-platform-sourcing",
+        "entityType": "process",
+        "entityName": "data platform sourcing",
+        "businessMeaning": "data platform sourcing is part of the Finance Analytics context for analytics_modernization.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
       }
     ],
     "factCount": 11,
-    "relationshipCandidateCount": 25,
+    "relationshipCandidateCount": 35,
     "relationships": [
       {
         "relationshipId": "meridian-health-finance-analytics-assembler-edge-1",
         "relationshipType": "depends_on",
         "sourceEntityType": "function",
-        "targetEntityType": "system",
-        "businessMeaning": "Finance Analytics connects to Oracle ERP Finance for the analytics_modernization request.",
+        "targetEntityType": "enterprise",
+        "businessMeaning": "Finance Analytics connects to Meridian Health for the analytics_modernization request.",
         "readiness": "candidate"
       },
       {
         "relationshipId": "meridian-health-finance-analytics-assembler-edge-2",
         "relationshipType": "uses",
         "sourceEntityType": "function",
-        "targetEntityType": "system",
-        "businessMeaning": "Finance Analytics connects to SQL Server Finance Mart for the analytics_modernization request.",
+        "targetEntityType": "use_case",
+        "businessMeaning": "Finance Analytics connects to Finance close, managed analytics services, and spend analytics modernization for the analytics_modernization request.",
         "readiness": "candidate"
       },
       {
@@ -313,7 +393,7 @@
         "relationshipType": "depends_on",
         "sourceEntityType": "function",
         "targetEntityType": "system",
-        "businessMeaning": "Finance Analytics connects to Informatica Finance ETL for the analytics_modernization request.",
+        "businessMeaning": "Finance Analytics connects to Oracle ERP Finance for the analytics_modernization request.",
         "readiness": "candidate"
       },
       {
@@ -321,7 +401,7 @@
         "relationshipType": "uses",
         "sourceEntityType": "function",
         "targetEntityType": "system",
-        "businessMeaning": "Finance Analytics connects to Tableau and Power BI finance dashboards for the analytics_modernization request.",
+        "businessMeaning": "Finance Analytics connects to SQL Server Finance Mart for the analytics_modernization request.",
         "readiness": "candidate"
       },
       {
@@ -329,23 +409,23 @@
         "relationshipType": "depends_on",
         "sourceEntityType": "function",
         "targetEntityType": "system",
-        "businessMeaning": "Finance Analytics connects to Databricks Finance Gold for the analytics_modernization request.",
+        "businessMeaning": "Finance Analytics connects to Informatica Finance ETL for the analytics_modernization request.",
         "readiness": "candidate"
       },
       {
         "relationshipId": "meridian-health-finance-analytics-assembler-edge-6",
         "relationshipType": "uses",
         "sourceEntityType": "function",
-        "targetEntityType": "data_domain",
-        "businessMeaning": "Finance Analytics connects to GL for the analytics_modernization request.",
+        "targetEntityType": "system",
+        "businessMeaning": "Finance Analytics connects to Tableau and Power BI finance dashboards for the analytics_modernization request.",
         "readiness": "candidate"
       },
       {
         "relationshipId": "meridian-health-finance-analytics-assembler-edge-7",
         "relationshipType": "depends_on",
         "sourceEntityType": "function",
-        "targetEntityType": "data_domain",
-        "businessMeaning": "Finance Analytics connects to AP for the analytics_modernization request.",
+        "targetEntityType": "system",
+        "businessMeaning": "Finance Analytics connects to Databricks Finance Gold for the analytics_modernization request.",
         "readiness": "candidate"
       },
       {
@@ -353,7 +433,7 @@
         "relationshipType": "uses",
         "sourceEntityType": "function",
         "targetEntityType": "data_domain",
-        "businessMeaning": "Finance Analytics connects to AR for the analytics_modernization request.",
+        "businessMeaning": "Finance Analytics connects to GL for the analytics_modernization request.",
         "readiness": "candidate"
       },
       {
@@ -361,7 +441,7 @@
         "relationshipType": "depends_on",
         "sourceEntityType": "function",
         "targetEntityType": "data_domain",
-        "businessMeaning": "Finance Analytics connects to vendor spend for the analytics_modernization request.",
+        "businessMeaning": "Finance Analytics connects to AP for the analytics_modernization request.",
         "readiness": "candidate"
       },
       {
@@ -369,7 +449,7 @@
         "relationshipType": "uses",
         "sourceEntityType": "function",
         "targetEntityType": "data_domain",
-        "businessMeaning": "Finance Analytics connects to budget for the analytics_modernization request.",
+        "businessMeaning": "Finance Analytics connects to AR for the analytics_modernization request.",
         "readiness": "candidate"
       },
       {
@@ -377,15 +457,15 @@
         "relationshipType": "depends_on",
         "sourceEntityType": "function",
         "targetEntityType": "data_domain",
-        "businessMeaning": "Finance Analytics connects to cost center for the analytics_modernization request.",
+        "businessMeaning": "Finance Analytics connects to vendor spend for the analytics_modernization request.",
         "readiness": "candidate"
       },
       {
         "relationshipId": "meridian-health-finance-analytics-assembler-edge-12",
         "relationshipType": "uses",
         "sourceEntityType": "function",
-        "targetEntityType": "infrastructure",
-        "businessMeaning": "Finance Analytics connects to SQL Server reporting estate for the analytics_modernization request.",
+        "targetEntityType": "data_domain",
+        "businessMeaning": "Finance Analytics connects to budget for the analytics_modernization request.",
         "readiness": "candidate"
       }
     ],
@@ -496,7 +576,9 @@
         "datasets/tenant-inputs/generated/meridian-health/standard-2026-07-v3/relationship_summary.csv"
       ],
       "includedEntityIds": [
+        "meridian-health-finance-analytics-enterprise-meridian-health",
         "meridian-health-finance-analytics-function-finance-analytics",
+        "meridian-health-finance-analytics-use_case-finance-close-managed-analytics-services-and-spend-analytics-modernization",
         "meridian-health-finance-analytics-system-oracle-erp-finance",
         "meridian-health-finance-analytics-system-sql-server-finance-mart",
         "meridian-health-finance-analytics-system-informatica-finance-etl",
@@ -515,13 +597,21 @@
         "meridian-health-finance-analytics-vendor-informatica",
         "meridian-health-finance-analytics-vendor-databricks",
         "meridian-health-finance-analytics-vendor-tableau",
+        "meridian-health-finance-analytics-contract-oracle",
+        "meridian-health-finance-analytics-contract-microsoft",
+        "meridian-health-finance-analytics-contract-informatica",
+        "meridian-health-finance-analytics-contract-databricks",
+        "meridian-health-finance-analytics-contract-tableau",
         "meridian-health-finance-analytics-metric-analytics-managed-services-spend",
         "meridian-health-finance-analytics-metric-finance-dashboard-run-cost",
         "meridian-health-finance-analytics-metric-manual-close-reconciliation-effort",
         "meridian-health-finance-analytics-program-databricks-finance-gold-certification",
         "meridian-health-finance-analytics-program-vendor-master-harmonization",
         "meridian-health-finance-analytics-risk-inconsistent-vendor-spend-definitions",
-        "meridian-health-finance-analytics-risk-slow-close-window-dashboards"
+        "meridian-health-finance-analytics-risk-slow-close-window-dashboards",
+        "meridian-health-finance-analytics-process-analytics-managed-services",
+        "meridian-health-finance-analytics-process-bi-platform-contracts",
+        "meridian-health-finance-analytics-process-data-platform-sourcing"
       ],
       "excludedEntityIds": [],
       "includedEvidenceIds": [
@@ -544,7 +634,7 @@
     },
     "claudeReadyPayload": {
       "systemInstruction": "Use only this governed context payload. Cite evidence refs. Mark inference. Do not treat synthetic, candidate, or source-adapter-only context as active tenant truth.",
-      "contextSummary": "Tenant: meridian-health\nModule: source\nPurpose: sourcing_context\nFinance Analytics context assembled for source (analytics_modernization): 5 evidence refs are available; all remain synthetic review evidence until tenant validation and promotion.\nProfiles: function:Finance Analytics; system:Oracle ERP Finance; system:SQL Server Finance Mart; system:Informatica Finance ETL; system:Tableau and Power BI finance dashboards; system:Databricks Finance Gold; data_domain:GL; data_domain:AP\nKey facts: pain_point=Month-end close dashboards slow down because 38 priority reports refresh from five SQL Server finance schemas during the same overnight load window.; pain_point=Vendor spend differs across AP, procurement, and contract repository extracts, so sourcing questions need a reconciled vendor-master rule before Source uses the data.; pain_point=FP&A trusts 42 certified dashboards, but business-unit teams still use 300+ Excel extracts copied from legacy Tableau views.; pain_point=Informatica job failures are resolved manually because the finance mart lacks clear lineage from Oracle ERP subledger jobs to report-level consumers.; pain_point=Databricks Finance Gold is the target path, but cost-center hierarchy, vendor master harmonization, and audit signoff are unresolved.; metric=Close report refresh completion by 6:00 AM CT; metric=Certified finance dashboard adoption; metric=Manual reconciliation hours per close cycle\nRelationships: depends_on:Finance Analytics connects to Oracle ERP Finance for the analytics_modernization request.; uses:Finance Analytics connects to SQL Server Finance Mart for the analytics_modernization request.; depends_on:Finance Analytics connects to Informatica Finance ETL for the analytics_modernization request.; uses:Finance Analytics connects to Tableau and Power BI finance dashboards for the analytics_modernization request.; depends_on:Finance Analytics connects to Databricks Finance Gold for the analytics_modernization request.; uses:Finance Analytics connects to GL for the analytics_modernization request.; depends_on:Finance Analytics connects to AP for the analytics_modernization request.; uses:Finance Analytics connects to AR for the analytics_modernization request.\nMetrics: Close report refresh completion by 6:00 AM CT; Certified finance dashboard adoption; Manual reconciliation hours per close cycle\nRisks/controls: inconsistent vendor spend definitions; slow close-window dashboards\nEvidence summary: Oracle ERP Finance GL/AP/AR extract as of 2026-06 synthetic close cycle.; SQL Server Finance Mart schema inventory showing GL, AP, AR, budget, vendor spend, and cost-center schemas.; Informatica finance ETL inventory with 200 nightly jobs and close-window failure notes.; Tableau and Power BI finance dashboard inventory with certified vs shadow-report split.; Finance Gold Data Product design notes for Databricks target certification.\nConfidence: good - The cluster has enough semantic depth for dry-run context assembly, but remains synthetic review context with candidate relationship edges.\nKnown gaps: inconsistent vendor spend definitions; slow close-window dashboards; incomplete lineage from ERP to BI; Relationship candidates are preserved for context assembly, but are not treated as validated active graph truth.\nRecommended next evidence: source-owner attestation; measured baseline extract; relationship validation; operator promotion review",
+      "contextSummary": "Tenant: meridian-health\nModule: source\nPurpose: sourcing_context\nFinance Analytics context assembled for source (analytics_modernization): 5 evidence refs are available; all remain synthetic review evidence until tenant validation and promotion.\nProfiles: enterprise:Meridian Health; function:Finance Analytics; use_case:Finance close, managed analytics services, and spend analytics modernization; system:Oracle ERP Finance; system:SQL Server Finance Mart; system:Informatica Finance ETL; system:Tableau and Power BI finance dashboards; system:Databricks Finance Gold\nKey facts: pain_point=Month-end close dashboards slow down because 38 priority reports refresh from five SQL Server finance schemas during the same overnight load window.; pain_point=Vendor spend differs across AP, procurement, and contract repository extracts, so sourcing questions need a reconciled vendor-master rule before Source uses the data.; pain_point=FP&A trusts 42 certified dashboards, but business-unit teams still use 300+ Excel extracts copied from legacy Tableau views.; pain_point=Informatica job failures are resolved manually because the finance mart lacks clear lineage from Oracle ERP subledger jobs to report-level consumers.; pain_point=Databricks Finance Gold is the target path, but cost-center hierarchy, vendor master harmonization, and audit signoff are unresolved.; metric=Close report refresh completion by 6:00 AM CT; metric=Certified finance dashboard adoption; metric=Manual reconciliation hours per close cycle\nRelationships: depends_on:Finance Analytics connects to Meridian Health for the analytics_modernization request.; uses:Finance Analytics connects to Finance close, managed analytics services, and spend analytics modernization for the analytics_modernization request.; depends_on:Finance Analytics connects to Oracle ERP Finance for the analytics_modernization request.; uses:Finance Analytics connects to SQL Server Finance Mart for the analytics_modernization request.; depends_on:Finance Analytics connects to Informatica Finance ETL for the analytics_modernization request.; uses:Finance Analytics connects to Tableau and Power BI finance dashboards for the analytics_modernization request.; depends_on:Finance Analytics connects to Databricks Finance Gold for the analytics_modernization request.; uses:Finance Analytics connects to GL for the analytics_modernization request.\nMetrics: Close report refresh completion by 6:00 AM CT; Certified finance dashboard adoption; Manual reconciliation hours per close cycle\nRisks/controls: inconsistent vendor spend definitions; slow close-window dashboards\nEvidence summary: Oracle ERP Finance GL/AP/AR extract as of 2026-06 synthetic close cycle.; SQL Server Finance Mart schema inventory showing GL, AP, AR, budget, vendor spend, and cost-center schemas.; Informatica finance ETL inventory with 200 nightly jobs and close-window failure notes.; Tableau and Power BI finance dashboard inventory with certified vs shadow-report split.; Finance Gold Data Product design notes for Databricks target certification.\nConfidence: good - The cluster has enough semantic depth for dry-run context assembly, but remains synthetic review context with candidate relationship edges.\nKnown gaps: inconsistent vendor spend definitions; slow close-window dashboards; incomplete lineage from ERP to BI; Relationship candidates are preserved for context assembly, but are not treated as validated active graph truth.\nRecommended next evidence: source-owner attestation; measured baseline extract; relationship validation; operator promotion review",
       "evidenceRefs": [
         "meridian-health-finance-analytics-evidence-1",
         "meridian-health-finance-analytics-evidence-2",
