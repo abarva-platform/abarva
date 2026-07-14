@@ -77,7 +77,7 @@ Revert the PR and redeploy through the repo-owned ACA workflow. No migrations or
 ## Audit Evidence
 
 - PR URL: https://github.com/abarva-platform/abarva/pull/4786
-- Runtime repair PR URL: pending
+- Runtime repair PR URL: https://github.com/abarva-platform/abarva/pull/4787
 - Pre-fix proof: PR #4784, Meridian disposable Move `44f6f4d4-ab88-4fdf-88e8-45c26f27838c`.
 - Failed post-PR #4786 deployed proof: `/Users/anand/Projects/nexus-moves-ctx-fix/proof/moves-ctx-proof-live-2026-07-14T12-27-16-555Z`; disposable Meridian Move `1e0d34aa-7f03-4c96-ad8d-91405efe5dfa`; readiness had four evidence rows, but no `move_context_extract_p1` artifact persisted because of the status schema mismatch.
 - Post-fix proof: pending controlled signed-in smoke.
