@@ -4,6 +4,19 @@
 const tenancy = { clientId: 'client-uuid', clientKey: 'skyharbor-air', userId: 'u1' };
 const createCalls: Array<Record<string, unknown>> = [];
 let createBehavior: (input: Record<string, unknown>) => { id: string } = () => ({ id: 'run-default' });
+const createMoveContextExtract = jest.fn(
+  async (_input: Record<string, unknown>): Promise<Record<string, unknown>> => ({
+    status: 'created',
+    extractId: 'extract-1',
+    artifactId: 'artifact-1',
+    evidenceId: 'evidence-1',
+    sourceMode: 'active_home_context',
+    attachedEvidenceItems: [],
+    suggestedContextItems: [],
+    excludedContextItems: [],
+    gapItems: [],
+  }),
+);
 
 jest.mock('@/lib/auth/tenancy', () => ({
   requireTenancy: jest.fn(async () => tenancy),
@@ -15,18 +28,32 @@ jest.mock('@/lib/deliverables/orchestrator/runs-repository', () => ({
     return createBehavior(input);
   }),
 }));
-const validateDeliverableTenantInvariant: jest.Mock<Promise<unknown>, unknown[]> = jest.fn(
-  async () => ({ ok: true, sourceKind: 'move', sourceId: 'm-1' }),
+const validateDeliverableTenantInvariant = jest.fn(
+  async (_input: Record<string, unknown>): Promise<Record<string, unknown>> => ({
+    ok: true,
+    sourceKind: 'move',
+    sourceId: 'm-1',
+  }),
 );
 jest.mock('@/lib/deliverables/orchestrator/tenant-invariant', () => ({
-  validateDeliverableTenantInvariant: (...args: unknown[]) => validateDeliverableTenantInvariant(...(args as [])),
+  validateDeliverableTenantInvariant: (input: Record<string, unknown>) =>
+    validateDeliverableTenantInvariant(input),
   tenantInvariantHttpStatus: () => 403,
+}));
+jest.mock('@/lib/programs/move-context-extract', () => ({
+  createMoveContextExtract: (input: Record<string, unknown>) =>
+    createMoveContextExtract(input),
 }));
 
 import { POST } from '../route';
 
-function req(body: unknown) {
-  return { json: async () => body } as never;
+function req(body: unknown, headers: Record<string, string> = {}) {
+  return {
+    json: async () => body,
+    headers: {
+      get: (name: string) => headers[name.toLowerCase()] ?? null,
+    },
+  } as never;
 }
 
 beforeEach(() => {
@@ -34,6 +61,7 @@ beforeEach(() => {
   createBehavior = (input) => ({ id: `run-${(input as { deliverableType: string }).deliverableType}` });
   validateDeliverableTenantInvariant.mockClear();
   validateDeliverableTenantInvariant.mockResolvedValue({ ok: true, sourceKind: 'move', sourceId: 'm-1' });
+  createMoveContextExtract.mockClear();
 });
 
 describe('POST /api/v1/deliverables/generate-phase', () => {
@@ -63,6 +91,15 @@ describe('POST /api/v1/deliverables/generate-phase', () => {
       clientId: 'client-uuid',
       tenantKey: 'skyharbor-air',
     });
+    expect(createMoveContextExtract).toHaveBeenCalledWith(expect.objectContaining({
+      moveId: 'm-1',
+      tenantKey: 'skyharbor-air',
+      phase: 3,
+    }));
+    const extractInput = createMoveContextExtract.mock.calls[0]?.[0] as {
+      candidatePreview: { enabled: boolean };
+    };
+    expect(extractInput.candidatePreview.enabled).toBe(false);
     // every enqueue carried the caller's tenant + the move as the source ref
     expect(createCalls.length).toBe(json.total);
     for (const c of createCalls) {
@@ -71,6 +108,31 @@ describe('POST /api/v1/deliverables/generate-phase', () => {
       expect(c.module).toBe('moves');
       expect((c.jobPayload as { sourceArtifactRef: string }).sourceArtifactRef).toBe('m-1');
     }
+  });
+
+  it('creates a candidate-preview extract only for an explicit acknowledged preview request', async () => {
+    const res = await POST(req({
+      moveId: 'm-preview',
+      phase: 3,
+      useCaseArchetype: 'ams',
+      contextExtract: {
+        candidatePreview: {
+          enabled: true,
+          candidateVersionId: 'skyharbor-air:skyharbor-air-pr10-candidate:candidate-dry-run',
+          acknowledgedNotActiveRuntimeTruth: true,
+        },
+      },
+    }, { 'x-abarva-candidate-preview-mode': 'enabled' }));
+    expect(res.status).toBe(202);
+    expect(createMoveContextExtract).toHaveBeenCalledWith(expect.objectContaining({
+      moveId: 'm-preview',
+      tenantKey: 'skyharbor-air',
+      candidatePreview: {
+        enabled: true,
+        candidateVersionId: 'skyharbor-air:skyharbor-air-pr10-candidate:candidate-dry-run',
+        acknowledgedNotActiveRuntimeTruth: true,
+      },
+    }));
   });
 
   it('strips the internal phase-label prefix from decisionContext before it reaches the model (regression 2026-07-09)', async () => {
@@ -122,6 +184,7 @@ describe('POST /api/v1/deliverables/generate-phase', () => {
     const res = await POST(req({ moveId: 'm-fc', phase: 3, useCaseArchetype: 'ams' }));
     expect(res.status).toBe(403);
     expect(createCalls).toHaveLength(0);
+    expect(createMoveContextExtract).not.toHaveBeenCalled();
     const json = (await res.json()) as Record<string, unknown>;
     expect(json.error).toBe('tenant_mismatch');
   });

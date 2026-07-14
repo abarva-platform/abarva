@@ -19,7 +19,8 @@ export type EvidenceType =
   | "baseline_evidence"
   | "decision_log"
   | "architecture_inventory"
-  | "uploaded_artifact";
+  | "uploaded_artifact"
+  | "move_context_extract_attached";
 
 export interface ExtractedProgramEvidence {
   evidenceType: EvidenceType;
