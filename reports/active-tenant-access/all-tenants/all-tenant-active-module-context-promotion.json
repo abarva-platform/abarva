@@ -1,0 +1,711 @@
+{
+  "reportVersion": "all-tenant-active-module-context-promotion/v1",
+  "generatedAt": "2026-07-14T13:00:00.000Z",
+  "activeTenantCount": 6,
+  "retiredTenantKeys": [
+    "northstar-clinical"
+  ],
+  "guardrails": {
+    "productionTenantDataWritten": false,
+    "writesPhysicalTables": false,
+    "activeTenantAccessLayerUpdated": true,
+    "candidatePromotedToActiveAccessMetadata": true,
+    "moduleRuntimeConsumptionChanged": false,
+    "moduleDefaultReadsCandidateData": false,
+    "realizedValueClaimed": false,
+    "northstarExcluded": true
+  },
+  "tenantPromotions": [
+    {
+      "reportVersion": "active-module-context-promotion/v1",
+      "generatedAt": "2026-07-14T13:00:00.000Z",
+      "tenantKey": "apex-retail",
+      "candidateVersionId": "candidate:apex-retail:16bf9cad3198",
+      "activeAccessRecord": {
+        "recordVersion": "active-tenant-access/v1",
+        "generatedAt": "2026-07-14T13:00:00.000Z",
+        "tenantKey": "apex-retail",
+        "activeVersionId": "candidate:apex-retail:16bf9cad3198",
+        "priorActiveVersionId": "apex-retail:active-runtime-truth:unchanged",
+        "sourceCandidateVersionId": "candidate:apex-retail:16bf9cad3198",
+        "activeAccessState": "promoted_for_safe_demo_metadata",
+        "productionTenantDataWritten": false,
+        "writesPhysicalTables": false,
+        "moduleRuntimeConsumptionChanged": false,
+        "moduleDefaultReadsCandidateData": false,
+        "rollbackTargetVersionId": "apex-retail:active-runtime-truth:unchanged",
+        "rollbackProofPath": "reports/active-tenant-access/apexretail/rollback-proof.md"
+      },
+      "guardrails": {
+        "selectedTenantOnly": true,
+        "productionTenantDataWritten": false,
+        "writesPhysicalTables": false,
+        "activeTenantAccessLayerUpdated": true,
+        "candidatePromotedToActiveAccessMetadata": true,
+        "moduleRuntimeConsumptionChanged": false,
+        "moduleDefaultReadsCandidateData": false,
+        "realizedValueClaimed": false
+      },
+      "quality": {
+        "candidateQualityGateStatus": "pass",
+        "candidateCreationStatus": "created",
+        "promotionBlockers": [],
+        "canonicalRecordCount": 3589,
+        "evidenceAttachmentCount": 3589,
+        "relationshipCandidateCount": 1690,
+        "enterpriseProfileStatus": "ready"
+      },
+      "moduleReadProof": [
+        {
+          "moduleKey": "home",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:apex-retail:16bf9cad3198",
+          "recordCount": 57,
+          "evidenceRefCount": 57,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "intelligence",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:apex-retail:16bf9cad3198",
+          "recordCount": 57,
+          "evidenceRefCount": 57,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "moves",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:apex-retail:16bf9cad3198",
+          "recordCount": 57,
+          "evidenceRefCount": 57,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "source",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:apex-retail:16bf9cad3198",
+          "recordCount": 57,
+          "evidenceRefCount": 57,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "tower",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:apex-retail:16bf9cad3198",
+          "recordCount": 57,
+          "evidenceRefCount": 57,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        }
+      ],
+      "outputPaths": {
+        "outputDir": "reports/active-tenant-access/apexretail",
+        "activeAccessRecordPath": "reports/active-tenant-access/apexretail/active-tenant-access-record.json",
+        "promotionReportPath": "reports/active-tenant-access/apexretail/active-module-context-promotion.json",
+        "moduleReadProofPath": "reports/active-tenant-access/apexretail/module-context-read-proof.json",
+        "summaryPath": "reports/active-tenant-access/apexretail/active-module-context-promotion.md"
+      }
+    },
+    {
+      "reportVersion": "active-module-context-promotion/v1",
+      "generatedAt": "2026-07-14T13:00:00.000Z",
+      "tenantKey": "first-capital-financial",
+      "candidateVersionId": "candidate:first-capital-financial:dd4a1abcf54b",
+      "activeAccessRecord": {
+        "recordVersion": "active-tenant-access/v1",
+        "generatedAt": "2026-07-14T13:00:00.000Z",
+        "tenantKey": "first-capital-financial",
+        "activeVersionId": "candidate:first-capital-financial:dd4a1abcf54b",
+        "priorActiveVersionId": "first-capital-financial:active-runtime-truth:unchanged",
+        "sourceCandidateVersionId": "candidate:first-capital-financial:dd4a1abcf54b",
+        "activeAccessState": "promoted_for_safe_demo_metadata",
+        "productionTenantDataWritten": false,
+        "writesPhysicalTables": false,
+        "moduleRuntimeConsumptionChanged": false,
+        "moduleDefaultReadsCandidateData": false,
+        "rollbackTargetVersionId": "first-capital-financial:active-runtime-truth:unchanged",
+        "rollbackProofPath": "reports/active-tenant-access/firstcapital/rollback-proof.md"
+      },
+      "guardrails": {
+        "selectedTenantOnly": true,
+        "productionTenantDataWritten": false,
+        "writesPhysicalTables": false,
+        "activeTenantAccessLayerUpdated": true,
+        "candidatePromotedToActiveAccessMetadata": true,
+        "moduleRuntimeConsumptionChanged": false,
+        "moduleDefaultReadsCandidateData": false,
+        "realizedValueClaimed": false
+      },
+      "quality": {
+        "candidateQualityGateStatus": "pass",
+        "candidateCreationStatus": "created",
+        "promotionBlockers": [],
+        "canonicalRecordCount": 5609,
+        "evidenceAttachmentCount": 5609,
+        "relationshipCandidateCount": 2757,
+        "enterpriseProfileStatus": "ready"
+      },
+      "moduleReadProof": [
+        {
+          "moduleKey": "home",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:first-capital-financial:dd4a1abcf54b",
+          "recordCount": 57,
+          "evidenceRefCount": 57,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "intelligence",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:first-capital-financial:dd4a1abcf54b",
+          "recordCount": 57,
+          "evidenceRefCount": 57,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "moves",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:first-capital-financial:dd4a1abcf54b",
+          "recordCount": 57,
+          "evidenceRefCount": 57,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "source",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:first-capital-financial:dd4a1abcf54b",
+          "recordCount": 57,
+          "evidenceRefCount": 57,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "tower",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:first-capital-financial:dd4a1abcf54b",
+          "recordCount": 57,
+          "evidenceRefCount": 57,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        }
+      ],
+      "outputPaths": {
+        "outputDir": "reports/active-tenant-access/firstcapital",
+        "activeAccessRecordPath": "reports/active-tenant-access/firstcapital/active-tenant-access-record.json",
+        "promotionReportPath": "reports/active-tenant-access/firstcapital/active-module-context-promotion.json",
+        "moduleReadProofPath": "reports/active-tenant-access/firstcapital/module-context-read-proof.json",
+        "summaryPath": "reports/active-tenant-access/firstcapital/active-module-context-promotion.md"
+      }
+    },
+    {
+      "reportVersion": "active-module-context-promotion/v1",
+      "generatedAt": "2026-07-14T13:00:00.000Z",
+      "tenantKey": "lakeshore-holdings",
+      "candidateVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+      "activeAccessRecord": {
+        "recordVersion": "active-tenant-access/v1",
+        "generatedAt": "2026-07-14T13:00:00.000Z",
+        "tenantKey": "lakeshore-holdings",
+        "activeVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+        "priorActiveVersionId": "lakeshore-holdings:active-runtime-truth:unchanged",
+        "sourceCandidateVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+        "activeAccessState": "promoted_for_safe_demo_metadata",
+        "productionTenantDataWritten": false,
+        "writesPhysicalTables": false,
+        "moduleRuntimeConsumptionChanged": false,
+        "moduleDefaultReadsCandidateData": false,
+        "rollbackTargetVersionId": "lakeshore-holdings:active-runtime-truth:unchanged",
+        "rollbackProofPath": "reports/active-tenant-access/lakeshore/rollback-proof.md"
+      },
+      "guardrails": {
+        "selectedTenantOnly": true,
+        "productionTenantDataWritten": false,
+        "writesPhysicalTables": false,
+        "activeTenantAccessLayerUpdated": true,
+        "candidatePromotedToActiveAccessMetadata": true,
+        "moduleRuntimeConsumptionChanged": false,
+        "moduleDefaultReadsCandidateData": false,
+        "realizedValueClaimed": false
+      },
+      "quality": {
+        "candidateQualityGateStatus": "pass",
+        "candidateCreationStatus": "created",
+        "promotionBlockers": [],
+        "canonicalRecordCount": 457,
+        "evidenceAttachmentCount": 457,
+        "relationshipCandidateCount": 183,
+        "enterpriseProfileStatus": "ready"
+      },
+      "moduleReadProof": [
+        {
+          "moduleKey": "home",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+          "recordCount": 57,
+          "evidenceRefCount": 57,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "intelligence",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+          "recordCount": 57,
+          "evidenceRefCount": 57,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "moves",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+          "recordCount": 57,
+          "evidenceRefCount": 57,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "source",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+          "recordCount": 57,
+          "evidenceRefCount": 57,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "tower",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+          "recordCount": 57,
+          "evidenceRefCount": 57,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        }
+      ],
+      "outputPaths": {
+        "outputDir": "reports/active-tenant-access/lakeshore",
+        "activeAccessRecordPath": "reports/active-tenant-access/lakeshore/active-tenant-access-record.json",
+        "promotionReportPath": "reports/active-tenant-access/lakeshore/active-module-context-promotion.json",
+        "moduleReadProofPath": "reports/active-tenant-access/lakeshore/module-context-read-proof.json",
+        "summaryPath": "reports/active-tenant-access/lakeshore/active-module-context-promotion.md"
+      }
+    },
+    {
+      "reportVersion": "active-module-context-promotion/v1",
+      "generatedAt": "2026-07-14T13:00:00.000Z",
+      "tenantKey": "lakeshore-industries",
+      "candidateVersionId": "candidate:lakeshore-industries:929f574689fc",
+      "activeAccessRecord": {
+        "recordVersion": "active-tenant-access/v1",
+        "generatedAt": "2026-07-14T13:00:00.000Z",
+        "tenantKey": "lakeshore-industries",
+        "activeVersionId": "candidate:lakeshore-industries:929f574689fc",
+        "priorActiveVersionId": "lakeshore-industries:active-runtime-truth:unchanged",
+        "sourceCandidateVersionId": "candidate:lakeshore-industries:929f574689fc",
+        "activeAccessState": "promoted_for_safe_demo_metadata",
+        "productionTenantDataWritten": false,
+        "writesPhysicalTables": false,
+        "moduleRuntimeConsumptionChanged": false,
+        "moduleDefaultReadsCandidateData": false,
+        "rollbackTargetVersionId": "lakeshore-industries:active-runtime-truth:unchanged",
+        "rollbackProofPath": "reports/active-tenant-access/lakeshore-industries/rollback-proof.md"
+      },
+      "guardrails": {
+        "selectedTenantOnly": true,
+        "productionTenantDataWritten": false,
+        "writesPhysicalTables": false,
+        "activeTenantAccessLayerUpdated": true,
+        "candidatePromotedToActiveAccessMetadata": true,
+        "moduleRuntimeConsumptionChanged": false,
+        "moduleDefaultReadsCandidateData": false,
+        "realizedValueClaimed": false
+      },
+      "quality": {
+        "candidateQualityGateStatus": "pass",
+        "candidateCreationStatus": "created",
+        "promotionBlockers": [],
+        "canonicalRecordCount": 3040,
+        "evidenceAttachmentCount": 3040,
+        "relationshipCandidateCount": 892,
+        "enterpriseProfileStatus": "ready"
+      },
+      "moduleReadProof": [
+        {
+          "moduleKey": "home",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:lakeshore-industries:929f574689fc",
+          "recordCount": 64,
+          "evidenceRefCount": 64,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "intelligence",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:lakeshore-industries:929f574689fc",
+          "recordCount": 64,
+          "evidenceRefCount": 64,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "moves",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:lakeshore-industries:929f574689fc",
+          "recordCount": 64,
+          "evidenceRefCount": 64,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "source",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:lakeshore-industries:929f574689fc",
+          "recordCount": 64,
+          "evidenceRefCount": 64,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "tower",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:lakeshore-industries:929f574689fc",
+          "recordCount": 64,
+          "evidenceRefCount": 64,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        }
+      ],
+      "outputPaths": {
+        "outputDir": "reports/active-tenant-access/lakeshore-industries",
+        "activeAccessRecordPath": "reports/active-tenant-access/lakeshore-industries/active-tenant-access-record.json",
+        "promotionReportPath": "reports/active-tenant-access/lakeshore-industries/active-module-context-promotion.json",
+        "moduleReadProofPath": "reports/active-tenant-access/lakeshore-industries/module-context-read-proof.json",
+        "summaryPath": "reports/active-tenant-access/lakeshore-industries/active-module-context-promotion.md"
+      }
+    },
+    {
+      "reportVersion": "active-module-context-promotion/v1",
+      "generatedAt": "2026-07-14T13:00:00.000Z",
+      "tenantKey": "meridian-health",
+      "candidateVersionId": "candidate:meridian-health:aef0edc75fad",
+      "activeAccessRecord": {
+        "recordVersion": "active-tenant-access/v1",
+        "generatedAt": "2026-07-14T13:00:00.000Z",
+        "tenantKey": "meridian-health",
+        "activeVersionId": "candidate:meridian-health:aef0edc75fad",
+        "priorActiveVersionId": "meridian-health:active-runtime-truth:unchanged",
+        "sourceCandidateVersionId": "candidate:meridian-health:aef0edc75fad",
+        "activeAccessState": "promoted_for_safe_demo_metadata",
+        "productionTenantDataWritten": false,
+        "writesPhysicalTables": false,
+        "moduleRuntimeConsumptionChanged": false,
+        "moduleDefaultReadsCandidateData": false,
+        "rollbackTargetVersionId": "meridian-health:active-runtime-truth:unchanged",
+        "rollbackProofPath": "reports/active-tenant-access/meridian/rollback-proof.md"
+      },
+      "guardrails": {
+        "selectedTenantOnly": true,
+        "productionTenantDataWritten": false,
+        "writesPhysicalTables": false,
+        "activeTenantAccessLayerUpdated": true,
+        "candidatePromotedToActiveAccessMetadata": true,
+        "moduleRuntimeConsumptionChanged": false,
+        "moduleDefaultReadsCandidateData": false,
+        "realizedValueClaimed": false
+      },
+      "quality": {
+        "candidateQualityGateStatus": "pass",
+        "candidateCreationStatus": "created",
+        "promotionBlockers": [],
+        "canonicalRecordCount": 4078,
+        "evidenceAttachmentCount": 4078,
+        "relationshipCandidateCount": 2177,
+        "enterpriseProfileStatus": "ready"
+      },
+      "moduleReadProof": [
+        {
+          "moduleKey": "home",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:meridian-health:aef0edc75fad",
+          "recordCount": 60,
+          "evidenceRefCount": 60,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "intelligence",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:meridian-health:aef0edc75fad",
+          "recordCount": 60,
+          "evidenceRefCount": 60,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "moves",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:meridian-health:aef0edc75fad",
+          "recordCount": 60,
+          "evidenceRefCount": 60,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "source",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:meridian-health:aef0edc75fad",
+          "recordCount": 60,
+          "evidenceRefCount": 60,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "tower",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:meridian-health:aef0edc75fad",
+          "recordCount": 60,
+          "evidenceRefCount": 60,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        }
+      ],
+      "outputPaths": {
+        "outputDir": "reports/active-tenant-access/meridian",
+        "activeAccessRecordPath": "reports/active-tenant-access/meridian/active-tenant-access-record.json",
+        "promotionReportPath": "reports/active-tenant-access/meridian/active-module-context-promotion.json",
+        "moduleReadProofPath": "reports/active-tenant-access/meridian/module-context-read-proof.json",
+        "summaryPath": "reports/active-tenant-access/meridian/active-module-context-promotion.md"
+      }
+    },
+    {
+      "reportVersion": "active-module-context-promotion/v1",
+      "generatedAt": "2026-07-14T13:00:00.000Z",
+      "tenantKey": "skyharbor-air",
+      "candidateVersionId": "candidate:skyharbor-air:80f0be2d1c76",
+      "activeAccessRecord": {
+        "recordVersion": "active-tenant-access/v1",
+        "generatedAt": "2026-07-14T13:00:00.000Z",
+        "tenantKey": "skyharbor-air",
+        "activeVersionId": "candidate:skyharbor-air:80f0be2d1c76",
+        "priorActiveVersionId": "skyharbor-air:active-runtime-truth:unchanged",
+        "sourceCandidateVersionId": "candidate:skyharbor-air:80f0be2d1c76",
+        "activeAccessState": "promoted_for_safe_demo_metadata",
+        "productionTenantDataWritten": false,
+        "writesPhysicalTables": false,
+        "moduleRuntimeConsumptionChanged": false,
+        "moduleDefaultReadsCandidateData": false,
+        "rollbackTargetVersionId": "skyharbor-air:active-runtime-truth:unchanged",
+        "rollbackProofPath": "reports/active-tenant-access/skyharbor/rollback-proof.md"
+      },
+      "guardrails": {
+        "selectedTenantOnly": true,
+        "productionTenantDataWritten": false,
+        "writesPhysicalTables": false,
+        "activeTenantAccessLayerUpdated": true,
+        "candidatePromotedToActiveAccessMetadata": true,
+        "moduleRuntimeConsumptionChanged": false,
+        "moduleDefaultReadsCandidateData": false,
+        "realizedValueClaimed": false
+      },
+      "quality": {
+        "candidateQualityGateStatus": "pass",
+        "candidateCreationStatus": "created",
+        "promotionBlockers": [],
+        "canonicalRecordCount": 3457,
+        "evidenceAttachmentCount": 3457,
+        "relationshipCandidateCount": 3136,
+        "enterpriseProfileStatus": "ready"
+      },
+      "moduleReadProof": [
+        {
+          "moduleKey": "home",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:skyharbor-air:80f0be2d1c76",
+          "recordCount": 59,
+          "evidenceRefCount": 59,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "intelligence",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:skyharbor-air:80f0be2d1c76",
+          "recordCount": 59,
+          "evidenceRefCount": 59,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "moves",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:skyharbor-air:80f0be2d1c76",
+          "recordCount": 59,
+          "evidenceRefCount": 59,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "source",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:skyharbor-air:80f0be2d1c76",
+          "recordCount": 59,
+          "evidenceRefCount": 59,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        },
+        {
+          "moduleKey": "tower",
+          "sourceMode": "active_tenant_access",
+          "activeTenantAccessVersionId": "candidate:skyharbor-air:80f0be2d1c76",
+          "recordCount": 59,
+          "evidenceRefCount": 59,
+          "candidateDataConsumed": false,
+          "moduleRuntimeConsumptionChanged": false,
+          "readinessStatus": "agent_ready",
+          "contextCompletenessOverall": "Good"
+        }
+      ],
+      "outputPaths": {
+        "outputDir": "reports/active-tenant-access/skyharbor",
+        "activeAccessRecordPath": "reports/active-tenant-access/skyharbor/active-tenant-access-record.json",
+        "promotionReportPath": "reports/active-tenant-access/skyharbor/active-module-context-promotion.json",
+        "moduleReadProofPath": "reports/active-tenant-access/skyharbor/module-context-read-proof.json",
+        "summaryPath": "reports/active-tenant-access/skyharbor/active-module-context-promotion.md"
+      }
+    }
+  ],
+  "tenantMatrix": [
+    {
+      "tenantKey": "apex-retail",
+      "outputSlug": "apexretail",
+      "candidateVersionId": "candidate:apex-retail:16bf9cad3198",
+      "canonicalRecordCount": 3589,
+      "evidenceAttachmentCount": 3589,
+      "relationshipCandidateCount": 1690,
+      "enterpriseProfileStatus": "ready",
+      "moduleProofStatus": "pass"
+    },
+    {
+      "tenantKey": "first-capital-financial",
+      "outputSlug": "firstcapital",
+      "candidateVersionId": "candidate:first-capital-financial:dd4a1abcf54b",
+      "canonicalRecordCount": 5609,
+      "evidenceAttachmentCount": 5609,
+      "relationshipCandidateCount": 2757,
+      "enterpriseProfileStatus": "ready",
+      "moduleProofStatus": "pass"
+    },
+    {
+      "tenantKey": "lakeshore-holdings",
+      "outputSlug": "lakeshore",
+      "candidateVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+      "canonicalRecordCount": 457,
+      "evidenceAttachmentCount": 457,
+      "relationshipCandidateCount": 183,
+      "enterpriseProfileStatus": "ready",
+      "moduleProofStatus": "pass"
+    },
+    {
+      "tenantKey": "lakeshore-industries",
+      "outputSlug": "lakeshore-industries",
+      "candidateVersionId": "candidate:lakeshore-industries:929f574689fc",
+      "canonicalRecordCount": 3040,
+      "evidenceAttachmentCount": 3040,
+      "relationshipCandidateCount": 892,
+      "enterpriseProfileStatus": "ready",
+      "moduleProofStatus": "pass"
+    },
+    {
+      "tenantKey": "meridian-health",
+      "outputSlug": "meridian",
+      "candidateVersionId": "candidate:meridian-health:aef0edc75fad",
+      "canonicalRecordCount": 4078,
+      "evidenceAttachmentCount": 4078,
+      "relationshipCandidateCount": 2177,
+      "enterpriseProfileStatus": "ready",
+      "moduleProofStatus": "pass"
+    },
+    {
+      "tenantKey": "skyharbor-air",
+      "outputSlug": "skyharbor",
+      "candidateVersionId": "candidate:skyharbor-air:80f0be2d1c76",
+      "canonicalRecordCount": 3457,
+      "evidenceAttachmentCount": 3457,
+      "relationshipCandidateCount": 3136,
+      "enterpriseProfileStatus": "ready",
+      "moduleProofStatus": "pass"
+    }
+  ],
+  "outputPaths": {
+    "outputDir": "reports/active-tenant-access/all-tenants",
+    "reportPath": "reports/active-tenant-access/all-tenants/all-tenant-active-module-context-promotion.json",
+    "summaryPath": "reports/active-tenant-access/all-tenants/all-tenant-active-module-context-promotion.md"
+  }
+}

@@ -1,15 +1,13 @@
 {
   "apex-retail": {
-    "total": 3596,
+    "total": 3588,
     "byCode": {
-      "placeholder_value_omitted": 3589,
-      "enterprise_profile_gap": 7
+      "placeholder_value_omitted": 3588
     },
     "bySeverity": {
-      "warning": 3596
+      "warning": 3588
     },
     "byDomain": {
-      "enterprise_profile": 8,
       "business_functions": 26,
       "org_ownership": 50,
       "workforce_roles": 12,
@@ -27,17 +25,6 @@
       "expert_lenses": 5
     },
     "samples": [
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_01_enterprise_profile.csv",
-        "rowNumber": 2,
-        "domain": "enterprise_profile",
-        "field": "known_gaps",
-        "value": "none"
-      },
       {
         "tenantKey": "apex-retail",
         "severity": "warning",
@@ -202,76 +189,18 @@
         "domain": "expert_lenses",
         "field": "known_gaps",
         "value": "none"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field headquarters is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "headquarters"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field locations is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "locations"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field leadership is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "leadership"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field mission is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "mission"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field vision is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "vision"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field segments is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "segments"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field asOf is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "asOf"
       }
     ]
   },
   "first-capital-financial": {
-    "total": 5616,
+    "total": 5608,
     "byCode": {
-      "placeholder_value_omitted": 5609,
-      "enterprise_profile_gap": 7
+      "placeholder_value_omitted": 5608
     },
     "bySeverity": {
-      "warning": 5616
+      "warning": 5608
     },
     "byDomain": {
-      "enterprise_profile": 8,
       "business_functions": 27,
       "org_ownership": 65,
       "workforce_roles": 16,
@@ -289,17 +218,6 @@
       "expert_lenses": 5
     },
     "samples": [
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_01_enterprise_profile.csv",
-        "rowNumber": 2,
-        "domain": "enterprise_profile",
-        "field": "known_gaps",
-        "value": "none"
-      },
       {
         "tenantKey": "first-capital-financial",
         "severity": "warning",
@@ -464,73 +382,16 @@
         "domain": "expert_lenses",
         "field": "known_gaps",
         "value": "none"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field headquarters is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "headquarters"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field locations is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "locations"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field leadership is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "leadership"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field mission is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "mission"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field vision is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "vision"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field segments is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "segments"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field asOf is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "asOf"
       }
     ]
   },
   "lakeshore-holdings": {
-    "total": 463,
+    "total": 456,
     "byCode": {
-      "placeholder_value_omitted": 456,
-      "enterprise_profile_gap": 7
+      "placeholder_value_omitted": 456
     },
     "bySeverity": {
-      "warning": 463
+      "warning": 456
     },
     "byDomain": {
       "business_functions": 14,
@@ -547,8 +408,7 @@
       "evidence_sources": 10,
       "metrics_outcomes": 12,
       "industry_context_patterns": 4,
-      "expert_lenses": 4,
-      "enterprise_profile": 7
+      "expert_lenses": 4
     },
     "samples": [
       {
@@ -715,78 +575,20 @@
         "domain": "expert_lenses",
         "field": "known_gaps",
         "value": "none"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field headquarters is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "headquarters"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field locations is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "locations"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field leadership is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "leadership"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field mission is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "mission"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field vision is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "vision"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field segments is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "segments"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field asOf is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "asOf"
       }
     ]
   },
   "lakeshore-industries": {
-    "total": 35,
+    "total": 30,
     "byCode": {
-      "primary_identity_missing_or_placeholder": 30,
-      "enterprise_profile_gap": 5
+      "primary_identity_missing_or_placeholder": 30
     },
     "bySeverity": {
-      "warning": 35
+      "warning": 30
     },
     "byDomain": {
       "relationships": 6,
-      "industry_context_patterns": 24,
-      "enterprise_profile": 5
+      "industry_context_patterns": 24
     },
     "samples": [
       {
@@ -810,46 +612,6 @@
         "domain": "industry_context_patterns",
         "field": "pattern_name|industry_pattern|theme|market_pattern_id",
         "value": ""
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field locations is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "locations"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field leadership is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "leadership"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field mission is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "mission"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field vision is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "vision"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field source is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "source"
       }
     ]
   },
@@ -1547,17 +1309,16 @@
     ]
   },
   "skyharbor-air": {
-    "total": 1200,
+    "total": 1189,
     "byCode": {
       "primary_identity_missing_or_placeholder": 248,
-      "placeholder_value_omitted": 945,
-      "enterprise_profile_gap": 7
+      "placeholder_value_omitted": 941
     },
     "bySeverity": {
-      "warning": 1200
+      "warning": 1189
     },
     "byDomain": {
-      "enterprise_profile": 20,
+      "enterprise_profile": 9,
       "operational_process_evidence": 52,
       "infrastructure_platforms": 551,
       "programs_initiatives": 102,
@@ -1897,39 +1658,6 @@
         "tenantKey": "skyharbor-air",
         "severity": "warning",
         "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field revenue_basis was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_01_enterprise_profile.csv",
-        "rowNumber": 2,
-        "domain": "enterprise_profile",
-        "field": "revenue_basis",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field revenue_period_label was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_01_enterprise_profile.csv",
-        "rowNumber": 2,
-        "domain": "enterprise_profile",
-        "field": "revenue_period_label",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field employee_count_basis was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_01_enterprise_profile.csv",
-        "rowNumber": 2,
-        "domain": "enterprise_profile",
-        "field": "employee_count_basis",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
         "message": "Placeholder value in field operating_company_breakdown was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_01_enterprise_profile.csv",
         "rowNumber": 2,
@@ -1957,17 +1685,6 @@
         "rowNumber": 2,
         "domain": "enterprise_profile",
         "field": "enterprise_cdp_status",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field headquarters was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_01_enterprise_profile.csv",
-        "rowNumber": 2,
-        "domain": "enterprise_profile",
-        "field": "headquarters",
         "value": "not_loaded"
       },
       {
@@ -2134,62 +1851,6 @@
         "domain": "infrastructure_platforms",
         "field": "primary_location_region",
         "value": "not_loaded"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field headquarters is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "headquarters"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field revenue is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "revenue"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field employees is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "employees"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field locations is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "locations"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field leadership is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "leadership"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field mission is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "mission"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field vision is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "vision"
       }
     ]
   }

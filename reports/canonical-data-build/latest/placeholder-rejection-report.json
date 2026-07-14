@@ -1,14 +1,13 @@
 {
-  "total": 14596,
+  "total": 14590,
   "byCode": {
-    "placeholder_value_omitted": 14299,
+    "placeholder_value_omitted": 14293,
     "primary_identity_missing_or_placeholder": 297
   },
   "bySeverity": {
-    "warning": 14596
+    "warning": 14590
   },
   "byDomain": {
-    "enterprise_profile": 27,
     "business_functions": 92,
     "org_ownership": 224,
     "workforce_roles": 67,
@@ -24,22 +23,12 @@
     "metrics_outcomes": 445,
     "industry_context_patterns": 722,
     "expert_lenses": 19,
+    "enterprise_profile": 21,
     "service_scope_managed_services": 12,
     "operational_process_evidence": 61,
     "infrastructure_platforms": 553
   },
   "samples": [
-    {
-      "tenantKey": "apex-retail",
-      "severity": "warning",
-      "code": "placeholder_value_omitted",
-      "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-      "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_01_enterprise_profile.csv",
-      "rowNumber": 2,
-      "domain": "enterprise_profile",
-      "field": "known_gaps",
-      "value": "none"
-    },
     {
       "tenantKey": "apex-retail",
       "severity": "warning",
@@ -202,17 +191,6 @@
       "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_16_expert_lenses.csv",
       "rowNumber": 2,
       "domain": "expert_lenses",
-      "field": "known_gaps",
-      "value": "none"
-    },
-    {
-      "tenantKey": "first-capital-financial",
-      "severity": "warning",
-      "code": "placeholder_value_omitted",
-      "message": "Placeholder value in field known_gaps was omitted and recorded as a gap, not a fact.",
-      "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_01_enterprise_profile.csv",
-      "rowNumber": 2,
-      "domain": "enterprise_profile",
       "field": "known_gaps",
       "value": "none"
     },
@@ -907,6 +885,28 @@
       "rowNumber": 2,
       "domain": "org_ownership",
       "field": "budget_authority",
+      "value": "not_loaded"
+    },
+    {
+      "tenantKey": "meridian-health",
+      "severity": "warning",
+      "code": "placeholder_value_omitted",
+      "message": "Placeholder value in field population_count was omitted and recorded as a gap, not a fact.",
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_04_workforce_personas.csv",
+      "rowNumber": 4,
+      "domain": "workforce_roles",
+      "field": "population_count",
+      "value": "not_provided"
+    },
+    {
+      "tenantKey": "meridian-health",
+      "severity": "warning",
+      "code": "placeholder_value_omitted",
+      "message": "Placeholder value in field population_basis was omitted and recorded as a gap, not a fact.",
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_04_workforce_personas.csv",
+      "rowNumber": 4,
+      "domain": "workforce_roles",
+      "field": "population_basis",
       "value": "not_loaded"
     }
   ]

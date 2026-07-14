@@ -1,11 +1,11 @@
 {
-  "candidateVersionId": "candidate:skyharbor-air:942cb1f220fa",
+  "candidateVersionId": "candidate:skyharbor-air:80f0be2d1c76",
   "tenantId": "skyharbor-air",
   "tenantKey": "skyharbor-air",
   "tenantDisplayName": "SkyHarbor Air",
-  "sourceBuildId": "canonical-data-build:24693eef8c78",
-  "sourceBuildFingerprint": "24693eef8c783cd336d3a3419b9adcfed12c6c13a76c81f2775387ed3b9ab0f5",
-  "inputFingerprint": "bc84e5a115a5625b707caab14cbc1c22233d65366b1668d3fb9d9a050fd6bdd1",
+  "sourceBuildId": "canonical-data-build:c32e4ed2326c",
+  "sourceBuildFingerprint": "c32e4ed2326c5825e7797f488656be1967641a2108b9176b089e3e84bd34bd22",
+  "inputFingerprint": "ec415456c3ac2ba007fed8d41771f38483ed2211678f8e09b1f94d1fe2214cec",
   "canonicalRecordCount": 3457,
   "evidenceAttachmentCount": 3457,
   "relationshipCandidateCount": 3136,
@@ -144,8 +144,8 @@
       "duplicateNames": 0
     }
   ],
-  "enterpriseProfileStatus": "gaps",
-  "profileGapCount": 7,
+  "enterpriseProfileStatus": "ready",
+  "profileGapCount": 0,
   "qualityGateStatus": "pass",
   "qualityGates": [
     {
@@ -176,7 +176,7 @@
       "id": "enterprise-profile-present-or-gapped",
       "label": "Enterprise profile present or explicit gaps",
       "status": "pass",
-      "detail": "Enterprise profile has 7 explicit gaps."
+      "detail": "Enterprise profile is ready."
     },
     {
       "id": "source-lineage-present",
@@ -206,7 +206,7 @@
       "id": "home-ava-readiness-artifact",
       "label": "Home/aVa readiness artifact present",
       "status": "pass",
-      "detail": "Home/aVa artifact exists and records caveats before active consumption."
+      "detail": "Home/aVa readiness is green."
     },
     {
       "id": "active-candidate-separation",
@@ -215,16 +215,8 @@
       "detail": "Candidate preview remains explicit-only; default Home and module runtime reads are unchanged."
     }
   ],
-  "promotionBlockers": [
-    "Profile gap before promotion: headquarters",
-    "Profile gap before promotion: revenue",
-    "Profile gap before promotion: employees",
-    "Profile gap before promotion: locations",
-    "Profile gap before promotion: leadership",
-    "Profile gap before promotion: mission",
-    "Profile gap before promotion: vision"
-  ],
-  "generatedAt": "2026-07-14T12:00:00.000Z",
+  "promotionBlockers": [],
+  "generatedAt": "2026-07-14T13:00:00.000Z",
   "status": "inactive",
   "creationStatus": "created",
   "mode": "candidate_preview",
@@ -263,7 +255,7 @@
     "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_15_industry_corpus_patterns.csv@bb2c81cbf691",
     "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_16_expert_lenses.csv@90595afdda44",
     "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_00_portfolio_entity_registry.csv@06457834b5d8",
-    "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_01_enterprise_profile.csv@bd47a4d6944e",
+    "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_01_enterprise_profile.csv@7611762ef538",
     "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_02_business_functions.csv@d044c9c4ebde",
     "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_03_org_ownership.csv@4079e0b62189",
     "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_04_workforce_personas.csv@d0d525d49bea",
@@ -489,7 +481,7 @@
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_01_enterprise_profile.csv",
-      "fingerprint": "bd47a4d6944e4fcc7c8bea8a74040a73a4e4e95f2f7de99d943c3bc7d3d8ea59",
+      "fingerprint": "7611762ef5383749a81dd6ebd4d1906fa4bffbdfddc4cc72f07dd614498a5d22",
       "rowCount": 1,
       "domain": "enterprise_profile"
     },
@@ -633,18 +625,11 @@
     }
   ],
   "homeAvaReadiness": {
-    "ready": false,
-    "profileReady": false,
+    "ready": true,
+    "profileReady": true,
     "evidenceReady": true,
     "relationshipReady": true,
     "caveats": [
-      "Enterprise profile missing headquarters.",
-      "Enterprise profile missing revenue.",
-      "Enterprise profile missing employees.",
-      "Enterprise profile missing locations.",
-      "Enterprise profile missing leadership.",
-      "Enterprise profile missing mission.",
-      "Enterprise profile missing vision.",
       "workforce_roles below depth by 13 rows.",
       "industry_context_patterns below depth by 1 rows.",
       "service_scope_managed_services below depth by 7 rows."

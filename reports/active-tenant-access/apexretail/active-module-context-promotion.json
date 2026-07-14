@@ -1,22 +1,22 @@
 {
   "reportVersion": "active-module-context-promotion/v1",
   "generatedAt": "2026-07-14T13:00:00.000Z",
-  "tenantKey": "meridian-health",
-  "candidateVersionId": "candidate:meridian-health:aef0edc75fad",
+  "tenantKey": "apex-retail",
+  "candidateVersionId": "candidate:apex-retail:16bf9cad3198",
   "activeAccessRecord": {
     "recordVersion": "active-tenant-access/v1",
     "generatedAt": "2026-07-14T13:00:00.000Z",
-    "tenantKey": "meridian-health",
-    "activeVersionId": "candidate:meridian-health:aef0edc75fad",
-    "priorActiveVersionId": "meridian-health:active-runtime-truth:unchanged",
-    "sourceCandidateVersionId": "candidate:meridian-health:aef0edc75fad",
+    "tenantKey": "apex-retail",
+    "activeVersionId": "candidate:apex-retail:16bf9cad3198",
+    "priorActiveVersionId": "apex-retail:active-runtime-truth:unchanged",
+    "sourceCandidateVersionId": "candidate:apex-retail:16bf9cad3198",
     "activeAccessState": "promoted_for_safe_demo_metadata",
     "productionTenantDataWritten": false,
     "writesPhysicalTables": false,
     "moduleRuntimeConsumptionChanged": false,
     "moduleDefaultReadsCandidateData": false,
-    "rollbackTargetVersionId": "meridian-health:active-runtime-truth:unchanged",
-    "rollbackProofPath": "reports/active-tenant-access/meridian/rollback-proof.md"
+    "rollbackTargetVersionId": "apex-retail:active-runtime-truth:unchanged",
+    "rollbackProofPath": "reports/active-tenant-access/apexretail/rollback-proof.md"
   },
   "guardrails": {
     "selectedTenantOnly": true,
@@ -32,18 +32,18 @@
     "candidateQualityGateStatus": "pass",
     "candidateCreationStatus": "created",
     "promotionBlockers": [],
-    "canonicalRecordCount": 4078,
-    "evidenceAttachmentCount": 4078,
-    "relationshipCandidateCount": 2177,
+    "canonicalRecordCount": 3589,
+    "evidenceAttachmentCount": 3589,
+    "relationshipCandidateCount": 1690,
     "enterpriseProfileStatus": "ready"
   },
   "moduleReadProof": [
     {
       "moduleKey": "home",
       "sourceMode": "active_tenant_access",
-      "activeTenantAccessVersionId": "candidate:meridian-health:aef0edc75fad",
-      "recordCount": 60,
-      "evidenceRefCount": 60,
+      "activeTenantAccessVersionId": "candidate:apex-retail:16bf9cad3198",
+      "recordCount": 57,
+      "evidenceRefCount": 57,
       "candidateDataConsumed": false,
       "moduleRuntimeConsumptionChanged": false,
       "readinessStatus": "agent_ready",
@@ -52,9 +52,9 @@
     {
       "moduleKey": "intelligence",
       "sourceMode": "active_tenant_access",
-      "activeTenantAccessVersionId": "candidate:meridian-health:aef0edc75fad",
-      "recordCount": 60,
-      "evidenceRefCount": 60,
+      "activeTenantAccessVersionId": "candidate:apex-retail:16bf9cad3198",
+      "recordCount": 57,
+      "evidenceRefCount": 57,
       "candidateDataConsumed": false,
       "moduleRuntimeConsumptionChanged": false,
       "readinessStatus": "agent_ready",
@@ -63,9 +63,9 @@
     {
       "moduleKey": "moves",
       "sourceMode": "active_tenant_access",
-      "activeTenantAccessVersionId": "candidate:meridian-health:aef0edc75fad",
-      "recordCount": 60,
-      "evidenceRefCount": 60,
+      "activeTenantAccessVersionId": "candidate:apex-retail:16bf9cad3198",
+      "recordCount": 57,
+      "evidenceRefCount": 57,
       "candidateDataConsumed": false,
       "moduleRuntimeConsumptionChanged": false,
       "readinessStatus": "agent_ready",
@@ -74,9 +74,9 @@
     {
       "moduleKey": "source",
       "sourceMode": "active_tenant_access",
-      "activeTenantAccessVersionId": "candidate:meridian-health:aef0edc75fad",
-      "recordCount": 60,
-      "evidenceRefCount": 60,
+      "activeTenantAccessVersionId": "candidate:apex-retail:16bf9cad3198",
+      "recordCount": 57,
+      "evidenceRefCount": 57,
       "candidateDataConsumed": false,
       "moduleRuntimeConsumptionChanged": false,
       "readinessStatus": "agent_ready",
@@ -85,9 +85,9 @@
     {
       "moduleKey": "tower",
       "sourceMode": "active_tenant_access",
-      "activeTenantAccessVersionId": "candidate:meridian-health:aef0edc75fad",
-      "recordCount": 60,
-      "evidenceRefCount": 60,
+      "activeTenantAccessVersionId": "candidate:apex-retail:16bf9cad3198",
+      "recordCount": 57,
+      "evidenceRefCount": 57,
       "candidateDataConsumed": false,
       "moduleRuntimeConsumptionChanged": false,
       "readinessStatus": "agent_ready",
@@ -95,10 +95,10 @@
     }
   ],
   "outputPaths": {
-    "outputDir": "reports/active-tenant-access/meridian",
-    "activeAccessRecordPath": "reports/active-tenant-access/meridian/active-tenant-access-record.json",
-    "promotionReportPath": "reports/active-tenant-access/meridian/active-module-context-promotion.json",
-    "moduleReadProofPath": "reports/active-tenant-access/meridian/module-context-read-proof.json",
-    "summaryPath": "reports/active-tenant-access/meridian/active-module-context-promotion.md"
+    "outputDir": "reports/active-tenant-access/apexretail",
+    "activeAccessRecordPath": "reports/active-tenant-access/apexretail/active-tenant-access-record.json",
+    "promotionReportPath": "reports/active-tenant-access/apexretail/active-module-context-promotion.json",
+    "moduleReadProofPath": "reports/active-tenant-access/apexretail/module-context-read-proof.json",
+    "summaryPath": "reports/active-tenant-access/apexretail/active-module-context-promotion.md"
   }
 }
