@@ -1,6 +1,6 @@
 # Active Module Context Promotion - lakeshore-holdings
 
-Generated: `2026-07-14T13:00:00.000Z`
+Generated: `2026-07-14T15:50:19.110Z`
 
 This promotes a reviewed candidate metadata pointer into Active Tenant Access for
 the selected safe demo tenant only. It does not write production tenant data,
@@ -9,11 +9,11 @@ candidate data by default, or claim realized value.
 
 ## Quality
 
-- Candidate version: `candidate:lakeshore-holdings:dfa86cb1154b`
+- Candidate version: `candidate:lakeshore-holdings:e16ad063e5bd`
 - Enterprise profile: ready
-- Canonical records: 457
-- Evidence attachments: 457
-- Relationship candidates: 183
+- Canonical records: 249
+- Evidence attachments: 249
+- Relationship candidates: 373
 - Promotion blockers: 0
 
 ## Module Read Proof

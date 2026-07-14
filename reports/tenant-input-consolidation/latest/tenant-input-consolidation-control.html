@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Tenant Input Consolidation</title><style>
+  body{font-family:Inter,Arial,sans-serif;margin:0;background:#f7f4ef;color:#071633}main{max-width:1180px;margin:0 auto;padding:44px}
+  h1{font-size:42px;margin:0 0 10px}.muted{color:#667085}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:24px 0}
+  .card{background:white;border:1px solid #ded7ca;border-radius:10px;padding:18px}.kpi{font-size:30px;font-weight:800}
+  table{width:100%;border-collapse:collapse;background:white;border:1px solid #ded7ca}th,td{padding:10px;border-bottom:1px solid #eee;text-align:left;font-size:13px}th{color:#667085;text-transform:uppercase;letter-spacing:.08em}
+  .ok{color:#087443;font-weight:700}.bad{color:#b42318;font-weight:700}
+  </style></head><body><main><p class="muted">DATA-INPUT-CANONICAL-PR1</p><h1>Tenant Input Consolidation Control</h1>
+  <p class="muted">One active universal file per dimension per tenant. Legacy packs archived out of the active build path.</p>
+  <section class="grid">
+  <div class="card"><div class="muted">Active tenants</div><div class="kpi">6</div></div>
+  <div class="card"><div class="muted">Files per tenant</div><div class="kpi">19</div></div>
+  <div class="card"><div class="muted">Legacy active files</div><div class="kpi ok">0</div></div>
+  <div class="card"><div class="muted">Northstar processed</div><div class="kpi ok">false</div></div>
+  </section>
+  <h2>Before / After</h2><table><thead><tr><th>Tenant</th><th>Before CSV</th><th>After CSV</th><th>Archived</th></tr></thead><tbody>
+  <tr><td>Apex Retail</td><td>17</td><td>19</td><td>0</td></tr><tr><td>First Capital Financial</td><td>17</td><td>19</td><td>0</td></tr><tr><td>Lakeshore Holdings</td><td>19</td><td>19</td><td>0</td></tr><tr><td>Lakeshore Industries</td><td>52</td><td>19</td><td>0</td></tr><tr><td>Meridian Health</td><td>60</td><td>19</td><td>0</td></tr><tr><td>SkyHarbor Air</td><td>57</td><td>19</td><td>0</td></tr>
+  </tbody></table>
+  <h2>Meridian Applications & Systems</h2><table><thead><tr><th>State</th><th>File</th><th>Rows</th></tr></thead><tbody>
+  <tr><td>Before</td><td><code>datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_05_applications_systems.csv</code></td><td>15</td></tr><tr><td>Before</td><td><code>datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_05_applications_systems.csv</code></td><td>15</td></tr><tr><td>Before</td><td><code>datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_05_applications_systems.csv</code></td><td>162</td></tr>
+  <tr><td>After</td><td><code>datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv</code></td><td>116</td></tr>
+  </tbody></table></main></body></html>

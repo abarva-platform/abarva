@@ -2,7 +2,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantDisplayName": "Apex Retail",
-    "candidateVersionId": "candidate:apex-retail:16bf9cad3198",
+    "candidateVersionId": "candidate:apex-retail:f778423b32c2",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -40,13 +40,13 @@
         "id": "source-lineage-present",
         "label": "Source lineage present for accepted records",
         "status": "pass",
-        "detail": "3589 accepted records checked for lineage."
+        "detail": "1046 accepted records checked for lineage."
       },
       {
         "id": "evidence-attached",
         "label": "Evidence attached to accepted records",
         "status": "pass",
-        "detail": "3589 evidence attachments for 3589 accepted records; 0 records without evidence."
+        "detail": "1046 evidence attachments for 1046 accepted records; 0 records without evidence."
       },
       {
         "id": "tenant-isolation",
@@ -58,7 +58,7 @@
         "id": "relationship-candidates",
         "label": "Relationship candidate generation",
         "status": "pass",
-        "detail": "1690 relationship candidates generated."
+        "detail": "1730 relationship candidates generated."
       },
       {
         "id": "home-ava-readiness-artifact",
@@ -77,7 +77,7 @@
   {
     "tenantKey": "first-capital-financial",
     "tenantDisplayName": "First Capital Financial",
-    "candidateVersionId": "candidate:first-capital-financial:dd4a1abcf54b",
+    "candidateVersionId": "candidate:first-capital-financial:4058ee9a40f9",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -115,13 +115,13 @@
         "id": "source-lineage-present",
         "label": "Source lineage present for accepted records",
         "status": "pass",
-        "detail": "5609 accepted records checked for lineage."
+        "detail": "1327 accepted records checked for lineage."
       },
       {
         "id": "evidence-attached",
         "label": "Evidence attached to accepted records",
         "status": "pass",
-        "detail": "5609 evidence attachments for 5609 accepted records; 0 records without evidence."
+        "detail": "1327 evidence attachments for 1327 accepted records; 0 records without evidence."
       },
       {
         "id": "tenant-isolation",
@@ -133,7 +133,7 @@
         "id": "relationship-candidates",
         "label": "Relationship candidate generation",
         "status": "pass",
-        "detail": "2757 relationship candidates generated."
+        "detail": "1991 relationship candidates generated."
       },
       {
         "id": "home-ava-readiness-artifact",
@@ -152,7 +152,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantDisplayName": "Lakeshore Holdings",
-    "candidateVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+    "candidateVersionId": "candidate:lakeshore-holdings:e16ad063e5bd",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -190,13 +190,13 @@
         "id": "source-lineage-present",
         "label": "Source lineage present for accepted records",
         "status": "pass",
-        "detail": "457 accepted records checked for lineage."
+        "detail": "249 accepted records checked for lineage."
       },
       {
         "id": "evidence-attached",
         "label": "Evidence attached to accepted records",
         "status": "pass",
-        "detail": "457 evidence attachments for 457 accepted records; 0 records without evidence."
+        "detail": "249 evidence attachments for 249 accepted records; 0 records without evidence."
       },
       {
         "id": "tenant-isolation",
@@ -208,7 +208,7 @@
         "id": "relationship-candidates",
         "label": "Relationship candidate generation",
         "status": "pass",
-        "detail": "183 relationship candidates generated."
+        "detail": "373 relationship candidates generated."
       },
       {
         "id": "home-ava-readiness-artifact",
@@ -227,7 +227,7 @@
   {
     "tenantKey": "lakeshore-industries",
     "tenantDisplayName": "Lakeshore Industries",
-    "candidateVersionId": "candidate:lakeshore-industries:929f574689fc",
+    "candidateVersionId": "candidate:lakeshore-industries:bde306214d94",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -265,13 +265,13 @@
         "id": "source-lineage-present",
         "label": "Source lineage present for accepted records",
         "status": "pass",
-        "detail": "3040 accepted records checked for lineage."
+        "detail": "839 accepted records checked for lineage."
       },
       {
         "id": "evidence-attached",
         "label": "Evidence attached to accepted records",
         "status": "pass",
-        "detail": "3040 evidence attachments for 3040 accepted records; 0 records without evidence."
+        "detail": "839 evidence attachments for 839 accepted records; 0 records without evidence."
       },
       {
         "id": "tenant-isolation",
@@ -283,7 +283,7 @@
         "id": "relationship-candidates",
         "label": "Relationship candidate generation",
         "status": "pass",
-        "detail": "892 relationship candidates generated."
+        "detail": "1580 relationship candidates generated."
       },
       {
         "id": "home-ava-readiness-artifact",
@@ -302,7 +302,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantDisplayName": "Meridian Health",
-    "candidateVersionId": "candidate:meridian-health:aef0edc75fad",
+    "candidateVersionId": "candidate:meridian-health:5698b1a4c532",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -340,13 +340,13 @@
         "id": "source-lineage-present",
         "label": "Source lineage present for accepted records",
         "status": "pass",
-        "detail": "4078 accepted records checked for lineage."
+        "detail": "1066 accepted records checked for lineage."
       },
       {
         "id": "evidence-attached",
         "label": "Evidence attached to accepted records",
         "status": "pass",
-        "detail": "4078 evidence attachments for 4078 accepted records; 0 records without evidence."
+        "detail": "1066 evidence attachments for 1066 accepted records; 0 records without evidence."
       },
       {
         "id": "tenant-isolation",
@@ -358,7 +358,7 @@
         "id": "relationship-candidates",
         "label": "Relationship candidate generation",
         "status": "pass",
-        "detail": "2177 relationship candidates generated."
+        "detail": "1662 relationship candidates generated."
       },
       {
         "id": "home-ava-readiness-artifact",
@@ -377,7 +377,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantDisplayName": "SkyHarbor Air",
-    "candidateVersionId": "candidate:skyharbor-air:80f0be2d1c76",
+    "candidateVersionId": "candidate:skyharbor-air:3565f457b05d",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -415,13 +415,13 @@
         "id": "source-lineage-present",
         "label": "Source lineage present for accepted records",
         "status": "pass",
-        "detail": "3457 accepted records checked for lineage."
+        "detail": "2066 accepted records checked for lineage."
       },
       {
         "id": "evidence-attached",
         "label": "Evidence attached to accepted records",
         "status": "pass",
-        "detail": "3457 evidence attachments for 3457 accepted records; 0 records without evidence."
+        "detail": "2066 evidence attachments for 2066 accepted records; 0 records without evidence."
       },
       {
         "id": "tenant-isolation",
@@ -433,7 +433,7 @@
         "id": "relationship-candidates",
         "label": "Relationship candidate generation",
         "status": "pass",
-        "detail": "3136 relationship candidates generated."
+        "detail": "1994 relationship candidates generated."
       },
       {
         "id": "home-ava-readiness-artifact",

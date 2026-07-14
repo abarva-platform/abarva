@@ -17,6 +17,10 @@ import {
   type ExtractedProgramEvidence,
 } from "@/lib/programs/evidence-ingestion";
 import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
+import {
+  sourceDisplayLabelFor,
+  technicalSourceFileFor,
+} from "@/lib/enterprise-data/source-display-labels";
 
 export const MOVE_CONTEXT_EXTRACT_EVIDENCE_TYPE =
   "move_context_extract_attached";
@@ -64,6 +68,7 @@ export interface MoveContextExtractItem {
   evidenceFamily?: string;
   sourceType?: string;
   sourceFileRef?: string;
+  technicalSourceFile?: string;
   citation?: string;
   readinessStatus?: "covered" | "generation_eligible" | "agent_ready";
   usedByPhase?: number;
@@ -163,15 +168,23 @@ function queryFor(input: MoveContextExtractInput): string {
 }
 
 function attachedItemFromChunk(chunk: TenantContextChunk): MoveContextExtractItem {
+  const sourcePath = chunk.sourceDoc ?? chunk.sourceSegmentId ?? chunk.chunkId;
+  const sourceLabel = sourceDisplayLabelFor({
+    sourcePath,
+    evidenceId: chunk.chunkId,
+    fallback: "Tenant context",
+  });
   return {
     status: "attached_evidence",
-    label: chunk.sourceDoc ?? chunk.sourceSegmentId ?? "Tenant context",
+    label: sourceLabel,
     summary: compact(chunk.text),
     reason:
       "Tenant-scoped active context matched the Move and is agent-ready, citation-ready, and not restricted.",
     sourceMode: "active_home_context",
     evidenceFamily: chunk.sourceBasis ?? chunk.sourceSegmentId ?? "enterprise_context",
     sourceType: "active_module_context",
+    sourceFileRef: sourceLabel,
+    technicalSourceFile: technicalSourceFileFor(sourcePath),
     citation: chunk.chunkId,
     readinessStatus: "agent_ready",
     sourceArtifactId: chunk.chunkId,
@@ -439,6 +452,7 @@ function renderMarkdown(input: {
           ...(item.evidenceFamily ? [`  - Evidence family: ${item.evidenceFamily}`] : []),
           ...(item.sourceType ? [`  - Source type: ${item.sourceType}`] : []),
           ...(item.sourceFileRef ? [`  - Source: ${item.sourceFileRef}`] : []),
+          ...(item.technicalSourceFile ? [`  - Technical source file: ${item.technicalSourceFile}`] : []),
           `  - Reason: ${item.reason}`,
           ...(item.whyAttached ? [`  - Why attached: ${item.whyAttached}`] : []),
         );

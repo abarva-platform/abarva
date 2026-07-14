@@ -1,10 +1,10 @@
 {
   "recordVersion": "active-tenant-access/v1",
-  "generatedAt": "2026-07-14T13:00:00.000Z",
+  "generatedAt": "2026-07-14T15:50:19.110Z",
   "tenantKey": "apex-retail",
-  "activeVersionId": "candidate:apex-retail:16bf9cad3198",
+  "activeVersionId": "candidate:apex-retail:f778423b32c2",
   "priorActiveVersionId": "apex-retail:active-runtime-truth:unchanged",
-  "sourceCandidateVersionId": "candidate:apex-retail:16bf9cad3198",
+  "sourceCandidateVersionId": "candidate:apex-retail:f778423b32c2",
   "activeAccessState": "promoted_for_safe_demo_metadata",
   "productionTenantDataWritten": false,
   "writesPhysicalTables": false,

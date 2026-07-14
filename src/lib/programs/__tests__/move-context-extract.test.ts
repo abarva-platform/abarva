@@ -76,8 +76,8 @@ describe("createMoveContextExtract", () => {
         chunkId: "chunk-1",
         recordId: "record-1",
         sourceSegmentId: "it_landscape",
-        sourceDoc: "systems.csv",
-        text: "Dispatch platform is the authoritative system for disruption operations.",
+        sourceDoc: "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_10_ai_initiatives.csv",
+        text: "AI agent assist is a relevant active data-layer context item for disruption operations.",
         embeddingStatus: "embedded",
         classification: "internal",
         vectorScore: 0.91,
@@ -95,6 +95,13 @@ describe("createMoveContextExtract", () => {
     expect(result.status).toBe("created");
     expect(result.sourceMode).toBe("active_home_context");
     expect(result.attachedEvidenceItems).toHaveLength(1);
+    expect(result.attachedEvidenceItems[0]).toEqual(
+      expect.objectContaining({
+        label: "AI & Automation Use Cases",
+        sourceFileRef: "AI & Automation Use Cases",
+        technicalSourceFile: "V7_10_ai_initiatives.csv",
+      }),
+    );
     expect(result.suggestedContextItems).toHaveLength(0);
     expect(queryContext).toHaveBeenCalledWith(expect.objectContaining({
       tenantClientKey: "skyharbor-air",
@@ -114,9 +121,13 @@ describe("createMoveContextExtract", () => {
         }),
       }),
     }));
+    const savedBody = saveArtifact.mock.calls[0]?.[1]?.body as string;
+    expect(savedBody).toContain("Source: AI & Automation Use Cases");
+    expect(savedBody).toContain("Technical source file: V7_10_ai_initiatives.csv");
+    expect(savedBody).not.toContain("Source: V7_10_ai_initiatives.csv");
     expect(recordEvidence).toHaveBeenCalledWith(ctx, expect.objectContaining({
       evidenceType: "move_context_extract_attached",
-      extractedText: expect.stringContaining("Dispatch platform"),
+      extractedText: expect.stringContaining("AI & Automation Use Cases"),
       extractedStructured: expect.objectContaining({
         warnings: expect.arrayContaining([
           expect.stringMatching(/Suggested Context.*excluded/i),

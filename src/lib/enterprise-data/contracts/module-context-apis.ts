@@ -136,7 +136,9 @@ export interface ModuleContextRecord {
 
 export interface ModuleContextEvidenceRef {
   evidenceId: string;
+  sourceLabel: string;
   sourcePath?: string;
+  technicalSourceFile?: string;
   sourceFingerprint?: string;
   rowCount?: number;
   domain?: ModuleContextRequestedDomain;

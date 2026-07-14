@@ -1,10 +1,10 @@
 {
   "recordVersion": "active-tenant-access/v1",
-  "generatedAt": "2026-07-14T13:00:00.000Z",
+  "generatedAt": "2026-07-14T15:50:19.110Z",
   "tenantKey": "first-capital-financial",
-  "activeVersionId": "candidate:first-capital-financial:dd4a1abcf54b",
+  "activeVersionId": "candidate:first-capital-financial:4058ee9a40f9",
   "priorActiveVersionId": "first-capital-financial:active-runtime-truth:unchanged",
-  "sourceCandidateVersionId": "candidate:first-capital-financial:dd4a1abcf54b",
+  "sourceCandidateVersionId": "candidate:first-capital-financial:4058ee9a40f9",
   "activeAccessState": "promoted_for_safe_demo_metadata",
   "productionTenantDataWritten": false,
   "writesPhysicalTables": false,

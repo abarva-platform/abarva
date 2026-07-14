@@ -1,6 +1,6 @@
 # Active Module Context Promotion - apex-retail
 
-Generated: `2026-07-14T13:00:00.000Z`
+Generated: `2026-07-14T15:50:19.110Z`
 
 This promotes a reviewed candidate metadata pointer into Active Tenant Access for
 the selected safe demo tenant only. It does not write production tenant data,
@@ -9,11 +9,11 @@ candidate data by default, or claim realized value.
 
 ## Quality
 
-- Candidate version: `candidate:apex-retail:16bf9cad3198`
+- Candidate version: `candidate:apex-retail:f778423b32c2`
 - Enterprise profile: ready
-- Canonical records: 3589
-- Evidence attachments: 3589
-- Relationship candidates: 1690
+- Canonical records: 1046
+- Evidence attachments: 1046
+- Relationship candidates: 1730
 - Promotion blockers: 0
 
 ## Module Read Proof

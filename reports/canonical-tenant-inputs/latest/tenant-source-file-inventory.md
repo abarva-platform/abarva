@@ -1,256 +1,125 @@
 # Tenant Source File Inventory
 
-Generated: 2026-07-13T23:58:15.797Z
+Generated: 2026-07-14T16:11:43.668Z
 
 This is the deterministic list of active tenant input files declared under the canonical root.
 
 | Tenant | Packet | File | Type | CSV rows |
 | --- | --- | --- | --- | ---: |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/README.md` | md |  |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_01_enterprise_profile.csv` | csv | 1 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv` | csv | 26 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_03_org_ownership.csv` | csv | 50 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_04_workforce_personas.csv` | csv | 12 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_05_applications_systems.csv` | csv | 182 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_06_data_assets_integrations.csv` | csv | 385 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_07_vendors_contracts.csv` | csv | 100 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_08_spend_value.csv` | csv | 188 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_09_programs_initiatives.csv` | csv | 159 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_10_ai_initiatives.csv` | csv | 155 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_11_operations_risk_controls.csv` | csv | 375 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_12_relationships.csv` | csv | 1,605 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_13_evidence_sources.csv` | csv | 14 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_14_metric_definitions.csv` | csv | 126 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_15_industry_corpus_patterns.csv` | csv | 206 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_16_expert_lenses.csv` | csv | 5 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/V6_BUSINESS_METADATA_DICTIONARY.csv` | csv | 523 |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/V6_GENERATED_MANIFEST.json` | json |  |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/V6_SCHEMA_CATALOG.json` | json |  |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/README.md` | md |  |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_01_enterprise_profile.csv` | csv | 1 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv` | csv | 27 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_03_org_ownership.csv` | csv | 65 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_04_workforce_personas.csv` | csv | 16 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_05_applications_systems.csv` | csv | 272 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_06_data_assets_integrations.csv` | csv | 460 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_07_vendors_contracts.csv` | csv | 120 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_08_spend_value.csv` | csv | 397 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_09_programs_initiatives.csv` | csv | 299 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_10_ai_initiatives.csv` | csv | 282 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_11_operations_risk_controls.csv` | csv | 547 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_12_relationships.csv` | csv | 2,614 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_13_evidence_sources.csv` | csv | 42 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_14_metric_definitions.csv` | csv | 168 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_15_industry_corpus_patterns.csv` | csv | 294 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_16_expert_lenses.csv` | csv | 5 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/V6_BUSINESS_METADATA_DICTIONARY.csv` | csv | 523 |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/V6_GENERATED_MANIFEST.json` | json |  |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/V6_SCHEMA_CATALOG.json` | json |  |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/holdco_tower/H01_entity_hierarchy.csv` | csv | 8 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/holdco_tower/H02_dashboard_metric_map.csv` | csv | 8 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/holdco_tower/README.md` | md |  |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/README.md` | md |  |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_01_enterprise_profile.csv` | csv | 1 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv` | csv | 14 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_03_org_ownership.csv` | csv | 8 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_04_workforce_personas.csv` | csv | 10 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_05_applications_systems.csv` | csv | 24 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_06_data_assets_integrations.csv` | csv | 34 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_07_vendors_contracts.csv` | csv | 19 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_08_spend_value.csv` | csv | 85 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_09_programs_initiatives.csv` | csv | 15 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_10_ai_initiatives.csv` | csv | 8 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_11_operations_risk_controls.csv` | csv | 10 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_12_relationships.csv` | csv | 199 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_13_evidence_sources.csv` | csv | 10 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_14_metric_definitions.csv` | csv | 12 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_15_industry_corpus_patterns.csv` | csv | 4 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_16_expert_lenses.csv` | csv | 4 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/V6_BUSINESS_METADATA_DICTIONARY.csv` | csv | 523 |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/V6_GENERATED_MANIFEST.json` | json |  |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/V6_SCHEMA_CATALOG.json` | json |  |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/00_master/V7_DIMENSION_REGISTRY.csv` | csv | 25 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/azure/v7-holdco-azure-load-payload.json` | json |  |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_00_portfolio_entity_registry.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_01_enterprise_profile.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_02_business_functions.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_03_org_ownership.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_04_workforce_personas.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_05_applications_systems.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_06_data_assets_integrations.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_07_vendors_contracts.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_08_spend_value.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_09_programs_initiatives_business_priorities.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_10_ai_initiatives.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_11_operations_risk_controls.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_12_relationships_graph_edges.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_13_source_evidence_registry.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_14_metric_definitions.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_15_industry_market_knowledge_patterns.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_16_expert_lenses.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_17_client_rate_card_cost_basis.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_18_function_system_data_vendor_bridge.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_19_service_tower_managed_services_scope.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_20_chunk_retrieval_registry.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_21_graph_registry_relationship_dictionary.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_22_operational_evidence_process_intelligence.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_23_external_benchmark_market_corpus.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/client_templates/V7_24_infrastructure_cloud_estate.csv` | csv | 0 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/field_catalog/V7_FIELD_CATALOG.csv` | csv | 690 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv` | csv | 8 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv` | csv | 8 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv` | csv | 96 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_03_org_ownership.csv` | csv | 116 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_04_workforce_personas.csv` | csv | 82 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_05_applications_systems.csv` | csv | 152 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_06_data_assets_integrations.csv` | csv | 82 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_07_vendors_contracts.csv` | csv | 96 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_08_spend_value.csv` | csv | 57 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_09_programs_initiatives_business_priorities.csv` | csv | 36 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_10_ai_initiatives.csv` | csv | 36 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_11_operations_risk_controls.csv` | csv | 48 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_12_relationships_graph_edges.csv` | csv | 529 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_13_source_evidence_registry.csv` | csv | 48 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_14_metric_definitions.csv` | csv | 384 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_15_industry_market_knowledge_patterns.csv` | csv | 24 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_16_expert_lenses.csv` | csv | 18 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_17_client_rate_card_cost_basis.csv` | csv | 54 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_18_function_system_data_vendor_bridge.csv` | csv | 510 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_19_service_tower_managed_services_scope.csv` | csv | 64 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_20_chunk_retrieval_registry.csv` | csv | 376 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_21_graph_registry_relationship_dictionary.csv` | csv | 6 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_22_operational_evidence_process_intelligence.csv` | csv | 112 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_23_external_benchmark_market_corpus.csv` | csv | 24 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_24_infrastructure_cloud_estate.csv` | csv | 128 |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_HOLDCO_HYGIENE_REPORT.json` | json |  |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_SYNTHETIC_MANIFEST.json` | json |  |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/azure/v7-tenant-load-payload.json` | json |  |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/derived/meridian_moves_current_state_findings.csv` | csv | 28 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/derived/meridian_moves_golden_questions_scorecard.csv` | csv | 42 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/README.md` | md |  |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_01_enterprise_profile.csv` | csv | 1 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv` | csv | 7 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv` | csv | 7 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_04_workforce_personas.csv` | csv | 6 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_05_applications_systems.csv` | csv | 15 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_06_data_assets_integrations.csv` | csv | 36 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_07_vendors_contracts.csv` | csv | 7 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_08_spend_value.csv` | csv | 10 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_09_programs_initiatives.csv` | csv | 7 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_10_ai_initiatives.csv` | csv | 3 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_11_operations_risk_controls.csv` | csv | 28 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_12_relationships.csv` | csv | 69 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_13_evidence_sources.csv` | csv | 4 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_14_metric_definitions.csv` | csv | 11 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_15_industry_corpus_patterns.csv` | csv | 7 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_16_expert_lenses.csv` | csv | 5 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/V6_V7_GENERATED_MANIFEST.json` | json |  |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_00_portfolio_entity_registry.csv` | csv | 1 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv` | csv | 1 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_02_business_functions.csv` | csv | 7 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_03_org_ownership.csv` | csv | 7 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_04_workforce_personas.csv` | csv | 6 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_05_applications_systems.csv` | csv | 15 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_06_data_assets_integrations.csv` | csv | 36 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_07_vendors_contracts.csv` | csv | 7 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_08_spend_value.csv` | csv | 10 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_09_programs_initiatives_business_priorities.csv` | csv | 7 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_10_ai_initiatives.csv` | csv | 3 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_11_operations_risk_controls.csv` | csv | 28 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_12_relationships_graph_edges.csv` | csv | 69 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_13_source_evidence_registry.csv` | csv | 4 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_14_metric_definitions.csv` | csv | 11 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_15_industry_market_knowledge_patterns.csv` | csv | 7 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_16_expert_lenses.csv` | csv | 5 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_17_client_rate_card_cost_basis.csv` | csv | 4 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_18_function_system_data_vendor_bridge.csv` | csv | 60 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_19_service_tower_managed_services_scope.csv` | csv | 3 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_20_chunk_retrieval_registry.csv` | csv | 118 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_21_graph_registry_relationship_dictionary.csv` | csv | 17 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_22_operational_evidence_process_intelligence.csv` | csv | 10 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_23_external_benchmark_market_corpus.csv` | csv | 2 |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_24_infrastructure_cloud_estate.csv` | csv | 4 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/README.md` | md |  |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_01_enterprise_profile.csv` | csv | 1 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_02_business_functions.csv` | csv | 25 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_03_org_ownership.csv` | csv | 73 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_04_workforce_personas.csv` | csv | 14 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_05_applications_systems.csv` | csv | 162 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_06_data_assets_integrations.csv` | csv | 360 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_07_vendors_contracts.csv` | csv | 95 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_08_spend_value.csv` | csv | 178 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_09_programs_initiatives.csv` | csv | 156 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_10_ai_initiatives.csv` | csv | 150 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_11_operations_risk_controls.csv` | csv | 349 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_12_relationships.csv` | csv | 1,551 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_13_evidence_sources.csv` | csv | 14 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_14_metric_definitions.csv` | csv | 116 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_15_industry_corpus_patterns.csv` | csv | 190 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_16_expert_lenses.csv` | csv | 5 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/V6_BUSINESS_METADATA_DICTIONARY.csv` | csv | 523 |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/V6_GENERATED_MANIFEST.json` | json |  |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/V6_SCHEMA_CATALOG.json` | json |  |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/azure/v7-tenant-load-payload.json` | json |  |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/derived/skyharbor_air_moves_current_state_findings.csv` | csv | 28 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/derived/skyharbor_air_moves_golden_questions_scorecard.csv` | csv | 42 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/README.md` | md |  |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_01_enterprise_profile.csv` | csv | 1 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_02_business_functions.csv` | csv | 6 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_03_org_ownership.csv` | csv | 6 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_04_workforce_personas.csv` | csv | 6 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_05_applications_systems.csv` | csv | 13 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_06_data_assets_integrations.csv` | csv | 35 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_07_vendors_contracts.csv` | csv | 10 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_08_spend_value.csv` | csv | 10 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_09_programs_initiatives.csv` | csv | 7 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_10_ai_initiatives.csv` | csv | 3 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_11_operations_risk_controls.csv` | csv | 28 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_12_relationships.csv` | csv | 74 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_13_evidence_sources.csv` | csv | 4 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_14_metric_definitions.csv` | csv | 12 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_15_industry_corpus_patterns.csv` | csv | 7 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_16_expert_lenses.csv` | csv | 5 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/V6_V7_GENERATED_MANIFEST.json` | json |  |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_00_portfolio_entity_registry.csv` | csv | 1 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_01_enterprise_profile.csv` | csv | 1 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_02_business_functions.csv` | csv | 6 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_03_org_ownership.csv` | csv | 6 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_04_workforce_personas.csv` | csv | 6 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_05_applications_systems.csv` | csv | 13 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_06_data_assets_integrations.csv` | csv | 35 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_07_vendors_contracts.csv` | csv | 10 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_08_spend_value.csv` | csv | 10 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_09_programs_initiatives_business_priorities.csv` | csv | 7 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_10_ai_initiatives.csv` | csv | 3 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_11_operations_risk_controls.csv` | csv | 28 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_12_relationships_graph_edges.csv` | csv | 74 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_13_source_evidence_registry.csv` | csv | 4 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_14_metric_definitions.csv` | csv | 12 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_15_industry_market_knowledge_patterns.csv` | csv | 7 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_16_expert_lenses.csv` | csv | 5 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_17_client_rate_card_cost_basis.csv` | csv | 4 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_18_function_system_data_vendor_bridge.csv` | csv | 60 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_19_service_tower_managed_services_scope.csv` | csv | 3 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_20_chunk_retrieval_registry.csv` | csv | 117 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_21_graph_registry_relationship_dictionary.csv` | csv | 17 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_22_operational_evidence_process_intelligence.csv` | csv | 10 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_23_external_benchmark_market_corpus.csv` | csv | 2 |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_24_infrastructure_cloud_estate.csv` | csv | 5 |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv` | csv | 40 |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv` | csv | 600 |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/business-capabilities.csv` | csv | 80 |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/dora-baseline.csv` | csv | 40 |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/enterprise-profile.csv` | csv | 1 |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/erp-landscape.csv` | csv | 60 |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/incidents.csv` | csv | 400 |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/infrastructure-estate.csv` | csv | 686 |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/initiatives.csv` | csv | 60 |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/integration-topology.csv` | csv | 500 |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/it-financials.csv` | csv | 168 |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/org-roles.csv` | csv | 272 |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/sla-register.csv` | csv | 72 |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/vendor-contracts.csv` | csv | 120 |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/manifest.json` | json |  |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/00_enterprise_profile.csv` | csv | 1 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv` | csv | 26 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/02_org_ownership.csv` | csv | 50 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/03_workforce_roles.csv` | csv | 12 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/04_applications_systems.csv` | csv | 122 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/05_data_assets_integrations.csv` | csv | 235 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/06_infrastructure_platforms.csv` | csv | 0 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/07_vendors_contracts.csv` | csv | 100 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/08_spend_value.csv` | csv | 6 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/09_programs_initiatives.csv` | csv | 80 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/10_ai_automation_use_cases.csv` | csv | 58 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/11_risks_controls.csv` | csv | 135 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/12_relationships.csv` | csv | 13 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/13_evidence_sources.csv` | csv | 1 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/14_metrics_outcomes.csv` | csv | 108 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/15_industry_context_patterns.csv` | csv | 107 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/16_expert_lenses.csv` | csv | 5 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/17_service_scope_managed_services.csv` | csv | 0 |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current/18_operational_process_evidence.csv` | csv | 0 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/00_enterprise_profile.csv` | csv | 1 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv` | csv | 27 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/02_org_ownership.csv` | csv | 65 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/03_workforce_roles.csv` | csv | 16 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/04_applications_systems.csv` | csv | 212 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/05_data_assets_integrations.csv` | csv | 114 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/06_infrastructure_platforms.csv` | csv | 0 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/07_vendors_contracts.csv` | csv | 120 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/08_spend_value.csv` | csv | 6 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/09_programs_initiatives.csv` | csv | 96 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/10_ai_automation_use_cases.csv` | csv | 146 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/11_risks_controls.csv` | csv | 210 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/12_relationships.csv` | csv | 11 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/13_evidence_sources.csv` | csv | 1 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/14_metrics_outcomes.csv` | csv | 157 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/15_industry_context_patterns.csv` | csv | 151 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/16_expert_lenses.csv` | csv | 5 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/17_service_scope_managed_services.csv` | csv | 0 |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current/18_operational_process_evidence.csv` | csv | 0 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/00_enterprise_profile.csv` | csv | 1 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv` | csv | 14 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/02_org_ownership.csv` | csv | 8 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/03_workforce_roles.csv` | csv | 10 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/04_applications_systems.csv` | csv | 24 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/05_data_assets_integrations.csv` | csv | 34 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/06_infrastructure_platforms.csv` | csv | 0 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/07_vendors_contracts.csv` | csv | 19 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/08_spend_value.csv` | csv | 85 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/09_programs_initiatives.csv` | csv | 15 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/10_ai_automation_use_cases.csv` | csv | 8 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/11_risks_controls.csv` | csv | 10 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/12_relationships.csv` | csv | 10 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/13_evidence_sources.csv` | csv | 1 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/14_metrics_outcomes.csv` | csv | 12 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/15_industry_context_patterns.csv` | csv | 4 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/16_expert_lenses.csv` | csv | 4 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/17_service_scope_managed_services.csv` | csv | 0 |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current/18_operational_process_evidence.csv` | csv | 0 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/00_enterprise_profile.csv` | csv | 8 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv` | csv | 59 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/02_org_ownership.csv` | csv | 116 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/03_workforce_roles.csv` | csv | 22 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/04_applications_systems.csv` | csv | 152 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/05_data_assets_integrations.csv` | csv | 82 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/06_infrastructure_platforms.csv` | csv | 128 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/07_vendors_contracts.csv` | csv | 19 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/08_spend_value.csv` | csv | 69 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/09_programs_initiatives.csv` | csv | 36 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/10_ai_automation_use_cases.csv` | csv | 36 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/11_risks_controls.csv` | csv | 48 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/12_relationships.csv` | csv | 519 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/13_evidence_sources.csv` | csv | 2 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/14_metrics_outcomes.csv` | csv | 236 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/15_industry_context_patterns.csv` | csv | 24 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/16_expert_lenses.csv` | csv | 18 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/17_service_scope_managed_services.csv` | csv | 8 |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current/18_operational_process_evidence.csv` | csv | 112 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv` | csv | 2 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv` | csv | 30 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv` | csv | 57 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv` | csv | 26 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv` | csv | 116 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/05_data_assets_integrations.csv` | csv | 147 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/06_infrastructure_platforms.csv` | csv | 4 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv` | csv | 109 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/08_spend_value.csv` | csv | 24 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv` | csv | 86 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/10_ai_automation_use_cases.csv` | csv | 63 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/11_risks_controls.csv` | csv | 172 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/12_relationships.csv` | csv | 85 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/13_evidence_sources.csv` | csv | 4 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/14_metrics_outcomes.csv` | csv | 116 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/15_industry_context_patterns.csv` | csv | 108 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/16_expert_lenses.csv` | csv | 15 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/17_service_scope_managed_services.csv` | csv | 2 |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current/18_operational_process_evidence.csv` | csv | 10 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/00_enterprise_profile.csv` | csv | 2 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv` | csv | 24 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv` | csv | 278 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/03_workforce_roles.csv` | csv | 12 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv` | csv | 613 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/05_data_assets_integrations.csv` | csv | 570 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/06_infrastructure_platforms.csv` | csv | 691 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/07_vendors_contracts.csv` | csv | 71 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/08_spend_value.csv` | csv | 186 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/09_programs_initiatives.csv` | csv | 67 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/10_ai_automation_use_cases.csv` | csv | 43 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/11_risks_controls.csv` | csv | 28 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/12_relationships.csv` | csv | 77 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/13_evidence_sources.csv` | csv | 3 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/14_metrics_outcomes.csv` | csv | 124 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/15_industry_context_patterns.csv` | csv | 9 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/16_expert_lenses.csv` | csv | 10 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/17_service_scope_managed_services.csv` | csv | 3 |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current/18_operational_process_evidence.csv` | csv | 410 |
 
 ## Retired / Excluded Inputs
 

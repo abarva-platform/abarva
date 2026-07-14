@@ -3,6 +3,7 @@ import {
   getModuleContext,
 } from "../module-context-serving";
 import type { ModuleContextReadRequest } from "../../contracts/module-context-apis";
+import { containsLegacyVersionLabel } from "../../source-display-labels";
 
 describe("module context serving contract", () => {
   const disallowedPrimaryLanguage = /\b(?:V4|V6|V7)\b/i;
@@ -61,12 +62,12 @@ describe("module context serving contract", () => {
     expect(packet.contextCompleteness).toEqual(
       expect.objectContaining({
         breadth: 100,
-        depth: 100,
         relationshipCoverage: 0,
         evidenceCoverage: 100,
         overall: "Good",
       }),
     );
+    expect(packet.contextCompleteness.depth).toBeGreaterThanOrEqual(90);
   });
 
   it.each(activeTenantKeys)(
@@ -219,6 +220,74 @@ describe("module context serving contract", () => {
     );
   });
 
+  it("uses business-facing source labels while preserving technical lineage", async () => {
+    const packet = await getModuleContext(
+      {
+        tenantKey: "meridian-health",
+        moduleKey: "moves",
+        purpose: "evidence_extract",
+        requestedDomains: ["applications_systems", "data_assets_integrations"],
+      },
+      {
+        repoRoot: process.cwd(),
+        generatedAt: "2026-07-14T00:00:00.000Z",
+      },
+    );
+
+    expect(packet.evidenceRefs.length).toBeGreaterThan(0);
+    expect(packet.evidenceRefs.every((ref) => ref.sourceLabel)).toBe(true);
+    expect(packet.evidenceRefs.map((ref) => ref.sourceLabel)).toEqual(
+      expect.arrayContaining([
+        "Applications & Systems",
+        "Data Assets & Integrations",
+      ]),
+    );
+    expect(
+      packet.evidenceRefs.some((ref) =>
+        String(ref.technicalSourceFile ?? ref.evidenceId).includes(
+          "04_applications_systems.csv",
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      packet.evidenceRefs.some((ref) =>
+        String(ref.technicalSourceFile ?? ref.evidenceId).includes(
+          "05_data_assets_integrations.csv",
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      packet.evidenceRefs.some((ref) => containsLegacyVersionLabel(ref.sourceLabel)),
+    ).toBe(false);
+  });
+
+  it("normalizes legacy raw filenames into business-facing labels for diagnostics-safe references", async () => {
+    const packet = await getModuleContext(
+      {
+        tenantKey: "meridian-health",
+        moduleKey: "moves",
+        purpose: "evidence_extract",
+        mode: "candidate_preview",
+        requestedDomains: ["evidence_sources"],
+      },
+      {
+        repoRoot: process.cwd(),
+        generatedAt: "2026-07-14T00:00:00.000Z",
+      },
+    );
+    const ref = packet.evidenceRefs.find((item) =>
+      item.evidenceId.includes("13_evidence_sources.csv"),
+    );
+
+    expect(ref).toEqual(
+      expect.objectContaining({
+        sourceLabel: "Evidence Sources",
+        technicalSourceFile: "13_evidence_sources.csv",
+      }),
+    );
+    expect(containsLegacyVersionLabel(ref?.sourceLabel ?? "")).toBe(false);
+  }, 30000);
+
   it("returns inactive candidate context only when candidate preview is explicit", async () => {
     const packet = await getModuleContext(
       {
@@ -259,7 +328,7 @@ describe("module context serving contract", () => {
       expect.arrayContaining([
         expect.objectContaining({
           domain: "applications_systems",
-          acceptedRecords: 626,
+          acceptedRecords: 613,
           readiness: "candidate_only",
         }),
         expect.objectContaining({

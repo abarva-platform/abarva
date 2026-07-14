@@ -52,9 +52,9 @@ describe("candidate version build from canonical tenant data", () => {
     const domains = Object.fromEntries(
       skyharbor!.domainCounts.map((entry) => [entry.domain, entry.acceptedRecords]),
     );
-    expect(domains.applications_systems).toBe(626);
+    expect(domains.applications_systems).toBe(613);
     expect(domains.data_assets_integrations).toBe(570);
-    expect(domains.infrastructure_platforms).toBe(691);
+    expect(domains.infrastructure_platforms).toBe(686);
     expect(skyharbor!.creationStatus).toBe("created");
   });
 
@@ -64,9 +64,9 @@ describe("candidate version build from canonical tenant data", () => {
     const domains = Object.fromEntries(
       meridian!.domainCounts.map((entry) => [entry.domain, entry.acceptedRecords]),
     );
-    expect(domains.applications_systems).toBe(192);
-    expect(domains.data_assets_integrations).toBe(432);
-    expect(domains.infrastructure_platforms).toBe(4);
+    expect(domains.applications_systems).toBe(116);
+    expect(domains.data_assets_integrations).toBe(147);
+    expect(domains.infrastructure_platforms).toBe(0);
     expect(JSON.stringify(meridian!.homeAvaReadiness.mustNotClaim).toLowerCase()).toContain(
       "candidate data is active tenant truth",
     );
@@ -88,7 +88,7 @@ describe("candidate version build from canonical tenant data", () => {
       expect.arrayContaining([
         expect.objectContaining({
           domain: "applications_systems",
-          acceptedRecords: 626,
+          acceptedRecords: 613,
         }),
       ]),
     );

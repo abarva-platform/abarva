@@ -33,10 +33,11 @@
       "canonicalInputRoot": "datasets/tenant-inputs/active/apex-retail/current",
       "packets": [
         {
-          "packetId": "enterprise-pack",
-          "path": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack",
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/apex-retail/current",
           "classification": "synthetic-demo",
-          "status": "active-input"
+          "status": "active-input",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current."
         }
       ]
     },
@@ -47,10 +48,11 @@
       "canonicalInputRoot": "datasets/tenant-inputs/active/first-capital-financial/current",
       "packets": [
         {
-          "packetId": "enterprise-pack",
-          "path": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack",
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/first-capital-financial/current",
           "classification": "synthetic-demo",
-          "status": "active-input"
+          "status": "active-input",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current."
         }
       ]
     },
@@ -61,10 +63,11 @@
       "canonicalInputRoot": "datasets/tenant-inputs/active/lakeshore-holdings/current",
       "packets": [
         {
-          "packetId": "enterprise-pack",
-          "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack",
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/lakeshore-holdings/current",
           "classification": "synthetic-demo",
-          "status": "active-input"
+          "status": "active-input",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current."
         }
       ]
     },
@@ -75,10 +78,11 @@
       "canonicalInputRoot": "datasets/tenant-inputs/active/lakeshore-industries/current",
       "packets": [
         {
-          "packetId": "holdco-pack",
-          "path": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack",
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/lakeshore-industries/current",
           "classification": "synthetic-demo",
-          "status": "active-input"
+          "status": "active-input",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current."
         }
       ]
     },
@@ -89,17 +93,11 @@
       "canonicalInputRoot": "datasets/tenant-inputs/active/meridian-health/current",
       "packets": [
         {
-          "packetId": "current-state-pack",
-          "path": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack",
-          "classification": "synthetic-planning-grade",
-          "status": "active-input"
-        },
-        {
-          "packetId": "rich-enterprise-pack",
-          "path": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack",
-          "classification": "synthetic-planning-grade",
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/meridian-health/current",
+          "classification": "synthetic-demo",
           "status": "active-input",
-          "note": "Must be included in future Meridian regeneration so Home/aVa does not read only the thin current-state projection."
+          "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current."
         }
       ]
     },
@@ -110,17 +108,11 @@
       "canonicalInputRoot": "datasets/tenant-inputs/active/skyharbor-air/current",
       "packets": [
         {
-          "packetId": "upgrade-candidate-pack",
-          "path": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack",
-          "classification": "synthetic-demo",
-          "status": "active-input"
-        },
-        {
-          "packetId": "rich-substrate-pack",
-          "path": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack",
+          "packetId": "current-universal",
+          "path": "datasets/tenant-inputs/active/skyharbor-air/current",
           "classification": "synthetic-demo",
           "status": "active-input",
-          "note": "Authoritative rich substrate for app/system, infrastructure, data, vendor, and relationship depth."
+          "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current."
         }
       ]
     }

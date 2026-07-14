@@ -1,7 +1,7 @@
 [
   {
     "tenantKey": "apex-retail",
-    "candidateVersionId": "candidate:apex-retail:16bf9cad3198",
+    "candidateVersionId": "candidate:apex-retail:f778423b32c2",
     "samples": [
       {
         "domain": "unknown",
@@ -9,17 +9,17 @@
         "sourceObjectId": "enterprise_profile:retail_demo:2",
         "displayName": "enterprise_profile:retail_demo:2",
         "evidenceKeys": [
-          "apex-retail:enterprise-pack:V6_01_enterprise_profile.csv:2"
+          "apex-retail:current-universal:00_enterprise_profile.csv:2"
         ],
         "attributes": {
           "tenantKey": "apex-retail",
-          "clientDisplayName": "Retail Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "enterprise_profile",
-          "recordId": "Retail Demo",
-          "recordName": "Retail Demo",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Retail Evidence Steward"
+          "entityName": "Retail Demo",
+          "industry": "Omnichannel Retail",
+          "subIndustry": "Retail operating model",
+          "revenueUsd": 50000000000,
+          "employeeCount": 200000,
+          "headquarters": "Minneapolis, MN",
+          "operatingRegions": "[\"United States\",\"Canada\",\"digital commerce markets\"]"
         }
       },
       {
@@ -28,17 +28,17 @@
         "sourceObjectId": "business_functions:store_operations:2",
         "displayName": "business_functions:store_operations:2",
         "evidenceKeys": [
-          "apex-retail:enterprise-pack:V6_02_business_functions.csv:2"
+          "apex-retail:current-universal:01_business_functions.csv:2"
         ],
         "attributes": {
           "tenantKey": "apex-retail",
-          "clientDisplayName": "Retail Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "APX-BF-001",
-          "recordName": "Store Operations",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "COO"
+          "functionName": "Store Operations",
+          "executiveOwner": "COO",
+          "sourceFile": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -47,17 +47,17 @@
         "sourceObjectId": "business_functions:digital_commerce:3",
         "displayName": "business_functions:digital_commerce:3",
         "evidenceKeys": [
-          "apex-retail:enterprise-pack:V6_02_business_functions.csv:3"
+          "apex-retail:current-universal:01_business_functions.csv:3"
         ],
         "attributes": {
           "tenantKey": "apex-retail",
-          "clientDisplayName": "Retail Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "APX-BF-002",
-          "recordName": "Digital Commerce",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Chief Digital Officer"
+          "functionName": "Digital Commerce",
+          "executiveOwner": "Chief Digital Officer",
+          "sourceFile": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -66,17 +66,17 @@
         "sourceObjectId": "business_functions:merchandising:4",
         "displayName": "business_functions:merchandising:4",
         "evidenceKeys": [
-          "apex-retail:enterprise-pack:V6_02_business_functions.csv:4"
+          "apex-retail:current-universal:01_business_functions.csv:4"
         ],
         "attributes": {
           "tenantKey": "apex-retail",
-          "clientDisplayName": "Retail Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "APX-BF-003",
-          "recordName": "Merchandising",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Chief Merchandising Officer"
+          "functionName": "Merchandising",
+          "executiveOwner": "Chief Merchandising Officer",
+          "sourceFile": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -85,17 +85,17 @@
         "sourceObjectId": "business_functions:supply_chain_and_fulfillment:5",
         "displayName": "business_functions:supply_chain_and_fulfillment:5",
         "evidenceKeys": [
-          "apex-retail:enterprise-pack:V6_02_business_functions.csv:5"
+          "apex-retail:current-universal:01_business_functions.csv:5"
         ],
         "attributes": {
           "tenantKey": "apex-retail",
-          "clientDisplayName": "Retail Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "APX-BF-004",
-          "recordName": "Supply Chain and Fulfillment",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Chief Supply Chain Officer"
+          "functionName": "Supply Chain and Fulfillment",
+          "executiveOwner": "Chief Supply Chain Officer",
+          "sourceFile": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -104,17 +104,17 @@
         "sourceObjectId": "business_functions:loyalty_and_customer_growth:6",
         "displayName": "business_functions:loyalty_and_customer_growth:6",
         "evidenceKeys": [
-          "apex-retail:enterprise-pack:V6_02_business_functions.csv:6"
+          "apex-retail:current-universal:01_business_functions.csv:6"
         ],
         "attributes": {
           "tenantKey": "apex-retail",
-          "clientDisplayName": "Retail Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "APX-BF-005",
-          "recordName": "Loyalty and Customer Growth",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Chief Marketing Officer"
+          "functionName": "Loyalty and Customer Growth",
+          "executiveOwner": "Chief Marketing Officer",
+          "sourceFile": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -123,17 +123,17 @@
         "sourceObjectId": "business_functions:finance_and_fp_a:7",
         "displayName": "business_functions:finance_and_fp_a:7",
         "evidenceKeys": [
-          "apex-retail:enterprise-pack:V6_02_business_functions.csv:7"
+          "apex-retail:current-universal:01_business_functions.csv:7"
         ],
         "attributes": {
           "tenantKey": "apex-retail",
-          "clientDisplayName": "Retail Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "APX-BF-006",
-          "recordName": "Finance and FP&A",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "CFO"
+          "functionName": "Finance and FP&A",
+          "executiveOwner": "CFO",
+          "sourceFile": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -142,17 +142,17 @@
         "sourceObjectId": "business_functions:loss_prevention_and_risk:8",
         "displayName": "business_functions:loss_prevention_and_risk:8",
         "evidenceKeys": [
-          "apex-retail:enterprise-pack:V6_02_business_functions.csv:8"
+          "apex-retail:current-universal:01_business_functions.csv:8"
         ],
         "attributes": {
           "tenantKey": "apex-retail",
-          "clientDisplayName": "Retail Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "APX-BF-007",
-          "recordName": "Loss Prevention and Risk",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Chief Risk Officer"
+          "functionName": "Loss Prevention and Risk",
+          "executiveOwner": "Chief Risk Officer",
+          "sourceFile": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -161,17 +161,17 @@
         "sourceObjectId": "business_functions:technology:9",
         "displayName": "business_functions:technology:9",
         "evidenceKeys": [
-          "apex-retail:enterprise-pack:V6_02_business_functions.csv:9"
+          "apex-retail:current-universal:01_business_functions.csv:9"
         ],
         "attributes": {
           "tenantKey": "apex-retail",
-          "clientDisplayName": "Retail Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "APX-BF-008",
-          "recordName": "Technology",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "CIO"
+          "functionName": "Technology",
+          "executiveOwner": "CIO",
+          "sourceFile": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -180,17 +180,17 @@
         "sourceObjectId": "business_functions:human_resources:10",
         "displayName": "business_functions:human_resources:10",
         "evidenceKeys": [
-          "apex-retail:enterprise-pack:V6_02_business_functions.csv:10"
+          "apex-retail:current-universal:01_business_functions.csv:10"
         ],
         "attributes": {
           "tenantKey": "apex-retail",
-          "clientDisplayName": "Retail Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "APX-BF-009",
-          "recordName": "Human Resources",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "CHRO"
+          "functionName": "Human Resources",
+          "executiveOwner": "CHRO",
+          "sourceFile": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -199,17 +199,17 @@
         "sourceObjectId": "business_functions:procurement_and_vendor_management:11",
         "displayName": "business_functions:procurement_and_vendor_management:11",
         "evidenceKeys": [
-          "apex-retail:enterprise-pack:V6_02_business_functions.csv:11"
+          "apex-retail:current-universal:01_business_functions.csv:11"
         ],
         "attributes": {
           "tenantKey": "apex-retail",
-          "clientDisplayName": "Retail Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "APX-BF-010",
-          "recordName": "Procurement and Vendor Management",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Chief Procurement Officer"
+          "functionName": "Procurement and Vendor Management",
+          "executiveOwner": "Chief Procurement Officer",
+          "sourceFile": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -218,24 +218,24 @@
         "sourceObjectId": "business_functions:real_estate_and_facilities:12",
         "displayName": "business_functions:real_estate_and_facilities:12",
         "evidenceKeys": [
-          "apex-retail:enterprise-pack:V6_02_business_functions.csv:12"
+          "apex-retail:current-universal:01_business_functions.csv:12"
         ],
         "attributes": {
           "tenantKey": "apex-retail",
-          "clientDisplayName": "Retail Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "APX-BF-011",
-          "recordName": "Real Estate and Facilities",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Chief Real Estate Officer"
+          "functionName": "Real Estate and Facilities",
+          "executiveOwner": "Chief Real Estate Officer",
+          "sourceFile": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       }
     ]
   },
   {
     "tenantKey": "first-capital-financial",
-    "candidateVersionId": "candidate:first-capital-financial:dd4a1abcf54b",
+    "candidateVersionId": "candidate:first-capital-financial:4058ee9a40f9",
     "samples": [
       {
         "domain": "unknown",
@@ -243,17 +243,17 @@
         "sourceObjectId": "enterprise_profile:financial_services_demo:2",
         "displayName": "enterprise_profile:financial_services_demo:2",
         "evidenceKeys": [
-          "first-capital-financial:enterprise-pack:V6_01_enterprise_profile.csv:2"
+          "first-capital-financial:current-universal:00_enterprise_profile.csv:2"
         ],
         "attributes": {
           "tenantKey": "first-capital-financial",
-          "clientDisplayName": "Financial Services Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "enterprise_profile",
-          "recordId": "Financial Services Demo",
-          "recordName": "Financial Services Demo",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Financial Services Evidence Steward"
+          "entityName": "Financial Services Demo",
+          "industry": "Financial services",
+          "subIndustry": "Money-center / large commercial bank with US Bancorp / PNC-scale consumer + commercial + cards + wealth complexity",
+          "revenueUsd": 52000000000,
+          "employeeCount": 65000,
+          "headquarters": "Charlotte, NC",
+          "operatingRegions": "[\"United States regional banking markets\",\"digital banking channels\",\"commercial banking markets\"]"
         }
       },
       {
@@ -262,17 +262,17 @@
         "sourceObjectId": "business_functions:consumer_banking_deposits:2",
         "displayName": "business_functions:consumer_banking_deposits:2",
         "evidenceKeys": [
-          "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:2"
+          "first-capital-financial:current-universal:01_business_functions.csv:2"
         ],
         "attributes": {
-          "tenantKey": "first-capital",
-          "clientDisplayName": "Financial Services Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "FC-BF-001",
-          "recordName": "Consumer Banking & Deposits",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Head of Consumer Banking"
+          "tenantKey": "first-capital-financial",
+          "functionName": "Consumer Banking & Deposits",
+          "executiveOwner": "Head of Consumer Banking",
+          "sourceFile": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -281,17 +281,17 @@
         "sourceObjectId": "business_functions:commercial_corporate_banking:3",
         "displayName": "business_functions:commercial_corporate_banking:3",
         "evidenceKeys": [
-          "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:3"
+          "first-capital-financial:current-universal:01_business_functions.csv:3"
         ],
         "attributes": {
-          "tenantKey": "first-capital",
-          "clientDisplayName": "Financial Services Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "FC-BF-002",
-          "recordName": "Commercial & Corporate Banking",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Head of Commercial Banking"
+          "tenantKey": "first-capital-financial",
+          "functionName": "Commercial & Corporate Banking",
+          "executiveOwner": "Head of Commercial Banking",
+          "sourceFile": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -300,17 +300,17 @@
         "sourceObjectId": "business_functions:cards_payments:4",
         "displayName": "business_functions:cards_payments:4",
         "evidenceKeys": [
-          "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:4"
+          "first-capital-financial:current-universal:01_business_functions.csv:4"
         ],
         "attributes": {
-          "tenantKey": "first-capital",
-          "clientDisplayName": "Financial Services Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "FC-BF-003",
-          "recordName": "Cards & Payments",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Head of Cards & Payments"
+          "tenantKey": "first-capital-financial",
+          "functionName": "Cards & Payments",
+          "executiveOwner": "Head of Cards & Payments",
+          "sourceFile": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -319,17 +319,17 @@
         "sourceObjectId": "business_functions:wealth_asset_management:5",
         "displayName": "business_functions:wealth_asset_management:5",
         "evidenceKeys": [
-          "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:5"
+          "first-capital-financial:current-universal:01_business_functions.csv:5"
         ],
         "attributes": {
-          "tenantKey": "first-capital",
-          "clientDisplayName": "Financial Services Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "FC-BF-004",
-          "recordName": "Wealth & Asset Management",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Head of Wealth Management"
+          "tenantKey": "first-capital-financial",
+          "functionName": "Wealth & Asset Management",
+          "executiveOwner": "Head of Wealth Management",
+          "sourceFile": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -338,17 +338,17 @@
         "sourceObjectId": "business_functions:treasury_capital_markets:6",
         "displayName": "business_functions:treasury_capital_markets:6",
         "evidenceKeys": [
-          "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:6"
+          "first-capital-financial:current-universal:01_business_functions.csv:6"
         ],
         "attributes": {
-          "tenantKey": "first-capital",
-          "clientDisplayName": "Financial Services Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "FC-BF-005",
-          "recordName": "Treasury & Capital Markets",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Treasurer"
+          "tenantKey": "first-capital-financial",
+          "functionName": "Treasury & Capital Markets",
+          "executiveOwner": "Treasurer",
+          "sourceFile": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -357,17 +357,17 @@
         "sourceObjectId": "business_functions:risk_management:7",
         "displayName": "business_functions:risk_management:7",
         "evidenceKeys": [
-          "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:7"
+          "first-capital-financial:current-universal:01_business_functions.csv:7"
         ],
         "attributes": {
-          "tenantKey": "first-capital",
-          "clientDisplayName": "Financial Services Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "FC-BF-006",
-          "recordName": "Risk Management",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Chief Risk Officer"
+          "tenantKey": "first-capital-financial",
+          "functionName": "Risk Management",
+          "executiveOwner": "Chief Risk Officer",
+          "sourceFile": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -376,17 +376,17 @@
         "sourceObjectId": "business_functions:financial_crimes_aml:8",
         "displayName": "business_functions:financial_crimes_aml:8",
         "evidenceKeys": [
-          "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:8"
+          "first-capital-financial:current-universal:01_business_functions.csv:8"
         ],
         "attributes": {
-          "tenantKey": "first-capital",
-          "clientDisplayName": "Financial Services Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "FC-BF-007",
-          "recordName": "Financial Crimes & AML",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "BSA/AML Officer"
+          "tenantKey": "first-capital-financial",
+          "functionName": "Financial Crimes & AML",
+          "executiveOwner": "BSA/AML Officer",
+          "sourceFile": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -395,17 +395,17 @@
         "sourceObjectId": "business_functions:compliance_regulatory:9",
         "displayName": "business_functions:compliance_regulatory:9",
         "evidenceKeys": [
-          "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:9"
+          "first-capital-financial:current-universal:01_business_functions.csv:9"
         ],
         "attributes": {
-          "tenantKey": "first-capital",
-          "clientDisplayName": "Financial Services Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "FC-BF-008",
-          "recordName": "Compliance & Regulatory",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Chief Compliance Officer"
+          "tenantKey": "first-capital-financial",
+          "functionName": "Compliance & Regulatory",
+          "executiveOwner": "Chief Compliance Officer",
+          "sourceFile": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -414,17 +414,17 @@
         "sourceObjectId": "business_functions:finance_controllership:10",
         "displayName": "business_functions:finance_controllership:10",
         "evidenceKeys": [
-          "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:10"
+          "first-capital-financial:current-universal:01_business_functions.csv:10"
         ],
         "attributes": {
-          "tenantKey": "first-capital",
-          "clientDisplayName": "Financial Services Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "FC-BF-009",
-          "recordName": "Finance & Controllership",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Chief Financial Officer"
+          "tenantKey": "first-capital-financial",
+          "functionName": "Finance & Controllership",
+          "executiveOwner": "Chief Financial Officer",
+          "sourceFile": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -433,17 +433,17 @@
         "sourceObjectId": "business_functions:operations_servicing:11",
         "displayName": "business_functions:operations_servicing:11",
         "evidenceKeys": [
-          "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:11"
+          "first-capital-financial:current-universal:01_business_functions.csv:11"
         ],
         "attributes": {
-          "tenantKey": "first-capital",
-          "clientDisplayName": "Financial Services Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "FC-BF-010",
-          "recordName": "Operations & Servicing",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Chief Operating Officer"
+          "tenantKey": "first-capital-financial",
+          "functionName": "Operations & Servicing",
+          "executiveOwner": "Chief Operating Officer",
+          "sourceFile": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -452,42 +452,42 @@
         "sourceObjectId": "business_functions:contact_center_customer_care:12",
         "displayName": "business_functions:contact_center_customer_care:12",
         "evidenceKeys": [
-          "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:12"
+          "first-capital-financial:current-universal:01_business_functions.csv:12"
         ],
         "attributes": {
-          "tenantKey": "first-capital",
-          "clientDisplayName": "Financial Services Demo",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "FC-BF-011",
-          "recordName": "Contact Center & Customer Care",
-          "sourceSystem": "v4_synthetic_pack",
-          "sourceOwner": "Head of Customer Experience"
+          "tenantKey": "first-capital-financial",
+          "functionName": "Contact Center & Customer Care",
+          "executiveOwner": "Head of Customer Experience",
+          "sourceFile": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       }
     ]
   },
   {
     "tenantKey": "lakeshore-holdings",
-    "candidateVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+    "candidateVersionId": "candidate:lakeshore-holdings:e16ad063e5bd",
     "samples": [
       {
         "domain": "unknown",
         "objectType": "tenant_profile",
-        "sourceObjectId": "enterprise_profile:lakeshore_holdings:2",
-        "displayName": "enterprise_profile:lakeshore_holdings:2",
+        "sourceObjectId": "enterprise_profile:lakeshore_holdings_enterprise_profile:2",
+        "displayName": "enterprise_profile:lakeshore_holdings_enterprise_profile:2",
         "evidenceKeys": [
-          "lakeshore-holdings:enterprise-pack:V6_01_enterprise_profile.csv:2"
+          "lakeshore-holdings:current-universal:00_enterprise_profile.csv:2"
         ],
         "attributes": {
           "tenantKey": "lakeshore-holdings",
-          "clientDisplayName": "Lakeshore Holdings",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "enterprise_profile",
-          "recordId": "LH-ENT-001",
-          "recordName": "Lakeshore Holdings enterprise profile",
-          "sourceSystem": "v6_holdco_synthetic_pack",
-          "sourceOwner": "Group CIO"
+          "entityName": "Lakeshore Holdings enterprise profile",
+          "industry": "Diversified private holding company",
+          "subIndustry": "portfolio-company operator with corporate shared services",
+          "revenueUsd": 0,
+          "employeeCount": 11800,
+          "headquarters": "Chicago, IL",
+          "operatingRegions": "[\"Midwest\",\"Great Lakes\",\"national distribution footprint\",\"portfolio-company operating markets\"]"
         }
       },
       {
@@ -496,17 +496,17 @@
         "sourceObjectId": "business_functions:corporate_finance_and_treasury:2",
         "displayName": "business_functions:corporate_finance_and_treasury:2",
         "evidenceKeys": [
-          "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:2"
+          "lakeshore-holdings:current-universal:01_business_functions.csv:2"
         ],
         "attributes": {
           "tenantKey": "lakeshore-holdings",
-          "clientDisplayName": "Lakeshore Holdings",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "LH-FN-FIN",
-          "recordName": "Corporate Finance and Treasury",
-          "sourceSystem": "v6_holdco_synthetic_pack",
-          "sourceOwner": "CFO"
+          "functionName": "Corporate Finance and Treasury",
+          "executiveOwner": "CFO",
+          "sourceFile": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "high",
+          "originalSourceFile": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -515,17 +515,17 @@
         "sourceObjectId": "business_functions:corporate_hr_and_talent:3",
         "displayName": "business_functions:corporate_hr_and_talent:3",
         "evidenceKeys": [
-          "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:3"
+          "lakeshore-holdings:current-universal:01_business_functions.csv:3"
         ],
         "attributes": {
           "tenantKey": "lakeshore-holdings",
-          "clientDisplayName": "Lakeshore Holdings",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "LH-FN-HR",
-          "recordName": "Corporate HR and Talent",
-          "sourceSystem": "v6_holdco_synthetic_pack",
-          "sourceOwner": "Chief People Officer"
+          "functionName": "Corporate HR and Talent",
+          "executiveOwner": "Chief People Officer",
+          "sourceFile": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "high",
+          "originalSourceFile": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -534,17 +534,17 @@
         "sourceObjectId": "business_functions:corporate_legal_and_compliance:4",
         "displayName": "business_functions:corporate_legal_and_compliance:4",
         "evidenceKeys": [
-          "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:4"
+          "lakeshore-holdings:current-universal:01_business_functions.csv:4"
         ],
         "attributes": {
           "tenantKey": "lakeshore-holdings",
-          "clientDisplayName": "Lakeshore Holdings",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "LH-FN-LEGAL",
-          "recordName": "Corporate Legal and Compliance",
-          "sourceSystem": "v6_holdco_synthetic_pack",
-          "sourceOwner": "General Counsel"
+          "functionName": "Corporate Legal and Compliance",
+          "executiveOwner": "General Counsel",
+          "sourceFile": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "high",
+          "originalSourceFile": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -553,17 +553,17 @@
         "sourceObjectId": "business_functions:investments_and_portfolio_management:5",
         "displayName": "business_functions:investments_and_portfolio_management:5",
         "evidenceKeys": [
-          "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:5"
+          "lakeshore-holdings:current-universal:01_business_functions.csv:5"
         ],
         "attributes": {
           "tenantKey": "lakeshore-holdings",
-          "clientDisplayName": "Lakeshore Holdings",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "LH-FN-INVEST",
-          "recordName": "Investments and Portfolio Management",
-          "sourceSystem": "v6_holdco_synthetic_pack",
-          "sourceOwner": "Chief Investment Officer"
+          "functionName": "Investments and Portfolio Management",
+          "executiveOwner": "Chief Investment Officer",
+          "sourceFile": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "high",
+          "originalSourceFile": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -572,17 +572,17 @@
         "sourceObjectId": "business_functions:corporate_it:6",
         "displayName": "business_functions:corporate_it:6",
         "evidenceKeys": [
-          "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:6"
+          "lakeshore-holdings:current-universal:01_business_functions.csv:6"
         ],
         "attributes": {
           "tenantKey": "lakeshore-holdings",
-          "clientDisplayName": "Lakeshore Holdings",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "LH-FN-CORP-IT",
-          "recordName": "Corporate IT",
-          "sourceSystem": "v6_holdco_synthetic_pack",
-          "sourceOwner": "Group CIO"
+          "functionName": "Corporate IT",
+          "executiveOwner": "Group CIO",
+          "sourceFile": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "high",
+          "originalSourceFile": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -591,17 +591,17 @@
         "sourceObjectId": "business_functions:corporate_innovation_it_and_data_ai:7",
         "displayName": "business_functions:corporate_innovation_it_and_data_ai:7",
         "evidenceKeys": [
-          "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:7"
+          "lakeshore-holdings:current-universal:01_business_functions.csv:7"
         ],
         "attributes": {
           "tenantKey": "lakeshore-holdings",
-          "clientDisplayName": "Lakeshore Holdings",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "LH-FN-INNOV",
-          "recordName": "Corporate Innovation IT and Data AI",
-          "sourceSystem": "v6_holdco_synthetic_pack",
-          "sourceOwner": "VP Corporate Innovation IT and Data AI"
+          "functionName": "Corporate Innovation IT and Data AI",
+          "executiveOwner": "VP Corporate Innovation IT and Data AI",
+          "sourceFile": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "high",
+          "originalSourceFile": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -610,17 +610,17 @@
         "sourceObjectId": "business_functions:northline_logistics_operations:8",
         "displayName": "business_functions:northline_logistics_operations:8",
         "evidenceKeys": [
-          "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:8"
+          "lakeshore-holdings:current-universal:01_business_functions.csv:8"
         ],
         "attributes": {
           "tenantKey": "lakeshore-holdings",
-          "clientDisplayName": "Lakeshore Holdings",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "LH-FN-NORTHLINE-OPS",
-          "recordName": "Northline Logistics Operations",
-          "sourceSystem": "v6_holdco_synthetic_pack",
-          "sourceOwner": "Northline COO"
+          "functionName": "Northline Logistics Operations",
+          "executiveOwner": "Northline COO",
+          "sourceFile": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "high",
+          "originalSourceFile": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -629,17 +629,17 @@
         "sourceObjectId": "business_functions:northline_local_it:9",
         "displayName": "business_functions:northline_local_it:9",
         "evidenceKeys": [
-          "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:9"
+          "lakeshore-holdings:current-universal:01_business_functions.csv:9"
         ],
         "attributes": {
           "tenantKey": "lakeshore-holdings",
-          "clientDisplayName": "Lakeshore Holdings",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "LH-FN-NORTHLINE-IT",
-          "recordName": "Northline Local IT",
-          "sourceSystem": "v6_holdco_synthetic_pack",
-          "sourceOwner": "Northline CIO"
+          "functionName": "Northline Local IT",
+          "executiveOwner": "Northline CIO",
+          "sourceFile": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "high",
+          "originalSourceFile": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -648,17 +648,17 @@
         "sourceObjectId": "business_functions:brightmark_client_delivery:10",
         "displayName": "business_functions:brightmark_client_delivery:10",
         "evidenceKeys": [
-          "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:10"
+          "lakeshore-holdings:current-universal:01_business_functions.csv:10"
         ],
         "attributes": {
           "tenantKey": "lakeshore-holdings",
-          "clientDisplayName": "Lakeshore Holdings",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "LH-FN-CRESTPOINT-OPS",
-          "recordName": "Brightmark Client Delivery",
-          "sourceSystem": "v6_holdco_synthetic_pack",
-          "sourceOwner": "Brightmark COO"
+          "functionName": "Brightmark Client Delivery",
+          "executiveOwner": "Brightmark COO",
+          "sourceFile": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "high",
+          "originalSourceFile": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -667,17 +667,17 @@
         "sourceObjectId": "business_functions:brightmark_local_it:11",
         "displayName": "business_functions:brightmark_local_it:11",
         "evidenceKeys": [
-          "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:11"
+          "lakeshore-holdings:current-universal:01_business_functions.csv:11"
         ],
         "attributes": {
           "tenantKey": "lakeshore-holdings",
-          "clientDisplayName": "Lakeshore Holdings",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "LH-FN-CRESTPOINT-IT",
-          "recordName": "Brightmark Local IT",
-          "sourceSystem": "v6_holdco_synthetic_pack",
-          "sourceOwner": "Brightmark CIO"
+          "functionName": "Brightmark Local IT",
+          "executiveOwner": "Brightmark CIO",
+          "sourceFile": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "high",
+          "originalSourceFile": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       },
       {
@@ -686,24 +686,24 @@
         "sourceObjectId": "business_functions:forge_field_commercial_and_supply_chain:12",
         "displayName": "business_functions:forge_field_commercial_and_supply_chain:12",
         "evidenceKeys": [
-          "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:12"
+          "lakeshore-holdings:current-universal:01_business_functions.csv:12"
         ],
         "attributes": {
           "tenantKey": "lakeshore-holdings",
-          "clientDisplayName": "Lakeshore Holdings",
-          "v6ContractVersion": "v6.0",
-          "businessObjectFamily": "business_function",
-          "recordId": "LH-FN-RIVERTON-OPS",
-          "recordName": "Forge & Field Commercial and Supply Chain",
-          "sourceSystem": "v6_holdco_synthetic_pack",
-          "sourceOwner": "Forge & Field COO"
+          "functionName": "Forge & Field Commercial and Supply Chain",
+          "executiveOwner": "Forge & Field COO",
+          "sourceFile": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "high",
+          "originalSourceFile": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "enterprise-pack"
         }
       }
     ]
   },
   {
     "tenantKey": "lakeshore-industries",
-    "candidateVersionId": "candidate:lakeshore-industries:929f574689fc",
+    "candidateVersionId": "candidate:lakeshore-industries:bde306214d94",
     "samples": [
       {
         "domain": "unknown",
@@ -711,17 +711,17 @@
         "sourceObjectId": "enterprise_profile:lakeshore_holdings:2",
         "displayName": "enterprise_profile:lakeshore_holdings:2",
         "evidenceKeys": [
-          "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:2"
+          "lakeshore-industries:current-universal:00_enterprise_profile.csv:2"
         ],
         "attributes": {
           "tenantKey": "lakeshore-industries",
-          "entityId": "LSH-HOLDCO",
           "entityName": "Lakeshore Holdings",
-          "entityShortName": "Lakeshore",
-          "entityType": "holding_company",
-          "entityScope": "holdco",
+          "industry": "Industrial holding company",
+          "subIndustry": "Diversified industrial, supply chain, foodservice, packaging, field services",
           "revenueUsd": 7120000000,
-          "employeeCount": 11800
+          "employeeCount": 11800,
+          "headquarters": "Chicago, IL",
+          "operatingRegions": "[\"Midwest\",\"Great Lakes\",\"national distribution footprint\",\"portfolio-company operating markets\"]"
         }
       },
       {
@@ -730,17 +730,17 @@
         "sourceObjectId": "enterprise_profile:northline_supply_chain:3",
         "displayName": "enterprise_profile:northline_supply_chain:3",
         "evidenceKeys": [
-          "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:3"
+          "lakeshore-industries:current-universal:00_enterprise_profile.csv:3"
         ],
         "attributes": {
           "tenantKey": "lakeshore-industries",
-          "entityId": "LSH-OPCO-NLS",
           "entityName": "Northline Supply Chain",
-          "entityShortName": "Northline",
-          "entityType": "operating_company",
-          "entityScope": "portfolio_company",
-          "parentEntityId": "LSH-HOLDCO",
-          "parentEntityName": "Lakeshore Holdings"
+          "industry": "Industrial distribution",
+          "subIndustry": "Foodservice supply chain, freight, cold chain, distribution",
+          "revenueUsd": 1500000000,
+          "employeeCount": 3000,
+          "headquarters": "Rosemont, IL",
+          "operatingRegions": "[\"Regional operating markets\",\"customer delivery locations\",\"field operations footprint\"]"
         }
       },
       {
@@ -749,17 +749,17 @@
         "sourceObjectId": "enterprise_profile:brightmark_marketing_services:4",
         "displayName": "enterprise_profile:brightmark_marketing_services:4",
         "evidenceKeys": [
-          "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:4"
+          "lakeshore-industries:current-universal:00_enterprise_profile.csv:4"
         ],
         "attributes": {
           "tenantKey": "lakeshore-industries",
-          "entityId": "LSH-OPCO-BMS",
           "entityName": "Brightmark Marketing Services",
-          "entityShortName": "Brightmark",
-          "entityType": "operating_company",
-          "entityScope": "portfolio_company",
-          "parentEntityId": "LSH-HOLDCO",
-          "parentEntityName": "Lakeshore Holdings"
+          "industry": "Marketing services",
+          "subIndustry": "Promotions, loyalty operations, fulfillment, retail marketing services",
+          "revenueUsd": 720000000,
+          "employeeCount": 1300,
+          "headquarters": "Chicago, IL",
+          "operatingRegions": "[\"Regional operating markets\",\"customer delivery locations\",\"field operations footprint\"]"
         }
       },
       {
@@ -768,17 +768,17 @@
         "sourceObjectId": "enterprise_profile:forge_field_consumer_products:5",
         "displayName": "enterprise_profile:forge_field_consumer_products:5",
         "evidenceKeys": [
-          "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:5"
+          "lakeshore-industries:current-universal:00_enterprise_profile.csv:5"
         ],
         "attributes": {
           "tenantKey": "lakeshore-industries",
-          "entityId": "LSH-OPCO-FFF",
           "entityName": "Forge & Field Consumer Products",
-          "entityShortName": "Forge & Field",
-          "entityType": "operating_company",
-          "entityScope": "portfolio_company",
-          "parentEntityId": "LSH-HOLDCO",
-          "parentEntityName": "Lakeshore Holdings"
+          "industry": "Consumer products",
+          "subIndustry": "Premium consumer products, DTC commerce, retail channels",
+          "revenueUsd": 800000000,
+          "employeeCount": 1200,
+          "headquarters": "Seattle, WA",
+          "operatingRegions": "[\"Regional operating markets\",\"customer delivery locations\",\"field operations footprint\"]"
         }
       },
       {
@@ -787,17 +787,17 @@
         "sourceObjectId": "enterprise_profile:great_lakes_pantry_services:6",
         "displayName": "enterprise_profile:great_lakes_pantry_services:6",
         "evidenceKeys": [
-          "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:6"
+          "lakeshore-industries:current-universal:00_enterprise_profile.csv:6"
         ],
         "attributes": {
           "tenantKey": "lakeshore-industries",
-          "entityId": "LSH-OPCO-GLP",
           "entityName": "Great Lakes Pantry Services",
-          "entityShortName": "Great Lakes Pantry",
-          "entityType": "operating_company",
-          "entityScope": "portfolio_company",
-          "parentEntityId": "LSH-HOLDCO",
-          "parentEntityName": "Lakeshore Holdings"
+          "industry": "Foodservice",
+          "subIndustry": "Workplace foodservice, micro-markets, vending, onsite dining",
+          "revenueUsd": 540000000,
+          "employeeCount": 900,
+          "headquarters": "Troy, MI",
+          "operatingRegions": "[\"Regional operating markets\",\"customer delivery locations\",\"field operations footprint\"]"
         }
       },
       {
@@ -806,17 +806,17 @@
         "sourceObjectId": "enterprise_profile:harborpoint_packaging_group:7",
         "displayName": "enterprise_profile:harborpoint_packaging_group:7",
         "evidenceKeys": [
-          "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:7"
+          "lakeshore-industries:current-universal:00_enterprise_profile.csv:7"
         ],
         "attributes": {
           "tenantKey": "lakeshore-industries",
-          "entityId": "LSH-OPCO-HPG",
           "entityName": "HarborPoint Packaging Group",
-          "entityShortName": "HarborPoint",
-          "entityType": "operating_company",
-          "entityScope": "portfolio_company",
-          "parentEntityId": "LSH-HOLDCO",
-          "parentEntityName": "Lakeshore Holdings"
+          "industry": "Packaging manufacturing",
+          "subIndustry": "Industrial packaging, print, corrugate, contract manufacturing",
+          "revenueUsd": 1050000000,
+          "employeeCount": 1800,
+          "headquarters": "Grand Rapids, MI",
+          "operatingRegions": "[\"Regional operating markets\",\"customer delivery locations\",\"field operations footprint\"]"
         }
       },
       {
@@ -825,17 +825,17 @@
         "sourceObjectId": "enterprise_profile:riverton_components_field_services:8",
         "displayName": "enterprise_profile:riverton_components_field_services:8",
         "evidenceKeys": [
-          "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:8"
+          "lakeshore-industries:current-universal:00_enterprise_profile.csv:8"
         ],
         "attributes": {
           "tenantKey": "lakeshore-industries",
-          "entityId": "LSH-OPCO-RCF",
           "entityName": "Riverton Components & Field Services",
-          "entityShortName": "Riverton",
-          "entityType": "operating_company",
-          "entityScope": "portfolio_company",
-          "parentEntityId": "LSH-HOLDCO",
-          "parentEntityName": "Lakeshore Holdings"
+          "industry": "Industrial components and field services",
+          "subIndustry": "Maintenance, repair, fabrication, installation, technical field services",
+          "revenueUsd": 1180000000,
+          "employeeCount": 2000,
+          "headquarters": "Cleveland, OH",
+          "operatingRegions": "[\"Regional operating markets\",\"customer delivery locations\",\"field operations footprint\"]"
         }
       },
       {
@@ -844,100 +844,100 @@
         "sourceObjectId": "enterprise_profile:keystone_industrial_services:9",
         "displayName": "enterprise_profile:keystone_industrial_services:9",
         "evidenceKeys": [
-          "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:9"
+          "lakeshore-industries:current-universal:00_enterprise_profile.csv:9"
         ],
         "attributes": {
           "tenantKey": "lakeshore-industries",
-          "entityId": "LSH-OPCO-KIS",
           "entityName": "Keystone Industrial Services",
-          "entityShortName": "Keystone",
-          "entityType": "operating_company",
-          "entityScope": "portfolio_company",
-          "parentEntityId": "LSH-HOLDCO",
-          "parentEntityName": "Lakeshore Holdings"
+          "industry": "Industrial services",
+          "subIndustry": "Facilities services, equipment lifecycle services, safety compliance",
+          "revenueUsd": 1330000000,
+          "employeeCount": 1600,
+          "headquarters": "Pittsburgh, PA",
+          "operatingRegions": "[\"Regional operating markets\",\"customer delivery locations\",\"field operations footprint\"]"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "tenant_profile",
-        "sourceObjectId": "enterprise_profile:lakeshore_holdings:2",
-        "displayName": "enterprise_profile:lakeshore_holdings:2",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:corporate_treasury:2",
+        "displayName": "business_functions:corporate_treasury:2",
         "evidenceKeys": [
-          "lakeshore-industries:holdco-pack:V7_01_enterprise_profile.csv:2"
+          "lakeshore-industries:current-universal:01_business_functions.csv:2"
         ],
         "attributes": {
-          "clientDisplayName": "Lakeshore Holdings",
-          "companyName": "Lakeshore Holdings",
-          "entityId": "LSH-HOLDCO",
-          "entityName": "Lakeshore Holdings",
-          "entityShortName": "Lakeshore",
-          "entityScope": "holdco",
-          "legalEntityType": "holding_company",
-          "industry": "Industrial holding company"
+          "tenantKey": "lakeshore-industries",
+          "functionName": "Corporate Treasury",
+          "executiveOwner": "CFO",
+          "businessCapabilities": "[\"Corporate Treasury strategy\",\"service delivery\",\"controls\",\"performance management\"]",
+          "sourceFile": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
+          "sourceDate": "2026-07-06",
+          "knownGaps": "Client must validate actual financials, system inventory, ownership, and evidence before board-grade use.",
+          "originalSourceFile": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_02_business_functions.csv"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "tenant_profile",
-        "sourceObjectId": "enterprise_profile:northline_supply_chain:3",
-        "displayName": "enterprise_profile:northline_supply_chain:3",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:finance_and_controller:3",
+        "displayName": "business_functions:finance_and_controller:3",
         "evidenceKeys": [
-          "lakeshore-industries:holdco-pack:V7_01_enterprise_profile.csv:3"
+          "lakeshore-industries:current-universal:01_business_functions.csv:3"
         ],
         "attributes": {
-          "clientDisplayName": "Lakeshore Holdings",
-          "companyName": "Northline Supply Chain",
-          "entityId": "LSH-OPCO-NLS",
-          "entityName": "Northline Supply Chain",
-          "entityShortName": "Northline",
-          "entityScope": "portfolio_company",
-          "parentEntityId": "LSH-HOLDCO",
-          "parentEntityName": "Lakeshore Holdings"
+          "tenantKey": "lakeshore-industries",
+          "functionName": "Finance and Controller",
+          "executiveOwner": "CFO",
+          "businessCapabilities": "[\"Finance and Controller strategy\",\"service delivery\",\"controls\",\"performance management\"]",
+          "sourceFile": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
+          "sourceDate": "2026-07-06",
+          "knownGaps": "Client must validate actual financials, system inventory, ownership, and evidence before board-grade use.",
+          "originalSourceFile": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_02_business_functions.csv"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "tenant_profile",
-        "sourceObjectId": "enterprise_profile:brightmark_marketing_services:4",
-        "displayName": "enterprise_profile:brightmark_marketing_services:4",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:fp_a_and_business_finance:4",
+        "displayName": "business_functions:fp_a_and_business_finance:4",
         "evidenceKeys": [
-          "lakeshore-industries:holdco-pack:V7_01_enterprise_profile.csv:4"
+          "lakeshore-industries:current-universal:01_business_functions.csv:4"
         ],
         "attributes": {
-          "clientDisplayName": "Lakeshore Holdings",
-          "companyName": "Brightmark Marketing Services",
-          "entityId": "LSH-OPCO-BMS",
-          "entityName": "Brightmark Marketing Services",
-          "entityShortName": "Brightmark",
-          "entityScope": "portfolio_company",
-          "parentEntityId": "LSH-HOLDCO",
-          "parentEntityName": "Lakeshore Holdings"
+          "tenantKey": "lakeshore-industries",
+          "functionName": "FP&A and Business Finance",
+          "executiveOwner": "CFO",
+          "businessCapabilities": "[\"FP&A and Business Finance strategy\",\"service delivery\",\"controls\",\"performance management\"]",
+          "sourceFile": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
+          "sourceDate": "2026-07-06",
+          "knownGaps": "Client must validate actual financials, system inventory, ownership, and evidence before board-grade use.",
+          "originalSourceFile": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_02_business_functions.csv"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "tenant_profile",
-        "sourceObjectId": "enterprise_profile:forge_field_consumer_products:5",
-        "displayName": "enterprise_profile:forge_field_consumer_products:5",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:procurement_and_supplier_management:5",
+        "displayName": "business_functions:procurement_and_supplier_management:5",
         "evidenceKeys": [
-          "lakeshore-industries:holdco-pack:V7_01_enterprise_profile.csv:5"
+          "lakeshore-industries:current-universal:01_business_functions.csv:5"
         ],
         "attributes": {
-          "clientDisplayName": "Lakeshore Holdings",
-          "companyName": "Forge & Field Consumer Products",
-          "entityId": "LSH-OPCO-FFF",
-          "entityName": "Forge & Field Consumer Products",
-          "entityShortName": "Forge & Field",
-          "entityScope": "portfolio_company",
-          "parentEntityId": "LSH-HOLDCO",
-          "parentEntityName": "Lakeshore Holdings"
+          "tenantKey": "lakeshore-industries",
+          "functionName": "Procurement and Supplier Management",
+          "executiveOwner": "Chief Procurement Officer",
+          "businessCapabilities": "[\"Procurement and Supplier Management strategy\",\"service delivery\",\"controls\",\"performance management\"]",
+          "sourceFile": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
+          "sourceDate": "2026-07-06",
+          "knownGaps": "Client must validate actual financials, system inventory, ownership, and evidence before board-grade use.",
+          "originalSourceFile": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_02_business_functions.csv"
         }
       }
     ]
   },
   {
     "tenantKey": "meridian-health",
-    "candidateVersionId": "candidate:meridian-health:aef0edc75fad",
+    "candidateVersionId": "candidate:meridian-health:5698b1a4c532",
     "samples": [
       {
         "domain": "unknown",
@@ -945,17 +945,36 @@
         "sourceObjectId": "enterprise_profile:meridian_health_system:2",
         "displayName": "enterprise_profile:meridian_health_system:2",
         "evidenceKeys": [
-          "meridian-health:current-state-pack:V6_01_enterprise_profile.csv:2"
+          "meridian-health:current-universal:00_enterprise_profile.csv:2"
         ],
         "attributes": {
           "tenantKey": "meridian-health",
-          "clientDisplayName": "Meridian Health System",
-          "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-          "businessObjectFamily": "enterprise_profile",
-          "recordId": "MER-V6-ENT-001",
-          "recordName": "Meridian Health System",
-          "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-          "sourceOwner": "AbarVa synthetic data steward"
+          "entityName": "Meridian Health System",
+          "industry": "Healthcare",
+          "subIndustry": "Integrated delivery network and health plan",
+          "headquarters": "Sacramento, CA",
+          "operatingRegions": "[\"Sacramento, CA\",\"Northern California service area\",\"Central California service area\",\"Nevada service area\"]",
+          "businessModel": "Medium-to-large health organization with clinical delivery, health-plan operations, finance, and analytics modernization needs.",
+          "customerSegments": "[\"patients\",\"members\",\"providers\",\"employer groups\",\"clinical operations leaders\",\"health-plan operations teams\"]"
+        }
+      },
+      {
+        "domain": "unknown",
+        "objectType": "tenant_profile",
+        "sourceObjectId": "enterprise_profile:healthcare_demo:3",
+        "displayName": "enterprise_profile:healthcare_demo:3",
+        "evidenceKeys": [
+          "meridian-health:current-universal:00_enterprise_profile.csv:3"
+        ],
+        "attributes": {
+          "tenantKey": "meridian-health",
+          "entityName": "Healthcare Demo",
+          "industry": "Healthcare",
+          "subIndustry": "Sutter-scale regional provider with Kaiser/Humana-style payer/services complexity",
+          "revenueUsd": 39600000000,
+          "employeeCount": 88000,
+          "businessModel": "enterprise operating model",
+          "customerSegments": "[\"patients\",\"members\",\"providers\",\"employer groups\",\"clinical operations leaders\",\"health-plan operations teams\"]"
         }
       },
       {
@@ -964,17 +983,17 @@
         "sourceObjectId": "business_functions:enterprise_data_and_analytics:2",
         "displayName": "business_functions:enterprise_data_and_analytics:2",
         "evidenceKeys": [
-          "meridian-health:current-state-pack:V6_02_business_functions.csv:2"
+          "meridian-health:current-universal:01_business_functions.csv:2"
         ],
         "attributes": {
           "tenantKey": "meridian-health",
-          "clientDisplayName": "Meridian Health System",
-          "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-          "businessObjectFamily": "business_function",
-          "recordId": "MER-FN-DATA",
-          "recordName": "Enterprise Data and Analytics",
-          "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-          "sourceOwner": "AbarVa synthetic data steward"
+          "functionName": "Enterprise Data and Analytics",
+          "executiveOwner": "CDAO",
+          "businessCapabilities": "[\"data intake\",\"data product certification\",\"dashboard modernization\",\"analytics demand management\"]",
+          "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+          "sourceDate": "2026-07-09",
+          "confidence": "medium",
+          "knownGaps": "[\"Synthetic PHI-free planning-grade substrate\",\"not real Meridian production data.\",\"AWS Databricks aspiration is not proof that the platform foundation is complete.\",\"No certified medallion architecture is loaded.\",\"No platform, network, or security foundation evidence is loaded.\",\"No formal data governance operating model is loaded.\",\"Do not convert planning hypotheses into realized ROI or audited clinical/financial claims.\"]"
         }
       },
       {
@@ -983,17 +1002,17 @@
         "sourceObjectId": "business_functions:clinical_operations:3",
         "displayName": "business_functions:clinical_operations:3",
         "evidenceKeys": [
-          "meridian-health:current-state-pack:V6_02_business_functions.csv:3"
+          "meridian-health:current-universal:01_business_functions.csv:3"
         ],
         "attributes": {
           "tenantKey": "meridian-health",
-          "clientDisplayName": "Meridian Health System",
-          "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-          "businessObjectFamily": "business_function",
-          "recordId": "MER-FN-CLINICAL",
-          "recordName": "Clinical Operations",
-          "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-          "sourceOwner": "AbarVa synthetic data steward"
+          "functionName": "Clinical Operations",
+          "executiveOwner": "CMO",
+          "businessCapabilities": "[\"clinical documentation\",\"care management\",\"longitudinal patient view\"]",
+          "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+          "sourceDate": "2026-07-09",
+          "confidence": "medium",
+          "knownGaps": "[\"Synthetic PHI-free planning-grade substrate\",\"not real Meridian production data.\",\"AWS Databricks aspiration is not proof that the platform foundation is complete.\",\"No certified medallion architecture is loaded.\",\"No platform, network, or security foundation evidence is loaded.\",\"No formal data governance operating model is loaded.\",\"Do not convert planning hypotheses into realized ROI or audited clinical/financial claims.\"]"
         }
       },
       {
@@ -1002,17 +1021,17 @@
         "sourceObjectId": "business_functions:health_plan_operations:4",
         "displayName": "business_functions:health_plan_operations:4",
         "evidenceKeys": [
-          "meridian-health:current-state-pack:V6_02_business_functions.csv:4"
+          "meridian-health:current-universal:01_business_functions.csv:4"
         ],
         "attributes": {
           "tenantKey": "meridian-health",
-          "clientDisplayName": "Meridian Health System",
-          "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-          "businessObjectFamily": "business_function",
-          "recordId": "MER-FN-PLAN",
-          "recordName": "Health Plan Operations",
-          "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-          "sourceOwner": "AbarVa synthetic data steward"
+          "functionName": "Health Plan Operations",
+          "executiveOwner": "Chief Health Plan Officer",
+          "businessCapabilities": "[\"prior authorization\",\"utilization management\",\"claims operations\",\"member support\"]",
+          "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv"
         }
       },
       {
@@ -1021,17 +1040,17 @@
         "sourceObjectId": "business_functions:quality_and_provider_performance:5",
         "displayName": "business_functions:quality_and_provider_performance:5",
         "evidenceKeys": [
-          "meridian-health:current-state-pack:V6_02_business_functions.csv:5"
+          "meridian-health:current-universal:01_business_functions.csv:5"
         ],
         "attributes": {
           "tenantKey": "meridian-health",
-          "clientDisplayName": "Meridian Health System",
-          "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-          "businessObjectFamily": "business_function",
-          "recordId": "MER-FN-QUALITY",
-          "recordName": "Quality and Provider Performance",
-          "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-          "sourceOwner": "AbarVa synthetic data steward"
+          "functionName": "Quality and Provider Performance",
+          "executiveOwner": "VP Quality",
+          "businessCapabilities": "[\"measure logic\",\"provider attribution\",\"care gap analytics\"]",
+          "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+          "sourceDate": "2026-07-09",
+          "confidence": "medium",
+          "knownGaps": "[\"Synthetic PHI-free planning-grade substrate\",\"not real Meridian production data.\",\"AWS Databricks aspiration is not proof that the platform foundation is complete.\",\"No certified medallion architecture is loaded.\",\"No platform, network, or security foundation evidence is loaded.\",\"No formal data governance operating model is loaded.\",\"Do not convert planning hypotheses into realized ROI or audited clinical/financial claims.\"]"
         }
       },
       {
@@ -1040,17 +1059,17 @@
         "sourceObjectId": "business_functions:finance_and_actuarial:6",
         "displayName": "business_functions:finance_and_actuarial:6",
         "evidenceKeys": [
-          "meridian-health:current-state-pack:V6_02_business_functions.csv:6"
+          "meridian-health:current-universal:01_business_functions.csv:6"
         ],
         "attributes": {
           "tenantKey": "meridian-health",
-          "clientDisplayName": "Meridian Health System",
-          "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-          "businessObjectFamily": "business_function",
-          "recordId": "MER-FN-FINANCE",
-          "recordName": "Finance and Actuarial",
-          "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-          "sourceOwner": "AbarVa synthetic data steward"
+          "functionName": "Finance and Actuarial",
+          "executiveOwner": "CFO",
+          "businessCapabilities": "[\"financial reporting\",\"cost transparency\",\"payment integrity\",\"close automation\"]",
+          "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv"
         }
       },
       {
@@ -1059,17 +1078,17 @@
         "sourceObjectId": "business_functions:contact_center_and_member_experience:7",
         "displayName": "business_functions:contact_center_and_member_experience:7",
         "evidenceKeys": [
-          "meridian-health:current-state-pack:V6_02_business_functions.csv:7"
+          "meridian-health:current-universal:01_business_functions.csv:7"
         ],
         "attributes": {
           "tenantKey": "meridian-health",
-          "clientDisplayName": "Meridian Health System",
-          "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-          "businessObjectFamily": "business_function",
-          "recordId": "MER-FN-CONTACT",
-          "recordName": "Contact Center and Member Experience",
-          "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-          "sourceOwner": "AbarVa synthetic data steward"
+          "functionName": "Contact Center and Member Experience",
+          "executiveOwner": "Chief Experience Officer",
+          "businessCapabilities": "[\"call handling\",\"CRM case management\",\"next-best-action workflows\"]",
+          "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+          "sourceDate": "2026-07-09",
+          "confidence": "medium",
+          "knownGaps": "[\"Synthetic PHI-free planning-grade substrate\",\"not real Meridian production data.\",\"AWS Databricks aspiration is not proof that the platform foundation is complete.\",\"No certified medallion architecture is loaded.\",\"No platform, network, or security foundation evidence is loaded.\",\"No formal data governance operating model is loaded.\",\"Do not convert planning hypotheses into realized ROI or audited clinical/financial claims.\"]"
         }
       },
       {
@@ -1078,327 +1097,308 @@
         "sourceObjectId": "business_functions:technology_platform_and_security:8",
         "displayName": "business_functions:technology_platform_and_security:8",
         "evidenceKeys": [
-          "meridian-health:current-state-pack:V6_02_business_functions.csv:8"
+          "meridian-health:current-universal:01_business_functions.csv:8"
         ],
         "attributes": {
           "tenantKey": "meridian-health",
-          "clientDisplayName": "Meridian Health System",
-          "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-          "businessObjectFamily": "business_function",
-          "recordId": "MER-FN-PLATFORM",
-          "recordName": "Technology Platform and Security",
-          "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-          "sourceOwner": "AbarVa synthetic data steward"
+          "functionName": "Technology Platform and Security",
+          "executiveOwner": "CDIO",
+          "businessCapabilities": "[\"AWS landing zone\",\"Databricks foundation\",\"network/security controls\",\"interface operations\"]",
+          "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+          "sourceDate": "2026-07-09",
+          "confidence": "medium",
+          "knownGaps": "[\"Synthetic PHI-free planning-grade substrate\",\"not real Meridian production data.\",\"AWS Databricks aspiration is not proof that the platform foundation is complete.\",\"No certified medallion architecture is loaded.\",\"No platform, network, or security foundation evidence is loaded.\",\"No formal data governance operating model is loaded.\",\"Do not convert planning hypotheses into realized ROI or audited clinical/financial claims.\"]"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "org_owner",
-        "sourceObjectId": "org_ownership:enterprise_data_and_analytics:2",
-        "displayName": "org_ownership:enterprise_data_and_analytics:2",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:ambulatory_and_primary_care:9",
+        "displayName": "business_functions:ambulatory_and_primary_care:9",
         "evidenceKeys": [
-          "meridian-health:current-state-pack:V6_03_org_ownership.csv:2"
+          "meridian-health:current-universal:01_business_functions.csv:9"
         ],
         "attributes": {
           "tenantKey": "meridian-health",
-          "clientDisplayName": "Meridian Health System",
-          "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-          "businessObjectFamily": "org_ownership",
-          "recordId": "MER-ORG-001",
-          "recordName": "Enterprise Data and Analytics ownership",
-          "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-          "sourceOwner": "AbarVa synthetic data steward"
+          "functionName": "Ambulatory and Primary Care",
+          "executiveOwner": "Chief Medical Officer",
+          "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "rich-enterprise-pack"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "org_owner",
-        "sourceObjectId": "org_ownership:clinical_operations:3",
-        "displayName": "org_ownership:clinical_operations:3",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:hospital_operations:10",
+        "displayName": "business_functions:hospital_operations:10",
         "evidenceKeys": [
-          "meridian-health:current-state-pack:V6_03_org_ownership.csv:3"
+          "meridian-health:current-universal:01_business_functions.csv:10"
         ],
         "attributes": {
           "tenantKey": "meridian-health",
-          "clientDisplayName": "Meridian Health System",
-          "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-          "businessObjectFamily": "org_ownership",
-          "recordId": "MER-ORG-002",
-          "recordName": "Clinical Operations ownership",
-          "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-          "sourceOwner": "AbarVa synthetic data steward"
+          "functionName": "Hospital Operations",
+          "executiveOwner": "Chief Operating Officer",
+          "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "rich-enterprise-pack"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "org_owner",
-        "sourceObjectId": "org_ownership:health_plan_operations:4",
-        "displayName": "org_ownership:health_plan_operations:4",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:pharmacy_services:11",
+        "displayName": "business_functions:pharmacy_services:11",
         "evidenceKeys": [
-          "meridian-health:current-state-pack:V6_03_org_ownership.csv:4"
+          "meridian-health:current-universal:01_business_functions.csv:11"
         ],
         "attributes": {
           "tenantKey": "meridian-health",
-          "clientDisplayName": "Meridian Health System",
-          "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-          "businessObjectFamily": "org_ownership",
-          "recordId": "MER-ORG-003",
-          "recordName": "Health Plan Operations ownership",
-          "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-          "sourceOwner": "AbarVa synthetic data steward"
-        }
-      },
-      {
-        "domain": "unknown",
-        "objectType": "org_owner",
-        "sourceObjectId": "org_ownership:quality_and_provider_performance:5",
-        "displayName": "org_ownership:quality_and_provider_performance:5",
-        "evidenceKeys": [
-          "meridian-health:current-state-pack:V6_03_org_ownership.csv:5"
-        ],
-        "attributes": {
-          "tenantKey": "meridian-health",
-          "clientDisplayName": "Meridian Health System",
-          "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-          "businessObjectFamily": "org_ownership",
-          "recordId": "MER-ORG-004",
-          "recordName": "Quality and Provider Performance ownership",
-          "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-          "sourceOwner": "AbarVa synthetic data steward"
+          "functionName": "Pharmacy Services",
+          "executiveOwner": "Chief Pharmacy Officer",
+          "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+          "sourceDate": "2026-06-18",
+          "confidence": "medium",
+          "originalSourceFile": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv",
+          "originalPacket": "rich-enterprise-pack"
         }
       }
     ]
   },
   {
     "tenantKey": "skyharbor-air",
-    "candidateVersionId": "candidate:skyharbor-air:80f0be2d1c76",
+    "candidateVersionId": "candidate:skyharbor-air:3565f457b05d",
     "samples": [
       {
         "domain": "unknown",
-        "objectType": "ai_automation_use_case",
-        "sourceObjectId": "ai_automation_use_cases:servicenow_now_assist:2",
-        "displayName": "ai_automation_use_cases:servicenow_now_assist:2",
+        "objectType": "tenant_profile",
+        "sourceObjectId": "enterprise_profile:skyharbor_air:2",
+        "displayName": "enterprise_profile:skyharbor_air:2",
         "evidenceKeys": [
-          "skyharbor-air:rich-substrate-pack:ai-tooling.csv:2"
+          "skyharbor-air:current-universal:00_enterprise_profile.csv:2"
         ],
         "attributes": {
-          "toolId": "AIT-001",
-          "toolName": "ServiceNow Now Assist",
-          "ownerRole": "Director Data",
-          "workflow": "code",
-          "riskClassification": "medium",
-          "modelName": "internal-llm",
-          "regulatedWorkflowFlag": "false",
-          "displayName": "ServiceNow Now Assist"
+          "tenantKey": "skyharbor-air",
+          "revenueUsd": 81400000000,
+          "employeeCount": 92000,
+          "headquarters": "Chicago, IL",
+          "customerSegments": "[\"passengers\",\"loyalty members\",\"corporate travel buyers\",\"cargo customers\",\"airport station operations\",\"crew and operations teams\"]",
+          "sourceFile": "datasets/tenant-inputs/active/skyharbor-air/current/00_enterprise_profile.csv",
+          "originalSourceFile": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/enterprise-profile.csv",
+          "originalPacket": "rich-substrate-pack"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "ai_automation_use_case",
-        "sourceObjectId": "ai_automation_use_cases:claude_code:3",
-        "displayName": "ai_automation_use_cases:claude_code:3",
+        "objectType": "tenant_profile",
+        "sourceObjectId": "enterprise_profile:skyharbor_air:3",
+        "displayName": "enterprise_profile:skyharbor_air:3",
         "evidenceKeys": [
-          "skyharbor-air:rich-substrate-pack:ai-tooling.csv:3"
+          "skyharbor-air:current-universal:00_enterprise_profile.csv:3"
         ],
         "attributes": {
-          "toolId": "AIT-002",
-          "toolName": "Claude Code",
-          "ownerRole": "VP Engineering",
-          "workflow": "revenue accounting",
-          "riskClassification": "high",
-          "modelName": "gpt-4o",
-          "regulatedWorkflowFlag": "false",
-          "displayName": "Claude Code"
+          "tenantKey": "skyharbor-air",
+          "entityName": "SkyHarbor Air",
+          "industry": "Airline",
+          "subIndustry": "Global passenger airline operations",
+          "headquarters": "Chicago, IL",
+          "operatingRegions": "[\"64 countries\",\"North America\",\"transatlantic network\",\"transpacific network\",\"Latin America\",\"global hub operations\"]",
+          "businessModel": "Medium-to-large airline with operations control, flight operations, crew operations, customer operations, mainframe/core operations, and AI modernization pressure.",
+          "customerSegments": "[\"passengers\",\"loyalty members\",\"corporate travel buyers\",\"cargo customers\",\"airport station operations\",\"crew and operations teams\"]"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "ai_automation_use_case",
-        "sourceObjectId": "ai_automation_use_cases:github_copilot:4",
-        "displayName": "ai_automation_use_cases:github_copilot:4",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:mro:2",
+        "displayName": "business_functions:mro:2",
         "evidenceKeys": [
-          "skyharbor-air:rich-substrate-pack:ai-tooling.csv:4"
+          "skyharbor-air:current-universal:01_business_functions.csv:2"
         ],
         "attributes": {
-          "toolId": "AIT-003",
-          "toolName": "GitHub Copilot",
-          "ownerRole": "CDAO",
-          "workflow": "service desk",
-          "riskClassification": "low",
-          "modelName": "claude-opus",
-          "regulatedWorkflowFlag": "false",
-          "displayName": "GitHub Copilot"
+          "tenantKey": "skyharbor-air",
+          "functionName": "MRO",
+          "sourceFile": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+          "originalSourceFile": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/business-capabilities.csv",
+          "originalPacket": "rich-substrate-pack",
+          "originalRowNumber": 2,
+          "sourceClassification": "synthetic-demo",
+          "sourceFingerprint": "de0f6328aa786409a07d84ca8d03db8f6a53a6990a3269cc6bb9cca8171fb852"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "ai_automation_use_case",
-        "sourceObjectId": "ai_automation_use_cases:github_copilot:5",
-        "displayName": "ai_automation_use_cases:github_copilot:5",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:safety:3",
+        "displayName": "business_functions:safety:3",
         "evidenceKeys": [
-          "skyharbor-air:rich-substrate-pack:ai-tooling.csv:5"
+          "skyharbor-air:current-universal:01_business_functions.csv:3"
         ],
         "attributes": {
-          "toolId": "AIT-004",
-          "toolName": "GitHub Copilot",
-          "ownerRole": "Director Data",
-          "workflow": "revenue accounting",
-          "riskClassification": "low",
-          "modelName": "internal-llm",
-          "regulatedWorkflowFlag": "false",
-          "displayName": "GitHub Copilot"
+          "tenantKey": "skyharbor-air",
+          "functionName": "Safety",
+          "sourceFile": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+          "originalSourceFile": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/business-capabilities.csv",
+          "originalPacket": "rich-substrate-pack",
+          "originalRowNumber": 4,
+          "sourceClassification": "synthetic-demo",
+          "sourceFingerprint": "de0f6328aa786409a07d84ca8d03db8f6a53a6990a3269cc6bb9cca8171fb852"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "ai_automation_use_case",
-        "sourceObjectId": "ai_automation_use_cases:amazon_q:6",
-        "displayName": "ai_automation_use_cases:amazon_q:6",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:ground_ops:4",
+        "displayName": "business_functions:ground_ops:4",
         "evidenceKeys": [
-          "skyharbor-air:rich-substrate-pack:ai-tooling.csv:6"
+          "skyharbor-air:current-universal:01_business_functions.csv:4"
         ],
         "attributes": {
-          "toolId": "AIT-005",
-          "toolName": "Amazon Q",
-          "ownerRole": "Director Data",
-          "workflow": "crew comms",
-          "riskClassification": "medium",
-          "modelName": "internal-llm",
-          "regulatedWorkflowFlag": "true",
-          "displayName": "Amazon Q"
+          "tenantKey": "skyharbor-air",
+          "functionName": "Ground Ops",
+          "sourceFile": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+          "originalSourceFile": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/business-capabilities.csv",
+          "originalPacket": "rich-substrate-pack",
+          "originalRowNumber": 5,
+          "sourceClassification": "synthetic-demo",
+          "sourceFingerprint": "de0f6328aa786409a07d84ca8d03db8f6a53a6990a3269cc6bb9cca8171fb852"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "ai_automation_use_case",
-        "sourceObjectId": "ai_automation_use_cases:claude_code:7",
-        "displayName": "ai_automation_use_cases:claude_code:7",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:customer:5",
+        "displayName": "business_functions:customer:5",
         "evidenceKeys": [
-          "skyharbor-air:rich-substrate-pack:ai-tooling.csv:7"
+          "skyharbor-air:current-universal:01_business_functions.csv:5"
         ],
         "attributes": {
-          "toolId": "AIT-006",
-          "toolName": "Claude Code",
-          "ownerRole": "Director Data",
-          "workflow": "forecasting",
-          "riskClassification": "high",
-          "modelName": "gemini",
-          "regulatedWorkflowFlag": "false",
-          "displayName": "Claude Code"
+          "tenantKey": "skyharbor-air",
+          "functionName": "Customer",
+          "sourceFile": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+          "originalSourceFile": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/business-capabilities.csv",
+          "originalPacket": "rich-substrate-pack",
+          "originalRowNumber": 6,
+          "sourceClassification": "synthetic-demo",
+          "sourceFingerprint": "de0f6328aa786409a07d84ca8d03db8f6a53a6990a3269cc6bb9cca8171fb852"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "ai_automation_use_case",
-        "sourceObjectId": "ai_automation_use_cases:salesforce_einstein:8",
-        "displayName": "ai_automation_use_cases:salesforce_einstein:8",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:pss:6",
+        "displayName": "business_functions:pss:6",
         "evidenceKeys": [
-          "skyharbor-air:rich-substrate-pack:ai-tooling.csv:8"
+          "skyharbor-air:current-universal:01_business_functions.csv:6"
         ],
         "attributes": {
-          "toolId": "AIT-007",
-          "toolName": "Salesforce Einstein",
-          "ownerRole": "Director Data",
-          "workflow": "fraud",
-          "riskClassification": "high",
-          "modelName": "gpt-4o",
-          "regulatedWorkflowFlag": "false",
-          "displayName": "Salesforce Einstein"
+          "tenantKey": "skyharbor-air",
+          "functionName": "PSS",
+          "sourceFile": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+          "originalSourceFile": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/business-capabilities.csv",
+          "originalPacket": "rich-substrate-pack",
+          "originalRowNumber": 7,
+          "sourceClassification": "synthetic-demo",
+          "sourceFingerprint": "de0f6328aa786409a07d84ca8d03db8f6a53a6990a3269cc6bb9cca8171fb852"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "ai_automation_use_case",
-        "sourceObjectId": "ai_automation_use_cases:github_copilot:9",
-        "displayName": "ai_automation_use_cases:github_copilot:9",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:dcs:7",
+        "displayName": "business_functions:dcs:7",
         "evidenceKeys": [
-          "skyharbor-air:rich-substrate-pack:ai-tooling.csv:9"
+          "skyharbor-air:current-universal:01_business_functions.csv:7"
         ],
         "attributes": {
-          "toolId": "AIT-008",
-          "toolName": "GitHub Copilot",
-          "ownerRole": "CDAO",
-          "workflow": "fraud",
-          "riskClassification": "low",
-          "modelName": "gpt-4o",
-          "regulatedWorkflowFlag": "false",
-          "displayName": "GitHub Copilot"
+          "tenantKey": "skyharbor-air",
+          "functionName": "DCS",
+          "sourceFile": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+          "originalSourceFile": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/business-capabilities.csv",
+          "originalPacket": "rich-substrate-pack",
+          "originalRowNumber": 8,
+          "sourceClassification": "synthetic-demo",
+          "sourceFingerprint": "de0f6328aa786409a07d84ca8d03db8f6a53a6990a3269cc6bb9cca8171fb852"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "ai_automation_use_case",
-        "sourceObjectId": "ai_automation_use_cases:claude_code:10",
-        "displayName": "ai_automation_use_cases:claude_code:10",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:cargo:8",
+        "displayName": "business_functions:cargo:8",
         "evidenceKeys": [
-          "skyharbor-air:rich-substrate-pack:ai-tooling.csv:10"
+          "skyharbor-air:current-universal:01_business_functions.csv:8"
         ],
         "attributes": {
-          "toolId": "AIT-009",
-          "toolName": "Claude Code",
-          "ownerRole": "Director Data",
-          "workflow": "code",
-          "riskClassification": "medium",
-          "modelName": "internal-llm",
-          "regulatedWorkflowFlag": "false",
-          "displayName": "Claude Code"
+          "tenantKey": "skyharbor-air",
+          "functionName": "Cargo",
+          "sourceFile": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+          "originalSourceFile": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/business-capabilities.csv",
+          "originalPacket": "rich-substrate-pack",
+          "originalRowNumber": 9,
+          "sourceClassification": "synthetic-demo",
+          "sourceFingerprint": "de0f6328aa786409a07d84ca8d03db8f6a53a6990a3269cc6bb9cca8171fb852"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "ai_automation_use_case",
-        "sourceObjectId": "ai_automation_use_cases:amazon_q:11",
-        "displayName": "ai_automation_use_cases:amazon_q:11",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:revenue_accounting:9",
+        "displayName": "business_functions:revenue_accounting:9",
         "evidenceKeys": [
-          "skyharbor-air:rich-substrate-pack:ai-tooling.csv:11"
+          "skyharbor-air:current-universal:01_business_functions.csv:9"
         ],
         "attributes": {
-          "toolId": "AIT-010",
-          "toolName": "Amazon Q",
-          "ownerRole": "VP Engineering",
-          "workflow": "forecasting",
-          "riskClassification": "medium",
-          "modelName": "gemini",
-          "regulatedWorkflowFlag": "true",
-          "displayName": "Amazon Q"
+          "tenantKey": "skyharbor-air",
+          "functionName": "Revenue Accounting",
+          "sourceFile": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+          "originalSourceFile": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/business-capabilities.csv",
+          "originalPacket": "rich-substrate-pack",
+          "originalRowNumber": 10,
+          "sourceClassification": "synthetic-demo",
+          "sourceFingerprint": "de0f6328aa786409a07d84ca8d03db8f6a53a6990a3269cc6bb9cca8171fb852"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "ai_automation_use_case",
-        "sourceObjectId": "ai_automation_use_cases:github_copilot:12",
-        "displayName": "ai_automation_use_cases:github_copilot:12",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:finance:10",
+        "displayName": "business_functions:finance:10",
         "evidenceKeys": [
-          "skyharbor-air:rich-substrate-pack:ai-tooling.csv:12"
+          "skyharbor-air:current-universal:01_business_functions.csv:10"
         ],
         "attributes": {
-          "toolId": "AIT-011",
-          "toolName": "GitHub Copilot",
-          "ownerRole": "CDAO",
-          "workflow": "code",
-          "riskClassification": "medium",
-          "modelName": "gemini",
-          "regulatedWorkflowFlag": "false",
-          "displayName": "GitHub Copilot"
+          "tenantKey": "skyharbor-air",
+          "functionName": "Finance",
+          "sourceFile": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+          "originalSourceFile": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/business-capabilities.csv",
+          "originalPacket": "rich-substrate-pack",
+          "originalRowNumber": 11,
+          "sourceClassification": "synthetic-demo",
+          "sourceFingerprint": "de0f6328aa786409a07d84ca8d03db8f6a53a6990a3269cc6bb9cca8171fb852"
         }
       },
       {
         "domain": "unknown",
-        "objectType": "ai_automation_use_case",
-        "sourceObjectId": "ai_automation_use_cases:github_copilot:13",
-        "displayName": "ai_automation_use_cases:github_copilot:13",
+        "objectType": "business_function",
+        "sourceObjectId": "business_functions:commercial:11",
+        "displayName": "business_functions:commercial:11",
         "evidenceKeys": [
-          "skyharbor-air:rich-substrate-pack:ai-tooling.csv:13"
+          "skyharbor-air:current-universal:01_business_functions.csv:11"
         ],
         "attributes": {
-          "toolId": "AIT-012",
-          "toolName": "GitHub Copilot",
-          "ownerRole": "Director Data",
-          "workflow": "code",
-          "riskClassification": "low",
-          "modelName": "gpt-4o",
-          "regulatedWorkflowFlag": "false",
-          "displayName": "GitHub Copilot"
+          "tenantKey": "skyharbor-air",
+          "functionName": "Commercial",
+          "sourceFile": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+          "originalSourceFile": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/business-capabilities.csv",
+          "originalPacket": "rich-substrate-pack",
+          "originalRowNumber": 12,
+          "sourceClassification": "synthetic-demo",
+          "sourceFingerprint": "de0f6328aa786409a07d84ca8d03db8f6a53a6990a3269cc6bb9cca8171fb852"
         }
       }
     ]

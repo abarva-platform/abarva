@@ -1,16 +1,16 @@
 {
   "reportVersion": "candidate-version-build/v1",
-  "generatedAt": "2026-07-14T13:00:00.000Z",
-  "sourceBuildId": "canonical-data-build:c32e4ed2326c",
+  "generatedAt": "2026-07-14T15:50:19.110Z",
+  "sourceBuildId": "canonical-data-build:c6dba401db07",
   "sourceBuildPath": "reports/canonical-data-build/latest",
-  "sourceBuildFingerprint": "c32e4ed2326c5825e7797f488656be1967641a2108b9176b089e3e84bd34bd22",
+  "sourceBuildFingerprint": "c6dba401db07e9a280869e59714a3c2374221cdf73c91843b1ef7b235b18c5a5",
   "summary": {
     "tenantsProcessed": 6,
     "candidateVersionsCreated": 6,
     "tenantsBlocked": 0,
-    "canonicalRecordsRepresented": 20230,
-    "evidenceAttachmentsRepresented": 20230,
-    "relationshipCandidatesRepresented": 10835,
+    "canonicalRecordsRepresented": 6593,
+    "evidenceAttachmentsRepresented": 6593,
+    "relationshipCandidatesRepresented": 9330,
     "inactiveOnly": true
   }
 }

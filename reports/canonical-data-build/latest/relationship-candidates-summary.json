@@ -1,14 +1,18 @@
 [
   {
     "tenantKey": "apex-retail",
-    "candidateCount": 1690,
+    "candidateCount": 1730,
     "byType": {
-      "owned_by": 411,
+      "owned_by": 369,
       "owns_system": 89,
-      "sourced_from": 385,
-      "technology_owned_by": 159,
-      "depends_on": 271,
-      "affects_system": 375
+      "supports_function": 122,
+      "technology_owned_by": 202,
+      "provided_by": 110,
+      "handles_data_domain": 200,
+      "sourced_from": 235,
+      "stored_on": 235,
+      "sponsored_by": 80,
+      "depends_on": 88
     },
     "gapCount": 0,
     "samples": [
@@ -20,8 +24,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "COO",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:2",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 2
       },
       {
@@ -32,8 +36,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Digital Officer",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:3",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:3",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 3
       },
       {
@@ -44,8 +48,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Merchandising Officer",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:4",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:4",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 4
       },
       {
@@ -56,8 +60,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Supply Chain Officer",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:5",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:5",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 5
       },
       {
@@ -68,8 +72,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Marketing Officer",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:6",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:6",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 6
       },
       {
@@ -80,8 +84,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "CFO",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:7",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:7",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 7
       },
       {
@@ -92,8 +96,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Risk Officer",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:8",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:8",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 8
       },
       {
@@ -104,8 +108,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "CIO",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:9",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:9",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 9
       },
       {
@@ -116,8 +120,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "CHRO",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:10",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:10",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 10
       },
       {
@@ -128,8 +132,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Procurement Officer",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:11",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:11",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 11
       },
       {
@@ -140,8 +144,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Real Estate Officer",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:12",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:12",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 12
       },
       {
@@ -152,8 +156,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "SVP Private Brands",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:13",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:13",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 13
       },
       {
@@ -164,8 +168,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "APX-BF-001",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:14",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:14",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 14
       },
       {
@@ -176,8 +180,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "APX-BF-002",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:15",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:15",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 15
       },
       {
@@ -188,8 +192,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "APX-BF-003",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:16",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:16",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 16
       },
       {
@@ -200,8 +204,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "APX-BF-004",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:17",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:17",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 17
       },
       {
@@ -212,8 +216,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "APX-BF-005",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:18",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:18",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 18
       },
       {
@@ -224,8 +228,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "APX-BF-006",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:19",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:19",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 19
       },
       {
@@ -236,8 +240,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "APX-BF-007",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:20",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:20",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 20
       },
       {
@@ -248,22 +252,26 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "APX-BF-008",
         "confidence": 0.72,
-        "evidenceKey": "apex-retail:enterprise-pack:V6_02_business_functions.csv:21",
-        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "apex-retail:current-universal:01_business_functions.csv:21",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
         "rowNumber": 21
       }
     ]
   },
   {
     "tenantKey": "first-capital-financial",
-    "candidateCount": 2757,
+    "candidateCount": 1991,
     "byType": {
-      "owned_by": 487,
+      "owned_by": 298,
       "owns_system": 117,
-      "sourced_from": 460,
-      "technology_owned_by": 299,
-      "depends_on": 823,
-      "affects_system": 571
+      "supports_function": 212,
+      "technology_owned_by": 308,
+      "provided_by": 212,
+      "handles_data_domain": 236,
+      "sourced_from": 114,
+      "stored_on": 114,
+      "sponsored_by": 96,
+      "depends_on": 284
     },
     "gapCount": 0,
     "samples": [
@@ -275,8 +283,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Head of Consumer Banking",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:2",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 2
       },
       {
@@ -287,8 +295,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Head of Commercial Banking",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:3",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:3",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 3
       },
       {
@@ -299,8 +307,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Head of Cards & Payments",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:4",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:4",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 4
       },
       {
@@ -311,8 +319,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Head of Wealth Management",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:5",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:5",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 5
       },
       {
@@ -323,8 +331,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Treasurer",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:6",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:6",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 6
       },
       {
@@ -335,8 +343,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Risk Officer",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:7",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:7",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 7
       },
       {
@@ -347,8 +355,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "BSA/AML Officer",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:8",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:8",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 8
       },
       {
@@ -359,8 +367,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Compliance Officer",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:9",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:9",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 9
       },
       {
@@ -371,8 +379,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Financial Officer",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:10",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:10",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 10
       },
       {
@@ -383,8 +391,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Operating Officer",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:11",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:11",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 11
       },
       {
@@ -395,8 +403,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Head of Customer Experience",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:12",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:12",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 12
       },
       {
@@ -407,8 +415,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Data & Analytics Officer",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:13",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:13",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 13
       },
       {
@@ -419,8 +427,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Information Security Officer",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:14",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:14",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 14
       },
       {
@@ -431,8 +439,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Information Officer",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:15",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:15",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 15
       },
       {
@@ -443,8 +451,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Strategy Officer",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:16",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:16",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 16
       },
       {
@@ -455,8 +463,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "COO",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:17",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:17",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 17
       },
       {
@@ -467,8 +475,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "CFO",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:18",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:18",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 18
       },
       {
@@ -479,8 +487,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "CIO",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:19",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:19",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 19
       },
       {
@@ -491,8 +499,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Commercial Officer",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:20",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:20",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 20
       },
       {
@@ -503,22 +511,26 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Risk Officer",
         "confidence": 0.72,
-        "evidenceKey": "first-capital-financial:enterprise-pack:V6_02_business_functions.csv:21",
-        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "first-capital-financial:current-universal:01_business_functions.csv:21",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
         "rowNumber": 21
       }
     ]
   },
   {
     "tenantKey": "lakeshore-holdings",
-    "candidateCount": 183,
+    "candidateCount": 373,
     "byType": {
-      "owned_by": 48,
+      "owned_by": 60,
       "owns_system": 31,
+      "supports_function": 24,
+      "technology_owned_by": 39,
+      "provided_by": 24,
+      "handles_data_domain": 75,
       "sourced_from": 34,
-      "technology_owned_by": 15,
-      "depends_on": 37,
-      "affects_system": 18
+      "stored_on": 34,
+      "sponsored_by": 15,
+      "depends_on": 37
     },
     "gapCount": 0,
     "samples": [
@@ -530,8 +542,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "CFO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:2",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:01_business_functions.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
         "rowNumber": 2
       },
       {
@@ -542,8 +554,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief People Officer",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:3",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:01_business_functions.csv:3",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
         "rowNumber": 3
       },
       {
@@ -554,8 +566,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "General Counsel",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:4",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:01_business_functions.csv:4",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
         "rowNumber": 4
       },
       {
@@ -566,8 +578,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Investment Officer",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:5",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:01_business_functions.csv:5",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
         "rowNumber": 5
       },
       {
@@ -578,8 +590,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Group CIO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:6",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:01_business_functions.csv:6",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
         "rowNumber": 6
       },
       {
@@ -590,8 +602,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "VP Corporate Innovation IT and Data AI",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:7",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:01_business_functions.csv:7",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
         "rowNumber": 7
       },
       {
@@ -602,8 +614,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Northline COO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:8",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:01_business_functions.csv:8",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
         "rowNumber": 8
       },
       {
@@ -614,8 +626,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Northline CIO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:9",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:01_business_functions.csv:9",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
         "rowNumber": 9
       },
       {
@@ -626,8 +638,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Brightmark COO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:10",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:01_business_functions.csv:10",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
         "rowNumber": 10
       },
       {
@@ -638,8 +650,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Brightmark CIO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:11",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:01_business_functions.csv:11",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
         "rowNumber": 11
       },
       {
@@ -650,8 +662,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Forge & Field COO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:12",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:01_business_functions.csv:12",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
         "rowNumber": 12
       },
       {
@@ -662,8 +674,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Forge & Field CIO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:13",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:01_business_functions.csv:13",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
         "rowNumber": 13
       },
       {
@@ -674,8 +686,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Great Lakes Pantry COO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:14",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:01_business_functions.csv:14",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
         "rowNumber": 14
       },
       {
@@ -686,8 +698,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Great Lakes Pantry IT Director",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_02_business_functions.csv:15",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:01_business_functions.csv:15",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
         "rowNumber": 15
       },
       {
@@ -698,8 +710,8 @@
         "targetObjectType": "application_system",
         "targetObjectName": "Oracle Fusion ERP",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_03_org_ownership.csv:2",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_03_org_ownership.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:02_org_ownership.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/02_org_ownership.csv",
         "rowNumber": 2
       },
       {
@@ -710,8 +722,8 @@
         "targetObjectType": "application_system",
         "targetObjectName": "Workday",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_03_org_ownership.csv:2",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_03_org_ownership.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:02_org_ownership.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/02_org_ownership.csv",
         "rowNumber": 2
       },
       {
@@ -722,8 +734,8 @@
         "targetObjectType": "application_system",
         "targetObjectName": "ServiceNow ITSM",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_03_org_ownership.csv:2",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_03_org_ownership.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:02_org_ownership.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/02_org_ownership.csv",
         "rowNumber": 2
       },
       {
@@ -734,8 +746,8 @@
         "targetObjectType": "application_system",
         "targetObjectName": "Azure Data Lakehouse",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_03_org_ownership.csv:2",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_03_org_ownership.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:02_org_ownership.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/02_org_ownership.csv",
         "rowNumber": 2
       },
       {
@@ -746,8 +758,8 @@
         "targetObjectType": "application_system",
         "targetObjectName": "Microsoft 365",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_03_org_ownership.csv:2",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_03_org_ownership.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:02_org_ownership.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/02_org_ownership.csv",
         "rowNumber": 2
       },
       {
@@ -758,21 +770,28 @@
         "targetObjectType": "application_system",
         "targetObjectName": "Entra ID",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_03_org_ownership.csv:2",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_03_org_ownership.csv",
+        "evidenceKey": "lakeshore-holdings:current-universal:02_org_ownership.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/02_org_ownership.csv",
         "rowNumber": 2
       }
     ]
   },
   {
     "tenantKey": "lakeshore-industries",
-    "candidateCount": 892,
+    "candidateCount": 1580,
     "byType": {
-      "owned_by": 226,
+      "owned_by": 189,
+      "supports_function": 255,
+      "business_owned_by": 152,
+      "technology_owned_by": 152,
+      "provided_by": 152,
       "handles_data_domain": 152,
+      "hosted_on": 152,
+      "sourced_from": 82,
       "stewarded_by": 82,
-      "supports_function": 396,
-      "sponsored_by": 36
+      "sponsored_by": 36,
+      "targets_metric": 36,
+      "depends_on": 140
     },
     "gapCount": 0,
     "samples": [
@@ -784,8 +803,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "CFO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:2",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 2
       },
       {
@@ -796,8 +815,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "CFO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:3",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:3",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 3
       },
       {
@@ -808,8 +827,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "CFO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:4",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:4",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 4
       },
       {
@@ -820,8 +839,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Procurement Officer",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:5",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:5",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 5
       },
       {
@@ -832,8 +851,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "CHRO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:6",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:6",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 6
       },
       {
@@ -844,8 +863,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "General Counsel",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:7",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:7",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 7
       },
       {
@@ -856,8 +875,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "CISO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:8",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:8",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 8
       },
       {
@@ -868,8 +887,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Corporate CIO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:9",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:9",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 9
       },
       {
@@ -880,8 +899,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Data Officer",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:10",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:10",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 10
       },
       {
@@ -892,8 +911,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "VP Innovation",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:11",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:11",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 11
       },
       {
@@ -904,8 +923,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "VP IT Operations",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:12",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:12",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 12
       },
       {
@@ -916,8 +935,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "VP Enterprise Architecture",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:13",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:13",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 13
       },
       {
@@ -928,8 +947,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "VP Supply Chain",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:14",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:14",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 14
       },
       {
@@ -940,8 +959,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "COO",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:15",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:15",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 15
       },
       {
@@ -952,8 +971,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "VP Fleet Operations",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:16",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:16",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 16
       },
       {
@@ -964,8 +983,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Commercial Officer",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:17",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:17",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 17
       },
       {
@@ -976,8 +995,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "VP Quality",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:18",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:18",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 18
       },
       {
@@ -988,8 +1007,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "VP Finance",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:19",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:19",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 19
       },
       {
@@ -1000,37 +1019,41 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "HR Director",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:20",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:20",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 20
       },
       {
         "tenantKey": "lakeshore-industries",
         "relationshipType": "owned_by",
         "sourceObjectType": "business_function",
-        "sourceObjectName": "Procurement and Supplier Management",
+        "sourceObjectName": "Sales and Customer Operations",
         "targetObjectType": "person_or_role",
-        "targetObjectName": "VP Procurement",
+        "targetObjectName": "Chief Commercial Officer",
         "confidence": 0.72,
-        "evidenceKey": "lakeshore-industries:holdco-pack:V7_02_business_functions.csv:21",
-        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "evidenceKey": "lakeshore-industries:current-universal:01_business_functions.csv:21",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
         "rowNumber": 21
       }
     ]
   },
   {
     "tenantKey": "meridian-health",
-    "candidateCount": 2177,
+    "candidateCount": 1662,
     "byType": {
-      "owned_by": 499,
-      "owns_system": 142,
-      "sourced_from": 396,
-      "technology_owned_by": 163,
-      "depends_on": 442,
-      "affects_system": 479,
-      "handles_data_domain": 42,
-      "supports_function": 7,
-      "sponsored_by": 7
+      "owned_by": 321,
+      "owns_system": 97,
+      "supports_function": 123,
+      "business_owned_by": 15,
+      "technology_owned_by": 202,
+      "provided_by": 116,
+      "handles_data_domain": 161,
+      "hosted_on": 15,
+      "sourced_from": 147,
+      "stored_on": 111,
+      "sponsored_by": 86,
+      "targets_metric": 7,
+      "depends_on": 261
     },
     "gapCount": 0,
     "samples": [
@@ -1042,8 +1065,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "CDAO",
         "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_02_business_functions.csv:2",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 2
       },
       {
@@ -1054,8 +1077,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "CMO",
         "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_02_business_functions.csv:3",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:3",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 3
       },
       {
@@ -1064,10 +1087,10 @@
         "sourceObjectType": "business_function",
         "sourceObjectName": "Health Plan Operations",
         "targetObjectType": "person_or_role",
-        "targetObjectName": "Health Plan COO",
+        "targetObjectName": "Chief Health Plan Officer",
         "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_02_business_functions.csv:4",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:4",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 4
       },
       {
@@ -1078,8 +1101,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "VP Quality",
         "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_02_business_functions.csv:5",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:5",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 5
       },
       {
@@ -1090,8 +1113,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "CFO",
         "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_02_business_functions.csv:6",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:6",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 6
       },
       {
@@ -1102,8 +1125,8 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "Chief Experience Officer",
         "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_02_business_functions.csv:7",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:7",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 7
       },
       {
@@ -1114,186 +1137,393 @@
         "targetObjectType": "person_or_role",
         "targetObjectName": "CDIO",
         "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_02_business_functions.csv:8",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv",
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:8",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
         "rowNumber": 8
       },
       {
         "tenantKey": "meridian-health",
-        "relationshipType": "owns_system",
-        "sourceObjectType": "org_owner",
-        "sourceObjectName": "Enterprise Data and Analytics",
-        "targetObjectType": "application_system",
-        "targetObjectName": "On-prem SQL Server reporting marts",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Ambulatory and Primary Care",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "Chief Medical Officer",
         "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_03_org_ownership.csv:2",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
-        "rowNumber": 2
-      },
-      {
-        "tenantKey": "meridian-health",
-        "relationshipType": "owns_system",
-        "sourceObjectType": "org_owner",
-        "sourceObjectName": "Clinical Operations",
-        "targetObjectType": "application_system",
-        "targetObjectName": "Epic Hyperspace",
-        "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_03_org_ownership.csv:3",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
-        "rowNumber": 3
-      },
-      {
-        "tenantKey": "meridian-health",
-        "relationshipType": "owns_system",
-        "sourceObjectType": "org_owner",
-        "sourceObjectName": "Clinical Operations",
-        "targetObjectType": "application_system",
-        "targetObjectName": "Epic Clarity",
-        "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_03_org_ownership.csv:3",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
-        "rowNumber": 3
-      },
-      {
-        "tenantKey": "meridian-health",
-        "relationshipType": "owns_system",
-        "sourceObjectType": "org_owner",
-        "sourceObjectName": "Clinical Operations",
-        "targetObjectType": "application_system",
-        "targetObjectName": "Epic Caboodle",
-        "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_03_org_ownership.csv:3",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
-        "rowNumber": 3
-      },
-      {
-        "tenantKey": "meridian-health",
-        "relationshipType": "owns_system",
-        "sourceObjectType": "org_owner",
-        "sourceObjectName": "Health Plan Operations",
-        "targetObjectType": "application_system",
-        "targetObjectName": "Claims administration platform",
-        "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_03_org_ownership.csv:4",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
-        "rowNumber": 4
-      },
-      {
-        "tenantKey": "meridian-health",
-        "relationshipType": "owns_system",
-        "sourceObjectType": "org_owner",
-        "sourceObjectName": "Finance and Actuarial",
-        "targetObjectType": "application_system",
-        "targetObjectName": "General ledger and close reporting",
-        "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_03_org_ownership.csv:6",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
-        "rowNumber": 6
-      },
-      {
-        "tenantKey": "meridian-health",
-        "relationshipType": "owns_system",
-        "sourceObjectType": "org_owner",
-        "sourceObjectName": "Contact Center and Member Experience",
-        "targetObjectType": "application_system",
-        "targetObjectName": "Contact center transcript and telephony platform",
-        "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_03_org_ownership.csv:7",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
-        "rowNumber": 7
-      },
-      {
-        "tenantKey": "meridian-health",
-        "relationshipType": "owns_system",
-        "sourceObjectType": "org_owner",
-        "sourceObjectName": "Technology Platform and Security",
-        "targetObjectType": "application_system",
-        "targetObjectName": "AWS analytics foundation",
-        "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_03_org_ownership.csv:8",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
-        "rowNumber": 8
-      },
-      {
-        "tenantKey": "meridian-health",
-        "relationshipType": "sourced_from",
-        "sourceObjectType": "data_asset_or_integration",
-        "sourceObjectName": "Unified clinical + claims lakehouse: EMR clinical",
-        "targetObjectType": "application_system",
-        "targetObjectName": "meridian-health-v6-v7-current-state-v1",
-        "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_06_data_assets_integrations.csv:2",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_06_data_assets_integrations.csv",
-        "rowNumber": 2
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:9",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "rowNumber": 9
       },
       {
         "tenantKey": "meridian-health",
         "relationshipType": "owned_by",
-        "sourceObjectType": "data_asset_or_integration",
-        "sourceObjectName": "Unified clinical + claims lakehouse: EMR clinical",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Hospital Operations",
         "targetObjectType": "person_or_role",
-        "targetObjectName": "owner_to_confirm_in_workshop",
+        "targetObjectName": "Chief Operating Officer",
         "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_06_data_assets_integrations.csv:2",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_06_data_assets_integrations.csv",
-        "rowNumber": 2
-      },
-      {
-        "tenantKey": "meridian-health",
-        "relationshipType": "sourced_from",
-        "sourceObjectType": "data_asset_or_integration",
-        "sourceObjectName": "Unified clinical + claims lakehouse: claims",
-        "targetObjectType": "application_system",
-        "targetObjectName": "meridian-health-v6-v7-current-state-v1",
-        "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_06_data_assets_integrations.csv:3",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_06_data_assets_integrations.csv",
-        "rowNumber": 3
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:10",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "rowNumber": 10
       },
       {
         "tenantKey": "meridian-health",
         "relationshipType": "owned_by",
-        "sourceObjectType": "data_asset_or_integration",
-        "sourceObjectName": "Unified clinical + claims lakehouse: claims",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Pharmacy Services",
         "targetObjectType": "person_or_role",
-        "targetObjectName": "owner_to_confirm_in_workshop",
+        "targetObjectName": "Chief Pharmacy Officer",
         "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_06_data_assets_integrations.csv:3",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_06_data_assets_integrations.csv",
-        "rowNumber": 3
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:11",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "rowNumber": 11
       },
       {
         "tenantKey": "meridian-health",
-        "relationshipType": "sourced_from",
-        "sourceObjectType": "data_asset_or_integration",
-        "sourceObjectName": "Unified clinical + claims lakehouse: pharmacy",
-        "targetObjectType": "application_system",
-        "targetObjectName": "meridian-health-v6-v7-current-state-v1",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Revenue Cycle and Coding",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "VP Revenue Cycle",
         "confidence": 0.72,
-        "evidenceKey": "meridian-health:current-state-pack:V6_06_data_assets_integrations.csv:4",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_06_data_assets_integrations.csv",
-        "rowNumber": 4
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:12",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "rowNumber": 12
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Member and Patient Contact Center",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "Chief Customer Experience Officer",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:13",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "rowNumber": 13
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Quality, STAR and HEDIS",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "Chief Quality Officer",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:14",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "rowNumber": 14
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Population Health and VBC",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "SVP Population Health",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:15",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "rowNumber": 15
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Data, Analytics and AI",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "Chief Data Officer",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:16",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "rowNumber": 16
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Cybersecurity, Privacy and Compliance",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "CISO",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:17",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "rowNumber": 17
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Digital and IT",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "Chief Digital & Information Officer",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:18",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "rowNumber": 18
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Provider Network Management",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "Chief Network Officer",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:19",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "rowNumber": 19
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Clinical Informatics",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "Chief Clinical Informatics Officer",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:20",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "rowNumber": 20
+      },
+      {
+        "tenantKey": "meridian-health",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Enterprise Transformation Office",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "Chief Strategy Officer",
+        "confidence": 0.72,
+        "evidenceKey": "meridian-health:current-universal:01_business_functions.csv:21",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "rowNumber": 21
       }
     ]
   },
   {
     "tenantKey": "skyharbor-air",
-    "candidateCount": 3136,
+    "candidateCount": 1994,
     "byType": {
-      "supports_function": 610,
-      "uses_system": 400,
-      "owned_by": 868,
-      "sourced_from": 535,
-      "feeds": 500,
+      "owned_by": 116,
       "owns_system": 11,
-      "technology_owned_by": 7,
-      "depends_on": 33,
-      "affects_system": 132,
+      "supports_function": 623,
+      "business_owned_by": 13,
+      "technology_owned_by": 20,
+      "provided_by": 13,
       "handles_data_domain": 33,
-      "sponsored_by": 7
+      "hosted_on": 13,
+      "sourced_from": 570,
+      "feeds": 500,
+      "stored_on": 35,
+      "sponsored_by": 7,
+      "targets_metric": 7,
+      "depends_on": 33
     },
     "gapCount": 0,
     "samples": [
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Operations Control Center / IROPS",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "COO",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:01_business_functions.csv:20",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+        "rowNumber": 20
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Flight Operations",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "SVP Flight Operations",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:01_business_functions.csv:21",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+        "rowNumber": 21
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Crew Operations",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "SVP Crew Resources",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:01_business_functions.csv:22",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+        "rowNumber": 22
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Customer Operations",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "Chief Customer Officer",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:01_business_functions.csv:23",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+        "rowNumber": 23
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Airline Operations Technology",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "CTO",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:01_business_functions.csv:24",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+        "rowNumber": 24
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owned_by",
+        "sourceObjectType": "business_function",
+        "sourceObjectName": "Finance and Vendor Management",
+        "targetObjectType": "person_or_role",
+        "targetObjectName": "CFO",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:01_business_functions.csv:25",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+        "rowNumber": 25
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Operations Control Center / IROPS",
+        "targetObjectType": "application_system",
+        "targetObjectName": "OCC disruption management console",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:274",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 274
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Operations Control Center / IROPS",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Flight operations dispatch platform",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:274",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 274
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Operations Control Center / IROPS",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Crew scheduling and legality platform",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:274",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 274
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Operations Control Center / IROPS",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Passenger service system",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:274",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 274
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Operations Control Center / IROPS",
+        "targetObjectType": "application_system",
+        "targetObjectName": "ServiceNow technology service management",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:274",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 274
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Flight Operations",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Flight operations dispatch platform",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:275",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 275
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Flight Operations",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Crew scheduling and legality platform",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:275",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 275
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Crew Operations",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Crew scheduling and legality platform",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:276",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 276
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Customer Operations",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Passenger service system",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:277",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 277
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Customer Operations",
+        "targetObjectType": "application_system",
+        "targetObjectName": "Salesforce customer service platform",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:277",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 277
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "relationshipType": "owns_system",
+        "sourceObjectType": "org_owner",
+        "sourceObjectName": "Finance and Vendor Management",
+        "targetObjectType": "application_system",
+        "targetObjectName": "SAP finance and procurement",
+        "confidence": 0.72,
+        "evidenceKey": "skyharbor-air:current-universal:02_org_ownership.csv:279",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+        "rowNumber": 279
+      },
       {
         "tenantKey": "skyharbor-air",
         "relationshipType": "supports_function",
@@ -1302,8 +1532,8 @@
         "targetObjectType": "business_function",
         "targetObjectName": "Revenue Accounting",
         "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:2",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
+        "evidenceKey": "skyharbor-air:current-universal:04_applications_systems.csv:2",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
         "rowNumber": 2
       },
       {
@@ -1314,8 +1544,8 @@
         "targetObjectType": "business_function",
         "targetObjectName": "PSS",
         "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:3",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
+        "evidenceKey": "skyharbor-air:current-universal:04_applications_systems.csv:3",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
         "rowNumber": 3
       },
       {
@@ -1326,213 +1556,9 @@
         "targetObjectType": "business_function",
         "targetObjectName": "MRO",
         "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:4",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
+        "evidenceKey": "skyharbor-air:current-universal:04_applications_systems.csv:4",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
         "rowNumber": 4
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "Commercial Hub 4",
-        "targetObjectType": "business_function",
-        "targetObjectName": "Commercial",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:5",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 5
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "Customer Portal 5",
-        "targetObjectType": "business_function",
-        "targetObjectName": "Customer",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:6",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 6
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "MRO Service 6",
-        "targetObjectType": "business_function",
-        "targetObjectName": "MRO",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:7",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 7
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "HR Ledger 7",
-        "targetObjectType": "business_function",
-        "targetObjectName": "HR",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:8",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 8
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "Catering Hub 8",
-        "targetObjectType": "business_function",
-        "targetObjectName": "Catering",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:9",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 9
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "Ground Ops Ledger 9",
-        "targetObjectType": "business_function",
-        "targetObjectName": "Ground Ops",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:10",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 10
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "Maintenance Gateway 10",
-        "targetObjectType": "business_function",
-        "targetObjectName": "Maintenance",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:11",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 11
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "Customer Hub 11",
-        "targetObjectType": "business_function",
-        "targetObjectName": "Customer",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:12",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 12
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "Finance Portal 12",
-        "targetObjectType": "business_function",
-        "targetObjectName": "Finance",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:13",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 13
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "Commercial Hub 13",
-        "targetObjectType": "business_function",
-        "targetObjectName": "Commercial",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:14",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 14
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "PSS Engine 14",
-        "targetObjectType": "business_function",
-        "targetObjectName": "PSS",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:15",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 15
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "Loyalty Service 15",
-        "targetObjectType": "business_function",
-        "targetObjectName": "Loyalty",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:16",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 16
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "MRO Ledger 16",
-        "targetObjectType": "business_function",
-        "targetObjectName": "MRO",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:17",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 17
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "Cargo Service 17",
-        "targetObjectType": "business_function",
-        "targetObjectName": "Cargo",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:18",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 18
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "Ground Ops Manager 18",
-        "targetObjectType": "business_function",
-        "targetObjectName": "Ground Ops",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:19",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 19
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "Catering Ledger 19",
-        "targetObjectType": "business_function",
-        "targetObjectName": "Catering",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:20",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 20
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "relationshipType": "supports_function",
-        "sourceObjectType": "application_system",
-        "sourceObjectName": "Commercial Gateway 20",
-        "targetObjectType": "business_function",
-        "targetObjectName": "Commercial",
-        "confidence": 0.72,
-        "evidenceKey": "skyharbor-air:rich-substrate-pack:application-portfolio.csv:21",
-        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/application-portfolio.csv",
-        "rowNumber": 21
       }
     ]
   }
