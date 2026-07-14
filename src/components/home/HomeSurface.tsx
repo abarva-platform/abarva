@@ -357,6 +357,22 @@ const CSS = `
 @media(max-width:760px){.homex .hx2-shell{grid-template-columns:1fr}.homex .hx2-explorer{max-height:280px;border-right:0;border-bottom:1px solid #e7e3da}.homex .hx2-detailHead,.homex .hx2-summaryGrid,.homex .hx2-gapGrid,.homex .hx2-sourceList,.homex .hx2-meaningHead,.homex .hx2-meaningGrid,.homex .hx2-meaningLists,.homex .hx2-moduleImpact,.homex .hx2-profileBlockHead,.homex .hx2-profileStats,.homex .hx2-profileCols,.homex .hx2-depthGrid,.homex .hx2-safeGrid,.homex .hx2-snapshotCards,.homex .hx2-actionGrid,.homex .hx2-contextCards{grid-template-columns:1fr}.homex .hx2-detailActions{flex-wrap:wrap}.homex .hx2-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx2-relRow .edge,.homex .hx2-relRow strong{grid-column:2}.homex .hx2-snapshotRow{grid-template-columns:1fr}.homex .hx2-enterprise,.homex .hx2-status,.homex .hx2-candidateBanner{padding-left:16px;padding-right:16px}}
 `;
 
+const HX3_CSS = `
+.homex{background:#ffffff;color:#0c1a3a;font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;overflow:auto}
+.homex .hx3{min-height:100%;background:#fff;color:#0c1a3a;--nav:#071526;--blue:#0b5fd3;--blue-bg:#eef5ff;--ink:#0c1a3a;--ink-2:#263755;--muted:#657089;--gray:#8590a5;--line:#e5eaf2;--line-2:#edf1f6;--surface:#fff;--soft:#f7f9fc;--green:#2da66f;--green-bg:#edf9f2;--amber:#b7791f;--amber-bg:#fff8eb;--purple:#6b46c1;--purple-bg:#f4efff;--shadow:0 1px 2px rgba(12,26,58,.04),0 12px 30px rgba(12,26,58,.06)}
+.homex .hx3-shell{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100%}
+.homex .hx3-side{border-right:1px solid var(--line);background:#fbfcff;padding:20px 12px 28px;position:sticky;top:0;align-self:start;min-height:calc(100vh - 64px);display:flex;flex-direction:column;gap:6px}
+.homex .hx3-sideTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);font-weight:800;padding:0 12px 5px}.homex .hx3-sideGroup{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);font-weight:800;padding:18px 12px 7px}
+.homex .hx3-navBtn{width:100%;display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;gap:10px;text-align:left;background:transparent;border:0;border-radius:9px;padding:9px 12px;cursor:pointer;color:var(--ink-2);font:inherit;font-size:13px;transition:background .13s,color .13s}.homex .hx3-navBtn:hover{background:#f2f6fb}.homex .hx3-navBtn[aria-pressed="true"]{background:var(--blue-bg);color:#0b346f;font-weight:800}.homex .hx3-navIcon{display:grid;place-items:center;width:22px;height:22px;color:#4e5f7d}.homex .hx3-navIcon svg{width:17px;height:17px}.homex .hx3-navCount{font-size:11px;color:var(--muted)}.homex .hx3-navMeta{display:block;color:var(--muted);font-size:11px;line-height:1.35;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.homex .hx3-recent{margin-top:auto;border-top:1px solid var(--line);padding-top:16px}.homex .hx3-recentItem{display:block;padding:7px 12px;color:var(--ink-2);font-size:12.5px;line-height:1.35}
+.homex .hx3-main{min-width:0;background:#fff}.homex .hx3-page{max-width:1040px;margin:0 auto;padding:34px 36px 120px}.homex .hx3-top{display:grid;grid-template-columns:minmax(0,1fr) 262px;gap:32px;align-items:start}.homex .hx3-crumb{font-size:12px;color:#6f7b91;margin-bottom:20px}.homex .hx3-crumb span{color:#9aa4b6;margin:0 8px}.homex .hx3-title{font-size:40px;line-height:1.04;letter-spacing:-.03em;margin:0;color:var(--ink);font-weight:820}.homex .hx3-demo{display:inline-flex;vertical-align:middle;margin-left:10px;border-radius:7px;background:#e5f0ff;color:#0b5fd3;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:5px 8px}.homex .hx3-subtitle{margin:14px 0 0;color:#394763;line-height:1.55;max-width:680px}
+.homex .hx3-statusCard{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:16px}.homex .hx3-statusLine{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:13px;font-weight:800}.homex .hx3-dot{width:9px;height:9px;border-radius:50%;background:var(--green);display:inline-block}.homex .hx3-statusMeta{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:12px;color:#42506b;font-size:12px}.homex .hx3-statusMeta span::before{content:'•';margin-right:8px;color:#9aa4b6}.homex .hx3-statusMeta span:first-child::before{content:'';margin:0}.homex .hx3-hair{height:1px;background:var(--line);margin:34px 0 24px}.homex .hx3-section{margin-top:28px}.homex .hx3-sectionHead{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:14px}.homex .hx3-section h2,.homex .hx3-sectionTitle{margin:0;font-size:20px;letter-spacing:-.015em;color:var(--ink)}.homex .hx3-section p{margin:5px 0 0;color:#657089;line-height:1.5}.homex .hx3-eyebrow{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:#9c7b3f;font-weight:800;margin-bottom:12px}
+.homex .hx3-snapshot{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.homex .hx3-card{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:18px;min-width:0}.homex .hx3-cardTop{display:flex;align-items:center;gap:14px}.homex .hx3-cardIcon{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;background:#eaf2ff;color:#0b5fd3}.homex .hx3-card:nth-child(2) .hx3-cardIcon{background:#edf9f2;color:#168055}.homex .hx3-card:nth-child(3) .hx3-cardIcon{background:#f4efff;color:#6b46c1}.homex .hx3-card:nth-child(4) .hx3-cardIcon{background:#fff3e3;color:#c06812}.homex .hx3-cardIcon svg{width:21px;height:21px}.homex .hx3-card strong{display:block;font-size:21px;line-height:1.05;color:var(--ink)}.homex .hx3-card span{display:block;margin-top:6px;color:#42506b;font-size:12.5px;font-weight:700}.homex .hx3-card p{font-size:12px;margin-top:4px;color:#657089}
+.homex .hx3-actions,.homex .hx3-contextCards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.homex .hx3-action{display:grid;grid-template-columns:48px minmax(0,1fr) 18px;gap:14px;align-items:center;text-align:left;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:17px;cursor:pointer;color:inherit;font:inherit}.homex .hx3-actionIcon{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;background:#eaf2ff;color:#0b5fd3}.homex .hx3-action:nth-child(2) .hx3-actionIcon{background:#edf9f2;color:#168055}.homex .hx3-action:nth-child(3) .hx3-actionIcon{background:#f4efff;color:#6b46c1}.homex .hx3-action:nth-child(4) .hx3-actionIcon{background:#fff3e3;color:#c06812}.homex .hx3-action strong{display:block;color:var(--ink);font-size:14px}.homex .hx3-action span:last-child{color:#0b5fd3;font-size:20px}.homex .hx3-action p{font-size:12.5px;margin-top:4px;color:#42506b}.homex .hx3-tabs{display:flex;gap:28px;border-bottom:1px solid var(--line);margin-top:12px}.homex .hx3-tab{border:0;background:transparent;padding:13px 0 12px;color:#4c5b76;font:inherit;font-weight:750;cursor:pointer;border-bottom:2px solid transparent}.homex .hx3-tab[aria-selected="true"]{color:#0b346f;border-color:#0b5fd3}.homex .hx3-tableWrap{border:1px solid var(--line);border-radius:12px;overflow:auto;background:#fff;box-shadow:var(--shadow);margin-top:12px}.homex .hx3-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:720px}.homex .hx3-table th{background:#f8fafc;color:#657089;text-align:left;font-size:11px;padding:12px;border-bottom:1px solid var(--line);white-space:nowrap}.homex .hx3-table td{padding:12px;border-bottom:1px solid var(--line-2);color:#1c2940;vertical-align:top}.homex .hx3-table tr:last-child td{border-bottom:0}.homex .hx3-contextCard{text-align:left;border:0;background:transparent;border-radius:0;padding:0 0 12px;cursor:pointer;color:inherit}.homex .hx3-contextCard strong{display:block;color:#0c1a3a;font-size:14px}.homex .hx3-contextCard small{display:block;color:#657089;font-size:12px;margin-top:3px}.homex .hx3-contextCard[aria-pressed="true"] strong{color:#0b5fd3}.homex .hx3-empty{border:1px dashed var(--line);border-radius:12px;background:#fbfcff;padding:16px;color:#657089}.homex .hx3-chipRow{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.homex .hx3-chip{border:1px solid var(--line);border-radius:999px;background:#fff;padding:6px 10px;color:#42506b;font-size:12px}.homex .hx3-detailHeader{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:start}.homex .hx3-detailActions{display:flex;gap:10px;align-items:center}.homex .hx3-btn{border:1px solid var(--line);border-radius:9px;background:#fff;color:#0c1a3a;padding:10px 13px;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}.homex .hx3-btn.primary{background:#071526;border-color:#071526;color:#fff}.homex .hx3-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.homex .hx3-list{display:grid;gap:9px;margin:0;padding:0;list-style:none}.homex .hx3-list li{position:relative;padding-left:18px;color:#27364f;line-height:1.45}.homex .hx3-list li::before{content:'✓';position:absolute;left:0;color:#168055;font-weight:900}.homex .hx3-warn li::before{content:'–';color:#b7791f}.homex .hx3-tech{margin-top:28px;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}.homex .hx3-tech summary{cursor:pointer;padding:16px 18px;font-weight:800;color:#0c1a3a}.homex .hx3-techBody{border-top:1px solid var(--line);padding:16px}.homex .hx3-gapCard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px}.homex .hx3-sourceCard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px}.homex .hx3-relRow{display:grid;grid-template-columns:28px minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px}.homex .hx3-relNode{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#eaf7f1;color:#168055;font-weight:900}.homex .hx3-relEdge{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#657089}
+.homex .hx2-avaLauncher{right:22px;bottom:22px;background:#071526;padding:11px 17px 11px 12px;border-radius:999px;box-shadow:0 12px 32px rgba(12,26,58,.34)}.homex .hx2-avaLauncherMark{width:26px;height:26px;border-radius:8px;background:rgba(76,155,232,.24);color:#42bff3;font-size:12px}.homex .hx2-rail{right:22px;bottom:22px;width:376px;max-height:76vh;border-radius:15px;border-color:var(--line);box-shadow:0 24px 60px rgba(13,21,38,.3)}.homex .hx2-rail.expanded{top:78px;bottom:22px;right:22px;left:auto;width:min(920px,calc(100vw - 300px));min-width:min(720px,calc(100vw - 44px))}.homex .hx2-avaMark{border-radius:999px;background:#f2f4f8;color:#0c1a3a}.homex .hx2-answerBox{background:#edf9f2;border-color:#ccebd8}.homex .hx2-answerBox.warn{background:#fff8eb;border-color:#ead8b6}.homex .hx2-suggestions button{border:1px solid var(--line);border-radius:9px;background:#fff;color:#0c1a3a;padding:11px 12px;cursor:pointer}.homex .hx2-ask button{border:0;border-radius:8px;background:#071526;color:#fff}.homex .hx2-ask input{border-color:var(--line)}
+@media(max-width:1180px){.homex .hx3-page{max-width:none}.homex .hx3-snapshot,.homex .hx3-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx3-top{grid-template-columns:1fr}.homex .hx3-statusCard{max-width:360px}.homex .hx2-rail.expanded{left:20px;right:20px;width:auto;min-width:0}}
+@media(max-width:860px){.homex .hx3-shell{grid-template-columns:1fr}.homex .hx3-side{position:static;min-height:0;border-right:0;border-bottom:1px solid var(--line);display:block}.homex .hx3-page{padding:24px 18px 96px}.homex .hx3-title{font-size:32px}.homex .hx3-snapshot,.homex .hx3-actions,.homex .hx3-contextCards,.homex .hx3-grid2{grid-template-columns:1fr}.homex .hx3-detailHeader{grid-template-columns:1fr}.homex .hx3-detailActions{flex-wrap:wrap}.homex .hx3-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx3-relEdge{grid-column:2}.homex .hx2-rail{left:12px;right:12px;width:auto}.homex .hx2-rail.expanded{left:12px;right:12px;top:72px}}
+`;
+
 const EMPTY_DIMS: BindingDimension[] = [];
 
 type ExplorerTab = "summary" | "data" | "gaps" | "sources" | "relationships";
@@ -896,12 +912,6 @@ function buildHomeExplorerAreas(
   });
 }
 
-function statusTone(gaps: number, rows: number): "green" | "amber" | "blue" {
-  if (rows <= 0) return "blue";
-  if (gaps > rows * 0.2) return "amber";
-  return "green";
-}
-
 function shortMetric(value: number): string {
   if (value >= 1_000_000) return `${trimCompactNumber(value / 1_000_000)}M`;
   if (value >= 1_000) return `${trimCompactNumber(value / 1_000)}K`;
@@ -941,33 +951,6 @@ function previewForDimension(
 ): HomeV6BrowserPreview | null {
   if (!browser || !dimension) return null;
   return browser.dimensions[dimension] ?? null;
-}
-
-function summarizeSelectedContext(args: {
-  dimension: BindingDimension | null;
-  preview: HomeV6BrowserPreview | null;
-  totalDimensions: number;
-  totalRows: number;
-  totalSources: number;
-  totalGaps: number;
-}): string {
-  const {
-    dimension,
-    preview,
-    totalDimensions,
-    totalRows,
-    totalSources,
-    totalGaps,
-  } = args;
-  if (!dimension) {
-    return `${totalDimensions.toLocaleString()} context areas are loaded with ${totalRows.toLocaleString()} records across ${totalSources.toLocaleString()} source files. ${totalGaps.toLocaleString()} evidence gaps remain visible so Home stays a context browser, not an unsupported advisory engine.`;
-  }
-  if (!preview) return dimension.description;
-  const gapText =
-    preview.dataThinCells > 0
-      ? `${displayMetric(preview.dataThinCells, "evidence gaps")} remain.`
-      : "No repeated evidence-gap pattern is visible in this area.";
-  return `${dimension.dimension} has ${preview.rowCount.toLocaleString()} loaded records from ${preview.sourceCount.toLocaleString()} source file${preview.sourceCount === 1 ? "" : "s"}. ${gapText}`;
 }
 
 function selectedExamples(preview: HomeV6BrowserPreview | null): string[] {
@@ -1028,8 +1011,7 @@ interface EnterpriseKnowledgeModel {
   loadedAreas: number;
   activeAccess: AdminSetupControlResponse["activeTenantAccess"] | null;
   candidateVersion:
-    | AdminSetupControlResponse["candidateTenantDataVersion"]
-    | null;
+    AdminSetupControlResponse["candidateTenantDataVersion"] | null;
   evidenceRegistry: AdminSetupControlResponse["evidenceRegistry"] | null;
   canonicalFacts: AdminSetupControlResponse["canonicalFacts"] | null;
   relationshipGraph: AdminSetupControlResponse["relationshipGraph"] | null;
@@ -1267,1044 +1249,6 @@ function HomeDataQualityPanel({
   );
 }
 
-function DataQualityExplorerDetail({
-  model,
-  candidatePreviewEnabled,
-  areas,
-  overview,
-}: {
-  model: HomeDataQualityModel | null;
-  candidatePreviewEnabled: boolean;
-  areas: HomeExplorerArea[];
-  overview: {
-    dimensions: HomeV6BrowserPreview[];
-    totalRows: number;
-    totalSources: number;
-    totalGaps: number;
-  };
-}) {
-  return (
-    <main className="hx2-detail" data-testid="home-data-quality-detail">
-      <div className="hx2-detailHead">
-        <div>
-          <div className="hx2-crumb">Home · Enterprise Knowledge</div>
-          <h1>Data Quality</h1>
-          <p>
-            Inspect source coverage, evidence strength, relationship coverage,
-            gaps, and answerability only when needed. This keeps the default
-            Home canvas focused on enterprise context.
-          </p>
-        </div>
-      </div>
-      <HomeDataQualityPanel
-        candidatePreviewEnabled={candidatePreviewEnabled}
-        model={model}
-      />
-      <section className="hx2-section" role="tabpanel">
-        <div className="hx2-summaryGrid">
-          <article>
-            <span>Loaded areas</span>
-            <strong>{areas.length.toLocaleString()}</strong>
-            <p>Context areas currently available in the Home explorer.</p>
-          </article>
-          <article>
-            <span>Source footprint</span>
-            <strong>{overview.totalSources.toLocaleString()} files</strong>
-            <p>Distinct source files represented in active Home context.</p>
-          </article>
-          <article>
-            <span>Validation work</span>
-            <strong>
-              {displayMetric(overview.totalGaps, "evidence gaps")}
-            </strong>
-            <p>
-              Missing fields remain visible before downstream module handoff.
-            </p>
-          </article>
-        </div>
-      </section>
-      <section className="hx2-section">
-        <div className="hx2-tableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Explorer area</th>
-                <th>Records</th>
-                <th>Sources</th>
-                <th>Gaps</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {areas.map((area) => {
-                const tone = statusTone(area.gaps, area.rows);
-                return (
-                  <tr key={area.id}>
-                    <td>{area.label}</td>
-                    <td>{area.rows.toLocaleString()}</td>
-                    <td>{area.sources.toLocaleString()}</td>
-                    <td>{area.gaps.toLocaleString()}</td>
-                    <td>
-                      {tone === "green"
-                        ? "Loaded"
-                        : tone === "amber"
-                          ? "Gaps visible"
-                          : "Needs validation"}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </main>
-  );
-}
-
-function KnowledgeOverview({
-  model,
-  areas,
-  summarySnapshot,
-  onAsk,
-  onSelectArea,
-  onSelectDataQuality,
-}: {
-  model: EnterpriseKnowledgeModel;
-  areas: HomeExplorerArea[];
-  summarySnapshot: HomeSummarySnapshot | null;
-  onAsk: (question: string) => void;
-  onSelectArea: (areaId: string) => void;
-  onSelectDataQuality: () => void;
-}) {
-  const unsupportedAreas = areas.filter((area) => area.gaps > 0).length;
-  const relationshipCount =
-    model.relationshipGraph?.graphRelationships ??
-    model.relationshipAreas.reduce((sum, area) => sum + area.rows, 0);
-  if (summarySnapshot) {
-    const profile = summarySnapshot.tenantProfileHeader;
-    const executive = summarySnapshot.executiveProfile;
-    const depth = executive.contextDepthWidth;
-    const relationshipArea = areas.find((area) =>
-      /relationship/i.test(area.label),
-    );
-    const firstArea = areas.find((area) => area.rows > 0) ?? areas[0] ?? null;
-    const contextCards = areas.slice(0, 4);
-    return (
-      <div
-        className="hx2-profile"
-        data-testid="home-enterprise-knowledge-snapshot"
-      >
-        <section className="hx2-profileBlock">
-          <div className="hx2-profileBlockHead">
-            <div>
-              <h2>Executive enterprise profile</h2>
-              <p>Who this tenant is, what is loaded, and what matters next.</p>
-            </div>
-            <span className="hx2-profileBadge">
-              {summarySnapshot.lineage.status.replace(/_/g, " ")}
-            </span>
-          </div>
-          <div className="hx2-profileStats">
-            <article className="hx2-profileStat">
-              <span>Industry</span>
-              <strong>{profile.industry ?? "Not available yet"}</strong>
-            </article>
-            <article className="hx2-profileStat">
-              <span>Headquarters</span>
-              <strong>{profile.headquarters ?? "Not available yet"}</strong>
-            </article>
-            <article className="hx2-profileStat">
-              <span>Revenue</span>
-              <strong>
-                {profile.revenueVerified
-                  ? profile.revenue
-                  : "Not available yet"}
-              </strong>
-            </article>
-            <article className="hx2-profileStat">
-              <span>Employees</span>
-              <strong>
-                {profile.employeesVerified
-                  ? profile.employees
-                  : "Not available yet"}
-              </strong>
-            </article>
-          </div>
-          <p className="hx2-profileSummary">
-            {executive.companySummaryFacts[0] ??
-              `${profile.displayName} has active Home context loaded for source-backed browsing.`}
-          </p>
-          <div className="hx2-profileCols">
-            <article className="hx2-profileList">
-              <span>Business model signals</span>
-              <ul>
-                {executive.businessModelSignals.slice(0, 4).map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-            <article className="hx2-profileList">
-              <span>Strategic priorities</span>
-              <ul>
-                {executive.strategicPrioritySignals.slice(0, 4).map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-          </div>
-        </section>
-
-        <section className="hx2-profileBlock">
-          <div className="hx2-profileBlockHead">
-            <div>
-              <h2>Context depth &amp; width</h2>
-              <p>How much of the enterprise is covered, and how deep.</p>
-            </div>
-          </div>
-          <div className="hx2-depthGrid">
-            <article className="hx2-depthChip">
-              <span>Loaded areas</span>
-              <strong>{depth.loadedAreas.toLocaleString()}</strong>
-              <p>{depth.contextPosture}</p>
-            </article>
-            <article className="hx2-depthChip">
-              <span>Loaded records</span>
-              <strong>{shortMetric(depth.loadedRecords)}</strong>
-              <p>Visible in active Home context.</p>
-            </article>
-            <article className="hx2-depthChip">
-              <span>Sources</span>
-              <strong>{shortMetric(depth.sourceCount)}</strong>
-              <p>Files backing the current context view.</p>
-            </article>
-            <article className="hx2-depthChip">
-              <span>Evidence</span>
-              <strong>{shortMetric(depth.evidenceCount)}</strong>
-              <p>Items visible for source-backed explanation.</p>
-            </article>
-            <article className="hx2-depthChip">
-              <span>Relationships</span>
-              <strong>{shortMetric(depth.relationshipCount)}</strong>
-              <p>Relationship reasoning stays caveated until validated.</p>
-            </article>
-            <article className="hx2-depthChip">
-              <span>Visible gaps</span>
-              <strong>{shortMetric(depth.visibleGaps)}</strong>
-              <p>Missing evidence stays visible before handoff.</p>
-            </article>
-          </div>
-        </section>
-
-        <section className="hx2-profileBlock">
-          <div className="hx2-profileBlockHead">
-            <div>
-              <h2>What AbarVa can safely answer</h2>
-              <p>The trust boundary before anyone acts on this context.</p>
-            </div>
-          </div>
-          <div className="hx2-safeGrid">
-            <article className="hx2-safeCard safe">
-              <span>Safe to ask</span>
-              <h3>Known context</h3>
-              <ul>
-                {executive.safeToAsk.slice(0, 4).map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-            <article className="hx2-safeCard warn">
-              <span>Do not rely yet</span>
-              <h3>Needs proof</h3>
-              <ul>
-                {executive.doNotRelyYet.slice(0, 4).map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-            <article className="hx2-safeCard next">
-              <span>Next data action</span>
-              <h3>Focus next</h3>
-              <ul>
-                {executive.recommendedNextDataActions
-                  .slice(0, 3)
-                  .map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-              </ul>
-            </article>
-          </div>
-        </section>
-
-        <section className="hx2-profileBlock">
-          <div className="hx2-profileBlockHead">
-            <div>
-              <h2>Enterprise snapshot</h2>
-              <p>The numbers behind the story. Each card leads to detail.</p>
-            </div>
-          </div>
-          <div className="hx2-snapshotCards">
-            {executive.enterpriseSnapshotMetrics.slice(0, 4).map((metric) => (
-              <button
-                className="hx2-snapshotCard"
-                key={metric.key}
-                onClick={
-                  metric.key === "relationship_depth" && relationshipArea
-                    ? () => onSelectArea(relationshipArea.id)
-                    : onSelectDataQuality
-                }
-                type="button"
-              >
-                <strong>{metric.value}</strong>
-                <p>{metric.label}</p>
-                <p>{metric.detail}</p>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="hx2-profileBlock">
-          <div className="hx2-profileBlockHead">
-            <div>
-              <h2>What you can do</h2>
-              <p>Start with the most important things.</p>
-            </div>
-          </div>
-          <div className="hx2-actionGrid">
-            <button
-              className="hx2-actionCard"
-              onClick={() => onAsk("What can Home safely answer right now?")}
-              type="button"
-            >
-              <span>Ask</span>
-              <strong>Ask a question</strong>
-              <p>Get facts, sources, and caveated explanations.</p>
-            </button>
-            <button
-              className="hx2-actionCard"
-              onClick={onSelectDataQuality}
-              type="button"
-            >
-              <span>Quality</span>
-              <strong>Explore gaps</strong>
-              <p>See what is missing before downstream decisions.</p>
-            </button>
-            <button
-              className="hx2-actionCard"
-              onClick={
-                relationshipArea
-                  ? () => onSelectArea(relationshipArea.id)
-                  : onSelectDataQuality
-              }
-              type="button"
-            >
-              <span>Relationships</span>
-              <strong>View relationships</strong>
-              <p>Understand what connects and what still needs validation.</p>
-            </button>
-            <button
-              className="hx2-actionCard"
-              onClick={
-                firstArea
-                  ? () => onSelectArea(firstArea.id)
-                  : onSelectDataQuality
-              }
-              type="button"
-            >
-              <span>Browse</span>
-              <strong>Browse the estate</strong>
-              <p>Open the loaded context areas and source-backed rows.</p>
-            </button>
-          </div>
-        </section>
-
-        <section className="hx2-profileBlock">
-          <div className="hx2-profileBlockHead">
-            <div>
-              <h2>Explore this context</h2>
-              <p>Browse the areas of information Home tracks.</p>
-            </div>
-          </div>
-          <div className="hx2-contextCards">
-            {contextCards.map((area) => (
-              <button
-                className="hx2-contextCard"
-                key={area.id}
-                onClick={() => onSelectArea(area.id)}
-                type="button"
-              >
-                <strong>{area.label}</strong>
-                <p>{areaDescription(area)}</p>
-                <small>{shortMetric(area.rows)} records</small>
-              </button>
-            ))}
-          </div>
-        </section>
-      </div>
-    );
-  }
-  return (
-    <div
-      className="hx2-knowledgeGrid"
-      data-testid="home-enterprise-knowledge-snapshot"
-    >
-      <section className="hx2-knowledgeBlock">
-        <div className="hx2-sectionTitle">
-          <h2>Enterprise Knowledge Snapshot</h2>
-          <span>What we hold</span>
-        </div>
-        <div className="hx2-snapshotRows">
-          {areas.map((area) => (
-            <div className="hx2-snapshotRow" key={area.id}>
-              <span>{area.label.replace(" & ", " / ")}</span>
-              <strong>{shortMetric(area.rows)}</strong>
-              <span>{area.examples || areaDescription(area)}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="hx2-knowledgeBlock">
-        <div className="hx2-sectionTitle">
-          <h2>Evidence Coverage</h2>
-          <span>What backs it</span>
-        </div>
-        <div className="hx2-evidenceStrip">
-          <div className="hx2-evidenceCell">
-            <span>Evidence sources</span>
-            <strong>
-              {shortMetric(
-                model.evidenceRegistry?.evidenceSources ?? model.totalSources,
-              )}
-            </strong>
-          </div>
-          <div className="hx2-evidenceCell">
-            <span>Known facts</span>
-            <strong>
-              {shortMetric(
-                model.canonicalFacts?.canonicalObjects ?? model.totalRows,
-              )}
-            </strong>
-          </div>
-          <div className="hx2-evidenceCell">
-            <span>Relationships</span>
-            <strong>{shortMetric(relationshipCount)}</strong>
-          </div>
-          <div className="hx2-evidenceCell">
-            <span>Insights</span>
-            <strong>
-              {shortMetric(
-                model.derivedIntelligence?.derivedInsights ??
-                  model.readyAreas.length,
-              )}
-            </strong>
-          </div>
-          <div className="hx2-evidenceCell">
-            <span>Unsupported areas</span>
-            <strong>{shortMetric(unsupportedAreas)}</strong>
-          </div>
-          <div className="hx2-evidenceCell">
-            <span>Stale / missing</span>
-            <strong>{shortMetric(model.totalGaps)}</strong>
-          </div>
-        </div>
-        <p className="hx2-evidenceNote">
-          AbarVa won’t answer beyond this evidence.{" "}
-          <strong>
-            {unsupportedAreas} area{unsupportedAreas === 1 ? "" : "s"}
-          </strong>{" "}
-          still need evidence before their answers can be trusted.
-        </p>
-      </section>
-
-      <section className="hx2-knowledgeBlock">
-        <div className="hx2-sectionTitle">
-          <h2>Answerability</h2>
-          <span>What Home can safely answer</span>
-        </div>
-        <div className="hx2-answerability">
-          <article>
-            <strong>{shortMetric(model.loadedAreas)} areas</strong>
-            <span>
-              Loaded for current-state browsing and source-backed lookup.
-            </span>
-          </article>
-          <article>
-            <strong>{shortMetric(model.totalSources)} sources</strong>
-            <span>Available to support citations and context inspection.</span>
-          </article>
-          <article>
-            <strong>{shortMetric(model.totalGaps)}</strong>
-            <span>
-              Visible evidence gaps that should stay out of advisory claims.
-            </span>
-          </article>
-        </div>
-      </section>
-
-      <section className="hx2-knowledgeBlock">
-        <div className="hx2-sectionTitle">
-          <h2>Top Gaps</h2>
-          <span>Needs Evidence</span>
-        </div>
-        {model.topGaps.length > 0 ? (
-          <div className="hx2-gapList">
-            {model.topGaps.map((gap) => (
-              <div className="hx2-gapItem" key={`${gap.area}-${gap.label}`}>
-                <strong>{gap.area}</strong>
-                <span>
-                  {gap.label}: {displayMetric(gap.count, "evidence gaps")}
-                  {gap.whyItMatters ? ` · ${gap.whyItMatters}` : ""}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="hx2-empty">
-            No repeated missing-field pattern is visible across the loaded Home
-            context.
-          </p>
-        )}
-      </section>
-
-      <section className="hx2-knowledgeBlock">
-        <div className="hx2-sectionTitle">
-          <h2>Ready Areas</h2>
-          <span>Source-backed starting points</span>
-        </div>
-        <div className="hx2-pillGrid">
-          {model.readyAreas.map((area) => (
-            <span className="hx2-readinessPill" key={area.label}>
-              <strong>{area.score}%</strong> {area.label} ·{" "}
-              {shortMetric(area.rows)} records
-            </span>
-          ))}
-        </div>
-      </section>
-
-      <section className="hx2-knowledgeBlock">
-        <div className="hx2-sectionTitle">
-          <h2>Relationship Overview</h2>
-          <span>Mapped links</span>
-        </div>
-        {model.relationshipAreas.length > 0 ? (
-          <div className="hx2-relOverview">
-            {model.relationshipAreas.map((area) => (
-              <div key={area.label}>
-                <span>{area.label}</span>
-                <strong>
-                  {shortMetric(area.rows)} links
-                  {area.gaps > 0
-                    ? ` · ${displayMetric(area.gaps, "evidence gaps")}`
-                    : ""}
-                </strong>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="hx2-empty">
-            Relationship-heavy context is not available in the current Home
-            packet.
-          </p>
-        )}
-      </section>
-    </div>
-  );
-}
-
-function englishStatusClass(label: string): string {
-  if (/strong/i.test(label)) return "strong";
-  if (/candidate/i.test(label)) return "candidate";
-  if (/needs/i.test(label)) return "needs";
-  if (/not ready/i.test(label)) return "not";
-  return "partial";
-}
-
-function WhatThisMeansPanel({
-  summary,
-  onAsk,
-}: {
-  summary: HomeEnglishSummary;
-  onAsk: (question: string) => void;
-}) {
-  return (
-    <section className="hx2-meaning" data-testid="home-english-summary">
-      <div className="hx2-meaningHead">
-        <div>
-          <div className="hx2-meaningKicker">Executive Context Summary</div>
-          <h2>{summary.title}</h2>
-          <p>{summary.currentUnderstanding}</p>
-        </div>
-        <span
-          className={`hx2-meaningStatus ${englishStatusClass(summary.statusLabel)}`}
-        >
-          {summary.statusLabel}
-        </span>
-      </div>
-      <p className="hx2-meaningWhy">
-        <strong>Why this matters: </strong>
-        {summary.whyThisMatters}
-      </p>
-      <div className="hx2-meaningGrid">
-        <article className="hx2-meaningBlock">
-          <span>Completeness</span>
-          <strong>{summary.completenessMeaning}</strong>
-        </article>
-        <article className="hx2-meaningBlock">
-          <span>Evidence posture</span>
-          <strong>{summary.evidencePosture}</strong>
-        </article>
-        <article className="hx2-meaningBlock">
-          <span>Relationship posture</span>
-          <strong>{summary.relationshipPosture}</strong>
-        </article>
-        <article className="hx2-meaningBlock">
-          <span>Answerability</span>
-          <strong>{summary.answerability}</strong>
-        </article>
-      </div>
-      <div className="hx2-meaningLists">
-        <article className="hx2-meaningList safe">
-          <h3>Safe to ask</h3>
-          <ul>
-            {summary.safeToAsk.slice(0, 5).map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </article>
-        <article className="hx2-meaningList caution">
-          <h3>Do not rely on this yet for</h3>
-          <ul>
-            {summary.decisionCautions.slice(0, 5).map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </article>
-      </div>
-      <article className="hx2-nextAction">
-        <span>Next data action</span>
-        <h3>{summary.nextDataAction}</h3>
-      </article>
-      <div className="hx2-moduleImpact" aria-label="Module impact">
-        {summary.moduleImpact.map((impact) => (
-          <article key={impact.module}>
-            <strong>{impact.module}</strong>
-            <span>{impact.status}</span>
-            <p>{impact.explanation}</p>
-          </article>
-        ))}
-      </div>
-      <div className="hx2-detailActions hx2-meaningActions">
-        <button
-          onClick={() => onAsk("Explain this context in plain English.")}
-          type="button"
-        >
-          Ask aVa to explain
-        </button>
-        <button
-          onClick={() => onAsk("What decisions should not rely on this yet?")}
-          type="button"
-        >
-          Ask what not to rely on
-        </button>
-      </div>
-    </section>
-  );
-}
-
-function ExplorerDetail({
-  area,
-  selected,
-  selectedDisplayName,
-  preview,
-  activeTab,
-  onTabChange,
-  overview,
-  setupControl,
-  englishSummary,
-  summarySnapshot,
-  areas,
-  tenantDisplayName,
-  onAsk,
-  onSelectArea,
-  onSelectDataQuality,
-}: {
-  area: HomeExplorerArea | null;
-  selected: BindingDimension | null;
-  selectedDisplayName?: string | null;
-  preview: HomeV6BrowserPreview | null;
-  activeTab: ExplorerTab;
-  onTabChange: (tab: ExplorerTab) => void;
-  setupControl: AdminSetupControlResponse | null;
-  englishSummary: HomeEnglishSummary | null;
-  summarySnapshot: HomeSummarySnapshot | null;
-  areas: HomeExplorerArea[];
-  tenantDisplayName: string;
-  onAsk: (question: string) => void;
-  onSelectArea: (areaId: string) => void;
-  onSelectDataQuality: () => void;
-  overview: {
-    dimensions: HomeV6BrowserPreview[];
-    totalRows: number;
-    totalSources: number;
-    totalGaps: number;
-  };
-}) {
-  const title =
-    selectedDisplayName ?? selected?.dimension ?? "What AbarVa knows";
-  const knowledgeModel = buildEnterpriseKnowledgeModel(
-    overview.dimensions,
-    setupControl,
-  );
-  const summary = summarizeSelectedContext({
-    dimension: selected,
-    preview,
-    totalDimensions: overview.dimensions.length,
-    totalRows: overview.totalRows,
-    totalSources: overview.totalSources,
-    totalGaps: overview.totalGaps,
-  });
-  const areaSummary = area
-    ? `${area.label} has ${area.rows.toLocaleString()} loaded records from ${area.sources.toLocaleString()} source file${area.sources === 1 ? "" : "s"}. ${
-        area.gaps > 0
-          ? `${displayMetric(area.gaps, "evidence gaps")} remain.`
-          : "No repeated evidence-gap pattern is visible in this area."
-      }`
-    : summary;
-  const examples = area
-    ? area.previews
-        .flatMap((areaPreview) => selectedExamples(areaPreview))
-        .slice(0, 4)
-    : selectedExamples(preview);
-  const tabs: Array<[ExplorerTab, string]> = [
-    ["summary", "Summary"],
-    ["data", "Data"],
-    ["gaps", "Gaps"],
-    ["sources", "Sources"],
-    ["relationships", "Relationships"],
-  ];
-  const visibleColumns =
-    preview?.columns
-      .map((column, index) => ({ column, index }))
-      .filter(({ column }) => !isLineageColumn(column)) ?? [];
-  const tableColumns =
-    visibleColumns.length > 0
-      ? visibleColumns
-      : (preview?.columns.map((column, index) => ({ column, index })) ?? []);
-  const gaps = preview?.knownGaps ?? [];
-  const relationships = relationshipItems(preview);
-  const selectedName =
-    selectedDisplayName ?? selected?.dimension ?? "enterprise context";
-  const isOverview = !selected;
-
-  return (
-    <main className="hx2-detail" data-testid="home-context-detail">
-      <div className="hx2-detailHead">
-        <div>
-          <div className="hx2-crumb">Home · Enterprise Knowledge</div>
-          <h1>
-            {isOverview
-              ? `What AbarVa knows about ${tenantDisplayName}`
-              : title}
-          </h1>
-          <p>
-            {isOverview
-              ? "What’s answerable, what evidence backs it, what’s missing, and which areas are ready to run — for this tenant’s active data."
-              : areaSummary}
-          </p>
-        </div>
-        <div className="hx2-detailActions">
-          <button
-            onClick={() =>
-              onAsk(
-                isOverview
-                  ? "Explain this Home context."
-                  : `Explain ${selectedName.toLowerCase()} in plain English.`,
-              )
-            }
-            type="button"
-          >
-            Explain context
-          </button>
-          <button
-            className="primary"
-            onClick={() => {
-              window.location.assign("/intelligence");
-            }}
-            type="button"
-          >
-            Send to Intelligence
-          </button>
-        </div>
-      </div>
-
-      {isOverview ? (
-        <>
-          {englishSummary && !summarySnapshot ? (
-            <WhatThisMeansPanel summary={englishSummary} onAsk={onAsk} />
-          ) : null}
-          <KnowledgeOverview
-            areas={areas}
-            model={knowledgeModel}
-            onAsk={onAsk}
-            onSelectArea={onSelectArea}
-            onSelectDataQuality={onSelectDataQuality}
-            summarySnapshot={summarySnapshot}
-          />
-        </>
-      ) : (
-        <>
-          <div
-            className="hx2-tabs"
-            role="tablist"
-            aria-label="Selected context views"
-          >
-            {tabs.map(([id, label]) => (
-              <button
-                aria-selected={activeTab === id}
-                className="hx2-tab"
-                key={id}
-                onClick={() => onTabChange(id)}
-                role="tab"
-                type="button"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-
-      {!isOverview && activeTab === "summary" ? (
-        <section className="hx2-section" role="tabpanel">
-          <div className="hx2-summaryGrid">
-            <article>
-              <span>What is loaded</span>
-              <strong>
-                {preview
-                  ? `${preview.rowCount.toLocaleString()} records`
-                  : `${overview.dimensions.length.toLocaleString()} context areas`}
-              </strong>
-              <p>
-                {preview
-                  ? `${selectedName} records with source-backed values and readable fields.`
-                  : "The tenant context pack is available for inspection by context area."}
-              </p>
-            </article>
-            <article>
-              <span>What can be trusted</span>
-              <strong>
-                {preview
-                  ? `${preview.sourceCount} source file${preview.sourceCount === 1 ? "" : "s"}`
-                  : `${overview.totalSources} files`}
-              </strong>
-              <p>
-                Home shows source-backed context and keeps missing evidence
-                visible.
-              </p>
-            </article>
-            <article>
-              <span>What needs work</span>
-              <strong>
-                {displayMetric(
-                  preview?.dataThinCells ?? overview.totalGaps,
-                  "evidence gaps",
-                )}
-              </strong>
-              <p>Gaps are client-to-complete fields, not confidence theater.</p>
-            </article>
-          </div>
-          {examples.length > 0 ? (
-            <div className="hx2-examples">
-              <h2>Representative loaded rows</h2>
-              {examples.map((example, index) => (
-                <div className="hx2-example" key={`${example}-${index}`}>
-                  <span>{index + 1}</span>
-                  <p>{example}</p>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </section>
-      ) : null}
-
-      {activeTab === "data" ? (
-        <section className="hx2-section" role="tabpanel">
-          {preview ? (
-            <>
-              <p className="hx2-tabIntro">
-                <strong>Plain English:</strong> this is the loaded business data
-                for {selectedName}. Values are formatted for reading; missing
-                fields stay visible as evidence gaps instead of being hidden.
-              </p>
-              <div className="hx2-tableMeta">
-                <span>{preview.rowCount.toLocaleString()} rows loaded</span>
-                <span>
-                  {preview.sourceCount.toLocaleString()} source file
-                  {preview.sourceCount === 1 ? "" : "s"}
-                </span>
-                <span>
-                  {displayMetric(preview.dataThinCells, "evidence gaps")} to
-                  complete
-                </span>
-              </div>
-              <div className="hx2-tableWrap">
-                <table>
-                  <thead>
-                    <tr>
-                      {tableColumns.map(({ column }) => (
-                        <th key={column.key}>{column.label}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {preview.rows.map((row, rowIndex) => (
-                      <tr key={`${preview.dimension}-${rowIndex}`}>
-                        {tableColumns.map(({ column, index }) => {
-                          const cell = row[index] ?? "";
-                          return (
-                            <td
-                              key={`${preview.dimension}-${rowIndex}-${column.key}`}
-                            >
-                              {cell === "Needs evidence" ? (
-                                <span className="hx2-gapPill">{cell}</span>
-                              ) : (
-                                formatPreviewCell(cell, column)
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          ) : (
-            <div className="hx2-tableWrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Context area</th>
-                    <th>Loaded records</th>
-                    <th>Sources</th>
-                    <th>Gaps</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {overview.dimensions.map((dimension) => (
-                    <tr key={dimension.dimension}>
-                      <td>{dimension.dimension}</td>
-                      <td>{dimension.rowCount.toLocaleString()}</td>
-                      <td>{dimension.sourceCount.toLocaleString()}</td>
-                      <td>{dimension.dataThinCells.toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      ) : null}
-
-      {activeTab === "gaps" ? (
-        <section className="hx2-section" role="tabpanel">
-          <p className="hx2-tabIntro">
-            <strong>Plain English:</strong> gaps are client-to-complete fields
-            in the loaded context. They are not a confidence score by
-            themselves; they tell the team what should be validated before this
-            area supports board-grade or downstream advisory work.
-          </p>
-          {gaps.length > 0 ? (
-            <div className="hx2-gapGrid">
-              {gaps.map((gap) => (
-                <article className="hx2-gapCard" key={gap.label}>
-                  <strong>{gap.label}</strong>
-                  <span>
-                    {displayMetric(gap.count, `${gap.label} gap`)} missing
-                  </span>
-                  <p>
-                    {gap.whyItMatters ??
-                      `${gap.label} needs client evidence before this area should support final decisions.`}
-                  </p>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="hx2-empty">
-              No repeated missing-field pattern is visible for this selection.
-            </p>
-          )}
-        </section>
-      ) : null}
-
-      {activeTab === "sources" ? (
-        <section className="hx2-section" role="tabpanel">
-          <p className="hx2-tabIntro">
-            <strong>Plain English:</strong> sources show where this context came
-            from. Home keeps the source trail available for audit, while the
-            main views keep file paths and internal row IDs out of the executive
-            read.
-          </p>
-          <div className="hx2-sourceList">
-            {(preview
-              ? preview.fileNames
-              : overview.dimensions.flatMap((d) => d.fileNames)
-            )
-              .slice(0, 12)
-              .map((fileName, index) => (
-                <article key={`${fileName}-${index}`}>
-                  <span>{clientFacingFileName(fileName)}</span>
-                  <strong>
-                    {preview ? preview.rowCount.toLocaleString() : "Loaded"}{" "}
-                    rows
-                  </strong>
-                  <p>
-                    Mapped into the context browser with source lineage
-                    preserved.
-                  </p>
-                </article>
-              ))}
-          </div>
-        </section>
-      ) : null}
-
-      {activeTab === "relationships" ? (
-        <section className="hx2-section" role="tabpanel">
-          <p className="hx2-tabIntro">
-            <strong>Plain English:</strong> relationships are mapped links
-            between business objects, such as systems to vendors, applications
-            to data, or initiatives to owners. If this selected area is only a
-            profile anchor, use relationship-heavy areas like Systems, Data,
-            Vendors, or the Relationships reference.
-          </p>
-          {relationships.length > 0 ? (
-            <div className="hx2-relMap">
-              {relationships.map((item, index) => (
-                <div
-                  className="hx2-relRow"
-                  key={`${item.from}-${item.to}-${index}`}
-                >
-                  <span className="node">{index + 1}</span>
-                  <p>{item.from}</p>
-                  <span className="edge">{item.relation}</span>
-                  <p>{item.to}</p>
-                  <strong>{item.strength}</strong>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="hx2-empty">
-              Select a relationship-heavy context area, such as Applications,
-              Data, Vendors, or Relationships, to inspect mapped links.
-            </p>
-          )}
-        </section>
-      ) : null}
-    </main>
-  );
-}
-
 function ExplorerRail({
   selected,
   selectedDisplayName,
@@ -2475,6 +1419,40 @@ function ExplorerRail({
   );
 }
 
+function HomeMiniIcon({ kind }: { kind: string }) {
+  const paths: Record<string, string> = {
+    home: '<path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z"/>',
+    search: '<circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/>',
+    upload: '<path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M5 20h14"/>',
+    list: '<path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/>',
+    link: '<path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/>',
+    file: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v6h5"/><path d="M9 14h6M9 17h6"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    chart:
+      '<path d="M4 20V4"/><path d="M4 20h16"/><rect x="7" y="12" width="2.8" height="5" rx=".7"/><rect x="12" y="8" width="2.8" height="9" rx=".7"/><rect x="17" y="5" width="2.8" height="12" rx=".7"/>',
+    people:
+      '<circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M3 20a5 5 0 0 1 10 0"/><path d="M14 20a4 4 0 0 1 7 0"/>',
+    app: '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
+    vendor: '<path d="M4 20h16M5 20V9l7-4 7 4v11M9 20v-6h6v6"/>',
+    data: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>',
+    risk: '<path d="M12 3 20 7v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/>',
+    tower: '<path d="M12 3v18M5 8h14M7 8l-3 7h6zm10 0-3 7h6z"/>',
+  };
+  return (
+    <svg
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+      viewBox="0 0 24 24"
+    >
+      <g dangerouslySetInnerHTML={{ __html: paths[kind] ?? paths.file }} />
+    </svg>
+  );
+}
+
 export function HomeSurface({
   payload,
   clientKey,
@@ -2595,13 +1573,6 @@ export function HomeSurface({
       .toLowerCase()
       .includes(needle);
   });
-  const groupedAreas = filteredAreas.reduce((groups, area) => {
-    const entries = groups.get(area.group) ?? [];
-    entries.push(area);
-    groups.set(area.group, entries);
-    return groups;
-  }, new Map<HomeExplorerArea["group"], HomeExplorerArea[]>());
-
   const askHomeKnow = useCallback(
     async (text: string) => {
       const question = text.trim();
@@ -2677,82 +1648,161 @@ export function HomeSurface({
     [clientKey, setIsAvaOpen, tenantKey],
   );
 
+  const overviewModel = buildEnterpriseKnowledgeModel(
+    dimensions,
+    safeSetupControl,
+  );
+  const profile = safeSummarySnapshot?.tenantProfileHeader;
+  const executive = safeSummarySnapshot?.executiveProfile;
+  const depth = executive?.contextDepthWidth;
+  const relationshipCount =
+    depth?.relationshipCount ??
+    safeSetupControl?.relationshipGraph?.graphRelationships ??
+    overviewModel.relationshipAreas.reduce((sum, area) => sum + area.rows, 0);
+  const evidenceCount =
+    depth?.evidenceCount ??
+    safeSetupControl?.evidenceRegistry?.evidenceSources ??
+    totalSources;
+  const knownFactCount =
+    safeSetupControl?.canonicalFacts?.canonicalObjects ?? evidenceCount;
+  const sourceBackedRecords = depth?.loadedRecords ?? totalRows;
+  const contextPosture =
+    depth?.contextPosture ??
+    safeEnglishSummary?.statusLabel ??
+    (totalRows > 0 ? "Strong" : "Needs evidence");
+  const relationshipPosture =
+    relationshipCount > 0
+      ? relationshipCount > sourceBackedRecords * 0.25
+        ? "Strong"
+        : "Limited"
+      : "Not projected";
+  const nextActions =
+    executive?.recommendedNextDataActions ??
+    safeEnglishSummary?.moduleImpact.map((impact) => impact.explanation) ??
+    [];
+  const safeToAsk =
+    executive?.safeToAsk ??
+    safeSummarySnapshot?.avaScope.canAnswer ??
+    safeEnglishSummary?.safeToAsk ??
+    [];
+  const doNotRely =
+    executive?.doNotRelyYet ??
+    safeSummarySnapshot?.avaScope.mustRefuseOrMarkUnsupported ??
+    safeEnglishSummary?.decisionCautions ??
+    [];
+  const firstRelationshipArea = explorerAreas.find((area) =>
+    /relationship|application|system|data|vendor/i.test(area.label),
+  );
+  const firstContextArea = explorerAreas.find((area) => area.rows > 0) ?? null;
+  const selectedName = selectedArea?.label ?? "enterprise context";
+  const selectedExamplesList = selectedExamples(selectedPreview);
+  const selectedGaps = selectedPreview?.knownGaps ?? [];
+  const selectedRelationships = relationshipItems(selectedPreview);
+  const visibleColumns =
+    selectedPreview?.columns
+      .map((column, index) => ({ column, index }))
+      .filter(({ column }) => !isLineageColumn(column)) ?? [];
+  const tableColumns =
+    visibleColumns.length > 0
+      ? visibleColumns
+      : (selectedPreview?.columns.map((column, index) => ({ column, index })) ??
+        []);
+  const explorerTabs: Array<[ExplorerTab, string]> = [
+    ["summary", "Summary"],
+    ["data", "Data"],
+    ["gaps", "Gaps"],
+    ["sources", "Sources"],
+    ["relationships", "Relationships"],
+  ];
+  const focusAreas = explorerAreas.filter((area) => area.rows > 0).slice(0, 4);
+  const recentItems = [
+    displayedTenantName,
+    firstContextArea?.label ?? "Enterprise knowledge",
+    firstRelationshipArea?.label ?? "Relationship review",
+  ];
+
+  const selectOverview = () => {
+    setDimKey(null);
+    setSelectedTool(null);
+    setActiveTab("summary");
+  };
+  const selectArea = (areaId: string) => {
+    setDimKey(areaId);
+    setSelectedTool(null);
+    setActiveTab("summary");
+  };
+  const selectDataQuality = () => {
+    setDimKey(null);
+    setSelectedTool("data-quality");
+    setActiveTab("summary");
+  };
+
   return (
     <div className="homex">
-      <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      <div className="hx2">
-        <header className="hx2-enterprise">
-          <div>
-            <div className="hx2-kicker">Home · Enterprise Knowledge</div>
-            <h1>
-              {displayedTenantName}
-              <span className="hx2-demoBadge">
-                {isDemoContext ? "Demo" : "Active"}
+      <style dangerouslySetInnerHTML={{ __html: `${CSS}\n${HX3_CSS}` }} />
+      <div className="hx3" data-testid="home-executive-briefing">
+        <div className="hx3-shell">
+          <aside
+            className="hx3-side"
+            aria-label="Home navigation"
+            data-testid="home-context-explorer"
+          >
+            <div className="hx3-sideTitle">Home</div>
+            <button
+              aria-pressed={!selectedArea && selectedTool === null}
+              className="hx3-navBtn"
+              onClick={selectOverview}
+              type="button"
+            >
+              <span className="hx3-navIcon">
+                <HomeMiniIcon kind="home" />
               </span>
-            </h1>
-            <p>
-              Browse known facts, source-backed evidence, evidence gaps, and
-              relationships before sending work to Intelligence, Moves, Source,
-              or Tower.
-            </p>
-          </div>
-          <div className="hx2-stats" aria-label="Home data state">
-            <div className="hx2-stat">
-              <span>Data Status</span>
-              <strong>{dataStatusLabel}</strong>
-            </div>
-            <div className="hx2-stat">
-              <span>Candidate preview</span>
-              <strong>
-                {safeSummarySnapshot?.tenantProfileHeader
-                  .candidatePreviewStatus ??
-                  (candidatePreviewEnabled
-                    ? (safeDataQuality?.candidatePreview.status ??
-                      "Preview requested")
-                    : "Not active")}
-              </strong>
-            </div>
-            <div className="hx2-stat">
-              <span>Last checked</span>
-              <strong>
-                {safeSummarySnapshot?.lineage.generatedAt
-                  ? formatShortUtcDate(safeSummarySnapshot.lineage.generatedAt)
-                  : safeV6Browser?.generatedAt
-                    ? formatShortUtcDate(safeV6Browser.generatedAt)
-                    : "Unavailable"}
-              </strong>
-            </div>
-            <div className="hx2-stat">
-              <span>Data origin</span>
-              <strong>
-                {safeSummarySnapshot?.tenantProfileHeader.dataOrigin ??
-                  (safeSetupControl?.tenant.realOrSyntheticStatus
-                    ? "Demo-safe"
-                    : "Source-backed")}
-              </strong>
-            </div>
-          </div>
-        </header>
-        {candidatePreviewEnabled ? (
-          <div className="hx2-candidateBanner" role="status">
-            <strong>Candidate Preview — inactive data.</strong> Home is showing
-            an explicit preview state only. {candidatePreviewDetail} It is not
-            active tenant truth. Candidate data is not used by modules unless an
-            approved promotion later changes the active access layer.
-            {safeDataQuality?.candidatePreview.promotionBlockers.length
-              ? ` Promotion blockers remain: ${safeDataQuality.candidatePreview.promotionBlockers
-                  .slice(0, 2)
-                  .join("; ")}.`
-              : ""}
-          </div>
-        ) : null}
+              <span>Home</span>
+            </button>
 
-        <div className="hx2-shell">
-          <aside className="hx2-explorer" data-testid="home-context-explorer">
-            <div className="hx2-explorerHead">
-              <strong>Context Explorer</strong>
-              <span>{explorerAreas.length} areas</span>
-            </div>
+            <div className="hx3-sideGroup">Your work</div>
+            <button
+              className="hx3-navBtn"
+              onClick={() => window.location.assign("/intelligence")}
+              type="button"
+            >
+              <span className="hx3-navIcon">
+                <HomeMiniIcon kind="search" />
+              </span>
+              <span>Intelligence</span>
+            </button>
+            <button
+              className="hx3-navBtn"
+              onClick={() => window.location.assign("/strategic-moves")}
+              type="button"
+            >
+              <span className="hx3-navIcon">
+                <HomeMiniIcon kind="list" />
+              </span>
+              <span>Moves</span>
+            </button>
+            <button
+              className="hx3-navBtn"
+              onClick={() => window.location.assign("/source")}
+              type="button"
+            >
+              <span className="hx3-navIcon">
+                <HomeMiniIcon kind="vendor" />
+              </span>
+              <span>Source</span>
+            </button>
+            <button
+              className="hx3-navBtn"
+              onClick={() => window.location.assign("/tower")}
+              type="button"
+            >
+              <span className="hx3-navIcon">
+                <HomeMiniIcon kind="tower" />
+              </span>
+              <span>Tower</span>
+            </button>
+
+            <div className="hx3-sideGroup">Context</div>
             <label className="hx2-search">
               <span>⌕</span>
               <input
@@ -2762,134 +1812,840 @@ export function HomeSurface({
                 value={search}
               />
             </label>
-            <div className="hx2-legend" aria-label="Context status legend">
-              <span>
-                <i className="green" />
-                Source-backed
-              </span>
-              <span>
-                <i className="blue" />
-                Needs evidence
-              </span>
-              <span>
-                <i className="amber" />
-                Gap
-              </span>
-            </div>
-            <button
-              aria-pressed={!selected && selectedTool === null}
-              className="hx2-treeBtn"
-              onClick={() => {
-                setDimKey(null);
-                setSelectedTool(null);
-                setActiveTab("summary");
-              }}
-              type="button"
-            >
-              <i className="hx2-nodeDot green" />
-              <span>
-                Enterprise overview
-                <small>
-                  {shortMetric(totalRows)} records across all context areas
-                </small>
-              </span>
-              <em>{shortMetric(totalGaps)} gaps</em>
-            </button>
             <button
               aria-pressed={selectedTool === "data-quality"}
-              className="hx2-treeBtn"
-              onClick={() => {
-                setDimKey(null);
-                setSelectedTool("data-quality");
-                setActiveTab("summary");
-              }}
+              className="hx3-navBtn"
+              onClick={selectDataQuality}
               type="button"
             >
-              <i
-                className={`hx2-nodeDot ${totalGaps > 0 ? "amber" : "green"}`}
-              />
+              <span className="hx3-navIcon">
+                <HomeMiniIcon kind="check" />
+              </span>
               <span>
                 Data Quality
-                <small>Source coverage, evidence gaps, and answerability</small>
+                <small className="hx3-navMeta">Source coverage and gaps</small>
               </span>
-              <em>{shortMetric(totalSources)} files</em>
+              <span className="hx3-navCount">{shortMetric(totalSources)}</span>
             </button>
-            {[...groupedAreas.entries()].map(([group, areas]) => (
-              <div className="hx2-treeGroup" key={group}>
-                <div className="hx2-treeGroupTitle">{group}</div>
-                {areas.map((area) => {
-                  const tone = statusTone(area.gaps, area.rows);
-                  return (
-                    <button
-                      aria-pressed={selectedArea?.id === area.id}
-                      className="hx2-treeBtn"
-                      key={area.id}
-                      onClick={() => {
-                        setDimKey(area.id);
-                        setSelectedTool(null);
-                        setActiveTab("summary");
-                      }}
-                      type="button"
-                    >
-                      <i className={`hx2-nodeDot ${tone}`} />
-                      <span>
-                        {area.label}
-                        <small>{areaDescription(area)}</small>
-                      </span>
-                      <em>{shortMetric(area.rows)}</em>
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
+            {filteredAreas.map((area) => {
+              const icon =
+                area.id === "functions"
+                  ? "people"
+                  : area.id === "applications"
+                    ? "app"
+                    : area.id === "vendors"
+                      ? "vendor"
+                      : area.id === "data"
+                        ? "data"
+                        : area.id === "risks"
+                          ? "risk"
+                          : area.id === "metrics"
+                            ? "chart"
+                            : "file";
+              return (
+                <button
+                  aria-pressed={selectedArea?.id === area.id}
+                  className="hx3-navBtn"
+                  key={area.id}
+                  onClick={() => selectArea(area.id)}
+                  type="button"
+                >
+                  <span className="hx3-navIcon">
+                    <HomeMiniIcon kind={icon} />
+                  </span>
+                  <span>
+                    {area.label}
+                    <small className="hx3-navMeta">
+                      {areaDescription(area)}
+                    </small>
+                  </span>
+                  <span className="hx3-navCount">{shortMetric(area.rows)}</span>
+                </button>
+              );
+            })}
+
+            <div className="hx3-recent">
+              <div className="hx3-sideGroup">Recent</div>
+              {recentItems
+                .filter(Boolean)
+                .slice(0, 3)
+                .map((item) => (
+                  <span className="hx3-recentItem" key={item}>
+                    {item}
+                  </span>
+                ))}
+            </div>
           </aside>
 
-          {selectedTool === "data-quality" ? (
-            <DataQualityExplorerDetail
-              areas={explorerAreas}
-              candidatePreviewEnabled={
-                safeDataQuality?.candidatePreview.previewRequested ?? false
-              }
-              model={safeDataQuality}
-              overview={{
-                dimensions,
-                totalRows,
-                totalSources,
-                totalGaps,
-              }}
-            />
-          ) : (
-            <ExplorerDetail
-              activeTab={activeTab}
-              area={selectedArea}
-              areas={explorerAreas}
-              onTabChange={setActiveTab}
-              overview={{
-                dimensions,
-                totalRows,
-                totalSources,
-                totalGaps,
-              }}
-              preview={selectedPreview}
-              selected={selected}
-              selectedDisplayName={selectedArea?.label}
-              setupControl={safeSetupControl}
-              englishSummary={safeEnglishSummary}
-              summarySnapshot={safeSummarySnapshot}
-              tenantDisplayName={displayedTenantName}
-              onAsk={askHomeKnow}
-              onSelectArea={(areaId) => {
-                setDimKey(areaId);
-                setSelectedTool(null);
-                setActiveTab("summary");
-              }}
-              onSelectDataQuality={() => {
-                setDimKey(null);
-                setSelectedTool("data-quality");
-                setActiveTab("summary");
-              }}
-            />
-          )}
+          <main className="hx3-main" data-testid="home-context-detail">
+            <div className="hx3-page">
+              {candidatePreviewEnabled ? (
+                <div className="hx2-candidateBanner" role="status">
+                  <strong>Candidate Preview — inactive data.</strong> Home is
+                  showing an explicit preview state only.{" "}
+                  {candidatePreviewDetail} It is not active tenant truth.
+                </div>
+              ) : null}
+
+              {selectedTool === "data-quality" ? (
+                <>
+                  <div className="hx3-top">
+                    <div>
+                      <div className="hx3-crumb">
+                        Home <span>›</span> Enterprise Knowledge <span>›</span>{" "}
+                        Data Quality
+                      </div>
+                      <h1 className="hx3-title">Data Quality</h1>
+                      <p className="hx3-subtitle">
+                        Source coverage, evidence posture, relationship
+                        coverage, and answerability are available when needed.
+                        They stay out of the default executive briefing.
+                      </p>
+                    </div>
+                    <div className="hx3-statusCard">
+                      <div className="hx3-statusLine">
+                        <span className="hx3-dot" /> Read-only diagnostics
+                      </div>
+                      <div className="hx3-statusMeta">
+                        <span>{totalSources.toLocaleString()} sources</span>
+                        <span>{totalRows.toLocaleString()} records</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="hx3-hair" />
+                  <HomeDataQualityPanel
+                    candidatePreviewEnabled={candidatePreviewEnabled}
+                    model={safeDataQuality}
+                  />
+                  <section className="hx3-section">
+                    <div className="hx3-snapshot">
+                      <article className="hx3-card">
+                        <div className="hx3-cardTop">
+                          <span className="hx3-cardIcon">
+                            <HomeMiniIcon kind="file" />
+                          </span>
+                          <div>
+                            <strong>{shortMetric(totalSources)}</strong>
+                            <span>Source files</span>
+                            <p>Represented in active Home context.</p>
+                          </div>
+                        </div>
+                      </article>
+                      <article className="hx3-card">
+                        <div className="hx3-cardTop">
+                          <span className="hx3-cardIcon">
+                            <HomeMiniIcon kind="check" />
+                          </span>
+                          <div>
+                            <strong>{contextPosture}</strong>
+                            <span>Evidence posture</span>
+                            <p>
+                              {safeDataQuality?.answerability.rationale ??
+                                "Source-backed context is available for browsing."}
+                            </p>
+                          </div>
+                        </div>
+                      </article>
+                      <article className="hx3-card">
+                        <div className="hx3-cardTop">
+                          <span className="hx3-cardIcon">
+                            <HomeMiniIcon kind="link" />
+                          </span>
+                          <div>
+                            <strong>{relationshipPosture}</strong>
+                            <span>Relationship depth</span>
+                            <p>
+                              {safeDataQuality?.relationshipCoverage
+                                .businessSummary ??
+                                "Relationship reasoning remains caveated until validated."}
+                            </p>
+                          </div>
+                        </div>
+                      </article>
+                      <article className="hx3-card">
+                        <div className="hx3-cardTop">
+                          <span className="hx3-cardIcon">
+                            <HomeMiniIcon kind="list" />
+                          </span>
+                          <div>
+                            <strong>{shortMetric(totalGaps)}</strong>
+                            <span>Visible gaps</span>
+                            <p>
+                              Missing evidence stays visible before handoff.
+                            </p>
+                          </div>
+                        </div>
+                      </article>
+                    </div>
+                  </section>
+                  <section className="hx3-section">
+                    <h2>Area coverage</h2>
+                    <div className="hx3-tableWrap">
+                      <table className="hx3-table">
+                        <thead>
+                          <tr>
+                            <th>Area</th>
+                            <th>Records</th>
+                            <th>Sources</th>
+                            <th>Gaps</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {explorerAreas.map((area) => (
+                            <tr key={area.id}>
+                              <td>{area.label}</td>
+                              <td>{area.rows.toLocaleString()}</td>
+                              <td>{area.sources.toLocaleString()}</td>
+                              <td>{area.gaps.toLocaleString()}</td>
+                              <td>
+                                {area.gaps > 0
+                                  ? "Needs validation"
+                                  : "Source-backed"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                </>
+              ) : selectedArea ? (
+                <>
+                  <div className="hx3-detailHeader">
+                    <div>
+                      <div className="hx3-crumb">
+                        Home <span>›</span> Enterprise Knowledge <span>›</span>{" "}
+                        {selectedArea.label}
+                      </div>
+                      <h1 className="hx3-title">{selectedArea.label}</h1>
+                      <p className="hx3-subtitle">
+                        {selectedArea.label} has{" "}
+                        {selectedArea.rows.toLocaleString()} loaded records from{" "}
+                        {selectedArea.sources.toLocaleString()} source file
+                        {selectedArea.sources === 1 ? "" : "s"}.{" "}
+                        {selectedArea.gaps > 0
+                          ? `${displayMetric(selectedArea.gaps, "evidence gaps")} remain visible.`
+                          : "No repeated evidence-gap pattern is visible in this area."}
+                      </p>
+                    </div>
+                    <div className="hx3-detailActions">
+                      <button
+                        className="hx3-btn"
+                        onClick={() =>
+                          askHomeKnow(
+                            `Explain ${selectedName.toLowerCase()} in plain English.`,
+                          )
+                        }
+                        type="button"
+                      >
+                        Explain context
+                      </button>
+                      <button
+                        className="hx3-btn primary"
+                        onClick={() => window.location.assign("/intelligence")}
+                        type="button"
+                      >
+                        Send to Intelligence
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    className="hx3-tabs"
+                    role="tablist"
+                    aria-label="Selected context views"
+                  >
+                    {explorerTabs.map(([id, label]) => (
+                      <button
+                        aria-selected={activeTab === id}
+                        className="hx3-tab"
+                        key={id}
+                        onClick={() => setActiveTab(id)}
+                        role="tab"
+                        type="button"
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {activeTab === "summary" ? (
+                    <section className="hx3-section" role="tabpanel">
+                      <div className="hx3-snapshot">
+                        <article className="hx3-card">
+                          <div className="hx3-cardTop">
+                            <span className="hx3-cardIcon">
+                              <HomeMiniIcon kind="file" />
+                            </span>
+                            <div>
+                              <strong>
+                                {selectedArea.rows.toLocaleString()} records
+                              </strong>
+                              <span>What is loaded</span>
+                              <p>Loaded with source-backed values.</p>
+                            </div>
+                          </div>
+                        </article>
+                        <article className="hx3-card">
+                          <div className="hx3-cardTop">
+                            <span className="hx3-cardIcon">
+                              <HomeMiniIcon kind="check" />
+                            </span>
+                            <div>
+                              <strong>
+                                {shortMetric(selectedArea.sources)}
+                              </strong>
+                              <span>What can be trusted</span>
+                              <p>
+                                Source files available for evidence inspection.
+                              </p>
+                            </div>
+                          </div>
+                        </article>
+                        <article className="hx3-card">
+                          <div className="hx3-cardTop">
+                            <span className="hx3-cardIcon">
+                              <HomeMiniIcon kind="link" />
+                            </span>
+                            <div>
+                              <strong>
+                                {shortMetric(selectedRelationships.length)}
+                              </strong>
+                              <span>Relationships</span>
+                              <p>Visible relationship examples.</p>
+                            </div>
+                          </div>
+                        </article>
+                        <article className="hx3-card">
+                          <div className="hx3-cardTop">
+                            <span className="hx3-cardIcon">
+                              <HomeMiniIcon kind="list" />
+                            </span>
+                            <div>
+                              <strong>
+                                {displayMetric(
+                                  selectedArea.gaps,
+                                  "evidence gaps",
+                                )}
+                              </strong>
+                              <span>What needs work</span>
+                              <p>Fields requiring evidence or review.</p>
+                            </div>
+                          </div>
+                        </article>
+                      </div>
+                      {selectedExamplesList.length > 0 ? (
+                        <div className="hx3-section">
+                          <h2>Representative loaded rows</h2>
+                          <div className="hx3-tableWrap">
+                            <table className="hx3-table">
+                              <tbody>
+                                {selectedExamplesList.map((example, index) => (
+                                  <tr key={`${example}-${index}`}>
+                                    <td>{index + 1}</td>
+                                    <td>{example}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      ) : null}
+                    </section>
+                  ) : null}
+
+                  {activeTab === "data" ? (
+                    <section className="hx3-section" role="tabpanel">
+                      {selectedPreview ? (
+                        <>
+                          <p className="hx3-empty">
+                            <strong>Plain English:</strong> this is the loaded
+                            business data for {selectedName}. Values are
+                            formatted for reading; missing fields stay visible
+                            as evidence gaps instead of being hidden.
+                          </p>
+                          <div className="hx3-chipRow">
+                            <span className="hx3-chip">
+                              {selectedPreview.rowCount.toLocaleString()} rows
+                              loaded
+                            </span>
+                            <span className="hx3-chip">
+                              {selectedPreview.sourceCount.toLocaleString()}{" "}
+                              source file
+                              {selectedPreview.sourceCount === 1 ? "" : "s"}
+                            </span>
+                            <span className="hx3-chip">
+                              {displayMetric(
+                                selectedPreview.dataThinCells,
+                                "evidence gaps",
+                              )}{" "}
+                              to complete
+                            </span>
+                          </div>
+                          <div className="hx3-tableWrap">
+                            <table className="hx3-table">
+                              <thead>
+                                <tr>
+                                  {tableColumns.map(({ column }) => (
+                                    <th key={column.key}>{column.label}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {selectedPreview.rows.map((row, rowIndex) => (
+                                  <tr
+                                    key={`${selectedPreview.dimension}-${rowIndex}`}
+                                  >
+                                    {tableColumns.map(({ column, index }) => (
+                                      <td
+                                        key={`${selectedPreview.dimension}-${rowIndex}-${column.key}`}
+                                      >
+                                        {formatPreviewCell(
+                                          row[index] ?? "",
+                                          column,
+                                        )}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="hx3-empty">
+                          No loaded data table is available for this area.
+                        </p>
+                      )}
+                    </section>
+                  ) : null}
+
+                  {activeTab === "gaps" ? (
+                    <section className="hx3-section" role="tabpanel">
+                      <p className="hx3-empty">
+                        <strong>Plain English:</strong> gaps are
+                        client-to-complete fields in the loaded context. They
+                        tell the team what should be validated before this area
+                        supports board-grade or downstream advisory work.
+                      </p>
+                      {selectedGaps.length > 0 ? (
+                        <div className="hx3-grid2">
+                          {selectedGaps.map((gap) => (
+                            <article className="hx3-gapCard" key={gap.label}>
+                              <strong>{gap.label}</strong>
+                              <p>
+                                {displayMetric(gap.count, `${gap.label} gap`)}{" "}
+                                missing{" "}
+                                {gap.whyItMatters ??
+                                  `${gap.label} needs client evidence before final decisions.`}
+                              </p>
+                            </article>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="hx3-empty">
+                          No repeated missing-field pattern is visible for this
+                          selection.
+                        </p>
+                      )}
+                    </section>
+                  ) : null}
+
+                  {activeTab === "sources" ? (
+                    <section className="hx3-section" role="tabpanel">
+                      <p className="hx3-empty">
+                        <strong>Plain English:</strong> sources show where this
+                        context came from. Home keeps the source trail available
+                        for audit while hiding file paths and internal row IDs
+                        from the executive read.
+                      </p>
+                      <div className="hx3-grid2">
+                        {(selectedPreview ? selectedPreview.fileNames : [])
+                          .slice(0, 12)
+                          .map((fileName, index) => (
+                            <article
+                              className="hx3-sourceCard"
+                              key={`${fileName}-${index}`}
+                            >
+                              <strong>{clientFacingFileName(fileName)}</strong>
+                              <p>
+                                Mapped into the context browser with source
+                                lineage preserved.
+                              </p>
+                            </article>
+                          ))}
+                      </div>
+                    </section>
+                  ) : null}
+
+                  {activeTab === "relationships" ? (
+                    <section className="hx3-section" role="tabpanel">
+                      <p className="hx3-empty">
+                        <strong>Plain English:</strong> relationships are mapped
+                        links between business objects, such as systems to
+                        vendors, applications to data, or initiatives to owners.
+                        If this selected area is only a profile anchor, use
+                        relationship-heavy areas like Systems, Data, Vendors, or
+                        the Relationships reference.
+                      </p>
+                      {selectedRelationships.length > 0 ? (
+                        <div className="hx3-grid2">
+                          {selectedRelationships.map((item, index) => (
+                            <div
+                              className="hx3-relRow"
+                              key={`${item.from}-${item.to}-${index}`}
+                            >
+                              <span className="hx3-relNode">{index + 1}</span>
+                              <span>{item.from}</span>
+                              <span className="hx3-relEdge">
+                                {item.relation}
+                              </span>
+                              <span>{item.to}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="hx3-empty">
+                          Select a relationship-heavy context area, such as
+                          Applications, Data, Vendors, or Relationships, to
+                          inspect mapped links.
+                        </p>
+                      )}
+                    </section>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <div className="hx3-top">
+                    <div>
+                      <div className="hx3-crumb">
+                        Home <span>›</span> Enterprise Knowledge <span>›</span>{" "}
+                        {displayedTenantName}
+                      </div>
+                      <h1 className="hx3-title">
+                        {displayedTenantName}
+                        <span className="hx3-demo">
+                          {isDemoContext ? "Demo" : "Active"}
+                        </span>
+                      </h1>
+                      <p className="hx3-subtitle">
+                        {executive?.companySummaryFacts[0] ??
+                          `${displayedTenantName} has active Home context for loaded records, source references, visible gaps, caveats, and module handoff readiness.`}
+                      </p>
+                    </div>
+                    <div className="hx3-statusCard">
+                      <div className="hx3-statusLine">
+                        <span className="hx3-dot" /> {dataStatusLabel}
+                      </div>
+                      <div className="hx3-statusMeta">
+                        <span>
+                          Updated{" "}
+                          {safeSummarySnapshot?.lineage.generatedAt
+                            ? formatShortUtcDate(
+                                safeSummarySnapshot.lineage.generatedAt,
+                              )
+                            : safeV6Browser?.generatedAt
+                              ? formatShortUtcDate(safeV6Browser.generatedAt)
+                              : "Unavailable"}
+                        </span>
+                        <span>Candidate preview</span>
+                        <span>Not active</span>
+                        <span>
+                          {safeSummarySnapshot?.tenantProfileHeader
+                            .dataOrigin ??
+                            (safeSetupControl?.tenant.realOrSyntheticStatus
+                              ? "Demo-safe"
+                              : "Source-backed")}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <section className="hx3-section">
+                    <h2>Executive profile</h2>
+                    <div className="hx3-snapshot">
+                      <article className="hx3-card">
+                        <div className="hx3-cardTop">
+                          <span className="hx3-cardIcon">
+                            <HomeMiniIcon kind="home" />
+                          </span>
+                          <div>
+                            <strong>
+                              {profile?.industry ?? "Industry pending"}
+                            </strong>
+                            <span>Industry</span>
+                            <p>
+                              {profile?.headquarters ??
+                                "Headquarters not loaded yet"}
+                            </p>
+                          </div>
+                        </div>
+                      </article>
+                      <article className="hx3-card">
+                        <div className="hx3-cardTop">
+                          <span className="hx3-cardIcon">
+                            <HomeMiniIcon kind="chart" />
+                          </span>
+                          <div>
+                            <strong>
+                              {profile?.revenueVerified
+                                ? profile.revenue
+                                : "Needs evidence"}
+                            </strong>
+                            <span>Revenue</span>
+                            <p>Profile fact must stay source-backed.</p>
+                          </div>
+                        </div>
+                      </article>
+                      <article className="hx3-card">
+                        <div className="hx3-cardTop">
+                          <span className="hx3-cardIcon">
+                            <HomeMiniIcon kind="people" />
+                          </span>
+                          <div>
+                            <strong>
+                              {profile?.employeesVerified
+                                ? profile.employees
+                                : "Needs evidence"}
+                            </strong>
+                            <span>Employees</span>
+                            <p>Loaded from enterprise profile facts.</p>
+                          </div>
+                        </div>
+                      </article>
+                      <article className="hx3-card">
+                        <div className="hx3-cardTop">
+                          <span className="hx3-cardIcon">
+                            <HomeMiniIcon kind="check" />
+                          </span>
+                          <div>
+                            <strong>{contextPosture}</strong>
+                            <span>Understanding</span>
+                            <p>
+                              Enough context to browse, with caveats visible.
+                            </p>
+                          </div>
+                        </div>
+                      </article>
+                    </div>
+                  </section>
+
+                  <div className="hx3-hair" />
+                  <section className="hx3-section">
+                    <h2>Executive snapshot</h2>
+                    <div className="hx3-snapshot">
+                      <article className="hx3-card">
+                        <div className="hx3-cardTop">
+                          <span className="hx3-cardIcon">
+                            <HomeMiniIcon kind="file" />
+                          </span>
+                          <div>
+                            <strong>{shortMetric(knownFactCount)}</strong>
+                            <span>Evidence items</span>
+                            <p>Visible in active context.</p>
+                          </div>
+                        </div>
+                      </article>
+                      <article className="hx3-card">
+                        <div className="hx3-cardTop">
+                          <span className="hx3-cardIcon">
+                            <HomeMiniIcon kind="check" />
+                          </span>
+                          <div>
+                            <strong>{contextPosture}</strong>
+                            <span>Evidence posture</span>
+                            <p>
+                              Enough to answer source-backed context questions.
+                            </p>
+                          </div>
+                        </div>
+                      </article>
+                      <article className="hx3-card">
+                        <div className="hx3-cardTop">
+                          <span className="hx3-cardIcon">
+                            <HomeMiniIcon kind="link" />
+                          </span>
+                          <div>
+                            <strong>{relationshipPosture}</strong>
+                            <span>Relationship depth</span>
+                            <p>
+                              Cross-system reasoning stays caveated until
+                              validated.
+                            </p>
+                          </div>
+                        </div>
+                      </article>
+                      <article className="hx3-card">
+                        <div className="hx3-cardTop">
+                          <span className="hx3-cardIcon">
+                            <HomeMiniIcon kind="chart" />
+                          </span>
+                          <div>
+                            <strong>
+                              {shortMetric(
+                                nextActions.length || safeToAsk.length,
+                              )}
+                            </strong>
+                            <span>Next actions</span>
+                            <p>
+                              Ready to focus on evidence, gaps, and handoff.
+                            </p>
+                          </div>
+                        </div>
+                      </article>
+                    </div>
+                  </section>
+
+                  <section className="hx3-section">
+                    <h2>What you can do</h2>
+                    <p>Start with the most important things.</p>
+                    <div className="hx3-actions">
+                      <button
+                        className="hx3-action"
+                        onClick={() =>
+                          askHomeKnow("What can Home safely answer right now?")
+                        }
+                        type="button"
+                      >
+                        <span className="hx3-actionIcon">
+                          <HomeMiniIcon kind="search" />
+                        </span>
+                        <span>
+                          <strong>Ask a question</strong>
+                          <p>Get facts, sources, and explanations.</p>
+                        </span>
+                        <span>→</span>
+                      </button>
+                      <button
+                        className="hx3-action"
+                        onClick={selectDataQuality}
+                        type="button"
+                      >
+                        <span className="hx3-actionIcon">
+                          <HomeMiniIcon kind="upload" />
+                        </span>
+                        <span>
+                          <strong>Inspect evidence</strong>
+                          <p>
+                            See coverage, missing fields, and source posture.
+                          </p>
+                        </span>
+                        <span>→</span>
+                      </button>
+                      <button
+                        className="hx3-action"
+                        onClick={selectDataQuality}
+                        type="button"
+                      >
+                        <span className="hx3-actionIcon">
+                          <HomeMiniIcon kind="search" />
+                        </span>
+                        <span>
+                          <strong>Explore gaps</strong>
+                          <p>See what is missing to answer more.</p>
+                        </span>
+                        <span>→</span>
+                      </button>
+                      <button
+                        className="hx3-action"
+                        onClick={() =>
+                          firstRelationshipArea
+                            ? selectArea(firstRelationshipArea.id)
+                            : selectDataQuality()
+                        }
+                        type="button"
+                      >
+                        <span className="hx3-actionIcon">
+                          <HomeMiniIcon kind="list" />
+                        </span>
+                        <span>
+                          <strong>View relationships</strong>
+                          <p>Understand how things connect.</p>
+                        </span>
+                        <span>→</span>
+                      </button>
+                    </div>
+                  </section>
+
+                  <section className="hx3-section">
+                    <div className="hx3-sectionHead">
+                      <div>
+                        <h2>Explore this context</h2>
+                        <p>Browse the areas of information AbarVa tracks.</p>
+                      </div>
+                    </div>
+                    <div
+                      className="hx3-tabs"
+                      role="tablist"
+                      aria-label="Context areas"
+                    >
+                      {focusAreas.map((area) => (
+                        <button
+                          aria-selected={false}
+                          className="hx3-tab"
+                          key={area.id}
+                          onClick={() => selectArea(area.id)}
+                          role="tab"
+                          type="button"
+                        >
+                          {area.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="hx3-tableWrap">
+                      <table className="hx3-table">
+                        <thead>
+                          <tr>
+                            <th>Name</th>
+                            <th>Records</th>
+                            <th>Evidence</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {explorerAreas.map((area) => (
+                            <tr key={area.id}>
+                              <td>{area.label}</td>
+                              <td>{area.rows.toLocaleString()}</td>
+                              <td>
+                                {area.gaps > 0 ? "Needs validation" : "Strong"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+
+                  <details className="hx3-tech">
+                    <summary>
+                      Technical details · data quality, source coverage,
+                      relationships, diagnostics
+                    </summary>
+                    <div className="hx3-techBody">
+                      <div className="hx3-grid2">
+                        <article>
+                          <h3>Safe to ask</h3>
+                          <ul className="hx3-list">
+                            {safeToAsk.slice(0, 5).map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        </article>
+                        <article>
+                          <h3>Do not rely yet</h3>
+                          <ul className="hx3-list hx3-warn">
+                            {doNotRely.slice(0, 5).map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                          </ul>
+                        </article>
+                      </div>
+                    </div>
+                  </details>
+                </>
+              )}
+            </div>
+          </main>
 
           {isAvaOpen ? (
             <ExplorerRail
@@ -2905,16 +2661,17 @@ export function HomeSurface({
               selectedDisplayName={selectedArea?.label}
               thread={thread}
             />
-          ) : null}
-          <button
-            className="hx2-avaLauncher"
-            data-testid="home-ava-launcher"
-            onClick={() => setIsAvaOpen(true)}
-            type="button"
-          >
-            <span className="hx2-avaLauncherMark">aVa</span>
-            Ask aVa
-          </button>
+          ) : (
+            <button
+              className="hx2-avaLauncher"
+              data-testid="home-ava-launcher"
+              onClick={() => setIsAvaOpen(true)}
+              type="button"
+            >
+              <span className="hx2-avaLauncherMark">aVa</span>
+              Ask aVa
+            </button>
+          )}
         </div>
       </div>
     </div>

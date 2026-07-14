@@ -494,7 +494,7 @@ const previewDataQuality = buildHomeDataQualityModel({
 const englishSummary = buildHomeEnglishSummary(dataQuality);
 
 describe("HomeSurface — Explorer context browser", () => {
-  it("renders Home as an Explorer-first context browser with scoped aVa", () => {
+  it("renders Home as an executive briefing with hidden aVa", () => {
     render(
       <HomeSurface
         clientKey="apexretail"
@@ -504,32 +504,22 @@ describe("HomeSurface — Explorer context browser", () => {
       />,
     );
 
+    expect(screen.getByTestId("home-executive-briefing")).toBeInTheDocument();
     expect(screen.getByTestId("home-context-explorer")).toBeInTheDocument();
     expect(screen.getByTestId("home-context-detail")).toBeInTheDocument();
-    expect(screen.getByTestId("home-context-rail")).toBeInTheDocument();
     expect(screen.queryByTestId("agent-dock-panel")).not.toBeInTheDocument();
-    expect(screen.getByText("Context Explorer")).toBeInTheDocument();
-    expect(screen.getAllByText("Home · Enterprise Knowledge")).toHaveLength(2);
-    expect(screen.getAllByText("Active Home context").length).toBeGreaterThan(
-      0,
-    );
-    expect(screen.getByText("Enterprise overview")).toBeInTheDocument();
+    expect(screen.queryByTestId("home-ava-drawer")).not.toBeInTheDocument();
+    expect(screen.getByText("Executive snapshot")).toBeInTheDocument();
+    expect(screen.getByText("What you can do")).toBeInTheDocument();
+    expect(screen.getByText("Explore this context")).toBeInTheDocument();
     expect(
-      screen.getByTestId("home-enterprise-knowledge-snapshot"),
+      screen.getByText(
+        "Technical details · data quality, source coverage, relationships, diagnostics",
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByTestId("home-english-summary")).toBeInTheDocument();
-    expect(screen.getByText("What this means")).toBeInTheDocument();
-    expect(screen.getByText("Safe to ask")).toBeInTheDocument();
-    expect(screen.getByText("Do not rely on this yet for")).toBeInTheDocument();
-    expect(screen.getByText("Next data action")).toBeInTheDocument();
     expect(
-      screen.getByText("Enterprise Knowledge Snapshot"),
+      screen.getByRole("button", { name: /Ask aVa/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Evidence Coverage")).toBeInTheDocument();
-    expect(screen.getAllByText("Answerability").length).toBeGreaterThan(0);
-    expect(screen.getByText("Top Gaps")).toBeInTheDocument();
-    expect(screen.getByText("Ready Areas")).toBeInTheDocument();
-    expect(screen.getByText("Relationship Overview")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Functions/i }),
     ).toBeInTheDocument();
@@ -539,40 +529,11 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(
       screen.getByRole("button", { name: /Vendors & Contracts/i }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Data Assets & Integrations/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Programs & Priorities/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Risks & Controls/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Metrics & Outcomes/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("tab", { name: "Summary" }),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "Data" })).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("tab", { name: "Questions" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/scoped aVa · read-only over evidence/i),
-    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Ask aVa/i }));
+    expect(screen.getByTestId("home-ava-drawer")).toBeInTheDocument();
     expect(screen.getByText("I can answer")).toBeInTheDocument();
     expect(screen.getByText("I won’t answer")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", {
-        name: "Explain this context in plain English.",
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", {
-        name: "What decisions should not rely on this yet?",
-      }),
-    ).toBeInTheDocument();
   });
 
   it("binds Home status panels to setup-control when supplied", () => {
@@ -609,18 +570,30 @@ describe("HomeSurface — Explorer context browser", () => {
     fireEvent.click(screen.getByRole("button", { name: /Data Quality/i }));
 
     expect(screen.getByTestId("home-data-quality-panel")).toBeInTheDocument();
-    expect(screen.getByText("What Home can trust right now")).toBeInTheDocument();
+    expect(
+      screen.getByText("What Home can trust right now"),
+    ).toBeInTheDocument();
     expect(screen.getAllByText("Source Coverage").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Candidate Coverage").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Evidence Strength").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Relationship Coverage").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Relationship Coverage").length).toBeGreaterThan(
+      0,
+    );
     expect(screen.getByText("Active / Candidate Status")).toBeInTheDocument();
     expect(screen.getAllByText("Partial").length).toBeGreaterThan(0);
-    expect(screen.getByText(/Candidate preview not active/i)).toBeInTheDocument();
-    expect(screen.getByText(/Default Home does not read candidate-only facts/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Candidate Preview — inactive data/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Candidate preview not active/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Default Home does not read candidate-only facts/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Candidate Preview — inactive data/),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Canonical Fact Store")).not.toBeInTheDocument();
-    expect(screen.queryByText("Enterprise Relationship Graph")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Enterprise Relationship Graph"),
+    ).not.toBeInTheDocument();
   });
 
   it("shows candidate preview only when explicitly enabled", () => {
@@ -816,7 +789,7 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(
       screen.getByText(/gaps are client-to-complete fields/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("1 field missing")).toBeInTheDocument();
+    expect(screen.getByText(/1 field missing/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: "Sources" }));
     expect(
