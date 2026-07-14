@@ -13,7 +13,7 @@ import {
 import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
 import { buildHomeDataQualityModel } from "@/lib/home/home-data-quality";
 import { buildHomeEnglishSummary } from "@/lib/home/home-english-summary";
-import { buildHomeSummarySnapshot } from "@/lib/home/home-summary-snapshot";
+import { buildHomeRuntimeSummarySnapshot } from "@/lib/home/home-summary-runtime";
 import { getHomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
 import { getHomeV7ContextBrowser } from "@/lib/home/v7-context-browser";
 import { getIntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
@@ -100,7 +100,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     browser,
   });
   const englishSummary = buildHomeEnglishSummary(dataQuality);
-  const summarySnapshot = buildHomeSummarySnapshot({
+  const summarySnapshot = await buildHomeRuntimeSummarySnapshot({
     tenantId: activeClient?.id ?? null,
     tenantKey: homeTenantKey ?? activeClient?.key ?? requestedClient,
     displayName: activeTenantName,
