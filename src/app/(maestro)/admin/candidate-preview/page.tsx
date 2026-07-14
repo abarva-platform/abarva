@@ -6,7 +6,7 @@ import { ContextBar } from "@/components/admin/ContextBar";
 import { EditorialCanvas } from "@/components/admin/EditorialCanvas";
 import {
   CANDIDATE_PREVIEW_BANNER,
-  readLatestCandidateVersionBuild,
+  loadCandidateVersionBuildForAdmin,
   type TenantCandidateVersion,
 } from "@/lib/enterprise-data/candidate-version-build/candidate-version-build";
 import { resolveAdminTenant } from "@/lib/admin/admin-tenant";
@@ -38,7 +38,10 @@ export default async function CandidatePreviewPage({
   await connection();
   const tenant = await resolveAdminTenant();
   const params = searchParams ? await searchParams : {};
-  const candidateBuild = await readLatestCandidateVersionBuild(process.cwd());
+  const candidateBuildState = await loadCandidateVersionBuildForAdmin({
+    repoRoot: process.cwd(),
+  });
+  const candidateBuild = candidateBuildState.report;
   const requestedTenantKey = params.tenantKey?.trim() || "skyharbor-air";
   const selectedCandidate =
     candidateBuild?.candidateVersions.find(
@@ -55,6 +58,7 @@ export default async function CandidatePreviewPage({
     selectedCandidate,
     requestedCandidateVersionId,
     candidateBuildPresent: Boolean(candidateBuild),
+    loadErrors: candidateBuildState.errors,
   });
   const previewAccepted = validationErrors.length === 0;
 
@@ -78,7 +82,13 @@ export default async function CandidatePreviewPage({
           tenant={selectedCandidate?.tenantDisplayName ?? requestedTenantKey}
           mode="Explicit candidate preview"
           agent="Steward"
-          data={candidateBuild ? "Inactive candidate read model" : "No candidate artifact"}
+          data={
+            candidateBuild
+              ? candidateBuildState.source === "report_artifact"
+                ? "Inactive candidate read model"
+                : "Inactive candidate read model · runtime deterministic fallback"
+              : "No candidate artifact"
+          }
           liveStatus={
             previewAccepted
               ? "Preview request accepted"
@@ -229,10 +239,11 @@ function validateCandidatePreviewRequest(input: {
   selectedCandidate: TenantCandidateVersion | null;
   requestedCandidateVersionId: string;
   candidateBuildPresent: boolean;
+  loadErrors: string[];
 }): string[] {
   const errors: string[] = [];
   if (!input.candidateBuildPresent) {
-    errors.push("Candidate version build artifact is missing.");
+    errors.push(...input.loadErrors);
   }
   if (!input.previewEnabled) {
     errors.push("Explicit preview flag is not enabled.");

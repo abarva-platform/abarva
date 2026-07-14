@@ -131,6 +131,17 @@ export interface CandidateVersionBuildReport {
   };
 }
 
+export type CandidateVersionBuildLoadSource =
+  | "report_artifact"
+  | "runtime_deterministic_fallback"
+  | "missing";
+
+export interface CandidateVersionBuildLoadResult {
+  report: CandidateVersionBuildReport | null;
+  source: CandidateVersionBuildLoadSource;
+  errors: string[];
+}
+
 const REQUIRED_SOURCE_BUILD_FILES = [
   "summary.md",
   "tenant-build-index.json",
@@ -385,6 +396,52 @@ export async function readLatestCandidateVersionBuild(
     };
   } catch {
     return null;
+  }
+}
+
+export async function loadCandidateVersionBuildForAdmin(options: {
+  repoRoot: string;
+  allowRuntimeFallback?: boolean;
+  forceRuntimeFallback?: boolean;
+}): Promise<CandidateVersionBuildLoadResult> {
+  if (!options.forceRuntimeFallback) {
+    const report = await readLatestCandidateVersionBuild(options.repoRoot);
+    if (report) {
+      return {
+        report,
+        source: "report_artifact",
+        errors: [],
+      };
+    }
+  }
+
+  if (options.allowRuntimeFallback === false) {
+    return {
+      report: null,
+      source: "missing",
+      errors: ["Candidate version build artifact is missing."],
+    };
+  }
+
+  try {
+    const report = await buildCandidateVersionBuildReport({
+      repoRoot: options.repoRoot,
+    });
+    return {
+      report,
+      source: "runtime_deterministic_fallback",
+      errors: [],
+    };
+  } catch (error) {
+    return {
+      report: null,
+      source: "missing",
+      errors: [
+        `Candidate version build artifact is missing and runtime deterministic fallback failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      ],
+    };
   }
 }
 
