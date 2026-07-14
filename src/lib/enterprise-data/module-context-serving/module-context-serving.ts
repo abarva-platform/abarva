@@ -17,8 +17,10 @@ import type { CanonicalIngestionRecord } from "../contracts/canonical-ingestion"
 import type {
   EvidenceBoundary,
   ModuleContextClassification,
+  ModuleContextCompleteness,
   ModuleContextDomainSummary,
   ModuleContextEvidenceRef,
+  ModuleContextExplanation,
   ModuleContextGap,
   ModuleContextGuardrails,
   ModuleContextMode,
@@ -82,6 +84,59 @@ export async function getModuleContext(
     return buildCandidatePreviewContext(request, options);
   }
   return buildActiveContext(request, options);
+}
+
+export async function explainModuleContext(
+  request: ModuleContextReadRequest,
+  options: ModuleContextServingOptions,
+): Promise<ModuleContextExplanation> {
+  const context = await getModuleContext(request, options);
+  return explainServedModuleContext(context);
+}
+
+export function explainServedModuleContext(
+  context: ServedModuleContextPacket,
+): ModuleContextExplanation {
+  const moduleLabel = moduleLabelFor(context.moduleKey);
+  const recordCount = context.records.length;
+  const evidenceCount = context.evidenceRefs.length;
+  const requestedDomainCount = context.domains.length;
+  const coveredDomainCount = context.domains.filter(
+    (domain) => domain.acceptedRecords > 0,
+  ).length;
+  const candidateText =
+    context.mode === "candidate_preview"
+      ? " It is inactive candidate data and not active tenant truth."
+      : "";
+  const activeText =
+    context.mode === "active" && context.activeTenantAccessVersionId
+      ? " Active Tenant Access metadata is available, but module runtime consumption is unchanged by this contract."
+      : "";
+  const missingActiveText =
+    context.mode === "active" && !context.activeTenantAccessVersionId
+      ? " No Active Tenant Access record is available, and the serving contract did not fall back to candidate data."
+      : "";
+
+  return {
+    tenantKey: context.tenantKey,
+    moduleKey: context.moduleKey,
+    purpose: context.purpose,
+    mode: context.mode,
+    sourceMode: context.sourceMode,
+    generatedAt: context.generatedAt,
+    summary:
+      `${moduleLabel} context has ${recordCount} readable records, ${evidenceCount} evidence references, and ${coveredDomainCount} of ${requestedDomainCount} requested domains with represented data.` +
+      candidateText +
+      activeText +
+      missingActiveText,
+    strengths: explanationStrengths(context),
+    limitations: explanationLimitations(context),
+    supportedQuestions: supportedQuestions(context),
+    unsupportedQuestions: unsupportedQuestions(context),
+    nextActions: nextActions(context),
+    contextCompleteness: context.contextCompleteness,
+    guardrails: context.guardrails,
+  };
 }
 
 async function buildActiveContext(
@@ -357,6 +412,16 @@ function packet(input: {
   readiness: ModuleContextReadiness;
   guardrails: ModuleContextGuardrails;
 }): ServedModuleContextPacket {
+  const contextCompleteness = computeContextCompleteness({
+    domains: input.domains,
+    records: input.records,
+    evidenceRefs: input.evidenceRefs,
+    validatedRelationships: input.validatedRelationships,
+    relationshipCandidates: input.relationshipCandidates,
+    gaps: input.gaps,
+    readiness: input.readiness,
+  });
+
   return {
     tenantKey: input.request.tenantKey,
     tenantDataVersion: input.tenantDataVersion,
@@ -382,6 +447,7 @@ function packet(input: {
     lineage: input.lineage,
     readiness: input.readiness,
     guardrails: input.guardrails,
+    contextCompleteness,
   };
 }
 
@@ -398,6 +464,239 @@ function selectCandidate(
       }
       return true;
     }) ?? null
+  );
+}
+
+function computeContextCompleteness(input: {
+  domains: ModuleContextDomainSummary[];
+  records: ModuleContextRecord[];
+  evidenceRefs: ModuleContextEvidenceRef[];
+  validatedRelationships: ModuleContextRelationship[];
+  relationshipCandidates: ModuleContextRelationship[];
+  gaps: ModuleContextGap[];
+  readiness: ModuleContextReadiness;
+}): ModuleContextCompleteness {
+  const domainCount = Math.max(input.domains.length, 1);
+  const coveredDomains = input.domains.filter(
+    (domain) => domain.acceptedRecords > 0,
+  ).length;
+  const breadth = percent(coveredDomains, domainCount);
+  const domainDepth =
+    input.domains.length === 0
+      ? 0
+      : Math.round(
+          input.domains.reduce(
+            (sum, domain) => sum + Math.min(domain.acceptedRecords / 50, 1),
+            0,
+          ) /
+            input.domains.length *
+            100,
+        );
+  const recordFieldDepth =
+    input.records.length === 0
+      ? 0
+      : Math.round(
+          input.records.reduce(
+            (sum, record) =>
+              sum + Math.min(Object.keys(record.fields).length / 8, 1),
+            0,
+          ) /
+            input.records.length *
+            100,
+        );
+  const depth = Math.round((domainDepth + recordFieldDepth) / 2);
+  const relationshipCoverage =
+    input.validatedRelationships.length > 0
+      ? 100
+      : input.relationshipCandidates.length > 0
+        ? Math.min(70, percent(input.relationshipCandidates.length, domainCount))
+        : 0;
+  const evidenceCoverage =
+    input.records.length === 0
+      ? input.evidenceRefs.length > 0
+        ? 25
+        : 0
+      : percent(
+          input.records.filter((record) => record.sourceEvidenceIds.length > 0)
+            .length,
+          input.records.length,
+        );
+  const blockerPenalty = Math.min(
+    35,
+    input.gaps.filter((gap) => gap.severity === "blocker").length * 8,
+  );
+  const warningPenalty = Math.min(
+    15,
+    input.gaps.filter((gap) => gap.severity === "warning").length * 4,
+  );
+  const readinessBonus =
+    (input.readiness.evidenceReady ? 5 : 0) +
+    (input.readiness.relationshipReady ? 5 : 0) +
+    (input.readiness.profileReady ? 5 : 0);
+  const answerability = clampScore(
+    Math.round(
+      breadth * 0.25 +
+        depth * 0.2 +
+        relationshipCoverage * 0.2 +
+        evidenceCoverage * 0.35 +
+        readinessBonus -
+        blockerPenalty -
+        warningPenalty,
+    ),
+  );
+  return {
+    breadth: clampScore(breadth),
+    depth: clampScore(depth),
+    relationshipCoverage: clampScore(relationshipCoverage),
+    evidenceCoverage: clampScore(evidenceCoverage),
+    answerability,
+    overall: overallFor(answerability),
+  };
+}
+
+function explanationStrengths(context: ServedModuleContextPacket): string[] {
+  const strengths: string[] = [];
+  const coveredDomains = context.domains.filter(
+    (domain) => domain.acceptedRecords > 0,
+  );
+  if (coveredDomains.length > 0) {
+    strengths.push(
+      `${coveredDomains.length} requested domains have represented context.`,
+    );
+  }
+  if (context.records.length > 0) {
+    strengths.push(
+      `${context.records.length} records are readable through the module context packet.`,
+    );
+  }
+  if (context.evidenceRefs.length > 0) {
+    strengths.push(
+      `${context.evidenceRefs.length} evidence references are available for lineage and citation checks.`,
+    );
+  }
+  if (context.relationshipCandidates.length > 0) {
+    strengths.push(
+      `${context.relationshipCandidates.length} relationship candidate groups are available for later validation.`,
+    );
+  }
+  if (context.activeTenantAccessVersionId) {
+    strengths.push("Active Tenant Access metadata pointer is resolved.");
+  }
+  if (strengths.length === 0) {
+    strengths.push("The packet preserves a safe empty response instead of falling back to inactive candidate data.");
+  }
+  return strengths;
+}
+
+function explanationLimitations(context: ServedModuleContextPacket): string[] {
+  const limitations = [
+    ...context.caveats,
+    ...context.gaps.map((gap) => gap.description),
+  ];
+  if (context.mode === "candidate_preview") {
+    limitations.unshift("Candidate preview is inactive and cannot be treated as active tenant truth.");
+  }
+  if (context.validatedRelationships.length === 0) {
+    limitations.push("Validated relationships are not present in this packet.");
+  }
+  if (context.records.length === 0) {
+    limitations.push("No readable records are available in this packet.");
+  }
+  return uniqueStrings(limitations);
+}
+
+function supportedQuestions(context: ServedModuleContextPacket): string[] {
+  const defaults: Record<string, string[]> = {
+    home: [
+      "What context is available for this tenant?",
+      "Which domains are source-backed or still incomplete?",
+    ],
+    intelligence: [
+      "Which tenant facts can support an answer context?",
+      "Where does the evidence suggest limitations or caveats?",
+    ],
+    moves: [
+      "Which tenant facts are available for a future phase evidence extract?",
+      "Which domains should a future Moves context extract inspect first?",
+    ],
+    source: [
+      "Which tenant facts are available for future sourcing context?",
+      "Which evidence and vendor domains can be inspected?",
+    ],
+    tower: [
+      "Which tenant facts are available for future measurement context?",
+      "Which evidence-backed domains can support readiness review?",
+    ],
+  };
+  return uniqueStrings([
+    ...(defaults[context.moduleKey] ?? []),
+    ...context.readiness.canAnswer,
+  ]);
+}
+
+function unsupportedQuestions(context: ServedModuleContextPacket): string[] {
+  const defaults = [
+    "Do not claim candidate preview data is active tenant truth.",
+    "Do not claim production tenant data was written or promoted by this serving call.",
+    "Do not claim module runtime behavior changed because this packet was generated.",
+  ];
+  if (context.moduleKey === "moves") {
+    defaults.push("Do not claim Move evidence was attached by the data layer.");
+  }
+  if (context.moduleKey === "tower") {
+    defaults.push("Do not calculate realized value, ROI, or Tower outcomes from this context packet.");
+  }
+  return uniqueStrings([...defaults, ...context.readiness.mustNotClaim]);
+}
+
+function nextActions(context: ServedModuleContextPacket): string[] {
+  const actions: string[] = [];
+  if (context.mode === "candidate_preview") {
+    actions.push("Review candidate preview quality before any promotion decision.");
+    actions.push("Promote only through the explicit Active Tenant Access promotion gate.");
+  }
+  if (context.mode === "active" && !context.activeTenantAccessVersionId) {
+    actions.push("Promote a reviewed candidate before relying on active module context.");
+  }
+  if (context.relationshipCandidates.length > 0 && context.validatedRelationships.length === 0) {
+    actions.push("Validate relationship candidates before cross-domain reasoning.");
+  }
+  if (context.gaps.length > 0) {
+    actions.push("Resolve blocker and warning gaps before treating the packet as board-ready.");
+  }
+  actions.push(`Let the ${moduleLabelFor(context.moduleKey)} module decide how to render or use this packet.`);
+  return uniqueStrings(actions);
+}
+
+function moduleLabelFor(moduleKey: ServedModuleContextPacket["moduleKey"]): string {
+  return {
+    home: "Home",
+    intelligence: "Intelligence",
+    moves: "Moves",
+    source: "Source",
+    tower: "Tower",
+  }[moduleKey];
+}
+
+function overallFor(answerability: number): ModuleContextCompleteness["overall"] {
+  if (answerability >= 85) return "Strong";
+  if (answerability >= 70) return "Good";
+  if (answerability >= 45) return "Limited";
+  return "Blocked";
+}
+
+function percent(numerator: number, denominator: number): number {
+  if (denominator <= 0) return 0;
+  return clampScore(Math.round((numerator / denominator) * 100));
+}
+
+function clampScore(value: number): number {
+  return Math.max(0, Math.min(100, value));
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return Array.from(
+    new Set(values.map((value) => value.trim()).filter((value) => value.length > 0)),
   );
 }
 
