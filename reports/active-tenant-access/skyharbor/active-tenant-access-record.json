@@ -1,15 +1,15 @@
 {
   "recordVersion": "active-tenant-access/v1",
-  "generatedAt": "2026-07-13T00:00:00.000Z",
+  "generatedAt": "2026-07-14T13:00:00.000Z",
   "tenantKey": "skyharbor-air",
-  "activeVersionId": "skyharbor-air:skyharbor-air-pr10-candidate:candidate-dry-run",
+  "activeVersionId": "candidate:skyharbor-air:80f0be2d1c76",
   "priorActiveVersionId": "skyharbor-air:active-runtime-truth:unchanged",
-  "sourceCandidateVersionId": "skyharbor-air:skyharbor-air-pr10-candidate:candidate-dry-run",
+  "sourceCandidateVersionId": "candidate:skyharbor-air:80f0be2d1c76",
   "activeAccessState": "promoted_for_safe_demo_metadata",
   "productionTenantDataWritten": false,
   "writesPhysicalTables": false,
   "moduleRuntimeConsumptionChanged": false,
   "moduleDefaultReadsCandidateData": false,
   "rollbackTargetVersionId": "skyharbor-air:active-runtime-truth:unchanged",
-  "rollbackProofPath": "reports/promotion-execution-dry-run/skyharbor/rollback-proof.json"
+  "rollbackProofPath": "reports/active-tenant-access/skyharbor/rollback-proof.md"
 }

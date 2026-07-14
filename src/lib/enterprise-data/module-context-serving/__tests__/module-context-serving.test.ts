@@ -5,6 +5,23 @@ import {
 import type { ModuleContextReadRequest } from "../../contracts/module-context-apis";
 
 describe("module context serving contract", () => {
+  const activeTenantKeys = [
+    "apex-retail",
+    "first-capital-financial",
+    "lakeshore-holdings",
+    "lakeshore-industries",
+    "meridian-health",
+    "skyharbor-air",
+  ];
+
+  const appTenantAliases = [
+    ["apexretail", "candidate:apex-retail:"],
+    ["arcturus", "candidate:first-capital-financial:"],
+    ["lakeshore", "candidate:lakeshore-holdings:"],
+    ["meridian", "candidate:meridian-health:"],
+    ["skyharbor", "candidate:skyharbor-air:"],
+  ] as const;
+
   it("defaults to active mode and does not consume candidate data", async () => {
     const packet = await getModuleContext(
       {
@@ -46,6 +63,66 @@ describe("module context serving contract", () => {
       }),
     );
   });
+
+  it.each(activeTenantKeys)(
+    "serves active module context for active registry tenant %s",
+    async (tenantKey) => {
+      const packet = await getModuleContext(
+        {
+          tenantKey,
+          moduleKey: "home",
+          purpose: "context_summary",
+          requestedDomains: [
+            "enterprise_profile",
+            "applications_systems",
+            "data_assets_integrations",
+          ],
+        },
+        {
+          repoRoot: process.cwd(),
+          generatedAt: "2026-07-14T00:00:00.000Z",
+        },
+      );
+
+      expect(packet.mode).toBe("active");
+      expect(packet.sourceMode).toBe("active_tenant_access");
+      expect(packet.activeTenantAccessVersionId).toContain(`candidate:${tenantKey}:`);
+      expect(packet.candidateVersionId).toBeNull();
+      expect(packet.records.length).toBeGreaterThan(0);
+      expect(packet.records.every((record) => record.agentReadiness === "agent_ready")).toBe(true);
+      expect(packet.records.every((record) => record.sourceEvidenceIds.length > 0)).toBe(true);
+      expect(packet.gaps).toHaveLength(0);
+      expect(packet.guardrails.candidateDataConsumed).toBe(false);
+      expect(packet.guardrails.defaultModuleReadsCandidateData).toBe(false);
+      expect(packet.guardrails.moduleRuntimeConsumptionChanged).toBe(false);
+    },
+    30000,
+  );
+
+  it.each(appTenantAliases)(
+    "resolves app tenant alias %s to active canonical context",
+    async (tenantKey, candidatePrefix) => {
+      const packet = await getModuleContext(
+        {
+          tenantKey,
+          moduleKey: "home",
+          purpose: "context_summary",
+          requestedDomains: ["enterprise_profile", "applications_systems"],
+        },
+        {
+          repoRoot: process.cwd(),
+          generatedAt: "2026-07-14T00:00:00.000Z",
+        },
+      );
+
+      expect(packet.sourceMode).toBe("active_tenant_access");
+      expect(packet.activeTenantAccessVersionId).toContain(candidatePrefix);
+      expect(packet.records.length).toBeGreaterThan(0);
+      expect(packet.guardrails.candidateDataConsumed).toBe(false);
+      expect(packet.guardrails.homeReadsCandidateByDefault).toBe(false);
+    },
+    30000,
+  );
 
   it("serves Meridian active module context without consuming candidate data by default", async () => {
     const packet = await getModuleContext(

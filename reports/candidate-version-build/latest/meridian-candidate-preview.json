@@ -1,10 +1,10 @@
 {
-  "candidateVersionId": "candidate:meridian-health:386677f11404",
+  "candidateVersionId": "candidate:meridian-health:aef0edc75fad",
   "tenantId": "meridian-health",
   "tenantKey": "meridian-health",
   "tenantDisplayName": "Meridian Health",
-  "sourceBuildId": "canonical-data-build:24693eef8c78",
-  "sourceBuildFingerprint": "24693eef8c783cd336d3a3419b9adcfed12c6c13a76c81f2775387ed3b9ab0f5",
+  "sourceBuildId": "canonical-data-build:c32e4ed2326c",
+  "sourceBuildFingerprint": "c32e4ed2326c5825e7797f488656be1967641a2108b9176b089e3e84bd34bd22",
   "inputFingerprint": "adaa900b69e7da20473a62440301d893268a0ab0f810d09ea9bcca95d773df6d",
   "canonicalRecordCount": 4078,
   "evidenceAttachmentCount": 4078,
@@ -216,7 +216,7 @@
     }
   ],
   "promotionBlockers": [],
-  "generatedAt": "2026-07-14T12:00:00.000Z",
+  "generatedAt": "2026-07-14T13:00:00.000Z",
   "status": "inactive",
   "creationStatus": "created",
   "mode": "candidate_preview",

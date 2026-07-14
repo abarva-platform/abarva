@@ -67,8 +67,29 @@ const CANONICAL_TO_REQUEST_DOMAIN = Object.fromEntries(
 ) as Record<string, ModuleContextRequestedDomain>;
 
 const ACTIVE_ACCESS_SLUGS: Record<string, string> = {
+  "apex-retail": "apexretail",
+  apexretail: "apexretail",
+  "first-capital": "firstcapital",
+  "first-capital-financial": "firstcapital",
+  firstcapital: "firstcapital",
+  arcturus: "firstcapital",
+  "lakeshore-holdings": "lakeshore",
+  lakeshore: "lakeshore",
+  "lakeshore-industries": "lakeshore-industries",
   "meridian-health": "meridian",
+  meridian: "meridian",
   "skyharbor-air": "skyharbor",
+  skyharbor: "skyharbor",
+};
+
+const REQUEST_TENANT_ALIASES: Record<string, string> = {
+  apexretail: "apex-retail",
+  arcturus: "first-capital-financial",
+  "first-capital": "first-capital-financial",
+  firstcapital: "first-capital-financial",
+  lakeshore: "lakeshore-holdings",
+  meridian: "meridian-health",
+  skyharbor: "skyharbor-air",
 };
 
 export interface ModuleContextServingOptions {
@@ -146,9 +167,10 @@ async function buildActiveContext(
 ): Promise<ServedModuleContextPacket> {
   const generatedAt = options.generatedAt ?? new Date().toISOString();
   const requestedDomains = normalizeRequestedDomains(request.requestedDomains);
+  const canonicalTenantKey = canonicalTenantKeyForRequest(request.tenantKey);
   const activeRecord = await readActiveAccessRecord(
     options.repoRoot,
-    request.tenantKey,
+    canonicalTenantKey,
   );
   const mismatchedActiveVersion =
     Boolean(request.activeTenantAccessVersionId) &&
@@ -160,7 +182,7 @@ async function buildActiveContext(
     activeVersionId
       ? await loadCanonicalContextSlice({
           repoRoot: options.repoRoot,
-          tenantKey: request.tenantKey,
+          tenantKey: canonicalTenantKey,
           requestedDomains,
           generatedAt,
           classification: "agent_ready",
@@ -224,7 +246,7 @@ async function buildActiveContext(
     gaps,
     caveats,
     lineage: {
-      activeAccessRecordPath: activeRecordPath(request.tenantKey),
+      activeAccessRecordPath: activeRecordPath(canonicalTenantKey),
       sourceSnapshotIds: canonicalSlice?.sourceSnapshotIds ?? [],
     },
     readiness: {
@@ -272,11 +294,12 @@ async function buildCandidatePreviewContext(
 ): Promise<ServedModuleContextPacket> {
   const generatedAt = options.generatedAt ?? new Date().toISOString();
   const requestedDomains = normalizeRequestedDomains(request.requestedDomains);
+  const canonicalTenantKey = canonicalTenantKeyForRequest(request.tenantKey);
   const loadResult = await loadCandidateVersionBuildForAdmin({
     repoRoot: options.repoRoot,
   });
   const report = loadResult.report;
-  const candidate = selectCandidate(report, request);
+  const candidate = selectCandidate(report, request, canonicalTenantKey);
 
   if (!candidate) {
     return missingCandidatePacket({
@@ -293,7 +316,7 @@ async function buildCandidatePreviewContext(
   );
   const canonicalSlice = await loadCanonicalContextSlice({
     repoRoot: options.repoRoot,
-    tenantKey: request.tenantKey,
+    tenantKey: canonicalTenantKey,
     requestedDomains,
     generatedAt,
     classification: "candidate_only",
@@ -483,11 +506,12 @@ function packet(input: {
 function selectCandidate(
   report: CandidateVersionBuildReport | null,
   request: ModuleContextReadRequest,
+  canonicalTenantKey: string,
 ): TenantCandidateVersion | null {
   if (!report) return null;
   return (
     report.candidateVersions.find((candidate) => {
-      if (candidate.tenantKey !== request.tenantKey) return false;
+      if (candidate.tenantKey !== canonicalTenantKey) return false;
       if (request.candidateVersionId) {
         return candidate.candidateVersionId === request.candidateVersionId;
       }
@@ -1103,4 +1127,8 @@ async function readActiveAccessRecord(
 
 function outputSlugForTenant(tenantKey: string): string {
   return ACTIVE_ACCESS_SLUGS[tenantKey] ?? tenantKey;
+}
+
+function canonicalTenantKeyForRequest(tenantKey: string): string {
+  return REQUEST_TENANT_ALIASES[tenantKey] ?? tenantKey;
 }

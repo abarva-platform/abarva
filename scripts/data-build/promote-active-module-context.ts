@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 
 import {
+  buildAllTenantActiveModuleContextPromotions,
   buildActiveModuleContextPromotion,
 } from "../../src/lib/enterprise-data/active-module-context-promotion/active-module-context-promotion";
 
@@ -8,12 +9,34 @@ interface Args {
   tenantKey?: string;
   slug?: string;
   generatedAt?: string;
+  allActiveTenants?: boolean;
 }
 
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
+  if (args.allActiveTenants) {
+    const report = await buildAllTenantActiveModuleContextPromotions({
+      repoRoot: process.cwd(),
+      generatedAt: args.generatedAt,
+    });
+    console.log(
+      JSON.stringify(
+        {
+          reportVersion: report.reportVersion,
+          activeTenantCount: report.activeTenantCount,
+          retiredTenantKeys: report.retiredTenantKeys,
+          guardrails: report.guardrails,
+          tenantMatrix: report.tenantMatrix,
+          outputDir: report.outputPaths.outputDir,
+        },
+        null,
+        2,
+      ),
+    );
+    return;
+  }
   if (!args.tenantKey || !args.slug) {
-    throw new Error("Usage: npm run audit:active-module-context-promotion -- --tenant <tenant-key> --slug <output-slug>");
+    throw new Error("Usage: npm run audit:active-module-context-promotion -- --tenant <tenant-key> --slug <output-slug> OR -- --all-active-tenants");
   }
   const report = await buildActiveModuleContextPromotion({
     repoRoot: process.cwd(),
@@ -52,6 +75,8 @@ function parseArgs(argv: string[]): Args {
     } else if (arg === "--generated-at" && next) {
       args.generatedAt = next;
       index += 1;
+    } else if (arg === "--all-active-tenants") {
+      args.allActiveTenants = true;
     }
   }
   return args;

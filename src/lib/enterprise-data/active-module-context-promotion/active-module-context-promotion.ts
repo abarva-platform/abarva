@@ -21,12 +21,57 @@ const MODULES: Array<ModuleContextReadRequest["moduleKey"]> = [
   "tower",
 ];
 
+const TENANT_INPUT_REGISTRY_PATH =
+  "datasets/tenant-inputs/tenant-input-registry.json";
+
+const ACTIVE_TENANT_OUTPUT_SLUGS: Record<string, string> = {
+  "apex-retail": "apexretail",
+  "first-capital-financial": "firstcapital",
+  "lakeshore-holdings": "lakeshore",
+  "lakeshore-industries": "lakeshore-industries",
+  "meridian-health": "meridian",
+  "skyharbor-air": "skyharbor",
+};
+
 export interface ActiveModuleContextPromotionOptions {
   repoRoot: string;
   tenantKey: string;
   outputSlug: string;
   generatedAt?: string;
   priorActiveVersionId?: string;
+}
+
+export interface AllTenantActiveModuleContextPromotionReport {
+  reportVersion: "all-tenant-active-module-context-promotion/v1";
+  generatedAt: string;
+  activeTenantCount: number;
+  retiredTenantKeys: string[];
+  guardrails: {
+    productionTenantDataWritten: false;
+    writesPhysicalTables: false;
+    activeTenantAccessLayerUpdated: true;
+    candidatePromotedToActiveAccessMetadata: true;
+    moduleRuntimeConsumptionChanged: false;
+    moduleDefaultReadsCandidateData: false;
+    realizedValueClaimed: false;
+    northstarExcluded: true;
+  };
+  tenantPromotions: ActiveModuleContextPromotionReport[];
+  tenantMatrix: Array<{
+    tenantKey: string;
+    outputSlug: string;
+    candidateVersionId: string;
+    canonicalRecordCount: number;
+    evidenceAttachmentCount: number;
+    relationshipCandidateCount: number;
+    enterpriseProfileStatus: "ready";
+    moduleProofStatus: "pass";
+  }>;
+  outputPaths: {
+    outputDir: string;
+    reportPath: string;
+    summaryPath: string;
+  };
 }
 
 export interface ActiveModuleContextPromotionReport {
@@ -169,6 +214,77 @@ export async function buildActiveModuleContextPromotion(
   return report;
 }
 
+export async function buildAllTenantActiveModuleContextPromotions(options: {
+  repoRoot: string;
+  generatedAt?: string;
+}): Promise<AllTenantActiveModuleContextPromotionReport> {
+  const generatedAt = options.generatedAt ?? new Date().toISOString();
+  const registry = await readTenantInputRegistry(options.repoRoot);
+  const activeTenantKeys = registry.activeTenants.map((tenant) => tenant.tenantKey);
+  const retiredTenantKeys = registry.retiredTenants.map((tenant) => tenant.tenantKey);
+  if (activeTenantKeys.some((tenantKey) => /northstar/i.test(tenantKey))) {
+    throw new Error("Northstar appears in active tenant registry.");
+  }
+
+  const missingSlugs = activeTenantKeys.filter(
+    (tenantKey) => !ACTIVE_TENANT_OUTPUT_SLUGS[tenantKey],
+  );
+  if (missingSlugs.length > 0) {
+    throw new Error(
+      `Missing active module-context output slugs for: ${missingSlugs.join(", ")}`,
+    );
+  }
+
+  const tenantPromotions = [];
+  for (const tenantKey of activeTenantKeys) {
+    tenantPromotions.push(
+      await buildActiveModuleContextPromotion({
+        repoRoot: options.repoRoot,
+        tenantKey,
+        outputSlug: ACTIVE_TENANT_OUTPUT_SLUGS[tenantKey],
+        generatedAt,
+      }),
+    );
+  }
+
+  const outputDir = "reports/active-tenant-access/all-tenants";
+  const report: AllTenantActiveModuleContextPromotionReport = {
+    reportVersion: "all-tenant-active-module-context-promotion/v1",
+    generatedAt,
+    activeTenantCount: activeTenantKeys.length,
+    retiredTenantKeys,
+    guardrails: {
+      productionTenantDataWritten: false,
+      writesPhysicalTables: false,
+      activeTenantAccessLayerUpdated: true,
+      candidatePromotedToActiveAccessMetadata: true,
+      moduleRuntimeConsumptionChanged: false,
+      moduleDefaultReadsCandidateData: false,
+      realizedValueClaimed: false,
+      northstarExcluded: true,
+    },
+    tenantPromotions,
+    tenantMatrix: tenantPromotions.map((promotion) => ({
+      tenantKey: promotion.tenantKey,
+      outputSlug: ACTIVE_TENANT_OUTPUT_SLUGS[promotion.tenantKey],
+      candidateVersionId: promotion.candidateVersionId,
+      canonicalRecordCount: promotion.quality.canonicalRecordCount,
+      evidenceAttachmentCount: promotion.quality.evidenceAttachmentCount,
+      relationshipCandidateCount: promotion.quality.relationshipCandidateCount,
+      enterpriseProfileStatus: promotion.quality.enterpriseProfileStatus,
+      moduleProofStatus: "pass",
+    })),
+    outputPaths: {
+      outputDir,
+      reportPath: `${outputDir}/all-tenant-active-module-context-promotion.json`,
+      summaryPath: `${outputDir}/all-tenant-active-module-context-promotion.md`,
+    },
+  };
+  validateAllTenantReport(report);
+  await writeAllTenantReport(options.repoRoot, report);
+  return report;
+}
+
 function validateCandidate(candidate: TenantCandidateVersion): asserts candidate is PromotionReadyCandidate {
   if (candidate.qualityGateStatus !== "pass") {
     throw new Error(`${candidate.tenantKey} candidate quality gate is not pass.`);
@@ -275,6 +391,36 @@ function validateReport(report: ActiveModuleContextPromotionReport): void {
   }
 }
 
+function validateAllTenantReport(
+  report: AllTenantActiveModuleContextPromotionReport,
+): void {
+  const allTenantsPass =
+    report.activeTenantCount === report.tenantPromotions.length &&
+    report.tenantPromotions.every(
+      (promotion) =>
+        promotion.quality.enterpriseProfileStatus === "ready" &&
+        promotion.quality.promotionBlockers.length === 0 &&
+        promotion.moduleReadProof.every(
+          (row) =>
+            row.sourceMode === "active_tenant_access" &&
+            row.activeTenantAccessVersionId === promotion.candidateVersionId &&
+            !row.candidateDataConsumed &&
+            !row.moduleRuntimeConsumptionChanged,
+        ),
+    );
+  if (
+    !allTenantsPass ||
+    !report.retiredTenantKeys.some((tenantKey) => /northstar/i.test(tenantKey)) ||
+    report.guardrails.productionTenantDataWritten ||
+    report.guardrails.writesPhysicalTables ||
+    report.guardrails.moduleRuntimeConsumptionChanged ||
+    report.guardrails.moduleDefaultReadsCandidateData ||
+    report.guardrails.realizedValueClaimed
+  ) {
+    throw new Error("All-tenant active module context promotion proof failed.");
+  }
+}
+
 async function writeReport(
   repoRoot: string,
   report: ActiveModuleContextPromotionReport,
@@ -329,5 +475,72 @@ ${report.moduleReadProof
 - Physical table writes: ${report.guardrails.writesPhysicalTables}
 - Module runtime consumption changed: ${report.guardrails.moduleRuntimeConsumptionChanged}
 - Default module candidate reads: ${report.guardrails.moduleDefaultReadsCandidateData}
+`;
+}
+
+async function readTenantInputRegistry(repoRoot: string): Promise<{
+  activeTenants: Array<{ tenantKey: string }>;
+  retiredTenants: Array<{ tenantKey: string }>;
+}> {
+  const text = await fs.readFile(
+    path.resolve(repoRoot, TENANT_INPUT_REGISTRY_PATH),
+    "utf8",
+  );
+  return JSON.parse(text) as {
+    activeTenants: Array<{ tenantKey: string }>;
+    retiredTenants: Array<{ tenantKey: string }>;
+  };
+}
+
+async function writeAllTenantReport(
+  repoRoot: string,
+  report: AllTenantActiveModuleContextPromotionReport,
+): Promise<void> {
+  const absoluteOutputDir = path.resolve(repoRoot, report.outputPaths.outputDir);
+  await fs.mkdir(absoluteOutputDir, { recursive: true });
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "all-tenant-active-module-context-promotion.json"),
+    `${JSON.stringify(report, null, 2)}\n`,
+  );
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "all-tenant-active-module-context-promotion.md"),
+    allTenantMarkdownReport(report),
+  );
+}
+
+function allTenantMarkdownReport(
+  report: AllTenantActiveModuleContextPromotionReport,
+): string {
+  return `# All-Tenant Active Module Context Promotion
+
+Generated: \`${report.generatedAt}\`
+
+This report proves every active tenant in the universal tenant-input registry has
+an Active Tenant Access metadata pointer and module-context read proof. Northstar
+is retired/excluded and is not processed as an active tenant.
+
+## Guardrails
+
+- Production tenant data written: ${report.guardrails.productionTenantDataWritten}
+- Physical table writes: ${report.guardrails.writesPhysicalTables}
+- Module runtime consumption changed: ${report.guardrails.moduleRuntimeConsumptionChanged}
+- Default module candidate reads: ${report.guardrails.moduleDefaultReadsCandidateData}
+- Realized value claimed: ${report.guardrails.realizedValueClaimed}
+- Northstar excluded: ${report.guardrails.northstarExcluded}
+
+## Tenant Matrix
+
+| Tenant | Candidate | Canonical records | Evidence | Relationships | Profile | Module proof |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+${report.tenantMatrix
+  .map(
+    (row) =>
+      `| ${row.tenantKey} | \`${row.candidateVersionId}\` | ${row.canonicalRecordCount.toLocaleString()} | ${row.evidenceAttachmentCount.toLocaleString()} | ${row.relationshipCandidateCount.toLocaleString()} | ${row.enterpriseProfileStatus} | ${row.moduleProofStatus} |`,
+  )
+  .join("\n")}
+
+## Retired / Excluded
+
+${report.retiredTenantKeys.map((tenantKey) => `- ${tenantKey}`).join("\n")}
 `;
 }
