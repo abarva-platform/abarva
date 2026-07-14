@@ -5,6 +5,7 @@ import {
 import type { ModuleContextReadRequest } from "../../contracts/module-context-apis";
 
 describe("module context serving contract", () => {
+  const disallowedPrimaryLanguage = /\b(?:V4|V6|V7)\b/i;
   const activeTenantKeys = [
     "apex-retail",
     "first-capital-financial",
@@ -42,8 +43,12 @@ describe("module context serving contract", () => {
     expect(packet.activeTenantAccessVersionId).toBeTruthy();
     expect(packet.candidateVersionId).toBeNull();
     expect(packet.records.length).toBeGreaterThan(0);
-    expect(packet.records.every((record) => record.agentReadiness === "agent_ready")).toBe(true);
-    expect(packet.records.every((record) => record.sourceEvidenceIds.length > 0)).toBe(true);
+    expect(
+      packet.records.every((record) => record.agentReadiness === "agent_ready"),
+    ).toBe(true);
+    expect(
+      packet.records.every((record) => record.sourceEvidenceIds.length > 0),
+    ).toBe(true);
     expect(packet.relationshipCandidates).toHaveLength(0);
     expect(packet.guardrails.activeByDefault).toBe(true);
     expect(packet.guardrails.candidatePreviewRequiresExplicitMode).toBe(true);
@@ -86,15 +91,65 @@ describe("module context serving contract", () => {
 
       expect(packet.mode).toBe("active");
       expect(packet.sourceMode).toBe("active_tenant_access");
-      expect(packet.activeTenantAccessVersionId).toContain(`candidate:${tenantKey}:`);
+      expect(packet.activeTenantAccessVersionId).toContain(
+        `candidate:${tenantKey}:`,
+      );
       expect(packet.candidateVersionId).toBeNull();
       expect(packet.records.length).toBeGreaterThan(0);
-      expect(packet.records.every((record) => record.agentReadiness === "agent_ready")).toBe(true);
-      expect(packet.records.every((record) => record.sourceEvidenceIds.length > 0)).toBe(true);
+      expect(
+        packet.records.every(
+          (record) => record.agentReadiness === "agent_ready",
+        ),
+      ).toBe(true);
+      expect(
+        packet.records.every((record) => record.sourceEvidenceIds.length > 0),
+      ).toBe(true);
       expect(packet.gaps).toHaveLength(0);
       expect(packet.guardrails.candidateDataConsumed).toBe(false);
       expect(packet.guardrails.defaultModuleReadsCandidateData).toBe(false);
       expect(packet.guardrails.moduleRuntimeConsumptionChanged).toBe(false);
+    },
+    30000,
+  );
+
+  it.each(activeTenantKeys)(
+    "normalizes legacy version language out of active Home records for %s",
+    async (tenantKey) => {
+      const packet = await getModuleContext(
+        {
+          tenantKey,
+          moduleKey: "home",
+          purpose: "context_summary",
+          requestedDomains: [
+            "enterprise_profile",
+            "functions",
+            "applications_systems",
+            "vendors_contracts",
+            "data_assets_integrations",
+            "programs_priorities",
+            "risks_controls",
+            "metrics_outcomes",
+          ],
+        },
+        {
+          repoRoot: process.cwd(),
+          generatedAt: "2026-07-14T00:00:00.000Z",
+        },
+      );
+
+      const visibleRecordText = packet.records
+        .map((record) =>
+          [record.title, record.summary, JSON.stringify(record.fields)].join(
+            "\n",
+          ),
+        )
+        .join("\n");
+
+      expect(visibleRecordText).not.toMatch(disallowedPrimaryLanguage);
+      expect(JSON.stringify(packet.lineage)).toMatch(
+        /candidate|active|source/i,
+      );
+      expect(packet.evidenceRefs.length).toBeGreaterThan(0);
     },
     30000,
   );
@@ -130,7 +185,11 @@ describe("module context serving contract", () => {
         tenantKey: "meridian-health",
         moduleKey: "home",
         purpose: "context_summary",
-        requestedDomains: ["enterprise_profile", "applications_systems", "data_assets_integrations"],
+        requestedDomains: [
+          "enterprise_profile",
+          "applications_systems",
+          "data_assets_integrations",
+        ],
       },
       {
         repoRoot: process.cwd(),
@@ -140,16 +199,24 @@ describe("module context serving contract", () => {
 
     expect(packet.mode).toBe("active");
     expect(packet.sourceMode).toBe("active_tenant_access");
-    expect(packet.activeTenantAccessVersionId).toContain("candidate:meridian-health:");
+    expect(packet.activeTenantAccessVersionId).toContain(
+      "candidate:meridian-health:",
+    );
     expect(packet.candidateVersionId).toBeNull();
     expect(packet.records.length).toBeGreaterThan(0);
-    expect(packet.records.every((record) => record.agentReadiness === "agent_ready")).toBe(true);
-    expect(packet.records.every((record) => record.sourceEvidenceIds.length > 0)).toBe(true);
+    expect(
+      packet.records.every((record) => record.agentReadiness === "agent_ready"),
+    ).toBe(true);
+    expect(
+      packet.records.every((record) => record.sourceEvidenceIds.length > 0),
+    ).toBe(true);
     expect(packet.gaps).toHaveLength(0);
     expect(packet.guardrails.candidateDataConsumed).toBe(false);
     expect(packet.guardrails.homeReadsCandidateByDefault).toBe(false);
     expect(packet.guardrails.moduleRuntimeConsumptionChanged).toBe(false);
-    expect(["Good", "Strong", "Limited"]).toContain(packet.contextCompleteness.overall);
+    expect(["Good", "Strong", "Limited"]).toContain(
+      packet.contextCompleteness.overall,
+    );
   });
 
   it("returns inactive candidate context only when candidate preview is explicit", async () => {
@@ -180,8 +247,14 @@ describe("module context serving contract", () => {
     expect(packet.activeTenantAccessVersionId).toBeNull();
     expect(packet.candidateVersionId).toContain("candidate:skyharbor-air:");
     expect(packet.records.length).toBeGreaterThan(0);
-    expect(packet.records.every((record) => record.agentReadiness === "candidate_only")).toBe(true);
-    expect(packet.records.every((record) => record.sourceEvidenceIds.length > 0)).toBe(true);
+    expect(
+      packet.records.every(
+        (record) => record.agentReadiness === "candidate_only",
+      ),
+    ).toBe(true);
+    expect(
+      packet.records.every((record) => record.sourceEvidenceIds.length > 0),
+    ).toBe(true);
     expect(packet.domains).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -205,7 +278,9 @@ describe("module context serving contract", () => {
     expect(packet.contextCompleteness.breadth).toBe(100);
     expect(packet.contextCompleteness.evidenceCoverage).toBe(100);
     expect(packet.contextCompleteness.relationshipCoverage).toBeGreaterThan(0);
-    expect(["Good", "Strong", "Limited"]).toContain(packet.contextCompleteness.overall);
+    expect(["Good", "Strong", "Limited"]).toContain(
+      packet.contextCompleteness.overall,
+    );
   }, 30000);
 
   it("honors requested domains and leaves relationship candidates out unless requested", async () => {
@@ -259,9 +334,7 @@ describe("module context serving contract", () => {
     expect(first.summary).toContain("not active tenant truth");
     expect(first.contextCompleteness.evidenceCoverage).toBe(100);
     expect(first.strengths).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining("evidence references"),
-      ]),
+      expect.arrayContaining([expect.stringContaining("evidence references")]),
     );
     expect(first.unsupportedQuestions).toEqual(
       expect.arrayContaining([
