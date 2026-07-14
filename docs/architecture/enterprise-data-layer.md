@@ -2,6 +2,10 @@
 
 Status: official architecture baseline.
 
+Operator-facing data-layer design, active input inventory, page access map, and
+end-to-end flow are maintained in
+[`docs/architecture/data-layer-operating-design.md`](./data-layer-operating-design.md).
+
 AbarVa ingests tenant evidence into an Evidence Registry, normalizes it into a Canonical Fact Store, connects it through an Enterprise Relationship Graph, derives intelligence and readiness scores, exposes the active tenant context through an Active Tenant Access Layer, and lets each module consume and write back through governed Module Context APIs.
 
 ## Architecture Spine
