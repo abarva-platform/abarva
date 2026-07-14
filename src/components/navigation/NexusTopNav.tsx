@@ -27,7 +27,7 @@ export interface NexusTopNavProps {
   timeString?: string;
 }
 
-const NEXUS_NAV_LOCKUP = "/brand/nexus/abarva-nexus-navbar-dark-32h.svg";
+const NEXUS_NAV_LOCKUP = "/brand/nexus/abarva-nexus-navbar-dark-clearance.svg";
 
 function userDisplayName(user: ReturnType<typeof useUser>["user"]): string {
   const firstName = user?.firstName?.trim();
@@ -107,7 +107,7 @@ export function NexusTopNav({ showProductNav = true }: NexusTopNavProps = {}) {
             src={NEXUS_NAV_LOCKUP}
             alt="AbarVa NEXUS"
             width={240}
-            height={32}
+            height={37}
             className={styles.brandImage}
             priority
           />
