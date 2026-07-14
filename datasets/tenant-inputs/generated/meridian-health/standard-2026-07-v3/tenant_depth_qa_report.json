@@ -1,0 +1,121 @@
+{
+  "tenant_key": "meridian-health",
+  "tenant_name": "Meridian Health",
+  "generated_at": "2026-07-14",
+  "standard": "standard-2026-07-v3",
+  "source_template_pack": "/Users/anand/Downloads/AbarVa_Final_Template_Pack_v3_With_Source_Adapters.zip",
+  "truth_split": {
+    "generated_candidate_quality_synthetic_data": true,
+    "active_tenant_input_modified": false,
+    "home_runtime_modified": false,
+    "module_runtime_behavior_changed": false,
+    "candidate_promoted": false
+  },
+  "counts": {
+    "00_enterprise_profile.xlsx": 1,
+    "01_business_functions.xlsx": 20,
+    "02_org_ownership.xlsx": 20,
+    "03_workforce_roles.xlsx": 40,
+    "04_applications_systems.xlsx": 67,
+    "05_data_assets_integrations.xlsx": 80,
+    "06_infrastructure_platforms.xlsx": 40,
+    "07_vendors_contracts.xlsx": 40,
+    "08_it_budget_spend_value.xlsx": 40,
+    "09_programs_initiatives.xlsx": 20,
+    "10_ai_automation_use_cases.xlsx": 20,
+    "11_risks_controls.xlsx": 40,
+    "12_relationships.xlsx": 360,
+    "13_evidence_sources.xlsx": 40,
+    "14_metrics_outcomes.xlsx": 40,
+    "15_industry_context_patterns.xlsx": 20,
+    "16_expert_lenses.xlsx": 20,
+    "17_managed_services_scope.xlsx": 20,
+    "18_operational_process_evidence.xlsx": 20,
+    "SA01_ServiceNow_CMDB_Extract_Template.xlsx": 60,
+    "SA02_IT_Finance_Budget_Spend_Extract_Template.xlsx": 40,
+    "SA03_Vendor_Contracts_Extract_Template.xlsx": 40,
+    "SA04_Program_Portfolio_Extract_Template.xlsx": 20,
+    "SA05_Cloud_Inventory_Extract_Template.xlsx": 25,
+    "SA06_Incident_Problem_Change_Extract_Template.xlsx": 40
+  },
+  "cluster_count": 20,
+  "required_clusters": [
+    "Enterprise profile and corporate priorities",
+    "Provider / clinical operations",
+    "Payer / claims operations",
+    "Eligibility / benefits",
+    "Prior authorization / utilization management",
+    "Member experience / contact center",
+    "Revenue cycle",
+    "Finance analytics",
+    "HR / workforce analytics",
+    "Clinical quality analytics",
+    "Claims analytics",
+    "Provider performance analytics",
+    "Enterprise data platform / lakehouse",
+    "Data governance, quality, catalog, MDM",
+    "Agent Assist for member service",
+    "Unified clinical + claims lakehouse",
+    "IT budget and Tower spend baseline",
+    "Vendor / contract / sourcing context",
+    "CMDB / infrastructure / cloud inventory context",
+    "Incident / problem / change operational health context"
+  ],
+  "relationship_types_present": [
+    "consumes",
+    "depends_on",
+    "feeds",
+    "funded_by",
+    "governed_by",
+    "has_risk",
+    "hosted_in",
+    "hosted_on",
+    "integrates_with",
+    "measured_by",
+    "owned_by",
+    "part_of",
+    "produces",
+    "provided_by",
+    "replaced_by",
+    "supports",
+    "target_platform_for",
+    "used_by"
+  ],
+  "checks": [
+    {
+      "name": "All 19 core dimensions populated",
+      "status": "pass"
+    },
+    {
+      "name": "All 6 source adapters populated",
+      "status": "pass"
+    },
+    {
+      "name": "No thin critical systems",
+      "status": "pass",
+      "details": "0 thin systems"
+    },
+    {
+      "name": "Relationship density >= 5 per cluster",
+      "status": "pass",
+      "details": "360 relationships for 20 clusters"
+    },
+    {
+      "name": "Evidence per cluster >= 2",
+      "status": "pass",
+      "details": "40 evidence rows"
+    },
+    {
+      "name": "No active promotion",
+      "status": "pass",
+      "details": "Generated path only; active tenant input untouched."
+    },
+    {
+      "name": "No realized value claims",
+      "status": "pass",
+      "details": "Rows use baseline/opportunity language only."
+    }
+  ],
+  "p0_findings": [],
+  "quality_opinion": "Pass: deep enough for review and context-layer redesign proof, pending client validation."
+}

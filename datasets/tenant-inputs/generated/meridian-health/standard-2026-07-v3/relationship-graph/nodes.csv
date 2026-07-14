@@ -1,0 +1,269 @@
+node_id,name,tenant_key
+N0001,Executive Office Workflow Platform,meridian-health
+N0002,Executive Office,meridian-health
+N0003,Chief Strategy Officer,meridian-health
+N0004,Executive Office Operational Dataset,meridian-health
+N0005,Executive Office Analytics Mart,meridian-health
+N0006,Executive Office Reporting Workspace,meridian-health
+N0007,Executive Office Primary Midwest Data Center Hosting Segment,meridian-health
+N0008,Primary Midwest Data Center,meridian-health
+N0009,Databricks on AWS Lakehouse,meridian-health
+N0010,Enterprise Strategy governance council,meridian-health
+N0011,Enterprise profile and corporate priorities modernization and readiness program,meridian-health
+N0012,Executive Office Analyst / Steward,meridian-health
+N0013,Oracle,meridian-health
+N0014,Executive Office cycle time,meridian-health
+N0015,Executive Office data lineage and definition risk,meridian-health
+N0016,Epic Hyperspace,meridian-health
+N0017,Provider Operations,meridian-health
+N0018,CMO,meridian-health
+N0019,Provider Operations Operational Dataset,meridian-health
+N0020,Epic Clarity,meridian-health
+N0021,Provider Operations Analytics Mart,meridian-health
+N0022,Epic Caboodle,meridian-health
+N0023,Provider Operations Primary Midwest Data Center Hosting Segment,meridian-health
+N0024,Clinical Operations governance council,meridian-health
+N0025,Provider / clinical operations modernization and readiness program,meridian-health
+N0026,Provider Operations Analyst / Steward,meridian-health
+N0027,Workday,meridian-health
+N0028,Provider Operations cycle time,meridian-health
+N0029,Provider Operations data lineage and definition risk,meridian-health
+N0030,Claims Administration Platform,meridian-health
+N0031,Claims Operations,meridian-health
+N0032,Health Plan COO,meridian-health
+N0033,Claims Operations Operational Dataset,meridian-health
+N0034,Claims Payment Rules Engine,meridian-health
+N0035,Claims Operations Analytics Mart,meridian-health
+N0036,Claims Inquiry CRM Adapter,meridian-health
+N0037,Claims Operations Primary Midwest Data Center Hosting Segment,meridian-health
+N0038,Health Plan Operations governance council,meridian-health
+N0039,Payer / claims operations modernization and readiness program,meridian-health
+N0040,Claims Operations Analyst / Steward,meridian-health
+N0041,Databricks,meridian-health
+N0042,Claims Operations cycle time,meridian-health
+N0043,Claims Operations data lineage and definition risk,meridian-health
+N0044,Eligibility and Benefits Workflow Platform,meridian-health
+N0045,Eligibility and Benefits,meridian-health
+N0046,VP Benefits Operations,meridian-health
+N0047,Eligibility Benefits Operational Dataset,meridian-health
+N0048,Eligibility and Benefits Analytics Mart,meridian-health
+N0049,Eligibility Benefits Analytics Mart,meridian-health
+N0050,Eligibility and Benefits Reporting Workspace,meridian-health
+N0051,Eligibility and Benefits Primary Midwest Data Center Hosting Segment,meridian-health
+N0052,Eligibility / benefits modernization and readiness program,meridian-health
+N0053,Eligibility and Benefits Analyst / Steward,meridian-health
+N0054,AWS,meridian-health
+N0055,Eligibility and Benefits cycle time,meridian-health
+N0056,Eligibility and Benefits data lineage and definition risk,meridian-health
+N0057,Prior Authorization and UM Workflow Platform,meridian-health
+N0058,Prior Authorization and UM,meridian-health
+N0059,VP Utilization Management,meridian-health
+N0060,Prior Authorization UM Operational Dataset,meridian-health
+N0061,Prior Authorization and UM Analytics Mart,meridian-health
+N0062,Prior Authorization UM Analytics Mart,meridian-health
+N0063,Prior Authorization and UM Reporting Workspace,meridian-health
+N0064,Prior Authorization and UM Primary Midwest Data Center Hosting Segment,meridian-health
+N0065,Utilization Management governance council,meridian-health
+N0066,Prior authorization / utilization management modernization and readiness program,meridian-health
+N0067,Prior Authorization and UM Analyst / Steward,meridian-health
+N0068,Tableau,meridian-health
+N0069,Prior Authorization and UM cycle time,meridian-health
+N0070,Prior Authorization and UM data lineage and definition risk,meridian-health
+N0071,Genesys Cloud Contact Center,meridian-health
+N0072,Contact Center and Member Service,meridian-health
+N0073,Chief Experience Officer,meridian-health
+N0074,Contact Center Member Service Operational Dataset,meridian-health
+N0075,Salesforce Health Cloud CRM,meridian-health
+N0076,Contact Center Member Service Analytics Mart,meridian-health
+N0077,Call Transcript Lake Landing Zone,meridian-health
+N0078,Contact Center and Member Service Primary Midwest Data Center Hosting Segment,meridian-health
+N0079,Member Experience governance council,meridian-health
+N0080,Member experience / contact center modernization and readiness program,meridian-health
+N0081,Contact Center and Member Service Analyst / Steward,meridian-health
+N0082,ServiceNow,meridian-health
+N0083,Contact Center and Member Service cycle time,meridian-health
+N0084,Contact Center and Member Service data lineage and definition risk,meridian-health
+N0085,Revenue Cycle Operations Workflow Platform,meridian-health
+N0086,Revenue Cycle Operations,meridian-health
+N0087,Revenue Cycle Leader,meridian-health
+N0088,Revenue Cycle Operations Operational Dataset,meridian-health
+N0089,Revenue Cycle Operations Analytics Mart,meridian-health
+N0090,Revenue Cycle Operations Reporting Workspace,meridian-health
+N0091,Revenue Cycle Operations Primary Midwest Data Center Hosting Segment,meridian-health
+N0092,Revenue Cycle governance council,meridian-health
+N0093,Revenue cycle modernization and readiness program,meridian-health
+N0094,Revenue Cycle Operations Analyst / Steward,meridian-health
+N0095,Informatica,meridian-health
+N0096,Revenue Cycle Operations cycle time,meridian-health
+N0097,Revenue Cycle Operations data lineage and definition risk,meridian-health
+N0098,Oracle ERP Finance,meridian-health
+N0099,Finance Analytics,meridian-health
+N0100,CFO,meridian-health
+N0101,Finance Mart GL AP AR Subject Area,meridian-health
+N0102,SQL Server Finance Mart,meridian-health
+N0103,Vendor Spend and Contract Analytics Dataset,meridian-health
+N0104,Netezza Finance Subject Area,meridian-health
+N0105,Finance Analytics Primary Midwest Data Center Hosting Segment,meridian-health
+N0106,Finance and Actuarial governance council,meridian-health
+N0107,Finance analytics modernization and readiness program,meridian-health
+N0108,Finance Analytics Analyst / Steward,meridian-health
+N0109,Finance Analytics cycle time,meridian-health
+N0110,Finance Analytics data lineage and definition risk,meridian-health
+N0111,Workforce Analytics Workflow Platform,meridian-health
+N0112,Workforce Analytics,meridian-health
+N0113,CHRO,meridian-health
+N0114,Workforce Analytics Operational Dataset,meridian-health
+N0115,Workforce Analytics Analytics Mart,meridian-health
+N0116,Workforce Analytics Reporting Workspace,meridian-health
+N0117,Workforce Analytics Primary Midwest Data Center Hosting Segment,meridian-health
+N0118,Human Resources governance council,meridian-health
+N0119,HR / workforce analytics modernization and readiness program,meridian-health
+N0120,Workforce Analytics Analyst / Steward,meridian-health
+N0121,Salesforce,meridian-health
+N0122,Workforce Analytics cycle time,meridian-health
+N0123,Workforce Analytics data lineage and definition risk,meridian-health
+N0124,Clinical Quality Analytics Workflow Platform,meridian-health
+N0125,Clinical Quality Analytics,meridian-health
+N0126,VP Quality,meridian-health
+N0127,Clinical Quality Analytics Operational Dataset,meridian-health
+N0128,Clinical Quality Analytics Analytics Mart,meridian-health
+N0129,Clinical Quality Analytics Reporting Workspace,meridian-health
+N0130,Clinical Quality Analytics Primary Midwest Data Center Hosting Segment,meridian-health
+N0131,Quality and Provider Performance governance council,meridian-health
+N0132,Clinical quality analytics modernization and readiness program,meridian-health
+N0133,Clinical Quality Analytics Analyst / Steward,meridian-health
+N0134,Optum Managed Services,meridian-health
+N0135,Clinical Quality Analytics cycle time,meridian-health
+N0136,Clinical Quality Analytics data lineage and definition risk,meridian-health
+N0137,Claims and Payment Analytics Workflow Platform,meridian-health
+N0138,Claims and Payment Analytics,meridian-health
+N0139,VP Claims Analytics,meridian-health
+N0140,Claims Payment Analytics Operational Dataset,meridian-health
+N0141,Claims and Payment Analytics Analytics Mart,meridian-health
+N0142,Claims Payment Analytics Analytics Mart,meridian-health
+N0143,Claims and Payment Analytics Reporting Workspace,meridian-health
+N0144,Claims and Payment Analytics Primary Midwest Data Center Hosting Segment,meridian-health
+N0145,Claims Analytics governance council,meridian-health
+N0146,Claims analytics modernization and readiness program,meridian-health
+N0147,Claims and Payment Analytics Analyst / Steward,meridian-health
+N0148,Claims and Payment Analytics cycle time,meridian-health
+N0149,Claims and Payment Analytics data lineage and definition risk,meridian-health
+N0150,Provider Performance Analytics Workflow Platform,meridian-health
+N0151,Provider Performance Analytics,meridian-health
+N0152,VP Provider Performance,meridian-health
+N0153,Provider Performance Analytics Operational Dataset,meridian-health
+N0154,Provider Performance Analytics Analytics Mart,meridian-health
+N0155,Provider Performance Analytics Reporting Workspace,meridian-health
+N0156,Provider Performance Analytics Primary Midwest Data Center Hosting Segment,meridian-health
+N0157,Provider Network governance council,meridian-health
+N0158,Provider performance analytics modernization and readiness program,meridian-health
+N0159,Provider Performance Analytics Analyst / Steward,meridian-health
+N0160,Microsoft,meridian-health
+N0161,Provider Performance Analytics cycle time,meridian-health
+N0162,Provider Performance Analytics data lineage and definition risk,meridian-health
+N0163,Enterprise Data Platform,meridian-health
+N0164,CDAO,meridian-health
+N0165,Enterprise Data Platform Operational Dataset,meridian-health
+N0166,Netezza Enterprise Warehouse,meridian-health
+N0167,Enterprise Data Platform Analytics Mart,meridian-health
+N0168,Informatica PowerCenter,meridian-health
+N0169,Enterprise Data Platform Primary Midwest Data Center Hosting Segment,meridian-health
+N0170,"Enterprise Data, Analytics & AI governance council",meridian-health
+N0171,Enterprise data platform / lakehouse modernization and readiness program,meridian-health
+N0172,Enterprise Data Platform Analyst / Steward,meridian-health
+N0173,Genesys,meridian-health
+N0174,Enterprise Data Platform cycle time,meridian-health
+N0175,Enterprise Data Platform data lineage and definition risk,meridian-health
+N0176,Data Governance and Data Quality Workflow Platform,meridian-health
+N0177,Data Governance and Data Quality,meridian-health
+N0178,Chief Data Officer,meridian-health
+N0179,Data Governance Data Quality Operational Dataset,meridian-health
+N0180,Data Governance and Data Quality Analytics Mart,meridian-health
+N0181,Data Governance Data Quality Analytics Mart,meridian-health
+N0182,Data Governance and Data Quality Reporting Workspace,meridian-health
+N0183,Data Governance and Data Quality Primary Midwest Data Center Hosting Segment,meridian-health
+N0184,Data Governance governance council,meridian-health
+N0185,"Data governance, quality, catalog, MDM modernization and readiness program",meridian-health
+N0186,Data Governance and Data Quality Analyst / Steward,meridian-health
+N0187,Data Governance and Data Quality cycle time,meridian-health
+N0188,Data Governance and Data Quality data lineage and definition risk,meridian-health
+N0189,Agent Assist and Next Best Action Workflow Platform,meridian-health
+N0190,Agent Assist and Next Best Action,meridian-health
+N0191,VP Contact Center,meridian-health
+N0192,Agent Assist Next Best Action Operational Dataset,meridian-health
+N0193,Agent Assist and Next Best Action Analytics Mart,meridian-health
+N0194,Agent Assist Next Best Action Analytics Mart,meridian-health
+N0195,Agent Assist and Next Best Action Reporting Workspace,meridian-health
+N0196,Agent Assist and Next Best Action Primary Midwest Data Center Hosting Segment,meridian-health
+N0197,Agent Assist for member service modernization and readiness program,meridian-health
+N0198,Agent Assist and Next Best Action Analyst / Steward,meridian-health
+N0199,Agent Assist and Next Best Action cycle time,meridian-health
+N0200,Agent Assist and Next Best Action data lineage and definition risk,meridian-health
+N0201,Unified Clinical and Claims Lakehouse,meridian-health
+N0202,Unified Clinical Claims Lakehouse Operational Dataset,meridian-health
+N0203,Unified Clinical Claims Lakehouse Analytics Mart,meridian-health
+N0204,Pharmacy Claims Platform,meridian-health
+N0205,Unified Clinical and Claims Lakehouse Primary Midwest Data Center Hosting Segment,meridian-health
+N0206,Unified clinical + claims lakehouse modernization and readiness program,meridian-health
+N0207,Unified Clinical and Claims Lakehouse Analyst / Steward,meridian-health
+N0208,Epic,meridian-health
+N0209,Unified Clinical and Claims Lakehouse cycle time,meridian-health
+N0210,Unified Clinical and Claims Lakehouse data lineage and definition risk,meridian-health
+N0211,IT Budget and Tower Baseline Workflow Platform,meridian-health
+N0212,IT Budget and Tower Baseline,meridian-health
+N0213,CIO / CFO,meridian-health
+N0214,IT Budget Tower Baseline Operational Dataset,meridian-health
+N0215,IT Budget and Tower Baseline Analytics Mart,meridian-health
+N0216,IT Budget Tower Baseline Analytics Mart,meridian-health
+N0217,IT Budget and Tower Baseline Reporting Workspace,meridian-health
+N0218,IT Budget and Tower Baseline Primary Midwest Data Center Hosting Segment,meridian-health
+N0219,Technology Finance governance council,meridian-health
+N0220,IT budget and Tower spend baseline modernization and readiness program,meridian-health
+N0221,IT Budget and Tower Baseline Analyst / Steward,meridian-health
+N0222,IT Budget and Tower Baseline cycle time,meridian-health
+N0223,IT Budget and Tower Baseline data lineage and definition risk,meridian-health
+N0224,Vendor and Contract Optimization Workflow Platform,meridian-health
+N0225,Vendor and Contract Optimization,meridian-health
+N0226,Chief Procurement Officer,meridian-health
+N0227,Vendor Contract Optimization Operational Dataset,meridian-health
+N0228,Vendor and Contract Optimization Analytics Mart,meridian-health
+N0229,Vendor Contract Optimization Analytics Mart,meridian-health
+N0230,Vendor and Contract Optimization Reporting Workspace,meridian-health
+N0231,Vendor and Contract Optimization Primary Midwest Data Center Hosting Segment,meridian-health
+N0232,Procurement and Vendor Management governance council,meridian-health
+N0233,Vendor / contract / sourcing context modernization and readiness program,meridian-health
+N0234,Vendor and Contract Optimization Analyst / Steward,meridian-health
+N0235,Vendor and Contract Optimization cycle time,meridian-health
+N0236,Vendor and Contract Optimization data lineage and definition risk,meridian-health
+N0237,ServiceNow CMDB,meridian-health
+N0238,Infrastructure and CMDB,meridian-health
+N0239,CTO,meridian-health
+N0240,Infrastructure CMDB Operational Dataset,meridian-health
+N0241,VMware Data Center Cluster,meridian-health
+N0242,Infrastructure CMDB Analytics Mart,meridian-health
+N0243,AWS Analytics Landing Zone,meridian-health
+N0244,Infrastructure and CMDB Primary Midwest Data Center Hosting Segment,meridian-health
+N0245,Technology Operations governance council,meridian-health
+N0246,CMDB / infrastructure / cloud inventory context modernization and readiness program,meridian-health
+N0247,Infrastructure and CMDB Analyst / Steward,meridian-health
+N0248,Infrastructure and CMDB cycle time,meridian-health
+N0249,Infrastructure and CMDB data lineage and definition risk,meridian-health
+N0250,ServiceNow ITSM,meridian-health
+N0251,Incident Problem Change Operations,meridian-health
+N0252,VP IT Operations,meridian-health
+N0253,Incident Problem Change Operations Operational Dataset,meridian-health
+N0254,Datadog Observability,meridian-health
+N0255,Incident Problem Change Operations Analytics Mart,meridian-health
+N0256,PagerDuty Incident Response,meridian-health
+N0257,Incident Problem Change Operations Primary Midwest Data Center Hosting Segment,meridian-health
+N0258,Incident / problem / change operational health context modernization and readiness program,meridian-health
+N0259,Incident Problem Change Operations Analyst / Steward,meridian-health
+N0260,Incident Problem Change Operations cycle time,meridian-health
+N0261,Incident Problem Change Operations data lineage and definition risk,meridian-health
+N0262,Epic FHIR Gateway,meridian-health
+N0263,Informatica Finance ETL,meridian-health
+N0264,Tableau Finance Dashboards,meridian-health
+N0265,Power BI Finance Workspace,meridian-health
+N0266,Databricks Finance Gold Data Product,meridian-health
+N0267,Unity Catalog Target,meridian-health
+N0268,Databricks Clinical Claims Lakehouse,meridian-health

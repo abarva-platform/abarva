@@ -1,0 +1,123 @@
+{
+  "tenant_key": "harbortrust-bank",
+  "tenant_name": "HarborTrust Bank",
+  "generated_at": "2026-07-14",
+  "standard": "standard-2026-07-v3",
+  "source_template_pack": "/Users/anand/Downloads/AbarVa_Final_Template_Pack_v3_With_Source_Adapters.zip",
+  "truth_split": {
+    "generated_candidate_quality_synthetic_data": true,
+    "active_tenant_input_modified": false,
+    "home_runtime_modified": false,
+    "module_runtime_behavior_changed": false,
+    "candidate_promoted": false
+  },
+  "counts": {
+    "00_enterprise_profile.xlsx": 1,
+    "01_business_functions.xlsx": 22,
+    "02_org_ownership.xlsx": 22,
+    "03_workforce_roles.xlsx": 44,
+    "04_applications_systems.xlsx": 69,
+    "05_data_assets_integrations.xlsx": 88,
+    "06_infrastructure_platforms.xlsx": 44,
+    "07_vendors_contracts.xlsx": 44,
+    "08_it_budget_spend_value.xlsx": 44,
+    "09_programs_initiatives.xlsx": 22,
+    "10_ai_automation_use_cases.xlsx": 22,
+    "11_risks_controls.xlsx": 44,
+    "12_relationships.xlsx": 396,
+    "13_evidence_sources.xlsx": 44,
+    "14_metrics_outcomes.xlsx": 44,
+    "15_industry_context_patterns.xlsx": 22,
+    "16_expert_lenses.xlsx": 22,
+    "17_managed_services_scope.xlsx": 22,
+    "18_operational_process_evidence.xlsx": 22,
+    "SA01_ServiceNow_CMDB_Extract_Template.xlsx": 66,
+    "SA02_IT_Finance_Budget_Spend_Extract_Template.xlsx": 44,
+    "SA03_Vendor_Contracts_Extract_Template.xlsx": 44,
+    "SA04_Program_Portfolio_Extract_Template.xlsx": 22,
+    "SA05_Cloud_Inventory_Extract_Template.xlsx": 27,
+    "SA06_Incident_Problem_Change_Extract_Template.xlsx": 44
+  },
+  "cluster_count": 22,
+  "required_clusters": [
+    "Enterprise profile and corporate priorities",
+    "Retail banking",
+    "Commercial banking",
+    "Cards",
+    "Payments",
+    "Lending",
+    "Wealth",
+    "Fraud / risk",
+    "Compliance / model risk",
+    "Contact center",
+    "Digital onboarding",
+    "Core banking modernization",
+    "Customer 360",
+    "Retail banking analytics",
+    "Cards analytics",
+    "Payments analytics",
+    "Fraud/risk analytics",
+    "Enterprise data platform / cloud data foundation",
+    "IT budget and Tower spend baseline",
+    "Vendor / contract / sourcing context",
+    "CMDB / infrastructure / cloud inventory context",
+    "Incident / problem / change operational health context"
+  ],
+  "relationship_types_present": [
+    "consumes",
+    "depends_on",
+    "feeds",
+    "funded_by",
+    "governed_by",
+    "has_risk",
+    "hosted_in",
+    "hosted_on",
+    "integrates_with",
+    "measured_by",
+    "owned_by",
+    "part_of",
+    "produces",
+    "provided_by",
+    "replaced_by",
+    "supports",
+    "target_platform_for",
+    "used_by"
+  ],
+  "checks": [
+    {
+      "name": "All 19 core dimensions populated",
+      "status": "pass"
+    },
+    {
+      "name": "All 6 source adapters populated",
+      "status": "pass"
+    },
+    {
+      "name": "No thin critical systems",
+      "status": "pass",
+      "details": "0 thin systems"
+    },
+    {
+      "name": "Relationship density >= 5 per cluster",
+      "status": "pass",
+      "details": "396 relationships for 22 clusters"
+    },
+    {
+      "name": "Evidence per cluster >= 2",
+      "status": "pass",
+      "details": "44 evidence rows"
+    },
+    {
+      "name": "No active promotion",
+      "status": "pass",
+      "details": "Generated path only; active tenant input untouched."
+    },
+    {
+      "name": "No realized value claims",
+      "status": "pass",
+      "details": "Rows use baseline/opportunity language only."
+    }
+  ],
+  "p0_findings": [],
+  "quality_opinion": "Pass: deep enough for review and context-layer redesign proof, pending client validation."
+}

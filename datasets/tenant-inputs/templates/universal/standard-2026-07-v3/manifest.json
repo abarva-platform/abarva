@@ -1,0 +1,39 @@
+{
+  "created_at": "2026-07-14T20:13:05.142629+00:00",
+  "version": "v3",
+  "core_dimensions": 19,
+  "source_adapters": 6,
+  "verticals": [
+    "Healthcare",
+    "Financial Services"
+  ],
+  "files": [
+    "00_enterprise_profile.xlsx",
+    "01_business_functions.xlsx",
+    "02_org_ownership.xlsx",
+    "03_workforce_roles.xlsx",
+    "04_applications_systems.xlsx",
+    "05_data_assets_integrations.xlsx",
+    "06_infrastructure_platforms.xlsx",
+    "07_vendors_contracts.xlsx",
+    "08_it_budget_spend_value.xlsx",
+    "09_programs_initiatives.xlsx",
+    "10_ai_automation_use_cases.xlsx",
+    "11_risks_controls.xlsx",
+    "12_relationships.xlsx",
+    "13_evidence_sources.xlsx",
+    "14_metrics_outcomes.xlsx",
+    "15_industry_context_patterns.xlsx",
+    "16_expert_lenses.xlsx",
+    "17_managed_services_scope.xlsx",
+    "18_operational_process_evidence.xlsx",
+    "AbarVa_Template_Pack_Index_v2.xlsx",
+    "AbarVa_Template_Pack_Index_v3.xlsx",
+    "SA01_ServiceNow_CMDB_Extract_Template.xlsx",
+    "SA02_IT_Finance_Budget_Spend_Extract_Template.xlsx",
+    "SA03_Vendor_Contracts_Extract_Template.xlsx",
+    "SA04_Program_Portfolio_Extract_Template.xlsx",
+    "SA05_Cloud_Inventory_Extract_Template.xlsx",
+    "SA06_Incident_Problem_Change_Extract_Template.xlsx"
+  ]
+}

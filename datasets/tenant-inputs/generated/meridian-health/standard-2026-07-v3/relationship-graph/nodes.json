@@ -1,0 +1,1342 @@
+[
+  {
+    "node_id": "N0001",
+    "name": "Executive Office Workflow Platform",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0002",
+    "name": "Executive Office",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0003",
+    "name": "Chief Strategy Officer",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0004",
+    "name": "Executive Office Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0005",
+    "name": "Executive Office Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0006",
+    "name": "Executive Office Reporting Workspace",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0007",
+    "name": "Executive Office Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0008",
+    "name": "Primary Midwest Data Center",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0009",
+    "name": "Databricks on AWS Lakehouse",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0010",
+    "name": "Enterprise Strategy governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0011",
+    "name": "Enterprise profile and corporate priorities modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0012",
+    "name": "Executive Office Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0013",
+    "name": "Oracle",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0014",
+    "name": "Executive Office cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0015",
+    "name": "Executive Office data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0016",
+    "name": "Epic Hyperspace",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0017",
+    "name": "Provider Operations",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0018",
+    "name": "CMO",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0019",
+    "name": "Provider Operations Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0020",
+    "name": "Epic Clarity",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0021",
+    "name": "Provider Operations Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0022",
+    "name": "Epic Caboodle",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0023",
+    "name": "Provider Operations Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0024",
+    "name": "Clinical Operations governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0025",
+    "name": "Provider / clinical operations modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0026",
+    "name": "Provider Operations Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0027",
+    "name": "Workday",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0028",
+    "name": "Provider Operations cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0029",
+    "name": "Provider Operations data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0030",
+    "name": "Claims Administration Platform",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0031",
+    "name": "Claims Operations",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0032",
+    "name": "Health Plan COO",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0033",
+    "name": "Claims Operations Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0034",
+    "name": "Claims Payment Rules Engine",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0035",
+    "name": "Claims Operations Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0036",
+    "name": "Claims Inquiry CRM Adapter",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0037",
+    "name": "Claims Operations Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0038",
+    "name": "Health Plan Operations governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0039",
+    "name": "Payer / claims operations modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0040",
+    "name": "Claims Operations Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0041",
+    "name": "Databricks",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0042",
+    "name": "Claims Operations cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0043",
+    "name": "Claims Operations data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0044",
+    "name": "Eligibility and Benefits Workflow Platform",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0045",
+    "name": "Eligibility and Benefits",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0046",
+    "name": "VP Benefits Operations",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0047",
+    "name": "Eligibility Benefits Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0048",
+    "name": "Eligibility and Benefits Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0049",
+    "name": "Eligibility Benefits Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0050",
+    "name": "Eligibility and Benefits Reporting Workspace",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0051",
+    "name": "Eligibility and Benefits Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0052",
+    "name": "Eligibility / benefits modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0053",
+    "name": "Eligibility and Benefits Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0054",
+    "name": "AWS",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0055",
+    "name": "Eligibility and Benefits cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0056",
+    "name": "Eligibility and Benefits data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0057",
+    "name": "Prior Authorization and UM Workflow Platform",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0058",
+    "name": "Prior Authorization and UM",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0059",
+    "name": "VP Utilization Management",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0060",
+    "name": "Prior Authorization UM Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0061",
+    "name": "Prior Authorization and UM Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0062",
+    "name": "Prior Authorization UM Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0063",
+    "name": "Prior Authorization and UM Reporting Workspace",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0064",
+    "name": "Prior Authorization and UM Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0065",
+    "name": "Utilization Management governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0066",
+    "name": "Prior authorization / utilization management modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0067",
+    "name": "Prior Authorization and UM Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0068",
+    "name": "Tableau",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0069",
+    "name": "Prior Authorization and UM cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0070",
+    "name": "Prior Authorization and UM data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0071",
+    "name": "Genesys Cloud Contact Center",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0072",
+    "name": "Contact Center and Member Service",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0073",
+    "name": "Chief Experience Officer",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0074",
+    "name": "Contact Center Member Service Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0075",
+    "name": "Salesforce Health Cloud CRM",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0076",
+    "name": "Contact Center Member Service Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0077",
+    "name": "Call Transcript Lake Landing Zone",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0078",
+    "name": "Contact Center and Member Service Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0079",
+    "name": "Member Experience governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0080",
+    "name": "Member experience / contact center modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0081",
+    "name": "Contact Center and Member Service Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0082",
+    "name": "ServiceNow",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0083",
+    "name": "Contact Center and Member Service cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0084",
+    "name": "Contact Center and Member Service data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0085",
+    "name": "Revenue Cycle Operations Workflow Platform",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0086",
+    "name": "Revenue Cycle Operations",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0087",
+    "name": "Revenue Cycle Leader",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0088",
+    "name": "Revenue Cycle Operations Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0089",
+    "name": "Revenue Cycle Operations Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0090",
+    "name": "Revenue Cycle Operations Reporting Workspace",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0091",
+    "name": "Revenue Cycle Operations Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0092",
+    "name": "Revenue Cycle governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0093",
+    "name": "Revenue cycle modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0094",
+    "name": "Revenue Cycle Operations Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0095",
+    "name": "Informatica",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0096",
+    "name": "Revenue Cycle Operations cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0097",
+    "name": "Revenue Cycle Operations data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0098",
+    "name": "Oracle ERP Finance",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0099",
+    "name": "Finance Analytics",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0100",
+    "name": "CFO",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0101",
+    "name": "Finance Mart GL AP AR Subject Area",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0102",
+    "name": "SQL Server Finance Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0103",
+    "name": "Vendor Spend and Contract Analytics Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0104",
+    "name": "Netezza Finance Subject Area",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0105",
+    "name": "Finance Analytics Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0106",
+    "name": "Finance and Actuarial governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0107",
+    "name": "Finance analytics modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0108",
+    "name": "Finance Analytics Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0109",
+    "name": "Finance Analytics cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0110",
+    "name": "Finance Analytics data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0111",
+    "name": "Workforce Analytics Workflow Platform",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0112",
+    "name": "Workforce Analytics",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0113",
+    "name": "CHRO",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0114",
+    "name": "Workforce Analytics Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0115",
+    "name": "Workforce Analytics Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0116",
+    "name": "Workforce Analytics Reporting Workspace",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0117",
+    "name": "Workforce Analytics Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0118",
+    "name": "Human Resources governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0119",
+    "name": "HR / workforce analytics modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0120",
+    "name": "Workforce Analytics Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0121",
+    "name": "Salesforce",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0122",
+    "name": "Workforce Analytics cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0123",
+    "name": "Workforce Analytics data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0124",
+    "name": "Clinical Quality Analytics Workflow Platform",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0125",
+    "name": "Clinical Quality Analytics",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0126",
+    "name": "VP Quality",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0127",
+    "name": "Clinical Quality Analytics Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0128",
+    "name": "Clinical Quality Analytics Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0129",
+    "name": "Clinical Quality Analytics Reporting Workspace",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0130",
+    "name": "Clinical Quality Analytics Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0131",
+    "name": "Quality and Provider Performance governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0132",
+    "name": "Clinical quality analytics modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0133",
+    "name": "Clinical Quality Analytics Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0134",
+    "name": "Optum Managed Services",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0135",
+    "name": "Clinical Quality Analytics cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0136",
+    "name": "Clinical Quality Analytics data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0137",
+    "name": "Claims and Payment Analytics Workflow Platform",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0138",
+    "name": "Claims and Payment Analytics",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0139",
+    "name": "VP Claims Analytics",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0140",
+    "name": "Claims Payment Analytics Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0141",
+    "name": "Claims and Payment Analytics Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0142",
+    "name": "Claims Payment Analytics Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0143",
+    "name": "Claims and Payment Analytics Reporting Workspace",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0144",
+    "name": "Claims and Payment Analytics Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0145",
+    "name": "Claims Analytics governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0146",
+    "name": "Claims analytics modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0147",
+    "name": "Claims and Payment Analytics Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0148",
+    "name": "Claims and Payment Analytics cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0149",
+    "name": "Claims and Payment Analytics data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0150",
+    "name": "Provider Performance Analytics Workflow Platform",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0151",
+    "name": "Provider Performance Analytics",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0152",
+    "name": "VP Provider Performance",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0153",
+    "name": "Provider Performance Analytics Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0154",
+    "name": "Provider Performance Analytics Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0155",
+    "name": "Provider Performance Analytics Reporting Workspace",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0156",
+    "name": "Provider Performance Analytics Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0157",
+    "name": "Provider Network governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0158",
+    "name": "Provider performance analytics modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0159",
+    "name": "Provider Performance Analytics Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0160",
+    "name": "Microsoft",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0161",
+    "name": "Provider Performance Analytics cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0162",
+    "name": "Provider Performance Analytics data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0163",
+    "name": "Enterprise Data Platform",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0164",
+    "name": "CDAO",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0165",
+    "name": "Enterprise Data Platform Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0166",
+    "name": "Netezza Enterprise Warehouse",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0167",
+    "name": "Enterprise Data Platform Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0168",
+    "name": "Informatica PowerCenter",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0169",
+    "name": "Enterprise Data Platform Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0170",
+    "name": "Enterprise Data, Analytics & AI governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0171",
+    "name": "Enterprise data platform / lakehouse modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0172",
+    "name": "Enterprise Data Platform Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0173",
+    "name": "Genesys",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0174",
+    "name": "Enterprise Data Platform cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0175",
+    "name": "Enterprise Data Platform data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0176",
+    "name": "Data Governance and Data Quality Workflow Platform",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0177",
+    "name": "Data Governance and Data Quality",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0178",
+    "name": "Chief Data Officer",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0179",
+    "name": "Data Governance Data Quality Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0180",
+    "name": "Data Governance and Data Quality Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0181",
+    "name": "Data Governance Data Quality Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0182",
+    "name": "Data Governance and Data Quality Reporting Workspace",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0183",
+    "name": "Data Governance and Data Quality Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0184",
+    "name": "Data Governance governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0185",
+    "name": "Data governance, quality, catalog, MDM modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0186",
+    "name": "Data Governance and Data Quality Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0187",
+    "name": "Data Governance and Data Quality cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0188",
+    "name": "Data Governance and Data Quality data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0189",
+    "name": "Agent Assist and Next Best Action Workflow Platform",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0190",
+    "name": "Agent Assist and Next Best Action",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0191",
+    "name": "VP Contact Center",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0192",
+    "name": "Agent Assist Next Best Action Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0193",
+    "name": "Agent Assist and Next Best Action Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0194",
+    "name": "Agent Assist Next Best Action Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0195",
+    "name": "Agent Assist and Next Best Action Reporting Workspace",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0196",
+    "name": "Agent Assist and Next Best Action Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0197",
+    "name": "Agent Assist for member service modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0198",
+    "name": "Agent Assist and Next Best Action Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0199",
+    "name": "Agent Assist and Next Best Action cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0200",
+    "name": "Agent Assist and Next Best Action data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0201",
+    "name": "Unified Clinical and Claims Lakehouse",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0202",
+    "name": "Unified Clinical Claims Lakehouse Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0203",
+    "name": "Unified Clinical Claims Lakehouse Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0204",
+    "name": "Pharmacy Claims Platform",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0205",
+    "name": "Unified Clinical and Claims Lakehouse Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0206",
+    "name": "Unified clinical + claims lakehouse modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0207",
+    "name": "Unified Clinical and Claims Lakehouse Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0208",
+    "name": "Epic",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0209",
+    "name": "Unified Clinical and Claims Lakehouse cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0210",
+    "name": "Unified Clinical and Claims Lakehouse data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0211",
+    "name": "IT Budget and Tower Baseline Workflow Platform",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0212",
+    "name": "IT Budget and Tower Baseline",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0213",
+    "name": "CIO / CFO",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0214",
+    "name": "IT Budget Tower Baseline Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0215",
+    "name": "IT Budget and Tower Baseline Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0216",
+    "name": "IT Budget Tower Baseline Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0217",
+    "name": "IT Budget and Tower Baseline Reporting Workspace",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0218",
+    "name": "IT Budget and Tower Baseline Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0219",
+    "name": "Technology Finance governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0220",
+    "name": "IT budget and Tower spend baseline modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0221",
+    "name": "IT Budget and Tower Baseline Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0222",
+    "name": "IT Budget and Tower Baseline cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0223",
+    "name": "IT Budget and Tower Baseline data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0224",
+    "name": "Vendor and Contract Optimization Workflow Platform",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0225",
+    "name": "Vendor and Contract Optimization",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0226",
+    "name": "Chief Procurement Officer",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0227",
+    "name": "Vendor Contract Optimization Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0228",
+    "name": "Vendor and Contract Optimization Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0229",
+    "name": "Vendor Contract Optimization Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0230",
+    "name": "Vendor and Contract Optimization Reporting Workspace",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0231",
+    "name": "Vendor and Contract Optimization Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0232",
+    "name": "Procurement and Vendor Management governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0233",
+    "name": "Vendor / contract / sourcing context modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0234",
+    "name": "Vendor and Contract Optimization Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0235",
+    "name": "Vendor and Contract Optimization cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0236",
+    "name": "Vendor and Contract Optimization data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0237",
+    "name": "ServiceNow CMDB",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0238",
+    "name": "Infrastructure and CMDB",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0239",
+    "name": "CTO",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0240",
+    "name": "Infrastructure CMDB Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0241",
+    "name": "VMware Data Center Cluster",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0242",
+    "name": "Infrastructure CMDB Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0243",
+    "name": "AWS Analytics Landing Zone",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0244",
+    "name": "Infrastructure and CMDB Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0245",
+    "name": "Technology Operations governance council",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0246",
+    "name": "CMDB / infrastructure / cloud inventory context modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0247",
+    "name": "Infrastructure and CMDB Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0248",
+    "name": "Infrastructure and CMDB cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0249",
+    "name": "Infrastructure and CMDB data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0250",
+    "name": "ServiceNow ITSM",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0251",
+    "name": "Incident Problem Change Operations",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0252",
+    "name": "VP IT Operations",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0253",
+    "name": "Incident Problem Change Operations Operational Dataset",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0254",
+    "name": "Datadog Observability",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0255",
+    "name": "Incident Problem Change Operations Analytics Mart",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0256",
+    "name": "PagerDuty Incident Response",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0257",
+    "name": "Incident Problem Change Operations Primary Midwest Data Center Hosting Segment",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0258",
+    "name": "Incident / problem / change operational health context modernization and readiness program",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0259",
+    "name": "Incident Problem Change Operations Analyst / Steward",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0260",
+    "name": "Incident Problem Change Operations cycle time",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0261",
+    "name": "Incident Problem Change Operations data lineage and definition risk",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0262",
+    "name": "Epic FHIR Gateway",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0263",
+    "name": "Informatica Finance ETL",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0264",
+    "name": "Tableau Finance Dashboards",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0265",
+    "name": "Power BI Finance Workspace",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0266",
+    "name": "Databricks Finance Gold Data Product",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0267",
+    "name": "Unity Catalog Target",
+    "tenant_key": "meridian-health"
+  },
+  {
+    "node_id": "N0268",
+    "name": "Databricks Clinical Claims Lakehouse",
+    "tenant_key": "meridian-health"
+  }
+]

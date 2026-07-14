@@ -1,0 +1,293 @@
+node_id,name,tenant_key
+N0001,Executive Office Workflow Platform,harbortrust-bank
+N0002,Executive Office,harbortrust-bank
+N0003,Chief Strategy Officer,harbortrust-bank
+N0004,Executive Office Operational Dataset,harbortrust-bank
+N0005,Executive Office Analytics Mart,harbortrust-bank
+N0006,Executive Office Reporting Workspace,harbortrust-bank
+N0007,Executive Office Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0008,Primary Northeast Data Center,harbortrust-bank
+N0009,Snowflake / Databricks Cloud Data Platform,harbortrust-bank
+N0010,Enterprise Strategy governance council,harbortrust-bank
+N0011,Enterprise profile and corporate priorities modernization and readiness program,harbortrust-bank
+N0012,Executive Office Analyst / Steward,harbortrust-bank
+N0013,ServiceNow,harbortrust-bank
+N0014,Executive Office cycle time,harbortrust-bank
+N0015,Executive Office data lineage and definition risk,harbortrust-bank
+N0016,FIS Core Banking Platform,harbortrust-bank
+N0017,Retail Deposits and Branch Operations,harbortrust-bank
+N0018,Retail Banking COO,harbortrust-bank
+N0019,Retail Deposits Branch Operations Operational Dataset,harbortrust-bank
+N0020,Branch Teller Platform,harbortrust-bank
+N0021,Retail Deposits Branch Operations Analytics Mart,harbortrust-bank
+N0022,Digital Banking Servicing Portal,harbortrust-bank
+N0023,Retail Deposits and Branch Operations Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0024,Retail Banking governance council,harbortrust-bank
+N0025,Retail banking modernization and readiness program,harbortrust-bank
+N0026,Retail Deposits and Branch Operations Analyst / Steward,harbortrust-bank
+N0027,FIS,harbortrust-bank
+N0028,Retail Deposits and Branch Operations cycle time,harbortrust-bank
+N0029,Retail Deposits and Branch Operations data lineage and definition risk,harbortrust-bank
+N0030,Commercial Lending and Treasury Workflow Platform,harbortrust-bank
+N0031,Commercial Lending and Treasury,harbortrust-bank
+N0032,Commercial Banking COO,harbortrust-bank
+N0033,Commercial Lending Treasury Operational Dataset,harbortrust-bank
+N0034,Commercial Lending and Treasury Analytics Mart,harbortrust-bank
+N0035,Commercial Lending Treasury Analytics Mart,harbortrust-bank
+N0036,Commercial Lending and Treasury Reporting Workspace,harbortrust-bank
+N0037,Commercial Lending and Treasury Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0038,Commercial Banking governance council,harbortrust-bank
+N0039,Commercial banking modernization and readiness program,harbortrust-bank
+N0040,Commercial Lending and Treasury Analyst / Steward,harbortrust-bank
+N0041,Azure,harbortrust-bank
+N0042,Commercial Lending and Treasury cycle time,harbortrust-bank
+N0043,Commercial Lending and Treasury data lineage and definition risk,harbortrust-bank
+N0044,Cards Operations Workflow Platform,harbortrust-bank
+N0045,Cards Operations,harbortrust-bank
+N0046,Head of Cards,harbortrust-bank
+N0047,Cards Operations Operational Dataset,harbortrust-bank
+N0048,Cards Operations Analytics Mart,harbortrust-bank
+N0049,Cards Operations Reporting Workspace,harbortrust-bank
+N0050,Cards Operations Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0051,Cards and Consumer Lending governance council,harbortrust-bank
+N0052,Cards modernization and readiness program,harbortrust-bank
+N0053,Cards Operations Analyst / Steward,harbortrust-bank
+N0054,Cards Operations cycle time,harbortrust-bank
+N0055,Cards Operations data lineage and definition risk,harbortrust-bank
+N0056,Payments Hub,harbortrust-bank
+N0057,Payments Operations,harbortrust-bank
+N0058,Payments Leader,harbortrust-bank
+N0059,Payments Operations Operational Dataset,harbortrust-bank
+N0060,ACH Wire Gateway,harbortrust-bank
+N0061,Payments Operations Analytics Mart,harbortrust-bank
+N0062,Real-Time Payments Adapter,harbortrust-bank
+N0063,Payments Operations Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0064,Payments governance council,harbortrust-bank
+N0065,Payments modernization and readiness program,harbortrust-bank
+N0066,Payments Operations Analyst / Steward,harbortrust-bank
+N0067,Informatica,harbortrust-bank
+N0068,Payments Operations cycle time,harbortrust-bank
+N0069,Payments Operations data lineage and definition risk,harbortrust-bank
+N0070,Consumer Lending Operations Workflow Platform,harbortrust-bank
+N0071,Consumer Lending Operations,harbortrust-bank
+N0072,Head of Consumer Lending,harbortrust-bank
+N0073,Consumer Lending Operations Operational Dataset,harbortrust-bank
+N0074,Consumer Lending Operations Analytics Mart,harbortrust-bank
+N0075,Consumer Lending Operations Reporting Workspace,harbortrust-bank
+N0076,Consumer Lending Operations Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0077,Consumer Lending governance council,harbortrust-bank
+N0078,Lending modernization and readiness program,harbortrust-bank
+N0079,Consumer Lending Operations Analyst / Steward,harbortrust-bank
+N0080,NICE,harbortrust-bank
+N0081,Consumer Lending Operations cycle time,harbortrust-bank
+N0082,Consumer Lending Operations data lineage and definition risk,harbortrust-bank
+N0083,Wealth Advisory and Brokerage Workflow Platform,harbortrust-bank
+N0084,Wealth Advisory and Brokerage,harbortrust-bank
+N0085,Head of Wealth,harbortrust-bank
+N0086,Wealth Advisory Brokerage Operational Dataset,harbortrust-bank
+N0087,Wealth Advisory and Brokerage Analytics Mart,harbortrust-bank
+N0088,Wealth Advisory Brokerage Analytics Mart,harbortrust-bank
+N0089,Wealth Advisory and Brokerage Reporting Workspace,harbortrust-bank
+N0090,Wealth Advisory and Brokerage Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0091,Wealth Management governance council,harbortrust-bank
+N0092,Wealth modernization and readiness program,harbortrust-bank
+N0093,Wealth Advisory and Brokerage Analyst / Steward,harbortrust-bank
+N0094,Wealth Advisory and Brokerage cycle time,harbortrust-bank
+N0095,Wealth Advisory and Brokerage data lineage and definition risk,harbortrust-bank
+N0096,Fraud Alert Platform,harbortrust-bank
+N0097,Fraud and Risk Operations,harbortrust-bank
+N0098,CRO,harbortrust-bank
+N0099,Fraud Risk Operations Operational Dataset,harbortrust-bank
+N0100,AML Transaction Monitoring,harbortrust-bank
+N0101,Fraud Risk Operations Analytics Mart,harbortrust-bank
+N0102,Fraud Case Management,harbortrust-bank
+N0103,Fraud and Risk Operations Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0104,Enterprise Risk governance council,harbortrust-bank
+N0105,Fraud / risk modernization and readiness program,harbortrust-bank
+N0106,Fraud and Risk Operations Analyst / Steward,harbortrust-bank
+N0107,Experian,harbortrust-bank
+N0108,Fraud and Risk Operations cycle time,harbortrust-bank
+N0109,Fraud and Risk Operations data lineage and definition risk,harbortrust-bank
+N0110,Compliance and Model Risk Management Workflow Platform,harbortrust-bank
+N0111,Compliance and Model Risk Management,harbortrust-bank
+N0112,Chief Compliance Officer,harbortrust-bank
+N0113,Compliance Model Risk Management Operational Dataset,harbortrust-bank
+N0114,Compliance and Model Risk Management Analytics Mart,harbortrust-bank
+N0115,Compliance Model Risk Management Analytics Mart,harbortrust-bank
+N0116,Compliance and Model Risk Management Reporting Workspace,harbortrust-bank
+N0117,Compliance and Model Risk Management Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0118,Compliance and Model Risk governance council,harbortrust-bank
+N0119,Compliance / model risk modernization and readiness program,harbortrust-bank
+N0120,Compliance and Model Risk Management Analyst / Steward,harbortrust-bank
+N0121,Databricks,harbortrust-bank
+N0122,Compliance and Model Risk Management cycle time,harbortrust-bank
+N0123,Compliance and Model Risk Management data lineage and definition risk,harbortrust-bank
+N0124,Contact Center and Servicing Workflow Platform,harbortrust-bank
+N0125,Contact Center and Servicing,harbortrust-bank
+N0126,Chief Experience Officer,harbortrust-bank
+N0127,Contact Center Servicing Operational Dataset,harbortrust-bank
+N0128,Contact Center and Servicing Analytics Mart,harbortrust-bank
+N0129,Contact Center Servicing Analytics Mart,harbortrust-bank
+N0130,Contact Center and Servicing Reporting Workspace,harbortrust-bank
+N0131,Contact Center and Servicing Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0132,Customer Experience governance council,harbortrust-bank
+N0133,Contact center modernization and readiness program,harbortrust-bank
+N0134,Contact Center and Servicing Analyst / Steward,harbortrust-bank
+N0135,Salesforce,harbortrust-bank
+N0136,Contact Center and Servicing cycle time,harbortrust-bank
+N0137,Contact Center and Servicing data lineage and definition risk,harbortrust-bank
+N0138,Digital Account Opening Platform,harbortrust-bank
+N0139,Digital Account Opening and Onboarding,harbortrust-bank
+N0140,Digital Banking Product Owner,harbortrust-bank
+N0141,Digital Account Opening Onboarding Operational Dataset,harbortrust-bank
+N0142,KYC Identity Verification Service,harbortrust-bank
+N0143,Digital Account Opening Onboarding Analytics Mart,harbortrust-bank
+N0144,Funding and Account Setup API,harbortrust-bank
+N0145,Digital Account Opening and Onboarding Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0146,Digital Banking governance council,harbortrust-bank
+N0147,Digital onboarding modernization and readiness program,harbortrust-bank
+N0148,Digital Account Opening and Onboarding Analyst / Steward,harbortrust-bank
+N0149,Accenture Managed Services,harbortrust-bank
+N0150,Digital Account Opening and Onboarding cycle time,harbortrust-bank
+N0151,Digital Account Opening and Onboarding data lineage and definition risk,harbortrust-bank
+N0152,Core Banking Modernization,harbortrust-bank
+N0153,CIO,harbortrust-bank
+N0154,Core Banking Modernization Operational Dataset,harbortrust-bank
+N0155,IBM z/OS Core Banking Mainframe,harbortrust-bank
+N0156,Core Banking Modernization Analytics Mart,harbortrust-bank
+N0157,Core Banking API Gateway,harbortrust-bank
+N0158,Core Banking Modernization Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0159,Technology Modernization governance council,harbortrust-bank
+N0160,Core banking modernization modernization and readiness program,harbortrust-bank
+N0161,Core Banking Modernization Analyst / Steward,harbortrust-bank
+N0162,Core Banking Modernization cycle time,harbortrust-bank
+N0163,Core Banking Modernization data lineage and definition risk,harbortrust-bank
+N0164,Customer 360 Data Product,harbortrust-bank
+N0165,CDAO,harbortrust-bank
+N0166,Customer 360 Data Product Operational Dataset,harbortrust-bank
+N0167,CRM Customer Master,harbortrust-bank
+N0168,Customer 360 Data Product Analytics Mart,harbortrust-bank
+N0169,Identity Resolution Service,harbortrust-bank
+N0170,Customer 360 Data Product Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0171,Enterprise Data governance council,harbortrust-bank
+N0172,Customer 360 modernization and readiness program,harbortrust-bank
+N0173,Customer 360 Data Product Analyst / Steward,harbortrust-bank
+N0174,Customer 360 Data Product cycle time,harbortrust-bank
+N0175,Customer 360 Data Product data lineage and definition risk,harbortrust-bank
+N0176,Retail Banking Analytics Workflow Platform,harbortrust-bank
+N0177,Retail Banking Analytics,harbortrust-bank
+N0178,Retail Analytics Lead,harbortrust-bank
+N0179,Retail Banking Analytics Operational Dataset,harbortrust-bank
+N0180,Retail Banking Analytics Analytics Mart,harbortrust-bank
+N0181,Retail Banking Analytics Reporting Workspace,harbortrust-bank
+N0182,Retail Banking Analytics Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0183,Retail Analytics governance council,harbortrust-bank
+N0184,Retail banking analytics modernization and readiness program,harbortrust-bank
+N0185,Retail Banking Analytics Analyst / Steward,harbortrust-bank
+N0186,Snowflake,harbortrust-bank
+N0187,Retail Banking Analytics cycle time,harbortrust-bank
+N0188,Retail Banking Analytics data lineage and definition risk,harbortrust-bank
+N0189,Cards Portfolio Analytics Workflow Platform,harbortrust-bank
+N0190,Cards Portfolio Analytics,harbortrust-bank
+N0191,Cards Analytics Lead,harbortrust-bank
+N0192,Cards Portfolio Analytics Operational Dataset,harbortrust-bank
+N0193,Cards Portfolio Analytics Analytics Mart,harbortrust-bank
+N0194,Cards Portfolio Analytics Reporting Workspace,harbortrust-bank
+N0195,Cards Portfolio Analytics Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0196,Cards Analytics governance council,harbortrust-bank
+N0197,Cards analytics modernization and readiness program,harbortrust-bank
+N0198,Cards Portfolio Analytics Analyst / Steward,harbortrust-bank
+N0199,Cards Portfolio Analytics cycle time,harbortrust-bank
+N0200,Cards Portfolio Analytics data lineage and definition risk,harbortrust-bank
+N0201,Payments and Settlement Analytics Workflow Platform,harbortrust-bank
+N0202,Payments and Settlement Analytics,harbortrust-bank
+N0203,Payments Analytics Lead,harbortrust-bank
+N0204,Payments Settlement Analytics Operational Dataset,harbortrust-bank
+N0205,Payments and Settlement Analytics Analytics Mart,harbortrust-bank
+N0206,Payments Settlement Analytics Analytics Mart,harbortrust-bank
+N0207,Payments and Settlement Analytics Reporting Workspace,harbortrust-bank
+N0208,Payments and Settlement Analytics Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0209,Payments Analytics governance council,harbortrust-bank
+N0210,Payments analytics modernization and readiness program,harbortrust-bank
+N0211,Payments and Settlement Analytics Analyst / Steward,harbortrust-bank
+N0212,Payments and Settlement Analytics cycle time,harbortrust-bank
+N0213,Payments and Settlement Analytics data lineage and definition risk,harbortrust-bank
+N0214,Fraud and Risk Analytics Workflow Platform,harbortrust-bank
+N0215,Fraud and Risk Analytics,harbortrust-bank
+N0216,Fraud Analytics Lead,harbortrust-bank
+N0217,Fraud Risk Analytics Operational Dataset,harbortrust-bank
+N0218,Fraud and Risk Analytics Analytics Mart,harbortrust-bank
+N0219,Fraud Risk Analytics Analytics Mart,harbortrust-bank
+N0220,Fraud and Risk Analytics Reporting Workspace,harbortrust-bank
+N0221,Fraud and Risk Analytics Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0222,Risk Analytics governance council,harbortrust-bank
+N0223,Fraud/risk analytics modernization and readiness program,harbortrust-bank
+N0224,Fraud and Risk Analytics Analyst / Steward,harbortrust-bank
+N0225,Fraud and Risk Analytics cycle time,harbortrust-bank
+N0226,Fraud and Risk Analytics data lineage and definition risk,harbortrust-bank
+N0227,Snowflake Banking Warehouse,harbortrust-bank
+N0228,Cloud Data Platform,harbortrust-bank
+N0229,Cloud Data Platform Operational Dataset,harbortrust-bank
+N0230,Databricks Risk Feature Workspace,harbortrust-bank
+N0231,Cloud Data Platform Analytics Mart,harbortrust-bank
+N0232,Informatica Banking ETL,harbortrust-bank
+N0233,Cloud Data Platform Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0234,Enterprise data platform / cloud data foundation modernization and readiness program,harbortrust-bank
+N0235,Cloud Data Platform Analyst / Steward,harbortrust-bank
+N0236,Cloud Data Platform cycle time,harbortrust-bank
+N0237,Cloud Data Platform data lineage and definition risk,harbortrust-bank
+N0238,IT Budget and Tower Baseline Workflow Platform,harbortrust-bank
+N0239,IT Budget and Tower Baseline,harbortrust-bank
+N0240,CIO / CFO,harbortrust-bank
+N0241,IT Budget Tower Baseline Operational Dataset,harbortrust-bank
+N0242,IT Budget and Tower Baseline Analytics Mart,harbortrust-bank
+N0243,IT Budget Tower Baseline Analytics Mart,harbortrust-bank
+N0244,IT Budget and Tower Baseline Reporting Workspace,harbortrust-bank
+N0245,IT Budget and Tower Baseline Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0246,Technology Finance governance council,harbortrust-bank
+N0247,IT budget and Tower spend baseline modernization and readiness program,harbortrust-bank
+N0248,IT Budget and Tower Baseline Analyst / Steward,harbortrust-bank
+N0249,IT Budget and Tower Baseline cycle time,harbortrust-bank
+N0250,IT Budget and Tower Baseline data lineage and definition risk,harbortrust-bank
+N0251,Vendor and Contract Optimization Workflow Platform,harbortrust-bank
+N0252,Vendor and Contract Optimization,harbortrust-bank
+N0253,Chief Procurement Officer,harbortrust-bank
+N0254,Vendor Contract Optimization Operational Dataset,harbortrust-bank
+N0255,Vendor and Contract Optimization Analytics Mart,harbortrust-bank
+N0256,Vendor Contract Optimization Analytics Mart,harbortrust-bank
+N0257,Vendor and Contract Optimization Reporting Workspace,harbortrust-bank
+N0258,Vendor and Contract Optimization Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0259,Procurement and Vendor Management governance council,harbortrust-bank
+N0260,Vendor / contract / sourcing context modernization and readiness program,harbortrust-bank
+N0261,Vendor and Contract Optimization Analyst / Steward,harbortrust-bank
+N0262,Vendor and Contract Optimization cycle time,harbortrust-bank
+N0263,Vendor and Contract Optimization data lineage and definition risk,harbortrust-bank
+N0264,ServiceNow CMDB,harbortrust-bank
+N0265,Infrastructure and CMDB,harbortrust-bank
+N0266,CTO,harbortrust-bank
+N0267,Infrastructure CMDB Operational Dataset,harbortrust-bank
+N0268,IBM z/OS Mainframe Cluster,harbortrust-bank
+N0269,Infrastructure CMDB Analytics Mart,harbortrust-bank
+N0270,Azure Banking Landing Zone,harbortrust-bank
+N0271,Infrastructure and CMDB Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0272,Technology Operations governance council,harbortrust-bank
+N0273,CMDB / infrastructure / cloud inventory context modernization and readiness program,harbortrust-bank
+N0274,Infrastructure and CMDB Analyst / Steward,harbortrust-bank
+N0275,TransUnion,harbortrust-bank
+N0276,Infrastructure and CMDB cycle time,harbortrust-bank
+N0277,Infrastructure and CMDB data lineage and definition risk,harbortrust-bank
+N0278,ServiceNow ITSM,harbortrust-bank
+N0279,Incident Problem Change Operations,harbortrust-bank
+N0280,VP IT Operations,harbortrust-bank
+N0281,Incident Problem Change Operations Operational Dataset,harbortrust-bank
+N0282,Splunk Observability,harbortrust-bank
+N0283,Incident Problem Change Operations Analytics Mart,harbortrust-bank
+N0284,PagerDuty Incident Response,harbortrust-bank
+N0285,Incident Problem Change Operations Primary Northeast Data Center Hosting Segment,harbortrust-bank
+N0286,Incident / problem / change operational health context modernization and readiness program,harbortrust-bank
+N0287,Incident Problem Change Operations Analyst / Steward,harbortrust-bank
+N0288,Incident Problem Change Operations cycle time,harbortrust-bank
+N0289,Incident Problem Change Operations data lineage and definition risk,harbortrust-bank
+N0290,Settlement Reconciliation Mart,harbortrust-bank
+N0291,Event Streaming Integration Layer,harbortrust-bank
+N0292,Alation Data Catalog,harbortrust-bank
