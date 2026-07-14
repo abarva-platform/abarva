@@ -46,7 +46,10 @@ const DEFAULT_DOMAINS: ModuleContextRequestedDomain[] = [
   "evidence_sources",
 ];
 
-const REQUEST_TO_CANONICAL_DOMAIN: Record<ModuleContextRequestedDomain, string> = {
+const REQUEST_TO_CANONICAL_DOMAIN: Record<
+  ModuleContextRequestedDomain,
+  string
+> = {
   enterprise_profile: "enterprise_profile",
   functions: "business_functions",
   applications_systems: "applications_systems",
@@ -60,10 +63,9 @@ const REQUEST_TO_CANONICAL_DOMAIN: Record<ModuleContextRequestedDomain, string> 
 };
 
 const CANONICAL_TO_REQUEST_DOMAIN = Object.fromEntries(
-  Object.entries(REQUEST_TO_CANONICAL_DOMAIN).map(([requestDomain, canonicalDomain]) => [
-    canonicalDomain,
-    requestDomain,
-  ]),
+  Object.entries(REQUEST_TO_CANONICAL_DOMAIN).map(
+    ([requestDomain, canonicalDomain]) => [canonicalDomain, requestDomain],
+  ),
 ) as Record<string, ModuleContextRequestedDomain>;
 
 const ACTIVE_ACCESS_SLUGS: Record<string, string> = {
@@ -176,18 +178,19 @@ async function buildActiveContext(
     Boolean(request.activeTenantAccessVersionId) &&
     activeRecord?.activeVersionId !== request.activeTenantAccessVersionId;
   const activeVersionId =
-    activeRecord && !mismatchedActiveVersion ? activeRecord.activeVersionId : null;
-  const gaps: ModuleContextGap[] = [];
-  const canonicalSlice =
-    activeVersionId
-      ? await loadCanonicalContextSlice({
-          repoRoot: options.repoRoot,
-          tenantKey: canonicalTenantKey,
-          requestedDomains,
-          generatedAt,
-          classification: "agent_ready",
-        })
+    activeRecord && !mismatchedActiveVersion
+      ? activeRecord.activeVersionId
       : null;
+  const gaps: ModuleContextGap[] = [];
+  const canonicalSlice = activeVersionId
+    ? await loadCanonicalContextSlice({
+        repoRoot: options.repoRoot,
+        tenantKey: canonicalTenantKey,
+        requestedDomains,
+        generatedAt,
+        classification: "agent_ready",
+      })
+    : null;
   const activeRecords = canonicalSlice?.records ?? [];
   const evidenceRefs = buildEvidenceRefsFromRecords(activeRecords);
   const caveats = [
@@ -230,14 +233,19 @@ async function buildActiveContext(
     request,
     generatedAt,
     resolvedMode: "active",
-    sourceMode: activeVersionId ? "active_tenant_access" : "active_not_available",
+    sourceMode: activeVersionId
+      ? "active_tenant_access"
+      : "active_not_available",
     tenantDataVersion: activeVersionId ?? "active:not_available",
     activeTenantAccessVersionId: activeVersionId,
     candidateVersionId: null,
     domains:
       canonicalSlice?.domains ??
       requestedDomains.map((domain) =>
-        emptyDomainSummary(domain, activeVersionId ? "needs_review" : "not_ready"),
+        emptyDomainSummary(
+          domain,
+          activeVersionId ? "needs_review" : "not_ready",
+        ),
       ),
     records: activeRecords,
     evidenceRefs,
@@ -263,7 +271,8 @@ async function buildActiveContext(
       profileReady: Boolean(
         canonicalSlice?.domains.some(
           (domain) =>
-            domain.domain === "enterprise_profile" && domain.acceptedRecords > 0,
+            domain.domain === "enterprise_profile" &&
+            domain.acceptedRecords > 0,
         ),
       ),
       caveats,
@@ -323,12 +332,12 @@ async function buildCandidatePreviewContext(
   });
   const canonicalRecords = canonicalSlice.records;
   const sampleRecords = candidate.readModelSamples
-    .filter((sample) => selectedCanonicalDomains.has(inferSampleCanonicalDomain(sample)))
+    .filter((sample) =>
+      selectedCanonicalDomains.has(inferSampleCanonicalDomain(sample)),
+    )
     .map((sample) => toContextRecord(sample));
   const records =
-    canonicalRecords.length > 0
-      ? canonicalRecords
-      : sampleRecords;
+    canonicalRecords.length > 0 ? canonicalRecords : sampleRecords;
   const evidenceRefs = buildEvidenceRefs({
     candidate,
     requestedDomains,
@@ -538,23 +547,23 @@ function computeContextCompleteness(input: {
     input.domains.length === 0
       ? 0
       : Math.round(
-          input.domains.reduce(
+          (input.domains.reduce(
             (sum, domain) => sum + Math.min(domain.acceptedRecords / 50, 1),
             0,
           ) /
-            input.domains.length *
+            input.domains.length) *
             100,
         );
   const recordFieldDepth =
     input.records.length === 0
       ? 0
       : Math.round(
-          input.records.reduce(
+          (input.records.reduce(
             (sum, record) =>
               sum + Math.min(Object.keys(record.fields).length / 8, 1),
             0,
           ) /
-            input.records.length *
+            input.records.length) *
             100,
         );
   const depth = Math.round((domainDepth + recordFieldDepth) / 2);
@@ -562,7 +571,10 @@ function computeContextCompleteness(input: {
     input.validatedRelationships.length > 0
       ? 100
       : input.relationshipCandidates.length > 0
-        ? Math.min(70, percent(input.relationshipCandidates.length, domainCount))
+        ? Math.min(
+            70,
+            percent(input.relationshipCandidates.length, domainCount),
+          )
         : 0;
   const evidenceCoverage =
     input.records.length === 0
@@ -636,7 +648,9 @@ function explanationStrengths(context: ServedModuleContextPacket): string[] {
     strengths.push("Active Tenant Access metadata pointer is resolved.");
   }
   if (strengths.length === 0) {
-    strengths.push("The packet preserves a safe empty response instead of falling back to inactive candidate data.");
+    strengths.push(
+      "The packet preserves a safe empty response instead of falling back to inactive candidate data.",
+    );
   }
   return strengths;
 }
@@ -647,7 +661,9 @@ function explanationLimitations(context: ServedModuleContextPacket): string[] {
     ...context.gaps.map((gap) => gap.description),
   ];
   if (context.mode === "candidate_preview") {
-    limitations.unshift("Candidate preview is inactive and cannot be treated as active tenant truth.");
+    limitations.unshift(
+      "Candidate preview is inactive and cannot be treated as active tenant truth.",
+    );
   }
   if (context.validatedRelationships.length === 0) {
     limitations.push("Validated relationships are not present in this packet.");
@@ -697,7 +713,9 @@ function unsupportedQuestions(context: ServedModuleContextPacket): string[] {
     defaults.push("Do not claim Move evidence was attached by the data layer.");
   }
   if (context.moduleKey === "tower") {
-    defaults.push("Do not calculate realized value, ROI, or Tower outcomes from this context packet.");
+    defaults.push(
+      "Do not calculate realized value, ROI, or Tower outcomes from this context packet.",
+    );
   }
   return uniqueStrings([...defaults, ...context.readiness.mustNotClaim]);
 }
@@ -705,23 +723,40 @@ function unsupportedQuestions(context: ServedModuleContextPacket): string[] {
 function nextActions(context: ServedModuleContextPacket): string[] {
   const actions: string[] = [];
   if (context.mode === "candidate_preview") {
-    actions.push("Review candidate preview quality before any promotion decision.");
-    actions.push("Promote only through the explicit Active Tenant Access promotion gate.");
+    actions.push(
+      "Review candidate preview quality before any promotion decision.",
+    );
+    actions.push(
+      "Promote only through the explicit Active Tenant Access promotion gate.",
+    );
   }
   if (context.mode === "active" && !context.activeTenantAccessVersionId) {
-    actions.push("Promote a reviewed candidate before relying on active module context.");
+    actions.push(
+      "Promote a reviewed candidate before relying on active module context.",
+    );
   }
-  if (context.relationshipCandidates.length > 0 && context.validatedRelationships.length === 0) {
-    actions.push("Validate relationship candidates before cross-domain reasoning.");
+  if (
+    context.relationshipCandidates.length > 0 &&
+    context.validatedRelationships.length === 0
+  ) {
+    actions.push(
+      "Validate relationship candidates before cross-domain reasoning.",
+    );
   }
   if (context.gaps.length > 0) {
-    actions.push("Resolve blocker and warning gaps before treating the packet as board-ready.");
+    actions.push(
+      "Resolve blocker and warning gaps before treating the packet as board-ready.",
+    );
   }
-  actions.push(`Let the ${moduleLabelFor(context.moduleKey)} module decide how to render or use this packet.`);
+  actions.push(
+    `Let the ${moduleLabelFor(context.moduleKey)} module decide how to render or use this packet.`,
+  );
   return uniqueStrings(actions);
 }
 
-function moduleLabelFor(moduleKey: ServedModuleContextPacket["moduleKey"]): string {
+function moduleLabelFor(
+  moduleKey: ServedModuleContextPacket["moduleKey"],
+): string {
   return {
     home: "Home",
     intelligence: "Intelligence",
@@ -731,7 +766,9 @@ function moduleLabelFor(moduleKey: ServedModuleContextPacket["moduleKey"]): stri
   }[moduleKey];
 }
 
-function overallFor(answerability: number): ModuleContextCompleteness["overall"] {
+function overallFor(
+  answerability: number,
+): ModuleContextCompleteness["overall"] {
   if (answerability >= 90) return "Strong";
   if (answerability >= 70) return "Good";
   if (answerability >= 45) return "Limited";
@@ -749,7 +786,9 @@ function clampScore(value: number): number {
 
 function uniqueStrings(values: string[]): string[] {
   return Array.from(
-    new Set(values.map((value) => value.trim()).filter((value) => value.length > 0)),
+    new Set(
+      values.map((value) => value.trim()).filter((value) => value.length > 0),
+    ),
   );
 }
 
@@ -769,7 +808,10 @@ function buildDomainSummaries(
       acceptedRecords: summary?.acceptedRecords ?? 0,
       skippedRows: summary?.skippedRows ?? 0,
       duplicateNames: summary?.duplicateNames ?? 0,
-      readiness: summary && summary.acceptedRecords > 0 ? "candidate_only" : "missing_evidence",
+      readiness:
+        summary && summary.acceptedRecords > 0
+          ? "candidate_only"
+          : "missing_evidence",
     };
   });
 }
@@ -783,7 +825,9 @@ function buildEvidenceRefs(input: {
   const sourceRefs = input.candidate.sourceLineage
     .map((source) => ({
       source,
-      domain: source.domain ? CANONICAL_TO_REQUEST_DOMAIN[source.domain] : undefined,
+      domain: source.domain
+        ? CANONICAL_TO_REQUEST_DOMAIN[source.domain]
+        : undefined,
     }))
     .filter((entry) => !entry.domain || selectedDomains.has(entry.domain))
     .map((entry): ModuleContextEvidenceRef => ({
@@ -822,7 +866,9 @@ function buildRelationshipCandidates(input: {
     .filter(() => input.candidate.relationshipCandidateCount > 0);
 }
 
-function buildCandidateGaps(candidate: TenantCandidateVersion): ModuleContextGap[] {
+function buildCandidateGaps(
+  candidate: TenantCandidateVersion,
+): ModuleContextGap[] {
   return [
     ...candidate.promotionBlockers.map((blocker, index) => ({
       gapId: `${candidate.tenantKey}:promotion-blocker:${index + 1}`,
@@ -834,24 +880,29 @@ function buildCandidateGaps(candidate: TenantCandidateVersion): ModuleContextGap
       .filter((gate) => gate.status !== "pass")
       .map((gate) => ({
         gapId: `${candidate.tenantKey}:quality-gate:${gate.id}`,
-        severity: gate.status === "fail" ? ("blocker" as const) : ("warning" as const),
+        severity:
+          gate.status === "fail" ? ("blocker" as const) : ("warning" as const),
         description: gate.detail,
         source: gate.label,
       })),
   ];
 }
 
-function toContextRecord(sample: CandidateReadModelSample): ModuleContextRecord {
+function toContextRecord(
+  sample: CandidateReadModelSample,
+): ModuleContextRecord {
   const canonicalDomain = inferSampleCanonicalDomain(sample);
-  const domain = CANONICAL_TO_REQUEST_DOMAIN[canonicalDomain] ?? "evidence_sources";
+  const domain =
+    CANONICAL_TO_REQUEST_DOMAIN[canonicalDomain] ?? "evidence_sources";
+  const fields = presentationFields(sample.attributes);
   return {
     recordId: sample.sourceObjectId,
     domain,
     canonicalDomain,
     objectType: sample.objectType,
-    title: sample.displayName,
-    summary: sampleSummary(sample),
-    fields: sample.attributes,
+    title: presentationText(sample.displayName),
+    summary: sampleSummary(fields, sample.objectType),
+    fields,
     sourceEvidenceIds: sample.evidenceKeys,
     citationStatus: sample.evidenceKeys.length > 0 ? "citable" : "needs_review",
     agentReadiness:
@@ -867,26 +918,32 @@ function toContextRecordFromCanonical(
   classification: ModuleContextClassification,
 ): ModuleContextRecord {
   const canonicalDomain = inferRecordCanonicalDomain(record);
-  const domain = CANONICAL_TO_REQUEST_DOMAIN[canonicalDomain] ?? "evidence_sources";
+  const domain =
+    CANONICAL_TO_REQUEST_DOMAIN[canonicalDomain] ?? "evidence_sources";
   const sourceEvidenceIds = record.evidenceReferences.map(
     (evidence) => evidence.evidenceKey,
   );
   const confidence = averageConfidence(record);
+  const fields = presentationFields(scalarAttributes(record));
   return {
     recordId: record.canonicalObjectKey ?? record.sourceObjectId,
     domain,
     canonicalDomain,
     objectType: record.objectType,
-    title: canonicalTitle(record),
-    summary: canonicalSummary(record),
-    fields: scalarAttributes(record),
+    title: presentationText(canonicalTitle(record)),
+    summary: canonicalSummary(fields),
+    fields,
     sourceEvidenceIds,
     citationStatus: sourceEvidenceIds.length > 0 ? "citable" : "needs_review",
-    agentReadiness: sourceEvidenceIds.length > 0 ? classification : "missing_evidence",
+    agentReadiness:
+      sourceEvidenceIds.length > 0 ? classification : "missing_evidence",
     relationshipReadiness:
-      record.relationships.length > 0 ? "relationship_not_validated" : "missing_evidence",
+      record.relationships.length > 0
+        ? "relationship_not_validated"
+        : "missing_evidence",
     restricted:
-      record.sensitivity === "confidential" || record.sensitivity === "restricted",
+      record.sensitivity === "confidential" ||
+      record.sensitivity === "restricted",
     confidence,
   };
 }
@@ -905,10 +962,12 @@ async function loadCanonicalContextSlice(input: {
   const selectedCanonicalDomains = new Set(
     input.requestedDomains.map((domain) => REQUEST_TO_CANONICAL_DOMAIN[domain]),
   );
-  const report: CanonicalDataBuildReport = await buildCanonicalTenantDataReport({
-    repoRoot: input.repoRoot,
-    generatedAt: input.generatedAt,
-  });
+  const report: CanonicalDataBuildReport = await buildCanonicalTenantDataReport(
+    {
+      repoRoot: input.repoRoot,
+      generatedAt: input.generatedAt,
+    },
+  );
   const byDomain = new Map<string, CanonicalIngestionRecord[]>();
   for (const record of report.canonicalRecords) {
     if (record.tenantKey !== input.tenantKey) continue;
@@ -929,7 +988,9 @@ async function loadCanonicalContextSlice(input: {
   return {
     records: Array.from(byDomain.values())
       .flat()
-      .map((record) => toContextRecordFromCanonical(record, input.classification)),
+      .map((record) =>
+        toContextRecordFromCanonical(record, input.classification),
+      ),
     domains: input.requestedDomains.map((domain) => {
       const canonicalDomain = REQUEST_TO_CANONICAL_DOMAIN[domain];
       const summary = recordSummary?.byDomain[canonicalDomain];
@@ -940,14 +1001,16 @@ async function loadCanonicalContextSlice(input: {
         acceptedRecords: summary?.acceptedRecords ?? 0,
         skippedRows: summary?.skippedRows ?? 0,
         duplicateNames: summary?.duplicateNames ?? 0,
-        readiness: summary && summary.acceptedRecords > 0
-          ? input.classification
-          : "missing_evidence",
+        readiness:
+          summary && summary.acceptedRecords > 0
+            ? input.classification
+            : "missing_evidence",
       };
     }),
     sourceSnapshotIds:
       tenant?.sourceFiles.map(
-        (file) => `${file.repoRelativePath}@${file.contentFingerprint.slice(0, 12)}`,
+        (file) =>
+          `${file.repoRelativePath}@${file.contentFingerprint.slice(0, 12)}`,
       ) ?? [],
   };
 }
@@ -985,8 +1048,10 @@ function canonicalTitle(record: CanonicalIngestionRecord): string {
   );
 }
 
-function canonicalSummary(record: CanonicalIngestionRecord): string {
-  return Object.entries(scalarAttributes(record))
+function canonicalSummary(
+  fields: Record<string, string | number | boolean>,
+): string {
+  return Object.entries(fields)
     .slice(0, 3)
     .map(([key, value]) => `${key}: ${String(value)}`)
     .join("; ");
@@ -1012,20 +1077,92 @@ function averageConfidence(record: CanonicalIngestionRecord): number {
   );
 }
 
-function sampleSummary(sample: CandidateReadModelSample): string {
-  const attributeSummary = Object.entries(sample.attributes)
+function sampleSummary(
+  fields: Record<string, string | number | boolean>,
+  objectType: string,
+): string {
+  const attributeSummary = Object.entries(fields)
     .slice(0, 3)
     .map(([key, value]) => `${key}: ${String(value)}`)
     .join("; ");
-  return attributeSummary || `${sample.objectType} candidate record`;
+  return attributeSummary || `${objectType} candidate record`;
 }
 
 function scalarValue(value: unknown): string | number | boolean {
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+  if (
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean"
+  ) {
     return value;
   }
   if (value === null || value === undefined) return "";
   return JSON.stringify(value);
+}
+
+const INTERNAL_PRESENTATION_FIELD_KEYS = new Set([
+  "tenantKey",
+  "clientDisplayName",
+  "v4ContractVersion",
+  "v6ContractVersion",
+  "v7ContractVersion",
+  "legacyMigrationName",
+  "sourceSystem",
+  "sourceOwner",
+  "sourceBasis",
+  "sourceFile",
+  "sourcePath",
+  "sourceFingerprint",
+  "inputFingerprint",
+  "buildVersion",
+]);
+
+function presentationFields(
+  fields: Record<string, unknown>,
+): Record<string, string | number | boolean> {
+  return Object.fromEntries(
+    Object.entries(fields)
+      .filter(([key]) => !isInternalPresentationField(key))
+      .slice(0, 10)
+      .map(([key, value]) => [key, scalarPresentationValue(value)]),
+  );
+}
+
+function isInternalPresentationField(key: string): boolean {
+  if (INTERNAL_PRESENTATION_FIELD_KEYS.has(key)) return true;
+  return /^(?:v4|v6|v7|legacy).*version$/i.test(key);
+}
+
+function scalarPresentationValue(value: unknown): string | number | boolean {
+  const scalar = scalarValue(value);
+  return typeof scalar === "string" ? presentationText(scalar) : scalar;
+}
+
+function presentationText(value: string): string {
+  return value
+    .replace(
+      /\bV[467]_[0-9]{2}_([A-Za-z0-9_-]+)\.csv\b/gi,
+      (_match, name: string) => `${humanizeIdentifier(name)} source`,
+    )
+    .replace(/\bv[467]\.[A-Za-z0-9._-]+\b/gi, "tenant input contract")
+    .replace(
+      /\b[A-Za-z0-9-]+-v[467](?:-v[467])?-[A-Za-z0-9-]+\b/gi,
+      "tenant input source",
+    )
+    .replace(/\bV[467]\s+(?:row|rows|record|records)\b/gi, "source record")
+    .replace(/\bV[467]\s+/gi, "")
+    .replace(/\b(?:from|loaded)\s+V[467]\b/gi, "$1 source")
+    .replace(/\bV[467]\b/gi, "source")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function humanizeIdentifier(value: string): string {
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function normalizeRequestedDomains(
@@ -1063,7 +1200,9 @@ function evidenceBoundary(
   gaps: ModuleContextGap[],
 ): EvidenceBoundary {
   return {
-    evidenceKeys: Array.from(new Set(evidenceRefs.map((ref) => ref.evidenceId))),
+    evidenceKeys: Array.from(
+      new Set(evidenceRefs.map((ref) => ref.evidenceId)),
+    ),
     excludedEvidenceKeys: [],
     staleEvidenceKeys: [],
     unsupportedClaimRisk: gaps.some((gap) => gap.severity === "blocker")
@@ -1085,7 +1224,8 @@ function guardrails(input: {
     requestedMode: input.requestedMode,
     resolvedMode: input.resolvedMode,
     candidatePreviewRequiresExplicitMode: true,
-    candidatePreviewExplicitlyRequested: input.candidatePreviewExplicitlyRequested,
+    candidatePreviewExplicitlyRequested:
+      input.candidatePreviewExplicitlyRequested,
     defaultModuleReadsCandidateData: false,
     candidateDataConsumed: input.candidateDataConsumed,
     activeTenantAccessLayerUpdated: false,
