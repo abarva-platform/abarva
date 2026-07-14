@@ -22,7 +22,7 @@ import {
   type SkyHarborApplicationsRegenerationResult,
 } from "@/lib/enterprise-data/remediation/skyharbor-applications-candidate-regeneration";
 import {
-  readLatestCandidateVersionBuild,
+  loadCandidateVersionBuildForAdmin,
   type CandidateVersionBuildReport,
   type TenantCandidateVersion,
 } from "@/lib/enterprise-data/candidate-version-build/candidate-version-build";
@@ -59,7 +59,10 @@ export default async function AdminDataLayerExplorerPage() {
   const tenant = await resolveAdminTenant();
   const model = buildAdminDataLayerExplorerModel(tenant.tenantName);
   const tenantQualityMatrix = await readLatestTenantQualityMatrix(process.cwd());
-  const candidateVersionBuild = await readLatestCandidateVersionBuild(process.cwd());
+  const candidateVersionBuildState = await loadCandidateVersionBuildForAdmin({
+    repoRoot: process.cwd(),
+  });
+  const candidateVersionBuild = candidateVersionBuildState.report;
   const skyHarborApplicationsRemediation =
     readLatestSkyHarborApplicationsRegeneration(process.cwd());
 
@@ -228,7 +231,10 @@ export default async function AdminDataLayerExplorerPage() {
             <TruthTile label="Runtime change" value="false" />
           </section>
 
-          <CandidateVersionBuildPanel report={candidateVersionBuild} />
+          <CandidateVersionBuildPanel
+            report={candidateVersionBuild}
+            loadSource={candidateVersionBuildState.source}
+          />
 
           <AllTenantQualityPanel matrix={tenantQualityMatrix} />
 
@@ -321,8 +327,10 @@ export default async function AdminDataLayerExplorerPage() {
 
 function CandidateVersionBuildPanel({
   report,
+  loadSource,
 }: {
   report: CandidateVersionBuildReport | null;
+  loadSource: "report_artifact" | "runtime_deterministic_fallback" | "missing";
 }) {
   if (!report) {
     return (
@@ -393,7 +401,8 @@ function CandidateVersionBuildPanel({
             Source build <code>{report.sourceBuildId}</code> produced{" "}
             {report.summary.candidateVersionsCreated} candidate versions.
             Active tenant access, promotion, default Home reads, and module
-            runtime reads remain unchanged.
+            runtime reads remain unchanged. Load source:{" "}
+            <code>{loadSource}</code>.
           </p>
         </div>
         <TruthTile

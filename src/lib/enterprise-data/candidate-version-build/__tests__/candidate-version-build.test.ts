@@ -1,6 +1,7 @@
 import {
   buildCandidateVersionBuildReport,
   evaluateCandidateVersionBuildReport,
+  loadCandidateVersionBuildForAdmin,
 } from "../candidate-version-build";
 
 describe("candidate version build from canonical tenant data", () => {
@@ -75,4 +76,23 @@ describe("candidate version build from canonical tenant data", () => {
     const evaluation = evaluateCandidateVersionBuildReport(report);
     expect(evaluation).toEqual({ ok: true, errors: [] });
   });
+
+  it("can build the admin preview read model without a bundled report artifact", async () => {
+    const fallback = await loadCandidateVersionBuildForAdmin({
+      repoRoot: process.cwd(),
+      forceRuntimeFallback: true,
+    });
+    expect(fallback.source).toBe("runtime_deterministic_fallback");
+    expect(fallback.errors).toEqual([]);
+    expect(fallback.report?.skyharborPreview?.domainCounts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          domain: "applications_systems",
+          acceptedRecords: 626,
+        }),
+      ]),
+    );
+    expect(fallback.report?.guardrails.productionTenantDataWritten).toBe(false);
+    expect(fallback.report?.guardrails.candidatePromoted).toBe(false);
+  }, 30000);
 });
