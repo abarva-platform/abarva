@@ -75,13 +75,29 @@
     "mode": "synthetic_fixture",
     "truthStatus": "synthetic_review",
     "executiveSummary": "Fraud Analyst Copilot context assembled for intelligence (risk_ai_copilot): 5 evidence refs are available; all remain synthetic review evidence until tenant validation and promotion.",
-    "profileCount": 23,
+    "profileCount": 30,
     "profiles": [
+      {
+        "profileId": "harbortrust-bank-fraud-analyst-copilot-enterprise-harbortrust-bank",
+        "entityType": "enterprise",
+        "entityName": "HarborTrust Bank",
+        "businessMeaning": "HarborTrust Bank is part of the Fraud Analyst Copilot context for risk_ai_copilot.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
+      },
       {
         "profileId": "harbortrust-bank-fraud-analyst-copilot-function-fraud-operations",
         "entityType": "function",
         "entityName": "Fraud Operations",
         "businessMeaning": "Fraud Operations is part of the Fraud Analyst Copilot context for risk_ai_copilot.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
+      },
+      {
+        "profileId": "harbortrust-bank-fraud-analyst-copilot-use_case-ai-copilot-support-for-fraud-analyst-triage-and-case-investigation",
+        "entityType": "use_case",
+        "entityName": "AI copilot support for fraud analyst triage and case investigation",
+        "businessMeaning": "AI copilot support for fraud analyst triage and case investigation is part of the Fraud Analyst Copilot context for risk_ai_copilot.",
         "moduleReadiness": "needs_review",
         "evidenceRefCount": 5
       },
@@ -206,6 +222,30 @@
         "evidenceRefCount": 5
       },
       {
+        "profileId": "harbortrust-bank-fraud-analyst-copilot-contract-kyc-vendor",
+        "entityType": "contract",
+        "entityName": "KYC vendor",
+        "businessMeaning": "KYC vendor is part of the Fraud Analyst Copilot context for risk_ai_copilot.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
+      },
+      {
+        "profileId": "harbortrust-bank-fraud-analyst-copilot-contract-device-intelligence-vendor",
+        "entityType": "contract",
+        "entityName": "device intelligence vendor",
+        "businessMeaning": "device intelligence vendor is part of the Fraud Analyst Copilot context for risk_ai_copilot.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
+      },
+      {
+        "profileId": "harbortrust-bank-fraud-analyst-copilot-contract-core-banking-provider",
+        "entityType": "contract",
+        "entityName": "core banking provider",
+        "businessMeaning": "core banking provider is part of the Fraud Analyst Copilot context for risk_ai_copilot.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
+      },
+      {
         "profileId": "harbortrust-bank-fraud-analyst-copilot-metric-fraud-ops-queue-cost",
         "entityType": "metric",
         "entityName": "fraud ops queue cost",
@@ -260,25 +300,41 @@
         "businessMeaning": "queue aging mixed with model quality signals is part of the Fraud Analyst Copilot context for risk_ai_copilot.",
         "moduleReadiness": "needs_review",
         "evidenceRefCount": 5
+      },
+      {
+        "profileId": "harbortrust-bank-fraud-analyst-copilot-process-kyc-vendor-context",
+        "entityType": "process",
+        "entityName": "KYC vendor context",
+        "businessMeaning": "KYC vendor context is part of the Fraud Analyst Copilot context for risk_ai_copilot.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
+      },
+      {
+        "profileId": "harbortrust-bank-fraud-analyst-copilot-process-device-intelligence-contract-context",
+        "entityType": "process",
+        "entityName": "device intelligence contract context",
+        "businessMeaning": "device intelligence contract context is part of the Fraud Analyst Copilot context for risk_ai_copilot.",
+        "moduleReadiness": "needs_review",
+        "evidenceRefCount": 5
       }
     ],
     "factCount": 11,
-    "relationshipCandidateCount": 22,
+    "relationshipCandidateCount": 29,
     "relationships": [
       {
         "relationshipId": "harbortrust-bank-fraud-analyst-copilot-assembler-edge-1",
         "relationshipType": "depends_on",
         "sourceEntityType": "function",
-        "targetEntityType": "system",
-        "businessMeaning": "Fraud Operations connects to Fraud alert platform for the risk_ai_copilot request.",
+        "targetEntityType": "enterprise",
+        "businessMeaning": "Fraud Operations connects to HarborTrust Bank for the risk_ai_copilot request.",
         "readiness": "candidate"
       },
       {
         "relationshipId": "harbortrust-bank-fraud-analyst-copilot-assembler-edge-2",
         "relationshipType": "uses",
         "sourceEntityType": "function",
-        "targetEntityType": "system",
-        "businessMeaning": "Fraud Operations connects to Fraud case management for the risk_ai_copilot request.",
+        "targetEntityType": "use_case",
+        "businessMeaning": "Fraud Operations connects to AI copilot support for fraud analyst triage and case investigation for the risk_ai_copilot request.",
         "readiness": "candidate"
       },
       {
@@ -286,7 +342,7 @@
         "relationshipType": "depends_on",
         "sourceEntityType": "function",
         "targetEntityType": "system",
-        "businessMeaning": "Fraud Operations connects to AML transaction monitoring for the risk_ai_copilot request.",
+        "businessMeaning": "Fraud Operations connects to Fraud alert platform for the risk_ai_copilot request.",
         "readiness": "candidate"
       },
       {
@@ -294,7 +350,7 @@
         "relationshipType": "uses",
         "sourceEntityType": "function",
         "targetEntityType": "system",
-        "businessMeaning": "Fraud Operations connects to Digital onboarding KYC for the risk_ai_copilot request.",
+        "businessMeaning": "Fraud Operations connects to Fraud case management for the risk_ai_copilot request.",
         "readiness": "candidate"
       },
       {
@@ -302,23 +358,23 @@
         "relationshipType": "depends_on",
         "sourceEntityType": "function",
         "targetEntityType": "system",
-        "businessMeaning": "Fraud Operations connects to Fraud feature store for the risk_ai_copilot request.",
+        "businessMeaning": "Fraud Operations connects to AML transaction monitoring for the risk_ai_copilot request.",
         "readiness": "candidate"
       },
       {
         "relationshipId": "harbortrust-bank-fraud-analyst-copilot-assembler-edge-6",
         "relationshipType": "uses",
         "sourceEntityType": "function",
-        "targetEntityType": "data_domain",
-        "businessMeaning": "Fraud Operations connects to fraud alerts for the risk_ai_copilot request.",
+        "targetEntityType": "system",
+        "businessMeaning": "Fraud Operations connects to Digital onboarding KYC for the risk_ai_copilot request.",
         "readiness": "candidate"
       },
       {
         "relationshipId": "harbortrust-bank-fraud-analyst-copilot-assembler-edge-7",
         "relationshipType": "depends_on",
         "sourceEntityType": "function",
-        "targetEntityType": "data_domain",
-        "businessMeaning": "Fraud Operations connects to case outcomes for the risk_ai_copilot request.",
+        "targetEntityType": "system",
+        "businessMeaning": "Fraud Operations connects to Fraud feature store for the risk_ai_copilot request.",
         "readiness": "candidate"
       },
       {
@@ -326,7 +382,7 @@
         "relationshipType": "uses",
         "sourceEntityType": "function",
         "targetEntityType": "data_domain",
-        "businessMeaning": "Fraud Operations connects to AML transactions for the risk_ai_copilot request.",
+        "businessMeaning": "Fraud Operations connects to fraud alerts for the risk_ai_copilot request.",
         "readiness": "candidate"
       },
       {
@@ -334,7 +390,7 @@
         "relationshipType": "depends_on",
         "sourceEntityType": "function",
         "targetEntityType": "data_domain",
-        "businessMeaning": "Fraud Operations connects to device risk for the risk_ai_copilot request.",
+        "businessMeaning": "Fraud Operations connects to case outcomes for the risk_ai_copilot request.",
         "readiness": "candidate"
       },
       {
@@ -342,23 +398,23 @@
         "relationshipType": "uses",
         "sourceEntityType": "function",
         "targetEntityType": "data_domain",
-        "businessMeaning": "Fraud Operations connects to model score for the risk_ai_copilot request.",
+        "businessMeaning": "Fraud Operations connects to AML transactions for the risk_ai_copilot request.",
         "readiness": "candidate"
       },
       {
         "relationshipId": "harbortrust-bank-fraud-analyst-copilot-assembler-edge-11",
         "relationshipType": "depends_on",
         "sourceEntityType": "function",
-        "targetEntityType": "infrastructure",
-        "businessMeaning": "Fraud Operations connects to real-time fraud decisioning for the risk_ai_copilot request.",
+        "targetEntityType": "data_domain",
+        "businessMeaning": "Fraud Operations connects to device risk for the risk_ai_copilot request.",
         "readiness": "candidate"
       },
       {
         "relationshipId": "harbortrust-bank-fraud-analyst-copilot-assembler-edge-12",
         "relationshipType": "uses",
         "sourceEntityType": "function",
-        "targetEntityType": "infrastructure",
-        "businessMeaning": "Fraud Operations connects to model governance evaluation set for the risk_ai_copilot request.",
+        "targetEntityType": "data_domain",
+        "businessMeaning": "Fraud Operations connects to model score for the risk_ai_copilot request.",
         "readiness": "candidate"
       }
     ],
@@ -464,7 +520,9 @@
         "datasets/tenant-inputs/generated/harbortrust-bank/standard-2026-07-v3/relationship_summary.csv"
       ],
       "includedEntityIds": [
+        "harbortrust-bank-fraud-analyst-copilot-enterprise-harbortrust-bank",
         "harbortrust-bank-fraud-analyst-copilot-function-fraud-operations",
+        "harbortrust-bank-fraud-analyst-copilot-use_case-ai-copilot-support-for-fraud-analyst-triage-and-case-investigation",
         "harbortrust-bank-fraud-analyst-copilot-system-fraud-alert-platform",
         "harbortrust-bank-fraud-analyst-copilot-system-fraud-case-management",
         "harbortrust-bank-fraud-analyst-copilot-system-aml-transaction-monitoring",
@@ -480,13 +538,18 @@
         "harbortrust-bank-fraud-analyst-copilot-vendor-kyc-vendor",
         "harbortrust-bank-fraud-analyst-copilot-vendor-device-intelligence-vendor",
         "harbortrust-bank-fraud-analyst-copilot-vendor-core-banking-provider",
+        "harbortrust-bank-fraud-analyst-copilot-contract-kyc-vendor",
+        "harbortrust-bank-fraud-analyst-copilot-contract-device-intelligence-vendor",
+        "harbortrust-bank-fraud-analyst-copilot-contract-core-banking-provider",
         "harbortrust-bank-fraud-analyst-copilot-metric-fraud-ops-queue-cost",
         "harbortrust-bank-fraud-analyst-copilot-metric-loss-avoidance-measurement-baseline",
         "harbortrust-bank-fraud-analyst-copilot-program-fraud-analyst-copilot",
         "harbortrust-bank-fraud-analyst-copilot-program-feature-store-feedback-loop",
         "harbortrust-bank-fraud-analyst-copilot-risk-model-version-lineage-gaps",
         "harbortrust-bank-fraud-analyst-copilot-risk-case-outcome-feedback-gaps",
-        "harbortrust-bank-fraud-analyst-copilot-risk-queue-aging-mixed-with-model-quality-signals"
+        "harbortrust-bank-fraud-analyst-copilot-risk-queue-aging-mixed-with-model-quality-signals",
+        "harbortrust-bank-fraud-analyst-copilot-process-kyc-vendor-context",
+        "harbortrust-bank-fraud-analyst-copilot-process-device-intelligence-contract-context"
       ],
       "excludedEntityIds": [],
       "includedEvidenceIds": [
@@ -509,7 +572,7 @@
     },
     "claudeReadyPayload": {
       "systemInstruction": "Use only this governed context payload. Cite evidence refs. Mark inference. Do not treat synthetic, candidate, or source-adapter-only context as active tenant truth.",
-      "contextSummary": "Tenant: harbortrust-bank\nModule: intelligence\nPurpose: strategy_context\nFraud Analyst Copilot context assembled for intelligence (risk_ai_copilot): 5 evidence refs are available; all remain synthetic review evidence until tenant validation and promotion.\nProfiles: function:Fraud Operations; system:Fraud alert platform; system:Fraud case management; system:AML transaction monitoring; system:Digital onboarding KYC; system:Fraud feature store; data_domain:fraud alerts; data_domain:case outcomes\nKey facts: pain_point=Fraud analysts triage card, ACH, wire, digital-login, and mule-account alerts in separate queues with inconsistent case priority rules.; pain_point=The fraud alert platform captures model score and reason codes, but downstream case outcomes are not consistently fed back to the feature store.; pain_point=AML transaction monitoring and real-time fraud decisions use overlapping customer and counterparty fields with different freshness rules.; pain_point=High-risk digital onboarding cases require manual lookup across KYC vendor evidence, device intelligence, and core banking account history.; pain_point=Operations leaders cannot separate true model drift from queue staffing backlogs without alert age, model version, analyst action, and loss outcome in one view.; metric=Fraud alert precision by model version; metric=Analyst case throughput and aging; metric=Confirmed fraud loss avoided / recovered amount baseline\nRelationships: depends_on:Fraud Operations connects to Fraud alert platform for the risk_ai_copilot request.; uses:Fraud Operations connects to Fraud case management for the risk_ai_copilot request.; depends_on:Fraud Operations connects to AML transaction monitoring for the risk_ai_copilot request.; uses:Fraud Operations connects to Digital onboarding KYC for the risk_ai_copilot request.; depends_on:Fraud Operations connects to Fraud feature store for the risk_ai_copilot request.; uses:Fraud Operations connects to fraud alerts for the risk_ai_copilot request.; depends_on:Fraud Operations connects to case outcomes for the risk_ai_copilot request.; uses:Fraud Operations connects to AML transactions for the risk_ai_copilot request.\nMetrics: Fraud alert precision by model version; Analyst case throughput and aging; Confirmed fraud loss avoided / recovered amount baseline\nRisks/controls: model version lineage gaps; case outcome feedback gaps; queue aging mixed with model quality signals\nEvidence summary: Fraud alert export with model score, reason code, channel, alert age, analyst action, and disposition fields.; Fraud case management extract with confirmed fraud, false positive, recovered amount, and write-off status.; AML transaction monitoring source inventory and control-owner interview.; Digital onboarding/KYC vendor report with identity verification and device-risk signals.; Fraud feature store design notes with feedback-loop and model governance gaps.\nConfidence: good - The cluster has enough semantic depth for dry-run context assembly, but remains synthetic review context with candidate relationship edges.\nKnown gaps: case outcome feedback gaps; model version lineage gaps; queue aging mixed with model quality signals; Relationship candidates are preserved for context assembly, but are not treated as validated active graph truth.\nRecommended next evidence: source-owner attestation; measured baseline extract; relationship validation; operator promotion review",
+      "contextSummary": "Tenant: harbortrust-bank\nModule: intelligence\nPurpose: strategy_context\nFraud Analyst Copilot context assembled for intelligence (risk_ai_copilot): 5 evidence refs are available; all remain synthetic review evidence until tenant validation and promotion.\nProfiles: enterprise:HarborTrust Bank; function:Fraud Operations; use_case:AI copilot support for fraud analyst triage and case investigation; system:Fraud alert platform; system:Fraud case management; system:AML transaction monitoring; system:Digital onboarding KYC; system:Fraud feature store\nKey facts: pain_point=Fraud analysts triage card, ACH, wire, digital-login, and mule-account alerts in separate queues with inconsistent case priority rules.; pain_point=The fraud alert platform captures model score and reason codes, but downstream case outcomes are not consistently fed back to the feature store.; pain_point=AML transaction monitoring and real-time fraud decisions use overlapping customer and counterparty fields with different freshness rules.; pain_point=High-risk digital onboarding cases require manual lookup across KYC vendor evidence, device intelligence, and core banking account history.; pain_point=Operations leaders cannot separate true model drift from queue staffing backlogs without alert age, model version, analyst action, and loss outcome in one view.; metric=Fraud alert precision by model version; metric=Analyst case throughput and aging; metric=Confirmed fraud loss avoided / recovered amount baseline\nRelationships: depends_on:Fraud Operations connects to HarborTrust Bank for the risk_ai_copilot request.; uses:Fraud Operations connects to AI copilot support for fraud analyst triage and case investigation for the risk_ai_copilot request.; depends_on:Fraud Operations connects to Fraud alert platform for the risk_ai_copilot request.; uses:Fraud Operations connects to Fraud case management for the risk_ai_copilot request.; depends_on:Fraud Operations connects to AML transaction monitoring for the risk_ai_copilot request.; uses:Fraud Operations connects to Digital onboarding KYC for the risk_ai_copilot request.; depends_on:Fraud Operations connects to Fraud feature store for the risk_ai_copilot request.; uses:Fraud Operations connects to fraud alerts for the risk_ai_copilot request.\nMetrics: Fraud alert precision by model version; Analyst case throughput and aging; Confirmed fraud loss avoided / recovered amount baseline\nRisks/controls: model version lineage gaps; case outcome feedback gaps; queue aging mixed with model quality signals\nEvidence summary: Fraud alert export with model score, reason code, channel, alert age, analyst action, and disposition fields.; Fraud case management extract with confirmed fraud, false positive, recovered amount, and write-off status.; AML transaction monitoring source inventory and control-owner interview.; Digital onboarding/KYC vendor report with identity verification and device-risk signals.; Fraud feature store design notes with feedback-loop and model governance gaps.\nConfidence: good - The cluster has enough semantic depth for dry-run context assembly, but remains synthetic review context with candidate relationship edges.\nKnown gaps: case outcome feedback gaps; model version lineage gaps; queue aging mixed with model quality signals; Relationship candidates are preserved for context assembly, but are not treated as validated active graph truth.\nRecommended next evidence: source-owner attestation; measured baseline extract; relationship validation; operator promotion review",
       "evidenceRefs": [
         "harbortrust-bank-fraud-analyst-copilot-evidence-1",
         "harbortrust-bank-fraud-analyst-copilot-evidence-2",

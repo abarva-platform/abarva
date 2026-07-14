@@ -278,6 +278,7 @@
     "audit:module-context-serving": "jest src/lib/enterprise-data/module-context-serving/__tests__/module-context-serving.test.ts --runInBand",
     "audit:enterprise-knowledge-layer": "npx tsx scripts/audit/build-enterprise-knowledge-layer-proof.ts",
     "audit:enterprise-knowledge-assembler": "npx tsx scripts/audit/build-enterprise-knowledge-assembler-proof.ts",
+    "audit:enterprise-knowledge-cache": "npx tsx scripts/audit/build-enterprise-knowledge-cache-proof.ts",
     "audit:moves-context-pack-dry-run": "npx tsx scripts/audit/build-moves-context-pack-dry-run-proof.ts",
     "audit:intelligence-context-pack-dry-run": "npx tsx scripts/audit/build-intelligence-context-pack-dry-run-proof.ts",
     "test:home-english-summary": "jest src/lib/home/__tests__/home-english-summary.test.ts --runInBand",

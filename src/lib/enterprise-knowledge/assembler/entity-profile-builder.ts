@@ -58,7 +58,9 @@ export function buildEntityProfiles(
 
 function profileSpecs(blueprint: ContextAssemblyBlueprint): ProfileSpec[] {
   return [
+    { entityType: "enterprise", entityName: blueprint.tenantName },
     { entityType: "function", entityName: blueprint.primaryFunction },
+    { entityType: "use_case", entityName: blueprint.outcomeHypothesis },
     ...blueprint.systems.map((entityName) => ({
       entityType: "system" as const,
       entityName,
@@ -75,6 +77,10 @@ function profileSpecs(blueprint: ContextAssemblyBlueprint): ProfileSpec[] {
       entityType: "vendor" as const,
       entityName,
     })),
+    ...blueprint.vendorsContracts.map((entityName) => ({
+      entityType: "contract" as const,
+      entityName,
+    })),
     ...blueprint.spendContext.map((entityName) => ({
       entityType: "metric" as const,
       entityName,
@@ -85,6 +91,10 @@ function profileSpecs(blueprint: ContextAssemblyBlueprint): ProfileSpec[] {
     })),
     ...blueprint.risksControls.map((entityName) => ({
       entityType: "risk" as const,
+      entityName,
+    })),
+    ...blueprint.sourceContext.map((entityName) => ({
+      entityType: "process" as const,
       entityName,
     })),
   ];
