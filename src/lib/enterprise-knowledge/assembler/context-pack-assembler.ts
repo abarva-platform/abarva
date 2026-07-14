@@ -2,6 +2,7 @@ import type {
   ContextPack,
   HomeKnowledgePack,
   IntelligenceContextPack,
+  ModuleContextScope,
   ModuleContextResponse,
   MovesContextPack,
   SourceContextPack,
@@ -104,7 +105,7 @@ export function assembleModuleContext(
   const contextPack = attachModuleShape({
     ...packDraft,
     claudeReadyContextPayload: buildClaudeReadyPayload(input.request, packDraft),
-  });
+  }, input.request.scope?.phase);
 
   return {
     requestId: `${contextPack.contextPackId}-response`,
@@ -129,7 +130,10 @@ export function assembleModuleContext(
   };
 }
 
-function attachModuleShape(pack: ContextPack): ContextPack {
+function attachModuleShape(
+  pack: ContextPack,
+  requestedPhase?: ModuleContextScope["phase"],
+): ContextPack {
   if (pack.moduleKey === "home") {
     return {
       ...pack,
@@ -148,7 +152,7 @@ function attachModuleShape(pack: ContextPack): ContextPack {
     return {
       ...pack,
       moduleKey: "moves",
-      phase: "P2 Diagnose & Evidence Pressure-Test",
+      phase: movesPhaseLabel(requestedPhase),
     } as MovesContextPack;
   }
   if (pack.moduleKey === "source") {
@@ -166,4 +170,25 @@ function attachModuleShape(pack: ContextPack): ContextPack {
     } as TowerContextPack;
   }
   return pack;
+}
+
+function movesPhaseLabel(
+  phase: ModuleContextScope["phase"] | undefined,
+): MovesContextPack["phase"] {
+  switch (phase) {
+    case "P0":
+      return "P0 Intake & Decision Framing";
+    case "P1":
+      return "P1 Charter & Baseline";
+    case "P2":
+      return "P2 Diagnose & Evidence Pressure-Test";
+    case "P3":
+      return "P3 Options & Business Case";
+    case "P4":
+      return "P4 Executive Decision & Commit";
+    case "P5":
+      return "P5 Execution Handoff";
+    default:
+      return "P2 Diagnose & Evidence Pressure-Test";
+  }
 }
