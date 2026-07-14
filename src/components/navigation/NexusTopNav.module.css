@@ -10,7 +10,7 @@
   top: 0;
   z-index: 50;
   display: grid;
-  grid-template-columns: minmax(250px, 1fr) auto minmax(220px, 1fr);
+  grid-template-columns: minmax(214px, 1fr) auto minmax(220px, 1fr);
   align-items: center;
   min-height: 72px;
   padding: 0 32px;
@@ -49,8 +49,8 @@
 
 .brandImage {
   display: block;
-  width: 240px;
-  height: 32px;
+  width: 202px;
+  height: auto;
   object-fit: contain;
 }
 
@@ -78,6 +78,7 @@
   font-weight: 620;
   letter-spacing: 0;
   text-decoration: none;
+  transform: translateY(2px);
   transition:
     color 160ms ease,
     text-shadow 160ms ease;
@@ -165,6 +166,7 @@
   min-width: 0;
   gap: 14px;
   overflow: hidden;
+  transform: translateY(1px);
 }
 
 .userCluster {
@@ -242,13 +244,13 @@
 
 @media (max-width: 1180px) {
   .root {
-    grid-template-columns: minmax(224px, 1fr) auto minmax(180px, 1fr);
+    grid-template-columns: minmax(200px, 1fr) auto minmax(180px, 1fr);
     padding: 0 24px;
     column-gap: 18px;
   }
 
   .brandImage {
-    width: 224px;
+    width: 190px;
   }
 
   .navLink {
@@ -269,7 +271,7 @@
   }
 
   .brandImage {
-    width: 214px;
+    width: 178px;
   }
 
   .primaryNav {
@@ -301,7 +303,7 @@
   }
 
   .brandImage {
-    width: 184px;
+    width: 154px;
   }
 
   .userCluster {
