@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The reviewed canonical build candidate preview route no longer depends only on generated report files being packaged into the production image. If the inactive candidate-version report artifact is unavailable at runtime, the admin-only preview and Data Layer Explorer compute the same deterministic inactive candidate snapshot in memory from canonical tenant inputs. This keeps the browser-visible proof path available without writing production tenant data, promoting a candidate, or changing module default reads.
+The reviewed canonical build candidate preview route no longer depends only on generated report files being packaged into the production image. If the inactive candidate-version report artifact or canonical build report artifacts are unavailable at runtime, the admin-only preview and Data Layer Explorer compute the same deterministic inactive candidate snapshot in memory from canonical tenant inputs. This keeps the browser-visible proof path available without writing production tenant data, promoting a candidate, or changing module default reads.
 
 ## Layer Impact
 
@@ -29,6 +29,7 @@ The reviewed canonical build candidate preview route no longer depends only on g
 ## Changes Included
 
 - Added runtime deterministic fallback loader in `src/lib/enterprise-data/candidate-version-build/candidate-version-build.ts`.
+- Added stable in-memory source-build fingerprinting when canonical report artifacts are absent from the production image.
 - Updated `/admin/candidate-preview` to use the fallback loader and label the load source.
 - Updated `/admin/data-layer-explorer` to use the fallback loader and show the source in the candidate-version panel.
 - Added a regression test that forces runtime fallback without relying on bundled report artifacts.
