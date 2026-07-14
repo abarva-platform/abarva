@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -100,17 +100,24 @@ own runtime-invariant proof) is required before this is "live" on `app.abarva.ai
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` (not yet run for
-  this change as of this record).
-- Shared runtime mutators: none used directly by this change; deploy proceeds through the
-  standard workflow only.
-- Approved image digest: N/A until the deploy workflow runs and produces one.
-- ACA runtime invariant: to be proven after deploy (template image, 100%-traffic revision
-  image, and worker job images must match the approved digest).
-- Worker image invariant: N/A — no worker involved in this change.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`, run
+  [29358267373](https://github.com/abarva-platform/abarva/actions/runs/29358267373),
+  triggered by the merge of PR #4799 (`46439bed31b1f7e6f6fc7738767b9baf9f602013`) to
+  `main`. Completed, conclusion `success`.
+- Shared runtime mutators: none used directly by this change; deploy proceeded entirely
+  through the standard workflow — no ad-hoc `az acr build`/`az containerapp update` was run
+  by this change.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:18a7ef5181cbd031eeaac562e45fd27eaabb9cc964d41bb62b6d191976222af9`.
+- ACA runtime invariant: **proven.** `az containerapp show -g rg-abarva-controlplane-lab-eastus
+  -n ca-abarva-web-lab-eastus` confirms `properties.template.containers[0].image` and the
+  100%-traffic revision (`ca-abarva-web-lab-eastus--m46439bed`, `weight: 100`) both resolve
+  to the digest above; `latestReadyRevisionName` matches `latestRevisionName`.
+- Worker image invariant: **proven.** The two standing deliverable-worker jobs,
+  `job-abarva-deliv-worker` and `job-abarva-deliv-worker-event`, both resolve to the same
+  digest as the web app template image above.
 - Feature/env flag update path: N/A — no flag.
-- Live signed-in proof required: yes, on `app.abarva.ai` after deploy, before calling this
-  "live-proven" (not yet performed as of this record).
+- Live signed-in proof required: yes — performed. See Audit Evidence below.
 
 ## Rollback Plan
 
@@ -120,11 +127,23 @@ revert restores the exact prior behavior with no asset cleanup required.
 
 ## Audit Evidence
 
-- Screenshots: `proof/nexus-nav-wordmark-final-preview-20260714/desktop-1280.png`,
-  `tablet-820.png`, `mobile-400.png`.
-- PR URL: to be added when opened.
-- CI run: to be added when the PR's checks complete.
-- Deployment URL / ACA revision: to be added after deploy (not yet performed).
+- Pre-deploy screenshots (static fixture, real CSS + real corrected SVG asset):
+  `proof/nexus-nav-wordmark-final-preview-20260714/desktop-1280.png`, `tablet-820.png`,
+  `mobile-400.png` (local-only, not committed to the repo).
+- PR: [abarva-platform/abarva#4799](https://github.com/abarva-platform/abarva/pull/4799),
+  22/22 required checks passed, squash-merged as `46439bed31b1f7e6f6fc7738767b9baf9f602013`.
+- CI/deploy run: [aca-main-deploy #29358267373](https://github.com/abarva-platform/abarva/actions/runs/29358267373),
+  conclusion `success`.
+- Deployment: ACA revision `ca-abarva-web-lab-eastus--m46439bed` in
+  `rg-abarva-controlplane-lab-eastus`, 100% ingress traffic, image digest
+  `sha256:18a7ef5181cbd031eeaac562e45fd27eaabb9cc964d41bb62b6d191976222af9`.
+- Live signed-in browser proof: navigated to `https://app.abarva.ai/home` as a real
+  authenticated user (Anand Sundaram) via the claude-in-chrome MCP (existing signed-in
+  session, no credentials entered by the agent). The top nav renders the full "NEXUS"
+  wordmark with no top clipping, correctly aligned next to the AbarVa logo and the
+  Knowledge/Intelligence/Moves/Source/Tower/Learn nav labels, with a real zoomed
+  screenshot of the brand lockup confirming every letterform (N, E, X, U, S) is fully
+  visible against the dark nav background.
 
 ## Known Gaps
 
