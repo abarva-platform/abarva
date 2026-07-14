@@ -1,9 +1,9 @@
 {
   "reportVersion": "candidate-version-build/v1",
-  "generatedAt": "2026-07-14T01:22:31.580Z",
-  "sourceBuildId": "canonical-data-build:ca80432e6744",
+  "generatedAt": "2026-07-14T12:00:00.000Z",
+  "sourceBuildId": "canonical-data-build:24693eef8c78",
   "sourceBuildPath": "reports/canonical-data-build/latest",
-  "sourceBuildFingerprint": "ca80432e6744f888ad49c8607df7dca7ba02848676d7d5142e3fc9b693b546c1",
+  "sourceBuildFingerprint": "24693eef8c783cd336d3a3419b9adcfed12c6c13a76c81f2775387ed3b9ab0f5",
   "summary": {
     "tenantsProcessed": 6,
     "candidateVersionsCreated": 6,

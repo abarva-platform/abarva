@@ -1,6 +1,6 @@
 # Reviewed Canonical Build to Inactive Candidate Versions
 
-Generated: 2026-07-14T01:22:31.580Z
+Generated: 2026-07-14T12:00:00.000Z
 
 ## Truth Split
 
@@ -13,7 +13,7 @@ Generated: 2026-07-14T01:22:31.580Z
 ## Summary
 
 - Source build: reports/canonical-data-build/latest
-- Source build fingerprint: ca80432e6744f888ad49c8607df7dca7ba02848676d7d5142e3fc9b693b546c1
+- Source build fingerprint: 24693eef8c783cd336d3a3419b9adcfed12c6c13a76c81f2775387ed3b9ab0f5
 - Tenants processed: 6
 - Candidate versions created: 6
 - Tenants blocked: 0
@@ -25,12 +25,12 @@ Generated: 2026-07-14T01:22:31.580Z
 
 | Tenant | Candidate ID | Status | Records | Evidence | Relationships | Profile | Promotion blockers |
 | --- | --- | --- | ---: | ---: | ---: | --- | ---: |
-| Apex Retail | `candidate:apex-retail:a8f372853cb9` | created / inactive | 3,589 | 3,589 | 1,690 | gaps | 8 |
-| First Capital Financial | `candidate:first-capital-financial:3794217b5b8c` | created / inactive | 5,609 | 5,609 | 2,757 | gaps | 7 |
-| Lakeshore Holdings | `candidate:lakeshore-holdings:f03c88db6e6c` | created / inactive | 457 | 457 | 183 | gaps | 9 |
-| Lakeshore Industries | `candidate:lakeshore-industries:615216388101` | created / inactive | 3,040 | 3,040 | 892 | gaps | 7 |
-| Meridian Health | `candidate:meridian-health:b8c7bed092e6` | created / inactive | 4,078 | 4,078 | 2,177 | gaps | 6 |
-| SkyHarbor Air | `candidate:skyharbor-air:c44972185e16` | created / inactive | 3,457 | 3,457 | 3,136 | gaps | 7 |
+| Apex Retail | `candidate:apex-retail:c4c22f56df29` | created / inactive | 3,589 | 3,589 | 1,690 | gaps | 7 |
+| First Capital Financial | `candidate:first-capital-financial:7d49ae021b1e` | created / inactive | 5,609 | 5,609 | 2,757 | gaps | 7 |
+| Lakeshore Holdings | `candidate:lakeshore-holdings:307719ab1500` | created / inactive | 457 | 457 | 183 | gaps | 7 |
+| Lakeshore Industries | `candidate:lakeshore-industries:24713a2beb6f` | created / inactive | 3,040 | 3,040 | 892 | gaps | 5 |
+| Meridian Health | `candidate:meridian-health:386677f11404` | created / inactive | 4,078 | 4,078 | 2,177 | ready | 0 |
+| SkyHarbor Air | `candidate:skyharbor-air:942cb1f220fa` | created / inactive | 3,457 | 3,457 | 3,136 | gaps | 7 |
 
 ## Required Proof Points
 

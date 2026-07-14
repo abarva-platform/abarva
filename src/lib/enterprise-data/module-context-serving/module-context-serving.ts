@@ -67,6 +67,7 @@ const CANONICAL_TO_REQUEST_DOMAIN = Object.fromEntries(
 ) as Record<string, ModuleContextRequestedDomain>;
 
 const ACTIVE_ACCESS_SLUGS: Record<string, string> = {
+  "meridian-health": "meridian",
   "skyharbor-air": "skyharbor",
 };
 

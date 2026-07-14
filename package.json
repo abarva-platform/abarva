@@ -247,6 +247,7 @@
     "audit:operator-promotion-workflow": "tsx scripts/audit/build-operator-promotion-workflow.ts",
     "audit:promotion-execution-dry-run": "tsx scripts/audit/build-promotion-execution-dry-run.ts",
     "audit:active-tenant-access-promotion": "tsx scripts/audit/build-active-tenant-access-promotion.ts",
+    "audit:active-module-context-promotion": "npx tsx scripts/data-build/promote-active-module-context.ts",
     "audit:post-promotion-module-read-proof": "tsx scripts/audit/build-post-promotion-module-read-proof.ts",
     "audit:active-tenant-access-rollback-proof": "tsx scripts/audit/build-active-tenant-access-rollback-proof.ts",
     "audit:new-client-onboarding-proof": "tsx scripts/audit/build-new-client-onboarding-proof.ts",

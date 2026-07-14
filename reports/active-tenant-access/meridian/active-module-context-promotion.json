@@ -1,0 +1,104 @@
+{
+  "reportVersion": "active-module-context-promotion/v1",
+  "generatedAt": "2026-07-14T12:00:00.000Z",
+  "tenantKey": "meridian-health",
+  "candidateVersionId": "candidate:meridian-health:386677f11404",
+  "activeAccessRecord": {
+    "recordVersion": "active-tenant-access/v1",
+    "generatedAt": "2026-07-14T12:00:00.000Z",
+    "tenantKey": "meridian-health",
+    "activeVersionId": "candidate:meridian-health:386677f11404",
+    "priorActiveVersionId": "meridian-health:active-runtime-truth:unchanged",
+    "sourceCandidateVersionId": "candidate:meridian-health:386677f11404",
+    "activeAccessState": "promoted_for_safe_demo_metadata",
+    "productionTenantDataWritten": false,
+    "writesPhysicalTables": false,
+    "moduleRuntimeConsumptionChanged": false,
+    "moduleDefaultReadsCandidateData": false,
+    "rollbackTargetVersionId": "meridian-health:active-runtime-truth:unchanged",
+    "rollbackProofPath": "reports/active-tenant-access/meridian/rollback-proof.md"
+  },
+  "guardrails": {
+    "selectedTenantOnly": true,
+    "productionTenantDataWritten": false,
+    "writesPhysicalTables": false,
+    "activeTenantAccessLayerUpdated": true,
+    "candidatePromotedToActiveAccessMetadata": true,
+    "moduleRuntimeConsumptionChanged": false,
+    "moduleDefaultReadsCandidateData": false,
+    "realizedValueClaimed": false
+  },
+  "quality": {
+    "candidateQualityGateStatus": "pass",
+    "candidateCreationStatus": "created",
+    "promotionBlockers": [],
+    "canonicalRecordCount": 4078,
+    "evidenceAttachmentCount": 4078,
+    "relationshipCandidateCount": 2177,
+    "enterpriseProfileStatus": "ready"
+  },
+  "moduleReadProof": [
+    {
+      "moduleKey": "home",
+      "sourceMode": "active_tenant_access",
+      "activeTenantAccessVersionId": "candidate:meridian-health:386677f11404",
+      "recordCount": 60,
+      "evidenceRefCount": 60,
+      "candidateDataConsumed": false,
+      "moduleRuntimeConsumptionChanged": false,
+      "readinessStatus": "agent_ready",
+      "contextCompletenessOverall": "Good"
+    },
+    {
+      "moduleKey": "intelligence",
+      "sourceMode": "active_tenant_access",
+      "activeTenantAccessVersionId": "candidate:meridian-health:386677f11404",
+      "recordCount": 60,
+      "evidenceRefCount": 60,
+      "candidateDataConsumed": false,
+      "moduleRuntimeConsumptionChanged": false,
+      "readinessStatus": "agent_ready",
+      "contextCompletenessOverall": "Good"
+    },
+    {
+      "moduleKey": "moves",
+      "sourceMode": "active_tenant_access",
+      "activeTenantAccessVersionId": "candidate:meridian-health:386677f11404",
+      "recordCount": 60,
+      "evidenceRefCount": 60,
+      "candidateDataConsumed": false,
+      "moduleRuntimeConsumptionChanged": false,
+      "readinessStatus": "agent_ready",
+      "contextCompletenessOverall": "Good"
+    },
+    {
+      "moduleKey": "source",
+      "sourceMode": "active_tenant_access",
+      "activeTenantAccessVersionId": "candidate:meridian-health:386677f11404",
+      "recordCount": 60,
+      "evidenceRefCount": 60,
+      "candidateDataConsumed": false,
+      "moduleRuntimeConsumptionChanged": false,
+      "readinessStatus": "agent_ready",
+      "contextCompletenessOverall": "Good"
+    },
+    {
+      "moduleKey": "tower",
+      "sourceMode": "active_tenant_access",
+      "activeTenantAccessVersionId": "candidate:meridian-health:386677f11404",
+      "recordCount": 60,
+      "evidenceRefCount": 60,
+      "candidateDataConsumed": false,
+      "moduleRuntimeConsumptionChanged": false,
+      "readinessStatus": "agent_ready",
+      "contextCompletenessOverall": "Good"
+    }
+  ],
+  "outputPaths": {
+    "outputDir": "reports/active-tenant-access/meridian",
+    "activeAccessRecordPath": "reports/active-tenant-access/meridian/active-tenant-access-record.json",
+    "promotionReportPath": "reports/active-tenant-access/meridian/active-module-context-promotion.json",
+    "moduleReadProofPath": "reports/active-tenant-access/meridian/module-context-read-proof.json",
+    "summaryPath": "reports/active-tenant-access/meridian/active-module-context-promotion.md"
+  }
+}

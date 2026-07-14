@@ -1,11 +1,11 @@
 [
   {
-    "candidateVersionId": "candidate:apex-retail:a8f372853cb9",
+    "candidateVersionId": "candidate:apex-retail:c4c22f56df29",
     "tenantId": "apex-retail",
     "tenantKey": "apex-retail",
     "tenantDisplayName": "Apex Retail",
-    "sourceBuildId": "canonical-data-build:ca80432e6744",
-    "sourceBuildFingerprint": "ca80432e6744f888ad49c8607df7dca7ba02848676d7d5142e3fc9b693b546c1",
+    "sourceBuildId": "canonical-data-build:24693eef8c78",
+    "sourceBuildFingerprint": "24693eef8c783cd336d3a3419b9adcfed12c6c13a76c81f2775387ed3b9ab0f5",
     "inputFingerprint": "5d45b570e3c0d35c061addb377889fbaf687218de27e8d45437c7afafc757177",
     "canonicalRecordCount": 3589,
     "evidenceAttachmentCount": 3589,
@@ -146,7 +146,7 @@
       }
     ],
     "enterpriseProfileStatus": "gaps",
-    "profileGapCount": 8,
+    "profileGapCount": 7,
     "qualityGateStatus": "pass",
     "qualityGates": [
       {
@@ -177,7 +177,7 @@
         "id": "enterprise-profile-present-or-gapped",
         "label": "Enterprise profile present or explicit gaps",
         "status": "pass",
-        "detail": "Enterprise profile has 8 explicit gaps."
+        "detail": "Enterprise profile has 7 explicit gaps."
       },
       {
         "id": "source-lineage-present",
@@ -222,11 +222,10 @@
       "Profile gap before promotion: leadership",
       "Profile gap before promotion: mission",
       "Profile gap before promotion: vision",
-      "Profile gap before promotion: strategy",
       "Profile gap before promotion: segments",
       "Profile gap before promotion: asOf"
     ],
-    "generatedAt": "2026-07-14T01:22:31.580Z",
+    "generatedAt": "2026-07-14T12:00:00.000Z",
     "status": "inactive",
     "creationStatus": "created",
     "mode": "candidate_preview",
@@ -365,7 +364,6 @@
         "Enterprise profile missing leadership.",
         "Enterprise profile missing mission.",
         "Enterprise profile missing vision.",
-        "Enterprise profile missing strategy.",
         "Enterprise profile missing segments.",
         "Enterprise profile missing asOf.",
         "workforce_roles below depth by 13 rows.",
@@ -631,12 +629,12 @@
     }
   },
   {
-    "candidateVersionId": "candidate:first-capital-financial:3794217b5b8c",
+    "candidateVersionId": "candidate:first-capital-financial:7d49ae021b1e",
     "tenantId": "first-capital-financial",
     "tenantKey": "first-capital-financial",
     "tenantDisplayName": "First Capital Financial",
-    "sourceBuildId": "canonical-data-build:ca80432e6744",
-    "sourceBuildFingerprint": "ca80432e6744f888ad49c8607df7dca7ba02848676d7d5142e3fc9b693b546c1",
+    "sourceBuildId": "canonical-data-build:24693eef8c78",
+    "sourceBuildFingerprint": "24693eef8c783cd336d3a3419b9adcfed12c6c13a76c81f2775387ed3b9ab0f5",
     "inputFingerprint": "472fa876ff58fa00b268cb06c2812bfe72b119d5706d05cb9eeaff50585d91ff",
     "canonicalRecordCount": 5609,
     "evidenceAttachmentCount": 5609,
@@ -856,7 +854,7 @@
       "Profile gap before promotion: segments",
       "Profile gap before promotion: asOf"
     ],
-    "generatedAt": "2026-07-14T01:22:31.580Z",
+    "generatedAt": "2026-07-14T12:00:00.000Z",
     "status": "inactive",
     "creationStatus": "created",
     "mode": "candidate_preview",
@@ -1259,12 +1257,12 @@
     }
   },
   {
-    "candidateVersionId": "candidate:lakeshore-holdings:f03c88db6e6c",
+    "candidateVersionId": "candidate:lakeshore-holdings:307719ab1500",
     "tenantId": "lakeshore-holdings",
     "tenantKey": "lakeshore-holdings",
     "tenantDisplayName": "Lakeshore Holdings",
-    "sourceBuildId": "canonical-data-build:ca80432e6744",
-    "sourceBuildFingerprint": "ca80432e6744f888ad49c8607df7dca7ba02848676d7d5142e3fc9b693b546c1",
+    "sourceBuildId": "canonical-data-build:24693eef8c78",
+    "sourceBuildFingerprint": "24693eef8c783cd336d3a3419b9adcfed12c6c13a76c81f2775387ed3b9ab0f5",
     "inputFingerprint": "0b4b6901ebd578645b123b8951bdcf34eeeeb814b0755351c8ff4713cc71330c",
     "canonicalRecordCount": 457,
     "evidenceAttachmentCount": 457,
@@ -1405,7 +1403,7 @@
       }
     ],
     "enterpriseProfileStatus": "gaps",
-    "profileGapCount": 9,
+    "profileGapCount": 7,
     "qualityGateStatus": "pass",
     "qualityGates": [
       {
@@ -1436,7 +1434,7 @@
         "id": "enterprise-profile-present-or-gapped",
         "label": "Enterprise profile present or explicit gaps",
         "status": "pass",
-        "detail": "Enterprise profile has 9 explicit gaps."
+        "detail": "Enterprise profile has 7 explicit gaps."
       },
       {
         "id": "source-lineage-present",
@@ -1481,12 +1479,10 @@
       "Profile gap before promotion: leadership",
       "Profile gap before promotion: mission",
       "Profile gap before promotion: vision",
-      "Profile gap before promotion: strategy",
-      "Profile gap before promotion: businessModel",
       "Profile gap before promotion: segments",
       "Profile gap before promotion: asOf"
     ],
-    "generatedAt": "2026-07-14T01:22:31.580Z",
+    "generatedAt": "2026-07-14T12:00:00.000Z",
     "status": "inactive",
     "creationStatus": "created",
     "mode": "candidate_preview",
@@ -1639,8 +1635,6 @@
         "Enterprise profile missing leadership.",
         "Enterprise profile missing mission.",
         "Enterprise profile missing vision.",
-        "Enterprise profile missing strategy.",
-        "Enterprise profile missing businessModel.",
         "Enterprise profile missing segments.",
         "Enterprise profile missing asOf.",
         "applications_systems below depth by 1 rows.",
@@ -1908,12 +1902,12 @@
     }
   },
   {
-    "candidateVersionId": "candidate:lakeshore-industries:615216388101",
+    "candidateVersionId": "candidate:lakeshore-industries:24713a2beb6f",
     "tenantId": "lakeshore-industries",
     "tenantKey": "lakeshore-industries",
     "tenantDisplayName": "Lakeshore Industries",
-    "sourceBuildId": "canonical-data-build:ca80432e6744",
-    "sourceBuildFingerprint": "ca80432e6744f888ad49c8607df7dca7ba02848676d7d5142e3fc9b693b546c1",
+    "sourceBuildId": "canonical-data-build:24693eef8c78",
+    "sourceBuildFingerprint": "24693eef8c783cd336d3a3419b9adcfed12c6c13a76c81f2775387ed3b9ab0f5",
     "inputFingerprint": "8f1e0d50f6ec8863461e9856a189a478c38df325cd9f1ebc7073092511038892",
     "canonicalRecordCount": 3040,
     "evidenceAttachmentCount": 3040,
@@ -2054,7 +2048,7 @@
       }
     ],
     "enterpriseProfileStatus": "gaps",
-    "profileGapCount": 7,
+    "profileGapCount": 5,
     "qualityGateStatus": "pass",
     "qualityGates": [
       {
@@ -2085,7 +2079,7 @@
         "id": "enterprise-profile-present-or-gapped",
         "label": "Enterprise profile present or explicit gaps",
         "status": "pass",
-        "detail": "Enterprise profile has 7 explicit gaps."
+        "detail": "Enterprise profile has 5 explicit gaps."
       },
       {
         "id": "source-lineage-present",
@@ -2129,11 +2123,9 @@
       "Profile gap before promotion: leadership",
       "Profile gap before promotion: mission",
       "Profile gap before promotion: vision",
-      "Profile gap before promotion: strategy",
-      "Profile gap before promotion: segments",
       "Profile gap before promotion: source"
     ],
-    "generatedAt": "2026-07-14T01:22:31.580Z",
+    "generatedAt": "2026-07-14T12:00:00.000Z",
     "status": "inactive",
     "creationStatus": "created",
     "mode": "candidate_preview",
@@ -2516,8 +2508,6 @@
         "Enterprise profile missing leadership.",
         "Enterprise profile missing mission.",
         "Enterprise profile missing vision.",
-        "Enterprise profile missing strategy.",
-        "Enterprise profile missing segments.",
         "Enterprise profile missing source.",
         "data_assets_integrations below depth by 18 rows."
       ],
@@ -2778,13 +2768,13 @@
     }
   },
   {
-    "candidateVersionId": "candidate:meridian-health:b8c7bed092e6",
+    "candidateVersionId": "candidate:meridian-health:386677f11404",
     "tenantId": "meridian-health",
     "tenantKey": "meridian-health",
     "tenantDisplayName": "Meridian Health",
-    "sourceBuildId": "canonical-data-build:ca80432e6744",
-    "sourceBuildFingerprint": "ca80432e6744f888ad49c8607df7dca7ba02848676d7d5142e3fc9b693b546c1",
-    "inputFingerprint": "9c1c367e0382fbbd480a310b73357890370f3d2e00177185664d45e539740e0c",
+    "sourceBuildId": "canonical-data-build:24693eef8c78",
+    "sourceBuildFingerprint": "24693eef8c783cd336d3a3419b9adcfed12c6c13a76c81f2775387ed3b9ab0f5",
+    "inputFingerprint": "adaa900b69e7da20473a62440301d893268a0ab0f810d09ea9bcca95d773df6d",
     "canonicalRecordCount": 4078,
     "evidenceAttachmentCount": 4078,
     "relationshipCandidateCount": 2177,
@@ -2923,8 +2913,8 @@
         "duplicateNames": 0
       }
     ],
-    "enterpriseProfileStatus": "gaps",
-    "profileGapCount": 6,
+    "enterpriseProfileStatus": "ready",
+    "profileGapCount": 0,
     "qualityGateStatus": "pass",
     "qualityGates": [
       {
@@ -2955,7 +2945,7 @@
         "id": "enterprise-profile-present-or-gapped",
         "label": "Enterprise profile present or explicit gaps",
         "status": "pass",
-        "detail": "Enterprise profile has 6 explicit gaps."
+        "detail": "Enterprise profile is ready."
       },
       {
         "id": "source-lineage-present",
@@ -2985,7 +2975,7 @@
         "id": "home-ava-readiness-artifact",
         "label": "Home/aVa readiness artifact present",
         "status": "pass",
-        "detail": "Home/aVa artifact exists and records caveats before active consumption."
+        "detail": "Home/aVa readiness is green."
       },
       {
         "id": "active-candidate-separation",
@@ -2994,15 +2984,8 @@
         "detail": "Candidate preview remains explicit-only; default Home and module runtime reads are unchanged."
       }
     ],
-    "promotionBlockers": [
-      "Profile gap before promotion: locations",
-      "Profile gap before promotion: leadership",
-      "Profile gap before promotion: mission",
-      "Profile gap before promotion: vision",
-      "Profile gap before promotion: strategy",
-      "Profile gap before promotion: segments"
-    ],
-    "generatedAt": "2026-07-14T01:22:31.580Z",
+    "promotionBlockers": [],
+    "generatedAt": "2026-07-14T12:00:00.000Z",
     "status": "inactive",
     "creationStatus": "created",
     "mode": "candidate_preview",
@@ -3027,7 +3010,7 @@
       "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_15_industry_corpus_patterns.csv@f52603fdc84c",
       "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_16_expert_lenses.csv@68825bba2c74",
       "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_00_portfolio_entity_registry.csv@b6aa9f83946d",
-      "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv@bca2cccaa95a",
+      "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv@0fb6c540de4f",
       "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_02_business_functions.csv@51a5dc143f1f",
       "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_03_org_ownership.csv@965acccf4b27",
       "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_04_workforce_personas.csv@b4ca55a78664",
@@ -3186,7 +3169,7 @@
       },
       {
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv",
-        "fingerprint": "bca2cccaa95a87adff4f1bb51ae1d6a894196dbae653ffd414df59304cb07604",
+        "fingerprint": "0fb6c540de4f9560a0689b338e653a1cbdbdc866ba15d500d4e17c153bb2dc64",
         "rowCount": 1,
         "domain": "enterprise_profile"
       },
@@ -3432,17 +3415,11 @@
       }
     ],
     "homeAvaReadiness": {
-      "ready": false,
-      "profileReady": false,
+      "ready": true,
+      "profileReady": true,
       "evidenceReady": true,
       "relationshipReady": true,
       "caveats": [
-        "Enterprise profile missing locations.",
-        "Enterprise profile missing leadership.",
-        "Enterprise profile missing mission.",
-        "Enterprise profile missing vision.",
-        "Enterprise profile missing strategy.",
-        "Enterprise profile missing segments.",
         "infrastructure_platforms below depth by 16 rows.",
         "service_scope_managed_services below depth by 7 rows."
       ],
@@ -3703,12 +3680,12 @@
     }
   },
   {
-    "candidateVersionId": "candidate:skyharbor-air:c44972185e16",
+    "candidateVersionId": "candidate:skyharbor-air:942cb1f220fa",
     "tenantId": "skyharbor-air",
     "tenantKey": "skyharbor-air",
     "tenantDisplayName": "SkyHarbor Air",
-    "sourceBuildId": "canonical-data-build:ca80432e6744",
-    "sourceBuildFingerprint": "ca80432e6744f888ad49c8607df7dca7ba02848676d7d5142e3fc9b693b546c1",
+    "sourceBuildId": "canonical-data-build:24693eef8c78",
+    "sourceBuildFingerprint": "24693eef8c783cd336d3a3419b9adcfed12c6c13a76c81f2775387ed3b9ab0f5",
     "inputFingerprint": "bc84e5a115a5625b707caab14cbc1c22233d65366b1668d3fb9d9a050fd6bdd1",
     "canonicalRecordCount": 3457,
     "evidenceAttachmentCount": 3457,
@@ -3921,14 +3898,14 @@
     ],
     "promotionBlockers": [
       "Profile gap before promotion: headquarters",
+      "Profile gap before promotion: revenue",
+      "Profile gap before promotion: employees",
       "Profile gap before promotion: locations",
       "Profile gap before promotion: leadership",
       "Profile gap before promotion: mission",
-      "Profile gap before promotion: vision",
-      "Profile gap before promotion: strategy",
-      "Profile gap before promotion: segments"
+      "Profile gap before promotion: vision"
     ],
-    "generatedAt": "2026-07-14T01:22:31.580Z",
+    "generatedAt": "2026-07-14T12:00:00.000Z",
     "status": "inactive",
     "creationStatus": "created",
     "mode": "candidate_preview",
@@ -4343,12 +4320,12 @@
       "relationshipReady": true,
       "caveats": [
         "Enterprise profile missing headquarters.",
+        "Enterprise profile missing revenue.",
+        "Enterprise profile missing employees.",
         "Enterprise profile missing locations.",
         "Enterprise profile missing leadership.",
         "Enterprise profile missing mission.",
         "Enterprise profile missing vision.",
-        "Enterprise profile missing strategy.",
-        "Enterprise profile missing segments.",
         "workforce_roles below depth by 13 rows.",
         "industry_context_patterns below depth by 1 rows.",
         "service_scope_managed_services below depth by 7 rows."

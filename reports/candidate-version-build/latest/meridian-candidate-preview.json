@@ -1,11 +1,11 @@
 {
-  "candidateVersionId": "candidate:meridian-health:b8c7bed092e6",
+  "candidateVersionId": "candidate:meridian-health:386677f11404",
   "tenantId": "meridian-health",
   "tenantKey": "meridian-health",
   "tenantDisplayName": "Meridian Health",
-  "sourceBuildId": "canonical-data-build:ca80432e6744",
-  "sourceBuildFingerprint": "ca80432e6744f888ad49c8607df7dca7ba02848676d7d5142e3fc9b693b546c1",
-  "inputFingerprint": "9c1c367e0382fbbd480a310b73357890370f3d2e00177185664d45e539740e0c",
+  "sourceBuildId": "canonical-data-build:24693eef8c78",
+  "sourceBuildFingerprint": "24693eef8c783cd336d3a3419b9adcfed12c6c13a76c81f2775387ed3b9ab0f5",
+  "inputFingerprint": "adaa900b69e7da20473a62440301d893268a0ab0f810d09ea9bcca95d773df6d",
   "canonicalRecordCount": 4078,
   "evidenceAttachmentCount": 4078,
   "relationshipCandidateCount": 2177,
@@ -144,8 +144,8 @@
       "duplicateNames": 0
     }
   ],
-  "enterpriseProfileStatus": "gaps",
-  "profileGapCount": 6,
+  "enterpriseProfileStatus": "ready",
+  "profileGapCount": 0,
   "qualityGateStatus": "pass",
   "qualityGates": [
     {
@@ -176,7 +176,7 @@
       "id": "enterprise-profile-present-or-gapped",
       "label": "Enterprise profile present or explicit gaps",
       "status": "pass",
-      "detail": "Enterprise profile has 6 explicit gaps."
+      "detail": "Enterprise profile is ready."
     },
     {
       "id": "source-lineage-present",
@@ -206,7 +206,7 @@
       "id": "home-ava-readiness-artifact",
       "label": "Home/aVa readiness artifact present",
       "status": "pass",
-      "detail": "Home/aVa artifact exists and records caveats before active consumption."
+      "detail": "Home/aVa readiness is green."
     },
     {
       "id": "active-candidate-separation",
@@ -215,15 +215,8 @@
       "detail": "Candidate preview remains explicit-only; default Home and module runtime reads are unchanged."
     }
   ],
-  "promotionBlockers": [
-    "Profile gap before promotion: locations",
-    "Profile gap before promotion: leadership",
-    "Profile gap before promotion: mission",
-    "Profile gap before promotion: vision",
-    "Profile gap before promotion: strategy",
-    "Profile gap before promotion: segments"
-  ],
-  "generatedAt": "2026-07-14T01:22:31.580Z",
+  "promotionBlockers": [],
+  "generatedAt": "2026-07-14T12:00:00.000Z",
   "status": "inactive",
   "creationStatus": "created",
   "mode": "candidate_preview",
@@ -248,7 +241,7 @@
     "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_15_industry_corpus_patterns.csv@f52603fdc84c",
     "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_16_expert_lenses.csv@68825bba2c74",
     "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_00_portfolio_entity_registry.csv@b6aa9f83946d",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv@bca2cccaa95a",
+    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv@0fb6c540de4f",
     "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_02_business_functions.csv@51a5dc143f1f",
     "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_03_org_ownership.csv@965acccf4b27",
     "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_04_workforce_personas.csv@b4ca55a78664",
@@ -407,7 +400,7 @@
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv",
-      "fingerprint": "bca2cccaa95a87adff4f1bb51ae1d6a894196dbae653ffd414df59304cb07604",
+      "fingerprint": "0fb6c540de4f9560a0689b338e653a1cbdbdc866ba15d500d4e17c153bb2dc64",
       "rowCount": 1,
       "domain": "enterprise_profile"
     },
@@ -653,17 +646,11 @@
     }
   ],
   "homeAvaReadiness": {
-    "ready": false,
-    "profileReady": false,
+    "ready": true,
+    "profileReady": true,
     "evidenceReady": true,
     "relationshipReady": true,
     "caveats": [
-      "Enterprise profile missing locations.",
-      "Enterprise profile missing leadership.",
-      "Enterprise profile missing mission.",
-      "Enterprise profile missing vision.",
-      "Enterprise profile missing strategy.",
-      "Enterprise profile missing segments.",
       "infrastructure_platforms below depth by 16 rows.",
       "service_scope_managed_services below depth by 7 rows."
     ],

@@ -2,14 +2,13 @@
   {
     "tenantKey": "apex-retail",
     "tenantDisplayName": "Apex Retail",
-    "candidateVersionId": "candidate:apex-retail:a8f372853cb9",
+    "candidateVersionId": "candidate:apex-retail:c4c22f56df29",
     "blockers": [
       "Profile gap before promotion: headquarters",
       "Profile gap before promotion: locations",
       "Profile gap before promotion: leadership",
       "Profile gap before promotion: mission",
       "Profile gap before promotion: vision",
-      "Profile gap before promotion: strategy",
       "Profile gap before promotion: segments",
       "Profile gap before promotion: asOf"
     ]
@@ -17,7 +16,7 @@
   {
     "tenantKey": "first-capital-financial",
     "tenantDisplayName": "First Capital Financial",
-    "candidateVersionId": "candidate:first-capital-financial:3794217b5b8c",
+    "candidateVersionId": "candidate:first-capital-financial:7d49ae021b1e",
     "blockers": [
       "Profile gap before promotion: headquarters",
       "Profile gap before promotion: locations",
@@ -31,15 +30,13 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantDisplayName": "Lakeshore Holdings",
-    "candidateVersionId": "candidate:lakeshore-holdings:f03c88db6e6c",
+    "candidateVersionId": "candidate:lakeshore-holdings:307719ab1500",
     "blockers": [
       "Profile gap before promotion: headquarters",
       "Profile gap before promotion: locations",
       "Profile gap before promotion: leadership",
       "Profile gap before promotion: mission",
       "Profile gap before promotion: vision",
-      "Profile gap before promotion: strategy",
-      "Profile gap before promotion: businessModel",
       "Profile gap before promotion: segments",
       "Profile gap before promotion: asOf"
     ]
@@ -47,42 +44,33 @@
   {
     "tenantKey": "lakeshore-industries",
     "tenantDisplayName": "Lakeshore Industries",
-    "candidateVersionId": "candidate:lakeshore-industries:615216388101",
+    "candidateVersionId": "candidate:lakeshore-industries:24713a2beb6f",
     "blockers": [
       "Profile gap before promotion: locations",
       "Profile gap before promotion: leadership",
       "Profile gap before promotion: mission",
       "Profile gap before promotion: vision",
-      "Profile gap before promotion: strategy",
-      "Profile gap before promotion: segments",
       "Profile gap before promotion: source"
     ]
   },
   {
     "tenantKey": "meridian-health",
     "tenantDisplayName": "Meridian Health",
-    "candidateVersionId": "candidate:meridian-health:b8c7bed092e6",
-    "blockers": [
-      "Profile gap before promotion: locations",
-      "Profile gap before promotion: leadership",
-      "Profile gap before promotion: mission",
-      "Profile gap before promotion: vision",
-      "Profile gap before promotion: strategy",
-      "Profile gap before promotion: segments"
-    ]
+    "candidateVersionId": "candidate:meridian-health:386677f11404",
+    "blockers": []
   },
   {
     "tenantKey": "skyharbor-air",
     "tenantDisplayName": "SkyHarbor Air",
-    "candidateVersionId": "candidate:skyharbor-air:c44972185e16",
+    "candidateVersionId": "candidate:skyharbor-air:942cb1f220fa",
     "blockers": [
       "Profile gap before promotion: headquarters",
+      "Profile gap before promotion: revenue",
+      "Profile gap before promotion: employees",
       "Profile gap before promotion: locations",
       "Profile gap before promotion: leadership",
       "Profile gap before promotion: mission",
-      "Profile gap before promotion: vision",
-      "Profile gap before promotion: strategy",
-      "Profile gap before promotion: segments"
+      "Profile gap before promotion: vision"
     ]
   }
 ]
