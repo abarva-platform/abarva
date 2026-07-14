@@ -66,7 +66,7 @@ Revert the PR and redeploy through the repo-owned ACA main deploy workflow. No d
 
 ## Audit Evidence
 
-- PR URL: Pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/4770.
 - ACA revision: Pending.
 - Live signed-in proof: Pending.
 - Local validation: commands listed in QA / Validation.
