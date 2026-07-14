@@ -54,3 +54,13 @@ consumes, depends_on, feeds, funded_by, governed_by, has_risk, hosted_in, hosted
 ## Quality Opinion
 
 Pass: deep enough for review and context-layer redesign proof, pending client validation.
+
+## Semantic Depth Fix1
+
+- Verdict: PASS
+- Scope: Fraud Analyst Copilot
+- Worst known-gaps duplicate rate: 0%
+- Questionnaire answer duplicate rate: 3.9%
+- Targeted cluster gates: Fraud Analyst Copilot=PASS
+
+Honest status: this proves semantic depth for the targeted proof clusters, not full active-runtime readiness.

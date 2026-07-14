@@ -119,5 +119,221 @@
     }
   ],
   "p0_findings": [],
-  "quality_opinion": "Pass: deep enough for review and context-layer redesign proof, pending client validation."
+  "quality_opinion": "Pass: deep enough for review and context-layer redesign proof, pending client validation. Semantic-depth Fix1: FAIL for targeted proof clusters; broader pack remains candidate review data pending client validation. Semantic-depth Fix1: FAIL for targeted proof clusters; broader pack remains candidate review data pending client validation. Semantic-depth Fix1: PASS for targeted proof clusters; broader pack remains candidate review data pending client validation.",
+  "semantic_depth_fix1": {
+    "verdict": "pass",
+    "scope": [
+      "Fraud Analyst Copilot"
+    ],
+    "anti_repetition": {
+      "max_known_gap_duplicate_pct": 0,
+      "questionnaire_answer_duplicate_pct": 3.9,
+      "pass": true,
+      "known_gap_stats": {
+        "00_enterprise_profile.xlsx": {
+          "total": 1,
+          "unique": 1,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "01_business_functions.xlsx": {
+          "total": 22,
+          "unique": 22,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "02_org_ownership.xlsx": {
+          "total": 22,
+          "unique": 22,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "03_workforce_roles.xlsx": {
+          "total": 44,
+          "unique": 44,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "04_applications_systems.xlsx": {
+          "total": 69,
+          "unique": 69,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "05_data_assets_integrations.xlsx": {
+          "total": 88,
+          "unique": 88,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "06_infrastructure_platforms.xlsx": {
+          "total": 44,
+          "unique": 44,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "07_vendors_contracts.xlsx": {
+          "total": 44,
+          "unique": 44,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "08_it_budget_spend_value.xlsx": {
+          "total": 44,
+          "unique": 44,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "09_programs_initiatives.xlsx": {
+          "total": 22,
+          "unique": 22,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "10_ai_automation_use_cases.xlsx": {
+          "total": 22,
+          "unique": 22,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "11_risks_controls.xlsx": {
+          "total": 44,
+          "unique": 44,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "12_relationships.xlsx": {
+          "total": 396,
+          "unique": 396,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "13_evidence_sources.xlsx": {
+          "total": 44,
+          "unique": 44,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "14_metrics_outcomes.xlsx": {
+          "total": 44,
+          "unique": 44,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "15_industry_context_patterns.xlsx": {
+          "total": 22,
+          "unique": 22,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "16_expert_lenses.xlsx": {
+          "total": 22,
+          "unique": 22,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "17_managed_services_scope.xlsx": {
+          "total": 22,
+          "unique": 22,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "18_operational_process_evidence.xlsx": {
+          "total": 22,
+          "unique": 22,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        }
+      },
+      "questionnaire_answer_stats": {
+        "total": 154,
+        "unique": 28,
+        "maxDuplicateCount": 6,
+        "maxDuplicatePct": 3.9,
+        "repeatedTop": [
+          {
+            "value": "business functions: respondent confirmed the record is useful for orientation, but asked AbarVa to verify source ownership, row-level lineage, volume baseline, and whether the data is current or target-state only.",
+            "count": 6
+          },
+          {
+            "value": "applications systems: respondent noted that the data should support fact-based context browsing, while advisory claims require relationship validation, module readiness checks, and source-owner attestation.",
+            "count": 6
+          },
+          {
+            "value": "data assets integrations: respondent identified missing proof around operating volume, owner accountability, cross-system dependency, and whether the evidence is approved for Home, Moves, Source, Tower, and Intelligence.",
+            "count": 6
+          },
+          {
+            "value": "vendors contracts: respondent said the next workshop should reconcile this context to systems, data assets, vendors, risks, metrics, and program funding before it becomes active tenant truth.",
+            "count": 6
+          },
+          {
+            "value": "it budget spend value: respondent confirmed the record is useful for orientation, but asked AbarVa to verify source ownership, row-level lineage, volume baseline, and whether the data is current or target-state only.",
+            "count": 6
+          }
+        ]
+      }
+    },
+    "cluster_assessments": [
+      {
+        "cluster": "Fraud Analyst Copilot",
+        "rowsMatched": 95,
+        "painPointsPresent": 5,
+        "evidenceItemsPresent": 5,
+        "metricsPresent": 3,
+        "issuesPresent": 3,
+        "modernizationDependenciesPresent": 3,
+        "relationshipsPresent": 36,
+        "pass": true,
+        "painPoints": [
+          "Fraud analysts triage card, ACH, wire, digital-login, and mule-account alerts in separate queues with inconsistent case priority rules.",
+          "The fraud alert platform captures model score and reason codes, but downstream case outcomes are not consistently fed back to the feature store.",
+          "AML transaction monitoring and real-time fraud decisions use overlapping customer and counterparty fields with different freshness rules.",
+          "High-risk digital onboarding cases require manual lookup across KYC vendor evidence, device intelligence, and core banking account history.",
+          "Operations leaders cannot separate true model drift from queue staffing backlogs without alert age, model version, analyst action, and loss outcome in one view."
+        ],
+        "evidenceItems": [
+          "Fraud alert export with model score, reason code, channel, alert age, analyst action, and disposition fields.",
+          "Fraud case management extract with confirmed fraud, false positive, recovered amount, and write-off status.",
+          "AML transaction monitoring source inventory and control-owner interview.",
+          "Digital onboarding/KYC vendor report with identity verification and device-risk signals.",
+          "Fraud feature store design notes with feedback-loop and model governance gaps."
+        ],
+        "metrics": [
+          "Fraud alert precision by model version",
+          "Analyst case throughput and aging",
+          "Confirmed fraud loss avoided / recovered amount baseline"
+        ],
+        "issues": [
+          "case outcome feedback gaps",
+          "model version lineage gaps",
+          "queue aging mixed with model quality signals"
+        ],
+        "modernizationDependencies": [
+          "fraud analyst copilot with cited case packet",
+          "feature-store feedback loop",
+          "model-risk-approved evaluation set"
+        ]
+      }
+    ]
+  }
 }
