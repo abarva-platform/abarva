@@ -9,6 +9,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { TextDecoder } from "util";
 import { StrategicMoveOriginateClient } from "../StrategicMoveOriginateClient";
@@ -89,6 +90,50 @@ function mockFetchWithChatArtifactAndExtraction(
   return fetchMock;
 }
 
+function openAvaDock() {
+  const chip = screen.queryByTestId("agent-dock-collapsed-chip");
+  if (chip) fireEvent.click(chip);
+}
+
+function sendDockMessage(message: string) {
+  fireEvent.change(screen.getByTestId("agent-dock-input"), {
+    target: { value: message },
+  });
+  fireEvent.click(screen.getByTestId("agent-dock-send"));
+}
+
+function selectP0Tab(step: number) {
+  const label =
+    step <= 2
+      ? /frame the bet/i
+      : step <= 4
+        ? /govern the move/i
+        : /prove readiness/i;
+  fireEvent.click(screen.getByRole("tab", { name: label }));
+}
+
+function submitP0Section(
+  container: HTMLElement,
+  step: number,
+  value: string,
+) {
+  selectP0Tab(step);
+  const input = container.querySelector(
+    `#orig-canvas-brief-section-${step}-input`,
+  ) as HTMLTextAreaElement | null;
+  expect(input).not.toBeNull();
+  fireEvent.change(input!, { target: { value } });
+  const section = container.querySelector(
+    `#orig-canvas-brief-section-${step}`,
+  ) as HTMLElement | null;
+  expect(section).not.toBeNull();
+  fireEvent.click(
+    within(section!).getByRole("button", {
+      name: /submit section|update section/i,
+    }),
+  );
+}
+
 describe("StrategicMoveOriginateClient", () => {
   beforeAll(() => {
     (global as unknown as { TextDecoder: typeof TextDecoder }).TextDecoder =
@@ -138,15 +183,13 @@ describe("StrategicMoveOriginateClient", () => {
 
     render(<StrategicMoveOriginateClient tenantName="Apex Retail" />);
 
-    const launcher = screen.getByTestId("orig-ava-launcher");
-    expect(launcher).toBeInTheDocument();
     expect(
-      screen.queryByPlaceholderText(/describe the outcome/i),
-    ).not.toBeInTheDocument();
-    fireEvent.click(launcher);
+      screen.getByRole("complementary", { name: /move journey/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId("agent-dock-collapsed-chip")).toBeInTheDocument();
+    openAvaDock();
 
-    const [headerMark] = screen.getAllByTestId("ava-ask-wordmark");
-    expect(headerMark).toHaveAttribute(
+    expect(screen.getAllByTestId("ava-ask-wordmark")[0]).toHaveAttribute(
       "src",
       "/brand/ava/ava-wordmark-2tone-light.svg",
     );
@@ -156,19 +199,14 @@ describe("StrategicMoveOriginateClient", () => {
       name: /promote to p1 charter/i,
     });
     expect(promoteButton).toBeDisabled();
-    expect(
-      screen.getByText("0 of 7 required sections complete"),
-    ).toBeInTheDocument();
+    expect(screen.getAllByText("0 of 7")[0]).toBeInTheDocument();
     expect(
       screen.getByText(/Describe the business problem or opportunity/i),
     ).toBeInTheDocument();
     expect(screen.queryByText(/optional/i)).not.toBeInTheDocument();
 
     await act(async () => {
-      fireEvent.change(screen.getByPlaceholderText(/describe the outcome/i), {
-        target: { value: "Start with the AMS vendor consolidation signal." },
-      });
-      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+      sendDockMessage("Start with the AMS vendor consolidation signal.");
     });
 
     await waitFor(() => {
@@ -256,20 +294,19 @@ describe("StrategicMoveOriginateClient", () => {
     mockFetchWithChatArtifactAndExtraction(staleArtifact, extractionFields);
 
     render(<StrategicMoveOriginateClient tenantName="Lakeshore Holdings" />);
-    fireEvent.click(screen.getByTestId("orig-ava-launcher"));
+    openAvaDock();
 
     await act(async () => {
-      fireEvent.change(screen.getByPlaceholderText(/describe the outcome/i), {
-        target: { value: "Create the Kyriba treasury Move." },
-      });
-      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+      sendDockMessage("Create the Kyriba treasury Move.");
     });
 
     await waitFor(() => {
       expect(screen.getByText("Ready to promote")).toBeInTheDocument();
     });
-    expect(screen.getByText("CFO and Treasurer, with CIO support."))
-      .toBeInTheDocument();
+    selectP0Tab(3);
+    expect(
+      screen.getByDisplayValue("CFO and Treasurer, with CIO support."),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Dr. Anita Krishnamurthy")).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /promote to p1 charter/i }),
@@ -280,15 +317,12 @@ describe("StrategicMoveOriginateClient", () => {
     mockFetchWithChatArtifactAndExtraction("", {});
 
     render(<StrategicMoveOriginateClient tenantName="Lakeshore Holdings" />);
-    fireEvent.click(screen.getByTestId("orig-ava-launcher"));
+    openAvaDock();
 
     const prompt = `Create a strategic Move named "Kyriba Treasury Controls Proof" for Lakeshore Holdings' Kyriba treasury rollout. The business problem is treasury visibility and payment-control risk across banks, SAP feeds, signers, payment formats, and SOX evidence. Sponsor candidate: CFO and Treasurer, with CIO support. Scope: treasury operations, bank connectivity, SAP finance feeds, payment controls, and control evidence; out of scope: changing the ERP core in this move. Evidence family: finance systems, treasury operations, risk and controls, vendor/contracts, data readiness. Value hypothesis: faster cash visibility, lower manual reconciliation effort, cleaner payment-control evidence, and better board confidence. Foundation readiness: Kyriba rollout is underway, but data lineage, bank connectivity inventory, signer controls, and SOX evidence need validation.`;
 
     await act(async () => {
-      fireEvent.change(screen.getByPlaceholderText(/describe the outcome/i), {
-        target: { value: prompt },
-      });
-      fireEvent.click(screen.getByRole("button", { name: "Send" }));
+      sendDockMessage(prompt);
     });
 
     await waitFor(() => {
@@ -296,15 +330,165 @@ describe("StrategicMoveOriginateClient", () => {
     });
     expect(screen.getByDisplayValue("Kyriba Treasury Controls Proof"))
       .toBeInTheDocument();
-    expect(screen.getByText("CFO and Treasurer, with CIO support."))
-      .toBeInTheDocument();
+    selectP0Tab(3);
     expect(
-      screen.getByText(
+      screen.getByDisplayValue("CFO and Treasurer, with CIO support."),
+    ).toBeInTheDocument();
+    selectP0Tab(1);
+    expect(
+      screen.getAllByText(
         "Treasury modernization and finance-controls move.",
-      ),
+      )[0],
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /promote to p1 charter/i }),
     ).toBeEnabled();
+  });
+
+  it("allows each P0 brief section to be typed and submitted without using chat", async () => {
+    const fetchMock = jest.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/api/programs/origination-submit") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ok: true,
+            engagementId: "move-manual-p0",
+            redirectTo: "/strategic-moves/move-manual-p0",
+          }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true }),
+      };
+    });
+    (global as { fetch: unknown }).fetch = fetchMock;
+
+    const { container } = render(
+      <StrategicMoveOriginateClient tenantName="Meridian Health" />,
+    );
+
+    const values = [
+      "Member service quality is constrained by fragmented system navigation and inconsistent knowledge access.",
+      "Contact Center Agent Assist — agent augmentation for member-service operations.",
+      "Chief Operating Officer, with CDIO as data/platform co-sponsor.",
+      "Claims status, prior authorization status, benefits and eligibility, CRM history, and agent knowledge lookup.",
+      "Call metrics, CRM history, claims samples, prior authorization samples, benefits and eligibility samples, systems inventory, controls, and value assumptions.",
+      "Reduce avoidable handle time, repeat contact, transfers, and manual rework while improving answer consistency.",
+      "CRM, claims, eligibility, prior authorization, knowledge, identity, audit, data quality, and PHI controls need validation.",
+    ];
+
+    values.forEach((value, index) => {
+      submitP0Section(container, index + 1, value);
+    });
+
+    expect(screen.getByText("Ready to promote")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /promote to p1 charter/i }),
+    ).toBeEnabled();
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "/api/chat/agent",
+      expect.anything(),
+    );
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: /promote to p1 charter/i }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(mockPush).toHaveBeenCalledWith(
+        "/strategic-moves/move-manual-p0",
+      );
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/programs/origination-submit",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining(
+          '"sponsor":"Chief Operating Officer, with CDIO as data/platform co-sponsor."',
+        ),
+      }),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/programs/origination-submit",
+      expect.objectContaining({
+        body: expect.stringContaining(
+          '"programName":"Member Service Agent Assist"',
+        ),
+      }),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/programs/origination-submit",
+      expect.objectContaining({
+        body: expect.stringContaining('"evidenceFamily":"Call metrics'),
+      }),
+    );
+  });
+
+  it("normalizes a sentence-like manual move name into a short strategic name", async () => {
+    const fetchMock = jest.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/api/programs/origination-submit") {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ok: true,
+            engagementId: "move-short-name",
+            redirectTo: "/strategic-moves/move-short-name",
+          }),
+        };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true }),
+      };
+    });
+    (global as { fetch: unknown }).fetch = fetchMock;
+
+    const { container } = render(
+      <StrategicMoveOriginateClient tenantName="Meridian Health" />,
+    );
+
+    [
+      "Members experience long calls because agents navigate too many systems.",
+      "Contact Center Agent Assist.",
+      "COO.",
+      "Member-service call center workflows.",
+      "Call metrics and CRM history.",
+      "Reduce handle time and repeat contact.",
+      "CRM, claims, eligibility, and PHI controls need validation.",
+    ].forEach((value, index) => {
+      submitP0Section(container, index + 1, value);
+    });
+
+    selectP0Tab(1);
+    fireEvent.change(screen.getByLabelText(/what should this move be called/i), {
+      target: {
+        value:
+          "Members experience long calls and inconsistent answers because agents navigate too many systems",
+      },
+    });
+
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: /promote to p1 charter/i }),
+      );
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/programs/origination-submit",
+      expect.objectContaining({
+        body: expect.stringContaining(
+          '"programName":"Member Service Agent Assist"',
+        ),
+      }),
+    );
   });
 });

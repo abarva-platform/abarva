@@ -142,6 +142,30 @@ function normalizeLabel(value: string): string {
     .trim();
 }
 
+function roleOnlyPlaceholderForOrigination(
+  parsedLabel: ParsedPersonLabel,
+): { name: string; role: string } | null {
+  if (parsedLabel.placeholderName) return null;
+  const role = optionalText(parsedLabel.placeholderRole) ?? parsedLabel.lookupLabel;
+  const normalized = normalizeLabel(role);
+  if (
+    !/\b(ceo|cfo|coo|cio|cto|cmo|cco|cdo|cdao|ciso|chro|cro|caio|cmio|vp|svp|evp|director|chief|officer|sponsor|owner|lead)\b/.test(
+      normalized,
+    )
+  ) {
+    return null;
+  }
+  const name = role
+    .split(/\s+/)
+    .map((part) =>
+      /^[A-Z]{2,6}$/.test(part)
+        ? part
+        : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
+    )
+    .join(" ");
+  return { name, role };
+}
+
 function personTokens(value: string): string[] {
   const stop = new Set([
     "the",
@@ -320,28 +344,35 @@ async function resolvePersonByLabel(input: {
   );
   const picked = contains ?? currentUser ?? rows[0];
 
-  if (!picked && parsedLabel.placeholderName) {
-    const { data: placeholder, error: placeholderError } = await sb
+  const placeholderSpec = parsedLabel.placeholderName
+    ? {
+        name: parsedLabel.placeholderName,
+        role: parsedLabel.placeholderRole,
+      }
+    : roleOnlyPlaceholderForOrigination(parsedLabel);
+
+  if (!picked && placeholderSpec) {
+    const { data: placeholderRow, error: placeholderError } = await sb
       .from("persons")
       .insert({
-        name: parsedLabel.placeholderName,
+        name: placeholderSpec.name,
         email: null,
-        role: parsedLabel.placeholderRole,
+        role: placeholderSpec.role,
         organization: input.clientName,
         familiarity: "first_meeting",
         personal_threads: [ORIGINATION_PLACEHOLDER_PERSON_MARKER],
       })
       .select("id, name, role")
       .single();
-    if (placeholderError || !placeholder) {
+    if (placeholderError || !placeholderRow) {
       throw new OriginationSubmitError(
         "person_placeholder_failed",
         placeholderError?.message ??
-          `Could not register "${parsedLabel.placeholderName}" as a pending sponsor in ${input.clientName}'s people records`,
+          `Could not register "${placeholderSpec.name}" as a pending sponsor in ${input.clientName}'s people records`,
         500,
       );
     }
-    const row = placeholder as Pick<PersonRow, "id" | "name" | "role">;
+    const row = placeholderRow as Pick<PersonRow, "id" | "name" | "role">;
     return { id: row.id, name: row.name, role: row.role };
   }
 

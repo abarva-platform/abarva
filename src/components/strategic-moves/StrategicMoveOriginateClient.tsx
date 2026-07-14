@@ -21,12 +21,16 @@ import {
   shapeAgentResponseForSurface,
   shapeStreamingAgentTextForSurface,
 } from "@/lib/agent/response-shape";
-import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
+import {
+  AgentDock,
+  type ChatMessage,
+} from "@/components/agent/AgentDock";
 import styles from "./StrategicMoves.module.css";
-import { PhaseRail } from "./PhaseRail";
 import { DiscoveryCapturePanel } from "../programs/discovery/DiscoveryCapturePanel";
 import { strategicMoveBriefToDiscoveryShape } from "./strategicMoveBriefToDiscoveryShape";
 import { resolveStrategicMoveOriginationRedirect } from "./resolveOriginationRedirect";
+import { MovePhaseExplorer } from "./MovePhaseExplorer";
+import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -62,6 +66,8 @@ const INITIAL_FIELDS: Record<ScaffoldFieldId, string> = {
 };
 
 const REQUIRED_FIELD_COUNT = Object.keys(INITIAL_FIELDS).length;
+const MOVE_NAME_MAX_WORDS = 6;
+const MOVE_NAME_MAX_CHARS = 48;
 
 const SCAFFOLD_DEFS: Array<{
   id: ScaffoldFieldId;
@@ -75,6 +81,103 @@ const SCAFFOLD_DEFS: Array<{
   { id: "evidence-family", label: "Evidence family selection", step: 5 },
   { id: "value-hypothesis", label: "Value hypothesis seed", step: 6 },
   { id: "foundation-readiness", label: "Foundation readiness", step: 7 },
+];
+
+type P0TabId = "frame" | "govern" | "readiness";
+
+type P0Question =
+  | {
+      id: "program-name";
+      label: string;
+      helper: string;
+      placeholder: string;
+    }
+  | {
+      id: ScaffoldFieldId;
+      label: string;
+      helper: string;
+      placeholder: string;
+    };
+
+const P0_TABS: Array<{
+  id: P0TabId;
+  label: string;
+  shortLabel: string;
+  summary: string;
+  questions: P0Question[];
+}> = [
+  {
+    id: "frame",
+    label: "Frame the Bet",
+    shortLabel: "Frame",
+    summary: "Problem, short name, archetype",
+    questions: [
+      {
+        id: "problem-statement",
+        label: "What business problem or opportunity are we solving?",
+        helper: "Tell the story in plain English. A note, email thread, or problem statement is enough.",
+        placeholder: "Members experience long calls and inconsistent answers because agents navigate multiple systems...",
+      },
+      {
+        id: "program-name",
+        label: "What should this Move be called?",
+        helper: "Keep it short and strategic. aVa can suggest one, but the title should be a few words.",
+        placeholder: "Member Service Agent Assist",
+      },
+      {
+        id: "archetype",
+        label: "Which transformation pattern does this fit?",
+        helper: "Use a practical archetype, not a taxonomy exercise. This helps route the right evidence and playbook.",
+        placeholder: "Contact Center Agent Assist - agent augmentation for member-service operations.",
+      },
+    ],
+  },
+  {
+    id: "govern",
+    label: "Govern the Move",
+    shortLabel: "Govern",
+    summary: "Sponsor/title and scope",
+    questions: [
+      {
+        id: "sponsor-candidate",
+        label: "Which executive role or title should sponsor this?",
+        helper: "A title is enough at P0. Named person resolution can happen later.",
+        placeholder: "COO as executive sponsor; VP Member Operations and Contact Center Director as operating owners; CDIO as data/platform co-sponsor.",
+      },
+      {
+        id: "scope-boundary",
+        label: "What is in scope, and what is explicitly out?",
+        helper: "Draw the first practical boundary so P1/P2 can validate instead of boil the ocean.",
+        placeholder: "In: claims status, prior auth status, benefits/eligibility, CRM history, agent knowledge lookup. Out: clinical decisions, appeals adjudication, provider contracts.",
+      },
+    ],
+  },
+  {
+    id: "readiness",
+    label: "Prove Readiness",
+    shortLabel: "Readiness",
+    summary: "Evidence, value, foundation",
+    questions: [
+      {
+        id: "evidence-family",
+        label: "What evidence should P1/P2 collect?",
+        helper: "Name the evidence families, not every file. Uploads and parsing come after promotion.",
+        placeholder: "Member-service metrics, call transcripts/intent taxonomy, CRM history, claims/auth/benefits samples, knowledge base, systems inventory, controls, value assumptions.",
+      },
+      {
+        id: "value-hypothesis",
+        label: "What value hypothesis should we validate?",
+        helper: "Keep it directional. Exact targets can be proven later from client evidence.",
+        placeholder: "Reduce avoidable handle time, repeat contact, transfers, and manual rework while improving first-call resolution and answer consistency.",
+      },
+      {
+        id: "foundation-readiness",
+        label: "What foundations must be ready?",
+        helper: "Capture the platform, data, control, and governance assumptions that P2 must prove.",
+        placeholder: "Trusted access to CRM, claims, eligibility/benefits, prior authorization, policy/knowledge, identity/access, audit logs, data freshness, quality, semantic definitions, and PHI controls.",
+      },
+    ],
+  },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -219,6 +322,82 @@ function mergeInlineCapture(
   };
 }
 
+function titleCaseMoveName(value: string): string {
+  const acronym = new Set(["ai", "ams", "crm", "erp", "phi", "sox", "rpa"]);
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => {
+      const clean = word.replace(/[^a-z0-9&/-]/gi, "");
+      if (!clean) return "";
+      if (acronym.has(clean.toLowerCase())) return clean.toUpperCase();
+      return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
+    })
+    .filter(Boolean)
+    .join(" ");
+}
+
+function compactMoveName(value: string): string {
+  const normalized = value
+    .replace(/[“”"]/g, "")
+    .replace(/[.!?;:,]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const words = normalized
+    .split(/\s+/)
+    .filter((word) => !/^(the|a|an|to|for|with|and|or|of|in|on|by|from|this|that|move|strategic)$/i.test(word))
+    .slice(0, MOVE_NAME_MAX_WORDS);
+  let candidate = titleCaseMoveName(words.join(" "));
+  if (candidate.length > MOVE_NAME_MAX_CHARS) {
+    candidate = candidate.slice(0, MOVE_NAME_MAX_CHARS).replace(/\s+\S*$/, "");
+  }
+  return candidate.trim();
+}
+
+function suggestedStrategicMoveName(
+  fields: Record<ScaffoldFieldId, string>,
+): string {
+  const source = Object.values(fields).join(" ").toLowerCase();
+  if (/\b(member|contact center|call center|agent|claims status|eligibility|benefits)\b/.test(source)) {
+    return "Member Service Agent Assist";
+  }
+  if (/\bprior authorization|prior auth|utilization management|um\b/.test(source)) {
+    return "Prior Auth Assist";
+  }
+  if (/\bclinical|emr|patient|care management|longitudinal\b/.test(source)) {
+    return "Clinical Data Foundation";
+  }
+  if (/\bclaim|claims|payment integrity|leakage|fraud|waste|abuse\b/.test(source)) {
+    return "Claims Integrity Analytics";
+  }
+  if (/\bkyriba|treasury|cash visibility|payment-control|payment control|sox\b/.test(source)) {
+    return "Treasury Controls Proof";
+  }
+  if (/\bams|managed services|vendor|sourcing|contract|renewal\b/.test(source)) {
+    return "AMS Vendor Optimization";
+  }
+  if (/\blakehouse|databricks|data platform|semantic layer|data foundation\b/.test(source)) {
+    return "Unified Data Foundation";
+  }
+  return compactMoveName(fields["problem-statement"]) || "Strategic Move";
+}
+
+function deriveStrategicMoveName(
+  typed: string,
+  fields: Record<ScaffoldFieldId, string>,
+): string {
+  const typedName = typed.trim();
+  if (!typedName) return suggestedStrategicMoveName(fields);
+  const wordCount = typedName.split(/\s+/).filter(Boolean).length;
+  if (wordCount <= MOVE_NAME_MAX_WORDS && typedName.length <= MOVE_NAME_MAX_CHARS) {
+    return typedName;
+  }
+  return suggestedStrategicMoveName({
+    ...fields,
+    "problem-statement": `${typedName} ${fields["problem-statement"]}`,
+  });
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -251,25 +430,18 @@ export function StrategicMoveOriginateClient({
     programName: "",
     fields: { ...INITIAL_FIELDS },
   });
-  const [composer, setComposer] = useState("");
-  const [chatOpen, setChatOpen] = useState(false);
+  const [draftFields, setDraftFields] = useState<Record<ScaffoldFieldId, string>>({
+    ...INITIAL_FIELDS,
+  });
+  const [activeP0Tab, setActiveP0Tab] = useState<P0TabId>("frame");
   const [streaming, setStreaming] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [scaffoldOpen, setScaffoldOpen] = useState(false);
   const [canvasTab, setCanvasTab] = useState<"brief" | "discovery">("brief");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const turnsRef = useRef<ChatTurn[]>(turns);
   turnsRef.current = turns;
-  const threadRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll thread
-  useEffect(() => {
-    if (threadRef.current) {
-      threadRef.current.scrollTop = threadRef.current.scrollHeight;
-    }
-  }, [turns]);
 
   // Debounced draft persistence
   useEffect(() => {
@@ -298,6 +470,10 @@ export function StrategicMoveOriginateClient({
               sponsor: brief.fields["sponsor-candidate"] || null,
               lead: null,
               crossProgramDependencies: [],
+              scopeBoundary: brief.fields["scope-boundary"] || null,
+              evidenceFamily: brief.fields["evidence-family"] || null,
+              foundationReadiness:
+                brief.fields["foundation-readiness"] || null,
             },
             patternMatch: null,
           },
@@ -319,6 +495,10 @@ export function StrategicMoveOriginateClient({
 
   const handleArtifact = useCallback((artifact: Artifact) => {
     if (artifact.type === "brief-progress") {
+      const nextArtifactFields = applyBriefProgressArtifact(
+        INITIAL_FIELDS,
+        artifact as BriefProgressArtifact,
+      );
       setBrief((prev) => ({
         ...prev,
         fields: applyBriefProgressArtifact(
@@ -326,12 +506,41 @@ export function StrategicMoveOriginateClient({
           artifact as BriefProgressArtifact,
         ),
       }));
+      setDraftFields((prev) => ({
+        ...prev,
+        ...Object.fromEntries(
+          Object.entries(nextArtifactFields).filter(([, value]) => value.trim()),
+        ),
+      }) as Record<ScaffoldFieldId, string>);
     }
+  }, []);
+
+  const saveDraftField = useCallback((id: ScaffoldFieldId) => {
+    const value = draftFields[id].trim();
+    if (!value) return;
+    setBrief((prev) => ({
+      ...prev,
+      fields: {
+        ...prev.fields,
+        [id]: value,
+      },
+    }));
+  }, [draftFields]);
+
+  const clearBriefField = useCallback((id: ScaffoldFieldId) => {
+    setBrief((prev) => ({
+      ...prev,
+      fields: {
+        ...prev.fields,
+        [id]: "",
+      },
+    }));
+    setDraftFields((prev) => ({ ...prev, [id]: "" }));
   }, []);
 
   const send = useCallback(
     async (messageOverride?: string) => {
-      const message = (messageOverride ?? composer).trim();
+      const message = (messageOverride ?? "").trim();
       if (!message || streaming) return;
 
       const assistantTurnId = generateTurnId();
@@ -345,11 +554,18 @@ export function StrategicMoveOriginateClient({
           text: "",
         },
       ]);
-      if (!messageOverride) setComposer("");
       setStreaming(true);
       setSubmitError(null);
       const inlineCapture = extractInlineP0Fields(message);
       setBrief((prev) => mergeInlineCapture(prev, inlineCapture));
+      setDraftFields((prev) => ({
+        ...prev,
+        ...Object.fromEntries(
+          Object.entries(inlineCapture.fields).filter(([, value]) =>
+            value?.trim(),
+          ),
+        ),
+      }) as Record<ScaffoldFieldId, string>);
 
       try {
         const conversationHistory = turnsRef.current
@@ -369,7 +585,16 @@ export function StrategicMoveOriginateClient({
             agentName: "Nexus",
             surface: "/strategic-moves/new",
             conversationHistory,
-            surfaceContext: { programName: brief.programName || null },
+            surfaceContext: {
+              programName: brief.programName || null,
+              brief: {
+                fields: brief.fields,
+                filledCount: Object.values(brief.fields).filter(
+                  (v) => v.trim().length > 0,
+                ).length,
+                fieldsTotal: REQUIRED_FIELD_COUNT,
+              },
+            },
           }),
         });
 
@@ -476,6 +701,16 @@ export function StrategicMoveOriginateClient({
                 }
                 return { ...prev, fields: nextFields };
               });
+              setDraftFields((prevDraft) => {
+                const nextDraft = { ...prevDraft };
+                for (const def of SCAFFOLD_DEFS) {
+                  const v = data.fields?.[def.id];
+                  if (typeof v === "string" && v.trim()) {
+                    nextDraft[def.id] = v.trim();
+                  }
+                }
+                return nextDraft;
+              });
             }
           }
         } catch {
@@ -498,10 +733,10 @@ export function StrategicMoveOriginateClient({
       }
     },
     [
-      composer,
       streaming,
       tenantName,
       brief.programName,
+      brief.fields,
       updateTurns,
       handleArtifact,
     ],
@@ -515,6 +750,60 @@ export function StrategicMoveOriginateClient({
   ).length;
   const canPromote =
     requiredFilled >= REQUIRED_FIELD_COUNT && !isPending && !streaming;
+  const suggestedName = suggestedStrategicMoveName(brief.fields);
+  const activeTab =
+    P0_TABS.find((tab) => tab.id === activeP0Tab) ?? P0_TABS[0];
+  const activeTabIndex = P0_TABS.findIndex((tab) => tab.id === activeTab.id);
+  const completionPercent = Math.round(
+    (requiredFilled / REQUIRED_FIELD_COUNT) * 100,
+  );
+  const originateTallies: PhaseTallyRow[] = [
+    {
+      phase: 0,
+      label: "P0 Originate",
+      met: requiredFilled,
+      total: REQUIRED_FIELD_COUNT,
+      state: "current",
+    },
+    { phase: 1, label: "P1 Charter", met: 0, total: 5, state: "upcoming" },
+    { phase: 2, label: "P2 Discover", met: 0, total: 5, state: "upcoming" },
+    { phase: 3, label: "P3 Design", met: 0, total: 5, state: "upcoming" },
+    { phase: 4, label: "P4 Roadmap", met: 0, total: 5, state: "upcoming" },
+    { phase: 5, label: "P5 Handoff", met: 0, total: 5, state: "upcoming" },
+  ];
+  const dockThread: ChatMessage[] = turns.map((turn) => ({
+    id: turn.id,
+    role: turn.role === "assistant" ? "agent" : "user",
+    body:
+      turn.text ||
+      (streaming && turn.role === "assistant" ? "..." : turn.text),
+  }));
+  const dockSuggestedActions = [
+    {
+      id: "p0-scope",
+      label: "Sharpen the scope boundary",
+      body: "Help me sharpen the P0 scope boundary for this Move.",
+    },
+    {
+      id: "p0-evidence",
+      label: "Suggest evidence families",
+      body: "Suggest the right P0 evidence families for this Move.",
+    },
+    {
+      id: "p0-readiness",
+      label: "Draft foundation readiness",
+      body: "Draft a concise foundation readiness answer for this P0 Move.",
+    },
+  ];
+  const activeScaffoldQuestions = activeTab.questions.filter(
+    (question): question is Extract<P0Question, { id: ScaffoldFieldId }> =>
+      question.id !== "program-name",
+  );
+  const activeTabMet = activeScaffoldQuestions.filter(
+    (question) => brief.fields[question.id].trim().length > 0,
+  ).length;
+  const nextTab = P0_TABS[activeTabIndex + 1] ?? null;
+  const previousTab = P0_TABS[activeTabIndex - 1] ?? null;
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -541,22 +830,7 @@ export function StrategicMoveOriginateClient({
 
   async function promote() {
     setSubmitError(null);
-    // Prefer an explicit Move name; otherwise derive a clean, short title from
-    // the hypothesis (first clause, capped at a word boundary) rather than
-    // dumping the full sentence as the Move name.
-    const deriveName = (typed: string, problem: string): string => {
-      const n = typed.trim();
-      if (n) return n.slice(0, 120);
-      const p = (problem || "").trim();
-      if (!p) return "Untitled Strategic Move";
-      let s = p.split(/[.!?\n]/)[0].trim();
-      if (s.length > 72) s = s.slice(0, 72).replace(/\s+\S*$/, "") + "…";
-      return s || "Untitled Strategic Move";
-    };
-    const finalName = deriveName(
-      brief.programName,
-      brief.fields["problem-statement"],
-    );
+    const finalName = deriveStrategicMoveName(brief.programName, brief.fields);
     startTransition(() => {
       void (async () => {
         // Snapshot origination turns before submit (filter empty turns, cap at 40)
@@ -620,7 +894,6 @@ export function StrategicMoveOriginateClient({
 
   return (
     <div id="orig-page" className={styles.page}>
-      {/* orig-identity */}
       <div id="orig-identity" className={styles.originContextBar}>
         <div className={styles.originContextLeft}>
           <span className={styles.originBranch} aria-hidden>
@@ -629,8 +902,13 @@ export function StrategicMoveOriginateClient({
           <span className={styles.originLabel}>Start a Move</span>
           <span id="orig-identity-title" className={styles.originDraftBadge}>
             {brief.programName.trim()
-              ? brief.programName.toUpperCase()
-              : "UNTITLED"}{" "}
+              ? deriveStrategicMoveName(
+                  brief.programName,
+                  brief.fields,
+                ).toUpperCase()
+              : requiredFilled > 0
+                ? suggestedName.toUpperCase()
+                : "UNTITLED"}{" "}
             &middot; DRAFT
           </span>
         </div>
@@ -643,336 +921,346 @@ export function StrategicMoveOriginateClient({
         </button>
       </div>
 
-      {/* orig-grid */}
-      <section
-        id="orig-grid"
-        className={`${styles.detailShell} ${chatOpen ? "" : styles.detailShellChatCollapsed}`.trim()}
-      >
-        {/* orig-chat */}
-        {chatOpen ? (
-        <aside id="orig-chat" className={styles.chatPane}>
-          <div className={styles.chatHead}>
-            <div className={styles.origChatHeadRow}>
-            <div className={styles.agentRow}>
-              <AvaAskMark
-                variant="wordmark-light"
-                style={{ width: 52, minWidth: 52 }}
-              />
-              <div>
-                <div className={styles.agentStatus}>
-                  <span className={styles.agentStatusDot} aria-hidden />
-                  New Move
-                </div>
-              </div>
-            </div>
-            <button
-              type="button"
-              className={styles.origChatClose}
-              onClick={() => setChatOpen(false)}
-              aria-label="Collapse aVa chat"
-            >
-              &#10005;
-            </button>
-            </div>
-          </div>
-
-          {/* orig-chat-message-list */}
-          <div
-            id="orig-chat-message-list"
-            className={styles.chatThread}
-            ref={threadRef}
-          >
-            {turns.map((turn) => (
-              <div
-                key={turn.id}
-                className={
-                  turn.role === "assistant"
-                    ? styles.bubbleNexus
-                    : styles.bubbleUser
-                }
-              >
-                {turn.text ||
-                  (streaming && turn.role === "assistant" ? "…" : "")}
-              </div>
-            ))}
-          </div>
-
-          {/* orig-chat-scaffold — collapsible step ladder */}
-          <div id="orig-chat-scaffold" className={styles.startFromBlock}>
-            <button
-              type="button"
-              className={styles.scaffoldToggleBtn}
-              onClick={() => setScaffoldOpen((v) => !v)}
-              aria-expanded={scaffoldOpen}
-              aria-controls="orig-chat-scaffold-grid"
-            >
-              <span aria-hidden>&#8627;</span>
-              Brief checklist
-              <span className={styles.startChipCount}>
-                {requiredFilled}/{REQUIRED_FIELD_COUNT} req.
-              </span>
-              <span className={styles.scaffoldToggleIcon} aria-hidden>
-                {scaffoldOpen ? "▴" : "▾"}
-              </span>
-            </button>
-            {scaffoldOpen && (
-              <div
-                id="orig-chat-scaffold-grid"
-                className={styles.startChipGrid}
-              >
-                {SCAFFOLD_DEFS.map(({ id, label, step }) => {
-                  const filled = brief.fields[id].trim().length > 0;
-                  return (
+      <section id="orig-grid" className={styles.phaseBody}>
+        <MovePhaseExplorer
+          moveId="new"
+          currentPhase={0}
+          tallies={originateTallies}
+        />
+        <div className={styles.phaseBodyMain}>
+          <AgentDock
+            agent={{
+              initials: "aVa",
+              mark: "ava",
+              name: "aVa",
+              role: "Move advisor",
+            }}
+            surface="/strategic-moves/new"
+            defaultMode="collapsed"
+            collapsedRestoreMode="expand"
+            collapsedSummary={{ label: "aVa", detail: "P0 Originate" }}
+            isAgentBusy={streaming}
+            thread={dockThread}
+            suggestedActions={dockSuggestedActions}
+            onMessage={(text) => void send(text)}
+            surfaceContext={{
+              phase: 0,
+              tenantName,
+              programName: brief.programName || null,
+              brief: {
+                fields: brief.fields,
+                filledCount: requiredFilled,
+                fieldsTotal: REQUIRED_FIELD_COUNT,
+              },
+            }}
+            workspace={
+              <article id="orig-canvas" className={styles.p0Workspace}>
+                <div className={styles.p0Header}>
+                  <div className={styles.detailBreadcrumb}>
                     <button
-                      key={id}
-                      id={`orig-chat-scaffold-step-${step}`}
-                      className={`${styles.startChipCompact} ${filled ? styles.startChipUsed : ""}`}
-                      onClick={() =>
-                        void send(`Let's work on step ${step}: ${label}.`)
-                      }
+                      className={styles.detailCrumb}
+                      onClick={cancelFlow}
                       type="button"
-                      disabled={streaming}
-                      aria-label={`${label}${filled ? " — captured" : ""}`}
-                      title={label}
                     >
-                      <span className={styles.chipStepNum} aria-hidden>
-                        {step}
-                      </span>
-                      <span className={styles.chipLabel}>{label}</span>
-                      {filled ? (
-                        <span className={styles.startChipArrow} aria-hidden>
-                          &#10003;
-                        </span>
-                      ) : null}
+                      Strategic Moves
                     </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* orig-chat-input-area */}
-          <div id="orig-chat-input-area" className={styles.chatInput}>
-            <div className={styles.inputRow}>
-              <textarea
-                id="orig-chat-input-field"
-                rows={1}
-                value={composer}
-                onChange={(e) => {
-                  setComposer(e.target.value);
-                  e.target.style.height = "auto";
-                  e.target.style.height = `${e.target.scrollHeight}px`;
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void send();
-                  }
-                }}
-                placeholder="Describe the outcome or pick a step above…"
-                disabled={streaming}
-                spellCheck
-                style={{ overflowY: "hidden", maxHeight: "120px" }}
-              />
-              <button
-                id="orig-chat-send-btn"
-                className={styles.sendBtn}
-                type="button"
-                onClick={() => void send()}
-                disabled={streaming || !composer.trim()}
-                aria-label="Send"
-              >
-                &#8593;
-              </button>
-            </div>
-          </div>
-        </aside>
-        ) : null}
-
-        {/* orig-canvas */}
-        <article id="orig-canvas" className={styles.rightPane}>
-          <div className={styles.detailHead}>
-            <div className={styles.detailHeadTop}>
-              <div className={styles.detailHeadLeft}>
-                <div className={styles.detailBreadcrumb}>
-                  <button
-                    className={styles.detailCrumb}
-                    onClick={cancelFlow}
-                    type="button"
-                  >
-                    Strategic Moves
-                  </button>
-                  <span aria-hidden>&rsaquo;</span>
-                  <span>{tenantName}</span>
-                  <span aria-hidden>&rsaquo;</span>
-                  <span>NEW</span>
-                </div>
-                <h1 className={styles.detailTitle}>
-                  Originate a strategic move
-                </h1>
-                <div className={styles.detailId}>Start &middot; Drafting</div>
-              </div>
-            </div>
-            <PhaseRail current={0} status="teal" />
-          </div>
-
-          {/* orig-canvas-tabs · Discovery Intake sub-tab (flag-gated) */}
-          {discoveryIntakeEnabled && (
-            <div
-              id="orig-canvas-tabs"
-              role="tablist"
-              aria-label="Originate canvas view"
-              style={{
-                display: "flex",
-                gap: 6,
-                padding: "10px 0 0",
-                borderBottom: "1px solid rgba(12,26,58,0.08)",
-              }}
-            >
-              {(["brief", "discovery"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  role="tab"
-                  type="button"
-                  aria-selected={canvasTab === tab}
-                  id={`orig-canvas-tab-${tab}`}
-                  onClick={() => setCanvasTab(tab)}
-                  style={{
-                    appearance: "none",
-                    border: "none",
-                    background: "transparent",
-                    padding: "6px 10px",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    letterSpacing: "0.04em",
-                    textTransform: "uppercase",
-                    cursor: "pointer",
-                    color: canvasTab === tab ? "#0C1A3A" : "#7C8598",
-                    borderBottom:
-                      canvasTab === tab
-                        ? "2px solid #0C1A3A"
-                        : "2px solid transparent",
-                  }}
-                >
-                  {tab === "brief" ? "Brief" : "Discovery"}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* orig-canvas-brief */}
-          {(!discoveryIntakeEnabled || canvasTab === "brief") && (
-            <div id="orig-canvas-brief" className={styles.scaffoldList}>
-              {SCAFFOLD_DEFS.map(({ id, label, step }) => {
-                const value = brief.fields[id];
-                const filled = value.trim().length > 0;
-                const num = String(step).padStart(2, "0");
-                return (
-                  <section
-                    id={`orig-canvas-brief-section-${step}`}
-                    className={`${styles.scaffoldRow} ${filled ? styles.scaffoldRowFilled : ""}`}
-                    key={id}
-                  >
-                    <div className={styles.scaffoldNum}>{num}</div>
-                    <div className={styles.scaffoldBody}>
-                      <div className={styles.scaffoldLabel}>{label}</div>
-                      {filled ? (
-                        <div
-                          id={`orig-canvas-brief-section-${step}-content`}
-                          className={styles.scaffoldName}
-                        >
-                          {value}
-                        </div>
-                      ) : (
-                        <div className={styles.scaffoldEmpty}>
-                          Not captured yet. Add it in the conversation or type
-                          it directly when ready.
-                        </div>
-                      )}
+                    <span aria-hidden>&rsaquo;</span>
+                    <span>{tenantName}</span>
+                    <span aria-hidden>&rsaquo;</span>
+                    <span>NEW</span>
+                  </div>
+                  <div className={styles.p0HeaderRow}>
+                    <div className={styles.p0TitleBlock}>
+                      <div className={styles.p0Eyebrow}>P0 · Originate</div>
+                      <h1 className={styles.p0Title}>
+                        Shape the Move brief
+                      </h1>
+                      <p className={styles.p0Subtitle}>
+                        Answer seven required questions. Direct fields and aVa
+                        both update this same brief in real time.
+                      </p>
                     </div>
-                    <div className={styles.scaffoldIndicator} aria-hidden />
-                  </section>
-                );
-              })}
-            </div>
-          )}
+                    <div
+                      id="orig-promote-bar-gate-summary"
+                      className={styles.p0ProgressPill}
+                    >
+                      <span>{requiredFilled} of 7</span>
+                      <div className={styles.p0ProgressTrack} aria-hidden>
+                        <div
+                          className={styles.p0ProgressFill}
+                          style={{ width: `${completionPercent}%` }}
+                        />
+                      </div>
+                      <small>{completionPercent}% complete</small>
+                    </div>
+                  </div>
+                </div>
 
-          {/* orig-canvas-discovery · DiscoveryCapturePanel projected from the brief */}
-          {discoveryIntakeEnabled && canvasTab === "discovery" && (
-            <div
-              id="orig-canvas-discovery"
-              style={{ padding: "8px 2px 4px", overflowY: "auto" }}
-            >
-              <DiscoveryCapturePanel
-                shape={strategicMoveBriefToDiscoveryShape(brief.fields)}
-              />
-            </div>
-          )}
+                <div
+                  className={styles.p0TabStrip}
+                  role="tablist"
+                  aria-label="Origination question groups"
+                >
+                  {P0_TABS.map((tab, index) => {
+                    const tabQuestions = tab.questions.filter(
+                      (question) => question.id !== "program-name",
+                    ) as Array<P0Question & { id: ScaffoldFieldId }>;
+                    const met = tabQuestions.filter(
+                      (question) =>
+                        brief.fields[question.id].trim().length > 0,
+                    ).length;
+                    const active = tab.id === activeTab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        className={`${styles.p0Tab} ${active ? styles.p0TabActive : ""}`}
+                        onClick={() => setActiveP0Tab(tab.id)}
+                      >
+                        <span>{index + 1}. {tab.label}</span>
+                        <strong>
+                          {met}/{tabQuestions.length}
+                        </strong>
+                        <small>{tab.summary}</small>
+                      </button>
+                    );
+                  })}
+                </div>
 
-          {/* orig-promote-bar */}
-          <footer id="orig-promote-bar" className={styles.scaffoldFoot}>
-            <div className={styles.programNameRow}>
-              <input
-                id="orig-identity-name-input"
-                type="text"
-                placeholder="Move name (aVa will suggest, or type here)"
-                value={brief.programName}
-                onChange={(e) =>
-                  setBrief((prev) => ({ ...prev, programName: e.target.value }))
-                }
-                className={styles.programNameInput}
-              />
-            </div>
-            <button
-              id="orig-promote-bar-promote-btn"
-              className={styles.btnPromote}
-              disabled={!canPromote}
-              onClick={() => void promote()}
-              type="button"
-              aria-disabled={!canPromote}
-            >
-              <span>Promote to P1 Charter</span>
-              <span className={styles.btnPromoteArrow} aria-hidden>
-                &rarr;
-              </span>
-            </button>
-            <div
-              id="orig-promote-bar-gate-summary"
-              className={styles.promoteHelper}
-            >
-              {canPromote
-                ? "Ready to promote"
-                : `${requiredFilled} of ${REQUIRED_FIELD_COUNT} required sections complete`}
-            </div>
-            {!canPromote ? (
-              <div
-                id="orig-promote-bar-status-text"
-                className={styles.promoteHelper}
-              >
-                Complete all 7 brief sections to promote.
-              </div>
-            ) : null}
-            {submitError ? (
-              <div className={styles.submitError}>{submitError}</div>
-            ) : null}
-          </footer>
-        </article>
-      </section>
+                {discoveryIntakeEnabled ? (
+                  <div
+                    id="orig-canvas-tabs"
+                    className={styles.p0SubTabs}
+                    role="tablist"
+                    aria-label="Originate canvas view"
+                  >
+                    {(["brief", "discovery"] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        role="tab"
+                        type="button"
+                        aria-selected={canvasTab === tab}
+                        id={`orig-canvas-tab-${tab}`}
+                        className={`${styles.p0SubTab} ${canvasTab === tab ? styles.p0SubTabActive : ""}`}
+                        onClick={() => setCanvasTab(tab)}
+                      >
+                        {tab === "brief" ? "Brief" : "Discovery"}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
 
-      {!chatOpen ? (
-        <button
-          type="button"
-          className={styles.origAvaLauncher}
-          onClick={() => setChatOpen(true)}
-          aria-label="Open aVa chat"
-          data-testid="orig-ava-launcher"
-        >
-          <AvaAskMark
-            variant="wordmark-light"
-            style={{ width: 42, minWidth: 42 }}
+                {(!discoveryIntakeEnabled || canvasTab === "brief") ? (
+                  <div id="orig-canvas-brief" className={styles.p0ActiveWork}>
+                    <div className={styles.p0ActiveHead}>
+                      <div>
+                        <div className={styles.p0Eyebrow}>
+                          Active work · {activeTab.shortLabel}
+                        </div>
+                        <h2 className={styles.p0SectionTitle}>
+                          {activeTab.label}
+                        </h2>
+                      </div>
+                      <span className={styles.p0GroupCount}>
+                        {activeTabMet} of {activeScaffoldQuestions.length}
+                      </span>
+                    </div>
+
+                    <div className={styles.p0QuestionGrid}>
+                      {activeTab.questions.map((question) => {
+                        if (question.id === "program-name") {
+                          return (
+                            <section
+                              key={question.id}
+                              className={styles.p0QuestionCard}
+                            >
+                              <label
+                                className={styles.p0QuestionLabel}
+                                htmlFor="orig-identity-name-input"
+                              >
+                                {question.label}
+                              </label>
+                              <p className={styles.p0QuestionHelp}>
+                                {question.helper}
+                              </p>
+                              <input
+                                id="orig-identity-name-input"
+                                type="text"
+                                placeholder={question.placeholder}
+                                value={brief.programName}
+                                onChange={(e) =>
+                                  setBrief((prev) => ({
+                                    ...prev,
+                                    programName: e.target.value,
+                                  }))
+                                }
+                                onBlur={() =>
+                                  setBrief((prev) => ({
+                                    ...prev,
+                                    programName: deriveStrategicMoveName(
+                                      prev.programName,
+                                      prev.fields,
+                                    ),
+                                  }))
+                                }
+                                maxLength={90}
+                                className={styles.p0NameInput}
+                              />
+                              <div className={styles.programNameHint}>
+                                Suggested: {suggestedName}
+                              </div>
+                            </section>
+                          );
+                        }
+
+                        const def = SCAFFOLD_DEFS.find(
+                          (item) => item.id === question.id,
+                        );
+                        if (!def) return null;
+                        const value = brief.fields[question.id];
+                        const filled = value.trim().length > 0;
+                        const draftValue = draftFields[question.id];
+                        return (
+                          <section
+                            id={`orig-canvas-brief-section-${def.step}`}
+                            key={question.id}
+                            className={`${styles.p0QuestionCard} ${filled ? styles.p0QuestionCardDone : ""}`}
+                          >
+                            <div className={styles.p0QuestionTop}>
+                              <div>
+                                <div className={styles.p0QuestionNumber}>
+                                  {String(def.step).padStart(2, "0")}
+                                </div>
+                                <label
+                                  className={styles.p0QuestionLabel}
+                                  htmlFor={`orig-canvas-brief-section-${def.step}-input`}
+                                >
+                                  {question.label}
+                                </label>
+                              </div>
+                              <span
+                                className={styles.p0QuestionStatus}
+                                aria-label={filled ? "Captured" : "Pending"}
+                              >
+                                {filled ? "Captured" : "Pending"}
+                              </span>
+                            </div>
+                            <p className={styles.p0QuestionHelp}>
+                              {question.helper}
+                            </p>
+                            {filled ? (
+                              <div
+                                id={`orig-canvas-brief-section-${def.step}-content`}
+                                className={styles.p0CapturedText}
+                              >
+                                {value}
+                              </div>
+                            ) : null}
+                            <textarea
+                              id={`orig-canvas-brief-section-${def.step}-input`}
+                              className={styles.p0AnswerInput}
+                              value={draftValue}
+                              placeholder={question.placeholder}
+                              rows={4}
+                              onChange={(e) =>
+                                setDraftFields((prev) => ({
+                                  ...prev,
+                                  [question.id]: e.target.value,
+                                }))
+                              }
+                            />
+                            <div className={styles.scaffoldActions}>
+                              <button
+                                type="button"
+                                className={styles.scaffoldSaveButton}
+                                onClick={() => saveDraftField(question.id)}
+                                disabled={!draftValue.trim()}
+                              >
+                                {filled ? "Update section" : "Submit section"}
+                              </button>
+                              {filled ? (
+                                <button
+                                  type="button"
+                                  className={styles.scaffoldClearButton}
+                                  onClick={() => clearBriefField(question.id)}
+                                >
+                                  Clear
+                                </button>
+                              ) : null}
+                            </div>
+                          </section>
+                        );
+                      })}
+                    </div>
+
+                    <footer id="orig-promote-bar" className={styles.p0Footer}>
+                      <div className={styles.p0StepNav}>
+                        <button
+                          type="button"
+                          className={styles.scaffoldClearButton}
+                          disabled={!previousTab}
+                          onClick={() =>
+                            previousTab ? setActiveP0Tab(previousTab.id) : null
+                          }
+                        >
+                          Back
+                        </button>
+                        {nextTab ? (
+                          <button
+                            type="button"
+                            className={styles.scaffoldSaveButton}
+                            onClick={() => setActiveP0Tab(nextTab.id)}
+                          >
+                            Next: {nextTab.shortLabel}
+                          </button>
+                        ) : null}
+                      </div>
+                      <div className={styles.p0Promotion}>
+                        <div>
+                          <strong>
+                            {canPromote
+                              ? "Ready to promote"
+                              : `${requiredFilled} of ${REQUIRED_FIELD_COUNT} required sections complete`}
+                          </strong>
+                          <span id="orig-promote-bar-status-text">
+                            {canPromote
+                              ? "P1 will use this brief as the charter seed."
+                              : "Complete all 7 brief sections to promote."}
+                          </span>
+                        </div>
+                        <button
+                          id="orig-promote-bar-promote-btn"
+                          className={styles.btnPromote}
+                          disabled={!canPromote}
+                          onClick={() => void promote()}
+                          type="button"
+                          aria-disabled={!canPromote}
+                        >
+                          <span>Promote to P1 Charter</span>
+                          <span className={styles.btnPromoteArrow} aria-hidden>
+                            &rarr;
+                          </span>
+                        </button>
+                      </div>
+                      {submitError ? (
+                        <div className={styles.submitError}>{submitError}</div>
+                      ) : null}
+                    </footer>
+                  </div>
+                ) : (
+                  <div id="orig-canvas-discovery" className={styles.p0Discovery}>
+                    <DiscoveryCapturePanel
+                      shape={strategicMoveBriefToDiscoveryShape(brief.fields)}
+                    />
+                  </div>
+                )}
+              </article>
+            }
           />
-        </button>
-      ) : null}
+        </div>
+      </section>
 
       {/* Discard confirmation */}
       {showConfirm ? (
