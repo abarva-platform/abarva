@@ -1,0 +1,87 @@
+Healthcare Demo
+Home
+Intelligence
+Moves
+Source
+Tower
+Learn
+AS
+Anand Sundaram · Healthcare Demo
+Sign out
+← All Moves
+CTX Smoke Member Assist 2026-07-14T11-57-23-7c646661
+
+Healthcare Composite Demo Tenant · AI PRODUCT ENABLEMENT · HEALTHCARE_PROVIDER
+
+PHASES
+✓
+Originate
+Complete
+P1
+Charter
+In progress
+P2
+Understand Current State
+Upcoming
+P3
+Choose the Approach
+Upcoming
+P4
+Build the Plan
+Upcoming
+P5
+Prepare to Execute
+Upcoming
+WORKSPACE
+▣
+Files & Evidence
+
+aVa assembles each phase from your evidence · you review & attest · the approved final carries forward
+
+CTX Smoke Member Assist 2026-07-14T11-57-23-7c646661/P1 · Charter
+AVA · MOVES
+Charter
+What exactly are we committing to investigate?
+
+Turn the idea into a bounded charter: scope, owner, success measures, assumptions, and the gate that protects the next phase.
+
+Step 1 of 3 · Prepare
+Continue →
+1
+Prepare
+2
+Scope
+3
+Gate approval
+a
+How to complete this phase
+1
+Review
+Read what AbarVa found, then download the recommended templates.
+2
+Run
+Conduct the working session with your SMEs and upload the summary.
+3
+Approve
+Confirm what changed, then approve to unlock the next phase.
+Templates & sessions
+
+Run the workshop with these templates; upload the completed output to record the choice and carry evidence forward.
+
+RECOMMENDED SESSIONS
+3
+Sponsor charter review
+Scope boundary workshop
+Success metric review
+TEMPLATES TO USE
+3
+DOCX
+Strategic Move Charter
+Use in workspace
+XLSX
+Scope Boundary Matrix
+Use in workspace
+PPTX
+Stakeholder Map
+Use in workspace
+Ask aVa
