@@ -1,0 +1,378 @@
+{
+  "tenant_key": "meridian-health",
+  "tenant_name": "Meridian Health",
+  "generated_at": "2026-07-14",
+  "standard": "standard-2026-07-v3",
+  "source_template_pack": "/Users/anand/Downloads/AbarVa_Final_Template_Pack_v3_With_Source_Adapters.zip",
+  "truth_split": {
+    "generated_candidate_quality_synthetic_data": true,
+    "active_tenant_input_modified": false,
+    "home_runtime_modified": false,
+    "module_runtime_behavior_changed": false,
+    "candidate_promoted": false
+  },
+  "counts": {
+    "00_enterprise_profile.xlsx": 1,
+    "01_business_functions.xlsx": 20,
+    "02_org_ownership.xlsx": 20,
+    "03_workforce_roles.xlsx": 40,
+    "04_applications_systems.xlsx": 67,
+    "05_data_assets_integrations.xlsx": 80,
+    "06_infrastructure_platforms.xlsx": 40,
+    "07_vendors_contracts.xlsx": 40,
+    "08_it_budget_spend_value.xlsx": 40,
+    "09_programs_initiatives.xlsx": 20,
+    "10_ai_automation_use_cases.xlsx": 20,
+    "11_risks_controls.xlsx": 40,
+    "12_relationships.xlsx": 360,
+    "13_evidence_sources.xlsx": 40,
+    "14_metrics_outcomes.xlsx": 40,
+    "15_industry_context_patterns.xlsx": 20,
+    "16_expert_lenses.xlsx": 20,
+    "17_managed_services_scope.xlsx": 20,
+    "18_operational_process_evidence.xlsx": 20,
+    "SA01_ServiceNow_CMDB_Extract_Template.xlsx": 60,
+    "SA02_IT_Finance_Budget_Spend_Extract_Template.xlsx": 40,
+    "SA03_Vendor_Contracts_Extract_Template.xlsx": 40,
+    "SA04_Program_Portfolio_Extract_Template.xlsx": 20,
+    "SA05_Cloud_Inventory_Extract_Template.xlsx": 25,
+    "SA06_Incident_Problem_Change_Extract_Template.xlsx": 40
+  },
+  "cluster_count": 20,
+  "required_clusters": [
+    "Enterprise profile and corporate priorities",
+    "Provider / clinical operations",
+    "Payer / claims operations",
+    "Eligibility / benefits",
+    "Prior authorization / utilization management",
+    "Member experience / contact center",
+    "Revenue cycle",
+    "Finance analytics",
+    "HR / workforce analytics",
+    "Clinical quality analytics",
+    "Claims analytics",
+    "Provider performance analytics",
+    "Enterprise data platform / lakehouse",
+    "Data governance, quality, catalog, MDM",
+    "Agent Assist for member service",
+    "Unified clinical + claims lakehouse",
+    "IT budget and Tower spend baseline",
+    "Vendor / contract / sourcing context",
+    "CMDB / infrastructure / cloud inventory context",
+    "Incident / problem / change operational health context"
+  ],
+  "relationship_types_present": [
+    "consumes",
+    "depends_on",
+    "feeds",
+    "funded_by",
+    "governed_by",
+    "has_risk",
+    "hosted_in",
+    "hosted_on",
+    "integrates_with",
+    "measured_by",
+    "owned_by",
+    "part_of",
+    "produces",
+    "provided_by",
+    "replaced_by",
+    "supports",
+    "target_platform_for",
+    "used_by"
+  ],
+  "checks": [
+    {
+      "name": "All 19 core dimensions populated",
+      "status": "pass"
+    },
+    {
+      "name": "All 6 source adapters populated",
+      "status": "pass"
+    },
+    {
+      "name": "No thin critical systems",
+      "status": "pass",
+      "details": "0 thin systems"
+    },
+    {
+      "name": "Relationship density >= 5 per cluster",
+      "status": "pass",
+      "details": "360 relationships for 20 clusters"
+    },
+    {
+      "name": "Evidence per cluster >= 2",
+      "status": "pass",
+      "details": "40 evidence rows"
+    },
+    {
+      "name": "No active promotion",
+      "status": "pass",
+      "details": "Generated path only; active tenant input untouched."
+    },
+    {
+      "name": "No realized value claims",
+      "status": "pass",
+      "details": "Rows use baseline/opportunity language only."
+    }
+  ],
+  "p0_findings": [],
+  "quality_opinion": "Pass: deep enough for review and context-layer redesign proof, pending client validation. Semantic-depth Fix1: FAIL for targeted proof clusters; broader pack remains candidate review data pending client validation. Semantic-depth Fix1: PASS for targeted proof clusters; broader pack remains candidate review data pending client validation. Semantic-depth Fix1: PASS for targeted proof clusters; broader pack remains candidate review data pending client validation.",
+  "semantic_depth_fix1": {
+    "verdict": "pass",
+    "scope": [
+      "Finance Analytics",
+      "Agent Assist / Member Service"
+    ],
+    "anti_repetition": {
+      "max_known_gap_duplicate_pct": 0,
+      "questionnaire_answer_duplicate_pct": 3.6,
+      "pass": true,
+      "known_gap_stats": {
+        "00_enterprise_profile.xlsx": {
+          "total": 1,
+          "unique": 1,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "01_business_functions.xlsx": {
+          "total": 20,
+          "unique": 20,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "02_org_ownership.xlsx": {
+          "total": 20,
+          "unique": 20,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "03_workforce_roles.xlsx": {
+          "total": 40,
+          "unique": 40,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "04_applications_systems.xlsx": {
+          "total": 67,
+          "unique": 67,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "05_data_assets_integrations.xlsx": {
+          "total": 80,
+          "unique": 80,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "06_infrastructure_platforms.xlsx": {
+          "total": 40,
+          "unique": 40,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "07_vendors_contracts.xlsx": {
+          "total": 40,
+          "unique": 40,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "08_it_budget_spend_value.xlsx": {
+          "total": 40,
+          "unique": 40,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "09_programs_initiatives.xlsx": {
+          "total": 20,
+          "unique": 20,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "10_ai_automation_use_cases.xlsx": {
+          "total": 20,
+          "unique": 20,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "11_risks_controls.xlsx": {
+          "total": 40,
+          "unique": 40,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "12_relationships.xlsx": {
+          "total": 360,
+          "unique": 360,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "13_evidence_sources.xlsx": {
+          "total": 40,
+          "unique": 40,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "14_metrics_outcomes.xlsx": {
+          "total": 40,
+          "unique": 40,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "15_industry_context_patterns.xlsx": {
+          "total": 20,
+          "unique": 20,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "16_expert_lenses.xlsx": {
+          "total": 20,
+          "unique": 20,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "17_managed_services_scope.xlsx": {
+          "total": 20,
+          "unique": 20,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        },
+        "18_operational_process_evidence.xlsx": {
+          "total": 20,
+          "unique": 20,
+          "maxDuplicateCount": 0,
+          "maxDuplicatePct": 0,
+          "repeatedTop": []
+        }
+      },
+      "questionnaire_answer_stats": {
+        "total": 140,
+        "unique": 35,
+        "maxDuplicateCount": 5,
+        "maxDuplicatePct": 3.6,
+        "repeatedTop": [
+          {
+            "value": "business functions: respondent confirmed the record is useful for orientation, but asked AbarVa to verify source ownership, row-level lineage, volume baseline, and whether the data is current or target-state only.",
+            "count": 5
+          },
+          {
+            "value": "applications systems: respondent noted that the data should support fact-based context browsing, while advisory claims require relationship validation, module readiness checks, and source-owner attestation.",
+            "count": 5
+          },
+          {
+            "value": "data assets integrations: respondent identified missing proof around operating volume, owner accountability, cross-system dependency, and whether the evidence is approved for Home, Moves, Source, Tower, and Intelligence.",
+            "count": 5
+          },
+          {
+            "value": "vendors contracts: respondent said the next workshop should reconcile this context to systems, data assets, vendors, risks, metrics, and program funding before it becomes active tenant truth.",
+            "count": 5
+          },
+          {
+            "value": "it budget spend value: respondent confirmed the record is useful for orientation, but asked AbarVa to verify source ownership, row-level lineage, volume baseline, and whether the data is current or target-state only.",
+            "count": 5
+          }
+        ]
+      }
+    },
+    "cluster_assessments": [
+      {
+        "cluster": "Finance Analytics",
+        "rowsMatched": 49,
+        "painPointsPresent": 5,
+        "evidenceItemsPresent": 5,
+        "metricsPresent": 3,
+        "issuesPresent": 3,
+        "modernizationDependenciesPresent": 3,
+        "relationshipsPresent": 17,
+        "pass": true,
+        "painPoints": [
+          "Month-end close dashboards slow down because 38 priority reports refresh from five SQL Server finance schemas during the same overnight load window.",
+          "Vendor spend differs across AP, procurement, and contract repository extracts, so sourcing questions need a reconciled vendor-master rule before Source uses the data.",
+          "FP&A trusts 42 certified dashboards, but business-unit teams still use 300+ Excel extracts copied from legacy Tableau views.",
+          "Informatica job failures are resolved manually because the finance mart lacks clear lineage from Oracle ERP subledger jobs to report-level consumers.",
+          "Databricks Finance Gold is the target path, but cost-center hierarchy, vendor master harmonization, and audit signoff are unresolved."
+        ],
+        "evidenceItems": [
+          "Oracle ERP Finance GL/AP/AR extract as of 2026-06 synthetic close cycle.",
+          "SQL Server Finance Mart schema inventory showing GL, AP, AR, budget, vendor spend, and cost-center schemas.",
+          "Informatica finance ETL inventory with 200 nightly jobs and close-window failure notes.",
+          "Tableau and Power BI finance dashboard inventory with certified vs shadow-report split.",
+          "Finance Gold Data Product design notes for Databricks target certification."
+        ],
+        "metrics": [
+          "Close report refresh completion by 6:00 AM CT",
+          "Certified finance dashboard adoption",
+          "Manual reconciliation hours per close cycle"
+        ],
+        "issues": [
+          "inconsistent vendor spend definitions",
+          "slow close-window dashboards",
+          "incomplete lineage from ERP to BI"
+        ],
+        "modernizationDependencies": [
+          "Databricks Finance Gold certification",
+          "vendor master harmonization",
+          "cost-center hierarchy stewardship"
+        ]
+      },
+      {
+        "cluster": "Agent Assist / Member Service",
+        "rowsMatched": 92,
+        "painPointsPresent": 5,
+        "evidenceItemsPresent": 5,
+        "metricsPresent": 3,
+        "issuesPresent": 3,
+        "modernizationDependenciesPresent": 3,
+        "relationshipsPresent": 34,
+        "pass": true,
+        "painPoints": [
+          "Agents search Salesforce cases, benefits notes, prior-auth status, and claims inquiry screens separately while the member waits on the call.",
+          "Call transcript intent labels are inconsistent across billing, eligibility, claims status, and prior authorization categories.",
+          "Genesys call metadata and Salesforce case outcomes are not reliably joined to claims and benefits context.",
+          "Knowledge articles are duplicated across operations playbooks and CRM snippets, creating conflicting guidance for appeal and denial inquiries.",
+          "Supervisors cannot prove whether AI suggestions reduce handle time without a baseline for after-call work, transfer rate, and first-contact resolution."
+        ],
+        "evidenceItems": [
+          "Genesys call sample with queue, intent, handle time, transfer flag, and after-call-work fields.",
+          "Salesforce Health Cloud case extract with member inquiry categories and resolution dispositions.",
+          "Call transcript annotation sample for billing, eligibility, claims status, and prior authorization intents.",
+          "Knowledge article export with duplicate and stale article flags.",
+          "Member service KPI baseline for AHT, FCR, transfer rate, complaint escalation, and quality score."
+        ],
+        "metrics": [
+          "Average handle time by intent",
+          "First contact resolution for claims-status calls",
+          "After-call work minutes per agent shift"
+        ],
+        "issues": [
+          "intent taxonomy drift",
+          "CRM-to-claims join gaps",
+          "stale knowledge article duplicates"
+        ],
+        "modernizationDependencies": [
+          "audited Claude agent-assist answer packet",
+          "Genesys-Salesforce-claims context join",
+          "human-approved next-best-action workflow"
+        ]
+      }
+    ]
+  }
+}
