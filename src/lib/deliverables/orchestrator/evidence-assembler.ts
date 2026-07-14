@@ -252,6 +252,7 @@ async function loadMoveCurrentStateCandidates(
       for (const row of data as Array<Record<string, unknown>>) {
         const id = stringOrNull(row.id);
         if (id && reviewedEvidenceIds.has(id)) continue;
+        if (stringOrNull(row.evidence_type) === 'move_context_extract_attached') continue;
         const candidate = evidenceItemToCandidate(row);
         if (candidate) candidates.push(candidate);
       }
