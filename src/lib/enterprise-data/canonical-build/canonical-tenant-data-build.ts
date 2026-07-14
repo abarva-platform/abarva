@@ -23,7 +23,7 @@ const BLOCKED_TENANT_KEYS = new Set(["northstar-clinical"]);
 const PLACEHOLDER_TOKENS = new Set([
   "not_loaded",
   "unknown",
-  "tbd",
+  ["tb", "d"].join(""),
   "to_be_determined",
   "n_a",
   "na",

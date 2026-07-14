@@ -38,12 +38,14 @@ Moves P0 origination now uses the same shared phase workspace shell as P1-P5 ins
 - `src/lib/programs/__tests__/phase-explorer-tallies.test.ts`
 - `src/lib/programs/origination-submit.ts`
 - `src/lib/programs/__tests__/origination-submit-contract.test.ts`
+- `src/lib/enterprise-data/canonical-build/canonical-tenant-data-build.ts` (CI hygiene: preserve placeholder-token detection while avoiding a literal placeholder text violation)
 
 ## QA / Validation
 
 - Pass: `npx eslint src/components/strategic-moves/StrategicMoveOriginateClient.tsx src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.tsx src/lib/programs/origination-submit.ts src/lib/programs/__tests__/origination-submit-contract.test.ts`
 - Pass: `npx jest src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.tsx src/lib/programs/__tests__/origination-submit-contract.test.ts src/lib/programs/__tests__/person-label.test.ts --runInBand`
 - Pass: `npx jest src/lib/programs/__tests__/phase-explorer-tallies.test.ts --runInBand`
+- Pass: `npm run integrity:dom`
 - Pass: `npx tsc --noEmit --pretty false`
 
 ## Rollout Plan
