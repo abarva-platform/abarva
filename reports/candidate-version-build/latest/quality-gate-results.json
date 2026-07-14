@@ -2,7 +2,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantDisplayName": "Apex Retail",
-    "candidateVersionId": "candidate:apex-retail:a8f372853cb9",
+    "candidateVersionId": "candidate:apex-retail:c4c22f56df29",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -34,7 +34,7 @@
         "id": "enterprise-profile-present-or-gapped",
         "label": "Enterprise profile present or explicit gaps",
         "status": "pass",
-        "detail": "Enterprise profile has 8 explicit gaps."
+        "detail": "Enterprise profile has 7 explicit gaps."
       },
       {
         "id": "source-lineage-present",
@@ -77,7 +77,7 @@
   {
     "tenantKey": "first-capital-financial",
     "tenantDisplayName": "First Capital Financial",
-    "candidateVersionId": "candidate:first-capital-financial:3794217b5b8c",
+    "candidateVersionId": "candidate:first-capital-financial:7d49ae021b1e",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -152,7 +152,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantDisplayName": "Lakeshore Holdings",
-    "candidateVersionId": "candidate:lakeshore-holdings:f03c88db6e6c",
+    "candidateVersionId": "candidate:lakeshore-holdings:307719ab1500",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -184,7 +184,7 @@
         "id": "enterprise-profile-present-or-gapped",
         "label": "Enterprise profile present or explicit gaps",
         "status": "pass",
-        "detail": "Enterprise profile has 9 explicit gaps."
+        "detail": "Enterprise profile has 7 explicit gaps."
       },
       {
         "id": "source-lineage-present",
@@ -227,7 +227,7 @@
   {
     "tenantKey": "lakeshore-industries",
     "tenantDisplayName": "Lakeshore Industries",
-    "candidateVersionId": "candidate:lakeshore-industries:615216388101",
+    "candidateVersionId": "candidate:lakeshore-industries:24713a2beb6f",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -259,7 +259,7 @@
         "id": "enterprise-profile-present-or-gapped",
         "label": "Enterprise profile present or explicit gaps",
         "status": "pass",
-        "detail": "Enterprise profile has 7 explicit gaps."
+        "detail": "Enterprise profile has 5 explicit gaps."
       },
       {
         "id": "source-lineage-present",
@@ -302,7 +302,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantDisplayName": "Meridian Health",
-    "candidateVersionId": "candidate:meridian-health:b8c7bed092e6",
+    "candidateVersionId": "candidate:meridian-health:386677f11404",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -334,7 +334,7 @@
         "id": "enterprise-profile-present-or-gapped",
         "label": "Enterprise profile present or explicit gaps",
         "status": "pass",
-        "detail": "Enterprise profile has 6 explicit gaps."
+        "detail": "Enterprise profile is ready."
       },
       {
         "id": "source-lineage-present",
@@ -364,7 +364,7 @@
         "id": "home-ava-readiness-artifact",
         "label": "Home/aVa readiness artifact present",
         "status": "pass",
-        "detail": "Home/aVa artifact exists and records caveats before active consumption."
+        "detail": "Home/aVa readiness is green."
       },
       {
         "id": "active-candidate-separation",
@@ -377,7 +377,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantDisplayName": "SkyHarbor Air",
-    "candidateVersionId": "candidate:skyharbor-air:c44972185e16",
+    "candidateVersionId": "candidate:skyharbor-air:942cb1f220fa",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [

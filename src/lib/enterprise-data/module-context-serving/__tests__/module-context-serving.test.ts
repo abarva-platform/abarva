@@ -47,13 +47,13 @@ describe("module context serving contract", () => {
     );
   });
 
-  it("keeps active mode from falling back to candidate data when active access is missing", async () => {
+  it("serves Meridian active module context without consuming candidate data by default", async () => {
     const packet = await getModuleContext(
       {
         tenantKey: "meridian-health",
         moduleKey: "home",
         purpose: "context_summary",
-        requestedDomains: ["enterprise_profile", "applications_systems"],
+        requestedDomains: ["enterprise_profile", "applications_systems", "data_assets_integrations"],
       },
       {
         repoRoot: process.cwd(),
@@ -62,21 +62,17 @@ describe("module context serving contract", () => {
     );
 
     expect(packet.mode).toBe("active");
-    expect(packet.sourceMode).toBe("active_not_available");
-    expect(packet.activeTenantAccessVersionId).toBeNull();
+    expect(packet.sourceMode).toBe("active_tenant_access");
+    expect(packet.activeTenantAccessVersionId).toContain("candidate:meridian-health:");
     expect(packet.candidateVersionId).toBeNull();
-    expect(packet.records).toHaveLength(0);
-    expect(packet.gaps).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          gapId: "meridian-health:active-access-record-missing",
-          severity: "blocker",
-        }),
-      ]),
-    );
+    expect(packet.records.length).toBeGreaterThan(0);
+    expect(packet.records.every((record) => record.agentReadiness === "agent_ready")).toBe(true);
+    expect(packet.records.every((record) => record.sourceEvidenceIds.length > 0)).toBe(true);
+    expect(packet.gaps).toHaveLength(0);
     expect(packet.guardrails.candidateDataConsumed).toBe(false);
     expect(packet.guardrails.homeReadsCandidateByDefault).toBe(false);
-    expect(packet.contextCompleteness.overall).toBe("Blocked");
+    expect(packet.guardrails.moduleRuntimeConsumptionChanged).toBe(false);
+    expect(["Good", "Strong", "Limited"]).toContain(packet.contextCompleteness.overall);
   });
 
   it("returns inactive candidate context only when candidate preview is explicit", async () => {

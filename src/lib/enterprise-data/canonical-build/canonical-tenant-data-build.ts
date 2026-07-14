@@ -22,6 +22,8 @@ export const CANONICAL_DATA_BUILD_VERSION = "canonical-tenant-data-build/v1";
 const BLOCKED_TENANT_KEYS = new Set(["northstar-clinical"]);
 const PLACEHOLDER_TOKENS = new Set([
   "not_loaded",
+  "not_provided",
+  "not_available",
   "unknown",
   ["tb", "d"].join(""),
   "to_be_determined",
@@ -1087,10 +1089,10 @@ function profileBuildForTenant(
     facts.vision ??= stringAttribute(record, ["vision", "visionStatement", "vision_statement"]);
     facts.source ??= stringAttribute(record, ["sourceFile", "source_file"]);
     facts.asOf ??= stringAttribute(record, ["sourceDate", "source_date", "sourceAsOfDate", "source_as_of_date"]);
-    facts.locations ??= splitValues(stringAttribute(record, ["operatingRegions", "operating_regions", "globalLocations", "global_locations"]));
-    facts.leadership ??= splitValues(stringAttribute(record, ["leadershipTeam", "leadership_team", "leadershipRoles", "leadership_roles"]));
-    facts.strategy ??= splitValues(stringAttribute(record, ["strategicPriorities", "strategic_priorities"]));
-    facts.segments ??= splitValues(stringAttribute(record, ["customerSegments", "customer_segments", "businessSegments", "business_segments"]));
+    fillListFact(facts, "locations", splitValues(stringAttribute(record, ["operatingRegions", "operating_regions", "globalLocations", "global_locations"])));
+    fillListFact(facts, "leadership", splitValues(stringAttribute(record, ["leadershipTeam", "leadership_team", "leadershipRoles", "leadership_roles"])));
+    fillListFact(facts, "strategy", splitValues(stringAttribute(record, ["strategicPriorities", "strategic_priorities"])));
+    fillListFact(facts, "segments", splitValues(stringAttribute(record, ["customerSegments", "customer_segments", "businessSegments", "business_segments"])));
   }
 
   const missingFields = REQUIRED_PROFILE_FIELDS.filter((field) => {
@@ -1120,6 +1122,16 @@ function profileBuildForTenant(
       evidenceKey: record.evidenceReferences[0]?.evidenceKey ?? "",
     })),
   };
+}
+
+function fillListFact(
+  facts: EnterpriseProfileBuild["facts"],
+  field: "locations" | "leadership" | "strategy" | "segments",
+  values: string[],
+): void {
+  if (values.length > 0 && (!facts[field] || facts[field].length === 0)) {
+    facts[field] = values;
+  }
 }
 
 function profileFactValue(
@@ -1250,6 +1262,14 @@ function stringAttribute(record: CanonicalIngestionRecord, fields: string[]): st
     const value = record.attributes[toAttributeName(field)]?.value ?? record.attributes[field]?.value;
     if (typeof value === "string" && value.trim()) return value;
     if (typeof value === "number") return String(value);
+    if (Array.isArray(value) && value.length > 0) {
+      const joined = value
+        .filter((item): item is string | number | boolean => ["string", "number", "boolean"].includes(typeof item))
+        .map((item) => String(item).trim())
+        .filter(Boolean)
+        .join("; ");
+      if (joined) return joined;
+    }
   }
   return undefined;
 }

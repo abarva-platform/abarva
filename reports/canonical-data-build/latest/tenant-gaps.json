@@ -1,15 +1,15 @@
 {
   "apex-retail": {
-    "total": 3599,
+    "total": 3596,
     "byCode": {
       "placeholder_value_omitted": 3589,
-      "enterprise_profile_gap": 10
+      "enterprise_profile_gap": 7
     },
     "bySeverity": {
-      "warning": 3599
+      "warning": 3596
     },
     "byDomain": {
-      "enterprise_profile": 11,
+      "enterprise_profile": 8,
       "business_functions": 26,
       "org_ownership": 50,
       "workforce_roles": 12,
@@ -215,22 +215,6 @@
         "tenantKey": "apex-retail",
         "severity": "warning",
         "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field revenue is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "revenue"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field employees is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "employees"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
         "message": "Enterprise profile field locations is missing from canonical tenant inputs.",
         "domain": "enterprise_profile",
         "field": "locations"
@@ -263,14 +247,6 @@
         "tenantKey": "apex-retail",
         "severity": "warning",
         "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field strategy is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "strategy"
-      },
-      {
-        "tenantKey": "apex-retail",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
         "message": "Enterprise profile field segments is missing from canonical tenant inputs.",
         "domain": "enterprise_profile",
         "field": "segments"
@@ -286,16 +262,16 @@
     ]
   },
   "first-capital-financial": {
-    "total": 5618,
+    "total": 5616,
     "byCode": {
       "placeholder_value_omitted": 5609,
-      "enterprise_profile_gap": 9
+      "enterprise_profile_gap": 7
     },
     "bySeverity": {
-      "warning": 5618
+      "warning": 5616
     },
     "byDomain": {
-      "enterprise_profile": 10,
+      "enterprise_profile": 8,
       "business_functions": 27,
       "org_ownership": 65,
       "workforce_roles": 16,
@@ -501,22 +477,6 @@
         "tenantKey": "first-capital-financial",
         "severity": "warning",
         "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field revenue is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "revenue"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field employees is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "employees"
-      },
-      {
-        "tenantKey": "first-capital-financial",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
         "message": "Enterprise profile field locations is missing from canonical tenant inputs.",
         "domain": "enterprise_profile",
         "field": "locations"
@@ -564,13 +524,13 @@
     ]
   },
   "lakeshore-holdings": {
-    "total": 467,
+    "total": 463,
     "byCode": {
       "placeholder_value_omitted": 456,
-      "enterprise_profile_gap": 11
+      "enterprise_profile_gap": 7
     },
     "bySeverity": {
-      "warning": 467
+      "warning": 463
     },
     "byDomain": {
       "business_functions": 14,
@@ -588,7 +548,7 @@
       "metrics_outcomes": 12,
       "industry_context_patterns": 4,
       "expert_lenses": 4,
-      "enterprise_profile": 11
+      "enterprise_profile": 7
     },
     "samples": [
       {
@@ -768,22 +728,6 @@
         "tenantKey": "lakeshore-holdings",
         "severity": "warning",
         "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field revenue is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "revenue"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field employees is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "employees"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
         "message": "Enterprise profile field locations is missing from canonical tenant inputs.",
         "domain": "enterprise_profile",
         "field": "locations"
@@ -816,22 +760,6 @@
         "tenantKey": "lakeshore-holdings",
         "severity": "warning",
         "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field strategy is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "strategy"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field businessModel is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "businessModel"
-      },
-      {
-        "tenantKey": "lakeshore-holdings",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
         "message": "Enterprise profile field segments is missing from canonical tenant inputs.",
         "domain": "enterprise_profile",
         "field": "segments"
@@ -847,18 +775,18 @@
     ]
   },
   "lakeshore-industries": {
-    "total": 39,
+    "total": 35,
     "byCode": {
       "primary_identity_missing_or_placeholder": 30,
-      "enterprise_profile_gap": 9
+      "enterprise_profile_gap": 5
     },
     "bySeverity": {
-      "warning": 39
+      "warning": 35
     },
     "byDomain": {
       "relationships": 6,
       "industry_context_patterns": 24,
-      "enterprise_profile": 9
+      "enterprise_profile": 5
     },
     "samples": [
       {
@@ -887,22 +815,6 @@
         "tenantKey": "lakeshore-industries",
         "severity": "warning",
         "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field revenue is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "revenue"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field employees is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "employees"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
         "message": "Enterprise profile field locations is missing from canonical tenant inputs.",
         "domain": "enterprise_profile",
         "field": "locations"
@@ -935,22 +847,6 @@
         "tenantKey": "lakeshore-industries",
         "severity": "warning",
         "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field strategy is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "strategy"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field segments is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "segments"
-      },
-      {
-        "tenantKey": "lakeshore-industries",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
         "message": "Enterprise profile field source is missing from canonical tenant inputs.",
         "domain": "enterprise_profile",
         "field": "source"
@@ -958,23 +854,23 @@
     ]
   },
   "meridian-health": {
-    "total": 3653,
+    "total": 3719,
     "byCode": {
-      "placeholder_value_omitted": 3626,
-      "primary_identity_missing_or_placeholder": 19,
-      "enterprise_profile_gap": 8
+      "placeholder_value_omitted": 3700,
+      "primary_identity_missing_or_placeholder": 19
     },
     "bySeverity": {
-      "warning": 3653
+      "warning": 3719
     },
     "byDomain": {
+      "enterprise_profile": 12,
       "org_ownership": 88,
-      "vendors_contracts": 109,
-      "spend_value": 198,
-      "programs_initiatives": 170,
-      "ai_automation_use_cases": 162,
-      "enterprise_profile": 17,
-      "workforce_roles": 18,
+      "workforce_roles": 26,
+      "applications_systems": 177,
+      "vendors_contracts": 116,
+      "spend_value": 208,
+      "programs_initiatives": 198,
+      "ai_automation_use_cases": 165,
       "data_assets_integrations": 432,
       "metrics_outcomes": 127,
       "service_scope_managed_services": 6,
@@ -983,12 +879,33 @@
       "industry_context_patterns": 192,
       "infrastructure_platforms": 2,
       "business_functions": 25,
-      "applications_systems": 162,
       "risks_controls": 349,
       "evidence_sources": 14,
       "expert_lenses": 5
     },
     "samples": [
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field revenue_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "domain": "enterprise_profile",
+        "field": "revenue_usd",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field employee_count was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "domain": "enterprise_profile",
+        "field": "employee_count",
+        "value": "not_provided"
+      },
       {
         "tenantKey": "meridian-health",
         "severity": "warning",
@@ -999,6 +916,28 @@
         "domain": "org_ownership",
         "field": "owned_systems",
         "value": "not_loaded"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field population_count was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_04_workforce_personas.csv",
+        "rowNumber": 4,
+        "domain": "workforce_roles",
+        "field": "population_count",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field annual_cost_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_05_applications_systems.csv",
+        "rowNumber": 2,
+        "domain": "applications_systems",
+        "field": "annual_cost_usd",
+        "value": "not_provided"
       },
       {
         "tenantKey": "meridian-health",
@@ -1015,6 +954,17 @@
         "tenantKey": "meridian-health",
         "severity": "warning",
         "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field annual_cost_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_07_vendors_contracts.csv",
+        "rowNumber": 2,
+        "domain": "vendors_contracts",
+        "field": "annual_cost_usd",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
         "message": "Placeholder value in field renewal_date was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_07_vendors_contracts.csv",
         "rowNumber": 2,
@@ -1026,12 +976,67 @@
         "tenantKey": "meridian-health",
         "severity": "warning",
         "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field amount_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_08_spend_value.csv",
+        "rowNumber": 2,
+        "domain": "spend_value",
+        "field": "amount_usd",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
         "message": "Placeholder value in field committed_vs_discretionary was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_08_spend_value.csv",
         "rowNumber": 2,
         "domain": "spend_value",
         "field": "committed_vs_discretionary",
         "value": "not_loaded"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field budget_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_09_programs_initiatives.csv",
+        "rowNumber": 2,
+        "domain": "programs_initiatives",
+        "field": "budget_usd",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field spend_to_date_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_09_programs_initiatives.csv",
+        "rowNumber": 2,
+        "domain": "programs_initiatives",
+        "field": "spend_to_date_usd",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field expected_value_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_09_programs_initiatives.csv",
+        "rowNumber": 2,
+        "domain": "programs_initiatives",
+        "field": "expected_value_usd",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field realized_value_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_09_programs_initiatives.csv",
+        "rowNumber": 2,
+        "domain": "programs_initiatives",
+        "field": "realized_value_usd",
+        "value": "not_provided"
       },
       {
         "tenantKey": "meridian-health",
@@ -1092,6 +1097,17 @@
         "tenantKey": "meridian-health",
         "severity": "warning",
         "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field measured_value_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_10_ai_initiatives.csv",
+        "rowNumber": 2,
+        "domain": "ai_automation_use_cases",
+        "field": "measured_value_usd",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
         "message": "Placeholder value in field revenue_period_label was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_00_portfolio_entity_registry.csv",
         "rowNumber": 2,
@@ -1105,39 +1121,6 @@
         "code": "placeholder_value_omitted",
         "message": "Placeholder value in field employee_count_basis was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_00_portfolio_entity_registry.csv",
-        "rowNumber": 2,
-        "domain": "enterprise_profile",
-        "field": "employee_count_basis",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field revenue_basis was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv",
-        "rowNumber": 2,
-        "domain": "enterprise_profile",
-        "field": "revenue_basis",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field revenue_period_label was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv",
-        "rowNumber": 2,
-        "domain": "enterprise_profile",
-        "field": "revenue_period_label",
-        "value": "not_loaded"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "placeholder_value_omitted",
-        "message": "Placeholder value in field employee_count_basis was omitted and recorded as a gap, not a fact.",
-        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv",
         "rowNumber": 2,
         "domain": "enterprise_profile",
         "field": "employee_count_basis",
@@ -1158,11 +1141,55 @@
         "tenantKey": "meridian-health",
         "severity": "warning",
         "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field corporate_it_budget_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "domain": "enterprise_profile",
+        "field": "corporate_it_budget_usd",
+        "value": "not_loaded"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field opco_local_technology_budget_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "domain": "enterprise_profile",
+        "field": "opco_local_technology_budget_usd",
+        "value": "not_loaded"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field total_direct_technology_budget_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "domain": "enterprise_profile",
+        "field": "total_direct_technology_budget_usd",
+        "value": "not_loaded"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
         "message": "Placeholder value in field technology_budget_basis was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv",
         "rowNumber": 2,
         "domain": "enterprise_profile",
         "field": "technology_budget_basis",
+        "value": "not_loaded"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field ai_data_budget_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "domain": "enterprise_profile",
+        "field": "ai_data_budget_usd",
         "value": "not_loaded"
       },
       {
@@ -1197,6 +1224,17 @@
         "domain": "org_ownership",
         "field": "budget_authority",
         "value": "not_loaded"
+      },
+      {
+        "tenantKey": "meridian-health",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field population_count was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_04_workforce_personas.csv",
+        "rowNumber": 4,
+        "domain": "workforce_roles",
+        "field": "population_count",
+        "value": "not_provided"
       },
       {
         "tenantKey": "meridian-health",
@@ -1505,93 +1543,30 @@
         "domain": "expert_lenses",
         "field": "known_gaps",
         "value": "none"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field revenue is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "revenue"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field employees is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "employees"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field locations is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "locations"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field leadership is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "leadership"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field mission is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "mission"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field vision is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "vision"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field strategy is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "strategy"
-      },
-      {
-        "tenantKey": "meridian-health",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field segments is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "segments"
       }
     ]
   },
   "skyharbor-air": {
-    "total": 1134,
+    "total": 1200,
     "byCode": {
       "primary_identity_missing_or_placeholder": 248,
-      "placeholder_value_omitted": 877,
-      "enterprise_profile_gap": 9
+      "placeholder_value_omitted": 945,
+      "enterprise_profile_gap": 7
     },
     "bySeverity": {
-      "warning": 1134
+      "warning": 1200
     },
     "byDomain": {
       "enterprise_profile": 20,
       "operational_process_evidence": 52,
       "infrastructure_platforms": 551,
-      "programs_initiatives": 74,
-      "spend_value": 188,
-      "vendors_contracts": 116,
+      "programs_initiatives": 102,
+      "spend_value": 198,
+      "vendors_contracts": 126,
       "org_ownership": 13,
-      "ai_automation_use_cases": 12,
-      "workforce_roles": 1,
+      "workforce_roles": 3,
+      "applications_systems": 13,
+      "ai_automation_use_cases": 15,
       "data_assets_integrations": 70,
       "metrics_outcomes": 12,
       "service_scope_managed_services": 6,
@@ -1669,12 +1644,56 @@
         "tenantKey": "skyharbor-air",
         "severity": "warning",
         "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field revenue_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "domain": "enterprise_profile",
+        "field": "revenue_usd",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field employee_count was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "domain": "enterprise_profile",
+        "field": "employee_count",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
         "message": "Placeholder value in field owned_systems was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_03_org_ownership.csv",
         "rowNumber": 6,
         "domain": "org_ownership",
         "field": "owned_systems",
         "value": "not_loaded"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field population_count was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_04_workforce_personas.csv",
+        "rowNumber": 7,
+        "domain": "workforce_roles",
+        "field": "population_count",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field annual_cost_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_05_applications_systems.csv",
+        "rowNumber": 2,
+        "domain": "applications_systems",
+        "field": "annual_cost_usd",
+        "value": "not_provided"
       },
       {
         "tenantKey": "skyharbor-air",
@@ -1691,6 +1710,17 @@
         "tenantKey": "skyharbor-air",
         "severity": "warning",
         "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field annual_cost_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_07_vendors_contracts.csv",
+        "rowNumber": 2,
+        "domain": "vendors_contracts",
+        "field": "annual_cost_usd",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
         "message": "Placeholder value in field renewal_date was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_07_vendors_contracts.csv",
         "rowNumber": 2,
@@ -1702,12 +1732,67 @@
         "tenantKey": "skyharbor-air",
         "severity": "warning",
         "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field amount_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_08_spend_value.csv",
+        "rowNumber": 2,
+        "domain": "spend_value",
+        "field": "amount_usd",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
         "message": "Placeholder value in field committed_vs_discretionary was omitted and recorded as a gap, not a fact.",
         "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_08_spend_value.csv",
         "rowNumber": 2,
         "domain": "spend_value",
         "field": "committed_vs_discretionary",
         "value": "not_loaded"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field budget_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_09_programs_initiatives.csv",
+        "rowNumber": 2,
+        "domain": "programs_initiatives",
+        "field": "budget_usd",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field spend_to_date_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_09_programs_initiatives.csv",
+        "rowNumber": 2,
+        "domain": "programs_initiatives",
+        "field": "spend_to_date_usd",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field expected_value_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_09_programs_initiatives.csv",
+        "rowNumber": 2,
+        "domain": "programs_initiatives",
+        "field": "expected_value_usd",
+        "value": "not_provided"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field realized_value_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_09_programs_initiatives.csv",
+        "rowNumber": 2,
+        "domain": "programs_initiatives",
+        "field": "realized_value_usd",
+        "value": "not_provided"
       },
       {
         "tenantKey": "skyharbor-air",
@@ -1763,6 +1848,17 @@
         "domain": "ai_automation_use_cases",
         "field": "adoption_metric",
         "value": "not_loaded"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field measured_value_usd was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_10_ai_initiatives.csv",
+        "rowNumber": 2,
+        "domain": "ai_automation_use_cases",
+        "field": "measured_value_usd",
+        "value": "not_provided"
       },
       {
         "tenantKey": "skyharbor-air",
@@ -1895,6 +1991,17 @@
         "domain": "org_ownership",
         "field": "budget_authority",
         "value": "not_loaded"
+      },
+      {
+        "tenantKey": "skyharbor-air",
+        "severity": "warning",
+        "code": "placeholder_value_omitted",
+        "message": "Placeholder value in field population_count was omitted and recorded as a gap, not a fact.",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_04_workforce_personas.csv",
+        "rowNumber": 7,
+        "domain": "workforce_roles",
+        "field": "population_count",
+        "value": "not_provided"
       },
       {
         "tenantKey": "skyharbor-air",
@@ -2083,22 +2190,6 @@
         "message": "Enterprise profile field vision is missing from canonical tenant inputs.",
         "domain": "enterprise_profile",
         "field": "vision"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field strategy is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "strategy"
-      },
-      {
-        "tenantKey": "skyharbor-air",
-        "severity": "warning",
-        "code": "enterprise_profile_gap",
-        "message": "Enterprise profile field segments is missing from canonical tenant inputs.",
-        "domain": "enterprise_profile",
-        "field": "segments"
       }
     ]
   }

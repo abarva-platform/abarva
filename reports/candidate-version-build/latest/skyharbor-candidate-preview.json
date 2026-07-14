@@ -1,10 +1,10 @@
 {
-  "candidateVersionId": "candidate:skyharbor-air:c44972185e16",
+  "candidateVersionId": "candidate:skyharbor-air:942cb1f220fa",
   "tenantId": "skyharbor-air",
   "tenantKey": "skyharbor-air",
   "tenantDisplayName": "SkyHarbor Air",
-  "sourceBuildId": "canonical-data-build:ca80432e6744",
-  "sourceBuildFingerprint": "ca80432e6744f888ad49c8607df7dca7ba02848676d7d5142e3fc9b693b546c1",
+  "sourceBuildId": "canonical-data-build:24693eef8c78",
+  "sourceBuildFingerprint": "24693eef8c783cd336d3a3419b9adcfed12c6c13a76c81f2775387ed3b9ab0f5",
   "inputFingerprint": "bc84e5a115a5625b707caab14cbc1c22233d65366b1668d3fb9d9a050fd6bdd1",
   "canonicalRecordCount": 3457,
   "evidenceAttachmentCount": 3457,
@@ -217,14 +217,14 @@
   ],
   "promotionBlockers": [
     "Profile gap before promotion: headquarters",
+    "Profile gap before promotion: revenue",
+    "Profile gap before promotion: employees",
     "Profile gap before promotion: locations",
     "Profile gap before promotion: leadership",
     "Profile gap before promotion: mission",
-    "Profile gap before promotion: vision",
-    "Profile gap before promotion: strategy",
-    "Profile gap before promotion: segments"
+    "Profile gap before promotion: vision"
   ],
-  "generatedAt": "2026-07-14T01:22:31.580Z",
+  "generatedAt": "2026-07-14T12:00:00.000Z",
   "status": "inactive",
   "creationStatus": "created",
   "mode": "candidate_preview",
@@ -639,12 +639,12 @@
     "relationshipReady": true,
     "caveats": [
       "Enterprise profile missing headquarters.",
+      "Enterprise profile missing revenue.",
+      "Enterprise profile missing employees.",
       "Enterprise profile missing locations.",
       "Enterprise profile missing leadership.",
       "Enterprise profile missing mission.",
       "Enterprise profile missing vision.",
-      "Enterprise profile missing strategy.",
-      "Enterprise profile missing segments.",
       "workforce_roles below depth by 13 rows.",
       "industry_context_patterns below depth by 1 rows.",
       "service_scope_managed_services below depth by 7 rows."

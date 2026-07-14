@@ -1,6 +1,6 @@
 # Canonical Tenant Data Build
 
-Generated: 2026-07-14T00:47:02.361Z
+Generated: 2026-07-14T05:13:14.551Z
 
 ## Truth Split
 
@@ -19,7 +19,7 @@ Generated: 2026-07-14T00:47:02.361Z
 - Quarantined canonical records: 0
 - Evidence attachments: 20,230
 - Relationship candidates: 10,835
-- Placeholder rejections/gaps: 14,454
+- Placeholder rejections/gaps: 14,596
 - Archive/legacy read violations: 0
 - Error findings: 0
 
@@ -31,7 +31,7 @@ Generated: 2026-07-14T00:47:02.361Z
 | First Capital Financial | 17 | 6,132 | 5,609 | 2,757 | gaps | not ready |
 | Lakeshore Holdings | 19 | 996 | 457 | 183 | gaps | not ready |
 | Lakeshore Industries | 52 | 3,809 | 3,040 | 892 | gaps | not ready |
-| Meridian Health | 60 | 4,697 | 4,078 | 2,177 | gaps | not ready |
+| Meridian Health | 60 | 4,697 | 4,078 | 2,177 | ready | ready |
 | SkyHarbor Air | 57 | 3,842 | 3,457 | 3,136 | gaps | not ready |
 
 ## Domain Counts
