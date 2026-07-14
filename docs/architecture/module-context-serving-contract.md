@@ -42,6 +42,28 @@ getModuleContext({
 });
 ```
 
+Modules that need a deterministic executive explanation should call:
+
+```ts
+explainModuleContext({
+  tenantKey,
+  moduleKey,
+  purpose,
+  mode,
+  scope,
+  requestedDomains,
+  evidencePolicy,
+  relationshipPolicy,
+});
+```
+
+`getModuleContext(...)` returns the facts, evidence, gaps, relationships,
+readiness, and guardrails.
+
+`explainModuleContext(...)` returns deterministic English and action lists
+derived from the packet. It does not call Claude, does not synthesize new facts,
+and does not implement module behavior.
+
 ### Module Keys
 
 ```text
@@ -112,6 +134,7 @@ caveats[]
 lineage
 readiness
 guardrails
+contextCompleteness
 ```
 
 Each record includes:
@@ -143,6 +166,49 @@ restricted
 missing_evidence
 relationship_not_validated
 ```
+
+Every packet also carries `contextCompleteness`:
+
+```json
+{
+  "breadth": 92,
+  "depth": 84,
+  "relationshipCoverage": 41,
+  "evidenceCoverage": 88,
+  "answerability": 79,
+  "overall": "Good"
+}
+```
+
+These scores are deterministic and packet-local. They are not Tower metrics,
+realized value, or a client outcome claim. Modules may render the same scores
+with different labels:
+
+| Module | Display label |
+| --- | --- |
+| Home | Enterprise Understanding |
+| Intelligence | Answer Readiness |
+| Moves | Evidence Readiness |
+| Source | Commercial Readiness |
+| Tower | Measurement Readiness |
+
+## Explanation Shape
+
+`explainModuleContext(...)` returns:
+
+```text
+summary
+strengths[]
+limitations[]
+supportedQuestions[]
+unsupportedQuestions[]
+nextActions[]
+contextCompleteness
+guardrails
+```
+
+The explanation is deterministic and evidence-bound. It is intended to prevent
+each module from inventing its own English for the same packet.
 
 ## Guardrails
 
@@ -234,4 +300,6 @@ The audit proves:
 - missing active access does not fall back to candidate data;
 - candidate preview returns records only when explicitly requested;
 - relationship candidates are omitted unless requested;
+- context completeness is available in every packet;
+- deterministic explanations preserve guardrails;
 - module-runtime and data-mutation guardrails remain false.

@@ -1,4 +1,8 @@
-import { getModuleContext } from "../module-context-serving";
+import {
+  explainModuleContext,
+  getModuleContext,
+} from "../module-context-serving";
+import type { ModuleContextReadRequest } from "../../contracts/module-context-apis";
 
 describe("module context serving contract", () => {
   it("defaults to active mode and does not consume candidate data", async () => {
@@ -30,6 +34,15 @@ describe("module context serving contract", () => {
     expect(packet.guardrails.moveRuntimeModified).toBe(false);
     expect(packet.guardrails.moveEvidenceCreated).toBe(false);
     expect(packet.guardrails.moduleRuntimeConsumptionChanged).toBe(false);
+    expect(packet.contextCompleteness).toEqual(
+      expect.objectContaining({
+        breadth: 0,
+        depth: 0,
+        relationshipCoverage: 0,
+        evidenceCoverage: 0,
+        overall: "Blocked",
+      }),
+    );
   });
 
   it("keeps active mode from falling back to candidate data when active access is missing", async () => {
@@ -61,6 +74,7 @@ describe("module context serving contract", () => {
     );
     expect(packet.guardrails.candidateDataConsumed).toBe(false);
     expect(packet.guardrails.homeReadsCandidateByDefault).toBe(false);
+    expect(packet.contextCompleteness.overall).toBe("Blocked");
   });
 
   it("returns inactive candidate context only when candidate preview is explicit", async () => {
@@ -113,6 +127,10 @@ describe("module context serving contract", () => {
     expect(packet.guardrails.defaultModuleReadsCandidateData).toBe(false);
     expect(packet.guardrails.moveEvidenceCreated).toBe(false);
     expect(packet.caveats.join(" ")).toContain("not active tenant truth");
+    expect(packet.contextCompleteness.breadth).toBe(100);
+    expect(packet.contextCompleteness.evidenceCoverage).toBe(100);
+    expect(packet.contextCompleteness.relationshipCoverage).toBeGreaterThan(0);
+    expect(["Good", "Strong", "Limited"]).toContain(packet.contextCompleteness.overall);
   }, 30000);
 
   it("honors requested domains and leaves relationship candidates out unless requested", async () => {
@@ -142,5 +160,46 @@ describe("module context serving contract", () => {
     expect(packet.guardrails.intelligenceRuntimeModified).toBe(false);
     expect(packet.guardrails.productionTenantDataWritten).toBe(false);
     expect(packet.guardrails.activeTenantAccessLayerUpdated).toBe(false);
+  }, 30000);
+
+  it("explains module context deterministically without adding module behavior", async () => {
+    const request: ModuleContextReadRequest = {
+      tenantKey: "skyharbor-air",
+      moduleKey: "moves",
+      purpose: "evidence_extract",
+      mode: "candidate_preview",
+      requestedDomains: ["applications_systems", "data_assets_integrations"],
+      relationshipPolicy: "candidates",
+    };
+    const options = {
+      repoRoot: process.cwd(),
+      generatedAt: "2026-07-14T00:00:00.000Z",
+    };
+
+    const first = await explainModuleContext(request, options);
+    const second = await explainModuleContext(request, options);
+
+    expect(first).toEqual(second);
+    expect(first.summary).toContain("Moves context has");
+    expect(first.summary).toContain("not active tenant truth");
+    expect(first.contextCompleteness.evidenceCoverage).toBe(100);
+    expect(first.strengths).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("evidence references"),
+      ]),
+    );
+    expect(first.unsupportedQuestions).toEqual(
+      expect.arrayContaining([
+        "Do not claim Move evidence was attached by the data layer.",
+        "Do not claim module runtime behavior changed because this packet was generated.",
+      ]),
+    );
+    expect(first.nextActions).toEqual(
+      expect.arrayContaining([
+        "Let the Moves module decide how to render or use this packet.",
+      ]),
+    );
+    expect(first.guardrails.moveEvidenceCreated).toBe(false);
+    expect(first.guardrails.moduleRuntimeConsumptionChanged).toBe(false);
   }, 30000);
 });

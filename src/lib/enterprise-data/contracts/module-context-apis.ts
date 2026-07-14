@@ -199,6 +199,38 @@ export interface ModuleContextGuardrails {
   homeReadsCandidateByDefault: false;
 }
 
+export type ModuleContextCompletenessOverall =
+  | "Strong"
+  | "Good"
+  | "Limited"
+  | "Blocked";
+
+export interface ModuleContextCompleteness {
+  breadth: number;
+  depth: number;
+  relationshipCoverage: number;
+  evidenceCoverage: number;
+  answerability: number;
+  overall: ModuleContextCompletenessOverall;
+}
+
+export interface ModuleContextExplanation {
+  tenantKey: string;
+  moduleKey: ModuleContextModuleKey;
+  purpose: ModuleContextPurpose;
+  mode: ModuleContextMode;
+  sourceMode: ModuleContextSourceMode;
+  generatedAt: string;
+  summary: string;
+  strengths: string[];
+  limitations: string[];
+  supportedQuestions: string[];
+  unsupportedQuestions: string[];
+  nextActions: string[];
+  contextCompleteness: ModuleContextCompleteness;
+  guardrails: ModuleContextGuardrails;
+}
+
 export interface ServedModuleContextPacket extends ModuleContextPacket {
   moduleKey: ModuleContextModuleKey;
   purpose: ModuleContextPurpose;
@@ -216,6 +248,7 @@ export interface ServedModuleContextPacket extends ModuleContextPacket {
   lineage: ModuleContextLineage;
   readiness: ModuleContextReadiness;
   guardrails: ModuleContextGuardrails;
+  contextCompleteness: ModuleContextCompleteness;
 }
 
 export interface MoveContextRequest extends TenantContextRequest {
@@ -245,6 +278,7 @@ export interface ClaimValidationResult {
 
 export interface ModuleContextApis {
   getModuleContext(request: ModuleContextReadRequest): Promise<ServedModuleContextPacket>;
+  explainModuleContext(request: ModuleContextReadRequest): Promise<ModuleContextExplanation>;
   getHomeContext(request: TenantContextRequest): Promise<ModuleContextPacket>;
   getIntelligenceContext(request: TenantContextRequest & { question?: string }): Promise<ModuleContextPacket>;
   getMoveContext(request: MoveContextRequest): Promise<ModuleContextPacket>;
