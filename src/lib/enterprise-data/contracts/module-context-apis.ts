@@ -8,7 +8,7 @@ export interface EvidenceBoundary {
   evidenceKeys: string[];
   excludedEvidenceKeys: string[];
   staleEvidenceKeys: string[];
-  unsupportedClaimRisk: 'low' | 'medium' | 'high';
+  unsupportedClaimRisk: "low" | "medium" | "high";
 }
 
 export interface ModuleContextPacket {
@@ -49,6 +49,11 @@ export type ModuleContextRequestedDomain =
   | "vendors_contracts"
   | "data_assets_integrations"
   | "programs_priorities"
+  | "ai_automation_use_cases"
+  | "operational_process_evidence"
+  | "org_ownership"
+  | "workforce_roles"
+  | "infrastructure_platforms"
   | "risks_controls"
   | "metrics_outcomes"
   | "enterprise_profile"
@@ -271,18 +276,26 @@ export interface ClaimValidationRequest extends TenantContextRequest {
 }
 
 export interface ClaimValidationResult {
-  status: 'supported' | 'unsupported' | 'assumption_required' | 'blocked';
+  status: "supported" | "unsupported" | "assumption_required" | "blocked";
   supportingEvidenceKeys: string[];
   blockedReason?: string;
 }
 
 export interface ModuleContextApis {
-  getModuleContext(request: ModuleContextReadRequest): Promise<ServedModuleContextPacket>;
-  explainModuleContext(request: ModuleContextReadRequest): Promise<ModuleContextExplanation>;
+  getModuleContext(
+    request: ModuleContextReadRequest,
+  ): Promise<ServedModuleContextPacket>;
+  explainModuleContext(
+    request: ModuleContextReadRequest,
+  ): Promise<ModuleContextExplanation>;
   getHomeContext(request: TenantContextRequest): Promise<ModuleContextPacket>;
-  getIntelligenceContext(request: TenantContextRequest & { question?: string }): Promise<ModuleContextPacket>;
+  getIntelligenceContext(
+    request: TenantContextRequest & { question?: string },
+  ): Promise<ModuleContextPacket>;
   getMoveContext(request: MoveContextRequest): Promise<ModuleContextPacket>;
   getSourceContext(request: SourceContextRequest): Promise<ModuleContextPacket>;
   getTowerContext(request: TowerContextRequest): Promise<ModuleContextPacket>;
-  validateClaimAgainstSources(request: ClaimValidationRequest): Promise<ClaimValidationResult>;
+  validateClaimAgainstSources(
+    request: ClaimValidationRequest,
+  ): Promise<ClaimValidationResult>;
 }

@@ -56,6 +56,11 @@ const REQUEST_TO_CANONICAL_DOMAIN: Record<
   vendors_contracts: "vendors_contracts",
   data_assets_integrations: "data_assets_integrations",
   programs_priorities: "programs_initiatives",
+  ai_automation_use_cases: "ai_automation_use_cases",
+  operational_process_evidence: "operational_process_evidence",
+  org_ownership: "org_ownership",
+  workforce_roles: "workforce_roles",
+  infrastructure_platforms: "infrastructure_platforms",
   risks_controls: "risks_controls",
   metrics_outcomes: "metrics_outcomes",
   relationships: "relationships",
@@ -830,20 +835,24 @@ function buildEvidenceRefs(input: {
         : undefined,
     }))
     .filter((entry) => !entry.domain || selectedDomains.has(entry.domain))
-    .map((entry): ModuleContextEvidenceRef => ({
-      evidenceId: `${entry.source.sourcePath}@${entry.source.fingerprint.slice(0, 12)}`,
-      sourcePath: entry.source.sourcePath,
-      sourceFingerprint: entry.source.fingerprint,
-      rowCount: entry.source.rowCount,
-      domain: entry.domain,
-      citationStatus: "citable",
-    }));
+    .map(
+      (entry): ModuleContextEvidenceRef => ({
+        evidenceId: `${entry.source.sourcePath}@${entry.source.fingerprint.slice(0, 12)}`,
+        sourcePath: entry.source.sourcePath,
+        sourceFingerprint: entry.source.fingerprint,
+        rowCount: entry.source.rowCount,
+        domain: entry.domain,
+        citationStatus: "citable",
+      }),
+    );
   const recordEvidenceIds = Array.from(
     new Set(input.records.flatMap((record) => record.sourceEvidenceIds)),
-  ).map((evidenceId): ModuleContextEvidenceRef => ({
-    evidenceId,
-    citationStatus: "citable",
-  }));
+  ).map(
+    (evidenceId): ModuleContextEvidenceRef => ({
+      evidenceId,
+      citationStatus: "citable",
+    }),
+  );
   return [...sourceRefs, ...recordEvidenceIds];
 }
 

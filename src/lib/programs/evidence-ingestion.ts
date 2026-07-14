@@ -35,6 +35,9 @@ export interface ExtractedProgramEvidence {
     attendees: string[];
     parse_method: string;
     warnings: string[];
+    source_layers_scanned?: string[];
+    domains_requested?: string[];
+    archetype_detected?: string | null;
   };
   confidence: number;
 }

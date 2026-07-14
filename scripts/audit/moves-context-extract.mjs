@@ -5,8 +5,14 @@ import path from "node:path";
 
 const root = process.cwd();
 const helperPath = path.join(root, "src/lib/programs/move-context-extract.ts");
-const routePath = path.join(root, "src/app/api/v1/deliverables/generate-phase/route.ts");
-const assemblerPath = path.join(root, "src/lib/deliverables/orchestrator/evidence-assembler.ts");
+const routePath = path.join(
+  root,
+  "src/app/api/v1/deliverables/generate-phase/route.ts",
+);
+const assemblerPath = path.join(
+  root,
+  "src/lib/deliverables/orchestrator/evidence-assembler.ts",
+);
 
 const helper = fs.readFileSync(helperPath, "utf8");
 const route = fs.readFileSync(routePath, "utf8");
@@ -14,8 +20,12 @@ const assembler = fs.readFileSync(assemblerPath, "utf8");
 
 const checks = [
   {
-    name: "active mode requires agent_ready filter",
-    pass: helper.includes("agent_readiness_status eq 'agent_ready'"),
+    name: "active mode uses Module Context Serving with lineage policy",
+    pass:
+      helper.includes("getModuleContext") &&
+      helper.includes('moduleKey: "moves"') &&
+      helper.includes('mode: "active"') &&
+      helper.includes('evidencePolicy: "lineage_required"'),
   },
   {
     name: "candidate preview is not read by default",
@@ -35,8 +45,8 @@ const checks = [
   {
     name: "extract attaches move-scoped program evidence rows",
     pass:
-      helper.includes(".from(\"program_evidence_items\")") &&
-      helper.includes(".eq(\"program_id\", args.moveId)") &&
+      helper.includes('.from("program_evidence_items")') &&
+      helper.includes('.eq("program_id", args.moveId)') &&
       helper.includes("attachedItemFromEvidenceRow") &&
       helper.includes("mapEvidenceToDiscoveryFamily"),
   },
@@ -65,6 +75,8 @@ for (const check of checks) {
 }
 
 if (failures.length > 0) {
-  console.error(`moves-context-extract audit failed: ${failures.length} check(s) failed.`);
+  console.error(
+    `moves-context-extract audit failed: ${failures.length} check(s) failed.`,
+  );
   process.exit(1);
 }

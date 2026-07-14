@@ -1,13 +1,17 @@
 import "server-only";
 
-import { queryTenantContext } from "@/lib/azure-search/tenant-context-retriever";
-import type { TenantContextChunk } from "@/lib/azure-search/tenant-context-retriever";
+import { getModuleContext } from "@/lib/enterprise-data/module-context-serving/module-context-serving";
+import type {
+  ModuleContextGap,
+  ModuleContextReadRequest,
+  ModuleContextRecord,
+  ModuleContextRequestedDomain,
+  ServedModuleContextPacket,
+} from "@/lib/enterprise-data/contracts/module-context-apis";
 import { findSkyHarborPreviewModule } from "@/lib/enterprise-data/candidate-preview-enablement/skyharbor-preview-package";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import type { TenancyCtx } from "@/lib/programs/types.db";
-import {
-  getDiscoveryBlueprint,
-} from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
+import { getDiscoveryBlueprint } from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
 import {
   mapEvidenceToDiscoveryFamily,
   type DiscoveryEvidenceReadinessItem,
@@ -57,6 +61,9 @@ export interface MoveContextExtractItem {
   summary: string;
   reason: string;
   sourceMode: MoveContextExtractSourceMode;
+  sourceLayer?: string;
+  domain?: ModuleContextRequestedDomain;
+  sectionLabel?: string;
   evidenceId?: string;
   moveId?: string;
   tenantId?: string;
@@ -73,6 +80,7 @@ export interface MoveContextExtractItem {
   canonicalRecordId?: string;
   sourceSegmentId?: string;
   confidence?: number;
+  diagnostics?: Record<string, string | number | boolean | null>;
 }
 
 export interface MoveContextExtractResult {
@@ -92,12 +100,17 @@ export interface MoveContextExtractResult {
   suggestedContextItems: MoveContextExtractItem[];
   excludedContextItems: MoveContextExtractItem[];
   gapItems: MoveContextExtractItem[];
+  sourceLayersScanned: string[];
+  domainsRequested: ModuleContextRequestedDomain[];
+  archetypeDetected: string | null;
+  uploadRequests: MoveContextExtractItem[];
+  contextLayerReuseStatus: string;
   generatedAt: string;
   message?: string;
 }
 
 interface MoveContextExtractDeps {
-  queryContext?: typeof queryTenantContext;
+  getModuleContext?: typeof getModuleContext;
   saveArtifact?: typeof saveMoveArtifact;
   recordEvidence?: typeof recordProgramEvidence;
   loadMoveEvidence?: typeof defaultLoadMoveEvidenceRows;
@@ -123,11 +136,322 @@ interface MoveEvidenceRow {
   createdAt: string | null;
 }
 
+interface MovePhaseContextRequirements {
+  phase: number;
+  label: string;
+  question: string;
+  output: string;
+  requiredDomains: ModuleContextRequestedDomain[];
+  uploadRequests: Array<{
+    label: string;
+    summary: string;
+    domain?: ModuleContextRequestedDomain;
+  }>;
+}
+
+const BASE_PHASE_REQUIREMENTS: Record<number, MovePhaseContextRequirements> = {
+  0: {
+    phase: 0,
+    label: "P0 Intake & Decision Framing",
+    question:
+      "What is the Move about, why now, and what enterprise context is needed to frame it correctly?",
+    output: "P0 Context Scan",
+    requiredDomains: [
+      "enterprise_profile",
+      "functions",
+      "programs_priorities",
+      "ai_automation_use_cases",
+      "applications_systems",
+      "data_assets_integrations",
+      "org_ownership",
+      "risks_controls",
+      "metrics_outcomes",
+      "evidence_sources",
+    ],
+    uploadRequests: [
+      {
+        label: "Problem statement or sponsor note",
+        summary:
+          "Upload the business problem, sponsor intent, or board/email framing for this Move.",
+      },
+      {
+        label: "Initial success criteria",
+        summary:
+          "Upload target outcomes, current pain points, and the metrics leadership cares about.",
+        domain: "metrics_outcomes",
+      },
+    ],
+  },
+  1: {
+    phase: 1,
+    label: "P1 Charter & Baseline",
+    question:
+      "What scope, baseline, evidence, and constraints should define this Move?",
+    output: "P1 Charter Context Extract",
+    requiredDomains: [
+      "functions",
+      "operational_process_evidence",
+      "applications_systems",
+      "data_assets_integrations",
+      "vendors_contracts",
+      "org_ownership",
+      "metrics_outcomes",
+      "risks_controls",
+      "evidence_sources",
+    ],
+    uploadRequests: [
+      {
+        label: "Charter scope and boundary",
+        summary:
+          "Upload the in-scope/out-of-scope boundary, business owner roles, and first-slice definition.",
+      },
+      {
+        label: "Baseline metric evidence",
+        summary:
+          "Upload the available baseline, target, or success criteria. Exact targets can be refined later.",
+        domain: "metrics_outcomes",
+      },
+    ],
+  },
+  2: {
+    phase: 2,
+    label: "P2 Diagnose & Evidence Pressure-Test",
+    question:
+      "What is the current-state reality, what evidence supports it, and what gaps must be closed before solution design?",
+    output: "P2 Discovery / Current-State Context Pack",
+    requiredDomains: [
+      "operational_process_evidence",
+      "applications_systems",
+      "data_assets_integrations",
+      "org_ownership",
+      "vendors_contracts",
+      "metrics_outcomes",
+      "risks_controls",
+      "relationships",
+      "evidence_sources",
+    ],
+    uploadRequests: [
+      {
+        label: "Current process map",
+        summary:
+          "Upload the current workflow, exceptions, handoffs, and pain points.",
+        domain: "operational_process_evidence",
+      },
+      {
+        label: "System landscape",
+        summary:
+          "Upload systems used today, integrations, data flows, and known constraints.",
+        domain: "applications_systems",
+      },
+      {
+        label: "Data source inventory",
+        summary:
+          "Upload source systems, data owners, data quality issues, latency, and access controls.",
+        domain: "data_assets_integrations",
+      },
+      {
+        label: "KPI baseline",
+        summary:
+          "Upload baseline metrics or success criteria for the use case.",
+        domain: "metrics_outcomes",
+      },
+      {
+        label: "Risk/control evidence",
+        summary:
+          "Upload PHI, privacy, audit, security, and human-in-the-loop control expectations.",
+        domain: "risks_controls",
+      },
+      {
+        label: "Ownership/governance evidence",
+        summary:
+          "Upload accountable business, platform, data, security, and change owner roles.",
+        domain: "org_ownership",
+      },
+    ],
+  },
+  3: {
+    phase: 3,
+    label: "P3 Options & Solution Design",
+    question:
+      "What future-state process, technology, data, operating model, and controls are viable?",
+    output: "P3 Design Evidence Pack",
+    requiredDomains: [
+      "operational_process_evidence",
+      "applications_systems",
+      "data_assets_integrations",
+      "infrastructure_platforms",
+      "ai_automation_use_cases",
+      "risks_controls",
+      "org_ownership",
+      "vendors_contracts",
+      "relationships",
+      "evidence_sources",
+    ],
+    uploadRequests: [
+      {
+        label: "Validated P2 current-state facts",
+        summary:
+          "Attach approved current-state findings before finalizing solution options.",
+      },
+      {
+        label: "Platform and security architecture evidence",
+        summary:
+          "Upload platform, network, identity, logging, security, and deployment constraints.",
+        domain: "infrastructure_platforms",
+      },
+    ],
+  },
+  4: {
+    phase: 4,
+    label: "P4 Executive Decision & Commit",
+    question:
+      "What option should leadership choose, what value is expected, what risks exist, and what will be measured?",
+    output: "P4 Business Case / Decision Context Pack",
+    requiredDomains: [
+      "metrics_outcomes",
+      "vendors_contracts",
+      "programs_priorities",
+      "risks_controls",
+      "functions",
+      "relationships",
+      "evidence_sources",
+    ],
+    uploadRequests: [
+      {
+        label: "Decision criteria and measurement plan",
+        summary:
+          "Upload leadership decision criteria, baseline evidence, and measurement ownership.",
+        domain: "metrics_outcomes",
+      },
+    ],
+  },
+  5: {
+    phase: 5,
+    label: "P5 Execution Handoff",
+    question:
+      "What must be handed to delivery, governance, sourcing, and Tower?",
+    output: "P5 Execution / Tower Handoff Context Pack",
+    requiredDomains: [
+      "applications_systems",
+      "data_assets_integrations",
+      "vendors_contracts",
+      "org_ownership",
+      "risks_controls",
+      "metrics_outcomes",
+      "relationships",
+      "evidence_sources",
+    ],
+    uploadRequests: [
+      {
+        label: "Execution handoff pack",
+        summary:
+          "Upload committed scope, owners, delivery dependencies, unresolved risks, and Tower measurement needs.",
+      },
+    ],
+  },
+};
+
+const AGENT_ASSIST_TERMS = [
+  "agent assist",
+  "call center",
+  "contact center",
+  "member service",
+  "claims inquiry",
+  "prior authorization",
+  "eligibility",
+  "benefits",
+  "crm",
+  "knowledge base",
+  "call transcripts",
+  "llm automation",
+  "case handling",
+];
+
+const AGENT_ASSIST_DOMAINS: ModuleContextRequestedDomain[] = [
+  "ai_automation_use_cases",
+  "operational_process_evidence",
+  "applications_systems",
+  "data_assets_integrations",
+  "infrastructure_platforms",
+  "org_ownership",
+  "workforce_roles",
+  "functions",
+  "metrics_outcomes",
+  "risks_controls",
+  "vendors_contracts",
+  "relationships",
+  "evidence_sources",
+];
+
+const DOMAIN_LABELS: Record<ModuleContextRequestedDomain, string> = {
+  enterprise_profile: "Enterprise Profile",
+  functions: "Business Functions",
+  applications_systems: "Applications & Systems",
+  vendors_contracts: "Vendors & Contracts",
+  data_assets_integrations: "Data Assets & Integrations",
+  programs_priorities: "Programs & Priorities",
+  ai_automation_use_cases: "AI & Automation Use Cases",
+  operational_process_evidence: "Operational Process Evidence",
+  org_ownership: "Org Ownership",
+  workforce_roles: "Workforce Roles",
+  infrastructure_platforms: "Infrastructure & Platforms",
+  risks_controls: "Risks & Controls",
+  metrics_outcomes: "Metrics & Outcomes",
+  relationships: "Relationships",
+  evidence_sources: "Evidence Sources",
+};
+
+export function detectMoveContextArchetype(
+  input: Pick<
+    MoveContextExtractInput,
+    "moveName" | "useCaseArchetype" | "phasePurpose" | "phaseLabel"
+  >,
+): string | null {
+  const text = [
+    input.moveName,
+    input.useCaseArchetype,
+    input.phaseLabel,
+    input.phasePurpose,
+  ]
+    .join(" ")
+    .toLowerCase();
+  return AGENT_ASSIST_TERMS.some((term) => text.includes(term))
+    ? "agent_assist_contact_center_ai"
+    : null;
+}
+
+export function getMovePhaseContextRequirements(
+  phase: number,
+): MovePhaseContextRequirements {
+  return BASE_PHASE_REQUIREMENTS[phase] ?? BASE_PHASE_REQUIREMENTS[5];
+}
+
+export function buildMoveContextDomains(
+  input: Pick<
+    MoveContextExtractInput,
+    "phase" | "moveName" | "useCaseArchetype" | "phaseLabel" | "phasePurpose"
+  >,
+): ModuleContextRequestedDomain[] {
+  const phaseRequirements = getMovePhaseContextRequirements(input.phase);
+  const archetype = detectMoveContextArchetype(input);
+  return Array.from(
+    new Set([
+      ...phaseRequirements.requiredDomains,
+      ...(archetype === "agent_assist_contact_center_ai"
+        ? AGENT_ASSIST_DOMAINS
+        : []),
+    ]),
+  );
+}
+
 function compact(value: string, max = 900): string {
   return value.replace(/\s+/g, " ").trim().slice(0, max);
 }
 
-function extractId(input: MoveContextExtractInput, generatedAt: string): string {
+function extractId(
+  input: MoveContextExtractInput,
+  generatedAt: string,
+): string {
   return [
     "move_context_extract",
     input.tenantKey,
@@ -162,22 +486,83 @@ function queryFor(input: MoveContextExtractInput): string {
     .join(" ");
 }
 
-function attachedItemFromChunk(chunk: TenantContextChunk): MoveContextExtractItem {
+function fieldSummary(
+  fields: Record<string, string | number | boolean>,
+): string {
+  return Object.entries(fields)
+    .slice(0, 4)
+    .map(([key, value]) => `${key}: ${String(value)}`)
+    .join("; ");
+}
+
+function suggestedItemFromModuleRecord(
+  record: ModuleContextRecord,
+): MoveContextExtractItem {
+  const sectionLabel = DOMAIN_LABELS[record.domain];
   return {
-    status: "attached_evidence",
-    label: chunk.sourceDoc ?? chunk.sourceSegmentId ?? "Tenant context",
-    summary: compact(chunk.text),
+    status: "suggested_context",
+    label: `${sectionLabel}: ${record.title}`,
+    summary: compact(
+      [record.summary, fieldSummary(record.fields)].filter(Boolean).join(" "),
+      900,
+    ),
     reason:
-      "Tenant-scoped active context matched the Move and is agent-ready, citation-ready, and not restricted.",
-    sourceMode: "active_home_context",
-    evidenceFamily: chunk.sourceBasis ?? chunk.sourceSegmentId ?? "enterprise_context",
-    sourceType: "active_module_context",
-    citation: chunk.chunkId,
-    readinessStatus: "agent_ready",
-    sourceArtifactId: chunk.chunkId,
-    canonicalRecordId: chunk.recordId,
-    sourceSegmentId: chunk.sourceSegmentId,
-    confidence: chunk.vectorScore,
+      "Relevant active tenant context from the Module Context Serving Contract. Review before attaching; not consumed by generation by default.",
+    sourceMode: "active_tenant_access",
+    sourceLayer: "Module Context Serving Contract",
+    domain: record.domain,
+    sectionLabel,
+    evidenceFamily: record.domain,
+    sourceType: "active_tenant_context",
+    citation: record.sourceEvidenceIds[0],
+    readinessStatus:
+      record.agentReadiness === "agent_ready" ? "agent_ready" : undefined,
+    sourceArtifactId: record.sourceEvidenceIds[0],
+    canonicalRecordId: record.recordId,
+    confidence: record.confidence,
+    diagnostics: {
+      canonicalDomain: record.canonicalDomain,
+      objectType: record.objectType,
+      citationStatus: record.citationStatus,
+      agentReadiness: record.agentReadiness,
+      relationshipReadiness: record.relationshipReadiness,
+      restricted: record.restricted,
+    },
+  };
+}
+
+function selectSuggestedModuleRecords(input: {
+  records: ModuleContextRecord[];
+  domainsRequested: ModuleContextRequestedDomain[];
+  perDomainLimit?: number;
+  totalLimit?: number;
+}): ModuleContextRecord[] {
+  const perDomainLimit = input.perDomainLimit ?? 4;
+  const totalLimit = input.totalLimit ?? 52;
+  const selected: ModuleContextRecord[] = [];
+  for (const domain of input.domainsRequested) {
+    const recordsForDomain = input.records
+      .filter((record) => record.domain === domain && !record.restricted)
+      .slice(0, perDomainLimit);
+    selected.push(...recordsForDomain);
+    if (selected.length >= totalLimit) break;
+  }
+  return selected.slice(0, totalLimit);
+}
+
+function gapItemFromModuleGap(gap: ModuleContextGap): MoveContextExtractItem {
+  const sectionLabel = gap.domain ? DOMAIN_LABELS[gap.domain] : "Context Layer";
+  return {
+    status: "gap",
+    label: `${sectionLabel} gap`,
+    summary: gap.description,
+    reason: `Module Context Serving reported a ${gap.severity} gap.`,
+    sourceMode: "active_tenant_access",
+    sourceLayer: gap.source ?? "Module Context Serving Contract",
+    domain: gap.domain,
+    sectionLabel,
+    sourceType: "context_gap",
+    sourceArtifactId: gap.gapId,
   };
 }
 
@@ -193,7 +578,11 @@ function stringOrNull(value: unknown): string | null {
 
 function numberOrNull(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string" && value.trim() && Number.isFinite(Number(value))) {
+  if (
+    typeof value === "string" &&
+    value.trim() &&
+    Number.isFinite(Number(value))
+  ) {
     return Number(value);
   }
   return null;
@@ -220,7 +609,9 @@ function evidenceRowText(row: MoveEvidenceRow): string {
   return compact(
     [
       row.summary,
-      signals.length ? `Extracted signals: ${signals.slice(0, 8).join("; ")}` : "",
+      signals.length
+        ? `Extracted signals: ${signals.slice(0, 8).join("; ")}`
+        : "",
       row.extractedText ?? "",
     ].join(" "),
     1200,
@@ -231,7 +622,10 @@ function evidencePolicyAllowsAttachment(row: MoveEvidenceRow): boolean {
   if (row.evidenceType === MOVE_CONTEXT_EXTRACT_EVIDENCE_TYPE) return false;
   const structured = row.extractedStructured;
   const sourceType = stringOrNull(structured.source_type);
-  if (sourceType === "candidate_preview" || sourceType === "suggested_context") {
+  if (
+    sourceType === "candidate_preview" ||
+    sourceType === "suggested_context"
+  ) {
     return false;
   }
   const classification = stringOrNull(structured.classification);
@@ -241,7 +635,9 @@ function evidencePolicyAllowsAttachment(row: MoveEvidenceRow): boolean {
   return Boolean(evidenceRowText(row));
 }
 
-function discoveryItemFromRow(row: MoveEvidenceRow): DiscoveryEvidenceReadinessItem {
+function discoveryItemFromRow(
+  row: MoveEvidenceRow,
+): DiscoveryEvidenceReadinessItem {
   return {
     id: row.id,
     title: row.title,
@@ -324,7 +720,12 @@ async function defaultLoadMoveEvidenceRows(args: {
       confidence: row.confidence as number | string | null,
       createdAt: stringOrNull(row.created_at),
     }))
-    .filter((row) => row.id && row.programId === args.moveId && row.tenantKey === args.tenantKey);
+    .filter(
+      (row) =>
+        row.id &&
+        row.programId === args.moveId &&
+        row.tenantKey === args.tenantKey,
+    );
 }
 
 async function defaultExistingExtract(args: {
@@ -349,12 +750,14 @@ async function defaultExistingExtract(args: {
 function explicitCandidatePreview(input: MoveContextExtractInput): boolean {
   return Boolean(
     input.candidatePreview?.enabled &&
-      input.candidatePreview.acknowledgedNotActiveRuntimeTruth &&
-      input.candidatePreview.candidateVersionId,
+    input.candidatePreview.acknowledgedNotActiveRuntimeTruth &&
+    input.candidatePreview.candidateVersionId,
   );
 }
 
-function candidateSuggestedItems(input: MoveContextExtractInput): MoveContextExtractItem[] {
+function candidateSuggestedItems(
+  input: MoveContextExtractInput,
+): MoveContextExtractItem[] {
   if (!explicitCandidatePreview(input)) return [];
   const packet = findSkyHarborPreviewModule("moves");
   return packet.sampleFacts.map((fact) => ({
@@ -368,7 +771,9 @@ function candidateSuggestedItems(input: MoveContextExtractInput): MoveContextExt
   }));
 }
 
-function candidateExcludedItem(input: MoveContextExtractInput): MoveContextExtractItem | null {
+function candidateExcludedItem(
+  input: MoveContextExtractInput,
+): MoveContextExtractItem | null {
   if (input.candidatePreview?.enabled) return null;
   return {
     status: "excluded_context",
@@ -380,18 +785,75 @@ function candidateExcludedItem(input: MoveContextExtractInput): MoveContextExtra
   };
 }
 
-function gapItems(attached: MoveContextExtractItem[]): MoveContextExtractItem[] {
-  if (attached.length > 0) return [];
-  return [
-    {
-      status: "gap",
-      label: "Agent-ready tenant context",
-      summary:
-        "No active agent-ready context matched this Move and phase. Upload, review, or promote source-backed evidence before relying on enterprise context.",
-      reason: "No attached evidence was created.",
-      sourceMode: "active_home_context",
+function uploadRequestItems(
+  input: MoveContextExtractInput,
+): MoveContextExtractItem[] {
+  const phaseRequirements = getMovePhaseContextRequirements(input.phase);
+  return phaseRequirements.uploadRequests.map((request) => ({
+    status: "gap",
+    label: request.label,
+    summary: request.summary,
+    reason:
+      "Client can upload this for the current Move or submit it to Admin for Context Layer reuse.",
+    sourceMode: "active_tenant_access",
+    sourceLayer: "Moves evidence upload",
+    domain: request.domain,
+    sectionLabel: request.domain
+      ? DOMAIN_LABELS[request.domain]
+      : "Move Evidence",
+    sourceType: "upload_request",
+    targetPhase: input.targetPhase ?? input.phase,
+    diagnostics: {
+      moveOnlyUseAvailable: true,
+      contextLayerReuseStatus: "admin_intake_candidate_available_after_upload",
     },
-  ];
+  }));
+}
+
+function gapItems(input: {
+  attached: MoveContextExtractItem[];
+  moduleContext: ServedModuleContextPacket | null;
+  domainsRequested: ModuleContextRequestedDomain[];
+}): MoveContextExtractItem[] {
+  const gaps: MoveContextExtractItem[] = [];
+  const domainSummaries = new Map(
+    (input.moduleContext?.domains ?? []).map((domain) => [
+      domain.domain,
+      domain,
+    ]),
+  );
+  for (const domain of input.domainsRequested) {
+    const summary = domainSummaries.get(domain);
+    if (!summary || summary.acceptedRecords <= 0) {
+      gaps.push({
+        status: "gap",
+        label: `${DOMAIN_LABELS[domain]} evidence`,
+        summary:
+          "Required phase context was not found or is not strong enough in active tenant context.",
+        reason:
+          "AbarVa needs client evidence or validated context before this phase can be finalized with confidence.",
+        sourceMode: "active_tenant_access",
+        sourceLayer: "Module Context Serving Contract",
+        domain,
+        sectionLabel: DOMAIN_LABELS[domain],
+        sourceType: "required_context_gap",
+      });
+    }
+  }
+  gaps.push(...(input.moduleContext?.gaps ?? []).map(gapItemFromModuleGap));
+  if (input.attached.length === 0) {
+    gaps.push({
+      status: "gap",
+      label: "Approved Move evidence",
+      summary:
+        "No Move-scoped uploaded evidence is attached yet. Suggested data-layer context is review-only and will not feed generation by default.",
+      reason: "Generation consumes attached/approved Move evidence only.",
+      sourceMode: "active_home_context",
+      sourceLayer: "Moves Module Memory",
+      sourceType: "move_evidence_gap",
+    });
+  }
+  return gaps;
 }
 
 function renderMarkdown(input: {
@@ -407,17 +869,38 @@ function renderMarkdown(input: {
   const lines = [
     `# ${titleForPhase(input.result.phase)}`,
     "",
-    "Move Context Extract",
+    getMovePhaseContextRequirements(input.result.phase).output,
     "",
-    "AbarVa gathered governed enterprise context relevant to this Move and phase. Source-backed, agent-ready items can be attached as Move evidence. Relevant but incomplete items are shown separately for review and are not used by generation until approved.",
+    "AbarVa scanned the governed tenant context layers and Move evidence for this phase. Move-scoped approved/uploaded evidence is attached for generation. Data-layer context is suggested for review and is not consumed by generation unless explicitly attached or approved.",
     "",
     `- Move: ${input.moveName}`,
     `- Phase: ${input.phaseLabel}`,
+    `- Phase question: ${getMovePhaseContextRequirements(input.result.phase).question}`,
+    `- Archetype detected: ${input.result.archetypeDetected ?? "not detected"}`,
     `- Source mode: ${input.result.sourceMode}`,
     `- Generated at: ${input.result.generatedAt}`,
     `- Candidate version: ${input.result.candidateVersionId ?? "not used"}`,
-    `- Active Tenant Access version: ${input.result.activeTenantAccessVersionId ?? "not wired"}`,
+    `- Active Tenant Access version: ${input.result.activeTenantAccessVersionId ?? "not available"}`,
     `- Attached Evidence count: ${input.result.attachedEvidenceItems.length}`,
+    `- Suggested Data-Layer Context count: ${input.result.suggestedContextItems.length}`,
+    `- Context Layer reuse status: ${input.result.contextLayerReuseStatus}`,
+    "",
+    "## What AbarVa Scanned",
+    ...input.result.sourceLayersScanned.map((layer) => `- ${layer}`),
+    "",
+    "## Domains Requested",
+    ...input.result.domainsRequested.map(
+      (domain) => `- ${DOMAIN_LABELS[domain]}`,
+    ),
+    "",
+    "## What This Means For The Phase",
+    input.result.gapItems.some(
+      (item) => item.sourceType === "required_context_gap",
+    )
+      ? "Needs client evidence before this phase should be treated as decision-ready."
+      : input.result.attachedEvidenceItems.length > 0
+        ? "Ready to draft with caveats. Suggested context still requires review before it can become approved evidence."
+        : "Ready for discovery framing only. Upload or approve Move evidence before generation relies on it.",
     "",
     "## Evidence Family Coverage",
     familyCounts.size === 0
@@ -436,20 +919,28 @@ function renderMarkdown(input: {
         lines.push(
           `- ${item.label}: ${item.summary}`,
           ...(item.evidenceId ? [`  - Evidence ID: ${item.evidenceId}`] : []),
-          ...(item.evidenceFamily ? [`  - Evidence family: ${item.evidenceFamily}`] : []),
+          ...(item.evidenceFamily
+            ? [`  - Evidence family: ${item.evidenceFamily}`]
+            : []),
           ...(item.sourceType ? [`  - Source type: ${item.sourceType}`] : []),
           ...(item.sourceFileRef ? [`  - Source: ${item.sourceFileRef}`] : []),
           `  - Reason: ${item.reason}`,
-          ...(item.whyAttached ? [`  - Why attached: ${item.whyAttached}`] : []),
+          ...(item.whyAttached
+            ? [`  - Why attached: ${item.whyAttached}`]
+            : []),
         );
       }
     }
     lines.push("");
   };
   section("Attached Evidence", input.result.attachedEvidenceItems);
-  section("Suggested Context - Needs Review", input.result.suggestedContextItems);
+  section(
+    "Suggested Data-Layer Context - Needs Review",
+    input.result.suggestedContextItems,
+  );
   section("Excluded / Not Used", input.result.excludedContextItems);
   section("Gaps to Complete", input.result.gapItems);
+  section("Suggested Uploads", input.result.uploadRequests);
   return lines.join("\n");
 }
 
@@ -457,16 +948,15 @@ function evidencePayload(
   input: MoveContextExtractInput,
   result: MoveContextExtractResult,
 ): ExtractedProgramEvidence {
-  const facts = result.attachedEvidenceItems.map(
-    (item) =>
-      [
-        item.evidenceId ? `Evidence ID ${item.evidenceId}` : null,
-        item.evidenceFamily ? `Family ${item.evidenceFamily}` : null,
-        `${item.label}: ${item.summary}`,
-        item.sourceFileRef ? `Source ${item.sourceFileRef}` : null,
-      ]
-        .filter(Boolean)
-        .join(" | "),
+  const facts = result.attachedEvidenceItems.map((item) =>
+    [
+      item.evidenceId ? `Evidence ID ${item.evidenceId}` : null,
+      item.evidenceFamily ? `Family ${item.evidenceFamily}` : null,
+      `${item.label}: ${item.summary}`,
+      item.sourceFileRef ? `Source ${item.sourceFileRef}` : null,
+    ]
+      .filter(Boolean)
+      .join(" | "),
   );
   return {
     evidenceType: MOVE_CONTEXT_EXTRACT_EVIDENCE_TYPE,
@@ -480,6 +970,9 @@ function evidencePayload(
       baseline_candidates: facts,
       attendees: [],
       parse_method: "move-context-extract/v1",
+      source_layers_scanned: result.sourceLayersScanned,
+      domains_requested: result.domainsRequested,
+      archetype_detected: result.archetypeDetected,
       warnings: [
         "Only Attached Evidence is present in this row.",
         "Suggested Context and candidate-preview items are intentionally excluded from downstream generation.",
@@ -495,10 +988,26 @@ export async function createMoveContextExtract(
 ): Promise<MoveContextExtractResult> {
   const generatedAt = new Date().toISOString();
   const targetPhase = input.targetPhase ?? input.phase;
-  const sourceMode: MoveContextExtractSourceMode = explicitCandidatePreview(input)
+  const sourceMode: MoveContextExtractSourceMode = explicitCandidatePreview(
+    input,
+  )
     ? "candidate_preview"
-    : "active_home_context";
+    : "active_tenant_access";
   const artifactType = artifactTypeForPhase(input.phase);
+  const domainsRequested = buildMoveContextDomains(input);
+  const archetypeDetected = detectMoveContextArchetype(input);
+  const sourceLayersScanned =
+    sourceMode === "candidate_preview"
+      ? ["Candidate Preview", "Evidence Registry", "File Cabinet"]
+      : [
+          "Active Tenant Access",
+          "Module Context Serving Contract",
+          "Evidence Registry",
+          "Moves Module Memory",
+          "File Cabinet",
+        ];
+  const contextLayerReuseStatus =
+    "Move uploads can be used for this Move only, or submitted to Admin as Context Intake Candidates for later validation and promotion.";
   const existing = await (deps.existingExtract ?? defaultExistingExtract)({
     tenantKey: input.tenantKey,
     moveId: input.moveId,
@@ -522,20 +1031,27 @@ export async function createMoveContextExtract(
       suggestedContextItems: [],
       excludedContextItems: [],
       gapItems: [],
+      sourceLayersScanned,
+      domainsRequested,
+      archetypeDetected,
+      uploadRequests: [],
+      contextLayerReuseStatus,
       generatedAt,
       message: "Existing current Move Context Extract found; not regenerated.",
     };
   }
 
-  const queryContext = deps.queryContext ?? queryTenantContext;
   let attachedEvidenceItems: MoveContextExtractItem[] = [];
-  const suggestedContextItems = candidateSuggestedItems(input);
+  let suggestedContextItems = candidateSuggestedItems(input);
   const excludedContextItems = [candidateExcludedItem(input)].filter(
     (item): item is MoveContextExtractItem => item !== null,
   );
+  let moduleContext: ServedModuleContextPacket | null = null;
+  const uploadRequests = uploadRequestItems(input);
 
-  if (sourceMode === "active_home_context") {
-    const loadMoveEvidence = deps.loadMoveEvidence ?? defaultLoadMoveEvidenceRows;
+  if (sourceMode === "active_tenant_access") {
+    const loadMoveEvidence =
+      deps.loadMoveEvidence ?? defaultLoadMoveEvidenceRows;
     const moveEvidenceRows = await loadMoveEvidence({
       tenantKey: input.tenantKey,
       moveId: input.moveId,
@@ -544,19 +1060,34 @@ export async function createMoveContextExtract(
       .filter(evidencePolicyAllowsAttachment)
       .map((row) => attachedItemFromEvidenceRow(input, row));
 
-    const chunks = await queryContext({
-      tenantClientKey: input.tenantKey,
-      query: queryFor(input),
-      topK: 12,
-      filters: {
-        minConfidence: 0.5,
-        sensitivity: ["public", "internal"],
-        extra: ["agent_readiness_status eq 'agent_ready'"],
+    const readModuleContext = deps.getModuleContext ?? getModuleContext;
+    const moduleRequest: ModuleContextReadRequest = {
+      tenantKey: input.tenantKey,
+      moduleKey: "moves",
+      purpose: "evidence_extract",
+      mode: "active",
+      requestedDomains: domainsRequested,
+      evidencePolicy: "lineage_required",
+      relationshipPolicy: "validated_and_candidates",
+      scope: {
+        moveId: input.moveId,
+        phase: String(input.phase),
+        targetPhase: String(targetPhase),
+        useCase: input.useCaseArchetype,
+        charter: input.moveName,
+        question: queryFor(input),
       },
+    };
+    moduleContext = await readModuleContext(moduleRequest, {
+      repoRoot: process.cwd(),
+      generatedAt,
     });
-    attachedEvidenceItems = [
-      ...attachedEvidenceItems,
-      ...chunks.map(attachedItemFromChunk),
+    suggestedContextItems = [
+      ...suggestedContextItems,
+      ...selectSuggestedModuleRecords({
+        records: moduleContext.records,
+        domainsRequested,
+      }).map(suggestedItemFromModuleRecord),
     ];
   }
 
@@ -568,16 +1099,26 @@ export async function createMoveContextExtract(
     sourceMode,
     phase: input.phase,
     targetPhase,
-    activeTenantAccessVersionId: null,
+    activeTenantAccessVersionId:
+      moduleContext?.activeTenantAccessVersionId ?? null,
     candidateVersionId:
       sourceMode === "candidate_preview"
         ? (input.candidatePreview?.candidateVersionId ?? null)
         : null,
-    sourceBuildId: null,
+    sourceBuildId: moduleContext?.lineage.sourceBuildId ?? null,
     attachedEvidenceItems,
     suggestedContextItems,
     excludedContextItems,
-    gapItems: gapItems(attachedEvidenceItems),
+    gapItems: gapItems({
+      attached: attachedEvidenceItems,
+      moduleContext,
+      domainsRequested,
+    }),
+    sourceLayersScanned,
+    domainsRequested,
+    archetypeDetected,
+    uploadRequests,
+    contextLayerReuseStatus,
     generatedAt,
   };
 
@@ -605,6 +1146,17 @@ export async function createMoveContextExtract(
     citationReady: attachedEvidenceItems.length > 0,
     metadata: {
       moveContextExtract: resultBase,
+      moduleContextServing: moduleContext
+        ? {
+            sourceMode: moduleContext.sourceMode,
+            activeTenantAccessVersionId:
+              moduleContext.activeTenantAccessVersionId,
+            tenantDataVersion: moduleContext.tenantDataVersion,
+            contextCompleteness: moduleContext.contextCompleteness,
+            readiness: moduleContext.readiness,
+            lineage: moduleContext.lineage,
+          }
+        : null,
       guardrails: {
         candidateReadByDefault: false,
         activeAndCandidateMixed: false,

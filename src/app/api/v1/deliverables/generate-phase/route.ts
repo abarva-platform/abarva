@@ -204,6 +204,18 @@ export async function POST(req: NextRequest) {
             sourceMode: 'active_home_context',
           },
         ],
+        sourceLayersScanned: [
+          'Active Tenant Access',
+          'Module Context Serving Contract',
+          'Evidence Registry',
+          'Moves Module Memory',
+          'File Cabinet',
+        ],
+        domainsRequested: [],
+        archetypeDetected: null,
+        uploadRequests: [],
+        contextLayerReuseStatus:
+          'Context extract failed before upload or context-layer reuse options were prepared.',
         generatedAt: new Date().toISOString(),
         message: errorMessage(err),
       };
