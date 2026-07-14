@@ -21,6 +21,345 @@
   min-width: 0;
 }
 
+.p0Workspace {
+  min-height: calc(100vh - 124px);
+  background: var(--canon-bg-cream);
+  border-left: 1px solid var(--canon-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.p0Header {
+  padding: 18px 28px 14px;
+  border-bottom: 1px solid var(--canon-border);
+}
+
+.p0HeaderRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.p0TitleBlock {
+  min-width: 0;
+}
+
+.p0Eyebrow {
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #005fd6;
+  white-space: nowrap;
+}
+
+.p0Title {
+  margin: 4px 0 2px;
+  font-family: var(--abarva-serif);
+  font-size: clamp(24px, 2vw, 32px);
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--abarva-ink-black);
+}
+
+.p0Subtitle {
+  margin: 0;
+  color: var(--canon-gray-700);
+  font-size: 13px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.p0ProgressPill {
+  width: min(260px, 28vw);
+  border: 1px solid var(--canon-border);
+  border-radius: 8px;
+  background: #fffdf8;
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+  color: var(--abarva-ink-black);
+}
+
+.p0ProgressPill span {
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.p0ProgressPill small {
+  color: var(--canon-gray-600);
+  font-size: 11px;
+}
+
+.p0ProgressTrack {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--canon-gray-200);
+  overflow: hidden;
+}
+
+.p0ProgressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: #2f8f66;
+}
+
+.p0TabStrip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px 28px;
+  border-bottom: 1px solid var(--canon-border);
+  background: #fbfaf6;
+}
+
+.p0Tab {
+  appearance: none;
+  border: 1px solid var(--canon-border);
+  border-radius: 8px;
+  background: #fffdf8;
+  color: var(--abarva-ink-black);
+  min-height: 58px;
+  padding: 9px 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.p0Tab span {
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.p0Tab strong {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--canon-gray-900);
+}
+
+.p0Tab small {
+  grid-column: 1 / -1;
+  color: var(--canon-gray-600);
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.p0TabActive {
+  border-color: #0f62fe;
+  box-shadow: inset 0 0 0 1px #0f62fe;
+}
+
+.p0SubTabs {
+  display: inline-flex;
+  gap: 6px;
+  padding: 10px 28px 0;
+}
+
+.p0SubTab {
+  appearance: none;
+  border: 1px solid var(--canon-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--canon-gray-700);
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.p0SubTabActive {
+  background: var(--abarva-ink-black);
+  color: var(--canon-bg-cream);
+}
+
+.p0ActiveWork {
+  flex: 1;
+  min-height: 0;
+  padding: 18px 28px 20px;
+  overflow: auto;
+}
+
+.p0ActiveHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.p0SectionTitle {
+  margin: 3px 0 0;
+  font-family: var(--abarva-serif);
+  font-size: 25px;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--abarva-ink-black);
+}
+
+.p0GroupCount {
+  color: var(--canon-gray-700);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.p0QuestionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.p0QuestionCard {
+  border: 1px solid var(--canon-border);
+  border-radius: 8px;
+  background: #fffdf8;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 244px;
+}
+
+.p0QuestionCardDone {
+  border-color: rgba(47, 143, 102, 0.35);
+}
+
+.p0QuestionTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.p0QuestionNumber {
+  font-family: var(--abarva-mono);
+  color: var(--canon-gray-600);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.p0QuestionLabel {
+  display: block;
+  margin-top: 3px;
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--abarva-ink-black);
+  line-height: 1.18;
+}
+
+.p0QuestionHelp {
+  margin: 7px 0 10px;
+  color: var(--canon-gray-700);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.p0QuestionStatus {
+  border: 1px solid var(--canon-border);
+  border-radius: 999px;
+  color: var(--canon-gray-700);
+  font-size: 10px;
+  font-weight: 900;
+  padding: 4px 7px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.p0CapturedText {
+  color: var(--canon-gray-800);
+  font-size: 12px;
+  line-height: 1.4;
+  border-left: 2px solid rgba(47, 143, 102, 0.45);
+  padding-left: 9px;
+  margin-bottom: 9px;
+  max-height: 66px;
+  overflow: auto;
+}
+
+.p0AnswerInput,
+.p0NameInput {
+  width: 100%;
+  border: 1px solid var(--canon-border);
+  border-radius: 8px;
+  background: white;
+  color: var(--abarva-ink-black);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  padding: 10px 11px;
+  outline: none;
+}
+
+.p0AnswerInput {
+  min-height: 106px;
+  resize: vertical;
+  margin-top: auto;
+}
+
+.p0NameInput {
+  height: 42px;
+}
+
+.p0AnswerInput:focus,
+.p0NameInput:focus {
+  border-color: #0f62fe;
+  box-shadow: 0 0 0 2px rgba(15, 98, 254, 0.12);
+}
+
+.p0Footer {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.p0StepNav {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.p0Promotion {
+  border: 1px solid var(--canon-border);
+  border-radius: 8px;
+  background: #fffdf8;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.p0Promotion div {
+  display: grid;
+  gap: 3px;
+}
+
+.p0Promotion strong {
+  color: var(--abarva-ink-black);
+  font-size: 13px;
+}
+
+.p0Promotion span {
+  color: var(--canon-gray-700);
+  font-size: 12px;
+}
+
+.p0Discovery {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 18px 28px 20px;
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -1989,6 +2328,72 @@
   margin-top: 2px;
 }
 
+.scaffoldEditLabel {
+  display: block;
+  margin-top: 12px;
+  margin-bottom: 5px;
+  font-family: var(--abarva-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--abarva-slate);
+}
+
+.scaffoldEditInput {
+  width: 100%;
+  min-height: 84px;
+  padding: 9px 10px;
+  border: 1px solid var(--canon-border);
+  border-radius: 6px;
+  background: var(--canon-bg-cream);
+  color: var(--abarva-ink-black);
+  font-family: var(--abarva-sans);
+  font-size: 12.5px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.scaffoldEditInput:focus {
+  outline: 2px solid rgba(10, 91, 255, 0.18);
+  border-color: var(--abarva-signal-blue);
+}
+
+.scaffoldActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.scaffoldSaveButton,
+.scaffoldClearButton {
+  border-radius: 6px;
+  font-family: var(--abarva-sans);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.scaffoldSaveButton {
+  border: 1px solid var(--abarva-ink-black);
+  background: var(--abarva-ink-black);
+  color: #fff;
+}
+
+.scaffoldSaveButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.scaffoldClearButton {
+  border: 1px solid var(--canon-border);
+  background: transparent;
+  color: var(--abarva-slate);
+}
+
 .scaffoldIndicator {
   width: 16px;
   height: 16px;
@@ -2034,6 +2439,13 @@
 .programNameInput:focus {
   outline: none;
   border-color: var(--abarva-ink-black);
+}
+
+.programNameHint {
+  margin-top: 5px;
+  font-family: var(--abarva-sans);
+  font-size: 11px;
+  color: var(--abarva-slate);
 }
 
 .btnPromote {

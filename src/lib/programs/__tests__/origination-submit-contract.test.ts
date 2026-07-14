@@ -43,6 +43,14 @@ describe('origination submit insert contract', () => {
     expect(source).toContain('initiative_context: input.fromInitiativeId');
   });
 
+  it('allows role-only P0 sponsors to register as pending placeholders', () => {
+    expect(source).toContain('roleOnlyPlaceholderForOrigination');
+    expect(source).toContain('parsedLabel.placeholderRole');
+    expect(source).toContain('ORIGINATION_PLACEHOLDER_PERSON_MARKER');
+    expect(source).toContain('name: placeholderSpec.name');
+    expect(source).toContain('role: placeholderSpec.role');
+  });
+
   it('wires the Wave 2 modules into the origination charter (Slices 2.2 / 2.3 / 2.5)', () => {
     // Adapter composed from the single Slice 2.1 suitability result.
     expect(source).toContain('originationCharterExtensions');
