@@ -447,7 +447,10 @@
     "qa:admin-home-ava": "npx tsx scripts/qa/admin-home-design-smoke-proof.ts --mode=chrome",
     "audit:home-data-quality": "npx tsx scripts/audit/home-data-quality.ts",
     "qa:home-data-quality-ava": "npx tsx scripts/qa/home-data-quality-ava.ts",
-    "test:home-data-quality": "jest --runTestsByPath src/lib/home/__tests__/home-data-quality.test.ts src/components/home/__tests__/HomeSurface.test.tsx --runInBand"
+    "test:home-data-quality": "jest --runTestsByPath src/lib/home/__tests__/home-data-quality.test.ts src/components/home/__tests__/HomeSurface.test.tsx --runInBand",
+    "smoke:home:full": "npx tsx scripts/qa/home-full-smoke-quality.ts --mode=full",
+    "audit:home:content-quality": "npx tsx scripts/qa/home-full-smoke-quality.ts --mode=server",
+    "qa:home:ava-quality": "npx tsx scripts/qa/home-full-smoke-quality.ts --mode=ava"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
