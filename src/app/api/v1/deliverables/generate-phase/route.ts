@@ -59,6 +59,32 @@ interface EnqueuedDeliverable {
   error?: string;
 }
 
+function errorMessage(err: unknown, fallback = 'unknown error'): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === 'string' && err.trim()) return err.trim();
+  if (err && typeof err === 'object') {
+    const record = err as {
+      message?: unknown;
+      code?: unknown;
+      details?: unknown;
+      hint?: unknown;
+    };
+    const parts = [
+      typeof record.message === 'string' ? record.message : null,
+      typeof record.code === 'string' ? `code=${record.code}` : null,
+      typeof record.details === 'string' ? record.details : null,
+      typeof record.hint === 'string' ? record.hint : null,
+    ].filter(Boolean);
+    if (parts.length > 0) return parts.join(' | ').slice(0, 1000);
+    try {
+      return JSON.stringify(err).slice(0, 1000);
+    } catch {
+      return fallback;
+    }
+  }
+  return fallback;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const ctx = await requireTenancy();
@@ -174,12 +200,12 @@ export async function POST(req: NextRequest) {
             status: 'gap',
             label: 'Move Context Extract',
             summary: 'Context extract failed before generation enqueue.',
-            reason: err instanceof Error ? err.message : 'unknown error',
+            reason: errorMessage(err),
             sourceMode: 'active_home_context',
           },
         ],
         generatedAt: new Date().toISOString(),
-        message: err instanceof Error ? err.message : 'unknown error',
+        message: errorMessage(err),
       };
     }
 
@@ -223,7 +249,7 @@ export async function POST(req: NextRequest) {
           gateArtifact: spec.gateArtifact,
           runId: null,
           status: 'error',
-          error: err instanceof Error ? err.message : 'enqueue failed',
+          error: errorMessage(err, 'enqueue failed'),
         });
       }
     }
@@ -240,7 +266,7 @@ export async function POST(req: NextRequest) {
     } catch {
       /* not a tenancy error */
     }
-    const message = err instanceof Error ? err.message : 'unknown error';
+    const message = errorMessage(err);
     console.error('[POST /api/v1/deliverables/generate-phase]', err);
     return Response.json({ error: 'internal_error', message }, { status: 500 });
   }

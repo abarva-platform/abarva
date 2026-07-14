@@ -228,6 +228,9 @@ describe("createMoveContextExtract", () => {
       ]),
     );
     const savedBody = saveArtifact.mock.calls[0]?.[1]?.body as string;
+    expect(saveArtifact.mock.calls[0]?.[1]).toMatchObject({
+      status: "review_required",
+    });
     expect(savedBody).toContain("- Attached Evidence count: 4");
     expect(savedBody).toContain("Evidence ID: ev-process");
     expect(savedBody).toContain("Evidence Family Coverage");
