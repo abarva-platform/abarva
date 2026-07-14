@@ -1,15 +1,15 @@
 {
   "reportVersion": "active-module-context-promotion/v1",
-  "generatedAt": "2026-07-14T13:00:00.000Z",
+  "generatedAt": "2026-07-14T15:50:19.110Z",
   "tenantKey": "lakeshore-industries",
-  "candidateVersionId": "candidate:lakeshore-industries:929f574689fc",
+  "candidateVersionId": "candidate:lakeshore-industries:bde306214d94",
   "activeAccessRecord": {
     "recordVersion": "active-tenant-access/v1",
-    "generatedAt": "2026-07-14T13:00:00.000Z",
+    "generatedAt": "2026-07-14T15:50:19.110Z",
     "tenantKey": "lakeshore-industries",
-    "activeVersionId": "candidate:lakeshore-industries:929f574689fc",
+    "activeVersionId": "candidate:lakeshore-industries:bde306214d94",
     "priorActiveVersionId": "lakeshore-industries:active-runtime-truth:unchanged",
-    "sourceCandidateVersionId": "candidate:lakeshore-industries:929f574689fc",
+    "sourceCandidateVersionId": "candidate:lakeshore-industries:bde306214d94",
     "activeAccessState": "promoted_for_safe_demo_metadata",
     "productionTenantDataWritten": false,
     "writesPhysicalTables": false,
@@ -32,16 +32,16 @@
     "candidateQualityGateStatus": "pass",
     "candidateCreationStatus": "created",
     "promotionBlockers": [],
-    "canonicalRecordCount": 3040,
-    "evidenceAttachmentCount": 3040,
-    "relationshipCandidateCount": 892,
+    "canonicalRecordCount": 839,
+    "evidenceAttachmentCount": 839,
+    "relationshipCandidateCount": 1580,
     "enterpriseProfileStatus": "ready"
   },
   "moduleReadProof": [
     {
       "moduleKey": "home",
       "sourceMode": "active_tenant_access",
-      "activeTenantAccessVersionId": "candidate:lakeshore-industries:929f574689fc",
+      "activeTenantAccessVersionId": "candidate:lakeshore-industries:bde306214d94",
       "recordCount": 64,
       "evidenceRefCount": 64,
       "candidateDataConsumed": false,
@@ -52,7 +52,7 @@
     {
       "moduleKey": "intelligence",
       "sourceMode": "active_tenant_access",
-      "activeTenantAccessVersionId": "candidate:lakeshore-industries:929f574689fc",
+      "activeTenantAccessVersionId": "candidate:lakeshore-industries:bde306214d94",
       "recordCount": 64,
       "evidenceRefCount": 64,
       "candidateDataConsumed": false,
@@ -63,7 +63,7 @@
     {
       "moduleKey": "moves",
       "sourceMode": "active_tenant_access",
-      "activeTenantAccessVersionId": "candidate:lakeshore-industries:929f574689fc",
+      "activeTenantAccessVersionId": "candidate:lakeshore-industries:bde306214d94",
       "recordCount": 64,
       "evidenceRefCount": 64,
       "candidateDataConsumed": false,
@@ -74,7 +74,7 @@
     {
       "moduleKey": "source",
       "sourceMode": "active_tenant_access",
-      "activeTenantAccessVersionId": "candidate:lakeshore-industries:929f574689fc",
+      "activeTenantAccessVersionId": "candidate:lakeshore-industries:bde306214d94",
       "recordCount": 64,
       "evidenceRefCount": 64,
       "candidateDataConsumed": false,
@@ -85,7 +85,7 @@
     {
       "moduleKey": "tower",
       "sourceMode": "active_tenant_access",
-      "activeTenantAccessVersionId": "candidate:lakeshore-industries:929f574689fc",
+      "activeTenantAccessVersionId": "candidate:lakeshore-industries:bde306214d94",
       "recordCount": 64,
       "evidenceRefCount": 64,
       "candidateDataConsumed": false,

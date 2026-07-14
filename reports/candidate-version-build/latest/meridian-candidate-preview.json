@@ -1,35 +1,35 @@
 {
-  "candidateVersionId": "candidate:meridian-health:aef0edc75fad",
+  "candidateVersionId": "candidate:meridian-health:5698b1a4c532",
   "tenantId": "meridian-health",
   "tenantKey": "meridian-health",
   "tenantDisplayName": "Meridian Health",
-  "sourceBuildId": "canonical-data-build:c32e4ed2326c",
-  "sourceBuildFingerprint": "c32e4ed2326c5825e7797f488656be1967641a2108b9176b089e3e84bd34bd22",
-  "inputFingerprint": "adaa900b69e7da20473a62440301d893268a0ab0f810d09ea9bcca95d773df6d",
-  "canonicalRecordCount": 4078,
-  "evidenceAttachmentCount": 4078,
-  "relationshipCandidateCount": 2177,
+  "sourceBuildId": "canonical-data-build:c6dba401db07",
+  "sourceBuildFingerprint": "c6dba401db07e9a280869e59714a3c2374221cdf73c91843b1ef7b235b18c5a5",
+  "inputFingerprint": "e93617c424621fc54a61cb41ee8e924ddade2a0eab57c62d1be834b22ccdf09c",
+  "canonicalRecordCount": 1066,
+  "evidenceAttachmentCount": 1066,
+  "relationshipCandidateCount": 1662,
   "domainCounts": [
     {
       "domain": "enterprise_profile",
-      "sourceRows": 4,
-      "acceptedRecords": 4,
+      "sourceRows": 2,
+      "acceptedRecords": 2,
       "skippedRows": 0,
-      "duplicateNames": 2
+      "duplicateNames": 0
     },
     {
       "domain": "business_functions",
-      "sourceRows": 39,
-      "acceptedRecords": 39,
+      "sourceRows": 30,
+      "acceptedRecords": 30,
       "skippedRows": 0,
-      "duplicateNames": 9
+      "duplicateNames": 0
     },
     {
       "domain": "org_ownership",
-      "sourceRows": 87,
-      "acceptedRecords": 87,
+      "sourceRows": 57,
+      "acceptedRecords": 57,
       "skippedRows": 0,
-      "duplicateNames": 31
+      "duplicateNames": 1
     },
     {
       "domain": "workforce_roles",
@@ -40,23 +40,23 @@
     },
     {
       "domain": "applications_systems",
-      "sourceRows": 192,
-      "acceptedRecords": 192,
+      "sourceRows": 116,
+      "acceptedRecords": 116,
       "skippedRows": 0,
-      "duplicateNames": 76
+      "duplicateNames": 0
     },
     {
       "domain": "data_assets_integrations",
-      "sourceRows": 432,
-      "acceptedRecords": 432,
+      "sourceRows": 147,
+      "acceptedRecords": 147,
       "skippedRows": 0,
-      "duplicateNames": 321
+      "duplicateNames": 36
     },
     {
       "domain": "infrastructure_platforms",
       "sourceRows": 4,
-      "acceptedRecords": 4,
-      "skippedRows": 0,
+      "acceptedRecords": 0,
+      "skippedRows": 4,
       "duplicateNames": 0
     },
     {
@@ -68,78 +68,78 @@
     },
     {
       "domain": "spend_value",
-      "sourceRows": 202,
-      "acceptedRecords": 202,
-      "skippedRows": 0,
-      "duplicateNames": 23
+      "sourceRows": 24,
+      "acceptedRecords": 20,
+      "skippedRows": 4,
+      "duplicateNames": 0
     },
     {
       "domain": "programs_initiatives",
-      "sourceRows": 170,
-      "acceptedRecords": 170,
+      "sourceRows": 86,
+      "acceptedRecords": 86,
       "skippedRows": 0,
-      "duplicateNames": 70
+      "duplicateNames": 0
     },
     {
       "domain": "ai_automation_use_cases",
-      "sourceRows": 156,
-      "acceptedRecords": 156,
+      "sourceRows": 63,
+      "acceptedRecords": 63,
       "skippedRows": 0,
-      "duplicateNames": 95
+      "duplicateNames": 0
     },
     {
       "domain": "risks_controls",
-      "sourceRows": 405,
-      "acceptedRecords": 405,
+      "sourceRows": 172,
+      "acceptedRecords": 172,
       "skippedRows": 0,
-      "duplicateNames": 332
+      "duplicateNames": 0
     },
     {
       "domain": "relationships",
-      "sourceRows": 1766,
-      "acceptedRecords": 1749,
-      "skippedRows": 17,
-      "duplicateNames": 128
+      "sourceRows": 85,
+      "acceptedRecords": 0,
+      "skippedRows": 85,
+      "duplicateNames": 0
     },
     {
       "domain": "evidence_sources",
-      "sourceRows": 140,
-      "acceptedRecords": 140,
+      "sourceRows": 4,
+      "acceptedRecords": 4,
       "skippedRows": 0,
-      "duplicateNames": 121
+      "duplicateNames": 3
     },
     {
       "domain": "metrics_outcomes",
-      "sourceRows": 138,
-      "acceptedRecords": 138,
+      "sourceRows": 116,
+      "acceptedRecords": 116,
       "skippedRows": 0,
-      "duplicateNames": 22
+      "duplicateNames": 0
     },
     {
       "domain": "industry_context_patterns",
-      "sourceRows": 199,
-      "acceptedRecords": 197,
+      "sourceRows": 108,
+      "acceptedRecords": 106,
       "skippedRows": 2,
-      "duplicateNames": 91
+      "duplicateNames": 0
     },
     {
       "domain": "expert_lenses",
       "sourceRows": 15,
-      "acceptedRecords": 15,
-      "skippedRows": 0,
-      "duplicateNames": 6
+      "acceptedRecords": 10,
+      "skippedRows": 5,
+      "duplicateNames": 0
     },
     {
       "domain": "service_scope_managed_services",
-      "sourceRows": 3,
-      "acceptedRecords": 3,
+      "sourceRows": 2,
+      "acceptedRecords": 2,
       "skippedRows": 0,
-      "duplicateNames": 1
+      "duplicateNames": 0
     },
     {
       "domain": "operational_process_evidence",
-      "sourceRows": 10,
-      "acceptedRecords": 10,
+      "sourceRows": 0,
+      "acceptedRecords": 0,
       "skippedRows": 0,
       "duplicateNames": 0
     }
@@ -182,13 +182,13 @@
       "id": "source-lineage-present",
       "label": "Source lineage present for accepted records",
       "status": "pass",
-      "detail": "4078 accepted records checked for lineage."
+      "detail": "1066 accepted records checked for lineage."
     },
     {
       "id": "evidence-attached",
       "label": "Evidence attached to accepted records",
       "status": "pass",
-      "detail": "4078 evidence attachments for 4078 accepted records; 0 records without evidence."
+      "detail": "1066 evidence attachments for 1066 accepted records; 0 records without evidence."
     },
     {
       "id": "tenant-isolation",
@@ -200,7 +200,7 @@
       "id": "relationship-candidates",
       "label": "Relationship candidate generation",
       "status": "pass",
-      "detail": "2177 relationship candidates generated."
+      "detail": "1662 relationship candidates generated."
     },
     {
       "id": "home-ava-readiness-artifact",
@@ -216,432 +216,145 @@
     }
   ],
   "promotionBlockers": [],
-  "generatedAt": "2026-07-14T13:00:00.000Z",
+  "generatedAt": "2026-07-14T15:50:19.110Z",
   "status": "inactive",
   "creationStatus": "created",
   "mode": "candidate_preview",
   "previewBanner": "Candidate Preview Mode - inactive candidate data. Not active tenant truth.",
   "sourceSnapshotIds": [
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/derived/meridian_moves_current_state_findings.csv@265bff70ed7c",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/derived/meridian_moves_golden_questions_scorecard.csv@f6c2dfe408ae",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_01_enterprise_profile.csv@19f06f015cdb",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv@a5c85bd866fd",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv@4c29c6fcd8d3",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_04_workforce_personas.csv@6420b716ff42",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_05_applications_systems.csv@719b24e95a59",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_06_data_assets_integrations.csv@ba6a3529bc55",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_07_vendors_contracts.csv@ee1febc65468",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_08_spend_value.csv@cc0145701226",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_09_programs_initiatives.csv@b495ae85fe04",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_10_ai_initiatives.csv@353663ee1aae",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_11_operations_risk_controls.csv@2501444ae288",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_12_relationships.csv@b1f6bd06dbd9",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_13_evidence_sources.csv@01276f14ef67",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_14_metric_definitions.csv@1134c1c518f3",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_15_industry_corpus_patterns.csv@f52603fdc84c",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_16_expert_lenses.csv@68825bba2c74",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_00_portfolio_entity_registry.csv@b6aa9f83946d",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv@0fb6c540de4f",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_02_business_functions.csv@51a5dc143f1f",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_03_org_ownership.csv@965acccf4b27",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_04_workforce_personas.csv@b4ca55a78664",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_05_applications_systems.csv@22f655e6dec8",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_06_data_assets_integrations.csv@9cd3f7acfca9",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_07_vendors_contracts.csv@e640fce6ba55",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_08_spend_value.csv@c34dff9f4969",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_09_programs_initiatives_business_priorities.csv@24a48efc6ed2",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_10_ai_initiatives.csv@6cc77899dfe8",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_11_operations_risk_controls.csv@5109f796afbf",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_12_relationships_graph_edges.csv@5c7987b2ff23",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_13_source_evidence_registry.csv@4b3e4adbe86a",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_14_metric_definitions.csv@688967812f74",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_15_industry_market_knowledge_patterns.csv@6852af099bcc",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_16_expert_lenses.csv@65ab60052434",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_17_client_rate_card_cost_basis.csv@5d8b0d464f7f",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_18_function_system_data_vendor_bridge.csv@e5ed57b42510",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_19_service_tower_managed_services_scope.csv@e2a0f96146c4",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_20_chunk_retrieval_registry.csv@03aea312d89d",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_21_graph_registry_relationship_dictionary.csv@aeaba8c9f916",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_22_operational_evidence_process_intelligence.csv@1728f1b2ba3e",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_23_external_benchmark_market_corpus.csv@cad53d99a62d",
-    "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_24_infrastructure_cloud_estate.csv@e9e8aaed1244",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_01_enterprise_profile.csv@94f5b5bccc72",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_02_business_functions.csv@7c333934be9f",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_03_org_ownership.csv@f9ec6fc159ac",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_04_workforce_personas.csv@b67b14192630",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_05_applications_systems.csv@82a793628dcd",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_06_data_assets_integrations.csv@1f72671f839f",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_07_vendors_contracts.csv@43613ca9eba8",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_08_spend_value.csv@af719b744e89",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_09_programs_initiatives.csv@36f645eccdae",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_10_ai_initiatives.csv@6edb304ea49f",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_11_operations_risk_controls.csv@2250326a11d1",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_12_relationships.csv@5a5d92b70f22",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_13_evidence_sources.csv@7d1af5b78f68",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_14_metric_definitions.csv@f99c62c429d9",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_15_industry_corpus_patterns.csv@5d6bb1145f4a",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_16_expert_lenses.csv@dfc98aee1f71",
-    "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/V6_BUSINESS_METADATA_DICTIONARY.csv@4d1de4d5ffc6"
+    "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv@92f1002bc114",
+    "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv@7b820626adfb",
+    "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv@ef068ec4082b",
+    "datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv@285066c9c60b",
+    "datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv@9174ca26def1",
+    "datasets/tenant-inputs/active/meridian-health/current/05_data_assets_integrations.csv@e1c364e5fece",
+    "datasets/tenant-inputs/active/meridian-health/current/06_infrastructure_platforms.csv@09e5c7030bf2",
+    "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv@45dd5205d6ad",
+    "datasets/tenant-inputs/active/meridian-health/current/08_spend_value.csv@cbfc78572541",
+    "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv@cabeafa172bb",
+    "datasets/tenant-inputs/active/meridian-health/current/10_ai_automation_use_cases.csv@f1b906ed9209",
+    "datasets/tenant-inputs/active/meridian-health/current/11_risks_controls.csv@3b15b296d6d0",
+    "datasets/tenant-inputs/active/meridian-health/current/12_relationships.csv@aa5c7d25aab6",
+    "datasets/tenant-inputs/active/meridian-health/current/13_evidence_sources.csv@ecfe9000a59b",
+    "datasets/tenant-inputs/active/meridian-health/current/14_metrics_outcomes.csv@84de54ace705",
+    "datasets/tenant-inputs/active/meridian-health/current/15_industry_context_patterns.csv@98b9fbadf589",
+    "datasets/tenant-inputs/active/meridian-health/current/16_expert_lenses.csv@d7f5599e4d6b",
+    "datasets/tenant-inputs/active/meridian-health/current/17_service_scope_managed_services.csv@9ca80f834382",
+    "datasets/tenant-inputs/active/meridian-health/current/18_operational_process_evidence.csv@80b748f26119"
   ],
   "sourceLineage": [
     {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/derived/meridian_moves_current_state_findings.csv",
-      "fingerprint": "265bff70ed7c08433fcf57d476bfa9a5ecd02e45de174497db81ae61e48907d1",
-      "rowCount": 28,
-      "domain": null
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/derived/meridian_moves_golden_questions_scorecard.csv",
-      "fingerprint": "f6c2dfe408ae10b32ee27d4c418faf45100ab2af8c4de877cdf938fc46a1cedf",
-      "rowCount": 42,
-      "domain": null
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_01_enterprise_profile.csv",
-      "fingerprint": "19f06f015cdbffacfeb77e2c69bc39031ad79ff86bde2bd5d6764a27eb939c21",
-      "rowCount": 1,
-      "domain": "enterprise_profile"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv",
-      "fingerprint": "a5c85bd866fd4274f90ace0cb1a4111eaaf19fb6d203f283f9904d2d532385a9",
-      "rowCount": 7,
-      "domain": "business_functions"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
-      "fingerprint": "4c29c6fcd8d3ab3ec0b6e83dc6877855dd5aab69e9f117b19f9b74003a23f70c",
-      "rowCount": 7,
-      "domain": "org_ownership"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_04_workforce_personas.csv",
-      "fingerprint": "6420b716ff427705373f4432617305267914d795e40159e308b921bf43f6fccd",
-      "rowCount": 6,
-      "domain": "workforce_roles"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_05_applications_systems.csv",
-      "fingerprint": "719b24e95a59790445270198d391e3d2e3f5772c2660bdc747bbc53e0eae4464",
-      "rowCount": 15,
-      "domain": "applications_systems"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_06_data_assets_integrations.csv",
-      "fingerprint": "ba6a3529bc55a697e44337771eba267d18506c1d052844c728d0a3e7c81a194a",
-      "rowCount": 36,
-      "domain": "data_assets_integrations"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_07_vendors_contracts.csv",
-      "fingerprint": "ee1febc65468d836d8e0c867dcc4a954d8722fc8a98ed030e3fa0aeb0e1f3278",
-      "rowCount": 7,
-      "domain": "vendors_contracts"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_08_spend_value.csv",
-      "fingerprint": "cc014570122653e0a8a2185dbcb9d0db2529ef8dd27b759db14a4be4b5fd1abb",
-      "rowCount": 10,
-      "domain": "spend_value"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_09_programs_initiatives.csv",
-      "fingerprint": "b495ae85fe04f52585033a5d0ef89ca98d8301fc553e76813a0062e497788a92",
-      "rowCount": 7,
-      "domain": "programs_initiatives"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_10_ai_initiatives.csv",
-      "fingerprint": "353663ee1aaee97f97807581e5f87dff5c9c786885e69708abcd292d16539da6",
-      "rowCount": 3,
-      "domain": "ai_automation_use_cases"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_11_operations_risk_controls.csv",
-      "fingerprint": "2501444ae288e01e6f62302d96298339f363453c43a6249de49cc79da99bc89b",
-      "rowCount": 28,
-      "domain": "risks_controls"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_12_relationships.csv",
-      "fingerprint": "b1f6bd06dbd97cfa6bdb607761fac688c587ad59a8767d43023dba5478f44ee4",
-      "rowCount": 69,
-      "domain": "relationships"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_13_evidence_sources.csv",
-      "fingerprint": "01276f14ef67ae75d2026da572b7f806ac7f2243a556e92fe48817fe1a6f0e70",
-      "rowCount": 4,
-      "domain": "evidence_sources"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_14_metric_definitions.csv",
-      "fingerprint": "1134c1c518f3eb3b9f7d76c582292ae3872f5c1b0136083615e8968fd062227d",
-      "rowCount": 11,
-      "domain": "metrics_outcomes"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_15_industry_corpus_patterns.csv",
-      "fingerprint": "f52603fdc84cf5fe2014ab61267246940faa5e979dfd69bc48155071c2ecb310",
-      "rowCount": 7,
-      "domain": "industry_context_patterns"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_16_expert_lenses.csv",
-      "fingerprint": "68825bba2c742a5804daa09374e17b4bc569eb3581b79749714523e1aa8194c7",
-      "rowCount": 5,
-      "domain": "expert_lenses"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_00_portfolio_entity_registry.csv",
-      "fingerprint": "b6aa9f83946d087c41bd749facd012a047e2d1b936213bc52caa36735bb7d86e",
-      "rowCount": 1,
-      "domain": "enterprise_profile"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv",
-      "fingerprint": "0fb6c540de4f9560a0689b338e653a1cbdbdc866ba15d500d4e17c153bb2dc64",
-      "rowCount": 1,
-      "domain": "enterprise_profile"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_02_business_functions.csv",
-      "fingerprint": "51a5dc143f1f3589b9f3f6b747a2c61ba0ae6bad39198d1d20460e02a4682d40",
-      "rowCount": 7,
-      "domain": "business_functions"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_03_org_ownership.csv",
-      "fingerprint": "965acccf4b27fa54e7bde72124943cc4097f9f343bd4e8f70694a4b9c912b839",
-      "rowCount": 7,
-      "domain": "org_ownership"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_04_workforce_personas.csv",
-      "fingerprint": "b4ca55a78664ce395cb5b0074a392ba957136e5804a70668de7aecefb0f01d09",
-      "rowCount": 6,
-      "domain": "workforce_roles"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_05_applications_systems.csv",
-      "fingerprint": "22f655e6dec8d5f8c7539e037b1ee49a6ca2a9648ae33710904392ea3c5250ef",
-      "rowCount": 15,
-      "domain": "applications_systems"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_06_data_assets_integrations.csv",
-      "fingerprint": "9cd3f7acfca9f80b19a6811ceb5c62c6160b187be7dd22d515ff071580098c83",
-      "rowCount": 36,
-      "domain": "data_assets_integrations"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_07_vendors_contracts.csv",
-      "fingerprint": "e640fce6ba55841ae14a2150ec3d3e7944192f12383f20622c05d1826e5ccbd0",
-      "rowCount": 7,
-      "domain": "vendors_contracts"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_08_spend_value.csv",
-      "fingerprint": "c34dff9f496970371b8284b46dd2c3079525c5f9605d729dfa96b4ada82f4d00",
-      "rowCount": 10,
-      "domain": "spend_value"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_09_programs_initiatives_business_priorities.csv",
-      "fingerprint": "24a48efc6ed203959ddb7e22ecc0bb2fbea4dba235618c5bb3841f240a4352b0",
-      "rowCount": 7,
-      "domain": "programs_initiatives"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_10_ai_initiatives.csv",
-      "fingerprint": "6cc77899dfe8ed6654f09a7f5b83f251a941a54937b9bbf0d42e8050902a678d",
-      "rowCount": 3,
-      "domain": "ai_automation_use_cases"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_11_operations_risk_controls.csv",
-      "fingerprint": "5109f796afbff7e3e1eac3fccc570334b8b4d12a538d81f97a6c8e63f6b4b86d",
-      "rowCount": 28,
-      "domain": "risks_controls"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_12_relationships_graph_edges.csv",
-      "fingerprint": "5c7987b2ff233ac273d8859f7518fd9519b82214ec616a446e61d4a5b5621ceb",
-      "rowCount": 69,
-      "domain": "relationships"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_13_source_evidence_registry.csv",
-      "fingerprint": "4b3e4adbe86aa560cdf1f67b28a45f5f75b4c26255c4b7336cad09453afcac09",
-      "rowCount": 4,
-      "domain": "evidence_sources"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_14_metric_definitions.csv",
-      "fingerprint": "688967812f74962d7c54380f4c418629ce65c174d4fa01bfcf9cda150c68f2d6",
-      "rowCount": 11,
-      "domain": "metrics_outcomes"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_15_industry_market_knowledge_patterns.csv",
-      "fingerprint": "6852af099bcc72140b7787dad4559d9706c10b57c3800ca3bb41efb6dd9a75de",
-      "rowCount": 7,
-      "domain": null
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_16_expert_lenses.csv",
-      "fingerprint": "65ab60052434b35df90e39387708e8af2f659e367440e51fd69d0ea400dfd41e",
-      "rowCount": 5,
-      "domain": "expert_lenses"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_17_client_rate_card_cost_basis.csv",
-      "fingerprint": "5d8b0d464f7fdcbebbcc68b24ef065c322477d1f335039dabc9937a261e1dac1",
-      "rowCount": 4,
-      "domain": "spend_value"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_18_function_system_data_vendor_bridge.csv",
-      "fingerprint": "e5ed57b42510e902b0807ae276fe3a3cb3347aa8a9679b70389664b6c43b9e5b",
-      "rowCount": 60,
-      "domain": "relationships"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_19_service_tower_managed_services_scope.csv",
-      "fingerprint": "e2a0f96146c4b06f1ca0a3858fda514b269e980e8eb6b20049257bcc0e8fc2db",
-      "rowCount": 3,
-      "domain": "service_scope_managed_services"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_20_chunk_retrieval_registry.csv",
-      "fingerprint": "03aea312d89d75b2e708e698ee4d7b64042cc6ff4784185e90048b483068e725",
-      "rowCount": 118,
-      "domain": "evidence_sources"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_21_graph_registry_relationship_dictionary.csv",
-      "fingerprint": "aeaba8c9f916c97002aaf930586185ce010be1c82f3f5cd0dda6faa92fa10730",
-      "rowCount": 17,
-      "domain": "relationships"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_22_operational_evidence_process_intelligence.csv",
-      "fingerprint": "1728f1b2ba3ecf0c59317fc1a16ab0a8f63f61a0ad56964bfe499d8f0092a2ed",
-      "rowCount": 10,
-      "domain": "operational_process_evidence"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_23_external_benchmark_market_corpus.csv",
-      "fingerprint": "cad53d99a62ddeb75e311ec4d89fbf3b4f78b01cda6010487f48463a01755df8",
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
+      "fingerprint": "92f1002bc114b2c34f01d543f2f69954a060b7d1c79f8d048d744818a897b6e5",
       "rowCount": 2,
-      "domain": "industry_context_patterns"
+      "domain": "enterprise_profile"
     },
     {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_24_infrastructure_cloud_estate.csv",
-      "fingerprint": "e9e8aaed1244000648f80f57a427994c0a2f4e132aa4a416086c5dfaf0d2f8a5",
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+      "fingerprint": "7b820626adfb615b5a18d05a0d43881a9c3375127970ba091a0e5343669524c2",
+      "rowCount": 30,
+      "domain": "business_functions"
+    },
+    {
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+      "fingerprint": "ef068ec4082b1438a8a516e9b604f100fc174336b3cc95f3735a34a9ab940fe3",
+      "rowCount": 57,
+      "domain": "org_ownership"
+    },
+    {
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv",
+      "fingerprint": "285066c9c60b2dcdbfe7e3ea7e56021c87284377f7346d57161f8e921182a2cf",
+      "rowCount": 26,
+      "domain": "workforce_roles"
+    },
+    {
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv",
+      "fingerprint": "9174ca26def1db3f2fd173eac048f8e9c3e81cd77624934ea0ba1cef20be9854",
+      "rowCount": 116,
+      "domain": "applications_systems"
+    },
+    {
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/05_data_assets_integrations.csv",
+      "fingerprint": "e1c364e5fece332170170c257fa58b3b8fb00641e8d755f9c1ab9bf54943ac47",
+      "rowCount": 147,
+      "domain": "data_assets_integrations"
+    },
+    {
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/06_infrastructure_platforms.csv",
+      "fingerprint": "09e5c7030bf2ca3096e298d4ae4f469dbc654c7c9cf9685525bb8767236a2526",
       "rowCount": 4,
       "domain": "infrastructure_platforms"
     },
     {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_01_enterprise_profile.csv",
-      "fingerprint": "94f5b5bccc720deec34a646f25647072258f98d7b8937b53e552890ba44b2c87",
-      "rowCount": 1,
-      "domain": "enterprise_profile"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_02_business_functions.csv",
-      "fingerprint": "7c333934be9f864c291f72ecf445f22d40ce181cb081b052128cee261249b9b3",
-      "rowCount": 25,
-      "domain": "business_functions"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_03_org_ownership.csv",
-      "fingerprint": "f9ec6fc159ac9bf908f076367d1a6af611c0dac43ab51497593ed4167c6e7859",
-      "rowCount": 73,
-      "domain": "org_ownership"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_04_workforce_personas.csv",
-      "fingerprint": "b67b141926304979257135f16341985ba768caca46936bed9016678e5a80eeaf",
-      "rowCount": 14,
-      "domain": "workforce_roles"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_05_applications_systems.csv",
-      "fingerprint": "82a793628dcd9c0eaf715dee9c1c293ded9eb299bacb23be581a595ddf00812a",
-      "rowCount": 162,
-      "domain": "applications_systems"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_06_data_assets_integrations.csv",
-      "fingerprint": "1f72671f839fb43f932a4dfb655ec9ee9f7634d471825dc00ec8672d8d58e0a8",
-      "rowCount": 360,
-      "domain": "data_assets_integrations"
-    },
-    {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_07_vendors_contracts.csv",
-      "fingerprint": "43613ca9eba8044889895238c9e5c3018d884095c80962c70627ac555217fea7",
-      "rowCount": 95,
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv",
+      "fingerprint": "45dd5205d6ad8f2c143e3de5b604f4f048b436d5484b8e2e04daa566bb8a567d",
+      "rowCount": 109,
       "domain": "vendors_contracts"
     },
     {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_08_spend_value.csv",
-      "fingerprint": "af719b744e899710b046f9dafa8bc1081679ac90e82239686db0a82f9f4be195",
-      "rowCount": 178,
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/08_spend_value.csv",
+      "fingerprint": "cbfc78572541cc83c570d012a5d3885b4ffb6430ae438e21c065718eb2c8be50",
+      "rowCount": 24,
       "domain": "spend_value"
     },
     {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_09_programs_initiatives.csv",
-      "fingerprint": "36f645eccdaed8df015530675a3c63b0b0d05ed122d8ba2bf3b10f7b89fa9ab3",
-      "rowCount": 156,
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv",
+      "fingerprint": "cabeafa172bbe1909df75ef9f5507304dc746df62b546472bd2089a0ea6ca1a2",
+      "rowCount": 86,
       "domain": "programs_initiatives"
     },
     {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_10_ai_initiatives.csv",
-      "fingerprint": "6edb304ea49fa472bc8cbf934f952a0479f143537b6a3c0a926929dd14ddbfc5",
-      "rowCount": 150,
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/10_ai_automation_use_cases.csv",
+      "fingerprint": "f1b906ed9209035c41f25d1495c3bb45ee9ab238df38d575abe96253e99bc4a5",
+      "rowCount": 63,
       "domain": "ai_automation_use_cases"
     },
     {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_11_operations_risk_controls.csv",
-      "fingerprint": "2250326a11d1a07bdb4bb024854503d38e14e35dfc1c6f15ccbe3bb87a689b8e",
-      "rowCount": 349,
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/11_risks_controls.csv",
+      "fingerprint": "3b15b296d6d01e73a2f0b4d95da52707b1b8922ceae9369a638a686b12644d01",
+      "rowCount": 172,
       "domain": "risks_controls"
     },
     {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_12_relationships.csv",
-      "fingerprint": "5a5d92b70f22493fb6f274a04c9d24055e040f004cf1d23b6df5574210c0f111",
-      "rowCount": 1551,
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/12_relationships.csv",
+      "fingerprint": "aa5c7d25aab659c6016e2b127d6e5f731028396d3c118a2c2feab4953c823355",
+      "rowCount": 85,
       "domain": "relationships"
     },
     {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_13_evidence_sources.csv",
-      "fingerprint": "7d1af5b78f68f681c197ff84cd525e9a42f8b2ded9cc577d43e69e387b48b648",
-      "rowCount": 14,
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/13_evidence_sources.csv",
+      "fingerprint": "ecfe9000a59b047b180b05932ab2dc063df0fdaf78b0b7e71277a359b301addd",
+      "rowCount": 4,
       "domain": "evidence_sources"
     },
     {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_14_metric_definitions.csv",
-      "fingerprint": "f99c62c429d96cc554b8402530143b140908cbadccb8974bce659c38afb36dda",
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/14_metrics_outcomes.csv",
+      "fingerprint": "84de54ace705c4ba82168c2f5277e1aee1c95d2e436b158aaa119dfdceb20ee3",
       "rowCount": 116,
       "domain": "metrics_outcomes"
     },
     {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_15_industry_corpus_patterns.csv",
-      "fingerprint": "5d6bb1145f4a100b0785f12cd9fbf77ece0ad8b37b01c484aae21a42b2c02cbc",
-      "rowCount": 190,
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/15_industry_context_patterns.csv",
+      "fingerprint": "98b9fbadf589c4e5b6afd37b3619b14bf911a43d845abfbe66d3828171da2b06",
+      "rowCount": 108,
       "domain": "industry_context_patterns"
     },
     {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_16_expert_lenses.csv",
-      "fingerprint": "dfc98aee1f718e68e70e495d82a3c63e8bf3f869418e7e0454cf0a3bdf88b853",
-      "rowCount": 5,
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/16_expert_lenses.csv",
+      "fingerprint": "d7f5599e4d6b9e89a8dda933484a8048d24fe15347f76be67f12742fd697eaca",
+      "rowCount": 15,
       "domain": "expert_lenses"
     },
     {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/V6_BUSINESS_METADATA_DICTIONARY.csv",
-      "fingerprint": "4d1de4d5ffc66302a6ec7fd424805b66f527171bd6a7c97476c3cdd7d6efeabd",
-      "rowCount": 523,
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/17_service_scope_managed_services.csv",
+      "fingerprint": "9ca80f834382666ffaaa7d85120837aa833a2006d1fb469eb723c514289e22f9",
+      "rowCount": 2,
+      "domain": "service_scope_managed_services"
+    },
+    {
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/18_operational_process_evidence.csv",
+      "fingerprint": "80b748f26119f94309f4b2bb7cd0658b597fada43ba9c38e5c08758411513cdf",
+      "rowCount": 10,
       "domain": null
     }
   ],
@@ -652,7 +365,10 @@
     "relationshipReady": true,
     "caveats": [
       "infrastructure_platforms below depth by 16 rows.",
-      "service_scope_managed_services below depth by 7 rows."
+      "relationships below depth by 15 rows.",
+      "evidence_sources below depth by 16 rows.",
+      "service_scope_managed_services below depth by 8 rows.",
+      "operational_process_evidence below depth by 10 rows."
     ],
     "canAnswer": [
       "which active canonical input files were loaded",
@@ -675,17 +391,36 @@
       "sourceObjectId": "enterprise_profile:meridian_health_system:2",
       "displayName": "enterprise_profile:meridian_health_system:2",
       "evidenceKeys": [
-        "meridian-health:current-state-pack:V6_01_enterprise_profile.csv:2"
+        "meridian-health:current-universal:00_enterprise_profile.csv:2"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "clientDisplayName": "Meridian Health System",
-        "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-        "businessObjectFamily": "enterprise_profile",
-        "recordId": "MER-V6-ENT-001",
-        "recordName": "Meridian Health System",
-        "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-        "sourceOwner": "AbarVa synthetic data steward"
+        "entityName": "Meridian Health System",
+        "industry": "Healthcare",
+        "subIndustry": "Integrated delivery network and health plan",
+        "headquarters": "Sacramento, CA",
+        "operatingRegions": "[\"Sacramento, CA\",\"Northern California service area\",\"Central California service area\",\"Nevada service area\"]",
+        "businessModel": "Medium-to-large health organization with clinical delivery, health-plan operations, finance, and analytics modernization needs.",
+        "customerSegments": "[\"patients\",\"members\",\"providers\",\"employer groups\",\"clinical operations leaders\",\"health-plan operations teams\"]"
+      }
+    },
+    {
+      "domain": "unknown",
+      "objectType": "tenant_profile",
+      "sourceObjectId": "enterprise_profile:healthcare_demo:3",
+      "displayName": "enterprise_profile:healthcare_demo:3",
+      "evidenceKeys": [
+        "meridian-health:current-universal:00_enterprise_profile.csv:3"
+      ],
+      "attributes": {
+        "tenantKey": "meridian-health",
+        "entityName": "Healthcare Demo",
+        "industry": "Healthcare",
+        "subIndustry": "Sutter-scale regional provider with Kaiser/Humana-style payer/services complexity",
+        "revenueUsd": 39600000000,
+        "employeeCount": 88000,
+        "businessModel": "enterprise operating model",
+        "customerSegments": "[\"patients\",\"members\",\"providers\",\"employer groups\",\"clinical operations leaders\",\"health-plan operations teams\"]"
       }
     },
     {
@@ -694,17 +429,17 @@
       "sourceObjectId": "business_functions:enterprise_data_and_analytics:2",
       "displayName": "business_functions:enterprise_data_and_analytics:2",
       "evidenceKeys": [
-        "meridian-health:current-state-pack:V6_02_business_functions.csv:2"
+        "meridian-health:current-universal:01_business_functions.csv:2"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "clientDisplayName": "Meridian Health System",
-        "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-        "businessObjectFamily": "business_function",
-        "recordId": "MER-FN-DATA",
-        "recordName": "Enterprise Data and Analytics",
-        "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-        "sourceOwner": "AbarVa synthetic data steward"
+        "functionName": "Enterprise Data and Analytics",
+        "executiveOwner": "CDAO",
+        "businessCapabilities": "[\"data intake\",\"data product certification\",\"dashboard modernization\",\"analytics demand management\"]",
+        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "sourceDate": "2026-07-09",
+        "confidence": "medium",
+        "knownGaps": "[\"Synthetic PHI-free planning-grade substrate\",\"not real Meridian production data.\",\"AWS Databricks aspiration is not proof that the platform foundation is complete.\",\"No certified medallion architecture is loaded.\",\"No platform, network, or security foundation evidence is loaded.\",\"No formal data governance operating model is loaded.\",\"Do not convert planning hypotheses into realized ROI or audited clinical/financial claims.\"]"
       }
     },
     {
@@ -713,17 +448,17 @@
       "sourceObjectId": "business_functions:clinical_operations:3",
       "displayName": "business_functions:clinical_operations:3",
       "evidenceKeys": [
-        "meridian-health:current-state-pack:V6_02_business_functions.csv:3"
+        "meridian-health:current-universal:01_business_functions.csv:3"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "clientDisplayName": "Meridian Health System",
-        "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-        "businessObjectFamily": "business_function",
-        "recordId": "MER-FN-CLINICAL",
-        "recordName": "Clinical Operations",
-        "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-        "sourceOwner": "AbarVa synthetic data steward"
+        "functionName": "Clinical Operations",
+        "executiveOwner": "CMO",
+        "businessCapabilities": "[\"clinical documentation\",\"care management\",\"longitudinal patient view\"]",
+        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "sourceDate": "2026-07-09",
+        "confidence": "medium",
+        "knownGaps": "[\"Synthetic PHI-free planning-grade substrate\",\"not real Meridian production data.\",\"AWS Databricks aspiration is not proof that the platform foundation is complete.\",\"No certified medallion architecture is loaded.\",\"No platform, network, or security foundation evidence is loaded.\",\"No formal data governance operating model is loaded.\",\"Do not convert planning hypotheses into realized ROI or audited clinical/financial claims.\"]"
       }
     },
     {
@@ -732,17 +467,17 @@
       "sourceObjectId": "business_functions:health_plan_operations:4",
       "displayName": "business_functions:health_plan_operations:4",
       "evidenceKeys": [
-        "meridian-health:current-state-pack:V6_02_business_functions.csv:4"
+        "meridian-health:current-universal:01_business_functions.csv:4"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "clientDisplayName": "Meridian Health System",
-        "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-        "businessObjectFamily": "business_function",
-        "recordId": "MER-FN-PLAN",
-        "recordName": "Health Plan Operations",
-        "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-        "sourceOwner": "AbarVa synthetic data steward"
+        "functionName": "Health Plan Operations",
+        "executiveOwner": "Chief Health Plan Officer",
+        "businessCapabilities": "[\"prior authorization\",\"utilization management\",\"claims operations\",\"member support\"]",
+        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "sourceDate": "2026-06-18",
+        "confidence": "medium",
+        "originalSourceFile": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv"
       }
     },
     {
@@ -751,17 +486,17 @@
       "sourceObjectId": "business_functions:quality_and_provider_performance:5",
       "displayName": "business_functions:quality_and_provider_performance:5",
       "evidenceKeys": [
-        "meridian-health:current-state-pack:V6_02_business_functions.csv:5"
+        "meridian-health:current-universal:01_business_functions.csv:5"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "clientDisplayName": "Meridian Health System",
-        "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-        "businessObjectFamily": "business_function",
-        "recordId": "MER-FN-QUALITY",
-        "recordName": "Quality and Provider Performance",
-        "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-        "sourceOwner": "AbarVa synthetic data steward"
+        "functionName": "Quality and Provider Performance",
+        "executiveOwner": "VP Quality",
+        "businessCapabilities": "[\"measure logic\",\"provider attribution\",\"care gap analytics\"]",
+        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "sourceDate": "2026-07-09",
+        "confidence": "medium",
+        "knownGaps": "[\"Synthetic PHI-free planning-grade substrate\",\"not real Meridian production data.\",\"AWS Databricks aspiration is not proof that the platform foundation is complete.\",\"No certified medallion architecture is loaded.\",\"No platform, network, or security foundation evidence is loaded.\",\"No formal data governance operating model is loaded.\",\"Do not convert planning hypotheses into realized ROI or audited clinical/financial claims.\"]"
       }
     },
     {
@@ -770,17 +505,17 @@
       "sourceObjectId": "business_functions:finance_and_actuarial:6",
       "displayName": "business_functions:finance_and_actuarial:6",
       "evidenceKeys": [
-        "meridian-health:current-state-pack:V6_02_business_functions.csv:6"
+        "meridian-health:current-universal:01_business_functions.csv:6"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "clientDisplayName": "Meridian Health System",
-        "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-        "businessObjectFamily": "business_function",
-        "recordId": "MER-FN-FINANCE",
-        "recordName": "Finance and Actuarial",
-        "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-        "sourceOwner": "AbarVa synthetic data steward"
+        "functionName": "Finance and Actuarial",
+        "executiveOwner": "CFO",
+        "businessCapabilities": "[\"financial reporting\",\"cost transparency\",\"payment integrity\",\"close automation\"]",
+        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "sourceDate": "2026-06-18",
+        "confidence": "medium",
+        "originalSourceFile": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv"
       }
     },
     {
@@ -789,17 +524,17 @@
       "sourceObjectId": "business_functions:contact_center_and_member_experience:7",
       "displayName": "business_functions:contact_center_and_member_experience:7",
       "evidenceKeys": [
-        "meridian-health:current-state-pack:V6_02_business_functions.csv:7"
+        "meridian-health:current-universal:01_business_functions.csv:7"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "clientDisplayName": "Meridian Health System",
-        "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-        "businessObjectFamily": "business_function",
-        "recordId": "MER-FN-CONTACT",
-        "recordName": "Contact Center and Member Experience",
-        "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-        "sourceOwner": "AbarVa synthetic data steward"
+        "functionName": "Contact Center and Member Experience",
+        "executiveOwner": "Chief Experience Officer",
+        "businessCapabilities": "[\"call handling\",\"CRM case management\",\"next-best-action workflows\"]",
+        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "sourceDate": "2026-07-09",
+        "confidence": "medium",
+        "knownGaps": "[\"Synthetic PHI-free planning-grade substrate\",\"not real Meridian production data.\",\"AWS Databricks aspiration is not proof that the platform foundation is complete.\",\"No certified medallion architecture is loaded.\",\"No platform, network, or security foundation evidence is loaded.\",\"No formal data governance operating model is loaded.\",\"Do not convert planning hypotheses into realized ROI or audited clinical/financial claims.\"]"
       }
     },
     {
@@ -808,93 +543,74 @@
       "sourceObjectId": "business_functions:technology_platform_and_security:8",
       "displayName": "business_functions:technology_platform_and_security:8",
       "evidenceKeys": [
-        "meridian-health:current-state-pack:V6_02_business_functions.csv:8"
+        "meridian-health:current-universal:01_business_functions.csv:8"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "clientDisplayName": "Meridian Health System",
-        "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-        "businessObjectFamily": "business_function",
-        "recordId": "MER-FN-PLATFORM",
-        "recordName": "Technology Platform and Security",
-        "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-        "sourceOwner": "AbarVa synthetic data steward"
+        "functionName": "Technology Platform and Security",
+        "executiveOwner": "CDIO",
+        "businessCapabilities": "[\"AWS landing zone\",\"Databricks foundation\",\"network/security controls\",\"interface operations\"]",
+        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "sourceDate": "2026-07-09",
+        "confidence": "medium",
+        "knownGaps": "[\"Synthetic PHI-free planning-grade substrate\",\"not real Meridian production data.\",\"AWS Databricks aspiration is not proof that the platform foundation is complete.\",\"No certified medallion architecture is loaded.\",\"No platform, network, or security foundation evidence is loaded.\",\"No formal data governance operating model is loaded.\",\"Do not convert planning hypotheses into realized ROI or audited clinical/financial claims.\"]"
       }
     },
     {
       "domain": "unknown",
-      "objectType": "org_owner",
-      "sourceObjectId": "org_ownership:enterprise_data_and_analytics:2",
-      "displayName": "org_ownership:enterprise_data_and_analytics:2",
+      "objectType": "business_function",
+      "sourceObjectId": "business_functions:ambulatory_and_primary_care:9",
+      "displayName": "business_functions:ambulatory_and_primary_care:9",
       "evidenceKeys": [
-        "meridian-health:current-state-pack:V6_03_org_ownership.csv:2"
+        "meridian-health:current-universal:01_business_functions.csv:9"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "clientDisplayName": "Meridian Health System",
-        "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-        "businessObjectFamily": "org_ownership",
-        "recordId": "MER-ORG-001",
-        "recordName": "Enterprise Data and Analytics ownership",
-        "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-        "sourceOwner": "AbarVa synthetic data steward"
+        "functionName": "Ambulatory and Primary Care",
+        "executiveOwner": "Chief Medical Officer",
+        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "sourceDate": "2026-06-18",
+        "confidence": "medium",
+        "originalSourceFile": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv",
+        "originalPacket": "rich-enterprise-pack"
       }
     },
     {
       "domain": "unknown",
-      "objectType": "org_owner",
-      "sourceObjectId": "org_ownership:clinical_operations:3",
-      "displayName": "org_ownership:clinical_operations:3",
+      "objectType": "business_function",
+      "sourceObjectId": "business_functions:hospital_operations:10",
+      "displayName": "business_functions:hospital_operations:10",
       "evidenceKeys": [
-        "meridian-health:current-state-pack:V6_03_org_ownership.csv:3"
+        "meridian-health:current-universal:01_business_functions.csv:10"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "clientDisplayName": "Meridian Health System",
-        "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-        "businessObjectFamily": "org_ownership",
-        "recordId": "MER-ORG-002",
-        "recordName": "Clinical Operations ownership",
-        "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-        "sourceOwner": "AbarVa synthetic data steward"
+        "functionName": "Hospital Operations",
+        "executiveOwner": "Chief Operating Officer",
+        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "sourceDate": "2026-06-18",
+        "confidence": "medium",
+        "originalSourceFile": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv",
+        "originalPacket": "rich-enterprise-pack"
       }
     },
     {
       "domain": "unknown",
-      "objectType": "org_owner",
-      "sourceObjectId": "org_ownership:health_plan_operations:4",
-      "displayName": "org_ownership:health_plan_operations:4",
+      "objectType": "business_function",
+      "sourceObjectId": "business_functions:pharmacy_services:11",
+      "displayName": "business_functions:pharmacy_services:11",
       "evidenceKeys": [
-        "meridian-health:current-state-pack:V6_03_org_ownership.csv:4"
+        "meridian-health:current-universal:01_business_functions.csv:11"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "clientDisplayName": "Meridian Health System",
-        "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-        "businessObjectFamily": "org_ownership",
-        "recordId": "MER-ORG-003",
-        "recordName": "Health Plan Operations ownership",
-        "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-        "sourceOwner": "AbarVa synthetic data steward"
-      }
-    },
-    {
-      "domain": "unknown",
-      "objectType": "org_owner",
-      "sourceObjectId": "org_ownership:quality_and_provider_performance:5",
-      "displayName": "org_ownership:quality_and_provider_performance:5",
-      "evidenceKeys": [
-        "meridian-health:current-state-pack:V6_03_org_ownership.csv:5"
-      ],
-      "attributes": {
-        "tenantKey": "meridian-health",
-        "clientDisplayName": "Meridian Health System",
-        "v6ContractVersion": "v6.0.0-meridian-current-state-20260709",
-        "businessObjectFamily": "org_ownership",
-        "recordId": "MER-ORG-004",
-        "recordName": "Quality and Provider Performance ownership",
-        "sourceSystem": "meridian-health-v6-v7-current-state-v1",
-        "sourceOwner": "AbarVa synthetic data steward"
+        "functionName": "Pharmacy Services",
+        "executiveOwner": "Chief Pharmacy Officer",
+        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+        "sourceDate": "2026-06-18",
+        "confidence": "medium",
+        "originalSourceFile": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv",
+        "originalPacket": "rich-enterprise-pack"
       }
     }
   ],

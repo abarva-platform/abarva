@@ -2,7 +2,7 @@
   {
     "moduleKey": "home",
     "sourceMode": "active_tenant_access",
-    "activeTenantAccessVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+    "activeTenantAccessVersionId": "candidate:lakeshore-holdings:e16ad063e5bd",
     "recordCount": 57,
     "evidenceRefCount": 57,
     "candidateDataConsumed": false,
@@ -13,7 +13,7 @@
   {
     "moduleKey": "intelligence",
     "sourceMode": "active_tenant_access",
-    "activeTenantAccessVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+    "activeTenantAccessVersionId": "candidate:lakeshore-holdings:e16ad063e5bd",
     "recordCount": 57,
     "evidenceRefCount": 57,
     "candidateDataConsumed": false,
@@ -24,7 +24,7 @@
   {
     "moduleKey": "moves",
     "sourceMode": "active_tenant_access",
-    "activeTenantAccessVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+    "activeTenantAccessVersionId": "candidate:lakeshore-holdings:e16ad063e5bd",
     "recordCount": 57,
     "evidenceRefCount": 57,
     "candidateDataConsumed": false,
@@ -35,7 +35,7 @@
   {
     "moduleKey": "source",
     "sourceMode": "active_tenant_access",
-    "activeTenantAccessVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+    "activeTenantAccessVersionId": "candidate:lakeshore-holdings:e16ad063e5bd",
     "recordCount": 57,
     "evidenceRefCount": 57,
     "candidateDataConsumed": false,
@@ -46,7 +46,7 @@
   {
     "moduleKey": "tower",
     "sourceMode": "active_tenant_access",
-    "activeTenantAccessVersionId": "candidate:lakeshore-holdings:dfa86cb1154b",
+    "activeTenantAccessVersionId": "candidate:lakeshore-holdings:e16ad063e5bd",
     "recordCount": 57,
     "evidenceRefCount": 57,
     "candidateDataConsumed": false,

@@ -23,6 +23,12 @@ type Registry = {
   activeRoot: string;
   archiveRoot: string;
   policy: Record<string, boolean>;
+  universalTemplateSet: {
+    templateSetId: string;
+    root: string;
+    manifest: string;
+    qualityDepthRules: string;
+  };
   activeTenants: Tenant[];
   retiredTenants: Array<{
     tenantKey: string;
@@ -40,6 +46,11 @@ type FileSummary = {
   extension: string;
   rows: number | null;
   sizeBytes: number;
+};
+
+type TemplateManifest = {
+  templateSetId: string;
+  templates: Array<{ file: string; required: boolean; columns: string[] }>;
 };
 
 const root = process.cwd();
@@ -93,6 +104,22 @@ function summarizePacket(packetPath: string): FileSummary[] {
     .sort((left, right) => left.relativePath.localeCompare(right.relativePath));
 }
 
+function readTemplateManifest(registry: Registry): TemplateManifest {
+  return JSON.parse(fs.readFileSync(path.join(root, registry.universalTemplateSet.manifest), "utf8")) as TemplateManifest;
+}
+
+function activeCurrentFiles(tenant: Tenant): string[] {
+  return walkFiles(path.join(root, tenant.canonicalInputRoot))
+    .map((file) => path.relative(path.join(root, tenant.canonicalInputRoot), file))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+function disallowedActiveFile(relativePath: string): boolean {
+  return /(^|\/)(V[0-9]+_|.*current-state-pack.*|.*rich-enterprise-pack.*|.*rich-substrate-pack.*|.*upgrade-candidate-pack.*|.*enterprise-pack.*|.*holdco-pack.*)/i.test(
+    relativePath,
+  );
+}
+
 function escapeMarkdown(value: unknown): string {
   return String(value ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
 }
@@ -104,6 +131,11 @@ function writeMarkdown(file: string, lines: string[]): void {
 
 function run(): void {
   const registry = readRegistry();
+  const templateManifest = readTemplateManifest(registry);
+  const requiredUniversalFiles = templateManifest.templates
+    .filter((template) => template.required)
+    .map((template) => template.file)
+    .sort((left, right) => left.localeCompare(right));
   ensureDir(outDir);
 
   const failures: string[] = [];
@@ -113,6 +145,30 @@ function run(): void {
     }
     if (!fs.existsSync(path.join(root, tenant.canonicalInputRoot))) {
       failures.push(`${tenant.tenantKey}: missing canonical root ${tenant.canonicalInputRoot}`);
+    }
+    if (tenant.packets.length !== 1 || tenant.packets[0]?.path !== tenant.canonicalInputRoot) {
+      failures.push(
+        `${tenant.tenantKey}: active registry must point to exactly one current-universal packet at ${tenant.canonicalInputRoot}`,
+      );
+    }
+
+    const currentFiles = activeCurrentFiles(tenant);
+    const currentCsvFiles = currentFiles.filter((file) => file.toLowerCase().endsWith(".csv"));
+    const nestedFiles = currentFiles.filter((file) => file.includes(path.sep) || file.includes("/"));
+    const disallowedFiles = currentFiles.filter(disallowedActiveFile);
+    const missingUniversalFiles = requiredUniversalFiles.filter((file) => !currentCsvFiles.includes(file));
+    const extraCsvFiles = currentCsvFiles.filter((file) => !requiredUniversalFiles.includes(file));
+    if (nestedFiles.length > 0) {
+      failures.push(`${tenant.tenantKey}: active current root contains nested files: ${nestedFiles.join(", ")}`);
+    }
+    if (disallowedFiles.length > 0) {
+      failures.push(`${tenant.tenantKey}: active current root contains legacy/versioned files: ${disallowedFiles.join(", ")}`);
+    }
+    if (missingUniversalFiles.length > 0) {
+      failures.push(`${tenant.tenantKey}: missing universal active files: ${missingUniversalFiles.join(", ")}`);
+    }
+    if (extraCsvFiles.length > 0) {
+      failures.push(`${tenant.tenantKey}: extra active CSV files outside universal template set: ${extraCsvFiles.join(", ")}`);
     }
 
     const packets = tenant.packets.map((packet) => {
@@ -139,6 +195,8 @@ function run(): void {
     return {
       ...tenant,
       packets,
+      currentCsvFiles,
+      requiredUniversalFileCount: requiredUniversalFiles.length,
       fileCount: packets.reduce((sum, packet) => sum + packet.fileCount, 0),
       csvRows: packets.reduce((sum, packet) => sum + packet.csvRows, 0),
     };
@@ -164,6 +222,9 @@ function run(): void {
     generatedAt: new Date().toISOString(),
     guardrails: {
       activeLoaderInputsMustBeUnderCanonicalRoot: true,
+      oneUniversalFilePerDomainPerTenant: true,
+      noVersionedFilesUnderActiveCurrent: true,
+      noNestedPacketFoldersUnderActiveCurrent: true,
       northstarActive: northstarActive,
       productionTenantDataWritten: false,
       activeTenantAccessLayerUpdated: false,
@@ -186,15 +247,18 @@ function run(): void {
     `- productionTenantDataWritten: ${report.guardrails.productionTenantDataWritten}`,
     `- activeTenantAccessLayerUpdated: ${report.guardrails.activeTenantAccessLayerUpdated}`,
     `- moduleRuntimeBehaviorChanged: ${report.guardrails.moduleRuntimeBehaviorChanged}`,
+    `- oneUniversalFilePerDomainPerTenant: ${report.guardrails.oneUniversalFilePerDomainPerTenant}`,
+    `- noVersionedFilesUnderActiveCurrent: ${report.guardrails.noVersionedFilesUnderActiveCurrent}`,
+    `- noNestedPacketFoldersUnderActiveCurrent: ${report.guardrails.noNestedPacketFoldersUnderActiveCurrent}`,
     `- northstarActive: ${report.guardrails.northstarActive}`,
     "",
     "## Active Tenant Input Roots",
     "",
-    "| Tenant | Canonical root | Packets | Files | CSV rows |",
-    "| --- | --- | ---: | ---: | ---: |",
+    "| Tenant | Canonical root | Packets | Universal CSV files | Files | CSV rows |",
+    "| --- | --- | ---: | ---: | ---: | ---: |",
     ...tenantReports.map(
       (tenant) =>
-        `| ${tenant.displayName} | \`${tenant.canonicalInputRoot}\` | ${tenant.packets.length} | ${tenant.fileCount.toLocaleString()} | ${tenant.csvRows.toLocaleString()} |`,
+        `| ${tenant.displayName} | \`${tenant.canonicalInputRoot}\` | ${tenant.packets.length} | ${tenant.currentCsvFiles.length}/${tenant.requiredUniversalFileCount} | ${tenant.fileCount.toLocaleString()} | ${tenant.csvRows.toLocaleString()} |`,
     ),
     "",
     "## Packet Detail",

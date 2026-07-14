@@ -1,6 +1,6 @@
 # Active Module Context Promotion - skyharbor-air
 
-Generated: `2026-07-14T13:00:00.000Z`
+Generated: `2026-07-14T15:50:19.110Z`
 
 This promotes a reviewed candidate metadata pointer into Active Tenant Access for
 the selected safe demo tenant only. It does not write production tenant data,
@@ -9,20 +9,20 @@ candidate data by default, or claim realized value.
 
 ## Quality
 
-- Candidate version: `candidate:skyharbor-air:80f0be2d1c76`
+- Candidate version: `candidate:skyharbor-air:3565f457b05d`
 - Enterprise profile: ready
-- Canonical records: 3457
-- Evidence attachments: 3457
-- Relationship candidates: 3136
+- Canonical records: 2066
+- Evidence attachments: 2066
+- Relationship candidates: 1994
 - Promotion blockers: 0
 
 ## Module Read Proof
 
-- home: active_tenant_access, records 59, evidence 59, candidate consumed false
-- intelligence: active_tenant_access, records 59, evidence 59, candidate consumed false
-- moves: active_tenant_access, records 59, evidence 59, candidate consumed false
-- source: active_tenant_access, records 59, evidence 59, candidate consumed false
-- tower: active_tenant_access, records 59, evidence 59, candidate consumed false
+- home: active_tenant_access, records 57, evidence 57, candidate consumed false
+- intelligence: active_tenant_access, records 57, evidence 57, candidate consumed false
+- moves: active_tenant_access, records 57, evidence 57, candidate consumed false
+- source: active_tenant_access, records 57, evidence 57, candidate consumed false
+- tower: active_tenant_access, records 57, evidence 57, candidate consumed false
 
 ## Guardrails
 

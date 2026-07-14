@@ -1,10 +1,10 @@
 {
   "recordVersion": "active-tenant-access/v1",
-  "generatedAt": "2026-07-14T13:00:00.000Z",
+  "generatedAt": "2026-07-14T15:50:19.110Z",
   "tenantKey": "lakeshore-industries",
-  "activeVersionId": "candidate:lakeshore-industries:929f574689fc",
+  "activeVersionId": "candidate:lakeshore-industries:bde306214d94",
   "priorActiveVersionId": "lakeshore-industries:active-runtime-truth:unchanged",
-  "sourceCandidateVersionId": "candidate:lakeshore-industries:929f574689fc",
+  "sourceCandidateVersionId": "candidate:lakeshore-industries:bde306214d94",
   "activeAccessState": "promoted_for_safe_demo_metadata",
   "productionTenantDataWritten": false,
   "writesPhysicalTables": false,

@@ -1,37 +1,38 @@
 # Canonical Tenant Inputs
 
-Generated: 2026-07-13T23:58:15.797Z
+Generated: 2026-07-14T16:11:43.668Z
 
 ## Guardrails
 
 - productionTenantDataWritten: false
 - activeTenantAccessLayerUpdated: false
 - moduleRuntimeBehaviorChanged: false
+- oneUniversalFilePerDomainPerTenant: true
+- noVersionedFilesUnderActiveCurrent: true
+- noNestedPacketFoldersUnderActiveCurrent: true
 - northstarActive: false
 
 ## Active Tenant Input Roots
 
-| Tenant | Canonical root | Packets | Files | CSV rows |
-| --- | --- | ---: | ---: | ---: |
-| Apex Retail | `datasets/tenant-inputs/active/apex-retail/current` | 1 | 20 | 4,112 |
-| First Capital Financial | `datasets/tenant-inputs/active/first-capital-financial/current` | 1 | 20 | 6,132 |
-| Lakeshore Holdings | `datasets/tenant-inputs/active/lakeshore-holdings/current` | 1 | 23 | 996 |
-| Lakeshore Industries | `datasets/tenant-inputs/active/lakeshore-industries/current` | 1 | 55 | 3,809 |
-| Meridian Health | `datasets/tenant-inputs/active/meridian-health/current` | 2 | 66 | 4,697 |
-| SkyHarbor Air | `datasets/tenant-inputs/active/skyharbor-air/current` | 2 | 61 | 3,842 |
+| Tenant | Canonical root | Packets | Universal CSV files | Files | CSV rows |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Apex Retail | `datasets/tenant-inputs/active/apex-retail/current` | 1 | 19/19 | 19 | 1,059 |
+| First Capital Financial | `datasets/tenant-inputs/active/first-capital-financial/current` | 1 | 19/19 | 19 | 1,338 |
+| Lakeshore Holdings | `datasets/tenant-inputs/active/lakeshore-holdings/current` | 1 | 19/19 | 19 | 259 |
+| Lakeshore Industries | `datasets/tenant-inputs/active/lakeshore-industries/current` | 1 | 19/19 | 19 | 1,694 |
+| Meridian Health | `datasets/tenant-inputs/active/meridian-health/current` | 1 | 19/19 | 19 | 1,176 |
+| SkyHarbor Air | `datasets/tenant-inputs/active/skyharbor-air/current` | 1 | 19/19 | 19 | 3,221 |
 
 ## Packet Detail
 
 | Tenant | Packet | Path | CSV files | CSV rows | Status |
 | --- | --- | --- | ---: | ---: | --- |
-| Apex Retail | enterprise-pack | `datasets/tenant-inputs/active/apex-retail/current/enterprise-pack` | 17 | 4,112 | active-input |
-| First Capital Financial | enterprise-pack | `datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack` | 17 | 6,132 | active-input |
-| Lakeshore Holdings | enterprise-pack | `datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack` | 19 | 996 | active-input |
-| Lakeshore Industries | holdco-pack | `datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack` | 52 | 3,809 | active-input |
-| Meridian Health | current-state-pack | `datasets/tenant-inputs/active/meridian-health/current/current-state-pack` | 43 | 735 | active-input |
-| Meridian Health | rich-enterprise-pack | `datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack` | 17 | 3,962 | active-input |
-| SkyHarbor Air | upgrade-candidate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack` | 43 | 743 | active-input |
-| SkyHarbor Air | rich-substrate-pack | `datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack` | 14 | 3,099 | active-input |
+| Apex Retail | current-universal | `datasets/tenant-inputs/active/apex-retail/current` | 19 | 1,059 | active-input |
+| First Capital Financial | current-universal | `datasets/tenant-inputs/active/first-capital-financial/current` | 19 | 1,338 | active-input |
+| Lakeshore Holdings | current-universal | `datasets/tenant-inputs/active/lakeshore-holdings/current` | 19 | 259 | active-input |
+| Lakeshore Industries | current-universal | `datasets/tenant-inputs/active/lakeshore-industries/current` | 19 | 1,694 | active-input |
+| Meridian Health | current-universal | `datasets/tenant-inputs/active/meridian-health/current` | 19 | 1,176 | active-input |
+| SkyHarbor Air | current-universal | `datasets/tenant-inputs/active/skyharbor-air/current` | 19 | 3,221 | active-input |
 
 ## Retired / Archived Tenants
 

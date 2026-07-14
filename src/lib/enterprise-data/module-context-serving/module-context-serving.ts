@@ -32,6 +32,10 @@ import type {
   ModuleContextRequestedDomain,
   ServedModuleContextPacket,
 } from "../contracts/module-context-apis";
+import {
+  sourceDisplayLabelFor,
+  technicalSourceFileFor,
+} from "../source-display-labels";
 
 const DEFAULT_DOMAINS: ModuleContextRequestedDomain[] = [
   "enterprise_profile",
@@ -832,7 +836,13 @@ function buildEvidenceRefs(input: {
     .filter((entry) => !entry.domain || selectedDomains.has(entry.domain))
     .map((entry): ModuleContextEvidenceRef => ({
       evidenceId: `${entry.source.sourcePath}@${entry.source.fingerprint.slice(0, 12)}`,
+      sourceLabel: sourceDisplayLabelFor({
+        sourcePath: entry.source.sourcePath,
+        canonicalDomain: entry.source.domain,
+        domain: entry.domain,
+      }),
       sourcePath: entry.source.sourcePath,
+      technicalSourceFile: technicalSourceFileFor(entry.source.sourcePath),
       sourceFingerprint: entry.source.fingerprint,
       rowCount: entry.source.rowCount,
       domain: entry.domain,
@@ -842,6 +852,8 @@ function buildEvidenceRefs(input: {
     new Set(input.records.flatMap((record) => record.sourceEvidenceIds)),
   ).map((evidenceId): ModuleContextEvidenceRef => ({
     evidenceId,
+    sourceLabel: sourceDisplayLabelFor({ evidenceId }),
+    technicalSourceFile: technicalSourceFileFor(evidenceId),
     citationStatus: "citable",
   }));
   return [...sourceRefs, ...recordEvidenceIds];
@@ -1022,6 +1034,8 @@ function buildEvidenceRefsFromRecords(
     new Set(records.flatMap((record) => record.sourceEvidenceIds)),
   ).map((evidenceId) => ({
     evidenceId,
+    sourceLabel: sourceDisplayLabelFor({ evidenceId }),
+    technicalSourceFile: technicalSourceFileFor(evidenceId),
     citationStatus: "citable" as const,
   }));
 }

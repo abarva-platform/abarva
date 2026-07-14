@@ -1,6 +1,6 @@
 # Reviewed Canonical Build to Inactive Candidate Versions
 
-Generated: 2026-07-14T13:00:00.000Z
+Generated: 2026-07-14T15:50:19.110Z
 
 ## Truth Split
 
@@ -13,33 +13,33 @@ Generated: 2026-07-14T13:00:00.000Z
 ## Summary
 
 - Source build: reports/canonical-data-build/latest
-- Source build fingerprint: c32e4ed2326c5825e7797f488656be1967641a2108b9176b089e3e84bd34bd22
+- Source build fingerprint: c6dba401db07e9a280869e59714a3c2374221cdf73c91843b1ef7b235b18c5a5
 - Tenants processed: 6
 - Candidate versions created: 6
 - Tenants blocked: 0
-- Canonical records represented: 20,230
-- Evidence attachments represented: 20,230
-- Relationship candidates represented: 10,835
+- Canonical records represented: 6,593
+- Evidence attachments represented: 6,593
+- Relationship candidates represented: 9,330
 
 ## Tenant Candidate Versions
 
 | Tenant | Candidate ID | Status | Records | Evidence | Relationships | Profile | Promotion blockers |
 | --- | --- | --- | ---: | ---: | ---: | --- | ---: |
-| Apex Retail | `candidate:apex-retail:16bf9cad3198` | created / inactive | 3,589 | 3,589 | 1,690 | ready | 0 |
-| First Capital Financial | `candidate:first-capital-financial:dd4a1abcf54b` | created / inactive | 5,609 | 5,609 | 2,757 | ready | 0 |
-| Lakeshore Holdings | `candidate:lakeshore-holdings:dfa86cb1154b` | created / inactive | 457 | 457 | 183 | ready | 0 |
-| Lakeshore Industries | `candidate:lakeshore-industries:929f574689fc` | created / inactive | 3,040 | 3,040 | 892 | ready | 0 |
-| Meridian Health | `candidate:meridian-health:aef0edc75fad` | created / inactive | 4,078 | 4,078 | 2,177 | ready | 0 |
-| SkyHarbor Air | `candidate:skyharbor-air:80f0be2d1c76` | created / inactive | 3,457 | 3,457 | 3,136 | ready | 0 |
+| Apex Retail | `candidate:apex-retail:f778423b32c2` | created / inactive | 1,046 | 1,046 | 1,730 | ready | 0 |
+| First Capital Financial | `candidate:first-capital-financial:4058ee9a40f9` | created / inactive | 1,327 | 1,327 | 1,991 | ready | 0 |
+| Lakeshore Holdings | `candidate:lakeshore-holdings:e16ad063e5bd` | created / inactive | 249 | 249 | 373 | ready | 0 |
+| Lakeshore Industries | `candidate:lakeshore-industries:bde306214d94` | created / inactive | 839 | 839 | 1,580 | ready | 0 |
+| Meridian Health | `candidate:meridian-health:5698b1a4c532` | created / inactive | 1,066 | 1,066 | 1,662 | ready | 0 |
+| SkyHarbor Air | `candidate:skyharbor-air:3565f457b05d` | created / inactive | 2,066 | 2,066 | 1,994 | ready | 0 |
 
 ## Required Proof Points
 
-- SkyHarbor applications/systems: 626
+- SkyHarbor applications/systems: 613
 - SkyHarbor data assets/integrations: 570
-- SkyHarbor infrastructure/platforms: 691
-- Meridian applications/systems: 192
-- Meridian data assets/integrations: 432
-- Meridian infrastructure/platforms: 4
+- SkyHarbor infrastructure/platforms: 686
+- Meridian applications/systems: 116
+- Meridian data assets/integrations: 147
+- Meridian infrastructure/platforms: 0
 
 ## Proof Files
 

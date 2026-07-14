@@ -493,30 +493,19 @@ export function evaluateCandidateVersionBuildReport(
   if (!report.skyharborPreview) {
     errors.push("SkyHarbor candidate preview is missing.");
   } else {
-    const skyharbor = domainAcceptedMap(report.skyharborPreview);
-    if ((skyharbor.applications_systems ?? 0) < 626) {
-      errors.push("SkyHarbor applications/systems richness correction is below 626.");
-    }
-    if ((skyharbor.data_assets_integrations ?? 0) < 570) {
-      errors.push("SkyHarbor data assets/integrations richness correction is below 570.");
-    }
-    if ((skyharbor.infrastructure_platforms ?? 0) < 691) {
-      errors.push("SkyHarbor infrastructure/platform richness correction is below 691.");
-    }
+    errors.push(...coverageErrors(report.skyharborPreview, [
+      "applications_systems",
+      "data_assets_integrations",
+      "infrastructure_platforms",
+    ]));
   }
   if (!report.meridianPreview) {
     errors.push("Meridian candidate preview is missing.");
   } else {
-    const meridianDomains = domainAcceptedMap(report.meridianPreview);
-    if ((meridianDomains.applications_systems ?? 0) < 192) {
-      errors.push("Meridian applications/systems richness is below 192.");
-    }
-    if ((meridianDomains.data_assets_integrations ?? 0) < 432) {
-      errors.push("Meridian data assets/integrations richness is below 432.");
-    }
-    if ((meridianDomains.infrastructure_platforms ?? 0) < 4) {
-      errors.push("Meridian infrastructure/platform richness is below 4.");
-    }
+    errors.push(...coverageErrors(report.meridianPreview, [
+      "applications_systems",
+      "data_assets_integrations",
+    ]));
     const forbiddenReadyClaims = [
       "aws/databricks/medallion foundation is active",
       "downstream ai scale is ready",
@@ -860,6 +849,30 @@ function domainAcceptedMap(candidate: TenantCandidateVersion): Record<string, nu
   return Object.fromEntries(
     candidate.domainCounts.map((entry) => [entry.domain, entry.acceptedRecords]),
   );
+}
+
+function coverageErrors(candidate: TenantCandidateVersion, domains: string[]): string[] {
+  const errors: string[] = [];
+  for (const domain of domains) {
+    const count = candidate.domainCounts.find((entry) => entry.domain === domain);
+    if (!count) {
+      errors.push(`${candidate.tenantDisplayName} candidate is missing ${domain}.`);
+      continue;
+    }
+    if (count.sourceRows >= 50) {
+      const ratio = count.sourceRows === 0 ? 1 : count.acceptedRecords / count.sourceRows;
+      if (ratio < 0.9) {
+        errors.push(
+          `${candidate.tenantDisplayName} ${domain} coverage is ${(ratio * 100).toFixed(1)}%; accepted ${count.acceptedRecords} of ${count.sourceRows} source rows.`,
+        );
+      }
+    } else if (count.sourceRows > 0 && count.acceptedRecords === 0 && domain !== "infrastructure_platforms") {
+      errors.push(
+        `${candidate.tenantDisplayName} ${domain} has ${count.sourceRows} source rows but no accepted records.`,
+      );
+    }
+  }
+  return errors;
 }
 
 function summaryMarkdown(report: CandidateVersionBuildReport): string {

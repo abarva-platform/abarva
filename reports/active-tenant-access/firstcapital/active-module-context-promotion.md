@@ -1,6 +1,6 @@
 # Active Module Context Promotion - first-capital-financial
 
-Generated: `2026-07-14T13:00:00.000Z`
+Generated: `2026-07-14T15:50:19.110Z`
 
 This promotes a reviewed candidate metadata pointer into Active Tenant Access for
 the selected safe demo tenant only. It does not write production tenant data,
@@ -9,11 +9,11 @@ candidate data by default, or claim realized value.
 
 ## Quality
 
-- Candidate version: `candidate:first-capital-financial:dd4a1abcf54b`
+- Candidate version: `candidate:first-capital-financial:4058ee9a40f9`
 - Enterprise profile: ready
-- Canonical records: 5609
-- Evidence attachments: 5609
-- Relationship candidates: 2757
+- Canonical records: 1327
+- Evidence attachments: 1327
+- Relationship candidates: 1991
 - Promotion blockers: 0
 
 ## Module Read Proof

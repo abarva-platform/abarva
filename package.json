@@ -257,6 +257,7 @@
     "audit:candidate-coverage:all-tenants": "tsx scripts/audit/check-all-tenant-candidate-coverage.ts",
     "audit:tenant-isolation:data-quality": "tsx scripts/audit/check-data-quality-tenant-isolation.ts",
     "audit:tenant-manifest-completeness": "tsx scripts/audit/tenant-manifest-completeness.ts",
+    "data:consolidate-tenant-inputs": "node scripts/data-build/consolidate-active-tenant-inputs.mjs",
     "audit:canonical-tenant-inputs": "npx tsx scripts/audit/canonical-tenant-inputs.ts",
     "audit:tenant-input-quality": "npx tsx scripts/audit/tenant-input-quality-depth.ts",
     "audit:source-projection:all-tenants": "tsx scripts/audit/tenant-manifest-completeness.ts",

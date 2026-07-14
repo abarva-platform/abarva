@@ -1,0 +1,2008 @@
+{
+  "tenants": [
+    {
+      "tenantKey": "apex-retail",
+      "displayName": "Apex Retail",
+      "before": {
+        "csvFiles": 17,
+        "duplicateDomainCount": 0,
+        "files": [
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/V6_BUSINESS_METADATA_DICTIONARY.csv",
+            "domain": null,
+            "rows": 523
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_01_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 1
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 26
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_03_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 50
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_04_workforce_personas.csv",
+            "domain": "workforce_roles",
+            "rows": 12
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_05_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 182
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_06_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 385
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 100
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 188
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_09_programs_initiatives.csv",
+            "domain": "programs_initiatives",
+            "rows": 159
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_10_ai_initiatives.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 155
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_11_operations_risk_controls.csv",
+            "domain": "risks_controls",
+            "rows": 375
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_12_relationships.csv",
+            "domain": "relationships",
+            "rows": 1605
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_13_evidence_sources.csv",
+            "domain": "evidence_sources",
+            "rows": 14
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_14_metric_definitions.csv",
+            "domain": "metrics_outcomes",
+            "rows": 126
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_15_industry_corpus_patterns.csv",
+            "domain": "industry_context_patterns",
+            "rows": 206
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/apex-retail/consolidated-20260714/enterprise-pack/templates/V6_16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 5
+          }
+        ]
+      },
+      "after": {
+        "csvFiles": 19,
+        "duplicateDomainCount": 0,
+        "files": [
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/00_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 1
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/01_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 26
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/02_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 50
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/03_workforce_roles.csv",
+            "domain": "workforce_roles",
+            "rows": 12
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/04_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 122
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/05_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 235
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/06_infrastructure_platforms.csv",
+            "domain": "infrastructure_platforms",
+            "rows": 0
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 100
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 6
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/09_programs_initiatives.csv",
+            "domain": "programs_initiatives",
+            "rows": 80
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/10_ai_automation_use_cases.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 58
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/11_risks_controls.csv",
+            "domain": "risks_controls",
+            "rows": 135
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/12_relationships.csv",
+            "domain": "relationships",
+            "rows": 13
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/13_evidence_sources.csv",
+            "domain": "evidence_sources",
+            "rows": 1
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/14_metrics_outcomes.csv",
+            "domain": "metrics_outcomes",
+            "rows": 108
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/15_industry_context_patterns.csv",
+            "domain": "industry_context_patterns",
+            "rows": 107
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 5
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/17_service_scope_managed_services.csv",
+            "domain": "service_scope_managed_services",
+            "rows": 0
+          },
+          {
+            "path": "datasets/tenant-inputs/active/apex-retail/current/18_operational_process_evidence.csv",
+            "domain": null,
+            "rows": 0
+          }
+        ]
+      },
+      "archivedPackets": 0
+    },
+    {
+      "tenantKey": "first-capital-financial",
+      "displayName": "First Capital Financial",
+      "before": {
+        "csvFiles": 17,
+        "duplicateDomainCount": 0,
+        "files": [
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/V6_BUSINESS_METADATA_DICTIONARY.csv",
+            "domain": null,
+            "rows": 523
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_01_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 1
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 27
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_03_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 65
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_04_workforce_personas.csv",
+            "domain": "workforce_roles",
+            "rows": 16
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_05_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 272
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_06_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 460
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 120
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 397
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_09_programs_initiatives.csv",
+            "domain": "programs_initiatives",
+            "rows": 299
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_10_ai_initiatives.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 282
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_11_operations_risk_controls.csv",
+            "domain": "risks_controls",
+            "rows": 547
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_12_relationships.csv",
+            "domain": "relationships",
+            "rows": 2614
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_13_evidence_sources.csv",
+            "domain": "evidence_sources",
+            "rows": 42
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_14_metric_definitions.csv",
+            "domain": "metrics_outcomes",
+            "rows": 168
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_15_industry_corpus_patterns.csv",
+            "domain": "industry_context_patterns",
+            "rows": 294
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/first-capital-financial/consolidated-20260714/enterprise-pack/templates/V6_16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 5
+          }
+        ]
+      },
+      "after": {
+        "csvFiles": 19,
+        "duplicateDomainCount": 0,
+        "files": [
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/00_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 1
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/01_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 27
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/02_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 65
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/03_workforce_roles.csv",
+            "domain": "workforce_roles",
+            "rows": 16
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/04_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 212
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/05_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 114
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/06_infrastructure_platforms.csv",
+            "domain": "infrastructure_platforms",
+            "rows": 0
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 120
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 6
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/09_programs_initiatives.csv",
+            "domain": "programs_initiatives",
+            "rows": 96
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/10_ai_automation_use_cases.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 146
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/11_risks_controls.csv",
+            "domain": "risks_controls",
+            "rows": 210
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/12_relationships.csv",
+            "domain": "relationships",
+            "rows": 11
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/13_evidence_sources.csv",
+            "domain": "evidence_sources",
+            "rows": 1
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/14_metrics_outcomes.csv",
+            "domain": "metrics_outcomes",
+            "rows": 157
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/15_industry_context_patterns.csv",
+            "domain": "industry_context_patterns",
+            "rows": 151
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 5
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/17_service_scope_managed_services.csv",
+            "domain": "service_scope_managed_services",
+            "rows": 0
+          },
+          {
+            "path": "datasets/tenant-inputs/active/first-capital-financial/current/18_operational_process_evidence.csv",
+            "domain": null,
+            "rows": 0
+          }
+        ]
+      },
+      "archivedPackets": 0
+    },
+    {
+      "tenantKey": "lakeshore-holdings",
+      "displayName": "Lakeshore Holdings",
+      "before": {
+        "csvFiles": 19,
+        "duplicateDomainCount": 0,
+        "files": [
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/V6_BUSINESS_METADATA_DICTIONARY.csv",
+            "domain": null,
+            "rows": 523
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/holdco_tower/H01_entity_hierarchy.csv",
+            "domain": null,
+            "rows": 8
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/holdco_tower/H02_dashboard_metric_map.csv",
+            "domain": null,
+            "rows": 8
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_01_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 1
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_02_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 14
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_03_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 8
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_04_workforce_personas.csv",
+            "domain": "workforce_roles",
+            "rows": 10
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_05_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 24
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_06_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 34
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 19
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 85
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_09_programs_initiatives.csv",
+            "domain": "programs_initiatives",
+            "rows": 15
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_10_ai_initiatives.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 8
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_11_operations_risk_controls.csv",
+            "domain": "risks_controls",
+            "rows": 10
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_12_relationships.csv",
+            "domain": "relationships",
+            "rows": 199
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_13_evidence_sources.csv",
+            "domain": "evidence_sources",
+            "rows": 10
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_14_metric_definitions.csv",
+            "domain": "metrics_outcomes",
+            "rows": 12
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_15_industry_corpus_patterns.csv",
+            "domain": "industry_context_patterns",
+            "rows": 4
+          },
+          {
+            "packetId": "enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-holdings/consolidated-20260714/enterprise-pack/templates/V6_16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 4
+          }
+        ]
+      },
+      "after": {
+        "csvFiles": 19,
+        "duplicateDomainCount": 0,
+        "files": [
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/00_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 1
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/01_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 14
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/02_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 8
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/03_workforce_roles.csv",
+            "domain": "workforce_roles",
+            "rows": 10
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/04_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 24
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/05_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 34
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/06_infrastructure_platforms.csv",
+            "domain": "infrastructure_platforms",
+            "rows": 0
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 19
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 85
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/09_programs_initiatives.csv",
+            "domain": "programs_initiatives",
+            "rows": 15
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/10_ai_automation_use_cases.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 8
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/11_risks_controls.csv",
+            "domain": "risks_controls",
+            "rows": 10
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/12_relationships.csv",
+            "domain": "relationships",
+            "rows": 10
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/13_evidence_sources.csv",
+            "domain": "evidence_sources",
+            "rows": 1
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/14_metrics_outcomes.csv",
+            "domain": "metrics_outcomes",
+            "rows": 12
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/15_industry_context_patterns.csv",
+            "domain": "industry_context_patterns",
+            "rows": 4
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 4
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/17_service_scope_managed_services.csv",
+            "domain": "service_scope_managed_services",
+            "rows": 0
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-holdings/current/18_operational_process_evidence.csv",
+            "domain": null,
+            "rows": 0
+          }
+        ]
+      },
+      "archivedPackets": 0
+    },
+    {
+      "tenantKey": "lakeshore-industries",
+      "displayName": "Lakeshore Industries",
+      "before": {
+        "csvFiles": 52,
+        "duplicateDomainCount": 19,
+        "files": [
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/00_master/V7_DIMENSION_REGISTRY.csv",
+            "domain": null,
+            "rows": 25
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_00_portfolio_entity_registry.csv",
+            "domain": "enterprise_profile",
+            "rows": 8
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_01_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 8
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_02_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 96
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_03_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 116
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_04_workforce_personas.csv",
+            "domain": "workforce_roles",
+            "rows": 82
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_05_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 152
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_06_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 82
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 96
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 57
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_09_programs_initiatives_business_priorities.csv",
+            "domain": "programs_initiatives",
+            "rows": 36
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_10_ai_initiatives.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 36
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_11_operations_risk_controls.csv",
+            "domain": "risks_controls",
+            "rows": 48
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_12_relationships_graph_edges.csv",
+            "domain": "relationships",
+            "rows": 529
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_13_source_evidence_registry.csv",
+            "domain": "evidence_sources",
+            "rows": 48
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_14_metric_definitions.csv",
+            "domain": "metrics_outcomes",
+            "rows": 384
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_15_industry_market_knowledge_patterns.csv",
+            "domain": null,
+            "rows": 24
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 18
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_17_client_rate_card_cost_basis.csv",
+            "domain": "spend_value",
+            "rows": 54
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_18_function_system_data_vendor_bridge.csv",
+            "domain": "relationships",
+            "rows": 510
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_19_service_tower_managed_services_scope.csv",
+            "domain": "service_scope_managed_services",
+            "rows": 64
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_20_chunk_retrieval_registry.csv",
+            "domain": "evidence_sources",
+            "rows": 376
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_21_graph_registry_relationship_dictionary.csv",
+            "domain": "relationships",
+            "rows": 6
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_22_operational_evidence_process_intelligence.csv",
+            "domain": "operational_process_evidence",
+            "rows": 112
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_23_external_benchmark_market_corpus.csv",
+            "domain": "industry_context_patterns",
+            "rows": 24
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/V7_24_infrastructure_cloud_estate.csv",
+            "domain": "infrastructure_platforms",
+            "rows": 128
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_00_portfolio_entity_registry.csv",
+            "domain": "enterprise_profile",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_01_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_02_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_03_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_04_workforce_personas.csv",
+            "domain": "workforce_roles",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_05_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_06_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_09_programs_initiatives_business_priorities.csv",
+            "domain": "programs_initiatives",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_10_ai_initiatives.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_11_operations_risk_controls.csv",
+            "domain": "risks_controls",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_12_relationships_graph_edges.csv",
+            "domain": "relationships",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_13_source_evidence_registry.csv",
+            "domain": "evidence_sources",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_14_metric_definitions.csv",
+            "domain": "metrics_outcomes",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_15_industry_market_knowledge_patterns.csv",
+            "domain": null,
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_17_client_rate_card_cost_basis.csv",
+            "domain": "spend_value",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_18_function_system_data_vendor_bridge.csv",
+            "domain": "relationships",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_19_service_tower_managed_services_scope.csv",
+            "domain": "service_scope_managed_services",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_20_chunk_retrieval_registry.csv",
+            "domain": "evidence_sources",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_21_graph_registry_relationship_dictionary.csv",
+            "domain": "relationships",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_22_operational_evidence_process_intelligence.csv",
+            "domain": "operational_process_evidence",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_23_external_benchmark_market_corpus.csv",
+            "domain": "industry_context_patterns",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/client_templates/V7_24_infrastructure_cloud_estate.csv",
+            "domain": "infrastructure_platforms",
+            "rows": 0
+          },
+          {
+            "packetId": "holdco-pack",
+            "path": "datasets/tenant-inputs/archive/lakeshore-industries/consolidated-20260714/holdco-pack/field_catalog/V7_FIELD_CATALOG.csv",
+            "domain": null,
+            "rows": 690
+          }
+        ]
+      },
+      "after": {
+        "csvFiles": 19,
+        "duplicateDomainCount": 0,
+        "files": [
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/00_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 8
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/01_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 59
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/02_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 116
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/03_workforce_roles.csv",
+            "domain": "workforce_roles",
+            "rows": 22
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/04_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 152
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/05_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 82
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/06_infrastructure_platforms.csv",
+            "domain": "infrastructure_platforms",
+            "rows": 128
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 19
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 69
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/09_programs_initiatives.csv",
+            "domain": "programs_initiatives",
+            "rows": 36
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/10_ai_automation_use_cases.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 36
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/11_risks_controls.csv",
+            "domain": "risks_controls",
+            "rows": 48
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/12_relationships.csv",
+            "domain": "relationships",
+            "rows": 519
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/13_evidence_sources.csv",
+            "domain": "evidence_sources",
+            "rows": 2
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/14_metrics_outcomes.csv",
+            "domain": "metrics_outcomes",
+            "rows": 236
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/15_industry_context_patterns.csv",
+            "domain": "industry_context_patterns",
+            "rows": 24
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 18
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/17_service_scope_managed_services.csv",
+            "domain": "service_scope_managed_services",
+            "rows": 8
+          },
+          {
+            "path": "datasets/tenant-inputs/active/lakeshore-industries/current/18_operational_process_evidence.csv",
+            "domain": null,
+            "rows": 112
+          }
+        ]
+      },
+      "archivedPackets": 0
+    },
+    {
+      "tenantKey": "meridian-health",
+      "displayName": "Meridian Health",
+      "before": {
+        "csvFiles": 60,
+        "duplicateDomainCount": 16,
+        "files": [
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/derived/meridian_moves_current_state_findings.csv",
+            "domain": null,
+            "rows": 28
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/derived/meridian_moves_golden_questions_scorecard.csv",
+            "domain": null,
+            "rows": 42
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_01_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 1
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_02_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 7
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_03_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 7
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_04_workforce_personas.csv",
+            "domain": "workforce_roles",
+            "rows": 6
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_05_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 15
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_06_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 36
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 7
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 10
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_09_programs_initiatives.csv",
+            "domain": "programs_initiatives",
+            "rows": 7
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_10_ai_initiatives.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 3
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_11_operations_risk_controls.csv",
+            "domain": "risks_controls",
+            "rows": 28
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_12_relationships.csv",
+            "domain": "relationships",
+            "rows": 69
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_13_evidence_sources.csv",
+            "domain": "evidence_sources",
+            "rows": 4
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_14_metric_definitions.csv",
+            "domain": "metrics_outcomes",
+            "rows": 11
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_15_industry_corpus_patterns.csv",
+            "domain": "industry_context_patterns",
+            "rows": 7
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/templates/V6_16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 5
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_00_portfolio_entity_registry.csv",
+            "domain": "enterprise_profile",
+            "rows": 1
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_01_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 1
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_02_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 7
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_03_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 7
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_04_workforce_personas.csv",
+            "domain": "workforce_roles",
+            "rows": 6
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_05_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 15
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_06_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 36
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 7
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 10
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_09_programs_initiatives_business_priorities.csv",
+            "domain": "programs_initiatives",
+            "rows": 7
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_10_ai_initiatives.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 3
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_11_operations_risk_controls.csv",
+            "domain": "risks_controls",
+            "rows": 28
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_12_relationships_graph_edges.csv",
+            "domain": "relationships",
+            "rows": 69
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_13_source_evidence_registry.csv",
+            "domain": "evidence_sources",
+            "rows": 4
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_14_metric_definitions.csv",
+            "domain": "metrics_outcomes",
+            "rows": 11
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_15_industry_market_knowledge_patterns.csv",
+            "domain": null,
+            "rows": 7
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 5
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_17_client_rate_card_cost_basis.csv",
+            "domain": "spend_value",
+            "rows": 4
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_18_function_system_data_vendor_bridge.csv",
+            "domain": "relationships",
+            "rows": 60
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_19_service_tower_managed_services_scope.csv",
+            "domain": "service_scope_managed_services",
+            "rows": 3
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_20_chunk_retrieval_registry.csv",
+            "domain": "evidence_sources",
+            "rows": 118
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_21_graph_registry_relationship_dictionary.csv",
+            "domain": "relationships",
+            "rows": 17
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_22_operational_evidence_process_intelligence.csv",
+            "domain": "operational_process_evidence",
+            "rows": 10
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_23_external_benchmark_market_corpus.csv",
+            "domain": "industry_context_patterns",
+            "rows": 2
+          },
+          {
+            "packetId": "current-state-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/current-state-pack/v7/V7_24_infrastructure_cloud_estate.csv",
+            "domain": "infrastructure_platforms",
+            "rows": 4
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/V6_BUSINESS_METADATA_DICTIONARY.csv",
+            "domain": null,
+            "rows": 523
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_01_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 1
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 25
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_03_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 73
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_04_workforce_personas.csv",
+            "domain": "workforce_roles",
+            "rows": 14
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_05_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 162
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_06_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 360
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 95
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 178
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_09_programs_initiatives.csv",
+            "domain": "programs_initiatives",
+            "rows": 156
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_10_ai_initiatives.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 150
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_11_operations_risk_controls.csv",
+            "domain": "risks_controls",
+            "rows": 349
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_12_relationships.csv",
+            "domain": "relationships",
+            "rows": 1551
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_13_evidence_sources.csv",
+            "domain": "evidence_sources",
+            "rows": 14
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_14_metric_definitions.csv",
+            "domain": "metrics_outcomes",
+            "rows": 116
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_15_industry_corpus_patterns.csv",
+            "domain": "industry_context_patterns",
+            "rows": 190
+          },
+          {
+            "packetId": "rich-enterprise-pack",
+            "path": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 5
+          }
+        ]
+      },
+      "after": {
+        "csvFiles": 19,
+        "duplicateDomainCount": 0,
+        "files": [
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 2
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 30
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 57
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv",
+            "domain": "workforce_roles",
+            "rows": 26
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 116
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/05_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 147
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/06_infrastructure_platforms.csv",
+            "domain": "infrastructure_platforms",
+            "rows": 4
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 109
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 24
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv",
+            "domain": "programs_initiatives",
+            "rows": 86
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/10_ai_automation_use_cases.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 63
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/11_risks_controls.csv",
+            "domain": "risks_controls",
+            "rows": 172
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/12_relationships.csv",
+            "domain": "relationships",
+            "rows": 85
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/13_evidence_sources.csv",
+            "domain": "evidence_sources",
+            "rows": 4
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/14_metrics_outcomes.csv",
+            "domain": "metrics_outcomes",
+            "rows": 116
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/15_industry_context_patterns.csv",
+            "domain": "industry_context_patterns",
+            "rows": 108
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 15
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/17_service_scope_managed_services.csv",
+            "domain": "service_scope_managed_services",
+            "rows": 2
+          },
+          {
+            "path": "datasets/tenant-inputs/active/meridian-health/current/18_operational_process_evidence.csv",
+            "domain": null,
+            "rows": 10
+          }
+        ]
+      },
+      "archivedPackets": 0
+    },
+    {
+      "tenantKey": "skyharbor-air",
+      "displayName": "SkyHarbor Air",
+      "before": {
+        "csvFiles": 57,
+        "duplicateDomainCount": 18,
+        "files": [
+          {
+            "packetId": "rich-substrate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/ai-tooling.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 40
+          },
+          {
+            "packetId": "rich-substrate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/application-portfolio.csv",
+            "domain": "applications_systems",
+            "rows": 600
+          },
+          {
+            "packetId": "rich-substrate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/business-capabilities.csv",
+            "domain": "business_functions",
+            "rows": 80
+          },
+          {
+            "packetId": "rich-substrate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/dora-baseline.csv",
+            "domain": "metrics_outcomes",
+            "rows": 40
+          },
+          {
+            "packetId": "rich-substrate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/enterprise-profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 1
+          },
+          {
+            "packetId": "rich-substrate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/erp-landscape.csv",
+            "domain": null,
+            "rows": 60
+          },
+          {
+            "packetId": "rich-substrate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/incidents.csv",
+            "domain": "operational_process_evidence",
+            "rows": 400
+          },
+          {
+            "packetId": "rich-substrate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/infrastructure-estate.csv",
+            "domain": "infrastructure_platforms",
+            "rows": 686
+          },
+          {
+            "packetId": "rich-substrate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/initiatives.csv",
+            "domain": "programs_initiatives",
+            "rows": 60
+          },
+          {
+            "packetId": "rich-substrate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/integration-topology.csv",
+            "domain": "data_assets_integrations",
+            "rows": 500
+          },
+          {
+            "packetId": "rich-substrate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/it-financials.csv",
+            "domain": "spend_value",
+            "rows": 168
+          },
+          {
+            "packetId": "rich-substrate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/org-roles.csv",
+            "domain": "org_ownership",
+            "rows": 272
+          },
+          {
+            "packetId": "rich-substrate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/sla-register.csv",
+            "domain": "metrics_outcomes",
+            "rows": 72
+          },
+          {
+            "packetId": "rich-substrate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/rich-substrate-pack/csv/vendor-contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 120
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/derived/skyharbor_air_moves_current_state_findings.csv",
+            "domain": null,
+            "rows": 28
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/derived/skyharbor_air_moves_golden_questions_scorecard.csv",
+            "domain": null,
+            "rows": 42
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_01_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 1
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_02_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 6
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_03_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 6
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_04_workforce_personas.csv",
+            "domain": "workforce_roles",
+            "rows": 6
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_05_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 13
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_06_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 35
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 10
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 10
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_09_programs_initiatives.csv",
+            "domain": "programs_initiatives",
+            "rows": 7
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_10_ai_initiatives.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 3
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_11_operations_risk_controls.csv",
+            "domain": "risks_controls",
+            "rows": 28
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_12_relationships.csv",
+            "domain": "relationships",
+            "rows": 74
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_13_evidence_sources.csv",
+            "domain": "evidence_sources",
+            "rows": 4
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_14_metric_definitions.csv",
+            "domain": "metrics_outcomes",
+            "rows": 12
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_15_industry_corpus_patterns.csv",
+            "domain": "industry_context_patterns",
+            "rows": 7
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/templates/V6_16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 5
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_00_portfolio_entity_registry.csv",
+            "domain": "enterprise_profile",
+            "rows": 1
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_01_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 1
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_02_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 6
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_03_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 6
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_04_workforce_personas.csv",
+            "domain": "workforce_roles",
+            "rows": 6
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_05_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 13
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_06_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 35
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 10
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 10
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_09_programs_initiatives_business_priorities.csv",
+            "domain": "programs_initiatives",
+            "rows": 7
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_10_ai_initiatives.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 3
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_11_operations_risk_controls.csv",
+            "domain": "risks_controls",
+            "rows": 28
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_12_relationships_graph_edges.csv",
+            "domain": "relationships",
+            "rows": 74
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_13_source_evidence_registry.csv",
+            "domain": "evidence_sources",
+            "rows": 4
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_14_metric_definitions.csv",
+            "domain": "metrics_outcomes",
+            "rows": 12
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_15_industry_market_knowledge_patterns.csv",
+            "domain": null,
+            "rows": 7
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 5
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_17_client_rate_card_cost_basis.csv",
+            "domain": "spend_value",
+            "rows": 4
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_18_function_system_data_vendor_bridge.csv",
+            "domain": "relationships",
+            "rows": 60
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_19_service_tower_managed_services_scope.csv",
+            "domain": "service_scope_managed_services",
+            "rows": 3
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_20_chunk_retrieval_registry.csv",
+            "domain": "evidence_sources",
+            "rows": 117
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_21_graph_registry_relationship_dictionary.csv",
+            "domain": "relationships",
+            "rows": 17
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_22_operational_evidence_process_intelligence.csv",
+            "domain": "operational_process_evidence",
+            "rows": 10
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_23_external_benchmark_market_corpus.csv",
+            "domain": "industry_context_patterns",
+            "rows": 2
+          },
+          {
+            "packetId": "upgrade-candidate-pack",
+            "path": "datasets/tenant-inputs/archive/skyharbor-air/consolidated-20260714/upgrade-candidate-pack/v7/V7_24_infrastructure_cloud_estate.csv",
+            "domain": "infrastructure_platforms",
+            "rows": 5
+          }
+        ]
+      },
+      "after": {
+        "csvFiles": 19,
+        "duplicateDomainCount": 0,
+        "files": [
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/00_enterprise_profile.csv",
+            "domain": "enterprise_profile",
+            "rows": 2
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/01_business_functions.csv",
+            "domain": "business_functions",
+            "rows": 24
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/02_org_ownership.csv",
+            "domain": "org_ownership",
+            "rows": 278
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/03_workforce_roles.csv",
+            "domain": "workforce_roles",
+            "rows": 12
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/04_applications_systems.csv",
+            "domain": "applications_systems",
+            "rows": 613
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/05_data_assets_integrations.csv",
+            "domain": "data_assets_integrations",
+            "rows": 570
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/06_infrastructure_platforms.csv",
+            "domain": "infrastructure_platforms",
+            "rows": 691
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/07_vendors_contracts.csv",
+            "domain": "vendors_contracts",
+            "rows": 71
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/08_spend_value.csv",
+            "domain": "spend_value",
+            "rows": 186
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/09_programs_initiatives.csv",
+            "domain": "programs_initiatives",
+            "rows": 67
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/10_ai_automation_use_cases.csv",
+            "domain": "ai_automation_use_cases",
+            "rows": 43
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/11_risks_controls.csv",
+            "domain": "risks_controls",
+            "rows": 28
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/12_relationships.csv",
+            "domain": "relationships",
+            "rows": 77
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/13_evidence_sources.csv",
+            "domain": "evidence_sources",
+            "rows": 3
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/14_metrics_outcomes.csv",
+            "domain": "metrics_outcomes",
+            "rows": 124
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/15_industry_context_patterns.csv",
+            "domain": "industry_context_patterns",
+            "rows": 9
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/16_expert_lenses.csv",
+            "domain": "expert_lenses",
+            "rows": 10
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/17_service_scope_managed_services.csv",
+            "domain": "service_scope_managed_services",
+            "rows": 3
+          },
+          {
+            "path": "datasets/tenant-inputs/active/skyharbor-air/current/18_operational_process_evidence.csv",
+            "domain": null,
+            "rows": 410
+          }
+        ]
+      },
+      "archivedPackets": 0
+    }
+  ]
+}
