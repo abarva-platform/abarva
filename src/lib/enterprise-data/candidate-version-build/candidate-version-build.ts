@@ -179,13 +179,16 @@ export async function buildCandidateVersionBuildReport(options: {
 }): Promise<CandidateVersionBuildReport> {
   const generatedAt = options.generatedAt ?? new Date().toISOString();
   const sourceBuildPath = CANONICAL_DATA_BUILD_REPORT_DIR;
-  const sourceBuildFiles = await fingerprintSourceBuild(options.repoRoot, sourceBuildPath);
-  const sourceBuildFingerprint = hashJson(sourceBuildFiles);
-  const sourceBuildId = `canonical-data-build:${sourceBuildFingerprint.slice(0, 12)}`;
   const canonicalBuild = await buildCanonicalTenantDataReport({
     repoRoot: options.repoRoot,
     generatedAt,
   });
+  const sourceBuildFiles = await fingerprintSourceBuild(
+    options.repoRoot,
+    sourceBuildPath,
+  ).catch(() => fingerprintInMemoryCanonicalBuild(canonicalBuild));
+  const sourceBuildFingerprint = hashJson(sourceBuildFiles);
+  const sourceBuildId = `canonical-data-build:${sourceBuildFingerprint.slice(0, 12)}`;
 
   const guardrails: CandidateVersionBuildReport["guardrails"] = {
     productionTenantDataWritten: false,
@@ -824,6 +827,33 @@ async function fingerprintSourceBuild(
     });
   }
   return fingerprints;
+}
+
+function fingerprintInMemoryCanonicalBuild(
+  canonicalBuild: CanonicalDataBuildReport,
+): Array<{ path: string; fingerprint: string }> {
+  const sourceFingerprints = canonicalBuild.tenants.flatMap((tenant) =>
+    tenant.sourceFiles.map((sourceFile) => ({
+      path: sourceFile.repoRelativePath,
+      fingerprint: sourceFile.contentFingerprint,
+    })),
+  );
+
+  return [
+    ...sourceFingerprints,
+    {
+      path: "in-memory:canonical-build-summary",
+      fingerprint: hashJson({
+        sourceRoot: canonicalBuild.sourceRoot,
+        templateSetId: canonicalBuild.templateSetId,
+        summary: canonicalBuild.summary,
+        tenants: canonicalBuild.canonicalRecordSummary,
+        evidence: canonicalBuild.evidenceAttachmentSummary,
+        relationships: canonicalBuild.relationshipCandidatesSummary,
+        homeAvaReadiness: canonicalBuild.homeAvaReadiness,
+      }),
+    },
+  ].sort((left, right) => left.path.localeCompare(right.path));
 }
 
 function domainAcceptedMap(candidate: TenantCandidateVersion): Record<string, number> {
