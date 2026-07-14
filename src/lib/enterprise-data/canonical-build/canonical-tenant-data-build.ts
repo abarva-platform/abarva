@@ -1094,7 +1094,7 @@ function profileBuildForTenant(
   }
 
   const missingFields = REQUIRED_PROFILE_FIELDS.filter((field) => {
-    const value = facts[field];
+    const value = profileFactValue(facts, field);
     return Array.isArray(value) ? value.length === 0 : !value;
   });
   for (const missingField of missingFields) {
@@ -1120,6 +1120,15 @@ function profileBuildForTenant(
       evidenceKey: record.evidenceReferences[0]?.evidenceKey ?? "",
     })),
   };
+}
+
+function profileFactValue(
+  facts: EnterpriseProfileBuild["facts"],
+  field: (typeof REQUIRED_PROFILE_FIELDS)[number],
+): string | string[] | undefined {
+  if (field === "revenue") return facts.revenueUsd;
+  if (field === "employees") return facts.employeeCount;
+  return facts[field];
 }
 
 function qualityDepthForTenant(

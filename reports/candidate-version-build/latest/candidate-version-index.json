@@ -1,0 +1,16 @@
+{
+  "reportVersion": "candidate-version-build/v1",
+  "generatedAt": "2026-07-14T01:22:31.580Z",
+  "sourceBuildId": "canonical-data-build:ca80432e6744",
+  "sourceBuildPath": "reports/canonical-data-build/latest",
+  "sourceBuildFingerprint": "ca80432e6744f888ad49c8607df7dca7ba02848676d7d5142e3fc9b693b546c1",
+  "summary": {
+    "tenantsProcessed": 6,
+    "candidateVersionsCreated": 6,
+    "tenantsBlocked": 0,
+    "canonicalRecordsRepresented": 20230,
+    "evidenceAttachmentsRepresented": 20230,
+    "relationshipCandidatesRepresented": 10835,
+    "inactiveOnly": true
+  }
+}
