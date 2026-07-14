@@ -27,6 +27,11 @@ Module request
 Default reads use active context only. Candidate context is returned only when a
 caller explicitly requests `mode: "candidate_preview"`.
 
+When an Active Tenant Access record exists for the tenant, active mode resolves
+that active version and hydrates read-only canonical records through the serving
+contract. When no Active Tenant Access record exists, active mode returns an
+honest unavailable packet and does not fall back to candidate preview.
+
 ## Read Function
 
 ```ts

@@ -24,7 +24,9 @@ describe("module context serving contract", () => {
     expect(packet.sourceMode).toBe("active_tenant_access");
     expect(packet.activeTenantAccessVersionId).toBeTruthy();
     expect(packet.candidateVersionId).toBeNull();
-    expect(packet.records).toHaveLength(0);
+    expect(packet.records.length).toBeGreaterThan(0);
+    expect(packet.records.every((record) => record.agentReadiness === "agent_ready")).toBe(true);
+    expect(packet.records.every((record) => record.sourceEvidenceIds.length > 0)).toBe(true);
     expect(packet.relationshipCandidates).toHaveLength(0);
     expect(packet.guardrails.activeByDefault).toBe(true);
     expect(packet.guardrails.candidatePreviewRequiresExplicitMode).toBe(true);
@@ -36,11 +38,11 @@ describe("module context serving contract", () => {
     expect(packet.guardrails.moduleRuntimeConsumptionChanged).toBe(false);
     expect(packet.contextCompleteness).toEqual(
       expect.objectContaining({
-        breadth: 0,
-        depth: 0,
+        breadth: 100,
+        depth: 100,
         relationshipCoverage: 0,
-        evidenceCoverage: 0,
-        overall: "Blocked",
+        evidenceCoverage: 100,
+        overall: "Good",
       }),
     );
   });

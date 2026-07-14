@@ -155,6 +155,18 @@ async function buildActiveContext(
   const activeVersionId =
     activeRecord && !mismatchedActiveVersion ? activeRecord.activeVersionId : null;
   const gaps: ModuleContextGap[] = [];
+  const canonicalSlice =
+    activeVersionId
+      ? await loadCanonicalContextSlice({
+          repoRoot: options.repoRoot,
+          tenantKey: request.tenantKey,
+          requestedDomains,
+          generatedAt,
+          classification: "agent_ready",
+        })
+      : null;
+  const activeRecords = canonicalSlice?.records ?? [];
+  const evidenceRefs = buildEvidenceRefsFromRecords(activeRecords);
   const caveats = [
     "Active mode is the default module context serving mode.",
     "Candidate read-model records are not consumed unless mode is candidate_preview.",
@@ -199,29 +211,43 @@ async function buildActiveContext(
     tenantDataVersion: activeVersionId ?? "active:not_available",
     activeTenantAccessVersionId: activeVersionId,
     candidateVersionId: null,
-    domains: requestedDomains.map((domain) =>
-      emptyDomainSummary(domain, activeVersionId ? "needs_review" : "not_ready"),
-    ),
-    records: [],
-    evidenceRefs: [],
+    domains:
+      canonicalSlice?.domains ??
+      requestedDomains.map((domain) =>
+        emptyDomainSummary(domain, activeVersionId ? "needs_review" : "not_ready"),
+      ),
+    records: activeRecords,
+    evidenceRefs,
     validatedRelationships: [],
     relationshipCandidates: [],
     gaps,
     caveats,
     lineage: {
       activeAccessRecordPath: activeRecordPath(request.tenantKey),
-      sourceSnapshotIds: [],
+      sourceSnapshotIds: canonicalSlice?.sourceSnapshotIds ?? [],
     },
     readiness: {
-      status: activeVersionId && gaps.length === 0 ? "needs_review" : "not_ready",
-      evidenceReady: false,
+      status:
+        activeVersionId && activeRecords.length > 0 && gaps.length === 0
+          ? "agent_ready"
+          : activeVersionId && gaps.length === 0
+            ? "needs_review"
+            : "not_ready",
+      evidenceReady: activeRecords.some(
+        (record) => record.sourceEvidenceIds.length > 0,
+      ),
       relationshipReady: false,
-      profileReady: false,
+      profileReady: Boolean(
+        canonicalSlice?.domains.some(
+          (domain) =>
+            domain.domain === "enterprise_profile" && domain.acceptedRecords > 0,
+        ),
+      ),
       caveats,
       canAnswer: activeVersionId
         ? [
             "Active Tenant Access metadata pointer is available.",
-            "Modules can request a context packet without reading candidate data by default.",
+            "Modules can request active canonical context without reading candidate preview data by default.",
           ]
         : [],
       mustNotClaim: [
@@ -264,18 +290,20 @@ async function buildCandidatePreviewContext(
   const selectedCanonicalDomains = new Set(
     requestedDomains.map((domain) => REQUEST_TO_CANONICAL_DOMAIN[domain]),
   );
-  const canonicalRecords = await loadCanonicalPreviewRecords({
+  const canonicalSlice = await loadCanonicalContextSlice({
     repoRoot: options.repoRoot,
     tenantKey: request.tenantKey,
     requestedDomains,
     generatedAt,
+    classification: "candidate_only",
   });
+  const canonicalRecords = canonicalSlice.records;
   const sampleRecords = candidate.readModelSamples
     .filter((sample) => selectedCanonicalDomains.has(inferSampleCanonicalDomain(sample)))
     .map((sample) => toContextRecord(sample));
   const records =
     canonicalRecords.length > 0
-      ? canonicalRecords.map((record) => toContextRecordFromCanonical(record))
+      ? canonicalRecords
       : sampleRecords;
   const evidenceRefs = buildEvidenceRefs({
     candidate,
@@ -679,7 +707,7 @@ function moduleLabelFor(moduleKey: ServedModuleContextPacket["moduleKey"]): stri
 }
 
 function overallFor(answerability: number): ModuleContextCompleteness["overall"] {
-  if (answerability >= 85) return "Strong";
+  if (answerability >= 90) return "Strong";
   if (answerability >= 70) return "Good";
   if (answerability >= 45) return "Limited";
   return "Blocked";
@@ -809,7 +837,10 @@ function toContextRecord(sample: CandidateReadModelSample): ModuleContextRecord 
   };
 }
 
-function toContextRecordFromCanonical(record: CanonicalIngestionRecord): ModuleContextRecord {
+function toContextRecordFromCanonical(
+  record: CanonicalIngestionRecord,
+  classification: ModuleContextClassification,
+): ModuleContextRecord {
   const canonicalDomain = inferRecordCanonicalDomain(record);
   const domain = CANONICAL_TO_REQUEST_DOMAIN[canonicalDomain] ?? "evidence_sources";
   const sourceEvidenceIds = record.evidenceReferences.map(
@@ -826,7 +857,7 @@ function toContextRecordFromCanonical(record: CanonicalIngestionRecord): ModuleC
     fields: scalarAttributes(record),
     sourceEvidenceIds,
     citationStatus: sourceEvidenceIds.length > 0 ? "citable" : "needs_review",
-    agentReadiness: sourceEvidenceIds.length > 0 ? "candidate_only" : "missing_evidence",
+    agentReadiness: sourceEvidenceIds.length > 0 ? classification : "missing_evidence",
     relationshipReadiness:
       record.relationships.length > 0 ? "relationship_not_validated" : "missing_evidence",
     restricted:
@@ -835,12 +866,17 @@ function toContextRecordFromCanonical(record: CanonicalIngestionRecord): ModuleC
   };
 }
 
-async function loadCanonicalPreviewRecords(input: {
+async function loadCanonicalContextSlice(input: {
   repoRoot: string;
   tenantKey: string;
   requestedDomains: ModuleContextRequestedDomain[];
   generatedAt: string;
-}): Promise<CanonicalIngestionRecord[]> {
+  classification: ModuleContextClassification;
+}): Promise<{
+  records: ModuleContextRecord[];
+  domains: ModuleContextDomainSummary[];
+  sourceSnapshotIds: string[];
+}> {
   const selectedCanonicalDomains = new Set(
     input.requestedDomains.map((domain) => REQUEST_TO_CANONICAL_DOMAIN[domain]),
   );
@@ -859,7 +895,47 @@ async function loadCanonicalPreviewRecords(input: {
       byDomain.set(canonicalDomain, existing);
     }
   }
-  return Array.from(byDomain.values()).flat();
+  const recordSummary = report.canonicalRecordSummary.find(
+    (summary) => summary.tenantKey === input.tenantKey,
+  );
+  const tenant = report.tenants.find(
+    (entry) => entry.tenantKey === input.tenantKey,
+  );
+  return {
+    records: Array.from(byDomain.values())
+      .flat()
+      .map((record) => toContextRecordFromCanonical(record, input.classification)),
+    domains: input.requestedDomains.map((domain) => {
+      const canonicalDomain = REQUEST_TO_CANONICAL_DOMAIN[domain];
+      const summary = recordSummary?.byDomain[canonicalDomain];
+      return {
+        domain,
+        canonicalDomain,
+        sourceRows: summary?.sourceRows ?? 0,
+        acceptedRecords: summary?.acceptedRecords ?? 0,
+        skippedRows: summary?.skippedRows ?? 0,
+        duplicateNames: summary?.duplicateNames ?? 0,
+        readiness: summary && summary.acceptedRecords > 0
+          ? input.classification
+          : "missing_evidence",
+      };
+    }),
+    sourceSnapshotIds:
+      tenant?.sourceFiles.map(
+        (file) => `${file.repoRelativePath}@${file.contentFingerprint.slice(0, 12)}`,
+      ) ?? [],
+  };
+}
+
+function buildEvidenceRefsFromRecords(
+  records: ModuleContextRecord[],
+): ModuleContextEvidenceRef[] {
+  return Array.from(
+    new Set(records.flatMap((record) => record.sourceEvidenceIds)),
+  ).map((evidenceId) => ({
+    evidenceId,
+    citationStatus: "citable" as const,
+  }));
 }
 
 function inferSampleCanonicalDomain(sample: CandidateReadModelSample): string {
