@@ -115,6 +115,13 @@ export default async function CandidatePreviewPage({
               module default reads, production tenant data, and promotion state
               remain unchanged.
             </p>
+            <div
+              data-candidate-preview-selected-candidate-id="true"
+              style={styles.candidateId}
+            >
+              <span>Candidate version id</span>
+              <strong>{selectedCandidate.candidateVersionId}</strong>
+            </div>
             <div style={styles.metrics}>
               <Metric label="Canonical records" value={selectedCandidate.canonicalRecordCount} />
               <Metric
@@ -333,6 +340,18 @@ const styles = {
     padding: 14,
     display: "grid",
     gap: 4,
+  },
+  candidateId: {
+    border: "1px solid #e7e3da",
+    borderRadius: 8,
+    padding: "12px 14px",
+    marginTop: 16,
+    display: "grid",
+    gap: 4,
+    fontFamily: "\"JetBrains Mono\", ui-monospace, monospace",
+    fontSize: 12,
+    color: "#0c1a3a",
+    overflowWrap: "anywhere",
   },
   guardrails: {
     borderTop: "1px solid #ece7dd",

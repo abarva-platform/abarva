@@ -143,7 +143,9 @@ export async function runCandidatePreviewProof(
       targetUrl,
       personaKey: persona.key,
       tenantKey: SKYHARBOR_CANDIDATE_PREVIEW_PACKAGE.tenantKey,
-      candidateVersionId: SKYHARBOR_CANDIDATE_PREVIEW_PACKAGE.candidateVersionId,
+      candidateVersionId:
+        signedInProof.selectedCandidateVersionId ??
+        SKYHARBOR_CANDIDATE_PREVIEW_PACKAGE.candidateVersionId,
       module: args.module,
       createdAt: new Date().toISOString(),
       routeStatus: {
@@ -183,7 +185,6 @@ function buildTargetPath(args: CandidatePreviewProofArgs): string {
   const params = new URLSearchParams({
     preview: "enabled",
     tenantKey: SKYHARBOR_CANDIDATE_PREVIEW_PACKAGE.tenantKey,
-    candidateVersionId: SKYHARBOR_CANDIDATE_PREVIEW_PACKAGE.candidateVersionId,
     module: args.module,
     operatorId: "candidate-preview-crawl",
     previewReason: "Focused signed-in candidate preview route proof.",
@@ -236,6 +237,7 @@ async function proveSignedInPreviewPage(
   runDir: string,
 ): Promise<{
   finalPathname: string;
+  selectedCandidateVersionId: string | null;
   pageStatus: CandidatePreviewProof["pageStatus"];
   guardrails: CandidatePreviewProof["guardrails"];
   artifacts: CandidatePreviewProof["artifacts"];
@@ -244,6 +246,7 @@ async function proveSignedInPreviewPage(
   await page.waitForLoadState("networkidle", { timeout: 20_000 }).catch(() => undefined);
   const finalUrl = new URL(page.url());
   const bodyText = await page.locator("body").innerText({ timeout: 15_000 });
+  const selectedCandidateVersionId = await readSelectedCandidateVersionId(page);
   const guardrails = await readGuardrailIndicators(page);
 
   const htmlPath = path.join(runDir, "candidate-preview.html");
@@ -253,6 +256,7 @@ async function proveSignedInPreviewPage(
 
   return {
     finalPathname: finalUrl.pathname,
+    selectedCandidateVersionId,
     pageStatus: {
       rendered: includesText(bodyText, "Candidate Preview Mode"),
       bannerVisible: includesText(bodyText, CANDIDATE_PREVIEW_BANNER),
@@ -274,6 +278,15 @@ async function proveSignedInPreviewPage(
       screenshotPath,
     },
   };
+}
+
+async function readSelectedCandidateVersionId(page: Page): Promise<string | null> {
+  const candidateIdText = await page
+    .locator("[data-candidate-preview-selected-candidate-id]")
+    .innerText({ timeout: 2_000 })
+    .catch(() => "");
+  const match = candidateIdText.match(/candidate(?:\s+version\s+id)?\s+(.+)/i);
+  return match?.[1]?.trim() || null;
 }
 
 async function readGuardrailIndicators(
