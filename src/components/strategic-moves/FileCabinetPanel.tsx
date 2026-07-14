@@ -41,7 +41,48 @@ interface Artifact {
   primaryEditableRecordLabel?: string | null;
   pairedVisualCompanionArtifactId?: string | null;
   visualCompanionArtifactType?: string | null;
+  contextExtract?: MoveContextExtractReview | null;
   downloadUrl: string;
+}
+
+interface MoveContextExtractReviewItem {
+  status?: string;
+  label?: string;
+  summary?: string;
+  reason?: string;
+  evidenceId?: string;
+  evidenceFamily?: string;
+  sourceType?: string;
+  sourceFileRef?: string;
+  readinessStatus?: string;
+  targetPhase?: number;
+  whyAttached?: string;
+}
+
+interface MoveContextExtractReview {
+  sourceMode?: string;
+  phase?: number;
+  targetPhase?: number;
+  generatedAt?: string;
+  candidateVersionId?: string | null;
+  activeTenantAccessVersionId?: string | null;
+  attachedEvidenceItems?: MoveContextExtractReviewItem[];
+  suggestedContextItems?: MoveContextExtractReviewItem[];
+  excludedContextItems?: MoveContextExtractReviewItem[];
+  gapItems?: MoveContextExtractReviewItem[];
+}
+
+interface ContextExtractReviewModel {
+  artifact: Artifact;
+  sourceModeLabel: string;
+  generatedLabel: string;
+  attached: MoveContextExtractReviewItem[];
+  suggested: MoveContextExtractReviewItem[];
+  excluded: MoveContextExtractReviewItem[];
+  gaps: MoveContextExtractReviewItem[];
+  gatheredMessage: string;
+  nextPhaseMessage: string;
+  coverageItems: string[];
 }
 
 type SponsorReviewDecision =
@@ -166,6 +207,68 @@ function metaLabel(value: string | null | undefined): string {
   return value ? value.replace(/_/g, " ") : "";
 }
 
+function itemList(value: unknown): MoveContextExtractReviewItem[] {
+  return Array.isArray(value) ? value : [];
+}
+
+export function isContextExtractArtifact(a: {
+  artifactType?: string | null;
+  contextExtract?: MoveContextExtractReview | null;
+}): boolean {
+  return Boolean(
+    a.contextExtract &&
+      typeof a.artifactType === "string" &&
+      a.artifactType.startsWith("move_context_extract_p"),
+  );
+}
+
+export function buildContextExtractReviewModel(
+  artifact: Artifact,
+): ContextExtractReviewModel | null {
+  const extract = artifact.contextExtract;
+  if (!extract) return null;
+  const attached = itemList(extract.attachedEvidenceItems);
+  const suggested = itemList(extract.suggestedContextItems);
+  const excluded = itemList(extract.excludedContextItems);
+  const gaps = itemList(extract.gapItems);
+  const phase = extract.phase ?? artifact.phase ?? 0;
+  const targetPhase = extract.targetPhase ?? phase;
+  const sourceModeLabel = metaLabel(extract.sourceMode) || "active context";
+  const generatedLabel = extract.generatedAt
+    ? fmtDate(extract.generatedAt)
+    : fmtDate(artifact.createdAt);
+  const coverageCounts = new Map<string, number>();
+  for (const item of attached) {
+    const family = item.evidenceFamily || "uncategorized";
+    coverageCounts.set(family, (coverageCounts.get(family) ?? 0) + 1);
+  }
+  const coverageItems = [...coverageCounts.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([family, count]) => `${metaLabel(family)}: ${count}`);
+  const gatheredMessage =
+    extract.sourceMode === "candidate_preview"
+      ? "AbarVa reviewed an explicitly acknowledged candidate preview. It is visible for review, not treated as active runtime truth."
+      : `AbarVa reviewed active Move evidence and active module context for P${phase}. Candidate preview data stayed out of the default path.`;
+  const nextPhaseMessage =
+    gaps.length > 0
+      ? `Do not treat P${targetPhase} as evidence-complete yet. Resolve the listed gaps before relying on this extract for phase decisions.`
+      : attached.length > 0
+        ? `P${targetPhase} can proceed using the attached evidence. Suggested and excluded context remain review-only until a human approves or loads it as evidence.`
+        : `No agent-ready evidence is attached yet. Upload or approve source-backed evidence before using this extract for P${targetPhase}.`;
+  return {
+    artifact,
+    sourceModeLabel,
+    generatedLabel,
+    attached,
+    suggested,
+    excluded,
+    gaps,
+    gatheredMessage,
+    nextPhaseMessage,
+    coverageItems,
+  };
+}
+
 export function artifactOutputRoleLabel(a: {
   outputRole?: string | null;
   fileFormat?: string | null;
@@ -198,6 +301,193 @@ function BulletList({ items }: { items: string[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+function ContextExtractMiniList({
+  title,
+  items,
+  empty,
+}: {
+  title: string;
+  items: MoveContextExtractReviewItem[];
+  empty: string;
+}) {
+  return (
+    <div>
+      <div
+        style={{
+          fontSize: 10.5,
+          fontWeight: 800,
+          color: "#5A6472",
+          letterSpacing: "0.05em",
+          textTransform: "uppercase",
+          marginBottom: 6,
+        }}
+      >
+        {title} · {items.length}
+      </div>
+      {items.length === 0 ? (
+        <p style={{ margin: 0, fontSize: 12, lineHeight: 1.45, color: "#64748B" }}>
+          {empty}
+        </p>
+      ) : (
+        <ul style={{ margin: 0, paddingLeft: 16, color: "#334155", fontSize: 12, lineHeight: 1.45 }}>
+          {items.slice(0, 3).map((item, index) => (
+            <li key={`${title}-${item.evidenceId ?? item.label ?? index}`}>
+              <strong>{item.label ?? "Context item"}</strong>
+              {item.evidenceFamily ? ` · ${metaLabel(item.evidenceFamily)}` : ""}
+              <br />
+              <span style={{ color: "#64748B" }}>
+                {(item.whyAttached || item.reason || item.summary || "").slice(0, 180)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {items.length > 3 && (
+        <div style={{ marginTop: 5, fontSize: 11, color: "#64748B" }}>
+          +{items.length - 3} more in the extract
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ContextExtractReviewPanel({ model }: { model: ContextExtractReviewModel }) {
+  return (
+    <section
+      style={{
+        border: "1px solid #DDE3EA",
+        borderRadius: 8,
+        background: "#fff",
+        padding: 14,
+        margin: "12px 0 10px",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) auto",
+          gap: 14,
+          alignItems: "start",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: 10.5,
+              fontWeight: 800,
+              color: "#0B5CAB",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+            }}
+          >
+            Executive context review
+          </div>
+          <h3
+            style={{
+              margin: "4px 0 4px",
+              fontFamily: "Georgia, serif",
+              fontSize: 18,
+              lineHeight: 1.18,
+              color: "#1A1A18",
+            }}
+          >
+            What AbarVa gathered for the next phase
+          </h3>
+          <p
+            style={{
+              margin: 0,
+              maxWidth: 860,
+              fontSize: 12.5,
+              lineHeight: 1.45,
+              color: "#475569",
+            }}
+          >
+            {model.gatheredMessage}
+          </p>
+        </div>
+        <div
+          style={{
+            minWidth: 180,
+            border: "1px solid #EEF0F3",
+            borderRadius: 8,
+            padding: "9px 10px",
+            background: "#FAFAF9",
+            fontSize: 11.5,
+            lineHeight: 1.45,
+            color: "#475569",
+          }}
+        >
+          <strong style={{ display: "block", color: "#0F172A", fontSize: 12 }}>
+            {model.attached.length} attached
+          </strong>
+          {model.sourceModeLabel}
+          <br />
+          {model.generatedLabel}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+          gap: 12,
+          marginTop: 14,
+        }}
+      >
+        <ContextExtractMiniList
+          title="Attached evidence"
+          items={model.attached}
+          empty="No approved Move evidence was attached."
+        />
+        <ContextExtractMiniList
+          title="Suggested"
+          items={model.suggested}
+          empty="No review-only context was suggested."
+        />
+        <ContextExtractMiniList
+          title="Excluded"
+          items={model.excluded}
+          empty="Nothing was explicitly excluded."
+        />
+        <ContextExtractMiniList
+          title="Gaps"
+          items={model.gaps}
+          empty="No blocking context gaps were recorded."
+        />
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          gap: 12,
+          marginTop: 14,
+          paddingTop: 12,
+          borderTop: "1px solid #EEF0F3",
+          fontSize: 12,
+          lineHeight: 1.45,
+          color: "#334155",
+        }}
+      >
+        <div>
+          <strong style={{ color: "#0F172A" }}>Evidence family coverage</strong>
+          <p style={{ margin: "5px 0 0", color: "#64748B" }}>
+            {model.coverageItems.length > 0
+              ? model.coverageItems.join(" · ")
+              : "No attached evidence families yet."}
+          </p>
+        </div>
+        <div>
+          <strong style={{ color: "#0F172A" }}>What this means</strong>
+          <p style={{ margin: "5px 0 0", color: "#64748B" }}>
+            {model.nextPhaseMessage}
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -1076,6 +1366,13 @@ export function FileCabinetPanel({
     return m;
   }, [visible]);
 
+  const contextExtractReview = useMemo(() => {
+    const artifact = artifacts.find(
+      (a) => a.lifecycleState === "current" && isContextExtractArtifact(a),
+    );
+    return artifact ? buildContextExtractReviewModel(artifact) : null;
+  }, [artifacts]);
+
   const totalCurrent = artifacts.filter(
     (a) => a.lifecycleState === "current",
   ).length;
@@ -1160,6 +1457,10 @@ export function FileCabinetPanel({
         >
           {uploadMsg}
         </div>
+      )}
+
+      {contextExtractReview && (
+        <ContextExtractReviewPanel model={contextExtractReview} />
       )}
 
       {/* Family filters */}

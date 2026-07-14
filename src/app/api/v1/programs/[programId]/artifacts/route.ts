@@ -45,7 +45,47 @@ interface CabinetArtifact {
   primaryEditableRecordLabel?: string | null;
   pairedVisualCompanionArtifactId?: string | null;
   visualCompanionArtifactType?: string | null;
+  contextExtract?: CabinetContextExtract | null;
   downloadUrl: string;
+}
+
+interface CabinetContextExtractItem {
+  status?: string;
+  label?: string;
+  summary?: string;
+  reason?: string;
+  evidenceId?: string;
+  evidenceFamily?: string;
+  sourceType?: string;
+  sourceFileRef?: string;
+  readinessStatus?: string;
+  targetPhase?: number;
+  whyAttached?: string;
+}
+
+interface CabinetContextExtract {
+  sourceMode?: string;
+  phase?: number;
+  targetPhase?: number;
+  generatedAt?: string;
+  candidateVersionId?: string | null;
+  activeTenantAccessVersionId?: string | null;
+  attachedEvidenceItems?: CabinetContextExtractItem[];
+  suggestedContextItems?: CabinetContextExtractItem[];
+  excludedContextItems?: CabinetContextExtractItem[];
+  gapItems?: CabinetContextExtractItem[];
+}
+
+function contextExtractFromMetadata(value: unknown): CabinetContextExtract | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const extract = value as CabinetContextExtract;
+  const hasContextExtractShape =
+    typeof extract.sourceMode === "string" ||
+    Array.isArray(extract.attachedEvidenceItems) ||
+    Array.isArray(extract.suggestedContextItems) ||
+    Array.isArray(extract.excludedContextItems) ||
+    Array.isArray(extract.gapItems);
+  return hasContextExtractShape ? extract : null;
 }
 
 export async function GET(
@@ -82,6 +122,7 @@ export async function GET(
         primaryEditableRecordLabel?: string;
         pairedVisualCompanionArtifactId?: string;
         visualCompanionArtifactType?: string;
+        moveContextExtract?: unknown;
       };
       return {
         artifactId: r.artifact_id,
@@ -116,6 +157,7 @@ export async function GET(
         pairedVisualCompanionArtifactId:
           meta?.pairedVisualCompanionArtifactId ?? null,
         visualCompanionArtifactType: meta?.visualCompanionArtifactType ?? null,
+        contextExtract: contextExtractFromMetadata(meta?.moveContextExtract),
         downloadUrl: `/api/v1/programs/${programId}/artifacts/${r.artifact_id}/download`,
       };
     });

@@ -92,4 +92,69 @@ describe('GET /api/v1/programs/[programId]/artifacts — Cabinet merge', () => {
     expect(res.status).toBe(200);
     expect(json.count).toBe(1);
   });
+
+  it('surfaces Move Context Extract metadata for the executive review panel', async () => {
+    moveRows = [
+      {
+        artifact_id: 'ctx-1',
+        artifact_type: 'move_context_extract_p1',
+        artifact_family: 'session_artifact',
+        title: 'P1 Context Extract',
+        phase: 1,
+        file_format: 'md',
+        file_name: 'move_context_extract_p1.md',
+        version: 1,
+        status: 'review_required',
+        lifecycle_state: 'current',
+        quality_score: null,
+        unsupported_claims_count: 0,
+        generated_by: 'u',
+        created_at: '2026-07-14T12:52:25Z',
+        file_size: 6695,
+        metadata: {
+          storage: 'azure_blob',
+          moveContextExtract: {
+            sourceMode: 'active_home_context',
+            phase: 1,
+            targetPhase: 1,
+            generatedAt: '2026-07-14T12:52:25Z',
+            candidateVersionId: null,
+            attachedEvidenceItems: [
+              {
+                evidenceId: 'ev-1',
+                label: 'Call center metrics',
+                evidenceFamily: 'kpi_baseline',
+                sourceType: 'uploaded_evidence',
+              },
+            ],
+            suggestedContextItems: [{ label: 'Review-only benchmark' }],
+            excludedContextItems: [{ label: 'Candidate preview data' }],
+            gapItems: [],
+          },
+        },
+      },
+    ];
+
+    const res = await GET(req(), params('move-x'));
+    const json = (await res.json()) as { artifacts: Array<Record<string, unknown>> };
+    expect(res.status).toBe(200);
+    expect(json.artifacts[0]).toEqual(
+      expect.objectContaining({
+        artifactId: 'ctx-1',
+        contextExtract: expect.objectContaining({
+          sourceMode: 'active_home_context',
+          candidateVersionId: null,
+          attachedEvidenceItems: [
+            expect.objectContaining({
+              evidenceId: 'ev-1',
+              evidenceFamily: 'kpi_baseline',
+            }),
+          ],
+          suggestedContextItems: [expect.objectContaining({ label: 'Review-only benchmark' })],
+          excludedContextItems: [expect.objectContaining({ label: 'Candidate preview data' })],
+          gapItems: [],
+        }),
+      }),
+    );
+  });
 });
