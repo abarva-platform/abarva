@@ -1,7 +1,15 @@
 import { buildHomeDataQualityModel } from "@/lib/home/home-data-quality";
 import { buildHomeEnglishSummary } from "@/lib/home/home-english-summary";
-import { buildHomeSummarySnapshot } from "@/lib/home/home-summary-snapshot";
+import {
+  buildHomeSummarySnapshot,
+  buildHomeSummarySnapshotFromModuleContext,
+} from "@/lib/home/home-summary-snapshot";
 import { getHomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
+import {
+  explainModuleContext,
+  getModuleContext,
+} from "@/lib/enterprise-data/module-context-serving/module-context-serving";
+import type { ModuleContextReadRequest } from "@/lib/enterprise-data/contracts/module-context-apis";
 
 describe("HomeSummarySnapshot", () => {
   it("builds a deterministic, structured active Home snapshot without model calls or writes", () => {
@@ -186,13 +194,40 @@ describe("HomeSummarySnapshot", () => {
     expect(new Set(prioritySignals)).not.toEqual(new Set(["Healthcare Demo"]));
   });
 
-  it("keeps Home dimension rollups specific instead of cloning tenant totals", () => {
-    const snapshot = buildHomeSummarySnapshot({
+  it("keeps Home supplier-context rollups specific instead of cloning tenant totals", async () => {
+    const request: ModuleContextReadRequest = {
+      tenantKey: "skyharbor-air",
+      moduleKey: "home" as const,
+      purpose: "context_summary" as const,
+      requestedDomains: [
+        "enterprise_profile",
+        "functions",
+        "applications_systems",
+        "vendors_contracts",
+        "data_assets_integrations",
+        "programs_priorities",
+        "risks_controls",
+        "metrics_outcomes",
+        "relationships",
+        "evidence_sources",
+      ],
+    };
+    const moduleContext = await getModuleContext(request, {
+      repoRoot: process.cwd(),
+      generatedAt: "2026-07-13T12:00:00.000Z",
+    });
+    const explanation = await explainModuleContext(request, {
+      repoRoot: process.cwd(),
+      generatedAt: "2026-07-13T12:00:00.000Z",
+    });
+    const snapshot = buildHomeSummarySnapshotFromModuleContext({
       tenantKey: "skyharbor-air",
       displayName: "Airline Demo",
       industry: "Airline",
-      browser: getHomeV6ContextBrowser("skyharbor"),
+      moduleContext,
+      moduleContextExplanation: explanation,
       generatedAt: "2026-07-13T12:00:00.000Z",
+      repoRoot: process.cwd(),
     });
     const area = (displayName: string) =>
       snapshot.contextAreas.find((entry) => entry.displayName === displayName);
@@ -205,11 +240,118 @@ describe("HomeSummarySnapshot", () => {
         ),
     );
 
-    expect(area("Applications & Systems")?.loadedCount).toBe(956);
-    expect(area("Vendors & Contracts")?.loadedCount).toBe(320);
-    expect(area("Integrations")?.loadedCount).toBe(2236);
-    expect(area("Metrics / KPIs")?.loadedCount).toBe(797);
-    expect(area("Relationships")?.loadedCount).toBe(0);
+    expect(area("Applications & Systems")?.loadedCount).toBe(626);
+    expect(area("Vendors & Contracts")?.loadedCount).toBe(140);
+    expect(area("Data Assets")?.loadedCount).toBe(570);
+    expect(area("Metrics / KPIs")?.loadedCount).toBe(136);
+    expect(area("Relationships")?.loadedCount).toBe(208);
     expect(loadedSignatures.size).toBeGreaterThan(5);
+  });
+
+  it("builds an active Home snapshot from the module context serving contract", async () => {
+    const request: ModuleContextReadRequest = {
+      tenantKey: "skyharbor-air",
+      moduleKey: "home" as const,
+      purpose: "context_summary" as const,
+      requestedDomains: [
+        "enterprise_profile",
+        "functions",
+        "applications_systems",
+        "vendors_contracts",
+        "data_assets_integrations",
+        "programs_priorities",
+        "risks_controls",
+        "metrics_outcomes",
+        "relationships",
+        "evidence_sources",
+      ],
+    };
+    const moduleContext = await getModuleContext(request, {
+      repoRoot: process.cwd(),
+      generatedAt: "2026-07-14T00:00:00.000Z",
+    });
+    const explanation = await explainModuleContext(request, {
+      repoRoot: process.cwd(),
+      generatedAt: "2026-07-14T00:00:00.000Z",
+    });
+
+    const snapshot = buildHomeSummarySnapshotFromModuleContext({
+      tenantKey: "skyharbor-air",
+      displayName: "Airline Demo",
+      industry: "Airline",
+      moduleContext,
+      moduleContextExplanation: explanation,
+      generatedAt: "2026-07-14T00:00:00.000Z",
+      repoRoot: process.cwd(),
+    });
+    const area = (displayName: string) =>
+      snapshot.contextAreas.find((entry) => entry.displayName === displayName);
+
+    expect(snapshot.moduleContextSummary?.sourceMode).toBe(
+      "active_tenant_access",
+    );
+    expect(snapshot.lineage.tenantDataVersionId).toBe(
+      moduleContext.activeTenantAccessVersionId,
+    );
+    expect(snapshot.guardrails.callsClaude).toBe(false);
+    expect(snapshot.guardrails.candidateReadByDefault).toBe(false);
+    expect(snapshot.tenantProfileHeader.displayName).toBe("SkyHarbor Air");
+    expect(snapshot.executiveProfile.contextDepthWidth.loadedRecords).toBe(
+      moduleContext.domains.reduce(
+        (sum, domain) => sum + domain.acceptedRecords,
+        0,
+      ),
+    );
+    expect(area("Applications & Systems")?.loadedCount).toBeGreaterThan(600);
+    expect(area("Data Assets")?.loadedCount).toBeGreaterThan(500);
+    expect(snapshot.moduleContextSummary?.contextCompleteness.overall).toBe(
+      "Good",
+    );
+    expect(snapshot.avaScope.canAnswer).toEqual(
+      expect.arrayContaining([
+        "What context is available for this tenant?",
+      ]),
+    );
+  });
+
+  it("does not let Home supplier snapshots fall back to candidate data when active access is missing", async () => {
+    const request: ModuleContextReadRequest = {
+      tenantKey: "meridian-health",
+      moduleKey: "home" as const,
+      purpose: "context_summary" as const,
+      requestedDomains: ["enterprise_profile", "applications_systems"],
+    };
+    const moduleContext = await getModuleContext(request, {
+      repoRoot: process.cwd(),
+      generatedAt: "2026-07-14T00:00:00.000Z",
+    });
+    const explanation = await explainModuleContext(request, {
+      repoRoot: process.cwd(),
+      generatedAt: "2026-07-14T00:00:00.000Z",
+    });
+
+    const snapshot = buildHomeSummarySnapshotFromModuleContext({
+      tenantKey: "meridian-health",
+      displayName: "Healthcare Demo",
+      industry: "Healthcare",
+      moduleContext,
+      moduleContextExplanation: explanation,
+      generatedAt: "2026-07-14T00:00:00.000Z",
+      repoRoot: process.cwd(),
+    });
+
+    expect(moduleContext.sourceMode).toBe("active_not_available");
+    expect(moduleContext.records).toHaveLength(0);
+    expect(moduleContext.guardrails.candidateDataConsumed).toBe(false);
+    expect(snapshot.lineage.status).toBe("blocked");
+    expect(snapshot.moduleContextSummary?.sourceMode).toBe(
+      "active_not_available",
+    );
+    expect(snapshot.executiveProfile.contextDepthWidth.loadedRecords).toBe(0);
+    expect(snapshot.avaScope.mustRefuseOrMarkUnsupported).toEqual(
+      expect.arrayContaining([
+        "Do not claim candidate preview data is active tenant truth.",
+      ]),
+    );
   });
 });

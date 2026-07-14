@@ -6,22 +6,22 @@
       "tenantId": null,
       "tenantKey": "skyharbor-air",
       "displayName": "SkyHarbor Air",
-      "legalName": "SkyHarbor Air Group",
+      "legalName": "SkyHarbor Air",
       "industry": "Airline",
-      "subIndustry": "Global passenger airline",
+      "subIndustry": "Global passenger airline operations",
       "headquarters": "Atlanta, GA",
       "revenue": "$52.1B",
       "revenueVerified": true,
       "employees": "95,000",
       "employeesVerified": true,
-      "businessModel": "Network airline with passenger operations, loyalty, cargo, operations control, crew operations, customer recovery, and technology-enabled irregular-operations recovery.",
+      "businessModel": "Medium-to-large airline with operations control, flight operations, crew operations, customer operations, mainframe/core operations, and AI modernization pressure.",
       "businessSegments": [
-        "Passenger operations",
-        "Loyalty and customer experience",
-        "Operations control",
-        "Crew operations",
-        "Cargo and partner operations",
-        "Technology and data platforms"
+        "airline operations",
+        "IROPS recovery",
+        "crew operations",
+        "customer operations",
+        "technology and data platforms",
+        "finance and vendor management"
       ],
       "missionStatement": "Move people and goods safely while protecting customer trust during disruption.",
       "visionStatement": "Become the most resilient AI-enabled airline operations network in the market.",
@@ -54,7 +54,7 @@
         "Client-approved source inventory still required before active promotion",
         "Revenue and workforce anchors are demo facts, not audited filings"
       ],
-      "dataOrigin": "Demo-safe",
+      "dataOrigin": "Source-backed",
       "mode": "active_home_context",
       "activeContextStatus": "Active Home context",
       "candidatePreviewStatus": "Not active"
@@ -115,7 +115,7 @@
       ],
       "dataOrigin": "Demo-safe",
       "mode": "active_home_context",
-      "activeContextStatus": "Active Home context",
+      "activeContextStatus": "Active context unavailable",
       "candidatePreviewStatus": "Not active"
     }
   },
@@ -177,7 +177,7 @@
       ],
       "dataOrigin": "Demo-safe",
       "mode": "active_home_context",
-      "activeContextStatus": "Active Home context",
+      "activeContextStatus": "Active context unavailable",
       "candidatePreviewStatus": "Not active"
     }
   },
@@ -239,7 +239,7 @@
       ],
       "dataOrigin": "Demo-safe",
       "mode": "active_home_context",
-      "activeContextStatus": "Active Home context",
+      "activeContextStatus": "Active context unavailable",
       "candidatePreviewStatus": "Not active"
     }
   },
@@ -300,7 +300,7 @@
       ],
       "dataOrigin": "Demo-safe",
       "mode": "active_home_context",
-      "activeContextStatus": "Active Home context",
+      "activeContextStatus": "Active context unavailable",
       "candidatePreviewStatus": "Not active"
     }
   }

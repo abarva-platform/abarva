@@ -7,695 +7,550 @@
         "areaKey": "business-functions",
         "displayName": "Business Functions",
         "executiveSummaryInputs": [
-          "Business functions",
-          "Workforce personas",
-          "Capabilities by business function"
+          "Reservations L1",
+          "Reservations L2",
+          "Reservations L3",
+          "Reservations L4",
+          "Check-in L1",
+          "Check-in L2"
         ],
-        "loadedCount": 73,
-        "mappedCount": 73,
-        "sourceCount": 2,
-        "evidenceCount": 53,
+        "loadedCount": 92,
+        "mappedCount": 92,
+        "sourceCount": 92,
+        "evidenceCount": 8,
         "relationshipCount": 0,
         "examples": [
-          "SHA-BF-001 - Operations Control Center / IROPS",
-          "SHA-BF-002 - Flight Operations",
-          "SHA-BF-003 - Crew Operations",
-          "SHA-PER-001 - IROPS duty manager",
-          "SHA-PER-002 - Dispatcher"
+          "Reservations L1",
+          "Reservations L2",
+          "Reservations L3",
+          "Reservations L4",
+          "Check-in L1"
         ],
-        "topGaps": [
-          {
-            "label": "Source Owner Missing",
-            "count": 53,
-            "whyItMatters": null
-          },
-          {
-            "label": "Primary Kpis Missing",
-            "count": 20,
-            "whyItMatters": null
-          }
-        ],
-        "evidencePosture": "Business Functions has 73 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_with_caveats",
+        "topGaps": [],
+        "evidencePosture": "Business Functions has 92 canonical records represented through the active module context contract.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "answerable_from_loaded_context",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?",
+          "Active Tenant Access metadata pointer is available.",
+          "Modules can request active canonical context without reading candidate preview data by default."
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
         "decisionsSupported": [
           "Source-backed context browsing",
           "Evidence inspection"
         ],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Close visible evidence gaps for this area."
+          "Let the Home module decide how to render or use this packet."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "applications-systems",
         "displayName": "Applications & Systems",
         "executiveSummaryInputs": [
-          "Application and system inventory",
-          "Infrastructure-related system coverage"
+          "Revenue Accounting Core 1",
+          "PSS Hub 2",
+          "MRO Portal 3",
+          "Commercial Hub 4",
+          "Customer Portal 5",
+          "MRO Service 6"
         ],
-        "loadedCount": 956,
-        "mappedCount": 956,
-        "sourceCount": 1,
-        "evidenceCount": 53,
+        "loadedCount": 626,
+        "mappedCount": 626,
+        "sourceCount": 626,
+        "evidenceCount": 8,
         "relationshipCount": 0,
         "examples": [
-          "SHA-INF-001 - ibm z",
-          "SHA-INF-002 - ibm z",
-          "SHA-INF-003 - aws org",
-          "SHA-SYS-CTO-001 - Operations Control Center Platform",
-          "SHA-SYS-CTO-002 - Disruption Management Application"
+          "Revenue Accounting Core 1",
+          "PSS Hub 2",
+          "MRO Portal 3",
+          "Commercial Hub 4",
+          "Customer Portal 5"
         ],
-        "topGaps": [
-          {
-            "label": "Vendor Id Missing",
-            "count": 944,
-            "whyItMatters": null
-          },
-          {
-            "label": "Source Owner Missing",
-            "count": 900,
-            "whyItMatters": null
-          },
-          {
-            "label": "Source Owner Missing|Data Thin:Business Capability Missing|Data Thin:System Owner Missing|Data Thin:Lifecycle Status Missing|Data Thin:Vendor Id Missing|Data Thin:Annual Cost Missing|Data Thin:Data Dependencies Missing|Data Thin:Ai Relevance Missing",
-            "count": 900,
-            "whyItMatters": null
-          },
-          {
-            "label": "Business Capability Missing",
-            "count": 900,
-            "whyItMatters": null
-          }
-        ],
-        "evidencePosture": "Applications & Systems has 956 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_with_caveats",
+        "topGaps": [],
+        "evidencePosture": "Applications & Systems has 626 canonical records represented through the active module context contract.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "answerable_from_loaded_context",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?",
+          "Active Tenant Access metadata pointer is available.",
+          "Modules can request active canonical context without reading candidate preview data by default."
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
         "decisionsSupported": [
           "Source-backed context browsing",
           "Evidence inspection"
         ],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Close visible evidence gaps for this area."
+          "Let the Home module decide how to render or use this packet."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "vendors-contracts",
         "displayName": "Vendors & Contracts",
         "executiveSummaryInputs": [
-          "Vendors and contracts"
+          "IBM Global Services",
+          "Amazon Web Services",
+          "Accenture",
+          "TCS",
+          "Microsoft Azure",
+          "Oracle"
         ],
-        "loadedCount": 320,
-        "mappedCount": 320,
-        "sourceCount": 1,
-        "evidenceCount": 53,
+        "loadedCount": 140,
+        "mappedCount": 140,
+        "sourceCount": 140,
+        "evidenceCount": 8,
         "relationshipCount": 0,
         "examples": [
-          "CON-00001 - SAP",
-          "CON-00002 - Infosys",
-          "CON-00003 - Informatica"
+          "IBM Global Services",
+          "Amazon Web Services",
+          "Accenture",
+          "TCS",
+          "Microsoft Azure"
         ],
-        "topGaps": [
-          {
-            "label": "Source Owner Missing",
-            "count": 320,
-            "whyItMatters": null
-          },
-          {
-            "label": "Source Owner Missing|Data Thin:Service Missing|Data Thin:Annual Cost Missing|Data Thin:Owning Function Missing|Data Thin:Linked Systems Missing|Data Thin:Contract Risk Missing|Data Thin:Pricing Basis Missing",
-            "count": 320,
-            "whyItMatters": null
-          },
-          {
-            "label": "Service Missing",
-            "count": 320,
-            "whyItMatters": null
-          },
-          {
-            "label": "Annual Cost Missing",
-            "count": 320,
-            "whyItMatters": null
-          }
-        ],
-        "evidencePosture": "Vendors & Contracts has 320 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_with_caveats",
+        "topGaps": [],
+        "evidencePosture": "Vendors & Contracts has 140 canonical records represented through the active module context contract.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "answerable_from_loaded_context",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?",
+          "Active Tenant Access metadata pointer is available.",
+          "Modules can request active canonical context without reading candidate preview data by default."
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
         "decisionsSupported": [
           "Source-backed context browsing",
           "Evidence inspection"
         ],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Close visible evidence gaps for this area."
+          "Let the Home module decide how to render or use this packet."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "data-assets",
         "displayName": "Data Assets",
         "executiveSummaryInputs": [
-          "Data assets and analytics coverage"
+          "INT-0001",
+          "INT-0002",
+          "INT-0003",
+          "INT-0004",
+          "INT-0005",
+          "INT-0006"
         ],
-        "loadedCount": 2236,
-        "mappedCount": 2236,
-        "sourceCount": 1,
-        "evidenceCount": 53,
+        "loadedCount": 570,
+        "mappedCount": 570,
+        "sourceCount": 570,
+        "evidenceCount": 8,
         "relationshipCount": 0,
         "examples": [
-          "SHA-DATA-CTO-001 - Flight Status Feed",
-          "SHA-DATA-CTO-002 - Aircraft Tail Assignment",
-          "SHA-DATA-CTO-003 - Crew Legality Feed"
+          "INT-0001",
+          "INT-0002",
+          "INT-0003",
+          "INT-0004",
+          "INT-0005"
         ],
-        "topGaps": [
-          {
-            "label": "Source Owner Missing",
-            "count": 2220,
-            "whyItMatters": null
-          },
-          {
-            "label": "Source Owner Missing|Data Thin:Data Owner Missing|Data Thin:System Of Record Missing|Data Thin:Lineage Missing|Data Thin:Consumers Missing|Data Thin:Quality Score Missing|Data Thin:Governance Status Missing",
-            "count": 2220,
-            "whyItMatters": null
-          },
-          {
-            "label": "Data Owner Missing",
-            "count": 2220,
-            "whyItMatters": null
-          },
-          {
-            "label": "System Of Record Missing",
-            "count": 2220,
-            "whyItMatters": null
-          }
-        ],
-        "evidencePosture": "Data Assets has 2,236 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_with_caveats",
+        "topGaps": [],
+        "evidencePosture": "Data Assets has 570 canonical records represented through the active module context contract.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "answerable_from_loaded_context",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?",
+          "Active Tenant Access metadata pointer is available.",
+          "Modules can request active canonical context without reading candidate preview data by default."
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
         "decisionsSupported": [
           "Source-backed context browsing",
           "Evidence inspection"
         ],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Close visible evidence gaps for this area."
+          "Let the Home module decide how to render or use this packet."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "integrations",
         "displayName": "Integrations",
         "executiveSummaryInputs": [
-          "Data and integration dependencies"
+          "SHA-REL-0001",
+          "SHA-REL-0002",
+          "SHA-REL-0003",
+          "SHA-REL-0004",
+          "SHA-REL-0005",
+          "SHA-REL-0006"
         ],
-        "loadedCount": 2236,
-        "mappedCount": 2236,
-        "sourceCount": 1,
-        "evidenceCount": 53,
+        "loadedCount": 208,
+        "mappedCount": 208,
+        "sourceCount": 225,
+        "evidenceCount": 8,
         "relationshipCount": 0,
         "examples": [
-          "SHA-DATA-CTO-001 - Flight Status Feed",
-          "SHA-DATA-CTO-002 - Aircraft Tail Assignment",
-          "SHA-DATA-CTO-003 - Crew Legality Feed"
+          "SHA-REL-0001",
+          "SHA-REL-0002",
+          "SHA-REL-0003",
+          "SHA-REL-0004",
+          "SHA-REL-0005"
         ],
-        "topGaps": [
-          {
-            "label": "Source Owner Missing",
-            "count": 2220,
-            "whyItMatters": null
-          },
-          {
-            "label": "Source Owner Missing|Data Thin:Data Owner Missing|Data Thin:System Of Record Missing|Data Thin:Lineage Missing|Data Thin:Consumers Missing|Data Thin:Quality Score Missing|Data Thin:Governance Status Missing",
-            "count": 2220,
-            "whyItMatters": null
-          },
-          {
-            "label": "Data Owner Missing",
-            "count": 2220,
-            "whyItMatters": null
-          },
-          {
-            "label": "System Of Record Missing",
-            "count": 2220,
-            "whyItMatters": null
-          }
-        ],
-        "evidencePosture": "Integrations has 2,236 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_with_caveats",
+        "topGaps": [],
+        "evidencePosture": "Integrations has 208 canonical records represented through the active module context contract.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "answerable_from_loaded_context",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?",
+          "Active Tenant Access metadata pointer is available.",
+          "Modules can request active canonical context without reading candidate preview data by default."
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
         "decisionsSupported": [
           "Source-backed context browsing",
           "Evidence inspection"
         ],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Close visible evidence gaps for this area."
+          "Let the Home module decide how to render or use this packet."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "programs-initiatives",
         "displayName": "Programs & Initiatives",
         "executiveSummaryInputs": [
-          "AI initiatives and automation footprint",
-          "Programs and initiatives",
-          "AI governance and metric boundaries"
+          "SHA-MOVE-001",
+          "SHA-MOVE-002",
+          "SHA-MOVE-003",
+          "SHA-MOVE-004",
+          "SHA-MOVE-005",
+          "SHA-MOVE-006"
         ],
-        "loadedCount": 663,
-        "mappedCount": 663,
-        "sourceCount": 2,
-        "evidenceCount": 53,
+        "loadedCount": 14,
+        "mappedCount": 14,
+        "sourceCount": 74,
+        "evidenceCount": 8,
         "relationshipCount": 0,
         "examples": [
-          "SHA-AI-CTO-001 - IROPS Decision Assistant",
-          "SHA-AI-CTO-002 - Crew Recovery Copilot",
-          "SHA-AI-CTO-003 - Passenger Reaccommodation Agent",
-          "SHA-PROG-CTO-001 - OCC Modernization",
-          "SHA-PROG-CTO-002 - IROPS Data Foundation"
+          "SHA-MOVE-001",
+          "SHA-MOVE-002",
+          "SHA-MOVE-003",
+          "SHA-MOVE-004",
+          "SHA-MOVE-005"
         ],
-        "topGaps": [
-          {
-            "label": "Budget Missing",
-            "count": 300,
-            "whyItMatters": null
-          },
-          {
-            "label": "User Group Missing",
-            "count": 292,
-            "whyItMatters": null
-          },
-          {
-            "label": "Source Owner Missing",
-            "count": 283,
-            "whyItMatters": null
-          },
-          {
-            "label": "Business Owner Missing",
-            "count": 270,
-            "whyItMatters": null
-          },
-          {
-            "label": "Technology Owner Missing",
-            "count": 270,
-            "whyItMatters": null
-          }
-        ],
-        "evidencePosture": "Programs & Initiatives has 663 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_with_caveats",
+        "topGaps": [],
+        "evidencePosture": "Programs & Initiatives has 14 canonical records represented through the active module context contract.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "answerable_from_loaded_context",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?",
+          "Active Tenant Access metadata pointer is available.",
+          "Modules can request active canonical context without reading candidate preview data by default."
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
         "decisionsSupported": [
           "Source-backed context browsing",
           "Evidence inspection"
         ],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Close visible evidence gaps for this area."
+          "Let the Home module decide how to render or use this packet."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "risks-controls",
         "displayName": "Risks & Controls",
         "executiveSummaryInputs": [
-          "Risk, control, and compliance coverage",
-          "Risks and constraints",
-          "Operations and service evidence",
-          "AI governance and metric boundaries"
+          "Workshop must provide evidence to close: No approved disruption recovery baseline.",
+          "Workshop must provide evidence to close: No certified operational event spine.",
+          "Workshop must provide evidence to close: Crew legality control evidence not loaded.",
+          "Workshop must provide evidence to close: Customer reaccommodation SLA not validated.",
+          "Workshop must provide evidence to close: Legality rules owner not signed off.",
+          "Workshop must provide evidence to close: Crew mobile feedback not loaded."
         ],
-        "loadedCount": 1877,
-        "mappedCount": 1877,
-        "sourceCount": 2,
-        "evidenceCount": 53,
+        "loadedCount": 56,
+        "mappedCount": 56,
+        "sourceCount": 56,
+        "evidenceCount": 8,
         "relationshipCount": 0,
         "examples": [
-          "INIT-0001 - operations risk control record",
-          "INIT-0001 - operations risk control record",
-          "INIT-0001 - operations risk control record",
-          "SHA-RISK-CTO-001 - Stale crew legality feed blocks autonomous crew recovery",
-          "SHA-RISK-CTO-002 - IROPS event store pilot coverage is not enterprise certified"
+          "Workshop must provide evidence to close: No approved disruption recovery baseline.",
+          "Workshop must provide evidence to close: No certified operational event spine.",
+          "Workshop must provide evidence to close: Crew legality control evidence not loaded.",
+          "Workshop must provide evidence to close: Customer reaccommodation SLA not validated.",
+          "Workshop must provide evidence to close: Legality rules owner not signed off."
         ],
-        "topGaps": [
-          {
-            "label": "Affected Systems Missing",
-            "count": 1166,
-            "whyItMatters": null
-          },
-          {
-            "label": "Business Impact Missing",
-            "count": 1055,
-            "whyItMatters": null
-          },
-          {
-            "label": "Affected Systems Missing|Data Thin:Business Impact Missing",
-            "count": 900,
-            "whyItMatters": null
-          },
-          {
-            "label": "Severity Missing",
-            "count": 455,
-            "whyItMatters": null
-          },
-          {
-            "label": "User Group Missing",
-            "count": 292,
-            "whyItMatters": null
-          }
-        ],
-        "evidencePosture": "Risks & Controls has 1,877 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_with_caveats",
+        "topGaps": [],
+        "evidencePosture": "Risks & Controls has 56 canonical records represented through the active module context contract.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "answerable_from_loaded_context",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?",
+          "Active Tenant Access metadata pointer is available.",
+          "Modules can request active canonical context without reading candidate preview data by default."
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
         "decisionsSupported": [
           "Source-backed context browsing",
           "Evidence inspection"
         ],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Close visible evidence gaps for this area."
+          "Let the Home module decide how to render or use this packet."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "metrics-kpis",
         "displayName": "Metrics / KPIs",
         "executiveSummaryInputs": [
-          "Metric definitions",
-          "Spend and value records",
-          "Value and benefit evidence"
+          "TEAM-001",
+          "TEAM-002",
+          "TEAM-003",
+          "TEAM-004",
+          "TEAM-005",
+          "TEAM-006"
         ],
-        "loadedCount": 797,
-        "mappedCount": 797,
-        "sourceCount": 2,
-        "evidenceCount": 53,
+        "loadedCount": 136,
+        "mappedCount": 136,
+        "sourceCount": 136,
+        "evidenceCount": 8,
         "relationshipCount": 0,
         "examples": [
-          "MET-0001 - Cost-to-Income Ratio",
-          "MET-0002 - Net Promoter Score",
-          "MET-0003 - Employee Attrition Rate",
-          "BEN-00001 - spend value record",
-          "BEN-00002 - spend value record"
+          "TEAM-001",
+          "TEAM-002",
+          "TEAM-003",
+          "TEAM-004",
+          "TEAM-005"
         ],
-        "topGaps": [
-          {
-            "label": "Vendor Id Missing",
-            "count": 483,
-            "whyItMatters": null
-          },
-          {
-            "label": "System Id Missing",
-            "count": 470,
-            "whyItMatters": null
-          },
-          {
-            "label": "Vendor Id Missing|Data Thin:System Id Missing|Data Thin:Renewal Or Gate Date Missing",
-            "count": 320,
-            "whyItMatters": null
-          },
-          {
-            "label": "Renewal Or Gate Date Missing",
-            "count": 320,
-            "whyItMatters": null
-          },
-          {
-            "label": "Source Owner Missing",
-            "count": 306,
-            "whyItMatters": null
-          }
-        ],
-        "evidencePosture": "Metrics / KPIs has 797 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_with_caveats",
+        "topGaps": [],
+        "evidencePosture": "Metrics / KPIs has 136 canonical records represented through the active module context contract.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "answerable_from_loaded_context",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?",
+          "Active Tenant Access metadata pointer is available.",
+          "Modules can request active canonical context without reading candidate preview data by default."
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
         "decisionsSupported": [
           "Source-backed context browsing",
           "Evidence inspection"
         ],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Close visible evidence gaps for this area."
+          "Let the Home module decide how to render or use this packet."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "evidence-sources",
         "displayName": "Evidence Sources",
         "executiveSummaryInputs": [
-          "Industry corpus patterns"
+          "SHA-EVID-001",
+          "SHA-EVID-002",
+          "SHA-EVID-003",
+          "SHA-EVID-004",
+          "SHA-EVID-001",
+          "SHA-EVID-002"
         ],
-        "loadedCount": 489,
-        "mappedCount": 489,
-        "sourceCount": 1,
-        "evidenceCount": 53,
+        "loadedCount": 125,
+        "mappedCount": 125,
+        "sourceCount": 125,
+        "evidenceCount": 8,
         "relationshipCount": 0,
         "examples": [
-          "sha-irops-agentic-readiness - IROPS agentic readiness gate",
-          "sha-mainframe-modernization-sequencing - Mainframe modernization sequencing",
-          "sha-cdp-identity-value-gate - Customer identity/CDP value gate"
+          "SHA-EVID-001",
+          "SHA-EVID-002",
+          "SHA-EVID-003",
+          "SHA-EVID-004",
+          "SHA-EVID-001"
         ],
-        "topGaps": [
-          {
-            "label": "Source Owner Missing",
-            "count": 489,
-            "whyItMatters": null
-          },
-          {
-            "label": "Source Owner Missing|Data Thin:When To Apply Missing|Data Thin:Signals Missing",
-            "count": 180,
-            "whyItMatters": null
-          },
-          {
-            "label": "When To Apply Missing",
-            "count": 180,
-            "whyItMatters": null
-          },
-          {
-            "label": "Signals Missing",
-            "count": 180,
-            "whyItMatters": null
-          }
-        ],
-        "evidencePosture": "Evidence Sources has 489 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_with_caveats",
+        "topGaps": [],
+        "evidencePosture": "Evidence Sources has 125 canonical records represented through the active module context contract.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "answerable_from_loaded_context",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?",
+          "Active Tenant Access metadata pointer is available.",
+          "Modules can request active canonical context without reading candidate preview data by default."
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
         "decisionsSupported": [
           "Source-backed context browsing",
           "Evidence inspection"
         ],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Close visible evidence gaps for this area."
+          "Let the Home module decide how to render or use this packet."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "relationships",
         "displayName": "Relationships",
-        "executiveSummaryInputs": [],
-        "loadedCount": 0,
-        "mappedCount": 0,
-        "sourceCount": 0,
-        "evidenceCount": 0,
+        "executiveSummaryInputs": [
+          "SHA-REL-0001",
+          "SHA-REL-0002",
+          "SHA-REL-0003",
+          "SHA-REL-0004",
+          "SHA-REL-0005",
+          "SHA-REL-0006"
+        ],
+        "loadedCount": 208,
+        "mappedCount": 208,
+        "sourceCount": 225,
+        "evidenceCount": 8,
         "relationshipCount": 0,
-        "examples": [],
+        "examples": [
+          "SHA-REL-0001",
+          "SHA-REL-0002",
+          "SHA-REL-0003",
+          "SHA-REL-0004",
+          "SHA-REL-0005"
+        ],
         "topGaps": [],
-        "evidencePosture": "Relationships is not represented in the current Home snapshot.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "not_available_yet",
+        "evidencePosture": "Relationships has 208 canonical records represented through the active module context contract.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "answerable_from_loaded_context",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?",
+          "Active Tenant Access metadata pointer is available.",
+          "Modules can request active canonical context without reading candidate preview data by default."
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [],
+        "decisionsSupported": [
+          "Source-backed context browsing",
+          "Evidence inspection"
+        ],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Load source-backed relationships evidence."
+          "Let the Home module decide how to render or use this packet."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "283 discovered source files across 12 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       }
     ]
@@ -707,462 +562,388 @@
       {
         "areaKey": "business-functions",
         "displayName": "Business Functions",
-        "executiveSummaryInputs": [
-          "Business functions",
-          "Workforce personas",
-          "Capabilities by business function"
-        ],
-        "loadedCount": 28,
-        "mappedCount": 28,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "LH-FN-FIN - Corporate Finance and Treasury",
-          "LH-FN-HR - Corporate HR and Talent",
-          "LH-FN-LEGAL - Corporate Legal and Compliance",
-          "LH-PER-CORP-FIN - Corporate finance analyst",
-          "LH-PER-HR - Corporate HR operations specialist"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Business Functions has 28 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Business Functions is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote business functions context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "applications-systems",
         "displayName": "Applications & Systems",
-        "executiveSummaryInputs": [
-          "Application and system inventory",
-          "Infrastructure-related system coverage"
-        ],
-        "loadedCount": 141,
-        "mappedCount": 141,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "LH-SYS-WORKDAY - Workday HCM and Finance",
-          "LH-SYS-ORACLE - Oracle Fusion ERP",
-          "LH-SYS-KYRIBA - Kyriba Treasury",
-          "LH-SYS-WORKDAY - Workday HCM and Finance",
-          "LH-SYS-ORACLE - Oracle Fusion ERP"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Applications & Systems has 141 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Applications & Systems is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote applications & systems context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "vendors-contracts",
         "displayName": "Vendors & Contracts",
-        "executiveSummaryInputs": [
-          "Vendors and contracts"
-        ],
-        "loadedCount": 90,
-        "mappedCount": 90,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "LH-VDR-WORKDAY - Workday",
-          "LH-VDR-ORACLE - Oracle",
-          "LH-VDR-KYRIBA - Kyriba"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Vendors & Contracts has 90 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Vendors & Contracts is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote vendors & contracts context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "data-assets",
         "displayName": "Data Assets",
-        "executiveSummaryInputs": [
-          "Data assets and analytics coverage"
-        ],
-        "loadedCount": 305,
-        "mappedCount": 305,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "LH-DATA-EMPLOYEE - Enterprise workforce master",
-          "LH-DATA-GL - Corporate GL and cost-center actuals",
-          "LH-DATA-CASH - Treasury cash position"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Data Assets has 305 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Data Assets is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote data assets context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "integrations",
         "displayName": "Integrations",
-        "executiveSummaryInputs": [
-          "Data and integration dependencies"
-        ],
-        "loadedCount": 305,
-        "mappedCount": 305,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "LH-DATA-EMPLOYEE - Enterprise workforce master",
-          "LH-DATA-GL - Corporate GL and cost-center actuals",
-          "LH-DATA-CASH - Treasury cash position"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Integrations has 305 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Integrations is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote integrations context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "programs-initiatives",
         "displayName": "Programs & Initiatives",
-        "executiveSummaryInputs": [
-          "AI initiatives and automation footprint",
-          "Programs and initiatives",
-          "AI governance and metric boundaries"
-        ],
-        "loadedCount": 252,
-        "mappedCount": 252,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "LH-AI-001 - Portfolio KPI narrative assistant",
-          "LH-AI-002 - Treasury cash anomaly monitor",
-          "LH-AI-003 - Northline dispatch exception assistant",
-          "LH-PGM-CORP-ERP - Corporate ERP and HCM controls modernization",
-          "LH-PGM-TREASURY - Treasury cash visibility standardization"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Programs & Initiatives has 252 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Programs & Initiatives is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote programs & initiatives context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "risks-controls",
         "displayName": "Risks & Controls",
-        "executiveSummaryInputs": [
-          "Risk, control, and compliance coverage",
-          "Risks and constraints",
-          "Operations and service evidence",
-          "AI governance and metric boundaries"
-        ],
-        "loadedCount": 205,
-        "mappedCount": 205,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "LH-RISK-001 - close and consolidation",
-          "LH-RISK-002 - bank connectivity",
-          "LH-RISK-003 - contract renewal visibility",
-          "LH-RISK-001 - close and consolidation",
-          "LH-RISK-002 - bank connectivity"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Risks & Controls has 205 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Risks & Controls is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote risks & controls context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "metrics-kpis",
         "displayName": "Metrics / KPIs",
-        "executiveSummaryInputs": [
-          "Metric definitions",
-          "Spend and value records",
-          "Value and benefit evidence"
-        ],
-        "loadedCount": 178,
-        "mappedCount": 178,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "LH-MET-TOTAL-IT-BUDGET - FY26 direct IT budget",
-          "LH-MET-RUN-BUDGET - FY26 run budget",
-          "LH-MET-CHANGE-BUDGET - FY26 change budget",
-          "LH-SPEND-LH-CORP-BUDGET - Corporate Shared Services IT FY26 annual IT budget",
-          "LH-SPEND-LH-CORP-RUN - Corporate Shared Services IT FY26 run budget"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Metrics / KPIs has 178 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Metrics / KPIs is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote metrics / kpis context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "evidence-sources",
         "displayName": "Evidence Sources",
-        "executiveSummaryInputs": [
-          "Industry corpus patterns"
-        ],
-        "loadedCount": 90,
-        "mappedCount": 90,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "LH-PAT-HOLDCO-IT-01 - Holding-company IT rollup",
-          "LH-PAT-SS-01 - Shared-services platform modernization",
-          "LH-PAT-AI-01 - Central innovation IT with local operating data"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Evidence Sources has 90 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Evidence Sources is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote evidence sources context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
@@ -1175,34 +956,37 @@
         "evidenceCount": 0,
         "relationshipCount": 0,
         "examples": [],
-        "topGaps": [],
-        "evidencePosture": "Relationships is not represented in the current Home snapshot.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
+        ],
+        "evidencePosture": "Relationships is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
         "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
         "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Load source-backed relationships evidence."
+          "Load or promote relationships context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "211 discovered source files across 7 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       }
     ]
@@ -1214,462 +998,388 @@
       {
         "areaKey": "business-functions",
         "displayName": "Business Functions",
-        "executiveSummaryInputs": [
-          "Business functions",
-          "Workforce personas",
-          "Capabilities by business function"
-        ],
-        "loadedCount": 39,
-        "mappedCount": 39,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "MER-BF-001 - Ambulatory and Primary Care",
-          "MER-BF-002 - Hospital Operations",
-          "MER-BF-003 - Health Plan Operations",
-          "MER-PER-001 - Primary care physician",
-          "MER-PER-002 - Care manager"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Business Functions has 39 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Business Functions is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote business functions context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "applications-systems",
         "displayName": "Applications & Systems",
-        "executiveSummaryInputs": [
-          "Application and system inventory",
-          "Infrastructure-related system coverage"
-        ],
-        "loadedCount": 162,
-        "mappedCount": 162,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "MER-APP-001 - Epic Hyperspace",
-          "MER-APP-002 - Epic MyChart",
-          "MER-APP-003 - Epic Cadence",
-          "MER-APP-001 - Epic Hyperspace",
-          "MER-APP-002 - Epic MyChart"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Applications & Systems has 162 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Applications & Systems is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote applications & systems context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "vendors-contracts",
         "displayName": "Vendors & Contracts",
-        "executiveSummaryInputs": [
-          "Vendors and contracts"
-        ],
-        "loadedCount": 95,
-        "mappedCount": 95,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "MER-VEN-001 - Epic",
-          "MER-VEN-002 - Databricks",
-          "MER-VEN-003 - AWS"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Vendors & Contracts has 95 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Vendors & Contracts is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote vendors & contracts context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "data-assets",
         "displayName": "Data Assets",
-        "executiveSummaryInputs": [
-          "Data assets and analytics coverage"
-        ],
-        "loadedCount": 360,
-        "mappedCount": 360,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "meridian-health-data asset integration-2 - Clinical operations data product",
-          "meridian-health-data asset integration-3 - Revenue cycle data product",
-          "meridian-health-data asset integration-4 - Care management data product"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Data Assets has 360 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Data Assets is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote data assets context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "integrations",
         "displayName": "Integrations",
-        "executiveSummaryInputs": [
-          "Data and integration dependencies"
-        ],
-        "loadedCount": 360,
-        "mappedCount": 360,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "meridian-health-data asset integration-2 - Clinical operations data product",
-          "meridian-health-data asset integration-3 - Revenue cycle data product",
-          "meridian-health-data asset integration-4 - Care management data product"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Integrations has 360 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Integrations is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote integrations context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "programs-initiatives",
         "displayName": "Programs & Initiatives",
-        "executiveSummaryInputs": [
-          "AI initiatives and automation footprint",
-          "Programs and initiatives",
-          "AI governance and metric boundaries"
-        ],
-        "loadedCount": 306,
-        "mappedCount": 306,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "MER-AI-001 - Databricks AWS clinical + claims lakehouse foundation",
-          "MER-AI-002 - Unified semantic layer for automation-ready data products",
-          "MER-AI-003 - Prior authorization automation evidence cockpit",
-          "MER-INIT-001 - Databricks AWS clinical + claims lakehouse foundation",
-          "MER-INIT-002 - Unified semantic layer for automation-ready data products"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Programs & Initiatives has 306 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Programs & Initiatives is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote programs & initiatives context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "risks-controls",
         "displayName": "Risks & Controls",
-        "executiveSummaryInputs": [
-          "Risk, control, and compliance coverage",
-          "Risks and constraints",
-          "Operations and service evidence",
-          "AI governance and metric boundaries"
-        ],
-        "loadedCount": 499,
-        "mappedCount": 499,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "MER-OPS-001 - Epic interface failures",
-          "MER-OPS-002 - claims EDI rejects",
-          "MER-OPS-003 - call transcript ingest backlog",
-          "MER-OPS-001 - Epic interface failures",
-          "MER-OPS-002 - claims EDI rejects"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Risks & Controls has 499 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Risks & Controls is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote risks & controls context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "metrics-kpis",
         "displayName": "Metrics / KPIs",
-        "executiveSummaryInputs": [
-          "Metric definitions",
-          "Spend and value records",
-          "Value and benefit evidence"
-        ],
-        "loadedCount": 294,
-        "mappedCount": 294,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "MERIDIANHEALTH-MET-0001 - Healthcare Demo benefit realization against committed value metric 1",
-          "MERIDIANHEALTH-MET-0002 - Healthcare Demo elapsed time for target process metric 2",
-          "MERIDIANHEALTH-MET-0003 - Healthcare Demo open control and governance pressure metric 3",
-          "meridian-health-spend value-2 - Clinical operations record",
-          "meridian-health-spend value-3 - Revenue cycle record"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Metrics / KPIs has 294 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Metrics / KPIs is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote metrics / kpis context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "evidence-sources",
         "displayName": "Evidence Sources",
-        "executiveSummaryInputs": [
-          "Industry corpus patterns"
-        ],
-        "loadedCount": 190,
-        "mappedCount": 190,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "mer-clinical-claims-lakehouse - Clinical and claims lakehouse foundation",
-          "mer-prior-auth-evidence - Prior authorization automation evidence gate",
-          "mer-payment-integrity-leakage - Payment integrity leakage reduction"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Evidence Sources has 190 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Evidence Sources is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote evidence sources context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
@@ -1682,34 +1392,37 @@
         "evidenceCount": 0,
         "relationshipCount": 0,
         "examples": [],
-        "topGaps": [],
-        "evidencePosture": "Relationships is not represented in the current Home snapshot.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
+        ],
+        "evidencePosture": "Relationships is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
         "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
         "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Load source-backed relationships evidence."
+          "Load or promote relationships context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "271 discovered source files across 11 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       }
     ]
@@ -1721,462 +1434,388 @@
       {
         "areaKey": "business-functions",
         "displayName": "Business Functions",
-        "executiveSummaryInputs": [
-          "Business functions",
-          "Workforce personas",
-          "Capabilities by business function"
-        ],
-        "loadedCount": 43,
-        "mappedCount": 43,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "FC-BF-001 - Consumer Banking & Deposits",
-          "FC-BF-002 - Commercial & Corporate Banking",
-          "FC-BF-003 - Cards & Payments",
-          "FC-PER-001 - Branch banker / relationship manager",
-          "FC-PER-002 - Contact center agent"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Business Functions has 43 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Business Functions is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote business functions context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "applications-systems",
         "displayName": "Applications & Systems",
-        "executiveSummaryInputs": [
-          "Application and system inventory",
-          "Infrastructure-related system coverage"
-        ],
-        "loadedCount": 272,
-        "mappedCount": 272,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "FC-APP-001 - Fiserv Core Deposits",
-          "FC-APP-002 - Thought Machine Loan Servicing",
-          "FC-APP-003 - FIS GL Posting Engine",
-          "FC-APP-001 - Fiserv Core Deposits",
-          "FC-APP-002 - Thought Machine Loan Servicing"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Applications & Systems has 272 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Applications & Systems is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote applications & systems context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "vendors-contracts",
         "displayName": "Vendors & Contracts",
-        "executiveSummaryInputs": [
-          "Vendors and contracts"
-        ],
-        "loadedCount": 120,
-        "mappedCount": 120,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "FC-VEN-001 - FIS",
-          "FC-VEN-002 - Fiserv",
-          "FC-VEN-003 - Temenos"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Vendors & Contracts has 120 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Vendors & Contracts is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote vendors & contracts context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "data-assets",
         "displayName": "Data Assets",
-        "executiveSummaryInputs": [
-          "Data assets and analytics coverage"
-        ],
-        "loadedCount": 460,
-        "mappedCount": 460,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "first-capital-financial-data asset integration-2 - Client servicing data product",
-          "first-capital-financial-data asset integration-3 - Payments data product",
-          "first-capital-financial-data asset integration-4 - Advisor productivity data product"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Data Assets has 460 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Data Assets is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote data assets context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "integrations",
         "displayName": "Integrations",
-        "executiveSummaryInputs": [
-          "Data and integration dependencies"
-        ],
-        "loadedCount": 460,
-        "mappedCount": 460,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "first-capital-financial-data asset integration-2 - Client servicing data product",
-          "first-capital-financial-data asset integration-3 - Payments data product",
-          "first-capital-financial-data asset integration-4 - Advisor productivity data product"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Integrations has 460 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Integrations is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote integrations context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "programs-initiatives",
         "displayName": "Programs & Initiatives",
-        "executiveSummaryInputs": [
-          "AI initiatives and automation footprint",
-          "Programs and initiatives",
-          "AI governance and metric boundaries"
-        ],
-        "loadedCount": 581,
-        "mappedCount": 581,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "FC-AI-001 - Real-time scam & APP fraud detection",
-          "FC-AI-002 - AML alert triage & false-positive reduction",
-          "FC-AI-003 - SAR narrative drafting copilot",
-          "FC-AI-001 - Real-time scam & APP fraud detection",
-          "FC-AI-002 - AML alert triage & false-positive reduction"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Programs & Initiatives has 581 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Programs & Initiatives is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote programs & initiatives context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "risks-controls",
         "displayName": "Risks & Controls",
-        "executiveSummaryInputs": [
-          "Risk, control, and compliance coverage",
-          "Risks and constraints",
-          "Operations and service evidence",
-          "AI governance and metric boundaries"
-        ],
-        "loadedCount": 829,
-        "mappedCount": 829,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "FC-OPS-001 - Core banking interface failures",
-          "FC-OPS-002 - ACH/wire exceptions",
-          "FC-OPS-003 - Card authorization incidents",
-          "FC-OPS-001 - Core banking interface failures",
-          "FC-OPS-002 - ACH/wire exceptions"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Risks & Controls has 829 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Risks & Controls is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote risks & controls context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "metrics-kpis",
         "displayName": "Metrics / KPIs",
-        "executiveSummaryInputs": [
-          "Metric definitions",
-          "Spend and value records",
-          "Value and benefit evidence"
-        ],
-        "loadedCount": 565,
-        "mappedCount": 565,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "FIRSTCAPITAL-MET-0001 - Financial Services Demo benefit realization against committed value metric 1",
-          "FIRSTCAPITAL-MET-0002 - Financial Services Demo elapsed time for target process metric 2",
-          "FIRSTCAPITAL-MET-0003 - Financial Services Demo open control and governance pressure metric 3",
-          "first-capital-financial-spend value-2 - Client servicing record",
-          "first-capital-financial-spend value-3 - Payments record"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Metrics / KPIs has 565 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Metrics / KPIs is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote metrics / kpis context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "evidence-sources",
         "displayName": "Evidence Sources",
-        "executiveSummaryInputs": [
-          "Industry corpus patterns"
-        ],
-        "loadedCount": 294,
-        "mappedCount": 294,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "fc-model-risk-ai-scale-gate - Model-risk gate before bank AI scale",
-          "fc-payments-value-gate - Payments value gated by core and sanctions dependencies",
-          "fc-aml-false-positive-reduction - AML false-positive reduction with review controls"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Evidence Sources has 294 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Evidence Sources is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote evidence sources context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
@@ -2189,34 +1828,37 @@
         "evidenceCount": 0,
         "relationshipCount": 0,
         "examples": [],
-        "topGaps": [],
-        "evidencePosture": "Relationships is not represented in the current Home snapshot.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
+        ],
+        "evidencePosture": "Relationships is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
         "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
         "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Load source-backed relationships evidence."
+          "Load or promote relationships context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "229 discovered source files across 5 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       }
     ]
@@ -2228,462 +1870,388 @@
       {
         "areaKey": "business-functions",
         "displayName": "Business Functions",
-        "executiveSummaryInputs": [
-          "Business functions",
-          "Workforce personas",
-          "Capabilities by business function"
-        ],
-        "loadedCount": 38,
-        "mappedCount": 38,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "APX-BF-001 - Store Operations",
-          "APX-BF-002 - Digital Commerce",
-          "APX-BF-003 - Merchandising",
-          "APX-PER-001 - Store manager",
-          "APX-PER-002 - Department lead"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Business Functions has 38 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Business Functions is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote business functions context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "applications-systems",
         "displayName": "Applications & Systems",
-        "executiveSummaryInputs": [
-          "Application and system inventory",
-          "Infrastructure-related system coverage"
-        ],
-        "loadedCount": 182,
-        "mappedCount": 182,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "APX-APP-001 - Oracle Retail Merchandising",
-          "APX-APP-002 - Manhattan Active WMS",
-          "APX-APP-003 - IBM Sterling OMS",
-          "APX-APP-001 - Oracle Retail Merchandising",
-          "APX-APP-002 - Manhattan Active WMS"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Applications & Systems has 182 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Applications & Systems is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote applications & systems context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "vendors-contracts",
         "displayName": "Vendors & Contracts",
-        "executiveSummaryInputs": [
-          "Vendors and contracts"
-        ],
-        "loadedCount": 100,
-        "mappedCount": 100,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "APX-VND-001 - Salesforce",
-          "APX-VND-002 - Oracle",
-          "APX-VND-003 - Manhattan"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Vendors & Contracts has 100 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Vendors & Contracts is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote vendors & contracts context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "data-assets",
         "displayName": "Data Assets",
-        "executiveSummaryInputs": [
-          "Data assets and analytics coverage"
-        ],
-        "loadedCount": 385,
-        "mappedCount": 385,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "APX-DATA-001 - POS transaction lake",
-          "APX-DATA-002 - Customer 360 / loyalty graph",
-          "APX-DATA-003 - Inventory availability product"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Data Assets has 385 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Data Assets is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote data assets context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "integrations",
         "displayName": "Integrations",
-        "executiveSummaryInputs": [
-          "Data and integration dependencies"
-        ],
-        "loadedCount": 385,
-        "mappedCount": 385,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "APX-DATA-001 - POS transaction lake",
-          "APX-DATA-002 - Customer 360 / loyalty graph",
-          "APX-DATA-003 - Inventory availability product"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Integrations has 385 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Integrations is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote integrations context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "programs-initiatives",
         "displayName": "Programs & Initiatives",
-        "executiveSummaryInputs": [
-          "AI initiatives and automation footprint",
-          "Programs and initiatives",
-          "AI governance and metric boundaries"
-        ],
-        "loadedCount": 314,
-        "mappedCount": 314,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "APX-INIT-001 - Retail lakehouse and customer inventory graph",
-          "APX-INIT-002 - AI demand forecasting and replenishment",
-          "APX-INIT-003 - Store labor scheduling optimization",
-          "APX-INIT-001 - Retail lakehouse and customer inventory graph",
-          "APX-INIT-002 - AI demand forecasting and replenishment"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Programs & Initiatives has 314 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Programs & Initiatives is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote programs & initiatives context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "risks-controls",
         "displayName": "Risks & Controls",
-        "executiveSummaryInputs": [
-          "Risk, control, and compliance coverage",
-          "Risks and constraints",
-          "Operations and service evidence",
-          "AI governance and metric boundaries"
-        ],
-        "loadedCount": 530,
-        "mappedCount": 530,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "APX-OPS-001 - POS availability",
-          "APX-OPS-002 - Ecommerce checkout",
-          "APX-OPS-003 - OMS order flow",
-          "APX-OPS-001 - POS availability",
-          "APX-OPS-002 - Ecommerce checkout"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Risks & Controls has 530 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Risks & Controls is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote risks & controls context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "metrics-kpis",
         "displayName": "Metrics / KPIs",
-        "executiveSummaryInputs": [
-          "Metric definitions",
-          "Spend and value records",
-          "Value and benefit evidence"
-        ],
-        "loadedCount": 314,
-        "mappedCount": 314,
-        "sourceCount": 2,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "APEXRETAIL-MET-0001 - Retail Demo benefit realization against committed value metric 1",
-          "APEXRETAIL-MET-0002 - Retail Demo elapsed time for target process metric 2",
-          "APEXRETAIL-MET-0003 - Retail Demo open control and governance pressure metric 3",
-          "APX-BUD-001 - Omnichannel selling record",
-          "APX-BUD-002 - Store operations record"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Metrics / KPIs has 314 loaded records from 2 source files.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Metrics / KPIs is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote metrics / kpis context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
         "areaKey": "evidence-sources",
         "displayName": "Evidence Sources",
-        "executiveSummaryInputs": [
-          "Industry corpus patterns"
-        ],
-        "loadedCount": 206,
-        "mappedCount": 206,
-        "sourceCount": 1,
+        "executiveSummaryInputs": [],
+        "loadedCount": 0,
+        "mappedCount": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "examples": [
-          "apx-omnichannel-inventory-truth - Omnichannel inventory truth before AI scale",
-          "apx-shrink-evidence-chain - Shrink AI evidence chain",
-          "apx-retail-media-incrementality - Retail media incrementality proof"
+        "examples": [],
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
         ],
-        "topGaps": [],
-        "evidencePosture": "Evidence Sources has 206 loaded records from 1 source file.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
-        "answerability": "answerable_from_loaded_context",
+        "evidencePosture": "Evidence Sources is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
+        "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
-        "decisionsSupported": [
-          "Source-backed context browsing",
-          "Evidence inspection"
-        ],
+        "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Validate loaded rows with the client owner."
+          "Load or promote evidence sources context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       },
       {
@@ -2696,34 +2264,37 @@
         "evidenceCount": 0,
         "relationshipCount": 0,
         "examples": [],
-        "topGaps": [],
-        "evidencePosture": "Relationships is not represented in the current Home snapshot.",
-        "relationshipDepth": "Relationship depth is limited or not projected for this area.",
+        "topGaps": [
+          {
+            "label": "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+            "count": 1,
+            "whyItMatters": "active_tenant_access"
+          }
+        ],
+        "evidencePosture": "Relationships is not represented in the current active module context packet.",
+        "relationshipDepth": "Validated relationship depth is limited or not projected for this area.",
         "answerability": "not_available_yet",
         "safeQuestions": [
-          "Loaded facts in the active Home context",
-          "Evidence gaps",
-          "Source coverage and caveats",
-          "What is loaded in the current Home context"
+          "What context is available for this tenant?",
+          "Which domains are source-backed or still incomplete?"
         ],
         "unsupportedQuestions": [
-          "Full enterprise estate coverage or application rationalization",
-          "Full enterprise application rationalization",
-          "Enterprise-wide sourcing savings estimates",
-          "Realized value or Tower outcome claims"
+          "Do not claim candidate preview data is active tenant truth.",
+          "Do not claim production tenant data was written or promoted by this serving call.",
+          "Do not claim module runtime behavior changed because this packet was generated.",
+          "Candidate data is active tenant truth."
         ],
         "decisionsSupported": [],
         "decisionsNotReady": [
-          "Broad advisory synthesis",
-          "Cross-domain dependency decisions"
+          "Cross-domain dependency decisions without validated relationships"
         ],
         "nextDataActions": [
-          "Load source-backed relationships evidence."
+          "Load or promote relationships context."
         ],
         "caveats": [
-          "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-          "186 discovered source files across 10 domains; surface file categories and evidence signals rather than generic source labels.",
-          "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence."
+          "Active mode is the default module context serving mode.",
+          "Candidate read-model records are not consumed unless mode is candidate_preview.",
+          "This supplier contract does not modify module runtime behavior."
         ]
       }
     ]

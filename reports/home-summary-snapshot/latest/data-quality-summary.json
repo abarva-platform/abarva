@@ -3,145 +3,111 @@
     "tenantKey": "skyharbor-air",
     "displayName": "SkyHarbor Air",
     "dataQualitySummary": {
-      "sourceCoverage": "pass",
-      "candidateCoverage": "Not active by default",
-      "evidenceStrength": "pass",
-      "relationshipCoverage": "gap",
-      "manifestCompleteness": "Source-rich/candidate-thin",
+      "sourceCoverage": "active-context-source-backed",
+      "candidateCoverage": "not-read-by-default",
+      "evidenceStrength": "100% evidence coverage",
+      "relationshipCoverage": "0% relationship coverage",
+      "manifestCompleteness": "Good",
       "homeAvaRepresentationWarnings": [
-        "The source estate is richer than the candidate facts Home can treat as promoted runtime context.",
-        "Client validation is required before board-grade use.",
-        "Source files indicate systems, integrations, or dependencies, but mapped business links are not complete yet.",
-        "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
-        "At least one module lacks graph-plan readiness."
+        "Active mode is the default module context serving mode.",
+        "Candidate read-model records are not consumed unless mode is candidate_preview.",
+        "This supplier contract does not modify module runtime behavior.",
+        "Validated relationships are not present in this packet."
       ],
-      "promotionBlockers": [
-        "Promotion execution is disabled by default in PR9.",
-        "Operator approval has not been requested or granted.",
-        "Active Tenant Access Layer pointer update remains unavailable in this release.",
-        "Module runtime consumption remains unchanged and disabled for candidate data.",
-        "No module reads candidate data by default.",
-        "Promotion execution is disabled by default in PR9.",
-        "Operator approval has not been requested or granted.",
-        "Active Tenant Access Layer pointer update remains unavailable in this release."
-      ],
-      "answerabilityPosture": "Home can explain loaded context, but candidate coverage and relationship mapping are not complete enough for broad advisory claims."
+      "promotionBlockers": [],
+      "answerabilityPosture": "88% answerability"
     }
   },
   {
     "tenantKey": "lakeshore-holdings",
     "displayName": "Lakeshore Holdings",
     "dataQualitySummary": {
-      "sourceCoverage": "pass",
-      "candidateCoverage": "Not active by default",
-      "evidenceStrength": "pass",
-      "relationshipCoverage": "gap",
-      "manifestCompleteness": "Source-rich/candidate-thin",
+      "sourceCoverage": "active-context-not-available",
+      "candidateCoverage": "not-read-by-default",
+      "evidenceStrength": "0% evidence coverage",
+      "relationshipCoverage": "0% relationship coverage",
+      "manifestCompleteness": "Blocked",
       "homeAvaRepresentationWarnings": [
-        "The source estate is richer than the candidate facts Home can treat as promoted runtime context.",
-        "Client validation is required before board-grade use.",
-        "Source files indicate systems, integrations, or dependencies, but mapped business links are not complete yet.",
-        "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
-        "At least one module lacks graph-plan readiness."
+        "Active mode is the default module context serving mode.",
+        "Candidate read-model records are not consumed unless mode is candidate_preview.",
+        "This supplier contract does not modify module runtime behavior.",
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+        "Validated relationships are not present in this packet.",
+        "No readable records are available in this packet."
       ],
       "promotionBlockers": [
-        "Required packet projection and mapping profile configuration is not available yet.",
-        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
-        "Required packet projection and mapping profile configuration is not available yet.",
-        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
-        "Expand candidate packet so canonical records materially cover the discovered source estate.",
-        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
-        "Map discovered evidence signals into candidate records with citations.",
-        "Clear promotion-gate blockers and capture operator approval."
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data."
       ],
-      "answerabilityPosture": "Home can explain loaded context, but candidate coverage and relationship mapping are not complete enough for broad advisory claims."
+      "answerabilityPosture": "0% answerability"
     }
   },
   {
     "tenantKey": "meridian-health",
     "displayName": "Meridian Health System",
     "dataQualitySummary": {
-      "sourceCoverage": "pass",
-      "candidateCoverage": "Not active by default",
-      "evidenceStrength": "gap",
-      "relationshipCoverage": "gap",
-      "manifestCompleteness": "Source-rich/candidate-thin",
+      "sourceCoverage": "active-context-not-available",
+      "candidateCoverage": "not-read-by-default",
+      "evidenceStrength": "0% evidence coverage",
+      "relationshipCoverage": "0% relationship coverage",
+      "manifestCompleteness": "Blocked",
       "homeAvaRepresentationWarnings": [
-        "The source estate is richer than the candidate facts Home can treat as promoted runtime context.",
-        "Client validation is required before board-grade use.",
-        "Source files indicate systems, integrations, or dependencies, but mapped business links are not complete yet.",
-        "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
-        "At least one module lacks graph-plan readiness."
+        "Active mode is the default module context serving mode.",
+        "Candidate read-model records are not consumed unless mode is candidate_preview.",
+        "This supplier contract does not modify module runtime behavior.",
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+        "Validated relationships are not present in this packet.",
+        "No readable records are available in this packet."
       ],
       "promotionBlockers": [
-        "Required packet projection and mapping profile configuration is not available yet.",
-        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
-        "Required packet projection and mapping profile configuration is not available yet.",
-        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
-        "Expand candidate packet so canonical records materially cover the discovered source estate.",
-        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
-        "Map discovered evidence signals into candidate records with citations.",
-        "Clear promotion-gate blockers and capture operator approval."
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data."
       ],
-      "answerabilityPosture": "Home can explain loaded context, but candidate coverage and relationship mapping are not complete enough for broad advisory claims."
+      "answerabilityPosture": "0% answerability"
     }
   },
   {
     "tenantKey": "first-capital",
     "displayName": "First Capital",
     "dataQualitySummary": {
-      "sourceCoverage": "pass",
-      "candidateCoverage": "Not active by default",
-      "evidenceStrength": "pass",
-      "relationshipCoverage": "gap",
-      "manifestCompleteness": "Source-rich/candidate-thin",
+      "sourceCoverage": "active-context-not-available",
+      "candidateCoverage": "not-read-by-default",
+      "evidenceStrength": "0% evidence coverage",
+      "relationshipCoverage": "0% relationship coverage",
+      "manifestCompleteness": "Blocked",
       "homeAvaRepresentationWarnings": [
-        "The source estate is richer than the candidate facts Home can treat as promoted runtime context.",
-        "Client validation is required before board-grade use.",
-        "Source files indicate systems, integrations, or dependencies, but mapped business links are not complete yet.",
-        "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
-        "At least one module lacks graph-plan readiness."
+        "Active mode is the default module context serving mode.",
+        "Candidate read-model records are not consumed unless mode is candidate_preview.",
+        "This supplier contract does not modify module runtime behavior.",
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+        "Validated relationships are not present in this packet.",
+        "No readable records are available in this packet."
       ],
       "promotionBlockers": [
-        "No Moves artifacts discovered in the repository inventory.",
-        "Required packet projection and mapping profile configuration is not available yet.",
-        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
-        "No Moves artifacts discovered in the repository inventory.",
-        "Required packet projection and mapping profile configuration is not available yet.",
-        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
-        "Expand candidate packet so canonical records materially cover the discovered source estate.",
-        "Add relationship mappings and prove graph-plan coverage before active truth claims."
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data."
       ],
-      "answerabilityPosture": "Home can explain loaded context, but candidate coverage and relationship mapping are not complete enough for broad advisory claims."
+      "answerabilityPosture": "0% answerability"
     }
   },
   {
     "tenantKey": "apex-retail",
     "displayName": "Apex Retail",
     "dataQualitySummary": {
-      "sourceCoverage": "pass",
-      "candidateCoverage": "Not active by default",
-      "evidenceStrength": "gap",
-      "relationshipCoverage": "gap",
-      "manifestCompleteness": "Source-rich/candidate-thin",
+      "sourceCoverage": "active-context-not-available",
+      "candidateCoverage": "not-read-by-default",
+      "evidenceStrength": "0% evidence coverage",
+      "relationshipCoverage": "0% relationship coverage",
+      "manifestCompleteness": "Blocked",
       "homeAvaRepresentationWarnings": [
-        "The source estate is richer than the candidate facts Home can treat as promoted runtime context.",
-        "Client validation is required before board-grade use.",
-        "Source files indicate systems, integrations, or dependencies, but mapped business links are not complete yet.",
-        "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
-        "At least one module lacks graph-plan readiness."
+        "Active mode is the default module context serving mode.",
+        "Candidate read-model records are not consumed unless mode is candidate_preview.",
+        "This supplier contract does not modify module runtime behavior.",
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+        "Validated relationships are not present in this packet.",
+        "No readable records are available in this packet."
       ],
       "promotionBlockers": [
-        "Required packet projection and mapping profile configuration is not available yet.",
-        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
-        "Required packet projection and mapping profile configuration is not available yet.",
-        "Current all-tenant batch is inventory/remediation only for this tenant until packet projection and mapping profiles are added.",
-        "Expand candidate packet so canonical records materially cover the discovered source estate.",
-        "Add relationship mappings and prove graph-plan coverage before active truth claims.",
-        "Map discovered evidence signals into candidate records with citations.",
-        "Clear promotion-gate blockers and capture operator approval."
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data."
       ],
-      "answerabilityPosture": "Home can explain loaded context, but candidate coverage and relationship mapping are not complete enough for broad advisory claims."
+      "answerabilityPosture": "0% answerability"
     }
   }
 ]

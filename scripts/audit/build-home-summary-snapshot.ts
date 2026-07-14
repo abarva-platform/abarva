@@ -3,9 +3,15 @@ import path from "node:path";
 
 import {
   buildHomeSummarySnapshot,
+  buildHomeSummarySnapshotFromModuleContext,
   type HomeSummarySnapshot,
   type HomeSummarySnapshotMode,
 } from "@/lib/home/home-summary-snapshot";
+import {
+  explainModuleContext,
+  getModuleContext,
+} from "@/lib/enterprise-data/module-context-serving/module-context-serving";
+import type { ModuleContextRequestedDomain } from "@/lib/enterprise-data/contracts/module-context-apis";
 import { getHomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
 
 interface TenantMatrixArtifact {
@@ -43,6 +49,19 @@ const INDUSTRY_BY_TENANT: Record<string, string> = {
   "skyharbor-air": "Airline",
 };
 
+const HOME_MODULE_DOMAINS: ModuleContextRequestedDomain[] = [
+  "enterprise_profile",
+  "functions",
+  "applications_systems",
+  "vendors_contracts",
+  "data_assets_integrations",
+  "programs_priorities",
+  "risks_controls",
+  "metrics_outcomes",
+  "relationships",
+  "evidence_sources",
+];
+
 async function main() {
   const generatedAt = new Date().toISOString();
   const tenants = await readTenants();
@@ -57,11 +76,16 @@ async function main() {
       reason: "Northstar is not processed as an active Home Summary Snapshot tenant.",
     }));
 
-  const snapshots = activeTenants.map((tenant) =>
+  const legacyBrowserSnapshots = activeTenants.map((tenant) =>
     buildSnapshotForTenant(tenant, "active_home_context", generatedAt),
   );
   const candidatePreviewSnapshots = activeTenants.map((tenant) =>
     buildSnapshotForTenant(tenant, "candidate_preview", generatedAt),
+  );
+  const snapshots = await Promise.all(
+    activeTenants.map((tenant) =>
+      buildModuleContextSnapshotForTenant(tenant, generatedAt),
+    ),
   );
 
   await fs.rm(outDir, { recursive: true, force: true });
@@ -72,6 +96,11 @@ async function main() {
     tenants: snapshots,
     candidatePreviewTenants: candidatePreviewSnapshots,
     excludedTenants,
+  });
+  await writeJson("legacy-browser-snapshots.json", {
+    generatedAt,
+    tenants: legacyBrowserSnapshots,
+    note: "Legacy browser snapshots are retained as comparison only. Home module data should consume the supplier-context snapshots.",
   });
   await writeJson(
     "tenant-profile-headers.json",
@@ -95,6 +124,16 @@ async function main() {
   );
   await writeJson("ava-scope-summary.json", pick(snapshots, "avaScope"));
   await writeJson("lineage.json", pick(snapshots, "lineage"));
+  await writeJson("home-module-context-snapshots.json", {
+    generatedAt,
+    tenants: snapshots,
+  });
+  await writeJson(
+    "skyharbor-module-context-snapshot.json",
+    snapshots.find(
+      (snapshot) => snapshot.tenantProfileHeader.tenantKey === "skyharbor-air",
+    ) ?? null,
+  );
   await writeJson(
     "skyharbor-snapshot.json",
     snapshots.find((snapshot) => snapshot.tenantProfileHeader.tenantKey === "skyharbor-air") ??
@@ -108,16 +147,29 @@ async function main() {
   await writeJson("guardrails.json", buildGuardrails(snapshots));
   await fs.writeFile(
     path.join(outDir, "summary.md"),
-    renderSummary({ generatedAt, snapshots, candidatePreviewSnapshots, excludedTenants }),
+    renderSummary({
+      generatedAt,
+      snapshots,
+      candidatePreviewSnapshots,
+      moduleContextSnapshots: snapshots,
+      excludedTenants,
+    }),
     "utf8",
   );
   await fs.writeFile(
     path.join(outDir, "home-summary-control.html"),
-    renderHtml({ generatedAt, snapshots, candidatePreviewSnapshots, excludedTenants }),
+    renderHtml({
+      generatedAt,
+      snapshots,
+      candidatePreviewSnapshots,
+      moduleContextSnapshots: snapshots,
+      excludedTenants,
+    }),
     "utf8",
   );
 
   assertGuardrails(snapshots, candidatePreviewSnapshots, excludedTenants);
+  assertModuleContextGuardrails(snapshots);
   console.log(
     `[home-summary-snapshot] wrote ${snapshots.length} active snapshots to ${path.relative(repoRoot, outDir)}`,
   );
@@ -137,6 +189,32 @@ function buildSnapshotForTenant(
     industry: INDUSTRY_BY_TENANT[tenant.tenantKey] ?? null,
     mode,
     browser,
+    generatedAt,
+  });
+}
+
+async function buildModuleContextSnapshotForTenant(
+  tenant: TenantMatrixArtifact["tenants"][number],
+  generatedAt: string,
+): Promise<HomeSummarySnapshot> {
+  const request = {
+    tenantKey: tenant.tenantKey,
+    moduleKey: "home" as const,
+    purpose: "context_summary" as const,
+    requestedDomains: HOME_MODULE_DOMAINS,
+  };
+  const [moduleContext, moduleContextExplanation] = await Promise.all([
+    getModuleContext(request, { repoRoot, generatedAt }),
+    explainModuleContext(request, { repoRoot, generatedAt }),
+  ]);
+  return buildHomeSummarySnapshotFromModuleContext({
+    repoRoot,
+    tenantKey: tenant.tenantKey,
+    displayName:
+      DISPLAY_NAME_BY_TENANT[tenant.tenantKey] ?? tenant.tenantDisplayName,
+    industry: INDUSTRY_BY_TENANT[tenant.tenantKey] ?? null,
+    moduleContext,
+    moduleContextExplanation,
     generatedAt,
   });
 }
@@ -210,20 +288,44 @@ function assertGuardrails(
     (snapshot) => snapshot.tenantProfileHeader.tenantKey === "skyharbor-air",
   );
   if (!skyHarbor) violations.push("skyharbor:missing");
-  else {
-    const text = JSON.stringify(skyHarbor).toLowerCase();
-    for (const required of [
-      "source-rich",
-      "partial",
-      "applications",
-      "relationship",
-      "candidate",
-    ]) {
-      if (!text.includes(required)) violations.push(`skyharbor:missing_${required}`);
-    }
-  }
   if (violations.length) {
     throw new Error(`Home Summary Snapshot guardrail failed: ${violations.join(", ")}`);
+  }
+}
+
+function assertModuleContextGuardrails(snapshots: HomeSummarySnapshot[]) {
+  const violations: string[] = [];
+  const skyHarbor = snapshots.find(
+    (snapshot) => snapshot.tenantProfileHeader.tenantKey === "skyharbor-air",
+  );
+  if (!skyHarbor) violations.push("skyharbor-module-context:missing");
+  else {
+    const apps = skyHarbor.contextAreas.find(
+      (area) => area.displayName === "Applications & Systems",
+    );
+    if (skyHarbor.moduleContextSummary?.sourceMode !== "active_tenant_access") {
+      violations.push("skyharbor-module-context:not_active");
+    }
+    if ((apps?.loadedCount ?? 0) < 600) {
+      violations.push("skyharbor-module-context:applications_thin");
+    }
+    if (skyHarbor.guardrails.candidateReadByDefault) {
+      violations.push("skyharbor-module-context:candidate_read_by_default");
+    }
+  }
+  const meridian = snapshots.find(
+    (snapshot) => snapshot.tenantProfileHeader.tenantKey === "meridian-health",
+  );
+  if (meridian?.moduleContextSummary?.sourceMode !== "active_not_available") {
+    violations.push("meridian-module-context:unexpected_active_access");
+  }
+  if (meridian && meridian.executiveProfile.contextDepthWidth.loadedRecords !== 0) {
+    violations.push("meridian-module-context:candidate_fallback_detected");
+  }
+  if (violations.length) {
+    throw new Error(
+      `Home module-context snapshot guardrail failed: ${violations.join(", ")}`,
+    );
   }
 }
 
@@ -231,6 +333,7 @@ function renderSummary(args: {
   generatedAt: string;
   snapshots: HomeSummarySnapshot[];
   candidatePreviewSnapshots: HomeSummarySnapshot[];
+  moduleContextSnapshots: HomeSummarySnapshot[];
   excludedTenants: Array<{ tenantKey: string; reason: string }>;
 }): string {
   const rows = args.snapshots
@@ -242,6 +345,12 @@ function renderSummary(args: {
   const excluded = args.excludedTenants
     .map((tenant) => `- ${tenant.tenantKey}: ${tenant.reason}`)
     .join("\n") || "- None";
+  const moduleRows = args.moduleContextSnapshots
+    .map(
+      (snapshot) =>
+        `| ${snapshot.tenantProfileHeader.displayName} | ${snapshot.moduleContextSummary?.sourceMode ?? "unknown"} | ${snapshot.lineage.status} | ${snapshot.executiveProfile.contextDepthWidth.loadedRecords.toLocaleString()} | ${snapshot.moduleContextSummary?.contextCompleteness.overall ?? "n/a"} |`,
+    )
+    .join("\n");
   return `# Home Summary Snapshot Proof
 
 Generated: \`${args.generatedAt}\`
@@ -257,6 +366,14 @@ ${rows}
 ## Candidate Preview
 
 Candidate preview snapshots are generated as explicit inactive preview mode only. They are not active tenant truth and are not read by modules by default.
+
+## Module Context Serving Snapshots
+
+These snapshots are built from \`getModuleContext(...)\` and \`explainModuleContext(...)\`.
+
+| Tenant | Source mode | Status | Loaded records | Completeness |
+| --- | --- | --- | ---: | --- |
+${moduleRows}
 
 ## Excluded
 
@@ -279,9 +396,10 @@ function renderHtml(args: {
   generatedAt: string;
   snapshots: HomeSummarySnapshot[];
   candidatePreviewSnapshots: HomeSummarySnapshot[];
+  moduleContextSnapshots: HomeSummarySnapshot[];
   excludedTenants: Array<{ tenantKey: string; reason: string }>;
 }): string {
-  const cards = args.snapshots
+  const cards = args.moduleContextSnapshots
     .map((snapshot) => {
       const metrics = snapshot.executiveProfile.enterpriseSnapshotMetrics
         .map(
