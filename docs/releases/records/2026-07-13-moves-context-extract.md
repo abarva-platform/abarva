@@ -68,7 +68,7 @@ Revert the PR and redeploy the prior ACA image through the repo-owned workflow. 
 
 ## Audit Evidence
 
-- PR URL: Pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/4774
 - CI/checks: Pending.
 - ACA deployment proof: Pending.
 - Live signed-in Moves proof: Pending.
