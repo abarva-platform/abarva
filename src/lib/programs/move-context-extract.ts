@@ -598,7 +598,7 @@ export async function createMoveContextExtract(
       moveName: input.moveName,
       phaseLabel: input.phaseLabel,
     }),
-    status: attachedEvidenceItems.length > 0 ? "needs_review" : "draft",
+    status: attachedEvidenceItems.length > 0 ? "review_required" : "draft",
     generatedBy: input.ctx.userId,
     sourceBasis: sourceMode,
     confidence: attachedEvidenceItems.length > 0 ? "medium" : "low",

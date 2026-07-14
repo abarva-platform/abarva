@@ -18,6 +18,7 @@ Approve & Build already created a Move Context Extract, but live Meridian proof 
 - Moves evidence layer: reads current Move-scoped `program_evidence_items` for the active tenant and attaches eligible uploaded evidence into the Move Context Extract.
 - Moves generation guardrail: generation skips the context-extract summary row so deliverables do not self-cite the extract as a new source.
 - File Cabinet artifact: markdown now shows attached evidence count, evidence family coverage, lineage, and source references.
+- Runtime repair: the File Cabinet artifact now uses the live schema's `review_required` status value, and the phase route surfaces plain Postgres-compatible error objects instead of collapsing them to `unknown error`.
 
 ## Client Applicability
 
@@ -32,6 +33,7 @@ Approve & Build already created a Move Context Extract, but live Meridian proof 
 - `src/lib/programs/move-context-extract.ts`
 - `src/lib/programs/__tests__/move-context-extract.test.ts`
 - `src/lib/deliverables/orchestrator/evidence-assembler.ts`
+- `src/app/api/v1/deliverables/generate-phase/route.ts`
 - `scripts/audit/moves-context-extract.mjs`
 
 ## QA / Validation
@@ -52,6 +54,7 @@ Completed before PR:
 Pending after deploy:
 
 - Controlled signed-in Meridian or SkyHarbor workflow smoke.
+- First post-PR #4786 smoke found a runtime schema mismatch before this repair: `move_artifacts.status` accepted `review_required`, while the context extract attempted `needs_review`. Deliverable queueing still worked, but the context extract artifact was not written. This repair fixes that mismatch before the next deploy proof.
 
 ## Rollout Plan
 
@@ -74,7 +77,9 @@ Revert the PR and redeploy through the repo-owned ACA workflow. No migrations or
 ## Audit Evidence
 
 - PR URL: https://github.com/abarva-platform/abarva/pull/4786
+- Runtime repair PR URL: pending
 - Pre-fix proof: PR #4784, Meridian disposable Move `44f6f4d4-ab88-4fdf-88e8-45c26f27838c`.
+- Failed post-PR #4786 deployed proof: `/Users/anand/Projects/nexus-moves-ctx-fix/proof/moves-ctx-proof-live-2026-07-14T12-27-16-555Z`; disposable Meridian Move `1e0d34aa-7f03-4c96-ad8d-91405efe5dfa`; readiness had four evidence rows, but no `move_context_extract_p1` artifact persisted because of the status schema mismatch.
 - Post-fix proof: pending controlled signed-in smoke.
 
 ## Known Gaps
