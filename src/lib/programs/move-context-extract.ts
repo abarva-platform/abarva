@@ -6,6 +6,13 @@ import { findSkyHarborPreviewModule } from "@/lib/enterprise-data/candidate-prev
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 import {
+  getDiscoveryBlueprint,
+} from "@/lib/deliverables/orchestrator/briefs/discovery-blueprint";
+import {
+  mapEvidenceToDiscoveryFamily,
+  type DiscoveryEvidenceReadinessItem,
+} from "@/lib/programs/discovery/evidence-readiness";
+import {
   recordProgramEvidence,
   type ExtractedProgramEvidence,
 } from "@/lib/programs/evidence-ingestion";
@@ -50,6 +57,18 @@ export interface MoveContextExtractItem {
   summary: string;
   reason: string;
   sourceMode: MoveContextExtractSourceMode;
+  evidenceId?: string;
+  moveId?: string;
+  tenantId?: string;
+  tenantKey?: string;
+  evidenceFamily?: string;
+  sourceType?: string;
+  sourceFileRef?: string;
+  citation?: string;
+  readinessStatus?: "covered" | "generation_eligible" | "agent_ready";
+  usedByPhase?: number;
+  targetPhase?: number;
+  whyAttached?: string;
   sourceArtifactId?: string;
   canonicalRecordId?: string;
   sourceSegmentId?: string;
@@ -81,11 +100,27 @@ interface MoveContextExtractDeps {
   queryContext?: typeof queryTenantContext;
   saveArtifact?: typeof saveMoveArtifact;
   recordEvidence?: typeof recordProgramEvidence;
+  loadMoveEvidence?: typeof defaultLoadMoveEvidenceRows;
   existingExtract?: (args: {
     tenantKey: string;
     moveId: string;
     artifactType: string;
   }) => Promise<{ artifactId: string } | null>;
+}
+
+interface MoveEvidenceRow {
+  id: string;
+  tenantKey: string;
+  programId: string;
+  attachmentId: string | null;
+  phase: number | null;
+  evidenceType: string;
+  title: string;
+  summary: string;
+  extractedText: string | null;
+  extractedStructured: Record<string, unknown>;
+  confidence: number | string | null;
+  createdAt: string | null;
 }
 
 function compact(value: string, max = 900): string {
@@ -135,11 +170,161 @@ function attachedItemFromChunk(chunk: TenantContextChunk): MoveContextExtractIte
     reason:
       "Tenant-scoped active context matched the Move and is agent-ready, citation-ready, and not restricted.",
     sourceMode: "active_home_context",
+    evidenceFamily: chunk.sourceBasis ?? chunk.sourceSegmentId ?? "enterprise_context",
+    sourceType: "active_module_context",
+    citation: chunk.chunkId,
+    readinessStatus: "agent_ready",
     sourceArtifactId: chunk.chunkId,
     canonicalRecordId: chunk.recordId,
     sourceSegmentId: chunk.sourceSegmentId,
     confidence: chunk.vectorScore,
   };
+}
+
+function objectValue(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function stringOrNull(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function numberOrNull(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() && Number.isFinite(Number(value))) {
+    return Number(value);
+  }
+  return null;
+}
+
+function extractedStringArray(
+  structured: Record<string, unknown>,
+  key: string,
+): string[] {
+  const value = structured[key];
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => stringOrNull(item))
+    .filter((item): item is string => Boolean(item));
+}
+
+function evidenceRowText(row: MoveEvidenceRow): string {
+  const signals = [
+    ...extractedStringArray(row.extractedStructured, "decisions"),
+    ...extractedStringArray(row.extractedStructured, "baseline_candidates"),
+    ...extractedStringArray(row.extractedStructured, "risks"),
+    ...extractedStringArray(row.extractedStructured, "action_items"),
+  ];
+  return compact(
+    [
+      row.summary,
+      signals.length ? `Extracted signals: ${signals.slice(0, 8).join("; ")}` : "",
+      row.extractedText ?? "",
+    ].join(" "),
+    1200,
+  );
+}
+
+function evidencePolicyAllowsAttachment(row: MoveEvidenceRow): boolean {
+  if (row.evidenceType === MOVE_CONTEXT_EXTRACT_EVIDENCE_TYPE) return false;
+  const structured = row.extractedStructured;
+  const sourceType = stringOrNull(structured.source_type);
+  if (sourceType === "candidate_preview" || sourceType === "suggested_context") {
+    return false;
+  }
+  const classification = stringOrNull(structured.classification);
+  if (classification === "restricted") return false;
+  const sensitivity = stringOrNull(structured.sensitivity);
+  if (sensitivity === "restricted") return false;
+  return Boolean(evidenceRowText(row));
+}
+
+function discoveryItemFromRow(row: MoveEvidenceRow): DiscoveryEvidenceReadinessItem {
+  return {
+    id: row.id,
+    title: row.title,
+    summary: row.summary,
+    evidenceType: row.evidenceType,
+    phase: row.phase,
+    confidence: row.confidence,
+    createdAt: row.createdAt,
+  };
+}
+
+function attachedItemFromEvidenceRow(
+  input: MoveContextExtractInput,
+  row: MoveEvidenceRow,
+): MoveContextExtractItem {
+  const blueprint = getDiscoveryBlueprint(input.useCaseArchetype);
+  const family =
+    mapEvidenceToDiscoveryFamily(discoveryItemFromRow(row), blueprint) ??
+    stringOrNull(row.extractedStructured.evidence_type) ??
+    row.evidenceType;
+  const sourceFileRef =
+    stringOrNull(row.extractedStructured.citation) ??
+    stringOrNull(row.extractedStructured.source_file) ??
+    row.attachmentId ??
+    row.id;
+  return {
+    status: "attached_evidence",
+    evidenceId: row.id,
+    moveId: row.programId,
+    tenantId: input.ctx.clientId,
+    tenantKey: row.tenantKey,
+    evidenceFamily: family,
+    label: row.title,
+    summary: evidenceRowText(row),
+    reason:
+      "Move-scoped uploaded evidence is covered by readiness and eligible for phase generation.",
+    sourceMode: "active_home_context",
+    sourceType:
+      stringOrNull(row.extractedStructured.source_type) ??
+      (row.attachmentId ? "uploaded_evidence" : "program_evidence"),
+    sourceArtifactId: row.attachmentId ?? row.id,
+    sourceFileRef,
+    citation: sourceFileRef,
+    confidence: numberOrNull(row.confidence) ?? undefined,
+    readinessStatus: "covered",
+    usedByPhase: input.phase,
+    targetPhase: input.targetPhase ?? input.phase,
+    whyAttached:
+      "Same tenant, same Move, source-backed/uploaded evidence, readiness-covered, and generation-eligible.",
+  };
+}
+
+async function defaultLoadMoveEvidenceRows(args: {
+  tenantKey: string;
+  moveId: string;
+}): Promise<MoveEvidenceRow[]> {
+  const sb = getAzureWriteFluentClient();
+  const { data, error } = await sb
+    .from("program_evidence_items")
+    .select(
+      "id, tenant_key, program_id, attachment_id, phase, evidence_type, title, summary, extracted_text, extracted_structured, confidence, created_at",
+    )
+    .eq("tenant_key", args.tenantKey)
+    .eq("program_id", args.moveId)
+    .order("created_at", { ascending: false })
+    .limit(80);
+  if (error || !Array.isArray(data)) return [];
+  return (data as Array<Record<string, unknown>>)
+    .map((row) => ({
+      id: stringOrNull(row.id) ?? "",
+      tenantKey: stringOrNull(row.tenant_key) ?? args.tenantKey,
+      programId: stringOrNull(row.program_id) ?? args.moveId,
+      attachmentId: stringOrNull(row.attachment_id),
+      phase: numberOrNull(row.phase),
+      evidenceType: stringOrNull(row.evidence_type) ?? "uploaded_artifact",
+      title: stringOrNull(row.title) ?? "Untitled Move evidence",
+      summary: stringOrNull(row.summary) ?? "",
+      extractedText: stringOrNull(row.extracted_text),
+      extractedStructured: objectValue(row.extracted_structured),
+      confidence: row.confidence as number | string | null,
+      createdAt: stringOrNull(row.created_at),
+    }))
+    .filter((row) => row.id && row.programId === args.moveId && row.tenantKey === args.tenantKey);
 }
 
 async function defaultExistingExtract(args: {
@@ -214,6 +399,11 @@ function renderMarkdown(input: {
   moveName: string;
   phaseLabel: string;
 }): string {
+  const familyCounts = new Map<string, number>();
+  for (const item of input.result.attachedEvidenceItems) {
+    const family = item.evidenceFamily ?? "uncategorized";
+    familyCounts.set(family, (familyCounts.get(family) ?? 0) + 1);
+  }
   const lines = [
     `# ${titleForPhase(input.result.phase)}`,
     "",
@@ -227,6 +417,14 @@ function renderMarkdown(input: {
     `- Generated at: ${input.result.generatedAt}`,
     `- Candidate version: ${input.result.candidateVersionId ?? "not used"}`,
     `- Active Tenant Access version: ${input.result.activeTenantAccessVersionId ?? "not wired"}`,
+    `- Attached Evidence count: ${input.result.attachedEvidenceItems.length}`,
+    "",
+    "## Evidence Family Coverage",
+    familyCounts.size === 0
+      ? "None."
+      : [...familyCounts.entries()]
+          .map(([family, count]) => `- ${family}: ${count} attached`)
+          .join("\n"),
     "",
   ];
   const section = (title: string, items: MoveContextExtractItem[]) => {
@@ -237,7 +435,12 @@ function renderMarkdown(input: {
       for (const item of items) {
         lines.push(
           `- ${item.label}: ${item.summary}`,
+          ...(item.evidenceId ? [`  - Evidence ID: ${item.evidenceId}`] : []),
+          ...(item.evidenceFamily ? [`  - Evidence family: ${item.evidenceFamily}`] : []),
+          ...(item.sourceType ? [`  - Source type: ${item.sourceType}`] : []),
+          ...(item.sourceFileRef ? [`  - Source: ${item.sourceFileRef}`] : []),
           `  - Reason: ${item.reason}`,
+          ...(item.whyAttached ? [`  - Why attached: ${item.whyAttached}`] : []),
         );
       }
     }
@@ -255,7 +458,15 @@ function evidencePayload(
   result: MoveContextExtractResult,
 ): ExtractedProgramEvidence {
   const facts = result.attachedEvidenceItems.map(
-    (item) => `${item.label}: ${item.summary}`,
+    (item) =>
+      [
+        item.evidenceId ? `Evidence ID ${item.evidenceId}` : null,
+        item.evidenceFamily ? `Family ${item.evidenceFamily}` : null,
+        `${item.label}: ${item.summary}`,
+        item.sourceFileRef ? `Source ${item.sourceFileRef}` : null,
+      ]
+        .filter(Boolean)
+        .join(" | "),
   );
   return {
     evidenceType: MOVE_CONTEXT_EXTRACT_EVIDENCE_TYPE,
@@ -324,6 +535,15 @@ export async function createMoveContextExtract(
   );
 
   if (sourceMode === "active_home_context") {
+    const loadMoveEvidence = deps.loadMoveEvidence ?? defaultLoadMoveEvidenceRows;
+    const moveEvidenceRows = await loadMoveEvidence({
+      tenantKey: input.tenantKey,
+      moveId: input.moveId,
+    });
+    attachedEvidenceItems = moveEvidenceRows
+      .filter(evidencePolicyAllowsAttachment)
+      .map((row) => attachedItemFromEvidenceRow(input, row));
+
     const chunks = await queryContext({
       tenantClientKey: input.tenantKey,
       query: queryFor(input),
@@ -334,7 +554,10 @@ export async function createMoveContextExtract(
         extra: ["agent_readiness_status eq 'agent_ready'"],
       },
     });
-    attachedEvidenceItems = chunks.map(attachedItemFromChunk);
+    attachedEvidenceItems = [
+      ...attachedEvidenceItems,
+      ...chunks.map(attachedItemFromChunk),
+    ];
   }
 
   const resultBase = {

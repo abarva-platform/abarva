@@ -6,9 +6,11 @@ import path from "node:path";
 const root = process.cwd();
 const helperPath = path.join(root, "src/lib/programs/move-context-extract.ts");
 const routePath = path.join(root, "src/app/api/v1/deliverables/generate-phase/route.ts");
+const assemblerPath = path.join(root, "src/lib/deliverables/orchestrator/evidence-assembler.ts");
 
 const helper = fs.readFileSync(helperPath, "utf8");
 const route = fs.readFileSync(routePath, "utf8");
+const assembler = fs.readFileSync(assemblerPath, "utf8");
 
 const checks = [
   {
@@ -29,6 +31,20 @@ const checks = [
       helper.includes("suggestedContextUsedForGeneration: false") &&
       helper.includes("if (attachedEvidenceItems.length > 0)") &&
       helper.includes("recordEvidence"),
+  },
+  {
+    name: "extract attaches move-scoped program evidence rows",
+    pass:
+      helper.includes(".from(\"program_evidence_items\")") &&
+      helper.includes(".eq(\"program_id\", args.moveId)") &&
+      helper.includes("attachedItemFromEvidenceRow") &&
+      helper.includes("mapEvidenceToDiscoveryFamily"),
+  },
+  {
+    name: "generation does not self-cite context extract evidence rows",
+    pass:
+      assembler.includes("move_context_extract_attached") &&
+      assembler.includes("continue"),
   },
   {
     name: "existing extracts are not silently overwritten",
