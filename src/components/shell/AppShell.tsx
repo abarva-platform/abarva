@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import { AppRail } from "./AppRail";
-import { AppTopBar } from "./AppTopBar";
 import { AppMiddleStrip } from "./AppMiddleStrip";
 // GlobalSearchModal is mounted in the maestro layout for app-wide coverage.
 import { AtlasPageStateProvider } from "./AtlasPageStateProvider";
+import { NexusTopNav } from "@/components/navigation/NexusTopNav";
 import type { SurfaceId, StageId } from "@/lib/shell/atlas-page-state";
 
 interface AppShellProps {
@@ -94,7 +94,7 @@ export function AppShell({
         overflow: "hidden",
       }}
     >
-      {/* Legacy left rail: explicit opt-in only. Product nav belongs in AppTopBar. */}
+      {/* Legacy left rail: explicit opt-in only. Product nav belongs in NexusTopNav. */}
       {showAppRail ? <AppRail /> : null}
 
       {/* Right main column */}
@@ -107,7 +107,7 @@ export function AppShell({
           overflow: "hidden",
         }}
       >
-        <AppTopBar
+        <NexusTopNav
           tenantName={topBarProps?.tenantName}
           preserveTenantName={topBarProps?.preserveTenantName}
           showLocked={topBarProps?.showLocked}

@@ -1,8 +1,8 @@
 'use client';
-// /home/learn shell — AppTopBar + LearnSideNav for all /home/learn/* routes.
+// /home/learn shell — NexusTopNav + LearnSideNav for all /home/learn/* routes.
 // /home/layout.tsx is a passthrough so this is the only chrome rendered here.
 
-import { AppTopBar } from '@/components/shell/AppTopBar';
+import { NexusTopNav } from '@/components/navigation/NexusTopNav';
 import { LearnSideNav } from '@/components/home/learn/LearnSideNav';
 
 export default function HomeLearnLayout({ children }: { children: React.ReactNode }) {
@@ -16,7 +16,7 @@ export default function HomeLearnLayout({ children }: { children: React.ReactNod
         background: '#ffffff',
       }}
     >
-      <AppTopBar />
+      <NexusTopNav />
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <LearnSideNav />

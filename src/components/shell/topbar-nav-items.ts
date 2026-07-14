@@ -1,13 +1,14 @@
-// Shared nav-item registry for the canonical AppTopBar.
+// Shared nav-item registry for the canonical NEXUS top navigation.
 //
-// Single source of truth for the canonical 5-item nav: Home,
-// Intelligence, Moves, Source, Tower.
+// Single source of truth for the canonical 6-item product nav: Knowledge,
+// Intelligence, Moves, Source, Tower, Learn. Routes stay stable even when
+// labels evolve: Knowledge is still served from /home.
 
 import type { useUser } from "@clerk/nextjs";
 import { resolveModuleAccess, type ProductModule } from "@/lib/auth/module-access";
 
 export type CockpitNavItem = {
-  key: "home" | ProductModule;
+  key: "home" | "learn" | ProductModule;
   label: string;
   href: string;
   match: (pathname: string) => boolean;
@@ -17,7 +18,7 @@ export type CockpitNavItem = {
 export const NAV_ITEMS: CockpitNavItem[] = [
   {
     key: "home",
-    label: "Home",
+    label: "Knowledge",
     href: "/home",
     match: (pathname) =>
       pathname === "/" ||
@@ -69,6 +70,16 @@ export const NAV_ITEMS: CockpitNavItem[] = [
       pathname === "/tower" ||
       pathname.startsWith("/tower/") ||
       (pathname.startsWith("/tenant/") && pathname.includes("/tower")),
+  },
+  {
+    key: "learn",
+    label: "Learn",
+    href: "/home/learn",
+    match: (pathname) =>
+      pathname === "/home/learn" ||
+      pathname.startsWith("/home/learn/") ||
+      pathname === "/learn" ||
+      pathname.startsWith("/learn/"),
   },
 ];
 

@@ -1,10 +1,8 @@
-// AppTopBarBlack — back-compat re-export.
+// AppTopBarBlack — historical back-compat re-export.
 //
-// As of 2026-05-08 the canonical AppTopBar IS the black bar (Option B
-// v2). This file used to host that variant; now it forwards to the
-// unified AppTopBar so any historical imports keep resolving.
-//
-// New code should import { AppTopBar } from "./AppTopBar" directly.
+// Authenticated product chrome now lives in NexusTopNav. This file forwards
+// through the AppTopBar compatibility shim so old imports keep resolving.
+// New code should import NexusTopNav directly.
 
 export { AppTopBar as AppTopBarBlack } from "./AppTopBar";
 export type { AppTopBarProps } from "./AppTopBar";
