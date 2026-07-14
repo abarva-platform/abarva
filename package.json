@@ -263,6 +263,10 @@
     "audit:home-english-summary": "tsx scripts/audit/build-home-english-summary.ts",
     "audit:home-summary-snapshot": "tsx scripts/audit/build-home-summary-snapshot.ts",
     "audit:home-ava-snapshot-alignment": "tsx scripts/audit/build-home-summary-snapshot.ts",
+    "build:canonical-tenant-data": "npx tsx scripts/data-build/build-canonical-tenant-data.ts",
+    "audit:canonical-data-build": "npx tsx scripts/data-build/audit-canonical-data-build.ts",
+    "audit:enterprise-profile-foundation": "npx tsx scripts/data-build/audit-enterprise-profile-foundation.ts",
+    "audit:home-ava-build-readiness": "npx tsx scripts/data-build/audit-home-ava-build-readiness.ts",
     "test:home-english-summary": "jest src/lib/home/__tests__/home-english-summary.test.ts --runInBand",
     "test:home-summary-snapshot": "jest src/lib/home/__tests__/home-summary-snapshot.test.ts --runInBand",
     "audit:architecture-rules": "node scripts/audit/architecture-rules.mjs --mode=changed --base=origin/main --head=HEAD",
@@ -435,8 +439,7 @@
     "qa:admin-home-ava": "npx tsx scripts/qa/admin-home-design-smoke-proof.ts --mode=chrome",
     "audit:home-data-quality": "npx tsx scripts/audit/home-data-quality.ts",
     "qa:home-data-quality-ava": "npx tsx scripts/qa/home-data-quality-ava.ts",
-    "test:home-data-quality": "jest --runTestsByPath src/lib/home/__tests__/home-data-quality.test.ts src/components/home/__tests__/HomeSurface.test.tsx --runInBand",
-    "audit:enterprise-profile-foundation": "tsx scripts/audit/build-enterprise-profile-foundation.ts"
+    "test:home-data-quality": "jest --runTestsByPath src/lib/home/__tests__/home-data-quality.test.ts src/components/home/__tests__/HomeSurface.test.tsx --runInBand"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
