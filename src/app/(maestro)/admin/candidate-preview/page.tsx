@@ -6,14 +6,9 @@ import { ContextBar } from "@/components/admin/ContextBar";
 import { EditorialCanvas } from "@/components/admin/EditorialCanvas";
 import {
   CANDIDATE_PREVIEW_BANNER,
-  evaluateCandidatePreviewEnablement,
-  normalizeRequest,
-  validateExplicitRequest,
-} from "@/lib/enterprise-data/candidate-preview-enablement/candidate-preview-enablement";
-import {
-  SKYHARBOR_CANDIDATE_PREVIEW_PACKAGE,
-  type CandidatePreviewModule,
-} from "@/lib/enterprise-data/candidate-preview-enablement/skyharbor-preview-package";
+  readLatestCandidateVersionBuild,
+  type TenantCandidateVersion,
+} from "@/lib/enterprise-data/candidate-version-build/candidate-version-build";
 import { resolveAdminTenant } from "@/lib/admin/admin-tenant";
 
 export const metadata = {
@@ -33,6 +28,8 @@ interface PageSearchParams {
   ack?: string;
 }
 
+type CandidatePreviewModule = "home" | "intelligence" | "moves" | "source" | "tower";
+
 export default async function CandidatePreviewPage({
   searchParams,
 }: {
@@ -41,27 +38,25 @@ export default async function CandidatePreviewPage({
   await connection();
   const tenant = await resolveAdminTenant();
   const params = searchParams ? await searchParams : {};
-  const request = normalizeRequest({
+  const candidateBuild = await readLatestCandidateVersionBuild(process.cwd());
+  const requestedTenantKey = params.tenantKey?.trim() || "skyharbor-air";
+  const selectedCandidate =
+    candidateBuild?.candidateVersions.find(
+      (candidate) => candidate.tenantKey === requestedTenantKey,
+    ) ?? null;
+  const requestedCandidateVersionId =
+    params.candidateVersionId?.trim() || selectedCandidate?.candidateVersionId || "";
+  const selectedModule = parseModule(params.module) ?? "home";
+  const validationErrors = validateCandidatePreviewRequest({
+    previewEnabled: params.preview === "enabled",
+    acknowledged: params.ack === "not-active-truth",
     operatorId: params.operatorId,
-    tenantKey: params.tenantKey,
-    candidateVersionId: params.candidateVersionId,
-    module: parseModule(params.module),
     previewReason: params.previewReason,
-    previewModeFlag: params.preview === "enabled" ? "enabled" : "",
-    acknowledgedNotActiveRuntimeTruth: params.ack === "not-active-truth",
-    requestSource: "admin_page",
+    selectedCandidate,
+    requestedCandidateVersionId,
+    candidateBuildPresent: Boolean(candidateBuild),
   });
-  const validationErrors = validateExplicitRequest(request);
-  const report =
-    validationErrors.length === 0
-      ? evaluateCandidatePreviewEnablement({
-          generatedAt: new Date().toISOString(),
-          request,
-        })
-      : null;
-  const selectedModule =
-    report?.selectedModulePacket ??
-    SKYHARBOR_CANDIDATE_PREVIEW_PACKAGE.modulePackets[0]!;
+  const previewAccepted = validationErrors.length === 0;
 
   return (
     <AdminCanonShellV2
@@ -77,20 +72,20 @@ export default async function CandidatePreviewPage({
       <EditorialCanvas
         eyebrow="Admin · Candidate Data"
         title="Candidate Preview Mode"
-        subtitle="Inspect an inactive SkyHarbor candidate only when the operator request carries the explicit preview flag and acknowledgement."
+        subtitle="Inspect inactive candidate data only when the operator request carries the explicit preview flag, candidate id, tenant, module, reason, and acknowledgement."
       >
         <ContextBar
-          tenant="SkyHarbor synthetic/reference"
+          tenant={selectedCandidate?.tenantDisplayName ?? requestedTenantKey}
           mode="Explicit candidate preview"
           agent="Steward"
-          data="Inactive candidate package"
+          data={candidateBuild ? "Inactive candidate read model" : "No candidate artifact"}
           liveStatus={
-            report?.qualityGateStatus === "pass"
+            previewAccepted
               ? "Preview request accepted"
               : "Preview disabled by default"
           }
           liveStatusKind={
-            report?.qualityGateStatus === "pass" ? "live" : "partial"
+            previewAccepted ? "live" : "partial"
           }
         />
 
@@ -99,11 +94,11 @@ export default async function CandidatePreviewPage({
           <strong>{CANDIDATE_PREVIEW_BANNER}</strong>
         </section>
 
-        {report ? (
+        {previewAccepted && selectedCandidate ? (
           <section style={styles.panel}>
             <div style={styles.kicker}>Explicit request accepted</div>
             <h2 style={styles.heading}>
-              {selectedModule.module} preview packet
+              {selectedCandidate.tenantDisplayName} · {selectedModule} preview packet
             </h2>
             <p style={styles.copy}>
               This is a read-only candidate inspection. Active tenant truth,
@@ -111,18 +106,18 @@ export default async function CandidatePreviewPage({
               remain unchanged.
             </p>
             <div style={styles.metrics}>
-              <Metric label="Facts" value={selectedModule.facts} />
+              <Metric label="Canonical records" value={selectedCandidate.canonicalRecordCount} />
               <Metric
                 label="Relationships"
-                value={selectedModule.relationships}
+                value={selectedCandidate.relationshipCandidateCount}
               />
               <Metric
                 label="Evidence keys"
-                value={selectedModule.evidenceKeys}
+                value={selectedCandidate.evidenceAttachmentCount}
               />
               <Metric label="Runtime eligible" value="false" />
             </div>
-            <GuardrailIndicators report={report} />
+            <GuardrailIndicators candidate={selectedCandidate} />
           </section>
         ) : (
           <section style={styles.panel}>
@@ -143,15 +138,16 @@ export default async function CandidatePreviewPage({
         )}
 
         <section style={styles.grid}>
-          {SKYHARBOR_CANDIDATE_PREVIEW_PACKAGE.modulePackets.map((packet) => (
-            <article key={packet.module} style={styles.moduleCard}>
-              <div style={styles.kicker}>{packet.module}</div>
+          {(candidateBuild?.candidateVersions ?? []).map((candidate) => (
+            <article key={candidate.candidateVersionId} style={styles.moduleCard}>
+              <div style={styles.kicker}>{candidate.tenantKey}</div>
               <h3 style={styles.cardTitle}>
-                {packet.facts} facts · {packet.evidenceKeys} evidence keys
+                {candidate.canonicalRecordCount.toLocaleString()} records ·{" "}
+                {candidate.evidenceAttachmentCount.toLocaleString()} evidence keys
               </h3>
               <p style={styles.cardCopy}>
-                Default source remains {packet.defaultRuntimeSource}. Preview
-                source is {packet.previewSource}. Runtime eligible: false.
+                Candidate id: {candidate.candidateVersionId}. Default Home
+                remains active Home context. Runtime eligible: false.
               </p>
             </article>
           ))}
@@ -171,34 +167,34 @@ function Metric({ label, value }: { label: string; value: string | number }) {
 }
 
 function GuardrailIndicators({
-  report,
+  candidate,
 }: {
-  report: NonNullable<ReturnType<typeof evaluateCandidatePreviewEnablement>>;
+  candidate: TenantCandidateVersion;
 }) {
   const rows = [
     {
       label: "candidatePromoted",
-      value: report.guardrails.candidatePromoted,
+      value: candidate.guardrails.candidatePromoted,
     },
     {
       label: "activeTenantAccessLayerUpdated",
-      value: report.guardrails.activeTenantAccessLayerUpdated,
+      value: candidate.guardrails.activeTenantAccessLayerUpdated,
     },
     {
       label: "productionTenantDataWritten",
-      value: report.guardrails.productionTenantDataWritten,
+      value: candidate.guardrails.productionTenantDataWritten,
     },
     {
       label: "moduleRuntimeConsumptionChanged",
-      value: report.guardrails.moduleRuntimeConsumptionChanged,
+      value: candidate.guardrails.moduleRuntimeConsumptionChanged,
     },
     {
       label: "moduleReadsCandidateByDefault",
-      value: report.guardrails.moduleReadsCandidateByDefault,
+      value: candidate.guardrails.moduleReadsCandidateByDefault,
     },
     {
       label: "previewModeRequiresExplicitFlag",
-      value: report.guardrails.previewModeRequiresExplicitFlag,
+      value: candidate.guardrails.candidatePreviewRequiresExplicitMode,
     },
   ];
 
@@ -223,6 +219,39 @@ function GuardrailIndicators({
       </div>
     </div>
   );
+}
+
+function validateCandidatePreviewRequest(input: {
+  previewEnabled: boolean;
+  acknowledged: boolean;
+  operatorId?: string;
+  previewReason?: string;
+  selectedCandidate: TenantCandidateVersion | null;
+  requestedCandidateVersionId: string;
+  candidateBuildPresent: boolean;
+}): string[] {
+  const errors: string[] = [];
+  if (!input.candidateBuildPresent) {
+    errors.push("Candidate version build artifact is missing.");
+  }
+  if (!input.previewEnabled) {
+    errors.push("Explicit preview flag is not enabled.");
+  }
+  if (!input.acknowledged) {
+    errors.push("Operator acknowledgement is required.");
+  }
+  if (!input.operatorId?.trim()) {
+    errors.push("Operator id is required.");
+  }
+  if (!input.previewReason?.trim()) {
+    errors.push("Preview reason is required.");
+  }
+  if (!input.selectedCandidate) {
+    errors.push("Requested tenant candidate was not found.");
+  } else if (input.selectedCandidate.candidateVersionId !== input.requestedCandidateVersionId) {
+    errors.push("Requested candidate version id does not match the generated candidate.");
+  }
+  return errors;
 }
 
 function parseModule(

@@ -21,6 +21,11 @@ import {
   readLatestSkyHarborApplicationsRegeneration,
   type SkyHarborApplicationsRegenerationResult,
 } from "@/lib/enterprise-data/remediation/skyharbor-applications-candidate-regeneration";
+import {
+  readLatestCandidateVersionBuild,
+  type CandidateVersionBuildReport,
+  type TenantCandidateVersion,
+} from "@/lib/enterprise-data/candidate-version-build/candidate-version-build";
 import { SHELL } from "@/lib/shell/shell-tokens";
 
 export const metadata = {
@@ -54,6 +59,7 @@ export default async function AdminDataLayerExplorerPage() {
   const tenant = await resolveAdminTenant();
   const model = buildAdminDataLayerExplorerModel(tenant.tenantName);
   const tenantQualityMatrix = await readLatestTenantQualityMatrix(process.cwd());
+  const candidateVersionBuild = await readLatestCandidateVersionBuild(process.cwd());
   const skyHarborApplicationsRemediation =
     readLatestSkyHarborApplicationsRegeneration(process.cwd());
 
@@ -222,6 +228,8 @@ export default async function AdminDataLayerExplorerPage() {
             <TruthTile label="Runtime change" value="false" />
           </section>
 
+          <CandidateVersionBuildPanel report={candidateVersionBuild} />
+
           <AllTenantQualityPanel matrix={tenantQualityMatrix} />
 
           <ReferenceDataAuditPanel audit={model.referenceDataAudit} />
@@ -308,6 +316,206 @@ export default async function AdminDataLayerExplorerPage() {
         </div>
       </main>
     </AppShell>
+  );
+}
+
+function CandidateVersionBuildPanel({
+  report,
+}: {
+  report: CandidateVersionBuildReport | null;
+}) {
+  if (!report) {
+    return (
+      <section
+        data-candidate-version-build
+        style={{
+          ...cardStyle,
+          padding: 18,
+          marginBottom: 16,
+          borderColor: "#FDBA74",
+          background: "#FFF7ED",
+        }}
+      >
+        <p style={{ ...labelStyle, margin: 0, color: "#C2410C" }}>
+          Candidate versions
+        </p>
+        <h2 style={{ margin: "6px 0", color: SHELL.INK, fontSize: 22 }}>
+          Candidate-version build artifact not generated yet.
+        </h2>
+        <p style={{ margin: 0, color: "#7C2D12", fontSize: 14 }}>
+          Run <code>npm run build:candidate-version</code> to materialize
+          reviewed canonical build output as inactive candidate preview
+          metadata.
+        </p>
+      </section>
+    );
+  }
+
+  const skyharbor = report.skyharborPreview;
+  const meridian = report.meridianPreview;
+
+  return (
+    <section
+      data-candidate-version-build
+      style={{
+        ...cardStyle,
+        padding: 18,
+        marginBottom: 16,
+        borderColor: "#A7F3D0",
+        background: "#F4FFFB",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) repeat(4, minmax(120px, 170px))",
+          gap: 14,
+          alignItems: "start",
+        }}
+      >
+        <div>
+          <p style={{ ...labelStyle, margin: 0, color: "#0F766E" }}>
+            Candidate versions · inactive preview only
+          </p>
+          <h2 style={{ margin: "6px 0", color: SHELL.INK, fontSize: 22 }}>
+            Reviewed canonical build output is available as inactive candidate
+            read models.
+          </h2>
+          <p
+            style={{
+              margin: 0,
+              color: "#14534A",
+              fontSize: 14,
+              lineHeight: 1.5,
+              maxWidth: 900,
+            }}
+          >
+            Source build <code>{report.sourceBuildId}</code> produced{" "}
+            {report.summary.candidateVersionsCreated} candidate versions.
+            Active tenant access, promotion, default Home reads, and module
+            runtime reads remain unchanged.
+          </p>
+        </div>
+        <TruthTile
+          label="Candidates"
+          value={String(report.summary.candidateVersionsCreated)}
+        />
+        <TruthTile
+          label="Records"
+          value={report.summary.canonicalRecordsRepresented.toLocaleString()}
+        />
+        <TruthTile
+          label="Promotion"
+          value={String(report.guardrails.candidatePromoted)}
+        />
+        <TruthTile
+          label="Default reads"
+          value={String(report.guardrails.defaultHomeReadsCandidateData)}
+        />
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: 12,
+          marginTop: 16,
+        }}
+      >
+        {skyharbor ? (
+          <CandidateTenantProofCard
+            candidate={skyharbor}
+            focus="SkyHarbor richness correction"
+          />
+        ) : null}
+        {meridian ? (
+          <CandidateTenantProofCard
+            candidate={meridian}
+            focus="Meridian healthcare context"
+          />
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function CandidateTenantProofCard({
+  candidate,
+  focus,
+}: {
+  candidate: TenantCandidateVersion;
+  focus: string;
+}) {
+  const domains = Object.fromEntries(
+    candidate.domainCounts.map((entry) => [entry.domain, entry.acceptedRecords]),
+  );
+  return (
+    <article style={{ ...cardStyle, padding: 16, background: "#FFFFFF" }}>
+      <p style={{ ...labelStyle, margin: 0, color: "#0F766E" }}>{focus}</p>
+      <h3 style={{ margin: "6px 0", color: SHELL.INK, fontSize: 18 }}>
+        {candidate.tenantDisplayName}
+      </h3>
+      <p
+        style={{
+          margin: 0,
+          color: "#475569",
+          fontSize: 13,
+          lineHeight: 1.45,
+        }}
+      >
+        <code>{candidate.candidateVersionId}</code>
+      </p>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: 8,
+          marginTop: 12,
+        }}
+      >
+        <MiniStat
+          label="Apps/systems"
+          value={(domains.applications_systems ?? 0).toLocaleString()}
+        />
+        <MiniStat
+          label="Data assets"
+          value={(domains.data_assets_integrations ?? 0).toLocaleString()}
+        />
+        <MiniStat
+          label="Infra"
+          value={(domains.infrastructure_platforms ?? 0).toLocaleString()}
+        />
+      </div>
+      <p style={{ margin: "12px 0 0", color: "#475569", fontSize: 13 }}>
+        Status: {candidate.creationStatus} · profile {candidate.enterpriseProfileStatus} ·{" "}
+        {candidate.promotionBlockers.length} promotion blockers.
+      </p>
+    </article>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      style={{
+        border: "1px solid #DDE7E3",
+        borderRadius: 8,
+        padding: "9px 10px",
+        background: "#F8FCFA",
+      }}
+    >
+      <p style={{ ...labelStyle, margin: 0, fontSize: 10 }}>{label}</p>
+      <p
+        style={{
+          margin: "4px 0 0",
+          color: SHELL.INK,
+          fontSize: 17,
+          fontWeight: 900,
+        }}
+      >
+        {value}
+      </p>
+    </div>
   );
 }
 

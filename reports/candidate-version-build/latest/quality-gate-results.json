@@ -1,0 +1,452 @@
+[
+  {
+    "tenantKey": "apex-retail",
+    "tenantDisplayName": "Apex Retail",
+    "candidateVersionId": "candidate:apex-retail:a8f372853cb9",
+    "qualityGateStatus": "pass",
+    "creationStatus": "created",
+    "gates": [
+      {
+        "id": "no-archive-legacy-read-violations",
+        "label": "No archive or legacy read violations",
+        "status": "pass",
+        "detail": "0 archive/legacy read violations."
+      },
+      {
+        "id": "northstar-excluded",
+        "label": "Northstar excluded from active processing",
+        "status": "pass",
+        "detail": "Northstar is retired/excluded and absent from active tenant processing."
+      },
+      {
+        "id": "no-error-findings",
+        "label": "No error findings for tenant",
+        "status": "pass",
+        "detail": "0 tenant error findings."
+      },
+      {
+        "id": "placeholder-rejection-complete",
+        "label": "Placeholder rejection complete",
+        "status": "pass",
+        "detail": "Placeholder values are emitted as gaps/rejections by the canonical build and are not promoted as facts."
+      },
+      {
+        "id": "enterprise-profile-present-or-gapped",
+        "label": "Enterprise profile present or explicit gaps",
+        "status": "pass",
+        "detail": "Enterprise profile has 8 explicit gaps."
+      },
+      {
+        "id": "source-lineage-present",
+        "label": "Source lineage present for accepted records",
+        "status": "pass",
+        "detail": "3589 accepted records checked for lineage."
+      },
+      {
+        "id": "evidence-attached",
+        "label": "Evidence attached to accepted records",
+        "status": "pass",
+        "detail": "3589 evidence attachments for 3589 accepted records; 0 records without evidence."
+      },
+      {
+        "id": "tenant-isolation",
+        "label": "Tenant isolation pass",
+        "status": "pass",
+        "detail": "Accepted records and source paths are scoped to the selected active tenant root."
+      },
+      {
+        "id": "relationship-candidates",
+        "label": "Relationship candidate generation",
+        "status": "pass",
+        "detail": "1690 relationship candidates generated."
+      },
+      {
+        "id": "home-ava-readiness-artifact",
+        "label": "Home/aVa readiness artifact present",
+        "status": "pass",
+        "detail": "Home/aVa artifact exists and records caveats before active consumption."
+      },
+      {
+        "id": "active-candidate-separation",
+        "label": "Active/candidate separation",
+        "status": "pass",
+        "detail": "Candidate preview remains explicit-only; default Home and module runtime reads are unchanged."
+      }
+    ]
+  },
+  {
+    "tenantKey": "first-capital-financial",
+    "tenantDisplayName": "First Capital Financial",
+    "candidateVersionId": "candidate:first-capital-financial:3794217b5b8c",
+    "qualityGateStatus": "pass",
+    "creationStatus": "created",
+    "gates": [
+      {
+        "id": "no-archive-legacy-read-violations",
+        "label": "No archive or legacy read violations",
+        "status": "pass",
+        "detail": "0 archive/legacy read violations."
+      },
+      {
+        "id": "northstar-excluded",
+        "label": "Northstar excluded from active processing",
+        "status": "pass",
+        "detail": "Northstar is retired/excluded and absent from active tenant processing."
+      },
+      {
+        "id": "no-error-findings",
+        "label": "No error findings for tenant",
+        "status": "pass",
+        "detail": "0 tenant error findings."
+      },
+      {
+        "id": "placeholder-rejection-complete",
+        "label": "Placeholder rejection complete",
+        "status": "pass",
+        "detail": "Placeholder values are emitted as gaps/rejections by the canonical build and are not promoted as facts."
+      },
+      {
+        "id": "enterprise-profile-present-or-gapped",
+        "label": "Enterprise profile present or explicit gaps",
+        "status": "pass",
+        "detail": "Enterprise profile has 7 explicit gaps."
+      },
+      {
+        "id": "source-lineage-present",
+        "label": "Source lineage present for accepted records",
+        "status": "pass",
+        "detail": "5609 accepted records checked for lineage."
+      },
+      {
+        "id": "evidence-attached",
+        "label": "Evidence attached to accepted records",
+        "status": "pass",
+        "detail": "5609 evidence attachments for 5609 accepted records; 0 records without evidence."
+      },
+      {
+        "id": "tenant-isolation",
+        "label": "Tenant isolation pass",
+        "status": "pass",
+        "detail": "Accepted records and source paths are scoped to the selected active tenant root."
+      },
+      {
+        "id": "relationship-candidates",
+        "label": "Relationship candidate generation",
+        "status": "pass",
+        "detail": "2757 relationship candidates generated."
+      },
+      {
+        "id": "home-ava-readiness-artifact",
+        "label": "Home/aVa readiness artifact present",
+        "status": "pass",
+        "detail": "Home/aVa artifact exists and records caveats before active consumption."
+      },
+      {
+        "id": "active-candidate-separation",
+        "label": "Active/candidate separation",
+        "status": "pass",
+        "detail": "Candidate preview remains explicit-only; default Home and module runtime reads are unchanged."
+      }
+    ]
+  },
+  {
+    "tenantKey": "lakeshore-holdings",
+    "tenantDisplayName": "Lakeshore Holdings",
+    "candidateVersionId": "candidate:lakeshore-holdings:f03c88db6e6c",
+    "qualityGateStatus": "pass",
+    "creationStatus": "created",
+    "gates": [
+      {
+        "id": "no-archive-legacy-read-violations",
+        "label": "No archive or legacy read violations",
+        "status": "pass",
+        "detail": "0 archive/legacy read violations."
+      },
+      {
+        "id": "northstar-excluded",
+        "label": "Northstar excluded from active processing",
+        "status": "pass",
+        "detail": "Northstar is retired/excluded and absent from active tenant processing."
+      },
+      {
+        "id": "no-error-findings",
+        "label": "No error findings for tenant",
+        "status": "pass",
+        "detail": "0 tenant error findings."
+      },
+      {
+        "id": "placeholder-rejection-complete",
+        "label": "Placeholder rejection complete",
+        "status": "pass",
+        "detail": "Placeholder values are emitted as gaps/rejections by the canonical build and are not promoted as facts."
+      },
+      {
+        "id": "enterprise-profile-present-or-gapped",
+        "label": "Enterprise profile present or explicit gaps",
+        "status": "pass",
+        "detail": "Enterprise profile has 9 explicit gaps."
+      },
+      {
+        "id": "source-lineage-present",
+        "label": "Source lineage present for accepted records",
+        "status": "pass",
+        "detail": "457 accepted records checked for lineage."
+      },
+      {
+        "id": "evidence-attached",
+        "label": "Evidence attached to accepted records",
+        "status": "pass",
+        "detail": "457 evidence attachments for 457 accepted records; 0 records without evidence."
+      },
+      {
+        "id": "tenant-isolation",
+        "label": "Tenant isolation pass",
+        "status": "pass",
+        "detail": "Accepted records and source paths are scoped to the selected active tenant root."
+      },
+      {
+        "id": "relationship-candidates",
+        "label": "Relationship candidate generation",
+        "status": "pass",
+        "detail": "183 relationship candidates generated."
+      },
+      {
+        "id": "home-ava-readiness-artifact",
+        "label": "Home/aVa readiness artifact present",
+        "status": "pass",
+        "detail": "Home/aVa artifact exists and records caveats before active consumption."
+      },
+      {
+        "id": "active-candidate-separation",
+        "label": "Active/candidate separation",
+        "status": "pass",
+        "detail": "Candidate preview remains explicit-only; default Home and module runtime reads are unchanged."
+      }
+    ]
+  },
+  {
+    "tenantKey": "lakeshore-industries",
+    "tenantDisplayName": "Lakeshore Industries",
+    "candidateVersionId": "candidate:lakeshore-industries:615216388101",
+    "qualityGateStatus": "pass",
+    "creationStatus": "created",
+    "gates": [
+      {
+        "id": "no-archive-legacy-read-violations",
+        "label": "No archive or legacy read violations",
+        "status": "pass",
+        "detail": "0 archive/legacy read violations."
+      },
+      {
+        "id": "northstar-excluded",
+        "label": "Northstar excluded from active processing",
+        "status": "pass",
+        "detail": "Northstar is retired/excluded and absent from active tenant processing."
+      },
+      {
+        "id": "no-error-findings",
+        "label": "No error findings for tenant",
+        "status": "pass",
+        "detail": "0 tenant error findings."
+      },
+      {
+        "id": "placeholder-rejection-complete",
+        "label": "Placeholder rejection complete",
+        "status": "pass",
+        "detail": "Placeholder values are emitted as gaps/rejections by the canonical build and are not promoted as facts."
+      },
+      {
+        "id": "enterprise-profile-present-or-gapped",
+        "label": "Enterprise profile present or explicit gaps",
+        "status": "pass",
+        "detail": "Enterprise profile has 7 explicit gaps."
+      },
+      {
+        "id": "source-lineage-present",
+        "label": "Source lineage present for accepted records",
+        "status": "pass",
+        "detail": "3040 accepted records checked for lineage."
+      },
+      {
+        "id": "evidence-attached",
+        "label": "Evidence attached to accepted records",
+        "status": "pass",
+        "detail": "3040 evidence attachments for 3040 accepted records; 0 records without evidence."
+      },
+      {
+        "id": "tenant-isolation",
+        "label": "Tenant isolation pass",
+        "status": "pass",
+        "detail": "Accepted records and source paths are scoped to the selected active tenant root."
+      },
+      {
+        "id": "relationship-candidates",
+        "label": "Relationship candidate generation",
+        "status": "pass",
+        "detail": "892 relationship candidates generated."
+      },
+      {
+        "id": "home-ava-readiness-artifact",
+        "label": "Home/aVa readiness artifact present",
+        "status": "pass",
+        "detail": "Home/aVa artifact exists and records caveats before active consumption."
+      },
+      {
+        "id": "active-candidate-separation",
+        "label": "Active/candidate separation",
+        "status": "pass",
+        "detail": "Candidate preview remains explicit-only; default Home and module runtime reads are unchanged."
+      }
+    ]
+  },
+  {
+    "tenantKey": "meridian-health",
+    "tenantDisplayName": "Meridian Health",
+    "candidateVersionId": "candidate:meridian-health:b8c7bed092e6",
+    "qualityGateStatus": "pass",
+    "creationStatus": "created",
+    "gates": [
+      {
+        "id": "no-archive-legacy-read-violations",
+        "label": "No archive or legacy read violations",
+        "status": "pass",
+        "detail": "0 archive/legacy read violations."
+      },
+      {
+        "id": "northstar-excluded",
+        "label": "Northstar excluded from active processing",
+        "status": "pass",
+        "detail": "Northstar is retired/excluded and absent from active tenant processing."
+      },
+      {
+        "id": "no-error-findings",
+        "label": "No error findings for tenant",
+        "status": "pass",
+        "detail": "0 tenant error findings."
+      },
+      {
+        "id": "placeholder-rejection-complete",
+        "label": "Placeholder rejection complete",
+        "status": "pass",
+        "detail": "Placeholder values are emitted as gaps/rejections by the canonical build and are not promoted as facts."
+      },
+      {
+        "id": "enterprise-profile-present-or-gapped",
+        "label": "Enterprise profile present or explicit gaps",
+        "status": "pass",
+        "detail": "Enterprise profile has 6 explicit gaps."
+      },
+      {
+        "id": "source-lineage-present",
+        "label": "Source lineage present for accepted records",
+        "status": "pass",
+        "detail": "4078 accepted records checked for lineage."
+      },
+      {
+        "id": "evidence-attached",
+        "label": "Evidence attached to accepted records",
+        "status": "pass",
+        "detail": "4078 evidence attachments for 4078 accepted records; 0 records without evidence."
+      },
+      {
+        "id": "tenant-isolation",
+        "label": "Tenant isolation pass",
+        "status": "pass",
+        "detail": "Accepted records and source paths are scoped to the selected active tenant root."
+      },
+      {
+        "id": "relationship-candidates",
+        "label": "Relationship candidate generation",
+        "status": "pass",
+        "detail": "2177 relationship candidates generated."
+      },
+      {
+        "id": "home-ava-readiness-artifact",
+        "label": "Home/aVa readiness artifact present",
+        "status": "pass",
+        "detail": "Home/aVa artifact exists and records caveats before active consumption."
+      },
+      {
+        "id": "active-candidate-separation",
+        "label": "Active/candidate separation",
+        "status": "pass",
+        "detail": "Candidate preview remains explicit-only; default Home and module runtime reads are unchanged."
+      }
+    ]
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "tenantDisplayName": "SkyHarbor Air",
+    "candidateVersionId": "candidate:skyharbor-air:c44972185e16",
+    "qualityGateStatus": "pass",
+    "creationStatus": "created",
+    "gates": [
+      {
+        "id": "no-archive-legacy-read-violations",
+        "label": "No archive or legacy read violations",
+        "status": "pass",
+        "detail": "0 archive/legacy read violations."
+      },
+      {
+        "id": "northstar-excluded",
+        "label": "Northstar excluded from active processing",
+        "status": "pass",
+        "detail": "Northstar is retired/excluded and absent from active tenant processing."
+      },
+      {
+        "id": "no-error-findings",
+        "label": "No error findings for tenant",
+        "status": "pass",
+        "detail": "0 tenant error findings."
+      },
+      {
+        "id": "placeholder-rejection-complete",
+        "label": "Placeholder rejection complete",
+        "status": "pass",
+        "detail": "Placeholder values are emitted as gaps/rejections by the canonical build and are not promoted as facts."
+      },
+      {
+        "id": "enterprise-profile-present-or-gapped",
+        "label": "Enterprise profile present or explicit gaps",
+        "status": "pass",
+        "detail": "Enterprise profile has 7 explicit gaps."
+      },
+      {
+        "id": "source-lineage-present",
+        "label": "Source lineage present for accepted records",
+        "status": "pass",
+        "detail": "3457 accepted records checked for lineage."
+      },
+      {
+        "id": "evidence-attached",
+        "label": "Evidence attached to accepted records",
+        "status": "pass",
+        "detail": "3457 evidence attachments for 3457 accepted records; 0 records without evidence."
+      },
+      {
+        "id": "tenant-isolation",
+        "label": "Tenant isolation pass",
+        "status": "pass",
+        "detail": "Accepted records and source paths are scoped to the selected active tenant root."
+      },
+      {
+        "id": "relationship-candidates",
+        "label": "Relationship candidate generation",
+        "status": "pass",
+        "detail": "3136 relationship candidates generated."
+      },
+      {
+        "id": "home-ava-readiness-artifact",
+        "label": "Home/aVa readiness artifact present",
+        "status": "pass",
+        "detail": "Home/aVa artifact exists and records caveats before active consumption."
+      },
+      {
+        "id": "active-candidate-separation",
+        "label": "Active/candidate separation",
+        "status": "pass",
+        "detail": "Candidate preview remains explicit-only; default Home and module runtime reads are unchanged."
+      }
+    ]
+  }
+]
