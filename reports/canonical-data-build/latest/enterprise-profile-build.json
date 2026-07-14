@@ -1,0 +1,343 @@
+[
+  {
+    "tenantKey": "apex-retail",
+    "tenantDisplayName": "Apex Retail",
+    "sourceFiles": [
+      "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_01_enterprise_profile.csv"
+    ],
+    "status": "gaps",
+    "facts": {
+      "industry": "Omnichannel Retail",
+      "subIndustry": "Retail operating model",
+      "revenueUsd": "50000000000",
+      "employeeCount": "200000",
+      "businessModel": "Omnichannel Retail operating model",
+      "source": "family-1-enterprise-operating-model/F01_enterprise-profile.yaml",
+      "locations": [],
+      "leadership": [],
+      "strategy": [],
+      "segments": []
+    },
+    "missingFields": [
+      "headquarters",
+      "revenue",
+      "employees",
+      "locations",
+      "leadership",
+      "mission",
+      "vision",
+      "strategy",
+      "segments",
+      "asOf"
+    ],
+    "sourceLineage": [
+      {
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "evidenceKey": "apex-retail:enterprise-pack:V6_01_enterprise_profile.csv:2"
+      }
+    ]
+  },
+  {
+    "tenantKey": "first-capital-financial",
+    "tenantDisplayName": "First Capital Financial",
+    "sourceFiles": [
+      "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_01_enterprise_profile.csv"
+    ],
+    "status": "gaps",
+    "facts": {
+      "industry": "Financial services",
+      "subIndustry": "Money-center / large commercial bank with US Bancorp / PNC-scale consumer + commercial + cards + wealth complexity",
+      "revenueUsd": "52000000000",
+      "employeeCount": "65000",
+      "businessModel": "enterprise operating model",
+      "source": "family-1-enterprise-operating-model/F01_enterprise-profile.yaml",
+      "locations": [],
+      "leadership": [],
+      "strategy": [
+        "technology_budget_usd:2400000000"
+      ],
+      "segments": []
+    },
+    "missingFields": [
+      "headquarters",
+      "revenue",
+      "employees",
+      "locations",
+      "leadership",
+      "mission",
+      "vision",
+      "segments",
+      "asOf"
+    ],
+    "sourceLineage": [
+      {
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "evidenceKey": "first-capital-financial:enterprise-pack:V6_01_enterprise_profile.csv:2"
+      }
+    ]
+  },
+  {
+    "tenantKey": "lakeshore-holdings",
+    "tenantDisplayName": "Lakeshore Holdings",
+    "sourceFiles": [
+      "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_01_enterprise_profile.csv"
+    ],
+    "status": "gaps",
+    "facts": {
+      "industry": "Diversified private holding company",
+      "subIndustry": "portfolio-company operator with corporate shared services",
+      "revenueUsd": "0",
+      "employeeCount": "11800",
+      "source": "holdco/entity-profile.csv",
+      "locations": [],
+      "leadership": [],
+      "strategy": [],
+      "segments": []
+    },
+    "missingFields": [
+      "headquarters",
+      "revenue",
+      "employees",
+      "locations",
+      "leadership",
+      "mission",
+      "vision",
+      "strategy",
+      "businessModel",
+      "segments",
+      "asOf"
+    ],
+    "sourceLineage": [
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "evidenceKey": "lakeshore-holdings:enterprise-pack:V6_01_enterprise_profile.csv:2"
+      }
+    ]
+  },
+  {
+    "tenantKey": "lakeshore-industries",
+    "tenantDisplayName": "Lakeshore Industries",
+    "sourceFiles": [
+      "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+      "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv"
+    ],
+    "status": "gaps",
+    "facts": {
+      "industry": "Industrial holding company",
+      "subIndustry": "Diversified industrial, supply chain, foodservice, packaging, field services",
+      "headquarters": "Chicago, IL",
+      "revenueUsd": "7120000000",
+      "employeeCount": "11800",
+      "businessModel": "Portfolio company rollup with corporate shared services and OpCo-led operations",
+      "asOf": "2026-07-06",
+      "locations": [],
+      "leadership": [],
+      "strategy": [],
+      "segments": []
+    },
+    "missingFields": [
+      "revenue",
+      "employees",
+      "locations",
+      "leadership",
+      "mission",
+      "vision",
+      "strategy",
+      "segments",
+      "source"
+    ],
+    "sourceLineage": [
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 2,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:2"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 3,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:3"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 4,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:4"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 5,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:5"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 6,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:6"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 7,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:7"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 8,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:8"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 9,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_00_portfolio_entity_registry.csv:9"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_01_enterprise_profile.csv:2"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 3,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_01_enterprise_profile.csv:3"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 4,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_01_enterprise_profile.csv:4"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 5,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_01_enterprise_profile.csv:5"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 6,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_01_enterprise_profile.csv:6"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 7,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_01_enterprise_profile.csv:7"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 8,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_01_enterprise_profile.csv:8"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 9,
+        "evidenceKey": "lakeshore-industries:holdco-pack:V7_01_enterprise_profile.csv:9"
+      }
+    ]
+  },
+  {
+    "tenantKey": "meridian-health",
+    "tenantDisplayName": "Meridian Health",
+    "sourceFiles": [
+      "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_01_enterprise_profile.csv",
+      "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_00_portfolio_entity_registry.csv",
+      "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv",
+      "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_01_enterprise_profile.csv"
+    ],
+    "status": "gaps",
+    "facts": {
+      "industry": "Healthcare",
+      "subIndustry": "Integrated delivery network and health plan",
+      "headquarters": "Sacramento, CA",
+      "revenueUsd": "not_provided",
+      "employeeCount": "not_provided",
+      "businessModel": "Medium-to-large health organization with clinical delivery, health-plan operations, finance, and analytics modernization needs.",
+      "source": "tenant_config",
+      "asOf": "2026-07-09",
+      "locations": [],
+      "leadership": [],
+      "strategy": [],
+      "segments": []
+    },
+    "missingFields": [
+      "revenue",
+      "employees",
+      "locations",
+      "leadership",
+      "mission",
+      "vision",
+      "strategy",
+      "segments"
+    ],
+    "sourceLineage": [
+      {
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "evidenceKey": "meridian-health:current-state-pack:V6_01_enterprise_profile.csv:2"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 2,
+        "evidenceKey": "meridian-health:current-state-pack:V7_00_portfolio_entity_registry.csv:2"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/v7/V7_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "evidenceKey": "meridian-health:current-state-pack:V7_01_enterprise_profile.csv:2"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/rich-enterprise-pack/templates/V6_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "evidenceKey": "meridian-health:rich-enterprise-pack:V6_01_enterprise_profile.csv:2"
+      }
+    ]
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "tenantDisplayName": "SkyHarbor Air",
+    "sourceFiles": [
+      "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_01_enterprise_profile.csv",
+      "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_00_portfolio_entity_registry.csv",
+      "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_01_enterprise_profile.csv"
+    ],
+    "status": "gaps",
+    "facts": {
+      "industry": "Airline",
+      "subIndustry": "Global passenger airline operations",
+      "revenueUsd": "not_provided",
+      "employeeCount": "not_provided",
+      "businessModel": "Medium-to-large airline with operations control, flight operations, crew operations, customer operations, mainframe/core operations, and AI modernization pressure.",
+      "source": "tenant_config",
+      "asOf": "2026-07-10",
+      "locations": [],
+      "leadership": [],
+      "strategy": [],
+      "segments": []
+    },
+    "missingFields": [
+      "headquarters",
+      "revenue",
+      "employees",
+      "locations",
+      "leadership",
+      "mission",
+      "vision",
+      "strategy",
+      "segments"
+    ],
+    "sourceLineage": [
+      {
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/templates/V6_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "evidenceKey": "skyharbor-air:upgrade-candidate-pack:V6_01_enterprise_profile.csv:2"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 2,
+        "evidenceKey": "skyharbor-air:upgrade-candidate-pack:V7_00_portfolio_entity_registry.csv:2"
+      },
+      {
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/upgrade-candidate-pack/v7/V7_01_enterprise_profile.csv",
+        "rowNumber": 2,
+        "evidenceKey": "skyharbor-air:upgrade-candidate-pack:V7_01_enterprise_profile.csv:2"
+      }
+    ]
+  }
+]

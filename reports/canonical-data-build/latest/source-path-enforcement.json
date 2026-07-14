@@ -1,0 +1,14 @@
+{
+  "canonicalRoot": "datasets/tenant-inputs",
+  "activeRoot": "datasets/tenant-inputs/active",
+  "archiveRoot": "datasets/tenant-inputs/archive",
+  "disallowedRoots": [
+    "datasets/tenant-inputs/archive",
+    "datasets/*-synthetic-*",
+    "datasets/*upgrade-candidate* outside canonical active root",
+    "Downloads",
+    "/private/tmp"
+  ],
+  "activeFilesInspected": 222,
+  "violations": []
+}

@@ -1,0 +1,194 @@
+[
+  {
+    "tenantKey": "apex-retail",
+    "companySizeBand": "large",
+    "totalSourceRows": 4112,
+    "totalAcceptedRecords": 3589,
+    "domainsMeetingDepth": 14,
+    "domainsBelowDepth": [
+      {
+        "domain": "workforce_roles",
+        "rows": 12,
+        "minimumRows": 25,
+        "gap": 13
+      },
+      {
+        "domain": "infrastructure_platforms",
+        "rows": 0,
+        "minimumRows": 20,
+        "gap": 20
+      },
+      {
+        "domain": "evidence_sources",
+        "rows": 14,
+        "minimumRows": 20,
+        "gap": 6
+      },
+      {
+        "domain": "service_scope_managed_services",
+        "rows": 0,
+        "minimumRows": 10,
+        "gap": 10
+      },
+      {
+        "domain": "operational_process_evidence",
+        "rows": 0,
+        "minimumRows": 10,
+        "gap": 10
+      }
+    ],
+    "qualityScore": 74
+  },
+  {
+    "tenantKey": "first-capital-financial",
+    "companySizeBand": "large",
+    "totalSourceRows": 6132,
+    "totalAcceptedRecords": 5609,
+    "domainsMeetingDepth": 15,
+    "domainsBelowDepth": [
+      {
+        "domain": "workforce_roles",
+        "rows": 16,
+        "minimumRows": 25,
+        "gap": 9
+      },
+      {
+        "domain": "infrastructure_platforms",
+        "rows": 0,
+        "minimumRows": 20,
+        "gap": 20
+      },
+      {
+        "domain": "service_scope_managed_services",
+        "rows": 0,
+        "minimumRows": 10,
+        "gap": 10
+      },
+      {
+        "domain": "operational_process_evidence",
+        "rows": 0,
+        "minimumRows": 10,
+        "gap": 10
+      }
+    ],
+    "qualityScore": 79
+  },
+  {
+    "tenantKey": "lakeshore-holdings",
+    "companySizeBand": "mid_market",
+    "totalSourceRows": 996,
+    "totalAcceptedRecords": 457,
+    "domainsMeetingDepth": 12,
+    "domainsBelowDepth": [
+      {
+        "domain": "applications_systems",
+        "rows": 24,
+        "minimumRows": 25,
+        "gap": 1
+      },
+      {
+        "domain": "data_assets_integrations",
+        "rows": 34,
+        "minimumRows": 40,
+        "gap": 6
+      },
+      {
+        "domain": "infrastructure_platforms",
+        "rows": 0,
+        "minimumRows": 8,
+        "gap": 8
+      },
+      {
+        "domain": "risks_controls",
+        "rows": 10,
+        "minimumRows": 20,
+        "gap": 10
+      },
+      {
+        "domain": "industry_context_patterns",
+        "rows": 4,
+        "minimumRows": 5,
+        "gap": 1
+      },
+      {
+        "domain": "service_scope_managed_services",
+        "rows": 0,
+        "minimumRows": 5,
+        "gap": 5
+      },
+      {
+        "domain": "operational_process_evidence",
+        "rows": 0,
+        "minimumRows": 5,
+        "gap": 5
+      }
+    ],
+    "qualityScore": 63
+  },
+  {
+    "tenantKey": "lakeshore-industries",
+    "companySizeBand": "large",
+    "totalSourceRows": 3809,
+    "totalAcceptedRecords": 3040,
+    "domainsMeetingDepth": 18,
+    "domainsBelowDepth": [
+      {
+        "domain": "data_assets_integrations",
+        "rows": 82,
+        "minimumRows": 100,
+        "gap": 18
+      }
+    ],
+    "qualityScore": 95
+  },
+  {
+    "tenantKey": "meridian-health",
+    "companySizeBand": "large",
+    "totalSourceRows": 4697,
+    "totalAcceptedRecords": 4078,
+    "domainsMeetingDepth": 17,
+    "domainsBelowDepth": [
+      {
+        "domain": "infrastructure_platforms",
+        "rows": 4,
+        "minimumRows": 20,
+        "gap": 16
+      },
+      {
+        "domain": "service_scope_managed_services",
+        "rows": 3,
+        "minimumRows": 10,
+        "gap": 7
+      }
+    ],
+    "qualityScore": 89
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "companySizeBand": "large",
+    "totalSourceRows": 3842,
+    "totalAcceptedRecords": 3457,
+    "domainsMeetingDepth": 16,
+    "domainsBelowDepth": [
+      {
+        "domain": "workforce_roles",
+        "rows": 12,
+        "minimumRows": 25,
+        "gap": 13
+      },
+      {
+        "domain": "industry_context_patterns",
+        "rows": 9,
+        "minimumRows": 10,
+        "gap": 1
+      },
+      {
+        "domain": "service_scope_managed_services",
+        "rows": 3,
+        "minimumRows": 10,
+        "gap": 7
+      }
+    ],
+    "qualityScore": 84
+  }
+]

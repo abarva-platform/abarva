@@ -1,0 +1,2030 @@
+[
+  {
+    "tenantKey": "apex-retail",
+    "tenantDisplayName": "Apex Retail",
+    "totalAcceptedRecords": 3589,
+    "totalQuarantinedRecords": 0,
+    "totalSkippedRows": 0,
+    "byDomain": {
+      "enterprise_profile": {
+        "sourceFiles": 1,
+        "sourceRows": 1,
+        "acceptedRecords": 1,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "business_functions": {
+        "sourceFiles": 1,
+        "sourceRows": 26,
+        "acceptedRecords": 26,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "org_ownership": {
+        "sourceFiles": 1,
+        "sourceRows": 50,
+        "acceptedRecords": 50,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 17
+      },
+      "workforce_roles": {
+        "sourceFiles": 1,
+        "sourceRows": 12,
+        "acceptedRecords": 12,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "applications_systems": {
+        "sourceFiles": 1,
+        "sourceRows": 182,
+        "acceptedRecords": 182,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 60
+      },
+      "data_assets_integrations": {
+        "sourceFiles": 1,
+        "sourceRows": 385,
+        "acceptedRecords": 385,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 150
+      },
+      "infrastructure_platforms": {
+        "sourceFiles": 0,
+        "sourceRows": 0,
+        "acceptedRecords": 0,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "vendors_contracts": {
+        "sourceFiles": 1,
+        "sourceRows": 100,
+        "acceptedRecords": 100,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "spend_value": {
+        "sourceFiles": 1,
+        "sourceRows": 188,
+        "acceptedRecords": 188,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 14
+      },
+      "programs_initiatives": {
+        "sourceFiles": 1,
+        "sourceRows": 159,
+        "acceptedRecords": 159,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 84
+      },
+      "ai_automation_use_cases": {
+        "sourceFiles": 1,
+        "sourceRows": 155,
+        "acceptedRecords": 155,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 99
+      },
+      "risks_controls": {
+        "sourceFiles": 1,
+        "sourceRows": 375,
+        "acceptedRecords": 375,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 364
+      },
+      "relationships": {
+        "sourceFiles": 1,
+        "sourceRows": 1605,
+        "acceptedRecords": 1605,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "evidence_sources": {
+        "sourceFiles": 1,
+        "sourceRows": 14,
+        "acceptedRecords": 14,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "metrics_outcomes": {
+        "sourceFiles": 1,
+        "sourceRows": 126,
+        "acceptedRecords": 126,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 18
+      },
+      "industry_context_patterns": {
+        "sourceFiles": 1,
+        "sourceRows": 206,
+        "acceptedRecords": 206,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 99
+      },
+      "expert_lenses": {
+        "sourceFiles": 1,
+        "sourceRows": 5,
+        "acceptedRecords": 5,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 1
+      },
+      "service_scope_managed_services": {
+        "sourceFiles": 0,
+        "sourceRows": 0,
+        "acceptedRecords": 0,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "operational_process_evidence": {
+        "sourceFiles": 0,
+        "sourceRows": 0,
+        "acceptedRecords": 0,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      }
+    },
+    "sampleObjects": [
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Retail Demo",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_01_enterprise_profile.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Store Operations",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Digital Commerce",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 3
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Merchandising",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 4
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Supply Chain and Fulfillment",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 5
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Loyalty and Customer Growth",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 6
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Finance and FP&A",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 7
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Loss Prevention and Risk",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 8
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Technology",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 9
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Human Resources",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 10
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Procurement and Vendor Management",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 11
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Real Estate and Facilities",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 12
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Private Brands",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 13
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Store selling and clienteling",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 14
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "POS checkout and payments",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 15
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Omnichannel order management",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 16
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Inventory availability and ATP",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 17
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Demand forecasting and replenishment",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 18
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Merchandise planning and allocation",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 19
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Pricing and markdown optimization",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 20
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Loyalty personalization",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 21
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Retail media activation",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 22
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Supply chain visibility",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 23
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Labor scheduling",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 24
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Shrink and fraud prevention",
+        "sourcePath": "datasets/tenant-inputs/active/apex-retail/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 25
+      }
+    ]
+  },
+  {
+    "tenantKey": "first-capital-financial",
+    "tenantDisplayName": "First Capital Financial",
+    "totalAcceptedRecords": 5609,
+    "totalQuarantinedRecords": 0,
+    "totalSkippedRows": 0,
+    "byDomain": {
+      "enterprise_profile": {
+        "sourceFiles": 1,
+        "sourceRows": 1,
+        "acceptedRecords": 1,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "business_functions": {
+        "sourceFiles": 1,
+        "sourceRows": 27,
+        "acceptedRecords": 27,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "org_ownership": {
+        "sourceFiles": 1,
+        "sourceRows": 65,
+        "acceptedRecords": 65,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 6
+      },
+      "workforce_roles": {
+        "sourceFiles": 1,
+        "sourceRows": 16,
+        "acceptedRecords": 16,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "applications_systems": {
+        "sourceFiles": 1,
+        "sourceRows": 272,
+        "acceptedRecords": 272,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 60
+      },
+      "data_assets_integrations": {
+        "sourceFiles": 1,
+        "sourceRows": 460,
+        "acceptedRecords": 460,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 346
+      },
+      "infrastructure_platforms": {
+        "sourceFiles": 0,
+        "sourceRows": 0,
+        "acceptedRecords": 0,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "vendors_contracts": {
+        "sourceFiles": 1,
+        "sourceRows": 120,
+        "acceptedRecords": 120,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "spend_value": {
+        "sourceFiles": 1,
+        "sourceRows": 397,
+        "acceptedRecords": 397,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 126
+      },
+      "programs_initiatives": {
+        "sourceFiles": 1,
+        "sourceRows": 299,
+        "acceptedRecords": 299,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 209
+      },
+      "ai_automation_use_cases": {
+        "sourceFiles": 1,
+        "sourceRows": 282,
+        "acceptedRecords": 282,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 170
+      },
+      "risks_controls": {
+        "sourceFiles": 1,
+        "sourceRows": 547,
+        "acceptedRecords": 547,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 531
+      },
+      "relationships": {
+        "sourceFiles": 1,
+        "sourceRows": 2614,
+        "acceptedRecords": 2614,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "evidence_sources": {
+        "sourceFiles": 1,
+        "sourceRows": 42,
+        "acceptedRecords": 42,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "metrics_outcomes": {
+        "sourceFiles": 1,
+        "sourceRows": 168,
+        "acceptedRecords": 168,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 11
+      },
+      "industry_context_patterns": {
+        "sourceFiles": 1,
+        "sourceRows": 294,
+        "acceptedRecords": 294,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 143
+      },
+      "expert_lenses": {
+        "sourceFiles": 1,
+        "sourceRows": 5,
+        "acceptedRecords": 5,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 1
+      },
+      "service_scope_managed_services": {
+        "sourceFiles": 0,
+        "sourceRows": 0,
+        "acceptedRecords": 0,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "operational_process_evidence": {
+        "sourceFiles": 0,
+        "sourceRows": 0,
+        "acceptedRecords": 0,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      }
+    },
+    "sampleObjects": [
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Financial Services Demo",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_01_enterprise_profile.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Consumer Banking & Deposits",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Commercial & Corporate Banking",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 3
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Cards & Payments",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 4
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Wealth & Asset Management",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 5
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Treasury & Capital Markets",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 6
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Risk Management",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 7
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Financial Crimes & AML",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 8
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Compliance & Regulatory",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 9
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Finance & Controllership",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 10
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Operations & Servicing",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 11
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Contact Center & Customer Care",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 12
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Data, Analytics & AI",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 13
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Cyber, Privacy & Resilience",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 14
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Technology & Engineering",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 15
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Enterprise Transformation Office",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 16
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Customer 360 across deposits, cards, lending, wealth",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 17
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Real-time fraud & scam detection",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 18
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "AML transaction monitoring & SAR automation",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 19
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Contact center next-best-action & assist",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 20
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Commercial credit underwriting automation",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 21
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Regulatory & financial close automation",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 22
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Credit & market risk modeling at scale",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 23
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Engineering productivity with code assist",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 24
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Data product governance & semantic layer",
+        "sourcePath": "datasets/tenant-inputs/active/first-capital-financial/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 25
+      }
+    ]
+  },
+  {
+    "tenantKey": "lakeshore-holdings",
+    "tenantDisplayName": "Lakeshore Holdings",
+    "totalAcceptedRecords": 457,
+    "totalQuarantinedRecords": 0,
+    "totalSkippedRows": 0,
+    "byDomain": {
+      "enterprise_profile": {
+        "sourceFiles": 1,
+        "sourceRows": 1,
+        "acceptedRecords": 1,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "business_functions": {
+        "sourceFiles": 1,
+        "sourceRows": 14,
+        "acceptedRecords": 14,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "org_ownership": {
+        "sourceFiles": 1,
+        "sourceRows": 8,
+        "acceptedRecords": 8,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "workforce_roles": {
+        "sourceFiles": 1,
+        "sourceRows": 10,
+        "acceptedRecords": 10,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "applications_systems": {
+        "sourceFiles": 1,
+        "sourceRows": 24,
+        "acceptedRecords": 24,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "data_assets_integrations": {
+        "sourceFiles": 1,
+        "sourceRows": 34,
+        "acceptedRecords": 34,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "infrastructure_platforms": {
+        "sourceFiles": 0,
+        "sourceRows": 0,
+        "acceptedRecords": 0,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "vendors_contracts": {
+        "sourceFiles": 1,
+        "sourceRows": 19,
+        "acceptedRecords": 19,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "spend_value": {
+        "sourceFiles": 1,
+        "sourceRows": 85,
+        "acceptedRecords": 85,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "programs_initiatives": {
+        "sourceFiles": 1,
+        "sourceRows": 15,
+        "acceptedRecords": 15,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "ai_automation_use_cases": {
+        "sourceFiles": 1,
+        "sourceRows": 8,
+        "acceptedRecords": 8,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "risks_controls": {
+        "sourceFiles": 1,
+        "sourceRows": 10,
+        "acceptedRecords": 10,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "relationships": {
+        "sourceFiles": 1,
+        "sourceRows": 199,
+        "acceptedRecords": 199,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "evidence_sources": {
+        "sourceFiles": 1,
+        "sourceRows": 10,
+        "acceptedRecords": 10,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "metrics_outcomes": {
+        "sourceFiles": 1,
+        "sourceRows": 12,
+        "acceptedRecords": 12,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "industry_context_patterns": {
+        "sourceFiles": 1,
+        "sourceRows": 4,
+        "acceptedRecords": 4,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "expert_lenses": {
+        "sourceFiles": 1,
+        "sourceRows": 4,
+        "acceptedRecords": 4,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "service_scope_managed_services": {
+        "sourceFiles": 0,
+        "sourceRows": 0,
+        "acceptedRecords": 0,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "operational_process_evidence": {
+        "sourceFiles": 0,
+        "sourceRows": 0,
+        "acceptedRecords": 0,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      }
+    },
+    "sampleObjects": [
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Lakeshore Holdings",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_01_enterprise_profile.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Corporate Finance and Treasury",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Corporate HR and Talent",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 3
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Corporate Legal and Compliance",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 4
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Investments and Portfolio Management",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 5
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Corporate IT",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 6
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Corporate Innovation IT and Data AI",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 7
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Northline Logistics Operations",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 8
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Northline Local IT",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 9
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Brightmark Client Delivery",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 10
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Brightmark Local IT",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 11
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Forge & Field Commercial and Supply Chain",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 12
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Forge & Field Local IT",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 13
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Great Lakes Pantry Service Operations",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 14
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Great Lakes Pantry Local IT",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 15
+      },
+      {
+        "domain": "org_ownership",
+        "objectType": "org_owner",
+        "name": "Group CIO Office",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_03_org_ownership.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "org_ownership",
+        "objectType": "org_owner",
+        "name": "Corporate Platforms",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_03_org_ownership.csv",
+        "rowNumber": 3
+      },
+      {
+        "domain": "org_ownership",
+        "objectType": "org_owner",
+        "name": "Corporate Innovation IT and Data AI",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_03_org_ownership.csv",
+        "rowNumber": 4
+      },
+      {
+        "domain": "org_ownership",
+        "objectType": "org_owner",
+        "name": "Information Security",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_03_org_ownership.csv",
+        "rowNumber": 5
+      },
+      {
+        "domain": "org_ownership",
+        "objectType": "org_owner",
+        "name": "Northline Local IT",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_03_org_ownership.csv",
+        "rowNumber": 6
+      },
+      {
+        "domain": "org_ownership",
+        "objectType": "org_owner",
+        "name": "Brightmark Local IT",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_03_org_ownership.csv",
+        "rowNumber": 7
+      },
+      {
+        "domain": "org_ownership",
+        "objectType": "org_owner",
+        "name": "Forge & Field Local IT",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_03_org_ownership.csv",
+        "rowNumber": 8
+      },
+      {
+        "domain": "org_ownership",
+        "objectType": "org_owner",
+        "name": "Great Lakes Pantry Local IT",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_03_org_ownership.csv",
+        "rowNumber": 9
+      },
+      {
+        "domain": "workforce_roles",
+        "objectType": "workforce_role",
+        "name": "Corporate finance analyst",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_04_workforce_personas.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "workforce_roles",
+        "objectType": "workforce_role",
+        "name": "Corporate HR operations specialist",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-holdings/current/enterprise-pack/templates/V6_04_workforce_personas.csv",
+        "rowNumber": 3
+      }
+    ]
+  },
+  {
+    "tenantKey": "lakeshore-industries",
+    "tenantDisplayName": "Lakeshore Industries",
+    "totalAcceptedRecords": 3040,
+    "totalQuarantinedRecords": 0,
+    "totalSkippedRows": 30,
+    "byDomain": {
+      "enterprise_profile": {
+        "sourceFiles": 4,
+        "sourceRows": 16,
+        "acceptedRecords": 16,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 8
+      },
+      "business_functions": {
+        "sourceFiles": 2,
+        "sourceRows": 96,
+        "acceptedRecords": 96,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 37
+      },
+      "org_ownership": {
+        "sourceFiles": 2,
+        "sourceRows": 116,
+        "acceptedRecords": 116,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 108
+      },
+      "workforce_roles": {
+        "sourceFiles": 2,
+        "sourceRows": 82,
+        "acceptedRecords": 82,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 60
+      },
+      "applications_systems": {
+        "sourceFiles": 2,
+        "sourceRows": 152,
+        "acceptedRecords": 152,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "data_assets_integrations": {
+        "sourceFiles": 2,
+        "sourceRows": 82,
+        "acceptedRecords": 82,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "infrastructure_platforms": {
+        "sourceFiles": 2,
+        "sourceRows": 128,
+        "acceptedRecords": 128,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "vendors_contracts": {
+        "sourceFiles": 2,
+        "sourceRows": 96,
+        "acceptedRecords": 96,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 77
+      },
+      "spend_value": {
+        "sourceFiles": 4,
+        "sourceRows": 111,
+        "acceptedRecords": 111,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 95
+      },
+      "programs_initiatives": {
+        "sourceFiles": 2,
+        "sourceRows": 36,
+        "acceptedRecords": 36,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "ai_automation_use_cases": {
+        "sourceFiles": 2,
+        "sourceRows": 36,
+        "acceptedRecords": 36,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 28
+      },
+      "risks_controls": {
+        "sourceFiles": 2,
+        "sourceRows": 48,
+        "acceptedRecords": 48,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "relationships": {
+        "sourceFiles": 6,
+        "sourceRows": 1045,
+        "acceptedRecords": 1039,
+        "quarantinedRecords": 0,
+        "skippedRows": 6,
+        "duplicateNames": 502
+      },
+      "evidence_sources": {
+        "sourceFiles": 4,
+        "sourceRows": 424,
+        "acceptedRecords": 424,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 368
+      },
+      "metrics_outcomes": {
+        "sourceFiles": 2,
+        "sourceRows": 384,
+        "acceptedRecords": 384,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 148
+      },
+      "industry_context_patterns": {
+        "sourceFiles": 2,
+        "sourceRows": 24,
+        "acceptedRecords": 0,
+        "quarantinedRecords": 0,
+        "skippedRows": 24,
+        "duplicateNames": 0
+      },
+      "expert_lenses": {
+        "sourceFiles": 2,
+        "sourceRows": 18,
+        "acceptedRecords": 18,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "service_scope_managed_services": {
+        "sourceFiles": 2,
+        "sourceRows": 64,
+        "acceptedRecords": 64,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 56
+      },
+      "operational_process_evidence": {
+        "sourceFiles": 2,
+        "sourceRows": 112,
+        "acceptedRecords": 112,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 98
+      }
+    },
+    "sampleObjects": [
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Lakeshore Holdings",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Northline Supply Chain",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 3
+      },
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Brightmark Marketing Services",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 4
+      },
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Forge & Field Consumer Products",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 5
+      },
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Great Lakes Pantry Services",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 6
+      },
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "HarborPoint Packaging Group",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 7
+      },
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Riverton Components & Field Services",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 8
+      },
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Keystone Industrial Services",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_00_portfolio_entity_registry.csv",
+        "rowNumber": 9
+      },
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Lakeshore Holdings",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Northline Supply Chain",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 3
+      },
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Brightmark Marketing Services",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 4
+      },
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Forge & Field Consumer Products",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 5
+      },
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Great Lakes Pantry Services",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 6
+      },
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "HarborPoint Packaging Group",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 7
+      },
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Riverton Components & Field Services",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 8
+      },
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Keystone Industrial Services",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_01_enterprise_profile.csv",
+        "rowNumber": 9
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Corporate Treasury",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Finance and Controller",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "rowNumber": 3
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "FP&A and Business Finance",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "rowNumber": 4
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Procurement and Supplier Management",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "rowNumber": 5
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Shared HR Operations",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "rowNumber": 6
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Legal and Compliance",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "rowNumber": 7
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Cybersecurity and Identity",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "rowNumber": 8
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Enterprise Applications",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "rowNumber": 9
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Data and Analytics",
+        "sourcePath": "datasets/tenant-inputs/active/lakeshore-industries/current/holdco-pack/V7_02_business_functions.csv",
+        "rowNumber": 10
+      }
+    ]
+  },
+  {
+    "tenantKey": "meridian-health",
+    "tenantDisplayName": "Meridian Health",
+    "totalAcceptedRecords": 4078,
+    "totalQuarantinedRecords": 0,
+    "totalSkippedRows": 19,
+    "byDomain": {
+      "enterprise_profile": {
+        "sourceFiles": 4,
+        "sourceRows": 4,
+        "acceptedRecords": 4,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 2
+      },
+      "business_functions": {
+        "sourceFiles": 3,
+        "sourceRows": 39,
+        "acceptedRecords": 39,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 9
+      },
+      "org_ownership": {
+        "sourceFiles": 3,
+        "sourceRows": 87,
+        "acceptedRecords": 87,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 31
+      },
+      "workforce_roles": {
+        "sourceFiles": 3,
+        "sourceRows": 26,
+        "acceptedRecords": 26,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 6
+      },
+      "applications_systems": {
+        "sourceFiles": 3,
+        "sourceRows": 192,
+        "acceptedRecords": 192,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 76
+      },
+      "data_assets_integrations": {
+        "sourceFiles": 3,
+        "sourceRows": 432,
+        "acceptedRecords": 432,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 321
+      },
+      "infrastructure_platforms": {
+        "sourceFiles": 1,
+        "sourceRows": 4,
+        "acceptedRecords": 4,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "vendors_contracts": {
+        "sourceFiles": 3,
+        "sourceRows": 109,
+        "acceptedRecords": 109,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 11
+      },
+      "spend_value": {
+        "sourceFiles": 4,
+        "sourceRows": 202,
+        "acceptedRecords": 202,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 23
+      },
+      "programs_initiatives": {
+        "sourceFiles": 3,
+        "sourceRows": 170,
+        "acceptedRecords": 170,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 70
+      },
+      "ai_automation_use_cases": {
+        "sourceFiles": 3,
+        "sourceRows": 156,
+        "acceptedRecords": 156,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 95
+      },
+      "risks_controls": {
+        "sourceFiles": 3,
+        "sourceRows": 405,
+        "acceptedRecords": 405,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 332
+      },
+      "relationships": {
+        "sourceFiles": 5,
+        "sourceRows": 1766,
+        "acceptedRecords": 1749,
+        "quarantinedRecords": 0,
+        "skippedRows": 17,
+        "duplicateNames": 128
+      },
+      "evidence_sources": {
+        "sourceFiles": 4,
+        "sourceRows": 140,
+        "acceptedRecords": 140,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 121
+      },
+      "metrics_outcomes": {
+        "sourceFiles": 3,
+        "sourceRows": 138,
+        "acceptedRecords": 138,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 22
+      },
+      "industry_context_patterns": {
+        "sourceFiles": 3,
+        "sourceRows": 199,
+        "acceptedRecords": 197,
+        "quarantinedRecords": 0,
+        "skippedRows": 2,
+        "duplicateNames": 91
+      },
+      "expert_lenses": {
+        "sourceFiles": 3,
+        "sourceRows": 15,
+        "acceptedRecords": 15,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 6
+      },
+      "service_scope_managed_services": {
+        "sourceFiles": 1,
+        "sourceRows": 3,
+        "acceptedRecords": 3,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 1
+      },
+      "operational_process_evidence": {
+        "sourceFiles": 1,
+        "sourceRows": 10,
+        "acceptedRecords": 10,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      }
+    },
+    "sampleObjects": [
+      {
+        "domain": "enterprise_profile",
+        "objectType": "tenant_profile",
+        "name": "Meridian Health System",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_01_enterprise_profile.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Enterprise Data and Analytics",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Clinical Operations",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 3
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Health Plan Operations",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 4
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Quality and Provider Performance",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 5
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Finance and Actuarial",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 6
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Contact Center and Member Experience",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 7
+      },
+      {
+        "domain": "business_functions",
+        "objectType": "business_function",
+        "name": "Technology Platform and Security",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_02_business_functions.csv",
+        "rowNumber": 8
+      },
+      {
+        "domain": "org_ownership",
+        "objectType": "org_owner",
+        "name": "Enterprise Data and Analytics",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "org_ownership",
+        "objectType": "org_owner",
+        "name": "Clinical Operations",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
+        "rowNumber": 3
+      },
+      {
+        "domain": "org_ownership",
+        "objectType": "org_owner",
+        "name": "Health Plan Operations",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
+        "rowNumber": 4
+      },
+      {
+        "domain": "org_ownership",
+        "objectType": "org_owner",
+        "name": "Quality and Provider Performance",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
+        "rowNumber": 5
+      },
+      {
+        "domain": "org_ownership",
+        "objectType": "org_owner",
+        "name": "Finance and Actuarial",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
+        "rowNumber": 6
+      },
+      {
+        "domain": "org_ownership",
+        "objectType": "org_owner",
+        "name": "Contact Center and Member Experience",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
+        "rowNumber": 7
+      },
+      {
+        "domain": "org_ownership",
+        "objectType": "org_owner",
+        "name": "Technology Platform and Security",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_03_org_ownership.csv",
+        "rowNumber": 8
+      },
+      {
+        "domain": "workforce_roles",
+        "objectType": "workforce_role",
+        "name": "Analytics managed-services report maintainer",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_04_workforce_personas.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "workforce_roles",
+        "objectType": "workforce_role",
+        "name": "Net-new analytics delivery resource",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_04_workforce_personas.csv",
+        "rowNumber": 3
+      },
+      {
+        "domain": "workforce_roles",
+        "objectType": "workforce_role",
+        "name": "Data steward / semantic owner",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_04_workforce_personas.csv",
+        "rowNumber": 4
+      },
+      {
+        "domain": "workforce_roles",
+        "objectType": "workforce_role",
+        "name": "Clinical quality analyst",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_04_workforce_personas.csv",
+        "rowNumber": 5
+      },
+      {
+        "domain": "workforce_roles",
+        "objectType": "workforce_role",
+        "name": "Finance analytics analyst",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_04_workforce_personas.csv",
+        "rowNumber": 6
+      },
+      {
+        "domain": "workforce_roles",
+        "objectType": "workforce_role",
+        "name": "Contact center supervisor",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_04_workforce_personas.csv",
+        "rowNumber": 7
+      },
+      {
+        "domain": "applications_systems",
+        "objectType": "application_system",
+        "name": "Epic Hyperspace",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_05_applications_systems.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "applications_systems",
+        "objectType": "application_system",
+        "name": "Epic Clarity",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_05_applications_systems.csv",
+        "rowNumber": 3
+      },
+      {
+        "domain": "applications_systems",
+        "objectType": "application_system",
+        "name": "Epic Caboodle",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_05_applications_systems.csv",
+        "rowNumber": 4
+      },
+      {
+        "domain": "applications_systems",
+        "objectType": "application_system",
+        "name": "On-prem SQL Server reporting marts",
+        "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/current-state-pack/templates/V6_05_applications_systems.csv",
+        "rowNumber": 5
+      }
+    ]
+  },
+  {
+    "tenantKey": "skyharbor-air",
+    "tenantDisplayName": "SkyHarbor Air",
+    "totalAcceptedRecords": 3457,
+    "totalQuarantinedRecords": 0,
+    "totalSkippedRows": 248,
+    "byDomain": {
+      "enterprise_profile": {
+        "sourceFiles": 4,
+        "sourceRows": 4,
+        "acceptedRecords": 3,
+        "quarantinedRecords": 0,
+        "skippedRows": 1,
+        "duplicateNames": 2
+      },
+      "business_functions": {
+        "sourceFiles": 3,
+        "sourceRows": 92,
+        "acceptedRecords": 92,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 6
+      },
+      "org_ownership": {
+        "sourceFiles": 3,
+        "sourceRows": 284,
+        "acceptedRecords": 284,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 77
+      },
+      "workforce_roles": {
+        "sourceFiles": 2,
+        "sourceRows": 12,
+        "acceptedRecords": 12,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 6
+      },
+      "applications_systems": {
+        "sourceFiles": 3,
+        "sourceRows": 626,
+        "acceptedRecords": 626,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 13
+      },
+      "data_assets_integrations": {
+        "sourceFiles": 3,
+        "sourceRows": 570,
+        "acceptedRecords": 570,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 35
+      },
+      "infrastructure_platforms": {
+        "sourceFiles": 2,
+        "sourceRows": 691,
+        "acceptedRecords": 691,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "vendors_contracts": {
+        "sourceFiles": 3,
+        "sourceRows": 140,
+        "acceptedRecords": 140,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 79
+      },
+      "spend_value": {
+        "sourceFiles": 4,
+        "sourceRows": 192,
+        "acceptedRecords": 24,
+        "quarantinedRecords": 0,
+        "skippedRows": 168,
+        "duplicateNames": 9
+      },
+      "programs_initiatives": {
+        "sourceFiles": 3,
+        "sourceRows": 74,
+        "acceptedRecords": 14,
+        "quarantinedRecords": 0,
+        "skippedRows": 60,
+        "duplicateNames": 0
+      },
+      "ai_automation_use_cases": {
+        "sourceFiles": 3,
+        "sourceRows": 46,
+        "acceptedRecords": 46,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 35
+      },
+      "risks_controls": {
+        "sourceFiles": 2,
+        "sourceRows": 56,
+        "acceptedRecords": 56,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "relationships": {
+        "sourceFiles": 4,
+        "sourceRows": 225,
+        "acceptedRecords": 208,
+        "quarantinedRecords": 0,
+        "skippedRows": 17,
+        "duplicateNames": 133
+      },
+      "evidence_sources": {
+        "sourceFiles": 3,
+        "sourceRows": 125,
+        "acceptedRecords": 125,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 120
+      },
+      "metrics_outcomes": {
+        "sourceFiles": 4,
+        "sourceRows": 136,
+        "acceptedRecords": 136,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 12
+      },
+      "industry_context_patterns": {
+        "sourceFiles": 2,
+        "sourceRows": 9,
+        "acceptedRecords": 7,
+        "quarantinedRecords": 0,
+        "skippedRows": 2,
+        "duplicateNames": 0
+      },
+      "expert_lenses": {
+        "sourceFiles": 2,
+        "sourceRows": 10,
+        "acceptedRecords": 10,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 5
+      },
+      "service_scope_managed_services": {
+        "sourceFiles": 1,
+        "sourceRows": 3,
+        "acceptedRecords": 3,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      },
+      "operational_process_evidence": {
+        "sourceFiles": 2,
+        "sourceRows": 410,
+        "acceptedRecords": 410,
+        "quarantinedRecords": 0,
+        "skippedRows": 0,
+        "duplicateNames": 0
+      }
+    },
+    "sampleObjects": [
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "ServiceNow Now Assist",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 2
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Claude Code",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 3
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "GitHub Copilot",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 4
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "GitHub Copilot",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 5
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Amazon Q",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 6
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Claude Code",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 7
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Salesforce Einstein",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 8
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "GitHub Copilot",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 9
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Claude Code",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 10
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Amazon Q",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 11
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "GitHub Copilot",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 12
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "GitHub Copilot",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 13
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Azure OpenAI app",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 14
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Claude Code",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 15
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Claude Code",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 16
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Custom RAG assistant",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 17
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "GitHub Copilot",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 18
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Salesforce Einstein",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 19
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Claude Code",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 20
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Azure OpenAI app",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 21
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "ServiceNow Now Assist",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 22
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Claude Code",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 23
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Salesforce Einstein",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 24
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Claude Code",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 25
+      },
+      {
+        "domain": "ai_automation_use_cases",
+        "objectType": "ai_automation_use_case",
+        "name": "Amazon Q",
+        "sourcePath": "datasets/tenant-inputs/active/skyharbor-air/current/rich-substrate-pack/csv/ai-tooling.csv",
+        "rowNumber": 26
+      }
+    ]
+  }
+]
