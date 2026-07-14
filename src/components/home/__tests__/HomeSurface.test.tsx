@@ -556,7 +556,7 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(screen.queryByText("Canonical Fact Store")).not.toBeInTheDocument();
   });
 
-  it("renders Home data quality, coverage, and answerability without candidate facts by default", () => {
+  it("renders Context Confidence as a client-facing trust story with diagnostics collapsed", () => {
     render(
       <HomeSurface
         clientKey="apexretail"
@@ -567,26 +567,29 @@ describe("HomeSurface — Explorer context browser", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Data Quality/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Context Confidence/i }),
+    );
 
-    expect(screen.getByTestId("home-data-quality-panel")).toBeInTheDocument();
     expect(
       screen.getByText("What Home can trust right now"),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("Source Coverage").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Candidate Coverage").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Evidence Strength").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Relationship Coverage").length).toBeGreaterThan(
-      0,
+    expect(
+      screen.getByText(/AbarVa has source-backed context across the major/i),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Enterprise context powers the platform")).toBeInTheDocument();
+    expect(screen.getAllByText("Applications & Systems").length).toBeGreaterThan(0);
+    expect(
+      screen.getByText(/Shows the technology estate that enables or constrains/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/Intelligence \/ Moves \/ Source \/ Tower/i).length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByTestId("home-data-quality-panel")).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Show technical diagnostics/i }),
     );
-    expect(screen.getByText("Active / Candidate Status")).toBeInTheDocument();
-    expect(screen.getAllByText("Partial").length).toBeGreaterThan(0);
-    expect(
-      screen.getByText(/Candidate preview not active/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Default Home does not read candidate-only facts/i),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("home-data-quality-panel")).toBeInTheDocument();
     expect(
       screen.queryByText(/Candidate Preview — inactive data/),
     ).not.toBeInTheDocument();
@@ -627,7 +630,7 @@ describe("HomeSurface — Explorer context browser", () => {
     ).toBeInTheDocument();
   });
 
-  it("selects a context area from the Explorer tree and defaults the detail view to Summary", () => {
+  it("selects a context area from the Explorer tree and shows an executive story", () => {
     render(
       <HomeSurface
         clientKey="apexretail"
@@ -643,17 +646,16 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(
       screen.getByRole("heading", { name: "Vendors & Contracts", level: 1 }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
-    expect(screen.getByText("What is loaded")).toBeInTheDocument();
-    expect(screen.getByText("90 records")).toBeInTheDocument();
-    expect(screen.getAllByText("12 fields").length).toBeGreaterThan(0);
-    expect(screen.getByText(/Kyriba/)).toBeInTheDocument();
+    expect(screen.getByText("Executive Summary")).toBeInTheDocument();
+    expect(screen.getByText("What AbarVa knows")).toBeInTheDocument();
+    expect(screen.getByText("Why it matters")).toBeInTheDocument();
+    expect(screen.getByText("Questions this supports")).toBeInTheDocument();
+    expect(screen.getByText("Not yet supported")).toBeInTheDocument();
+    expect(screen.getByText("Key records")).toBeInTheDocument();
+    expect(screen.getAllByText(/Kyriba/).length).toBeGreaterThan(0);
   });
 
-  it("renders loaded rows as clean CXO-readable data without lineage clutter", () => {
+  it("renders the full loaded record table as clean CXO-readable data without lineage clutter", () => {
     render(
       <HomeSurface
         clientKey="apexretail"
@@ -665,12 +667,11 @@ describe("HomeSurface — Explorer context browser", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /Vendors & Contracts/i }),
     );
-    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
 
-    expect(screen.getByText("90 rows loaded")).toBeInTheDocument();
-    expect(screen.getByText("Kyriba")).toBeInTheDocument();
+    expect(screen.getByText(/Business-readable records loaded/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Kyriba").length).toBeGreaterThan(0);
     expect(screen.getByText("Treasury")).toBeInTheDocument();
-    expect(screen.getAllByText("Needs evidence").length).toBeGreaterThan(0);
+    expect(screen.getByText("Loaded")).toBeInTheDocument();
     expect(screen.queryByText("VND-001 - Kyriba")).not.toBeInTheDocument();
     expect(
       screen.queryByText("apex/vendors-contracts.csv"),
@@ -678,7 +679,7 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(screen.queryByText("synthetic demo")).not.toBeInTheDocument();
   });
 
-  it("resets to Summary when another Explorer node is selected", () => {
+  it("resets the record filters when another Explorer node is selected", () => {
     render(
       <HomeSurface
         clientKey="apexretail"
@@ -690,11 +691,10 @@ describe("HomeSurface — Explorer context browser", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /Vendors & Contracts/i }),
     );
-    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
-    expect(screen.getByRole("tab", { name: "Data" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
+    fireEvent.change(screen.getByLabelText("Search loaded records"), {
+      target: { value: "Kyriba" },
+    });
+    expect(screen.getByText("1 of 1 shown")).toBeInTheDocument();
 
     fireEvent.click(
       screen.getByRole("button", { name: /Applications & Systems/i }),
@@ -702,10 +702,7 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(
       screen.getByRole("heading", { name: "Applications & Systems", level: 1 }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "Summary" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
+    expect(screen.getAllByText("ERP Core").length).toBeGreaterThan(0);
   });
 
   it("formats raw numeric preview cells for CXO readability", () => {
@@ -735,13 +732,12 @@ describe("HomeSurface — Explorer context browser", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /Metrics & Outcomes/i }),
     );
-    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
 
-    expect(screen.getByText("$1M")).toBeInTheDocument();
+    expect(screen.getByText(/Run-rate savings/i)).toBeInTheDocument();
     expect(screen.queryByText("1000000")).not.toBeInTheDocument();
   });
 
-  it("renders Sources and Relationships as first-class selected-context views", () => {
+  it("keeps sources and relationships available as collapsed diagnostics", () => {
     render(
       <HomeSurface
         clientKey="apexretail"
@@ -753,16 +749,16 @@ describe("HomeSurface — Explorer context browser", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /Vendors & Contracts/i }),
     );
-    fireEvent.click(screen.getByRole("tab", { name: "Sources" }));
-    expect(screen.getByText("vendors contracts")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByText("Diagnostics, sources, gaps, and relationships"),
+    );
+    expect(screen.getAllByText("vendors contracts").length).toBeGreaterThan(0);
     expect(screen.queryByText("07 vendors contracts")).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("tab", { name: "Relationships" }));
-    expect(screen.getByText("Kyriba")).toBeInTheDocument();
+    expect(screen.getAllByText("Kyriba").length).toBeGreaterThan(0);
     expect(screen.getByText("Treasury")).toBeInTheDocument();
   });
 
-  it("explains profile quality, gaps, and relationships in plain English", () => {
+  it("explains each dimension in plain English before showing records", () => {
     render(
       <HomeSurface
         clientKey="apexretail"
@@ -773,36 +769,19 @@ describe("HomeSurface — Explorer context browser", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Functions/i }));
 
-    expect(screen.getByText("What is loaded")).toBeInTheDocument();
-    expect(screen.getByText("1 records")).toBeInTheDocument();
-    expect(screen.getByText("What needs work")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
     expect(
-      screen.getByText(/this is the loaded business data for Functions/i),
+      screen.getByText(/how the enterprise is organized/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("$7.12B")).toBeInTheDocument();
-    expect(screen.getByText("11,800")).toBeInTheDocument();
+    expect(screen.getByText("Why it matters")).toBeInTheDocument();
+    expect(screen.getByText("Key records")).toBeInTheDocument();
     expect(screen.queryByText("7120000000")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Gaps" }));
+    fireEvent.click(
+      screen.getByText("Diagnostics, sources, gaps, and relationships"),
+    );
     expect(
-      screen.getByText(/gaps are client-to-complete fields/i),
+      screen.getByText(/Parent entity/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/1 field missing/i)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("tab", { name: "Sources" }));
-    expect(
-      screen.getByText(/sources show where this context came from/i),
-    ).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("tab", { name: "Relationships" }));
-    expect(
-      screen.getByText(
-        /relationships are mapped links between business objects/i,
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/only a profile anchor/i)).toBeInTheDocument();
     expect(screen.queryByText("7120000000")).not.toBeInTheDocument();
     expect(screen.queryByText("11800")).not.toBeInTheDocument();
   });

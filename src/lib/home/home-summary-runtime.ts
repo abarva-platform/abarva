@@ -11,6 +11,7 @@ import {
   type HomeSummarySnapshot,
   type HomeSummarySnapshotMode,
 } from "@/lib/home/home-summary-snapshot";
+import { applyHomeSummaryClaudeRender } from "@/lib/home/home-summary-claude-render";
 import type { HomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
 
 const HOME_CONTEXT_DOMAINS = [
@@ -59,9 +60,13 @@ export async function buildHomeRuntimeSummarySnapshot(
       englishSummary: options.englishSummary ?? null,
       generatedAt: options.generatedAt,
     });
+  const renderForHome = (snapshot: HomeSummarySnapshot) =>
+    mode === "candidate_preview"
+      ? snapshot
+      : applyHomeSummaryClaudeRender({ snapshot });
 
   if (!tenantKey || mode === "candidate_preview") {
-    return fallback();
+    return renderForHome(fallback());
   }
 
   const request = {
@@ -86,17 +91,19 @@ export async function buildHomeRuntimeSummarySnapshot(
     !moduleContextExplanation ||
     moduleContext.sourceMode !== "active_tenant_access"
   ) {
-    return fallback();
+    return renderForHome(fallback());
   }
 
-  return buildHomeSummarySnapshotFromModuleContext({
-    repoRoot: options.repoRoot,
-    tenantId: options.tenantId ?? null,
-    tenantKey,
-    displayName: options.displayName,
-    industry: options.industry,
-    moduleContext,
-    moduleContextExplanation,
-    generatedAt: options.generatedAt,
-  });
+  return renderForHome(
+    buildHomeSummarySnapshotFromModuleContext({
+      repoRoot: options.repoRoot,
+      tenantId: options.tenantId ?? null,
+      tenantKey,
+      displayName: options.displayName,
+      industry: options.industry,
+      moduleContext,
+      moduleContextExplanation,
+      generatedAt: options.generatedAt,
+    }),
+  );
 }

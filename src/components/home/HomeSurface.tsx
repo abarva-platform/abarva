@@ -4,7 +4,7 @@
 // Home KNOW endpoint and renders the shared HomeKnowResponse contract. It does
 // not classify intent, retrieve data, or render Intelligence experts locally.
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
 import type { ChatMessage } from "@/components/agent/AgentDock";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
@@ -20,12 +20,16 @@ import type {
 import { demoSafeClientText } from "@/lib/client-config";
 import type {
   HomeV6BrowserPreview,
+  HomeV6BrowserSourceRow,
   HomeV6ContextBrowser,
 } from "@/lib/home/v6-context-browser";
 import type { AdminSetupControlResponse } from "@/lib/admin/setup-control";
 import type { HomeDataQualityModel } from "@/lib/home/home-data-quality";
 import type { HomeEnglishSummary } from "@/lib/home/home-english-summary";
-import type { HomeSummarySnapshot } from "@/lib/home/home-summary-snapshot";
+import type {
+  HomeKnowledgeLayerVisualSpec,
+  HomeSummarySnapshot,
+} from "@/lib/home/home-summary-snapshot";
 
 const CSS = `
 .homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);height:100%;min-height:0;overflow:hidden;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
@@ -368,15 +372,90 @@ const HX3_CSS = `
 .homex .hx3-statusCard{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:16px}.homex .hx3-statusLine{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:13px;font-weight:800}.homex .hx3-dot{width:9px;height:9px;border-radius:50%;background:var(--green);display:inline-block}.homex .hx3-statusMeta{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:12px;color:#42506b;font-size:12px}.homex .hx3-statusMeta span::before{content:'•';margin-right:8px;color:#9aa4b6}.homex .hx3-statusMeta span:first-child::before{content:'';margin:0}.homex .hx3-hair{height:1px;background:var(--line);margin:34px 0 24px}.homex .hx3-section{margin-top:28px}.homex .hx3-sectionHead{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:14px}.homex .hx3-section h2,.homex .hx3-sectionTitle{margin:0;font-size:20px;letter-spacing:-.015em;color:var(--ink)}.homex .hx3-section p{margin:5px 0 0;color:#657089;line-height:1.5}.homex .hx3-eyebrow{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:#9c7b3f;font-weight:800;margin-bottom:12px}
 .homex .hx3-snapshot{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.homex .hx3-card{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:18px;min-width:0}.homex .hx3-cardTop{display:flex;align-items:center;gap:14px}.homex .hx3-cardIcon{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;background:#eaf2ff;color:#0b5fd3}.homex .hx3-card:nth-child(2) .hx3-cardIcon{background:#edf9f2;color:#168055}.homex .hx3-card:nth-child(3) .hx3-cardIcon{background:#f4efff;color:#6b46c1}.homex .hx3-card:nth-child(4) .hx3-cardIcon{background:#fff3e3;color:#c06812}.homex .hx3-cardIcon svg{width:21px;height:21px}.homex .hx3-card strong{display:block;font-size:21px;line-height:1.05;color:var(--ink)}.homex .hx3-card span{display:block;margin-top:6px;color:#42506b;font-size:12.5px;font-weight:700}.homex .hx3-card p{font-size:12px;margin-top:4px;color:#657089}
 .homex .hx3-actions,.homex .hx3-contextCards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.homex .hx3-action{display:grid;grid-template-columns:48px minmax(0,1fr) 18px;gap:14px;align-items:center;text-align:left;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:17px;cursor:pointer;color:inherit;font:inherit}.homex .hx3-actionIcon{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;background:#eaf2ff;color:#0b5fd3}.homex .hx3-action:nth-child(2) .hx3-actionIcon{background:#edf9f2;color:#168055}.homex .hx3-action:nth-child(3) .hx3-actionIcon{background:#f4efff;color:#6b46c1}.homex .hx3-action:nth-child(4) .hx3-actionIcon{background:#fff3e3;color:#c06812}.homex .hx3-action strong{display:block;color:var(--ink);font-size:14px}.homex .hx3-action span:last-child{color:#0b5fd3;font-size:20px}.homex .hx3-action p{font-size:12.5px;margin-top:4px;color:#42506b}.homex .hx3-tabs{display:flex;gap:28px;border-bottom:1px solid var(--line);margin-top:12px}.homex .hx3-tab{border:0;background:transparent;padding:13px 0 12px;color:#4c5b76;font:inherit;font-weight:750;cursor:pointer;border-bottom:2px solid transparent}.homex .hx3-tab[aria-selected="true"]{color:#0b346f;border-color:#0b5fd3}.homex .hx3-tableWrap{border:1px solid var(--line);border-radius:12px;overflow:auto;background:#fff;box-shadow:var(--shadow);margin-top:12px}.homex .hx3-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:720px}.homex .hx3-table th{background:#f8fafc;color:#657089;text-align:left;font-size:11px;padding:12px;border-bottom:1px solid var(--line);white-space:nowrap}.homex .hx3-table td{padding:12px;border-bottom:1px solid var(--line-2);color:#1c2940;vertical-align:top}.homex .hx3-table tr:last-child td{border-bottom:0}.homex .hx3-contextCard{text-align:left;border:0;background:transparent;border-radius:0;padding:0 0 12px;cursor:pointer;color:inherit}.homex .hx3-contextCard strong{display:block;color:#0c1a3a;font-size:14px}.homex .hx3-contextCard small{display:block;color:#657089;font-size:12px;margin-top:3px}.homex .hx3-contextCard[aria-pressed="true"] strong{color:#0b5fd3}.homex .hx3-empty{border:1px dashed var(--line);border-radius:12px;background:#fbfcff;padding:16px;color:#657089}.homex .hx3-chipRow{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.homex .hx3-chip{border:1px solid var(--line);border-radius:999px;background:#fff;padding:6px 10px;color:#42506b;font-size:12px}.homex .hx3-detailHeader{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:start}.homex .hx3-detailActions{display:flex;gap:10px;align-items:center}.homex .hx3-btn{border:1px solid var(--line);border-radius:9px;background:#fff;color:#0c1a3a;padding:10px 13px;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}.homex .hx3-btn.primary{background:#071526;border-color:#071526;color:#fff}.homex .hx3-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.homex .hx3-list{display:grid;gap:9px;margin:0;padding:0;list-style:none}.homex .hx3-list li{position:relative;padding-left:18px;color:#27364f;line-height:1.45}.homex .hx3-list li::before{content:'✓';position:absolute;left:0;color:#168055;font-weight:900}.homex .hx3-warn li::before{content:'–';color:#b7791f}.homex .hx3-tech{margin-top:28px;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}.homex .hx3-tech summary{cursor:pointer;padding:16px 18px;font-weight:800;color:#0c1a3a}.homex .hx3-techBody{border-top:1px solid var(--line);padding:16px}.homex .hx3-gapCard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px}.homex .hx3-sourceCard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px}.homex .hx3-relRow{display:grid;grid-template-columns:28px minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px}.homex .hx3-relNode{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#eaf7f1;color:#168055;font-weight:900}.homex .hx3-relEdge{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#657089}
+.homex .hx3-brief{border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#fff,#fbfcff);box-shadow:var(--shadow);padding:24px}.homex .hx3-brief h2{font-size:24px}.homex .hx3-briefLead{font-size:16px;color:#31415f;line-height:1.6;margin-top:8px;max-width:820px}.homex .hx3-storyGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}.homex .hx3-storyCard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:16px}.homex .hx3-storyCard h3{margin:0 0 10px;font-size:14px;color:var(--ink)}.homex .hx3-storyCard p{margin:0;color:#42506b;line-height:1.55}.homex .hx3-storyCard ul{display:grid;gap:8px;margin:0;padding:0;list-style:none}.homex .hx3-storyCard li{position:relative;padding-left:18px;color:#31415f;line-height:1.45}.homex .hx3-storyCard li::before{content:'✓';position:absolute;left:0;color:#168055;font-weight:900}.homex .hx3-storyCard.warn li::before{content:'–';color:#b7791f}.homex .hx3-nextAction{margin-top:16px;border-left:4px solid var(--green);background:#f2fbf6;border-radius:10px;padding:14px 16px;color:#173d2d;font-weight:750}.homex .hx3-recordControls{display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,1fr) minmax(220px,1.2fr);gap:10px;margin:14px 0}.homex .hx3-recordControls select,.homex .hx3-recordControls input{width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 12px;font:inherit;font-size:12.5px;color:#25344e}.homex .hx3-recordCount{font-size:12px;color:#657089;margin-top:8px}.homex .hx3-knowledgeVisual{border:1px solid var(--line);border-radius:18px;background:radial-gradient(circle at 50% 50%,#eef7ff 0,#fbfcff 44%,#fff 100%);box-shadow:var(--shadow);padding:24px;overflow:hidden}.homex .hx3-knowledgeMap{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;min-height:330px}.homex .hx3-knowledgeCenter{grid-column:2;grid-row:2;align-self:center;justify-self:center;width:220px;height:158px;border-radius:24px;background:#071526;color:#fff;display:grid;place-items:center;text-align:center;padding:22px;box-shadow:0 18px 44px rgba(7,21,38,.28);z-index:2}.homex .hx3-knowledgeCenter strong{display:block;font-size:20px;line-height:1.12}.homex .hx3-knowledgeCenter span{display:block;margin-top:8px;color:#c7d9f6;font-size:12px;line-height:1.35}.homex .hx3-knowledgeNode{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.92);padding:14px;min-height:98px;box-shadow:0 8px 24px rgba(12,26,58,.05);z-index:1}.homex .hx3-knowledgeNode strong{display:block;color:#0c1a3a;font-size:14px}.homex .hx3-knowledgeNode span{display:block;color:#657089;font-size:12px;line-height:1.4;margin-top:6px}.homex .hx3-knowledgeNode:nth-child(2),.homex .hx3-knowledgeNode:nth-child(5){background:#f5fbf7}.homex .hx3-knowledgeNode:nth-child(3),.homex .hx3-knowledgeNode:nth-child(6){background:#f5f8ff}.homex .hx3-knowledgeFlow{margin-top:14px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.homex .hx3-flowStep{border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px;font-size:12px;color:#42506b}.homex .hx3-flowStep strong{display:block;color:#0c1a3a;margin-bottom:4px}.homex .hx3-trustHero{border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:var(--shadow);padding:24px}.homex .hx3-trustCards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:18px}.homex .hx3-trustCard{border:1px solid var(--line);border-radius:12px;background:#fbfcff;padding:16px}.homex .hx3-trustCard strong{display:block;font-size:22px;color:#0c1a3a}.homex .hx3-trustCard span{display:block;margin-top:6px;font-size:12px;color:#657089;font-weight:750}.homex .hx3-trustLists{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}.homex .hx3-mutedDetails{margin-top:16px}.homex .hx3-mutedDetails summary{color:#657089;font-size:12.5px}
 .homex .hx2-avaLauncher{right:22px;bottom:22px;background:#071526;padding:11px 17px 11px 12px;border-radius:999px;box-shadow:0 12px 32px rgba(12,26,58,.34)}.homex .hx2-avaLauncherMark{width:26px;height:26px;border-radius:8px;background:rgba(76,155,232,.24);color:#42bff3;font-size:12px}.homex .hx2-rail{right:22px;bottom:22px;width:376px;max-height:76vh;border-radius:15px;border-color:var(--line);box-shadow:0 24px 60px rgba(13,21,38,.3)}.homex .hx2-rail.expanded{top:78px;bottom:22px;right:22px;left:auto;width:min(920px,calc(100vw - 300px));min-width:min(720px,calc(100vw - 44px))}.homex .hx2-avaMark{border-radius:999px;background:#f2f4f8;color:#0c1a3a}.homex .hx2-answerBox{background:#edf9f2;border-color:#ccebd8}.homex .hx2-answerBox.warn{background:#fff8eb;border-color:#ead8b6}.homex .hx2-suggestions button{border:1px solid var(--line);border-radius:9px;background:#fff;color:#0c1a3a;padding:11px 12px;cursor:pointer}.homex .hx2-ask button{border:0;border-radius:8px;background:#071526;color:#fff}.homex .hx2-ask input{border-color:var(--line)}
+.homex .hx3-knowledgeMeta{display:flex;justify-content:flex-end;margin-bottom:10px}.homex .hx3-knowledgeMeta span{border:1px solid var(--line);border-radius:999px;background:#fff;padding:5px 9px;color:#657089;font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}.homex .hx3-knowledgeNode.enterprise{border-color:#bdd7ff}.homex .hx3-knowledgeNode.technology{border-color:#c5d7ff;background:#f5f8ff}.homex .hx3-knowledgeNode.commercial{border-color:#efd6a6;background:#fffbf1}.homex .hx3-knowledgeNode.data{border-color:#afe1d1;background:#f5fbf7}.homex .hx3-knowledgeNode.delivery{border-color:#d6c6ff;background:#faf7ff}.homex .hx3-knowledgeNode.risk{border-color:#f1c2b8;background:#fff7f5}.homex .hx3-knowledgeNode.value{border-color:#bfdab8;background:#f8fff6}.homex .hx3-knowledgeNode em{display:block;margin-top:8px;color:#0a6b52;font-style:normal;font-size:10.5px;font-weight:850;letter-spacing:.05em;text-transform:uppercase}.homex .hx3-knowledgeCaveat{margin:14px 0 0;border-left:4px solid #d58a1f;background:#fff9ef;border-radius:10px;padding:12px 14px;color:#5f451f;font-size:12.5px;line-height:1.5}.homex .hx3-trustCards{grid-template-columns:repeat(5,minmax(0,1fr))}
 @media(max-width:1180px){.homex .hx3-page{max-width:none}.homex .hx3-snapshot,.homex .hx3-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx3-top{grid-template-columns:1fr}.homex .hx3-statusCard{max-width:360px}.homex .hx2-rail.expanded{left:20px;right:20px;width:auto;min-width:0}}
-@media(max-width:860px){.homex .hx3-shell{grid-template-columns:1fr}.homex .hx3-side{position:static;min-height:0;border-right:0;border-bottom:1px solid var(--line);display:block}.homex .hx3-page{padding:24px 18px 96px}.homex .hx3-title{font-size:32px}.homex .hx3-snapshot,.homex .hx3-actions,.homex .hx3-contextCards,.homex .hx3-grid2{grid-template-columns:1fr}.homex .hx3-detailHeader{grid-template-columns:1fr}.homex .hx3-detailActions{flex-wrap:wrap}.homex .hx3-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx3-relEdge{grid-column:2}.homex .hx2-rail{left:12px;right:12px;width:auto}.homex .hx2-rail.expanded{left:12px;right:12px;top:72px}}
+@media(max-width:860px){.homex .hx3-shell{grid-template-columns:1fr}.homex .hx3-side{position:static;min-height:0;border-right:0;border-bottom:1px solid var(--line);display:block}.homex .hx3-page{padding:24px 18px 96px}.homex .hx3-title{font-size:32px}.homex .hx3-snapshot,.homex .hx3-actions,.homex .hx3-contextCards,.homex .hx3-grid2,.homex .hx3-storyGrid,.homex .hx3-recordControls,.homex .hx3-trustCards,.homex .hx3-trustLists,.homex .hx3-knowledgeMap,.homex .hx3-knowledgeFlow{grid-template-columns:1fr}.homex .hx3-knowledgeCenter{grid-column:auto;grid-row:auto;width:auto}.homex .hx3-detailHeader{grid-template-columns:1fr}.homex .hx3-detailActions{flex-wrap:wrap}.homex .hx3-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx3-relEdge{grid-column:2}.homex .hx2-rail{left:12px;right:12px;width:auto}.homex .hx2-rail.expanded{left:12px;right:12px;top:72px}}
 `;
 
 const EMPTY_DIMS: BindingDimension[] = [];
 
-type ExplorerTab = "summary" | "data" | "gaps" | "sources" | "relationships";
 type ExplorerTool = "data-quality" | null;
+
+type DimensionStory = {
+  headline: string;
+  summary: string;
+  knows: string[];
+  whyItMatters: string;
+  supportedQuestions: string[];
+  notYetSupported: string[];
+  nextAction: string;
+};
+
+type HomeContextAreaSnapshot = HomeSummarySnapshot["contextAreas"][number];
+
+const DIMENSION_PLATFORM_USAGE = [
+  {
+    dimension: "Functions",
+    purpose: "Shows how the enterprise is organized and where work happens.",
+    modules: "Intelligence / Moves / Tower",
+  },
+  {
+    dimension: "Applications & Systems",
+    purpose: "Shows the technology estate that enables or constrains the business.",
+    modules: "Intelligence / Moves / Source / Tower",
+  },
+  {
+    dimension: "Vendors & Contracts",
+    purpose:
+      "Shows who provides technology, services, platforms, and commercial commitments.",
+    modules: "Source / Intelligence / Tower",
+  },
+  {
+    dimension: "Data Assets & Integrations",
+    purpose:
+      "Shows whether the enterprise has the data foundation required for analytics, AI, automation, and reporting.",
+    modules: "Intelligence / Moves / Tower",
+  },
+  {
+    dimension: "Programs & Priorities",
+    purpose: "Shows what the enterprise is trying to change or improve.",
+    modules: "Moves / Intelligence / Tower",
+  },
+  {
+    dimension: "Risks & Controls",
+    purpose:
+      "Shows what can go wrong and what must be governed before decisions are made.",
+    modules: "Intelligence / Moves / Source / Tower",
+  },
+  {
+    dimension: "Metrics & Outcomes",
+    purpose: "Shows how success will be measured.",
+    modules: "Tower / Moves / Intelligence",
+  },
+] as const;
+
+type AreaDataRow = {
+  id: string;
+  dataSet: string;
+  record: string;
+  category: string;
+  ownerOrSystem: string;
+  status: string;
+  source: string;
+  filterValues: Record<string, string>;
+  searchText: string;
+};
+
+type AreaDataTable = {
+  rows: AreaDataRow[];
+  dataSetOptions: string[];
+  smartFilter: {
+    label: string;
+    options: string[];
+  } | null;
+};
 
 const TECHNICAL_STRING_FIELDS = new Set([
   "id",
@@ -840,6 +919,327 @@ function areaDescription(area: HomeExplorerArea): string {
   return `${shortMetric(area.rows)} records · source-backed`;
 }
 
+function storyForArea(
+  area: HomeExplorerArea,
+  tenantName: string,
+): DimensionStory {
+  const label = area.label;
+  const baseSummary = `${label} is available as source-backed enterprise context for ${tenantName}. Home uses it to explain what is known, what can be trusted, and what should be validated before the context is sent to another module.`;
+  const storyByArea: Record<string, Omit<DimensionStory, "headline">> = {
+    functions: {
+      summary:
+        "Shows how the enterprise is organized and where work happens.",
+      knows: [
+        "Major business and technology functions with executive ownership where loaded.",
+        "Capability themes such as operations, analytics, finance, experience, platform, and controls.",
+        "Which functions are ready for context browsing and which still need ownership or scope evidence.",
+      ],
+      whyItMatters:
+        "Intelligence uses this for strategy. Moves uses it for transformation scope. Source uses it for business demand. Tower uses it for ownership and outcome tracking.",
+      supportedQuestions: [
+        "Which functions are represented in the current context?",
+        "Who owns the major business capabilities where evidence is loaded?",
+        "Which functions should be involved before a Move, Source event, or Tower outcome is trusted?",
+      ],
+      notYetSupported: [
+        "Full organization design recommendations.",
+        "Budget or staffing conclusions unless those facts are separately loaded.",
+        "Claims that every function in the enterprise has been inventoried.",
+      ],
+      nextAction:
+        "Validate executive owners, business capabilities, and missing functions before using this as the operating model of record.",
+    },
+    applications: {
+      summary:
+        "Shows the technology estate that enables or constrains the business.",
+      knows: [
+        "Core systems and platforms loaded for the tenant, including current-state and legacy estate records.",
+        "Criticality, served business areas, and system categories where supplied.",
+        "Which systems can support application-level discussion and which need richer dependency evidence.",
+      ],
+      whyItMatters:
+        "Intelligence uses this for modernization. Moves uses it for solution design. Source uses it for vendor and service scope. Tower uses it for cost, risk, and outcome linkage.",
+      supportedQuestions: [
+        "Which systems are loaded and which are critical?",
+        "Where do legacy reporting, operational, or platform dependencies show up?",
+        "Which systems should be inspected before planning a Move or sourcing event?",
+      ],
+      notYetSupported: [
+        "A complete enterprise application rationalization decision.",
+        "Dependency-critical path analysis until relationship links are validated.",
+        "Future-state platform claims unless the record explicitly marks them as target state.",
+      ],
+      nextAction:
+        "Confirm all rows from the canonical systems template are present, then validate dependency and owner fields for the critical systems.",
+    },
+    vendors: {
+      summary:
+        "Shows who provides technology, services, platforms, and commercial commitments.",
+      knows: [
+        "Loaded vendors, contracts, service areas, commercial categories, and owners where available.",
+        "Which vendor facts are source-backed and which still require procurement or finance validation.",
+        "Where Source can continue the work with sourcing evidence rather than generic spend assumptions.",
+      ],
+      whyItMatters:
+        "Source uses this for sourcing and renegotiation. Intelligence uses it for spend strategy. Moves uses it for execution dependencies. Tower uses it for vendor value tracking.",
+      supportedQuestions: [
+        "Which vendors and contracts are loaded?",
+        "Which areas have enough evidence to inspect commercial posture?",
+        "What should Source review next before estimating outsourcing or vendor savings?",
+      ],
+      notYetSupported: [
+        "Enterprise-wide savings percentages without contract and baseline spend evidence.",
+        "Award recommendations or vendor scoring.",
+        "Realized value claims.",
+      ],
+      nextAction:
+        "Attach contract baselines, renewal dates, service scope, and spend bands before using this for sourcing recommendations.",
+    },
+    data: {
+      summary:
+        "Shows whether the enterprise has the data foundation required for analytics, AI, automation, and reporting.",
+      knows: [
+        "Loaded data assets and integration records, including systems of record and reporting or analytics platforms where supplied.",
+        "Which assets are current-state, target-state, or need workshop confirmation.",
+        "Where data foundation gaps may constrain AI, reporting, or operating-model changes.",
+      ],
+      whyItMatters:
+        "Intelligence uses this for AI readiness. Moves uses it for data foundation work. Source uses it for platform and vendor scope. Tower uses it for data and outcome measurement.",
+      supportedQuestions: [
+        "Which data assets and integrations are loaded?",
+        "Which systems of record support the loaded assets?",
+        "Where should data governance or platform-readiness work focus next?",
+      ],
+      notYetSupported: [
+        "Production lakehouse readiness unless the source marks it as implemented.",
+        "Automated AI workflow readiness without quality, governance, and integration validation.",
+        "Complete lineage unless relationship evidence is projected and reviewed.",
+      ],
+      nextAction:
+        "Separate current-state assets from target-state assets, then validate owners, source systems, integration types, and lineage relationships.",
+    },
+    programs: {
+      summary:
+        "Shows what the enterprise is trying to change or improve.",
+      knows: [
+        "Loaded transformation themes and priorities.",
+        "Potential handoff candidates for Moves or Intelligence exploration.",
+        "Where initiative evidence is present versus still planning-grade.",
+      ],
+      whyItMatters:
+        "Moves uses this for execution planning. Intelligence uses it for investment choices. Tower uses it for value tracking.",
+      supportedQuestions: [
+        "Which priorities are visible in the current context?",
+        "Which initiatives could become a Move?",
+        "What evidence is needed before a program is approved for execution?",
+      ],
+      notYetSupported: [
+        "Funding decisions without a baseline and sponsor signoff.",
+        "Success-rate claims.",
+        "Commitment that a program is ready to execute.",
+      ],
+      nextAction:
+        "Validate sponsor, baseline, decision rights, dependencies, and value hypothesis before sending an initiative into Moves.",
+    },
+    risks: {
+      summary:
+        "Shows what can go wrong and what must be governed before decisions are made.",
+      knows: [
+        "Loaded risk and control records.",
+        "Where evidence caveats should limit answers.",
+        "Which areas should be validated before downstream advisory or execution work.",
+      ],
+      whyItMatters:
+        "Intelligence uses this for risk-aware strategy. Moves uses it for readiness gates. Source uses it for contract and control requirements. Tower uses it for control and outcome tracking.",
+      supportedQuestions: [
+        "What risks and caveats are loaded?",
+        "Which areas should not be used for decisions yet?",
+        "What evidence should be reviewed before handoff?",
+      ],
+      notYetSupported: [
+        "Control effectiveness conclusions.",
+        "Audit opinions.",
+        "Regulatory compliance claims.",
+      ],
+      nextAction:
+        "Attach risk owners, control evidence, dates, and disposition before treating this as a compliance-ready record.",
+    },
+    metrics: {
+      summary:
+        "Shows how success will be measured.",
+      knows: [
+        "Loaded metric names, outcome areas, and measurement themes.",
+        "Which measures have source-backed definitions versus missing baselines.",
+        "Where Tower should later track promised versus measured value.",
+      ],
+      whyItMatters:
+        "Tower uses this for value realization. Moves uses it for baselines. Intelligence uses it for business-case framing.",
+      supportedQuestions: [
+        "Which metrics are loaded?",
+        "What outcomes can be discussed as definitions?",
+        "Which measures need baselines before Tower can track value?",
+      ],
+      notYetSupported: [
+        "Realized savings or ROI claims.",
+        "Outcome attribution.",
+        "Executive scorecards without baselines and actuals.",
+      ],
+      nextAction:
+        "Load baselines, owners, measurement cadence, and actuals before using this as a value proof layer.",
+    },
+  };
+  const story = storyByArea[area.id] ?? {
+    summary: baseSummary,
+    knows: [
+      "Loaded source-backed records for the selected area.",
+      "Evidence references and known gaps where available.",
+      "Representative records for client review.",
+    ],
+    whyItMatters:
+      "This gives the team a governed way to inspect enterprise context before asking aVa or sending work to another module.",
+    supportedQuestions: [
+      `What does AbarVa know about ${label.toLowerCase()}?`,
+      "What evidence backs this area?",
+      "What should be validated next?",
+    ],
+    notYetSupported: [
+      "Unsupported recommendations.",
+      "Facts outside the loaded tenant context.",
+      "Realized value claims.",
+    ],
+    nextAction: "Review key records and validate any missing evidence.",
+  };
+  return {
+    headline:
+      area.rows > 0
+        ? `${label} is loaded enough for context browsing, with decision limits visible.`
+        : `${label} still needs evidence before it can support a client story.`,
+    ...story,
+  };
+}
+
+function areaSnapshotFor(
+  area: HomeExplorerArea | null,
+  snapshot: HomeSummarySnapshot | null,
+): HomeContextAreaSnapshot | null {
+  if (!area || !snapshot) return null;
+  const aliases: Record<string, string[]> = {
+    functions: ["Business Functions"],
+    applications: ["Applications & Systems"],
+    vendors: ["Vendors & Contracts"],
+    data: ["Data Assets", "Integrations"],
+    programs: ["Programs & Initiatives"],
+    risks: ["Risks & Controls"],
+    metrics: ["Metrics / KPIs"],
+  };
+  const candidates = aliases[area.id] ?? [area.label];
+  return (
+    snapshot.contextAreas.find((contextArea) =>
+      candidates.some(
+        (candidate) =>
+          contextArea.displayName.toLowerCase() === candidate.toLowerCase(),
+      ),
+    ) ??
+    snapshot.contextAreas.find((contextArea) =>
+      candidates.some((candidate) =>
+        contextArea.displayName
+          .toLowerCase()
+          .includes(candidate.toLowerCase().split(" ")[0] ?? candidate),
+      ),
+    ) ??
+    null
+  );
+}
+
+function storyFromSnapshot(
+  area: HomeExplorerArea,
+  tenantName: string,
+  snapshot: HomeContextAreaSnapshot | null,
+): DimensionStory {
+  const fallback = storyForArea(area, tenantName);
+  if (!snapshot) return fallback;
+  const summaryInput =
+    snapshot.claudeExecutiveSummary ??
+    snapshot.executiveSummaryInputs.find((input) => input.length > 20) ??
+    fallback.summary;
+  const whatAbarVaKnows =
+    snapshot.claudeWhatAbarVaKnows?.length
+      ? snapshot.claudeWhatAbarVaKnows
+      : snapshot.examples.length > 0
+        ? snapshot.examples.slice(0, 4)
+        : fallback.knows;
+  const supportedQuestions =
+    snapshot.claudeSupportedQuestions?.length
+      ? snapshot.claudeSupportedQuestions
+      : snapshot.safeQuestions.length > 0
+        ? snapshot.safeQuestions
+        : fallback.supportedQuestions;
+  const unsupportedQuestions =
+    snapshot.claudeUnsupportedQuestions?.length
+      ? snapshot.claudeUnsupportedQuestions
+      : snapshot.unsupportedQuestions.length > 0
+        ? snapshot.unsupportedQuestions
+        : fallback.notYetSupported;
+  return {
+    headline:
+      snapshot.loadedCount > 0
+        ? `${snapshot.displayName} has source-backed context for executive review.`
+        : fallback.headline,
+    summary: summaryInput,
+    knows: whatAbarVaKnows,
+    whyItMatters: snapshot.claudeWhyItMatters ?? fallback.whyItMatters,
+    supportedQuestions,
+    notYetSupported: unsupportedQuestions,
+    nextAction:
+      snapshot.claudeNextDataAction ??
+      snapshot.nextDataActions[0] ??
+      snapshot.topGaps[0]?.whyItMatters ??
+      fallback.nextAction,
+  };
+}
+
+function trustReadinessSummary(model: HomeDataQualityModel | null): {
+  headline: string;
+  posture: string;
+  strengths: string[];
+  limits: string[];
+  nextActions: string[];
+} {
+  if (!model) {
+    return {
+      headline:
+        "Trust posture is unavailable until Home receives a data-quality packet.",
+      posture: "Needs data",
+      strengths: [],
+      limits: ["Data-quality packet is missing."],
+      nextActions: ["Load and validate Home context."],
+    };
+  }
+  return {
+    headline:
+      "Home is safe for source-backed context browsing, with relationship and decision limits kept visible.",
+    posture: model.answerability.label,
+    strengths: [
+      `${model.evidenceQuality.factsWithEvidence.toLocaleString()} evidence items are visible in the active Home context.`,
+      model.sourceCoverage.sourceRichCandidateThin
+        ? "Source-rich areas are flagged before they can be overstated."
+        : "No source-rich/candidate-thin warning is active in this view.",
+      model.answerability.rationale,
+    ],
+    limits: [
+      model.relationshipCoverage.businessSummary,
+      ...model.answerability.limits,
+      ...model.caveats,
+    ].slice(0, 5),
+    nextActions:
+      model.gaps.length > 0
+        ? model.gaps
+            .slice(0, 4)
+            .map((gap) => `${gap.title}: ${gap.detail}`)
+        : ["Validate relationship depth before relying on cross-domain decisions."],
+  };
+}
+
 function displayAreaExamples(previews: HomeV6BrowserPreview[]): string {
   const examples = previews
     .flatMap((preview) => selectedExamples(preview))
@@ -1004,6 +1404,152 @@ function relationshipItems(
   });
 }
 
+function normalizeDataCell(value: string | null | undefined): string {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed || trimmed === "Needs evidence") return "";
+  if (isSourceLineageString(trimmed)) return "";
+  if (/synthetic demo/i.test(trimmed)) return "";
+  return trimmed;
+}
+
+function pickRowValue(
+  row: HomeV6BrowserSourceRow,
+  patterns: RegExp[],
+): string {
+  for (const pattern of patterns) {
+    const match = Object.entries(row.values).find(([label, value]) => {
+      if (!pattern.test(label)) return false;
+      return Boolean(normalizeDataCell(value));
+    });
+    if (match) {
+      return formatPreviewCell(match[1], {
+        key: match[0],
+        label: match[0],
+      });
+    }
+  }
+  return "";
+}
+
+function buildAreaDataRows(area: HomeExplorerArea | null): AreaDataRow[] {
+  if (!area) return [];
+  return area.previews.flatMap((preview) =>
+    preview.sourceRows.map((row, rowIndex) => {
+      const dataSet = preview.dimension;
+      const record = normalizeDataCell(row.label) || `${dataSet} row`;
+      const category =
+        pickRowValue(row, [
+          /\b(category|type|scope|domain|capability|function|segment)\b/i,
+        ]) || "Not classified";
+      const ownerOrSystem =
+        pickRowValue(row, [
+          /\b(owner|sponsor|accountable|system of record|source system|vendor|platform)\b/i,
+        ]) || "Not assigned";
+      const status =
+        pickRowValue(row, [
+          /\b(criticality|status|state|risk|priority|maturity|readiness)\b/i,
+        ]) || "Loaded";
+      const source = clientFacingFileName(row.v6File || preview.fileNames[0] || dataSet);
+      const filterValues = Object.fromEntries(
+        Object.entries(row.values)
+          .map(([label, value]) => [
+            label,
+            normalizeDataCell(
+              formatPreviewCell(value, { key: label, label }),
+            ),
+          ])
+          .filter((entry): entry is [string, string] => Boolean(entry[1])),
+      );
+      const searchText = [
+        dataSet,
+        record,
+        category,
+        ownerOrSystem,
+        status,
+        source,
+        ...Object.values(filterValues),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return {
+        id: `${preview.dimension}-${row.rowNumber || rowIndex}-${row.rowId || record}`,
+        dataSet,
+        record,
+        category,
+        ownerOrSystem,
+        status,
+        source,
+        filterValues,
+        searchText,
+      };
+    }),
+  );
+}
+
+function chooseSmartAreaFilter(rows: AreaDataRow[]): AreaDataTable["smartFilter"] {
+  if (rows.length < 2) return null;
+  const candidateLabels = new Map<string, Map<string, number>>();
+  for (const row of rows) {
+    for (const [label, value] of Object.entries(row.filterValues)) {
+      if (
+        /\b(name|description|summary|notes?|comment|id|loaded record|entity short name|company|unit)\b/i.test(
+          label,
+        )
+      ) {
+        continue;
+      }
+      const normalized = value.trim();
+      if (!normalized || normalized.length > 64) continue;
+      const counts = candidateLabels.get(label) ?? new Map<string, number>();
+      counts.set(normalized, (counts.get(normalized) ?? 0) + 1);
+      candidateLabels.set(label, counts);
+    }
+  }
+
+  const ranked = [...candidateLabels.entries()]
+    .map(([label, counts]) => {
+      const options = [...counts.entries()]
+        .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+        .map(([value]) => value);
+      const optionCount = options.length;
+      const preferred =
+        /\b(criticality|category|type|status|state|scope|domain|owner|system of record|priority|risk)\b/i.test(
+          label,
+        )
+          ? 1
+          : 0;
+      const useful = optionCount >= 2 && optionCount <= Math.min(16, rows.length - 1);
+      return { label, options, preferred, optionCount, useful };
+    })
+    .filter((candidate) => candidate.useful)
+    .sort(
+      (left, right) =>
+        right.preferred - left.preferred ||
+        left.optionCount - right.optionCount ||
+        left.label.localeCompare(right.label),
+    );
+
+  const selected = ranked[0];
+  if (!selected) return null;
+  return {
+    label: selected.label,
+    options: selected.options,
+  };
+}
+
+function buildAreaDataTable(area: HomeExplorerArea | null): AreaDataTable {
+  const rows = buildAreaDataRows(area);
+  const dataSetOptions = [...new Set(rows.map((row) => row.dataSet))].sort(
+    (left, right) => left.localeCompare(right),
+  );
+  return {
+    rows,
+    dataSetOptions,
+    smartFilter: chooseSmartAreaFilter(rows),
+  };
+}
+
 interface EnterpriseKnowledgeModel {
   totalRows: number;
   totalSources: number;
@@ -1155,7 +1701,7 @@ function HomeDataQualityPanel({
     <section className="hx2-dqPanel" data-testid="home-data-quality-panel">
       <div className="hx2-dqHead">
         <div>
-          <div className="hx2-cardKicker">Data Quality</div>
+          <div className="hx2-cardKicker">Technical diagnostics</div>
           <h2>What Home can trust right now</h2>
           <p>
             Home is showing <strong>{model.activeContextLabel}</strong>. It
@@ -1453,6 +1999,104 @@ function HomeMiniIcon({ kind }: { kind: string }) {
   );
 }
 
+function fallbackKnowledgeLayerVisual(): HomeKnowledgeLayerVisualSpec {
+  return {
+    title: "Enterprise knowledge layer",
+    subtitle:
+      "AbarVa turns source evidence into governed enterprise context, then serves that context to every module with the same trust boundary.",
+    centerLabel: "Enterprise Knowledge Layer",
+    centerDetail:
+      "Source-backed facts, gaps, caveats, and relationship candidates.",
+    nodes: DIMENSION_PLATFORM_USAGE.map((item, index) => ({
+      id: item.dimension.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
+      label: item.dimension,
+      detail: item.purpose,
+      tone:
+        index === 0
+          ? "enterprise"
+          : index === 1
+            ? "technology"
+            : index === 2
+              ? "commercial"
+              : index === 3
+                ? "data"
+                : index === 4
+                  ? "delivery"
+                  : index === 5
+                    ? "risk"
+                    : "value",
+      moduleUses: item.modules.split(" / "),
+    })),
+    flow: [
+      { label: "Source evidence", detail: "Files, uploads, and enterprise records." },
+      { label: "Canonical context", detail: "Normalized facts and source lineage." },
+      { label: "Knowledge layer", detail: "Relationships, gaps, and caveats." },
+      { label: "Module packet", detail: "Active context served through one contract." },
+      { label: "Product action", detail: "Home, Intelligence, Moves, Source, and Tower." },
+    ],
+    caveat:
+      "Relationship depth and measured outcomes must be validated before cross-domain dependency, sourcing savings, or Tower value claims.",
+    generatedBy: "deterministic",
+  };
+}
+
+function KnowledgeLayerVisual({
+  spec,
+}: {
+  spec: HomeKnowledgeLayerVisualSpec;
+}) {
+  return (
+    <div className="hx3-knowledgeVisual">
+      <div className="hx3-knowledgeMeta">
+        <span>
+          {spec.generatedBy === "claude"
+            ? "Claude-rendered visual spec"
+            : "Deterministic visual fallback"}
+        </span>
+      </div>
+      <div className="hx3-knowledgeMap">
+        {spec.nodes.slice(0, 3).map((node) => (
+          <article
+            className={`hx3-knowledgeNode ${node.tone}`}
+            key={node.id}
+          >
+            <strong>{node.label}</strong>
+            <span>{node.detail}</span>
+            <em>{node.moduleUses.join(" / ")}</em>
+          </article>
+        ))}
+        <div className="hx3-knowledgeCenter">
+          <div>
+            <strong>{spec.centerLabel}</strong>
+            <span>{spec.centerDetail}</span>
+          </div>
+        </div>
+        {spec.nodes.slice(3).map((node) => (
+          <article
+            className={`hx3-knowledgeNode ${node.tone}`}
+            key={node.id}
+          >
+            <strong>{node.label}</strong>
+            <span>{node.detail}</span>
+            <em>{node.moduleUses.join(" / ")}</em>
+          </article>
+        ))}
+      </div>
+      <div className="hx3-knowledgeFlow">
+        {spec.flow.slice(0, 5).map((step, index) => (
+          <div className="hx3-flowStep" key={`${step.label}-${index}`}>
+            <strong>
+              {index + 1}. {step.label}
+            </strong>
+            {step.detail}
+          </div>
+        ))}
+      </div>
+      <p className="hx3-knowledgeCaveat">{spec.caveat}</p>
+    </div>
+  );
+}
+
 export function HomeSurface({
   payload,
   clientKey,
@@ -1518,8 +2162,11 @@ export function HomeSurface({
         : (safePayload?.context ?? EMPTY_DIMS);
   const [dimKey, setDimKey] = useState<string | null>(null);
   const [selectedTool, setSelectedTool] = useState<ExplorerTool>(null);
-  const [activeTab, setActiveTab] = useState<ExplorerTab>("summary");
   const [search, setSearch] = useState("");
+  const [dataSetFilter, setDataSetFilter] = useState("all");
+  const [smartFilterValue, setSmartFilterValue] = useState("all");
+  const [recordSearch, setRecordSearch] = useState("");
+  const [showTrustDiagnostics, setShowTrustDiagnostics] = useState(false);
   const [thread, setThread] = useState<ChatMessage[]>([]);
   const [isBusy, setIsBusy] = useState(false);
   const [isAvaOpen, setIsAvaOpen] = useState(false);
@@ -1539,6 +2186,31 @@ export function HomeSurface({
     : null;
   const selected = selectedArea?.primaryDimension ?? null;
   const selectedPreview = selectedArea?.primaryPreview ?? null;
+  const selectedAreaSnapshot = areaSnapshotFor(
+    selectedArea,
+    safeSummarySnapshot,
+  );
+  const selectedStory = selectedArea
+    ? storyFromSnapshot(
+        selectedArea,
+        displayedTenantName,
+        selectedAreaSnapshot,
+      )
+    : null;
+  const selectedAreaDataTable = buildAreaDataTable(selectedArea);
+  const selectedRows = selectedAreaDataTable.rows.filter((row) => {
+    if (dataSetFilter !== "all" && row.dataSet !== dataSetFilter) return false;
+    if (
+      selectedAreaDataTable.smartFilter &&
+      smartFilterValue !== "all" &&
+      row.filterValues[selectedAreaDataTable.smartFilter.label] !==
+        smartFilterValue
+    ) {
+      return false;
+    }
+    const needle = recordSearch.trim().toLowerCase();
+    return !needle || row.searchText.includes(needle);
+  });
   const totalRows = dimensions.reduce(
     (sum, dimension) => sum + dimension.rowCount,
     0,
@@ -1546,10 +2218,6 @@ export function HomeSurface({
   const totalSources = new Set(
     dimensions.flatMap((dimension) => dimension.fileNames),
   ).size;
-  const totalGaps = dimensions.reduce(
-    (sum, dimension) => sum + dimension.dataThinCells,
-    0,
-  );
   const dataStatusLabel =
     safeSummarySnapshot?.tenantProfileHeader.activeContextStatus ??
     "Active Home context";
@@ -1654,6 +2322,12 @@ export function HomeSurface({
   );
   const profile = safeSummarySnapshot?.tenantProfileHeader;
   const executive = safeSummarySnapshot?.executiveProfile;
+  const knowledgeLayerVisual =
+    executive?.knowledgeLayerVisual ?? fallbackKnowledgeLayerVisual();
+  const executiveBriefingCopy =
+    executive?.claudeExecutiveSummary ??
+    executive?.companySummaryFacts[0] ??
+    `${displayedTenantName} has active Home context for loaded records, source references, visible gaps, caveats, and module handoff readiness.`;
   const depth = executive?.contextDepthWidth;
   const relationshipCount =
     depth?.relationshipCount ??
@@ -1693,49 +2367,29 @@ export function HomeSurface({
   const firstRelationshipArea = explorerAreas.find((area) =>
     /relationship|application|system|data|vendor/i.test(area.label),
   );
-  const firstContextArea = explorerAreas.find((area) => area.rows > 0) ?? null;
   const selectedName = selectedArea?.label ?? "enterprise context";
-  const selectedExamplesList = selectedExamples(selectedPreview);
   const selectedGaps = selectedPreview?.knownGaps ?? [];
   const selectedRelationships = relationshipItems(selectedPreview);
-  const visibleColumns =
-    selectedPreview?.columns
-      .map((column, index) => ({ column, index }))
-      .filter(({ column }) => !isLineageColumn(column)) ?? [];
-  const tableColumns =
-    visibleColumns.length > 0
-      ? visibleColumns
-      : (selectedPreview?.columns.map((column, index) => ({ column, index })) ??
-        []);
-  const explorerTabs: Array<[ExplorerTab, string]> = [
-    ["summary", "Summary"],
-    ["data", "Data"],
-    ["gaps", "Gaps"],
-    ["sources", "Sources"],
-    ["relationships", "Relationships"],
-  ];
+  const trustReadiness = trustReadinessSummary(safeDataQuality);
   const focusAreas = explorerAreas.filter((area) => area.rows > 0).slice(0, 4);
-  const recentItems = [
-    displayedTenantName,
-    firstContextArea?.label ?? "Enterprise knowledge",
-    firstRelationshipArea?.label ?? "Relationship review",
-  ];
-
   const selectOverview = () => {
     setDimKey(null);
     setSelectedTool(null);
-    setActiveTab("summary");
   };
   const selectArea = (areaId: string) => {
     setDimKey(areaId);
     setSelectedTool(null);
-    setActiveTab("summary");
   };
   const selectDataQuality = () => {
     setDimKey(null);
     setSelectedTool("data-quality");
-    setActiveTab("summary");
   };
+
+  useEffect(() => {
+    setDataSetFilter("all");
+    setSmartFilterValue("all");
+    setRecordSearch("");
+  }, [dimKey]);
 
   return (
     <div className="homex">
@@ -1760,7 +2414,6 @@ export function HomeSurface({
               <span>Home</span>
             </button>
 
-            <div className="hx3-sideGroup">Your work</div>
             <button
               className="hx3-navBtn"
               onClick={() => window.location.assign("/intelligence")}
@@ -1822,10 +2475,12 @@ export function HomeSurface({
                 <HomeMiniIcon kind="check" />
               </span>
               <span>
-                Data Quality
-                <small className="hx3-navMeta">Source coverage and gaps</small>
+                Context Confidence
+                <small className="hx3-navMeta">Trust and module readiness</small>
               </span>
-              <span className="hx3-navCount">{shortMetric(totalSources)}</span>
+              <span className="hx3-navCount">
+                {trustReadiness.posture}
+              </span>
             </button>
             {filteredAreas.map((area) => {
               const icon =
@@ -1863,18 +2518,6 @@ export function HomeSurface({
                 </button>
               );
             })}
-
-            <div className="hx3-recent">
-              <div className="hx3-sideGroup">Recent</div>
-              {recentItems
-                .filter(Boolean)
-                .slice(0, 3)
-                .map((item) => (
-                  <span className="hx3-recentItem" key={item}>
-                    {item}
-                  </span>
-                ))}
-            </div>
           </aside>
 
           <main className="hx3-main" data-testid="home-context-detail">
@@ -1893,122 +2536,150 @@ export function HomeSurface({
                     <div>
                       <div className="hx3-crumb">
                         Home <span>›</span> Enterprise Knowledge <span>›</span>{" "}
-                        Data Quality
+                        Context Confidence
                       </div>
-                      <h1 className="hx3-title">Data Quality</h1>
+                      <h1 className="hx3-title">Context Confidence</h1>
                       <p className="hx3-subtitle">
-                        Source coverage, evidence posture, relationship
-                        coverage, and answerability are available when needed.
-                        They stay out of the default executive briefing.
+                        This page explains why AbarVa collects enterprise
+                        context, which modules use each dimension, what can be
+                        safely answered today, and what still needs validation.
                       </p>
                     </div>
                     <div className="hx3-statusCard">
                       <div className="hx3-statusLine">
-                        <span className="hx3-dot" /> Read-only diagnostics
+                        <span className="hx3-dot" /> Active context check
                       </div>
                       <div className="hx3-statusMeta">
-                        <span>{totalSources.toLocaleString()} sources</span>
-                        <span>{totalRows.toLocaleString()} records</span>
+                        <span>Fact-based answers ready</span>
+                        <span>Candidate preview not active</span>
                       </div>
                     </div>
                   </div>
                   <div className="hx3-hair" />
-                  <HomeDataQualityPanel
-                    candidatePreviewEnabled={candidatePreviewEnabled}
-                    model={safeDataQuality}
-                  />
-                  <section className="hx3-section">
-                    <div className="hx3-snapshot">
-                      <article className="hx3-card">
-                        <div className="hx3-cardTop">
-                          <span className="hx3-cardIcon">
-                            <HomeMiniIcon kind="file" />
-                          </span>
-                          <div>
-                            <strong>{shortMetric(totalSources)}</strong>
-                            <span>Source files</span>
-                            <p>Represented in active Home context.</p>
-                          </div>
-                        </div>
+
+                  <section className="hx3-trustHero">
+                      <div className="hx3-eyebrow">Context Confidence</div>
+                      <h2>What Home can trust right now</h2>
+                      <p className="hx3-briefLead">
+                        AbarVa has source-backed context across the major
+                        enterprise dimensions. This is strong enough for
+                        enterprise orientation and fact-based questions.
+                        Relationship depth and measured outcomes still need
+                        validation before using this context for cross-domain
+                        dependency reasoning, sourcing savings, or Tower value
+                        claims.
+                      </p>
+                      <div className="hx3-trustCards">
+                        <article className="hx3-trustCard">
+                          <strong>Available</strong>
+                          <span>Enterprise context</span>
+                        </article>
+                        <article className="hx3-trustCard">
+                          <strong>Available</strong>
+                          <span>Evidence support</span>
+                        </article>
+                        <article className="hx3-trustCard">
+                          <strong>{relationshipPosture}</strong>
+                          <span>Relationship depth</span>
+                        </article>
+                        <article className="hx3-trustCard">
+                          <strong>Advisory</strong>
+                          <span>Decision readiness</span>
+                        </article>
+                        <article className="hx3-trustCard">
+                          <strong>Not active</strong>
+                          <span>Candidate preview</span>
+                        </article>
+                      </div>
+                      <div className="hx3-trustLists">
+                      <article className="hx3-storyCard">
+                        <h3>Strong enough for</h3>
+                        <ul>
+                          {trustReadiness.strengths
+                            .filter(Boolean)
+                            .slice(0, 3)
+                            .map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                        </ul>
                       </article>
-                      <article className="hx3-card">
-                        <div className="hx3-cardTop">
-                          <span className="hx3-cardIcon">
-                            <HomeMiniIcon kind="check" />
-                          </span>
-                          <div>
-                            <strong>{contextPosture}</strong>
-                            <span>Evidence posture</span>
-                            <p>
-                              {safeDataQuality?.answerability.rationale ??
-                                "Source-backed context is available for browsing."}
-                            </p>
-                          </div>
-                        </div>
+                      <article className="hx3-storyCard warn">
+                        <h3>Do not overstate</h3>
+                        <ul>
+                          {trustReadiness.limits
+                            .filter(Boolean)
+                            .slice(0, 3)
+                            .map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                        </ul>
                       </article>
-                      <article className="hx3-card">
-                        <div className="hx3-cardTop">
-                          <span className="hx3-cardIcon">
-                            <HomeMiniIcon kind="link" />
-                          </span>
-                          <div>
-                            <strong>{relationshipPosture}</strong>
-                            <span>Relationship depth</span>
-                            <p>
-                              {safeDataQuality?.relationshipCoverage
-                                .businessSummary ??
-                                "Relationship reasoning remains caveated until validated."}
-                            </p>
-                          </div>
-                        </div>
-                      </article>
-                      <article className="hx3-card">
-                        <div className="hx3-cardTop">
-                          <span className="hx3-cardIcon">
-                            <HomeMiniIcon kind="list" />
-                          </span>
-                          <div>
-                            <strong>{shortMetric(totalGaps)}</strong>
-                            <span>Visible gaps</span>
-                            <p>
-                              Missing evidence stays visible before handoff.
-                            </p>
-                          </div>
-                        </div>
+                      <article className="hx3-storyCard">
+                        <h3>Validate next</h3>
+                        <ul>
+                          {trustReadiness.nextActions
+                            .filter(Boolean)
+                            .slice(0, 3)
+                            .map((item) => (
+                              <li key={item}>{item}</li>
+                            ))}
+                        </ul>
                       </article>
                     </div>
                   </section>
+
                   <section className="hx3-section">
-                    <h2>Area coverage</h2>
+                    <div className="hx3-sectionHead">
+                      <div>
+                        <h2>Enterprise context powers the platform</h2>
+                        <p>
+                          Each dimension gives AbarVa a different part of the
+                          enterprise operating picture. Modules use that shared
+                          context instead of inventing their own local truth.
+                        </p>
+                      </div>
+                    </div>
                     <div className="hx3-tableWrap">
                       <table className="hx3-table">
                         <thead>
                           <tr>
-                            <th>Area</th>
-                            <th>Records</th>
-                            <th>Sources</th>
-                            <th>Gaps</th>
-                            <th>Status</th>
+                            <th>Dimension</th>
+                            <th>Why AbarVa collects it</th>
+                            <th>Primary module use</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {explorerAreas.map((area) => (
-                            <tr key={area.id}>
-                              <td>{area.label}</td>
-                              <td>{area.rows.toLocaleString()}</td>
-                              <td>{area.sources.toLocaleString()}</td>
-                              <td>{area.gaps.toLocaleString()}</td>
-                              <td>
-                                {area.gaps > 0
-                                  ? "Needs validation"
-                                  : "Source-backed"}
-                              </td>
+                          {DIMENSION_PLATFORM_USAGE.map((item) => (
+                            <tr key={item.dimension}>
+                              <td>{item.dimension}</td>
+                              <td>{item.purpose}</td>
+                              <td>{item.modules}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
                   </section>
+
+                  <div className="hx3-mutedDetails">
+                    <button
+                      className="hx3-btn"
+                      onClick={() =>
+                        setShowTrustDiagnostics((current) => !current)
+                      }
+                      type="button"
+                    >
+                      {showTrustDiagnostics
+                        ? "Hide technical diagnostics"
+                        : "Show technical diagnostics"}
+                    </button>
+                    {showTrustDiagnostics ? (
+                      <HomeDataQualityPanel
+                        candidatePreviewEnabled={candidatePreviewEnabled}
+                        model={safeDataQuality}
+                      />
+                    ) : null}
+                  </div>
                 </>
               ) : selectedArea ? (
                 <>
@@ -2020,13 +2691,7 @@ export function HomeSurface({
                       </div>
                       <h1 className="hx3-title">{selectedArea.label}</h1>
                       <p className="hx3-subtitle">
-                        {selectedArea.label} has{" "}
-                        {selectedArea.rows.toLocaleString()} loaded records from{" "}
-                        {selectedArea.sources.toLocaleString()} source file
-                        {selectedArea.sources === 1 ? "" : "s"}.{" "}
-                        {selectedArea.gaps > 0
-                          ? `${displayMetric(selectedArea.gaps, "evidence gaps")} remain visible.`
-                          : "No repeated evidence-gap pattern is visible in this area."}
+                        {selectedStory?.headline}
                       </p>
                     </div>
                     <div className="hx3-detailActions">
@@ -2050,269 +2715,218 @@ export function HomeSurface({
                       </button>
                     </div>
                   </div>
-                  <div
-                    className="hx3-tabs"
-                    role="tablist"
-                    aria-label="Selected context views"
-                  >
-                    {explorerTabs.map(([id, label]) => (
-                      <button
-                        aria-selected={activeTab === id}
-                        className="hx3-tab"
-                        key={id}
-                        onClick={() => setActiveTab(id)}
-                        role="tab"
-                        type="button"
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {activeTab === "summary" ? (
-                    <section className="hx3-section" role="tabpanel">
-                      <div className="hx3-snapshot">
-                        <article className="hx3-card">
-                          <div className="hx3-cardTop">
-                            <span className="hx3-cardIcon">
-                              <HomeMiniIcon kind="file" />
-                            </span>
-                            <div>
-                              <strong>
-                                {selectedArea.rows.toLocaleString()} records
-                              </strong>
-                              <span>What is loaded</span>
-                              <p>Loaded with source-backed values.</p>
-                            </div>
-                          </div>
+                  <section className="hx3-section">
+                    <div className="hx3-brief">
+                      <div className="hx3-eyebrow">Executive Summary</div>
+                      <h2>{selectedArea.label}</h2>
+                      <p className="hx3-briefLead">
+                        {selectedStory?.summary}
+                      </p>
+                      <div className="hx3-storyGrid">
+                        <article className="hx3-storyCard">
+                          <h3>What AbarVa knows</h3>
+                          <ul>
+                            {(selectedStory?.knows ?? [])
+                              .slice(0, 4)
+                              .map((item) => (
+                                <li key={item}>{item}</li>
+                              ))}
+                          </ul>
                         </article>
-                        <article className="hx3-card">
-                          <div className="hx3-cardTop">
-                            <span className="hx3-cardIcon">
-                              <HomeMiniIcon kind="check" />
-                            </span>
-                            <div>
-                              <strong>
-                                {shortMetric(selectedArea.sources)}
-                              </strong>
-                              <span>What can be trusted</span>
-                              <p>
-                                Source files available for evidence inspection.
-                              </p>
-                            </div>
-                          </div>
+                        <article className="hx3-storyCard">
+                          <h3>Why it matters</h3>
+                          <p>{selectedStory?.whyItMatters}</p>
                         </article>
-                        <article className="hx3-card">
-                          <div className="hx3-cardTop">
-                            <span className="hx3-cardIcon">
-                              <HomeMiniIcon kind="link" />
-                            </span>
-                            <div>
-                              <strong>
-                                {shortMetric(selectedRelationships.length)}
-                              </strong>
-                              <span>Relationships</span>
-                              <p>Visible relationship examples.</p>
-                            </div>
-                          </div>
+                        <article className="hx3-storyCard">
+                          <h3>Questions this supports</h3>
+                          <ul>
+                            {(selectedStory?.supportedQuestions ?? [])
+                              .slice(0, 4)
+                              .map((item) => (
+                                <li key={item}>{item}</li>
+                              ))}
+                          </ul>
                         </article>
-                        <article className="hx3-card">
-                          <div className="hx3-cardTop">
-                            <span className="hx3-cardIcon">
-                              <HomeMiniIcon kind="list" />
-                            </span>
-                            <div>
-                              <strong>
-                                {displayMetric(
-                                  selectedArea.gaps,
-                                  "evidence gaps",
-                                )}
-                              </strong>
-                              <span>What needs work</span>
-                              <p>Fields requiring evidence or review.</p>
-                            </div>
-                          </div>
+                        <article className="hx3-storyCard warn">
+                          <h3>Not yet supported</h3>
+                          <ul>
+                            {(selectedStory?.notYetSupported ?? [])
+                              .slice(0, 4)
+                              .map((item) => (
+                                <li key={item}>{item}</li>
+                              ))}
+                          </ul>
                         </article>
                       </div>
-                      {selectedExamplesList.length > 0 ? (
-                        <div className="hx3-section">
-                          <h2>Representative loaded rows</h2>
-                          <div className="hx3-tableWrap">
-                            <table className="hx3-table">
-                              <tbody>
-                                {selectedExamplesList.map((example, index) => (
-                                  <tr key={`${example}-${index}`}>
-                                    <td>{index + 1}</td>
-                                    <td>{example}</td>
-                                  </tr>
+                      <div className="hx3-nextAction">
+                        Next validation action: {selectedStory?.nextAction}
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="hx3-section">
+                    <div className="hx3-sectionHead">
+                      <div>
+                        <h2>Key records</h2>
+                        <p>
+                          Business-readable records loaded for this area. Use
+                          filters to narrow the full set without hiding the
+                          underlying row coverage.
+                        </p>
+                      </div>
+                      <span className="hx3-chip">
+                        {selectedRows.length.toLocaleString()} of{" "}
+                        {selectedAreaDataTable.rows.length.toLocaleString()}{" "}
+                        shown
+                      </span>
+                    </div>
+                    {selectedAreaDataTable.rows.length > 0 ? (
+                      <>
+                        <div className="hx3-recordControls">
+                          <select
+                            aria-label="Filter by dataset"
+                            onChange={(event) =>
+                              setDataSetFilter(event.currentTarget.value)
+                            }
+                            value={dataSetFilter}
+                          >
+                            <option value="all">All datasets</option>
+                            {selectedAreaDataTable.dataSetOptions.map(
+                              (option) => (
+                                <option key={option} value={option}>
+                                  {option}
+                                </option>
+                              ),
+                            )}
+                          </select>
+                          {selectedAreaDataTable.smartFilter ? (
+                            <select
+                              aria-label={`Filter by ${selectedAreaDataTable.smartFilter.label}`}
+                              onChange={(event) =>
+                                setSmartFilterValue(event.currentTarget.value)
+                              }
+                              value={smartFilterValue}
+                            >
+                              <option value="all">
+                                All {selectedAreaDataTable.smartFilter.label}
+                              </option>
+                              {selectedAreaDataTable.smartFilter.options.map(
+                                (option) => (
+                                  <option key={option} value={option}>
+                                    {option}
+                                  </option>
+                                ),
+                              )}
+                            </select>
+                          ) : (
+                            <span />
+                          )}
+                          <input
+                            aria-label="Search loaded records"
+                            onChange={(event) =>
+                              setRecordSearch(event.currentTarget.value)
+                            }
+                            placeholder="Search loaded records..."
+                            value={recordSearch}
+                          />
+                        </div>
+                        <div className="hx3-tableWrap">
+                          <table className="hx3-table">
+                            <thead>
+                              <tr>
+                                <th>Dataset</th>
+                                <th>Record</th>
+                                <th>Category</th>
+                                <th>Owner / System</th>
+                                <th>Status</th>
+                                <th>Source</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {selectedRows.map((row) => (
+                                <tr key={row.id}>
+                                  <td>{row.dataSet}</td>
+                                  <td>{row.record}</td>
+                                  <td>{row.category}</td>
+                                  <td>{row.ownerOrSystem}</td>
+                                  <td>{row.status}</td>
+                                  <td>{row.source}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        {selectedRows.length === 0 ? (
+                          <p className="hx3-recordCount">
+                            No rows match the current filters.
+                          </p>
+                        ) : null}
+                      </>
+                    ) : (
+                      <p className="hx3-empty">
+                        No loaded record table is available for this area yet.
+                      </p>
+                    )}
+                  </section>
+
+                  <details className="hx3-tech">
+                    <summary>Diagnostics, sources, gaps, and relationships</summary>
+                    <div className="hx3-techBody">
+                      <div className="hx3-grid2">
+                        <article className="hx3-storyCard">
+                          <h3>Sources</h3>
+                          {selectedPreview?.fileNames.length ? (
+                            <ul>
+                              {selectedPreview.fileNames
+                                .slice(0, 8)
+                                .map((fileName, index) => (
+                                  <li key={`${fileName}-${index}`}>
+                                    {clientFacingFileName(fileName)}
+                                  </li>
                                 ))}
-                              </tbody>
-                            </table>
+                            </ul>
+                          ) : (
+                            <p>No source list is available for this area.</p>
+                          )}
+                        </article>
+                        <article className="hx3-storyCard warn">
+                          <h3>Known gaps</h3>
+                          {selectedGaps.length > 0 ? (
+                            <ul>
+                              {selectedGaps.slice(0, 6).map((gap) => (
+                                <li key={gap.label}>
+                                  {gap.label}:{" "}
+                                  {displayMetric(gap.count, `${gap.label} gap`)}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>No repeated missing-field pattern is visible.</p>
+                          )}
+                        </article>
+                      </div>
+                      {selectedRelationships.length > 0 ? (
+                        <div className="hx3-section">
+                          <h3>Relationship examples</h3>
+                          <div className="hx3-grid2">
+                            {selectedRelationships.map((item, index) => (
+                              <div
+                                className="hx3-relRow"
+                                key={`${item.from}-${item.to}-${index}`}
+                              >
+                                <span className="hx3-relNode">{index + 1}</span>
+                                <span>{item.from}</span>
+                                <span className="hx3-relEdge">
+                                  {item.relation}
+                                </span>
+                                <span>{item.to}</span>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       ) : null}
-                    </section>
-                  ) : null}
-
-                  {activeTab === "data" ? (
-                    <section className="hx3-section" role="tabpanel">
-                      {selectedPreview ? (
-                        <>
-                          <p className="hx3-empty">
-                            <strong>Plain English:</strong> this is the loaded
-                            business data for {selectedName}. Values are
-                            formatted for reading; missing fields stay visible
-                            as evidence gaps instead of being hidden.
-                          </p>
-                          <div className="hx3-chipRow">
-                            <span className="hx3-chip">
-                              {selectedPreview.rowCount.toLocaleString()} rows
-                              loaded
-                            </span>
-                            <span className="hx3-chip">
-                              {selectedPreview.sourceCount.toLocaleString()}{" "}
-                              source file
-                              {selectedPreview.sourceCount === 1 ? "" : "s"}
-                            </span>
-                            <span className="hx3-chip">
-                              {displayMetric(
-                                selectedPreview.dataThinCells,
-                                "evidence gaps",
-                              )}{" "}
-                              to complete
-                            </span>
-                          </div>
-                          <div className="hx3-tableWrap">
-                            <table className="hx3-table">
-                              <thead>
-                                <tr>
-                                  {tableColumns.map(({ column }) => (
-                                    <th key={column.key}>{column.label}</th>
-                                  ))}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {selectedPreview.rows.map((row, rowIndex) => (
-                                  <tr
-                                    key={`${selectedPreview.dimension}-${rowIndex}`}
-                                  >
-                                    {tableColumns.map(({ column, index }) => (
-                                      <td
-                                        key={`${selectedPreview.dimension}-${rowIndex}-${column.key}`}
-                                      >
-                                        {formatPreviewCell(
-                                          row[index] ?? "",
-                                          column,
-                                        )}
-                                      </td>
-                                    ))}
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </>
-                      ) : (
-                        <p className="hx3-empty">
-                          No loaded data table is available for this area.
-                        </p>
-                      )}
-                    </section>
-                  ) : null}
-
-                  {activeTab === "gaps" ? (
-                    <section className="hx3-section" role="tabpanel">
-                      <p className="hx3-empty">
-                        <strong>Plain English:</strong> gaps are
-                        client-to-complete fields in the loaded context. They
-                        tell the team what should be validated before this area
-                        supports board-grade or downstream advisory work.
-                      </p>
-                      {selectedGaps.length > 0 ? (
-                        <div className="hx3-grid2">
-                          {selectedGaps.map((gap) => (
-                            <article className="hx3-gapCard" key={gap.label}>
-                              <strong>{gap.label}</strong>
-                              <p>
-                                {displayMetric(gap.count, `${gap.label} gap`)}{" "}
-                                missing{" "}
-                                {gap.whyItMatters ??
-                                  `${gap.label} needs client evidence before final decisions.`}
-                              </p>
-                            </article>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="hx3-empty">
-                          No repeated missing-field pattern is visible for this
-                          selection.
-                        </p>
-                      )}
-                    </section>
-                  ) : null}
-
-                  {activeTab === "sources" ? (
-                    <section className="hx3-section" role="tabpanel">
-                      <p className="hx3-empty">
-                        <strong>Plain English:</strong> sources show where this
-                        context came from. Home keeps the source trail available
-                        for audit while hiding file paths and internal row IDs
-                        from the executive read.
-                      </p>
-                      <div className="hx3-grid2">
-                        {(selectedPreview ? selectedPreview.fileNames : [])
-                          .slice(0, 12)
-                          .map((fileName, index) => (
-                            <article
-                              className="hx3-sourceCard"
-                              key={`${fileName}-${index}`}
-                            >
-                              <strong>{clientFacingFileName(fileName)}</strong>
-                              <p>
-                                Mapped into the context browser with source
-                                lineage preserved.
-                              </p>
-                            </article>
-                          ))}
-                      </div>
-                    </section>
-                  ) : null}
-
-                  {activeTab === "relationships" ? (
-                    <section className="hx3-section" role="tabpanel">
-                      <p className="hx3-empty">
-                        <strong>Plain English:</strong> relationships are mapped
-                        links between business objects, such as systems to
-                        vendors, applications to data, or initiatives to owners.
-                        If this selected area is only a profile anchor, use
-                        relationship-heavy areas like Systems, Data, Vendors, or
-                        the Relationships reference.
-                      </p>
-                      {selectedRelationships.length > 0 ? (
-                        <div className="hx3-grid2">
-                          {selectedRelationships.map((item, index) => (
-                            <div
-                              className="hx3-relRow"
-                              key={`${item.from}-${item.to}-${index}`}
-                            >
-                              <span className="hx3-relNode">{index + 1}</span>
-                              <span>{item.from}</span>
-                              <span className="hx3-relEdge">
-                                {item.relation}
-                              </span>
-                              <span>{item.to}</span>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="hx3-empty">
-                          Select a relationship-heavy context area, such as
-                          Applications, Data, Vendors, or Relationships, to
-                          inspect mapped links.
-                        </p>
-                      )}
-                    </section>
-                  ) : null}
+                    </div>
+                  </details>
                 </>
               ) : (
                 <>
@@ -2329,8 +2943,7 @@ export function HomeSurface({
                         </span>
                       </h1>
                       <p className="hx3-subtitle">
-                        {executive?.companySummaryFacts[0] ??
-                          `${displayedTenantName} has active Home context for loaded records, source references, visible gaps, caveats, and module handoff readiness.`}
+                        {executiveBriefingCopy}
                       </p>
                     </div>
                     <div className="hx3-statusCard">
@@ -2494,6 +3107,16 @@ export function HomeSurface({
                         </div>
                       </article>
                     </div>
+                  </section>
+
+                  <section className="hx3-section">
+                    <div className="hx3-sectionHead">
+                      <div>
+                        <h2>{knowledgeLayerVisual.title}</h2>
+                        <p>{knowledgeLayerVisual.subtitle}</p>
+                      </div>
+                    </div>
+                    <KnowledgeLayerVisual spec={knowledgeLayerVisual} />
                   </section>
 
                   <section className="hx3-section">

@@ -70,6 +70,26 @@ export interface HomeEnterpriseSnapshotMetric {
   detail: string;
 }
 
+export interface HomeKnowledgeLayerVisualSpec {
+  title: string;
+  subtitle: string;
+  centerLabel: string;
+  centerDetail: string;
+  nodes: Array<{
+    id: string;
+    label: string;
+    detail: string;
+    tone: "enterprise" | "technology" | "commercial" | "data" | "delivery" | "risk" | "value";
+    moduleUses: string[];
+  }>;
+  flow: Array<{
+    label: string;
+    detail: string;
+  }>;
+  caveat: string;
+  generatedBy: "deterministic" | "claude";
+}
+
 export interface HomeContextDepthWidth {
   loadedAreas: number;
   loadedRecords: number;
@@ -83,6 +103,12 @@ export interface HomeContextDepthWidth {
 export interface HomeContextAreaSummary {
   areaKey: string;
   displayName: string;
+  claudeExecutiveSummary?: string;
+  claudeWhatAbarVaKnows?: string[];
+  claudeWhyItMatters?: string;
+  claudeSupportedQuestions?: string[];
+  claudeUnsupportedQuestions?: string[];
+  claudeNextDataAction?: string;
   executiveSummaryInputs: string[];
   loadedCount: number;
   mappedCount: number;
@@ -140,6 +166,8 @@ export interface HomeSummaryLineage {
 }
 
 export interface HomeExecutiveProfile {
+  claudeExecutiveSummary?: string;
+  knowledgeLayerVisual?: HomeKnowledgeLayerVisualSpec;
   companySummaryFacts: string[];
   businessModelSignals: string[];
   strategicPrioritySignals: string[];
@@ -164,7 +192,7 @@ export interface HomeSummarySnapshot {
   caveats: string[];
   guardrails: {
     deterministicBuilder: true;
-    callsClaude: false;
+    callsClaude: boolean;
     productionTenantDataWritten: false;
     activeTenantAccessLayerUpdated: false;
     candidatePromoted: false;
@@ -238,6 +266,96 @@ const REQUIRED_CONTEXT_AREAS = [
   ["evidence-sources", "Evidence Sources"],
   ["relationships", "Relationships"],
 ] as const;
+
+const DEFAULT_KNOWLEDGE_LAYER_VISUAL: HomeKnowledgeLayerVisualSpec = {
+  title: "Enterprise knowledge layer",
+  subtitle:
+    "AbarVa turns source evidence into governed enterprise context, then serves that context to every module with the same trust boundary.",
+  centerLabel: "Enterprise Knowledge Layer",
+  centerDetail:
+    "Source-backed facts, gaps, caveats, and relationship candidates.",
+  nodes: [
+    {
+      id: "functions",
+      label: "Functions",
+      detail: "Operating areas, owners, capabilities, and decision context.",
+      tone: "enterprise",
+      moduleUses: ["Intelligence", "Moves", "Tower"],
+    },
+    {
+      id: "applications",
+      label: "Applications",
+      detail:
+        "Systems, platforms, technology estate, and current versus target-state signals.",
+      tone: "technology",
+      moduleUses: ["Intelligence", "Moves", "Source", "Tower"],
+    },
+    {
+      id: "vendors",
+      label: "Vendors",
+      detail:
+        "Commercial context, contracts, providers, and sourcing evidence.",
+      tone: "commercial",
+      moduleUses: ["Source", "Intelligence", "Tower"],
+    },
+    {
+      id: "data",
+      label: "Data Assets",
+      detail:
+        "Marts, data products, integrations, lineage, and analytics readiness.",
+      tone: "data",
+      moduleUses: ["Intelligence", "Moves", "Tower"],
+    },
+    {
+      id: "programs",
+      label: "Programs",
+      detail: "Priorities, initiatives, dependencies, and execution candidates.",
+      tone: "delivery",
+      moduleUses: ["Moves", "Intelligence", "Tower"],
+    },
+    {
+      id: "risks",
+      label: "Risks & Controls",
+      detail:
+        "Controls, caveats, decision risks, and governance requirements.",
+      tone: "risk",
+      moduleUses: ["Intelligence", "Moves", "Source", "Tower"],
+    },
+    {
+      id: "metrics",
+      label: "Metrics & Outcomes",
+      detail:
+        "Measurement definitions, baselines, and value proof boundaries.",
+      tone: "value",
+      moduleUses: ["Tower", "Moves", "Intelligence"],
+    },
+  ],
+  flow: [
+    {
+      label: "Source evidence",
+      detail: "Files, uploads, and enterprise records.",
+    },
+    {
+      label: "Canonical context",
+      detail: "Normalized facts and source lineage.",
+    },
+    {
+      label: "Knowledge layer",
+      detail: "Relationships, gaps, and caveats.",
+    },
+    {
+      label: "Module packet",
+      detail: "Active context served through one contract.",
+    },
+    {
+      label: "Product action",
+      detail: "Home, Intelligence, Moves, Source, and Tower.",
+    },
+  ],
+  caveat:
+    "Relationship depth and measured outcomes must be validated before cross-domain dependency, sourcing savings, or Tower value claims.",
+  generatedBy: "deterministic",
+};
 
 const CONTEXT_AREA_DIMENSIONS: Record<string, Set<string>> = {
   "Business Functions": new Set([
@@ -358,6 +476,7 @@ export function buildHomeSummarySnapshot(
         dimensions,
         englishSummary,
       ),
+      knowledgeLayerVisual: DEFAULT_KNOWLEDGE_LAYER_VISUAL,
       enterpriseSnapshotMetrics: buildEnterpriseMetrics({
         profile,
         contextDepthWidth,
@@ -509,6 +628,7 @@ export function buildHomeSummarySnapshotFromModuleContext(
         options.moduleContext.records,
         "programs_priorities",
       ),
+      knowledgeLayerVisual: DEFAULT_KNOWLEDGE_LAYER_VISUAL,
       enterpriseSnapshotMetrics: buildEnterpriseMetricsFromModuleContext({
         moduleContext: options.moduleContext,
       }),
