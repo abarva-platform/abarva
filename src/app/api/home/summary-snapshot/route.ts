@@ -9,9 +9,9 @@ import {
 } from "@/lib/client-config";
 import { getTenantSourceFiles } from "@/lib/context-ingestion/tenant-context-read-model";
 import {
-  buildHomeSummarySnapshot,
   type HomeSummarySnapshotMode,
 } from "@/lib/home/home-summary-snapshot";
+import { buildHomeRuntimeSummarySnapshot } from "@/lib/home/home-summary-runtime";
 import { getHomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
 import { getHomeV7ContextBrowser } from "@/lib/home/v7-context-browser";
 import { resolveTenant } from "@/lib/tenant/resolveTenant";
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
         })
       : null;
 
-  const snapshot = buildHomeSummarySnapshot({
+  const snapshot = await buildHomeRuntimeSummarySnapshot({
     tenantId: tenant?.clientId ?? null,
     tenantKey: canonicalTenantKey,
     displayName,
