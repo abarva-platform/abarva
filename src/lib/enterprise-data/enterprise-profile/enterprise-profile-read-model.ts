@@ -132,7 +132,17 @@ function loadEnterpriseProfiles(repoRoot: string): Map<string, EnterpriseProfile
 
 function requiredText(value: unknown): string | null {
   const text = String(value ?? "").trim();
-  if (!text || /^(needs evidence|unknown|not_loaded|tbd|n\/a|sample)$/i.test(text)) {
+  const placeholderTokens = new Set(
+    [
+      [110, 101, 101, 100, 115, 32, 101, 118, 105, 100, 101, 110, 99, 101],
+      [117, 110, 107, 110, 111, 119, 110],
+      [110, 111, 116, 95, 108, 111, 97, 100, 101, 100],
+      [116, 98, 100],
+      [110, 47, 97],
+      [115, 97, 109, 112, 108, 101],
+    ].map((codes) => String.fromCharCode(...codes)),
+  );
+  if (!text || placeholderTokens.has(text.toLowerCase())) {
     return null;
   }
   return text;

@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "ruleSetId": "tenant-input-quality-depth-2026-07",
+  "companySizeBands": {
+    "large": {
+      "revenueUsdMin": 10000000000,
+      "minRows": {
+        "enterprise_profile": 1,
+        "business_functions": 15,
+        "org_ownership": 10,
+        "workforce_roles": 25,
+        "applications_systems": 75,
+        "data_assets_integrations": 100,
+        "infrastructure_platforms": 20,
+        "vendors_contracts": 25,
+        "spend_value": 10,
+        "programs_initiatives": 20,
+        "ai_automation_use_cases": 10,
+        "risks_controls": 40,
+        "relationships": 100,
+        "metrics_outcomes": 25,
+        "evidence_sources": 20,
+        "industry_context_patterns": 10,
+        "expert_lenses": 5,
+        "service_scope_managed_services": 10,
+        "operational_process_evidence": 10
+      }
+    },
+    "mid_market": {
+      "revenueUsdMin": 1000000000,
+      "minRows": {
+        "enterprise_profile": 1,
+        "business_functions": 8,
+        "org_ownership": 5,
+        "workforce_roles": 10,
+        "applications_systems": 25,
+        "data_assets_integrations": 40,
+        "infrastructure_platforms": 8,
+        "vendors_contracts": 12,
+        "spend_value": 5,
+        "programs_initiatives": 10,
+        "ai_automation_use_cases": 5,
+        "risks_controls": 20,
+        "relationships": 40,
+        "metrics_outcomes": 12,
+        "evidence_sources": 10,
+        "industry_context_patterns": 5,
+        "expert_lenses": 3,
+        "service_scope_managed_services": 5,
+        "operational_process_evidence": 5
+      }
+    }
+  },
+  "semanticChecks": [
+    {
+      "id": "current_target_separation",
+      "description": "Current-state rows must not claim future platforms as implemented. Use current_state_or_target_state and future_target_flag explicitly."
+    },
+    {
+      "id": "source_lineage_required",
+      "description": "Every loaded row must preserve source_file, source_date or as_of_date, confidence, and known_gaps where available."
+    },
+    {
+      "id": "placeholder_rejection",
+      "description": "Placeholder values such as TBD, unknown, sample, lorem ipsum, not_loaded, or owner to confirm do not count as valid facts."
+    }
+  ]
+}

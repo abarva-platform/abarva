@@ -1,0 +1,1 @@
+tenant_key,data_asset_name,data_domain,source_system,target_system,integration_type,platform_or_database,current_state_or_target_state,refresh_frequency,data_owner,data_steward,quality_status,regulated_data_flag,analytics_usage,source_file,source_date,confidence,known_gaps

@@ -1,0 +1,1450 @@
+{
+  "generatedAt": "2026-07-13T23:58:15.798Z",
+  "truthSplit": {
+    "productionTenantDataWritten": false,
+    "activeTenantAccessLayerUpdated": false,
+    "moduleRuntimeBehaviorChanged": false,
+    "candidateRegenerated": false,
+    "sourceFilesStandardizedOnly": true
+  },
+  "universalTemplateSet": {
+    "templateSetId": "universal-tenant-input-standard-2026-07",
+    "root": "datasets/tenant-inputs/templates/universal/standard-2026-07",
+    "manifest": "datasets/tenant-inputs/templates/universal/standard-2026-07/template-manifest.json",
+    "qualityDepthRules": "datasets/tenant-inputs/templates/universal/standard-2026-07/quality-depth-rules.json",
+    "azureLanding": {
+      "storageAccount": "to-be-bound-by-environment",
+      "container": "tenant-inputs",
+      "rawPrefix": "tenant-inputs/{tenant_key}/{intake_id}/raw/",
+      "validatedPrefix": "tenant-inputs/{tenant_key}/{intake_id}/validated/",
+      "archivePrefix": "tenant-inputs/archive/{tenant_key}/{intake_id}/",
+      "fileNamePattern": "{tenant_key}__{template_name}__{as_of_yyyymmdd}__{source_owner}__r{revision}.csv"
+    }
+  },
+  "templates": {
+    "requiredCount": 19,
+    "missingRequired": []
+  },
+  "tenants": [
+    {
+      "tenantKey": "apex-retail",
+      "displayName": "Apex Retail",
+      "companySizeBand": "large",
+      "packets": [
+        "enterprise-pack"
+      ],
+      "csvFileCount": 17,
+      "csvRows": 4112,
+      "mappedCsvRows": 3589,
+      "domainDepth": [
+        {
+          "domain": "enterprise_profile",
+          "rows": 1,
+          "minimumRows": 1,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_01_enterprise_profile.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "business_functions",
+          "rows": 26,
+          "minimumRows": 15,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_02_business_functions.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "org_ownership",
+          "rows": 50,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_03_org_ownership.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "workforce_roles",
+          "rows": 12,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_04_workforce_personas.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "applications_systems",
+          "rows": 182,
+          "minimumRows": 75,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_05_applications_systems.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "data_assets_integrations",
+          "rows": 385,
+          "minimumRows": 100,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_06_data_assets_integrations.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "infrastructure_platforms",
+          "rows": 0,
+          "minimumRows": 20,
+          "sourceFiles": [],
+          "status": "blocker"
+        },
+        {
+          "domain": "vendors_contracts",
+          "rows": 100,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_07_vendors_contracts.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "spend_value",
+          "rows": 188,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_08_spend_value.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "programs_initiatives",
+          "rows": 159,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_09_programs_initiatives.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "ai_automation_use_cases",
+          "rows": 155,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_10_ai_initiatives.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "risks_controls",
+          "rows": 375,
+          "minimumRows": 40,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_11_operations_risk_controls.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "relationships",
+          "rows": 1605,
+          "minimumRows": 100,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_12_relationships.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "metrics_outcomes",
+          "rows": 126,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_14_metric_definitions.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "evidence_sources",
+          "rows": 14,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_13_evidence_sources.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "industry_context_patterns",
+          "rows": 206,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_15_industry_corpus_patterns.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "expert_lenses",
+          "rows": 5,
+          "minimumRows": 5,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_16_expert_lenses.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "service_scope_managed_services",
+          "rows": 0,
+          "minimumRows": 10,
+          "sourceFiles": [],
+          "status": "blocker"
+        },
+        {
+          "domain": "operational_process_evidence",
+          "rows": 0,
+          "minimumRows": 10,
+          "sourceFiles": [],
+          "status": "blocker"
+        }
+      ],
+      "blockers": [
+        {
+          "domain": "workforce_roles",
+          "rows": 12,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_04_workforce_personas.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "infrastructure_platforms",
+          "rows": 0,
+          "minimumRows": 20,
+          "sourceFiles": [],
+          "status": "blocker"
+        },
+        {
+          "domain": "evidence_sources",
+          "rows": 14,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_13_evidence_sources.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "service_scope_managed_services",
+          "rows": 0,
+          "minimumRows": 10,
+          "sourceFiles": [],
+          "status": "blocker"
+        },
+        {
+          "domain": "operational_process_evidence",
+          "rows": 0,
+          "minimumRows": 10,
+          "sourceFiles": [],
+          "status": "blocker"
+        }
+      ],
+      "warnings": [
+        "Unmapped source file: enterprise-pack/V6_BUSINESS_METADATA_DICTIONARY.csv"
+      ]
+    },
+    {
+      "tenantKey": "first-capital-financial",
+      "displayName": "First Capital Financial",
+      "companySizeBand": "large",
+      "packets": [
+        "enterprise-pack"
+      ],
+      "csvFileCount": 17,
+      "csvRows": 6132,
+      "mappedCsvRows": 5609,
+      "domainDepth": [
+        {
+          "domain": "enterprise_profile",
+          "rows": 1,
+          "minimumRows": 1,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_01_enterprise_profile.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "business_functions",
+          "rows": 27,
+          "minimumRows": 15,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_02_business_functions.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "org_ownership",
+          "rows": 65,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_03_org_ownership.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "workforce_roles",
+          "rows": 16,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_04_workforce_personas.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "applications_systems",
+          "rows": 272,
+          "minimumRows": 75,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_05_applications_systems.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "data_assets_integrations",
+          "rows": 460,
+          "minimumRows": 100,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_06_data_assets_integrations.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "infrastructure_platforms",
+          "rows": 0,
+          "minimumRows": 20,
+          "sourceFiles": [],
+          "status": "blocker"
+        },
+        {
+          "domain": "vendors_contracts",
+          "rows": 120,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_07_vendors_contracts.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "spend_value",
+          "rows": 397,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_08_spend_value.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "programs_initiatives",
+          "rows": 299,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_09_programs_initiatives.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "ai_automation_use_cases",
+          "rows": 282,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_10_ai_initiatives.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "risks_controls",
+          "rows": 547,
+          "minimumRows": 40,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_11_operations_risk_controls.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "relationships",
+          "rows": 2614,
+          "minimumRows": 100,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_12_relationships.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "metrics_outcomes",
+          "rows": 168,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_14_metric_definitions.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "evidence_sources",
+          "rows": 42,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_13_evidence_sources.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "industry_context_patterns",
+          "rows": 294,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_15_industry_corpus_patterns.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "expert_lenses",
+          "rows": 5,
+          "minimumRows": 5,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_16_expert_lenses.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "service_scope_managed_services",
+          "rows": 0,
+          "minimumRows": 10,
+          "sourceFiles": [],
+          "status": "blocker"
+        },
+        {
+          "domain": "operational_process_evidence",
+          "rows": 0,
+          "minimumRows": 10,
+          "sourceFiles": [],
+          "status": "blocker"
+        }
+      ],
+      "blockers": [
+        {
+          "domain": "workforce_roles",
+          "rows": 16,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_04_workforce_personas.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "infrastructure_platforms",
+          "rows": 0,
+          "minimumRows": 20,
+          "sourceFiles": [],
+          "status": "blocker"
+        },
+        {
+          "domain": "service_scope_managed_services",
+          "rows": 0,
+          "minimumRows": 10,
+          "sourceFiles": [],
+          "status": "blocker"
+        },
+        {
+          "domain": "operational_process_evidence",
+          "rows": 0,
+          "minimumRows": 10,
+          "sourceFiles": [],
+          "status": "blocker"
+        }
+      ],
+      "warnings": [
+        "Unmapped source file: enterprise-pack/V6_BUSINESS_METADATA_DICTIONARY.csv"
+      ]
+    },
+    {
+      "tenantKey": "lakeshore-holdings",
+      "displayName": "Lakeshore Holdings",
+      "companySizeBand": "mid_market",
+      "packets": [
+        "enterprise-pack"
+      ],
+      "csvFileCount": 19,
+      "csvRows": 996,
+      "mappedCsvRows": 473,
+      "domainDepth": [
+        {
+          "domain": "enterprise_profile",
+          "rows": 9,
+          "minimumRows": 1,
+          "sourceFiles": [
+            "enterprise-pack/holdco_tower/H01_entity_hierarchy.csv",
+            "enterprise-pack/templates/V6_01_enterprise_profile.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "business_functions",
+          "rows": 14,
+          "minimumRows": 8,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_02_business_functions.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "org_ownership",
+          "rows": 8,
+          "minimumRows": 5,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_03_org_ownership.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "workforce_roles",
+          "rows": 10,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_04_workforce_personas.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "applications_systems",
+          "rows": 24,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_05_applications_systems.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "data_assets_integrations",
+          "rows": 34,
+          "minimumRows": 40,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_06_data_assets_integrations.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "infrastructure_platforms",
+          "rows": 0,
+          "minimumRows": 8,
+          "sourceFiles": [],
+          "status": "blocker"
+        },
+        {
+          "domain": "vendors_contracts",
+          "rows": 19,
+          "minimumRows": 12,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_07_vendors_contracts.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "spend_value",
+          "rows": 93,
+          "minimumRows": 5,
+          "sourceFiles": [
+            "enterprise-pack/holdco_tower/H02_dashboard_metric_map.csv",
+            "enterprise-pack/templates/V6_08_spend_value.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "programs_initiatives",
+          "rows": 15,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_09_programs_initiatives.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "ai_automation_use_cases",
+          "rows": 8,
+          "minimumRows": 5,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_10_ai_initiatives.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "risks_controls",
+          "rows": 10,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_11_operations_risk_controls.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "relationships",
+          "rows": 199,
+          "minimumRows": 40,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_12_relationships.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "metrics_outcomes",
+          "rows": 12,
+          "minimumRows": 12,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_14_metric_definitions.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "evidence_sources",
+          "rows": 10,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_13_evidence_sources.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "industry_context_patterns",
+          "rows": 4,
+          "minimumRows": 5,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_15_industry_corpus_patterns.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "expert_lenses",
+          "rows": 4,
+          "minimumRows": 3,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_16_expert_lenses.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "service_scope_managed_services",
+          "rows": 0,
+          "minimumRows": 5,
+          "sourceFiles": [],
+          "status": "blocker"
+        },
+        {
+          "domain": "operational_process_evidence",
+          "rows": 0,
+          "minimumRows": 5,
+          "sourceFiles": [],
+          "status": "blocker"
+        }
+      ],
+      "blockers": [
+        {
+          "domain": "applications_systems",
+          "rows": 24,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_05_applications_systems.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "data_assets_integrations",
+          "rows": 34,
+          "minimumRows": 40,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_06_data_assets_integrations.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "infrastructure_platforms",
+          "rows": 0,
+          "minimumRows": 8,
+          "sourceFiles": [],
+          "status": "blocker"
+        },
+        {
+          "domain": "risks_controls",
+          "rows": 10,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_11_operations_risk_controls.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "industry_context_patterns",
+          "rows": 4,
+          "minimumRows": 5,
+          "sourceFiles": [
+            "enterprise-pack/templates/V6_15_industry_corpus_patterns.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "service_scope_managed_services",
+          "rows": 0,
+          "minimumRows": 5,
+          "sourceFiles": [],
+          "status": "blocker"
+        },
+        {
+          "domain": "operational_process_evidence",
+          "rows": 0,
+          "minimumRows": 5,
+          "sourceFiles": [],
+          "status": "blocker"
+        }
+      ],
+      "warnings": [
+        "Unmapped source file: enterprise-pack/V6_BUSINESS_METADATA_DICTIONARY.csv"
+      ]
+    },
+    {
+      "tenantKey": "lakeshore-industries",
+      "displayName": "Lakeshore Industries",
+      "companySizeBand": "large",
+      "packets": [
+        "holdco-pack"
+      ],
+      "csvFileCount": 52,
+      "csvRows": 3809,
+      "mappedCsvRows": 3094,
+      "domainDepth": [
+        {
+          "domain": "enterprise_profile",
+          "rows": 16,
+          "minimumRows": 1,
+          "sourceFiles": [
+            "holdco-pack/V7_00_portfolio_entity_registry.csv",
+            "holdco-pack/V7_01_enterprise_profile.csv",
+            "holdco-pack/client_templates/V7_00_portfolio_entity_registry.csv",
+            "holdco-pack/client_templates/V7_01_enterprise_profile.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "business_functions",
+          "rows": 96,
+          "minimumRows": 15,
+          "sourceFiles": [
+            "holdco-pack/V7_02_business_functions.csv",
+            "holdco-pack/client_templates/V7_02_business_functions.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "org_ownership",
+          "rows": 116,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "holdco-pack/V7_03_org_ownership.csv",
+            "holdco-pack/client_templates/V7_03_org_ownership.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "workforce_roles",
+          "rows": 82,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "holdco-pack/V7_04_workforce_personas.csv",
+            "holdco-pack/client_templates/V7_04_workforce_personas.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "applications_systems",
+          "rows": 152,
+          "minimumRows": 75,
+          "sourceFiles": [
+            "holdco-pack/V7_05_applications_systems.csv",
+            "holdco-pack/client_templates/V7_05_applications_systems.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "data_assets_integrations",
+          "rows": 82,
+          "minimumRows": 100,
+          "sourceFiles": [
+            "holdco-pack/V7_06_data_assets_integrations.csv",
+            "holdco-pack/client_templates/V7_06_data_assets_integrations.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "infrastructure_platforms",
+          "rows": 128,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "holdco-pack/V7_24_infrastructure_cloud_estate.csv",
+            "holdco-pack/client_templates/V7_24_infrastructure_cloud_estate.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "vendors_contracts",
+          "rows": 96,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "holdco-pack/V7_07_vendors_contracts.csv",
+            "holdco-pack/client_templates/V7_07_vendors_contracts.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "spend_value",
+          "rows": 111,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "holdco-pack/V7_08_spend_value.csv",
+            "holdco-pack/V7_17_client_rate_card_cost_basis.csv",
+            "holdco-pack/client_templates/V7_08_spend_value.csv",
+            "holdco-pack/client_templates/V7_17_client_rate_card_cost_basis.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "programs_initiatives",
+          "rows": 36,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "holdco-pack/V7_09_programs_initiatives_business_priorities.csv",
+            "holdco-pack/client_templates/V7_09_programs_initiatives_business_priorities.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "ai_automation_use_cases",
+          "rows": 36,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "holdco-pack/V7_10_ai_initiatives.csv",
+            "holdco-pack/client_templates/V7_10_ai_initiatives.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "risks_controls",
+          "rows": 48,
+          "minimumRows": 40,
+          "sourceFiles": [
+            "holdco-pack/V7_11_operations_risk_controls.csv",
+            "holdco-pack/client_templates/V7_11_operations_risk_controls.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "relationships",
+          "rows": 1045,
+          "minimumRows": 100,
+          "sourceFiles": [
+            "holdco-pack/V7_12_relationships_graph_edges.csv",
+            "holdco-pack/V7_18_function_system_data_vendor_bridge.csv",
+            "holdco-pack/V7_21_graph_registry_relationship_dictionary.csv",
+            "holdco-pack/client_templates/V7_12_relationships_graph_edges.csv",
+            "holdco-pack/client_templates/V7_18_function_system_data_vendor_bridge.csv",
+            "holdco-pack/client_templates/V7_21_graph_registry_relationship_dictionary.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "metrics_outcomes",
+          "rows": 384,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "holdco-pack/V7_14_metric_definitions.csv",
+            "holdco-pack/client_templates/V7_14_metric_definitions.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "evidence_sources",
+          "rows": 424,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "holdco-pack/V7_13_source_evidence_registry.csv",
+            "holdco-pack/V7_20_chunk_retrieval_registry.csv",
+            "holdco-pack/client_templates/V7_13_source_evidence_registry.csv",
+            "holdco-pack/client_templates/V7_20_chunk_retrieval_registry.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "industry_context_patterns",
+          "rows": 48,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "holdco-pack/V7_15_industry_market_knowledge_patterns.csv",
+            "holdco-pack/V7_23_external_benchmark_market_corpus.csv",
+            "holdco-pack/client_templates/V7_15_industry_market_knowledge_patterns.csv",
+            "holdco-pack/client_templates/V7_23_external_benchmark_market_corpus.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "expert_lenses",
+          "rows": 18,
+          "minimumRows": 5,
+          "sourceFiles": [
+            "holdco-pack/V7_16_expert_lenses.csv",
+            "holdco-pack/client_templates/V7_16_expert_lenses.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "service_scope_managed_services",
+          "rows": 64,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "holdco-pack/V7_19_service_tower_managed_services_scope.csv",
+            "holdco-pack/client_templates/V7_19_service_tower_managed_services_scope.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "operational_process_evidence",
+          "rows": 112,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "holdco-pack/V7_22_operational_evidence_process_intelligence.csv",
+            "holdco-pack/client_templates/V7_22_operational_evidence_process_intelligence.csv"
+          ],
+          "status": "pass"
+        }
+      ],
+      "blockers": [
+        {
+          "domain": "data_assets_integrations",
+          "rows": 82,
+          "minimumRows": 100,
+          "sourceFiles": [
+            "holdco-pack/V7_06_data_assets_integrations.csv",
+            "holdco-pack/client_templates/V7_06_data_assets_integrations.csv"
+          ],
+          "status": "blocker"
+        }
+      ],
+      "warnings": [
+        "Unmapped source file: holdco-pack/00_master/V7_DIMENSION_REGISTRY.csv",
+        "Unmapped source file: holdco-pack/field_catalog/V7_FIELD_CATALOG.csv"
+      ]
+    },
+    {
+      "tenantKey": "meridian-health",
+      "displayName": "Meridian Health",
+      "companySizeBand": "large",
+      "packets": [
+        "current-state-pack",
+        "rich-enterprise-pack"
+      ],
+      "csvFileCount": 60,
+      "csvRows": 4697,
+      "mappedCsvRows": 4104,
+      "domainDepth": [
+        {
+          "domain": "enterprise_profile",
+          "rows": 4,
+          "minimumRows": 1,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_01_enterprise_profile.csv",
+            "current-state-pack/v7/V7_00_portfolio_entity_registry.csv",
+            "current-state-pack/v7/V7_01_enterprise_profile.csv",
+            "rich-enterprise-pack/templates/V6_01_enterprise_profile.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "business_functions",
+          "rows": 39,
+          "minimumRows": 15,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_02_business_functions.csv",
+            "current-state-pack/v7/V7_02_business_functions.csv",
+            "rich-enterprise-pack/templates/V6_02_business_functions.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "org_ownership",
+          "rows": 87,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_03_org_ownership.csv",
+            "current-state-pack/v7/V7_03_org_ownership.csv",
+            "rich-enterprise-pack/templates/V6_03_org_ownership.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "workforce_roles",
+          "rows": 26,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_04_workforce_personas.csv",
+            "current-state-pack/v7/V7_04_workforce_personas.csv",
+            "rich-enterprise-pack/templates/V6_04_workforce_personas.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "applications_systems",
+          "rows": 192,
+          "minimumRows": 75,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_05_applications_systems.csv",
+            "current-state-pack/v7/V7_05_applications_systems.csv",
+            "rich-enterprise-pack/templates/V6_05_applications_systems.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "data_assets_integrations",
+          "rows": 432,
+          "minimumRows": 100,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_06_data_assets_integrations.csv",
+            "current-state-pack/v7/V7_06_data_assets_integrations.csv",
+            "rich-enterprise-pack/templates/V6_06_data_assets_integrations.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "infrastructure_platforms",
+          "rows": 4,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "current-state-pack/v7/V7_24_infrastructure_cloud_estate.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "vendors_contracts",
+          "rows": 109,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_07_vendors_contracts.csv",
+            "current-state-pack/v7/V7_07_vendors_contracts.csv",
+            "rich-enterprise-pack/templates/V6_07_vendors_contracts.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "spend_value",
+          "rows": 202,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_08_spend_value.csv",
+            "current-state-pack/v7/V7_08_spend_value.csv",
+            "current-state-pack/v7/V7_17_client_rate_card_cost_basis.csv",
+            "rich-enterprise-pack/templates/V6_08_spend_value.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "programs_initiatives",
+          "rows": 170,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_09_programs_initiatives.csv",
+            "current-state-pack/v7/V7_09_programs_initiatives_business_priorities.csv",
+            "rich-enterprise-pack/templates/V6_09_programs_initiatives.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "ai_automation_use_cases",
+          "rows": 156,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_10_ai_initiatives.csv",
+            "current-state-pack/v7/V7_10_ai_initiatives.csv",
+            "rich-enterprise-pack/templates/V6_10_ai_initiatives.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "risks_controls",
+          "rows": 405,
+          "minimumRows": 40,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_11_operations_risk_controls.csv",
+            "current-state-pack/v7/V7_11_operations_risk_controls.csv",
+            "rich-enterprise-pack/templates/V6_11_operations_risk_controls.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "relationships",
+          "rows": 1766,
+          "minimumRows": 100,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_12_relationships.csv",
+            "current-state-pack/v7/V7_12_relationships_graph_edges.csv",
+            "current-state-pack/v7/V7_18_function_system_data_vendor_bridge.csv",
+            "current-state-pack/v7/V7_21_graph_registry_relationship_dictionary.csv",
+            "rich-enterprise-pack/templates/V6_12_relationships.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "metrics_outcomes",
+          "rows": 138,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_14_metric_definitions.csv",
+            "current-state-pack/v7/V7_14_metric_definitions.csv",
+            "rich-enterprise-pack/templates/V6_14_metric_definitions.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "evidence_sources",
+          "rows": 140,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_13_evidence_sources.csv",
+            "current-state-pack/v7/V7_13_source_evidence_registry.csv",
+            "current-state-pack/v7/V7_20_chunk_retrieval_registry.csv",
+            "rich-enterprise-pack/templates/V6_13_evidence_sources.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "industry_context_patterns",
+          "rows": 206,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_15_industry_corpus_patterns.csv",
+            "current-state-pack/v7/V7_15_industry_market_knowledge_patterns.csv",
+            "current-state-pack/v7/V7_23_external_benchmark_market_corpus.csv",
+            "rich-enterprise-pack/templates/V6_15_industry_corpus_patterns.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "expert_lenses",
+          "rows": 15,
+          "minimumRows": 5,
+          "sourceFiles": [
+            "current-state-pack/templates/V6_16_expert_lenses.csv",
+            "current-state-pack/v7/V7_16_expert_lenses.csv",
+            "rich-enterprise-pack/templates/V6_16_expert_lenses.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "service_scope_managed_services",
+          "rows": 3,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "current-state-pack/v7/V7_19_service_tower_managed_services_scope.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "operational_process_evidence",
+          "rows": 10,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "current-state-pack/v7/V7_22_operational_evidence_process_intelligence.csv"
+          ],
+          "status": "pass"
+        }
+      ],
+      "blockers": [
+        {
+          "domain": "infrastructure_platforms",
+          "rows": 4,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "current-state-pack/v7/V7_24_infrastructure_cloud_estate.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "service_scope_managed_services",
+          "rows": 3,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "current-state-pack/v7/V7_19_service_tower_managed_services_scope.csv"
+          ],
+          "status": "blocker"
+        }
+      ],
+      "warnings": [
+        "Unmapped source file: current-state-pack/derived/meridian_moves_current_state_findings.csv",
+        "Unmapped source file: current-state-pack/derived/meridian_moves_golden_questions_scorecard.csv",
+        "Unmapped source file: rich-enterprise-pack/V6_BUSINESS_METADATA_DICTIONARY.csv",
+        "Potential current/target blend: current-state-pack/templates/V6_05_applications_systems.csv",
+        "Potential current/target blend: current-state-pack/templates/V6_06_data_assets_integrations.csv",
+        "Potential current/target blend: current-state-pack/v7/V7_05_applications_systems.csv",
+        "Potential current/target blend: current-state-pack/v7/V7_06_data_assets_integrations.csv",
+        "Potential current/target blend: current-state-pack/v7/V7_24_infrastructure_cloud_estate.csv"
+      ]
+    },
+    {
+      "tenantKey": "skyharbor-air",
+      "displayName": "SkyHarbor Air",
+      "companySizeBand": "large",
+      "packets": [
+        "upgrade-candidate-pack",
+        "rich-substrate-pack"
+      ],
+      "csvFileCount": 57,
+      "csvRows": 3842,
+      "mappedCsvRows": 3712,
+      "domainDepth": [
+        {
+          "domain": "enterprise_profile",
+          "rows": 4,
+          "minimumRows": 1,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_01_enterprise_profile.csv",
+            "upgrade-candidate-pack/v7/V7_00_portfolio_entity_registry.csv",
+            "upgrade-candidate-pack/v7/V7_01_enterprise_profile.csv",
+            "rich-substrate-pack/csv/enterprise-profile.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "business_functions",
+          "rows": 92,
+          "minimumRows": 15,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_02_business_functions.csv",
+            "upgrade-candidate-pack/v7/V7_02_business_functions.csv",
+            "rich-substrate-pack/csv/business-capabilities.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "org_ownership",
+          "rows": 284,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_03_org_ownership.csv",
+            "upgrade-candidate-pack/v7/V7_03_org_ownership.csv",
+            "rich-substrate-pack/csv/org-roles.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "workforce_roles",
+          "rows": 12,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_04_workforce_personas.csv",
+            "upgrade-candidate-pack/v7/V7_04_workforce_personas.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "applications_systems",
+          "rows": 626,
+          "minimumRows": 75,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_05_applications_systems.csv",
+            "upgrade-candidate-pack/v7/V7_05_applications_systems.csv",
+            "rich-substrate-pack/csv/application-portfolio.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "data_assets_integrations",
+          "rows": 570,
+          "minimumRows": 100,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_06_data_assets_integrations.csv",
+            "upgrade-candidate-pack/v7/V7_06_data_assets_integrations.csv",
+            "rich-substrate-pack/csv/integration-topology.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "infrastructure_platforms",
+          "rows": 691,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "upgrade-candidate-pack/v7/V7_24_infrastructure_cloud_estate.csv",
+            "rich-substrate-pack/csv/infrastructure-estate.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "vendors_contracts",
+          "rows": 140,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_07_vendors_contracts.csv",
+            "upgrade-candidate-pack/v7/V7_07_vendors_contracts.csv",
+            "rich-substrate-pack/csv/vendor-contracts.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "spend_value",
+          "rows": 192,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_08_spend_value.csv",
+            "upgrade-candidate-pack/v7/V7_08_spend_value.csv",
+            "upgrade-candidate-pack/v7/V7_17_client_rate_card_cost_basis.csv",
+            "rich-substrate-pack/csv/it-financials.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "programs_initiatives",
+          "rows": 74,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_09_programs_initiatives.csv",
+            "upgrade-candidate-pack/v7/V7_09_programs_initiatives_business_priorities.csv",
+            "rich-substrate-pack/csv/initiatives.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "ai_automation_use_cases",
+          "rows": 46,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_10_ai_initiatives.csv",
+            "upgrade-candidate-pack/v7/V7_10_ai_initiatives.csv",
+            "rich-substrate-pack/csv/ai-tooling.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "risks_controls",
+          "rows": 56,
+          "minimumRows": 40,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_11_operations_risk_controls.csv",
+            "upgrade-candidate-pack/v7/V7_11_operations_risk_controls.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "relationships",
+          "rows": 225,
+          "minimumRows": 100,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_12_relationships.csv",
+            "upgrade-candidate-pack/v7/V7_12_relationships_graph_edges.csv",
+            "upgrade-candidate-pack/v7/V7_18_function_system_data_vendor_bridge.csv",
+            "upgrade-candidate-pack/v7/V7_21_graph_registry_relationship_dictionary.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "metrics_outcomes",
+          "rows": 136,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_14_metric_definitions.csv",
+            "upgrade-candidate-pack/v7/V7_14_metric_definitions.csv",
+            "rich-substrate-pack/csv/dora-baseline.csv",
+            "rich-substrate-pack/csv/sla-register.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "evidence_sources",
+          "rows": 125,
+          "minimumRows": 20,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_13_evidence_sources.csv",
+            "upgrade-candidate-pack/v7/V7_13_source_evidence_registry.csv",
+            "upgrade-candidate-pack/v7/V7_20_chunk_retrieval_registry.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "industry_context_patterns",
+          "rows": 16,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_15_industry_corpus_patterns.csv",
+            "upgrade-candidate-pack/v7/V7_15_industry_market_knowledge_patterns.csv",
+            "upgrade-candidate-pack/v7/V7_23_external_benchmark_market_corpus.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "expert_lenses",
+          "rows": 10,
+          "minimumRows": 5,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_16_expert_lenses.csv",
+            "upgrade-candidate-pack/v7/V7_16_expert_lenses.csv"
+          ],
+          "status": "pass"
+        },
+        {
+          "domain": "service_scope_managed_services",
+          "rows": 3,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "upgrade-candidate-pack/v7/V7_19_service_tower_managed_services_scope.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "operational_process_evidence",
+          "rows": 410,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "upgrade-candidate-pack/v7/V7_22_operational_evidence_process_intelligence.csv",
+            "rich-substrate-pack/csv/incidents.csv"
+          ],
+          "status": "pass"
+        }
+      ],
+      "blockers": [
+        {
+          "domain": "workforce_roles",
+          "rows": 12,
+          "minimumRows": 25,
+          "sourceFiles": [
+            "upgrade-candidate-pack/templates/V6_04_workforce_personas.csv",
+            "upgrade-candidate-pack/v7/V7_04_workforce_personas.csv"
+          ],
+          "status": "blocker"
+        },
+        {
+          "domain": "service_scope_managed_services",
+          "rows": 3,
+          "minimumRows": 10,
+          "sourceFiles": [
+            "upgrade-candidate-pack/v7/V7_19_service_tower_managed_services_scope.csv"
+          ],
+          "status": "blocker"
+        }
+      ],
+      "warnings": [
+        "Unmapped source file: upgrade-candidate-pack/derived/skyharbor_air_moves_current_state_findings.csv",
+        "Unmapped source file: upgrade-candidate-pack/derived/skyharbor_air_moves_golden_questions_scorecard.csv",
+        "Unmapped source file: rich-substrate-pack/csv/erp-landscape.csv"
+      ]
+    }
+  ],
+  "retiredTenants": [
+    {
+      "tenantKey": "northstar-clinical",
+      "displayName": "Northstar Clinical",
+      "status": "retired-excluded",
+      "archivePaths": [
+        "datasets/tenant-inputs/archive/northstar-clinical-tech-synthetic-v1",
+        "datasets/tenant-inputs/archive/client-load-staging/northstar-clinical"
+      ],
+      "reason": "Operator instruction: there should be no Northstar active tenant."
+    }
+  ],
+  "failures": []
+}
