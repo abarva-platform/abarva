@@ -25,6 +25,10 @@ import {
   type DeliverableSpec,
 } from '@/lib/programs/deliverable-registry';
 import { orchestratorDeliverableType } from '@/lib/programs/orchestrated-deliverable-map';
+import {
+  createMoveContextExtract,
+  type MoveContextExtractResult,
+} from '@/lib/programs/move-context-extract';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,6 +40,13 @@ interface GeneratePhaseBody {
   useCaseArchetype?: string;
   moveName?: string;
   clientDisplayName?: string;
+  contextExtract?: {
+    candidatePreview?: {
+      enabled?: boolean;
+      candidateVersionId?: string;
+      acknowledgedNotActiveRuntimeTruth?: boolean;
+    };
+  };
 }
 
 interface EnqueuedDeliverable {
@@ -118,6 +129,60 @@ export async function POST(req: NextRequest) {
     // as-is for the route's own response (internal/ops-facing, not model input).
     const clientSafePhaseLabel = phaseLabel.replace(/^P\d+\s*/i, '').trim() || 'this phase';
 
+    let contextExtract: MoveContextExtractResult | null = null;
+    try {
+      contextExtract = await createMoveContextExtract({
+        ctx,
+        moveId,
+        tenantKey: clientKey,
+        phase,
+        targetPhase: phase,
+        moveName,
+        useCaseArchetype,
+        phaseLabel,
+        phasePurpose: specs.map((spec) => spec.documentPurpose).join(' '),
+        candidatePreview: {
+          enabled:
+            req.headers.get('x-abarva-candidate-preview-mode') === 'enabled' &&
+            body.contextExtract?.candidatePreview?.enabled === true,
+          candidateVersionId:
+            body.contextExtract?.candidatePreview?.candidateVersionId?.trim(),
+          acknowledgedNotActiveRuntimeTruth:
+            body.contextExtract?.candidatePreview
+              ?.acknowledgedNotActiveRuntimeTruth === true,
+        },
+      });
+    } catch (err) {
+      contextExtract = {
+        status: 'error',
+        extractId: null,
+        artifactId: null,
+        evidenceId: null,
+        moveId,
+        tenantKey: clientKey,
+        sourceMode: 'active_home_context',
+        phase,
+        targetPhase: phase,
+        activeTenantAccessVersionId: null,
+        candidateVersionId: null,
+        sourceBuildId: null,
+        attachedEvidenceItems: [],
+        suggestedContextItems: [],
+        excludedContextItems: [],
+        gapItems: [
+          {
+            status: 'gap',
+            label: 'Move Context Extract',
+            summary: 'Context extract failed before generation enqueue.',
+            reason: err instanceof Error ? err.message : 'unknown error',
+            sourceMode: 'active_home_context',
+          },
+        ],
+        generatedAt: new Date().toISOString(),
+        message: err instanceof Error ? err.message : 'unknown error',
+      };
+    }
+
     // Enqueue one run per deliverable. Best-effort: a failure on one is reported in
     // its row, not fatal to the batch — so the user still gets the rest building.
     const results: EnqueuedDeliverable[] = [];
@@ -166,7 +231,7 @@ export async function POST(req: NextRequest) {
     const queued = results.filter((r) => r.status === 'queued').length;
     // 202 if anything queued; 500 only if every deliverable failed to enqueue.
     return Response.json(
-      { phase, phaseLabel, queued, total: results.length, deliverables: results },
+      { phase, phaseLabel, contextExtract, queued, total: results.length, deliverables: results },
       { status: queued > 0 ? 202 : 500 },
     );
   } catch (err) {
