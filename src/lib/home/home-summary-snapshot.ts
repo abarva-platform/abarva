@@ -1,6 +1,12 @@
 import crypto from "node:crypto";
 
 import type { AdminSetupControlResponse } from "@/lib/admin/setup-control";
+import type {
+  ModuleContextExplanation,
+  ModuleContextRecord,
+  ModuleContextRequestedDomain,
+  ServedModuleContextPacket,
+} from "@/lib/enterprise-data/contracts/module-context-apis";
 import {
   formatEnterpriseEmployeeCount,
   formatEnterpriseRevenue,
@@ -152,6 +158,7 @@ export interface HomeSummarySnapshot {
   tenantProfileHeader: HomeTenantProfileHeader;
   executiveProfile: HomeExecutiveProfile;
   contextAreas: HomeContextAreaSummary[];
+  moduleContextSummary?: HomeModuleContextSummary;
   dataQualitySummary: HomeDataQualitySummary;
   avaScope: HomeAvaScope;
   caveats: string[];
@@ -170,6 +177,30 @@ export interface HomeSummarySnapshot {
   lineage: HomeSummaryLineage;
 }
 
+export interface HomeModuleContextSummary {
+  sourceMode: ServedModuleContextPacket["sourceMode"];
+  activeTenantAccessVersionId: string | null;
+  candidateVersionId: string | null;
+  requestedDomains: Array<{
+    domain: ModuleContextRequestedDomain;
+    canonicalDomain: string;
+    acceptedRecords: number;
+    sourceRows: number;
+    readiness: string;
+  }>;
+  readableRecords: number;
+  evidenceRefs: number;
+  validatedRelationships: number;
+  relationshipCandidates: number;
+  contextCompleteness: ServedModuleContextPacket["contextCompleteness"];
+  explanationSummary: string;
+  strengths: string[];
+  limitations: string[];
+  supportedQuestions: string[];
+  unsupportedQuestions: string[];
+  nextActions: string[];
+}
+
 export interface HomeSummarySnapshotBuildOptions {
   repoRoot?: string;
   tenantId?: string | null;
@@ -182,6 +213,17 @@ export interface HomeSummarySnapshotBuildOptions {
   dataQuality?: HomeDataQualityModel | null;
   englishSummary?: HomeEnglishSummary | null;
   generatedAt?: string;
+}
+
+export interface HomeSummarySnapshotFromModuleContextOptions {
+  tenantId?: string | null;
+  tenantKey: string;
+  displayName?: string | null;
+  industry?: string | null;
+  moduleContext: ServedModuleContextPacket;
+  moduleContextExplanation: ModuleContextExplanation;
+  generatedAt?: string;
+  repoRoot?: string;
 }
 
 const REQUIRED_CONTEXT_AREAS = [
@@ -364,6 +406,462 @@ export function buildHomeSummarySnapshot(
       inputFingerprint,
     },
   };
+}
+
+export function buildHomeSummarySnapshotFromModuleContext(
+  options: HomeSummarySnapshotFromModuleContextOptions,
+): HomeSummarySnapshot {
+  const generatedAt =
+    options.generatedAt ??
+    options.moduleContext.generatedAt ??
+    new Date().toISOString();
+  const base = buildHomeSummarySnapshot({
+    repoRoot: options.repoRoot,
+    tenantId: options.tenantId ?? null,
+    tenantKey: options.tenantKey,
+    displayName:
+      options.displayName ??
+      firstModuleField(options.moduleContext.records, [
+        "clientDisplayName",
+        "entityName",
+        "companyName",
+      ]) ??
+      options.tenantKey,
+    industry:
+      options.industry ??
+      firstModuleField(options.moduleContext.records, ["industry", "vertical"]),
+    mode:
+      options.moduleContext.mode === "candidate_preview"
+        ? "candidate_preview"
+        : "active_home_context",
+    generatedAt,
+  });
+  const profile = deriveTenantProfileFromModuleContext({
+    baseProfile: base.tenantProfileHeader,
+    moduleContext: options.moduleContext,
+  });
+  const contextAreas = buildContextAreasFromModuleContext({
+    moduleContext: options.moduleContext,
+    explanation: options.moduleContextExplanation,
+  });
+  const contextDepthWidth = buildContextDepthWidthFromModuleContext(
+    options.moduleContext,
+  );
+  const moduleContextSummary = buildModuleContextSummary({
+    moduleContext: options.moduleContext,
+    explanation: options.moduleContextExplanation,
+  });
+  const dataQualitySummary = buildDataQualitySummaryFromModuleContext({
+    moduleContext: options.moduleContext,
+    explanation: options.moduleContextExplanation,
+  });
+  const avaScope = buildAvaScopeFromModuleContext({
+    tenantKey: options.tenantKey,
+    mode:
+      options.moduleContext.mode === "candidate_preview"
+        ? "candidate_preview"
+        : "active_home_context",
+    explanation: options.moduleContextExplanation,
+  });
+  const caveats = uniqueNonEmpty([
+    ...options.moduleContext.caveats,
+    ...options.moduleContextExplanation.limitations,
+  ]).slice(0, 10);
+  const status = snapshotStatusFromModuleContext(options.moduleContext);
+  const lineageWithoutFingerprint = {
+    generatedAt,
+    generatedBy: "home_summary_engine" as const,
+    inputFingerprint: "",
+    tenantDataVersionId:
+      options.moduleContext.activeTenantAccessVersionId ??
+      options.moduleContext.tenantDataVersion ??
+      null,
+    candidateVersionId:
+      options.moduleContext.mode === "candidate_preview"
+        ? options.moduleContext.candidateVersionId
+        : null,
+    sourceSnapshotIds: options.moduleContext.lineage.sourceSnapshotIds,
+    dataQualitySnapshotId:
+      options.moduleContext.lineage.sourceBuildFingerprint ?? null,
+    manifestProjectionSnapshotId:
+      options.moduleContext.lineage.inputFingerprint ?? null,
+    answerabilitySnapshotId:
+      options.moduleContext.contextCompleteness.overall.toLowerCase(),
+    mode:
+      options.moduleContext.mode === "candidate_preview"
+        ? ("candidate_preview" as const)
+        : ("active_home_context" as const),
+    status,
+  };
+  const snapshotWithoutFingerprint = {
+    contractVersion: "home_summary_snapshot.v1" as const,
+    tenantProfileHeader: profile,
+    executiveProfile: {
+      companySummaryFacts: deriveCompanyFactsFromModuleContext({
+        profile,
+        explanation: options.moduleContextExplanation,
+      }),
+      businessModelSignals: deriveModuleRecordSignals(
+        options.moduleContext.records,
+        "enterprise_profile",
+      ),
+      strategicPrioritySignals: deriveModuleRecordSignals(
+        options.moduleContext.records,
+        "programs_priorities",
+      ),
+      enterpriseSnapshotMetrics: buildEnterpriseMetricsFromModuleContext({
+        moduleContext: options.moduleContext,
+      }),
+      contextDepthWidth,
+      whatAbarVaKnows: [
+        options.moduleContextExplanation.summary,
+        ...options.moduleContextExplanation.strengths,
+      ].slice(0, 5),
+      whatIsMissing: [
+        ...options.moduleContext.gaps.map((gap) => gap.description),
+        ...options.moduleContextExplanation.limitations,
+      ].slice(0, 8),
+      safeToAsk: options.moduleContextExplanation.supportedQuestions,
+      doNotRelyYet: options.moduleContextExplanation.unsupportedQuestions,
+      recommendedNextDataActions: options.moduleContextExplanation.nextActions,
+      moduleImpact: base.executiveProfile.moduleImpact,
+    },
+    contextAreas,
+    moduleContextSummary,
+    dataQualitySummary,
+    avaScope,
+    caveats,
+    guardrails: {
+      deterministicBuilder: true as const,
+      callsClaude: false as const,
+      productionTenantDataWritten: false as const,
+      activeTenantAccessLayerUpdated: false as const,
+      candidatePromoted: false as const,
+      moduleRuntimeConsumptionChanged: false as const,
+      candidateReadByDefault: false as const,
+      uploadsFiles: false as const,
+      validatesFiles: false as const,
+      createsCandidates: false as const,
+    },
+    lineage: lineageWithoutFingerprint,
+  };
+  const inputFingerprint = stableFingerprint(snapshotWithoutFingerprint);
+  return {
+    ...snapshotWithoutFingerprint,
+    lineage: {
+      ...lineageWithoutFingerprint,
+      inputFingerprint,
+    },
+  };
+}
+
+const MODULE_DOMAIN_TO_HOME_AREA: Record<
+  HomeContextAreaSummary["displayName"],
+  ModuleContextRequestedDomain
+> = {
+  "Business Functions": "functions",
+  "Applications & Systems": "applications_systems",
+  "Vendors & Contracts": "vendors_contracts",
+  "Data Assets": "data_assets_integrations",
+  Integrations: "relationships",
+  "Programs & Initiatives": "programs_priorities",
+  "Risks & Controls": "risks_controls",
+  "Metrics / KPIs": "metrics_outcomes",
+  "Evidence Sources": "evidence_sources",
+  Relationships: "relationships",
+};
+
+function deriveTenantProfileFromModuleContext(args: {
+  baseProfile: HomeTenantProfileHeader;
+  moduleContext: ServedModuleContextPacket;
+}): HomeTenantProfileHeader {
+  const profileRecords = args.moduleContext.records.filter(
+    (record) => record.domain === "enterprise_profile",
+  );
+  const businessSegments = parseListField(
+    firstModuleField(profileRecords, ["businessSegments", "segments"]),
+  );
+  return {
+    ...args.baseProfile,
+    displayName:
+      firstModuleField(profileRecords, [
+        "clientDisplayName",
+        "companyName",
+        "entityName",
+      ]) ?? args.baseProfile.displayName,
+    legalName:
+      firstModuleField(profileRecords, ["companyName", "entityName"]) ??
+      args.baseProfile.legalName,
+    industry:
+      firstModuleField(profileRecords, ["industry", "vertical"]) ??
+      args.baseProfile.industry,
+    subIndustry:
+      firstModuleField(profileRecords, ["subIndustry"]) ??
+      args.baseProfile.subIndustry,
+    businessModel:
+      firstModuleField(profileRecords, ["businessModel"]) ??
+      args.baseProfile.businessModel,
+    businessSegments: businessSegments.length
+      ? businessSegments
+      : args.baseProfile.businessSegments,
+    dataOrigin: args.moduleContext.evidenceRefs.length
+      ? "Source-backed"
+      : args.baseProfile.dataOrigin,
+    activeContextStatus:
+      args.moduleContext.sourceMode === "active_tenant_access"
+        ? "Active Home context"
+        : "Active context unavailable",
+    candidatePreviewStatus:
+      args.moduleContext.mode === "candidate_preview"
+        ? "Inactive candidate preview"
+        : "Not active",
+  };
+}
+
+function buildContextDepthWidthFromModuleContext(
+  moduleContext: ServedModuleContextPacket,
+): HomeContextDepthWidth {
+  return {
+    loadedAreas: moduleContext.domains.filter(
+      (domain) => domain.acceptedRecords > 0,
+    ).length,
+    loadedRecords: sum(
+      moduleContext.domains.map((domain) => domain.acceptedRecords),
+    ),
+    sourceCount: moduleContext.evidenceRefs.length,
+    evidenceCount: moduleContext.evidenceRefs.length,
+    relationshipCount:
+      moduleContext.validatedRelationships.length +
+      moduleContext.relationshipCandidates.length,
+    visibleGaps: moduleContext.gaps.length,
+    contextPosture: moduleContext.contextCompleteness.overall,
+  };
+}
+
+function buildContextAreasFromModuleContext(args: {
+  moduleContext: ServedModuleContextPacket;
+  explanation: ModuleContextExplanation;
+}): HomeContextAreaSummary[] {
+  return REQUIRED_CONTEXT_AREAS.map(([areaKey, displayName]) => {
+    const requestedDomain = MODULE_DOMAIN_TO_HOME_AREA[displayName];
+    const domainSummary = args.moduleContext.domains.find(
+      (domain) => domain.domain === requestedDomain,
+    );
+    const records = args.moduleContext.records.filter(
+      (record) => record.domain === requestedDomain,
+    );
+    const gaps = args.moduleContext.gaps
+      .filter((gap) => !gap.domain || gap.domain === requestedDomain)
+      .slice(0, 5);
+    const relationshipCount =
+      requestedDomain === "relationships"
+        ? args.moduleContext.validatedRelationships.length +
+          args.moduleContext.relationshipCandidates.length
+        : 0;
+    const loadedCount = domainSummary?.acceptedRecords ?? 0;
+    const sourceCount = Math.max(
+      domainSummary?.sourceRows ?? 0,
+      new Set(records.flatMap((record) => record.sourceEvidenceIds)).size,
+    );
+    return {
+      areaKey,
+      displayName,
+      executiveSummaryInputs: records.map((record) => record.title).slice(0, 6),
+      loadedCount,
+      mappedCount: loadedCount,
+      sourceCount,
+      evidenceCount: records.filter((record) => record.sourceEvidenceIds.length)
+        .length,
+      relationshipCount,
+      examples: records.map((record) => record.title).slice(0, 5),
+      topGaps: gaps.map((gap) => ({
+        label: gap.description,
+        count: 1,
+        whyItMatters: gap.source ?? null,
+      })),
+      evidencePosture:
+        loadedCount > 0
+          ? `${displayName} has ${formatNumber(loadedCount)} canonical record${loadedCount === 1 ? "" : "s"} represented through the active module context contract.`
+          : `${displayName} is not represented in the current active module context packet.`,
+      relationshipDepth:
+        relationshipCount > 0
+          ? `${formatNumber(relationshipCount)} relationship candidate${relationshipCount === 1 ? "" : "s"} visible for validation.`
+          : "Validated relationship depth is limited or not projected for this area.",
+      answerability:
+        loadedCount > 0 && !gaps.some((gap) => gap.severity === "blocker")
+          ? "answerable_from_loaded_context"
+          : loadedCount > 0
+            ? "answerable_with_caveats"
+            : "not_available_yet",
+      safeQuestions: args.explanation.supportedQuestions.slice(0, 4),
+      unsupportedQuestions: args.explanation.unsupportedQuestions.slice(0, 4),
+      decisionsSupported:
+        loadedCount > 0
+          ? ["Source-backed context browsing", "Evidence inspection"]
+          : [],
+      decisionsNotReady:
+        relationshipCount === 0
+          ? ["Cross-domain dependency decisions without validated relationships"]
+          : args.explanation.unsupportedQuestions.slice(0, 2),
+      nextDataActions:
+        loadedCount > 0
+          ? args.explanation.nextActions.slice(0, 2)
+          : [`Load or promote ${displayName.toLowerCase()} context.`],
+      caveats: args.moduleContext.caveats.slice(0, 3),
+    };
+  });
+}
+
+function buildModuleContextSummary(args: {
+  moduleContext: ServedModuleContextPacket;
+  explanation: ModuleContextExplanation;
+}): HomeModuleContextSummary {
+  return {
+    sourceMode: args.moduleContext.sourceMode,
+    activeTenantAccessVersionId:
+      args.moduleContext.activeTenantAccessVersionId,
+    candidateVersionId: args.moduleContext.candidateVersionId,
+    requestedDomains: args.moduleContext.domains.map((domain) => ({
+      domain: domain.domain,
+      canonicalDomain: domain.canonicalDomain,
+      acceptedRecords: domain.acceptedRecords,
+      sourceRows: domain.sourceRows,
+      readiness: domain.readiness,
+    })),
+    readableRecords: args.moduleContext.records.length,
+    evidenceRefs: args.moduleContext.evidenceRefs.length,
+    validatedRelationships: args.moduleContext.validatedRelationships.length,
+    relationshipCandidates: args.moduleContext.relationshipCandidates.length,
+    contextCompleteness: args.moduleContext.contextCompleteness,
+    explanationSummary: args.explanation.summary,
+    strengths: args.explanation.strengths,
+    limitations: args.explanation.limitations,
+    supportedQuestions: args.explanation.supportedQuestions,
+    unsupportedQuestions: args.explanation.unsupportedQuestions,
+    nextActions: args.explanation.nextActions,
+  };
+}
+
+function buildDataQualitySummaryFromModuleContext(args: {
+  moduleContext: ServedModuleContextPacket;
+  explanation: ModuleContextExplanation;
+}): HomeDataQualitySummary {
+  const blockers = args.moduleContext.gaps.filter(
+    (gap) => gap.severity === "blocker",
+  );
+  return {
+    sourceCoverage:
+      args.moduleContext.sourceMode === "active_tenant_access"
+        ? "active-context-source-backed"
+        : "active-context-not-available",
+    candidateCoverage:
+      args.moduleContext.mode === "candidate_preview"
+        ? "inactive-candidate-preview"
+        : "not-read-by-default",
+    evidenceStrength: `${args.moduleContext.contextCompleteness.evidenceCoverage}% evidence coverage`,
+    relationshipCoverage: `${args.moduleContext.contextCompleteness.relationshipCoverage}% relationship coverage`,
+    manifestCompleteness: args.explanation.contextCompleteness.overall,
+    homeAvaRepresentationWarnings: args.explanation.limitations.slice(0, 8),
+    promotionBlockers: blockers.map((gap) => gap.description),
+    answerabilityPosture: `${args.moduleContext.contextCompleteness.answerability}% answerability`,
+  };
+}
+
+function buildAvaScopeFromModuleContext(args: {
+  tenantKey: string;
+  mode: HomeSummarySnapshotMode;
+  explanation: ModuleContextExplanation;
+}): HomeAvaScope {
+  return {
+    canAnswer: args.explanation.supportedQuestions,
+    shouldCaveat: args.explanation.limitations.slice(0, 6),
+    mustRefuseOrMarkUnsupported: args.explanation.unsupportedQuestions,
+    suggestedPrompts: [
+      "What can Home safely answer right now?",
+      "What data supports this answer?",
+      "What is missing before using this for decisions?",
+      "Which domains are strongest?",
+    ],
+    sourceSnapshotReference: `${args.tenantKey}:${args.mode}:module-context`,
+  };
+}
+
+function buildEnterpriseMetricsFromModuleContext(args: {
+  moduleContext: ServedModuleContextPacket;
+}): HomeEnterpriseSnapshotMetric[] {
+  return [
+    {
+      key: "context_completeness",
+      label: "Context completeness",
+      value: args.moduleContext.contextCompleteness.overall,
+      detail: `${args.moduleContext.contextCompleteness.answerability}% answerability from the served module context packet.`,
+    },
+    {
+      key: "evidence_refs",
+      label: "Evidence references",
+      value: formatNumber(args.moduleContext.evidenceRefs.length),
+      detail: "Lineage references visible to Home through the supplier contract.",
+    },
+    {
+      key: "represented_domains",
+      label: "Represented domains",
+      value: `${args.moduleContext.domains.filter((domain) => domain.acceptedRecords > 0).length}/${args.moduleContext.domains.length}`,
+      detail: "Requested domains with canonical records in the packet.",
+    },
+    {
+      key: "relationship_readiness",
+      label: "Relationship readiness",
+      value: `${args.moduleContext.contextCompleteness.relationshipCoverage}%`,
+      detail:
+        args.moduleContext.validatedRelationships.length > 0
+          ? "Validated relationships are present."
+          : "Relationship candidates still need validation.",
+    },
+  ];
+}
+
+function deriveCompanyFactsFromModuleContext(args: {
+  profile: HomeTenantProfileHeader;
+  explanation: ModuleContextExplanation;
+}): string[] {
+  return uniqueNonEmpty([
+    args.profile.businessModel
+      ? `${args.profile.displayName} is ${args.profile.subIndustry ?? args.profile.industry ?? "an enterprise"} with a business model spanning ${args.profile.businessModel}.`
+      : `${args.profile.displayName} is ${args.profile.subIndustry ?? args.profile.industry ?? "an enterprise"} represented in the active Home context.`,
+    args.explanation.summary,
+  ]);
+}
+
+function deriveModuleRecordSignals(
+  records: ModuleContextRecord[],
+  domain: ModuleContextRequestedDomain,
+): string[] {
+  return uniqueNonEmpty(
+    records
+      .filter((record) => record.domain === domain)
+      .flatMap((record) => [
+        record.fields.businessModel,
+        record.fields.businessSegments,
+        record.fields.strategicPriority,
+        record.fields.name,
+        record.title,
+      ])
+      .map((value) => String(value ?? "").trim())
+      .flatMap((value) => parseListField(value).length ? parseListField(value) : [value]),
+  )
+    .filter((value) => value.length > 0)
+    .slice(0, 6);
+}
+
+function snapshotStatusFromModuleContext(
+  moduleContext: ServedModuleContextPacket,
+): HomeSummarySnapshotStatus {
+  if (moduleContext.sourceMode === "active_not_available") return "blocked";
+  if (moduleContext.contextCompleteness.overall === "Strong") return "ready";
+  if (moduleContext.contextCompleteness.overall === "Good")
+    return "ready_with_caveats";
+  if (moduleContext.contextCompleteness.overall === "Limited") return "partial";
+  return "blocked";
 }
 
 function deriveTenantProfile(args: {
@@ -799,6 +1297,48 @@ function firstValue(
     if (value && value !== "Needs evidence") return value;
   }
   return null;
+}
+
+function firstModuleField(
+  records: ModuleContextRecord[],
+  keys: string[],
+): string | null {
+  const normalizedKeys = keys.map((key) => key.toLowerCase());
+  for (const record of records) {
+    for (const [key, value] of Object.entries(record.fields)) {
+      if (!normalizedKeys.includes(key.toLowerCase())) continue;
+      const stringValue = String(value ?? "").trim();
+      if (stringValue && stringValue !== "Needs evidence") return stringValue;
+    }
+  }
+  return null;
+}
+
+function parseListField(value: string | null | undefined): string[] {
+  const trimmed = value?.trim();
+  if (!trimmed) return [];
+  if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((entry) => String(entry ?? "").trim())
+          .filter(Boolean);
+      }
+    } catch {
+      // Fall through to delimiter parsing for non-JSON list strings.
+    }
+  }
+  return trimmed
+    .split(/;|\|,/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function uniqueNonEmpty(values: string[]): string[] {
+  return Array.from(
+    new Set(values.map((value) => value.trim()).filter(Boolean)),
+  );
 }
 
 function stableFingerprint(value: unknown): string {

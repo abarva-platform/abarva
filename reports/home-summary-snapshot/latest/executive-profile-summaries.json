@@ -4,93 +4,89 @@
     "displayName": "SkyHarbor Air",
     "executiveProfile": {
       "companySummaryFacts": [
-        "SkyHarbor Air Group is Global passenger airline headquartered in Atlanta, GA with $52.1B revenue and 95,000 employees. Its model spans Network airline with passenger operations, loyalty, cargo, operations control, crew operations, customer recovery, and technology-enabled irregular-operations recovery.",
-        "Mission: Move people and goods safely while protecting customer trust during disruption.",
-        "Vision: Become the most resilient AI-enabled airline operations network in the market.",
-        "Airline Demo has active Home context, but the enterprise has a richer upstream source estate than the default Home representation. Treat the active view as useful for source-backed browsing, not full enterprise coverage, until inactive candidate expansion, relationship projection, and active-use controls are complete."
+        "SkyHarbor Air is Global passenger airline operations with a business model spanning Medium-to-large airline with operations control, flight operations, crew operations, customer operations, mainframe/core operations, and AI modernization pressure..",
+        "Home context has 75 readable records, 75 evidence references, and 10 of 10 requested domains with represented data. Active Tenant Access metadata is available, but module runtime consumption is unchanged by this contract."
       ],
       "businessModelSignals": [
-        "Network airline with passenger operations, loyalty, cargo, operations control, crew operations, customer recovery, and technology-enabled irregular-operations recovery.",
-        "Segment: Passenger operations",
-        "Segment: Loyalty and customer experience",
-        "Segment: Operations control",
-        "Segment: Crew operations",
-        "Segment: Cargo and partner operations"
+        "SkyHarbor Air",
+        "Medium-to-large airline with operations control, flight operations, crew operations, customer operations, mainframe/core operations, and AI modernization pressure.",
+        "airline operations",
+        "IROPS recovery",
+        "crew operations",
+        "customer operations"
       ],
       "strategicPrioritySignals": [
-        "IROPS recovery command",
-        "Mainframe and MQ modernization",
-        "Crew recovery decision support",
-        "Customer reaccommodation assist",
-        "Tower value tracking for operational outcomes"
+        "SHA-MOVE-001",
+        "SHA-MOVE-002",
+        "SHA-MOVE-003",
+        "SHA-MOVE-004",
+        "SHA-MOVE-005",
+        "SHA-MOVE-006"
       ],
       "enterpriseSnapshotMetrics": [
         {
-          "key": "evidence_items",
-          "label": "Evidence items",
-          "value": "53",
-          "detail": "Visible to the current Home context."
+          "key": "context_completeness",
+          "label": "Context completeness",
+          "value": "Good",
+          "detail": "88% answerability from the served module context packet."
         },
         {
-          "key": "evidence_posture",
-          "label": "Evidence posture",
-          "value": "pass",
-          "detail": "Generated or synthetic records must stay clearly labeled."
+          "key": "evidence_refs",
+          "label": "Evidence references",
+          "value": "75",
+          "detail": "Lineage references visible to Home through the supplier contract."
         },
         {
-          "key": "relationship_depth",
-          "label": "Relationship depth",
-          "value": "Limited",
-          "detail": "Relationship evidence exists in sources, but business links are not ready enough to overstate dependency coverage."
+          "key": "represented_domains",
+          "label": "Represented domains",
+          "value": "10/10",
+          "detail": "Requested domains with canonical records in the packet."
         },
         {
-          "key": "next_actions",
-          "label": "Next best actions",
-          "value": "6",
-          "detail": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded."
+          "key": "relationship_readiness",
+          "label": "Relationship readiness",
+          "value": "0%",
+          "detail": "Relationship candidates still need validation."
         }
       ],
       "contextDepthWidth": {
-        "loadedAreas": 19,
-        "loadedRecords": 14194,
-        "sourceCount": 12,
-        "evidenceCount": 53,
+        "loadedAreas": 10,
+        "loadedRecords": 1970,
+        "sourceCount": 75,
+        "evidenceCount": 75,
         "relationshipCount": 0,
-        "visibleGaps": 94042,
-        "contextPosture": "Partial"
+        "visibleGaps": 0,
+        "contextPosture": "Good"
       },
       "whatAbarVaKnows": [
-        "Airline Demo has active Home context, but the enterprise has a richer upstream source estate than the default Home representation. Treat the active view as useful for source-backed browsing, not full enterprise coverage, until inactive candidate expansion, relationship projection, and active-use controls are complete.",
-        "53 evidence items are visible for the current Home context. Evidence still needs to stay attached when candidate data is expanded.",
-        "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated."
+        "Home context has 75 readable records, 75 evidence references, and 10 of 10 requested domains with represented data. Active Tenant Access metadata is available, but module runtime consumption is unchanged by this contract.",
+        "10 requested domains have represented context.",
+        "75 records are readable through the module context packet.",
+        "75 evidence references are available for lineage and citation checks.",
+        "Active Tenant Access metadata pointer is resolved."
       ],
       "whatIsMissing": [
-        "Full enterprise estate coverage or application rationalization",
-        "Full enterprise application rationalization",
-        "Enterprise-wide sourcing savings estimates",
-        "Realized value or Tower outcome claims",
-        "Cross-system dependency, vendor, risk, or outcome reasoning",
-        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
-        "Expand candidate packet so canonical records materially cover the discovered source estate."
+        "Active mode is the default module context serving mode.",
+        "Candidate read-model records are not consumed unless mode is candidate_preview.",
+        "This supplier contract does not modify module runtime behavior.",
+        "Validated relationships are not present in this packet."
       ],
       "safeToAsk": [
-        "Loaded facts in the active Home context",
-        "Evidence gaps",
-        "Source coverage and caveats",
-        "What is loaded in the current Home context",
-        "Which evidence and gaps are visible",
-        "Which related areas should be inspected next"
+        "What context is available for this tenant?",
+        "Which domains are source-backed or still incomplete?",
+        "Active Tenant Access metadata pointer is available.",
+        "Modules can request active canonical context without reading candidate preview data by default."
       ],
       "doNotRelyYet": [
-        "Full enterprise estate coverage or application rationalization",
-        "Full enterprise application rationalization",
-        "Enterprise-wide sourcing savings estimates",
-        "Realized value or Tower outcome claims",
-        "Cross-system dependency, vendor, risk, or outcome reasoning"
+        "Do not claim candidate preview data is active tenant truth.",
+        "Do not claim production tenant data was written or promoted by this serving call.",
+        "Do not claim module runtime behavior changed because this packet was generated.",
+        "Candidate data is active tenant truth.",
+        "Move evidence has been created by the data layer.",
+        "Module runtime consumption changed in this PR."
       ],
       "recommendedNextDataActions": [
-        "Finish projecting the richer applications, systems, integration, and relationship source into an inactive candidate, attach evidence, validate weak rows, and keep it inactive until controls pass."
+        "Let the Home module decide how to render or use this packet."
       ],
       "moduleImpact": [
         {
@@ -126,93 +122,75 @@
     "displayName": "Lakeshore Holdings",
     "executiveProfile": {
       "companySummaryFacts": [
-        "Lakeshore Holdings is Portfolio-company operator with corporate shared services headquartered in Chicago, IL with $7.12B revenue and 11,800 employees. Its model spans Holding company with operating companies and corporate shared services across legal, finance, HR, IT, innovation, and sourcing; value is managed by portfolio-company economics and shared-service leverage.",
-        "Mission: Protect operating-company autonomy while using shared intelligence to improve cost, risk, and growth decisions.",
-        "Vision: Turn fragmented portfolio knowledge into a governed enterprise intelligence layer for smarter transformation and sourcing decisions.",
-        "Lakeshore Holdings has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
+        "Lakeshore Holdings is Portfolio-company operator with corporate shared services with a business model spanning Holding company with operating companies and corporate shared services across legal, finance, HR, IT, innovation, and sourcing; value is managed by portfolio-company economics and shared-service leverage..",
+        "Home context has 0 readable records, 0 evidence references, and 0 of 10 requested domains with represented data. No Active Tenant Access record is available, and the serving contract did not fall back to candidate data."
       ],
-      "businessModelSignals": [
-        "Holding company with operating companies and corporate shared services across legal, finance, HR, IT, innovation, and sourcing; value is managed by portfolio-company economics and shared-service leverage.",
-        "Segment: Northline",
-        "Segment: Brightmark",
-        "Segment: Forge and Field",
-        "Segment: Great Lakes Pantry",
-        "Segment: Corporate Shared Services"
-      ],
-      "strategicPrioritySignals": [
-        "Legal contract intake modernization",
-        "Corporate shared-services operating model",
-        "Vendor and consulting spend optimization",
-        "Portfolio data and AI foundation",
-        "Source-to-value governance"
-      ],
+      "businessModelSignals": [],
+      "strategicPrioritySignals": [],
       "enterpriseSnapshotMetrics": [
         {
-          "key": "evidence_items",
-          "label": "Evidence items",
+          "key": "context_completeness",
+          "label": "Context completeness",
+          "value": "Blocked",
+          "detail": "0% answerability from the served module context packet."
+        },
+        {
+          "key": "evidence_refs",
+          "label": "Evidence references",
           "value": "0",
-          "detail": "Visible to the current Home context."
+          "detail": "Lineage references visible to Home through the supplier contract."
         },
         {
-          "key": "evidence_posture",
-          "label": "Evidence posture",
-          "value": "pass",
-          "detail": "Generated or synthetic records must stay clearly labeled."
+          "key": "represented_domains",
+          "label": "Represented domains",
+          "value": "0/10",
+          "detail": "Requested domains with canonical records in the packet."
         },
         {
-          "key": "relationship_depth",
-          "label": "Relationship depth",
-          "value": "Limited",
-          "detail": "Relationship evidence exists in sources, but business links are not ready enough to overstate dependency coverage."
-        },
-        {
-          "key": "next_actions",
-          "label": "Next best actions",
-          "value": "9",
-          "detail": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded."
+          "key": "relationship_readiness",
+          "label": "Relationship readiness",
+          "value": "0%",
+          "detail": "Relationship candidates still need validation."
         }
       ],
       "contextDepthWidth": {
-        "loadedAreas": 19,
-        "loadedRecords": 2054,
-        "sourceCount": 12,
+        "loadedAreas": 0,
+        "loadedRecords": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "visibleGaps": 0,
-        "contextPosture": "Partial"
+        "visibleGaps": 1,
+        "contextPosture": "Blocked"
       },
       "whatAbarVaKnows": [
-        "Lakeshore Holdings has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts.",
-        "Evidence support is not confirmed yet, so Home should stay limited to what source and gap views can show.",
-        "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated."
+        "Home context has 0 readable records, 0 evidence references, and 0 of 10 requested domains with represented data. No Active Tenant Access record is available, and the serving contract did not fall back to candidate data.",
+        "The packet preserves a safe empty response instead of falling back to inactive candidate data."
       ],
       "whatIsMissing": [
-        "Full enterprise estate coverage or application rationalization",
-        "Full enterprise application rationalization",
-        "Enterprise-wide sourcing savings estimates",
-        "Realized value or Tower outcome claims",
-        "Cross-system dependency, vendor, risk, or outcome reasoning",
-        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
-        "tenant-packet projection"
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+        "Active mode is the default module context serving mode.",
+        "Candidate read-model records are not consumed unless mode is candidate_preview.",
+        "This supplier contract does not modify module runtime behavior.",
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+        "Validated relationships are not present in this packet.",
+        "No readable records are available in this packet."
       ],
       "safeToAsk": [
-        "Loaded facts in the active Home context",
-        "Evidence gaps",
-        "Source coverage and caveats",
-        "What is loaded in the current Home context",
-        "Which evidence and gaps are visible",
-        "Which related areas should be inspected next"
+        "What context is available for this tenant?",
+        "Which domains are source-backed or still incomplete?"
       ],
       "doNotRelyYet": [
-        "Full enterprise estate coverage or application rationalization",
-        "Full enterprise application rationalization",
-        "Enterprise-wide sourcing savings estimates",
-        "Realized value or Tower outcome claims",
-        "Cross-system dependency, vendor, risk, or outcome reasoning"
+        "Do not claim candidate preview data is active tenant truth.",
+        "Do not claim production tenant data was written or promoted by this serving call.",
+        "Do not claim module runtime behavior changed because this packet was generated.",
+        "Candidate data is active tenant truth.",
+        "Move evidence has been created by the data layer.",
+        "Module runtime consumption changed in this PR."
       ],
       "recommendedNextDataActions": [
-        "Expand the candidate packet from the richer source estate, attach evidence, and validate the records before broader use."
+        "Promote a reviewed candidate before relying on active module context.",
+        "Resolve blocker and warning gaps before treating the packet as board-ready.",
+        "Let the Home module decide how to render or use this packet."
       ],
       "moduleImpact": [
         {
@@ -248,94 +226,75 @@
     "displayName": "Meridian Health System",
     "executiveProfile": {
       "companySummaryFacts": [
-        "Meridian Health System is Integrated delivery network and health plan headquartered in Sacramento, CA with $16.8B revenue and 58,000 employees. Its model spans Integrated provider and payer organization combining hospitals, ambulatory clinics, health-plan operations, pharmacy, contact center, finance, and analytics modernization.",
-        "Mission: Improve care access, quality, and affordability through trusted data and coordinated operations.",
-        "Vision: Build a governed clinical, claims, and finance intelligence layer that makes automation safe and measurable.",
-        "Meridian Health has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
+        "Meridian Health System is Integrated delivery network and health plan with a business model spanning Integrated provider and payer organization combining hospitals, ambulatory clinics, health-plan operations, pharmacy, contact center, finance, and analytics modernization..",
+        "Home context has 0 readable records, 0 evidence references, and 0 of 10 requested domains with represented data. No Active Tenant Access record is available, and the serving contract did not fall back to candidate data."
       ],
-      "businessModelSignals": [
-        "Integrated provider and payer organization combining hospitals, ambulatory clinics, health-plan operations, pharmacy, contact center, finance, and analytics modernization.",
-        "Segment: Clinical delivery",
-        "Segment: Health plan operations",
-        "Segment: Pharmacy and claims",
-        "Segment: Finance and revenue cycle",
-        "Segment: Provider quality"
-      ],
-      "strategicPrioritySignals": [
-        "Unified clinical and claims lakehouse",
-        "Governed data foundation for AI automation",
-        "Call center optimization",
-        "Provider quality and performance",
-        "Cost-of-care transparency",
-        "Payment integrity"
-      ],
+      "businessModelSignals": [],
+      "strategicPrioritySignals": [],
       "enterpriseSnapshotMetrics": [
         {
-          "key": "evidence_items",
-          "label": "Evidence items",
+          "key": "context_completeness",
+          "label": "Context completeness",
+          "value": "Blocked",
+          "detail": "0% answerability from the served module context packet."
+        },
+        {
+          "key": "evidence_refs",
+          "label": "Evidence references",
           "value": "0",
-          "detail": "Visible to the current Home context."
+          "detail": "Lineage references visible to Home through the supplier contract."
         },
         {
-          "key": "evidence_posture",
-          "label": "Evidence posture",
-          "value": "gap",
-          "detail": "Narrative/source documents exist but are not represented in evidence operations."
+          "key": "represented_domains",
+          "label": "Represented domains",
+          "value": "0/10",
+          "detail": "Requested domains with canonical records in the packet."
         },
         {
-          "key": "relationship_depth",
-          "label": "Relationship depth",
-          "value": "Limited",
-          "detail": "Relationship evidence exists in sources, but business links are not ready enough to overstate dependency coverage."
-        },
-        {
-          "key": "next_actions",
-          "label": "Next best actions",
-          "value": "10",
-          "detail": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded."
+          "key": "relationship_readiness",
+          "label": "Relationship readiness",
+          "value": "0%",
+          "detail": "Relationship candidates still need validation."
         }
       ],
       "contextDepthWidth": {
-        "loadedAreas": 19,
-        "loadedRecords": 3369,
-        "sourceCount": 12,
+        "loadedAreas": 0,
+        "loadedRecords": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "visibleGaps": 0,
-        "contextPosture": "Partial"
+        "visibleGaps": 1,
+        "contextPosture": "Blocked"
       },
       "whatAbarVaKnows": [
-        "Meridian Health has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts.",
-        "Evidence support is not confirmed yet, so Home should stay limited to what source and gap views can show.",
-        "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated."
+        "Home context has 0 readable records, 0 evidence references, and 0 of 10 requested domains with represented data. No Active Tenant Access record is available, and the serving contract did not fall back to candidate data.",
+        "The packet preserves a safe empty response instead of falling back to inactive candidate data."
       ],
       "whatIsMissing": [
-        "Full enterprise estate coverage or application rationalization",
-        "Full enterprise application rationalization",
-        "Enterprise-wide sourcing savings estimates",
-        "Realized value or Tower outcome claims",
-        "Cross-system dependency, vendor, risk, or outcome reasoning",
-        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
-        "tenant-packet projection"
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+        "Active mode is the default module context serving mode.",
+        "Candidate read-model records are not consumed unless mode is candidate_preview.",
+        "This supplier contract does not modify module runtime behavior.",
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+        "Validated relationships are not present in this packet.",
+        "No readable records are available in this packet."
       ],
       "safeToAsk": [
-        "Loaded facts in the active Home context",
-        "Evidence gaps",
-        "Source coverage and caveats",
-        "What is loaded in the current Home context",
-        "Which evidence and gaps are visible",
-        "Which related areas should be inspected next"
+        "What context is available for this tenant?",
+        "Which domains are source-backed or still incomplete?"
       ],
       "doNotRelyYet": [
-        "Full enterprise estate coverage or application rationalization",
-        "Full enterprise application rationalization",
-        "Enterprise-wide sourcing savings estimates",
-        "Realized value or Tower outcome claims",
-        "Cross-system dependency, vendor, risk, or outcome reasoning"
+        "Do not claim candidate preview data is active tenant truth.",
+        "Do not claim production tenant data was written or promoted by this serving call.",
+        "Do not claim module runtime behavior changed because this packet was generated.",
+        "Candidate data is active tenant truth.",
+        "Move evidence has been created by the data layer.",
+        "Module runtime consumption changed in this PR."
       ],
       "recommendedNextDataActions": [
-        "Expand the candidate packet from the richer source estate, attach evidence, and validate the records before broader use."
+        "Promote a reviewed candidate before relying on active module context.",
+        "Resolve blocker and warning gaps before treating the packet as board-ready.",
+        "Let the Home module decide how to render or use this packet."
       ],
       "moduleImpact": [
         {
@@ -371,93 +330,75 @@
     "displayName": "First Capital",
     "executiveProfile": {
       "companySummaryFacts": [
-        "First Capital Financial Services is Consumer and commercial banking headquartered in Charlotte, NC with $52B revenue and 65,000 employees. Its model spans Diversified bank with consumer, commercial, cards, lending, wealth, risk, operations, and technology modernization responsibilities.",
-        "Mission: Help customers and businesses manage money with trusted, efficient, and compliant financial services.",
-        "Vision: Modernize banking operations with governed data, resilient platforms, and measurable AI-enabled decision support.",
-        "First Capital has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
+        "First Capital is Consumer and commercial banking with a business model spanning Diversified bank with consumer, commercial, cards, lending, wealth, risk, operations, and technology modernization responsibilities..",
+        "Home context has 0 readable records, 0 evidence references, and 0 of 10 requested domains with represented data. No Active Tenant Access record is available, and the serving contract did not fall back to candidate data."
       ],
-      "businessModelSignals": [
-        "Diversified bank with consumer, commercial, cards, lending, wealth, risk, operations, and technology modernization responsibilities.",
-        "Segment: Consumer banking",
-        "Segment: Commercial banking",
-        "Segment: Cards and payments",
-        "Segment: Lending operations",
-        "Segment: Wealth management"
-      ],
-      "strategicPrioritySignals": [
-        "Digital account-opening modernization",
-        "Fraud and payment integrity analytics",
-        "Core banking modernization sequencing",
-        "Vendor and consulting spend transparency",
-        "Risk and compliance automation"
-      ],
+      "businessModelSignals": [],
+      "strategicPrioritySignals": [],
       "enterpriseSnapshotMetrics": [
         {
-          "key": "evidence_items",
-          "label": "Evidence items",
+          "key": "context_completeness",
+          "label": "Context completeness",
+          "value": "Blocked",
+          "detail": "0% answerability from the served module context packet."
+        },
+        {
+          "key": "evidence_refs",
+          "label": "Evidence references",
           "value": "0",
-          "detail": "Visible to the current Home context."
+          "detail": "Lineage references visible to Home through the supplier contract."
         },
         {
-          "key": "evidence_posture",
-          "label": "Evidence posture",
-          "value": "pass",
-          "detail": "Generated or synthetic records must stay clearly labeled."
+          "key": "represented_domains",
+          "label": "Represented domains",
+          "value": "0/10",
+          "detail": "Requested domains with canonical records in the packet."
         },
         {
-          "key": "relationship_depth",
-          "label": "Relationship depth",
-          "value": "Limited",
-          "detail": "Relationship evidence exists in sources, but business links are not ready enough to overstate dependency coverage."
-        },
-        {
-          "key": "next_actions",
-          "label": "Next best actions",
-          "value": "9",
-          "detail": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded."
+          "key": "relationship_readiness",
+          "label": "Relationship readiness",
+          "value": "0%",
+          "detail": "Relationship candidates still need validation."
         }
       ],
       "contextDepthWidth": {
-        "loadedAreas": 19,
-        "loadedRecords": 5415,
-        "sourceCount": 12,
+        "loadedAreas": 0,
+        "loadedRecords": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "visibleGaps": 0,
-        "contextPosture": "Partial"
+        "visibleGaps": 1,
+        "contextPosture": "Blocked"
       },
       "whatAbarVaKnows": [
-        "First Capital has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts.",
-        "Evidence support is not confirmed yet, so Home should stay limited to what source and gap views can show.",
-        "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated."
+        "Home context has 0 readable records, 0 evidence references, and 0 of 10 requested domains with represented data. No Active Tenant Access record is available, and the serving contract did not fall back to candidate data.",
+        "The packet preserves a safe empty response instead of falling back to inactive candidate data."
       ],
       "whatIsMissing": [
-        "Full enterprise estate coverage or application rationalization",
-        "Full enterprise application rationalization",
-        "Enterprise-wide sourcing savings estimates",
-        "Realized value or Tower outcome claims",
-        "Cross-system dependency, vendor, risk, or outcome reasoning",
-        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
-        "tenant-packet projection"
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+        "Active mode is the default module context serving mode.",
+        "Candidate read-model records are not consumed unless mode is candidate_preview.",
+        "This supplier contract does not modify module runtime behavior.",
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+        "Validated relationships are not present in this packet.",
+        "No readable records are available in this packet."
       ],
       "safeToAsk": [
-        "Loaded facts in the active Home context",
-        "Evidence gaps",
-        "Source coverage and caveats",
-        "What is loaded in the current Home context",
-        "Which evidence and gaps are visible",
-        "Which related areas should be inspected next"
+        "What context is available for this tenant?",
+        "Which domains are source-backed or still incomplete?"
       ],
       "doNotRelyYet": [
-        "Full enterprise estate coverage or application rationalization",
-        "Full enterprise application rationalization",
-        "Enterprise-wide sourcing savings estimates",
-        "Realized value or Tower outcome claims",
-        "Cross-system dependency, vendor, risk, or outcome reasoning"
+        "Do not claim candidate preview data is active tenant truth.",
+        "Do not claim production tenant data was written or promoted by this serving call.",
+        "Do not claim module runtime behavior changed because this packet was generated.",
+        "Candidate data is active tenant truth.",
+        "Move evidence has been created by the data layer.",
+        "Module runtime consumption changed in this PR."
       ],
       "recommendedNextDataActions": [
-        "Expand the candidate packet from the richer source estate, attach evidence, and validate the records before broader use."
+        "Promote a reviewed candidate before relying on active module context.",
+        "Resolve blocker and warning gaps before treating the packet as board-ready.",
+        "Let the Home module decide how to render or use this packet."
       ],
       "moduleImpact": [
         {
@@ -493,93 +434,75 @@
     "displayName": "Apex Retail",
     "executiveProfile": {
       "companySummaryFacts": [
-        "Apex Retail Group is Omnichannel specialty and mass-market retail headquartered in Minneapolis, MN with $18.4B revenue and 72,000 employees. Its model spans Omnichannel retailer with stores, digital commerce, loyalty, merchandising, supply chain, customer care, and data-enabled personalization.",
-        "Mission: Serve customers with convenient, trusted, and value-conscious retail experiences across channels.",
-        "Vision: Make retail operations smarter by connecting customer, inventory, supply-chain, and workforce decisions.",
-        "Apex Retail has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts."
+        "Apex Retail is Omnichannel specialty and mass-market retail with a business model spanning Omnichannel retailer with stores, digital commerce, loyalty, merchandising, supply chain, customer care, and data-enabled personalization..",
+        "Home context has 0 readable records, 0 evidence references, and 0 of 10 requested domains with represented data. No Active Tenant Access record is available, and the serving contract did not fall back to candidate data."
       ],
-      "businessModelSignals": [
-        "Omnichannel retailer with stores, digital commerce, loyalty, merchandising, supply chain, customer care, and data-enabled personalization.",
-        "Segment: Stores",
-        "Segment: Digital commerce",
-        "Segment: Loyalty and marketing",
-        "Segment: Merchandising",
-        "Segment: Supply chain"
-      ],
-      "strategicPrioritySignals": [
-        "CDP and identity resolution",
-        "Inventory and replenishment intelligence",
-        "Contact-center productivity",
-        "Vendor spend optimization",
-        "Store labor and supply-chain modernization"
-      ],
+      "businessModelSignals": [],
+      "strategicPrioritySignals": [],
       "enterpriseSnapshotMetrics": [
         {
-          "key": "evidence_items",
-          "label": "Evidence items",
+          "key": "context_completeness",
+          "label": "Context completeness",
+          "value": "Blocked",
+          "detail": "0% answerability from the served module context packet."
+        },
+        {
+          "key": "evidence_refs",
+          "label": "Evidence references",
           "value": "0",
-          "detail": "Visible to the current Home context."
+          "detail": "Lineage references visible to Home through the supplier contract."
         },
         {
-          "key": "evidence_posture",
-          "label": "Evidence posture",
-          "value": "gap",
-          "detail": "Narrative/source documents exist but are not represented in evidence operations."
+          "key": "represented_domains",
+          "label": "Represented domains",
+          "value": "0/10",
+          "detail": "Requested domains with canonical records in the packet."
         },
         {
-          "key": "relationship_depth",
-          "label": "Relationship depth",
-          "value": "Limited",
-          "detail": "Relationship evidence exists in sources, but business links are not ready enough to overstate dependency coverage."
-        },
-        {
-          "key": "next_actions",
-          "label": "Next best actions",
-          "value": "10",
-          "detail": "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded."
+          "key": "relationship_readiness",
+          "label": "Relationship readiness",
+          "value": "0%",
+          "detail": "Relationship candidates still need validation."
         }
       ],
       "contextDepthWidth": {
-        "loadedAreas": 19,
-        "loadedRecords": 3601,
-        "sourceCount": 12,
+        "loadedAreas": 0,
+        "loadedRecords": 0,
+        "sourceCount": 0,
         "evidenceCount": 0,
         "relationshipCount": 0,
-        "visibleGaps": 0,
-        "contextPosture": "Partial"
+        "visibleGaps": 1,
+        "contextPosture": "Blocked"
       },
       "whatAbarVaKnows": [
-        "Apex Retail has active Home context for loaded records, source references, visible gaps, and caveats. Home can explain what is present without treating upstream files or inactive candidate data as active facts.",
-        "Evidence support is not confirmed yet, so Home should stay limited to what source and gap views can show.",
-        "Relationship reasoning is limited. Home can describe selected records, but cross-system, vendor, program, risk, and outcome links should be treated as incomplete until relationships are projected and validated."
+        "Home context has 0 readable records, 0 evidence references, and 0 of 10 requested domains with represented data. No Active Tenant Access record is available, and the serving contract did not fall back to candidate data.",
+        "The packet preserves a safe empty response instead of falling back to inactive candidate data."
       ],
       "whatIsMissing": [
-        "Full enterprise estate coverage or application rationalization",
-        "Full enterprise application rationalization",
-        "Enterprise-wide sourcing savings estimates",
-        "Realized value or Tower outcome claims",
-        "Cross-system dependency, vendor, risk, or outcome reasoning",
-        "Home should show a source-rich but candidate-thin caveat until canonical candidate coverage is expanded.",
-        "Relationship panel should state that graph operations are not yet planned despite dependency-rich source evidence.",
-        "tenant-packet projection"
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+        "Active mode is the default module context serving mode.",
+        "Candidate read-model records are not consumed unless mode is candidate_preview.",
+        "This supplier contract does not modify module runtime behavior.",
+        "No Active Tenant Access record is available for this tenant. The serving contract will not fall back to candidate data.",
+        "Validated relationships are not present in this packet.",
+        "No readable records are available in this packet."
       ],
       "safeToAsk": [
-        "Loaded facts in the active Home context",
-        "Evidence gaps",
-        "Source coverage and caveats",
-        "What is loaded in the current Home context",
-        "Which evidence and gaps are visible",
-        "Which related areas should be inspected next"
+        "What context is available for this tenant?",
+        "Which domains are source-backed or still incomplete?"
       ],
       "doNotRelyYet": [
-        "Full enterprise estate coverage or application rationalization",
-        "Full enterprise application rationalization",
-        "Enterprise-wide sourcing savings estimates",
-        "Realized value or Tower outcome claims",
-        "Cross-system dependency, vendor, risk, or outcome reasoning"
+        "Do not claim candidate preview data is active tenant truth.",
+        "Do not claim production tenant data was written or promoted by this serving call.",
+        "Do not claim module runtime behavior changed because this packet was generated.",
+        "Candidate data is active tenant truth.",
+        "Move evidence has been created by the data layer.",
+        "Module runtime consumption changed in this PR."
       ],
       "recommendedNextDataActions": [
-        "Expand the candidate packet from the richer source estate, attach evidence, and validate the records before broader use."
+        "Promote a reviewed candidate before relying on active module context.",
+        "Resolve blocker and warning gaps before treating the packet as board-ready.",
+        "Let the Home module decide how to render or use this packet."
       ],
       "moduleImpact": [
         {
