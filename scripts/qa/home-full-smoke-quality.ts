@@ -7,6 +7,7 @@ import {
   getModuleContext,
 } from "@/lib/enterprise-data/module-context-serving/module-context-serving";
 import type {
+  ModuleContextExplanation,
   ModuleContextRecord,
   ModuleContextRelationship,
   ModuleContextRequestedDomain,
@@ -53,7 +54,11 @@ interface Finding {
 interface TabResult {
   tenantKey: string;
   dimension: string;
-  tab: "Summary" | "Data" | "Gaps" | "Sources" | "Relationships";
+  tab:
+    | "Executive Story"
+    | "Key Records"
+    | "Diagnostics"
+    | "Context Confidence";
   verdict: Verdict;
   scores: QualityScores;
   notes: string[];
@@ -242,6 +247,8 @@ const CANDIDATE_LEAK =
 const UNSUPPORTED_VALUE_CLAIM =
   /\b(?:realized value|verified savings|guaranteed savings|20\s*[-–]\s*30%|20\s*[-–]\s*25%|outcome achieved)\b/i;
 const NORTHSTAR = /northstar/i;
+const DIAGNOSTIC_FIRST_PRIMARY_COPY =
+  /source rows across 0 domains|not available yet|0 mapped links|0 gaps|home remains a context browser|no repeated evidence-gap pattern is visible/i;
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
@@ -272,7 +279,7 @@ async function main() {
       { repoRoot, generatedAt },
     );
     contexts.set(tenant.tenantKey, context);
-    await explainModuleContext(
+    const explanation = await explainModuleContext(
       {
         tenantKey: tenant.tenantKey,
         moduleKey: "home",
@@ -284,6 +291,7 @@ async function main() {
     );
 
     findings.push(...evaluateTenantGuardrails(tenant, context));
+    findings.push(...evaluateStoryQuality(tenant, context, explanation));
 
     const dimensionArtifacts = evaluateDimensions(tenant, context);
     dimensionResults.push(...dimensionArtifacts.dimensionResults);
@@ -377,7 +385,7 @@ async function main() {
         outputDir: path.relative(repoRoot, args.outDir),
         tenantsTested: tenantResults.length,
         dimensionsTested: dimensionResults.length,
-        tabsTested: tabResults.length,
+        storyBlocksTested: tabResults.length,
         avaPromptsTested: avaResults.length,
         p0: grouped.P0.length,
         p1: grouped.P1.length,
@@ -494,6 +502,128 @@ function evaluateTenantGuardrails(
   return findings;
 }
 
+function evaluateStoryQuality(
+  tenant: TenantConfig,
+  context: ServedModuleContextPacket,
+  explanation: ModuleContextExplanation,
+): Finding[] {
+  const findings: Finding[] = [];
+  const storyText = [
+    explanation.summary,
+    ...explanation.strengths,
+    ...explanation.limitations,
+    ...explanation.supportedQuestions,
+    ...explanation.unsupportedQuestions,
+    ...explanation.nextActions,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  if (explanation.summary.trim().length < 80) {
+    findings.push({
+      id: `${tenant.tenantKey}:story:thin-summary`,
+      severity: "P1",
+      tenantKey: tenant.tenantKey,
+      category: "Home story quality",
+      message:
+        "Home explanation summary is too thin to tell a credible client-facing story.",
+      evidence: explanation.summary,
+    });
+  }
+  if (DIAGNOSTIC_FIRST_PRIMARY_COPY.test(storyText)) {
+    findings.push({
+      id: `${tenant.tenantKey}:story:diagnostic-first-copy`,
+      severity: "P1",
+      tenantKey: tenant.tenantKey,
+      category: "Home story quality",
+      message:
+        "Home explanation uses diagnostic-first language in primary copy instead of client-facing context confidence.",
+      evidence: storyText.match(DIAGNOSTIC_FIRST_PRIMARY_COPY)?.[0],
+    });
+  }
+  if (
+    !/source|evidence|known|context/i.test(storyText) ||
+    !/limited|not yet|caveat|unsupported|validate/i.test(storyText)
+  ) {
+    findings.push({
+      id: `${tenant.tenantKey}:story:missing-trust-boundary`,
+      severity: "P1",
+      tenantKey: tenant.tenantKey,
+      category: "Home story quality",
+      message:
+        "Home explanation must state both what is source-backed and what still needs validation.",
+    });
+  }
+  if (UNSUPPORTED_VALUE_CLAIM.test(storyText)) {
+    findings.push({
+      id: `${tenant.tenantKey}:story:unsupported-value-language`,
+      severity: "P0",
+      tenantKey: tenant.tenantKey,
+      category: "unsupported module claim",
+      message:
+        "Home explanation contains unsupported savings, realized value, or outcome language.",
+      evidence: storyText.match(UNSUPPORTED_VALUE_CLAIM)?.[0],
+    });
+  }
+  if (explanation.supportedQuestions.length < 2) {
+    findings.push({
+      id: `${tenant.tenantKey}:story:supported-questions-thin`,
+      severity: "P2",
+      tenantKey: tenant.tenantKey,
+      category: "Home story quality",
+      message:
+        "Home explanation should provide at least two safe question examples.",
+    });
+  }
+  if (explanation.unsupportedQuestions.length < 2) {
+    findings.push({
+      id: `${tenant.tenantKey}:story:unsupported-questions-thin`,
+      severity: "P2",
+      tenantKey: tenant.tenantKey,
+      category: "Home story quality",
+      message:
+        "Home explanation should provide at least two questions or claims that are not yet supported.",
+    });
+  }
+  if (explanation.nextActions.length < 1) {
+    findings.push({
+      id: `${tenant.tenantKey}:story:missing-next-action`,
+      severity: "P1",
+      tenantKey: tenant.tenantKey,
+      category: "Home story quality",
+      message:
+        "Home explanation must include at least one validation or next data action.",
+    });
+  }
+
+  for (const dimension of DIMENSIONS) {
+    const domain = context.domains.find(
+      (item) => item.domain === dimension.domain,
+    );
+    const records = context.records.filter(
+      (record) => record.domain === dimension.domain,
+    );
+    const storyBasis = [
+      dimension.label,
+      domain?.readiness,
+      ...records.slice(0, 5).map(recordText),
+    ].join("\n");
+    if ((domain?.acceptedRecords ?? 0) > 0 && storyBasis.length < 80) {
+      findings.push({
+        id: `${tenant.tenantKey}:${dimension.domain}:story-thin`,
+        severity: "P1",
+        tenantKey: tenant.tenantKey,
+        dimension: dimension.label,
+        category: "Home dimension story quality",
+        message:
+          "Dimension has records, but the available story basis is too thin for a client-facing explanation.",
+      });
+    }
+  }
+
+  return findings;
+}
+
 function evaluateDimensions(
   tenant: TenantConfig,
   context: ServedModuleContextPacket,
@@ -562,7 +692,7 @@ function evaluateDimensions(
         severity: "P1",
         tenantKey: tenant.tenantKey,
         dimension: dimension.label,
-        tab: "Sources",
+        tab: "Diagnostics",
         category: "source lineage",
         message: `${dimension.label} served sample has records but no sourceEvidenceIds.`,
       });
@@ -644,21 +774,21 @@ function evaluateDimensions(
     });
 
     tabResults.push(
-      buildTabResult(tenant, dimension, "Summary", scores, [
+      buildTabResult(tenant, dimension, "Executive Story", scores, [
         `${dimension.label} has ${acceptedRecords} active module-context records and ${evidenceRefs.length} evidence references.`,
       ]),
-      buildTabResult(tenant, dimension, "Data", scores, [
-        `${records.length} records are served for the Data tab comparison.`,
+      buildTabResult(tenant, dimension, "Key Records", scores, [
+        `${records.length} records are served for the visible Key records table.`,
       ]),
-      buildTabResult(tenant, dimension, "Gaps", scores, [
+      buildTabResult(tenant, dimension, "Diagnostics", scores, [
         gaps.length
           ? `${gaps.length} module-context gaps are present.`
           : "No domain-specific module-context gaps are present.",
       ]),
-      buildTabResult(tenant, dimension, "Sources", scores, [
+      buildTabResult(tenant, dimension, "Diagnostics", scores, [
         `${evidenceRefs.length} source/evidence references are available for this domain.`,
       ]),
-      buildTabResult(tenant, dimension, "Relationships", scores, [
+      buildTabResult(tenant, dimension, "Diagnostics", scores, [
         `${relationships.length} validated relationships and ${relationshipCandidates.length} relationship candidates are present for this domain.`,
       ]),
     );
@@ -846,6 +976,42 @@ async function runBrowserProof({
         for (const dimension of DIMENSIONS) {
           await clickIfVisible(page, dimension.label);
           await page.waitForTimeout(250);
+          const dimensionText = normalizeText(
+            await page.locator("body").innerText({ timeout: 10000 }),
+          );
+          if (DIAGNOSTIC_FIRST_PRIMARY_COPY.test(dimensionText)) {
+            localFindings.push({
+              id: `${tenant.tenantKey}:${dimension.domain}:browser-diagnostic-first`,
+              severity: "P1",
+              tenantKey: tenant.tenantKey,
+              dimension: dimension.label,
+              category: "Home visible story quality",
+              message:
+                "Visible dimension page contains diagnostic-first language that weakens the client story.",
+              evidence:
+                dimensionText.match(DIAGNOSTIC_FIRST_PRIMARY_COPY)?.[0] ??
+                undefined,
+            });
+          }
+          for (const requiredText of [
+            "Executive Summary",
+            "What AbarVa knows",
+            "Why it matters",
+            "Questions this supports",
+            "Not yet supported",
+            "Key records",
+          ]) {
+            if (!dimensionText.includes(requiredText)) {
+              localFindings.push({
+                id: `${tenant.tenantKey}:${dimension.domain}:missing-${slug(requiredText)}`,
+                severity: "P1",
+                tenantKey: tenant.tenantKey,
+                dimension: dimension.label,
+                category: "Home visible story quality",
+                message: `Visible dimension page is missing required story block: ${requiredText}.`,
+              });
+            }
+          }
           await capture(
             page,
             args.outDir,
@@ -854,22 +1020,8 @@ async function runBrowserProof({
             tenant.tenantKey,
             `dimension-${slug(dimension.label)}-summary`,
             dimension.label,
-            "Summary",
+            "Executive Story",
           );
-          for (const tab of ["Data", "Sources", "Relationships"] as const) {
-            await clickIfVisible(page, tab);
-            await page.waitForTimeout(200);
-            await capture(
-              page,
-              args.outDir,
-              screenshots,
-              domArtifacts,
-              tenant.tenantKey,
-              `dimension-${slug(dimension.label)}-${slug(tab)}`,
-              dimension.label,
-              tab,
-            );
-          }
         }
 
         const qa = await askAvaQuestions(
@@ -1067,9 +1219,9 @@ function buildTabResult(
   notes: string[],
 ): TabResult {
   const adjusted =
-    tab === "Sources" && scores.evidenceSourceGrounding < 3
+    tab === "Diagnostics" && scores.evidenceSourceGrounding < 3
       ? { ...scores, factualAccuracy: 3 }
-      : tab === "Relationships" && scores.relationshipTruthfulness < 4
+      : tab === "Diagnostics" && scores.relationshipTruthfulness < 4
         ? {
             ...scores,
             decisionReadinessCaveats: Math.max(
@@ -1102,7 +1254,7 @@ async function writeReportBundle(args: {
   const { outDir } = args.args;
   const grouped = groupFindings(args.findings);
   await writeJson(outDir, "tenant-results.json", args.tenantResults);
-  await writeJson(outDir, "page-tab-results.json", args.tabResults);
+  await writeJson(outDir, "page-story-block-results.json", args.tabResults);
   await writeJson(
     outDir,
     "dimension-quality-scores.json",
@@ -1203,7 +1355,7 @@ This audit is read-only. It does not mutate tenant data, promote candidates, upd
 
 - Tenants audited: ${args.tenantResults.length}
 - Dimensions audited: ${args.dimensionResults.length}
-- Tabs audited: ${args.tabResults.length}
+- Story blocks audited: ${args.tabResults.length}
 - aVa prompts tested: ${args.avaResults.length}
 - P0/P1/P2: ${grouped.P0.length} / ${grouped.P1.length} / ${grouped.P2.length}
 
@@ -1266,7 +1418,7 @@ function renderHtml(args: {
       <div><span>P0</span><strong>${grouped.P0.length}</strong></div>
       <div><span>P1</span><strong>${grouped.P1.length}</strong></div>
       <div><span>P2</span><strong>${grouped.P2.length}</strong></div>
-      <div><span>Tabs</span><strong>${args.tabResults.length}</strong></div>
+      <div><span>Story blocks</span><strong>${args.tabResults.length}</strong></div>
     </section>
     <section class="grid">${tenantCards}</section>
     <table><thead><tr><th>Severity</th><th>Tenant</th><th>Dimension</th><th>Category</th><th>Message</th></tr></thead><tbody>${findings}</tbody></table>
