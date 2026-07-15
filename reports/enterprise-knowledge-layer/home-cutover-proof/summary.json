@@ -24,7 +24,8 @@
     "doubleClickProfilesPresent": true,
     "technicalDiagnosticsCollapsed": true,
     "duplicateModuleLeftNavRemoved": true,
-    "forbiddenPrimaryLanguageAbsent": true
+    "forbiddenPrimaryLanguageAbsent": true,
+    "runtimeActiveAccessMetadataPackaged": true
   },
   "dimensions": [
     {

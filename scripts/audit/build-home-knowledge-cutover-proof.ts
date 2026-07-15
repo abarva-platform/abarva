@@ -53,6 +53,7 @@ const outDir = path.join(
 
 const homePagePath = path.join(repoRoot, "src/app/(maestro)/home/page.tsx");
 const homeSurfacePath = path.join(repoRoot, "src/components/home/HomeSurface.tsx");
+const dockerIgnorePath = path.join(repoRoot, ".dockerignore");
 const summaryBuilderPath = path.join(
   repoRoot,
   "src/lib/home/home-summary-snapshot.ts",
@@ -175,11 +176,13 @@ async function main() {
     fs.readFileSync(homeSurfacePath, "utf8"),
     fs.readFileSync(summaryBuilderPath, "utf8"),
   ];
+  const dockerIgnoreSource = fs.readFileSync(dockerIgnorePath, "utf8");
 
   const routeCutoverStatus = analyzeRouteCutover({
     pageSource,
     surfaceSource,
     summaryBuilderSource,
+    dockerIgnoreSource,
   });
   const scenarioOutputs = await Promise.all(
     scenarios.map((scenario) => buildScenarioProof(scenario)),
@@ -256,10 +259,12 @@ function analyzeRouteCutover({
   pageSource,
   surfaceSource,
   summaryBuilderSource,
+  dockerIgnoreSource,
 }: {
   pageSource: string;
   surfaceSource: string;
   summaryBuilderSource: string;
+  dockerIgnoreSource: string;
 }) {
   return {
     defaultRouteUsesKnowledgeLayer:
@@ -311,6 +316,11 @@ function analyzeRouteCutover({
         extractUserFacingStrings(summaryBuilderSource),
       ].join("\n"),
     ),
+    runtimeActiveAccessMetadataPackaged:
+      dockerIgnoreSource.includes("reports/") &&
+      dockerIgnoreSource.includes("reports/*") &&
+      dockerIgnoreSource.includes("!reports/active-tenant-access/") &&
+      dockerIgnoreSource.includes("!reports/active-tenant-access/**"),
   };
 }
 
@@ -448,6 +458,11 @@ function assessQuality(args: {
   if (!route.forbiddenPrimaryLanguageAbsent) {
     p1.push("Legacy migration wording appears in primary Home/Knowledge code paths.");
   }
+  if (!route.runtimeActiveAccessMetadataPackaged) {
+    p0.push(
+      "Runtime image does not package reports/active-tenant-access metadata required for active Knowledge serving.",
+    );
+  }
   for (const scenario of args.scenarioOutputs) {
     if (scenario.sourceMode !== "active_tenant_access") {
       p1.push(`${scenario.key} did not resolve active tenant access.`);
@@ -541,6 +556,7 @@ Status: ${proof.status.toUpperCase()}
 - Required dimensions present: ${proof.routeCutoverStatus.requiredDimensionsPresent}
 - Double-click profiles present: ${proof.routeCutoverStatus.doubleClickProfilesPresent}
 - Duplicate module left-nav removed: ${proof.routeCutoverStatus.duplicateModuleLeftNavRemoved}
+- Runtime active access metadata packaged: ${proof.routeCutoverStatus.runtimeActiveAccessMetadataPackaged}
 
 ## Quality Findings
 
