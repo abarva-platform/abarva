@@ -102,7 +102,7 @@ export function buildMovesContextPackDryRun(params: {
     fallbackBehavior,
     response,
     movesContextPack,
-    phaseSections: buildPhaseSections(movesContextPack, params.input.phase),
+    phaseSections: buildMovesPhaseSections(movesContextPack, params.input.phase),
   };
 }
 
@@ -165,7 +165,7 @@ function buildFallbackBehavior(
   };
 }
 
-function buildPhaseSections(
+export function buildMovesPhaseSections(
   pack: MovesContextPack,
   phase: NonNullable<ModuleContextScope["phase"]>,
 ): MovesPhasePackSections {
