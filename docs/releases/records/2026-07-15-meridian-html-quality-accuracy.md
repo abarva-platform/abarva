@@ -14,8 +14,8 @@ Updates the Meridian data-state reconciliation proof HTML and supporting audit o
 
 ## Layer Impact
 
-- public-demo: Meridian proof/report artifacts used for demo-readiness review are updated.
-- internal-admin: The audit script that generates the Meridian reconciliation report is updated for clearer quality and accuracy checks.
+- `public-demo`: Meridian proof/report artifacts used for demo-readiness review are updated.
+- `internal-admin`: The audit script that generates the Meridian reconciliation report is updated for clearer quality and accuracy checks.
 
 ## Client Applicability
 
