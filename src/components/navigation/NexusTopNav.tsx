@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
+import type { MouseEvent } from "react";
 import { useSignOut } from "@/lib/auth/use-sign-out";
 import { demoSafeClientText } from "@/lib/client-config";
 import { AdminInboxTopNavBadge } from "@/components/shell/AdminInboxTopNavBadge";
@@ -58,6 +59,28 @@ function navLinkClass(active: boolean): string {
   return active ? `${styles.navLink} ${styles.navLinkActive}` : styles.navLink;
 }
 
+function handleProductNavClick(event: MouseEvent<HTMLAnchorElement>, href: string) {
+  if (
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.metaKey ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.shiftKey
+  ) {
+    return;
+  }
+
+  const target = event.currentTarget.getAttribute("target");
+  if (target && target !== "_self") return;
+
+  const url = new URL(href, window.location.origin);
+  if (url.origin !== window.location.origin) return;
+
+  event.preventDefault();
+  window.location.assign(`${url.pathname}${url.search}${url.hash}`);
+}
+
 function NavLinks({
   items,
   pathname,
@@ -77,6 +100,7 @@ function NavLinks({
             href={item.href}
             className={navLinkClass(active)}
             aria-current={active ? "page" : undefined}
+            onClick={(event) => handleProductNavClick(event, item.href)}
           >
             {item.label}
           </a>
@@ -108,7 +132,12 @@ export function NexusTopNav({ showProductNav: showProductNavProp = true }: Nexus
   return (
     <header className={styles.root} data-testid="nexus-top-nav">
       <div className={styles.brandSlot}>
-        <a href="/home" className={styles.brandLink} aria-label="AbarVa NEXUS Knowledge">
+        <a
+          href="/home"
+          className={styles.brandLink}
+          aria-label="AbarVa NEXUS Knowledge"
+          onClick={(event) => handleProductNavClick(event, "/home")}
+        >
           <Image
             src={NEXUS_NAV_LOCKUP}
             alt="AbarVa NEXUS"

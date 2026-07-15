@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The global Nexus product navigation now uses normal browser anchors for top-level module switches. This fixes a live issue where clicking Knowledge from Tower, Source, or Intelligence showed the correct `/home` link target but did not leave the current page because the client-side route transition was prevented or aborted.
+The global Nexus product navigation now uses normal browser anchors plus an explicit same-origin `window.location.assign` handoff for top-level module switches. This fixes a live issue where clicking Knowledge from Tower, Source, or Intelligence showed the correct `/home` link target but did not reliably leave the current page because the client-side route transition was prevented, aborted, or not completed.
 
 ## Layer Impact
 
@@ -28,6 +28,7 @@ The global Nexus product navigation now uses normal browser anchors for top-leve
 
 - `src/components/navigation/NexusTopNav.tsx`
 - `src/components/navigation/__tests__/NexusTopNav.test.tsx`
+- Follow-up hardening: normal left-clicks on product nav links now explicitly assign same-origin browser navigation while preserving modifier-click/new-tab behavior.
 
 ## QA / Validation
 
@@ -37,6 +38,7 @@ The global Nexus product navigation now uses normal browser anchors for top-leve
 - Pass: `npx eslint src/components/navigation/NexusTopNav.tsx src/components/navigation/__tests__/NexusTopNav.test.tsx`.
 - Pass: `npm run release:check`.
 - Pass: `git diff --check`.
+- Pass: after the first deploy, verified the native-anchor build was live but still saw the Tower-to-Knowledge proof stay on `/tower`; added explicit click handoff as the follow-up hardening.
 - Pending: signed-in browser proof from Tower to Knowledge after deploy.
 
 ## Rollout Plan
@@ -55,7 +57,7 @@ Merge to `main` through PR, deploy through the repo-owned Azure Container Apps m
 
 ## Rollback Plan
 
-Revert this PR and redeploy through the ACA main workflow. The rollback restores the previous Next.js Link-based global product navigation.
+Revert the global nav native-anchor/handoff PRs and redeploy through the ACA main workflow. The rollback restores the previous Next.js Link-based global product navigation.
 
 ## Audit Evidence
 
