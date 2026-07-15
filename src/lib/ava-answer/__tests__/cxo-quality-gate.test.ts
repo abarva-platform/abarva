@@ -156,6 +156,15 @@ describe("CXO answer quality gate", () => {
         }),
       ]),
     );
+    expect(result.categories).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "no_internal_language",
+          score: 0,
+          passed: false,
+        }),
+      ]),
+    );
   });
 
   it("flags missing typed exhibits for explicit visual requests", () => {
@@ -170,6 +179,14 @@ describe("CXO answer quality gate", () => {
       expect.arrayContaining([
         expect.objectContaining({ code: "missing-chart-artifact" }),
         expect.objectContaining({ code: "missing-table-artifact" }),
+      ]),
+    );
+    expect(result.categories).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "visual_usefulness",
+          passed: false,
+        }),
       ]),
     );
   });

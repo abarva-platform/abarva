@@ -200,4 +200,60 @@ describe("POST /api/intelligence/ask telemetry", () => {
       }),
     );
   });
+
+  it("does not expose raw advisory trace events or internal data-state language", async () => {
+    (askIntelligence as jest.Mock).mockImplementationOnce(async function* () {
+      yield {
+        type: "sources",
+        sources: [
+          {
+            type: "TENANT",
+            id: "v7_02_business_functions",
+            name: "V7 Business functions",
+            detail:
+              "Loaded substrate: 442 business records and 118 retrieval chunks. Transcript governance is not_loaded.",
+          },
+        ],
+      };
+      yield {
+        type: "intelligence-dossier",
+        intelligenceDossier: {
+          tenantEvidenceDossier: {
+            sections: [{ id: "s1" }],
+            confidence: "strong",
+          },
+          evidenceBoundary: { missingTenantEvidence: [{}] },
+          decisionOptionsDossier: { options: [{ id: "o1" }] },
+        },
+      };
+      yield {
+        type: "advisory-packet",
+        advisoryPacket: {
+          auditLineage: { sourceRefs: [{ id: "v7_01" }] },
+          modelVisiblePacket: { tenantFacts: [{ id: "f1" }], gaps: [{}] },
+          retrievalDiagnostics: { warningCount: 0 },
+        },
+      };
+      yield {
+        type: "delta",
+        text: "Transcript governance is not loaded in the V7 substrate.",
+      };
+      yield { type: "done" };
+    });
+
+    const response = await POST(
+      makeRequest({
+        q: "For Meridian agent assist, rank the top opportunities.",
+        client: "meridian",
+        traceEnabled: true,
+      }) as never,
+    );
+    const text = await readResponseText(response);
+
+    expect(text).toContain('"type":"context-summary"');
+    expect(text).toContain("not yet evidenced");
+    expect(text).not.toMatch(
+      /intelligence-dossier|advisory-packet|not loaded|not_loaded|V7|substrate|business records|retrieval chunks|v7_02/i,
+    );
+  });
 });

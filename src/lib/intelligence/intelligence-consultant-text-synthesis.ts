@@ -367,7 +367,7 @@ export function buildIntelligenceConsultantPromptPacketFromAdvisoryPacket(
         .slice(0, 6)
         .map(
           (entity) =>
-            `${entity.name}: assess; value=see tenant facts; complexity=not shown in loaded sources; risk=validate readiness; missing=${model.gaps[0]?.statement ?? "none named"}`,
+            `${entity.name}: assess; value=see tenant facts; complexity=not supported by the available evidence; risk=validate readiness; missing=${model.gaps[0]?.statement ?? "none named"}`,
         ),
       tradeoffs: model.relationships
         .map((relationship) => relationship.implication)
@@ -709,7 +709,7 @@ export async function synthesizeIntelligenceConsultantText(args: {
         "For chart, graph, trend, visual, visualize, plot, or benchmark asks, use <<<TAB: Chart | grounding: tenant-evidence>>> unless the visual is industry, benchmark, corpus, function, or category context; then use the matching grounding label.",
         "For table, matrix, comparison-grid, ranking, breakdown, or show-me asks, use <<<TAB: Table | grounding: tenant-evidence>>> unless the table is context rather than tenant proof.",
         `Use business-friendly columns aligned to the user's ask. Include ${requiredVisualRows}-6 rows only.`,
-        'Use only the provided packet. If a value is not shown, write "not shown in loaded sources" instead of inventing it.',
+        'Use only the provided packet. If a value is not shown, write "not supported by the available evidence" instead of inventing it.',
         "Do not put the Markdown table in the main answer. It must be inside the Chart or Table tab.",
         "Do not add source-support, evidence-register, citation, or material-used tables.",
         "Return final user-facing text only.",
