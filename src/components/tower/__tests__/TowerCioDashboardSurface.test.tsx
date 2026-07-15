@@ -5,7 +5,12 @@
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen } from "@testing-library/react";
 
-import { TOWER_CIO_STARTER_QUESTIONS, TowerIndexPage } from "../TowerIndexPage";
+import {
+  TOWER_CIO_ENTERPRISE_STARTER_QUESTIONS,
+  TOWER_CIO_STARTER_QUESTIONS,
+  TowerIndexPage,
+  towerCioStarterQuestionsForTenant,
+} from "../TowerIndexPage";
 import type {
   AIInitiative,
   AIInitiativeVendorRow,
@@ -746,13 +751,19 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
   it("uses executive-grade aVa starter questions for the CIO dock", () => {
     expect(TOWER_CIO_STARTER_QUESTIONS).toEqual([
       "Show the holding-company IT budget by portfolio company and shared services.",
-      "Which funded programs have the largest gap between promised and proven value?",
+      "Which funded programs have the largest gap between promised and measured value?",
       "Which portfolio-company CIOs should I inspect first based on spend, risk, and value proof?",
       "Where is run budget crowding out change budget across the portfolio?",
       "Which vendors create the biggest renewal or concentration exposure this quarter?",
       "Which AI investments are true initiatives versus Copilot, platform, or vendor-embedded spend?",
       "What evidence is missing before this dashboard is board-ready?",
     ]);
+    expect(towerCioStarterQuestionsForTenant("Healthcare Demo")).toEqual(
+      TOWER_CIO_ENTERPRISE_STARTER_QUESTIONS,
+    );
+    expect(towerCioStarterQuestionsForTenant("Lakeshore Holdings")).toEqual(
+      TOWER_CIO_STARTER_QUESTIONS,
+    );
 
     render(
       <TowerIndexPage
@@ -763,7 +774,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
         initiatives={[]}
         vendors={[]}
         activeTab="portfolio"
-        cxoView={GOVERNED_CXO_VIEW}
+        cxoView={{ ...GOVERNED_CXO_VIEW, tenantName: "Lakeshore Holdings" }}
       />,
     );
 
@@ -777,5 +788,37 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
         "Which portfolio-company CIOs should I inspect first based on spend, risk, and value proof?",
       ),
     ).toBeInTheDocument();
+  });
+
+  it("uses enterprise starter questions for Healthcare/Meridian instead of portfolio-company wording", () => {
+    render(
+      <TowerIndexPage
+        tenantName="Healthcare Demo"
+        context="Tower"
+        towerToday="2026-07-01"
+        clientId="client-meridian"
+        initiatives={[]}
+        vendors={[]}
+        activeTab="portfolio"
+        cxoView={{ ...GOVERNED_CXO_VIEW, tenantName: "Healthcare Demo" }}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "Show the enterprise technology budget by run, change, and funded initiatives.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Which executive owners should inspect spend, risk, and value proof first?",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "Show the holding-company IT budget by portfolio company and shared services.",
+      ),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/portfolio-company CIOs/i)).not.toBeInTheDocument();
   });
 });

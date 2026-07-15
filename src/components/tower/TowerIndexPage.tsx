@@ -73,6 +73,7 @@ interface CioTowerVisibleAnswer {
 }
 
 interface CioTowerChatResponse {
+  response?: string;
   modelOutput?: CioTowerVisibleAnswer;
   traceKey?: string;
 }
@@ -126,15 +127,35 @@ const T = {
 
 const PANEL_SHADOW = "0 18px 42px rgba(15, 23, 42, 0.07)";
 
-export const TOWER_CIO_STARTER_QUESTIONS = [
+export const TOWER_CIO_HOLDCO_STARTER_QUESTIONS = [
   "Show the holding-company IT budget by portfolio company and shared services.",
-  "Which funded programs have the largest gap between promised and proven value?",
+  "Which funded programs have the largest gap between promised and measured value?",
   "Which portfolio-company CIOs should I inspect first based on spend, risk, and value proof?",
   "Where is run budget crowding out change budget across the portfolio?",
   "Which vendors create the biggest renewal or concentration exposure this quarter?",
   "Which AI investments are true initiatives versus Copilot, platform, or vendor-embedded spend?",
   "What evidence is missing before this dashboard is board-ready?",
 ] as const;
+
+export const TOWER_CIO_ENTERPRISE_STARTER_QUESTIONS = [
+  "Show the enterprise technology budget by run, change, and funded initiatives.",
+  "Which funded programs have the largest gap between promised and measured value?",
+  "Which executive owners should inspect spend, risk, and value proof first?",
+  "Where is run budget crowding out change capacity?",
+  "Which vendors create the biggest renewal or concentration exposure this quarter?",
+  "Which AI investments are true initiatives versus Copilot, platform, or vendor-embedded spend?",
+  "What evidence is missing before this dashboard is board-ready?",
+] as const;
+
+export const TOWER_CIO_STARTER_QUESTIONS = TOWER_CIO_HOLDCO_STARTER_QUESTIONS;
+
+export function towerCioStarterQuestionsForTenant(
+  tenantName: string,
+): ReadonlyArray<string> {
+  return /lakeshore|holdings|industrial|morgan/i.test(tenantName)
+    ? TOWER_CIO_HOLDCO_STARTER_QUESTIONS
+    : TOWER_CIO_ENTERPRISE_STARTER_QUESTIONS;
+}
 
 // ─── Confidence value (cval) — solid/dashed/dotted underline by confidence ────
 type Confidence = "high" | "med" | "low";
@@ -683,6 +704,7 @@ function buildCioDashboardModel(
   todayIso: string,
   budgetRollups: ReadonlyArray<TowerBudgetRollup> = [],
   metricPackets: ReadonlyArray<CioTowerMetricPacket> = [],
+  tenantName = "",
 ): CioDashboardModel {
   const totalBudgetPacket = findCioTowerMetricPacket(
     metricPackets,
@@ -966,7 +988,7 @@ function buildCioDashboardModel(
       tone: "green",
     });
   }
-  const scenarioQuestions = [...TOWER_CIO_STARTER_QUESTIONS];
+  const scenarioQuestions = [...towerCioStarterQuestionsForTenant(tenantName)];
 
   return {
     initiativeCount: initiatives.length,
@@ -6567,6 +6589,7 @@ export function TowerIndexPage({
     towerToday,
     budgetRollups ?? [],
     metricPackets ?? [],
+    cxoView?.tenantName ?? tenantName,
   );
   const hasTowerEvidenceForAva =
     Boolean(cxoView) ||
@@ -6667,7 +6690,9 @@ export function TowerIndexPage({
               id: `atlas-error-${Date.now()}`,
               role: "atlas",
               content:
-                "aVa could not produce a valid Tower answer contract. No fallback answer was generated.",
+                json.modelOutput?.answer ??
+                json.response ??
+                "aVa could not complete the advisory synthesis. Use the visible Tower measures as the governed read and try the question again.",
             },
           ]);
           return;
@@ -6698,8 +6723,8 @@ export function TowerIndexPage({
             role: "atlas",
             content:
               err instanceof DOMException && err.name === "AbortError"
-                ? "aVa did not return a Tower answer contract within the response window. No fallback answer was generated."
-                : "aVa did not return a Tower answer contract. No fallback answer was generated.",
+                ? "aVa did not finish the Tower answer within the response window. Use the visible dashboard measures as the governed read and try again."
+                : "aVa could not complete the Tower advisory synthesis. Use the visible dashboard measures as the governed read and try again.",
           },
         ]);
       } finally {
