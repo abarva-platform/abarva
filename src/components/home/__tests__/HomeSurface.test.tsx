@@ -649,8 +649,8 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(screen.getByText("Executive Summary")).toBeInTheDocument();
     expect(screen.getByText("What Nexus knows")).toBeInTheDocument();
     expect(screen.getByText("Why it matters")).toBeInTheDocument();
-    expect(screen.getByText("Questions this supports")).toBeInTheDocument();
-    expect(screen.getByText("Not yet supported")).toBeInTheDocument();
+    expect(screen.getByText("Decisions this can inform")).toBeInTheDocument();
+    expect(screen.getByText("Validate before deciding")).toBeInTheDocument();
     expect(
       screen.getAllByText(/Retail Demo's vendors & contracts context/i).length,
     ).toBeGreaterThan(0);

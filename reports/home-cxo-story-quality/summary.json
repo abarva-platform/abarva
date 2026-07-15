@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "storyScore": 11,
+  "requiredStoryScore": 11,
+  "visualScore": 9,
+  "requiredVisualScore": 9,
+  "generatedBy": "claude",
+  "model": "claude-opus-4-8",
+  "sourceContextHash": "sha256:03d68e65ea27528d9b53dfcc3f6ec18379dca66d83555eed5b1d71966483e70b",
+  "failures": [],
+  "sourceArtifacts": {
+    "claudePrompt": "reports/home-knowledge-story-quality/claude-prompts/meridian-home-story-prompt.txt",
+    "rawClaudeResponse": "reports/home-knowledge-story-quality/claude-responses/meridian-home-story-response.txt",
+    "renderedReviewTable": "reports/home-knowledge-story-quality/rendered-review-table.html"
+  }
+}

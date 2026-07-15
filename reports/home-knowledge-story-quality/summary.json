@@ -1,0 +1,14 @@
+{
+  "tenant_key": "meridian-health",
+  "tenant_name": "Healthcare Demo / Meridian Health",
+  "context_pack_id": "home-knowledge-story-quality-meridian-2026-07-15",
+  "context_pack_hash": "22dc8141edb81f614656dc4f957932afd1a62456e55b43a6af743fa5011e1817",
+  "prompt_hash": "c4ab3f215cb4dc202801daa64bda0f0782531f497affa60234b273b4fa41279a",
+  "generated_at": "2026-07-15T18:06:18.633Z",
+  "model": "claude-opus-4-8",
+  "status": "passed",
+  "claude_derived": true,
+  "dimensions": 19,
+  "validation": [],
+  "unsupportedClaims": []
+}

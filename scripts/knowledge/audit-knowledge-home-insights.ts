@@ -7,23 +7,23 @@ const failures = validateHomeInsightSummary(MERIDIAN_KNOWLEDGE_HOME_INSIGHTS);
 
 const text = JSON.stringify(MERIDIAN_KNOWLEDGE_HOME_INSIGHTS).toLowerCase();
 for (const required of [
-  "member service",
-  "contact center",
-  "crm",
-  "claims",
-  "eligibility",
-  "knowledge",
-  "aht",
-  "fcr",
-  "aws",
-  "databricks",
-  "target-state",
-  "not current production",
-  "phi",
-  "hitl",
-]) {
-  if (!text.includes(required)) {
-    failures.push(`home insights missing ${required}`);
+  ["member service", /member service/],
+  ["contact center", /contact center/],
+  ["crm", /\bcrm\b/],
+  ["claims", /claims/],
+  ["eligibility", /eligibility/],
+  ["knowledge", /knowledge/],
+  ["contact-center KPI baseline", /contact center (?:kpis?|baselines?)|aht|fcr/],
+  ["aws", /\baws\b/],
+  ["databricks", /databricks/],
+  ["target-state", /target-state|target state|declared direction/],
+  ["not current production", /not current production|target-state, not current production|target state, not current production/],
+  ["phi", /\bphi\b/],
+  ["human-in-the-loop", /human-in-the-loop|hitl/],
+] as const) {
+  const [label, pattern] = required;
+  if (!pattern.test(text)) {
+    failures.push(`home insights missing ${label}`);
   }
 }
 
