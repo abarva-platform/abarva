@@ -10,11 +10,12 @@
 
 ## Plain-English Summary
 
-Tightens the Intelligence aVa answer path so CXO-visible answers do not expose internal data-layer, Move trace, packet, table, or debug language. The route now sends server-sanitized `agent-answer` packets, stream deltas are scrubbed before they render, and the prompt contract asks for decision-grade structured rows that Nexus can lift into typed visual artifacts instead of raw chart/SVG/Mermaid code. Chat exports now preserve typed tables, chart exhibits, and graph relationships in HTML/PDF exports instead of flattening or dropping structured formatting.
+Tightens the Intelligence aVa answer path so CXO-visible answers do not expose internal data-layer, Move trace, packet, table, or debug language. The route now sends server-sanitized `agent-answer` packets, stream deltas and browser-facing source events are scrubbed before they render, and the prompt contract asks for decision-grade structured rows that Nexus can lift into typed visual artifacts instead of raw chart/SVG/Mermaid code. Chat exports now preserve typed tables, chart exhibits, and graph relationships in HTML/PDF exports instead of flattening or dropping structured formatting.
 
 ## Layer Impact
 
 - global-control-lane: shared Intelligence API response shaping and final packet sanitization now enforce CXO-safe language before data reaches the browser.
+- global-control-lane: browser-facing Intelligence source events now use display-safe source names, details, and IDs while preserving original source objects for internal trace/audit.
 - global-control-lane: aVa visible-answer validation now treats internal product/data-layer terms as errors.
 - global-control-lane: Intelligence prompts now encourage compact source-backed decision tables for rankings, comparisons, roadmaps, trends, and tradeoffs, while forbidding raw renderer/chart code in visible answers.
 - global-control-lane: Intelligence chat export rendering now keeps typed table/chart/graph artifacts in the downloadable HTML/PDF path.
@@ -37,12 +38,14 @@ Tightens the Intelligence aVa answer path so CXO-visible answers do not expose i
 - `src/lib/intelligence/ask/synthesizer.ts`
 - `src/lib/ava-answer/export/render-answer-pdf.tsx`
 - Regression tests for public answer scrubbing, server-side answer safety, CXO quality validation, and structured exhibit lifting.
+- Regression tests for browser-facing source text scrubbing of data-layer/source-record language.
 - Regression tests for HTML/PDF export preservation of tables, chart exhibits, and graph relationships.
 
 ## QA / Validation
 
 - Pass: focused Jest suites for public answer scrubbing, CXO quality gate, server render safety, and structured exhibits.
 - Pass: confirms `V7 substrate`, `candidate_move`, `move_id`, `phase_id`, `artifact_id`, `evidence_id`, `tenant_id`, and `source_record_id` are removed or blocked from visible answers.
+- Pass: confirms browser-facing source text removes V-layer labels, source-record counts, internal source IDs, and `candidate_move` markers before reaching the UI stream.
 - Pass: confirms a Meridian-style agent-assist ranking table is lifted into typed table and chart artifacts.
 - Pass: confirms chat HTML/PDF exports preserve typed tables, chart exhibits, graph relationships, and compact numeric formatting.
 - Pending: full release validation and post-deploy signed-in Meridian Intelligence proof after merge/deploy.

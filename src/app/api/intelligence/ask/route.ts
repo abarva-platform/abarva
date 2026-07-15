@@ -49,6 +49,7 @@ import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import {
   scrubInternalVisibleAvaTerms,
   scrubPublicAvaAnswerText,
+  scrubPublicAvaSourceText,
 } from "@/lib/ava-answer/public-answer-scrub";
 import { sanitizeAgentAnswerForRender } from "@/lib/intelligence/answer/answer-safety";
 import {
@@ -734,6 +735,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               query,
               (event.sources ?? []) as AskSource[],
             );
+            const displaySources = enrichedSources.map(displaySafeAskSource);
             citationCount = enrichedSources.length;
             patternId =
               enrichedSources.find((source) => source.type === "PATTERN")?.id ??
@@ -743,7 +745,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               encoder.encode(
                 JSON.stringify({
                   ...event,
-                  sources: enrichedSources,
+                  sources: displaySources,
                 }) + "\n",
               ),
             );
@@ -1210,6 +1212,24 @@ function displaySafeIntelligenceDelta(text: string): string {
   }
 
   return scrubForDisplay(text.replace(/<<<TAB:[\s\S]*$/g, "").trimEnd());
+}
+
+const INTERNAL_SOURCE_ID_RE =
+  /\b(?:candidate_move|move_id|phase_id|artifact_id|evidence_id|source_record_id|context_pack_id|program_evidence_items|move_artifacts|tenant_id|client_id|intelligence_v\d+|V\d+[_:-])/i;
+
+function displaySafeAskSource(source: AskSource, index: number): AskSource {
+  const name = scrubPublicAvaSourceText(source.name);
+  const detail = scrubPublicAvaSourceText(source.detail);
+  const id =
+    source.id && !INTERNAL_SOURCE_ID_RE.test(source.id)
+      ? scrubInternalVisibleAvaTerms(source.id)
+      : `source-${index + 1}`;
+  return {
+    ...source,
+    id,
+    name: name || `Source ${index + 1}`,
+    detail,
+  };
 }
 
 function assistantMemoryText(text: string): string {

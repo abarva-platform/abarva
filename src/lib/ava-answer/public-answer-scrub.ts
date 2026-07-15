@@ -215,6 +215,24 @@ export function scrubPublicAvaAnswerText(value: string): string {
   return enforcePublicAvaParagraphCap(scrubbed);
 }
 
+export function scrubPublicAvaSourceText(value: string): string {
+  return scrubPublicAvaAnswerText(value)
+    .replace(/\bV\d+[_-]\d+\s*/gi, "")
+    .replace(/\bV\d+\s+/gi, "")
+    .replace(/\bintelligence_v\d+\b/gi, "enterprise context")
+    .replace(/\bsynthetic_demo_manifest_gated\b/gi, "demo validation gate")
+    .replace(/\bsynthetic demo\b/gi, "demo")
+    .replace(
+      /\b\d[\d,]*\s+(?:business records|field facts|graph nodes|relationship edges|retrieval chunks)\b/gi,
+      "available source material",
+    )
+    .replace(/\bSelected for this question:\s*/gi, "")
+    .replace(/\bUse these as business-language grounding\.\s*/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function stripInternalEvidenceAppendix(value: string): string {
   const lines = value.replace(/\r\n/g, "\n").split("\n");
   const kept: string[] = [];
