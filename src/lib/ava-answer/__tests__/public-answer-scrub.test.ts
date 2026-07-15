@@ -164,14 +164,15 @@ Tenant evidence`);
 
   it("cleans internal data-layer source text before it reaches the browser", () => {
     const cleaned = scrubPublicAvaSourceText(
-      "Meridian Health System V7 executive dossier from Azure Postgres intelligence_v7. Loaded substrate: 442 business records, 11,507 field facts, 97 graph nodes, 69 relationship edges, and 118 retrieval chunks. Selected for this question: V7_02_business_functions.csv candidate_move planning context. Boundary: synthetic_demo_manifest_gated.",
+      "Meridian Health System V7 executive dossier from Azure Postgres intelligence_v7. Revenue Basis: not_loaded. Loaded substrate: 442 business records, 11,507 field facts, 97 graph nodes, 69 relationship edges, and 118 retrieval chunks. Selected for this question: V7_02_business_functions.csv candidate_move planning context. Boundary: synthetic_demo_manifest_gated.",
     );
 
     expect(cleaned).toContain("Meridian Health System executive business file");
+    expect(cleaned).toContain("Revenue Basis: not yet available");
     expect(cleaned).toContain("available source material");
     expect(cleaned).toContain("candidate opportunity planning context");
     expect(cleaned).not.toMatch(
-      /V7|intelligence_v7|substrate|business records|field facts|graph nodes|relationship edges|retrieval chunks|candidate_move|synthetic_demo_manifest_gated/i,
+      /V7|intelligence_v7|not_loaded|substrate|business records|field facts|graph nodes|relationship edges|retrieval chunks|candidate_move|synthetic_demo_manifest_gated/i,
     );
   });
 

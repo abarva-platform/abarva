@@ -46,6 +46,7 @@ Tightens the Intelligence aVa answer path so CXO-visible answers do not expose i
 - Pass: focused Jest suites for public answer scrubbing, CXO quality gate, server render safety, and structured exhibits.
 - Pass: confirms `V7 substrate`, `candidate_move`, `move_id`, `phase_id`, `artifact_id`, `evidence_id`, `tenant_id`, and `source_record_id` are removed or blocked from visible answers.
 - Pass: confirms browser-facing source text removes V-layer labels, source-record counts, internal source IDs, and `candidate_move` markers before reaching the UI stream.
+- Pass: confirms versioned source IDs such as `v7.1` are replaced with display-safe source references before reaching the UI stream.
 - Pass: confirms a Meridian-style agent-assist ranking table is lifted into typed table and chart artifacts.
 - Pass: confirms chat HTML/PDF exports preserve typed tables, chart exhibits, graph relationships, and compact numeric formatting.
 - Pending: full release validation and post-deploy signed-in Meridian Intelligence proof after merge/deploy.

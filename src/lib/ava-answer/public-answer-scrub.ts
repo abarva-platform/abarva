@@ -220,6 +220,7 @@ export function scrubPublicAvaSourceText(value: string): string {
     .replace(/\bV\d+[_-]\d+\s*/gi, "")
     .replace(/\bV\d+\s+/gi, "")
     .replace(/\bintelligence_v\d+\b/gi, "enterprise context")
+    .replace(/\bnot_loaded\b/gi, "not yet available")
     .replace(/\bsynthetic_demo_manifest_gated\b/gi, "demo validation gate")
     .replace(/\bsynthetic demo\b/gi, "demo")
     .replace(
