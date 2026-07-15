@@ -48,7 +48,7 @@ datasets/tenant-inputs/active/<tenant-key>/current/
 The universal template set is:
 
 ```text
-datasets/tenant-inputs/templates/universal/standard-2026-07/
+datasets/tenant-inputs/templates/universal/standard-2026-07-v3/
 ```
 
 The registry that declares active tenants, active packets, retired tenants, and
@@ -71,10 +71,6 @@ filename:   {tenant_key}__{template_name}__{as_of_yyyymmdd}__{source_owner}__r{r
 Raw uploads are not runtime truth. The build must consume validated packets
 after quality checks, source lineage checks, placeholder rejection, and operator
 approval.
-
-Some current template filenames still carry legacy version labels as file
-identifiers. They are not architecture names and must not be used to describe
-the data-layer design.
 
 ## Universal Template Domains
 

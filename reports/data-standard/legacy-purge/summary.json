@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-07-15T13:24:00.772Z",
+  "standard": "standard-2026-07-v3",
+  "deletedLegacyFileCount": 1830,
+  "remainingAllowedLegacyReferenceCount": 567,
+  "blockedLoaderPathCount": 0,
+  "blockedGuardedContentCount": 0,
+  "guardrails": {
+    "standard": "standard-2026-07-v3",
+    "productionTenantDataWritten": false,
+    "activeTenantAccessLayerUpdated": false,
+    "candidatePromoted": false,
+    "moduleRuntimeConsumptionChanged": false
+  },
+  "purgedRoots": [
+    "datasets/tenant-inputs/archive",
+    "datasets/enterprise-intelligence-template-pack-v6",
+    "datasets/client-load-staging",
+    "datasets/lakeshore-kyriba-synthetic-v1",
+    "datasets/tenant-inputs/templates/universal/standard-2026-07",
+    "public/setup-templates",
+    "public/templates top-level client workbooks",
+    "scripts/tenant-v6",
+    "scripts/v7",
+    "scripts/lib/v6-v7"
+  ],
+  "blockedPathFindings": [],
+  "blockedContentFindings": []
+}

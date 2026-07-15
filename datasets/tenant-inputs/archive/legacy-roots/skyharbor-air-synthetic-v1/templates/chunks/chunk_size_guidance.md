@@ -1,1 +1,0 @@
-Chunks target 200-600 tokens and never split a number away from its source row. Named entities must trace to provenance.

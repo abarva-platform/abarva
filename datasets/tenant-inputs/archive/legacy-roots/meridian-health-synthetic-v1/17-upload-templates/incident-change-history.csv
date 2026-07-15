@@ -1,3 +1,0 @@
-event_id,system,severity,clinical_impact,root_cause
-INC-001,MR-APP-EPIC,sev2,ambulatory documentation latency,interface queue saturation
-CHG-009,MR-APP-LIS,sev3,lab result delay,change window conflict

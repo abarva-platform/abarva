@@ -1,8 +1,0 @@
-company_name: Lakeshore Holdings
-synthetic_peer_anchor: diversified private holding company with industrial, logistics, marketing, consumer, and workplace-services portfolio companies
-revenue_fy26_usd: 5850000000
-employees_fte: 11580
-portfolio_company_count: 5
-canonical_tenant_key: lakeshore-holdings
-dataset_version: v4-tower-enriched
-data_classification: synthetic_calibrated

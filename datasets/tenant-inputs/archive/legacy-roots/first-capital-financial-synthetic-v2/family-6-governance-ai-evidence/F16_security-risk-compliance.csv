@@ -1,9 +1,0 @@
-control_id,control_area,system_id,status,regulation,owner_role,last_audit_date,finding_count,notes
-FCF-CTRL-001,data_lineage,FCF-APP-FIS-HORIZON|FCF-APP-SNOWFLAKE,deficient,OCC,CIO,2025-11-15,3,OCC MRA: data-lineage gaps for wire transaction reporting; remediation deadline 2026-Q4.
-FCF-CTRL-002,bsa_aml_case_mgmt,FCF-APP-NICE-ACTIMIZE|FCF-APP-FENERGO-KYC,deficient,FinCEN/OCC,Chief Risk Officer,2026-01-20,5,BSA AML case management quality; alert-to-SAR funnel evidence required; staffing plan filed.
-FCF-CTRL-003,model_risk_sr11_7,FCF-APP-DATABRICKS|FCF-APP-NICE-ACTIMIZE,at_risk,Federal Reserve,Chief Model Risk Officer,2026-03-10,2,SR 11-7: 12 production AI models lack refreshed validation evidence; blocking AML and fraud scale.
-FCF-CTRL-004,glba_safeguards,FCF-APP-MOBILE-BANKING|FCF-APP-SALESFORCE-FSC,compliant,OCC/FRB,CISO,2026-02-28,0,GLBA safeguarding controls in place; annual testing completed; no open findings.
-FCF-CTRL-005,pci_dss_v4,FCF-APP-FEDWIRE-ACH|FCF-APP-FIS-HORIZON,compliant,PCI SSC,CISO,2026-04-15,1,PCI DSS v4 compliant; 1 minor finding on session key rotation; remediation in 30 days.
-FCF-CTRL-006,third_party_ai_risk,,at_risk,OCC,Chief Risk Officer,2026-05-01,4,OCC examiner flagged: 8 of 12 named AI vendors have undocumented data rights and exit clauses.
-FCF-CTRL-007,cyber_resilience,FCF-APP-SPLUNK|FCF-APP-CROWDSTRIKE,compliant,Federal Reserve,CISO,2026-03-30,0,DFAST cyber scenario playbook completed; 99.97% SOC uptime; no high-severity gaps.
-FCF-CTRL-008,fair_lending,FCF-APP-NCINO|FCF-APP-DATABRICKS,at_risk,CFPB,Chief Compliance Officer,2026-04-20,2,CFPB: commercial credit model explainability gaps; bias testing in progress; nCino mapping incomplete.

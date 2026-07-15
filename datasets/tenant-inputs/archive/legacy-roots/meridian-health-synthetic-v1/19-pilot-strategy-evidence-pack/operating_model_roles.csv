@@ -1,8 +1,0 @@
-function,role_title,decision_right,pain_point,capacity_constraint,required_in_pilot,move_phase
-Plan Operations,VP Payment Integrity,Approve payment integrity diagnostic scope,Leakage opportunities compete with operational fire drills,Part-time SME capacity,yes,P1
-Revenue Cycle,VP Revenue Cycle,Approve prior auth and denial first cohort,Payer and service-line prioritization not fixed,SME review windows limited,yes,P1
-Finance,CFO FP&A Lead,Approve value baseline and cost transparency lens,Cost pools not tied to operational levers,Monthly planning cadence,yes,P1
-Member Experience,VP Member Experience,Approve call center use-case boundary,Raw transcript use must be avoided,Queue owner availability,yes,P1
-Quality,Chief Quality Officer,Approve quality metric family and provider benchmark framing,HEDIS/STAR detail not loaded yet,Measure owner confirmation needed,yes,P1
-Data Office,Chief Data Officer,Approve semantic/data product roadmap and PHI minimization,Data ownership and quality thresholds vary by domain,Data steward capacity,yes,P1
-Compliance / Privacy,Privacy Officer,Approve guardrails and blocked actions,PHI/PII default blocked for pilot,Review required for any real data ask,yes,P1

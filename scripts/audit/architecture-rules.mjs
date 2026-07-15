@@ -136,10 +136,13 @@ function fullFiles(dir = ROOT) {
   return out;
 }
 
-function changedAddedLines(base, head) {
-  const committed = git(['diff', '--unified=0', '--no-ext-diff', `${base}...${head}`]);
-  const workingTree = git(['diff', '--unified=0', '--no-ext-diff']);
-  const patch = `${committed}\n${workingTree}`;
+function changedAddedLines(base, head, files) {
+  const patches = [];
+  for (const file of files) {
+    patches.push(git(['diff', '--unified=0', '--no-ext-diff', `${base}...${head}`, '--', file]));
+    patches.push(git(['diff', '--unified=0', '--no-ext-diff', '--', file]));
+  }
+  const patch = patches.join('\n');
   return parseAddedLines(patch);
 }
 
@@ -271,7 +274,7 @@ if (mode === 'full') {
   rows = fullLines(files);
 } else if (mode === 'changed') {
   files = changedFiles(base, head).filter((file) => !shouldSkipFile(file));
-  rows = changedAddedLines(base, head);
+  rows = changedAddedLines(base, head, files);
 } else {
   console.error(`Unknown --mode=${mode}. Use changed or full.`);
   process.exit(2);

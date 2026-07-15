@@ -78,14 +78,14 @@
         ]
       },
       "timings": {
-        "intentClassificationMs": 0.15,
-        "contextResolutionMs": 0.24,
+        "intentClassificationMs": 0.13,
+        "contextResolutionMs": 0.22,
         "assemblyMs": 0.59,
-        "entityProfileCacheMs": 0.28,
-        "relationshipSliceCacheMs": 0.06,
+        "entityProfileCacheMs": 0.33,
+        "relationshipSliceCacheMs": 0.07,
         "fastContextPackCacheMs": 0.1,
         "deepContextPackCacheMs": 0.06,
-        "totalMs": 1.59
+        "totalMs": 1.61
       },
       "truthSplit": {
         "cacheOnly": true,
@@ -1712,13 +1712,13 @@
       },
       "timings": {
         "intentClassificationMs": 0.04,
-        "contextResolutionMs": 0.07,
-        "assemblyMs": 0.09,
-        "entityProfileCacheMs": 0.16,
+        "contextResolutionMs": 0.08,
+        "assemblyMs": 0.1,
+        "entityProfileCacheMs": 0.13,
         "relationshipSliceCacheMs": 0.02,
         "fastContextPackCacheMs": 0.02,
         "deepContextPackCacheMs": 0.01,
-        "totalMs": 0.43
+        "totalMs": 0.41
       },
       "truthSplit": {
         "cacheOnly": true,

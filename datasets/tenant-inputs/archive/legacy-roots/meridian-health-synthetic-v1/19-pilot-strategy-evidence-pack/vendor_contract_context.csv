@@ -1,6 +1,0 @@
-vendor,capability,contract_status,renewal_window,annual_spend_range,baa_status,ai_clause_status,risk,move_phase
-Epic,EHR and clinical data platform,current,next_6_months,25M-30M,current,requires_prompt_logging_limits,EHR dependency and optimization scope need evidence,P2
-Optum / Change Healthcare,Claims and RCM workflows,current,next_12_months,5M-15M,current,review_needed,Payment integrity and denials data rights need review,P2
-Microsoft / Azure,AI and data platform,current,next_12_months,10M-20M,current,standard_dpa_or_baa,AI workload boundary and audit logging need confirmation,P3
-Contact center vendor,Member service platform,placeholder,unknown,unknown,unknown,unknown,Need vendor identity and data processing posture,P2
-Quality analytics vendor,HEDIS / STAR quality analytics,placeholder,unknown,unknown,unknown,unknown,Need attribution and quality-measure evidence,P2

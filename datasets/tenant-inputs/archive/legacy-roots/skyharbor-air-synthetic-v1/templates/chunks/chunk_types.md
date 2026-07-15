@@ -1,1 +1,0 @@
-chunk_types: definition, lineage, runbook, decision, value, risk, opportunity, executive_view, industry_pattern

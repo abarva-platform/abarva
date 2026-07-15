@@ -1,9 +1,0 @@
-tenant_key,initiative_id,portfolio_company,metric_basis,committed_value_usd,forecast_value_usd,realized_value_usd,unrealized_or_blocked_value_usd,period,evidence_status,confidence,source_template,is_synthetic
-lakeshore-holdings,LAK-AI-001,Lakeshore Shared Services,portfolio_value_realization,8000000,6800000.0,2000000.0,6000000,FY2026,source_backed,medium,T07_benefit-realization,True
-lakeshore-holdings,LAK-AI-002,Northline Logistics Group,portfolio_value_realization,6500000,5525000.0,780000.0,5720000,FY2026,partial,medium,T07_benefit-realization,True
-lakeshore-holdings,LAK-AI-003,Lakeshore Shared Services,portfolio_value_realization,5400000,4590000.0,972000.0,4428000,FY2026,partial,medium,T07_benefit-realization,True
-lakeshore-holdings,LAK-AI-004,Northline Logistics Group,portfolio_value_realization,9800000,8330000.0,2450000.0,7350000,FY2026,source_backed,medium,T07_benefit-realization,True
-lakeshore-holdings,LAK-AI-005,Crestpoint Marketing Services,portfolio_value_realization,2200000,1870000.0,264000.0,1936000,FY2026,partial,medium,T07_benefit-realization,True
-lakeshore-holdings,LAK-AI-006,Riverton Consumer Products,portfolio_value_realization,4500000,3825000.0,540000.0,3960000,FY2026,partial,medium,T07_benefit-realization,True
-lakeshore-holdings,LAK-AI-007,Arborfield Workplace Services,portfolio_value_realization,1400000,1190000.0,168000.0,1232000,FY2026,partial,medium,T07_benefit-realization,True
-lakeshore-holdings,LAK-AI-008,Lakeshore Shared Services,portfolio_value_realization,3000000,2550000.0,360000.0,2640000,FY2026,partial,medium,T07_benefit-realization,True

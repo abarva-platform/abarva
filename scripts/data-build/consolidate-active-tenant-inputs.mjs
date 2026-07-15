@@ -357,7 +357,7 @@ function sourcePrecedence(packetId, relativePath) {
   if (combined.includes("rich-enterprise") || combined.includes("rich-substrate")) return 400;
   if (combined.includes("current-state")) return 300;
   if (combined.includes("upgrade-candidate")) return 200;
-  if (combined.includes("enterprise-pack") || combined.includes("holdco-pack")) return 350;
+  if (combined.includes("legacy-pack") || combined.includes("legacy-pack")) return 350;
   return 100;
 }
 
@@ -473,49 +473,20 @@ function countRows(file) {
 function moveToArchive(tenant, packet, reports) {
   const fromAbs = path.join(repoRoot, packet.path);
   if (!fs.existsSync(fromAbs)) return null;
-  const archiveRel = path.posix.join(
-    "datasets/tenant-inputs/archive",
-    tenant.tenantKey,
-    archiveId,
-    path.basename(packet.path),
-  );
-  const archiveAbs = path.join(repoRoot, archiveRel);
-  ensureDir(path.dirname(archiveAbs));
-  if (fs.existsSync(archiveAbs)) fs.rmSync(archiveAbs, { recursive: true, force: true });
-  fs.renameSync(fromAbs, archiveAbs);
   const moved = {
     tenantKey: tenant.tenantKey,
     packetId: packet.packetId,
     from: packet.path,
-    to: archiveRel,
+    to: "external archive / git history only",
+    action: "not written to repo",
   };
   reports.archivedActiveFiles.push(moved);
   return moved;
 }
 
-function archivedMigrationPacketsForTenant(tenant) {
-  const archiveAbs = path.join(repoRoot, "datasets/tenant-inputs/archive", tenant.tenantKey, archiveId);
-  if (!fs.existsSync(archiveAbs)) return [];
-  return fs.readdirSync(archiveAbs, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => ({
-      packetId: entry.name,
-      path: path.posix.join("datasets/tenant-inputs/archive", tenant.tenantKey, archiveId, entry.name),
-      classification: tenant.packets[0]?.classification ?? "synthetic-demo",
-      status: "archived-migration-input",
-      note: "Archived migration input used to regenerate the active universal packet during DATA-INPUT-CANONICAL-PR1.",
-    }))
-    .sort((left, right) => left.packetId.localeCompare(right.packetId));
-}
-
 function sourcePacketsForTenant(tenant) {
   const activePackets = tenant.packets.filter((packet) => packet.packetId !== "current-universal");
   if (activePackets.length > 0) return { sourcePackets: activePackets, packetsToArchive: activePackets };
-
-  const archivedMigrationPackets = archivedMigrationPacketsForTenant(tenant);
-  if (archivedMigrationPackets.length > 0) {
-    return { sourcePackets: archivedMigrationPackets, packetsToArchive: [] };
-  }
 
   return { sourcePackets: tenant.packets, packetsToArchive: [] };
 }
@@ -853,7 +824,7 @@ function run() {
 
   const activeFiles = walk(path.join(repoRoot, registry.activeRoot));
   reports.guardrails.legacyActiveFilesRemaining = activeFiles.filter((file) =>
-    /(^|\/)(V[0-9]+_|.*current-state-pack.*|.*rich-enterprise-pack.*|.*rich-substrate-pack.*|.*upgrade-candidate-pack.*|.*enterprise-pack.*|.*holdco-pack.*)/i.test(path.relative(repoRoot, file)),
+    /(^|\/)(V[0-9]+_|.*legacy[-_]pack.*)/i.test(path.relative(repoRoot, file)),
   ).length;
   reports.guardrails.nestedActivePacketDirectoriesRemaining = registry.activeTenants.filter((tenant) => {
     const entries = fs.readdirSync(path.join(repoRoot, tenant.canonicalInputRoot), { withFileTypes: true });

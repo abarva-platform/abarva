@@ -14,7 +14,7 @@ This document answers four operational questions:
 AbarVa has one tenant data intake standard:
 
 ```text
-Universal Tenant Input Standard
+Universal Tenant Input Standard v3
 ```
 
 It is not tenant-specific, industry-specific, module-specific, or demo-specific.
@@ -26,7 +26,7 @@ not as separate schemas.
 The canonical template location is:
 
 ```text
-datasets/tenant-inputs/templates/universal/standard-2026-07/
+datasets/tenant-inputs/templates/universal/standard-2026-07-v3/
 ```
 
 The canonical active input location is:
@@ -83,10 +83,6 @@ These are the only approved template files for new tenant pilots.
 | Expert lenses | `16_expert_lenses.csv` | CIO/CDAO/CFO/CPO/COO-style question lenses, inputs, limits, and decision use. |
 | Managed-service scope | `17_service_scope_managed_services.csv` | Service towers, scope, provider, volume, SLA/KPI, run cost, target option. |
 | Operational process evidence | `18_operational_process_evidence.csv` | Process evidence, systems used, volume, cycle time, pain points, controls, automation candidates. |
-
-Some current active files retain historical filename prefixes as compatibility
-identifiers. That is not the architecture standard. The governing standard is
-the universal template set above.
 
 ## Azure Landing And Admin Upload Alignment
 
@@ -258,23 +254,18 @@ What is now true:
 
 What is not yet fully true:
 
-- Historical filename prefixes are not fully renamed to universal template names.
-- Some rich tenants still have multiple active packets under `current/`; target state is one validated intake packet per tenant load/run.
 - Lakeshore Industries has data-layer proof but no separate signed-in automation persona today.
 - Some module pages still have compatibility read paths while module-context adoption is phased in.
 - Outcome Ledger and Module Memory are not the only runtime sources for Tower/Moves/Source yet.
 
 ## Required Next Corrections
 
-1. Flatten each tenant's current input into one validated universal packet per
-   load/run while preserving archive lineage.
-2. Rename active files to the universal filename convention after scripts are
-   wrapped so runtime does not break.
-3. Ensure admin upload writes to the Azure raw/validated convention and emits a
+1. Keep every tenant on one declared universal current packet per load/run.
+2. Ensure admin upload writes to the Azure raw/validated convention and emits a
    registry update candidate.
-4. Add an app automation persona for every active app tenant that must be
+3. Add an app automation persona for every active app tenant that must be
    browser-proven independently.
-5. Continue migrating Home, Intelligence, Moves, Source, and Tower off
+4. Continue migrating Home, Intelligence, Moves, Source, and Tower off
    compatibility read paths and onto Module Context Serving by default.
 
 ## Validation Commands

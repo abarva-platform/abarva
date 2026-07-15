@@ -1,2 +1,0 @@
-source_id,agent_id,vendor,module,agent_name,persona,workflow,eligible_volume,ai_touched_volume,auto_resolved_volume,cycle_time_before_hours,cycle_time_after_hours,error_rate_pct_before,error_rate_pct_after,monthly_spend_usd,evidence_state
-src-ai-tools,FCF-ERP-AGENT-001,SAP,Finance ERP,Finance close anomaly assistant candidate,financial analyst,month-end close exception review,420,0,0,36,,3.5,,0,review_required

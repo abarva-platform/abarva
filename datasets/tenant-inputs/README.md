@@ -7,13 +7,13 @@ projection, and future onboarding proofs.
 ## Rule
 
 - Active tenant inputs live under `datasets/tenant-inputs/active/<tenant-key>/`.
-- Retired, duplicate, historical, or staging inputs live under `datasets/tenant-inputs/archive/`.
 - New tenant pilots use the universal template set under
-  `datasets/tenant-inputs/templates/universal/standard-2026-07`.
+  `datasets/tenant-inputs/templates/universal/standard-2026-07-v3`.
 - Loader contracts must point at this root before a tenant input can become
   active product truth.
-- Legacy dataset folders outside this root are compatibility history only until
-  they are removed in a mechanical cleanup.
+- Legacy V-named/source-pack/staging copies are not retained in loader-visible
+  repository paths. Historical recovery is git history or controlled external
+  archive only.
 
 Northstar is retired/excluded and must not be processed as an active tenant.
 

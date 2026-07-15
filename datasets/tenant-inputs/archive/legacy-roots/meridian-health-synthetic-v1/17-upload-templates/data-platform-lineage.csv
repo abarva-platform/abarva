@@ -1,3 +1,0 @@
-data_product,source_system,phi_class,refresh_sla,quality_score
-denials mart,claims clearinghouse,restricted,daily,86
-clinical risk panels,Epic Clarity,restricted,daily,82

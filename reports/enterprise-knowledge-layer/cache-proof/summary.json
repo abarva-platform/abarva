@@ -102,14 +102,14 @@
         "purpose": "executive_orientation",
         "selectedCatalogKey": "meridian-health-finance-analytics",
         "timings": {
-          "intentClassificationMs": 0.15,
-          "contextResolutionMs": 0.24,
+          "intentClassificationMs": 0.13,
+          "contextResolutionMs": 0.22,
           "assemblyMs": 0.59,
-          "entityProfileCacheMs": 0.28,
-          "relationshipSliceCacheMs": 0.06,
+          "entityProfileCacheMs": 0.33,
+          "relationshipSliceCacheMs": 0.07,
           "fastContextPackCacheMs": 0.1,
           "deepContextPackCacheMs": 0.06,
-          "totalMs": 1.59
+          "totalMs": 1.61
         }
       },
       {
@@ -119,13 +119,13 @@
         "selectedCatalogKey": "meridian-health-finance-analytics",
         "timings": {
           "intentClassificationMs": 0.04,
-          "contextResolutionMs": 0.07,
-          "assemblyMs": 0.09,
-          "entityProfileCacheMs": 0.16,
+          "contextResolutionMs": 0.08,
+          "assemblyMs": 0.1,
+          "entityProfileCacheMs": 0.13,
           "relationshipSliceCacheMs": 0.02,
           "fastContextPackCacheMs": 0.02,
           "deepContextPackCacheMs": 0.01,
-          "totalMs": 0.43
+          "totalMs": 0.41
         }
       },
       {
@@ -137,11 +137,11 @@
           "intentClassificationMs": 0.03,
           "contextResolutionMs": 0.07,
           "assemblyMs": 0.08,
-          "entityProfileCacheMs": 0.12,
-          "relationshipSliceCacheMs": 0.01,
+          "entityProfileCacheMs": 0.13,
+          "relationshipSliceCacheMs": 0.02,
           "fastContextPackCacheMs": 0.02,
           "deepContextPackCacheMs": 0.02,
-          "totalMs": 0.35
+          "totalMs": 0.36
         }
       },
       {
@@ -150,14 +150,14 @@
         "purpose": "strategy_context",
         "selectedCatalogKey": "harbortrust-bank-fraud-analyst-copilot",
         "timings": {
-          "intentClassificationMs": 0.02,
-          "contextResolutionMs": 0.04,
+          "intentClassificationMs": 0.03,
+          "contextResolutionMs": 0.05,
           "assemblyMs": 0.07,
-          "entityProfileCacheMs": 0.14,
+          "entityProfileCacheMs": 0.15,
           "relationshipSliceCacheMs": 0.01,
           "fastContextPackCacheMs": 0.01,
           "deepContextPackCacheMs": 0.01,
-          "totalMs": 0.33
+          "totalMs": 0.34
         }
       },
       {
@@ -167,21 +167,21 @@
         "selectedCatalogKey": "meridian-health-finance-analytics",
         "timings": {
           "intentClassificationMs": 0.02,
-          "contextResolutionMs": 0.07,
-          "assemblyMs": 0.06,
-          "entityProfileCacheMs": 0.43,
+          "contextResolutionMs": 0.34,
+          "assemblyMs": 0.08,
+          "entityProfileCacheMs": 0.1,
           "relationshipSliceCacheMs": 0.01,
           "fastContextPackCacheMs": 0.01,
           "deepContextPackCacheMs": 0.01,
-          "totalMs": 0.63
+          "totalMs": 0.59
         }
       }
     ],
     "aggregate": {
       "maxFastContextPackCacheMs": 0.1,
       "maxDeepContextPackCacheMs": 0.06,
-      "maxTotalMs": 1.59,
-      "averageTotalMs": 0.67
+      "maxTotalMs": 1.61,
+      "averageTotalMs": 0.66
     }
   },
   "scenarios": [
@@ -200,7 +200,7 @@
           "relationshipCandidates": 35,
           "fastCacheId": "ek-cache-meridian-health-meridian-finance-home-fast-context-pack-home-active-executive-orientation-applications-systems-data-domains-evidence-functions-metrics-outcomes-relationships-vendors-contracts-context-template-v3-semantic-depth-fix1-enterprise-knowledge-cache-pr4-d0-any-any",
           "deepCacheId": "ek-cache-meridian-health-meridian-finance-home-deep-context-pack-home-active-executive-orientation-applications-systems-data-domains-evidence-functions-metrics-outcomes-relationships-vendors-contracts-context-template-v3-semantic-depth-fix1-enterprise-knowledge-cache-pr4-2-any-any",
-          "totalMs": 1.59,
+          "totalMs": 1.61,
           "truthBoundary": {
             "activeTenantContextDefault": true,
             "candidatePreviewExplicitlyRequested": false,
@@ -222,7 +222,7 @@
           "relationshipCandidates": 35,
           "fastCacheId": "ek-cache-meridian-health-meridian-finance-tower-fast-context-pack-tower-active-measurement-context-applications-systems-data-domains-evidence-functions-metrics-outcomes-relationships-vendors-contracts-context-template-v3-semantic-depth-fix1-enterprise-knowledge-cache-pr4-d0-any-any",
           "deepCacheId": "ek-cache-meridian-health-meridian-finance-tower-deep-context-pack-tower-active-measurement-context-applications-systems-data-domains-evidence-functions-metrics-outcomes-relationships-vendors-contracts-context-template-v3-semantic-depth-fix1-enterprise-knowledge-cache-pr4-2-any-any",
-          "totalMs": 0.43,
+          "totalMs": 0.41,
           "truthBoundary": {
             "activeTenantContextDefault": true,
             "candidatePreviewExplicitlyRequested": false,
@@ -251,7 +251,7 @@
           "relationshipCandidates": 29,
           "fastCacheId": "ek-cache-meridian-health-meridian-agent-assist-moves-fast-context-pack-moves-active-phase-readiness-applications-systems-data-domains-evidence-functions-metrics-outcomes-processes-programs-relationships-risks-controls-context-template-v3-semantic-depth-fix1-enterprise-knowledge-cache-pr4-d0-any-any",
           "deepCacheId": "ek-cache-meridian-health-meridian-agent-assist-moves-deep-context-pack-moves-active-phase-readiness-applications-systems-data-domains-evidence-functions-metrics-outcomes-processes-programs-relationships-risks-controls-context-template-v3-semantic-depth-fix1-enterprise-knowledge-cache-pr4-2-any-any",
-          "totalMs": 0.35,
+          "totalMs": 0.36,
           "truthBoundary": {
             "activeTenantContextDefault": true,
             "candidatePreviewExplicitlyRequested": false,
@@ -280,7 +280,7 @@
           "relationshipCandidates": 29,
           "fastCacheId": "ek-cache-harbortrust-bank-harbortrust-fraud-intelligence-fast-context-pack-intelligence-active-strategy-context-applications-systems-data-domains-evidence-functions-metrics-outcomes-relationships-risks-controls-vendors-contracts-context-template-v3-semantic-depth-fix1-enterprise-knowledge-cache-pr4-d0-any-any",
           "deepCacheId": "ek-cache-harbortrust-bank-harbortrust-fraud-intelligence-deep-context-pack-intelligence-active-strategy-context-applications-systems-data-domains-evidence-functions-metrics-outcomes-relationships-risks-controls-vendors-contracts-context-template-v3-semantic-depth-fix1-enterprise-knowledge-cache-pr4-2-any-any",
-          "totalMs": 0.33,
+          "totalMs": 0.34,
           "truthBoundary": {
             "activeTenantContextDefault": true,
             "candidatePreviewExplicitlyRequested": false,
@@ -309,7 +309,7 @@
           "relationshipCandidates": 35,
           "fastCacheId": "ek-cache-meridian-health-generic-fallback-moves-fast-context-pack-moves-active-phase-readiness-applications-systems-evidence-functions-metrics-outcomes-processes-relationships-risks-controls-vendors-contracts-context-template-v3-semantic-depth-fix1-enterprise-knowledge-cache-pr4-d0-any-any",
           "deepCacheId": "ek-cache-meridian-health-generic-fallback-moves-deep-context-pack-moves-active-phase-readiness-applications-systems-evidence-functions-metrics-outcomes-processes-relationships-risks-controls-vendors-contracts-context-template-v3-semantic-depth-fix1-enterprise-knowledge-cache-pr4-2-any-any",
-          "totalMs": 0.63,
+          "totalMs": 0.59,
           "truthBoundary": {
             "activeTenantContextDefault": true,
             "candidatePreviewExplicitlyRequested": false,

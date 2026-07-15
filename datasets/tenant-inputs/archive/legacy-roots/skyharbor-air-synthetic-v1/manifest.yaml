@@ -1,8 +1,0 @@
-name: skyharbor-air-synthetic-v1
-client_id: 6f3c8d21-9b45-4f12-8d61-4b8f7c2a9301
-client_key: skyharbor-air
-generated_at: 2026-05-27
-segments: 15
-record_count: 645
-chunk_count: 480
-policy: deidentified_synthetic_airline_modernization_rehearsal

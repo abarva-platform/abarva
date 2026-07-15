@@ -74,14 +74,14 @@
         ]
       },
       "timings": {
-        "intentClassificationMs": 0.02,
-        "contextResolutionMs": 0.04,
+        "intentClassificationMs": 0.03,
+        "contextResolutionMs": 0.05,
         "assemblyMs": 0.07,
-        "entityProfileCacheMs": 0.14,
+        "entityProfileCacheMs": 0.15,
         "relationshipSliceCacheMs": 0.01,
         "fastContextPackCacheMs": 0.01,
         "deepContextPackCacheMs": 0.01,
-        "totalMs": 0.33
+        "totalMs": 0.34
       },
       "truthSplit": {
         "cacheOnly": true,

@@ -1,4 +1,0 @@
-bucket,amount_usd,percent_it_budget,note
-run,350000000,64,Run baseline
-grow,120000000,22,Grow portfolio
-transform,75000000,14,Transformation capacity

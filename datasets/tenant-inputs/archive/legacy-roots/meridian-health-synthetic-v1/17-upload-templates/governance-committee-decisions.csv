@@ -1,3 +1,0 @@
-decision_id,use_case,decision,conditions,review_date
-GOV-001,ambient documentation,approved,clinician opt-in and monthly safety review,2026-06-30
-GOV-002,generative discharge summary,pilot_only,no autonomous patient communication,2026-07-31

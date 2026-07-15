@@ -1,9 +1,0 @@
-tenant_key,initiative_id,portfolio_company,spend_amount_usd,amount_type,accounting_treatment,spend_posture,business_function,ytd_spend_usd,annual_budget_usd,contract_value_usd,renewal_date,unit_economic_note,source_template,is_synthetic
-lakeshore-holdings,LAK-AI-001,Lakeshore Shared Services,2500000,program_budget,mixed,change,enterprise_shared_services,1200000,2500000,,,change spend; mixed treatment,T08_spend-contracts,True
-lakeshore-holdings,LAK-AI-002,Northline Logistics Group,1800000,program_budget,mixed,change,treasury,864000,1800000,,,change spend; mixed treatment,T08_spend-contracts,True
-lakeshore-holdings,LAK-AI-003,Lakeshore Shared Services,1200000,program_budget,mixed,change,procurement,576000,1200000,,,change spend; mixed treatment,T08_spend-contracts,True
-lakeshore-holdings,LAK-AI-004,Northline Logistics Group,3200000,program_budget,mixed,change,operations,1536000,3200000,,,change spend; mixed treatment,T08_spend-contracts,True
-lakeshore-holdings,LAK-AI-005,Crestpoint Marketing Services,650000,annual_tool_or_project_spend,mixed,change,procurement,312000,650000,,,change spend; mixed treatment,T08_spend-contracts,True
-lakeshore-holdings,LAK-AI-006,Riverton Consumer Products,1200000,program_budget,mixed,change,sales,576000,1200000,,,change spend; mixed treatment,T08_spend-contracts,True
-lakeshore-holdings,LAK-AI-007,Arborfield Workplace Services,450000,annual_tool_or_project_spend,mixed,change,operations,216000,450000,,,change spend; mixed treatment,T08_spend-contracts,True
-lakeshore-holdings,LAK-AI-008,Lakeshore Shared Services,900000,annual_tool_or_project_spend,mixed,change,enterprise_shared_services,432000,900000,,,change spend; mixed treatment,T08_spend-contracts,True

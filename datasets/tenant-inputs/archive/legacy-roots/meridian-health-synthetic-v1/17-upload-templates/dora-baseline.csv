@@ -1,3 +1,0 @@
-team,deploy_frequency,lead_time_hours,change_failure_rate_pct,mttr_hours
-clinical_apps,weekly,96,12.4,8
-data_platform,daily,28,7.1,4

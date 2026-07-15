@@ -1,6 +1,0 @@
-email,password,name,role,client_key,tenant_key
-ceo@northstar-clinical.example.com,Demo2026!,Maya Rangan,CEO,northstar,northstar-clinical-tech
-cfo@northstar-clinical.example.com,Demo2026!,Daniel Okafor,CFO,northstar,northstar-clinical-tech
-cio@northstar-clinical.example.com,Demo2026!,Priya Mehta,CIO,northstar,northstar-clinical-tech
-cqo@northstar-clinical.example.com,Demo2026!,Elena Kovacs,Chief Quality Officer,northstar,northstar-clinical-tech
-evp-his@northstar-clinical.example.com,Demo2026!,Marcus Lee,EVP Health Information Systems,northstar,northstar-clinical-tech

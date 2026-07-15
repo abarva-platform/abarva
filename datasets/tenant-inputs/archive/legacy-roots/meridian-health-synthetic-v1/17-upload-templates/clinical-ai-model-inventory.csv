@@ -1,3 +1,0 @@
-model_id,use_case,risk_class,clinical_owner,validation_status,phi_touch
-MR-AI-001,sepsis early warning,high,CMIO,shadow_validation,true
-MR-AI-002,no-show prediction,medium,VP Patient Access,production_monitoring,true

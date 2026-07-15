@@ -1,2 +1,0 @@
-refresh_id,period,source_freshness,parser_status,approval_state,notes
-APX-REFRESH-202606,2026-06,fresh,parsed,pending_preload_review,Generated V3 local source pack; not committed.

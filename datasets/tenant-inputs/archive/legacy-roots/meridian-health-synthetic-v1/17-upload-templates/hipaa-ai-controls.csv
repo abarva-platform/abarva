@@ -1,3 +1,0 @@
-control_id,control_area,system,phi_touch,status,evidence_owner
-HIPAA-AI-001,minimum necessary,Abridge,true,implemented,Privacy Office
-HIPAA-AI-002,audit logging,Azure OpenAI,true,partial,CISO

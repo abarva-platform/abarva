@@ -1,3 +1,0 @@
-app_id,name,vendor,category,clinical_criticality,run_cost_fy25_usd,business_owner,it_owner
-MR-APP-EPIC,Enterprise Epic,Epic,EHR,tier_0,18400000,CMIO,VP Clinical Applications
-MR-APP-SUNQUEST,Legacy LIS,Sunquest,Laboratory,tier_1,4200000,Lab Medical Director,Director Ancillary Apps

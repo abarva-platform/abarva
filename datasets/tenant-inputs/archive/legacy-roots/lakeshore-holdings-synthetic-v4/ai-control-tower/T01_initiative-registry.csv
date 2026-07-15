@@ -1,9 +1,0 @@
-tenant_key,initiative_id,original_initiative_id,initiative_name,portfolio_company,business_function,stage,owner,scope_type,status,evidence_id,source_template,is_synthetic
-lakeshore-holdings,LAK-AI-001,INIT-001,Shared services IT spend transparency,Lakeshore Shared Services,enterprise_shared_services,build,CIO,enterprise_shared_platform,at_risk,LAK-EVID-TWR-001,T01_initiative-registry,True
-lakeshore-holdings,LAK-AI-002,INIT-002,Treasury cash visibility standardization,Northline Logistics Group,treasury,pilot,Treasurer,portfolio_company_specific,active,LAK-EVID-TWR-002,T01_initiative-registry,True
-lakeshore-holdings,LAK-AI-003,INIT-003,Vendor consolidation across portfolio,Lakeshore Shared Services,procurement,mobilize,CPO,enterprise_shared_platform,mobilize,LAK-EVID-TWR-003,T01_initiative-registry,True
-lakeshore-holdings,LAK-AI-004,INIT-004,Northline warehouse automation analytics,Northline Logistics Group,operations,build,COO,portfolio_company_specific,at_risk,LAK-EVID-TWR-004,T01_initiative-registry,True
-lakeshore-holdings,LAK-AI-005,INIT-005,Crestpoint sourcing AI assistant,Crestpoint Marketing Services,procurement,pilot,Head of Sourcing,portfolio_company_specific,active,LAK-EVID-TWR-005,T01_initiative-registry,True
-lakeshore-holdings,LAK-AI-006,INIT-006,Riverton DTC demand sensing,Riverton Consumer Products,sales,pilot,Chief Digital Officer,portfolio_company_specific,active,LAK-EVID-TWR-006,T01_initiative-registry,True
-lakeshore-holdings,LAK-AI-007,INIT-007,Arborfield route optimization,Arborfield Workplace Services,operations,pilot,VP Operations,portfolio_company_specific,active,LAK-EVID-TWR-007,T01_initiative-registry,True
-lakeshore-holdings,LAK-AI-008,INIT-008,M365 Copilot targeted rollout,Lakeshore Shared Services,enterprise_shared_services,pilot,CIO,enterprise_shared_platform,active,LAK-EVID-TWR-008,T01_initiative-registry,True

@@ -1,8 +1,0 @@
-source_id,source_type,source_system,owner_role,cadence,period_end,refresh_status,data_class
-src-portfolio,CSV export,First Capital candidate application and initiative portfolio,CIO,monthly,2026-06-17,parsed,confidential
-src-finance,CSV export,First Capital technology financials and commitments,CFO,monthly,2026-06-17,parsed,confidential
-src-ai-tools,CSV export,AI tool footprint and usage telemetry,CIO,monthly,2026-06-17,parsed,confidential
-src-dora-devex,CSV export,DORA and developer experience baseline,VP Engineering,monthly,2026-06-17,parsed,internal
-src-vendors,CSV export,Vendor contracts and renewal calendar,CFO / Procurement,monthly,2026-06-17,parsed,confidential
-src-risk,CSV export,Regulatory obligations and controls,CRO,monthly,2026-06-17,review_required,restricted
-src-corpus,JSONL and Markdown evidence,First Capital retrieval corpus and source documents,CIO,monthly,2026-06-17,review_required,confidential

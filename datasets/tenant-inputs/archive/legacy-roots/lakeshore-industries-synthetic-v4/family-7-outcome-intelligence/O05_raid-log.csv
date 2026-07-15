@@ -1,7 +1,0 @@
-Item_ID,Initiative_ID,Type,Description,Severity,Likelihood,Status,Owner,Due_Date,Mitigation
-LAKESHORE-RAID-0001,LAK-AI-002,risk,Bank connectivity not certified for critical banks (ISO 20022); manual portal fallback in use,high,high,open,Treasurer,2026-09-30,Prioritize critical banks; automate connectivity tests; monitor exception rates
-LAKESHORE-RAID-0002,LAK-AI-001,risk,"Payment-format mapping defect affecting ~85,000 payments/month",high,medium,open,Treasury Ops Lead,2026-08-31,Reconcile payment formats; add pre-submission validation; defect RACI
-LAKESHORE-RAID-0003,LAK-AI-001,issue,SOX payment and signer controls evidence incomplete for go-live,high,high,open,Controller,2026-09-15,Evidence signer matrix; link controls to source; close audit gaps
-LAKESHORE-RAID-0004,LAK-AI-003,dependency,Liquidity forecast data products not certified for FP&A use,medium,high,open,CFO,2026-10-15,Certify cash/working-capital data products; assign metric ownership
-LAKESHORE-RAID-0005,LAK-AI-009,risk,M365 Copilot finance adoption drag; committed value not realized (at risk),high,medium,open,CIO,2026-09-30,Gate scale on measured benefit; targeted enablement; metric certification
-LAKESHORE-RAID-0006,LAK-AI-004,assumption,Finance semantic-layer metric ownership assigned across SAP/BlackLine/Hyperion,medium,medium,open,Controller,2026-08-31,Assign metric owners; certify definitions; link source evidence

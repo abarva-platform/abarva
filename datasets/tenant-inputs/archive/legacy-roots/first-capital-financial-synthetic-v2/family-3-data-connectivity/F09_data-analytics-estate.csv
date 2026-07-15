@@ -1,9 +1,0 @@
-data_product_id,name,source_system,owner_team,data_class,refresh_sla,quality_score,lineage_documented,notes
-FCF-DP-001,Customer 360 Profile,FCF-APP-FIS-HORIZON|FCF-APP-SALESFORCE-FSC,TEAM-FCF-DATA,pii_confidential,4h,88,true,Cross-system customer view; consent gaps block AI personalization
-FCF-DP-002,Transaction Ledger,FCF-APP-FIS-HORIZON|FCF-APP-FEDWIRE-ACH,TEAM-FCF-DATA,pci_confidential,1h,95,true,Regulatory reporting source; MRA-flagged lineage gaps for wire transactions
-FCF-DP-003,Commercial Credit Data,FCF-APP-NCINO|FCF-APP-HOGAN-LOANS,TEAM-FCF-DATA,confidential,24h,71,false,Credit underwriting and portfolio data; integration gaps cause 23-day cycle time
-FCF-DP-004,AML Alert Dataset,FCF-APP-NICE-ACTIMIZE,TEAM-FCF-RISK,restricted,1h,82,true,SR 11-7 subject; model-feature use requires validation evidence
-FCF-DP-005,Fraud Feature Store,FCF-APP-DATABRICKS|FCF-APP-SNOWFLAKE,TEAM-FCF-DATA,restricted,15min,96,true,Real-time fraud features; Featurespace integration in progress
-FCF-DP-006,Regulatory Reporting Pack,FCF-APP-SAP-ECC|FCF-APP-SNOWFLAKE,TEAM-FCF-FINANCE,confidential,24h,79,true,"Call report, FR Y-9C, HMDA; OCC MRA on lineage documentation"
-FCF-DP-007,ML Model Registry,FCF-APP-DATABRICKS,TEAM-FCF-MRM,restricted,on_demand,91,true,47 production models; 12 require SR 11-7 refreshed evidence
-FCF-DP-008,Digital Funnel Analytics,FCF-APP-MOBILE-BANKING|FCF-APP-ONLINE-ACCT-OPEN,TEAM-FCF-DIGITAL,pii_confidential,1h,74,false,Abandonment 64%; peer benchmark 42%; AI personalization blocked pending consent

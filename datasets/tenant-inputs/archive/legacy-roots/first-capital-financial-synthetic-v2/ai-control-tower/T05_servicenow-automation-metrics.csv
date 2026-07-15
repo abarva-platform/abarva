@@ -1,8 +1,0 @@
-workflow_id,workflow_name,workflow_type,business_function,monthly_volume_tickets,ai_deflection_rate_pct,auto_resolve_rate_pct,avg_mttr_before_hrs,avg_mttr_after_hrs,mttr_delta_hrs,fte_equivalent_saved,monthly_cost_avoided_usd,ai_feature_status,notes
-SNW-001,Password Reset & MFA,itsm_l1,all,2840,68,61,0.5,0.08,0.42,4.2,18200,active,"Highest-volume, highest-AI-deflection workflow; Now Assist + Virtual Agent handling 61% fully automated"
-SNW-002,Software Access Request,itsm_l1,all,1920,42,38,8,2.1,5.9,2.8,12100,active,CMDB-grounded access rules power 38% auto-approval; complex exceptions still routed to human
-SNW-003,Laptop & Hardware Issues,itsm_l2,FCF-BF-TECH,840,22,14,6.2,4.8,1.4,0.6,2600,active,Physical hardware requires human dispatch; AI limited to triage and dispatch routing
-SNW-004,Core Banking Incident (P1/P2),itsm_major_incident,FCF-BF-RETAIL,18,0,0,4.2,3.1,1.1,0.5,8800,active_assist_only,AI not auto-resolving P1/P2 — human in the loop required. AI providing runbook suggestions and similar-incident retrieval; saving ~1.1hr per incident in bridge time
-SNW-005,GRC Control Evidence Request,grc_compliance,FCF-BF-RISK,320,28,0,18,14.8,3.2,2.4,4800,piloting,PILOT: AI packaging evidence from CMDB + Splunk + change records; SR 11-7 pre-assessment required before production — regulatory workflow
-SNW-006,HR Onboarding Task,hr_case,FCF-BF-HR,280,35,28,2.4,1.4,1,0.8,3200,active,Onboarding task orchestration; PII scrubbed from AI prompt per policy; new hire day-1 experience improved
-SNW-007,Model Risk Evidence Package,mrm_governance,FCF-BF-RISK,47,60,0,86,54,32,3.4,14200,active,"Model risk evidence packaging (FCF-INIT-012): AI assembling data lineage, performance metrics, bias test results from Databricks + ServiceNow; 32hr saved per model review"

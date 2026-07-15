@@ -13,14 +13,14 @@
       "purpose": "executive_orientation",
       "selectedCatalogKey": "meridian-health-finance-analytics",
       "timings": {
-        "intentClassificationMs": 0.15,
-        "contextResolutionMs": 0.24,
+        "intentClassificationMs": 0.13,
+        "contextResolutionMs": 0.22,
         "assemblyMs": 0.59,
-        "entityProfileCacheMs": 0.28,
-        "relationshipSliceCacheMs": 0.06,
+        "entityProfileCacheMs": 0.33,
+        "relationshipSliceCacheMs": 0.07,
         "fastContextPackCacheMs": 0.1,
         "deepContextPackCacheMs": 0.06,
-        "totalMs": 1.59
+        "totalMs": 1.61
       }
     },
     {
@@ -30,13 +30,13 @@
       "selectedCatalogKey": "meridian-health-finance-analytics",
       "timings": {
         "intentClassificationMs": 0.04,
-        "contextResolutionMs": 0.07,
-        "assemblyMs": 0.09,
-        "entityProfileCacheMs": 0.16,
+        "contextResolutionMs": 0.08,
+        "assemblyMs": 0.1,
+        "entityProfileCacheMs": 0.13,
         "relationshipSliceCacheMs": 0.02,
         "fastContextPackCacheMs": 0.02,
         "deepContextPackCacheMs": 0.01,
-        "totalMs": 0.43
+        "totalMs": 0.41
       }
     },
     {
@@ -48,11 +48,11 @@
         "intentClassificationMs": 0.03,
         "contextResolutionMs": 0.07,
         "assemblyMs": 0.08,
-        "entityProfileCacheMs": 0.12,
-        "relationshipSliceCacheMs": 0.01,
+        "entityProfileCacheMs": 0.13,
+        "relationshipSliceCacheMs": 0.02,
         "fastContextPackCacheMs": 0.02,
         "deepContextPackCacheMs": 0.02,
-        "totalMs": 0.35
+        "totalMs": 0.36
       }
     },
     {
@@ -61,14 +61,14 @@
       "purpose": "strategy_context",
       "selectedCatalogKey": "harbortrust-bank-fraud-analyst-copilot",
       "timings": {
-        "intentClassificationMs": 0.02,
-        "contextResolutionMs": 0.04,
+        "intentClassificationMs": 0.03,
+        "contextResolutionMs": 0.05,
         "assemblyMs": 0.07,
-        "entityProfileCacheMs": 0.14,
+        "entityProfileCacheMs": 0.15,
         "relationshipSliceCacheMs": 0.01,
         "fastContextPackCacheMs": 0.01,
         "deepContextPackCacheMs": 0.01,
-        "totalMs": 0.33
+        "totalMs": 0.34
       }
     },
     {
@@ -78,20 +78,20 @@
       "selectedCatalogKey": "meridian-health-finance-analytics",
       "timings": {
         "intentClassificationMs": 0.02,
-        "contextResolutionMs": 0.07,
-        "assemblyMs": 0.06,
-        "entityProfileCacheMs": 0.43,
+        "contextResolutionMs": 0.34,
+        "assemblyMs": 0.08,
+        "entityProfileCacheMs": 0.1,
         "relationshipSliceCacheMs": 0.01,
         "fastContextPackCacheMs": 0.01,
         "deepContextPackCacheMs": 0.01,
-        "totalMs": 0.63
+        "totalMs": 0.59
       }
     }
   ],
   "aggregate": {
     "maxFastContextPackCacheMs": 0.1,
     "maxDeepContextPackCacheMs": 0.06,
-    "maxTotalMs": 1.59,
-    "averageTotalMs": 0.67
+    "maxTotalMs": 1.61,
+    "averageTotalMs": 0.66
   }
 }
