@@ -1082,26 +1082,8 @@ describe("AgentDock · thread render", () => {
   });
 
   it("exports the current chat session without making a model call", async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
-      ok: true,
-      headers: new Headers({
-        "content-disposition": 'attachment; filename="ava-session.html"',
-      }),
-      blob: async () => new Blob(["<html>export</html>"], { type: "text/html" }),
-    });
-    (global as { fetch: unknown }).fetch = fetchMock;
-    const originalCreateObjectUrl = URL.createObjectURL;
-    const originalRevokeObjectUrl = URL.revokeObjectURL;
-    Object.defineProperty(URL, "createObjectURL", {
-      configurable: true,
-      value: jest.fn(() => "blob:ava-session"),
-    });
-    Object.defineProperty(URL, "revokeObjectURL", {
-      configurable: true,
-      value: jest.fn(),
-    });
-    const clickSpy = jest
-      .spyOn(HTMLAnchorElement.prototype, "click")
+    const submitSpy = jest
+      .spyOn(HTMLFormElement.prototype, "submit")
       .mockImplementation(() => undefined);
 
     render(
@@ -1152,27 +1134,64 @@ describe("AgentDock · thread render", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Export chat session as HTML" }));
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/intelligence/ask/export",
-      expect.objectContaining({ method: "POST" }),
-    );
-    const request = JSON.parse(fetchMock.mock.calls[0][1].body);
+    await waitFor(() => expect(submitSpy).toHaveBeenCalledTimes(1));
+    const form = document.querySelector(
+      'form[action="/api/intelligence/ask/export"]',
+    ) as HTMLFormElement | null;
+    expect(form).toBeInTheDocument();
+    expect(form?.method).toBe("post");
+    const payload = form?.querySelector(
+      'input[name="payload"]',
+    ) as HTMLInputElement | null;
+    expect(payload).toBeInTheDocument();
+    const request = JSON.parse(payload?.value ?? "{}");
     expect(request.format).toBe("html");
     expect(request.session.surface).toBe("intelligence");
     expect(request.session.turns).toHaveLength(2);
     expect(request.session.turns[1].answer.tenantKey).toBe("lakeshore-holdings");
     await waitFor(() => expect(screen.getByText("Ready")).toBeInTheDocument());
 
-    Object.defineProperty(URL, "createObjectURL", {
-      configurable: true,
-      value: originalCreateObjectUrl,
-    });
-    Object.defineProperty(URL, "revokeObjectURL", {
-      configurable: true,
-      value: originalRevokeObjectUrl,
-    });
-    clickSpy.mockRestore();
+    document
+      .querySelectorAll(
+        'form[action="/api/intelligence/ask/export"], iframe[title="aVa session export download target"]',
+      )
+      .forEach((node) => node.remove());
+    submitSpy.mockRestore();
+  });
+
+  it("exports the current chat session through native form POST", async () => {
+    const submitSpy = jest
+      .spyOn(HTMLFormElement.prototype, "submit")
+      .mockImplementation(() => undefined);
+
+    render(
+      <AgentDock
+        agent={{ ...AGENT, name: "aVa" }}
+        surface="intelligence"
+        thread={[{ id: "u1", role: "user", body: "Rank supply chain AI bets." }]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Export chat session as HTML" }));
+
+    await waitFor(() => expect(submitSpy).toHaveBeenCalledTimes(1));
+    const payload = document.querySelector(
+      'form[action="/api/intelligence/ask/export"] input[name="payload"]',
+    ) as HTMLInputElement | null;
+    const request = JSON.parse(payload?.value ?? "{}");
+    expect(request.format).toBe("html");
+    expect(request.session.surface).toBe("intelligence");
+    expect(request.session.turns).toHaveLength(1);
+    await waitFor(() => expect(screen.getByText("Ready")).toBeInTheDocument());
+
+    document
+      .querySelectorAll(
+        'form[action="/api/intelligence/ask/export"], iframe[title="aVa session export download target"]',
+      )
+      .forEach((node) => node.remove());
+    submitSpy.mockRestore();
   });
 
   it("renders Intelligence structured artifacts in the dock once a governed packet arrives", () => {

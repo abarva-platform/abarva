@@ -309,32 +309,33 @@ function alignmentClass(column: AnswerTableColumn): string {
 
 type ExportFormat = "html" | "pdf";
 
-async function downloadAnswerExport(
-  answer: AvaAnswerPacket,
-  format: ExportFormat,
-) {
-  const response = await fetch("/api/intelligence/ask/export", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ answer, format }),
-  });
-  if (!response.ok) {
-    throw new Error(`Export failed (${response.status})`);
-  }
-  const blob = await response.blob();
-  const disposition = response.headers.get("content-disposition") ?? "";
-  const filename =
-    disposition.match(/filename="([^"]+)"/)?.[1] ??
-    `ava-answer.${format}`;
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
+function submitAnswerExport(answer: AvaAnswerPacket, format: ExportFormat) {
+  const targetName = `ava-export-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}`;
+  const iframe = document.createElement("iframe");
+  iframe.name = targetName;
+  iframe.title = "aVa export download target";
+  iframe.style.display = "none";
+
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "/api/intelligence/ask/export";
+  form.target = targetName;
+  form.style.display = "none";
+
+  const payload = document.createElement("input");
+  payload.type = "hidden";
+  payload.name = "payload";
+  payload.value = JSON.stringify({ answer, format });
+  form.appendChild(payload);
+
+  document.body.appendChild(iframe);
+  document.body.appendChild(form);
+  form.submit();
   window.setTimeout(() => {
-    link.remove();
-    URL.revokeObjectURL(url);
+    form.remove();
+    iframe.remove();
   }, 60_000);
 }
 
@@ -346,7 +347,7 @@ function ExportActions({ answer }: { answer: AvaAnswerPacket }) {
     setPending(format);
     setStatus("");
     try {
-      await downloadAnswerExport(answer, format);
+      submitAnswerExport(answer, format);
       setStatus("Ready");
     } catch {
       setStatus("Failed");

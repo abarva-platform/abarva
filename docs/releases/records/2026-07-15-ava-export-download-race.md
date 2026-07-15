@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-This release fixes a browser download race in aVa exports. The app was creating an HTML/PDF blob, clicking the temporary download link, and cleaning up the temporary browser objects immediately. In signed-in Chrome proof, the export endpoint returned `200`, but the browser download could still be canceled before the file was saved. The fix keeps the temporary anchor and blob URL alive briefly after the click, then cleans them up.
+This release fixes a browser download race in aVa exports. The app was fetching the HTML/PDF response into a client-side Blob, clicking a temporary download link, and relying on synthetic Blob download events. Signed-in Chrome proof showed the export endpoint could return `200` while the browser download was canceled or never emitted. The fix moves exports to a native browser form POST download path while preserving the existing validated export endpoint.
 
 ## Layer Impact
 
@@ -28,8 +28,9 @@ This release fixes a browser download race in aVa exports. The app was creating 
 
 ## Changes Included
 
-- `src/components/agent-answer/AgentAnswerRenderer.tsx`: defer temporary anchor cleanup and blob URL revocation after answer export clicks.
-- `src/components/agent/AgentDock.tsx`: defer temporary anchor cleanup and blob URL revocation after chat-session export clicks.
+- `src/components/agent-answer/AgentAnswerRenderer.tsx`: submit answer exports through a hidden native form POST instead of fetch-to-Blob download.
+- `src/components/agent/AgentDock.tsx`: submit chat-session exports through a hidden native form POST instead of fetch-to-Blob download.
+- `src/app/api/intelligence/ask/export/route.ts`: accept a form `payload` field containing the same validated export JSON shape already used by the JSON API.
 - `docs/releases/records/2026-07-15-ava-export-download-race.md`: release-control record.
 
 ## QA / Validation
@@ -65,6 +66,8 @@ Revert this release to restore immediate blob URL cleanup, or roll back the ACA 
 - Pre-fix observation: expanded Home aVa rendered `Export HTML` and `Export PDF`; HTML export endpoint returned `200`; browser download save was canceled.
 - First fix proof: `/tmp/meridian-home-ava-export-proof-final-2026-07-15T21-05-20-100Z/proof-result.json`
 - First fix observation: deferring only blob URL revocation was insufficient; browser download save was still canceled.
+- Second fix proof: `/tmp/meridian-home-ava-export-proof-anchor-2026-07-15T21-25-41-305Z/proof-result.json`
+- Second fix observation: keeping the temporary Blob anchor alive still did not produce a completed browser download event in signed-in proof, so this release moves to native browser form POST downloads.
 
 ## Known Gaps
 
