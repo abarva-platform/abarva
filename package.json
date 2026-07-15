@@ -282,6 +282,7 @@
     "audit:knowledge-module-preview": "npx tsx scripts/audit/build-knowledge-module-preview-proof.ts",
     "audit:moves-knowledge-runtime": "npx tsx scripts/audit/build-moves-knowledge-runtime-proof.ts",
     "audit:home-knowledge-preview": "npx tsx scripts/audit/build-home-knowledge-preview-proof.ts",
+    "audit:home-knowledge-pressure": "npx tsx scripts/audit/build-home-knowledge-pressure-proof.ts",
     "audit:intelligence-knowledge-runtime": "npx tsx scripts/audit/build-intelligence-knowledge-runtime-proof.ts",
     "audit:knowledge-layer-signed-in-preview": "npx tsx scripts/audit/build-knowledge-layer-signed-in-preview-proof.ts",
     "audit:knowledge-layer-live-preview": "npx tsx scripts/audit/build-knowledge-layer-live-preview-proof.ts",
