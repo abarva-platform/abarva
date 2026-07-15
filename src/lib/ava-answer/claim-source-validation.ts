@@ -21,6 +21,8 @@ const VENDOR_OR_SYSTEM_RE =
   /\b(?:SAP|SAP GRC|SAP BW|SAP MM|Kyriba|ServiceNow|BofA CashPro|Quantum TMS|Coupa|Workday|Oracle|Salesforce|Snowflake|Databricks|Tableau|Power BI|Teradata|SAS)\b/g;
 const ASSERTS_SOURCE_RE =
   /\b(?:loaded|source|evidence|confirmed|shows|proves|certified|recorded|model-visible|known)\b/i;
+const SAFE_UNSUPPORTED_CONTEXT_RE =
+  /\b(?:not|no|without|missing|unconfirmed|unsupported|lacks?|lack of|absent|unavailable|incomplete|needs? proof|needs? evidence|requires? evidence)\b[\w\s,;:'"()/.-]{0,120}\b(?:loaded|available|proven|proved|confirmed|certified|grounded|validated|in evidence|source-backed|production|current)\b|\b(?:loaded|available|proven|proved|confirmed|certified|grounded|validated|in evidence|source-backed|production|current)\b[\w\s,;:'"()/.-]{0,120}\b(?:not|no|without|missing|unconfirmed|unsupported|lacks?|lack of|absent|unavailable|incomplete|needs? proof|needs? evidence|requires? evidence)\b/i;
 
 interface ExtractedClaim {
   type: AvaClaimType;
@@ -133,6 +135,10 @@ function localClaimContext(text: string, claim: string): string {
   return text.slice(start, end);
 }
 
+function isSafeUnsupportedClaimContext(context: string): boolean {
+  return SAFE_UNSUPPORTED_CONTEXT_RE.test(context);
+}
+
 export function validateAvaAnswerClaims(
   answer: AvaAnswerPacket,
 ): AvaClaimValidationReport {
@@ -142,9 +148,10 @@ export function validateAvaAnswerClaims(
   const findings: AvaClaimValidationFinding[] = claims.map((claim, index) => {
     const supported = claimHasSupport(claim, support);
     const sourceIds = sourceIdsForClaim(answer, claim.claim);
-    const sourceAsserted = ASSERTS_SOURCE_RE.test(
-      localClaimContext(text, claim.claim),
-    );
+    const context = localClaimContext(text, claim.claim);
+    const safeUnsupportedContext = isSafeUnsupportedClaimContext(context);
+    const sourceAsserted =
+      ASSERTS_SOURCE_RE.test(context) && !safeUnsupportedContext;
     const severity = supported ? "pass" : sourceAsserted ? "fail" : "watch";
     return {
       id: `claim-${index + 1}`,
@@ -152,13 +159,17 @@ export function validateAvaAnswerClaims(
       claim: claim.claim,
       support: supported
         ? "exact_source_fact"
+        : safeUnsupportedContext
+          ? "caveated_gap"
         : sourceAsserted
           ? "unsupported"
           : "assumption",
-      severity,
+      severity: safeUnsupportedContext ? "pass" : severity,
       sourceIds,
       detail: supported
         ? "Claim appears in the answer packet support material."
+        : safeUnsupportedContext
+          ? "Claim is framed as missing, unavailable, or unproven rather than asserted as tenant fact."
         : sourceAsserted
           ? "Claim is presented with source/evidence language but is not present in packet support material."
           : "Claim is not traceable inside the packet and should stay caveated as an assumption.",

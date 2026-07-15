@@ -194,6 +194,7 @@ export type AvaClaimType =
 
 export type AvaClaimSupport =
   | "exact_source_fact"
+  | "caveated_gap"
   | "derived_calculation"
   | "reasoned_inference"
   | "product_registry"
