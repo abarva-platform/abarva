@@ -6031,9 +6031,9 @@ interface TowerIndexPageProps {
   vendors?: ReadonlyArray<AIInitiativeVendorRow>;
   /** CIO budget rollups from the governed Tower budget read model. */
   budgetRollups?: ReadonlyArray<TowerBudgetRollup>;
-  /** Governed metric packet from cio_tower.measure_results. Dashboard and chat share this source. */
+  /** Derived metric packet from cio_tower.measure_results. Dashboard and chat share this read model. */
   metricPackets?: ReadonlyArray<CioTowerMetricPacket>;
-  /** Governed CXO command-center model from cio_tower.* only. */
+  /** Derived CXO command-center projection from cio_tower.*; not the Tower source of truth. */
   cxoView?: CioTowerCxoViewModel | null;
   /**
    * T-5 (Bind 1): pre-computed band tile aggregations from DB substrate.

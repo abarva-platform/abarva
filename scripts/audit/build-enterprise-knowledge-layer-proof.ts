@@ -17,6 +17,7 @@ import type {
   RelationshipEdge,
   UnsupportedClaim,
 } from "../../src/lib/enterprise-knowledge/contracts";
+import { buildTowerContextPackFields } from "../../src/lib/enterprise-knowledge/assembler/tower-context-pack-builder";
 
 type SemanticReport = {
   codename: string;
@@ -496,7 +497,7 @@ function buildFixture(def: FixtureDefinition, report: SemanticReport) {
     return {
       ...base,
       moduleKey: "tower",
-      realizedValueRequiresMeasuredEvidence: true,
+      ...buildTowerContextPackFields(base),
     } satisfies TowerContextPack;
   });
   const responses = packs.map(responseFor);

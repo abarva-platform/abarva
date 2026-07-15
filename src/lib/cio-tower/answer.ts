@@ -12,6 +12,11 @@ import {
   CHART_OUTPUT_CONTRACT,
   isTrendAsk,
 } from "@/lib/intelligence/ask/response-policy";
+import {
+  evaluateTowerValueClaimGate,
+  TOWER_REALIZED_VALUE_REQUIRES_MEASURED_EVIDENCE,
+} from "@/lib/tower/value-claim-gate";
+import type { TowerValueClaim } from "@/lib/enterprise-knowledge/contracts";
 
 const MODEL_NAME = "claude-sonnet-4-6";
 const PROMPT_VERSION = "cio_tower_advisor_prompt_v1";
@@ -73,6 +78,16 @@ export interface CioTowerRelationshipRow {
   source_row: string | null;
 }
 
+export interface CioTowerValueClaimPolicy {
+  projectionRole: "derived_read_model";
+  projectionPath: "path_a_derived_projection";
+  sourceOfTruthStatus: "bridge_only";
+  v3ReconciliationStatus: "not_v3_reconciled";
+  realizedValueLanguageAllowed: boolean;
+  claim: TowerValueClaim;
+  caveat: string;
+}
+
 export interface CioTowerPromptContext {
   tenantKey: string;
   tenantName: string;
@@ -82,6 +97,7 @@ export interface CioTowerPromptContext {
   relevantFacts: CioTowerFactRow[];
   relationships: CioTowerRelationshipRow[];
   gaps: string[];
+  valueClaimPolicy: CioTowerValueClaimPolicy;
 }
 
 export interface CioTowerAnswerResult {
@@ -333,6 +349,12 @@ export function buildCioTowerClaudePrompt(
   });
 
   const gapLines = context.gaps.map((gap) => `- ${gap}`);
+  const valueClaimPolicyLines = [
+    `- Projection role: ${context.valueClaimPolicy.projectionRole}.`,
+    `- Source-of-truth status: ${context.valueClaimPolicy.sourceOfTruthStatus}; v3 reconciliation: ${context.valueClaimPolicy.v3ReconciliationStatus}.`,
+    `- Realized-value language allowed: ${context.valueClaimPolicy.realizedValueLanguageAllowed ? "yes" : "no"}.`,
+    `- Claim gate: ${context.valueClaimPolicy.claim.gateStatus}; ${context.valueClaimPolicy.claim.reason}`,
+  ];
 
   return [
     `You are a senior CIO/CFO advisor for AbarVa speaking to ${context.tenantName}.`,
@@ -346,6 +368,8 @@ export function buildCioTowerClaudePrompt(
     '- Do not use visible scaffolding labels like "Read:", "Evidence:", "Implication:", or "Next move:".',
     "- Do not mention Atlas. The agent is aVa.",
     "- If the data is incomplete, state the specific missing business field in plain English.",
+    "- Do not describe value as realized, proven, harvested, or delivered unless the Tower value-claim policy below explicitly allows realized-value language.",
+    "- If realized-value language is not allowed, say the value is promised, planned, forecast, measured-value evidence, or measurement readiness depending on the loaded fields.",
     "- Write like a human senior advisor: direct, concise, specific, and willing to disagree.",
     "- Use short paragraphs or bullets when they improve readability.",
     "- End naturally based on the question. Do not append generic menu choices.",
@@ -411,6 +435,9 @@ export function buildCioTowerClaudePrompt(
     gapLines.length
       ? gapLines.join("\n")
       : "- No blocking gap identified for this question.",
+    "",
+    "Tower value-claim policy:",
+    valueClaimPolicyLines.join("\n"),
     "",
     "Answer now. Return the JSON object only.",
   ].join("\n");
@@ -571,6 +598,7 @@ function deriveGaps(
   contract: CioTowerContract,
   measures: CioTowerMeasureResult[],
   facts: CioTowerFactRow[],
+  valueClaimPolicy: CioTowerValueClaimPolicy,
 ): string[] {
   const gaps: string[] = [];
   const measureByKey = new Map(
@@ -593,6 +621,12 @@ function deriveGaps(
   ) {
     gaps.push("Measured value is not populated for the selected initiatives.");
   }
+  if (
+    contract.contract_key === "tower_value_realization" &&
+    !valueClaimPolicy.realizedValueLanguageAllowed
+  ) {
+    gaps.push("Realized-value language is blocked until v3-reconciled measured evidence is loaded.");
+  }
   if (!Number(actualSpend?.value_numeric)) {
     gaps.push("Actual spend YTD is missing or not separately loaded.");
   }
@@ -600,6 +634,32 @@ function deriveGaps(
     gaps.push("No matching Tower facts were found for this question family.");
   }
   return [...new Set(gaps)];
+}
+
+function buildCioTowerValueClaimPolicy(
+  measures: CioTowerMeasureResult[],
+): CioTowerValueClaimPolicy {
+  const measuredValue = measures.find((measure) => measure.measure_key === "measured_value_ytd");
+  const claim = evaluateTowerValueClaimGate({
+    claimId: "cio-tower-realized-value-language",
+    claimKind: "realized_value",
+    label: measuredValue?.label ?? "Measured value YTD",
+    value: measuredValue?.value_numeric ?? null,
+    valueType: "currency",
+    sourceFactIds: measuredValue?.source_fact_keys ?? [],
+    evidenceIds: [],
+    evidenceAuthorities: [],
+    v3Reconciled: false,
+  });
+  return {
+    projectionRole: "derived_read_model",
+    projectionPath: "path_a_derived_projection",
+    sourceOfTruthStatus: "bridge_only",
+    v3ReconciliationStatus: "not_v3_reconciled",
+    realizedValueLanguageAllowed: claim.realizedValueLanguageAllowed,
+    claim,
+    caveat: TOWER_REALIZED_VALUE_REQUIRES_MEASURED_EVIDENCE,
+  };
 }
 
 export async function loadCioTowerPromptContext(args: {
@@ -613,6 +673,7 @@ export async function loadCioTowerPromptContext(args: {
     loadRelevantFacts(args.tenantKey, contract),
     loadRelationships(args.tenantKey),
   ]);
+  const valueClaimPolicy = buildCioTowerValueClaimPolicy(measures);
   return {
     tenantKey: args.tenantKey,
     tenantName: args.tenantName,
@@ -621,7 +682,8 @@ export async function loadCioTowerPromptContext(args: {
     measures,
     relevantFacts,
     relationships,
-    gaps: deriveGaps(contract, measures, relevantFacts),
+    gaps: deriveGaps(contract, measures, relevantFacts, valueClaimPolicy),
+    valueClaimPolicy,
   };
 }
 
@@ -653,6 +715,7 @@ async function persistPromptAndTrace(args: {
     relevantFacts: args.context.relevantFacts,
     relationships: args.context.relationships,
     gaps: args.context.gaps,
+    valueClaimPolicy: args.context.valueClaimPolicy,
   };
   const tx = createTxSession("abarva-cio-tower-answer-trace");
   await tx(async (run) => {

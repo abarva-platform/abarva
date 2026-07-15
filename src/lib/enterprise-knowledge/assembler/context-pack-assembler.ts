@@ -21,6 +21,7 @@ import {
 } from "./gap-confidence-builder";
 import type { ContextAssemblyInput } from "./fixture-input";
 import { buildRelationshipSlice } from "./relationship-slice-builder";
+import { buildTowerContextPackFields } from "./tower-context-pack-builder";
 
 export function assembleModuleContext(
   input: ContextAssemblyInput,
@@ -166,7 +167,7 @@ function attachModuleShape(
     return {
       ...pack,
       moduleKey: "tower",
-      realizedValueRequiresMeasuredEvidence: true,
+      ...buildTowerContextPackFields(pack),
     } as TowerContextPack;
   }
   return pack;

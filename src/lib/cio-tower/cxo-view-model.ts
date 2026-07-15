@@ -85,10 +85,31 @@ export interface CioTowerCxoBenchmarkRow {
   measuredValue: number | null;
 }
 
+export interface CioTowerDerivedProjectionMetadata {
+  projectionRole: 'derived_read_model';
+  projectionPath: 'path_a_derived_projection';
+  sourceOfTruthStatus: 'bridge_only';
+  v3ReconciliationStatus: 'not_v3_reconciled';
+  sourceOfTruthCaveat: string;
+  realizedValueLanguagePolicy: string;
+}
+
+export const CIO_TOWER_DERIVED_PROJECTION_METADATA: CioTowerDerivedProjectionMetadata = {
+  projectionRole: 'derived_read_model',
+  projectionPath: 'path_a_derived_projection',
+  sourceOfTruthStatus: 'bridge_only',
+  v3ReconciliationStatus: 'not_v3_reconciled',
+  sourceOfTruthCaveat:
+    'cio_tower is a Tower read-model projection until every displayed fact reconciles to v3 evidence, canonical facts, entity profiles, and relationships.',
+  realizedValueLanguagePolicy:
+    'Realized value requires finance-attested measured evidence; otherwise Tower must render value as promised, planned, forecast, or measurement-readiness.',
+};
+
 export interface CioTowerCxoViewModel {
   tenantKey: string;
   tenantName: string;
   generatedFrom: 'cio_tower';
+  projectionMetadata: CioTowerDerivedProjectionMetadata;
   headline: string;
   sections: Array<{ key: CioTowerCxoSectionKey; label: string; purpose: string }>;
   cards: CioTowerCxoMeasureCard[];
@@ -138,7 +159,7 @@ const CXO_SECTIONS: CioTowerCxoViewModel['sections'] = [
   {
     key: 'value_command_center',
     label: 'Value Command Center',
-    purpose: 'Budget, promised value, proven value, and the value still needing executive attention.',
+    purpose: 'Budget, promised value, measured-value evidence, and the value still needing executive attention.',
   },
   {
     key: 'portfolio_control',
@@ -203,7 +224,7 @@ function sourceLabel(row: FactEvidenceRow): string {
 function businessGapForMeasure(measureKey: string): string {
   if (measureKey === 'total_it_budget_fy26') return 'FY26 total IT budget is not available yet.';
   if (measureKey === 'promised_value_fy26') return 'Business-case value is not available yet.';
-  if (measureKey === 'measured_value_ytd') return 'Finance-attested realized value is not available yet.';
+  if (measureKey === 'measured_value_ytd') return 'Finance-attested measured-value evidence is not available yet.';
   if (measureKey === 'actual_spend_ytd') return 'Year-to-date actual spend is not available yet.';
   if (measureKey === 'run_budget_fy26') return 'Run budget split is not available yet.';
   if (measureKey === 'change_budget_fy26') return 'Change budget split is not available yet.';
@@ -608,13 +629,14 @@ export async function loadCioTowerCxoView(args: {
     const gaps = Array.from(new Set(cards.map((card) => card.gap).filter((gap): gap is string => Boolean(gap))));
     const totalBudget = cards.find((card) => card.measureKey === 'total_it_budget_fy26');
     const headline = totalBudget?.valueNumeric
-      ? `${args.tenantName} has ${totalBudget.displayValue} of FY26 technology budget in view. The executive question is how much of that spend is turning into measurable value.`
-      : `${args.tenantName}'s Tower command center is waiting for the FY26 technology budget before it can tell a board-grade value story.`;
+      ? `${args.tenantName} has ${totalBudget.displayValue} of FY26 technology budget in view. The executive question is how much of that spend has finance-attested measurement evidence.`
+      : `${args.tenantName}'s Tower command center is waiting for the FY26 technology budget before it can tell a board-grade measurement story.`;
 
     return {
       tenantKey,
       tenantName: args.tenantName,
       generatedFrom: 'cio_tower',
+      projectionMetadata: CIO_TOWER_DERIVED_PROJECTION_METADATA,
       headline,
       sections: CXO_SECTIONS,
       cards,
