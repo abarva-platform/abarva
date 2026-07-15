@@ -99,7 +99,7 @@ export interface IntelligenceContextPackDryRunResult {
   progressiveClaudePayload: ProgressiveClaudePayload;
 }
 
-const INTELLIGENCE_DOMAINS: RequestedKnowledgeDomain[] = [
+export const INTELLIGENCE_DOMAINS: RequestedKnowledgeDomain[] = [
   "enterprise_profile",
   "functions",
   "processes",
@@ -130,11 +130,11 @@ export function buildIntelligenceContextPackDryRun(params: {
   });
   const response = assembleModuleContext(resolved);
   const intelligenceContextPack = response.contextPack as IntelligenceContextPack;
-  const fastContextPack = buildFastContextPack(intelligenceContextPack, intent);
-  const deepContextPack = buildDeepContextPack(intelligenceContextPack);
-  const streamingTrace = buildStreamingTrace(fastContextPack, deepContextPack);
+  const fastContextPack = buildIntelligenceFastContextPack(intelligenceContextPack, intent);
+  const deepContextPack = buildIntelligenceDeepContextPack(intelligenceContextPack);
+  const streamingTrace = buildIntelligenceStreamingTrace(fastContextPack, deepContextPack);
   const cachePlan = buildCachePlan();
-  const progressiveClaudePayload = buildProgressiveClaudePayload({
+  const progressiveClaudePayload = buildIntelligenceProgressiveClaudePayload({
     input: params.input,
     pack: intelligenceContextPack,
     fastContextPack,
@@ -177,7 +177,7 @@ function buildIntelligenceRequest(
   };
 }
 
-function buildFastContextPack(
+export function buildIntelligenceFastContextPack(
   pack: IntelligenceContextPack,
   intent: IntentClassification,
 ): FastContextPack {
@@ -204,7 +204,7 @@ function buildFastContextPack(
   };
 }
 
-function buildDeepContextPack(pack: IntelligenceContextPack): DeepContextPack {
+export function buildIntelligenceDeepContextPack(pack: IntelligenceContextPack): DeepContextPack {
   return {
     targetLatencyMs: 15000,
     expandedRelationshipCount: pack.relationshipCandidates.length,
@@ -228,7 +228,7 @@ function buildDeepContextPack(pack: IntelligenceContextPack): DeepContextPack {
   };
 }
 
-function buildStreamingTrace(
+export function buildIntelligenceStreamingTrace(
   fastContextPack: FastContextPack,
   deepContextPack: DeepContextPack,
 ): StreamingContextAssemblyTrace {
@@ -290,7 +290,7 @@ function buildCachePlan(): ContextPackCachePlan {
   };
 }
 
-function buildProgressiveClaudePayload(params: {
+export function buildIntelligenceProgressiveClaudePayload(params: {
   input: IntelligenceContextPackDryRunInput;
   pack: IntelligenceContextPack;
   fastContextPack: FastContextPack;
