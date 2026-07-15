@@ -72,14 +72,14 @@ function NavLinks({
       {items.map((item) => {
         const active = item.match(pathname);
         return (
-          <Link
+          <a
             key={`${mobile ? "mobile" : "desktop"}-${item.key}`}
             href={item.href}
             className={navLinkClass(active)}
             aria-current={active ? "page" : undefined}
           >
             {item.label}
-          </Link>
+          </a>
         );
       })}
     </>
@@ -108,7 +108,7 @@ export function NexusTopNav({ showProductNav: showProductNavProp = true }: Nexus
   return (
     <header className={styles.root} data-testid="nexus-top-nav">
       <div className={styles.brandSlot}>
-        <Link href="/home" className={styles.brandLink} aria-label="AbarVa NEXUS Knowledge">
+        <a href="/home" className={styles.brandLink} aria-label="AbarVa NEXUS Knowledge">
           <Image
             src={NEXUS_NAV_LOCKUP}
             alt="AbarVa NEXUS"
@@ -117,7 +117,7 @@ export function NexusTopNav({ showProductNav: showProductNavProp = true }: Nexus
             className={styles.brandImage}
             priority
           />
-        </Link>
+        </a>
       </div>
 
       {navItems.length > 0 ? (
