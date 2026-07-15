@@ -47,6 +47,27 @@ Home aVa answers should use the same rendering discipline as Intelligence:
 
 The answer should not expose implementation language such as dataset internals, route names, table names, legacy version labels, or debug details.
 
+## Rich Answer and Export Contract
+
+Home aVa uses the shared `AvaAnswerPacket` answer contract. The surface is `home`, but the renderer and export behavior must stay equivalent to Intelligence for structured output.
+
+Required rich answer support:
+
+- Markdown prose with headings, bullets, and emphasis rendered by the shared aVa renderer.
+- Typed tables rendered through the shared table artifact path.
+- Typed charts rendered through approved chart artifacts and approved chart builders.
+- Typed relationship graphs rendered through graph artifacts.
+- Evidence citations, caveats, gaps, and next steps rendered as governed answer metadata.
+
+Required export support:
+
+- HTML export must preserve prose formatting, tables, inline SVG charts, visual relationship graphs, citations, caveats, and next steps.
+- PDF export must preserve prose formatting, tables, chart exhibit structure, graph exhibit structure, citations, caveats, and next steps.
+- Home exports must be labeled as Home exports, not Intelligence exports.
+- Export must not expose raw markdown table syntax, raw chart JSON, internal route names, legacy version labels, or inactive candidate data unless an explicit preview export is added later.
+
+This contract means Home aVa can be scoped more narrowly than Intelligence while still using the same board-grade answer artifact format.
+
 ## Visual Contract
 
 Home aVa is hidden/minimized by default.
@@ -71,5 +92,6 @@ Home aVa is not accepted unless QA proves:
 - Candidate data is not read by default.
 - Unsupported strategy/value/production claims are refused or routed.
 - The expanded panel is readable and can render structured responses.
+- HTML/PDF exports preserve Home aVa tables, charts, graphs, prose formatting, citations, caveats, and next steps.
 - The launcher/collapse/expand/hide controls work.
 - The visual mark matches the canonical aVa mark used by current product navigation.

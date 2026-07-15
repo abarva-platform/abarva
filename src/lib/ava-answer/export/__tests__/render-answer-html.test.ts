@@ -2,7 +2,12 @@ import {
   renderAvaAnswerStandaloneHtml,
   renderAvaChatSessionStandaloneHtml,
 } from "@/lib/ava-answer/export/render-answer-html";
+import {
+  buildAvaAnswerPdf,
+  buildAvaChatSessionPdf,
+} from "@/lib/ava-answer/export/render-answer-pdf";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
+import { renderToBuffer } from "@react-pdf/renderer";
 
 function answerFixture(): AvaAnswerPacket {
   return {
@@ -55,6 +60,22 @@ function answerFixture(): AvaAnswerPacket {
           { from: "claims", to: "agent", label: "answers claim status" },
         ],
       },
+      {
+        artifact: "graph",
+        id: "supply-chain-graph",
+        title: "Decision Dependency Graph",
+        nodes: [
+          { id: "demand", label: "Demand sensing", kind: "AI bet" },
+          { id: "forecast", label: "Forecast data product", kind: "Data asset" },
+        ],
+        edges: [
+          {
+            from: "demand",
+            to: "forecast",
+            label: "depends on",
+          },
+        ],
+      },
     ],
     tables: [],
     charts: [],
@@ -83,15 +104,28 @@ describe("renderAvaAnswerStandaloneHtml", () => {
     const html = renderAvaAnswerStandaloneHtml(answerFixture());
 
     expect(html).toContain("<!doctype html>");
+    expect(html).toContain("aVa Intelligence Export");
     expect(html).toContain("Supply Chain AI Matrix");
     expect(html).toContain("<svg");
     expect(html).toContain("Quick wins");
+    expect(html).toContain("Decision Dependency Graph");
+    expect(html).toContain("Forecast data product");
+    expect(html).toContain("depends on");
     expect(html).toContain("Demand sensing");
     expect(html).toContain("$12.5M");
     expect(html).toContain("Agent Assist Dependencies");
     expect(html).toContain("CRM history");
     expect(html).toContain("answers claim status");
     expect(html).not.toContain("12500000");
+  });
+
+  it("labels Home answer exports by surface while preserving visual artifacts", () => {
+    const answer = { ...answerFixture(), surface: "home" as const };
+    const html = renderAvaAnswerStandaloneHtml(answer);
+
+    expect(html).toContain("aVa Home Export");
+    expect(html).toContain("Decision Dependency Graph");
+    expect(html).toContain("<svg");
   });
 
   it("exports model-emitted chart fences after they are lifted to inlineChart artifacts", () => {
@@ -207,7 +241,7 @@ Use the typed artifact if available.`;
       ],
     });
 
-    expect(html).toContain("aVa Executive Session Export");
+    expect(html).toContain("aVa Intelligence Session Export");
     expect(html).toContain("Supply chain AI investment session");
     expect(html).toContain("User prompt 1");
     expect(html).toContain("Give me the top 5 supply chain AI bets.");
@@ -219,5 +253,46 @@ Use the typed artifact if available.`;
     expect(html).toContain("Supply chain benchmark pack");
     expect(html).toContain("Validate source-system readiness before funding.");
     expect(html).toContain("Move demand sensing into P0 Originate.");
+  });
+});
+
+describe("aVa answer PDF export", () => {
+  it("preserves Home answer tables, charts, and graphs as PDF exhibit content", async () => {
+    const buffer = await renderToBuffer(
+      buildAvaAnswerPdf({ ...answerFixture(), surface: "home" }),
+    );
+    const pdfText = buffer.toString("latin1");
+
+    expect(pdfText).toContain("aVa Home Export");
+    expect(pdfText).toContain("Supply Chain AI Matrix");
+    expect(pdfText).toContain("Decision Dependency Graph");
+    expect(pdfText).toContain("Forecast data product");
+    expect(pdfText).toContain("Ranked Use Cases");
+    expect(pdfText).toContain("Demand sensing");
+    expect(pdfText).not.toContain("Use the HTML export for the full inline SVG chart");
+  });
+
+  it("preserves session export artifact labels for downstream sharing", async () => {
+    const buffer = await renderToBuffer(
+      buildAvaChatSessionPdf({
+        surface: "home",
+        tenantKey: "lakeshore-holdings",
+        title: "Home aVa context session",
+        turns: [
+          { id: "u1", role: "user", body: "Show me the system dependencies." },
+          {
+            id: "a1",
+            role: "agent",
+            body: "",
+            answer: { ...answerFixture(), surface: "home" },
+          },
+        ],
+      }),
+    );
+    const pdfText = buffer.toString("latin1");
+
+    expect(pdfText).toContain("Home aVa context session");
+    expect(pdfText).toContain("Visual artifacts");
+    expect(pdfText).toContain("Decision Dependency Graph");
   });
 });
