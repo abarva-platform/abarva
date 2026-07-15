@@ -58,6 +58,35 @@ function bindingTenantKey(value: string | null | undefined): string | null {
   if (key === "apexretail") return "apex-retail";
   if (key === "skyharbor") return "skyharbor-air";
   if (key === "lakeshore") return "lakeshore-holdings";
+  if (key === "airline-demo" || key === "airline demo") return "skyharbor-air";
+  if (key === "healthcare-demo" || key === "healthcare demo") {
+    return "meridian-health";
+  }
+  if (key === "retail-demo" || key === "retail demo") return "apex-retail";
+  if (
+    key === "financial-services-demo" ||
+    key === "financial services demo"
+  ) {
+    return "first-capital";
+  }
+  if (key.includes("skyharbor") || key.includes("airline")) {
+    return "skyharbor-air";
+  }
+  if (key.includes("meridian") || key.includes("healthcare")) {
+    return "meridian-health";
+  }
+  if (key.includes("apex") || key.includes("retail")) {
+    return "apex-retail";
+  }
+  if (
+    key.includes("arcturus") ||
+    key.includes("first-capital") ||
+    key.includes("first capital") ||
+    key.includes("financial")
+  ) {
+    return "first-capital";
+  }
+  if (key.includes("lakeshore")) return "lakeshore-holdings";
   return key;
 }
 
@@ -82,7 +111,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const activeClient = await getActiveClientRow(requestedClient).catch(
     () => null,
   );
-  const homeTenantKey = bindingTenantKey(activeClient?.key ?? requestedClient);
+  const homeTenantKey =
+    bindingTenantKey(requestedClient) ??
+    bindingTenantKey(activeClient?.key) ??
+    bindingTenantKey(activeClient?.name);
   const displayClientKey =
     activeClient?.key ?? homeTenantKey ?? requestedClient;
   const activeTenantName =
