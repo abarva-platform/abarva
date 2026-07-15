@@ -1,1 +1,0 @@
-Pending live Azure load. Run TENANT_KEY=skyharbor npx tsx scripts/seed/load-tenant-substrate.ts after verification.

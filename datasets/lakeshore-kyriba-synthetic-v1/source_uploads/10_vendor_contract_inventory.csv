@@ -1,7 +1,0 @@
-vendor_id,vendor_name,contract_reference_masked,contract_type,annual_value_usd,renewal_date,owner_role,data_rights,exit_terms,sensitive_terms_detail,notes
-V-KYRIBA,Kyriba,contract-****-vkyriba,Treasury management system,780000,2027-03-31,Treasurer,DPA on file; data residency US,Annual renewal; termination for cause,redacted; metadata only,Target platform candidate
-V-BOOMI,Boomi,contract-****-vboomi,Integration platform,410000,2026-11-30,Integration Lead,Standard cloud DPA,90-day notice,redacted; metadata only,Middleware dependency
-V-SI-A,Northstar Advisory,contract-****-vsia,Implementation SI,0,TBD,Procurement,To be negotiated,RFP pending,redacted; metadata only,Potential bidder
-V-SI-B,Lakefront Systems,contract-****-vsib,Implementation SI,0,TBD,Procurement,To be negotiated,RFP pending,redacted; metadata only,Potential bidder
-V-SI-C,HarborPoint Tech,contract-****-vsic,Implementation SI,0,TBD,Procurement,To be negotiated,RFP pending,redacted; metadata only,Potential bidder
-V-BANKS,Banking providers,contract-****-vbanks,Bank portals/connectivity,335000,various,Treasurer,Bank agreements,various,redacted; metadata only,Connectivity owners

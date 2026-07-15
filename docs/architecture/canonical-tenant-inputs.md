@@ -5,9 +5,8 @@ folders, old demo packs, and local reports. The governed filesystem contract is:
 
 ```text
 datasets/tenant-inputs/
-  templates/universal/standard-2026-07/
+  templates/universal/standard-2026-07-v3/
   active/<tenant-key>/<version-or-lane>/
-  archive/
   tenant-input-registry.json
 ```
 
@@ -17,14 +16,14 @@ Only files under `datasets/tenant-inputs/active/<tenant-key>/` may be used as
 authoritative tenant input for loaders, candidate generation, Home/aVa
 projection, or module context.
 
-Everything else under `datasets/` is compatibility history unless it is copied
-or moved into the canonical root and declared in
-`tenant-input-registry.json`.
+Everything else under `datasets/` is not an approved tenant input unless it is
+part of the universal template standard, a generated v3 candidate proof, or an
+explicitly declared active packet in `tenant-input-registry.json`.
 
 All new tenant pilots use one universal template set:
 
 ```text
-datasets/tenant-inputs/templates/universal/standard-2026-07
+datasets/tenant-inputs/templates/universal/standard-2026-07-v3
 ```
 
 Industry differences are captured in rows, categories, descriptors, evidence,
@@ -91,12 +90,14 @@ rows when richer source evidence exists upstream.
 
 Northstar is retired/excluded. It must not appear as an active tenant input.
 
-## Migration Rule
+## Legacy Purge Rule
 
-Do not delete historical files without archiving them first. Move active source
-truth into `datasets/tenant-inputs/active`, move retired/legacy assets into
-`datasets/tenant-inputs/archive`, then update load contracts to consume only the
-canonical root.
+Legacy V-named tenant packs, staging packs, current-state packs, rich packs,
+upgrade-candidate packs, and public client workbooks must not remain in
+loader-visible repository paths. If historical recovery is required, use git
+history or a controlled external archive. Runtime loaders and module context
+builders must consume only the v3 universal template standard and declared
+active tenant inputs.
 
 ## Validation
 

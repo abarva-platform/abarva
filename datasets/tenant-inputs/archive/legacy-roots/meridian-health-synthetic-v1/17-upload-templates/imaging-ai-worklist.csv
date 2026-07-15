@@ -1,3 +1,0 @@
-modality,algorithm,study_volume,turnaround_delta_min,safety_review_state
-CT,stroke triage,48000,-11,approved_with_qc
-Mammography,lesion prioritization,39000,-8,under_review

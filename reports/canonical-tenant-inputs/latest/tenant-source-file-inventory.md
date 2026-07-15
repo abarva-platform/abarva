@@ -1,6 +1,6 @@
 # Tenant Source File Inventory
 
-Generated: 2026-07-14T16:11:43.668Z
+Generated: 2026-07-15T13:19:54.753Z
 
 This is the deterministic list of active tenant input files declared under the canonical root.
 
@@ -126,6 +126,3 @@ This is the deterministic list of active tenant input files declared under the c
 ### Northstar Clinical
 
 Status: retired-excluded
-
-- `datasets/tenant-inputs/archive/northstar-clinical-tech-synthetic-v1`
-- `datasets/tenant-inputs/archive/client-load-staging/northstar-clinical`

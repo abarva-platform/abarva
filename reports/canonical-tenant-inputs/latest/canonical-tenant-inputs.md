@@ -1,6 +1,6 @@
 # Canonical Tenant Inputs
 
-Generated: 2026-07-14T16:11:43.668Z
+Generated: 2026-07-15T13:19:54.753Z
 
 ## Guardrails
 
@@ -38,7 +38,7 @@ Generated: 2026-07-14T16:11:43.668Z
 
 | Tenant | Status | Archive paths | Reason |
 | --- | --- | --- | --- |
-| Northstar Clinical | retired-excluded | `datasets/tenant-inputs/archive/northstar-clinical-tech-synthetic-v1`<br>`datasets/tenant-inputs/archive/client-load-staging/northstar-clinical` | Operator instruction: there should be no Northstar active tenant. |
+| Northstar Clinical | retired-excluded | External/git history only | Operator instruction: there should be no Northstar active tenant. Legacy source files are no longer retained in loader-visible repository paths. |
 
 ## Legacy Roots Pending Mechanical Cleanup
 
@@ -48,24 +48,3 @@ None.
 
 | From | To |
 | --- | --- |
-| `datasets/apex-retail-synthetic-v1` | `datasets/tenant-inputs/archive/legacy-roots/apex-retail-synthetic-v1` |
-| `datasets/apex-retail-synthetic-v4` | `datasets/tenant-inputs/archive/legacy-roots/apex-retail-synthetic-v4` |
-| `datasets/apex-retail-synthetic-v6` | `datasets/tenant-inputs/archive/legacy-roots/apex-retail-synthetic-v6` |
-| `datasets/first-capital-financial-synthetic-v1` | `datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v1` |
-| `datasets/first-capital-financial-synthetic-v2` | `datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v2` |
-| `datasets/first-capital-financial-synthetic-v4` | `datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v4` |
-| `datasets/first-capital-financial-synthetic-v6` | `datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v6` |
-| `datasets/lakeshore-holdings-synthetic-v4` | `datasets/tenant-inputs/archive/legacy-roots/lakeshore-holdings-synthetic-v4` |
-| `datasets/lakeshore-holdings-synthetic-v6` | `datasets/tenant-inputs/archive/legacy-roots/lakeshore-holdings-synthetic-v6` |
-| `datasets/lakeshore-industries-synthetic-v4` | `datasets/tenant-inputs/archive/legacy-roots/lakeshore-industries-synthetic-v4` |
-| `datasets/lakeshore-industries-synthetic-v6` | `datasets/tenant-inputs/archive/legacy-roots/lakeshore-industries-synthetic-v6` |
-| `datasets/lakeshore-industries-synthetic-v7-holdco` | `datasets/tenant-inputs/archive/legacy-roots/lakeshore-industries-synthetic-v7-holdco` |
-| `datasets/meridian-health-synthetic-v1` | `datasets/tenant-inputs/archive/legacy-roots/meridian-health-synthetic-v1` |
-| `datasets/meridian-health-synthetic-v4` | `datasets/tenant-inputs/archive/legacy-roots/meridian-health-synthetic-v4` |
-| `datasets/meridian-health-synthetic-v6` | `datasets/tenant-inputs/archive/legacy-roots/meridian-health-synthetic-v6` |
-| `datasets/meridian-health-v6-v7-current-state-v1` | `datasets/tenant-inputs/archive/legacy-roots/meridian-health-v6-v7-current-state-v1` |
-| `datasets/skyharbor-air-synthetic-v1` | `datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v1` |
-| `datasets/skyharbor-air-synthetic-v2` | `datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v2` |
-| `datasets/skyharbor-air-synthetic-v4` | `datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v4` |
-| `datasets/skyharbor-air-synthetic-v6` | `datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v6` |
-| `datasets/skyharbor-air-v6-v7-upgrade-candidate-20260710` | `datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-v6-v7-upgrade-candidate-20260710` |

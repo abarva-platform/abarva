@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-14T16:11:43.668Z",
+  "generatedAt": "2026-07-15T13:19:54.753Z",
   "guardrails": {
     "activeLoaderInputsMustBeUnderCanonicalRoot": true,
     "oneUniversalFilePerDomainPerTenant": true,
@@ -14,20 +14,21 @@
     "schemaVersion": 1,
     "canonicalRoot": "datasets/tenant-inputs",
     "activeRoot": "datasets/tenant-inputs/active",
-    "archiveRoot": "datasets/tenant-inputs/archive",
+    "archiveRoot": "external://tenant-inputs/archive",
     "policy": {
       "activeLoaderInputsMustBeUnderCanonicalRoot": true,
       "allNewTenantInputsMustUseUniversalTemplateSet": true,
-      "legacyTemplateNamesAreFileIdentifiersOnly": true,
+      "universalTemplateStandardV3IsOnlyApprovedStandard": true,
       "northstarIsRetired": true,
-      "legacyDatasetRootsAreCompatibilityOnly": true,
-      "legacyDatasetRootsMayNotBecomeActiveTruth": true
+      "legacyDatasetRootsAreDeletedFromRepo": true,
+      "legacyDatasetRootsMayNotBecomeActiveTruth": true,
+      "noLoaderCompatibleLegacyPaths": true
     },
     "universalTemplateSet": {
-      "templateSetId": "universal-tenant-input-standard-2026-07",
-      "root": "datasets/tenant-inputs/templates/universal/standard-2026-07",
-      "manifest": "datasets/tenant-inputs/templates/universal/standard-2026-07/template-manifest.json",
-      "qualityDepthRules": "datasets/tenant-inputs/templates/universal/standard-2026-07/quality-depth-rules.json",
+      "templateSetId": "universal-tenant-input-standard-2026-07-v3",
+      "root": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3",
+      "manifest": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/template-manifest.json",
+      "qualityDepthRules": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/quality-depth-rules.json",
       "azureLanding": {
         "storageAccount": "to-be-bound-by-environment",
         "container": "tenant-inputs",
@@ -35,7 +36,8 @@
         "validatedPrefix": "tenant-inputs/{tenant_key}/{intake_id}/validated/",
         "archivePrefix": "tenant-inputs/archive/{tenant_key}/{intake_id}/",
         "fileNamePattern": "{tenant_key}__{template_name}__{as_of_yyyymmdd}__{source_owner}__r{revision}.csv"
-      }
+      },
+      "workbookManifest": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/manifest.json"
     },
     "activeTenants": [
       {
@@ -49,7 +51,7 @@
             "path": "datasets/tenant-inputs/active/apex-retail/current",
             "classification": "synthetic-demo",
             "status": "active-input",
-            "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current."
+            "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
           }
         ]
       },
@@ -64,7 +66,7 @@
             "path": "datasets/tenant-inputs/active/first-capital-financial/current",
             "classification": "synthetic-demo",
             "status": "active-input",
-            "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current."
+            "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
           }
         ]
       },
@@ -79,7 +81,7 @@
             "path": "datasets/tenant-inputs/active/lakeshore-holdings/current",
             "classification": "synthetic-demo",
             "status": "active-input",
-            "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current."
+            "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
           }
         ]
       },
@@ -94,7 +96,7 @@
             "path": "datasets/tenant-inputs/active/lakeshore-industries/current",
             "classification": "synthetic-demo",
             "status": "active-input",
-            "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current."
+            "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
           }
         ]
       },
@@ -109,7 +111,7 @@
             "path": "datasets/tenant-inputs/active/meridian-health/current",
             "classification": "synthetic-demo",
             "status": "active-input",
-            "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current."
+            "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
           }
         ]
       },
@@ -124,7 +126,7 @@
             "path": "datasets/tenant-inputs/active/skyharbor-air/current",
             "classification": "synthetic-demo",
             "status": "active-input",
-            "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current."
+            "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths."
           }
         ]
       }
@@ -134,100 +136,20 @@
         "tenantKey": "northstar-clinical",
         "displayName": "Northstar Clinical",
         "status": "retired-excluded",
-        "archivePaths": [
-          "datasets/tenant-inputs/archive/northstar-clinical-tech-synthetic-v1",
-          "datasets/tenant-inputs/archive/client-load-staging/northstar-clinical"
-        ],
-        "reason": "Operator instruction: there should be no Northstar active tenant."
+        "archivePaths": [],
+        "reason": "Operator instruction: there should be no Northstar active tenant. Legacy source files are no longer retained in loader-visible repository paths."
       }
     ],
     "legacyRootsPendingArchiveCleanup": [],
-    "legacyRootsArchived": [
-      {
-        "from": "datasets/apex-retail-synthetic-v1",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/apex-retail-synthetic-v1"
-      },
-      {
-        "from": "datasets/apex-retail-synthetic-v4",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/apex-retail-synthetic-v4"
-      },
-      {
-        "from": "datasets/apex-retail-synthetic-v6",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/apex-retail-synthetic-v6"
-      },
-      {
-        "from": "datasets/first-capital-financial-synthetic-v1",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v1"
-      },
-      {
-        "from": "datasets/first-capital-financial-synthetic-v2",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v2"
-      },
-      {
-        "from": "datasets/first-capital-financial-synthetic-v4",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v4"
-      },
-      {
-        "from": "datasets/first-capital-financial-synthetic-v6",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/first-capital-financial-synthetic-v6"
-      },
-      {
-        "from": "datasets/lakeshore-holdings-synthetic-v4",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/lakeshore-holdings-synthetic-v4"
-      },
-      {
-        "from": "datasets/lakeshore-holdings-synthetic-v6",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/lakeshore-holdings-synthetic-v6"
-      },
-      {
-        "from": "datasets/lakeshore-industries-synthetic-v4",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/lakeshore-industries-synthetic-v4"
-      },
-      {
-        "from": "datasets/lakeshore-industries-synthetic-v6",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/lakeshore-industries-synthetic-v6"
-      },
-      {
-        "from": "datasets/lakeshore-industries-synthetic-v7-holdco",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/lakeshore-industries-synthetic-v7-holdco"
-      },
-      {
-        "from": "datasets/meridian-health-synthetic-v1",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/meridian-health-synthetic-v1"
-      },
-      {
-        "from": "datasets/meridian-health-synthetic-v4",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/meridian-health-synthetic-v4"
-      },
-      {
-        "from": "datasets/meridian-health-synthetic-v6",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/meridian-health-synthetic-v6"
-      },
-      {
-        "from": "datasets/meridian-health-v6-v7-current-state-v1",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/meridian-health-v6-v7-current-state-v1"
-      },
-      {
-        "from": "datasets/skyharbor-air-synthetic-v1",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v1"
-      },
-      {
-        "from": "datasets/skyharbor-air-synthetic-v2",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v2"
-      },
-      {
-        "from": "datasets/skyharbor-air-synthetic-v4",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v4"
-      },
-      {
-        "from": "datasets/skyharbor-air-synthetic-v6",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-synthetic-v6"
-      },
-      {
-        "from": "datasets/skyharbor-air-v6-v7-upgrade-candidate-20260710",
-        "to": "datasets/tenant-inputs/archive/legacy-roots/skyharbor-air-v6-v7-upgrade-candidate-20260710"
-      }
-    ]
+    "legacySourcePurge": {
+      "status": "purged-from-loader-visible-repo-paths",
+      "purgedAt": "2026-07-15",
+      "allowedSourceOfTruth": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3 and datasets/tenant-inputs/active/<tenant-key>/current",
+      "notes": [
+        "Legacy V4/V5/V6/V7/synthetic/current-state/rich/upgrade packs are not approved tenant inputs.",
+        "Historical recovery is git history or external archive only; loaders must not read legacy repo paths."
+      ]
+    }
   },
   "tenants": [
     {
@@ -241,43 +163,43 @@
           "path": "datasets/tenant-inputs/active/apex-retail/current",
           "classification": "synthetic-demo",
           "status": "active-input",
-          "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current.",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths.",
           "files": [
             {
               "relativePath": "00_enterprise_profile.csv",
               "extension": ".csv",
               "rows": 1,
-              "sizeBytes": 1649
+              "sizeBytes": 1611
             },
             {
               "relativePath": "01_business_functions.csv",
               "extension": ".csv",
               "rows": 26,
-              "sizeBytes": 11619
+              "sizeBytes": 10631
             },
             {
               "relativePath": "02_org_ownership.csv",
               "extension": ".csv",
               "rows": 50,
-              "sizeBytes": 25840
+              "sizeBytes": 23940
             },
             {
               "relativePath": "03_workforce_roles.csv",
               "extension": ".csv",
               "rows": 12,
-              "sizeBytes": 6302
+              "sizeBytes": 5810
             },
             {
               "relativePath": "04_applications_systems.csv",
               "extension": ".csv",
               "rows": 122,
-              "sizeBytes": 65525
+              "sizeBytes": 60889
             },
             {
               "relativePath": "05_data_assets_integrations.csv",
               "extension": ".csv",
               "rows": 235,
-              "sizeBytes": 121401
+              "sizeBytes": 113411
             },
             {
               "relativePath": "06_infrastructure_platforms.csv",
@@ -289,61 +211,61 @@
               "relativePath": "07_vendors_contracts.csv",
               "extension": ".csv",
               "rows": 100,
-              "sizeBytes": 44386
+              "sizeBytes": 40586
             },
             {
               "relativePath": "08_spend_value.csv",
               "extension": ".csv",
               "rows": 6,
-              "sizeBytes": 2876
+              "sizeBytes": 2648
             },
             {
               "relativePath": "09_programs_initiatives.csv",
               "extension": ".csv",
               "rows": 80,
-              "sizeBytes": 46363
+              "sizeBytes": 43323
             },
             {
               "relativePath": "10_ai_automation_use_cases.csv",
               "extension": ".csv",
               "rows": 58,
-              "sizeBytes": 29387
+              "sizeBytes": 27705
             },
             {
               "relativePath": "11_risks_controls.csv",
               "extension": ".csv",
               "rows": 135,
-              "sizeBytes": 63097
+              "sizeBytes": 56617
             },
             {
               "relativePath": "12_relationships.csv",
               "extension": ".csv",
               "rows": 13,
-              "sizeBytes": 6313
+              "sizeBytes": 5819
             },
             {
               "relativePath": "13_evidence_sources.csv",
               "extension": ".csv",
               "rows": 1,
-              "sizeBytes": 771
+              "sizeBytes": 733
             },
             {
               "relativePath": "14_metrics_outcomes.csv",
               "extension": ".csv",
               "rows": 108,
-              "sizeBytes": 63393
+              "sizeBytes": 59289
             },
             {
               "relativePath": "15_industry_context_patterns.csv",
               "extension": ".csv",
               "rows": 107,
-              "sizeBytes": 50112
+              "sizeBytes": 46153
             },
             {
               "relativePath": "16_expert_lenses.csv",
               "extension": ".csv",
               "rows": 5,
-              "sizeBytes": 2439
+              "sizeBytes": 2249
             },
             {
               "relativePath": "17_service_scope_managed_services.csv",
@@ -399,43 +321,43 @@
           "path": "datasets/tenant-inputs/active/first-capital-financial/current",
           "classification": "synthetic-demo",
           "status": "active-input",
-          "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current.",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths.",
           "files": [
             {
               "relativePath": "00_enterprise_profile.csv",
               "extension": ".csv",
               "rows": 1,
-              "sizeBytes": 1857
+              "sizeBytes": 1819
             },
             {
               "relativePath": "01_business_functions.csv",
               "extension": ".csv",
               "rows": 27,
-              "sizeBytes": 13403
+              "sizeBytes": 12377
             },
             {
               "relativePath": "02_org_ownership.csv",
               "extension": ".csv",
               "rows": 65,
-              "sizeBytes": 37517
+              "sizeBytes": 35047
             },
             {
               "relativePath": "03_workforce_roles.csv",
               "extension": ".csv",
               "rows": 16,
-              "sizeBytes": 7730
+              "sizeBytes": 7074
             },
             {
               "relativePath": "04_applications_systems.csv",
               "extension": ".csv",
               "rows": 212,
-              "sizeBytes": 116784
+              "sizeBytes": 108728
             },
             {
               "relativePath": "05_data_assets_integrations.csv",
               "extension": ".csv",
               "rows": 114,
-              "sizeBytes": 63491
+              "sizeBytes": 59615
             },
             {
               "relativePath": "06_infrastructure_platforms.csv",
@@ -447,61 +369,61 @@
               "relativePath": "07_vendors_contracts.csv",
               "extension": ".csv",
               "rows": 120,
-              "sizeBytes": 55749
+              "sizeBytes": 51189
             },
             {
               "relativePath": "08_spend_value.csv",
               "extension": ".csv",
               "rows": 6,
-              "sizeBytes": 3246
+              "sizeBytes": 3018
             },
             {
               "relativePath": "09_programs_initiatives.csv",
               "extension": ".csv",
               "rows": 96,
-              "sizeBytes": 66776
+              "sizeBytes": 63128
             },
             {
               "relativePath": "10_ai_automation_use_cases.csv",
               "extension": ".csv",
               "rows": 146,
-              "sizeBytes": 80031
+              "sizeBytes": 75797
             },
             {
               "relativePath": "11_risks_controls.csv",
               "extension": ".csv",
               "rows": 210,
-              "sizeBytes": 107915
+              "sizeBytes": 97835
             },
             {
               "relativePath": "12_relationships.csv",
               "extension": ".csv",
               "rows": 11,
-              "sizeBytes": 5844
+              "sizeBytes": 5426
             },
             {
               "relativePath": "13_evidence_sources.csv",
               "extension": ".csv",
               "rows": 1,
-              "sizeBytes": 816
+              "sizeBytes": 778
             },
             {
               "relativePath": "14_metrics_outcomes.csv",
               "extension": ".csv",
               "rows": 157,
-              "sizeBytes": 102245
+              "sizeBytes": 96279
             },
             {
               "relativePath": "15_industry_context_patterns.csv",
               "extension": ".csv",
               "rows": 151,
-              "sizeBytes": 78200
+              "sizeBytes": 72613
             },
             {
               "relativePath": "16_expert_lenses.csv",
               "extension": ".csv",
               "rows": 5,
-              "sizeBytes": 2679
+              "sizeBytes": 2489
             },
             {
               "relativePath": "17_service_scope_managed_services.csv",
@@ -557,43 +479,43 @@
           "path": "datasets/tenant-inputs/active/lakeshore-holdings/current",
           "classification": "synthetic-demo",
           "status": "active-input",
-          "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current.",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths.",
           "files": [
             {
               "relativePath": "00_enterprise_profile.csv",
               "extension": ".csv",
               "rows": 1,
-              "sizeBytes": 2403
+              "sizeBytes": 2365
             },
             {
               "relativePath": "01_business_functions.csv",
               "extension": ".csv",
               "rows": 14,
-              "sizeBytes": 6720
+              "sizeBytes": 6188
             },
             {
               "relativePath": "02_org_ownership.csv",
               "extension": ".csv",
               "rows": 8,
-              "sizeBytes": 5354
+              "sizeBytes": 5050
             },
             {
               "relativePath": "03_workforce_roles.csv",
               "extension": ".csv",
               "rows": 10,
-              "sizeBytes": 4982
+              "sizeBytes": 4572
             },
             {
               "relativePath": "04_applications_systems.csv",
               "extension": ".csv",
               "rows": 24,
-              "sizeBytes": 14688
+              "sizeBytes": 13776
             },
             {
               "relativePath": "05_data_assets_integrations.csv",
               "extension": ".csv",
               "rows": 34,
-              "sizeBytes": 18839
+              "sizeBytes": 17207
             },
             {
               "relativePath": "06_infrastructure_platforms.csv",
@@ -605,61 +527,61 @@
               "relativePath": "07_vendors_contracts.csv",
               "extension": ".csv",
               "rows": 19,
-              "sizeBytes": 8921
+              "sizeBytes": 8199
             },
             {
               "relativePath": "08_spend_value.csv",
               "extension": ".csv",
               "rows": 85,
-              "sizeBytes": 40482
+              "sizeBytes": 37252
             },
             {
               "relativePath": "09_programs_initiatives.csv",
               "extension": ".csv",
               "rows": 15,
-              "sizeBytes": 9157
+              "sizeBytes": 8587
             },
             {
               "relativePath": "10_ai_automation_use_cases.csv",
               "extension": ".csv",
               "rows": 8,
-              "sizeBytes": 4165
+              "sizeBytes": 3933
             },
             {
               "relativePath": "11_risks_controls.csv",
               "extension": ".csv",
               "rows": 10,
-              "sizeBytes": 4792
+              "sizeBytes": 4312
             },
             {
               "relativePath": "12_relationships.csv",
               "extension": ".csv",
               "rows": 10,
-              "sizeBytes": 4694
+              "sizeBytes": 4314
             },
             {
               "relativePath": "13_evidence_sources.csv",
               "extension": ".csv",
               "rows": 1,
-              "sizeBytes": 807
+              "sizeBytes": 769
             },
             {
               "relativePath": "14_metrics_outcomes.csv",
               "extension": ".csv",
               "rows": 12,
-              "sizeBytes": 7640
+              "sizeBytes": 7172
             },
             {
               "relativePath": "15_industry_context_patterns.csv",
               "extension": ".csv",
               "rows": 4,
-              "sizeBytes": 2165
+              "sizeBytes": 2017
             },
             {
               "relativePath": "16_expert_lenses.csv",
               "extension": ".csv",
               "rows": 4,
-              "sizeBytes": 2162
+              "sizeBytes": 2010
             },
             {
               "relativePath": "17_service_scope_managed_services.csv",
@@ -715,121 +637,121 @@
           "path": "datasets/tenant-inputs/active/lakeshore-industries/current",
           "classification": "synthetic-demo",
           "status": "active-input",
-          "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current.",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths.",
           "files": [
             {
               "relativePath": "00_enterprise_profile.csv",
               "extension": ".csv",
               "rows": 8,
-              "sizeBytes": 11328
+              "sizeBytes": 11112
             },
             {
               "relativePath": "01_business_functions.csv",
               "extension": ".csv",
               "rows": 59,
-              "sizeBytes": 37663
+              "sizeBytes": 36483
             },
             {
               "relativePath": "02_org_ownership.csv",
               "extension": ".csv",
               "rows": 116,
-              "sizeBytes": 67651
+              "sizeBytes": 65331
             },
             {
               "relativePath": "03_workforce_roles.csv",
               "extension": ".csv",
               "rows": 22,
-              "sizeBytes": 14083
+              "sizeBytes": 13577
             },
             {
               "relativePath": "04_applications_systems.csv",
               "extension": ".csv",
               "rows": 152,
-              "sizeBytes": 110596
+              "sizeBytes": 107556
             },
             {
               "relativePath": "05_data_assets_integrations.csv",
               "extension": ".csv",
               "rows": 82,
-              "sizeBytes": 54609
+              "sizeBytes": 52969
             },
             {
               "relativePath": "06_infrastructure_platforms.csv",
               "extension": ".csv",
               "rows": 128,
-              "sizeBytes": 79737
+              "sizeBytes": 76793
             },
             {
               "relativePath": "07_vendors_contracts.csv",
               "extension": ".csv",
               "rows": 19,
-              "sizeBytes": 11516
+              "sizeBytes": 11136
             },
             {
               "relativePath": "08_spend_value.csv",
               "extension": ".csv",
               "rows": 69,
-              "sizeBytes": 34561
+              "sizeBytes": 32317
             },
             {
               "relativePath": "09_programs_initiatives.csv",
               "extension": ".csv",
               "rows": 36,
-              "sizeBytes": 36038
+              "sizeBytes": 34598
             },
             {
               "relativePath": "10_ai_automation_use_cases.csv",
               "extension": ".csv",
               "rows": 36,
-              "sizeBytes": 19880
+              "sizeBytes": 19484
             },
             {
               "relativePath": "11_risks_controls.csv",
               "extension": ".csv",
               "rows": 48,
-              "sizeBytes": 31153
+              "sizeBytes": 29713
             },
             {
               "relativePath": "12_relationships.csv",
               "extension": ".csv",
               "rows": 519,
-              "sizeBytes": 261192
+              "sizeBytes": 239994
             },
             {
               "relativePath": "13_evidence_sources.csv",
               "extension": ".csv",
               "rows": 2,
-              "sizeBytes": 1674
+              "sizeBytes": 1618
             },
             {
               "relativePath": "14_metrics_outcomes.csv",
               "extension": ".csv",
               "rows": 236,
-              "sizeBytes": 144270
+              "sizeBytes": 139078
             },
             {
               "relativePath": "15_industry_context_patterns.csv",
               "extension": ".csv",
               "rows": 24,
-              "sizeBytes": 15135
+              "sizeBytes": 14487
             },
             {
               "relativePath": "16_expert_lenses.csv",
               "extension": ".csv",
               "rows": 18,
-              "sizeBytes": 10600
+              "sizeBytes": 10240
             },
             {
               "relativePath": "17_service_scope_managed_services.csv",
               "extension": ".csv",
               "rows": 8,
-              "sizeBytes": 4761
+              "sizeBytes": 4553
             },
             {
               "relativePath": "18_operational_process_evidence.csv",
               "extension": ".csv",
               "rows": 112,
-              "sizeBytes": 59680
+              "sizeBytes": 55984
             }
           ],
           "fileCount": 19,
@@ -873,121 +795,121 @@
           "path": "datasets/tenant-inputs/active/meridian-health/current",
           "classification": "synthetic-demo",
           "status": "active-input",
-          "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current.",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths.",
           "files": [
             {
               "relativePath": "00_enterprise_profile.csv",
               "extension": ".csv",
               "rows": 2,
-              "sizeBytes": 3000
+              "sizeBytes": 2913
             },
             {
               "relativePath": "01_business_functions.csv",
               "extension": ".csv",
               "rows": 30,
-              "sizeBytes": 16867
+              "sizeBytes": 15572
             },
             {
               "relativePath": "02_org_ownership.csv",
               "extension": ".csv",
               "rows": 57,
-              "sizeBytes": 34634
+              "sizeBytes": 32177
             },
             {
               "relativePath": "03_workforce_roles.csv",
               "extension": ".csv",
               "rows": 26,
-              "sizeBytes": 17322
+              "sizeBytes": 16156
             },
             {
               "relativePath": "04_applications_systems.csv",
               "extension": ".csv",
               "rows": 116,
-              "sizeBytes": 72221
+              "sizeBytes": 67221
             },
             {
               "relativePath": "05_data_assets_integrations.csv",
               "extension": ".csv",
               "rows": 147,
-              "sizeBytes": 113689
+              "sizeBytes": 106480
             },
             {
               "relativePath": "06_infrastructure_platforms.csv",
               "extension": ".csv",
               "rows": 4,
-              "sizeBytes": 5423
+              "sizeBytes": 5263
             },
             {
               "relativePath": "07_vendors_contracts.csv",
               "extension": ".csv",
               "rows": 109,
-              "sizeBytes": 56895
+              "sizeBytes": 52243
             },
             {
               "relativePath": "08_spend_value.csv",
               "extension": ".csv",
               "rows": 24,
-              "sizeBytes": 19792
+              "sizeBytes": 18734
             },
             {
               "relativePath": "09_programs_initiatives.csv",
               "extension": ".csv",
               "rows": 86,
-              "sizeBytes": 64639
+              "sizeBytes": 60934
             },
             {
               "relativePath": "10_ai_automation_use_cases.csv",
               "extension": ".csv",
               "rows": 63,
-              "sizeBytes": 35929
+              "sizeBytes": 33784
             },
             {
               "relativePath": "11_risks_controls.csv",
               "extension": ".csv",
               "rows": 172,
-              "sizeBytes": 99899
+              "sizeBytes": 90755
             },
             {
               "relativePath": "12_relationships.csv",
               "extension": ".csv",
               "rows": 85,
-              "sizeBytes": 66245
+              "sizeBytes": 61479
             },
             {
               "relativePath": "13_evidence_sources.csv",
               "extension": ".csv",
               "rows": 4,
-              "sizeBytes": 4836
+              "sizeBytes": 4659
             },
             {
               "relativePath": "14_metrics_outcomes.csv",
               "extension": ".csv",
               "rows": 116,
-              "sizeBytes": 77094
+              "sizeBytes": 71864
             },
             {
               "relativePath": "15_industry_context_patterns.csv",
               "extension": ".csv",
               "rows": 108,
-              "sizeBytes": 61555
+              "sizeBytes": 57008
             },
             {
               "relativePath": "16_expert_lenses.csv",
               "extension": ".csv",
               "rows": 15,
-              "sizeBytes": 15140
+              "sizeBytes": 14520
             },
             {
               "relativePath": "17_service_scope_managed_services.csv",
               "extension": ".csv",
               "rows": 2,
-              "sizeBytes": 2107
+              "sizeBytes": 2021
             },
             {
               "relativePath": "18_operational_process_evidence.csv",
               "extension": ".csv",
               "rows": 10,
-              "sizeBytes": 9067
+              "sizeBytes": 8567
             }
           ],
           "fileCount": 19,
@@ -1031,121 +953,121 @@
           "path": "datasets/tenant-inputs/active/skyharbor-air/current",
           "classification": "synthetic-demo",
           "status": "active-input",
-          "note": "Consolidated universal one-file-per-domain packet. Legacy source packets are archived outside active current.",
+          "note": "Consolidated universal one-file-per-domain packet. Legacy V-named source/template packs have been purged from loader-visible repo paths.",
           "files": [
             {
               "relativePath": "00_enterprise_profile.csv",
               "extension": ".csv",
               "rows": 2,
-              "sizeBytes": 2938
+              "sizeBytes": 2852
             },
             {
               "relativePath": "01_business_functions.csv",
               "extension": ".csv",
               "rows": 24,
-              "sizeBytes": 13021
+              "sizeBytes": 12043
             },
             {
               "relativePath": "02_org_ownership.csv",
               "extension": ".csv",
               "rows": 278,
-              "sizeBytes": 101543
+              "sizeBytes": 93071
             },
             {
               "relativePath": "03_workforce_roles.csv",
               "extension": ".csv",
               "rows": 12,
-              "sizeBytes": 11645
+              "sizeBytes": 11027
             },
             {
               "relativePath": "04_applications_systems.csv",
               "extension": ".csv",
               "rows": 613,
-              "sizeBytes": 264800
+              "sizeBytes": 243124
             },
             {
               "relativePath": "05_data_assets_integrations.csv",
               "extension": ".csv",
               "rows": 570,
-              "sizeBytes": 277042
+              "sizeBytes": 258647
             },
             {
               "relativePath": "06_infrastructure_platforms.csv",
               "extension": ".csv",
               "rows": 691,
-              "sizeBytes": 310758
+              "sizeBytes": 289252
             },
             {
               "relativePath": "07_vendors_contracts.csv",
               "extension": ".csv",
               "rows": 71,
-              "sizeBytes": 37824
+              "sizeBytes": 35207
             },
             {
               "relativePath": "08_spend_value.csv",
               "extension": ".csv",
               "rows": 186,
-              "sizeBytes": 75239
+              "sizeBytes": 68247
             },
             {
               "relativePath": "09_programs_initiatives.csv",
               "extension": ".csv",
               "rows": 67,
-              "sizeBytes": 32412
+              "sizeBytes": 30548
             },
             {
               "relativePath": "10_ai_automation_use_cases.csv",
               "extension": ".csv",
               "rows": 43,
-              "sizeBytes": 17794
+              "sizeBytes": 16825
             },
             {
               "relativePath": "11_risks_controls.csv",
               "extension": ".csv",
               "rows": 28,
-              "sizeBytes": 30652
+              "sizeBytes": 28916
             },
             {
               "relativePath": "12_relationships.csv",
               "extension": ".csv",
               "rows": 77,
-              "sizeBytes": 65700
+              "sizeBytes": 60604
             },
             {
               "relativePath": "13_evidence_sources.csv",
               "extension": ".csv",
               "rows": 3,
-              "sizeBytes": 4526
+              "sizeBytes": 4368
             },
             {
               "relativePath": "14_metrics_outcomes.csv",
               "extension": ".csv",
               "rows": 124,
-              "sizeBytes": 52358
+              "sizeBytes": 48310
             },
             {
               "relativePath": "15_industry_context_patterns.csv",
               "extension": ".csv",
               "rows": 9,
-              "sizeBytes": 12859
+              "sizeBytes": 12398
             },
             {
               "relativePath": "16_expert_lenses.csv",
               "extension": ".csv",
               "rows": 10,
-              "sizeBytes": 13336
+              "sizeBytes": 12851
             },
             {
               "relativePath": "17_service_scope_managed_services.csv",
               "extension": ".csv",
               "rows": 3,
-              "sizeBytes": 3039
+              "sizeBytes": 2886
             },
             {
               "relativePath": "18_operational_process_evidence.csv",
               "extension": ".csv",
               "rows": 410,
-              "sizeBytes": 162034
+              "sizeBytes": 155454
             }
           ],
           "fileCount": 19,

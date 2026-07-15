@@ -1,0 +1,13 @@
+{
+  "generatedAt": "2026-07-15T13:24:00.772Z",
+  "guardrails": {
+    "standard": "standard-2026-07-v3",
+    "productionTenantDataWritten": false,
+    "activeTenantAccessLayerUpdated": false,
+    "candidatePromoted": false,
+    "moduleRuntimeConsumptionChanged": false
+  },
+  "blockedPathFindings": [],
+  "blockedContentFindings": [],
+  "blockedCount": 0
+}

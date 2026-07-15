@@ -1,8 +1,0 @@
-platform_id,metric_name,period,value,unit,capacity,capacity_pct,notes
-FCF-APP-FIS-HORIZON,daily_transactions,2026-05,2400000,txn/day,3200000,75,Mainframe batch window 23:00–05:00 EST
-FCF-APP-FEDWIRE-ACH,daily_payment_volume,2026-05,8200000000,usd/day,,,FedNow/RTP represents 4% of daily volume
-FCF-APP-MOBILE-BANKING,monthly_active_users,2026-05,1840000,users,3200000,58,Peer median MAU penetration is 78%
-FCF-APP-SNOWFLAKE,daily_queries,2026-05,142000,queries,,,"Cortex AI calls = 8,400/day; masked data only"
-FCF-APP-NICE-ACTIMIZE,monthly_alerts,2026-05,38400,alerts,,,False positive rate 89%; SR 11-7 validation pending
-FCF-APP-SERVICENOW,monthly_incidents,2026-05,4200,tickets,,,CMDB coverage 74%; critical CIs 98%
-FCF-APP-DATABRICKS,monthly_ml_jobs,2026-05,18600,jobs,,,Fraud graph job = 3.2h/day; credit scoring = 1.4h/day

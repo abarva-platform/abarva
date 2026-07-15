@@ -1,6 +1,6 @@
 # Tenant Input Quality And Depth
 
-Generated: 2026-07-14T16:11:44.118Z
+Generated: 2026-07-15T13:19:54.677Z
 
 ## Truth Split
 
@@ -9,8 +9,8 @@ Generated: 2026-07-14T16:11:44.118Z
 
 ## Universal Template Set
 
-- Template set: `universal-tenant-input-standard-2026-07`
-- Template root: `datasets/tenant-inputs/templates/universal/standard-2026-07`
+- Template set: `universal-tenant-input-standard-2026-07-v3`
+- Template root: `datasets/tenant-inputs/templates/universal/standard-2026-07-v3`
 - Azure container: `tenant-inputs`
 - Raw prefix: `tenant-inputs/{tenant_key}/{intake_id}/raw/`
 - Validated prefix: `tenant-inputs/{tenant_key}/{intake_id}/validated/`

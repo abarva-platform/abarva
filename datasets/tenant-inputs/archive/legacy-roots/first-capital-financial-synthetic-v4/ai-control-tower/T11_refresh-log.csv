@@ -1,2 +1,0 @@
-refresh_id,period,source_freshness,parser_status,approval_state,notes
-FC-REFRESH-2026-06,2026-06,local_artifact_generated_not_loaded,not_run,awaiting_backend_refresh,Synthetic First Capital context/corpus/Tower files assembled locally for backend refresh rehearsal.

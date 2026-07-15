@@ -1,1 +1,0 @@
-{"edges":[{"edge_id":"MR-INT-001","source":"MR-APP-EPIC","target":"MR-APP-LIS","standard":"HL7 v2 ORU","data_class":"PHI","latency_sla":"15m"},{"edge_id":"MR-INT-002","source":"MR-APP-EPIC","target":"MR-APP-PRIORAUTH","standard":"FHIR Prior Auth API","data_class":"PHI","latency_sla":"near-real-time"}]}

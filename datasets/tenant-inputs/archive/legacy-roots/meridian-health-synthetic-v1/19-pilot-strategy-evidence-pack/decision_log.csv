@@ -1,8 +1,0 @@
-decision,status,owner_role,date_needed,dependency,risk_if_delayed,move_phase
-Select first health-plan pilot use case,open,Executive Sponsor,2026-06-30,Use-case ranking and value hypothesis,Pilot remains broad and hard to prove,P1
-Approve no-PHI/PII pilot evidence boundary,open,Privacy Officer,2026-06-30,Risk guardrail register,Adoption slows due privacy concern,P1
-Choose prior auth payer/service-line first cohort,open,VP Revenue Cycle,2026-07-05,Prior auth workqueue summary,P2 diagnosis lacks focus,P2
-Choose payment integrity opportunity taxonomy,open,VP Payment Integrity,2026-07-05,RCM denials summary,Leakage analysis stays generic,P2
-Approve contact center transcript minimization rule,open,VP Member Experience,2026-07-05,Risk guardrail register,Call center pilot could ask for unnecessary sensitive data,P2
-Decide if provider quality is in scope for first pilot,open,Chief Quality Officer,2026-07-10,HEDIS/STAR measure catalog gap,Quality use case may remain preliminary,P1
-Decide whether automated close is first-wave or later-wave,open,Controller,2026-07-10,Finance close intake gap,Finance pilot scope may dilute health-plan story,P1

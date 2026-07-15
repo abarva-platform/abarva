@@ -1,3 +1,0 @@
-requirement,system,deadline,readiness_state,blocker
-prior_auth_api,MR-APP-PRIORAUTH,2027-01-01,amber,payer companion guide variance
-patient_access_api,MR-APP-EPIC,2026-07-01,green,monitoring runbook

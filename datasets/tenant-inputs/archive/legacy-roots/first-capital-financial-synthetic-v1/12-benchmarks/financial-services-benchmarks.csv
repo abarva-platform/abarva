@@ -1,5 +1,0 @@
-benchmark_id,metric,first_capital_value,peer_median,top_quartile,notes
-FCF-BENCH-001,efficiency_ratio,0.68,0.61,0.55,Technology run cost and remediation burden pressure operating efficiency.
-FCF-BENCH-002,mobile_app_rating,3.1,4.2,4.6,Digital friction story for CXO demo.
-FCF-BENCH-003,digital_account_open_abandonment,0.64,0.42,0.28,Grounds digital account opening value case.
-FCF-BENCH-004,it_spend_pct_revenue,0.092,0.071,0.061,Explains CFO pressure on vendor and legacy run cost.

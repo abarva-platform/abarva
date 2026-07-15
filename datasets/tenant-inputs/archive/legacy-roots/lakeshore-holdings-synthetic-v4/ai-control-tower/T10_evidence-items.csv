@@ -1,9 +1,0 @@
-tenant_key,evidence_id,initiative_id,evidence_type,source_file,source_row,citation_label,confidence,source_template,is_synthetic
-lakeshore-holdings,LAK-EVID-TWR-001,LAK-AI-001,synthetic_tower_source_row,v4-tower-enriched package,2,Lakeshore Shared Services Shared services IT spend transparency,medium,T10_evidence-items,True
-lakeshore-holdings,LAK-EVID-TWR-002,LAK-AI-002,synthetic_tower_source_row,v4-tower-enriched package,3,Northline Logistics Group Treasury cash visibility standardization,medium,T10_evidence-items,True
-lakeshore-holdings,LAK-EVID-TWR-003,LAK-AI-003,synthetic_tower_source_row,v4-tower-enriched package,4,Lakeshore Shared Services Vendor consolidation across portfolio,medium,T10_evidence-items,True
-lakeshore-holdings,LAK-EVID-TWR-004,LAK-AI-004,synthetic_tower_source_row,v4-tower-enriched package,5,Northline Logistics Group Northline warehouse automation analytics,medium,T10_evidence-items,True
-lakeshore-holdings,LAK-EVID-TWR-005,LAK-AI-005,synthetic_tower_source_row,v4-tower-enriched package,6,Crestpoint Marketing Services Crestpoint sourcing AI assistant,medium,T10_evidence-items,True
-lakeshore-holdings,LAK-EVID-TWR-006,LAK-AI-006,synthetic_tower_source_row,v4-tower-enriched package,7,Riverton Consumer Products Riverton DTC demand sensing,medium,T10_evidence-items,True
-lakeshore-holdings,LAK-EVID-TWR-007,LAK-AI-007,synthetic_tower_source_row,v4-tower-enriched package,8,Arborfield Workplace Services Arborfield route optimization,medium,T10_evidence-items,True
-lakeshore-holdings,LAK-EVID-TWR-008,LAK-AI-008,synthetic_tower_source_row,v4-tower-enriched package,9,Lakeshore Shared Services M365 Copilot targeted rollout,medium,T10_evidence-items,True

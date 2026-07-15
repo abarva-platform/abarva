@@ -31,8 +31,8 @@
 ## Timing
 - Max fast cache build: 0.1ms
 - Max deep cache build: 0.06ms
-- Max total build: 1.59ms
-- Average total build: 0.67ms
+- Max total build: 1.61ms
+- Average total build: 0.66ms
 
 ## Scenarios
 - meridian-finance: Home fast cache plus Tower deep cache for finance analytics modernization. (meridian-finance-cache.json)

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-14T16:11:44.118Z",
+  "generatedAt": "2026-07-15T13:19:54.677Z",
   "truthSplit": {
     "productionTenantDataWritten": false,
     "activeTenantAccessLayerUpdated": false,
@@ -8,10 +8,10 @@
     "sourceFilesStandardizedOnly": true
   },
   "universalTemplateSet": {
-    "templateSetId": "universal-tenant-input-standard-2026-07",
-    "root": "datasets/tenant-inputs/templates/universal/standard-2026-07",
-    "manifest": "datasets/tenant-inputs/templates/universal/standard-2026-07/template-manifest.json",
-    "qualityDepthRules": "datasets/tenant-inputs/templates/universal/standard-2026-07/quality-depth-rules.json",
+    "templateSetId": "universal-tenant-input-standard-2026-07-v3",
+    "root": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3",
+    "manifest": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/template-manifest.json",
+    "qualityDepthRules": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/quality-depth-rules.json",
     "azureLanding": {
       "storageAccount": "to-be-bound-by-environment",
       "container": "tenant-inputs",
@@ -19,7 +19,8 @@
       "validatedPrefix": "tenant-inputs/{tenant_key}/{intake_id}/validated/",
       "archivePrefix": "tenant-inputs/archive/{tenant_key}/{intake_id}/",
       "fileNamePattern": "{tenant_key}__{template_name}__{as_of_yyyymmdd}__{source_owner}__r{revision}.csv"
-    }
+    },
+    "workbookManifest": "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/manifest.json"
   },
   "templates": {
     "requiredCount": 19,
@@ -1507,11 +1508,8 @@
       "tenantKey": "northstar-clinical",
       "displayName": "Northstar Clinical",
       "status": "retired-excluded",
-      "archivePaths": [
-        "datasets/tenant-inputs/archive/northstar-clinical-tech-synthetic-v1",
-        "datasets/tenant-inputs/archive/client-load-staging/northstar-clinical"
-      ],
-      "reason": "Operator instruction: there should be no Northstar active tenant."
+      "archivePaths": [],
+      "reason": "Operator instruction: there should be no Northstar active tenant. Legacy source files are no longer retained in loader-visible repository paths."
     }
   ],
   "failures": []

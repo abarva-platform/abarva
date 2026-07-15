@@ -41,7 +41,7 @@ export interface DataTrustActionQueueItem {
   severity: ActionImpact;
   segmentName: string;
   consequence: string;
-  /** Path to the template file in /public/setup-templates, or null if no template exists. */
+  /** Legacy public setup-template links were retired; tenant inputs now use the universal v3 standard. */
   templateHref: string | null;
   templateLabel: 'YAML' | 'CSV' | null;
   uploadHref: string;
@@ -97,16 +97,6 @@ function isSparseRung(rung: TrustRung): boolean {
 
 const CRITICAL_PATH_FAMILIES = new Set([1, 2, 3, 4, 5, 6, 9, 12]);
 
-const TEMPLATE_BY_FAMILY: Record<
-  number,
-  { href: string; label: 'YAML' | 'CSV' }
-> = {
-  1: { href: '/setup-templates/enterprise-profile.yaml', label: 'YAML' },
-  3: { href: '/setup-templates/it-system-landscape.csv', label: 'CSV' },
-  6: { href: '/setup-templates/program-inventory.csv', label: 'CSV' },
-  12: { href: '/setup-templates/compliance-and-regulatory.csv', label: 'CSV' },
-};
-
 export function composeDataTrustBlocks(
   segments: InventorySegmentRollup[],
 ): DataTrustBlocks {
@@ -161,14 +151,13 @@ export function composeDataTrustBlocks(
 
   const actionQueue: DataTrustActionQueueItem[] = ranked.map((seg) => {
     const score = impactScoreForSegment(seg.familyNumber);
-    const tpl = TEMPLATE_BY_FAMILY[seg.familyNumber];
     return {
       id: `next-${seg.segmentId}`,
       severity: impactFromScore(score) as ActionImpact,
       segmentName: seg.segmentName,
       consequence: unlocksCopy(seg.familyNumber, seg.segmentName),
-      templateHref: tpl?.href ?? null,
-      templateLabel: tpl?.label ?? null,
+      templateHref: null,
+      templateLabel: null,
       // Upload destination is the segment detail page (or a
       // future upload flow); points to /admin/segments/<id> per
       // existing route from Setup Fix Package.

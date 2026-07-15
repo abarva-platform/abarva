@@ -75,7 +75,7 @@ async function main() {
       "reports/canonical-data-build/latest/tenant-build-index.json",
     ),
     readJson<TemplateManifest>(
-      "datasets/tenant-inputs/templates/universal/standard-2026-07/template-manifest.json",
+      "datasets/tenant-inputs/templates/universal/standard-2026-07-v3/template-manifest.json",
     ),
   ]);
 

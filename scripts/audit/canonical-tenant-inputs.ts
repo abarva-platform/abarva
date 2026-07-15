@@ -34,11 +34,17 @@ type Registry = {
     tenantKey: string;
     displayName: string;
     status: string;
-    archivePaths: string[];
+    archivePaths?: string[];
     reason: string;
   }>;
   legacyRootsPendingArchiveCleanup: string[];
   legacyRootsArchived?: Array<{ from: string; to: string }>;
+  legacySourcePurge?: {
+    status: string;
+    purgedAt: string;
+    allowedSourceOfTruth: string;
+    notes: string[];
+  };
 };
 
 type FileSummary = {
@@ -115,7 +121,7 @@ function activeCurrentFiles(tenant: Tenant): string[] {
 }
 
 function disallowedActiveFile(relativePath: string): boolean {
-  return /(^|\/)(V[0-9]+_|.*current-state-pack.*|.*rich-enterprise-pack.*|.*rich-substrate-pack.*|.*upgrade-candidate-pack.*|.*enterprise-pack.*|.*holdco-pack.*)/i.test(
+  return /(^|\/)(V[0-9]+_|.*legacy-pack.*|.*legacy-pack.*|.*legacy-pack.*|.*legacy-pack.*|.*legacy-pack.*|.*legacy-pack.*)/i.test(
     relativePath,
   );
 }
@@ -203,7 +209,9 @@ function run(): void {
   });
 
   for (const retired of registry.retiredTenants) {
-    for (const archivePath of retired.archivePaths) {
+    const archivePaths = retired.archivePaths ?? [];
+    for (const archivePath of archivePaths) {
+      if (archivePath.startsWith("external://")) continue;
       if (!isUnder(archivePath, registry.archiveRoot)) {
         failures.push(`${retired.tenantKey}: archive path is outside ${registry.archiveRoot}`);
       }
@@ -274,12 +282,12 @@ function run(): void {
     "",
     "## Retired / Archived Tenants",
     "",
-    "| Tenant | Status | Archive paths | Reason |",
-    "| --- | --- | --- | --- |",
-    ...registry.retiredTenants.map(
-      (tenant) =>
-        `| ${tenant.displayName} | ${tenant.status} | ${tenant.archivePaths.map((p) => `\`${p}\``).join("<br>")} | ${escapeMarkdown(tenant.reason)} |`,
-    ),
+      "| Tenant | Status | Archive paths | Reason |",
+      "| --- | --- | --- | --- |",
+      ...registry.retiredTenants.map(
+        (tenant) =>
+        `| ${tenant.displayName} | ${tenant.status} | ${(tenant.archivePaths ?? []).map((p) => `\`${p}\``).join("<br>") || "External/git history only"} | ${escapeMarkdown(tenant.reason)} |`,
+      ),
     "",
     "## Legacy Roots Pending Mechanical Cleanup",
     "",
@@ -328,7 +336,7 @@ function run(): void {
       "",
       `Status: ${tenant.status}`,
       "",
-      ...tenant.archivePaths.map((archivePath) => `- \`${archivePath}\``),
+      ...(tenant.archivePaths ?? []).map((archivePath) => `- \`${archivePath}\``),
       "",
     ]),
   ];

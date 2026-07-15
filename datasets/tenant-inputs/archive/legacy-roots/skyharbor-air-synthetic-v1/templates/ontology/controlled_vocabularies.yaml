@@ -1,6 +1,0 @@
-modernization_action: [extract, wrap, retire, leave, reverse, analyze]
-modernization_outcome: [delivered, delayed, over-ran, abandoned, mixed, reversed]
-criticality: [1, 2, 3, 4, 5]
-data_basis: [public_anchor, synthetic_comparable, generated_assumption, user_supplied_future]
-approval_status: [approved_synthetic, pending_customer_approval, rejected, superseded]
-evidence_status: [validated, partial, projected, stuck, disputed]
