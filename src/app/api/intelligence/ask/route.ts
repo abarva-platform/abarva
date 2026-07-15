@@ -50,6 +50,7 @@ import {
   scrubInternalVisibleAvaTerms,
   scrubPublicAvaAnswerText,
   scrubPublicAvaSourceText,
+  scrubVisibleAvaDataStateLanguage,
 } from "@/lib/ava-answer/public-answer-scrub";
 import { sanitizeAgentAnswerForRender } from "@/lib/intelligence/answer/answer-safety";
 import {
@@ -762,6 +763,18 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
             );
             continue;
           }
+          if (
+            event.type === "intelligence-dossier" ||
+            event.type === "advisory-packet"
+          ) {
+            const summary = displaySafeContextSummary(
+              event as unknown as Record<string, unknown>,
+            );
+            if (summary && payload.traceEnabled) {
+              controller.enqueue(encoder.encode(JSON.stringify(summary) + "\n"));
+            }
+            continue;
+          }
           if (event.type === "error") sawStreamError = true;
           if (event.type === "done") continue;
           controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
@@ -1201,7 +1214,10 @@ function intelligenceSourcesFromCitations(
 }
 
 function displaySafeIntelligenceDelta(text: string): string {
-  const scrubForDisplay = (value: string) => scrubInternalVisibleAvaTerms(value);
+  const scrubForDisplay = (value: string) =>
+    scrubPublicAvaAnswerText(
+      scrubVisibleAvaDataStateLanguage(scrubInternalVisibleAvaTerms(value)),
+    );
   if (!text.includes("<<<TAB:") && !text.includes("grounding:")) {
     return scrubForDisplay(text);
   }
@@ -1212,6 +1228,86 @@ function displaySafeIntelligenceDelta(text: string): string {
   }
 
   return scrubForDisplay(text.replace(/<<<TAB:[\s\S]*$/g, "").trimEnd());
+}
+
+function numberFromPath(value: unknown, path: readonly string[]): number {
+  let current = value;
+  for (const key of path) {
+    if (!current || typeof current !== "object") return 0;
+    current = (current as Record<string, unknown>)[key];
+  }
+  return typeof current === "number" && Number.isFinite(current) ? current : 0;
+}
+
+function arrayLengthFromPath(value: unknown, path: readonly string[]): number {
+  let current = value;
+  for (const key of path) {
+    if (!current || typeof current !== "object") return 0;
+    current = (current as Record<string, unknown>)[key];
+  }
+  return Array.isArray(current) ? current.length : 0;
+}
+
+function stringFromPath(value: unknown, path: readonly string[]): string {
+  let current = value;
+  for (const key of path) {
+    if (!current || typeof current !== "object") return "";
+    current = (current as Record<string, unknown>)[key];
+  }
+  return typeof current === "string" ? scrubPublicAvaAnswerText(current) : "";
+}
+
+function displaySafeContextSummary(
+  event: Record<string, unknown>,
+): Record<string, unknown> | null {
+  if (event.type === "intelligence-dossier") {
+    const context = event.intelligenceDossier;
+    return {
+      type: "context-summary",
+      summary: {
+        sourceSections: arrayLengthFromPath(context, [
+          "tenantEvidenceDossier",
+          "sections",
+        ]),
+        missingEvidenceItems: arrayLengthFromPath(context, [
+          "evidenceBoundary",
+          "missingTenantEvidence",
+        ]),
+        decisionOptions: arrayLengthFromPath(context, [
+          "decisionOptionsDossier",
+          "options",
+        ]),
+        evidenceStrength: stringFromPath(context, [
+          "tenantEvidenceDossier",
+          "confidence",
+        ]),
+        note: "Active enterprise context was assembled for this answer; internal trace details are kept out of the visible chat.",
+      },
+    };
+  }
+  if (event.type === "advisory-packet") {
+    const context = event.advisoryPacket;
+    return {
+      type: "context-summary",
+      summary: {
+        sourceRefs: arrayLengthFromPath(context, ["auditLineage", "sourceRefs"]),
+        visibleFacts: arrayLengthFromPath(context, [
+          "modelVisiblePacket",
+          "tenantFacts",
+        ]),
+        visibleGaps: arrayLengthFromPath(context, [
+          "modelVisiblePacket",
+          "gaps",
+        ]),
+        retrievalWarnings: numberFromPath(context, [
+          "retrievalDiagnostics",
+          "warningCount",
+        ]),
+        note: "aVa used evidence-backed context and kept internal lineage outside the visible answer.",
+      },
+    };
+  }
+  return null;
 }
 
 const INTERNAL_SOURCE_ID_RE =
@@ -1443,7 +1539,7 @@ function buildHomeKnowTenantFenceAnswer(input: {
     question: "cross-tenant request",
     intent: "tenant_fence",
     status: "blocked",
-    directAnswer: `I can't share or use another tenant's data from Home. Your signed-in session is fenced to ${input.activeTenantDisplayName}; ask from this tenant's loaded context only.`,
+    directAnswer: `I can't share or use another tenant's data from Home. Your signed-in session is fenced to ${input.activeTenantDisplayName}; ask from this tenant's active enterprise context only.`,
     citations: [],
     gaps: [
       {

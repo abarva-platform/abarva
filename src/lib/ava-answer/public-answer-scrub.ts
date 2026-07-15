@@ -39,6 +39,27 @@ export function scrubInternalVisibleAvaTerms(value: string): string {
     .replace(/\bclient_id\b/gi, "client reference");
 }
 
+export function scrubVisibleAvaDataStateLanguage(value: string): string {
+  return value
+    .replace(/\bThe loaded tenant sources show\b/gi, "The available business context shows")
+    .replace(/\bThe loaded sources show\b/gi, "The available evidence indicates")
+    .replace(/\bThe loaded evidence shows\b/gi, "The available evidence shows")
+    .replace(/\bnot_loaded\b/gi, "not yet evidenced")
+    .replace(/\bnot loaded\b/gi, "not yet evidenced")
+    .replace(/\bnot yet available\b/gi, "not yet evidenced")
+    .replace(/\bnot present in loaded sources\b/gi, "not supported by the available evidence")
+    .replace(/\bnot shown in loaded sources\b/gi, "not supported by the available evidence")
+    .replace(/\bloaded context\b/gi, "active enterprise context")
+    .replace(/\bloaded source context\b/gi, "available source material")
+    .replace(/\bloaded sources\b/gi, "supporting sources")
+    .replace(/\bloaded evidence\b/gi, "available evidence")
+    .replace(/\bloaded tenant sources\b/gi, "available business context")
+    .replace(/\bloaded tenant evidence\b/gi, "available business context")
+    .replace(/\bloaded facts?\b/gi, "available details")
+    .replace(/\bthe loaded context\b/gi, "the active enterprise context")
+    .replace(/\bavailable business context show\b/gi, "available business context shows");
+}
+
 export function operationalEvidenceInsufficiencyLead(
   question: string,
 ): string | null {
@@ -56,7 +77,9 @@ export function operationalEvidenceInsufficiencyLead(
 }
 
 export function scrubPublicAvaAnswerText(value: string): string {
-  const scrubbed = scrubInternalVisibleAvaTerms(stripInternalEvidenceAppendix(value))
+  const scrubbed = scrubVisibleAvaDataStateLanguage(
+    scrubInternalVisibleAvaTerms(stripInternalEvidenceAppendix(value)),
+  )
     .replace(
       /\n?\s*Next,\s+have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves\.?/gi,
       "",
@@ -126,12 +149,12 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\bpackets?\b/gi, "answer material")
     .replace(/\bcurrent-state context\b/gi, "current picture")
     .replace(/\bloaded source context\b/gi, "available source material")
-    .replace(/\bloaded context\b/gi, "available business material")
-    .replace(/\bThe loaded tenant sources show\b/gi, "The business context shows")
-    .replace(/\bThe loaded sources show\b/gi, "The business context shows")
-    .replace(/\bloaded tenant sources\b/gi, "business context")
-    .replace(/\bloaded evidence\b/gi, "business context")
-    .replace(/\bloaded sources\b/gi, "business context")
+    .replace(/\bloaded context\b/gi, "active enterprise context")
+    .replace(/\bThe loaded tenant sources show\b/gi, "The available business context shows")
+    .replace(/\bThe loaded sources show\b/gi, "The available evidence indicates")
+    .replace(/\bloaded tenant sources\b/gi, "available business context")
+    .replace(/\bloaded evidence\b/gi, "available evidence")
+    .replace(/\bloaded sources\b/gi, "supporting sources")
     .replace(/\bsource context\b/gi, "business context")
     .replace(/\btyped facts?\b/gi, "available details")
     .replace(/\bloaded facts?\b/gi, "available details")
@@ -177,7 +200,9 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\bsession memory\b/gi, "available business material")
     .replace(/\bearlier turns\b/gi, "available business material")
     .replace(/\bprevious conversation\b/gi, "available business material")
-    .replace(/\bnot loaded\b/gi, "not yet available")
+    .replace(/\bnot_loaded\b/gi, "not yet evidenced")
+    .replace(/\bnot loaded\b/gi, "not yet evidenced")
+    .replace(/\bnot yet available\b/gi, "not yet evidenced")
     .replace(/\bintelligence-v2\b/gi, "Intelligence")
     .replace(/\bThe supporting evidence is that\s+/gi, "")
     .replace(/\bThat means\s+The\b/g, "That means the")
@@ -218,12 +243,12 @@ export function scrubPublicAvaAnswerText(value: string): string {
 }
 
 export function scrubPublicAvaSourceText(value: string): string {
-  const sourceReady = value
+  const sourceReady = scrubVisibleAvaDataStateLanguage(value)
     .replace(/\bV\d+[_-]\d+\s*/gi, "")
     .replace(/\bV\d+\s+/gi, "")
     .replace(/\bIntelligence\s+V\d+\b/gi, "enterprise context")
     .replace(/\bintelligence_v\d+\b/gi, "enterprise context")
-    .replace(/\bnot_loaded\b/gi, "not yet available")
+    .replace(/\bnot_loaded\b/gi, "not yet evidenced")
     .replace(/\bsynthetic_demo_manifest_gated\b/gi, "demo validation gate")
     .replace(/\bsynthetic\s+demo\s+manifest\s+gated\b/gi, "demo validation gate");
 

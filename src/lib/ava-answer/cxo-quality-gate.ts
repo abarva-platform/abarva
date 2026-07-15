@@ -2,6 +2,8 @@ import type {
   AvaAnswerPacket,
   AvaCxoAnswerMode,
   AvaCxoQuality,
+  AvaCxoQualityCategoryId,
+  AvaCxoQualityCategoryScore,
   AvaCxoQualityFinding,
 } from "@/lib/ava-answer/contract";
 import { isVisibleAvaArtifact } from "@/lib/ava-answer/renderable-artifacts";
@@ -95,6 +97,98 @@ function combinedPublicText(answer: AvaAnswerPacket): string {
   ]
     .filter(Boolean)
     .join("\n\n");
+}
+
+const CATEGORY_LABELS: Record<AvaCxoQualityCategoryId, string> = {
+  executive_tone: "Executive tone",
+  point_of_view_clarity: "Point-of-view clarity",
+  business_implication: "Business implication",
+  evidence_grounding: "Evidence grounding",
+  caveat_quality: "Caveat quality",
+  decision_usefulness: "Decision usefulness",
+  no_internal_language: "No internal language",
+  visual_usefulness: "Visual usefulness",
+  module_handoff_clarity: "Module handoff clarity",
+  concision: "Concision",
+};
+
+function scoreCategories(
+  answer: AvaAnswerPacket,
+  text: string,
+  findings: AvaCxoQualityFinding[],
+): AvaCxoQualityCategoryScore[] {
+  const scores: Record<AvaCxoQualityCategoryId, number> = {
+    executive_tone: 5,
+    point_of_view_clarity: 5,
+    business_implication: 5,
+    evidence_grounding: 5,
+    caveat_quality: 5,
+    decision_usefulness: 5,
+    no_internal_language: 5,
+    visual_usefulness: 5,
+    module_handoff_clarity: 5,
+    concision: 5,
+  };
+  const lower = text.toLowerCase();
+  for (const finding of findings) {
+    if (finding.severity === "error") {
+      if (
+        finding.code === "raw-internal-id" ||
+        finding.code === "internal-visible-language"
+      ) {
+        scores.no_internal_language = 0;
+      } else if (finding.code === "model-deflection-language") {
+        scores.executive_tone = Math.min(scores.executive_tone, 1);
+        scores.point_of_view_clarity = Math.min(scores.point_of_view_clarity, 2);
+      }
+      continue;
+    }
+    if (finding.code === "weak-executive-opener") {
+      scores.executive_tone = Math.min(scores.executive_tone, 3.5);
+      scores.point_of_view_clarity = Math.min(scores.point_of_view_clarity, 4);
+    }
+    if (finding.code === "missing-evidence-boundary") {
+      scores.evidence_grounding = Math.min(scores.evidence_grounding, 3.5);
+      scores.caveat_quality = Math.min(scores.caveat_quality, 4);
+    }
+    if (finding.code === "missing-caveat-or-evidence-need") {
+      scores.caveat_quality = Math.min(scores.caveat_quality, 3.5);
+    }
+    if (finding.code === "missing-next-move") {
+      scores.decision_usefulness = Math.min(scores.decision_usefulness, 3.5);
+      scores.module_handoff_clarity = Math.min(scores.module_handoff_clarity, 3.5);
+    }
+    if (finding.code.startsWith("missing-") && finding.code.endsWith("-artifact")) {
+      scores.visual_usefulness = Math.min(scores.visual_usefulness, 3.5);
+    }
+  }
+  if (!/\b(?:so what|means|therefore|because|gate|decision|recommend|fund|hold|sequence|risk|value)\b/i.test(text)) {
+    scores.business_implication = Math.min(scores.business_implication, 4);
+  }
+  if (!/\b(?:source|evidence|context|benchmark|pattern|supported|confirmed|validated|evidenced)\b/i.test(text)) {
+    scores.evidence_grounding = Math.min(scores.evidence_grounding, 4);
+  }
+  if (!/\b(?:next|owner|decision|gate|phase|move|fund|hold|pilot|validate|confirm)\b/i.test(text)) {
+    scores.decision_usefulness = Math.min(scores.decision_usefulness, 4);
+    scores.module_handoff_clarity = Math.min(scores.module_handoff_clarity, 4);
+  }
+  const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+  if (wordCount > 900) scores.concision = Math.min(scores.concision, 4);
+  if (wordCount > 1300) scores.concision = Math.min(scores.concision, 3.5);
+  if (answer.artifacts.length === 0 && hasVisualRequest(answer.question)) {
+    scores.visual_usefulness = Math.min(scores.visual_usefulness, 3.5);
+  }
+  if (lower.includes("not loaded") || lower.includes("not_loaded")) {
+    scores.no_internal_language = 0;
+  }
+
+  return (Object.keys(scores) as AvaCxoQualityCategoryId[]).map((id) => ({
+    id,
+    label: CATEGORY_LABELS[id],
+    score: scores[id],
+    maxScore: 5,
+    passed: scores[id] >= 4,
+  }));
 }
 
 function hasSourceBackedMaterial(answer: AvaAnswerPacket): boolean {
@@ -220,5 +314,6 @@ export function evaluateCxoAnswerQuality(
   );
   const score = Math.max(0, 100 - penalty);
   const passed = findings.every((finding) => finding.severity !== "error");
-  return { mode, score, passed, findings };
+  const categories = scoreCategories(answer, text, findings);
+  return { mode, score, passed, findings, categories };
 }

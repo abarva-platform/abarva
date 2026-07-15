@@ -237,11 +237,32 @@ export interface AvaCxoQualityFinding {
   field?: string;
 }
 
+export type AvaCxoQualityCategoryId =
+  | "executive_tone"
+  | "point_of_view_clarity"
+  | "business_implication"
+  | "evidence_grounding"
+  | "caveat_quality"
+  | "decision_usefulness"
+  | "no_internal_language"
+  | "visual_usefulness"
+  | "module_handoff_clarity"
+  | "concision";
+
+export interface AvaCxoQualityCategoryScore {
+  id: AvaCxoQualityCategoryId;
+  label: string;
+  score: number;
+  maxScore: 5;
+  passed: boolean;
+}
+
 export interface AvaCxoQuality {
   mode: AvaCxoAnswerMode;
   score: number;
   passed: boolean;
   findings: AvaCxoQualityFinding[];
+  categories?: AvaCxoQualityCategoryScore[];
 }
 
 export interface AvaAnswerSafety {

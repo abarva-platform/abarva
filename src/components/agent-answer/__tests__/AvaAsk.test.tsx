@@ -151,7 +151,7 @@ describe("AvaAsk — canonical ask reused across surfaces", () => {
     expect(
       within(screen.getByRole("table")).getByText(/AI bet/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("$14,000,000")).toBeInTheDocument();
+    expect(screen.getByText("$14M")).toBeInTheDocument();
 
     // Exactly one "Ava ·" header — no double-render.
     expect(screen.getAllByText(/Ava ·/i)).toHaveLength(1);

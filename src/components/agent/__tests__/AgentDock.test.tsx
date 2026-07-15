@@ -1327,7 +1327,8 @@ describe("AgentDock · thread render", () => {
           {
             id: "a",
             role: "agent",
-            body: "| AI Use Case | Value (1-5) | Complexity (1-5) |",
+            body:
+              "Sequence the roadmap before funding scale.\n\n| AI Use Case | Value (1-5) | Complexity (1-5) |\n|---|---|---|\n| Structured lookup | 4 | 2 |\n\nGate the LLM tier on transcript governance.",
             agentAnswer: {
               surface: "intelligence",
               mode: "ANALYZE",
@@ -1336,7 +1337,7 @@ describe("AgentDock · thread render", () => {
               intent: "chart",
               status: "answered",
               directAnswer:
-                "| AI Use Case | Value (1-5) | Complexity (1-5) |",
+                "Sequence the roadmap before funding scale.\n\n| AI Use Case | Value (1-5) | Complexity (1-5) |\n|---|---|---|\n| Structured lookup | 4 | 2 |\n\nGate the LLM tier on transcript governance.",
               artifacts: [
                 {
                   artifact: "table",
@@ -1382,6 +1383,8 @@ describe("AgentDock · thread render", () => {
     );
 
     const turn = screen.getByTestId("agent-dock-turn-agent");
+    expect(turn).toHaveTextContent("Sequence the roadmap before funding scale.");
+    expect(turn).toHaveTextContent("Gate the LLM tier on transcript governance.");
     expect(turn).toHaveTextContent("Requested Visual Boundary");
     expect(turn).toHaveTextContent("Needs validated records");
     expect(turn).not.toHaveTextContent("| AI Use Case |");

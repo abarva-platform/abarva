@@ -84,7 +84,7 @@ Tenant evidence`);
     );
 
     expect(cleaned).toBe(
-      "certified operational data products. The business context shows an operational-data gap.",
+      "certified operational data products. The available business context shows an operational-data gap.",
     );
     expect(cleaned).not.toMatch(/last two turns|Here's the logic|loaded tenant evidence|evidence base gap/i);
   });
@@ -97,7 +97,7 @@ Tenant evidence`);
     expect(cleaned).toContain(
       "certified operational data products — real-time crew, aircraft, and gate feeds with governed freshness and lineage — is the single best AI investment SkyHarbor can make next.",
     );
-    expect(cleaned).toContain("The business context shows three value pools");
+    expect(cleaned).toContain("The available evidence shows three value pools");
     expect(cleaned).not.toMatch(
       /last three times|this session|tenant evidence|loaded evidence|keeps being the right answer|If it's the latter/i,
     );
@@ -127,7 +127,7 @@ Tenant evidence`);
     expect(cleaned).toContain(
       "certified operational data products is the single best AI investment SkyHarbor can make next.",
     );
-    expect(cleaned).toContain("The business context shows three distinct value pools");
+    expect(cleaned).toContain("The available evidence indicates three distinct value pools");
     expect(cleaned).toContain(
       "The integration handles 5M daily events and is flagged for migration.",
     );
@@ -168,7 +168,7 @@ Tenant evidence`);
     );
 
     expect(cleaned).toContain("Meridian Health System executive business file");
-    expect(cleaned).toContain("Revenue Basis: not yet available");
+    expect(cleaned).toContain("Revenue Basis: not yet evidenced");
     expect(cleaned).toContain("available source material");
     expect(cleaned).toContain("candidate opportunity planning context");
     expect(cleaned).not.toMatch(
@@ -185,7 +185,7 @@ Tenant evidence`);
       "certified operational data products is the single best AI investment SkyHarbor can make next.",
     );
     expect(cleaned).toContain(
-      "The business context shows three distinct value pools.",
+      "The available business context shows three distinct value pools.",
     );
     expect(cleaned).not.toMatch(
       /answer is the same|all session|loaded tenant sources|If it's the latter/i,

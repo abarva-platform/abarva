@@ -75,6 +75,15 @@ function hasRawMarkdownTableFragment(value: string): boolean {
     .some((line) => (line.match(/\|/g) ?? []).length >= 2);
 }
 
+function stripMarkdownTableFragments(value: string): string {
+  return value
+    .split(/\r?\n/)
+    .filter((line) => (line.match(/\|/g) ?? []).length < 2)
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function shouldRenderAvaArtifactsInDock(
   surface: string,
   answer?: AvaAnswerPacket | null,
@@ -93,7 +102,7 @@ function avaAnswerTextForDock(answer?: AvaAnswerPacket | null): string {
       .join("\n\n")
       .trim();
   if (hasRenderableAvaArtifacts(answer) && hasRawMarkdownTableFragment(text)) {
-    return "";
+    return stripMarkdownTableFragments(text);
   }
   return text;
 }
@@ -185,7 +194,7 @@ function visibleAgentDockBody(
     agentAnswer &&
     hasRenderableAvaArtifacts(agentAnswer) &&
     hasRawMarkdownTableFragment(body)
-      ? ""
+      ? stripMarkdownTableFragments(body)
       : body;
   const text = packetText || bodyText;
   return preserveVisibleText ? text : demoSafeClientText(text);
@@ -1076,7 +1085,7 @@ export function AgentDock(props: AgentDockProps) {
         {/* Header */}
         <div style={HEADER_STYLE}>
           <div style={AGENT_ROW_STYLE}>
-            <AvaAskMark variant="wordmark-light" style={AGENT_WORDMARK_STYLE} />
+            <AvaAskMark variant="wordmark-dark" style={AGENT_WORDMARK_STYLE} />
             <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
               <span style={AGENT_ROLE_STYLE}>{agent.role}</span>
             </div>
@@ -1371,7 +1380,7 @@ export function AgentDock(props: AgentDockProps) {
         >
           <span style={COLLAPSED_CHIP_INITIALS_STYLE}>
             <AvaAskMark
-              variant="wordmark-light"
+              variant="wordmark-dark"
               style={{ width: 42, minWidth: 42 }}
             />
           </span>

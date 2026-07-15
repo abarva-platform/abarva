@@ -191,7 +191,7 @@ describe("StrategicMoveOriginateClient", () => {
 
     expect(screen.getAllByTestId("ava-ask-wordmark")[0]).toHaveAttribute(
       "src",
-      "/brand/ava/ava-wordmark-2tone-light.svg",
+      "/brand/ava/ava-wordmark-2tone-dark.svg",
     );
     expect(screen.queryByText(/^Ava$/)).not.toBeInTheDocument();
 

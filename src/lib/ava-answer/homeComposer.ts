@@ -209,7 +209,7 @@ function homeInterpretation(response: HomeKnowResponse): string | undefined {
     return "The useful result here is the gap itself: the requested field family is not available enough for a clean answer.";
   }
   if (response.gaps.length > 0) {
-    return "The loaded context is directionally useful, but the named gaps limit precision.";
+    return "The active enterprise context is directionally useful, but the named gaps limit precision.";
   }
   if (
     response.tables.length ||

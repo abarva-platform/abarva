@@ -211,12 +211,12 @@ function defaultDirectAnswer(
       : "This question needs a guided next step.";
   }
   if (status === "no_data") {
-    return "I do not see enough loaded context to answer that cleanly.";
+    return "I do not see enough available evidence to answer that cleanly.";
   }
   if (status === "partial") {
-    return "The loaded context answers part of the question, with specific gaps still open.";
+    return "The available evidence answers part of the question, with specific gaps still open.";
   }
-  return "The loaded context supports a direct answer.";
+  return "The available evidence supports a direct answer.";
 }
 
 function defaultInterpretation(input: {
