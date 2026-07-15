@@ -53,7 +53,6 @@ export default async function AdminSetupPage() {
         showLocked: true,
         context: "Setup",
       }}
-      showProductNav={false}
     >
       <AdminSetupExperience
         tenantName={tenant.tenantName}

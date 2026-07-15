@@ -9,10 +9,17 @@ const appTopBarSource = readFileSync(
   join(process.cwd(), "src/components/shell/AppTopBar.tsx"),
   "utf8",
 );
+const nexusTopNavSource = readFileSync(
+  join(process.cwd(), "src/components/navigation/NexusTopNav.tsx"),
+  "utf8",
+);
 
 describe("Cockpit shell navigation contract", () => {
   it("defaults AppShell to the cockpit top-nav model and sunsets the old app rail by default", () => {
-    expect(appShellSource).toContain("showProductNav = true");
+    // Product-nav visibility now lives in NexusTopNav (mounted once by
+    // MaestroChrome, not per-page by AppShell) rather than being threaded
+    // through as an AppShell prop.
+    expect(nexusTopNavSource).toContain("showProductNav: showProductNavProp = true");
     expect(appShellSource).toContain("showAppRail = false");
     expect(appShellSource).toContain(
       'gridTemplateColumns: showAppRail ? "76px 1fr" : "1fr"',

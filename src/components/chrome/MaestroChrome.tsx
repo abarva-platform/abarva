@@ -2,9 +2,10 @@
 
 import { usePathname } from 'next/navigation';
 import AbarvaNav from '@/components/AbarvaNav';
+import { NexusTopNav } from '@/components/navigation/NexusTopNav';
 
 // Shell-native surfaces render AppShell themselves — these routes bypass
-// MaestroChrome so AbarvaNav doesn't double-render with the AppRail.
+// MaestroChrome's own AbarvaNav so it doesn't double-render with the AppRail.
 // Entries are startsWith-matched so /admin/connectors also passes through.
 const SHELL_SURFACE_PREFIXES = [
   '/admin',
@@ -19,9 +20,22 @@ const SHELL_SURFACE_PREFIXES = [
 export function MaestroChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? '';
 
-  // Pass-through for shell-native surfaces (they render AppShell themselves)
+  // Shell-native surfaces: mount NexusTopNav HERE, once, as part of this
+  // persisted layout subtree, instead of inside each page's own AppShell.
+  // AppShell (and the page it wraps) is swapped out on every client-side
+  // navigation; MaestroChrome is not, because it lives inside the shared
+  // (maestro) layout — so the nav (and its Clerk session state) now survives
+  // navigation between shell-native routes instead of unmounting and
+  // re-mounting with a blank/loading flash on every click.
   if (SHELL_SURFACE_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
-    return <>{children}</>;
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <NexusTopNav />
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          {children}
+        </div>
+      </div>
+    );
   }
 
   const activePage =

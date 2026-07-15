@@ -73,7 +73,6 @@ export default async function AdminDataLayerExplorerPage() {
         tenantName: tenant.tenantName,
         context: "Data Journey",
       }}
-      showProductNav
     >
       <main
         data-admin-data-layer-explorer
