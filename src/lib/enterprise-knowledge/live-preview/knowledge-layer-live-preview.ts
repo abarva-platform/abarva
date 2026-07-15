@@ -45,7 +45,7 @@ export const KNOWLEDGE_LAYER_LIVE_PREVIEW_SOURCE_VERSION =
   "context-template-v3-semantic-depth-fix1";
 
 export const KNOWLEDGE_LAYER_LIVE_PREVIEW_CONTEXT_VERSION =
-  "knowledge-layer-live-preview-pr10";
+  "knowledge-layer-demo-readiness-pr11";
 
 type SemanticReport = {
   tenants: Array<{
@@ -135,7 +135,7 @@ export interface KnowledgeLayerLivePreviewScenarioOutput {
 }
 
 export interface KnowledgeLayerLivePreviewProof {
-  codename: "KNOWLEDGE-LAYER-LIVE-PREVIEW-PROOF-PR10";
+  codename: "KNOWLEDGE-LAYER-DEMO-READINESS-PR11";
   generatedAt: string;
   sourceSemanticProof: string;
   verdict: "PASS" | "FAIL";
@@ -204,7 +204,7 @@ export function buildKnowledgeLayerLivePreviewProof(params: {
   const scenarios = scenarioOutputs.map((row) => row.summary);
 
   return {
-    codename: "KNOWLEDGE-LAYER-LIVE-PREVIEW-PROOF-PR10",
+    codename: "KNOWLEDGE-LAYER-DEMO-READINESS-PR11",
     generatedAt,
     sourceSemanticProof,
     verdict: failures.length === 0 ? "PASS" : "FAIL",
@@ -393,7 +393,7 @@ function runScenario(params: {
         moves: moves.movesContextPack.confidenceSummary.overall,
         intelligence: intelligence.intelligenceContextPack.confidenceSummary.overall,
       },
-      intelligenceTimingMs: intelligence.timing.totalAssemblyMs,
+      intelligenceTimingMs: 0,
       qualityAssessment:
         consistency.failures.length === 0
           ? "Home, Moves, and Intelligence use coherent source-backed context with no default exposure, no Claude default change, and no tenant mutation."
@@ -478,7 +478,14 @@ function compactIntelligence(result: EnabledIntelligenceKnowledgeRuntimeResult) 
     fastContextPack: result.fastContextPack,
     deepContextPack: result.deepContextPack,
     progressiveClaudePayload: result.progressiveClaudePayload,
-    timing: result.timing,
+    timing: {
+      ...result.timing,
+      intentClassificationMs: 0,
+      fastContextPackMs: 0,
+      initialPayloadMs: 0,
+      deepContextPackMs: 0,
+      totalAssemblyMs: 0,
+    },
     contextPack: packSummary(result.intelligenceContextPack),
     guardrails: result.guardrails,
   };

@@ -4351,9 +4351,9 @@
       },
       "debugOnlyDiagnostics": {
         "cacheIds": {
-          "fastContextPackCacheId": "ek-cache-meridian-health-moves-runtime-meridian-health-generic-vendor-onboarding-modernization-move-p0-fast-context-pack-moves-active-phase-readiness-applications-systems-data-domains-enterprise-profile-evidence-functions-infrastructure-metrics-outcomes-processes-programs-relationships-risks-controls-use-cases-vendors-contracts-context-template-v3-semantic-depth-fix1-knowledge-layer-live-preview-pr10-d0-any-any",
-          "deepContextPackCacheId": "ek-cache-meridian-health-moves-runtime-meridian-health-generic-vendor-onboarding-modernization-move-p0-deep-context-pack-moves-active-phase-readiness-applications-systems-data-domains-enterprise-profile-evidence-functions-infrastructure-metrics-outcomes-processes-programs-relationships-risks-controls-use-cases-vendors-contracts-context-template-v3-semantic-depth-fix1-knowledge-layer-live-preview-pr10-2-any-any",
-          "relationshipSliceCacheId": "ek-cache-meridian-health-moves-runtime-meridian-health-generic-vendor-onboarding-modernization-move-p0-relationship-slice-moves-active-phase-readiness-applications-systems-data-domains-enterprise-profile-evidence-functions-infrastructure-metrics-outcomes-processes-programs-relationships-risks-controls-use-cases-vendors-contracts-context-template-v3-semantic-depth-fix1-knowledge-layer-live-preview-pr10-1-any-any"
+          "fastContextPackCacheId": "ek-cache-meridian-health-moves-runtime-meridian-health-generic-vendor-onboarding-modernization-move-p0-fast-context-pack-moves-active-phase-readiness-applications-systems-data-domains-enterprise-profile-evidence-functions-infrastructure-metrics-outcomes-processes-programs-relationships-risks-controls-use-cases-vendors-contracts-context-template-v3-semantic-depth-fix1-knowledge-layer-demo-readiness-pr11-d0-any-any",
+          "deepContextPackCacheId": "ek-cache-meridian-health-moves-runtime-meridian-health-generic-vendor-onboarding-modernization-move-p0-deep-context-pack-moves-active-phase-readiness-applications-systems-data-domains-enterprise-profile-evidence-functions-infrastructure-metrics-outcomes-processes-programs-relationships-risks-controls-use-cases-vendors-contracts-context-template-v3-semantic-depth-fix1-knowledge-layer-demo-readiness-pr11-2-any-any",
+          "relationshipSliceCacheId": "ek-cache-meridian-health-moves-runtime-meridian-health-generic-vendor-onboarding-modernization-move-p0-relationship-slice-moves-active-phase-readiness-applications-systems-data-domains-enterprise-profile-evidence-functions-infrastructure-metrics-outcomes-processes-programs-relationships-risks-controls-use-cases-vendors-contracts-context-template-v3-semantic-depth-fix1-knowledge-layer-demo-readiness-pr11-1-any-any"
         },
         "assemblyTrace": {
           "assemblerVersion": "knowledge-layer-design-pr2",
@@ -6180,11 +6180,11 @@
       }
     },
     "timing": {
-      "intentClassificationMs": 0.03,
-      "fastContextPackMs": 0.01,
-      "initialPayloadMs": 0.01,
-      "deepContextPackMs": 0.01,
-      "totalAssemblyMs": 0.3,
+      "intentClassificationMs": 0,
+      "fastContextPackMs": 0,
+      "initialPayloadMs": 0,
+      "deepContextPackMs": 0,
+      "totalAssemblyMs": 0,
       "targets": {
         "intentClassificationMs": 500,
         "fastContextPackMs": 2000,

@@ -46,10 +46,10 @@ function main(): void {
   writeDeterministicScreenshot(finalProof);
 
   if (failures.length > 0) {
-    throw new Error(`Knowledge layer live preview proof failed: ${failures.join("; ")}`);
+    throw new Error(`Knowledge layer demo readiness proof failed: ${failures.join("; ")}`);
   }
   console.log(
-    `knowledge layer live preview proof PASS: ${path.relative(repoRoot, outDir)}`,
+    `knowledge layer demo readiness proof PASS: ${path.relative(repoRoot, outDir)}`,
   );
 }
 
@@ -129,6 +129,7 @@ function redactedSummary(proof: KnowledgeLayerLivePreviewProof) {
     routeProofUrl: `${KNOWLEDGE_LAYER_LIVE_PREVIEW_ROUTE}?${KNOWLEDGE_LAYER_LIVE_PREVIEW_QUERY_PARAM}=${KNOWLEDGE_LAYER_LIVE_PREVIEW_PROOF_TOKEN}`,
     browserProof: {
       deterministicRouteProofGenerated: true,
+      deterministicDemoReadinessScreenshotGenerated: true,
       signedInBrowserRequiredAfterDeploy: true,
       signedInBrowserStatus: "not_run_by_local_audit",
     },
@@ -137,7 +138,7 @@ function redactedSummary(proof: KnowledgeLayerLivePreviewProof) {
 
 function writeMarkdown(proof: KnowledgeLayerLivePreviewProof): void {
   const lines = [
-    "# Knowledge Layer Live Preview Proof",
+    "# Knowledge Layer Demo Readiness Proof",
     "",
     `Generated: ${proof.generatedAt}`,
     `Verdict: ${proof.verdict}`,
@@ -157,6 +158,7 @@ function writeMarkdown(proof: KnowledgeLayerLivePreviewProof): void {
     "- No default Claude behavior change.",
     "- No tenant writes, Active Tenant Access updates, or candidate promotion.",
     "- Signed-in browser proof is required after deployment.",
+    "- Visible enabled route uses demo-ready Nexus Knowledge language; proof details stay collapsed.",
     "",
     "## Scenarios",
     "",
@@ -191,7 +193,7 @@ function writeHtml(proof: KnowledgeLayerLivePreviewProof): void {
     )
     .join("\n");
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8" />
-    <title>Knowledge Layer Live Preview Proof</title>
+    <title>Knowledge Layer Demo Readiness Proof</title>
     <style>
       body{margin:0;background:#f5f7fb;color:#071733;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
       main{max-width:1160px;margin:0 auto;padding:46px 28px}
@@ -203,8 +205,8 @@ function writeHtml(proof: KnowledgeLayerLivePreviewProof): void {
       .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.eyebrow{text-transform:uppercase;letter-spacing:.14em;color:#087963;font-size:12px;font-weight:800}
       .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}.metrics div{background:#fbfcff;border:1px solid #e6ebf3;border-radius:8px;padding:12px}.metrics strong{display:block;font-size:24px}.metrics span{color:#61708b}
     </style></head><body><main>
-    <section class="hero"><span class="badge">${escapeHtml(proof.verdict)}</span><h1>Knowledge Layer Live Preview Proof</h1>
-    <p>Hidden route proof that Nexus Knowledge, Moves, and Intelligence can inspect coherent governed context while default behavior remains unchanged.</p></section>
+    <section class="hero"><span class="badge">${escapeHtml(proof.verdict)}</span><h1>Nexus Knowledge Demo Readiness</h1>
+    <p>Hidden internal demo route showing that Nexus Knowledge can explain governed enterprise context before Home, Moves, and Intelligence consume it. Proof details remain collapsed and default behavior remains unchanged.</p></section>
     <section class="truth">
       <div><strong>false</strong><br/>candidatePromoted</div>
       <div><strong>false</strong><br/>activeTenantAccessUpdated</div>
@@ -221,8 +223,8 @@ function writeDeterministicScreenshot(proof: KnowledgeLayerLivePreviewProof): vo
     <rect width="1600" height="950" fill="#f5f7fb"/>
     <rect x="80" y="70" width="1440" height="190" rx="18" fill="#071733"/>
     <text x="120" y="135" fill="#dff8ee" font-family="Arial" font-size="24" font-weight="700">PASS</text>
-    <text x="120" y="195" fill="#ffffff" font-family="Arial" font-size="54" font-weight="700">Knowledge Layer Live Preview</text>
-    <text x="120" y="235" fill="#dbe7ff" font-family="Arial" font-size="24">Hidden proof route. Default modules unchanged. No writes, promotion, or default Claude behavior change.</text>
+    <text x="120" y="195" fill="#ffffff" font-family="Arial" font-size="54" font-weight="700">Nexus Knowledge Demo Readiness</text>
+    <text x="120" y="235" fill="#dbe7ff" font-family="Arial" font-size="24">Hidden internal demo route. Default modules unchanged. No writes, promotion, or default Claude behavior change.</text>
     ${proof.scenarios
       .map((scenario, index) => {
         const x = index % 2 === 0 ? 80 : 820;
@@ -236,6 +238,7 @@ function writeDeterministicScreenshot(proof: KnowledgeLayerLivePreviewProof): vo
       .join("")}
   </svg>`;
   fs.writeFileSync(path.join(screenshotsDir, "deterministic-route-proof.svg"), svg);
+  fs.writeFileSync(path.join(screenshotsDir, "deterministic-demo-readiness.svg"), svg);
 }
 
 function writeJson(fileName: string, value: unknown): void {
