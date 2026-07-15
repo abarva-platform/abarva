@@ -5,7 +5,13 @@ import {
 } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { loadCioTowerCxoView } from "@/lib/cio-tower/cxo-view-model";
+import { buildTowerV3ContextPackFromTenantInputs } from "@/lib/enterprise-knowledge/tower/tower-v3-context-pack-from-tenant-inputs";
 import { listTowerBudgetRollupsForClient } from "@/lib/tower/tower-budget-rollups";
+import {
+  isMeridianTowerRuntimeTenant,
+  isTowerV3ContextRuntimeEnabled,
+} from "@/lib/tower/tower-v3-runtime-flag";
+import { buildTowerV3RuntimeViewModel } from "@/lib/tower/tower-v3-runtime-view";
 
 export const metadata = { title: "Tower · AbarVa" };
 export const dynamic = "force-dynamic";
@@ -41,6 +47,21 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
       tenantKey: client?.key ?? requestedClient,
     }).catch(() => []),
   ]);
+  const towerV3RuntimeView =
+    isTowerV3ContextRuntimeEnabled() &&
+    (isMeridianTowerRuntimeTenant(client?.key) ||
+      isMeridianTowerRuntimeTenant(requestedClient) ||
+      isMeridianTowerRuntimeTenant(client?.name))
+      ? buildTowerV3RuntimeViewModel({
+          tenantName,
+          contextPack: buildTowerV3ContextPackFromTenantInputs({
+            tenantKey: "meridian-health",
+            tenantName,
+            activeInputRoot:
+              "datasets/tenant-inputs/active/meridian-health/current",
+          }).contextPack,
+        })
+      : null;
 
   return (
     <TowerIndexPage
@@ -49,6 +70,7 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
       towerToday={new Date().toISOString().slice(0, 10)}
       clientId={client?.id}
       cxoView={cxoView}
+      towerV3RuntimeView={towerV3RuntimeView}
       budgetRollups={budgetRollups}
     />
   );

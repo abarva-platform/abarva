@@ -56,6 +56,7 @@ import type {
   CioTowerCxoTableRow,
   CioTowerCxoViewModel,
 } from "@/lib/cio-tower/cxo-view-model";
+import type { TowerV3RuntimeViewModel } from "@/lib/tower/tower-v3-runtime-view";
 
 export interface TowerSubstrateCounts {
   initiatives: number;
@@ -3092,6 +3093,376 @@ function CxoGovernedCommandCenter({
   );
 }
 
+function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
+  return (
+    <div
+      data-testid="tower-context-runtime-view"
+      style={{
+        padding: "0 40px 90px",
+        maxWidth: 1080,
+        margin: "0 auto",
+      }}
+    >
+      <section
+        style={{
+          border: `1px solid ${T.BORDER_STRONG}`,
+          background: "#fff",
+          borderRadius: 12,
+          boxShadow: PANEL_SHADOW,
+          padding: 24,
+          marginBottom: 18,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: T.MONO,
+            fontSize: 10,
+            letterSpacing: "1.5px",
+            textTransform: "uppercase",
+            color: T.GREEN,
+            fontWeight: 900,
+            marginBottom: 10,
+          }}
+        >
+          Measurement readiness
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1.45fr) repeat(3, minmax(0, .7fr))",
+            gap: 18,
+            alignItems: "start",
+          }}
+        >
+          <div>
+            <h2
+              style={{
+                margin: 0,
+                color: T.INK,
+                fontFamily: T.SERIF,
+                fontSize: 30,
+                lineHeight: 1.05,
+                fontWeight: 650,
+                letterSpacing: "-0.025em",
+              }}
+            >
+              {view.tenantName} measurement plan is ready for gating, not outcome proof.
+            </h2>
+            <p
+              style={{
+                margin: "12px 0 0",
+                color: T.INK_2,
+                fontSize: 14,
+                lineHeight: 1.55,
+                maxWidth: 680,
+              }}
+            >
+              {view.headline} The page is showing metric families, value hypotheses,
+              evidence blockers, and next measurement actions from the governed context pack.
+            </p>
+          </div>
+          {[
+            ["Metric families", view.metricCount],
+            ["Value hypotheses", view.valueRecordCount],
+            ["Claim gates", view.valueClaimCount],
+          ].map(([label, value]) => (
+            <div
+              key={label}
+              style={{
+                border: `1px solid ${T.BORDER}`,
+                borderRadius: 10,
+                padding: 14,
+                background: T.CREAM,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: T.MONO,
+                  fontSize: 9,
+                  letterSpacing: "1.3px",
+                  textTransform: "uppercase",
+                  color: T.GRAY_DK,
+                  fontWeight: 800,
+                }}
+              >
+                {label}
+              </div>
+              <div
+                style={{
+                  fontFamily: T.SERIF,
+                  fontSize: 30,
+                  fontWeight: 800,
+                  marginTop: 8,
+                  color: T.INK,
+                }}
+              >
+                {value}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1.2fr .8fr",
+          gap: 18,
+          marginBottom: 18,
+        }}
+      >
+        <CioPanel
+          eyebrow="Metric Families"
+          title="What Tower should track before value is claimed."
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gap: 10,
+            }}
+          >
+            {view.metricFamilies.slice(0, 10).map((metric) => (
+              <div
+                key={`${metric.sourceDimension}-${metric.label}`}
+                style={{
+                  border: `1px solid ${T.BORDER}`,
+                  borderRadius: 8,
+                  padding: 12,
+                  background: T.CREAM,
+                  minHeight: 116,
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: T.SERIF,
+                    fontSize: 16,
+                    lineHeight: 1.18,
+                    fontWeight: 750,
+                    color: T.INK,
+                  }}
+                >
+                  {metric.label}
+                </div>
+                <div style={{ marginTop: 10, display: "grid", gap: 5 }}>
+                  <SmallEvidenceLine label="Baseline" value={metric.baselineStatus} />
+                  <SmallEvidenceLine label="Target" value={metric.targetStatus} />
+                  <SmallEvidenceLine label="Evidence" value={metric.evidenceStatus} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CioPanel>
+
+        <CioPanel
+          eyebrow="Value Hypothesis Gate"
+          title="What value language is currently safe."
+        >
+          <div
+            style={{
+              border: `1px solid ${T.AMBER}`,
+              background: T.AMBER_BG,
+              borderRadius: 10,
+              padding: 13,
+              marginBottom: 12,
+              color: T.INK,
+              fontSize: 13.5,
+              lineHeight: 1.45,
+            }}
+          >
+            Finance-attested measurement evidence is not yet available. Tower can show
+            value hypotheses with caveats, not outcome proof.
+          </div>
+          <div style={{ display: "grid", gap: 9 }}>
+            {view.valueHypotheses.slice(0, 6).map((item) => (
+              <div
+                key={`${item.label}-${item.value}`}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(0, 1fr) auto",
+                  gap: 10,
+                  alignItems: "center",
+                  borderBottom: `1px solid ${T.RULE}`,
+                  paddingBottom: 9,
+                }}
+              >
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontWeight: 750, color: T.INK, fontSize: 13.5 }}>
+                    {item.label}
+                  </div>
+                  <div style={{ color: T.INK_2, fontSize: 12.5, marginTop: 2 }}>
+                    {item.claimBasis.replace(/_/g, " ")}
+                  </div>
+                </div>
+                <span
+                  style={{
+                    fontFamily: T.MONO,
+                    fontSize: 10,
+                    letterSpacing: "1px",
+                    textTransform: "uppercase",
+                    borderRadius: 999,
+                    padding: "5px 8px",
+                    background: item.gateStatus === "allowed" ? T.GREEN_BG : T.AMBER_BG,
+                    color: item.gateStatus === "allowed" ? T.GREEN : T.AMBER,
+                    border: `1px solid ${
+                      item.gateStatus === "allowed" ? "rgba(29,158,117,.35)" : "rgba(186,117,23,.35)"
+                    }`,
+                    fontWeight: 800,
+                  }}
+                >
+                  {item.gateStatus}
+                </span>
+              </div>
+            ))}
+          </div>
+        </CioPanel>
+      </section>
+
+      <CioPanel
+        eyebrow="Executive Blocker Themes"
+        title="Repeated row-level caveats grouped for leadership action."
+      >
+        <div
+          data-testid="tower-gap-themes"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            gap: 12,
+          }}
+        >
+          {view.gapThemes.map((theme) => (
+            <div
+              key={theme.themeId}
+              style={{
+                border: `1px solid ${T.BORDER}`,
+                borderRadius: 10,
+                padding: 14,
+                background: "#fff",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  alignItems: "flex-start",
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: T.SERIF,
+                    fontSize: 17,
+                    fontWeight: 800,
+                    lineHeight: 1.15,
+                    color: T.INK,
+                  }}
+                >
+                  {theme.title}
+                </div>
+                <span
+                  style={{
+                    fontFamily: T.MONO,
+                    fontSize: 10,
+                    whiteSpace: "nowrap",
+                    color: T.GRAY_DK,
+                    fontWeight: 800,
+                  }}
+                >
+                  {theme.affectedRecordCount} records
+                </span>
+              </div>
+              <p style={{ color: T.INK_2, fontSize: 13, lineHeight: 1.45 }}>
+                {theme.whyItMatters}
+              </p>
+              <div style={{ display: "grid", gap: 5, marginTop: 10 }}>
+                <SmallEvidenceLine
+                  label="Required"
+                  value={theme.requiredEvidence.slice(0, 2).join("; ")}
+                />
+                <SmallEvidenceLine
+                  label="Handoff"
+                  value={`${theme.moduleHandoff}${theme.ownerOrSteward ? ` · ${theme.ownerOrSteward}` : ""}`}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </CioPanel>
+
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr)",
+          gap: 18,
+          marginTop: 18,
+        }}
+      >
+        <CioPanel
+          eyebrow="Next Measurement Actions"
+          title="What has to happen before the dashboard can move from plan to proof."
+        >
+          <ol style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 8 }}>
+            {view.nextMeasurementActions.map((action) => (
+              <li key={action} style={{ color: T.INK_2, lineHeight: 1.45 }}>
+                {action}
+              </li>
+            ))}
+          </ol>
+        </CioPanel>
+        <details
+          style={{
+            border: `1px solid ${T.BORDER}`,
+            borderRadius: 10,
+            padding: 12,
+            background: T.CREAM,
+            color: T.INK_2,
+            fontSize: 12.5,
+          }}
+        >
+          <summary
+            style={{
+              cursor: "pointer",
+              color: T.INK,
+              fontWeight: 800,
+              fontFamily: T.MONO,
+              fontSize: 10,
+              letterSpacing: "1.3px",
+              textTransform: "uppercase",
+            }}
+          >
+            Bridge diagnostics
+          </summary>
+          <div style={{ marginTop: 10, lineHeight: 1.5 }}>
+            Existing Tower read model fallback is retained for diagnostics only. It is a
+            derived bridge view and has not been reconciled row by row to governed
+            context. {view.bridgeDiagnostics.message}
+          </div>
+        </details>
+      </section>
+    </div>
+  );
+}
+
+function SmallEvidenceLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "74px minmax(0, 1fr)", gap: 8 }}>
+      <span
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 9,
+          letterSpacing: "1px",
+          textTransform: "uppercase",
+          color: T.GRAY_DK,
+          fontWeight: 800,
+        }}
+      >
+        {label}
+      </span>
+      <span style={{ color: T.INK_2, fontSize: 12.5, lineHeight: 1.35 }}>{value}</span>
+    </div>
+  );
+}
+
 function CioDashboardPanel({
   active,
   model,
@@ -6035,6 +6406,8 @@ interface TowerIndexPageProps {
   metricPackets?: ReadonlyArray<CioTowerMetricPacket>;
   /** Derived CXO command-center projection from cio_tower.*; not the Tower source of truth. */
   cxoView?: CioTowerCxoViewModel | null;
+  /** Flagged TowerContextPack runtime view for selected measurement/readiness proof. */
+  towerV3RuntimeView?: TowerV3RuntimeViewModel | null;
   /**
    * T-5 (Bind 1): pre-computed band tile aggregations from DB substrate.
    */
@@ -6084,6 +6457,7 @@ export function TowerIndexPage({
   budgetRollups,
   metricPackets,
   cxoView,
+  towerV3RuntimeView,
   bandMetrics,
   pressuresView,
   atlasObservationsView,
@@ -6540,6 +6914,8 @@ export function TowerIndexPage({
                 pressure={detailPressure}
                 closeHref={closeDetailHref}
               />
+            ) : towerV3RuntimeView ? (
+              <TowerContextRuntimePanel view={towerV3RuntimeView} />
             ) : cxoView ? (
               <CxoGovernedCommandCenter
                 model={cxoView}
