@@ -109,6 +109,72 @@ describe("sanitizeAgentAnswerForRender", () => {
     );
   });
 
+  it("scrubs data-layer labels from final agent-answer citations and exhibits", () => {
+    const safe = sanitizeAgentAnswerForRender({
+      ...unsafeAnswer,
+      directAnswer:
+        "For Meridian agent assist, start with authorization status lookup.",
+      prose:
+        "For Meridian agent assist, start with authorization status lookup. Source table: Meridian Health System V7 executive business file.",
+      artifacts: [
+        {
+          artifact: "table",
+          id: "source-table",
+          title: "Sources Used",
+          columns: [
+            { key: "source", label: "Source" },
+            { key: "use", label: "How IT Supports The Answer" },
+          ],
+          rows: [
+            {
+              source: "Meridian Health System V7 executive business file",
+              use: "Meridian Health System has a readback-validated V7 corpus in Azure Postgres Intelligence V7. Loaded foundation: 442 business records, 11,507 field facts, 97 graph nodes, 69 relationship edges, and 118 retrieval chunks.",
+            },
+            {
+              source: "V7 Enterprise profile",
+              use: "Revenue Basis: Not Loaded; validation: Synthetic Demo Manifest Gated.",
+            },
+          ],
+        },
+      ],
+      citations: [
+        {
+          id: "c1",
+          label: "Meridian Health System V7 executive business file",
+          sourceClass: "tenant-fact",
+          recordId: "meridian-health:v7.1.0-meridian-current-state-20260709",
+          excerpt:
+            "Meridian Health System has a readback-validated V7 corpus in Azure Postgres Intelligence V7. Loaded foundation: 442 business records, 11,507 field facts, 97 graph nodes, 69 relationship edges, and 118 retrieval chunks.",
+        },
+        {
+          id: "c2",
+          label: "V7 Enterprise profile",
+          sourceClass: "tenant-fact",
+          recordId: "v7_01_enterprise_profile",
+          excerpt:
+            "Enterprise profile from Intelligence V7 (source file). Revenue Basis: Not Loaded; Technology Budget Basis: not_loaded; validation: Synthetic Demo Manifest Gated.",
+        },
+      ],
+    });
+
+    const renderedPayload = JSON.stringify({
+      prose: safe.prose,
+      citations: safe.citations,
+      artifacts: safe.artifacts,
+    });
+
+    expect(renderedPayload).not.toMatch(/\bV\d+\b/i);
+    expect(renderedPayload).not.toMatch(/v7[._:-]/i);
+    expect(renderedPayload).not.toMatch(/Intelligence V7/i);
+    expect(renderedPayload).not.toMatch(/not_loaded|Not Loaded/i);
+    expect(renderedPayload).not.toMatch(/Synthetic Demo Manifest Gated/i);
+    expect(renderedPayload).not.toMatch(
+      /business records|field facts|graph nodes|relationship edges|retrieval chunks/i,
+    );
+    expect(renderedPayload).not.toMatch(/recordId/i);
+    expect(renderedPayload).toContain("available source material");
+  });
+
   it("detects unsafe public text patterns without regex state drift", () => {
     expect(
       containsUnsafePublicText("clients[c7578e7a-545a-4b75-860e-465358f5e00b]"),

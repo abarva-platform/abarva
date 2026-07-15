@@ -4,7 +4,10 @@ import type {
   AnswerTable,
   AvaAnswerPacket,
 } from "@/lib/ava-answer/contract";
-import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
+import {
+  scrubPublicAvaAnswerText,
+  scrubPublicAvaSourceText,
+} from "@/lib/ava-answer/public-answer-scrub";
 import {
   shapeAvaAnswerPacket,
   shapePublicText,
@@ -77,23 +80,55 @@ export function sanitizePublicText(
   return cleaned || fallback;
 }
 
+function sanitizePublicSourceText(
+  value: string,
+  fallback = "evidence",
+): string {
+  const withoutUnsafeIds = dedupeConsultantLabels(value)
+    .replace(BRACKET_RECORD_RE, fallback)
+    .replace(UUID_RE, fallback)
+    .replace(RAW_RECORD_ID_RE, fallback)
+    .replace(INTERNAL_FIELD_RE, "source field");
+  const cleaned = shapePublicText(
+    scrubPublicAvaSourceText(withoutUnsafeIds),
+    fallback,
+  )
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+  return cleaned || fallback;
+}
+
+function sanitizeUnknownForRender(value: unknown): unknown {
+  if (typeof value === "string") return sanitizePublicSourceText(value);
+  if (Array.isArray(value)) return value.map(sanitizeUnknownForRender);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, entry]) => [
+      key,
+      sanitizeUnknownForRender(entry),
+    ]),
+  );
+}
+
 function sanitizeCitation(citation: AnswerCitation): AnswerCitation {
   const fallback = fallbackCitationLabel(citation);
   const rawLabel = citation.label || fallback;
+  const publicCitation = { ...citation };
+  delete publicCitation.recordId;
   return {
-    ...citation,
+    ...publicCitation,
     label: containsUnsafePublicText(rawLabel)
       ? fallback
-      : sanitizePublicText(rawLabel, fallback),
+      : sanitizePublicSourceText(rawLabel, fallback),
     excerpt: citation.excerpt
-      ? sanitizePublicText(citation.excerpt, fallback)
+      ? sanitizePublicSourceText(citation.excerpt, fallback)
       : citation.excerpt,
   };
 }
 
 function sanitizeCell(value: string | number | null): string | number | null {
   if (typeof value !== "string") return value;
-  return sanitizePublicText(value, "evidence");
+  return sanitizePublicSourceText(value, "evidence");
 }
 
 function sanitizeTable<T extends AnswerTable>(table: T): T {
@@ -164,8 +199,54 @@ export function sanitizeAvaAnswerForRender(
         title: artifact.title
           ? sanitizePublicText(artifact.title, "Answer chart")
           : artifact.title,
+        subtitle: artifact.subtitle
+          ? sanitizePublicText(artifact.subtitle, "Answer chart")
+          : artifact.subtitle,
+        sourceNote: artifact.sourceNote
+          ? sanitizePublicSourceText(artifact.sourceNote, "Source note")
+          : artifact.sourceNote,
+        data: sanitizeUnknownForRender(artifact.data),
       };
     }),
+    prose: answer.prose ? sanitizePublicText(answer.prose, "") : answer.prose,
+    factsUsed: answer.factsUsed.map((fact) => ({
+      ...fact,
+      id: sanitizePublicSourceText(fact.id, "fact"),
+      label: sanitizePublicText(fact.label, "Fact"),
+      value:
+        typeof fact.value === "string"
+          ? sanitizePublicSourceText(fact.value, "Fact")
+          : fact.value,
+    })),
+    metricsUsed: answer.metricsUsed.map((metric) => ({
+      ...metric,
+      id: sanitizePublicSourceText(metric.id, "metric"),
+      label: sanitizePublicText(metric.label, "Metric"),
+      unit: metric.unit ? sanitizePublicText(metric.unit, "") : metric.unit,
+    })),
+    relationshipsUsed: answer.relationshipsUsed.map((relationship) => ({
+      ...relationship,
+      id: sanitizePublicSourceText(relationship.id, "relationship"),
+      label: sanitizePublicText(relationship.label, "Relationship"),
+      fromLabel: relationship.fromLabel
+        ? sanitizePublicText(relationship.fromLabel, "Entity")
+        : relationship.fromLabel,
+      toLabel: relationship.toLabel
+        ? sanitizePublicText(relationship.toLabel, "Entity")
+        : relationship.toLabel,
+      relationshipType: relationship.relationshipType
+        ? sanitizePublicText(relationship.relationshipType, "relationship")
+        : relationship.relationshipType,
+    })),
+    corpusUsed: answer.corpusUsed?.map((corpus) => ({
+      ...corpus,
+      id: sanitizePublicSourceText(corpus.id, "corpus"),
+      label: sanitizePublicText(corpus.label, "Corpus support"),
+      corpusType: corpus.corpusType
+        ? sanitizePublicText(corpus.corpusType, "corpus")
+        : corpus.corpusType,
+    })),
+    decisionFrame: sanitizeUnknownForRender(answer.decisionFrame),
     gaps: answer.gaps.map((gap) => ({
       ...gap,
       label: sanitizePublicText(gap.label, "Source gap"),
