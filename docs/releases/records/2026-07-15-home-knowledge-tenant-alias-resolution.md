@@ -39,9 +39,12 @@ data-layer runway.
 - `src/app/(maestro)/home/page.tsx`: maps requested-client, active-client, and
   display-name aliases such as `skyharbor`, `Airline Demo`, and `lakeshore`
   before `getModuleContext`.
+- `Dockerfile`: copies `reports/active-tenant-access` into the runtime image so
+  the module-context supplier can read Active Tenant Access metadata in ACA.
 - `scripts/audit/build-home-knowledge-cutover-proof.ts`: adds a SkyHarbor
   active-context proof scenario and fails if app-client aliases are not
-  canonicalized before active Knowledge reads.
+  canonicalized before active Knowledge reads or if active-access metadata is
+  not copied into the final runtime image.
 - `reports/enterprise-knowledge-layer/home-cutover-proof/*`: regenerated proof
   outputs showing SkyHarbor active context resolution.
 
@@ -89,5 +92,6 @@ candidate data, production tables, or Active Tenant Access pointers.
 ## Known Gaps
 
 Home/aVa chat summaries are not moved to a new Claude generation path in this
-release. This release fixes active Knowledge context resolution for Home; it does
-not perform the broader legacy V-named dataset archive/purge.
+release. This release fixes active Knowledge context resolution and runtime
+metadata packaging for Home; it does not perform the broader legacy V-named
+dataset archive/purge.

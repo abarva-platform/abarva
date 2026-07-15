@@ -116,6 +116,7 @@ COPY --from=build --chown=node:node /app/src/scripts ./src/scripts
 COPY --from=build --chown=node:node /app/intelligence ./intelligence
 COPY --from=build --chown=node:node /app/scripts ./scripts
 COPY --from=build --chown=node:node /app/datasets ./datasets
+COPY --from=build --chown=node:node /app/reports/active-tenant-access ./reports/active-tenant-access
 COPY --from=build --chown=node:node /app/tower-standardized-v1 ./tower-standardized-v1
 COPY --from=build --chown=node:node /app/supabase/migrations ./supabase/migrations
 
