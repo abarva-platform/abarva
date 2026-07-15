@@ -256,6 +256,7 @@
     "data:consolidate-tenant-inputs": "node scripts/data-build/consolidate-active-tenant-inputs.mjs",
     "audit:canonical-tenant-inputs": "npx tsx scripts/audit/canonical-tenant-inputs.ts",
     "audit:tenant-input-quality": "npx tsx scripts/audit/tenant-input-quality-depth.ts",
+    "audit:meridian-data-state-reconciliation": "node scripts/audit/meridian-data-state-reconciliation.mjs",
     "audit:source-projection:all-tenants": "tsx scripts/audit/tenant-manifest-completeness.ts",
     "audit:home-ava-representation": "tsx scripts/audit/tenant-manifest-completeness.ts",
     "audit:home-english-summary": "tsx scripts/audit/build-home-english-summary.ts",
