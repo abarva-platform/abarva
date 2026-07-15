@@ -5,6 +5,7 @@ import { AdvisoryIntelligencePage } from '@/components/intelligence-advisory/Adv
 import { getActiveClientRow, hasLockedTenantSession } from '@/lib/active-client';
 import { canonicalClientDisplayName } from '@/lib/client-config';
 import { getEnterpriseLandscapeViewModel } from '@/lib/home/enterprise-landscape-view-model';
+import { resolveIntelligenceViewModelClientKey } from '@/lib/intelligence/intelligence-view-model-client-key';
 
 export const metadata = {
   title: 'Intelligence · Advisory Board | AbarVa',
@@ -38,6 +39,11 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
   const requestedClient = (await hasLockedTenantSession()) ? rawRequestedClient : null;
   const client = await getActiveClientRow(requestedClient).catch(() => null);
   const contextTenantKey = enterpriseContextTenantKey(client?.key ?? requestedClient);
+  const viewModelClientKey = resolveIntelligenceViewModelClientKey({
+    clientKey: client?.key,
+    requestedClient,
+    contextTenantKey,
+  });
   const tenantName =
     canonicalClientDisplayName({ key: client?.key, name: client?.name }) ??
     client?.name ??
@@ -55,7 +61,7 @@ export default async function IntelligencePage({ searchParams }: IntelligencePag
     >
       <AdvisoryIntelligencePage
         viewModel={getEnterpriseLandscapeViewModel({
-          clientKey: contextTenantKey ?? client?.key ?? requestedClient,
+          clientKey: viewModelClientKey,
           tenantName,
         })}
       />
