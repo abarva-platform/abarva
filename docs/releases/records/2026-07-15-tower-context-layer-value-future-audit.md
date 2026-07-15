@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds a read-only Tower audit generator that checks whether Tower is using governed context/data paths, whether value and ROI claims are properly caveated, and what Tower should become next. The output is a review packet under `reports/tower-audit/` with CSVs, JSON, Markdown, and an HTML proof page.
+Adds read-only Tower audit generators that check whether Tower is using governed context/data paths, whether value and ROI claims are properly caveated, what Tower should become next, and how `cio_tower` facts/measures/entities/relationships are derived today. The output is a review packet under `reports/tower-audit/` with CSVs, JSON, Markdown, and HTML proof pages.
 
 ## Layer Impact
 
@@ -29,12 +29,16 @@ Adds a read-only Tower audit generator that checks whether Tower is using govern
 ## Changes Included
 
 - `scripts/audit/tower-context-layer-quality.mjs`
+- `scripts/audit/cio-tower-fact-derivation-audit.mjs`
 - `package.json` script `audit:tower-context-layer-quality`
+- `package.json` script `audit:cio-tower-fact-derivation`
 - Generated report outputs under `reports/tower-audit/`
+- Generated fact-derivation outputs under `reports/tower-audit/cio-fact-derivation/`
 
 ## QA / Validation
 
 - `npm run audit:tower-context-layer-quality`: Pass; generated `reports/tower-audit/`.
+- `npm run audit:cio-tower-fact-derivation`: Pass; generated `reports/tower-audit/cio-fact-derivation/` with 5 tenants, 245 standardized source files, 248 source-to-Tower lineage rows, 8 Tower-to-v3 reconciliation rows, 6 legacy bridge dependency rows, 7 consumer rows, and 6 unreconciled fact classes.
 - `npm run audit:meridian-data-state-reconciliation`: Pass; status `safe-for-cdao-demo-with-caveats`, readiness `99/100`.
 - `npm run audit:enterprise-knowledge-layer`: Pass; generated enterprise knowledge proof.
 - `npm run audit:enterprise-naming`: Pass.
@@ -72,7 +76,15 @@ Revert the PR. Since this is read-only audit/report generation, rollback has no 
 - `reports/tower-audit/meridian-tower-readiness.csv`
 - `reports/tower-audit/future-of-tower.md`
 - `reports/tower-audit/tower-audit-proof.html`
+- `reports/tower-audit/cio-fact-derivation/summary.md`
+- `reports/tower-audit/cio-fact-derivation/summary.json`
+- `reports/tower-audit/cio-fact-derivation/source-to-cio-tower-lineage.csv`
+- `reports/tower-audit/cio-fact-derivation/cio-tower-to-v3-reconciliation.csv`
+- `reports/tower-audit/cio-fact-derivation/legacy-bridge-dependencies.csv`
+- `reports/tower-audit/cio-fact-derivation/tower-consumer-map.csv`
+- `reports/tower-audit/cio-fact-derivation/unreconciled-facts.csv`
+- `reports/tower-audit/cio-fact-derivation/cio-fact-derivation-proof.html`
 
 ## Known Gaps
 
-Browser screenshots are intentionally marked `Not run` unless a signed-in browser proof is executed separately. This PR does not rebuild Tower, redesign Tower, promote candidate data, create synthetic data, or change runtime value-claim behavior.
+Browser screenshots are intentionally marked `Not run` unless a signed-in browser proof is executed separately. The `cio_tower` fact-derivation audit is static/source-based; it proves code and package lineage, not live database row counts. This PR does not rebuild Tower, redesign Tower, promote candidate data, create synthetic data, mutate `cio_tower`, or change runtime value-claim behavior.
