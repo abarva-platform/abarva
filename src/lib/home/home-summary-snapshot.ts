@@ -255,16 +255,25 @@ export interface HomeSummarySnapshotFromModuleContextOptions {
 }
 
 const REQUIRED_CONTEXT_AREAS = [
+  ["enterprise-profile", "Enterprise Profile"],
   ["business-functions", "Business Functions"],
+  ["org-ownership", "Org Ownership"],
+  ["workforce-roles", "Workforce Roles"],
   ["applications-systems", "Applications & Systems"],
+  ["data-assets-integrations", "Data Assets & Integrations"],
+  ["infrastructure-platforms", "Infrastructure & Platforms"],
   ["vendors-contracts", "Vendors & Contracts"],
-  ["data-assets", "Data Assets"],
-  ["integrations", "Integrations"],
+  ["it-budget-spend-value", "IT Budget, Spend & Value"],
   ["programs-initiatives", "Programs & Initiatives"],
+  ["ai-automation-use-cases", "AI & Automation Use Cases"],
   ["risks-controls", "Risks & Controls"],
-  ["metrics-kpis", "Metrics / KPIs"],
-  ["evidence-sources", "Evidence Sources"],
   ["relationships", "Relationships"],
+  ["evidence-sources", "Evidence Sources"],
+  ["metrics-outcomes", "Metrics & Outcomes"],
+  ["industry-context-patterns", "Industry Context Patterns"],
+  ["expert-lenses", "Expert Lenses"],
+  ["managed-services-scope", "Managed Services Scope"],
+  ["operational-process-evidence", "Operational Process Evidence"],
 ] as const;
 
 const DEFAULT_KNOWLEDGE_LAYER_VISUAL: HomeKnowledgeLayerVisualSpec = {
@@ -358,22 +367,45 @@ const DEFAULT_KNOWLEDGE_LAYER_VISUAL: HomeKnowledgeLayerVisualSpec = {
 };
 
 const CONTEXT_AREA_DIMENSIONS: Record<string, Set<string>> = {
+  "Enterprise Profile": new Set(["Enterprise Profile"]),
   "Business Functions": new Set([
     "Business & Operating Model",
+    "Business Functions",
+  ]),
+  "Org Ownership": new Set([
+    "Business & Operating Model",
+    "Portfolio Company Hierarchy",
+  ]),
+  "Workforce Roles": new Set([
     "Workforce & Personas",
     "Capabilities & Value Streams",
   ]),
   "Applications & Systems": new Set([
     "Applications & Core Systems",
+    "Applications Systems",
+  ]),
+  "Data Assets & Integrations": new Set([
+    "Data & Analytics Estate",
+    "Integrations & Interfaces",
+    "Data Assets Integrations",
+  ]),
+  "Infrastructure & Platforms": new Set([
     "Infrastructure & Cloud",
+    "Infrastructure Cloud Estate",
   ]),
   "Vendors & Contracts": new Set(["Vendors & Contracts"]),
-  "Data Assets": new Set(["Data & Analytics Estate"]),
-  Integrations: new Set(["Integrations & Interfaces"]),
+  "IT Budget, Spend & Value": new Set([
+    "IT Budget & Financials",
+    "Spend Value",
+    "Benefits Realization",
+  ]),
   "Programs & Initiatives": new Set([
-    "AI & Automation Footprint",
     "Initiatives & Roadmap",
-    "AI Governance & Policy",
+    "Programs Initiatives Business Priorities",
+  ]),
+  "AI & Automation Use Cases": new Set([
+    "AI & Automation Footprint",
+    "AI Initiatives",
   ]),
   "Risks & Controls": new Set([
     "Security & Compliance",
@@ -381,13 +413,30 @@ const CONTEXT_AREA_DIMENSIONS: Record<string, Set<string>> = {
     "Operations & Service",
     "AI Governance & Policy",
   ]),
-  "Metrics / KPIs": new Set([
+  Relationships: new Set(["System & Business Relationships"]),
+  "Evidence Sources": new Set([
+    "Source Documents",
+    "Operational Evidence",
+  ]),
+  "Metrics & Outcomes": new Set([
     "Business Metrics",
-    "IT Budget & Financials",
+    "Metric Definitions",
     "Benefits Realization",
   ]),
-  "Evidence Sources": new Set(["Industry Benchmarks"]),
-  Relationships: new Set([]),
+  "Industry Context Patterns": new Set([
+    "Industry Benchmarks",
+    "Industry & Market Patterns",
+  ]),
+  "Expert Lenses": new Set(["Expert Lenses"]),
+  "Managed Services Scope": new Set([
+    "Service Tower Managed Services",
+    "Vendors & Contracts",
+  ]),
+  "Operational Process Evidence": new Set([
+    "Operations & Service",
+    "Operational Evidence",
+    "Source Documents",
+  ]),
 };
 
 export function buildHomeSummarySnapshot(
@@ -679,16 +728,25 @@ const MODULE_DOMAIN_TO_HOME_AREA: Record<
   HomeContextAreaSummary["displayName"],
   ModuleContextRequestedDomain
 > = {
+  "Enterprise Profile": "enterprise_profile",
   "Business Functions": "functions",
+  "Org Ownership": "functions",
+  "Workforce Roles": "functions",
   "Applications & Systems": "applications_systems",
+  "Data Assets & Integrations": "data_assets_integrations",
+  "Infrastructure & Platforms": "applications_systems",
   "Vendors & Contracts": "vendors_contracts",
-  "Data Assets": "data_assets_integrations",
-  Integrations: "relationships",
+  "IT Budget, Spend & Value": "metrics_outcomes",
   "Programs & Initiatives": "programs_priorities",
+  "AI & Automation Use Cases": "programs_priorities",
   "Risks & Controls": "risks_controls",
-  "Metrics / KPIs": "metrics_outcomes",
-  "Evidence Sources": "evidence_sources",
   Relationships: "relationships",
+  "Evidence Sources": "evidence_sources",
+  "Metrics & Outcomes": "metrics_outcomes",
+  "Industry Context Patterns": "evidence_sources",
+  "Expert Lenses": "evidence_sources",
+  "Managed Services Scope": "vendors_contracts",
+  "Operational Process Evidence": "evidence_sources",
 };
 
 function deriveTenantProfileFromModuleContext(args: {
@@ -729,7 +787,7 @@ function deriveTenantProfileFromModuleContext(args: {
       : args.baseProfile.dataOrigin,
     activeContextStatus:
       args.moduleContext.sourceMode === "active_tenant_access"
-        ? "Active Home context"
+        ? "Active Knowledge context"
         : "Active context unavailable",
     candidatePreviewStatus:
       args.moduleContext.mode === "candidate_preview"
