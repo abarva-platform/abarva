@@ -216,8 +216,71 @@ function chartHtml(chart: AnswerChart): string {
   }</section>`;
 }
 
+function graphSvgHtml(graph: AnswerGraph): string {
+  const nodes = graph.nodes.slice(0, 14);
+  if (nodes.length === 0) {
+    return `<p class="note">No graph nodes available.</p>`;
+  }
+
+  const width = 900;
+  const height = Math.max(260, Math.ceil(nodes.length / 2) * 86 + 46);
+  const positions = new Map(
+    nodes.map((node, index) => {
+      const col = index % 2;
+      const row = Math.floor(index / 2);
+      return [
+        node.id,
+        {
+          x: col === 0 ? 210 : 690,
+          y: 58 + row * 86,
+          label: node.label,
+          kind: node.kind,
+        },
+      ] as const;
+    }),
+  );
+
+  const edgeHtml = graph.edges
+    .slice(0, 18)
+    .map((edge, index) => {
+      const from = positions.get(edge.from);
+      const to = positions.get(edge.to);
+      if (!from || !to) return "";
+      const midX = (from.x + to.x) / 2;
+      const midY = (from.y + to.y) / 2 - 8;
+      return `<g>
+<line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" stroke="#74839a" stroke-width="2" marker-end="url(#arrow)"/>
+${
+  edge.label
+    ? `<text x="${midX}" y="${midY - (index % 2) * 8}" text-anchor="middle" font-size="12" fill="#526072">${esc(edge.label)}</text>`
+    : ""
+}
+</g>`;
+    })
+    .join("");
+
+  const nodeHtml = nodes
+    .map((node) => {
+      const position = positions.get(node.id);
+      if (!position) return "";
+      const label = esc(node.label);
+      const kind = position.kind ? `<tspan x="${position.x}" dy="16" font-size="11" fill="#6b7280">${esc(position.kind)}</tspan>` : "";
+      return `<g>
+<rect x="${position.x - 150}" y="${position.y - 27}" width="300" height="54" rx="12" fill="#f0faf4" stroke="#cfe8d7"/>
+<text x="${position.x}" y="${position.y - 3}" text-anchor="middle" font-size="13" font-weight="700" fill="#111827">${label}${kind}</text>
+</g>`;
+    })
+    .join("");
+
+  return `<div class="graph-visual"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(graph.title ?? "Relationship graph")}">
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#74839a"/></marker></defs>
+${edgeHtml}
+${nodeHtml}
+</svg></div>`;
+}
+
 function graphHtml(graph: AnswerGraph): string {
-  return `<section class="card"><h2>${esc(graph.title ?? "Relationship graph")}</h2><ul class="graph">${graph.edges
+  return `<section class="card"><h2>${esc(graph.title ?? "Relationship graph")}</h2>${graphSvgHtml(graph)}<ul class="graph">${graph.edges
     .slice(0, 16)
     .map((edge) => {
       const from = graph.nodes.find((node) => node.id === edge.from)?.label ?? edge.from;
@@ -318,6 +381,8 @@ h2{font-family:Georgia,serif;font-size:20px;margin:0 0 14px}
 .stat b{display:block;font-size:20px;font-family:Georgia,serif}
 .stat span{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em}
 .svg svg{display:block;width:100%;height:auto}
+.graph-visual{background:#fff;border:1px solid #e5e1d8;border-radius:8px;padding:12px;margin-bottom:14px}
+.graph-visual svg{display:block;width:100%;height:auto}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:9px 10px;border-bottom:1px solid #e5e1d8;text-align:left;vertical-align:top}
 th{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;background:#faf9f5}
@@ -345,9 +410,10 @@ ${bodyHtml}
 export function renderAvaAnswerStandaloneHtml(answer: AvaAnswerPacket): string {
   const display = sanitizeAvaAnswerForRender(answer);
   const generatedAt = new Date().toISOString();
+  const surfaceLabel = display.surface.charAt(0).toUpperCase() + display.surface.slice(1);
 
   return documentChrome({
-    eyebrow: "aVa Intelligence Export",
+    eyebrow: `aVa ${surfaceLabel} Export`,
     title: display.question,
     metaHtml: [
       display.tenantKey,
@@ -393,7 +459,7 @@ ${session.turns
   .join("")}`;
 
   return documentChrome({
-    eyebrow: "aVa Executive Session Export",
+    eyebrow: `aVa ${session.surface.charAt(0).toUpperCase() + session.surface.slice(1)} Session Export`,
     title,
     metaHtml: [
       tenant,

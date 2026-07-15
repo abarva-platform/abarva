@@ -541,6 +541,7 @@ export function buildAvaAnswerPdf(
 ): ReactElement<DocumentProps> {
   const display = sanitizeAvaAnswerForRender(answer);
   const generatedAt = new Date().toISOString();
+  const surfaceLabel = display.surface.charAt(0).toUpperCase() + display.surface.slice(1);
 
   return (
     <Document
@@ -550,7 +551,7 @@ export function buildAvaAnswerPdf(
       producer="AbarVa"
     >
       <Page size="LETTER" style={styles.page}>
-        <Text style={styles.eyebrow}>aVa Intelligence Export</Text>
+        <Text style={styles.eyebrow}>aVa {surfaceLabel} Export</Text>
         <Text style={styles.title}>{display.question}</Text>
         <Text style={styles.meta}>
           {display.tenantKey} | {display.status} | {display.quality.confidence} confidence | {generatedAt}
@@ -570,6 +571,8 @@ export function buildAvaChatSessionPdf(
     sanitizeAvaAnswerForRender(answer).artifacts.filter(isVisibleAvaArtifact),
   );
   const title = session.title?.trim() || "aVa Executive Session Export";
+  const surfaceLabel =
+    session.surface.charAt(0).toUpperCase() + session.surface.slice(1);
   const tenant =
     session.tenantKey?.trim() ||
     session.turns.find((turn) => turn.answer)?.answer?.tenantKey ||
@@ -591,7 +594,7 @@ export function buildAvaChatSessionPdf(
       producer="AbarVa"
     >
       <Page size="LETTER" style={styles.page}>
-        <Text style={styles.eyebrow}>aVa Executive Session Export</Text>
+        <Text style={styles.eyebrow}>aVa {surfaceLabel} Session Export</Text>
         <Text style={styles.title}>{title}</Text>
         <Text style={styles.meta}>
           {tenant} | {session.surface} | {session.turns.length} turns | {generatedAt}
