@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds read-only Tower audit generators that check whether Tower is using governed context/data paths, whether value and ROI claims are properly caveated, what Tower should become next, and how `cio_tower` facts/measures/entities/relationships are derived today. The output is a review packet under `reports/tower-audit/` with CSVs, JSON, Markdown, and HTML proof pages.
+Adds read-only Tower audit generators that check whether Tower is using governed context/data paths, whether value and ROI claims are properly caveated, what Tower should become next, how `cio_tower` facts/measures/entities/relationships are derived today, and whether Tower is aligned to the `standard-2026-07-v3` enterprise context source of truth. The output is a review packet under `reports/tower-audit/` and `reports/tower-v3-alignment/` with CSVs, JSON, Markdown, and HTML proof pages.
 
 ## Layer Impact
 
@@ -30,15 +30,19 @@ Adds read-only Tower audit generators that check whether Tower is using governed
 
 - `scripts/audit/tower-context-layer-quality.mjs`
 - `scripts/audit/cio-tower-fact-derivation-audit.mjs`
+- `scripts/audit/tower-v3-source-of-truth-alignment.mjs`
 - `package.json` script `audit:tower-context-layer-quality`
 - `package.json` script `audit:cio-tower-fact-derivation`
+- `package.json` script `audit:tower-v3-source-of-truth-alignment`
 - Generated report outputs under `reports/tower-audit/`
 - Generated fact-derivation outputs under `reports/tower-audit/cio-fact-derivation/`
+- Generated v3 source-of-truth alignment outputs under `reports/tower-v3-alignment/`
 
 ## QA / Validation
 
 - `npm run audit:tower-context-layer-quality`: Pass; generated `reports/tower-audit/`.
 - `npm run audit:cio-tower-fact-derivation`: Pass; generated `reports/tower-audit/cio-fact-derivation/` with 5 tenants, 245 standardized source files, 248 source-to-Tower lineage rows, 8 Tower-to-v3 reconciliation rows, 6 legacy bridge dependency rows, 7 consumer rows, and 6 unreconciled fact classes.
+- `npm run audit:tower-v3-source-of-truth-alignment`: Fail by design in the current code line; generated `reports/tower-v3-alignment/` and correctly flags that Tower is not yet aligned to v3 source-of-truth because `tower-standardized-v1` remains an independent bridge, `cio_tower` lacks required v3/evidence/canonical/entity/relationship lineage fields, and TowerContextPack lacks TowerMetricRecord/TowerValueRecord/TowerValueClaim support.
 - `npm run audit:meridian-data-state-reconciliation`: Pass; status `safe-for-cdao-demo-with-caveats`, readiness `99/100`.
 - `npm run audit:enterprise-knowledge-layer`: Pass; generated enterprise knowledge proof.
 - `npm run audit:enterprise-naming`: Pass.
@@ -84,7 +88,15 @@ Revert the PR. Since this is read-only audit/report generation, rollback has no 
 - `reports/tower-audit/cio-fact-derivation/tower-consumer-map.csv`
 - `reports/tower-audit/cio-fact-derivation/unreconciled-facts.csv`
 - `reports/tower-audit/cio-fact-derivation/cio-fact-derivation-proof.html`
+- `reports/tower-v3-alignment/summary.md`
+- `reports/tower-v3-alignment/summary.json`
+- `reports/tower-v3-alignment/cio-tower-source-of-truth-classification.csv`
+- `reports/tower-v3-alignment/tower-to-v3-lineage.csv`
+- `reports/tower-v3-alignment/unreconciled-tower-rows.csv`
+- `reports/tower-v3-alignment/required-v3-tower-extensions.md`
+- `reports/tower-v3-alignment/tower-context-pack-design.md`
+- `reports/tower-v3-alignment/tower-v3-alignment-proof.html`
 
 ## Known Gaps
 
-Browser screenshots are intentionally marked `Not run` unless a signed-in browser proof is executed separately. The `cio_tower` fact-derivation audit is static/source-based; it proves code and package lineage, not live database row counts. This PR does not rebuild Tower, redesign Tower, promote candidate data, create synthetic data, mutate `cio_tower`, or change runtime value-claim behavior.
+Browser screenshots are intentionally marked `Not run` unless a signed-in browser proof is executed separately. The `cio_tower` fact-derivation and Tower v3 source-of-truth alignment audits are static/source-based; they prove code/package/contract lineage, not live database row counts. The v3 alignment audit intentionally reports `Fail` until Tower is migrated so `cio_tower` is only a reconciled derived projection or retired behind TowerContextPack. This PR does not rebuild Tower, redesign Tower, promote candidate data, create synthetic data, mutate `cio_tower`, or change runtime value-claim behavior.

@@ -1,0 +1,7 @@
+tower_visible_row_class,current_key,missing_v3_lineage,current_consumer,safe_current_status,blocked_claim
+cio_tower.facts,fact_key,source_standard;source_dimension;source_row_id;evidence_registry_id;canonical_fact_id;active_candidate_status;safe_to_display;value_claim_status,Tower CXO view and Tower aVa prompt packet,read-model only with caveat,authoritative v3-native fact
+cio_tower.measure_results,result_key/source_fact_keys,tower_context_pack_id;canonical_fact_ids;calculation_method;value_claim_status;active_candidate_status,dashboard metric packet and chat parity,materialized metric read model with formula caveat,source-of-truth financial result
+cio_tower.entities,entity_key,entity_profile_id;source_dimension;active_candidate_status,"CXO view, charts, relationships",Tower entity label,canonical enterprise entity profile
+cio_tower.relationships,relationship_key,relationship_edge_id;relationship type dictionary proof;evidence_registry_id,Tower aVa context and dependency explanations,Tower local relationship context,canonical enterprise graph edge
+tower-standardized-v1 source rows,source_key/source_row,tenant input packet ID;v3 source dimension;canonical ingestion record ID,Tower loader,migration bridge only,active enterprise source input
+realized value display,realized_value_usd,TowerValueClaim.supported_by_evidence;supporting_evidence_refs;claim_status;caveat_text,Tower value-state calculations,only safe when measured evidence and value claim support exist,realized ROI/value without evidence-backed claim object
