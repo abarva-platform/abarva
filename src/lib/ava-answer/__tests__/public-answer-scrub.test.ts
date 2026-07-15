@@ -147,6 +147,18 @@ Tenant evidence`);
     expect(cleaned).not.toMatch(/same answer|keeps making it airtight/i);
   });
 
+  it("removes data-layer and Move trace language from CXO-visible answers", () => {
+    const cleaned = scrubPublicAvaAnswerText(
+      "The V7 substrate and candidate_move packet show move_id, phase_id, artifact_id, evidence_id, tenant_id, and source_record_id values for the agent assist case.",
+    );
+
+    expect(cleaned).toContain("active enterprise context");
+    expect(cleaned).toContain("candidate opportunity");
+    expect(cleaned).not.toMatch(
+      /V7|substrate|candidate_move|move_id|phase_id|artifact_id|evidence_id|tenant_id|source_record_id|packet/i,
+    );
+  });
+
   it("cleans all-session answer history and loaded tenant source phrasing", () => {
     const cleaned = scrubPublicAvaAnswerText(
       "The answer is the same one the evidence has supported all session: certified operational data products is the single best AI investment SkyHarbor can make next.\n\nThe loaded tenant sources show three distinct value pools.\n\nIf it's the latter, that single gap is the only thing worth fixing before any other AI conversation is worth the meeting time.",

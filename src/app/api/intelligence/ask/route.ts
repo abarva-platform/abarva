@@ -47,6 +47,11 @@ import { classifyAbarvaAnswerMode } from "@/lib/intelligence/ask/response-policy
 import { composeAvaAnswer } from "@/lib/ava-answer/composeAvaAnswer";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import {
+  scrubInternalVisibleAvaTerms,
+  scrubPublicAvaAnswerText,
+} from "@/lib/ava-answer/public-answer-scrub";
+import { sanitizeAgentAnswerForRender } from "@/lib/intelligence/answer/answer-safety";
+import {
   buildHomeKnowAgentAnswer,
   homeKnowResponseToAvaAnswer,
   shouldUseHomeKnowAgentAnswer,
@@ -1135,7 +1140,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           tenantId,
           userId,
           role: "assistant",
-          content: assistantText,
+          content: assistantMemoryText(assistantText),
           metadata: {
             client: requestedOrSurfaceClient,
             classification: classificationForMemory,
@@ -1194,16 +1199,22 @@ function intelligenceSourcesFromCitations(
 }
 
 function displaySafeIntelligenceDelta(text: string): string {
+  const scrubForDisplay = (value: string) => scrubInternalVisibleAvaTerms(value);
   if (!text.includes("<<<TAB:") && !text.includes("grounding:")) {
-    return text;
+    return scrubForDisplay(text);
   }
 
   const parsed = parseIntelligenceTabbedResponse(text);
   if (parsed.mainAnswer.trim()) {
-    return parsed.mainAnswer;
+    return scrubForDisplay(parsed.mainAnswer);
   }
 
-  return text.replace(/<<<TAB:[\s\S]*$/g, "").trimEnd();
+  return scrubForDisplay(text.replace(/<<<TAB:[\s\S]*$/g, "").trimEnd());
+}
+
+function assistantMemoryText(text: string): string {
+  const displayText = displaySafeIntelligenceDelta(text);
+  return displayText.trim() ? displayText : scrubPublicAvaAnswerText(text);
 }
 
 function applyProductTruthToAvaAnswer(
@@ -1223,7 +1234,7 @@ function applyProductTruthToAvaAnswer(
           answerMode,
         )
       : undefined;
-  return {
+  return sanitizeAgentAnswerForRender({
     ...answer,
     directAnswer,
     ...(prose ? { prose } : {}),
@@ -1240,7 +1251,7 @@ function applyProductTruthToAvaAnswer(
           ]
         : []),
     ],
-  };
+  });
 }
 
 function recordIntelligenceTelemetry(input: {

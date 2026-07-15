@@ -41,6 +41,20 @@ function answerFixture(): AvaAnswerPacket {
         ],
         rows: [{ use_case: "Demand sensing", value_usd: 12500000 }],
       },
+      {
+        artifact: "graph",
+        id: "dependency-graph",
+        title: "Agent Assist Dependencies",
+        nodes: [
+          { id: "crm", label: "CRM history" },
+          { id: "claims", label: "Claims platform" },
+          { id: "agent", label: "Agent assist workspace" },
+        ],
+        edges: [
+          { from: "crm", to: "agent", label: "feeds context" },
+          { from: "claims", to: "agent", label: "answers claim status" },
+        ],
+      },
     ],
     tables: [],
     charts: [],
@@ -74,6 +88,9 @@ describe("renderAvaAnswerStandaloneHtml", () => {
     expect(html).toContain("Quick wins");
     expect(html).toContain("Demand sensing");
     expect(html).toContain("$12.5M");
+    expect(html).toContain("Agent Assist Dependencies");
+    expect(html).toContain("CRM history");
+    expect(html).toContain("answers claim status");
     expect(html).not.toContain("12500000");
   });
 

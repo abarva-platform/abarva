@@ -18,6 +18,8 @@ const NEXT_MOVE_RE =
   /\b(?:next move|next step|sequence|prioriti[sz]e|validate|decide|fund|pilot|scale|assign|stand up|defer|stop)\b/i;
 const RAW_ID_RE =
   /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6}|[a-z_][a-z0-9_:-]*\[[^\]\s]{8,}\]|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\b/i;
+const INTERNAL_VISIBLE_LANGUAGE_RE =
+  /\b(?:candidate_move|move_id|phase_id|artifact_id|evidence_id|source_record_id|context_pack_id|tenant_id|client_id|program_evidence_items|move_artifacts|substrate|loaded context|loaded evidence|loaded tenant sources|source rows?|edge rows?|debug|packet)\b|\bV\d+(?:[_-][A-Za-z0-9./-]+|\s+(?:substrate|data\s+layer|context\s+layer))\b/i;
 
 export function classifyCxoAnswerMode(input: {
   question: string;
@@ -140,6 +142,15 @@ export function evaluateCxoAnswerQuality(
       code: "raw-internal-id",
       severity: "error",
       message: "Answer exposes an internal ID or record handle.",
+      field: "directAnswer",
+    });
+  }
+  if (INTERNAL_VISIBLE_LANGUAGE_RE.test(text)) {
+    pushFinding(findings, {
+      code: "internal-visible-language",
+      severity: "error",
+      message:
+        "Visible CXO answer exposes internal product, data-layer, or trace language.",
       field: "directAnswer",
     });
   }

@@ -2,7 +2,7 @@ const RAW_ID_REPLACE =
   /\b(?:APP|DP|CON|NODE|EDGE)-\d{3,}\b|\b[A-Z]{2,16}-[A-Z0-9]{2,24}-\d{2,8}\b|\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi;
 
 export const PUBLIC_ANSWER_FORBIDDEN_LANGUAGE_RE =
-  /\b(cannot be characterized|cannot be identified|I found|source support|missing source support|supporting material|evidence ledger|supporting material ledger|Current-state read|current-state context|loaded context|source context|loaded source context|loaded evidence|loaded sources|loaded tenant sources|tenant evidence|Evidence points|\bevidence points?\b|\bsource signals?\b|\bcontext dimensions?\b|\bdimensions loaded\b|\bloaded with \d[\d,]*\b|\btrust\s+\d{1,3}\b|\btrust\s+\d{1,3}%\b|\bevidence\s+refs?\b|\brows?\b|home_know|intelligence-v2|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|\bsemantic\b|typed facts?|loaded facts?|canonical entities|relationship maps?|relationship paths?|debug|session memory|earlier turns|previous conversation|last\s+\w+\s+(?:turns?|times)|all session|same answer(?: as)?|answer is the same|answer hasn'?t (?:changed|moved)|substrate|not loaded|\/Users\/|localhost)\b|^\s*(Read|Evidence):/i;
+  /\b(cannot be characterized|cannot be identified|I found|source support|missing source support|supporting material|evidence ledger|supporting material ledger|Current-state read|current-state context|loaded context|source context|loaded source context|loaded evidence|loaded sources|loaded tenant sources|tenant evidence|Evidence points|\bevidence points?\b|\bsource signals?\b|\bcontext dimensions?\b|\bdimensions loaded\b|\bloaded with \d[\d,]*\b|\btrust\s+\d{1,3}\b|\btrust\s+\d{1,3}%\b|\bevidence\s+refs?\b|\brows?\b|home_know|intelligence-v2|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|\bsemantic\b|typed facts?|loaded facts?|canonical entities|relationship maps?|relationship paths?|debug|session memory|earlier turns|previous conversation|last\s+\w+\s+(?:turns?|times)|all session|same answer(?: as)?|answer is the same|answer hasn'?t (?:changed|moved)|substrate|not loaded|candidate_move|move_id|phase_id|artifact_id|evidence_id|source_record_id|program_evidence_items|move_artifacts|context_pack_id|tenant_id|client_id|\/Users\/|localhost)\b|\bV\d+(?:[_-][A-Za-z0-9./-]+|\s+(?:substrate|data\s+layer|context\s+layer))\b|^\s*(Read|Evidence):/i;
 
 export const PUBLIC_ANSWER_INTERNAL_COUNT_RE =
   /\b\d[\d,]*\s+(?:canonical\s+)?(?:entities|facts|relationships|citations|rows|evidence points?|context dimensions?)\b/i;
@@ -16,6 +16,25 @@ export function publicAnswerLeakIssues(text: string): string[] {
     issues.push("internal_count_language");
   }
   return issues;
+}
+
+export function scrubInternalVisibleAvaTerms(value: string): string {
+  return value
+    .replace(/\bV\d+\s+substrate\b/gi, "active enterprise context")
+    .replace(/\bV\d+\s+data\s+layer\b/gi, "active enterprise context")
+    .replace(/\bV\d+\s+context\s+layer\b/gi, "active enterprise context")
+    .replace(/\bV\d+[_-][A-Za-z0-9_.-]+\b/gi, "source file")
+    .replace(/\bcandidate_move\b/gi, "candidate opportunity")
+    .replace(/\bmove_id\b/gi, "Move reference")
+    .replace(/\bphase_id\b/gi, "phase reference")
+    .replace(/\bartifact_id\b/gi, "artifact reference")
+    .replace(/\bevidence_id\b/gi, "evidence reference")
+    .replace(/\bsource_record_id\b/gi, "source reference")
+    .replace(/\bcontext_pack_id\b/gi, "context reference")
+    .replace(/\bprogram_evidence_items\b/gi, "attached evidence")
+    .replace(/\bmove_artifacts\b/gi, "Move artifacts")
+    .replace(/\btenant_id\b/gi, "workspace reference")
+    .replace(/\bclient_id\b/gi, "client reference");
 }
 
 export function operationalEvidenceInsufficiencyLead(
@@ -35,7 +54,7 @@ export function operationalEvidenceInsufficiencyLead(
 }
 
 export function scrubPublicAvaAnswerText(value: string): string {
-  const scrubbed = stripInternalEvidenceAppendix(value)
+  const scrubbed = scrubInternalVisibleAvaTerms(stripInternalEvidenceAppendix(value))
     .replace(
       /\n?\s*Next,\s+have the accountable owner review the listed sources and decide whether this belongs in Source, Tower, or Moves\.?/gi,
       "",
@@ -138,7 +157,6 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\bevidence-based\b/gi, "business-context-backed")
     .replace(/\bsupporting material ledger\b/gi, "business context")
     .replace(/\bevidence ledger\b/gi, "business context")
-    .replace(/\bevidence\b/gi, "business context")
     .replace(/\bsupporting material\b/gi, "business context")
     .replace(/\bsource rows?\b/gi, "source records")
     .replace(/\bedge rows?\b/gi, "connection records")
