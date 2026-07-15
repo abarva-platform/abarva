@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -52,21 +52,21 @@ Tightens the Intelligence aVa answer path so CXO-visible answers do not expose i
 - Pass: confirms final `agent-answer` packets scrub V-layer labels, `Intelligence V#` wording, `not_loaded`, validation-gate labels, raw `recordId`, and source-record counts from citations and exhibits.
 - Pass: confirms a Meridian-style agent-assist ranking table is lifted into typed table and chart artifacts.
 - Pass: confirms chat HTML/PDF exports preserve typed tables, chart exhibits, graph relationships, and compact numeric formatting.
-- Pending: post-deploy signed-in Meridian Intelligence proof after merge/deploy.
+- Pass: post-deploy signed-in Meridian proof on `https://app.abarva.ai/intelligence?client=meridian` returned page 200, ask API 200 NDJSON, `agent-answer` present, zero forbidden browser-visible hits across sources/deltas/final answer packet, HTML export preserving table/SVG/graph/currency/percent formatting, and PDF export returning a valid `%PDF-` file.
 
 ## Rollout Plan
 
-Merge the PR through the protected GitHub path. Production activation requires the repo-owned Azure Container Apps main deploy workflow to build and deploy the merged SHA, then signed-in browser proof on `https://app.abarva.ai/intelligence?client=meridian`.
+Merged through the protected GitHub path. Production activation completed through the repo-owned Azure Container Apps main deploy workflow, followed by signed-in browser proof on `https://app.abarva.ai/intelligence?client=meridian`.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: Required for production.
 - Shared runtime mutators: None in this PR.
-- Approved image digest: Pending deploy workflow.
-- ACA runtime invariant: Pending deploy workflow.
+- Approved image digest: Captured by ACA main deploy run `29444862476`.
+- ACA runtime invariant: Pass in ACA main deploy run `29444862476`.
 - Worker image invariant: Not applicable.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Yes, Meridian Intelligence 10-question smoke after deploy.
+- Live signed-in proof required: Complete for Meridian Intelligence agent-assist smoke after deploy.
 
 ## Rollback Plan
 
@@ -74,12 +74,17 @@ Revert the PR and redeploy the prior known-good main SHA through the repo-owned 
 
 ## Audit Evidence
 
-- PR URL: Pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/4834
+- Follow-up PR URL: https://github.com/abarva-platform/abarva/pull/4837
+- Follow-up PR URL: https://github.com/abarva-platform/abarva/pull/4838
+- Follow-up PR URL: https://github.com/abarva-platform/abarva/pull/4840
+- Merge SHA: `5b47d1f5ae83b4442283b2ce6d977fc19fd9fb3c`
+- ACA deploy run: `29444862476`
 - Focused test output: local Jest run in this release branch.
 - Prior motivating proof: `reports/intelligence-ava-live-proof/` and Downloads proof bundle from the signed-in Meridian live audit.
 - Follow-up motivating proof: `reports/intelligence-ava-live-proof-post4838/v-hit-diagnostic.json` captured the remaining V-layer leakage in final `agent-answer` citation/exhibit metadata.
+- Live proof bundle: `reports/intelligence-ava-live-proof-post4840/proof.json`
 
 ## Known Gaps
 
-- Post-deploy signed-in live proof is not yet captured for this follow-up candidate.
 - This does not change retrieval, data-layer promotion, Home, Moves, Source, or Tower behavior.
