@@ -262,6 +262,16 @@ const GOVERNED_CXO_VIEW: CioTowerCxoViewModel = {
   tenantKey: "skyharbor-air",
   tenantName: "Airline Demo",
   generatedFrom: "cio_tower",
+  projectionMetadata: {
+    projectionRole: "derived_read_model",
+    projectionPath: "path_a_derived_projection",
+    sourceOfTruthStatus: "bridge_only",
+    v3ReconciliationStatus: "not_v3_reconciled",
+    sourceOfTruthCaveat:
+      "cio_tower is a Tower read-model projection until every displayed fact reconciles to v3 evidence, canonical facts, entity profiles, and relationships.",
+    realizedValueLanguagePolicy:
+      "Realized value requires finance-attested measured evidence; otherwise Tower must render value as promised, planned, forecast, or measurement-readiness.",
+  },
   headline:
     "Airline Demo has $2.6B of FY26 technology budget in view. The executive question is how much of that spend is turning into measurable value.",
   sections: [],

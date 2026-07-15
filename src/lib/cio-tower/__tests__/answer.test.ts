@@ -56,6 +56,27 @@ function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPrompt
     ],
     relationships: [],
     gaps: ['Actual spend YTD is missing or not separately loaded.'],
+    valueClaimPolicy: {
+      projectionRole: 'derived_read_model',
+      projectionPath: 'path_a_derived_projection',
+      sourceOfTruthStatus: 'bridge_only',
+      v3ReconciliationStatus: 'not_v3_reconciled',
+      realizedValueLanguageAllowed: false,
+      caveat: 'Realized value requires finance-attested measured evidence.',
+      claim: {
+        claimId: 'test-claim',
+        claimKind: 'realized_value',
+        label: 'Measured value YTD',
+        value: null,
+        valueType: 'currency',
+        sourceFactIds: [],
+        evidenceIds: [],
+        gateStatus: 'blocked',
+        realizedValueLanguageAllowed: false,
+        reason: 'Realized value requires finance-attested measured evidence.',
+        requiredEvidence: ['v3 canonical fact reconciliation'],
+      },
+    },
     ...overrides,
   };
 }
@@ -77,6 +98,8 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('You own every user-visible word');
     expect(prompt).toContain('AbarVa will render the strings exactly as returned');
     expect(prompt).toContain('It will not rewrite, summarize, scrub, relabel, infer, or improve them');
+    expect(prompt).toContain('Realized-value language allowed: no');
+    expect(prompt).toContain('Projection role: derived_read_model');
     expect(prompt).toContain('Crew Recovery & Legality Modernization');
     expect(prompt).toContain('$28.3M');
   });
@@ -127,4 +150,3 @@ describe('cio tower answer contract', () => {
     });
   });
 });
-
