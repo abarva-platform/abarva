@@ -225,31 +225,36 @@ function buildChatSessionExport(
   };
 }
 
-async function downloadChatSessionExport(
+function submitChatSessionExport(
   session: AvaChatSessionExport,
   format: AvaChatSessionExportFormat,
 ) {
-  const response = await fetch("/api/intelligence/ask/export", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ session, format }),
-  });
-  if (!response.ok) {
-    throw new Error(`Session export failed (${response.status})`);
-  }
-  const blob = await response.blob();
-  const disposition = response.headers.get("content-disposition") ?? "";
-  const filename =
-    disposition.match(/filename="([^"]+)"/)?.[1] ?? `ava-session.${format}`;
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
+  const targetName = `ava-session-export-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}`;
+  const iframe = document.createElement("iframe");
+  iframe.name = targetName;
+  iframe.title = "aVa session export download target";
+  iframe.style.display = "none";
+
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "/api/intelligence/ask/export";
+  form.target = targetName;
+  form.style.display = "none";
+
+  const payload = document.createElement("input");
+  payload.type = "hidden";
+  payload.name = "payload";
+  payload.value = JSON.stringify({ session, format });
+  form.appendChild(payload);
+
+  document.body.appendChild(iframe);
+  document.body.appendChild(form);
+  form.submit();
   window.setTimeout(() => {
-    link.remove();
-    URL.revokeObjectURL(url);
+    form.remove();
+    iframe.remove();
   }, 60_000);
 }
 
@@ -827,7 +832,7 @@ export function AgentDock(props: AgentDockProps) {
       setSessionExportPending(format);
       setSessionExportStatus("");
       try {
-        await downloadChatSessionExport(sessionExportPayload, format);
+        submitChatSessionExport(sessionExportPayload, format);
         setSessionExportStatus("Ready");
       } catch {
         setSessionExportStatus("Failed");

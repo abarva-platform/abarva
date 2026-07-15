@@ -29,6 +29,23 @@ interface ExportPayload {
   format?: ExportFormat;
 }
 
+async function readExportPayload(req: NextRequest): Promise<ExportPayload> {
+  const contentType = req.headers.get("content-type") ?? "";
+  if (
+    contentType.includes("application/x-www-form-urlencoded") ||
+    contentType.includes("multipart/form-data")
+  ) {
+    const formData = await req.formData();
+    const rawPayload = formData.get("payload");
+    if (typeof rawPayload !== "string") {
+      throw new Error("missing_form_payload");
+    }
+    return JSON.parse(rawPayload) as ExportPayload;
+  }
+
+  return (await req.json()) as ExportPayload;
+}
+
 function filenameFor(answer: AvaAnswerPacket, format: ExportFormat): string {
   const tenant = answer.tenantKey.replace(/[^a-z0-9-]+/gi, "-").toLowerCase();
   const date = new Date().toISOString().slice(0, 10);
@@ -156,10 +173,13 @@ export async function POST(req: NextRequest) {
 
   let payload: ExportPayload;
   try {
-    payload = (await req.json()) as ExportPayload;
+    payload = await readExportPayload(req);
   } catch {
     return Response.json(
-      { error: "invalid_json", detail: "Request body must be JSON." },
+      {
+        error: "invalid_payload",
+        detail: "Request body must be JSON or a form payload field.",
+      },
       { status: 400 },
     );
   }
