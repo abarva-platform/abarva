@@ -89,6 +89,15 @@ describe("NexusTopNav", () => {
     expect(within(nav).queryByRole("link", { name: "Home" })).toBeNull();
   });
 
+  it("keeps the Knowledge destination stable from Tower", () => {
+    renderNav("/tower");
+    const nav = screen.getByRole("navigation", { name: "Primary" });
+
+    expect(within(nav).getAllByRole("link", { name: "Knowledge" })[0]?.getAttribute("href")).toBe(
+      "/home",
+    );
+  });
+
   it.each([
     ["/home", "Knowledge"],
     ["/home/context", "Knowledge"],
