@@ -153,6 +153,10 @@ const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
       /what.*(it\s+)?spend/i,
       /total.*(it\s+)?budget/i,
       /fy26.*(it\s+)?budget/i,
+      /(enterprise|technology).*(budget|spend)/i,
+      /budget.*by.*(company|owner|function|service|portfolio)/i,
+      /shared services/i,
+      /portfolio-company.*(it\s+)?budget/i,
     ],
   },
   {
@@ -166,6 +170,9 @@ const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
       /value.*lag/i,
       /realized value/i,
       /where.*value/i,
+      /promised.*(measured|proven)/i,
+      /gap.*(promised|measured|value)/i,
+      /value proof/i,
     ],
   },
   {
@@ -215,7 +222,7 @@ function sha256(text: string): string {
   return crypto.createHash("sha256").update(text).digest("hex");
 }
 
-function matchContractKey(question: string): string {
+export function matchContractKey(question: string): string {
   for (const matcher of CONTRACT_MATCHERS) {
     if (matcher.patterns.some((pattern) => pattern.test(question)))
       return matcher.key;
@@ -594,6 +601,107 @@ function deriveMetricCards(
   return cards.slice(0, 4);
 }
 
+function measureNumber(
+  measures: CioTowerMeasureResult[],
+  measureKey: string,
+): number | null {
+  const raw = measures.find((measure) => measure.measure_key === measureKey)?.value_numeric;
+  if (raw === null || raw === undefined || raw === "") return null;
+  const numeric = Number(raw);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function fallbackMetricRows(
+  context: CioTowerPromptContext,
+): string[][] {
+  const keys = [
+    ["Total technology budget", "total_it_budget_fy26"],
+    ["Run budget", "run_budget_fy26"],
+    ["Change budget", "change_budget_fy26"],
+    ["Funded initiatives", "initiative_budget_fy26"],
+    ["Promised value", "promised_value_fy26"],
+    ["Measured value", "measured_value_ytd"],
+    ["Actual spend YTD", "actual_spend_ytd"],
+  ] as const;
+  return keys.flatMap(([label, key]) => {
+    const value = measureNumber(context.measures, key);
+    return value === null ? [] : [[label, money(value)]];
+  });
+}
+
+export function buildCioTowerFallbackAnswer(
+  context: CioTowerPromptContext,
+): CioTowerVisibleAnswerContract {
+  const totalBudget = measureNumber(context.measures, "total_it_budget_fy26");
+  const runBudget = measureNumber(context.measures, "run_budget_fy26");
+  const changeBudget = measureNumber(context.measures, "change_budget_fy26");
+  const initiativeBudget = measureNumber(context.measures, "initiative_budget_fy26");
+  const promisedValue = measureNumber(context.measures, "promised_value_fy26");
+  const measuredValue = measureNumber(context.measures, "measured_value_ytd");
+  const hasRunChange = runBudget !== null || changeBudget !== null;
+  const hasValue = promisedValue !== null || measuredValue !== null || initiativeBudget !== null;
+  const valueLanguage = context.valueClaimPolicy.realizedValueLanguageAllowed
+    ? "measured outcomes"
+    : "measurement readiness";
+
+  let answer: string;
+  if (context.contract.contract_key === "tower_run_change_split" || hasRunChange) {
+    const budgetPart =
+      totalBudget !== null
+        ? `${context.tenantName} has ${money(totalBudget)} of FY26 technology budget in view`
+        : `${context.tenantName} has a Tower budget view available`;
+    const splitPart =
+      runBudget !== null && changeBudget !== null
+        ? `: ${money(runBudget)} run and ${money(changeBudget)} change.`
+        : ". The run/change split still needs a cleaner budget cut before it should drive a board decision.";
+    answer = `${budgetPart}${splitPart} The CIO read is whether run spend is crowding out change capacity, not whether every dollar is already value-certified. Keep this as a budget-control view until finance-attested ${valueLanguage} is complete.`;
+  } else if (context.contract.contract_key === "tower_value_realization" || hasValue) {
+    const promisedPart =
+      promisedValue !== null ? `${money(promisedValue)} promised value` : "promised value";
+    const measuredPart =
+      measuredValue !== null ? `${money(measuredValue)} measured value` : "measured value evidence";
+    answer = `${context.tenantName} should treat the value story as measurement-grade, not outcome-proof. Tower shows ${promisedPart} against ${measuredPart}; the management action is to inspect the largest promise-to-measurement gaps before approving more funding.`;
+  } else if (context.contract.contract_key === "tower_total_it_spend") {
+    answer =
+      totalBudget !== null
+        ? `${context.tenantName} has ${money(totalBudget)} of FY26 technology budget in view. Use that as the executive envelope, then inspect run/change mix, vendor concentration, and measured-value evidence before making funding moves.`
+        : `${context.tenantName} has Tower budget context, but the total FY26 technology budget is not available in the governed dashboard values yet.`;
+  } else {
+    answer = `${context.tenantName} can be read from the governed Tower dashboard values, but the advisory synthesis needs a clean re-run. The safe executive read is to inspect budget, vendor exposure, measured value, and evidence gaps before treating the dashboard as board-ready.`;
+  }
+
+  const rows = fallbackMetricRows(context);
+  return {
+    version: "cio_tower_visible_answer_v1",
+    answer,
+    tables:
+      rows.length > 0
+        ? [
+            {
+              id: "tower_dashboard_values",
+              title: "Tower dashboard values",
+              columns: ["Measure", "Value"],
+              rows,
+            },
+          ]
+        : [],
+    tabs: [
+      {
+        id: "trust_boundary",
+        label: "Trust boundary",
+        prose: context.valueClaimPolicy.realizedValueLanguageAllowed
+          ? "Measured-value language is allowed only where the Tower value-claim gate has enough finance-attested support."
+          : "Do not call value realized or proven yet. Tower can support budget control, measurement readiness, and gap inspection until value claims pass the finance-evidence gate.",
+        tables: [],
+      },
+    ],
+    followUpQuestion:
+      context.contract.contract_key === "tower_total_it_spend"
+        ? "Should I break the budget into run, change, vendor, and value-proof views next?"
+        : "Should I show the budget-control and value-proof gaps next?",
+  };
+}
+
 function deriveGaps(
   contract: CioTowerContract,
   measures: CioTowerMeasureResult[],
@@ -831,6 +939,12 @@ export async function answerCioTowerQuestion(args: {
     for (const visibleText of collectVisibleTextFromContract(parsedOutput)) {
       validationErrors.push(...validateVisibleAnswer(visibleText));
     }
+  } else {
+    parsedOutput = buildCioTowerFallbackAnswer(context);
+    validationErrors.push("cio_tower_deterministic_fallback_generated");
+    for (const visibleText of collectVisibleTextFromContract(parsedOutput)) {
+      validationErrors.push(...validateVisibleAnswer(visibleText));
+    }
   }
   const latencyMs = Date.now() - startedAt;
   const { promptPackageKey, traceKey } = await persistPromptAndTrace({
@@ -842,16 +956,6 @@ export async function answerCioTowerQuestion(args: {
     validationErrors,
     latencyMs,
   });
-
-  if (!parsedOutput) {
-    const error = new Error("cio_tower_visible_contract_parse_failed");
-    (error as Error & { cause?: unknown }).cause = {
-      promptPackageKey,
-      traceKey,
-      rawResponse,
-    };
-    throw error;
-  }
 
   const gfmTables =
     parsedOutput.tables && parsedOutput.tables.length > 0

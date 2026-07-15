@@ -60,9 +60,19 @@ export async function POST(request: Request) {
       {
         error: 'tower_cio_chat_failed',
         detail: message,
+        response:
+          'aVa could not complete the Tower advisory synthesis. Use the visible dashboard measures as the governed read and try again.',
+        modelOutput: {
+          version: 'cio_tower_visible_answer_v1',
+          answer:
+            'aVa could not complete the Tower advisory synthesis. Use the visible dashboard measures as the governed read and try again.',
+          tables: [],
+          tabs: [],
+          followUpQuestion: null,
+        },
         rendererPolicy: {
           purePlacementOnly: true,
-          fallbackAnswerGenerated: false,
+          fallbackAnswerGenerated: true,
         },
       },
       { status: 502 },

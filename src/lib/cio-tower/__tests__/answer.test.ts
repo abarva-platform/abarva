@@ -1,6 +1,8 @@
 import {
+  buildCioTowerFallbackAnswer,
   buildCioTowerClaudePrompt,
   canonicalCioTowerTenantKey,
+  matchContractKey,
   parseVisibleAnswerContract,
   type CioTowerPromptContext,
 } from '../answer';
@@ -148,5 +150,83 @@ describe('cio tower answer contract', () => {
       ],
       followUpQuestion: 'Do you want the value-proof view next?',
     });
+  });
+
+  it('routes portfolio-company budget and value-proof questions to the right Tower contracts', () => {
+    expect(
+      matchContractKey(
+        'Show the holding-company IT budget by portfolio company and shared services.',
+      ),
+    ).toBe('tower_total_it_spend');
+    expect(
+      matchContractKey(
+        'Which funded programs have the largest gap between promised and measured value?',
+      ),
+    ).toBe('tower_value_realization');
+  });
+
+  it('builds a user-safe deterministic fallback when Claude misses the Tower answer contract', () => {
+    const fallback = buildCioTowerFallbackAnswer(
+      context({
+        tenantName: 'Healthcare Demo',
+        contract: {
+          contract_key: 'tower_total_it_spend',
+          intent: 'budget_control',
+          question_family: 'total_it_spend',
+          measure_key: 'total_it_budget_fy26',
+          artifact_type: 'summary_table',
+          examples: [],
+        },
+        measures: [
+          {
+            measure_key: 'total_it_budget_fy26',
+            label: 'FY26 IT budget',
+            description: 'Committed FY26 IT budget envelope.',
+            period: 'fy26',
+            basis: 'committed',
+            scope: 'enterprise_envelope',
+            value_numeric: '1069500000',
+            value_json: { row_count: 12 },
+            source_fact_keys: ['fact-budget-1'],
+            formula_version: 'cio_tower_v1',
+          },
+          {
+            measure_key: 'run_budget_fy26',
+            label: 'FY26 run budget',
+            description: 'Run budget.',
+            period: 'fy26',
+            basis: 'committed',
+            scope: 'enterprise_envelope',
+            value_numeric: '713000000',
+            value_json: { row_count: 12 },
+            source_fact_keys: ['fact-run-1'],
+            formula_version: 'cio_tower_v1',
+          },
+          {
+            measure_key: 'change_budget_fy26',
+            label: 'FY26 change budget',
+            description: 'Change budget.',
+            period: 'fy26',
+            basis: 'committed',
+            scope: 'enterprise_envelope',
+            value_numeric: '356500000',
+            value_json: { row_count: 12 },
+            source_fact_keys: ['fact-change-1'],
+            formula_version: 'cio_tower_v1',
+          },
+        ],
+      }),
+    );
+
+    expect(fallback.version).toBe('cio_tower_visible_answer_v1');
+    expect(fallback.answer).toContain('Healthcare Demo has $1.1B of FY26 technology budget in view');
+    expect(fallback.answer).toContain('$713.0M run and $356.5M change');
+    expect(fallback.answer).not.toMatch(/valid Tower answer contract|No fallback answer|JSON|source key|record ID/i);
+    expect(fallback.answer).not.toMatch(/\brealized\b|\bproven\b|\bdelivered\b/i);
+    expect(fallback.tables?.[0]?.rows).toEqual([
+      ['Total technology budget', '$1.1B'],
+      ['Run budget', '$713.0M'],
+      ['Change budget', '$356.5M'],
+    ]);
   });
 });
