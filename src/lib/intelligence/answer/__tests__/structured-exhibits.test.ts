@@ -616,13 +616,12 @@ describe("buildStructuredExhibits", () => {
     const exhibits = buildStructuredExhibits({
       routing: {
         ...routing,
-        query:
-          "Show me an AI adoption trend chart for back-office functions.",
+        query: "Show me an AI adoption trend chart for back-office functions.",
         outputShape: "chart",
       },
       sources,
       prose:
-        "Adoption has moved from pilots into operating workflows.\n\n```chart\n{\"type\":\"line\",\"title\":\"AI adoption trend\",\"subtitle\":\"Back-office functions\",\"xKey\":\"Year\",\"yKey\":\"Adoption\",\"unit\":\"%\",\"data\":[{\"Year\":\"2024\",\"Adoption\":22},{\"Year\":\"2025\",\"Adoption\":41},{\"Year\":\"2026\",\"Adoption\":68}],\"note\":\"Directional benchmark view\"}\n```\n\nThe slope is the board message.",
+        'Adoption has moved from pilots into operating workflows.\n\n```chart\n{"type":"line","title":"AI adoption trend","subtitle":"Back-office functions","xKey":"Year","yKey":"Adoption","unit":"%","data":[{"Year":"2024","Adoption":22},{"Year":"2025","Adoption":41},{"Year":"2026","Adoption":68}],"note":"Directional benchmark view"}\n```\n\nThe slope is the board message.',
     });
 
     expect(exhibits.prose).toContain(
@@ -630,7 +629,7 @@ describe("buildStructuredExhibits", () => {
     );
     expect(exhibits.prose).toContain("The slope is the board message.");
     expect(exhibits.prose).not.toContain("```chart");
-    expect(exhibits.prose).not.toContain("\"type\":\"line\"");
+    expect(exhibits.prose).not.toContain('"type":"line"');
     expect(exhibits.charts).toEqual([
       expect.objectContaining({
         id: "answer-chart-fence-1",
@@ -657,7 +656,7 @@ describe("buildStructuredExhibits", () => {
       routing,
       sources,
       prose:
-        "Here is the recommendation.\n\n```chart\n{\"type\":\"line\",\"title\":\"Bad chart\",\"xKey\":\"Year\",\"yKey\":\"Adoption\",\"data\":[{\"Year\":\"2026\",\"Adoption\":\"directional\"}]}\n```\n\nUse the loaded facts only.",
+        'Here is the recommendation.\n\n```chart\n{"type":"line","title":"Bad chart","xKey":"Year","yKey":"Adoption","data":[{"Year":"2026","Adoption":"directional"}]}\n```\n\nUse the loaded facts only.',
     });
 
     expect(exhibits.prose).toContain("Here is the recommendation.");
@@ -869,4 +868,195 @@ Use the first wave to validate data access, compliance controls, and supervisor 
       expect(exhibits.prose).not.toContain("Supporting Material");
     },
   );
+
+  describe("governed decision-table fence (Fix Slice 1/2)", () => {
+    const decisionTableJson = JSON.stringify({
+      title: "Meridian AI Investment Priorities",
+      rows: [
+        {
+          initiative: "Agent Assist",
+          value: "High — projected $4.2M annual savings",
+          valueScore: 88,
+          complexity: "Medium — requires EHR integration",
+          complexityScore: 55,
+          readiness: "Medium — pilot data available",
+          readinessScore: 62,
+          evidenceBasis: "Tenant call-volume data; industry AHT benchmarks",
+          recommendation: "Prioritize as the next 90-day initiative",
+          nextAction: "Scope pilot with contact-center ops",
+          directional: false,
+        },
+        {
+          initiative: "Payment Integrity",
+          value: "High — reduces claims leakage",
+          valueScore: 81,
+          complexity: "High — multiple payer integrations",
+          complexityScore: 76,
+          readiness: "Low — data quality gaps",
+          readinessScore: 34,
+          evidenceBasis:
+            "Industry benchmark; tenant claims volume is directional",
+          recommendation: "Fund a data-quality remediation sprint first",
+          nextAction: "Commission a claims data audit",
+          directional: true,
+        },
+        {
+          initiative: "Cost Transparency",
+          value: "Medium — improves patient satisfaction",
+          valueScore: 58,
+          complexity: "Low — vendor tool available",
+          complexityScore: 28,
+          readiness: "High — vendor contract in place",
+          readinessScore: 84,
+          evidenceBasis: "Vendor contract; tenant satisfaction survey",
+          recommendation: "Quick win — implement in parallel",
+          nextAction: "Confirm vendor SOW scope",
+          directional: false,
+        },
+      ],
+    });
+
+    function decisionTableProse(json: string, tail = ""): string {
+      return [
+        "Ranked by value, complexity, and readiness.",
+        "",
+        "```decision-table",
+        json,
+        "```",
+        "",
+        `Next move: validate the payment-integrity data quality gap before funding.${tail}`,
+      ].join("\n");
+    }
+
+    it("promotes a ranked decision-table fence into a typed table and three derived charts", () => {
+      const exhibits = buildStructuredExhibits({
+        routing: {
+          ...routing,
+          query:
+            "rank agent assist vs payment integrity vs cost transparency by value, complexity, readiness",
+          outputShape: "chart",
+        },
+        sources,
+        prose: decisionTableProse(decisionTableJson),
+      });
+
+      expect(exhibits.prose).toContain("Ranked by value, complexity");
+      expect(exhibits.prose).toContain(
+        "Next, validate the payment-integrity data quality gap before funding.",
+      );
+      expect(exhibits.prose).not.toContain("decision-table");
+      expect(exhibits.prose).not.toContain("Requested Visual Boundary");
+
+      expect(exhibits.tables).toHaveLength(1);
+      const table = exhibits.tables[0];
+      expect(table?.title).toBe("Meridian AI Investment Priorities");
+      expect(table?.columns.map((column) => column.key)).toEqual([
+        "initiative",
+        "value",
+        "complexity",
+        "readiness",
+        "evidenceBasis",
+        "recommendation",
+        "nextAction",
+      ]);
+      expect(table?.rows).toHaveLength(3);
+      expect(table?.rows[1]).toEqual(
+        expect.objectContaining({
+          initiative: "Payment Integrity",
+          value: expect.stringContaining("(directional)"),
+        }),
+      );
+      expect(table?.note).toContain("directional");
+
+      expect(exhibits.charts.map((chart) => chart.id)).toEqual([
+        "answer-decision-table-quadrant-matrix",
+        "answer-decision-table-readiness-bar",
+        "answer-decision-table-priority-stack",
+      ]);
+
+      const matrix = exhibits.charts[0];
+      expect(matrix?.kind).toBe("quadrant-matrix");
+      expect(matrix?.title).toContain("(directional estimate)");
+      expect((matrix?.data as { points: unknown[] }).points).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ label: "Agent Assist", x: 55, y: 88 }),
+        ]),
+      );
+
+      const readinessBar = exhibits.charts[1];
+      expect(readinessBar?.kind).toBe("horizontal-bar");
+      expect((readinessBar?.data as { data: unknown[] }).data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            initiative: "Cost Transparency",
+            readiness: 84,
+          }),
+        ]),
+      );
+
+      const priorityStack = exhibits.charts[2];
+      expect(priorityStack?.kind).toBe("bar");
+      expect(
+        (priorityStack?.data as { data: Array<{ initiative: string }> }).data[0]
+          ?.initiative,
+      ).toBe("Agent Assist");
+    });
+
+    it("still renders the guardrail table when the decision-table fence is malformed and no other rows exist", () => {
+      const exhibits = buildStructuredExhibits({
+        routing: tableRouting(
+          "rank agent assist vs payment integrity by value, complexity, readiness",
+        ),
+        sources,
+        prose: [
+          "```decision-table",
+          "{not valid json",
+          "```",
+          "",
+          "Next move: validate the source extract.",
+        ].join("\n"),
+      });
+
+      expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
+    });
+
+    it("renders the table even when too few rows carry numeric scores to derive charts", () => {
+      const oneScoredRow = JSON.stringify({
+        title: "Partial Priorities",
+        rows: [
+          {
+            initiative: "Agent Assist",
+            value: "High",
+            valueScore: 88,
+            complexity: "Medium",
+            complexityScore: 55,
+            readiness: "Medium",
+            readinessScore: 62,
+            evidenceBasis: "Tenant data",
+            recommendation: "Prioritize",
+            nextAction: "Scope pilot",
+            directional: false,
+          },
+          {
+            initiative: "Payment Integrity",
+            value: "Not yet scored",
+            evidenceBasis: "Awaiting claims audit",
+            recommendation: "Hold",
+            nextAction: "Commission audit",
+            directional: true,
+          },
+        ],
+      });
+
+      const exhibits = buildStructuredExhibits({
+        routing: tableRouting("rank agent assist vs payment integrity"),
+        sources,
+        prose: decisionTableProse(oneScoredRow),
+      });
+
+      expect(exhibits.tables).toHaveLength(1);
+      expect(exhibits.tables[0]?.rows).toHaveLength(2);
+      expect(exhibits.charts).toHaveLength(0);
+    });
+  });
 });
