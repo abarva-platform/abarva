@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -93,17 +93,23 @@ standard Azure Container Apps release lane.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
-- Shared runtime mutators: none used directly; deploy proceeds through the standard
-  workflow only.
-- Approved image digest: to be recorded once the deploy workflow runs.
-- ACA runtime invariant: to be proven after deploy (template image, 100%-traffic revision
-  image, and worker job images must match the approved digest).
-- Worker image invariant: N/A — no worker involved in this change.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`, run
+  [29380286780](https://github.com/abarva-platform/abarva/actions/runs/29380286780),
+  triggered by the merge of PR #4811 (`9d5c41adbadb299303913f3dfaf27edcdff5f150`) to
+  `main`. Completed, conclusion `success`.
+- Shared runtime mutators: none used directly; deploy proceeded entirely through the
+  standard workflow.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:71dddc03de6f00591f42484e6faa791d285d24eefb7807085e2e2cec89b66916`.
+- ACA runtime invariant: **proven.** `az containerapp show -g rg-abarva-controlplane-lab-eastus
+  -n ca-abarva-web-lab-eastus` confirms `properties.template.containers[0].image` and the
+  100%-traffic revision (`ca-abarva-web-lab-eastus--m9d5c41ad`, `weight: 100`) both resolve
+  to the digest above.
+- Worker image invariant: **proven.** `job-abarva-deliv-worker` and
+  `job-abarva-deliv-worker-event` both resolve to the same digest as the web app template
+  image above.
 - Feature/env flag update path: N/A — no flag.
-- Live signed-in proof required: yes, on `app.abarva.ai` after deploy — click through the
-  primary nav links and confirm no blank/loading flash between navigations, before calling
-  this "live-proven".
+- Live signed-in proof required: yes — performed. See Audit Evidence below.
 
 ## Rollback Plan
 
@@ -112,9 +118,24 @@ previous per-page nav mount behavior returns immediately; no asset or data clean
 
 ## Audit Evidence
 
-- PR URL: to be added when opened.
-- CI run: to be added when the PR's checks complete.
-- Deployment URL / ACA revision: to be added after deploy.
+- PR: [abarva-platform/abarva#4811](https://github.com/abarva-platform/abarva/pull/4811),
+  21/21 required checks passed, squash-merged as `9d5c41adbadb299303913f3dfaf27edcdff5f150`.
+- CI/deploy run: [aca-main-deploy #29380286780](https://github.com/abarva-platform/abarva/actions/runs/29380286780),
+  conclusion `success`.
+- Deployment: ACA revision `ca-abarva-web-lab-eastus--m9d5c41ad` in
+  `rg-abarva-controlplane-lab-eastus`, 100% ingress traffic, image digest
+  `sha256:71dddc03de6f00591f42484e6faa791d285d24eefb7807085e2e2cec89b66916`.
+- Live signed-in browser proof: signed in as a real authenticated user on
+  `app.abarva.ai`, clicked through Intelligence → Moves → Source → Tower in sequence.
+  Screenshots taken immediately and 1s after each click confirm the nav bar (logo, all six
+  nav labels, avatar, "Sign out") stayed fully rendered throughout every transition — only
+  the page body below it showed a normal loading skeleton, exactly the intended behavior.
+  Beyond visual screenshots, injected a unique `data-persistence-probe` marker attribute
+  directly onto the live `[data-testid="nexus-top-nav"]` DOM node while on `/strategic-moves`,
+  then clicked to `/source/queue` and re-queried the same selector: the exact same marker
+  value was still present on the header after navigation, which is direct, code-level proof
+  that the header DOM node survived the navigation rather than being unmounted and
+  recreated — the actual root cause this release fixes.
 
 ## Known Gaps
 
