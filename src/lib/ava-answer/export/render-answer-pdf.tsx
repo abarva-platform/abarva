@@ -14,7 +14,9 @@ import { isVisibleAvaArtifact } from "@/lib/ava-answer/renderable-artifacts";
 import { sanitizeAvaAnswerForRender } from "@/lib/intelligence/answer/answer-safety";
 import type {
   AnswerChart,
+  AnswerGraph,
   AnswerTable,
+  AnswerTableColumn,
   AvaAnswerPacket,
 } from "@/lib/ava-answer/contract";
 import type { AvaChatSessionExport } from "@/lib/ava-answer/export/session-types";
@@ -98,6 +100,48 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica-Bold",
     marginBottom: 4,
   },
+  chartRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  chartLabel: {
+    width: "31%",
+    fontSize: 8,
+    paddingRight: 6,
+  },
+  chartTrack: {
+    width: "52%",
+    height: 7,
+    backgroundColor: "#edf1ee",
+    borderRadius: 3,
+  },
+  chartBar: {
+    height: 7,
+    backgroundColor: "#166534",
+    borderRadius: 3,
+  },
+  chartValue: {
+    width: "17%",
+    fontSize: 8,
+    color: "#374151",
+    textAlign: "right",
+  },
+  graphEdge: {
+    borderBottomColor: "#e5e1d8",
+    borderBottomWidth: 0.5,
+    paddingBottom: 5,
+    marginBottom: 5,
+  },
+  graphEdgeMain: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+  },
+  graphEdgeLabel: {
+    fontSize: 8,
+    color: "#6b7280",
+    marginTop: 2,
+  },
   bullet: {
     fontSize: 8,
     marginBottom: 3,
@@ -162,6 +206,80 @@ function paragraphs(value: string): string[] {
     .filter(Boolean);
 }
 
+function parseNumericCellValue(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().replace(/[$,\s]/g, "");
+  if (!/^-?\d+(?:\.\d+)?$/.test(normalized)) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function inferredCellFormat(
+  column: AnswerTableColumn,
+): "currency" | "percent" | "number" | null {
+  if (
+    column.format === "currency" ||
+    column.format === "percent" ||
+    column.format === "number"
+  ) {
+    return column.format;
+  }
+  const name = `${column.key} ${column.label}`.toLowerCase();
+  if (/\b(usd|amount|budget|cost|spend|revenue|value|rate)\b/.test(name)) {
+    return "currency";
+  }
+  if (/\b(percent|percentage|pct|share|ratio)\b/.test(name)) return "percent";
+  if (/\b(count|employees?|users?|records?|volume|number)\b/.test(name)) {
+    return "number";
+  }
+  return null;
+}
+
+function trimCompactNumber(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: Math.abs(value) >= 10 ? 1 : 2,
+  }).format(value);
+}
+
+function formatCompactUsd(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000_000)
+    return `$${trimCompactNumber(value / 1_000_000_000)}B`;
+  if (abs >= 1_000_000) return `$${trimCompactNumber(value / 1_000_000)}M`;
+  if (abs >= 1_000) return `$${trimCompactNumber(value / 1_000)}K`;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatPercent(value: number): string {
+  const normalized = Math.abs(value) <= 1 ? value : value / 100;
+  return new Intl.NumberFormat("en-US", {
+    style: "percent",
+    maximumFractionDigits: 1,
+  }).format(normalized);
+}
+
+function formatCell(
+  value: string | number | null,
+  column: AnswerTableColumn,
+): string {
+  if (value === null) return "-";
+  const numeric = parseNumericCellValue(value);
+  const format = inferredCellFormat(column);
+  if (numeric !== null && format === "currency") return formatCompactUsd(numeric);
+  if (numeric !== null && format === "percent") return formatPercent(numeric);
+  if (numeric !== null && format === "number") {
+    return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
+      numeric,
+    );
+  }
+  return text(value);
+}
+
 function tableBlock(table: AnswerTable): ReactElement {
   return (
     <View style={styles.card} wrap={false}>
@@ -177,7 +295,7 @@ function tableBlock(table: AnswerTable): ReactElement {
         <View key={rowIndex} style={styles.row}>
           {table.columns.slice(0, 5).map((column) => (
             <Text key={column.key} style={styles.cell}>
-              {text(row[column.key]) || "-"}
+              {formatCell(row[column.key] ?? null, column) || "-"}
             </Text>
           ))}
         </View>
@@ -200,15 +318,105 @@ function quadrantPoints(chart: AnswerChart): Array<{ label: string; x: number; y
   });
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function chartSeriesRows(chart: AnswerChart): Array<{
+  label: string;
+  value: number | null;
+  displayValue: string;
+}> {
+  if (!isRecord(chart.data)) return [];
+  const data = chart.data;
+  const sourceRows = Array.isArray(chart.data.data)
+    ? chart.data.data
+    : Array.isArray(chart.data.points)
+      ? chart.data.points
+      : Array.isArray(chart.data.phases)
+        ? chart.data.phases
+        : Array.isArray(chart.data.steps)
+          ? chart.data.steps
+          : [];
+
+  return sourceRows.flatMap((row) => {
+    if (!isRecord(row)) return [];
+    const labelKey =
+      chart.xKey ||
+      (typeof data.xKey === "string" ? data.xKey : null) ||
+      ["label", "name", "phase", "workstream", "Year", "year", "category"].find(
+        (key) => row[key] !== undefined,
+      );
+    const valueKey =
+      chart.yKey ||
+      (typeof data.yKey === "string" ? data.yKey : null) ||
+      ["value", "Value", "amount", "cost", "spend", "Adoption", "y"].find(
+        (key) => parseNumericCellValue(row[key]) !== null,
+      );
+    const label = text(labelKey ? row[labelKey] : "");
+    if (!label) return [];
+    const numeric = valueKey ? parseNumericCellValue(row[valueKey]) : null;
+    const unit = chart.unit || (typeof data.unit === "string" ? data.unit : "");
+    return [
+      {
+        label,
+        value: numeric,
+        displayValue:
+          numeric === null
+            ? text(valueKey ? row[valueKey] : "")
+            : unit === "%"
+              ? `${trimCompactNumber(numeric)}%`
+              : trimCompactNumber(numeric),
+      },
+    ];
+  });
+}
+
 function chartBlock(chart: AnswerChart): ReactElement {
   if (chart.kind !== "quadrant-matrix" && chart.kind !== "2x2-matrix") {
+    const rows = chartSeriesRows(chart).slice(0, 12);
+    const maxValue = Math.max(
+      ...rows.flatMap((row) => (row.value !== null ? [Math.abs(row.value)] : [])),
+      1,
+    );
     return (
       <View style={styles.card} wrap={false}>
         <Text style={styles.cardTitle}>{chart.title ?? chart.kind}</Text>
-        <Text style={styles.note}>
-          This PDF preserves the chart as a governed exhibit summary. Use the
-          HTML export for the full inline SVG chart.
-        </Text>
+        {chart.subtitle ? <Text style={styles.note}>{chart.subtitle}</Text> : null}
+        {rows.length > 0 ? (
+          <View>
+            {rows.map((row) => (
+              <View key={`${row.label}-${row.displayValue}`} style={styles.chartRow}>
+                <Text style={styles.chartLabel}>{row.label}</Text>
+                <View style={styles.chartTrack}>
+                  <View
+                    style={[
+                      styles.chartBar,
+                      {
+                        width: `${Math.max(
+                          6,
+                          Math.min(
+                            100,
+                            row.value === null
+                              ? 0
+                              : (Math.abs(row.value) / maxValue) * 100,
+                          ),
+                        )}%`,
+                      },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.chartValue}>{row.displayValue}</Text>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.note}>
+            Chart exhibit preserved with title and governed metadata; no compact
+            tabular series was available for PDF rendering.
+          </Text>
+        )}
+        {chart.sourceNote ? <Text style={styles.note}>{chart.sourceNote}</Text> : null}
       </View>
     );
   }
@@ -254,11 +462,43 @@ function chartBlock(chart: AnswerChart): ReactElement {
   );
 }
 
+function graphBlock(graph: AnswerGraph): ReactElement {
+  const nodeLabelById = new Map(graph.nodes.map((node) => [node.id, node.label]));
+  const edges = graph.edges.slice(0, 16);
+  return (
+    <View style={styles.card} wrap={false}>
+      <Text style={styles.cardTitle}>{graph.title ?? "Relationship graph"}</Text>
+      <Text style={styles.note}>
+        {graph.nodes.length} nodes | {graph.edges.length} relationships
+      </Text>
+      {edges.length > 0 ? (
+        edges.map((edge, index) => (
+          <View key={`${edge.from}-${edge.to}-${index}`} style={styles.graphEdge}>
+            <Text style={styles.graphEdgeMain}>
+              {text(nodeLabelById.get(edge.from) ?? edge.from)}
+              {" -> "}
+              {text(nodeLabelById.get(edge.to) ?? edge.to)}
+            </Text>
+            {edge.label || edge.kind ? (
+              <Text style={styles.graphEdgeLabel}>
+                {[edge.label, edge.kind].filter(Boolean).join(" | ")}
+              </Text>
+            ) : null}
+          </View>
+        ))
+      ) : (
+        <Text style={styles.note}>No visible relationships available.</Text>
+      )}
+    </View>
+  );
+}
+
 function answerBlocks(answer: AvaAnswerPacket): ReactElement[] {
   const display = sanitizeAvaAnswerForRender(answer);
   const artifacts = display.artifacts.filter(isVisibleAvaArtifact);
   const charts = artifacts.filter((artifact) => artifact.artifact === "chart");
   const tables = artifacts.filter((artifact) => artifact.artifact === "table");
+  const graphs = artifacts.filter((artifact) => artifact.artifact === "graph");
 
   return [
     ...paragraphs(display.directAnswer).map((paragraph, index) => (
@@ -267,6 +507,7 @@ function answerBlocks(answer: AvaAnswerPacket): ReactElement[] {
       </Text>
     )),
     ...charts.map((chart) => <View key={chart.id}>{chartBlock(chart)}</View>),
+    ...graphs.map((graph) => <View key={graph.id}>{graphBlock(graph)}</View>),
     ...tables.map((table) => <View key={table.id}>{tableBlock(table)}</View>),
     ...(display.caveats.length > 0
       ? [
