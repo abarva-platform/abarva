@@ -247,8 +247,10 @@ async function downloadChatSessionExport(
   link.download = filename;
   document.body.appendChild(link);
   link.click();
-  link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  window.setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 60_000);
 }
 
 /**
