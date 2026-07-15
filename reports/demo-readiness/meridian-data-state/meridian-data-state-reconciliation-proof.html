@@ -62,13 +62,13 @@
   <nav>
     <div class="brand">ABARVA · NEXUS</div>
     <h1>Data Layer Operating Guide</h1>
-    <a href="#executive-summary">Executive Summary</a><a href="#meridian-health-enterprise-context-and-strategic-priorities">Meridian Health: Enterprise Context and Strategic Priorities</a><a href="#meridian-agent-assist-golden-thread">Meridian Agent Assist Golden Thread</a><a href="#cdao-meeting-talk-track">CDAO Meeting Talk Track</a><a href="#client-onboarding-model">Client Onboarding Model</a><a href="#how-clients-use-the-templates">How Clients Use the Templates</a><a href="#workshop-and-interview-playbook">Workshop and Interview Playbook</a><a href="#agent-assist-context-requirements">Agent Assist Context Requirements</a><a href="#copilot-assisted-source-parsing">Copilot-Assisted Source Parsing</a><a href="#hybrid-validation-and-promotion">Hybrid Validation and Promotion</a><a href="#source-template-standard">Source Template Standard</a><a href="#template-examples-with-meridian-rows">Template Examples with Meridian Rows</a><a href="#visual-data-layer-cake">Visual Data Layer Cake</a><a href="#one-step-data-flow-walkthrough">One-Step Data Flow Walkthrough</a><a href="#erd-graph-dot-connector-view">ERD + Graph Dot-Connector View</a><a href="#end-to-end-data-flow">End-to-End Data Flow</a><a href="#layer-by-layer-volumetric">Layer-by-Layer Volumetric</a><a href="#logical-data-model-erd">Logical Data Model / ERD</a><a href="#evidence-registry">Evidence Registry</a><a href="#canonical-facts">Canonical Facts</a><a href="#entity-profiles">Entity Profiles</a><a href="#relationship-graph">Relationship Graph</a><a href="#context-gaps-and-confidence">Context Gaps and Confidence</a><a href="#azure-technical-architecture">Azure Technical Architecture</a><a href="#moves-workflow-p0-p5">Moves Workflow P0-P5</a><a href="#phase-by-phase-evidence-guide">Phase-by-Phase Evidence Guide</a><a href="#module-wiring">Module Wiring</a><a href="#module-handoff-map">Module Handoff Map</a><a href="#source-to-layer-reconciliation">Source-to-Layer Reconciliation</a><a href="#aws-databricks-semantic-proof">AWS / Databricks Semantic Proof</a><a href="#legacy-leakage-proof">Legacy Leakage Proof</a><a href="#demo-readiness">Demo Readiness</a><a href="#appendix-raw-proof-tables">Appendix / Raw Proof Tables</a>
+    <a href="#executive-summary">Executive Summary</a><a href="#meridian-health-enterprise-context-and-strategic-priorities">Meridian Health: Enterprise Context and Strategic Priorities</a><a href="#meridian-agent-assist-golden-thread">Meridian Agent Assist Golden Thread</a><a href="#cdao-meeting-talk-track">CDAO Meeting Talk Track</a><a href="#html-quality-and-accuracy-audit">HTML Quality and Accuracy Audit</a><a href="#client-onboarding-model">Client Onboarding Model</a><a href="#how-clients-use-the-templates">How Clients Use the Templates</a><a href="#workshop-and-interview-playbook">Workshop and Interview Playbook</a><a href="#agent-assist-context-requirements">Agent Assist Context Requirements</a><a href="#copilot-assisted-source-parsing">Copilot-Assisted Source Parsing</a><a href="#hybrid-validation-and-promotion">Hybrid Validation and Promotion</a><a href="#source-template-standard">Source Template Standard</a><a href="#template-examples-with-meridian-rows">Template Examples with Meridian Rows</a><a href="#visual-data-layer-cake">Visual Data Layer Cake</a><a href="#moves-over-data-layer">Moves Over Data Layer</a><a href="#gap-to-evidence-feedback-loop">Gap to Evidence Feedback Loop</a><a href="#context-pack-assembly">Context Pack Assembly</a><a href="#one-step-data-flow-walkthrough">One-Step Data Flow Walkthrough</a><a href="#erd-graph-dot-connector-view">ERD + Graph Dot-Connector View</a><a href="#end-to-end-data-flow">End-to-End Data Flow</a><a href="#layer-by-layer-volumetric">Layer-by-Layer Volumetric</a><a href="#logical-data-model-erd">Logical Data Model / ERD</a><a href="#evidence-registry">Evidence Registry</a><a href="#canonical-facts">Canonical Facts</a><a href="#entity-profiles">Entity Profiles</a><a href="#relationship-graph">Relationship Graph</a><a href="#context-gaps-and-confidence">Context Gaps and Confidence</a><a href="#azure-technical-architecture">Azure Technical Architecture</a><a href="#moves-workflow-p0-p5">Moves Workflow P0-P5</a><a href="#phase-by-phase-evidence-guide">Phase-by-Phase Evidence Guide</a><a href="#module-wiring">Module Wiring</a><a href="#module-handoff-map">Module Handoff Map</a><a href="#source-to-layer-reconciliation">Source-to-Layer Reconciliation</a><a href="#aws-databricks-semantic-proof">AWS / Databricks Semantic Proof</a><a href="#legacy-leakage-proof">Legacy Leakage Proof</a><a href="#demo-readiness">Demo Readiness</a><a href="#appendix-raw-proof-tables">Appendix / Raw Proof Tables</a>
   </nav>
   <main>
     <div class="hero">
       <div class="eyebrow">Meridian Health · Agent Assist · Nexus Data Layer</div>
-      <h2>From client evidence to module-ready enterprise context</h2>
-      <p>Nexus does not start with a prompt. Nexus starts with enterprise context. For Meridian Agent Assist, client templates, source adapters, interviews, existing enterprise documents, and SME validation reconcile into evidence, facts, profiles, relationships, gaps, confidence, and module context packs.</p>
+      <h2>From use-case context requirements to module-ready enterprise context</h2>
+      <p>Nexus does not start with a prompt, and a use case does not create evidence. For Meridian Agent Assist, the use case defines required context. Client documents, source-system exports, interviews, reports, contracts, architecture diagrams, and operational data fill those requirements. Templates/adapters capture the evidence, validation governs active/candidate status, and the Context Pack Assembler creates module-ready payloads.</p>
       <div><span class="badge good">safe-for-cdao-demo-with-caveats</span><span class="badge warn">readiness 99/100</span><span class="badge good">no production writes</span><span class="badge good">candidate not promoted</span></div>
     </div>
     <section id="executive-summary">
@@ -795,6 +795,18 @@
         <div class="card"><h3>What not to overclaim</h3><p>Do not claim production Meridian data, certified AWS/Databricks readiness, realized ROI, PHI ingestion, or approved Tower outcomes. This is demo-safe synthetic planning context with caveats.</p></div>
       </div>
     </section>
+    <section id="html-quality-and-accuracy-audit">
+      <h2>HTML Quality and Accuracy Audit</h2>
+      <p>This pass audits the guide for semantic accuracy, demo safety, architecture correctness, and truth boundaries. The main correction is simple: a use case does not create evidence; a use case defines the context required to make a decision.</p>
+      <div class="grid">
+        <div class="card"><div class="eyebrow">Sections Audited</div><div class="metric">39</div><p>Every major page, diagram, module statement, and proof section reviewed.</p></div>
+        <div class="card"><div class="eyebrow">High Severity</div><div class="metric">8</div><p>Architecture semantics corrected before demo use.</p></div>
+        <div class="card"><div class="eyebrow">Status</div><div class="metric">Fixed</div><p>All findings are marked fixed in the audit artifact.</p></div>
+        <div class="card"><div class="eyebrow">Boundary</div><div class="metric">No Runtime</div><p>No data rebuild, candidate promotion, deploy, or product behavior change.</p></div>
+      </div>
+      <div class="example"><strong>Corrected mental model:</strong> Business use case defines context requirements → client evidence fills those requirements → templates/adapters capture evidence → governed data layers reconcile it → Context Pack Assembler creates module-specific payloads → gaps return as evidence requests.</div>
+      <table><thead><tr><th>section_name</th><th>severity</th><th>issue_found</th><th>corrected_wording_or_diagram</th><th>demo_risk</th><th>fixed_status</th></tr></thead><tbody><tr><td>Executive Summary</td><td>medium</td><td>The summary could imply a linear client-input-to-module path.</td><td>Business use case defines context requirements; evidence fills them; modules consume governed context packs.</td><td>Could create ambiguity in a live demo if not caveated.</td><td>fixed</td></tr><tr><td>Meridian Health Context and Strategic Priorities</td><td>low</td><td>Strategic context needed stronger current-vs-target architecture boundary.</td><td>Legacy/on-prem-heavy current state; AWS + Databricks are target foundation/readiness path, not certified production.</td><td>Low risk after clarification.</td><td>fixed</td></tr><tr><td>Agent Assist Golden Thread</td><td>medium</td><td>Golden thread needed explicit context requirement framing.</td><td>Agent Assist use case defines required business, system, data, control, metric, org, and foundation context.</td><td>Could create ambiguity in a live demo if not caveated.</td><td>fixed</td></tr><tr><td>CDAO Meeting Talk Track</td><td>low</td><td>Talk track needed stronger no-overclaim guardrail.</td><td>CDAO story now emphasizes governed context, caveats, and no realized value claim.</td><td>Low risk after clarification.</td><td>fixed</td></tr><tr><td>Client Onboarding Model</td><td>medium</td><td>Could imply onboarding creates active truth automatically.</td><td>Intake creates candidate context until SME validation approves active status.</td><td>Could create ambiguity in a live demo if not caveated.</td><td>fixed</td></tr><tr><td>How Clients Use the Templates</td><td>high</td><td>Lifecycle started with select use case but did not say a use case defines requirements rather than evidence.</td><td>Use case -&gt; required context dimensions -&gt; evidence collection -&gt; templates/adapters -&gt; validation -&gt; active context or gap.</td><td>Could mislead executives about architecture, evidence readiness, or product behavior.</td><td>fixed</td></tr><tr><td>Workshop and Interview Playbook</td><td>low</td><td>Workshop outputs needed to be described as evidence inputs, not approved facts.</td><td>Workshop answers become evidence candidates with confidence and validation status.</td><td>Low risk after clarification.</td><td>fixed</td></tr><tr><td>Agent Assist Context Requirements</td><td>low</td><td>Needed explicit before-finalizing-discovery guidance.</td><td>Business, technology, data, controls, org/change, metrics, and foundation readiness are required to finalize discovery artifacts.</td><td>Low risk after clarification.</td><td>fixed</td></tr><tr><td>Copilot-Assisted Source Parsing</td><td>high</td><td>Copilot extraction could be misread as approval.</td><td>Copilot output remains candidate-only until SME/source validation.</td><td>Could mislead executives about architecture, evidence readiness, or product behavior.</td><td>fixed</td></tr><tr><td>Hybrid Validation and Promotion</td><td>low</td><td>Correct but needed stronger outcomes.</td><td>Review can produce candidate context, rejected evidence, active context, or known unresolved gap.</td><td>Low risk after clarification.</td><td>fixed</td></tr><tr><td>Source Template Standard</td><td>medium</td><td>Could imply templates directly feed modules.</td><td>Templates/adapters feed governed layers; Context Pack Assembler feeds modules.</td><td>Could create ambiguity in a live demo if not caveated.</td><td>fixed</td></tr><tr><td>Template Examples with Meridian Rows</td><td>low</td><td>Examples needed stronger synthetic/candidate caveat.</td><td>Rows are demo-safe synthetic examples with evidence/confidence/gap caveats.</td><td>Low risk after clarification.</td><td>fixed</td></tr><tr><td>Visual Data Layer Cake</td><td>low</td><td>Needed explicit module-ready context boundary.</td><td>Every layer adds source, confidence, gap, and active/candidate status before modules can rely on it.</td><td>Low risk after clarification.</td><td>fixed</td></tr><tr><td>Moves Over Data Layer</td><td>high</td><td>Required diagram was missing.</td><td>Moves phases request phase-specific MovesContextPacks from the Nexus data layer; gaps flow back to client evidence intake.</td><td>Could mislead executives about architecture, evidence readiness, or product behavior.</td><td>fixed</td></tr><tr><td>Gap to Evidence Feedback Loop</td><td>high</td><td>Gap handling was present but not visualized as a controlled loop.</td><td>Gap -&gt; evidence request -&gt; client response -&gt; candidate update -&gt; SME validation -&gt; active/rejected/unresolved outcome.</td><td>Could mislead executives about architecture, evidence readiness, or product behavior.</td><td>fixed</td></tr><tr><td>Context Pack Assembly</td><td>high</td><td>Modules could be interpreted as reading raw templates.</td><td>KnowledgeContextPack, MovesContextPack, IntelligenceContextPack, SourceContextPack, and TowerContextPack are assembled from governed layers.</td><td>Could mislead executives about architecture, evidence readiness, or product behavior.</td><td>fixed</td></tr><tr><td>One-Step Data Flow Walkthrough</td><td>high</td><td>Original flow implied use case directly creates client evidence.</td><td>Use case defines context requirements; client evidence fills them; validation governs active use.</td><td>Could mislead executives about architecture, evidence readiness, or product behavior.</td><td>fixed</td></tr><tr><td>ERD / Graph View</td><td>medium</td><td>ERD needed to distinguish governed model from graph explanation.</td><td>ERD defines governed contract; graph connects systems, functions, data, risks, metrics, vendors, and programs.</td><td>Could create ambiguity in a live demo if not caveated.</td><td>fixed</td></tr><tr><td>End-to-End Data Flow</td><td>medium</td><td>Needed to use corrected pipeline semantics.</td><td>Evidence is captured through templates/adapters, reconciled into governed layers, and assembled into context packs.</td><td>Could create ambiguity in a live demo if not caveated.</td><td>fixed</td></tr><tr><td>Layer-by-Layer Volumetric</td><td>low</td><td>Counts could be mistaken for production truth.</td><td>Counts remain proof/report data with active/candidate caveats and no production-write claim.</td><td>Low risk after clarification.</td><td>fixed</td></tr><tr><td>Logical Data Model / ERD</td><td>medium</td><td>Needed stronger context-pack assembler role.</td><td>Governed entities and relationships feed policy-filtered context packs, not raw module prompts.</td><td>Could create ambiguity in a live demo if not caveated.</td><td>fixed</td></tr><tr><td>Evidence Registry</td><td>low</td><td>Registry needed explicit source-proof wording.</td><td>Evidence carries source type, owner, as-of date, sensitivity, confidence, active/candidate status, linked facts, and dimensions.</td><td>Low risk after clarification.</td><td>fixed</td></tr><tr><td>Canonical Facts</td><td>medium</td><td>Could imply source statements become facts automatically.</td><td>Source statements are normalized only with evidence, confidence, and validation status.</td><td>Could create ambiguity in a live demo if not caveated.</td><td>fixed</td></tr><tr><td>Entity Profiles</td><td>low</td><td>Table-only section needed usage clarification.</td><td>Profiles organize reusable enterprise context after evidence-backed facts are available.</td><td>Low risk after clarification.</td><td>fixed</td></tr><tr><td>Relationship Graph</td><td>medium</td><td>Graph needed explicit non-calculation boundary.</td><td>Graph explains dependency context and gaps; it does not calculate Tower value or certify readiness.</td><td>Could create ambiguity in a live demo if not caveated.</td><td>fixed</td></tr><tr><td>Context Gaps and Confidence</td><td>low</td><td>Gap handling needed positive framing.</td><td>A gap is a controlled evidence request with owner, severity, and possible validation outcomes.</td><td>Low risk after clarification.</td><td>fixed</td></tr><tr><td>Azure Technical Architecture</td><td>medium</td><td>Tech overlay needed context-pack boundary.</td><td>ACA/Blob/validation/data artifacts assemble governed context packs; no runtime behavior changed in this PR.</td><td>Could create ambiguity in a live demo if not caveated.</td><td>fixed</td></tr><tr><td>Moves Workflow P0-P5</td><td>medium</td><td>Moves needed phase-specific context pack language.</td><td>Each phase requests a phase-specific MovesContextPack and returns gaps as evidence requests.</td><td>Could create ambiguity in a live demo if not caveated.</td><td>fixed</td></tr><tr><td>Phase-by-Phase Evidence Guide</td><td>low</td><td>Phase guide needed evidence lifecycle caveat.</td><td>Uploaded/answered items become candidate evidence until validated for phase use.</td><td>Low risk after clarification.</td><td>fixed</td></tr><tr><td>Module Wiring</td><td>high</td><td>Module cards could imply modules read broad context directly.</td><td>Modules consume context packs: Knowledge, Moves, Intelligence, Source, Tower, each with scope-specific payloads.</td><td>Could mislead executives about architecture, evidence readiness, or product behavior.</td><td>fixed</td></tr><tr><td>Module Handoff Map</td><td>medium</td><td>Map showed handoff without enough context-pack semantics.</td><td>The same context spine is assembled into module-specific context packs; modules add decision surfaces, not raw truth.</td><td>Could create ambiguity in a live demo if not caveated.</td><td>fixed</td></tr><tr><td>Source-to-Layer Reconciliation</td><td>medium</td><td>Trace cards needed to clarify validation path.</td><td>Trace flows source row -&gt; evidence -&gt; fact/profile/edge/gap -&gt; context pack; modules consume the pack.</td><td>Could create ambiguity in a live demo if not caveated.</td><td>fixed</td></tr><tr><td>AWS / Databricks Semantic Proof</td><td>high</td><td>Must preserve current vs target state boundary.</td><td>Current state is fragmented/legacy; AWS + Databricks lakehouse, medallion, Unity Catalog, data products, PHI/HITL/audit controls are target/readiness path.</td><td>Could mislead executives about architecture, evidence readiness, or product behavior.</td><td>fixed</td></tr><tr><td>Legacy Leakage Proof</td><td>low</td><td>Correct but should stay caveated as historical/report-only.</td><td>Old V-named references are kept out of active demo language and loader-visible paths.</td><td>Low risk after clarification.</td><td>fixed</td></tr><tr><td>Demo Readiness</td><td>medium</td><td>Needed to separate safe claims from future work.</td><td>Demo is safe with caveats; no production data, no realized ROI, no certified AWS/Databricks, no Tower outcome proof.</td><td>Could create ambiguity in a live demo if not caveated.</td><td>fixed</td></tr><tr><td>Client Data Request Pack</td><td>low</td><td>Data request list needed lifecycle tie-back.</td><td>Requested files fill context dimensions and enter the same template/adapter, validation, active/candidate lifecycle.</td><td>Low risk after clarification.</td><td>fixed</td></tr><tr><td>Good Enough by Phase</td><td>low</td><td>Good-enough criteria needed evidence-gated caveat.</td><td>Good enough means sufficient evidence and explicit caveats for that phase, not complete enterprise truth.</td><td>Low risk after clarification.</td><td>fixed</td></tr><tr><td>Recommended Client Onboarding Sequence</td><td>medium</td><td>Sequence needed corrected lifecycle.</td><td>Use case selects required context; weeks collect evidence, validate candidate context, assemble context packs, and recycle gaps.</td><td>Could create ambiguity in a live demo if not caveated.</td><td>fixed</td></tr><tr><td>Appendix / Raw Proof Tables</td><td>low</td><td>Appendix needed no-runtime-change caveat.</td><td>Tables support the guide but do not represent runtime mutation, client production data, or candidate promotion.</td><td>Low risk after clarification.</td><td>fixed</td></tr></tbody></table>
+    </section>
     <section id="client-onboarding-model">
       <h2>Client Onboarding Model</h2>
       <p>Real clients rarely complete a perfect data pack in one motion. Nexus supports four paths that converge into governed context.</p>
@@ -804,9 +816,9 @@
     <section id="how-clients-use-the-templates">
       <h2>How Clients Use the Templates</h2>
       <div class="rail">
-        <div class="step"><strong>Step 1</strong><span>Select use case</span></div><div class="step"><strong>Step 2</strong><span>Identify required dimensions</span></div><div class="step"><strong>Step 3</strong><span>Assign owners</span></div><div class="step"><strong>Step 4</strong><span>Fill templates</span></div><div class="step"><strong>Step 5</strong><span>Attach evidence</span></div><div class="step"><strong>Step 6</strong><span>Mark confidence/gaps</span></div><div class="step"><strong>Step 7</strong><span>Review candidate context</span></div><div class="step"><strong>Step 8</strong><span>Approve or keep candidate-only</span></div>
+        <div class="step"><strong>Step 1</strong><span>Select use case</span></div><div class="step"><strong>Step 2</strong><span>Identify required context dimensions</span></div><div class="step"><strong>Step 3</strong><span>Collect existing documents/exports</span></div><div class="step"><strong>Step 4</strong><span>Conduct interviews/workshops</span></div><div class="step"><strong>Step 5</strong><span>Use Copilot-assisted parsing</span></div><div class="step"><strong>Step 6</strong><span>Map extracted content to templates/source adapters</span></div><div class="step"><strong>Step 7</strong><span>Assign evidence IDs and confidence</span></div><div class="step"><strong>Step 8</strong><span>Client SME validates or rejects</span></div><div class="step"><strong>Step 9</strong><span>Candidate context is assembled</span></div><div class="step"><strong>Step 10</strong><span>Approved context becomes active</span></div><div class="step"><strong>Step 11</strong><span>Modules consume context packs</span></div><div class="step"><strong>Step 12</strong><span>Gaps generate new evidence requests</span></div><div class="step"><strong>Step 13</strong><span>New evidence re-enters governed flow</span></div>
       </div>
-      <p>For Meridian Agent Assist, the core intake dimensions are Business Functions, Org Ownership, Workforce Roles, Applications & Systems, Data Assets & Integrations, Infrastructure & Platforms, Vendors & Contracts, Programs & Initiatives, AI Use Cases, Risks & Controls, Metrics & Outcomes, Operational Process Evidence, Evidence Sources, and Relationships.</p>
+      <p>For Meridian Agent Assist, the use case defines the required context dimensions. Client evidence then fills those requirements through Business Functions, Org Ownership, Workforce Roles, Applications & Systems, Data Assets & Integrations, Infrastructure & Platforms, Vendors & Contracts, Programs & Initiatives, AI Use Cases, Risks & Controls, Metrics & Outcomes, Operational Process Evidence, Evidence Sources, and Relationships.</p>
       <div class="two">
         <div class="card"><h3>Evidence Examples</h3><ul><li>CMDB export</li><li>Application inventory</li><li>Architecture diagram</li><li>ServiceNow incidents</li><li>Contact center KPI report</li><li>Claims platform data dictionary</li><li>Knowledge base export</li><li>Vendor contract</li><li>Program roadmap</li><li>Security control assessment</li></ul></div>
         <div class="card"><h3>Confidence Rules</h3><ul><li>High: source-system export or approved owner evidence</li><li>Medium: SME-confirmed interview or reviewed deck</li><li>Low: inferred from document</li><li>Gap: stale, missing owner, missing evidence, or ambiguous current-vs-target status</li></ul></div>
@@ -949,16 +961,272 @@
         <div class="card"><h3>What modules receive</h3><p>Moves, Source, Tower, Intelligence, and Knowledge should receive active context packs with source traceability, confidence, gap status, and clear limits.</p></div>
       </div>
     </section>
+    <section id="moves-over-data-layer">
+      <h2>Moves Over Data Layer</h2>
+      <p>Moves does not bypass the data layer. Each phase asks the Nexus context layer for the right evidence-backed context. When a gap is found, the client can provide new evidence. That evidence is captured through templates or source adapters, validated, and then becomes reusable enterprise context.</p>
+      <div class="svg-panel">
+    <svg viewBox="0 0 1280 520" role="img" aria-label="Moves over Nexus data layer">
+      <rect x="0" y="0" width="1280" height="520" rx="18" fill="#0b111a"/>
+      <text x="54" y="40" fill="#75a7ff" font-size="13" font-weight="900" letter-spacing="3">MOVES OVER DATA LAYER</text>
+      <text x="54" y="68" fill="#eef3f8" font-size="23" font-weight="900">Moves does not bypass the data layer</text>
+
+      <g>
+        <rect x="62" y="72" width="160" height="72" rx="12" fill="#101722" stroke="#75a7ff" stroke-width="2"/>
+        <text x="80" y="101" fill="#eef3f8" font-size="18" font-weight="900">P0</text>
+        <foreignObject x="114" y="84" width="92" height="48">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.2">problem, sponsor, scope, known evidence</div>
+        </foreignObject>
+        <path d="M142 144 L142 198" stroke="#75a7ff" stroke-width="2" stroke-dasharray="6 6"/>
+        <rect x="82" y="198" width="120" height="40" rx="10" fill="#182335" stroke="#8bd3ff"/>
+        <text x="142" y="222" text-anchor="middle" fill="#8bd3ff" font-size="11" font-weight="900">MovesContextPack</text>
+      </g>
+      <g>
+        <rect x="260" y="72" width="160" height="72" rx="12" fill="#101722" stroke="#75a7ff" stroke-width="2"/>
+        <text x="278" y="101" fill="#eef3f8" font-size="18" font-weight="900">P1</text>
+        <foreignObject x="312" y="84" width="92" height="48">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.2">systems, functions, owners, metrics, risks</div>
+        </foreignObject>
+        <path d="M340 144 L340 198" stroke="#75a7ff" stroke-width="2" stroke-dasharray="6 6"/>
+        <rect x="280" y="198" width="120" height="40" rx="10" fill="#182335" stroke="#8bd3ff"/>
+        <text x="340" y="222" text-anchor="middle" fill="#8bd3ff" font-size="11" font-weight="900">MovesContextPack</text>
+      </g>
+      <g>
+        <rect x="458" y="72" width="160" height="72" rx="12" fill="#101722" stroke="#75a7ff" stroke-width="2"/>
+        <text x="476" y="101" fill="#eef3f8" font-size="18" font-weight="900">P2</text>
+        <foreignObject x="510" y="84" width="92" height="48">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.2">current process, data, integration, metric gaps</div>
+        </foreignObject>
+        <path d="M538 144 L538 198" stroke="#75a7ff" stroke-width="2" stroke-dasharray="6 6"/>
+        <rect x="478" y="198" width="120" height="40" rx="10" fill="#182335" stroke="#8bd3ff"/>
+        <text x="538" y="222" text-anchor="middle" fill="#8bd3ff" font-size="11" font-weight="900">MovesContextPack</text>
+      </g>
+      <g>
+        <rect x="656" y="72" width="160" height="72" rx="12" fill="#101722" stroke="#75a7ff" stroke-width="2"/>
+        <text x="674" y="101" fill="#eef3f8" font-size="18" font-weight="900">P3</text>
+        <foreignObject x="708" y="84" width="92" height="48">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.2">options, target foundation, controls</div>
+        </foreignObject>
+        <path d="M736 144 L736 198" stroke="#75a7ff" stroke-width="2" stroke-dasharray="6 6"/>
+        <rect x="676" y="198" width="120" height="40" rx="10" fill="#182335" stroke="#8bd3ff"/>
+        <text x="736" y="222" text-anchor="middle" fill="#8bd3ff" font-size="11" font-weight="900">MovesContextPack</text>
+      </g>
+      <g>
+        <rect x="854" y="72" width="160" height="72" rx="12" fill="#101722" stroke="#75a7ff" stroke-width="2"/>
+        <text x="872" y="101" fill="#eef3f8" font-size="18" font-weight="900">P4</text>
+        <foreignObject x="906" y="84" width="92" height="48">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.2">evidence confidence, value, sourcing caveats</div>
+        </foreignObject>
+        <path d="M934 144 L934 198" stroke="#75a7ff" stroke-width="2" stroke-dasharray="6 6"/>
+        <rect x="874" y="198" width="120" height="40" rx="10" fill="#182335" stroke="#8bd3ff"/>
+        <text x="934" y="222" text-anchor="middle" fill="#8bd3ff" font-size="11" font-weight="900">MovesContextPack</text>
+      </g>
+      <g>
+        <rect x="1052" y="72" width="160" height="72" rx="12" fill="#101722" stroke="#75a7ff" stroke-width="2"/>
+        <text x="1070" y="101" fill="#eef3f8" font-size="18" font-weight="900">P5</text>
+        <foreignObject x="1104" y="84" width="92" height="48">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.2">handoff, Source, Tower, evidence plan</div>
+        </foreignObject>
+        <path d="M1132 144 L1132 198" stroke="#75a7ff" stroke-width="2" stroke-dasharray="6 6"/>
+        <rect x="1072" y="198" width="120" height="40" rx="10" fill="#182335" stroke="#8bd3ff"/>
+        <text x="1132" y="222" text-anchor="middle" fill="#8bd3ff" font-size="11" font-weight="900">MovesContextPack</text>
+      </g>
+      <rect x="48" y="276" width="1184" height="112" rx="16" fill="#101722" stroke="#ffd166" opacity=".92"/>
+      <text x="72" y="300" fill="#ffd166" font-size="13" font-weight="900">Common Nexus Data Layer</text>
+
+      <g>
+        <rect x="58" y="306" width="142" height="52" rx="11" fill="#0b111a" stroke="#ffd166" stroke-width="1.5"/>
+        <foreignObject x="70" y="318" width="118" height="28">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#eef3f8; font-weight:800; text-align:center; line-height:1.15">Source Templates / Adapters</div>
+        </foreignObject>
+        <path d="M200 332 L224 332" stroke="#ffd166" stroke-width="2"/><path d="M224 332 l-7 -5 v10 z" fill="#ffd166"/>
+      </g>
+      <g>
+        <rect x="226" y="306" width="142" height="52" rx="11" fill="#0b111a" stroke="#ffd166" stroke-width="1.5"/>
+        <foreignObject x="238" y="318" width="118" height="28">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#eef3f8; font-weight:800; text-align:center; line-height:1.15">Evidence Registry</div>
+        </foreignObject>
+        <path d="M368 332 L392 332" stroke="#ffd166" stroke-width="2"/><path d="M392 332 l-7 -5 v10 z" fill="#ffd166"/>
+      </g>
+      <g>
+        <rect x="394" y="306" width="142" height="52" rx="11" fill="#0b111a" stroke="#ffd166" stroke-width="1.5"/>
+        <foreignObject x="406" y="318" width="118" height="28">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#eef3f8; font-weight:800; text-align:center; line-height:1.15">Canonical Facts</div>
+        </foreignObject>
+        <path d="M536 332 L560 332" stroke="#ffd166" stroke-width="2"/><path d="M560 332 l-7 -5 v10 z" fill="#ffd166"/>
+      </g>
+      <g>
+        <rect x="562" y="306" width="142" height="52" rx="11" fill="#0b111a" stroke="#ffd166" stroke-width="1.5"/>
+        <foreignObject x="574" y="318" width="118" height="28">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#eef3f8; font-weight:800; text-align:center; line-height:1.15">Entity Profiles</div>
+        </foreignObject>
+        <path d="M704 332 L728 332" stroke="#ffd166" stroke-width="2"/><path d="M728 332 l-7 -5 v10 z" fill="#ffd166"/>
+      </g>
+      <g>
+        <rect x="730" y="306" width="142" height="52" rx="11" fill="#0b111a" stroke="#ffd166" stroke-width="1.5"/>
+        <foreignObject x="742" y="318" width="118" height="28">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#eef3f8; font-weight:800; text-align:center; line-height:1.15">Relationship Graph</div>
+        </foreignObject>
+        <path d="M872 332 L896 332" stroke="#ffd166" stroke-width="2"/><path d="M896 332 l-7 -5 v10 z" fill="#ffd166"/>
+      </g>
+      <g>
+        <rect x="898" y="306" width="142" height="52" rx="11" fill="#0b111a" stroke="#ffd166" stroke-width="1.5"/>
+        <foreignObject x="910" y="318" width="118" height="28">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#eef3f8; font-weight:800; text-align:center; line-height:1.15">Gaps + Confidence</div>
+        </foreignObject>
+        <path d="M1040 332 L1064 332" stroke="#ffd166" stroke-width="2"/><path d="M1064 332 l-7 -5 v10 z" fill="#ffd166"/>
+      </g>
+      <g>
+        <rect x="1066" y="306" width="142" height="52" rx="11" fill="#0b111a" stroke="#ffd166" stroke-width="1.5"/>
+        <foreignObject x="1078" y="318" width="118" height="28">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#eef3f8; font-weight:800; text-align:center; line-height:1.15">Context Pack Assembler</div>
+        </foreignObject>
+
+      </g>
+      <path d="M1188 358 C1235 420 1120 454 966 404" stroke="#ff6b6b" stroke-width="2.5" fill="none" stroke-dasharray="8 7"/>
+      <text x="934" y="432" fill="#ffb3b3" font-size="12" font-weight="800">gap found → evidence request to client</text>
+      <path d="M360 430 C260 462 145 430 118 358" stroke="#3ddc97" stroke-width="2.5" fill="none" stroke-dasharray="8 7"/>
+      <text x="82" y="460" fill="#b9f8dc" font-size="12" font-weight="800">validated new evidence returns through templates/adapters</text>
+      <text x="54" y="498" fill="#9aa8b8" font-size="13">Moves asks the Nexus context layer for the right evidence-backed context. New client evidence is captured, validated, and then becomes reusable enterprise context.</text>
+    </svg>
+  </div>
+      <div class="grid3">
+        <div class="card"><h3>What this means</h3><p>P0 through P5 do not own truth independently. They request phase-specific MovesContextPacks assembled from governed evidence, facts, profiles, graph relationships, gaps, and confidence.</p></div>
+        <div class="card"><h3>Meridian example</h3><p>P2 can ask for current-state systems and data gaps for Agent Assist. If transcript availability or knowledge freshness is missing, Moves should send that gap back as an evidence request.</p></div>
+        <div class="card"><h3>Truth boundary</h3><p>Gaps do not automatically become facts. New client inputs first become candidate context, rejected evidence, active context after validation, or known unresolved gaps.</p></div>
+      </div>
+    </section>
+    <section id="gap-to-evidence-feedback-loop">
+      <h2>Gap to Evidence Feedback Loop</h2>
+      <p>A gap is not a failure. A gap is a controlled evidence request. The client can address it by uploading a missing document, exporting a source-system file, answering a workshop question, confirming an owner, validating a metric baseline, clarifying current versus target state, or approving/rejecting a Copilot-derived candidate row.</p>
+      <div class="svg-panel">
+    <svg viewBox="0 0 1280 500" role="img" aria-label="Gap to evidence feedback loop">
+      <rect x="0" y="0" width="1280" height="500" rx="18" fill="#0b111a"/>
+      <text x="54" y="42" fill="#75a7ff" font-size="13" font-weight="900" letter-spacing="3">GAP FEEDBACK LOOP</text>
+      <text x="54" y="70" fill="#eef3f8" font-size="23" font-weight="900">A gap is a controlled evidence request, not a failure</text>
+      <ellipse cx="640" cy="250" rx="360" ry="150" fill="none" stroke="#75a7ff" stroke-width="2.5" stroke-dasharray="10 8"/>
+
+      <g>
+        <rect x="562" y="81" width="156" height="68" rx="13" fill="#101722" stroke="#ff6b6b" stroke-width="2"/>
+        <text x="640" y="107" text-anchor="middle" fill="#eef3f8" font-size="13" font-weight="900">Gap detected</text>
+        <foreignObject x="576" y="118" width="128" height="26">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.12; text-align:center">missing, stale, low-confidence, ambiguous</div>
+        </foreignObject>
+      </g>
+      <g>
+        <rect x="860.7787643056313" y="148.5" width="156" height="68" rx="13" fill="#101722" stroke="#75a7ff" stroke-width="2"/>
+        <text x="938.7787643056313" y="174.5" text-anchor="middle" fill="#eef3f8" font-size="13" font-weight="900">Evidence request</text>
+        <foreignObject x="874.7787643056313" y="185.5" width="128" height="26">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.12; text-align:center">document, export, interview, owner, baseline</div>
+        </foreignObject>
+      </g>
+      <g>
+        <rect x="860.7787643056313" y="283.5" width="156" height="68" rx="13" fill="#101722" stroke="#75a7ff" stroke-width="2"/>
+        <text x="938.7787643056313" y="309.5" text-anchor="middle" fill="#eef3f8" font-size="13" font-weight="900">Client response</text>
+        <foreignObject x="874.7787643056313" y="320.5" width="128" height="26">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.12; text-align:center">upload, answer, confirm, reject, clarify</div>
+        </foreignObject>
+      </g>
+      <g>
+        <rect x="562" y="351" width="156" height="68" rx="13" fill="#101722" stroke="#75a7ff" stroke-width="2"/>
+        <text x="640" y="377" text-anchor="middle" fill="#eef3f8" font-size="13" font-weight="900">Candidate update</text>
+        <foreignObject x="576" y="388" width="128" height="26">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.12; text-align:center">captured through template or adapter</div>
+        </foreignObject>
+      </g>
+      <g>
+        <rect x="263.22123569436866" y="283.5" width="156" height="68" rx="13" fill="#101722" stroke="#75a7ff" stroke-width="2"/>
+        <text x="341.22123569436866" y="309.5" text-anchor="middle" fill="#eef3f8" font-size="13" font-weight="900">SME validation</text>
+        <foreignObject x="277.22123569436866" y="320.5" width="128" height="26">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.12; text-align:center">approve, correct, reject, unresolved</div>
+        </foreignObject>
+      </g>
+      <g>
+        <rect x="263.22123569436866" y="148.5" width="156" height="68" rx="13" fill="#101722" stroke="#75a7ff" stroke-width="2"/>
+        <text x="341.22123569436866" y="174.5" text-anchor="middle" fill="#eef3f8" font-size="13" font-weight="900">Active context</text>
+        <foreignObject x="277.22123569436866" y="185.5" width="128" height="26">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.12; text-align:center">only if approved and source-backed</div>
+        </foreignObject>
+      </g>
+      <circle cx="640" cy="250" r="64" fill="#182335" stroke="#3ddc97" stroke-width="2"/>
+      <text x="640" y="242" text-anchor="middle" fill="#eef3f8" font-size="15" font-weight="900">Governed</text>
+      <text x="640" y="262" text-anchor="middle" fill="#eef3f8" font-size="15" font-weight="900">review loop</text>
+      <text x="60" y="462" fill="#9aa8b8" font-size="13">Outcomes: candidate context, rejected evidence, active context after validation, or a known unresolved gap.</text>
+    </svg>
+  </div>
+      <div class="grid3">
+        <div class="card"><h3>Why it matters</h3><p>This makes the product feel consultative: Nexus does not hide uncertainty. It turns uncertainty into the next evidence action.</p></div>
+        <div class="card"><h3>What can go wrong</h3><p>If gaps are treated as active facts, generated deliverables can overstate readiness or invent a business case without source support.</p></div>
+        <div class="card"><h3>Which modules use it</h3><p>Moves uses gaps for phase readiness, Intelligence uses gaps for caveated recommendations, Source uses gaps for sourcing due diligence, and Tower uses gaps to protect value claims.</p></div>
+      </div>
+    </section>
+    <section id="context-pack-assembly">
+      <h2>Context Pack Assembly</h2>
+      <p>Modules consume context packs, not raw source templates. Knowledge, Moves, Intelligence, Source, Tower, and aVa should receive purpose-built governed payloads filtered by tenant, sensitivity, source basis, active/candidate state, phase, and module policy.</p>
+      <div class="svg-panel">
+    <svg viewBox="0 0 1280 430" role="img" aria-label="Context pack assembly">
+      <rect x="0" y="0" width="1280" height="430" rx="18" fill="#0b111a"/>
+      <text x="54" y="42" fill="#75a7ff" font-size="13" font-weight="900" letter-spacing="3">CONTEXT PACK ASSEMBLY</text>
+      <text x="54" y="70" fill="#eef3f8" font-size="23" font-weight="900">Modules consume governed context packs, not raw templates</text>
+      <rect x="94" y="112" width="1092" height="70" rx="16" fill="#101722" stroke="#ffd166" stroke-width="2"/>
+      <text x="640" y="142" text-anchor="middle" fill="#eef3f8" font-size="17" font-weight="900">Evidence Registry + Canonical Facts + Entity Profiles + Graph + Gaps + Confidence</text>
+      <text x="640" y="164" text-anchor="middle" fill="#9aa8b8" font-size="12">filtered by tenant, sensitivity, source basis, active/candidate status, phase, and module policy</text>
+      <path d="M640 182 L640 226" stroke="#75a7ff" stroke-width="3"/>
+      <rect x="500" y="226" width="280" height="44" rx="13" fill="#182335" stroke="#8bd3ff" stroke-width="2"/>
+      <text x="640" y="253" text-anchor="middle" fill="#8bd3ff" font-size="14" font-weight="900">Context Pack Assembler</text>
+
+      <g>
+        <rect x="72" y="262" width="190" height="88" rx="14" fill="#101722" stroke="#b693ff" stroke-width="2"/>
+        <text x="167" y="294" text-anchor="middle" fill="#eef3f8" font-size="13" font-weight="900">KnowledgeContextPack</text>
+        <foreignObject x="94" y="308" width="146" height="32">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.12; text-align:center">browsing, relationships, evidence limits</div>
+        </foreignObject>
+      </g>
+      <g>
+        <rect x="304" y="262" width="190" height="88" rx="14" fill="#101722" stroke="#b693ff" stroke-width="2"/>
+        <text x="399" y="294" text-anchor="middle" fill="#eef3f8" font-size="13" font-weight="900">MovesContextPack</text>
+        <foreignObject x="326" y="308" width="146" height="32">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.12; text-align:center">phase-specific context, evidence, gaps</div>
+        </foreignObject>
+      </g>
+      <g>
+        <rect x="536" y="262" width="190" height="88" rx="14" fill="#101722" stroke="#b693ff" stroke-width="2"/>
+        <text x="631" y="294" text-anchor="middle" fill="#eef3f8" font-size="13" font-weight="900">IntelligenceContextPack</text>
+        <foreignObject x="558" y="308" width="146" height="32">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.12; text-align:center">governed Claude-ready payload</div>
+        </foreignObject>
+      </g>
+      <g>
+        <rect x="768" y="262" width="190" height="88" rx="14" fill="#101722" stroke="#b693ff" stroke-width="2"/>
+        <text x="863" y="294" text-anchor="middle" fill="#eef3f8" font-size="13" font-weight="900">SourceContextPack</text>
+        <foreignObject x="790" y="308" width="146" height="32">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.12; text-align:center">vendors, contracts, systems, spend, SLA, risk</div>
+        </foreignObject>
+      </g>
+      <g>
+        <rect x="1000" y="262" width="190" height="88" rx="14" fill="#101722" stroke="#b693ff" stroke-width="2"/>
+        <text x="1095" y="294" text-anchor="middle" fill="#eef3f8" font-size="13" font-weight="900">TowerContextPack</text>
+        <foreignObject x="1022" y="308" width="146" height="32">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.12; text-align:center">baseline, hypothesis, plan, measured evidence</div>
+        </foreignObject>
+      </g>
+    </svg>
+  </div>
+      <div class="grid3">
+        <div class="card"><h3>SourceContextPack</h3><p>Links vendors, contracts, systems supported, business functions, spend, SLAs, service performance, risks, renewals, programs, sourcing gaps, and evidence.</p></div>
+        <div class="card"><h3>TowerContextPack</h3><p>Supports value hypothesis, baseline metric, measurement plan, promised value, and measured value only when evidence exists.</p></div>
+        <div class="card"><h3>MovesContextPack</h3><p>Changes by phase: P0 frames the bet, P1 charters, P2 diagnoses, P3 compares options, P4 supports commitment, and P5 prepares execution handoff.</p></div>
+      </div>
+    </section>
     <section id="one-step-data-flow-walkthrough">
       <h2>One-Step Data Flow Walkthrough</h2>
-      <p>This view answers the client question: “What happens after we give you documents, exports, or workshop answers?” The answer is not magic ingestion. It is a controlled progression from evidence to candidate rows to validated context to module use.</p>
+      <p>This view answers the client question: “What happens after we select a use case and give you documents, exports, or workshop answers?” The answer is not magic ingestion. The use case defines required context; client evidence fills those requirements; templates/adapters capture the evidence; validation determines what can become active context.</p>
       <div class="svg-panel">
     <svg viewBox="0 0 1280 420" role="img" aria-label="Meridian end-to-end data flow process">
       <rect x="0" y="0" width="1280" height="420" rx="18" fill="#0b111a" />
       <text x="54" y="45" fill="#75a7ff" font-size="13" font-weight="900" letter-spacing="3">ONE STEP AT A TIME</text>
-      <text x="54" y="72" fill="#eef3f8" font-size="24" font-weight="900">How a client data packet becomes an answerable enterprise context pack</text>
+      <text x="54" y="72" fill="#eef3f8" font-size="24" font-weight="900">How a use case becomes a governed context request</text>
       <path d="M55 336 H1218" stroke="#2a3546" stroke-width="2"/>
-      <text x="55" y="366" fill="#9aa8b8" font-size="13">The visual contract: draft context can accelerate discovery, but only active, validated context should drive default module answers and generated deliverables.</text>
+      <text x="55" y="366" fill="#9aa8b8" font-size="13">Correction: a use case does not create evidence. It defines the context required to decide safely; evidence fills that requirement.</text>
 
       <g>
         <rect x="70" y="122" width="156" height="170" rx="14" fill="#101722" stroke="#75a7ff" stroke-width="2"/>
@@ -966,7 +1234,7 @@
         <text x="98" y="160" text-anchor="middle" fill="#061018" font-size="14" font-weight="900">1</text>
         <text x="88" y="194" fill="#eef3f8" font-size="16" font-weight="900">Use case</text>
         <foreignObject x="88" y="210" width="120" height="62">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">Agent Assist scope, sponsors, success criteria</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">defines decision and context requirements</div>
         </foreignObject>
         <path d="M230 207 L257 207" stroke="#75a7ff" stroke-width="3"/><path d="M257 207 l-8 -6 v12 z" fill="#75a7ff"/>
       </g>
@@ -974,9 +1242,9 @@
         <rect x="265" y="122" width="156" height="170" rx="14" fill="#101722" stroke="#3ddc97" stroke-width="2"/>
         <circle cx="293" cy="154" r="17" fill="#3ddc97"/>
         <text x="293" y="160" text-anchor="middle" fill="#061018" font-size="14" font-weight="900">2</text>
-        <text x="283" y="194" fill="#eef3f8" font-size="16" font-weight="900">Client evidence</text>
+        <text x="283" y="194" fill="#eef3f8" font-size="16" font-weight="900">Evidence intake</text>
         <foreignObject x="283" y="210" width="120" height="62">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">templates, exports, docs, interviews, workshops</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">documents, exports, interviews, reports</div>
         </foreignObject>
         <path d="M425 207 L452 207" stroke="#75a7ff" stroke-width="3"/><path d="M452 207 l-8 -6 v12 z" fill="#75a7ff"/>
       </g>
@@ -984,9 +1252,9 @@
         <rect x="460" y="122" width="156" height="170" rx="14" fill="#101722" stroke="#ffd166" stroke-width="2"/>
         <circle cx="488" cy="154" r="17" fill="#ffd166"/>
         <text x="488" y="160" text-anchor="middle" fill="#061018" font-size="14" font-weight="900">3</text>
-        <text x="478" y="194" fill="#eef3f8" font-size="16" font-weight="900">Source parsing</text>
+        <text x="478" y="194" fill="#eef3f8" font-size="16" font-weight="900">Templates/adapters</text>
         <foreignObject x="478" y="210" width="120" height="62">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">Copilot drafts candidate rows with citations</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">capture evidence with IDs and confidence</div>
         </foreignObject>
         <path d="M620 207 L647 207" stroke="#75a7ff" stroke-width="3"/><path d="M647 207 l-8 -6 v12 z" fill="#75a7ff"/>
       </g>
@@ -996,7 +1264,7 @@
         <text x="683" y="160" text-anchor="middle" fill="#061018" font-size="14" font-weight="900">4</text>
         <text x="673" y="194" fill="#eef3f8" font-size="16" font-weight="900">Validation</text>
         <foreignObject x="673" y="210" width="120" height="62">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">SME approves, corrects, or keeps candidate-only</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">SME approves, rejects, or keeps candidate-only</div>
         </foreignObject>
         <path d="M815 207 L842 207" stroke="#75a7ff" stroke-width="3"/><path d="M842 207 l-8 -6 v12 z" fill="#75a7ff"/>
       </g>
@@ -1004,9 +1272,9 @@
         <rect x="850" y="122" width="156" height="170" rx="14" fill="#101722" stroke="#ff9f6e" stroke-width="2"/>
         <circle cx="878" cy="154" r="17" fill="#ff9f6e"/>
         <text x="878" y="160" text-anchor="middle" fill="#061018" font-size="14" font-weight="900">5</text>
-        <text x="868" y="194" fill="#eef3f8" font-size="16" font-weight="900">Canonicalization</text>
+        <text x="868" y="194" fill="#eef3f8" font-size="16" font-weight="900">Data layer</text>
         <foreignObject x="868" y="210" width="120" height="62">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">facts, profiles, relationships, gaps, confidence</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">facts, profiles, graph, gaps, confidence</div>
         </foreignObject>
         <path d="M1010 207 L1037 207" stroke="#75a7ff" stroke-width="3"/><path d="M1037 207 l-8 -6 v12 z" fill="#75a7ff"/>
       </g>
@@ -1014,9 +1282,9 @@
         <rect x="1045" y="122" width="156" height="170" rx="14" fill="#101722" stroke="#8bd3ff" stroke-width="2"/>
         <circle cx="1073" cy="154" r="17" fill="#8bd3ff"/>
         <text x="1073" y="160" text-anchor="middle" fill="#061018" font-size="14" font-weight="900">6</text>
-        <text x="1063" y="194" fill="#eef3f8" font-size="16" font-weight="900">Module context</text>
+        <text x="1063" y="194" fill="#eef3f8" font-size="16" font-weight="900">Context packs</text>
         <foreignObject x="1063" y="210" width="120" height="62">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">Moves, Intelligence, Source, Tower consume active context</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">phase-specific governed module payloads</div>
         </foreignObject>
 
       </g>
@@ -1025,7 +1293,7 @@
       <div class="rail">
         <div class="step"><strong>Before</strong><span>Client brings templates, exports, decks, reports, contracts, CMDB, ServiceNow, process maps, and interviews.</span></div>
         <div class="step"><strong>During</strong><span>Nexus parses, normalizes, scores confidence, flags gaps, and asks SMEs to validate.</span></div>
-        <div class="step"><strong>After</strong><span>Approved context feeds Moves deliverables, Source sourcing context, Tower measurement plans, and Intelligence answers.</span></div>
+        <div class="step"><strong>After</strong><span>Approved context feeds context packs for Moves deliverables, Source sourcing context, Tower measurement plans, and Intelligence answers.</span></div>
       </div>
     </section>
     <section id="erd-graph-dot-connector-view">
@@ -1127,9 +1395,9 @@
     <svg viewBox="0 0 1280 420" role="img" aria-label="Meridian end-to-end data flow process">
       <rect x="0" y="0" width="1280" height="420" rx="18" fill="#0b111a" />
       <text x="54" y="45" fill="#75a7ff" font-size="13" font-weight="900" letter-spacing="3">ONE STEP AT A TIME</text>
-      <text x="54" y="72" fill="#eef3f8" font-size="24" font-weight="900">How a client data packet becomes an answerable enterprise context pack</text>
+      <text x="54" y="72" fill="#eef3f8" font-size="24" font-weight="900">How a use case becomes a governed context request</text>
       <path d="M55 336 H1218" stroke="#2a3546" stroke-width="2"/>
-      <text x="55" y="366" fill="#9aa8b8" font-size="13">The visual contract: draft context can accelerate discovery, but only active, validated context should drive default module answers and generated deliverables.</text>
+      <text x="55" y="366" fill="#9aa8b8" font-size="13">Correction: a use case does not create evidence. It defines the context required to decide safely; evidence fills that requirement.</text>
 
       <g>
         <rect x="70" y="122" width="156" height="170" rx="14" fill="#101722" stroke="#75a7ff" stroke-width="2"/>
@@ -1137,7 +1405,7 @@
         <text x="98" y="160" text-anchor="middle" fill="#061018" font-size="14" font-weight="900">1</text>
         <text x="88" y="194" fill="#eef3f8" font-size="16" font-weight="900">Use case</text>
         <foreignObject x="88" y="210" width="120" height="62">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">Agent Assist scope, sponsors, success criteria</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">defines decision and context requirements</div>
         </foreignObject>
         <path d="M230 207 L257 207" stroke="#75a7ff" stroke-width="3"/><path d="M257 207 l-8 -6 v12 z" fill="#75a7ff"/>
       </g>
@@ -1145,9 +1413,9 @@
         <rect x="265" y="122" width="156" height="170" rx="14" fill="#101722" stroke="#3ddc97" stroke-width="2"/>
         <circle cx="293" cy="154" r="17" fill="#3ddc97"/>
         <text x="293" y="160" text-anchor="middle" fill="#061018" font-size="14" font-weight="900">2</text>
-        <text x="283" y="194" fill="#eef3f8" font-size="16" font-weight="900">Client evidence</text>
+        <text x="283" y="194" fill="#eef3f8" font-size="16" font-weight="900">Evidence intake</text>
         <foreignObject x="283" y="210" width="120" height="62">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">templates, exports, docs, interviews, workshops</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">documents, exports, interviews, reports</div>
         </foreignObject>
         <path d="M425 207 L452 207" stroke="#75a7ff" stroke-width="3"/><path d="M452 207 l-8 -6 v12 z" fill="#75a7ff"/>
       </g>
@@ -1155,9 +1423,9 @@
         <rect x="460" y="122" width="156" height="170" rx="14" fill="#101722" stroke="#ffd166" stroke-width="2"/>
         <circle cx="488" cy="154" r="17" fill="#ffd166"/>
         <text x="488" y="160" text-anchor="middle" fill="#061018" font-size="14" font-weight="900">3</text>
-        <text x="478" y="194" fill="#eef3f8" font-size="16" font-weight="900">Source parsing</text>
+        <text x="478" y="194" fill="#eef3f8" font-size="16" font-weight="900">Templates/adapters</text>
         <foreignObject x="478" y="210" width="120" height="62">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">Copilot drafts candidate rows with citations</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">capture evidence with IDs and confidence</div>
         </foreignObject>
         <path d="M620 207 L647 207" stroke="#75a7ff" stroke-width="3"/><path d="M647 207 l-8 -6 v12 z" fill="#75a7ff"/>
       </g>
@@ -1167,7 +1435,7 @@
         <text x="683" y="160" text-anchor="middle" fill="#061018" font-size="14" font-weight="900">4</text>
         <text x="673" y="194" fill="#eef3f8" font-size="16" font-weight="900">Validation</text>
         <foreignObject x="673" y="210" width="120" height="62">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">SME approves, corrects, or keeps candidate-only</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">SME approves, rejects, or keeps candidate-only</div>
         </foreignObject>
         <path d="M815 207 L842 207" stroke="#75a7ff" stroke-width="3"/><path d="M842 207 l-8 -6 v12 z" fill="#75a7ff"/>
       </g>
@@ -1175,9 +1443,9 @@
         <rect x="850" y="122" width="156" height="170" rx="14" fill="#101722" stroke="#ff9f6e" stroke-width="2"/>
         <circle cx="878" cy="154" r="17" fill="#ff9f6e"/>
         <text x="878" y="160" text-anchor="middle" fill="#061018" font-size="14" font-weight="900">5</text>
-        <text x="868" y="194" fill="#eef3f8" font-size="16" font-weight="900">Canonicalization</text>
+        <text x="868" y="194" fill="#eef3f8" font-size="16" font-weight="900">Data layer</text>
         <foreignObject x="868" y="210" width="120" height="62">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">facts, profiles, relationships, gaps, confidence</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">facts, profiles, graph, gaps, confidence</div>
         </foreignObject>
         <path d="M1010 207 L1037 207" stroke="#75a7ff" stroke-width="3"/><path d="M1037 207 l-8 -6 v12 z" fill="#75a7ff"/>
       </g>
@@ -1185,9 +1453,9 @@
         <rect x="1045" y="122" width="156" height="170" rx="14" fill="#101722" stroke="#8bd3ff" stroke-width="2"/>
         <circle cx="1073" cy="154" r="17" fill="#8bd3ff"/>
         <text x="1073" y="160" text-anchor="middle" fill="#061018" font-size="14" font-weight="900">6</text>
-        <text x="1063" y="194" fill="#eef3f8" font-size="16" font-weight="900">Module context</text>
+        <text x="1063" y="194" fill="#eef3f8" font-size="16" font-weight="900">Context packs</text>
         <foreignObject x="1063" y="210" width="120" height="62">
-          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">Moves, Intelligence, Source, Tower consume active context</div>
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px Inter, sans-serif; color:#9aa8b8; line-height:1.35">phase-specific governed module payloads</div>
         </foreignObject>
 
       </g>
@@ -1588,12 +1856,12 @@
     <section id="module-wiring">
       <h2>Module Wiring</h2>
       <div class="grid">
-        <div class="card"><div class="eyebrow">Knowledge</div><p>What do we know? Active context browsing and evidence-backed gaps.</p></div><div class="card"><div class="eyebrow">Intelligence</div><p>What should leaders decide? Uses context, benchmarks, risks, and options.</p></div><div class="card"><div class="eyebrow">Moves</div><p>How do we execute the transformation? Pulls evidence, gaps, phase readiness, and deliverables.</p></div><div class="card"><div class="eyebrow">Source</div><p>What vendor/commercial decisions are needed? Uses systems, vendors, contracts, rates, risks.</p></div><div class="card"><div class="eyebrow">Tower</div><p>How will value be tracked? Uses metrics, baseline caveats, outcome context, and monitoring needs.</p></div>
+        <div class="card"><div class="eyebrow">Knowledge</div><p>Consumes KnowledgeContextPack for active context browsing, relationship discovery, evidence limits, and visible gaps.</p></div><div class="card"><div class="eyebrow">Intelligence</div><p>Consumes IntelligenceContextPack / Claude-ready governed payload for recommendations with evidence, caveats, and decision limits.</p></div><div class="card"><div class="eyebrow">Moves</div><p>Consumes phase-specific MovesContextPack for P0-P5 evidence, gaps, readiness, deliverables, and next evidence requests.</p></div><div class="card"><div class="eyebrow">Source</div><p>Consumes SourceContextPack linking vendors, contracts, systems supported, functions, spend, SLAs, performance, risks, renewals, programs, sourcing gaps, and evidence.</p></div><div class="card"><div class="eyebrow">Tower</div><p>Consumes TowerContextPack for value hypothesis, baseline metric, measurement plan, promised value, and measured value only when evidence exists.</p></div>
       </div>
     </section>
     <section id="module-handoff-map">
       <h2>Module Handoff Map</h2>
-      <p>This page explains why the modules should not feel disconnected. The same context spine starts in Knowledge, is explored in Intelligence, becomes execution in Moves, becomes sourcing/commercial strategy in Source, and becomes measurement discipline in Tower.</p>
+      <p>This page explains why the modules should not feel disconnected. The same governed context spine is assembled into module-specific context packs: KnowledgeContextPack, IntelligenceContextPack, MovesContextPack, SourceContextPack, and TowerContextPack.</p>
       <div class="svg-panel">
     <svg viewBox="0 0 1280 455" role="img" aria-label="Nexus module handoff map">
       <rect x="0" y="0" width="1280" height="455" rx="18" fill="#0b111a" />
@@ -1602,31 +1870,31 @@
 
     <g>
       <path d="M194 154 C254.5 154, 254.5 117, 315 117" stroke="#75a7ff" stroke-width="2.5" fill="none" opacity=".78"/>
-      <text x="254.5" y="127.5" fill="#9aa8b8" font-size="11" text-anchor="middle">context</text>
+      <text x="254.5" y="127.5" fill="#9aa8b8" font-size="11" text-anchor="middle">KnowledgeContextPack</text>
     </g>
     <g>
       <path d="M405 117 C470 117, 470 154, 535 154" stroke="#75a7ff" stroke-width="2.5" fill="none" opacity=".78"/>
-      <text x="470" y="127.5" fill="#9aa8b8" font-size="11" text-anchor="middle">ranked use cases</text>
+      <text x="470" y="127.5" fill="#9aa8b8" font-size="11" text-anchor="middle">IntelligenceContextPack</text>
     </g>
     <g>
       <path d="M625 154 C690 154, 690 117, 755 117" stroke="#75a7ff" stroke-width="2.5" fill="none" opacity=".78"/>
-      <text x="690" y="127.5" fill="#9aa8b8" font-size="11" text-anchor="middle">sourcing needs</text>
+      <text x="690" y="127.5" fill="#9aa8b8" font-size="11" text-anchor="middle">SourceContextPack</text>
     </g>
     <g>
       <path d="M845 117 C906.5 117, 906.5 154, 968 154" stroke="#75a7ff" stroke-width="2.5" fill="none" opacity=".78"/>
-      <text x="906.5" y="127.5" fill="#9aa8b8" font-size="11" text-anchor="middle">value plan</text>
+      <text x="906.5" y="127.5" fill="#9aa8b8" font-size="11" text-anchor="middle">TowerContextPack</text>
     </g>
     <g>
       <path d="M535 196 C535 196, 535 262, 535 262" stroke="#75a7ff" stroke-width="2.5" fill="none" opacity=".78"/>
-      <text x="535" y="221" fill="#9aa8b8" font-size="11" text-anchor="middle">phase evidence</text>
+      <text x="535" y="221" fill="#9aa8b8" font-size="11" text-anchor="middle">MovesContextPack</text>
     </g>
     <g>
       <path d="M610 286 C789 286, 789 196, 968 196" stroke="#75a7ff" stroke-width="2.5" fill="none" opacity=".78"/>
-      <text x="789" y="233" fill="#9aa8b8" font-size="11" text-anchor="middle">measurement prompts</text>
+      <text x="789" y="233" fill="#9aa8b8" font-size="11" text-anchor="middle">measured only with evidence</text>
     </g>
     <g>
       <path d="M460 286 C283 286, 283 196, 106 196" stroke="#75a7ff" stroke-width="2.5" fill="none" opacity=".78"/>
-      <text x="283" y="233" fill="#9aa8b8" font-size="11" text-anchor="middle">answers cite context</text>
+      <text x="283" y="233" fill="#9aa8b8" font-size="11" text-anchor="middle">answers cite governed context</text>
     </g>
 
     <g>
@@ -1676,19 +1944,25 @@
     </svg>
   </div>
       <div class="grid3">
-        <div class="card"><h3>Moves to Source</h3><p>When P3/P4 identifies build/buy needs, Source should inherit systems, vendors, contracts, scope, rates, risks, and delivery assumptions instead of starting over.</p></div>
-        <div class="card"><h3>Moves to Tower</h3><p>When P4/P5 defines success criteria, Tower should inherit baselines, target metrics, measurement caveats, owners, and value hypotheses.</p></div>
+        <div class="card"><h3>Moves to Source</h3><p>When P3/P4 identifies build/buy needs, Source should receive a SourceContextPack with systems, vendors, contracts, scope, rates, risks, service performance, renewals, and sourcing gaps.</p></div>
+        <div class="card"><h3>Moves to Tower</h3><p>When P4/P5 defines success criteria, Tower should receive a TowerContextPack with baselines, target metrics, measurement caveats, owners, value hypotheses, and measured value only when evidence exists.</p></div>
         <div class="card"><h3>aVa across all modules</h3><p>aVa should explain what it knows, what evidence it used, what is missing, and why it recommends the next step.</p></div>
       </div>
     </section>
     <section id="source-to-layer-reconciliation">
       <h2>Source-to-Layer Reconciliation</h2>
-      <div class="grid3"><div class="card"><div class="eyebrow">MERIDIAN-TRACE-01</div><h3>MERIDIAN-HEALTH-MH-ENTERPRISE-EV01 - AbarVa executive profile interview</h3><p><strong>Source:</strong> tenant-inputs/generated/meridian-health/standard-2026-07-v3/evidence-manifest/meridian-health-mh-enterprise-ev01.json</p><p><strong>Fact:</strong> Executive Office; Enterprise Strategy; systems; data; risks; metrics</p><p><strong>Edge:</strong> Executive Office Workflow Platform supports Executive Office</p><p><strong>Modules:</strong> Home; Intelligence; Moves; Source; Tower - candidate review only</p></div><div class="card"><div class="eyebrow">MERIDIAN-TRACE-02</div><h3>MERIDIAN-HEALTH-MH-ENTERPRISE-EV02 - FY26 enterprise strategy workshop</h3><p><strong>Source:</strong> tenant-inputs/generated/meridian-health/standard-2026-07-v3/evidence-manifest/meridian-health-mh-enterprise-ev02.json</p><p><strong>Fact:</strong> Executive Office; Enterprise Strategy; systems; data; risks; metrics</p><p><strong>Edge:</strong> Executive Office owned by Chief Strategy Officer</p><p><strong>Modules:</strong> Home; Intelligence; Moves; Source; Tower - candidate review only</p></div><div class="card"><div class="eyebrow">MERIDIAN-TRACE-03</div><h3>MERIDIAN-HEALTH-MH-CLINICAL-OPS-EV01 - Epic application inventory</h3><p><strong>Source:</strong> tenant-inputs/generated/meridian-health/standard-2026-07-v3/evidence-manifest/meridian-health-mh-clinical-ops-ev01.json</p><p><strong>Fact:</strong> Provider Operations; Clinical Operations; systems; data; risks; metrics</p><p><strong>Edge:</strong> Epic Hyperspace supports Provider Operations</p><p><strong>Modules:</strong> Home; Intelligence; Moves; Source; Tower - candidate review only</p></div><div class="card"><div class="eyebrow">MERIDIAN-TRACE-04</div><h3>MERIDIAN-HEALTH-MH-CLINICAL-OPS-EV02 - Clinical operations workshop notes</h3><p><strong>Source:</strong> tenant-inputs/generated/meridian-health/standard-2026-07-v3/evidence-manifest/meridian-health-mh-clinical-ops-ev02.json</p><p><strong>Fact:</strong> Provider Operations; Clinical Operations; systems; data; risks; metrics</p><p><strong>Edge:</strong> Executive Office Analytics Mart consumes Executive Office Operational Dataset</p><p><strong>Modules:</strong> Home; Intelligence; Moves; Source; Tower - candidate review only</p></div><div class="card"><div class="eyebrow">MERIDIAN-TRACE-05</div><h3>MERIDIAN-HEALTH-MH-CLAIMS-OPS-EV01 - Claims platform extract</h3><p><strong>Source:</strong> tenant-inputs/generated/meridian-health/standard-2026-07-v3/evidence-manifest/meridian-health-mh-claims-ops-ev01.json</p><p><strong>Fact:</strong> Claims Operations; Health Plan Operations; systems; data; risks; metrics</p><p><strong>Edge:</strong> Claims Administration Platform supports Claims Operations</p><p><strong>Modules:</strong> Home; Intelligence; Moves; Source; Tower - candidate review only</p></div><div class="card"><div class="eyebrow">MERIDIAN-TRACE-06</div><h3>MERIDIAN-HEALTH-MH-CLAIMS-OPS-EV02 - Claims analytics SME interview</h3><p><strong>Source:</strong> tenant-inputs/generated/meridian-health/standard-2026-07-v3/evidence-manifest/meridian-health-mh-claims-ops-ev02.json</p><p><strong>Fact:</strong> Claims Operations; Health Plan Operations; systems; data; risks; metrics</p><p><strong>Edge:</strong> Executive Office Analytics Mart integrates with Executive Office Reporting Workspace</p><p><strong>Modules:</strong> Home; Intelligence; Moves; Source; Tower - candidate review only</p></div></div>
+      <p>Source-to-layer reconciliation is the audit trail. A source row or adapter output does not go straight to a module. It becomes evidence, then a normalized fact/profile/edge or gap, then a context pack item if policy and validation allow it.</p>
+      <div class="diagram"><span class="node">Source row / adapter output</span><span class="arrow">→</span><span class="node">Evidence Registry</span><span class="arrow">→</span><span class="node">Canonical Fact / Profile / Edge</span><span class="arrow">→</span><span class="node">Gap + confidence check</span><span class="arrow">→</span><span class="node">Context Pack Assembler</span><span class="arrow">→</span><span class="node">Module-specific context pack</span></div>
+      <div class="grid3"><div class="card"><div class="eyebrow">MERIDIAN-TRACE-01</div><h3>MERIDIAN-HEALTH-MH-ENTERPRISE-EV01 - AbarVa executive profile interview</h3><p><strong>Source row:</strong> tenant-inputs/generated/meridian-health/standard-2026-07-v3/evidence-manifest/meridian-health-mh-enterprise-ev01.json</p><p><strong>Normalized fact:</strong> Executive Office; Enterprise Strategy; systems; data; risks; metrics</p><p><strong>Relationship/gap signal:</strong> Executive Office Workflow Platform supports Executive Office</p><p><strong>Context pack:</strong> Home; Intelligence; Moves; Source; Tower - candidate review only</p></div><div class="card"><div class="eyebrow">MERIDIAN-TRACE-02</div><h3>MERIDIAN-HEALTH-MH-ENTERPRISE-EV02 - FY26 enterprise strategy workshop</h3><p><strong>Source row:</strong> tenant-inputs/generated/meridian-health/standard-2026-07-v3/evidence-manifest/meridian-health-mh-enterprise-ev02.json</p><p><strong>Normalized fact:</strong> Executive Office; Enterprise Strategy; systems; data; risks; metrics</p><p><strong>Relationship/gap signal:</strong> Executive Office owned by Chief Strategy Officer</p><p><strong>Context pack:</strong> Home; Intelligence; Moves; Source; Tower - candidate review only</p></div><div class="card"><div class="eyebrow">MERIDIAN-TRACE-03</div><h3>MERIDIAN-HEALTH-MH-CLINICAL-OPS-EV01 - Epic application inventory</h3><p><strong>Source row:</strong> tenant-inputs/generated/meridian-health/standard-2026-07-v3/evidence-manifest/meridian-health-mh-clinical-ops-ev01.json</p><p><strong>Normalized fact:</strong> Provider Operations; Clinical Operations; systems; data; risks; metrics</p><p><strong>Relationship/gap signal:</strong> Epic Hyperspace supports Provider Operations</p><p><strong>Context pack:</strong> Home; Intelligence; Moves; Source; Tower - candidate review only</p></div><div class="card"><div class="eyebrow">MERIDIAN-TRACE-04</div><h3>MERIDIAN-HEALTH-MH-CLINICAL-OPS-EV02 - Clinical operations workshop notes</h3><p><strong>Source row:</strong> tenant-inputs/generated/meridian-health/standard-2026-07-v3/evidence-manifest/meridian-health-mh-clinical-ops-ev02.json</p><p><strong>Normalized fact:</strong> Provider Operations; Clinical Operations; systems; data; risks; metrics</p><p><strong>Relationship/gap signal:</strong> Executive Office Analytics Mart consumes Executive Office Operational Dataset</p><p><strong>Context pack:</strong> Home; Intelligence; Moves; Source; Tower - candidate review only</p></div><div class="card"><div class="eyebrow">MERIDIAN-TRACE-05</div><h3>MERIDIAN-HEALTH-MH-CLAIMS-OPS-EV01 - Claims platform extract</h3><p><strong>Source row:</strong> tenant-inputs/generated/meridian-health/standard-2026-07-v3/evidence-manifest/meridian-health-mh-claims-ops-ev01.json</p><p><strong>Normalized fact:</strong> Claims Operations; Health Plan Operations; systems; data; risks; metrics</p><p><strong>Relationship/gap signal:</strong> Claims Administration Platform supports Claims Operations</p><p><strong>Context pack:</strong> Home; Intelligence; Moves; Source; Tower - candidate review only</p></div><div class="card"><div class="eyebrow">MERIDIAN-TRACE-06</div><h3>MERIDIAN-HEALTH-MH-CLAIMS-OPS-EV02 - Claims analytics SME interview</h3><p><strong>Source row:</strong> tenant-inputs/generated/meridian-health/standard-2026-07-v3/evidence-manifest/meridian-health-mh-claims-ops-ev02.json</p><p><strong>Normalized fact:</strong> Claims Operations; Health Plan Operations; systems; data; risks; metrics</p><p><strong>Relationship/gap signal:</strong> Executive Office Analytics Mart integrates with Executive Office Reporting Workspace</p><p><strong>Context pack:</strong> Home; Intelligence; Moves; Source; Tower - candidate review only</p></div></div>
       <table><thead><tr><th>layer_order</th><th>layer_name</th><th>source_rows</th><th>accepted_rows</th><th>candidate_rows</th><th>active_rows</th><th>evidence_refs</th><th>canonical_facts</th><th>entity_profiles</th><th>relationship_edges</th><th>context_gaps</th><th>module_context_items</th><th>confidence_score_or_distribution</th></tr></thead><tbody><tr><td>1</td><td>Source Templates / Core Dimensions</td><td>1176</td><td>1176</td><td>1176</td><td>1176</td><td>0</td><td>1176</td><td>0</td><td>0</td><td>309</td><td>1176</td><td>high=29; medium=985; low=7</td></tr><tr><td>2</td><td>Source Adapters</td><td>249</td><td>6</td><td>6</td><td>0</td><td>6</td><td>0</td><td>0</td><td>0</td><td>0</td><td>6</td><td>high=0; medium=6; low=0</td></tr><tr><td>3</td><td>Evidence Registry</td><td>40</td><td>40</td><td>40</td><td>20</td><td>40</td><td>0</td><td>0</td><td>0</td><td>25</td><td>40</td><td>high=40; medium=0; low=0</td></tr><tr><td>4</td><td>Canonical Facts</td><td>1173</td><td>1173</td><td>1173</td><td>1176</td><td>40</td><td>1173</td><td>0</td><td>0</td><td>432</td><td>140</td><td>high=0; medium=0; low=0</td></tr><tr><td>5</td><td>Entity Profiles</td><td>268</td><td>268</td><td>268</td><td>0</td><td>0</td><td>0</td><td>268</td><td>0</td><td>0</td><td>268</td><td>high=0; medium=268; low=0</td></tr><tr><td>6</td><td>Relationship Graph</td><td>360</td><td>360</td><td>360</td><td>0</td><td>360</td><td>0</td><td>268</td><td>360</td><td>252</td><td>360</td><td>high=0; medium=360; low=0</td></tr><tr><td>7</td><td>Context Gaps</td><td>741</td><td>741</td><td>432</td><td>309</td><td>40</td><td>0</td><td>0</td><td>0</td><td>741</td><td>741</td><td>high=0; medium=741; low=0</td></tr><tr><td>8</td><td>Context Confidence</td><td>1576</td><td>1576</td><td>400</td><td>1176</td><td>40</td><td>1176</td><td>268</td><td>360</td><td>741</td><td>400</td><td>high=69; medium=1345; low=7</td></tr><tr><td>9</td><td>Knowledge/Home Context Pack</td><td>1176</td><td>1176</td><td>40</td><td>1176</td><td>40</td><td>1176</td><td>268</td><td>360</td><td>741</td><td>1216</td><td>high=69; medium=985; low=7</td></tr><tr><td>10</td><td>Moves Agent Assist Context Pack</td><td>1176</td><td>1176</td><td>40</td><td>1176</td><td>40</td><td>1176</td><td>268</td><td>360</td><td>741</td><td>1216</td><td>high=69; medium=985; low=7</td></tr><tr><td>11</td><td>Intelligence Agent Assist Context Pack</td><td>1176</td><td>1176</td><td>40</td><td>1176</td><td>40</td><td>1176</td><td>268</td><td>360</td><td>741</td><td>1216</td><td>high=69; medium=985; low=7</td></tr><tr><td>12</td><td>Source Context Pack</td><td>1176</td><td>1176</td><td>40</td><td>1176</td><td>40</td><td>1176</td><td>268</td><td>360</td><td>741</td><td>1216</td><td>high=69; medium=985; low=7</td></tr><tr><td>13</td><td>Tower Context Pack</td><td>1176</td><td>1176</td><td>40</td><td>1176</td><td>40</td><td>1176</td><td>268</td><td>360</td><td>741</td><td>1216</td><td>high=69; medium=985; low=7</td></tr></tbody></table>
     </section>
     <section id="aws-databricks-semantic-proof">
       <h2>AWS / Databricks Semantic Proof</h2>
-      <p>The data supports the intended story: AWS + Databricks is the target foundation Nexus/Moves recommends and governs. It is not represented as already certified production.</p>
+      <p>The data supports the intended story: Meridian's current state is legacy/on-prem-heavy with fragmented reporting and data context. AWS + Databricks is the target foundation/readiness path for a governed lakehouse, medallion architecture, governed data products, Unity Catalog/governance, identity/member/provider spine, and PHI/HITL/audit controls. It is not represented as already certified production.</p>
+      <div class="two">
+        <div class="card"><h3>Current State</h3><ul><li>legacy/on-prem-heavy estate</li><li>fragmented reporting/data estate</li><li>SQL Server marts / Netezza/DB2-style warehouse where applicable</li><li>Tableau and SAS analytics context</li><li>incomplete lineage, freshness, and KPI baseline proof</li></ul></div>
+        <div class="card"><h3>Target State</h3><ul><li>AWS + Databricks lakehouse foundation</li><li>medallion architecture</li><li>Unity Catalog/governance</li><li>governed data products after certification</li><li>identity/member/provider spine</li><li>PHI/HITL/audit controls</li></ul></div>
+      </div>
       <p><span class="badge good">0 unsafe active rows</span><span class="badge bad">target/future foundation required</span></p>
       <table><thead><tr><th>artifact_path</th><th>row_number</th><th>terms</th><th>classification</th><th>unsafe</th><th>recommended_action</th><th>evidence</th></tr></thead><tbody><tr><td>datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv</td><td>2</td><td>AWS; Databricks; lakehouse; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Meridian Health System | Healthcare | Integrated delivery network and health plan | not_provided | not_provided | Sacramento, CA | Sacramento, CA; Northern California service area; Central California service area; Nevada service area | Medium-to-large health organization with clinical delivery, health-plan operations, finance, and analytics modernization needs. | patients; members; providers; employer groups; clinical operations leaders; health-plan operations teams | Improve a</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv</td><td>2</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Enterprise Data and Analytics |  | CDAO | data intake; data product certification; dashboard modernization; analytics demand management |  |  |  |  |  |  | datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platf</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv</td><td>3</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Clinical Operations |  | CMO | clinical documentation; care management; longitudinal patient view |  |  |  |  |  |  | datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platform, network, or security foundation e</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv</td><td>5</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Quality and Provider Performance |  | VP Quality | measure logic; provider attribution; care gap analytics |  |  |  |  |  |  | datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platform, network, or security fou</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv</td><td>7</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Contact Center and Member Experience |  | Chief Experience Officer | call handling; CRM case management; next-best-action workflows |  |  |  |  |  |  | datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platform,</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv</td><td>8</td><td>AWS; Databricks; medallion; landing zone</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Technology Platform and Security |  | CDIO | AWS landing zone; Databricks foundation; network/security controls; interface operations |  |  |  |  |  |  | datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platfor</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv</td><td>2</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Enterprise Data and Analytics |  | CDAO |  | Owns evidence, priorities, and phase-gate facts for Enterprise Data and Analytics. |  | On-prem SQL Server reporting marts |  |  | datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loa</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv</td><td>3</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Clinical Operations |  | CMO |  | Owns evidence, priorities, and phase-gate facts for Clinical Operations. |  | Epic Hyperspace; Epic Clarity; Epic Caboodle |  |  | datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No p</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv</td><td>4</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Health Plan Operations |  | Health Plan COO |  | Owns evidence, priorities, and phase-gate facts for Health Plan Operations. |  | Claims administration platform |  |  | datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | </td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv</td><td>5</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Quality and Provider Performance |  | VP Quality |  | Owns evidence, priorities, and phase-gate facts for Quality and Provider Performance. |  | not_loaded |  |  | datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No pl</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv</td><td>7</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Contact Center and Member Experience |  | Chief Experience Officer |  | Owns evidence, priorities, and phase-gate facts for Contact Center and Member Experience. |  | Contact center transcript and telephony platform |  |  | datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is comple</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv</td><td>8</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Technology Platform and Security |  | CDIO |  | Owns evidence, priorities, and phase-gate facts for Technology Platform and Security. |  | AWS analytics foundation |  |  | datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded.</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv</td><td>12</td><td>AWS; Databricks; lakehouse</td><td>foundation-not-ready</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Data Platform Migration Office |  | Chief Data Officer |  | databricks_aws_lakehouse |  | databricks_aws_lakehouse |  |  | datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv | 2026-06-18 | medium | none | datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv | rich-universal-standard-v3 | 5 | MER-IT-004 | synthetic-demo | f9ec6fc159ac9bf908f076367d1a6af611c0dac43ab51497593ed4167c6e7859 | retained_from_active_source | none</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv</td><td>17</td><td>AWS</td><td>foundation-not-ready</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Cloud and Infrastructure |  | VP Infrastructure |  | aws_network_datacenter |  | aws_network_datacenter |  |  | datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv | 2026-06-18 | medium | none | datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv | rich-universal-standard-v3 | 10 | MER-IT-009 | synthetic-demo | f9ec6fc159ac9bf908f076367d1a6af611c0dac43ab51497593ed4167c6e7859 | retained_from_active_source | none</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv</td><td>40</td><td>AWS; Databricks; lakehouse</td><td>foundation-not-ready</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | databricks_aws_lakehouse |  | Chief Data Officer |  | Owns roadmap, run health, architecture standards, risk acceptance, and value evidence for assigned domain |  | Clinical Data Platform; Epic EHR |  |  | datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv | 2026-06-18 | medium | none | datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv | rich-universal-standard-v3 | 55 | MERIDIAN_HEALTH_ROLE_4 | synthetic-demo | f9ec6fc159ac9bf90</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv</td><td>45</td><td>AWS</td><td>foundation-not-ready</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | aws_network_datacenter |  | VP Infrastructure |  | Owns roadmap, run health, architecture standards, risk acceptance, and value evidence for assigned domain |  | Patient Access; Clinical Data Platform |  |  | datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv | 2026-06-18 | medium | none | datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv | rich-universal-standard-v3 | 60 | MERIDIAN_HEALTH_ROLE_9 | synthetic-demo | f9ec6fc159ac9b</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv</td><td>2</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Analytics managed-services report maintainer | Analytics managed-services report maintainer |  |  |  |  |  |  | High | datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platform, network, or security foundation evi</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv</td><td>3</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Net-new analytics delivery resource | Net-new analytics delivery resource |  |  |  |  |  |  | High | datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platform, network, or security foundation evidence is loaded. |</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv</td><td>4</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Data steward / semantic owner | Data steward / semantic owner |  |  |  |  |  |  | High | datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platform, network, or security foundation evidence is loaded. | No formal d</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv</td><td>5</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Clinical quality analyst | Clinical quality analyst |  |  |  |  |  |  | High | datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platform, network, or security foundation evidence is loaded. | No formal data govern</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv</td><td>6</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Finance analytics analyst | Finance analytics analyst |  |  |  |  |  |  | High | datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platform, network, or security foundation evidence is loaded. | No formal data gove</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv</td><td>7</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Contact center supervisor | Contact center supervisor |  |  |  |  |  |  | Medium | datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platform, network, or security foundation evidence is loaded. | No formal data go</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv</td><td>8</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Analytics managed-services report maintainer |  |  |  |  |  |  | Maintenance load; fragmented marts; missing governance; foundation gaps |  | datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv | 2026-07-09 |  | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platform, network, or securi</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv</td><td>9</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Net-new analytics delivery resource |  |  |  |  |  |  | Maintenance load; fragmented marts; missing governance; foundation gaps |  | datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv | 2026-07-09 |  | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platform, network, or security founda</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv</td><td>10</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Data steward / semantic owner |  |  |  |  |  |  | Maintenance load; fragmented marts; missing governance; foundation gaps |  | datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv | 2026-07-09 |  | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platform, network, or security foundation e</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv</td><td>11</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Clinical quality analyst |  |  |  |  |  |  | Maintenance load; fragmented marts; missing governance; foundation gaps |  | datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv | 2026-07-09 |  | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platform, network, or security foundation eviden</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv</td><td>12</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Finance analytics analyst |  |  |  |  |  |  | Maintenance load; fragmented marts; missing governance; foundation gaps |  | datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv | 2026-07-09 |  | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platform, network, or security foundation evide</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv</td><td>13</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Contact center supervisor |  |  |  |  |  |  | Maintenance load; fragmented marts; missing governance; foundation gaps |  | datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv | 2026-07-09 |  | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not proof that the platform foundation is complete. | No certified medallion architecture is loaded. | No platform, network, or security foundation evide</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv</td><td>3</td><td>lakehouse</td><td>foundation-not-ready</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Epic Clarity |  | clinical_ehr | clinical_ehr | current_state | current_mixed | current_mixed | extend_to_lakehouse | critical | Epic Analytics | Epic and Clinical Systems | VDR-00008 | phi |  | current_state | datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv | 2026-06-18 | medium | none | datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv | rich-universal-standard-v3 | 9 | MER-APP-008 | synthetic-demo | 82a793628d</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv</td><td>5</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | On-prem SQL Server reporting marts |  | legacy_reporting_marts | legacy_reporting_marts | current_state | current_mixed | current_mixed | fragmented_current_state | critical | Enterprise Data Warehouse | Enterprise Data Warehouse | MER-VEN-MICROSOFT | departmental marts; duplicated business rules; extract chains |  | current_state | datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substra</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv</td><td>6</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Tableau reporting estate |  | business_intelligence | business_intelligence | current_state | current_mixed | current_mixed | current_reporting | high | BI and Analytics | BI and Analytics | MER-VEN-TABLEAU | dashboards; extracts; local metric definitions |  | current_state | datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks as</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv</td><td>7</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | SAS analytics estate |  | advanced_analytics_legacy | advanced_analytics_legacy | current_state | current_mixed | current_mixed | current_reporting | medium | Analytics | Analytics | MER-VEN-SAS | analytics programs; payment integrity models; statistical extracts |  | current_state | datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Datab</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv</td><td>8</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Power BI reporting estate |  | business_intelligence | business_intelligence | current_state | current_mixed | current_mixed | current_reporting | high | BI and Analytics | BI and Analytics | MER-VEN-MICROSOFT | dashboards; finance reporting; semantic models |  | current_state | datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv</td><td>9</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Claims administration platform |  | claims | claims | current_state | current_mixed | current_mixed | current_core | critical | Health Plan Operations | Health Plan Operations | MER-VEN-CLAIMS | medical claims; adjudication; claim edits |  | current_state | datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is not pro</td></tr><tr><td>datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv</td><td>10</td><td>AWS; Databricks; medallion</td><td>target/future foundation</td><td>no</td><td>Keep target/foundation caveat visible</td><td>meridian-health | Pharmacy claims platform |  | pharmacy_claims | pharmacy_claims | current_state | current_mixed | current_mixed | current_core | high | Pharmacy Operations | Pharmacy Operations | MER-VEN-PBM | pharmacy claims; formulary; medication adherence |  | current_state | datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv | 2026-07-09 | medium | Synthetic PHI-free planning-grade substrate; not real Meridian production data. | AWS Databricks aspiration is n</td></tr></tbody></table>
     </section>

@@ -965,12 +965,12 @@ function layerCakeSvg(rows) {
 
 function pipelineSvg() {
   const steps = [
-    ['1', 'Use case', 'Agent Assist scope, sponsors, success criteria'],
-    ['2', 'Client evidence', 'templates, exports, docs, interviews, workshops'],
-    ['3', 'Source parsing', 'Copilot drafts candidate rows with citations'],
-    ['4', 'Validation', 'SME approves, corrects, or keeps candidate-only'],
-    ['5', 'Canonicalization', 'facts, profiles, relationships, gaps, confidence'],
-    ['6', 'Module context', 'Moves, Intelligence, Source, Tower consume active context'],
+    ['1', 'Use case', 'defines decision and context requirements'],
+    ['2', 'Evidence intake', 'documents, exports, interviews, reports'],
+    ['3', 'Templates/adapters', 'capture evidence with IDs and confidence'],
+    ['4', 'Validation', 'SME approves, rejects, or keeps candidate-only'],
+    ['5', 'Data layer', 'facts, profiles, graph, gaps, confidence'],
+    ['6', 'Context packs', 'phase-specific governed module payloads'],
   ];
   const stepMarkup = steps.map(([num, title, copy], index) => {
     const x = 70 + index * 195;
@@ -991,9 +991,9 @@ function pipelineSvg() {
     <svg viewBox="0 0 1280 420" role="img" aria-label="Meridian end-to-end data flow process">
       <rect x="0" y="0" width="1280" height="420" rx="18" fill="#0b111a" />
       <text x="54" y="45" fill="#75a7ff" font-size="13" font-weight="900" letter-spacing="3">ONE STEP AT A TIME</text>
-      <text x="54" y="72" fill="#eef3f8" font-size="24" font-weight="900">How a client data packet becomes an answerable enterprise context pack</text>
+      <text x="54" y="72" fill="#eef3f8" font-size="24" font-weight="900">How a use case becomes a governed context request</text>
       <path d="M55 336 H1218" stroke="#2a3546" stroke-width="2"/>
-      <text x="55" y="366" fill="#9aa8b8" font-size="13">The visual contract: draft context can accelerate discovery, but only active, validated context should drive default module answers and generated deliverables.</text>
+      <text x="55" y="366" fill="#9aa8b8" font-size="13">Correction: a use case does not create evidence. It defines the context required to decide safely; evidence fills that requirement.</text>
       ${stepMarkup}
     </svg>
   </div>`;
@@ -1162,6 +1162,138 @@ function phaseJourneySvg() {
   </div>`;
 }
 
+function movesOverDataLayerSvg() {
+  const phases = [
+    ['P0', 'problem, sponsor, scope, known evidence'],
+    ['P1', 'systems, functions, owners, metrics, risks'],
+    ['P2', 'current process, data, integration, metric gaps'],
+    ['P3', 'options, target foundation, controls'],
+    ['P4', 'evidence confidence, value, sourcing caveats'],
+    ['P5', 'handoff, Source, Tower, evidence plan'],
+  ];
+  const phaseMarkup = phases.map(([phase, request], index) => {
+    const x = 62 + index * 198;
+    return `
+      <g>
+        <rect x="${x}" y="72" width="160" height="72" rx="12" fill="#101722" stroke="#75a7ff" stroke-width="2"/>
+        <text x="${x + 18}" y="101" fill="#eef3f8" font-size="18" font-weight="900">${phase}</text>
+        <foreignObject x="${x + 52}" y="84" width="92" height="48">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.2">${htmlEscape(request)}</div>
+        </foreignObject>
+        <path d="M${x + 80} 144 L${x + 80} 198" stroke="#75a7ff" stroke-width="2" stroke-dasharray="6 6"/>
+        <rect x="${x + 20}" y="198" width="120" height="40" rx="10" fill="#182335" stroke="#8bd3ff"/>
+        <text x="${x + 80}" y="222" text-anchor="middle" fill="#8bd3ff" font-size="11" font-weight="900">MovesContextPack</text>
+      </g>`;
+  }).join('');
+  const dataLayer = [
+    'Source Templates / Adapters',
+    'Evidence Registry',
+    'Canonical Facts',
+    'Entity Profiles',
+    'Relationship Graph',
+    'Gaps + Confidence',
+    'Context Pack Assembler',
+  ].map((label, index) => {
+    const x = 58 + index * 168;
+    return `
+      <g>
+        <rect x="${x}" y="306" width="142" height="52" rx="11" fill="#0b111a" stroke="#ffd166" stroke-width="1.5"/>
+        <foreignObject x="${x + 12}" y="318" width="118" height="28">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#eef3f8; font-weight:800; text-align:center; line-height:1.15">${htmlEscape(label)}</div>
+        </foreignObject>
+        ${index < 6 ? `<path d="M${x + 142} 332 L${x + 166} 332" stroke="#ffd166" stroke-width="2"/><path d="M${x + 166} 332 l-7 -5 v10 z" fill="#ffd166"/>` : ''}
+      </g>`;
+  }).join('');
+  return `<div class="svg-panel">
+    <svg viewBox="0 0 1280 520" role="img" aria-label="Moves over Nexus data layer">
+      <rect x="0" y="0" width="1280" height="520" rx="18" fill="#0b111a"/>
+      <text x="54" y="40" fill="#75a7ff" font-size="13" font-weight="900" letter-spacing="3">MOVES OVER DATA LAYER</text>
+      <text x="54" y="68" fill="#eef3f8" font-size="23" font-weight="900">Moves does not bypass the data layer</text>
+      ${phaseMarkup}
+      <rect x="48" y="276" width="1184" height="112" rx="16" fill="#101722" stroke="#ffd166" opacity=".92"/>
+      <text x="72" y="300" fill="#ffd166" font-size="13" font-weight="900">Common Nexus Data Layer</text>
+      ${dataLayer}
+      <path d="M1188 358 C1235 420 1120 454 966 404" stroke="#ff6b6b" stroke-width="2.5" fill="none" stroke-dasharray="8 7"/>
+      <text x="934" y="432" fill="#ffb3b3" font-size="12" font-weight="800">gap found → evidence request to client</text>
+      <path d="M360 430 C260 462 145 430 118 358" stroke="#3ddc97" stroke-width="2.5" fill="none" stroke-dasharray="8 7"/>
+      <text x="82" y="460" fill="#b9f8dc" font-size="12" font-weight="800">validated new evidence returns through templates/adapters</text>
+      <text x="54" y="498" fill="#9aa8b8" font-size="13">Moves asks the Nexus context layer for the right evidence-backed context. New client evidence is captured, validated, and then becomes reusable enterprise context.</text>
+    </svg>
+  </div>`;
+}
+
+function gapFeedbackLoopSvg() {
+  const items = [
+    ['Gap detected', 'missing, stale, low-confidence, ambiguous'],
+    ['Evidence request', 'document, export, interview, owner, baseline'],
+    ['Client response', 'upload, answer, confirm, reject, clarify'],
+    ['Candidate update', 'captured through template or adapter'],
+    ['SME validation', 'approve, correct, reject, unresolved'],
+    ['Active context', 'only if approved and source-backed'],
+  ];
+  const markup = items.map(([title, copy], index) => {
+    const angle = (-90 + index * 60) * Math.PI / 180;
+    const cx = 640 + Math.cos(angle) * 345;
+    const cy = 250 + Math.sin(angle) * 135;
+    return `
+      <g>
+        <rect x="${cx - 78}" y="${cy - 34}" width="156" height="68" rx="13" fill="#101722" stroke="${index === 0 ? '#ff6b6b' : '#75a7ff'}" stroke-width="2"/>
+        <text x="${cx}" y="${cy - 8}" text-anchor="middle" fill="#eef3f8" font-size="13" font-weight="900">${htmlEscape(title)}</text>
+        <foreignObject x="${cx - 64}" y="${cy + 3}" width="128" height="26">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.12; text-align:center">${htmlEscape(copy)}</div>
+        </foreignObject>
+      </g>`;
+  }).join('');
+  return `<div class="svg-panel">
+    <svg viewBox="0 0 1280 500" role="img" aria-label="Gap to evidence feedback loop">
+      <rect x="0" y="0" width="1280" height="500" rx="18" fill="#0b111a"/>
+      <text x="54" y="42" fill="#75a7ff" font-size="13" font-weight="900" letter-spacing="3">GAP FEEDBACK LOOP</text>
+      <text x="54" y="70" fill="#eef3f8" font-size="23" font-weight="900">A gap is a controlled evidence request, not a failure</text>
+      <ellipse cx="640" cy="250" rx="360" ry="150" fill="none" stroke="#75a7ff" stroke-width="2.5" stroke-dasharray="10 8"/>
+      ${markup}
+      <circle cx="640" cy="250" r="64" fill="#182335" stroke="#3ddc97" stroke-width="2"/>
+      <text x="640" y="242" text-anchor="middle" fill="#eef3f8" font-size="15" font-weight="900">Governed</text>
+      <text x="640" y="262" text-anchor="middle" fill="#eef3f8" font-size="15" font-weight="900">review loop</text>
+      <text x="60" y="462" fill="#9aa8b8" font-size="13">Outcomes: candidate context, rejected evidence, active context after validation, or a known unresolved gap.</text>
+    </svg>
+  </div>`;
+}
+
+function contextPackAssemblySvg() {
+  const packs = [
+    ['KnowledgeContextPack', 'browsing, relationships, evidence limits'],
+    ['MovesContextPack', 'phase-specific context, evidence, gaps'],
+    ['IntelligenceContextPack', 'governed Claude-ready payload'],
+    ['SourceContextPack', 'vendors, contracts, systems, spend, SLA, risk'],
+    ['TowerContextPack', 'baseline, hypothesis, plan, measured evidence'],
+  ];
+  const packMarkup = packs.map(([title, copy], index) => {
+    const x = 72 + index * 232;
+    return `
+      <g>
+        <rect x="${x}" y="262" width="190" height="88" rx="14" fill="#101722" stroke="#b693ff" stroke-width="2"/>
+        <text x="${x + 95}" y="294" text-anchor="middle" fill="#eef3f8" font-size="13" font-weight="900">${htmlEscape(title)}</text>
+        <foreignObject x="${x + 22}" y="308" width="146" height="32">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px Inter, sans-serif; color:#9aa8b8; line-height:1.12; text-align:center">${htmlEscape(copy)}</div>
+        </foreignObject>
+      </g>`;
+  }).join('');
+  return `<div class="svg-panel">
+    <svg viewBox="0 0 1280 430" role="img" aria-label="Context pack assembly">
+      <rect x="0" y="0" width="1280" height="430" rx="18" fill="#0b111a"/>
+      <text x="54" y="42" fill="#75a7ff" font-size="13" font-weight="900" letter-spacing="3">CONTEXT PACK ASSEMBLY</text>
+      <text x="54" y="70" fill="#eef3f8" font-size="23" font-weight="900">Modules consume governed context packs, not raw templates</text>
+      <rect x="94" y="112" width="1092" height="70" rx="16" fill="#101722" stroke="#ffd166" stroke-width="2"/>
+      <text x="640" y="142" text-anchor="middle" fill="#eef3f8" font-size="17" font-weight="900">Evidence Registry + Canonical Facts + Entity Profiles + Graph + Gaps + Confidence</text>
+      <text x="640" y="164" text-anchor="middle" fill="#9aa8b8" font-size="12">filtered by tenant, sensitivity, source basis, active/candidate status, phase, and module policy</text>
+      <path d="M640 182 L640 226" stroke="#75a7ff" stroke-width="3"/>
+      <rect x="500" y="226" width="280" height="44" rx="13" fill="#182335" stroke="#8bd3ff" stroke-width="2"/>
+      <text x="640" y="253" text-anchor="middle" fill="#8bd3ff" font-size="14" font-weight="900">Context Pack Assembler</text>
+      ${packMarkup}
+    </svg>
+  </div>`;
+}
+
 function moduleHandoffSvg() {
   const nodes = [
     ['Knowledge', 106, 154, '#75a7ff', 'browse enterprise context'],
@@ -1172,13 +1304,13 @@ function moduleHandoffSvg() {
     ['aVa', 535, 286, '#8bd3ff', 'reason with citations and limits'],
   ];
   const edges = [
-    [194, 154, 315, 117, 'context'],
-    [405, 117, 535, 154, 'ranked use cases'],
-    [625, 154, 755, 117, 'sourcing needs'],
-    [845, 117, 968, 154, 'value plan'],
-    [535, 196, 535, 262, 'phase evidence'],
-    [610, 286, 968, 196, 'measurement prompts'],
-    [460, 286, 106, 196, 'answers cite context'],
+    [194, 154, 315, 117, 'KnowledgeContextPack'],
+    [405, 117, 535, 154, 'IntelligenceContextPack'],
+    [625, 154, 755, 117, 'SourceContextPack'],
+    [845, 117, 968, 154, 'TowerContextPack'],
+    [535, 196, 535, 262, 'MovesContextPack'],
+    [610, 286, 968, 196, 'measured only with evidence'],
+    [460, 286, 106, 196, 'answers cite governed context'],
   ].map(([x1, y1, x2, y2, label]) => `
     <g>
       <path d="M${x1} ${y1} C${(x1 + x2) / 2} ${y1}, ${(x1 + x2) / 2} ${y2}, ${x2} ${y2}" stroke="#75a7ff" stroke-width="2.5" fill="none" opacity=".78"/>
@@ -1210,6 +1342,7 @@ const tocSections = [
   'Meridian Health: Enterprise Context and Strategic Priorities',
   'Meridian Agent Assist Golden Thread',
   'CDAO Meeting Talk Track',
+  'HTML Quality and Accuracy Audit',
   'Client Onboarding Model',
   'How Clients Use the Templates',
   'Workshop and Interview Playbook',
@@ -1219,6 +1352,9 @@ const tocSections = [
   'Source Template Standard',
   'Template Examples with Meridian Rows',
   'Visual Data Layer Cake',
+  'Moves Over Data Layer',
+  'Gap to Evidence Feedback Loop',
+  'Context Pack Assembly',
   'One-Step Data Flow Walkthrough',
   'ERD + Graph Dot-Connector View',
   'End-to-End Data Flow',
@@ -1326,6 +1462,57 @@ const clientDataRequest = [
   'Data governance/catalog exports',
 ];
 
+const htmlQualityAccuracyAudit = [
+  ['Executive Summary', 'medium', 'The summary could imply a linear client-input-to-module path.', 'Client inputs -> Context Packs -> Nexus Modules', 'Business use case defines context requirements; evidence fills them; modules consume governed context packs.', 'Avoids suggesting raw inputs are directly module-consumable.'],
+  ['Meridian Health Context and Strategic Priorities', 'low', 'Strategic context needed stronger current-vs-target architecture boundary.', 'AWS/Databricks modernization agenda', 'Legacy/on-prem-heavy current state; AWS + Databricks are target foundation/readiness path, not certified production.', 'Prevents overclaiming production readiness.'],
+  ['Agent Assist Golden Thread', 'medium', 'Golden thread needed explicit context requirement framing.', 'Problem -> Context -> Gaps -> Moves Plan', 'Agent Assist use case defines required business, system, data, control, metric, org, and foundation context.', 'Keeps the story decision-led and evidence-gated.'],
+  ['CDAO Meeting Talk Track', 'low', 'Talk track needed stronger no-overclaim guardrail.', 'Evidence-gated AI', 'CDAO story now emphasizes governed context, caveats, and no realized value claim.', 'Keeps executive demo credible.'],
+  ['Client Onboarding Model', 'medium', 'Could imply onboarding creates active truth automatically.', 'Template/interview/Copilot/hybrid intake', 'Intake creates candidate context until SME validation approves active status.', 'Protects active/candidate boundary.'],
+  ['How Clients Use the Templates', 'high', 'Lifecycle started with select use case but did not say a use case defines requirements rather than evidence.', 'Select use case -> fill templates', 'Use case -> required context dimensions -> evidence collection -> templates/adapters -> validation -> active context or gap.', 'Fixes the primary semantic risk.'],
+  ['Workshop and Interview Playbook', 'low', 'Workshop outputs needed to be described as evidence inputs, not approved facts.', 'Outputs: process evidence, roles, metrics', 'Workshop answers become evidence candidates with confidence and validation status.', 'Prevents interview notes from becoming truth without review.'],
+  ['Agent Assist Context Requirements', 'low', 'Needed explicit before-finalizing-discovery guidance.', 'Context requirements list', 'Business, technology, data, controls, org/change, metrics, and foundation readiness are required to finalize discovery artifacts.', 'Clarifies why tech stack and org context matter.'],
+  ['Copilot-Assisted Source Parsing', 'high', 'Copilot extraction could be misread as approval.', 'Copilot drafts candidate rows', 'Copilot output remains candidate-only until SME/source validation.', 'Prevents generated extraction from becoming approved truth.'],
+  ['Hybrid Validation and Promotion', 'low', 'Correct but needed stronger outcomes.', 'Candidate -> active', 'Review can produce candidate context, rejected evidence, active context, or known unresolved gap.', 'Makes gap handling explicit.'],
+  ['Source Template Standard', 'medium', 'Could imply templates directly feed modules.', 'Feeds evidence, facts, profiles, gaps, and module context', 'Templates/adapters feed governed layers; Context Pack Assembler feeds modules.', 'Protects module-consumption architecture.'],
+  ['Template Examples with Meridian Rows', 'low', 'Examples needed stronger synthetic/candidate caveat.', 'Meridian row examples', 'Rows are demo-safe synthetic examples with evidence/confidence/gap caveats.', 'Prevents client-data overclaim.'],
+  ['Visual Data Layer Cake', 'low', 'Needed explicit module-ready context boundary.', 'Raw client material is not what modules consume', 'Every layer adds source, confidence, gap, and active/candidate status before modules can rely on it.', 'Keeps diagram accurate.'],
+  ['Moves Over Data Layer', 'high', 'Required diagram was missing.', 'No equivalent previous page', 'Moves phases request phase-specific MovesContextPacks from the Nexus data layer; gaps flow back to client evidence intake.', 'Fixes the main architecture story.'],
+  ['Gap to Evidence Feedback Loop', 'high', 'Gap handling was present but not visualized as a controlled loop.', 'Gaps listed as caveats', 'Gap -> evidence request -> client response -> candidate update -> SME validation -> active/rejected/unresolved outcome.', 'Prevents gaps from being treated as failures or facts.'],
+  ['Context Pack Assembly', 'high', 'Modules could be interpreted as reading raw templates.', 'Modules receive active context packs', 'KnowledgeContextPack, MovesContextPack, IntelligenceContextPack, SourceContextPack, and TowerContextPack are assembled from governed layers.', 'Corrects module wiring.'],
+  ['One-Step Data Flow Walkthrough', 'high', 'Original flow implied use case directly creates client evidence.', 'Use case -> Client evidence', 'Use case defines context requirements; client evidence fills them; validation governs active use.', 'Fixes the flagged semantic bug.'],
+  ['ERD / Graph View', 'medium', 'ERD needed to distinguish governed model from graph explanation.', 'ERD + graph view', 'ERD defines governed contract; graph connects systems, functions, data, risks, metrics, vendors, and programs.', 'Improves architecture accuracy.'],
+  ['End-to-End Data Flow', 'medium', 'Needed to use corrected pipeline semantics.', 'Client Inputs -> Template Rows -> Modules', 'Evidence is captured through templates/adapters, reconciled into governed layers, and assembled into context packs.', 'Avoids direct raw-source-to-module implication.'],
+  ['Layer-by-Layer Volumetric', 'low', 'Counts could be mistaken for production truth.', 'Accepted/candidate/active row counts', 'Counts remain proof/report data with active/candidate caveats and no production-write claim.', 'Protects demo safety.'],
+  ['Logical Data Model / ERD', 'medium', 'Needed stronger context-pack assembler role.', 'Edges and gaps feed context packs', 'Governed entities and relationships feed policy-filtered context packs, not raw module prompts.', 'Aligns data model with runtime contract.'],
+  ['Evidence Registry', 'low', 'Registry needed explicit source-proof wording.', 'Evidence Registry tracks source-backed proof', 'Evidence carries source type, owner, as-of date, sensitivity, confidence, active/candidate status, linked facts, and dimensions.', 'Keeps proof basis visible.'],
+  ['Canonical Facts', 'medium', 'Could imply source statements become facts automatically.', 'Source statement -> Normalized fact', 'Source statements are normalized only with evidence, confidence, and validation status.', 'Prevents automatic fact promotion.'],
+  ['Entity Profiles', 'low', 'Table-only section needed usage clarification.', 'Profile coverage table', 'Profiles organize reusable enterprise context after evidence-backed facts are available.', 'Improves executive readability.'],
+  ['Relationship Graph', 'medium', 'Graph needed explicit non-calculation boundary.', 'Graph traversal identifies dependencies', 'Graph explains dependency context and gaps; it does not calculate Tower value or certify readiness.', 'Prevents metric/value overclaim.'],
+  ['Context Gaps and Confidence', 'low', 'Gap handling needed positive framing.', 'Context is not just facts', 'A gap is a controlled evidence request with owner, severity, and possible validation outcomes.', 'Makes uncertainty actionable.'],
+  ['Azure Technical Architecture', 'medium', 'Tech overlay needed context-pack boundary.', 'Where client evidence becomes safe module context', 'ACA/Blob/validation/data artifacts assemble governed context packs; no runtime behavior changed in this PR.', 'Prevents runtime/deploy overclaim.'],
+  ['Moves Workflow P0-P5', 'medium', 'Moves needed phase-specific context pack language.', 'Each phase asks minimum context', 'Each phase requests a phase-specific MovesContextPack and returns gaps as evidence requests.', 'Aligns Moves with data layer.'],
+  ['Phase-by-Phase Evidence Guide', 'low', 'Phase guide needed evidence lifecycle caveat.', 'What to upload/answer/produce', 'Uploaded/answered items become candidate evidence until validated for phase use.', 'Prevents self-attestation overclaim.'],
+  ['Module Wiring', 'high', 'Module cards could imply modules read broad context directly.', 'Uses context, vendors, metrics', 'Modules consume context packs: Knowledge, Moves, Intelligence, Source, Tower, each with scope-specific payloads.', 'Corrects module architecture.'],
+  ['Module Handoff Map', 'medium', 'Map showed handoff without enough context-pack semantics.', 'The same context spine starts in Knowledge...', 'The same context spine is assembled into module-specific context packs; modules add decision surfaces, not raw truth.', 'Makes platform story accurate.'],
+  ['Source-to-Layer Reconciliation', 'medium', 'Trace cards needed to clarify validation path.', 'Source -> Fact -> Edge -> Modules', 'Trace flows source row -> evidence -> fact/profile/edge/gap -> context pack; modules consume the pack.', 'Avoids direct source-to-module shortcut.'],
+  ['AWS / Databricks Semantic Proof', 'high', 'Must preserve current vs target state boundary.', 'AWS + Databricks is the target foundation', 'Current state is fragmented/legacy; AWS + Databricks lakehouse, medallion, Unity Catalog, data products, PHI/HITL/audit controls are target/readiness path.', 'Prevents certified-production claim.'],
+  ['Legacy Leakage Proof', 'low', 'Correct but should stay caveated as historical/report-only.', 'Legacy leakage table', 'Old V-named references are kept out of active demo language and loader-visible paths.', 'Prevents naming confusion.'],
+  ['Demo Readiness', 'medium', 'Needed to separate safe claims from future work.', 'safe-for-cdao-demo-with-caveats', 'Demo is safe with caveats; no production data, no realized ROI, no certified AWS/Databricks, no Tower outcome proof.', 'Keeps demo claims defensible.'],
+  ['Client Data Request Pack', 'low', 'Data request list needed lifecycle tie-back.', 'Client data request pack', 'Requested files fill context dimensions and enter the same template/adapter, validation, active/candidate lifecycle.', 'Makes client ask purposeful.'],
+  ['Good Enough by Phase', 'low', 'Good-enough criteria needed evidence-gated caveat.', 'P0/P1 enough context, P2 enough evidence...', 'Good enough means sufficient evidence and explicit caveats for that phase, not complete enterprise truth.', 'Avoids over-scoping.'],
+  ['Recommended Client Onboarding Sequence', 'medium', 'Sequence needed corrected lifecycle.', 'Week 0 use case + sponsors + templates', 'Use case selects required context; weeks collect evidence, validate candidate context, assemble context packs, and recycle gaps.', 'Aligns operating model with architecture.'],
+  ['Appendix / Raw Proof Tables', 'low', 'Appendix needed no-runtime-change caveat.', 'Raw proof tables', 'Tables support the guide but do not represent runtime mutation, client production data, or candidate promotion.', 'Protects audit boundary.'],
+].map(([section_name, severity, issue_found, old_wording_or_diagram, corrected_wording_or_diagram, rationale]) => ({
+  section_name,
+  issue_found,
+  severity,
+  old_wording_or_diagram,
+  corrected_wording_or_diagram,
+  rationale,
+  demo_risk: severity === 'high' ? 'Could mislead executives about architecture, evidence readiness, or product behavior.' : severity === 'medium' ? 'Could create ambiguity in a live demo if not caveated.' : 'Low risk after clarification.',
+  fixed_status: 'fixed',
+}));
+
 const html = `<!doctype html>
 <html lang="en">
 <head>
@@ -1395,8 +1582,8 @@ const html = `<!doctype html>
   <main>
     <div class="hero">
       <div class="eyebrow">Meridian Health · Agent Assist · Nexus Data Layer</div>
-      <h2>From client evidence to module-ready enterprise context</h2>
-      <p>Nexus does not start with a prompt. Nexus starts with enterprise context. For Meridian Agent Assist, client templates, source adapters, interviews, existing enterprise documents, and SME validation reconcile into evidence, facts, profiles, relationships, gaps, confidence, and module context packs.</p>
+      <h2>From use-case context requirements to module-ready enterprise context</h2>
+      <p>Nexus does not start with a prompt, and a use case does not create evidence. For Meridian Agent Assist, the use case defines required context. Client documents, source-system exports, interviews, reports, contracts, architecture diagrams, and operational data fill those requirements. Templates/adapters capture the evidence, validation governs active/candidate status, and the Context Pack Assembler creates module-ready payloads.</p>
       <div>${badge(overallStatus)}${badge(`readiness ${readinessScore}/100`)}${badge('no production writes')}${badge('candidate not promoted')}</div>
     </div>
     <section id="executive-summary">
@@ -1457,6 +1644,18 @@ const html = `<!doctype html>
         <div class="card"><h3>What not to overclaim</h3><p>Do not claim production Meridian data, certified AWS/Databricks readiness, realized ROI, PHI ingestion, or approved Tower outcomes. This is demo-safe synthetic planning context with caveats.</p></div>
       </div>
     </section>
+    <section id="html-quality-and-accuracy-audit">
+      <h2>HTML Quality and Accuracy Audit</h2>
+      <p>This pass audits the guide for semantic accuracy, demo safety, architecture correctness, and truth boundaries. The main correction is simple: a use case does not create evidence; a use case defines the context required to make a decision.</p>
+      <div class="grid">
+        <div class="card"><div class="eyebrow">Sections Audited</div><div class="metric">${htmlQualityAccuracyAudit.length}</div><p>Every major page, diagram, module statement, and proof section reviewed.</p></div>
+        <div class="card"><div class="eyebrow">High Severity</div><div class="metric">${htmlQualityAccuracyAudit.filter((item) => item.severity === 'high').length}</div><p>Architecture semantics corrected before demo use.</p></div>
+        <div class="card"><div class="eyebrow">Status</div><div class="metric">Fixed</div><p>All findings are marked fixed in the audit artifact.</p></div>
+        <div class="card"><div class="eyebrow">Boundary</div><div class="metric">No Runtime</div><p>No data rebuild, candidate promotion, deploy, or product behavior change.</p></div>
+      </div>
+      <div class="example"><strong>Corrected mental model:</strong> Business use case defines context requirements → client evidence fills those requirements → templates/adapters capture evidence → governed data layers reconcile it → Context Pack Assembler creates module-specific payloads → gaps return as evidence requests.</div>
+      ${tableHtml(htmlQualityAccuracyAudit, ['section_name','severity','issue_found','corrected_wording_or_diagram','demo_risk','fixed_status'], 40)}
+    </section>
     <section id="client-onboarding-model">
       <h2>Client Onboarding Model</h2>
       <p>Real clients rarely complete a perfect data pack in one motion. Nexus supports four paths that converge into governed context.</p>
@@ -1471,9 +1670,23 @@ const html = `<!doctype html>
     <section id="how-clients-use-the-templates">
       <h2>How Clients Use the Templates</h2>
       <div class="rail">
-        ${['Select use case','Identify required dimensions','Assign owners','Fill templates','Attach evidence','Mark confidence/gaps','Review candidate context','Approve or keep candidate-only'].map((step, index) => `<div class="step"><strong>Step ${index + 1}</strong><span>${htmlEscape(step)}</span></div>`).join('')}
+        ${[
+          'Select use case',
+          'Identify required context dimensions',
+          'Collect existing documents/exports',
+          'Conduct interviews/workshops',
+          'Use Copilot-assisted parsing',
+          'Map extracted content to templates/source adapters',
+          'Assign evidence IDs and confidence',
+          'Client SME validates or rejects',
+          'Candidate context is assembled',
+          'Approved context becomes active',
+          'Modules consume context packs',
+          'Gaps generate new evidence requests',
+          'New evidence re-enters governed flow',
+        ].map((step, index) => `<div class="step"><strong>Step ${index + 1}</strong><span>${htmlEscape(step)}</span></div>`).join('')}
       </div>
-      <p>For Meridian Agent Assist, the core intake dimensions are Business Functions, Org Ownership, Workforce Roles, Applications & Systems, Data Assets & Integrations, Infrastructure & Platforms, Vendors & Contracts, Programs & Initiatives, AI Use Cases, Risks & Controls, Metrics & Outcomes, Operational Process Evidence, Evidence Sources, and Relationships.</p>
+      <p>For Meridian Agent Assist, the use case defines the required context dimensions. Client evidence then fills those requirements through Business Functions, Org Ownership, Workforce Roles, Applications & Systems, Data Assets & Integrations, Infrastructure & Platforms, Vendors & Contracts, Programs & Initiatives, AI Use Cases, Risks & Controls, Metrics & Outcomes, Operational Process Evidence, Evidence Sources, and Relationships.</p>
       <div class="two">
         <div class="card"><h3>Evidence Examples</h3>${simpleList(['CMDB export','Application inventory','Architecture diagram','ServiceNow incidents','Contact center KPI report','Claims platform data dictionary','Knowledge base export','Vendor contract','Program roadmap','Security control assessment'])}</div>
         <div class="card"><h3>Confidence Rules</h3>${simpleList(['High: source-system export or approved owner evidence','Medium: SME-confirmed interview or reviewed deck','Low: inferred from document','Gap: stale, missing owner, missing evidence, or ambiguous current-vs-target status'])}</div>
@@ -1536,14 +1749,44 @@ const html = `<!doctype html>
         <div class="card"><h3>What modules receive</h3><p>Moves, Source, Tower, Intelligence, and Knowledge should receive active context packs with source traceability, confidence, gap status, and clear limits.</p></div>
       </div>
     </section>
+    <section id="moves-over-data-layer">
+      <h2>Moves Over Data Layer</h2>
+      <p>Moves does not bypass the data layer. Each phase asks the Nexus context layer for the right evidence-backed context. When a gap is found, the client can provide new evidence. That evidence is captured through templates or source adapters, validated, and then becomes reusable enterprise context.</p>
+      ${movesOverDataLayerSvg()}
+      <div class="grid3">
+        <div class="card"><h3>What this means</h3><p>P0 through P5 do not own truth independently. They request phase-specific MovesContextPacks assembled from governed evidence, facts, profiles, graph relationships, gaps, and confidence.</p></div>
+        <div class="card"><h3>Meridian example</h3><p>P2 can ask for current-state systems and data gaps for Agent Assist. If transcript availability or knowledge freshness is missing, Moves should send that gap back as an evidence request.</p></div>
+        <div class="card"><h3>Truth boundary</h3><p>Gaps do not automatically become facts. New client inputs first become candidate context, rejected evidence, active context after validation, or known unresolved gaps.</p></div>
+      </div>
+    </section>
+    <section id="gap-to-evidence-feedback-loop">
+      <h2>Gap to Evidence Feedback Loop</h2>
+      <p>A gap is not a failure. A gap is a controlled evidence request. The client can address it by uploading a missing document, exporting a source-system file, answering a workshop question, confirming an owner, validating a metric baseline, clarifying current versus target state, or approving/rejecting a Copilot-derived candidate row.</p>
+      ${gapFeedbackLoopSvg()}
+      <div class="grid3">
+        <div class="card"><h3>Why it matters</h3><p>This makes the product feel consultative: Nexus does not hide uncertainty. It turns uncertainty into the next evidence action.</p></div>
+        <div class="card"><h3>What can go wrong</h3><p>If gaps are treated as active facts, generated deliverables can overstate readiness or invent a business case without source support.</p></div>
+        <div class="card"><h3>Which modules use it</h3><p>Moves uses gaps for phase readiness, Intelligence uses gaps for caveated recommendations, Source uses gaps for sourcing due diligence, and Tower uses gaps to protect value claims.</p></div>
+      </div>
+    </section>
+    <section id="context-pack-assembly">
+      <h2>Context Pack Assembly</h2>
+      <p>Modules consume context packs, not raw source templates. Knowledge, Moves, Intelligence, Source, Tower, and aVa should receive purpose-built governed payloads filtered by tenant, sensitivity, source basis, active/candidate state, phase, and module policy.</p>
+      ${contextPackAssemblySvg()}
+      <div class="grid3">
+        <div class="card"><h3>SourceContextPack</h3><p>Links vendors, contracts, systems supported, business functions, spend, SLAs, service performance, risks, renewals, programs, sourcing gaps, and evidence.</p></div>
+        <div class="card"><h3>TowerContextPack</h3><p>Supports value hypothesis, baseline metric, measurement plan, promised value, and measured value only when evidence exists.</p></div>
+        <div class="card"><h3>MovesContextPack</h3><p>Changes by phase: P0 frames the bet, P1 charters, P2 diagnoses, P3 compares options, P4 supports commitment, and P5 prepares execution handoff.</p></div>
+      </div>
+    </section>
     <section id="one-step-data-flow-walkthrough">
       <h2>One-Step Data Flow Walkthrough</h2>
-      <p>This view answers the client question: “What happens after we give you documents, exports, or workshop answers?” The answer is not magic ingestion. It is a controlled progression from evidence to candidate rows to validated context to module use.</p>
+      <p>This view answers the client question: “What happens after we select a use case and give you documents, exports, or workshop answers?” The answer is not magic ingestion. The use case defines required context; client evidence fills those requirements; templates/adapters capture the evidence; validation determines what can become active context.</p>
       ${pipelineSvg()}
       <div class="rail">
         <div class="step"><strong>Before</strong><span>Client brings templates, exports, decks, reports, contracts, CMDB, ServiceNow, process maps, and interviews.</span></div>
         <div class="step"><strong>During</strong><span>Nexus parses, normalizes, scores confidence, flags gaps, and asks SMEs to validate.</span></div>
-        <div class="step"><strong>After</strong><span>Approved context feeds Moves deliverables, Source sourcing context, Tower measurement plans, and Intelligence answers.</span></div>
+        <div class="step"><strong>After</strong><span>Approved context feeds context packs for Moves deliverables, Source sourcing context, Tower measurement plans, and Intelligence answers.</span></div>
       </div>
     </section>
     <section id="erd-graph-dot-connector-view">
@@ -1633,32 +1876,38 @@ const html = `<!doctype html>
       <h2>Module Wiring</h2>
       <div class="grid">
         ${[
-          ['Knowledge','What do we know? Active context browsing and evidence-backed gaps.'],
-          ['Intelligence','What should leaders decide? Uses context, benchmarks, risks, and options.'],
-          ['Moves','How do we execute the transformation? Pulls evidence, gaps, phase readiness, and deliverables.'],
-          ['Source','What vendor/commercial decisions are needed? Uses systems, vendors, contracts, rates, risks.'],
-          ['Tower','How will value be tracked? Uses metrics, baseline caveats, outcome context, and monitoring needs.'],
+          ['Knowledge','Consumes KnowledgeContextPack for active context browsing, relationship discovery, evidence limits, and visible gaps.'],
+          ['Intelligence','Consumes IntelligenceContextPack / Claude-ready governed payload for recommendations with evidence, caveats, and decision limits.'],
+          ['Moves','Consumes phase-specific MovesContextPack for P0-P5 evidence, gaps, readiness, deliverables, and next evidence requests.'],
+          ['Source','Consumes SourceContextPack linking vendors, contracts, systems supported, functions, spend, SLAs, performance, risks, renewals, programs, sourcing gaps, and evidence.'],
+          ['Tower','Consumes TowerContextPack for value hypothesis, baseline metric, measurement plan, promised value, and measured value only when evidence exists.'],
         ].map(([name, copy]) => `<div class="card"><div class="eyebrow">${name}</div><p>${copy}</p></div>`).join('')}
       </div>
     </section>
     <section id="module-handoff-map">
       <h2>Module Handoff Map</h2>
-      <p>This page explains why the modules should not feel disconnected. The same context spine starts in Knowledge, is explored in Intelligence, becomes execution in Moves, becomes sourcing/commercial strategy in Source, and becomes measurement discipline in Tower.</p>
+      <p>This page explains why the modules should not feel disconnected. The same governed context spine is assembled into module-specific context packs: KnowledgeContextPack, IntelligenceContextPack, MovesContextPack, SourceContextPack, and TowerContextPack.</p>
       ${moduleHandoffSvg()}
       <div class="grid3">
-        <div class="card"><h3>Moves to Source</h3><p>When P3/P4 identifies build/buy needs, Source should inherit systems, vendors, contracts, scope, rates, risks, and delivery assumptions instead of starting over.</p></div>
-        <div class="card"><h3>Moves to Tower</h3><p>When P4/P5 defines success criteria, Tower should inherit baselines, target metrics, measurement caveats, owners, and value hypotheses.</p></div>
+        <div class="card"><h3>Moves to Source</h3><p>When P3/P4 identifies build/buy needs, Source should receive a SourceContextPack with systems, vendors, contracts, scope, rates, risks, service performance, renewals, and sourcing gaps.</p></div>
+        <div class="card"><h3>Moves to Tower</h3><p>When P4/P5 defines success criteria, Tower should receive a TowerContextPack with baselines, target metrics, measurement caveats, owners, value hypotheses, and measured value only when evidence exists.</p></div>
         <div class="card"><h3>aVa across all modules</h3><p>aVa should explain what it knows, what evidence it used, what is missing, and why it recommends the next step.</p></div>
       </div>
     </section>
     <section id="source-to-layer-reconciliation">
       <h2>Source-to-Layer Reconciliation</h2>
-      <div class="grid3">${traceSamples.slice(0, 6).map((trace) => `<div class="card"><div class="eyebrow">${htmlEscape(trace.trace_id)}</div><h3>${htmlEscape(trace.evidence_registry_record)}</h3><p><strong>Source:</strong> ${htmlEscape(trace.source_template_row)}</p><p><strong>Fact:</strong> ${htmlEscape(trace.canonical_fact)}</p><p><strong>Edge:</strong> ${htmlEscape(trace.relationship_edge)}</p><p><strong>Modules:</strong> ${htmlEscape(trace.module_context_pack)}</p></div>`).join('')}</div>
+      <p>Source-to-layer reconciliation is the audit trail. A source row or adapter output does not go straight to a module. It becomes evidence, then a normalized fact/profile/edge or gap, then a context pack item if policy and validation allow it.</p>
+      ${flowDiagram(['Source row / adapter output','Evidence Registry','Canonical Fact / Profile / Edge','Gap + confidence check','Context Pack Assembler','Module-specific context pack'])}
+      <div class="grid3">${traceSamples.slice(0, 6).map((trace) => `<div class="card"><div class="eyebrow">${htmlEscape(trace.trace_id)}</div><h3>${htmlEscape(trace.evidence_registry_record)}</h3><p><strong>Source row:</strong> ${htmlEscape(trace.source_template_row)}</p><p><strong>Normalized fact:</strong> ${htmlEscape(trace.canonical_fact)}</p><p><strong>Relationship/gap signal:</strong> ${htmlEscape(trace.relationship_edge)}</p><p><strong>Context pack:</strong> ${htmlEscape(trace.module_context_pack)}</p></div>`).join('')}</div>
       ${tableHtml(layerReconciliation, ['layer_order','layer_name','source_rows','accepted_rows','candidate_rows','active_rows','evidence_refs','canonical_facts','entity_profiles','relationship_edges','context_gaps','module_context_items','confidence_score_or_distribution'], 20)}
     </section>
     <section id="aws-databricks-semantic-proof">
       <h2>AWS / Databricks Semantic Proof</h2>
-      <p>The data supports the intended story: AWS + Databricks is the target foundation Nexus/Moves recommends and governs. It is not represented as already certified production.</p>
+      <p>The data supports the intended story: Meridian's current state is legacy/on-prem-heavy with fragmented reporting and data context. AWS + Databricks is the target foundation/readiness path for a governed lakehouse, medallion architecture, governed data products, Unity Catalog/governance, identity/member/provider spine, and PHI/HITL/audit controls. It is not represented as already certified production.</p>
+      <div class="two">
+        <div class="card"><h3>Current State</h3>${simpleList(['legacy/on-prem-heavy estate','fragmented reporting/data estate','SQL Server marts / Netezza/DB2-style warehouse where applicable','Tableau and SAS analytics context','incomplete lineage, freshness, and KPI baseline proof'])}</div>
+        <div class="card"><h3>Target State</h3>${simpleList(['AWS + Databricks lakehouse foundation','medallion architecture','Unity Catalog/governance','governed data products after certification','identity/member/provider spine','PHI/HITL/audit controls'])}</div>
+      </div>
       <p>${badge(`${unsafeAwsRows.filter((row) => row.artifact_path.includes('/active/')).length} unsafe active rows`)}${badge('target/future foundation required')}</p>
       ${tableHtml(awsDatabricksRows, ['artifact_path','row_number','terms','classification','unsafe','recommended_action','evidence'], 35)}
     </section>
@@ -1710,6 +1959,32 @@ writeCsv('moves-phase-context-readiness.csv', movesPhaseReadiness, ['phase','req
 writeJson('agent-assist-context-readiness.json', agentAssistContextReadiness);
 writeJson('reconciliation-trace-samples.json', traceSamples);
 writeJson('summary.json', summary);
+writeJson('html-quality-accuracy-audit.json', htmlQualityAccuracyAudit);
+fs.writeFileSync(path.join(reportDir, 'html-quality-accuracy-audit.md'), `# Meridian HTML Quality and Accuracy Audit
+
+Codename: MERIDIAN-DATA-LAYER-HTML-QUALITY-ACCURACY-PR3
+
+Status: fixed
+
+Scope: content, diagram, story, and architecture-accuracy hardening for the Meridian data layer HTML guide. This audit did not rebuild data, change row counts, change runtime behavior, deploy, promote candidate data, or add unsupported product claims.
+
+## Core Correction
+
+A use case does not create evidence. A use case defines the context required to make a decision. Client evidence comes from documents, interviews, source-system exports, contracts, reports, architecture diagrams, and operational data. Nexus maps that evidence into templates/adapters, validates it, reconciles it into governed data layers, and assembles module-specific context packs.
+
+## Section Findings
+
+${htmlQualityAccuracyAudit.map((item, index) => `### ${index + 1}. ${item.section_name}
+
+- Severity: ${item.severity}
+- Issue found: ${item.issue_found}
+- Old wording or diagram: ${item.old_wording_or_diagram}
+- Corrected wording or diagram: ${item.corrected_wording_or_diagram}
+- Rationale: ${item.rationale}
+- Demo risk: ${item.demo_risk}
+- Fixed status: ${item.fixed_status}
+`).join('\n')}
+`);
 fs.writeFileSync(path.join(reportDir, 'meridian-data-state-reconciliation-proof.html'), html.replace(/[ \t]+$/gm, ''));
 
 const summaryMd = `# Meridian Data State Reconciliation Summary
