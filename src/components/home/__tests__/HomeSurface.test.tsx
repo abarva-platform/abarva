@@ -647,7 +647,7 @@ describe("HomeSurface — Explorer context browser", () => {
       screen.getByRole("heading", { name: "Vendors & Contracts", level: 1 }),
     ).toBeInTheDocument();
     expect(screen.getByText("Executive Summary")).toBeInTheDocument();
-    expect(screen.getByText("What AbarVa knows")).toBeInTheDocument();
+    expect(screen.getByText("What Nexus knows")).toBeInTheDocument();
     expect(screen.getByText("Why it matters")).toBeInTheDocument();
     expect(screen.getByText("Questions this supports")).toBeInTheDocument();
     expect(screen.getByText("Not yet supported")).toBeInTheDocument();
@@ -705,7 +705,7 @@ describe("HomeSurface — Explorer context browser", () => {
     fireEvent.change(screen.getByLabelText("Search loaded records"), {
       target: { value: "Kyriba" },
     });
-    expect(screen.getByText("1 record visible")).toBeInTheDocument();
+    expect(screen.getByText(/1 visible row · 90 loaded records/i)).toBeInTheDocument();
 
     fireEvent.click(
       screen.getByRole("button", { name: /Applications & Systems/i }),
@@ -791,8 +791,9 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(screen.getByText("Why it matters")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "Data" }));
     expect(
-      screen.getByText(/Retail Demo's applications & systems packet/i),
+      screen.getByText(/Retail Demo's applications & systems context reports 90 loaded records/i),
     ).toBeInTheDocument();
+    expect(screen.getByText(/This view shows 1 visible row/i)).toBeInTheDocument();
     expect(screen.getAllByText("ERP Core").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("tab", { name: "Relationships" }));
     expect(
@@ -812,6 +813,33 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(screen.getAllByText(/Lifecycle/i).length).toBeGreaterThan(0);
     expect(screen.queryByText("7120000000")).not.toBeInTheDocument();
     expect(screen.queryByText("11800")).not.toBeInTheDocument();
+  });
+
+  it("keeps tenant-story copy from overstating samples or unsafe claims", () => {
+    render(
+      <HomeSurface
+        clientKey="apexretail"
+        payload={payload}
+        v6Browser={v6Browser}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Applications & Systems/i }),
+    );
+
+    expect(
+      screen.queryByText(/packet currently contains 1 record/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Retail Demo's applications & systems context includes 90 loaded records/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/^Candidate data is active tenant truth\.$/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Let the Home module decide/i),
+    ).not.toBeInTheDocument();
   });
 
   it("searches the Explorer tree", () => {
