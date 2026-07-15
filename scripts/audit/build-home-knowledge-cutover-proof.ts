@@ -55,6 +55,7 @@ const outDir = path.join(
 const homePagePath = path.join(repoRoot, "src/app/(maestro)/home/page.tsx");
 const homeSurfacePath = path.join(repoRoot, "src/components/home/HomeSurface.tsx");
 const dockerIgnorePath = path.join(repoRoot, ".dockerignore");
+const dockerfilePath = path.join(repoRoot, "Dockerfile");
 const summaryBuilderPath = path.join(
   repoRoot,
   "src/lib/home/home-summary-snapshot.ts",
@@ -187,12 +188,14 @@ async function main() {
     fs.readFileSync(summaryBuilderPath, "utf8"),
   ];
   const dockerIgnoreSource = fs.readFileSync(dockerIgnorePath, "utf8");
+  const dockerfileSource = fs.readFileSync(dockerfilePath, "utf8");
 
   const routeCutoverStatus = analyzeRouteCutover({
     pageSource,
     surfaceSource,
     summaryBuilderSource,
     dockerIgnoreSource,
+    dockerfileSource,
   });
   const scenarioOutputs = await Promise.all(
     scenarios.map((scenario) => buildScenarioProof(scenario)),
@@ -270,11 +273,13 @@ function analyzeRouteCutover({
   surfaceSource,
   summaryBuilderSource,
   dockerIgnoreSource,
+  dockerfileSource,
 }: {
   pageSource: string;
   surfaceSource: string;
   summaryBuilderSource: string;
   dockerIgnoreSource: string;
+  dockerfileSource: string;
 }) {
   return {
     defaultRouteUsesKnowledgeLayer:
@@ -330,7 +335,10 @@ function analyzeRouteCutover({
       dockerIgnoreSource.includes("reports/") &&
       dockerIgnoreSource.includes("reports/*") &&
       dockerIgnoreSource.includes("!reports/active-tenant-access/") &&
-      dockerIgnoreSource.includes("!reports/active-tenant-access/**"),
+      dockerIgnoreSource.includes("!reports/active-tenant-access/**") &&
+      dockerfileSource.includes(
+        "/app/reports/active-tenant-access ./reports/active-tenant-access",
+      ),
     appClientAliasesCanonicalized:
       pageSource.includes('key === "skyharbor"') &&
       pageSource.includes('"skyharbor-air"') &&
