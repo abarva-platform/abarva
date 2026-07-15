@@ -17,7 +17,7 @@ export interface AvaAnswerValidationResult {
 }
 
 const FORBIDDEN_RE =
-  /\b(Read:|Evidence:|Evidence points|Current-state read|pattern family|P11|local env|read path|route used|runtime unavailable|source_record_id|read-model|home_know_lookup|debug|scaffold|Wave 0|Wave-0)\b/i;
+  /\b(Read:|Evidence:|Evidence points|Current-state read|pattern family|P11|local env|read path|route used|runtime unavailable|source_record_id|read-model|home_know_lookup|debug|scaffold|Wave 0|Wave-0|candidate_move|move_id|phase_id|artifact_id|evidence_id|context_pack_id|tenant_id|client_id|program_evidence_items|move_artifacts|substrate|loaded context|loaded evidence|loaded tenant sources)\b|\bV\d+(?:[_-][A-Za-z0-9./-]+|\s+(?:substrate|data\s+layer|context\s+layer))\b/i;
 const RAW_UUID_RE =
   /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
 const RAW_TABLE_RE =

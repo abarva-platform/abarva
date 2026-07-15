@@ -812,6 +812,32 @@ describe("buildStructuredExhibits", () => {
     );
   });
 
+  it("lifts an agent-assist ranking table into typed table and chart artifacts", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: {
+        ...routing,
+        query:
+          "Rank the Meridian agent assist opportunities and show the value tradeoff.",
+        outputShape: "chart",
+      },
+      sources,
+      prose: `Healthcare Demo should prioritize agent assist where operational value is high and readiness can be proven.
+
+| Opportunity | Value score | Complexity score | Basis |
+|---|---:|---:|---|
+| Real-time agent assist | 88 | 62 | Call-center workflow and knowledge-access context |
+| Intent detection | 74 | 48 | Transcript and CRM readiness context |
+| Next-best action | 69 | 70 | Claims, benefits, and authorization dependency context |
+
+Use the first wave to validate data access, compliance controls, and supervisor adoption before scaling.`,
+    });
+
+    expect(exhibits.tables).toHaveLength(1);
+    expect(exhibits.charts).toHaveLength(1);
+    expect(exhibits.prose).toContain("Healthcare Demo should prioritize");
+    expect(exhibits.prose).not.toContain("| Opportunity |");
+  });
+
   it.each([
     "What is the single best AI investment SkyHarbor should make next?",
     "Where is AI spend most likely being wasted?",

@@ -96,6 +96,19 @@ describe("sanitizeAgentAnswerForRender", () => {
     expect(table?.rows[0]?.source).toBe("evidence");
   });
 
+  it("scrubs data-layer and Move trace labels before server-side render", () => {
+    const safe = sanitizeAgentAnswerForRender({
+      ...unsafeAnswer,
+      directAnswer:
+        "Healthcare Demo should proceed, but the V7 substrate has candidate_move, move_id, phase_id, artifact_id, evidence_id, tenant_id, and source_record_id trace fields.",
+    });
+
+    expect(safe.directAnswer).toContain("Healthcare Demo should proceed");
+    expect(safe.directAnswer).not.toMatch(
+      /V7|substrate|candidate_move|move_id|phase_id|artifact_id|evidence_id|tenant_id|source_record_id/i,
+    );
+  });
+
   it("detects unsafe public text patterns without regex state drift", () => {
     expect(
       containsUnsafePublicText("clients[c7578e7a-545a-4b75-860e-465358f5e00b]"),

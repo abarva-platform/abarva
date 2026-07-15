@@ -139,6 +139,25 @@ describe("CXO answer quality gate", () => {
     );
   });
 
+  it("blocks internal data-layer and Move trace language from visible CXO answers", () => {
+    const result = evaluateCxoAnswerQuality(
+      answerFixture({
+        directAnswer:
+          "The V7 substrate shows candidate_move, move_id, phase_id, artifact_id, evidence_id, and tenant_id for this case.",
+      }),
+    );
+
+    expect(result.passed).toBe(false);
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "internal-visible-language",
+          severity: "error",
+        }),
+      ]),
+    );
+  });
+
   it("flags missing typed exhibits for explicit visual requests", () => {
     const result = evaluateCxoAnswerQuality(
       answerFixture({

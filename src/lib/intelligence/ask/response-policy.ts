@@ -1,4 +1,5 @@
 import type { AskSource } from "./types";
+import { scrubPublicAvaAnswerText } from "@/lib/ava-answer/public-answer-scrub";
 
 const HOLLOW_OPENER_RE =
   /^\s*(?:good|great|excellent)\s+question(?:,\s*[A-Z][a-z]+)?\.?\s*(?:let me\s+(?:give|be|walk|explain)[^.]*\.\s*)?/i;
@@ -25,7 +26,7 @@ For strategy, trend, investment, operating-model, sourcing, roadmap, risk, or po
 - Include a compact table, chart, graph, scorecard, or 2x2 when the question asks for ranking, trend, comparison, relationships, value/complexity, or visual output.
 - End with next moves that a CXO could assign.
 
-Use plain executive language. Do not print internal IDs, source table names, model/tool names, hidden prompt labels, or debug wording.`;
+Use plain executive language. Do not print internal IDs, source table names, model/tool names, hidden prompt labels, debug wording, data-layer version labels, or trace terms such as substrate, packet, candidate_move, move_id, phase_id, artifact_id, evidence_id, tenant_id, client_id, or V-number file/layer labels.`;
 
 export const CONSULTANT_ANSWER_SHAPE_CONTRACT = `CONSULTANT ANSWER SHAPE
 
@@ -41,11 +42,11 @@ Keep each paragraph under roughly 55 words. Do not print visible section labels 
 
 EVIDENCE CODE RULE: Never invent or print evidence codes, pattern IDs, or internal citation identifiers such as BASE-XXX, CTX-XXX, VAL-XXX, X123, or any similar alphanumeric code. The loaded context does not expose database record IDs or pattern reference numbers to you. If a fact comes from loaded tenant data, state it in plain business English — dollar value, owner, date, status — without attaching a code. A fabricated code is worse than no citation.
 
-If the user explicitly asks for a table, chart, graph, matrix, scorecard, or visual, answer in two parts:
+If the user explicitly asks for a table, chart, graph, matrix, scorecard, or visual, or if the answer naturally compares/ranks three or more items, answer in two parts:
 1. A short natural-language advisory answer.
 2. A compact Markdown table with human-readable columns and rows that the UI can lift into the right-side canvas.
 
-Do not include Markdown tables unless the user asks for a visual/table-style output.`;
+Do not use Markdown tables for source-support ledgers. Do use them for real decision exhibits: ranking, comparison, roadmap, value/complexity, dependency, spend, trend, or operating-model tradeoff rows. Never output raw SVG, Mermaid, chart JSON, or renderer code.`;
 
 // Table-first variant for explicit visual asks (rank, compare, show as table, etc.).
 // Skips the prose-opener rule entirely — table is line 1.
@@ -79,7 +80,7 @@ Keep each paragraph under roughly 55 words. Do not print visible section labels 
 
 EVIDENCE CODE RULE: Never invent or print evidence codes, pattern IDs, or internal citation identifiers such as BASE-XXX, CTX-XXX, VAL-XXX, X123, or any similar alphanumeric code. The loaded context does not expose database record IDs or pattern reference numbers to you. Cite facts in plain business English — dollar value, owner, date, status — with no attached code. A fabricated code is worse than no citation.
 
-This surface renders full GitHub-Flavored Markdown. Use GFM tables for ANY comparison, ranked list, vendor matrix, spend breakdown, or multi-attribute data (3+ items × 2+ attributes). Use bold for the single most decision-critical number or phrase per section. Use bullet lists where items scan better than prose. Tables and structure are expected — prose-only responses are substandard for tabular questions.`;
+This surface renders full GitHub-Flavored Markdown. Use GFM tables for ANY comparison, ranked list, vendor matrix, spend breakdown, roadmap, dependency map, or multi-attribute data (3+ items × 2+ attributes). Use bold for the single most decision-critical number or phrase per section. Use bullet lists where items scan better than prose. Tables and structure are expected — prose-only responses are substandard for comparison, ranking, roadmap, or visual questions. Never output raw SVG, Mermaid, chart JSON, or renderer code; the product turns source-backed rows into typed visual artifacts.`;
 
 const TREND_ASK_RE =
   /\b(trend|trends|over time|quarterly|quarter|annual|year(?:ly|-over-year|ly)|y(?:ear)?-?o-?y|q-?o-?q|month(?:ly)?|historical|history|progression|trajectory|growth|decline|ramp|forecast|projection|evolv|chang(?:e|ed|ing)|increas|decreas|improv|worsen|compar(?:e|ed|ison) (?:by|over|across) (?:year|quarter|month|period|time)|period|over the (?:last|past|next)|trend line|time[ -]series|adoption rate|spending over|spend over|budget over|cost over|savings over|rate of)\b/i;
@@ -190,19 +191,12 @@ Required answer structure:
 
 Use AbarVa product language naturally. The answer should make the operating model obvious: Intelligence identifies and frames the top bets; Home grounds current-state evidence; Moves turns each bet into a governed transformation initiative; Source handles vendor, sourcing, and contract levers; Tower tracks value, adoption, risk, and realized outcomes.`;
 
-export const CHART_OUTPUT_CONTRACT = `CHART-FIRST RULE: The rendering surface supports inline charts via fenced \`\`\`chart\`\`\` code blocks. Apply this rule proactively:
-- MANDATORY for any trend, time-series, quarter-over-quarter, year-over-year, or period-based data — emit a chart block even if not explicitly asked
-- MANDATORY for any ranked list of ≥4 items with numeric values — use horizontal-bar
-- RECOMMENDED for spend breakdowns, allocation shares (≤6 slices use pie), or maturity comparisons
-- OPTIONAL alongside a GFM table when both complement each other
-- NEVER fabricate data points to fill a chart; only emit a chart block when you have ≥3 real numeric values
-
-Chart block format:
-\`\`\`chart
-{"type":"line","title":"IT Spend Trend","subtitle":"FY2024–FY2026 · $M","xKey":"Period","yKey":"Spend","data":[{"Period":"FY2024","Spend":47.2},{"Period":"FY2025","Spend":51.8},{"Period":"FY2026","Spend":58.4}],"unit":"$","note":"Source: tenant evidence"}
-\`\`\`
-
-Supported types: "line" (time-series trends), "area" (cumulative trends), "bar" (category comparison ≤6 items), "horizontal-bar" (ranked list ≥4 items), "pie" (share/allocation ≤6 slices). For two metrics on one chart add "yKey2" and "color2". The unit prefix appears in axis ticks and tooltips.`;
+export const CHART_OUTPUT_CONTRACT = `STRUCTURED VISUAL CONTRACT: The rendering surface converts source-backed Markdown tables into typed tables, charts, matrices, and graphs. Apply this rule proactively:
+- MANDATORY for any trend, time-series, quarter-over-quarter, year-over-year, or period-based data — emit a compact chart-ready GFM table with period and numeric value columns.
+- MANDATORY for any ranked list of 4 or more items with numeric values — emit a compact GFM table with label, value, and basis columns.
+- RECOMMENDED for spend breakdowns, allocation shares, maturity comparisons, value/complexity tradeoffs, dependency maps, or roadmap sequencing.
+- NEVER fabricate data points to fill a chart; only emit rows when you have source-backed values or clearly label qualitative scores as high/medium/low.
+- NEVER output raw SVG, Mermaid, fenced chart JSON, canvas code, renderer code, or implementation snippets in the visible answer.`;
 
 export function isBroadCurrentStateQuestion(query: string): boolean {
   return BROAD_CURRENT_STATE_RE.test(query);
@@ -220,8 +214,10 @@ export function stripMarkdownControl(text: string): string {
 }
 
 export function sanitizeAskSynthesis(text: string, maxWords = 400): string {
-  const withoutOpener = stripMarkdownControl(
-    stripInternalRecordIds(text).replace(HOLLOW_OPENER_RE, "").trim(),
+  const withoutOpener = scrubPublicAvaAnswerText(
+    stripMarkdownControl(
+      stripInternalRecordIds(text).replace(HOLLOW_OPENER_RE, "").trim(),
+    ),
   );
   if (wordCount(withoutOpener) <= maxWords) return withoutOpener;
 
