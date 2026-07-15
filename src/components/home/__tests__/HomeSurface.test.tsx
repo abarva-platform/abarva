@@ -549,9 +549,9 @@ describe("HomeSurface — Explorer context browser", () => {
 
     expect(screen.getByText("Demo-safe")).toBeInTheDocument();
     expect(screen.getByText("512")).toBeInTheDocument();
-    expect(screen.getAllByText("Active Home context").length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      screen.getAllByText("Active Knowledge context").length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText("Candidate preview")).toBeInTheDocument();
     expect(screen.queryByText("Canonical Fact Store")).not.toBeInTheDocument();
   });
@@ -651,7 +651,14 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(screen.getByText("Why it matters")).toBeInTheDocument();
     expect(screen.getByText("Questions this supports")).toBeInTheDocument();
     expect(screen.getByText("Not yet supported")).toBeInTheDocument();
-    expect(screen.getByText("Key records")).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/Retail Demo's vendors & contracts context/i).length,
+    ).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
+    expect(
+      screen.getByText("Retail Demo Vendors & Contracts records"),
+    ).toBeInTheDocument();
     expect(screen.getAllByText(/Kyriba/).length).toBeGreaterThan(0);
   });
 
@@ -667,8 +674,11 @@ describe("HomeSurface — Explorer context browser", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /Vendors & Contracts/i }),
     );
+    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
 
-    expect(screen.getByText(/Business-readable records loaded/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Representative entries include Kyriba/i),
+    ).toBeInTheDocument();
     expect(screen.getAllByText("Kyriba").length).toBeGreaterThan(0);
     expect(screen.getByText("Treasury")).toBeInTheDocument();
     expect(screen.getByText("Loaded")).toBeInTheDocument();
@@ -691,10 +701,11 @@ describe("HomeSurface — Explorer context browser", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /Vendors & Contracts/i }),
     );
+    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
     fireEvent.change(screen.getByLabelText("Search loaded records"), {
       target: { value: "Kyriba" },
     });
-    expect(screen.getByText("1 of 1 shown")).toBeInTheDocument();
+    expect(screen.getByText("1 record visible")).toBeInTheDocument();
 
     fireEvent.click(
       screen.getByRole("button", { name: /Applications & Systems/i }),
@@ -702,6 +713,7 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(
       screen.getByRole("heading", { name: "Applications & Systems", level: 1 }),
     ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
     expect(screen.getAllByText("ERP Core").length).toBeGreaterThan(0);
   });
 
@@ -732,8 +744,9 @@ describe("HomeSurface — Explorer context browser", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /Metrics & Outcomes/i }),
     );
+    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
 
-    expect(screen.getByText(/Run-rate savings/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Run-rate savings/i).length).toBeGreaterThan(0);
     expect(screen.queryByText("1000000")).not.toBeInTheDocument();
   });
 
@@ -758,7 +771,7 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(screen.getByText("Treasury")).toBeInTheDocument();
   });
 
-  it("explains each dimension in plain English before showing records", () => {
+  it("tells a tenant-specific story across dimension tabs", () => {
     render(
       <HomeSurface
         clientKey="apexretail"
@@ -767,21 +780,36 @@ describe("HomeSurface — Explorer context browser", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Functions/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Applications & Systems/i }),
+    );
 
     expect(
-      screen.getByText(/how the enterprise is organized/i),
-    ).toBeInTheDocument();
+      screen.getAllByText(/Retail Demo's applications & systems context/i)
+        .length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText("Why it matters")).toBeInTheDocument();
-    expect(screen.getByText("Key records")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
+    expect(
+      screen.getByText(/Retail Demo's applications & systems packet/i),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("ERP Core").length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("tab", { name: "Relationships" }));
+    expect(
+      screen.getByText(/Retail Demo's applications & systems context includes/i),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Gaps" }));
+    expect(
+      screen.getByText(/Retail Demo's applications & systems context has/i),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: "Evidence" }));
+    expect(
+      screen.getByText(/Retail Demo's applications & systems story is backed/i),
+    ).toBeInTheDocument();
     expect(screen.queryByText("7120000000")).not.toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByText("Diagnostics, sources, gaps, and relationships"),
-    );
-    expect(
-      screen.getByText(/Parent entity/i),
-    ).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Diagnostics, sources, gaps, and relationships"));
+    expect(screen.getAllByText(/Lifecycle/i).length).toBeGreaterThan(0);
     expect(screen.queryByText("7120000000")).not.toBeInTheDocument();
     expect(screen.queryByText("11800")).not.toBeInTheDocument();
   });

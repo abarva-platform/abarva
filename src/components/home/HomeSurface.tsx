@@ -393,31 +393,6 @@ const EMPTY_DIMS: BindingDimension[] = [];
 type ExplorerTool = "data-quality" | null;
 type KnowledgeAreaTab = "summary" | "data" | "relationships" | "gaps" | "evidence";
 
-const KNOWLEDGE_PROFILE_REQUIREMENTS = [
-  "business meaning",
-  "current-state summary",
-  "target-state direction",
-  "operating role",
-  "related functions",
-  "related systems",
-  "related data domains",
-  "related infrastructure",
-  "related vendors/contracts",
-  "related spend",
-  "related programs",
-  "related risks/controls",
-  "related metrics/outcomes",
-  "related use cases",
-  "evidence refs",
-  "confidence",
-  "known gaps",
-  "caveats",
-  "active vs candidate status",
-  "source lineage",
-  "as-of date",
-  "module readiness",
-] as const;
-
 type DimensionStory = {
   headline: string;
   summary: string;
@@ -490,6 +465,20 @@ type AreaDataTable = {
     label: string;
     options: string[];
   } | null;
+};
+
+type AreaTabStory = {
+  title: string;
+  lead: string;
+  status?: string;
+  empty: string;
+};
+
+type AreaTabStories = {
+  data: AreaTabStory;
+  relationships: AreaTabStory;
+  gaps: AreaTabStory;
+  evidence: AreaTabStory;
 };
 
 const TECHNICAL_STRING_FIELDS = new Set([
@@ -1377,12 +1366,18 @@ function storyForArea(
     ],
     nextAction: "Review key records and validate any missing evidence.",
   };
+  const sourceLabel = area.sources === 1 ? "source" : "sources";
+  const tenantLoadedSummary =
+    area.rows > 0
+      ? `${tenantName}'s ${label.toLowerCase()} context includes ${shortMetric(area.rows)} loaded records across ${shortMetric(area.sources)} ${sourceLabel}. ${area.examples ? `Representative context includes ${area.examples}. ` : ""}${story.summary}`
+      : `${tenantName} does not yet have source-backed ${label.toLowerCase()} context loaded for a client story. ${story.summary}`;
   return {
     headline:
       area.rows > 0
-        ? `${label} is loaded enough for context browsing, with decision limits visible.`
-        : `${label} still needs evidence before it can support a client story.`,
+        ? `${tenantName}'s ${label.toLowerCase()} context is loaded for fact-based review, with decision limits visible.`
+        : `${tenantName}'s ${label.toLowerCase()} context still needs evidence before it can support a client story.`,
     ...story,
+    summary: tenantLoadedSummary,
   };
 }
 
@@ -1794,7 +1789,7 @@ function relationshipItems(
     const recordById = new Map(
       area.moduleRecords.map((record) => [record.recordId, record.title]),
     );
-    return area.moduleRelationships.slice(0, 8).map((relationship, index) => ({
+    return area.moduleRelationships.slice(0, 8).map((relationship) => ({
       from:
         (relationship.sourceRecordId
           ? recordById.get(relationship.sourceRecordId)
@@ -2044,6 +2039,144 @@ function buildAreaDataTable(area: HomeExplorerArea | null): AreaDataTable {
     rows,
     dataSetOptions,
     smartFilter: chooseSmartAreaFilter(rows),
+  };
+}
+
+function uniqueNonEmpty(values: Array<string | null | undefined>): string[] {
+  const seen = new Set<string>();
+  const output: string[] = [];
+  for (const value of values) {
+    const normalized = normalizeDataCell(value);
+    if (!normalized) continue;
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    output.push(normalized);
+  }
+  return output;
+}
+
+function readableList(values: string[], fallback: string, limit = 3): string {
+  const selected = values.filter(Boolean).slice(0, limit);
+  if (selected.length === 0) return fallback;
+  if (selected.length === 1) return selected[0] ?? fallback;
+  if (selected.length === 2) return `${selected[0]} and ${selected[1]}`;
+  return `${selected.slice(0, -1).join(", ")}, and ${selected[selected.length - 1]}`;
+}
+
+function areaDomainPhrase(area: HomeExplorerArea | null): string {
+  if (!area) return "enterprise context";
+  return area.label.toLowerCase();
+}
+
+function buildTenantTabStories(args: {
+  area: HomeExplorerArea | null;
+  tenantName: string;
+  dataTable: AreaDataTable;
+  filteredRows: AreaDataRow[];
+  relationships: Array<{
+    from: string;
+    relation: string;
+    to: string;
+    strength: string;
+  }>;
+  gaps: Array<{ label: string; count: number; whyItMatters?: string | null }>;
+  story: DimensionStory | null;
+}): AreaTabStories {
+  const {
+    area,
+    tenantName,
+    dataTable,
+    filteredRows,
+    relationships,
+    gaps,
+    story,
+  } = args;
+  const areaLabel = area?.label ?? "Enterprise context";
+  const domain = areaDomainPhrase(area);
+  const totalRows = dataTable.rows.length;
+  const shownRows = filteredRows.length;
+  const examples = uniqueNonEmpty([
+    ...filteredRows.map((row) => row.record),
+    ...(area?.examples ? area.examples.split(/,\s*/) : []),
+  ]);
+  const categories = uniqueNonEmpty(filteredRows.map((row) => row.category));
+  const ownersOrSystems = uniqueNonEmpty(
+    filteredRows.map((row) => row.ownerOrSystem),
+  ).filter((value) => !/^not assigned$/i.test(value));
+  const statuses = uniqueNonEmpty(filteredRows.map((row) => row.status));
+  const sourceLabels = uniqueNonEmpty([
+    ...filteredRows.map((row) => row.source),
+    ...(area?.moduleEvidenceRefs.map((ref) => ref.sourceLabel) ?? []),
+    ...(area?.primaryPreview?.fileNames.map(clientFacingFileName) ?? []),
+  ]);
+  const rowNoun = totalRows === 1 ? "record" : "records";
+  const sourceNoun = sourceLabels.length === 1 ? "source" : "sources";
+  const representative = readableList(
+    examples,
+    `the loaded ${domain} records`,
+    4,
+  );
+  const categoryText = readableList(categories, "the loaded categories", 4);
+  const ownerText = readableList(
+    ownersOrSystems,
+    "owners or systems still being validated",
+    3,
+  );
+  const statusText = readableList(statuses, "loaded status", 3);
+  const sourceText = readableList(sourceLabels, "the active evidence packet", 3);
+  const filteredText =
+    shownRows === totalRows
+      ? `${totalRows.toLocaleString()} ${rowNoun}`
+      : `${shownRows.toLocaleString()} of ${totalRows.toLocaleString()} ${rowNoun}`;
+  const relationshipExample = relationships[0]
+    ? `${relationships[0].from} ${relationships[0].relation} ${relationships[0].to}`
+    : "";
+  const topGap = gaps[0]?.label ?? "";
+  const nextAction =
+    story?.nextAction ??
+    `Validate the highest-impact ${domain} records before using this area for decisions.`;
+
+  return {
+    data: {
+      title: `${tenantName} ${areaLabel} records`,
+      status: `${filteredText} visible`,
+      lead:
+        totalRows > 0
+          ? `${tenantName}'s ${domain} packet currently contains ${filteredText}. Representative entries include ${representative}. The loaded view is organized around ${categoryText}, with ${ownerText} and status signals such as ${statusText}.`
+          : `${tenantName} does not yet have loaded ${domain} rows in the active Knowledge packet, so this tab cannot support a client story until source-backed records are loaded.`,
+      empty: `${tenantName} has loaded ${domain} rows, but the current filters exclude them. Clear the filters to restore the tenant story.`,
+    },
+    relationships: {
+      title: `${tenantName} relationship picture`,
+      status: `${relationships.length.toLocaleString()} visible`,
+      lead:
+        relationships.length > 0
+          ? `${tenantName}'s ${domain} context includes ${relationships.length.toLocaleString()} visible relationship${relationships.length === 1 ? "" : "s"}. A representative link is ${relationshipExample}. Treat these as context links unless they are marked validated.`
+          : `${tenantName}'s ${domain} records are loaded, but validated cross-domain links are not visible for this selected view yet. Use the records for fact-based orientation, not dependency conclusions, until relationships are projected and reviewed.`,
+      empty: `${tenantName} has no visible ${domain} relationship links in this view. Do not infer function-to-system, system-to-vendor, data-to-outcome, or risk-to-control dependency paths from this tab yet.`,
+    },
+    gaps: {
+      title: `${tenantName} validation gaps`,
+      status:
+        gaps.length > 0
+          ? `${gaps.length.toLocaleString()} gap${gaps.length === 1 ? "" : "s"}`
+          : "No repeated gap pattern",
+      lead:
+        gaps.length > 0
+          ? `${tenantName}'s ${domain} context has ${gaps.length.toLocaleString()} visible validation gap${gaps.length === 1 ? "" : "s"}. The first item to resolve is ${topGap}. ${nextAction}`
+          : `${tenantName}'s active ${domain} packet does not show a repeated missing-field pattern in this view. That means the current record fields are usable for orientation, while deeper owner, dependency, baseline, and outcome validation may still be needed before decisions.`,
+      empty: `${tenantName} has no repeated ${domain} gap pattern visible in the active packet. Keep validating decision-critical owners, dependencies, and measurement fields before using this area as final operating truth.`,
+    },
+    evidence: {
+      title: `${tenantName} evidence trail`,
+      status: `${sourceLabels.length.toLocaleString()} ${sourceNoun}`,
+      lead:
+        sourceLabels.length > 0
+          ? `${tenantName}'s ${domain} story is backed by ${sourceLabels.length.toLocaleString()} visible ${sourceNoun}, including ${sourceText}. Use these references to audit the records before sending the context into Intelligence, Moves, Source, or Tower.`
+          : `${tenantName}'s ${domain} records do not expose source references in this view yet. Until evidence is attached, this area should not be used for client-facing claims.`,
+      empty: `${tenantName} has no visible ${domain} evidence references in this view. Load or attach source-backed evidence before treating this as board-ready context.`,
+    },
   };
 }
 
@@ -2901,6 +3034,15 @@ export function HomeSurface({
       }))
     : (selectedPreview?.knownGaps ?? []);
   const selectedRelationships = relationshipItems(selectedPreview, selectedArea);
+  const selectedTabStories = buildTenantTabStories({
+    area: selectedArea,
+    tenantName: displayedTenantName,
+    dataTable: selectedAreaDataTable,
+    filteredRows: selectedRows,
+    relationships: selectedRelationships,
+    gaps: selectedGaps,
+    story: selectedStory,
+  });
   const trustReadiness = trustReadinessSummary(safeDataQuality);
   const focusAreas = explorerAreas.filter((area) => area.rows > 0).slice(0, 4);
   const selectOverview = () => {
@@ -3279,17 +3421,23 @@ export function HomeSurface({
                       <article className="hx3-storyCard">
                         <h3>{selectedProfileType}</h3>
                         <p>
-                          Double-click profiles for this dimension use the
-                          Knowledge packet to show meaning, current state,
-                          target direction, relationships, evidence, confidence,
-                          gaps, caveats, source lineage, and module readiness.
+                          For {displayedTenantName}, this profile turns the
+                          loaded {selectedArea.label.toLowerCase()} context into
+                          a governed briefing surface: what is known, which
+                          records matter, what evidence backs them, and which
+                          caveats should follow the context into downstream
+                          modules.
                         </p>
                         <ul>
-                          {KNOWLEDGE_PROFILE_REQUIREMENTS.slice(0, 6).map(
-                            (requirement) => (
-                              <li key={requirement}>{requirement}</li>
-                            ),
-                          )}
+                          {selectedTabStories.data.lead ? (
+                            <li>{selectedTabStories.data.lead}</li>
+                          ) : null}
+                          {selectedTabStories.relationships.lead ? (
+                            <li>{selectedTabStories.relationships.lead}</li>
+                          ) : null}
+                          {selectedTabStories.gaps.lead ? (
+                            <li>{selectedTabStories.gaps.lead}</li>
+                          ) : null}
                         </ul>
                       </article>
                       <div className="hx3-nextAction">
@@ -3303,17 +3451,11 @@ export function HomeSurface({
                   <section className="hx3-section">
                     <div className="hx3-sectionHead">
                       <div>
-                        <h2>Key records</h2>
-                        <p>
-                          Business-readable records loaded for this area. Use
-                          filters to narrow the full set without hiding the
-                          underlying row coverage.
-                        </p>
+                        <h2>{selectedTabStories.data.title}</h2>
+                        <p>{selectedTabStories.data.lead}</p>
                       </div>
                       <span className="hx3-chip">
-                        {selectedRows.length.toLocaleString()} of{" "}
-                        {selectedAreaDataTable.rows.length.toLocaleString()}{" "}
-                        shown
+                        {selectedTabStories.data.status}
                       </span>
                     </div>
                     {selectedAreaDataTable.rows.length > 0 ? (
@@ -3394,13 +3536,13 @@ export function HomeSurface({
                         </div>
                         {selectedRows.length === 0 ? (
                           <p className="hx3-recordCount">
-                            No rows match the current filters.
+                            {selectedTabStories.data.empty}
                           </p>
                         ) : null}
                       </>
                     ) : (
                       <p className="hx3-empty">
-                        No loaded record table is available for this area yet.
+                        {selectedTabStories.data.empty}
                       </p>
                     )}
                   </section>
@@ -3410,15 +3552,11 @@ export function HomeSurface({
                     <section className="hx3-section">
                       <div className="hx3-sectionHead">
                         <div>
-                          <h2>Key relationships</h2>
-                          <p>
-                            Relationship links are shown only when the active
-                            Knowledge packet supplies validated links or
-                            candidate links for review.
-                          </p>
+                          <h2>{selectedTabStories.relationships.title}</h2>
+                          <p>{selectedTabStories.relationships.lead}</p>
                         </div>
                         <span className="hx3-chip">
-                          {selectedRelationships.length.toLocaleString()} visible
+                          {selectedTabStories.relationships.status}
                         </span>
                       </div>
                       {selectedRelationships.length > 0 ? (
@@ -3439,9 +3577,7 @@ export function HomeSurface({
                         </div>
                       ) : (
                         <p className="hx3-empty">
-                          Relationship depth is not validated for this dimension
-                          yet. Use this area for facts and evidence, not
-                          dependency conclusions.
+                          {selectedTabStories.relationships.empty}
                         </p>
                       )}
                     </section>
@@ -3451,12 +3587,12 @@ export function HomeSurface({
                     <section className="hx3-section">
                       <div className="hx3-sectionHead">
                         <div>
-                          <h2>Important gaps</h2>
-                          <p>
-                            Gaps show what should be validated before this
-                            dimension is used for downstream decisions.
-                          </p>
+                          <h2>{selectedTabStories.gaps.title}</h2>
+                          <p>{selectedTabStories.gaps.lead}</p>
                         </div>
+                        <span className="hx3-chip">
+                          {selectedTabStories.gaps.status}
+                        </span>
                       </div>
                       {selectedGaps.length > 0 ? (
                         <div className="hx3-grid2">
@@ -3475,8 +3611,7 @@ export function HomeSurface({
                         </div>
                       ) : (
                         <p className="hx3-empty">
-                          No repeated gap pattern is visible for this dimension
-                          in the active Knowledge packet.
+                          {selectedTabStories.gaps.empty}
                         </p>
                       )}
                     </section>
@@ -3486,19 +3621,11 @@ export function HomeSurface({
                     <section className="hx3-section">
                       <div className="hx3-sectionHead">
                         <div>
-                          <h2>Evidence coverage</h2>
-                          <p>
-                            Evidence references show what backs the current
-                            dimension. Technical paths stay secondary to the
-                            client story.
-                          </p>
+                          <h2>{selectedTabStories.evidence.title}</h2>
+                          <p>{selectedTabStories.evidence.lead}</p>
                         </div>
                         <span className="hx3-chip">
-                          {(
-                            selectedArea.moduleEvidenceRefs.length ||
-                            selectedPreview?.fileNames.length ||
-                            0
-                          ).toLocaleString()} sources
+                          {selectedTabStories.evidence.status}
                         </span>
                       </div>
                       {selectedArea.moduleEvidenceRefs.length > 0 ? (
@@ -3536,8 +3663,7 @@ export function HomeSurface({
                         </div>
                       ) : (
                         <p className="hx3-empty">
-                          No evidence references are available for this
-                          dimension yet.
+                          {selectedTabStories.evidence.empty}
                         </p>
                       )}
                     </section>
