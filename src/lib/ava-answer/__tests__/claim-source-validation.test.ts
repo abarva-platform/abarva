@@ -100,6 +100,27 @@ describe("validateAvaAnswerClaims", () => {
     );
   });
 
+  it("does not fail safe negations about unproven systems", () => {
+    const report = validateAvaAnswerClaims(
+      answerFixture({
+        surface: "home",
+        directAnswer:
+          "The AWS Databricks aspiration, medallion architecture, platform/network/security foundation, and formal data governance operating model are not yet available as grounded context here.",
+      }),
+    );
+
+    expect(report.passed).toBe(true);
+    expect(report.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          claim: "Databricks",
+          support: "caveated_gap",
+          severity: "pass",
+        }),
+      ]),
+    );
+  });
+
   it("blocks unsupported live product capability claims during packet validation", () => {
     const validation = validateAvaAnswerPacket(
       answerFixture({
