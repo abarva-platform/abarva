@@ -1,4 +1,8 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import {
+  clerkClient,
+  clerkMiddleware,
+  createRouteMatcher,
+} from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextFetchEvent, NextRequest } from "next/server";
 import {
@@ -247,17 +251,129 @@ function withProductionReadinessNoStoreHeaders<T extends NextResponse>(
   return response;
 }
 
+interface ProxySessionMetadata {
+  role?: string;
+  clientId?: string;
+  defaultClientId?: string;
+}
+
+interface ProxySessionIdentity {
+  metadata: ProxySessionMetadata;
+  email: string | null;
+  source: "session_claims" | "clerk_user_fallback";
+}
+
+interface ClerkUserIdentityLike {
+  publicMetadata?: unknown;
+  primaryEmailAddress?: { emailAddress?: string | null } | null;
+  emailAddresses?: Array<{ emailAddress?: string | null }> | null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function stringField(
+  value: Record<string, unknown>,
+  key: keyof ProxySessionMetadata,
+): string | undefined {
+  const field = value[key];
+  return typeof field === "string" && field.trim() ? field : undefined;
+}
+
+function normalizeProxyMetadata(value: unknown): ProxySessionMetadata {
+  if (!isRecord(value)) return {};
+  return {
+    role: stringField(value, "role"),
+    clientId: stringField(value, "clientId"),
+    defaultClientId: stringField(value, "defaultClientId"),
+  };
+}
+
+function emailFromClaims(sessionClaims: unknown): string | null {
+  if (!isRecord(sessionClaims)) return null;
+  const email = sessionClaims.emailAddress;
+  return typeof email === "string" && email.trim() ? email : null;
+}
+
+function emailFromClerkUser(user: ClerkUserIdentityLike | null): string | null {
+  const primary = user?.primaryEmailAddress?.emailAddress;
+  if (typeof primary === "string" && primary.trim()) return primary;
+  const first = user?.emailAddresses?.find(
+    (entry) =>
+      typeof entry.emailAddress === "string" && entry.emailAddress.trim(),
+  )?.emailAddress;
+  return first ?? null;
+}
+
+function shouldFetchClerkUserForProxyIdentity(
+  identity: ProxySessionIdentity,
+): boolean {
+  return (
+    !identity.metadata.role ||
+    !identity.metadata.clientId ||
+    !identity.metadata.defaultClientId ||
+    !identity.email
+  );
+}
+
+export function readProxySessionIdentity(
+  sessionClaims: unknown,
+  clerkUser: ClerkUserIdentityLike | null = null,
+): ProxySessionIdentity {
+  const claimsMetadata = normalizeProxyMetadata(
+    isRecord(sessionClaims) ? sessionClaims.publicMetadata : undefined,
+  );
+  const clerkMetadata = normalizeProxyMetadata(clerkUser?.publicMetadata);
+  const hasClerkMetadata =
+    Boolean(clerkMetadata.role) ||
+    Boolean(clerkMetadata.clientId) ||
+    Boolean(clerkMetadata.defaultClientId);
+
+  return {
+    metadata: {
+      role: claimsMetadata.role ?? clerkMetadata.role,
+      clientId: claimsMetadata.clientId ?? clerkMetadata.clientId,
+      defaultClientId:
+        claimsMetadata.defaultClientId ?? clerkMetadata.defaultClientId,
+    },
+    email: emailFromClaims(sessionClaims) ?? emailFromClerkUser(clerkUser),
+    source: hasClerkMetadata ? "clerk_user_fallback" : "session_claims",
+  };
+}
+
+async function resolveProxySessionIdentity(
+  sessionClaims: unknown,
+  userId: string | null,
+): Promise<ProxySessionIdentity> {
+  const identity = readProxySessionIdentity(sessionClaims);
+  if (!userId || !shouldFetchClerkUserForProxyIdentity(identity)) {
+    return identity;
+  }
+
+  try {
+    const clerk = await clerkClient();
+    const user = await clerk.users.getUser(userId);
+    return readProxySessionIdentity(sessionClaims, user);
+  } catch (error) {
+    console.warn(
+      "[proxy] Clerk user metadata fallback failed; continuing with session claims only",
+      error,
+    );
+    return identity;
+  }
+}
+
 const clerkProtectedProxy = clerkMiddleware(
   async (auth, request: NextRequest) => {
     const { userId, sessionClaims } = await auth();
-    const metadata =
-      (sessionClaims?.publicMetadata as
-        | { role?: string; clientId?: string; defaultClientId?: string }
-        | undefined) ?? {};
+    const identity = await resolveProxySessionIdentity(
+      sessionClaims,
+      userId,
+    );
+    const metadata = identity.metadata;
     const metadataRole = metadata.role ?? null;
-    const email =
-      (sessionClaims as { emailAddress?: string } | undefined)?.emailAddress ??
-      null;
+    const email = identity.email;
     const role = resolveSessionRole(metadataRole, email);
     const requestedClientId = request.nextUrl.searchParams.get("client");
     const activeClientId =

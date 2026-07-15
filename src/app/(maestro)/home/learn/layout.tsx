@@ -1,8 +1,7 @@
 'use client';
-// /home/learn shell — NexusTopNav + LearnSideNav for all /home/learn/* routes.
-// /home/layout.tsx is a passthrough so this is the only chrome rendered here.
+// /home/learn shell — LearnSideNav + content for all /home/learn/* routes.
+// MaestroChrome owns the single persisted NexusTopNav for shell-native routes.
 
-import { NexusTopNav } from '@/components/navigation/NexusTopNav';
 import { LearnSideNav } from '@/components/home/learn/LearnSideNav';
 
 export default function HomeLearnLayout({ children }: { children: React.ReactNode }) {
@@ -16,8 +15,6 @@ export default function HomeLearnLayout({ children }: { children: React.ReactNod
         background: '#ffffff',
       }}
     >
-      <NexusTopNav />
-
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <LearnSideNav />
 
