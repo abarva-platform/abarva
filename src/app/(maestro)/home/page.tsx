@@ -13,6 +13,7 @@ import {
 import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
 import { buildHomeDataQualityModel } from "@/lib/home/home-data-quality";
 import { buildHomeEnglishSummary } from "@/lib/home/home-english-summary";
+import { applyHomeSummaryClaudeRender } from "@/lib/home/home-summary-claude-render";
 import { buildHomeRuntimeSummarySnapshot } from "@/lib/home/home-summary-runtime";
 import { buildHomeSummarySnapshotFromModuleContext } from "@/lib/home/home-summary-snapshot";
 import { getHomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
@@ -26,6 +27,10 @@ import {
   explainModuleContext,
   getModuleContext,
 } from "@/lib/enterprise-data/module-context-serving/module-context-serving";
+import {
+  applyStoredKnowledgeDimensionNarratives,
+  getStoredKnowledgeHomeInsightSummary,
+} from "@/lib/enterprise-knowledge/narratives/knowledge-narrative-store";
 
 export const metadata: Metadata = {
   title: "Knowledge · Enterprise Context | AbarVa",
@@ -182,7 +187,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     browser,
   });
   const englishSummary = buildHomeEnglishSummary(dataQuality);
-  const summarySnapshot =
+  const baseSummarySnapshot =
     moduleContext && moduleContextExplanation
       ? buildHomeSummarySnapshotFromModuleContext({
           tenantId: activeClient?.id ?? null,
@@ -211,6 +216,17 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           dataQuality,
           englishSummary,
         });
+  const renderedSummarySnapshot =
+    candidatePreviewEnabled || !moduleContext
+      ? baseSummarySnapshot
+      : await applyHomeSummaryClaudeRender({ snapshot: baseSummarySnapshot });
+  const summarySnapshot = applyStoredKnowledgeDimensionNarratives(
+    renderedSummarySnapshot,
+    homeTenantKey ?? activeClient?.key ?? requestedClient,
+  );
+  const homeInsightSummary = getStoredKnowledgeHomeInsightSummary(
+    homeTenantKey ?? activeClient?.key ?? requestedClient,
+  );
 
   return (
     <AppShell
@@ -246,6 +262,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           setupControl={setupControl}
           dataQuality={dataQuality}
           englishSummary={englishSummary}
+          homeInsightSummary={homeInsightSummary}
           summarySnapshot={summarySnapshot}
           v6Browser={browser}
         />

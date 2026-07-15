@@ -39,6 +39,7 @@ import type {
   ModuleContextRequestedDomain,
   ServedModuleContextPacket,
 } from "@/lib/enterprise-data/contracts/module-context-apis";
+import type { KnowledgeHomeInsightSummary } from "@/lib/enterprise-knowledge/narratives/knowledge-narrative-store";
 
 const CSS = `
 .homex{--hl:#E7E3DA;--hi:#1A1A18;--hm:#6B6B63;--hf:#9A998E;--hg:#1F6B3A;--hb:#0A76D8;--ham:#A66A1F;--hr:#a32d2d;--hcard:#fff;--hbg:#FBFAF7;background:var(--hbg);height:100%;min-height:0;overflow:hidden;color:var(--hi);font-family:var(--font-geist-sans),Inter,system-ui,sans-serif;font-size:14px}
@@ -380,7 +381,7 @@ const HX3_CSS = `
 .homex .hx3-main{min-width:0;background:#fff}.homex .hx3-page{max-width:1040px;margin:0 auto;padding:34px 36px 120px}.homex .hx3-top{display:grid;grid-template-columns:minmax(0,1fr) 262px;gap:32px;align-items:start}.homex .hx3-crumb{font-size:12px;color:#6f7b91;margin-bottom:20px}.homex .hx3-crumb span{color:#9aa4b6;margin:0 8px}.homex .hx3-title{font-size:40px;line-height:1.04;letter-spacing:-.03em;margin:0;color:var(--ink);font-weight:820}.homex .hx3-demo{display:inline-flex;vertical-align:middle;margin-left:10px;border-radius:7px;background:#e5f0ff;color:#0b5fd3;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:5px 8px}.homex .hx3-subtitle{margin:14px 0 0;color:#394763;line-height:1.55;max-width:680px}
 .homex .hx3-statusCard{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:16px}.homex .hx3-statusLine{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:13px;font-weight:800}.homex .hx3-dot{width:9px;height:9px;border-radius:50%;background:var(--green);display:inline-block}.homex .hx3-statusMeta{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:12px;color:#42506b;font-size:12px}.homex .hx3-statusMeta span::before{content:'•';margin-right:8px;color:#9aa4b6}.homex .hx3-statusMeta span:first-child::before{content:'';margin:0}.homex .hx3-hair{height:1px;background:var(--line);margin:34px 0 24px}.homex .hx3-section{margin-top:28px}.homex .hx3-sectionHead{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:14px}.homex .hx3-section h2,.homex .hx3-sectionTitle{margin:0;font-size:20px;letter-spacing:-.015em;color:var(--ink)}.homex .hx3-section p{margin:5px 0 0;color:#657089;line-height:1.5}.homex .hx3-eyebrow{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:#9c7b3f;font-weight:800;margin-bottom:12px}
 .homex .hx3-snapshot{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.homex .hx3-card{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:18px;min-width:0}.homex .hx3-cardTop{display:flex;align-items:center;gap:14px}.homex .hx3-cardIcon{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;background:#eaf2ff;color:#0b5fd3}.homex .hx3-card:nth-child(2) .hx3-cardIcon{background:#edf9f2;color:#168055}.homex .hx3-card:nth-child(3) .hx3-cardIcon{background:#f4efff;color:#6b46c1}.homex .hx3-card:nth-child(4) .hx3-cardIcon{background:#fff3e3;color:#c06812}.homex .hx3-cardIcon svg{width:21px;height:21px}.homex .hx3-card strong{display:block;font-size:21px;line-height:1.05;color:var(--ink)}.homex .hx3-card span{display:block;margin-top:6px;color:#42506b;font-size:12.5px;font-weight:700}.homex .hx3-card p{font-size:12px;margin-top:4px;color:#657089}
-.homex .hx3-actions,.homex .hx3-contextCards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.homex .hx3-action{display:grid;grid-template-columns:48px minmax(0,1fr) 18px;gap:14px;align-items:center;text-align:left;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:17px;cursor:pointer;color:inherit;font:inherit}.homex .hx3-actionIcon{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;background:#eaf2ff;color:#0b5fd3}.homex .hx3-action:nth-child(2) .hx3-actionIcon{background:#edf9f2;color:#168055}.homex .hx3-action:nth-child(3) .hx3-actionIcon{background:#f4efff;color:#6b46c1}.homex .hx3-action:nth-child(4) .hx3-actionIcon{background:#fff3e3;color:#c06812}.homex .hx3-action strong{display:block;color:var(--ink);font-size:14px}.homex .hx3-action span:last-child{color:#0b5fd3;font-size:20px}.homex .hx3-action p{font-size:12.5px;margin-top:4px;color:#42506b}.homex .hx3-tabs{display:flex;gap:28px;border-bottom:1px solid var(--line);margin-top:12px}.homex .hx3-tab{border:0;background:transparent;padding:13px 0 12px;color:#4c5b76;font:inherit;font-weight:750;cursor:pointer;border-bottom:2px solid transparent}.homex .hx3-tab[aria-selected="true"]{color:#0b346f;border-color:#0b5fd3}.homex .hx3-tableWrap{border:1px solid var(--line);border-radius:12px;overflow:auto;background:#fff;box-shadow:var(--shadow);margin-top:12px}.homex .hx3-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:720px}.homex .hx3-table th{background:#f8fafc;color:#657089;text-align:left;font-size:11px;padding:12px;border-bottom:1px solid var(--line);white-space:nowrap}.homex .hx3-table td{padding:12px;border-bottom:1px solid var(--line-2);color:#1c2940;vertical-align:top}.homex .hx3-table tr:last-child td{border-bottom:0}.homex .hx3-contextCard{text-align:left;border:0;background:transparent;border-radius:0;padding:0 0 12px;cursor:pointer;color:inherit}.homex .hx3-contextCard strong{display:block;color:#0c1a3a;font-size:14px}.homex .hx3-contextCard small{display:block;color:#657089;font-size:12px;margin-top:3px}.homex .hx3-contextCard[aria-pressed="true"] strong{color:#0b5fd3}.homex .hx3-empty{border:1px dashed var(--line);border-radius:12px;background:#fbfcff;padding:16px;color:#657089}.homex .hx3-chipRow{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.homex .hx3-chip{border:1px solid var(--line);border-radius:999px;background:#fff;padding:6px 10px;color:#42506b;font-size:12px}.homex .hx3-detailHeader{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:start}.homex .hx3-detailActions{display:flex;gap:10px;align-items:center}.homex .hx3-btn{border:1px solid var(--line);border-radius:9px;background:#fff;color:#0c1a3a;padding:10px 13px;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}.homex .hx3-btn.primary{background:#071526;border-color:#071526;color:#fff}.homex .hx3-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.homex .hx3-list{display:grid;gap:9px;margin:0;padding:0;list-style:none}.homex .hx3-list li{position:relative;padding-left:18px;color:#27364f;line-height:1.45}.homex .hx3-list li::before{content:'✓';position:absolute;left:0;color:#168055;font-weight:900}.homex .hx3-warn li::before{content:'–';color:#b7791f}.homex .hx3-tech{margin-top:28px;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}.homex .hx3-tech summary{cursor:pointer;padding:16px 18px;font-weight:800;color:#0c1a3a}.homex .hx3-techBody{border-top:1px solid var(--line);padding:16px}.homex .hx3-gapCard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px}.homex .hx3-sourceCard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px}.homex .hx3-relRow{display:grid;grid-template-columns:28px minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px}.homex .hx3-relNode{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#eaf7f1;color:#168055;font-weight:900}.homex .hx3-relEdge{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#657089}
+.homex .hx3-actions,.homex .hx3-contextCards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.homex .hx3-action{display:grid;grid-template-columns:48px minmax(0,1fr) 18px;gap:14px;align-items:center;text-align:left;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:17px;cursor:pointer;color:inherit;font:inherit}.homex .hx3-actionIcon{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;background:#eaf2ff;color:#0b5fd3}.homex .hx3-action:nth-child(2) .hx3-actionIcon{background:#edf9f2;color:#168055}.homex .hx3-action:nth-child(3) .hx3-actionIcon{background:#f4efff;color:#6b46c1}.homex .hx3-action:nth-child(4) .hx3-actionIcon{background:#fff3e3;color:#c06812}.homex .hx3-action strong{display:block;color:var(--ink);font-size:14px}.homex .hx3-action span:last-child{color:#0b5fd3;font-size:20px}.homex .hx3-action p{font-size:12.5px;margin-top:4px;color:#42506b}.homex .hx3-tabs{display:flex;gap:28px;border-bottom:1px solid var(--line);margin-top:12px}.homex .hx3-tab{border:0;background:transparent;padding:13px 0 12px;color:#4c5b76;font:inherit;font-weight:750;cursor:pointer;border-bottom:2px solid transparent}.homex .hx3-tab[aria-selected="true"]{color:#0b346f;border-color:#0b5fd3}.homex .hx3-tableWrap{border:1px solid var(--line);border-radius:12px;overflow:auto;background:#fff;box-shadow:var(--shadow);margin-top:12px}.homex .hx3-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:720px}.homex .hx3-table th{background:#f8fafc;color:#657089;text-align:left;font-size:11px;padding:12px;border-bottom:1px solid var(--line);white-space:nowrap}.homex .hx3-table td{padding:12px;border-bottom:1px solid var(--line-2);color:#1c2940;vertical-align:top}.homex .hx3-table tr:last-child td{border-bottom:0}.homex .hx3-contextCard{text-align:left;border:0;background:transparent;border-radius:0;padding:0 0 12px;cursor:pointer;color:inherit}.homex .hx3-contextCard strong{display:block;color:#0c1a3a;font-size:14px}.homex .hx3-contextCard small{display:block;color:#657089;font-size:12px;margin-top:3px}.homex .hx3-contextCard[aria-pressed="true"] strong{color:#0b5fd3}.homex .hx3-empty{border:1px dashed var(--line);border-radius:12px;background:#fbfcff;padding:16px;color:#657089}.homex .hx3-chipRow{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.homex .hx3-chip{border:1px solid var(--line);border-radius:999px;background:#fff;padding:6px 10px;color:#42506b;font-size:12px}.homex .hx3-detailHeader{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:start}.homex .hx3-detailActions{display:flex;gap:10px;align-items:center}.homex .hx3-btn{border:1px solid var(--line);border-radius:9px;background:#fff;color:#0c1a3a;padding:10px 13px;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}.homex .hx3-btn.primary{background:#071526;border-color:#071526;color:#fff}.homex .hx3-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.homex .hx3-list{display:grid;gap:9px;margin:0;padding:0;list-style:none}.homex .hx3-list li{position:relative;padding-left:18px;color:#27364f;line-height:1.45}.homex .hx3-list li::before{content:'✓';position:absolute;left:0;color:#168055;font-weight:900}.homex .hx3-warn li::before{content:'–';color:#b7791f}.homex .hx3-tech{margin-top:28px;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}.homex .hx3-tech summary{cursor:pointer;padding:16px 18px;font-weight:800;color:#0c1a3a}.homex .hx3-techBody{border-top:1px solid var(--line);padding:16px}.homex .hx3-gapCard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px}.homex .hx3-sourceCard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px}.homex .hx3-relRow{display:grid;grid-template-columns:28px minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px}.homex .hx3-relNode{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#eaf7f1;color:#168055;font-weight:900}.homex .hx3-relEdge{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#657089}.homex .hx3-relCaveat{display:block;margin-top:4px;color:#b7791f;font-size:11px;line-height:1.35}
 .homex .hx3-brief{border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#fff,#fbfcff);box-shadow:var(--shadow);padding:24px}.homex .hx3-brief h2{font-size:24px}.homex .hx3-briefLead{font-size:16px;color:#31415f;line-height:1.6;margin-top:8px;max-width:820px}.homex .hx3-storyGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}.homex .hx3-storyCard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:16px}.homex .hx3-storyCard h3{margin:0 0 10px;font-size:14px;color:var(--ink)}.homex .hx3-storyCard p{margin:0;color:#42506b;line-height:1.55}.homex .hx3-storyCard ul{display:grid;gap:8px;margin:0;padding:0;list-style:none}.homex .hx3-storyCard li{position:relative;padding-left:18px;color:#31415f;line-height:1.45}.homex .hx3-storyCard li::before{content:'✓';position:absolute;left:0;color:#168055;font-weight:900}.homex .hx3-storyCard.warn li::before{content:'–';color:#b7791f}.homex .hx3-nextAction{margin-top:16px;border-left:4px solid var(--green);background:#f2fbf6;border-radius:10px;padding:14px 16px;color:#173d2d;font-weight:750}.homex .hx3-recordControls{display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,1fr) minmax(220px,1.2fr);gap:10px;margin:14px 0}.homex .hx3-recordControls select,.homex .hx3-recordControls input{width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 12px;font:inherit;font-size:12.5px;color:#25344e}.homex .hx3-recordCount{font-size:12px;color:#657089;margin-top:8px}.homex .hx3-knowledgeVisual{border:1px solid var(--line);border-radius:18px;background:radial-gradient(circle at 50% 50%,#eef7ff 0,#fbfcff 44%,#fff 100%);box-shadow:var(--shadow);padding:24px;overflow:hidden}.homex .hx3-knowledgeMap{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;min-height:330px}.homex .hx3-knowledgeCenter{grid-column:2;grid-row:2;align-self:center;justify-self:center;width:220px;height:158px;border-radius:24px;background:#071526;color:#fff;display:grid;place-items:center;text-align:center;padding:22px;box-shadow:0 18px 44px rgba(7,21,38,.28);z-index:2}.homex .hx3-knowledgeCenter strong{display:block;font-size:20px;line-height:1.12}.homex .hx3-knowledgeCenter span{display:block;margin-top:8px;color:#c7d9f6;font-size:12px;line-height:1.35}.homex .hx3-knowledgeNode{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.92);padding:14px;min-height:98px;box-shadow:0 8px 24px rgba(12,26,58,.05);z-index:1}.homex .hx3-knowledgeNode strong{display:block;color:#0c1a3a;font-size:14px}.homex .hx3-knowledgeNode span{display:block;color:#657089;font-size:12px;line-height:1.4;margin-top:6px}.homex .hx3-knowledgeNode:nth-child(2),.homex .hx3-knowledgeNode:nth-child(5){background:#f5fbf7}.homex .hx3-knowledgeNode:nth-child(3),.homex .hx3-knowledgeNode:nth-child(6){background:#f5f8ff}.homex .hx3-knowledgeFlow{margin-top:14px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.homex .hx3-flowStep{border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px;font-size:12px;color:#42506b}.homex .hx3-flowStep strong{display:block;color:#0c1a3a;margin-bottom:4px}.homex .hx3-trustHero{border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:var(--shadow);padding:24px}.homex .hx3-trustCards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:18px}.homex .hx3-trustCard{border:1px solid var(--line);border-radius:12px;background:#fbfcff;padding:16px}.homex .hx3-trustCard strong{display:block;font-size:22px;color:#0c1a3a}.homex .hx3-trustCard span{display:block;margin-top:6px;font-size:12px;color:#657089;font-weight:750}.homex .hx3-trustLists{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}.homex .hx3-mutedDetails{margin-top:16px}.homex .hx3-mutedDetails summary{color:#657089;font-size:12.5px}
 .homex .hx2-avaLauncher{right:22px;bottom:22px;background:#071526;padding:11px 17px 11px 12px;border-radius:999px;box-shadow:0 12px 32px rgba(12,26,58,.34)}.homex .hx2-avaLauncherMark{width:26px;height:26px;border-radius:8px;background:rgba(76,155,232,.24);color:#42bff3;font-size:12px}.homex .hx2-rail{right:22px;bottom:22px;width:376px;max-height:76vh;border-radius:15px;border-color:var(--line);box-shadow:0 24px 60px rgba(13,21,38,.3)}.homex .hx2-rail.expanded{top:78px;bottom:22px;right:22px;left:auto;width:min(920px,calc(100vw - 300px));min-width:min(720px,calc(100vw - 44px))}.homex .hx2-avaMark{border-radius:999px;background:#f2f4f8;color:#0c1a3a}.homex .hx2-answerBox{background:#edf9f2;border-color:#ccebd8}.homex .hx2-answerBox.warn{background:#fff8eb;border-color:#ead8b6}.homex .hx2-suggestions button{border:1px solid var(--line);border-radius:9px;background:#fff;color:#0c1a3a;padding:11px 12px;cursor:pointer}.homex .hx2-ask button{border:0;border-radius:8px;background:#071526;color:#fff}.homex .hx2-ask input{border-color:var(--line)}
 .homex .hx3-knowledgeMeta{display:flex;justify-content:flex-end;margin-bottom:10px}.homex .hx3-knowledgeMeta span{border:1px solid var(--line);border-radius:999px;background:#fff;padding:5px 9px;color:#657089;font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}.homex .hx3-knowledgeNode.enterprise{border-color:#bdd7ff}.homex .hx3-knowledgeNode.technology{border-color:#c5d7ff;background:#f5f8ff}.homex .hx3-knowledgeNode.commercial{border-color:#efd6a6;background:#fffbf1}.homex .hx3-knowledgeNode.data{border-color:#afe1d1;background:#f5fbf7}.homex .hx3-knowledgeNode.delivery{border-color:#d6c6ff;background:#faf7ff}.homex .hx3-knowledgeNode.risk{border-color:#f1c2b8;background:#fff7f5}.homex .hx3-knowledgeNode.value{border-color:#bfdab8;background:#f8fff6}.homex .hx3-knowledgeNode em{display:block;margin-top:8px;color:#0a6b52;font-style:normal;font-size:10.5px;font-weight:850;letter-spacing:.05em;text-transform:uppercase}.homex .hx3-knowledgeCaveat{margin:14px 0 0;border-left:4px solid #d58a1f;background:#fff9ef;border-radius:10px;padding:12px 14px;color:#5f451f;font-size:12.5px;line-height:1.5}.homex .hx3-trustCards{grid-template-columns:repeat(5,minmax(0,1fr))}
@@ -1429,16 +1430,17 @@ function storyFromSnapshot(
 ): DimensionStory {
   const fallback = storyForArea(area, tenantName);
   if (!snapshot) return fallback;
-  const summaryInput =
+  const rawSummaryInput =
     snapshot.claudeExecutiveSummary ??
     snapshot.executiveSummaryInputs.find((input) => input.length > 20) ??
     fallback.summary;
+  const summaryInput = isUsefulTenantSummary(rawSummaryInput)
+    ? rawSummaryInput
+    : fallback.summary;
   const whatAbarVaKnows =
     snapshot.claudeWhatAbarVaKnows?.length
       ? snapshot.claudeWhatAbarVaKnows
-      : snapshot.examples.length > 0
-        ? snapshot.examples.slice(0, 4)
-        : fallback.knows;
+      : buildFallbackKnowledgeBullets(area, tenantName, snapshot, fallback);
   const supportedQuestions =
     snapshot.claudeSupportedQuestions?.length
       ? snapshot.claudeSupportedQuestions
@@ -1451,6 +1453,10 @@ function storyFromSnapshot(
       : snapshot.unsupportedQuestions.length > 0
         ? snapshot.unsupportedQuestions
         : fallback.notYetSupported;
+  const nextActionCandidate =
+    snapshot.claudeNextDataAction ??
+    snapshot.nextDataActions[0] ??
+    snapshot.topGaps[0]?.whyItMatters;
   return {
     headline:
       snapshot.loadedCount > 0
@@ -1460,13 +1466,80 @@ function storyFromSnapshot(
     knows: whatAbarVaKnows,
     whyItMatters: snapshot.claudeWhyItMatters ?? fallback.whyItMatters,
     supportedQuestions,
-    notYetSupported: unsupportedQuestions,
-    nextAction:
-      snapshot.claudeNextDataAction ??
-      snapshot.nextDataActions[0] ??
-      snapshot.topGaps[0]?.whyItMatters ??
-      fallback.nextAction,
+    notYetSupported: normalizeUnsupportedStoryItems(
+      unsupportedQuestions,
+      fallback.notYetSupported,
+    ),
+    nextAction: isUsefulTenantNextAction(nextActionCandidate)
+      ? nextActionCandidate
+      : fallback.nextAction,
   };
+}
+
+function buildFallbackKnowledgeBullets(
+  area: HomeExplorerArea,
+  tenantName: string,
+  snapshot: HomeContextAreaSnapshot,
+  fallback: DimensionStory,
+): string[] {
+  if (snapshot.loadedCount <= 0) return fallback.knows;
+  const sourceNoun = snapshot.sourceCount === 1 ? "source" : "sources";
+  const relationship =
+    snapshot.relationshipCount > 0
+      ? `${shortMetric(snapshot.relationshipCount)} relationship link${snapshot.relationshipCount === 1 ? "" : "s"} visible for validation.`
+      : "Validated cross-domain relationship depth is still limited for this area.";
+  return [
+    `${tenantName} has ${shortMetric(snapshot.loadedCount)} source-backed ${area.label.toLowerCase()} record${snapshot.loadedCount === 1 ? "" : "s"} across ${shortMetric(snapshot.sourceCount)} ${sourceNoun}.`,
+    snapshot.evidencePosture,
+    relationship,
+    "Use the Data and Evidence tabs for representative rows; do not treat the first visible rows as the executive story.",
+  ].filter(Boolean);
+}
+
+function isUsefulTenantSummary(summary: string | null | undefined): summary is string {
+  const trimmed = summary?.trim() ?? "";
+  if (!trimmed) return false;
+  if (trimmed.split(/\s+/).length < 8) return false;
+  if (!/[.!?]$/.test(trimmed)) return false;
+  return true;
+}
+
+function isUsefulTenantNextAction(
+  action: string | null | undefined,
+): action is string {
+  const trimmed = action?.trim() ?? "";
+  if (!trimmed) return false;
+  return !/(home module|render or use this packet|decide how to render)/i.test(
+    trimmed,
+  );
+}
+
+function normalizeUnsupportedStoryItems(
+  items: string[],
+  fallback: string[],
+): string[] {
+  const normalized = uniqueNonEmpty(items)
+    .map((item) => normalizeUnsupportedStoryItem(item))
+    .filter(Boolean);
+  return normalized.length > 0 ? normalized : fallback;
+}
+
+function normalizeUnsupportedStoryItem(item: string): string {
+  const trimmed = item.trim().replace(/\.$/, "");
+  if (!trimmed) return "";
+  if (/^candidate data is active tenant truth$/i.test(trimmed)) {
+    return "Do not treat candidate data as active tenant truth.";
+  }
+  if (/^production tenant data was written/i.test(trimmed)) {
+    return "Do not claim production tenant data was written or promoted by this serving call.";
+  }
+  if (/^module runtime behavior changed/i.test(trimmed)) {
+    return "Do not claim module runtime behavior changed because this packet was generated.";
+  }
+  if (/^(do not|don't|not enough|unsupported|avoid|no\b)/i.test(trimmed)) {
+    return `${trimmed}.`;
+  }
+  return `Do not claim ${trimmed.charAt(0).toLowerCase()}${trimmed.slice(1)}.`;
 }
 
 function trustReadinessSummary(model: HomeDataQualityModel | null): {
@@ -2094,7 +2167,8 @@ function buildTenantTabStories(args: {
   } = args;
   const areaLabel = area?.label ?? "Enterprise context";
   const domain = areaDomainPhrase(area);
-  const totalRows = dataTable.rows.length;
+  const tableRows = dataTable.rows.length;
+  const totalRows = Math.max(area?.rows ?? 0, tableRows);
   const shownRows = filteredRows.length;
   const examples = uniqueNonEmpty([
     ...filteredRows.map((row) => row.record),
@@ -2111,7 +2185,11 @@ function buildTenantTabStories(args: {
     ...(area?.primaryPreview?.fileNames.map(clientFacingFileName) ?? []),
   ]);
   const rowNoun = totalRows === 1 ? "record" : "records";
-  const sourceNoun = sourceLabels.length === 1 ? "source" : "sources";
+  const sourceCount = Math.max(
+    area?.sources ?? 0,
+    sourceLabels.length,
+  );
+  const sourceNoun = sourceCount === 1 ? "source" : "sources";
   const representative = readableList(
     examples,
     `the loaded ${domain} records`,
@@ -2125,10 +2203,14 @@ function buildTenantTabStories(args: {
   );
   const statusText = readableList(statuses, "loaded status", 3);
   const sourceText = readableList(sourceLabels, "the active evidence packet", 3);
-  const filteredText =
-    shownRows === totalRows
-      ? `${totalRows.toLocaleString()} ${rowNoun}`
-      : `${shownRows.toLocaleString()} of ${totalRows.toLocaleString()} ${rowNoun}`;
+  const loadedText = `${totalRows.toLocaleString()} loaded ${rowNoun}`;
+  const visibleRowNoun = shownRows === 1 ? "row" : "rows";
+  const visibleText =
+    tableRows > 0
+      ? shownRows === tableRows
+        ? `${shownRows.toLocaleString()} visible ${visibleRowNoun}`
+        : `${shownRows.toLocaleString()} of ${tableRows.toLocaleString()} visible rows`
+      : "0 visible rows";
   const relationshipExample = relationships[0]
     ? `${relationships[0].from} ${relationships[0].relation} ${relationships[0].to}`
     : "";
@@ -2140,10 +2222,13 @@ function buildTenantTabStories(args: {
   return {
     data: {
       title: `${tenantName} ${areaLabel} records`,
-      status: `${filteredText} visible`,
+      status:
+        tableRows > 0
+          ? `${visibleText} · ${loadedText}`
+          : `${loadedText}`,
       lead:
         totalRows > 0
-          ? `${tenantName}'s ${domain} packet currently contains ${filteredText}. Representative entries include ${representative}. The loaded view is organized around ${categoryText}, with ${ownerText} and status signals such as ${statusText}.`
+          ? `${tenantName}'s ${domain} context reports ${loadedText}. This view shows ${visibleText} for review. Representative entries include ${representative}. The loaded view is organized around ${categoryText}, with ${ownerText} and status signals such as ${statusText}.`
           : `${tenantName} does not yet have loaded ${domain} rows in the active Knowledge packet, so this tab cannot support a client story until source-backed records are loaded.`,
       empty: `${tenantName} has loaded ${domain} rows, but the current filters exclude them. Clear the filters to restore the tenant story.`,
     },
@@ -2170,10 +2255,10 @@ function buildTenantTabStories(args: {
     },
     evidence: {
       title: `${tenantName} evidence trail`,
-      status: `${sourceLabels.length.toLocaleString()} ${sourceNoun}`,
+      status: `${sourceCount.toLocaleString()} ${sourceNoun}`,
       lead:
-        sourceLabels.length > 0
-          ? `${tenantName}'s ${domain} story is backed by ${sourceLabels.length.toLocaleString()} visible ${sourceNoun}, including ${sourceText}. Use these references to audit the records before sending the context into Intelligence, Moves, Source, or Tower.`
+        sourceCount > 0
+          ? `${tenantName}'s ${domain} story is backed by ${sourceCount.toLocaleString()} ${sourceNoun}. Visible references include ${sourceText}. Use these references to audit the records before sending the context into Intelligence, Moves, Source, or Tower.`
           : `${tenantName}'s ${domain} records do not expose source references in this view yet. Until evidence is attached, this area should not be used for client-facing claims.`,
       empty: `${tenantName} has no visible ${domain} evidence references in this view. Load or attach source-backed evidence before treating this as board-ready context.`,
     },
@@ -2737,6 +2822,7 @@ export function HomeSurface({
   setupControl,
   dataQuality,
   englishSummary,
+  homeInsightSummary,
   summarySnapshot,
   candidatePreviewEnabled = false,
 }: {
@@ -2749,6 +2835,7 @@ export function HomeSurface({
   setupControl?: AdminSetupControlResponse | null;
   dataQuality?: HomeDataQualityModel | null;
   englishSummary?: HomeEnglishSummary | null;
+  homeInsightSummary?: KnowledgeHomeInsightSummary | null;
   summarySnapshot?: HomeSummarySnapshot | null;
   candidatePreviewEnabled?: boolean;
 }) {
@@ -2772,6 +2859,10 @@ export function HomeSurface({
   const safeSummarySnapshot = useMemo(
     () => sanitizeVisibleStrings(summarySnapshot ?? null),
     [summarySnapshot],
+  );
+  const safeHomeInsightSummary = useMemo(
+    () => sanitizeVisibleStrings(homeInsightSummary ?? null),
+    [homeInsightSummary],
   );
   const safeModuleContext = useMemo(
     () => sanitizeVisibleStrings(moduleContext ?? null),
@@ -3384,7 +3475,7 @@ export function HomeSurface({
                       </p>
                       <div className="hx3-storyGrid">
                         <article className="hx3-storyCard">
-                          <h3>What AbarVa knows</h3>
+                          <h3>What Nexus knows</h3>
                           <ul>
                             {(selectedStory?.knows ?? [])
                               .slice(0, 4)
@@ -3773,6 +3864,227 @@ export function HomeSurface({
                       </div>
                     </div>
                   </div>
+
+                  {safeHomeInsightSummary ? (
+                    <>
+                      <section
+                        className="hx3-section"
+                        data-testid="knowledge-home-insights"
+                      >
+                        <div className="hx3-brief">
+                          <div className="hx3-eyebrow">Enterprise Brief</div>
+                          <h2>{safeHomeInsightSummary.summary_title}</h2>
+                          <p className="hx3-briefLead">
+                            {safeHomeInsightSummary.executive_summary}
+                          </p>
+                          <div className="hx3-storyGrid">
+                            <article className="hx3-storyCard">
+                              <h3>Strategic priorities</h3>
+                              <ul>
+                                {safeHomeInsightSummary.strategic_priorities.map(
+                                  (priority) => (
+                                    <li key={priority}>{priority}</li>
+                                  ),
+                                )}
+                              </ul>
+                            </article>
+                            <article className="hx3-storyCard warn">
+                              <h3>Do not claim</h3>
+                              <ul>
+                                {safeHomeInsightSummary.do_not_claim
+                                  .slice(0, 4)
+                                  .map((claim) => (
+                                    <li key={claim}>{claim}</li>
+                                  ))}
+                              </ul>
+                            </article>
+                          </div>
+                        </div>
+                      </section>
+
+                      <section className="hx3-section">
+                        <div className="hx3-sectionHead">
+                          <div>
+                            <h2>Cross-dimension insights</h2>
+                            <p>
+                              These are the executive patterns Nexus sees across
+                              functions, systems, data, controls, metrics, and
+                              module readiness.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="hx3-grid2">
+                          {safeHomeInsightSummary.top_insights.map((insight) => (
+                            <article className="hx3-storyCard" key={insight.title}>
+                              <h3>{insight.title}</h3>
+                              <p>{insight.what_nexus_sees}</p>
+                              <p>
+                                <strong>Why it matters: </strong>
+                                {insight.why_it_matters}
+                              </p>
+                              <div className="hx3-chipRow">
+                                <span className="hx3-chip">
+                                  {insight.evidence_strength}
+                                </span>
+                                <span className="hx3-chip">
+                                  {insight.module_handoff}
+                                </span>
+                              </div>
+                              <div className="hx3-nextAction">
+                                Next: {insight.next_action}
+                              </div>
+                            </article>
+                          ))}
+                        </div>
+                      </section>
+
+                      <section className="hx3-section">
+                        <div className="hx3-sectionHead">
+                          <div>
+                            <h2>Agent Assist context map</h2>
+                            <p>
+                              The golden thread shows why Agent Assist is a
+                              cross-enterprise transformation, not a standalone
+                              chatbot.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="hx3-grid2">
+                          {safeHomeInsightSummary.enterprise_context_map.map(
+                            (edge, index) => (
+                              <div
+                                className="hx3-relRow"
+                                key={`${edge.from}-${edge.relation}-${edge.to}-${index}`}
+                              >
+                                <span className="hx3-relNode">{index + 1}</span>
+                                <span>{edge.from}</span>
+                                <span className="hx3-relEdge">
+                                  {edge.relation}
+                                </span>
+                                <span>
+                                  {edge.to}
+                                  {edge.caveat ? (
+                                    <small className="hx3-relCaveat">
+                                      {edge.caveat}
+                                    </small>
+                                  ) : null}
+                                </span>
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      </section>
+
+                      <section className="hx3-section">
+                        <div className="hx3-sectionHead">
+                          <div>
+                            <h2>Readiness and evidence</h2>
+                            <p>
+                              Use this to see what is strong, partial, future
+                              target, or still not validated before sending work
+                              to Intelligence, Moves, Source, or Tower.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="hx3-tableWrap">
+                          <table className="hx3-table">
+                            <thead>
+                              <tr>
+                                <th>Dimension</th>
+                                <th>Readiness</th>
+                                <th>Story</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {safeHomeInsightSummary.readiness_matrix.map(
+                                (row) => (
+                                  <tr key={row.dimension}>
+                                    <td>{row.dimension}</td>
+                                    <td>{row.readiness}</td>
+                                    <td>{row.story}</td>
+                                  </tr>
+                                ),
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                        <div className="hx3-tableWrap">
+                          <table className="hx3-table">
+                            <thead>
+                              <tr>
+                                <th>Evidence area</th>
+                                <th>Coverage</th>
+                                <th>Confidence</th>
+                                <th>Caveat</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {safeHomeInsightSummary.evidence_heatmap.map(
+                                (row) => (
+                                  <tr key={row.dimension}>
+                                    <td>{row.dimension}</td>
+                                    <td>{row.evidence_coverage}</td>
+                                    <td>{row.confidence}</td>
+                                    <td>{row.caveat}</td>
+                                  </tr>
+                                ),
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </section>
+
+                      <section className="hx3-section">
+                        <div className="hx3-sectionHead">
+                          <div>
+                            <h2>Top gaps and module readiness</h2>
+                            <p>
+                              These are the evidence requests that make the
+                              story actionable instead of decorative.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="hx3-grid2">
+                          {safeHomeInsightSummary.top_gaps.map((gap) => (
+                            <article className="hx3-gapCard" key={gap.gap}>
+                              <strong>{gap.gap}</strong>
+                              <p>{gap.why_it_matters}</p>
+                              <p>
+                                <strong>Evidence needed: </strong>
+                                {gap.evidence_requested}
+                              </p>
+                              <span className="hx3-chip">
+                                {gap.suggested_workshop_owner} ·{" "}
+                                {gap.module_impacted}
+                              </span>
+                            </article>
+                          ))}
+                        </div>
+                        <div className="hx3-tableWrap">
+                          <table className="hx3-table">
+                            <thead>
+                              <tr>
+                                <th>Module</th>
+                                <th>Readiness</th>
+                                <th>Next best action</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {safeHomeInsightSummary.module_readiness.map(
+                                (row) => (
+                                  <tr key={row.module}>
+                                    <td>{row.module}</td>
+                                    <td>{row.readiness}</td>
+                                    <td>{row.next_best_action}</td>
+                                  </tr>
+                                ),
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </section>
+                    </>
+                  ) : null}
 
                   <section className="hx3-section">
                     <h2>Executive profile</h2>
