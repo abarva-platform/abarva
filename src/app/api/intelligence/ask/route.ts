@@ -1215,7 +1215,7 @@ function displaySafeIntelligenceDelta(text: string): string {
 }
 
 const INTERNAL_SOURCE_ID_RE =
-  /\b(?:candidate_move|move_id|phase_id|artifact_id|evidence_id|source_record_id|context_pack_id|program_evidence_items|move_artifacts|tenant_id|client_id|intelligence_v\d+|V\d+[_:-])/i;
+  /\b(?:candidate_move|move_id|phase_id|artifact_id|evidence_id|source_record_id|context_pack_id|program_evidence_items|move_artifacts|tenant_id|client_id|intelligence_v\d+|v\d+[._:-])/i;
 
 function displaySafeAskSource(source: AskSource, index: number): AskSource {
   const name = scrubPublicAvaSourceText(source.name);
