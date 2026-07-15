@@ -405,6 +405,8 @@ reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv,csv,,
 reports/demo-readiness/meridian-data-state/agent-assist-context-readiness.json,json,,meridian-health,report/proof,historical doc only,no,no,no,yes,No action,no forbidden legacy term
 reports/demo-readiness/meridian-data-state/aws-databricks-semantic-audit.csv,csv,,meridian-health,report/proof,historical doc only,no,no,no,yes,No action,no forbidden legacy term
 reports/demo-readiness/meridian-data-state/entity-profile-coverage.csv,csv,,meridian-health,report/proof,historical doc only,no,no,no,yes,No action,no forbidden legacy term
+reports/demo-readiness/meridian-data-state/html-quality-accuracy-audit.json,json,,meridian-health,report/proof,historical doc only,no,no,no,yes,No action,no forbidden legacy term
+reports/demo-readiness/meridian-data-state/html-quality-accuracy-audit.md,markdown,,meridian-health,report/proof,historical doc only,no,no,no,yes,No action,no forbidden legacy term
 reports/demo-readiness/meridian-data-state/layer-reconciliation.csv,csv,,meridian-health,report/proof,historical doc only,no,no,no,no,No action,no forbidden legacy term
 reports/demo-readiness/meridian-data-state/legacy-leakage-audit.csv,csv,,meridian-health,report/proof,legacy / must not load,no,no,yes,no,Historical/compatibility reference; keep out of active Meridian demo path,legacy term V4
 reports/demo-readiness/meridian-data-state/meridian-data-state-reconciliation-proof.html,html,,meridian-health,report/proof,historical doc only,no,no,no,yes,No action,no forbidden legacy term
