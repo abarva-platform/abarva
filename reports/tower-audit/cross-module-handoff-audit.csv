@@ -1,0 +1,6 @@
+module,expected_handoff,status,current_state,recommendation,pass_fail
+Knowledge,"metrics, evidence, gaps, ownership, confidence",Partial,Enterprise Knowledge packs define TowerContextPack but Tower runtime mostly uses cio_tower read model,Create adapter that converts Knowledge context pack to TowerValueRecord inputs,Partial
+Intelligence,decision framing and value hypotheses,Partial,"aVa can define hypothesis, Tower must not accept as measured value",Add value hypothesis intake status,Partial
+Moves,"charter success criteria, P1/P5 measurement plans",Partial,Moves context pack dry-run exists; formal Tower handoff not proven,Create Moves-to-Tower measurement plan handoff,Partial
+Source,"vendor spend, savings hypotheses, SLA performance, commercial baseline",Partial,"Source awareness helper exists, but commercial value needs formal Source ID",Create Source commercial value handoff record,Partial
+Tower back to modules,missing baseline/method/owner/cadence/risk,Partial,Derived gaps exist but are not universal outbound events,Emit Tower evidence request/gap events,Partial
