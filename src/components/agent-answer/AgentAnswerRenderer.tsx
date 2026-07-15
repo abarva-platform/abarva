@@ -333,7 +333,7 @@ async function downloadAnswerExport(
   document.body.appendChild(link);
   link.click();
   link.remove();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 function ExportActions({ answer }: { answer: AvaAnswerPacket }) {
