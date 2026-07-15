@@ -40,6 +40,7 @@ const CSS = `
 .agentAnswer .aaChartHead,.agentAnswer .aaTableHead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--aa-line);background:var(--aa-soft)}
 .agentAnswer .aaGraphHead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--aa-line);background:var(--aa-soft)}
 .agentAnswer .aaChartTitle,.agentAnswer .aaGraphTitle,.agentAnswer .aaTableTitle{font-size:14px;font-weight:700}
+.agentAnswer .aaChartSubtitle{margin-top:2px;font-size:12px;color:var(--aa-muted)}
 .agentAnswer .aaBuilder{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;color:var(--aa-faint)}
 .agentAnswer .aaSvg{padding:12px;background:#fff}
 .agentAnswer .aaSvg svg{display:block;width:100%;height:auto}
@@ -252,7 +253,9 @@ function inferredCellFormat(
     return "currency";
   }
   if (/\b(percent|percentage|pct|share|ratio)\b/.test(name)) return "percent";
-  if (/\b(count|employees?|users?|population|records?|volume|number)\b/.test(name)) {
+  if (
+    /\b(count|employees?|users?|population|records?|volume|number)\b/.test(name)
+  ) {
     return "number";
   }
   return null;
@@ -264,12 +267,15 @@ function formatNumericCell(
 ): string {
   if (format === "currency") return formatCompactUsd(value);
   if (format === "percent") return formatPercent(value);
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value);
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
+    value,
+  );
 }
 
 function formatCompactUsd(value: number): string {
   const abs = Math.abs(value);
-  if (abs >= 1_000_000_000) return `$${trimCompactNumber(value / 1_000_000_000)}B`;
+  if (abs >= 1_000_000_000)
+    return `$${trimCompactNumber(value / 1_000_000_000)}B`;
   if (abs >= 1_000_000) return `$${trimCompactNumber(value / 1_000_000)}M`;
   if (abs >= 1_000) return `$${trimCompactNumber(value / 1_000)}K`;
   return new Intl.NumberFormat("en-US", {
@@ -438,7 +444,12 @@ export function AnswerChartRenderer({
   return (
     <div className="aaChart">
       <div className="aaChartHead">
-        <div className="aaChartTitle">{chart.title ?? chart.kind}</div>
+        <div>
+          <div className="aaChartTitle">{chart.title ?? chart.kind}</div>
+          {chart.subtitle ? (
+            <div className="aaChartSubtitle">{chart.subtitle}</div>
+          ) : null}
+        </div>
       </div>
       {rendered.svg ? (
         <div

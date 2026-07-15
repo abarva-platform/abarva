@@ -339,6 +339,23 @@ export function isExplicitVisualAsk(query: string): boolean {
   );
 }
 
+/**
+ * A ranked-comparison ask ("rank X vs Y vs Z by value, complexity,
+ * readiness") gets steered toward the governed ```decision-table fenced
+ * JSON contract (structured-exhibits.ts) instead of the generic Markdown
+ * repair, so the table/chart pipeline gets typed rows and numeric scores
+ * instead of having to regex-parse free-form prose.
+ */
+export function isRankedDecisionAsk(query: string): boolean {
+  const q = query.toLowerCase();
+  const asksToRank =
+    /\b(rank|ranked|ranking|prioriti[sz]e|prioritization)\b/.test(q);
+  const comparesMultipleItems = /\bvs\.?\b|\bversus\b/.test(q);
+  const hasDecisionCriteria =
+    /\b(value|complexity|readiness|impact|effort|risk|feasibility)\b/.test(q);
+  return asksToRank && comparesMultipleItems && hasDecisionCriteria;
+}
+
 function requiresNativeExecutiveCanvas(query: string): boolean {
   return /\b(abarva\s+right-canvas|structured\s+abarva|executive\s+(?:canvas|exhibit)|canvas\s+exhibit|prioriti[sz]e|priority|priorities|sequence|sequencing|investment|invest|fund|funding|value[ -/]readiness|readiness|gate|roadmap|risk-boundary|proof-boundary|transformation|operating model|portfolio)\b/i.test(
     query,
@@ -372,6 +389,22 @@ function hasMarkdownDecisionTable(text: string): boolean {
   }
   return /\|\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|/.test(text);
 }
+
+function hasDecisionTableFence(text: string): boolean {
+  return /```decision-table\s*[\s\S]*?```/i.test(text);
+}
+
+const DECISION_TABLE_REPAIR_INSTRUCTION = [
+  "DECISION TABLE REPAIR: The user asked to rank or compare named items on decision criteria (for example value, complexity, readiness).",
+  "Keep the senior-advisor answer concise, then include exactly one fenced block using this exact format — no other Markdown table anywhere in the answer:",
+  "```decision-table",
+  '{"title":"<short title>","rows":[{"initiative":"<item name>","value":"<qualitative value read, e.g. High — evidence detail>","valueScore":<0-100 int>,"complexity":"<qualitative complexity read>","complexityScore":<0-100 int>,"readiness":"<qualitative readiness read>","readinessScore":<0-100 int>,"evidenceBasis":"<what backs this row>","recommendation":"<one-line recommendation>","nextAction":"<one concrete next step>","directional":<true if any field in this row is your professional estimate rather than a value taken directly from cited evidence>}]}',
+  "```",
+  "Include exactly one row for every item the user named — never fewer than requested and never omit an item because evidence is thin.",
+  'Where the loaded sources do not give you an exact value, use your best professional judgment as a senior advisor and set "directional": true on that row rather than refusing, inventing a fake citation, or leaving the row out.',
+  "valueScore, complexityScore, and readinessScore are always required integers 0-100 reflecting relative ranking across the named items, even on directional rows.",
+  "Return only the final answer.",
+].join("\n");
 
 function extractMessageText(response: unknown): string {
   const content = (response as { content?: unknown }).content;
@@ -969,17 +1002,20 @@ ${args.query}${strategyToAbarvaSolutionPromptDirective}`
         }),
       );
     }
+    const wantsDecisionTableRepair = isRankedDecisionAsk(args.query);
     if (
       blockingRepairEnabled &&
       args.richText &&
       isExplicitVisualAsk(args.query) &&
-      !hasMarkdownDecisionTable(text)
+      !hasMarkdownDecisionTable(text) &&
+      !hasDecisionTableFence(text)
     ) {
       const visualRepairStartedAt = Date.now();
       emitTiming(
         latencyTrace.mark("repair.visual.start", {
           model,
           draftChars: text.length,
+          mode: wantsDecisionTableRepair ? "decision_table" : "markdown_table",
         }),
       );
       const visualRepair = await client.messages.create({
@@ -995,20 +1031,26 @@ ${args.query}${strategyToAbarvaSolutionPromptDirective}`
               "DRAFT TO REPAIR:",
               text,
               "",
-              'VISUAL CONTRACT REPAIR: The user explicitly asked for a table, chart, graph, visual, ranking, matrix, breakdown, or show-me structure. Keep the senior-advisor answer concise, then use the Intelligence decision-canvas tab markers from the system prompt. Put exactly one compact GitHub-flavored Markdown decision table with a header row, separator row, and 2-6 evidence-backed rows inside a Table or Chart tab. Use the columns the user requested where possible. Do not add source-support or evidence-register tables. If a requested value is not in the sources, write "not shown in loaded sources" in that cell rather than inventing it. Return only the final answer.',
+              wantsDecisionTableRepair
+                ? DECISION_TABLE_REPAIR_INSTRUCTION
+                : 'VISUAL CONTRACT REPAIR: The user explicitly asked for a table, chart, graph, visual, ranking, matrix, breakdown, or show-me structure. Keep the senior-advisor answer concise, then use the Intelligence decision-canvas tab markers from the system prompt. Put exactly one compact GitHub-flavored Markdown decision table with a header row, separator row, and 2-6 rows inside a Table or Chart tab. Use the columns the user requested where possible. Do not add source-support or evidence-register tables. Where a requested value is not directly in the sources, use your best professional judgment and mark that row "(directional)" rather than writing "not shown in loaded sources" or leaving the row out. Return only the final answer.',
             ].join("\n"),
           },
         ],
       });
       const repairedText = extractMessageText(visualRepair);
+      const accepted = wantsDecisionTableRepair
+        ? hasDecisionTableFence(repairedText) ||
+          hasMarkdownDecisionTable(repairedText)
+        : hasMarkdownDecisionTable(repairedText);
       emitTiming(
         latencyTrace.finish("repair.visual.done", visualRepairStartedAt, {
           model,
           repairedChars: repairedText.length,
-          accepted: hasMarkdownDecisionTable(repairedText),
+          accepted,
         }),
       );
-      if (hasMarkdownDecisionTable(repairedText)) {
+      if (accepted) {
         text = repairedText;
       }
     }

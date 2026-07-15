@@ -74,7 +74,11 @@ export function renderAnswerChartSvgForExport(chart: AnswerChart): {
 } {
   const builderName = chart.builder ?? builderForChartKind(chart.kind);
   if (!isSvgBuilderName(builderName)) {
-    return { builderName, svg: null, error: `No SVG builder named ${builderName}` };
+    return {
+      builderName,
+      svg: null,
+      error: `No SVG builder named ${builderName}`,
+    };
   }
   try {
     const svg = invokeSvgBuilder(builderName, chart.data);
@@ -147,11 +151,15 @@ function formatPercent(value: number): string {
   }).format(normalized);
 }
 
-function formatCell(value: string | number | null, column: AnswerTableColumn): string {
+function formatCell(
+  value: string | number | null,
+  column: AnswerTableColumn,
+): string {
   if (value === null) return "-";
   const numeric = parseNumericCellValue(value);
   const format = inferredCellFormat(column);
-  if (numeric !== null && format === "currency") return formatCompactUsd(numeric);
+  if (numeric !== null && format === "currency")
+    return formatCompactUsd(numeric);
   if (numeric !== null && format === "percent") return formatPercent(numeric);
   if (numeric !== null && format === "number") {
     return new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(
@@ -171,7 +179,10 @@ function proseHtml(text: string): string {
 }
 
 function listHtml(label: string, rows: readonly string[]): string {
-  const visible = rows.map((row) => row.trim()).filter(Boolean).slice(0, 12);
+  const visible = rows
+    .map((row) => row.trim())
+    .filter(Boolean)
+    .slice(0, 12);
   if (visible.length === 0) return "";
   return `<section class="card compact"><h2>${esc(label)}</h2><ul>${visible
     .map((row) => `<li>${esc(row)}</li>`)
@@ -198,7 +209,10 @@ function tableHtml(table: AnswerTable): string {
     .map(
       (row) =>
         `<tr>${table.columns
-          .map((column) => `<td>${esc(formatCell(row[column.key] ?? null, column))}</td>`)
+          .map(
+            (column) =>
+              `<td>${esc(formatCell(row[column.key] ?? null, column))}</td>`,
+          )
           .join("")}</tr>`,
     )
     .join("");
@@ -210,6 +224,8 @@ function tableHtml(table: AnswerTable): string {
 function chartHtml(chart: AnswerChart): string {
   const rendered = renderAnswerChartSvgForExport(chart);
   return `<section class="card"><h2>${esc(chart.title ?? chart.kind)}</h2>${
+    chart.subtitle ? `<p class="note">${esc(chart.subtitle)}</p>` : ""
+  }${
     rendered.svg
       ? `<div class="svg">${rendered.svg}</div>`
       : `<p class="note">Chart unavailable: ${esc(rendered.error)}</p>`
@@ -264,7 +280,9 @@ ${
       const position = positions.get(node.id);
       if (!position) return "";
       const label = esc(node.label);
-      const kind = position.kind ? `<tspan x="${position.x}" dy="16" font-size="11" fill="#6b7280">${esc(position.kind)}</tspan>` : "";
+      const kind = position.kind
+        ? `<tspan x="${position.x}" dy="16" font-size="11" fill="#6b7280">${esc(position.kind)}</tspan>`
+        : "";
       return `<g>
 <rect x="${position.x - 150}" y="${position.y - 27}" width="300" height="54" rx="12" fill="#f0faf4" stroke="#cfe8d7"/>
 <text x="${position.x}" y="${position.y - 3}" text-anchor="middle" font-size="13" font-weight="700" fill="#111827">${label}${kind}</text>
@@ -283,8 +301,10 @@ function graphHtml(graph: AnswerGraph): string {
   return `<section class="card"><h2>${esc(graph.title ?? "Relationship graph")}</h2>${graphSvgHtml(graph)}<ul class="graph">${graph.edges
     .slice(0, 16)
     .map((edge) => {
-      const from = graph.nodes.find((node) => node.id === edge.from)?.label ?? edge.from;
-      const to = graph.nodes.find((node) => node.id === edge.to)?.label ?? edge.to;
+      const from =
+        graph.nodes.find((node) => node.id === edge.from)?.label ?? edge.from;
+      const to =
+        graph.nodes.find((node) => node.id === edge.to)?.label ?? edge.to;
       return `<li><strong>${esc(from)}</strong> -> ${esc(to)}${
         edge.label ? ` <span>${esc(edge.label)}</span>` : ""
       }</li>`;
@@ -321,8 +341,12 @@ ${listHtml("Recommended Next Moves", nextStepRows(display))}
 ${citationHtml(display.citations)}`;
 }
 
-function sessionStats(session: AvaChatSessionExport): AvaChatSessionExportStats {
-  const answers = session.turns.flatMap((turn) => (turn.answer ? [turn.answer] : []));
+function sessionStats(
+  session: AvaChatSessionExport,
+): AvaChatSessionExportStats {
+  const answers = session.turns.flatMap((turn) =>
+    turn.answer ? [turn.answer] : [],
+  );
   const visibleArtifacts = answers.flatMap((answer) =>
     sanitizeAvaAnswerForRender(answer).artifacts.filter(isVisibleAvaArtifact),
   );
@@ -330,14 +354,24 @@ function sessionStats(session: AvaChatSessionExport): AvaChatSessionExportStats 
     userTurns: session.turns.filter((turn) => turn.role === "user").length,
     agentTurns: session.turns.filter((turn) => turn.role === "agent").length,
     answerPackets: answers.length,
-    charts: visibleArtifacts.filter((artifact) => artifact.artifact === "chart").length,
-    tables: visibleArtifacts.filter((artifact) => artifact.artifact === "table").length,
-    graphs: visibleArtifacts.filter((artifact) => artifact.artifact === "graph").length,
-    citations: answers.reduce((sum, answer) => sum + answer.citations.length, 0),
-    blockedAnswers: answers.filter((answer) => answer.status === "blocked").length,
+    charts: visibleArtifacts.filter((artifact) => artifact.artifact === "chart")
+      .length,
+    tables: visibleArtifacts.filter((artifact) => artifact.artifact === "table")
+      .length,
+    graphs: visibleArtifacts.filter((artifact) => artifact.artifact === "graph")
+      .length,
+    citations: answers.reduce(
+      (sum, answer) => sum + answer.citations.length,
+      0,
+    ),
+    blockedAnswers: answers.filter((answer) => answer.status === "blocked")
+      .length,
     warningFindings: answers.reduce(
       (sum, answer) =>
-        sum + (answer.quality.cxo?.findings.filter((finding) => finding.severity === "warning").length ?? 0),
+        sum +
+        (answer.quality.cxo?.findings.filter(
+          (finding) => finding.severity === "warning",
+        ).length ?? 0),
       0,
     ),
   };
@@ -410,7 +444,8 @@ ${bodyHtml}
 export function renderAvaAnswerStandaloneHtml(answer: AvaAnswerPacket): string {
   const display = sanitizeAvaAnswerForRender(answer);
   const generatedAt = new Date().toISOString();
-  const surfaceLabel = display.surface.charAt(0).toUpperCase() + display.surface.slice(1);
+  const surfaceLabel =
+    display.surface.charAt(0).toUpperCase() + display.surface.slice(1);
 
   return documentChrome({
     eyebrow: `aVa ${surfaceLabel} Export`,
@@ -453,7 +488,9 @@ ${session.turns
       )}</div></section>`;
     }
     return `<section class="turn agent"><div class="turn-label">aVa response ${index + 1}</div>${
-      turn.answer ? answerBodyHtml(turn.answer) : `<div class="prose">${proseHtml(turn.body)}</div>`
+      turn.answer
+        ? answerBodyHtml(turn.answer)
+        : `<div class="prose">${proseHtml(turn.body)}</div>`
     }</section>`;
   })
   .join("")}`;

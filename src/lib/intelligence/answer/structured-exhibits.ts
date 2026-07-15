@@ -115,13 +115,15 @@ const MOVES_PHASE_ROWS: AnswerTable["rows"] = [
   },
   {
     phase: "P1 Charter",
-    focus: "Define scope, sponsor, success metric, decision cadence, and evidence gates.",
+    focus:
+      "Define scope, sponsor, success metric, decision cadence, and evidence gates.",
     artifact: "Sprint charter and governance path",
     boundary: "Accountable sponsor approves the charter.",
   },
   {
     phase: "P2 Understand Current State",
-    focus: "Ground systems, data, owners, contracts, gaps, and evidence boundaries.",
+    focus:
+      "Ground systems, data, owners, contracts, gaps, and evidence boundaries.",
     artifact: "Current-state evidence pack",
     boundary: "Data and process owners validate the evidence.",
   },
@@ -133,13 +135,15 @@ const MOVES_PHASE_ROWS: AnswerTable["rows"] = [
   },
   {
     phase: "P4 Build the Plan",
-    focus: "Turn the chosen approach into workstreams, milestones, risks, and funding asks.",
+    focus:
+      "Turn the chosen approach into workstreams, milestones, risks, and funding asks.",
     artifact: "Roadmap and business case",
     boundary: "Finance and sponsor review the funding case.",
   },
   {
     phase: "P5 Prepare to Execute",
-    focus: "Confirm owners, controls, vendors, adoption plan, and launch readiness.",
+    focus:
+      "Confirm owners, controls, vendors, adoption plan, and launch readiness.",
     artifact: "Execution-ready plan",
     boundary: "Launch authority remains with accountable owners.",
   },
@@ -147,7 +151,8 @@ const MOVES_PHASE_ROWS: AnswerTable["rows"] = [
     phase: "Tower Track Outcomes",
     focus: "Track adoption, KPI movement, benefits, risks, and funding gates.",
     artifact: "Value-realization scorecard",
-    boundary: "Tower supports Finance or outcome-owner certification; it does not certify by itself.",
+    boundary:
+      "Tower supports Finance or outcome-owner certification; it does not certify by itself.",
   },
 ];
 
@@ -162,8 +167,7 @@ function movesExecutionPhaseTable(citationIds: string[]): AnswerTable {
       { key: "boundary", label: "Decision boundary" },
     ],
     rows: MOVES_PHASE_ROWS,
-    note:
-      "Assembled by the AbarVa answer-mode contract so the canonical P0-P5 plus Tower structure is always present.",
+    note: "Assembled by the AbarVa answer-mode contract so the canonical P0-P5 plus Tower structure is always present.",
     citationIds,
   };
 }
@@ -585,6 +589,301 @@ function chartFencesFromProse(
   };
 }
 
+// Governed decision-table exhibit — Fix Slice 1/2. Ranked-comparison answers
+// (rank X vs Y vs Z by value/complexity/readiness) are steered by the
+// synthesizer toward a ```decision-table fenced JSON block instead of relying
+// on regex-parsed Markdown, so a real typed table + derived charts render
+// even when the model's prose style drifts. See synthesizer.ts's
+// isRankedDecisionAsk() repair pass for the prompt side of this contract.
+export interface DecisionTableRow {
+  initiative: string;
+  value: string | null;
+  valueScore: number | null;
+  complexity: string | null;
+  complexityScore: number | null;
+  readiness: string | null;
+  readinessScore: number | null;
+  evidenceBasis: string | null;
+  recommendation: string | null;
+  nextAction: string | null;
+  directional: boolean;
+}
+
+const DECISION_TABLE_COLUMNS: AnswerTableColumn[] = [
+  { key: "initiative", label: "Initiative", format: "text", align: "left" },
+  { key: "value", label: "Value", format: "text", align: "left" },
+  { key: "complexity", label: "Complexity", format: "text", align: "left" },
+  { key: "readiness", label: "Readiness", format: "text", align: "left" },
+  {
+    key: "evidenceBasis",
+    label: "Evidence basis",
+    format: "text",
+    align: "left",
+  },
+  {
+    key: "recommendation",
+    label: "Recommendation",
+    format: "text",
+    align: "left",
+  },
+  { key: "nextAction", label: "Next action", format: "text", align: "left" },
+];
+
+function clampScore(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  if (value < 0 || value > 100) return null;
+  return Math.round(value);
+}
+
+function textOrNull(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed.slice(0, 240) : null;
+}
+
+function parseDecisionTableFenceRows(
+  raw: string,
+): { title: string | null; rows: DecisionTableRow[] } | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    return null;
+  }
+  const record = parsed as Record<string, unknown>;
+  if (!Array.isArray(record.rows)) return null;
+
+  const rows: DecisionTableRow[] = record.rows
+    .flatMap((entry): DecisionTableRow[] => {
+      if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
+        return [];
+      }
+      const row = entry as Record<string, unknown>;
+      const initiative = textOrNull(row.initiative);
+      if (!initiative) return [];
+      return [
+        {
+          initiative,
+          value: textOrNull(row.value),
+          valueScore: clampScore(row.valueScore),
+          complexity: textOrNull(row.complexity),
+          complexityScore: clampScore(row.complexityScore),
+          readiness: textOrNull(row.readiness),
+          readinessScore: clampScore(row.readinessScore),
+          evidenceBasis: textOrNull(row.evidenceBasis),
+          recommendation: textOrNull(row.recommendation),
+          nextAction: textOrNull(row.nextAction),
+          directional: row.directional === true,
+        },
+      ];
+    })
+    .slice(0, 12);
+
+  if (rows.length === 0) return null;
+  return { title: textOrNull(record.title), rows };
+}
+
+function markDirectional(
+  value: string | null,
+  directional: boolean,
+): string | null {
+  if (!value) return directional ? "Directional estimate" : null;
+  if (!directional) return value;
+  return /directional/i.test(value) ? value : `${value} (directional)`;
+}
+
+function decisionTableFromRows(
+  title: string | null,
+  rows: DecisionTableRow[],
+  citationIds: string[],
+  index: number,
+): AnswerTable {
+  const anyDirectional = rows.some((row) => row.directional);
+  return {
+    id: `answer-decision-table-${index + 1}`,
+    title: title ?? "Decision Table",
+    columns: DECISION_TABLE_COLUMNS,
+    rows: rows.map((row) => ({
+      initiative: row.initiative,
+      value: markDirectional(row.value, row.directional),
+      complexity: markDirectional(row.complexity, row.directional),
+      readiness: markDirectional(row.readiness, row.directional),
+      evidenceBasis: row.evidenceBasis,
+      recommendation: row.recommendation,
+      nextAction: row.nextAction,
+    })),
+    note: anyDirectional
+      ? "Ranked by aVa from the loaded evidence and cited context. Rows marked (directional) are professional-judgment estimates pending source validation, not invented values."
+      : "Ranked by aVa from the loaded evidence and cited context.",
+    citationIds,
+  };
+}
+
+function decisionTableFencesFromProse(
+  prose: string,
+  citationIds: string[],
+): {
+  prose: string;
+  tables: AnswerTable[];
+  decisionRows: DecisionTableRow[];
+} {
+  const tables: AnswerTable[] = [];
+  let decisionRows: DecisionTableRow[] = [];
+  const cleaned = prose.replace(
+    /```decision-table\s*([\s\S]*?)```/gi,
+    (_match, raw: string) => {
+      const parsedFence = parseDecisionTableFenceRows(raw);
+      if (!parsedFence) return "\n";
+      tables.push(
+        decisionTableFromRows(
+          parsedFence.title,
+          parsedFence.rows,
+          citationIds,
+          tables.length,
+        ),
+      );
+      if (decisionRows.length === 0) decisionRows = parsedFence.rows;
+      return "\n";
+    },
+  );
+  return {
+    prose: cleaned.replace(/\n{3,}/g, "\n\n").trim(),
+    tables,
+    decisionRows,
+  };
+}
+
+function anyDirectionalRow(rows: DecisionTableRow[]): boolean {
+  return rows.some((row) => row.directional);
+}
+
+function directionalSuffix(rows: DecisionTableRow[]): string {
+  return anyDirectionalRow(rows) ? " (directional estimate)" : "";
+}
+
+function directionalChartSubtitle(
+  rows: DecisionTableRow[],
+  base?: string,
+): string | undefined {
+  if (!anyDirectionalRow(rows)) return base;
+  const caveat = "Includes directional estimates pending source validation.";
+  return base ? `${caveat} ${base}` : caveat;
+}
+
+function valueComplexityMatrixFromDecisionRows(
+  rows: DecisionTableRow[],
+  citationIds: string[],
+): AnswerChart | null {
+  const points = rows
+    .filter((row) => row.valueScore !== null && row.complexityScore !== null)
+    .map((row) => ({
+      label:
+        row.initiative.length > 42
+          ? `${row.initiative.slice(0, 39)}...`
+          : row.initiative,
+      x: row.complexityScore as number,
+      y: row.valueScore as number,
+    }))
+    .slice(0, 12);
+  if (points.length < 2) return null;
+  return {
+    id: "answer-decision-table-quadrant-matrix",
+    kind: "quadrant-matrix",
+    title: `Value / Complexity 2x2 Matrix${directionalSuffix(rows)}`,
+    subtitle: directionalChartSubtitle(rows),
+    data: {
+      title: "Value / Complexity 2x2 Matrix",
+      xAxisLabel: "Implementation complexity",
+      yAxisLabel: "Business value",
+      points,
+    },
+    builder: "quadrantMatrix",
+    citationIds,
+  };
+}
+
+function readinessBarChartFromDecisionRows(
+  rows: DecisionTableRow[],
+  citationIds: string[],
+): AnswerChart | null {
+  const data = rows
+    .filter((row) => row.readinessScore !== null)
+    .map((row) => ({
+      initiative:
+        row.initiative.length > 32
+          ? `${row.initiative.slice(0, 29)}...`
+          : row.initiative,
+      readiness: row.readinessScore as number,
+    }))
+    .slice(0, 8);
+  if (data.length < 2) return null;
+  return {
+    id: "answer-decision-table-readiness-bar",
+    kind: "horizontal-bar",
+    title: `Readiness by Initiative${directionalSuffix(rows)}`,
+    subtitle: directionalChartSubtitle(rows),
+    data: {
+      type: "horizontal-bar",
+      title: "Readiness by Initiative",
+      data,
+      xKey: "initiative",
+      yKey: "readiness",
+      unit: "%",
+    },
+    builder: "inlineChart",
+    citationIds,
+  };
+}
+
+function priorityStackFromDecisionRows(
+  rows: DecisionTableRow[],
+  citationIds: string[],
+): AnswerChart | null {
+  const data = rows
+    .filter(
+      (row) =>
+        row.valueScore !== null &&
+        row.complexityScore !== null &&
+        row.readinessScore !== null,
+    )
+    .map((row) => ({
+      initiative:
+        row.initiative.length > 32
+          ? `${row.initiative.slice(0, 29)}...`
+          : row.initiative,
+      priority: Math.round(
+        (row.valueScore as number) * 0.5 +
+          (row.readinessScore as number) * 0.3 +
+          (100 - (row.complexityScore as number)) * 0.2,
+      ),
+    }))
+    .sort((a, b) => b.priority - a.priority)
+    .slice(0, 8);
+  if (data.length < 2) return null;
+  return {
+    id: "answer-decision-table-priority-stack",
+    kind: "bar",
+    title: `Priority Stack Ranking${directionalSuffix(rows)}`,
+    subtitle: directionalChartSubtitle(
+      rows,
+      "Priority blends value (50%), readiness (30%), and inverse complexity (20%).",
+    ),
+    data: {
+      type: "bar",
+      title: "Priority Stack Ranking",
+      subtitle: "Weighted by value, readiness, and inverse complexity",
+      data,
+      xKey: "initiative",
+      yKey: "priority",
+    },
+    builder: "inlineChart",
+    citationIds,
+  };
+}
+
 function stripResidualTableFragments(prose: string): string {
   const stripped = prose
     .split(/\r?\n/)
@@ -643,8 +942,7 @@ function requestedVisualFallbackTable(
           "Load or cite the ranked items, values, complexity/readiness scores, and source basis for each row.",
       },
     ],
-    note:
-      "aVa did not expose unvalidated model text as a table or chart. Load source-backed rows to render the requested visual.",
+    note: "aVa did not expose unvalidated model text as a table or chart. Load source-backed rows to render the requested visual.",
     citationIds,
   };
 }
@@ -678,7 +976,9 @@ function exactCurrencyOrNumber(value: string | number | null): number | null {
   return base;
 }
 
-function ordinalScore(value: string | number | null | undefined): number | null {
+function ordinalScore(
+  value: string | number | null | undefined,
+): number | null {
   if (typeof value === "number" && Number.isFinite(value)) {
     if (value >= 0 && value <= 5) return (value / 5) * 100;
     if (value >= 0 && value <= 10) return (value / 10) * 100;
@@ -747,9 +1047,8 @@ function quadrantFromExtractedTable(
         y,
       };
     })
-    .filter(
-      (point): point is { label: string; x: number; y: number } =>
-        Boolean(point),
+    .filter((point): point is { label: string; x: number; y: number } =>
+      Boolean(point),
     )
     .slice(0, 12);
 
@@ -1056,9 +1355,7 @@ function hasExplicitStructuredArtifactRequest(
 ): boolean {
   const q = routing.query.toLowerCase();
   return (
-    wantsGraphArtifact(q) ||
-    wantsChartArtifact(q) ||
-    wantsTableArtifact(q)
+    wantsGraphArtifact(q) || wantsChartArtifact(q) || wantsTableArtifact(q)
   );
 }
 
@@ -1089,9 +1386,9 @@ export function buildStructuredExhibits(
 ): StructuredExhibits {
   const citations = answerCitationsFromAskSources(input.sources);
   const answerMode = classifyAbarvaAnswerMode(input.routing.query);
-  const shouldRenderStructured = hasExplicitStructuredArtifactRequest(
-    input.routing,
-  ) || answerMode === "strategy_to_moves_execution";
+  const shouldRenderStructured =
+    hasExplicitStructuredArtifactRequest(input.routing) ||
+    answerMode === "strategy_to_moves_execution";
   const query = input.routing.query.toLowerCase();
   const shouldBuildChart =
     input.routing.outputShape === "chart" || wantsChartArtifact(query);
@@ -1102,8 +1399,12 @@ export function buildStructuredExhibits(
     input.prose,
     citations.map((citation) => citation.id),
   );
-  const markdown = markdownTablesFromProse(
+  const decisionFences = decisionTableFencesFromProse(
     chartFences.prose,
+    citations.map((citation) => citation.id),
+  );
+  const markdown = markdownTablesFromProse(
+    decisionFences.prose,
     citations.map((citation) => citation.id),
   );
   const inline = inlineMarkdownTablesFromProse(
@@ -1114,8 +1415,27 @@ export function buildStructuredExhibits(
   const charts: AnswerChart[] = [];
   const graphs: AnswerGraph[] = [];
   tables.push(...sourceExhibits.tables);
+  tables.push(...decisionFences.tables);
   charts.push(...sourceExhibits.charts);
   charts.push(...chartFences.charts);
+  if (decisionFences.decisionRows.length > 0) {
+    const decisionCitationIds = citations.map((citation) => citation.id);
+    const matrix = valueComplexityMatrixFromDecisionRows(
+      decisionFences.decisionRows,
+      decisionCitationIds,
+    );
+    if (matrix) charts.push(matrix);
+    const readinessBar = readinessBarChartFromDecisionRows(
+      decisionFences.decisionRows,
+      decisionCitationIds,
+    );
+    if (readinessBar) charts.push(readinessBar);
+    const priorityStack = priorityStackFromDecisionRows(
+      decisionFences.decisionRows,
+      decisionCitationIds,
+    );
+    if (priorityStack) charts.push(priorityStack);
+  }
   graphs.push(...sourceExhibits.graphs);
   if (
     shouldRenderStructured ||
