@@ -851,46 +851,6 @@ function categoryForDimension(dimension: string): string {
   return "Context";
 }
 
-function knowledgeProfileTypeForArea(area: HomeExplorerArea | null) {
-  if (!area) {
-    return "EnterpriseProfile";
-  }
-  if (/function|ownership|workforce/i.test(area.label)) {
-    return "FunctionProfile";
-  }
-  if (/application|system/i.test(area.label)) {
-    return "SystemProfile";
-  }
-  if (/data asset|integration/i.test(area.label)) {
-    return "DataDomainProfile";
-  }
-  if (/infrastructure|platform/i.test(area.label)) {
-    return "InfrastructureProfile";
-  }
-  if (/vendor/i.test(area.label)) {
-    return "VendorProfile";
-  }
-  if (/contract/i.test(area.label)) {
-    return "ContractProfile";
-  }
-  if (/program|initiative/i.test(area.label)) {
-    return "ProgramProfile";
-  }
-  if (/risk|control/i.test(area.label)) {
-    return "RiskProfile";
-  }
-  if (/metric|outcome|budget|spend|value/i.test(area.label)) {
-    return "MetricProfile";
-  }
-  if (/use case|automation|ai/i.test(area.label)) {
-    return "UseCaseProfile";
-  }
-  if (/process/i.test(area.label)) {
-    return "ProcessProfile";
-  }
-  return "EnterpriseProfile";
-}
-
 type HomeExplorerArea = {
   id: string;
   label: string;
@@ -3116,7 +3076,6 @@ export function HomeSurface({
     /relationship|application|system|data|vendor/i.test(area.label),
   );
   const selectedName = selectedArea?.label ?? "enterprise context";
-  const selectedProfileType = knowledgeProfileTypeForArea(selectedArea);
   const selectedGaps = selectedArea?.moduleGaps.length
     ? selectedArea.moduleGaps.map((gap) => ({
         label: gap.description,
@@ -3489,17 +3448,17 @@ export function HomeSurface({
                           <p>{selectedStory?.whyItMatters}</p>
                         </article>
                         <article className="hx3-storyCard">
-                          <h3>Questions this supports</h3>
+                          <h3>Decisions this can inform</h3>
                           <ul>
                             {(selectedStory?.supportedQuestions ?? [])
                               .slice(0, 4)
                               .map((item) => (
                                 <li key={item}>{item}</li>
-                              ))}
+                            ))}
                           </ul>
                         </article>
                         <article className="hx3-storyCard warn">
-                          <h3>Not yet supported</h3>
+                          <h3>Validate before deciding</h3>
                           <ul>
                             {(selectedStory?.notYetSupported ?? [])
                               .slice(0, 4)
@@ -3510,14 +3469,12 @@ export function HomeSurface({
                         </article>
                       </div>
                       <article className="hx3-storyCard">
-                        <h3>{selectedProfileType}</h3>
+                        <h3>{selectedArea.label} story</h3>
                         <p>
-                          For {displayedTenantName}, this profile turns the
-                          loaded {selectedArea.label.toLowerCase()} context into
-                          a governed briefing surface: what is known, which
-                          records matter, what evidence backs them, and which
-                          caveats should follow the context into downstream
-                          modules.
+                          This view explains how {selectedArea.label.toLowerCase()} fit into
+                          {` ${displayedTenantName}'s`} enterprise context layer:
+                          what matters now, what connects to other dimensions,
+                          and what must be validated before a module acts on it.
                         </p>
                         <ul>
                           {selectedTabStories.data.lead ? (
@@ -3888,11 +3845,42 @@ export function HomeSurface({
                                 )}
                               </ul>
                             </article>
+                            <article className="hx3-storyCard">
+                              <h3>What more context unlocks</h3>
+                              <ul>
+                                {safeHomeInsightSummary.top_gaps
+                                  .slice(0, 4)
+                                  .map((gap) => (
+                                    <li key={gap.gap}>
+                                      {gap.evidence_requested} unlocks{" "}
+                                      {gap.module_impacted}.
+                                    </li>
+                                  ))}
+                              </ul>
+                            </article>
+                          </div>
+                        </div>
+                      </section>
+
+                      <details className="hx3-tech">
+                        <summary>Proof, guardrails, and do-not-claim boundaries</summary>
+                        <div className="hx3-techBody">
+                          <div className="hx3-grid2">
                             <article className="hx3-storyCard warn">
-                              <h3>Do not claim</h3>
+                              <h3>Evidence boundaries</h3>
                               <ul>
                                 {safeHomeInsightSummary.do_not_claim
-                                  .slice(0, 4)
+                                  .slice(0, 6)
+                                  .map((claim) => (
+                                    <li key={claim}>{claim}</li>
+                                  ))}
+                              </ul>
+                            </article>
+                            <article className="hx3-storyCard">
+                              <h3>Safe claims</h3>
+                              <ul>
+                                {safeHomeInsightSummary.safe_claims
+                                  .slice(0, 5)
                                   .map((claim) => (
                                     <li key={claim}>{claim}</li>
                                   ))}
@@ -3900,7 +3888,7 @@ export function HomeSurface({
                             </article>
                           </div>
                         </div>
-                      </section>
+                      </details>
 
                       <section className="hx3-section">
                         <div className="hx3-sectionHead">

@@ -1,0 +1,1722 @@
+import type {
+  KnowledgeDimensionNarrativeSummary,
+  KnowledgeHomeInsightSummary,
+} from "../knowledge-narrative-store";
+
+export const MERIDIAN_CLAUDE_HOME_INSIGHTS = {
+  "summary_title": "Meridian Health: Building the Governed Context Layer Before Scaling AI",
+  "executive_summary": "This narrative is built on a source-backed synthetic demo context for a Meridian-style integrated delivery network and health plan; it is planning-grade and is not real Meridian production data. The story it tells is deliberate: the enterprise context layer is the hero, and member service Agent Assist in the contact center is one worked example of what that layer unlocks. Across nine represented domains, the context reads well on breadth and evidence coverage, with 62 readable records each backed by a citable evidence reference. What the context makes clear is that Meridian runs a mature but fragmented current-state estate: Epic clinical systems (Epic Clarity, Epic Caboodle), a claims administration platform, eligibility and benefits, a CRM member case platform, a contact center platform, an enterprise knowledge base, on-prem SQL Server reporting marts, a DB2 or Netezza-style integration warehouse where applicable, and heavy reporting through Tableau, SAS, and Power BI. The declared direction is an AWS plus Databricks lakehouse with medallion architecture, Unity Catalog-style governance, PHI controls, human-in-the-loop review, and audit controls. Those platform elements are target-state, not current production. The decision implication for leadership is straightforward: high-value bets such as Agent Assist depend on a governed context spine that does not yet exist, so the near-term work is evidence capture, baseline setting, and relationship validation rather than premature automation claims.",
+  "strategic_priorities": [
+    "Stand up a governed clinical and claims context spine (identity, eligibility, claims, knowledge) as the shared foundation for member service, quality, and finance use cases.",
+    "Prove the AWS plus Databricks lakehouse and medallion architecture as target-state, with certified layers, lineage, and PHI controls, before treating any AI use case as production-ready.",
+    "Establish KPI baselines and accountable owners so contact center, quality, and cost-transparency programs can be measured rather than asserted.",
+    "Validate the currently missing relationship layer so systems, functions, data assets, and risks connect into a decision-grade context map.",
+    "Frame member service Agent Assist as a governed, human-in-the-loop worked example that shows how the context layer converts fragmented reporting into reliable, auditable operational support."
+  ],
+  "top_insights": [
+    {
+      "title": "A capable current-state estate is fragmented across reporting marts and tools",
+      "what_nexus_sees": "The context describes Epic Clarity and Epic Caboodle, a claims administration platform, on-prem SQL Server reporting marts, and heavy Tableau, SAS, and Power BI reporting, alongside a CRM member platform and contact center platform.",
+      "why_it_matters": "Fragmentation means the same member, claim, and eligibility facts live in multiple places, which limits consistent answers for member service and slows every downstream decision.",
+      "evidence_strength": "Strong",
+      "related_dimensions": [
+        "Applications & Systems",
+        "Data Assets & Integrations",
+        "Business Functions"
+      ],
+      "next_action": "Confirm system owners, criticality, and interface points for member service, claims, eligibility, and knowledge in a working session.",
+      "module_handoff": "Knowledge frames the estate; Intelligence reasons about consolidation options."
+    },
+    {
+      "title": "AWS and Databricks are the declared destination, not the current production floor",
+      "what_nexus_sees": "AWS, Databricks, medallion architecture, Unity Catalog-style governance, and a governed lakehouse appear consistently as target-state direction, with explicit gaps noting no certified medallion architecture and no platform, network, or security foundation evidence loaded.",
+      "why_it_matters": "Treating the target platform as if it were live would overstate readiness and risk building AI use cases on an unproven foundation.",
+      "evidence_strength": "Target / Future",
+      "related_dimensions": [
+        "Infrastructure & Platforms",
+        "Data Assets & Integrations",
+        "Programs & Initiatives"
+      ],
+      "next_action": "Request landing-zone, medallion certification, and security foundation artifacts to confirm foundation maturity.",
+      "module_handoff": "Knowledge holds the boundary; Moves can phase-gate the foundation build once evidence exists."
+    },
+    {
+      "title": "Member service Agent Assist is a well-anchored worked example that depends on many upstream domains",
+      "what_nexus_sees": "The business anchor ties Agent Assist to member service operations, supervisors, knowledge stewards, health plan operations, claims, eligibility and benefits, clinical reporting, data governance, privacy, and analytics, and a call center optimization program sits in early evidence framing.",
+      "why_it_matters": "It shows that a single high-value use case is only as strong as the governed context feeding it, which is exactly why the context layer is the hero of this story.",
+      "evidence_strength": "Medium",
+      "related_dimensions": [
+        "Business Functions",
+        "AI & Automation Use Cases",
+        "Programs & Initiatives"
+      ],
+      "next_action": "Capture current contact center KPIs and confirm knowledge base and CRM readiness before scoping automation.",
+      "module_handoff": "Knowledge scopes dependencies; Moves turns Agent Assist into a phase-gated bet."
+    },
+    {
+      "title": "The relationship layer that connects the context is not yet validated",
+      "what_nexus_sees": "Relationship rows were present in source but not accepted, and readiness reports relationship coverage at zero with relationships not validated across records.",
+      "why_it_matters": "Without validated links, the context can describe each domain but cannot yet reason confidently about how a system change ripples into functions, risks, and outcomes.",
+      "evidence_strength": "Gap",
+      "related_dimensions": [
+        "Relationships",
+        "Evidence Sources"
+      ],
+      "next_action": "Run a relationship validation session to connect systems, functions, data assets, risks, and metrics.",
+      "module_handoff": "Knowledge surfaces the gap; Intelligence depends on it for reliable reasoning."
+    },
+    {
+      "title": "Metrics exist as definitions and readiness checks, not yet as measured outcomes",
+      "what_nexus_sees": "Metrics such as analytics maintenance share, net-new analytics capacity, medallion certification status, and program baseline readiness are defined with a synthetic steward as owner and baseline required.",
+      "why_it_matters": "Value can be framed and targeted, but no realized savings or ROI can be claimed until actuals and accountable owners are in place.",
+      "evidence_strength": "Partial",
+      "related_dimensions": [
+        "Metrics & Outcomes",
+        "IT Budget, Spend & Value"
+      ],
+      "next_action": "Assign real metric owners and capture current baselines for the priority programs.",
+      "module_handoff": "Knowledge defines the metrics; Tower carries them once actuals exist."
+    }
+  ],
+  "enterprise_context_map": [
+    {
+      "from": "Contact Center and Member Experience",
+      "relation": "depends on",
+      "to": "CRM member case management",
+      "caveat": "Interface readiness not yet validated."
+    },
+    {
+      "from": "Member service Agent Assist",
+      "relation": "draws answers from",
+      "to": "Enterprise knowledge base",
+      "caveat": "Knowledge base currency and governance not yet confirmed."
+    },
+    {
+      "from": "Member service Agent Assist",
+      "relation": "needs facts from",
+      "to": "Claims administration platform",
+      "caveat": "Integration path is target-state, not proven."
+    },
+    {
+      "from": "Member service Agent Assist",
+      "relation": "needs facts from",
+      "to": "Eligibility and benefits platform",
+      "caveat": "Eligibility data readiness to be validated."
+    },
+    {
+      "from": "Epic Clarity and Epic Caboodle",
+      "relation": "feed",
+      "to": "On-prem SQL Server reporting marts",
+      "caveat": "Fragmented current-state reporting."
+    },
+    {
+      "from": "On-prem SQL Server reporting marts",
+      "relation": "consolidate into",
+      "to": "AWS plus Databricks lakehouse",
+      "caveat": "Target-state; no certified medallion architecture loaded."
+    },
+    {
+      "from": "Governed data foundation",
+      "relation": "enables",
+      "to": "AI and automation use cases",
+      "caveat": "Foundation is planning-grade, not current production."
+    },
+    {
+      "from": "Unified clinical and claims lakehouse",
+      "relation": "requires",
+      "to": "Patient and member identity spine",
+      "caveat": "Identity spine not loaded; open high-severity risk."
+    },
+    {
+      "from": "Tableau, SAS, and Power BI reporting",
+      "relation": "served by",
+      "to": "Enterprise Data and Analytics function",
+      "caveat": "Ownership and demand model to confirm."
+    },
+    {
+      "from": "Databricks and AWS foundation program",
+      "relation": "governed by",
+      "to": "Unity Catalog-style governance and PHI controls",
+      "caveat": "Governance operating model status not yet certified."
+    }
+  ],
+  "readiness_matrix": [
+    {
+      "dimension": "Applications & Systems",
+      "readiness": "Strong",
+      "story": "Current-state clinical, claims, reporting, and member systems are described with owners and criticality; AWS and Databricks remain target-state."
+    },
+    {
+      "dimension": "Data Assets & Integrations",
+      "readiness": "Partial",
+      "story": "Fragmented marts and warehouse are visible and a governed lakehouse is planned, but certified layers and an identity spine are not loaded."
+    },
+    {
+      "dimension": "Business Functions",
+      "readiness": "Strong",
+      "story": "Member experience, clinical, health plan, quality, finance, and technology functions are represented with executive owners."
+    },
+    {
+      "dimension": "Programs & Initiatives",
+      "readiness": "Partial",
+      "story": "Priority programs including call center optimization and the lakehouse foundation are framed in early evidence stages with baselines required."
+    },
+    {
+      "dimension": "Relationships",
+      "readiness": "Gap",
+      "story": "Relationship rows were not accepted and coverage reads zero, so cross-domain reasoning is not yet reliable."
+    },
+    {
+      "dimension": "Metrics & Outcomes",
+      "readiness": "Partial",
+      "story": "Metrics are defined with readiness checks but carry synthetic ownership and require real baselines."
+    },
+    {
+      "dimension": "Infrastructure & Platforms",
+      "readiness": "Target / Future",
+      "story": "The AWS and Databricks foundation is a declared direction with no certified platform, network, or security evidence loaded."
+    },
+    {
+      "dimension": "Risks & Controls",
+      "readiness": "Strong",
+      "story": "High-severity open risks are captured with required evidence, from medallion certification to governance and audit trail gaps."
+    }
+  ],
+  "evidence_heatmap": [
+    {
+      "dimension": "Applications & Systems",
+      "evidence_coverage": "High",
+      "confidence": "Medium",
+      "caveat": "Citable synthetic records; deployment and hosting are current_mixed and need workshop confirmation."
+    },
+    {
+      "dimension": "Data Assets & Integrations",
+      "evidence_coverage": "Medium",
+      "confidence": "Medium",
+      "caveat": "Many assets are workshop-refresh with owner to confirm; lakehouse layers are target-state."
+    },
+    {
+      "dimension": "Vendors & Contracts",
+      "evidence_coverage": "Medium",
+      "confidence": "Medium",
+      "caveat": "Vendors are named but commercial terms and economics are not loaded."
+    },
+    {
+      "dimension": "Programs & Initiatives",
+      "evidence_coverage": "Medium",
+      "confidence": "Medium",
+      "caveat": "Mostly candidate moves in early evidence framing with baseline required."
+    },
+    {
+      "dimension": "Risks & Controls",
+      "evidence_coverage": "High",
+      "confidence": "Medium",
+      "caveat": "Risks are open with evidence required; closure depends on workshops."
+    },
+    {
+      "dimension": "Metrics & Outcomes",
+      "evidence_coverage": "Medium",
+      "confidence": "Low",
+      "caveat": "Definitions present; no measured actuals and synthetic ownership."
+    },
+    {
+      "dimension": "Relationships",
+      "evidence_coverage": "Low",
+      "confidence": "Low",
+      "caveat": "No validated relationships available in this context."
+    },
+    {
+      "dimension": "Evidence Sources",
+      "evidence_coverage": "Medium",
+      "confidence": "Medium",
+      "caveat": "Synthetic, PHI-free, planning-grade, manifest-gated sources only."
+    }
+  ],
+  "top_gaps": [
+    {
+      "gap": "No validated relationship layer connecting systems, functions, data, risks, and metrics",
+      "why_it_matters": "Cross-domain reasoning and impact analysis cannot be trusted until links are validated.",
+      "source_dimension": "Relationships",
+      "evidence_requested": "Confirmed relationships mapping systems to functions, data assets, risks, and outcomes.",
+      "suggested_workshop_owner": "CDAO / Enterprise Data and Analytics",
+      "module_impacted": "Intelligence"
+    },
+    {
+      "gap": "No patient and member identity spine loaded",
+      "why_it_matters": "A unified clinical and claims view and reliable member service both depend on trustworthy identity resolution.",
+      "source_dimension": "Data Assets & Integrations",
+      "evidence_requested": "Identity spine design and match logic evidence.",
+      "suggested_workshop_owner": "Chief Data Officer",
+      "module_impacted": "Knowledge"
+    },
+    {
+      "gap": "No certified medallion architecture or platform foundation evidence",
+      "why_it_matters": "AI use cases built on an unproven foundation carry quality, security, and PHI risk.",
+      "source_dimension": "Infrastructure & Platforms",
+      "evidence_requested": "Landing-zone, medallion certification, and security foundation artifacts.",
+      "suggested_workshop_owner": "CDIO / Technology Platform and Security",
+      "module_impacted": "Moves"
+    },
+    {
+      "gap": "No measured KPI baselines for priority programs",
+      "why_it_matters": "Value cannot be realized or defended without current baselines and accountable owners.",
+      "source_dimension": "Metrics & Outcomes",
+      "evidence_requested": "Current contact center, quality, and cost baselines with named owners.",
+      "suggested_workshop_owner": "Chief Experience Officer and CFO",
+      "module_impacted": "Tower"
+    },
+    {
+      "gap": "No commercial economics for named vendors",
+      "why_it_matters": "Sourcing scope and contract optimization require loaded commercial evidence.",
+      "source_dimension": "Vendors & Contracts",
+      "evidence_requested": "Contract terms, spend, and renewal data for key vendors.",
+      "suggested_workshop_owner": "Procurement / Vendor Management",
+      "module_impacted": "Source"
+    }
+  ],
+  "module_readiness": [
+    {
+      "module": "Knowledge",
+      "readiness": "Ready to narrate current-state context across nine represented domains with citable synthetic evidence.",
+      "next_best_action": "Confirm ownership, criticality, and dependencies for member service, claims, eligibility, and knowledge systems."
+    },
+    {
+      "module": "Intelligence",
+      "readiness": "Partly ready; domain context is strong but the missing relationship layer limits confident cross-domain reasoning.",
+      "next_best_action": "Validate relationships so reasoning about AI focus and risk becomes decision-grade."
+    },
+    {
+      "module": "Moves",
+      "readiness": "Framing-ready; priority bets such as Agent Assist and the lakehouse foundation are captured as early-stage candidates.",
+      "next_best_action": "Convert the foundation and Agent Assist into phase-gated plans once baseline and foundation evidence exist."
+    },
+    {
+      "module": "Source",
+      "readiness": "Not yet enabled for commercial work; vendors are named but economics are absent.",
+      "next_best_action": "Load contract and spend evidence before sourcing and optimization analysis."
+    },
+    {
+      "module": "Tower",
+      "readiness": "Not yet enabled for value realization; metrics are defined but not measured.",
+      "next_best_action": "Capture actual baselines and assign real owners before any value claim."
+    }
+  ],
+  "safe_claims": [
+    "This context is source-backed synthetic demo context and is not real Meridian production data.",
+    "The current-state estate includes Epic Clarity, Epic Caboodle, a claims administration platform, eligibility and benefits, a CRM member platform, a contact center platform, a knowledge base, on-prem SQL Server reporting marts, a DB2 or Netezza-style warehouse where applicable, and Tableau, SAS, and Power BI reporting.",
+    "AWS, Databricks, medallion architecture, Unity Catalog-style governance, PHI controls, human-in-the-loop review, and audit controls are described as target-state, not current production.",
+    "Member service Agent Assist is a worked example that depends on many upstream governed domains.",
+    "Priority programs and metrics are captured in early business context framing with baselines still required.",
+    "This is synthetic Meridian-style demo context, not real Meridian production data.",
+    "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+    "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+    "Agent Assist is ready for business context planning and phase-gated execution framing, not production launch."
+  ],
+  "do_not_claim": [
+    "Do not claim real Meridian production data was loaded.",
+    "Do not claim AWS or Databricks is certified current production for this tenant.",
+    "Do not claim realized ROI, Tower value, or savings until measured business context exists.",
+    "Do not claim PHI-bearing transcripts have been ingested or approved.",
+    "Do not treat candidate or generated graph records as approved active tenant truth."
+  ],
+  "tenant_key": "meridian-health",
+  "tenant_name": "Meridian Health",
+  "source_context_hash": "sha256:03d68e65ea27528d9b53dfcc3f6ec18379dca66d83555eed5b1d71966483e70b",
+  "evidence_refs_used": [
+    "meridian-enterprise-profile",
+    "meridian-member-service-context",
+    "meridian-current-analytics-estate",
+    "meridian-agent-assist-use-case",
+    "meridian-risk-control-context",
+    "meridian-metrics-baseline-context"
+  ],
+  "relationship_edges_used": [
+    "rel-member-service-to-contact-center",
+    "rel-member-service-to-claims",
+    "rel-member-service-to-eligibility",
+    "rel-agent-assist-to-analytics-foundation",
+    "rel-agent-assist-to-phi-controls"
+  ],
+  "context_gap_ids_used": [
+    "gap-transcript-governance",
+    "gap-api-readiness",
+    "gap-kpi-baselines",
+    "gap-aws-databricks-production-readiness"
+  ],
+  "generated_by": "claude",
+  "generated_model": "claude-opus-4-8",
+  "generated_at": "2026-07-15T17:53:58.088Z",
+  "validation_status": "passed",
+  "validation_errors": []
+} satisfies KnowledgeHomeInsightSummary;
+
+export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
+  {
+    "dimension_key": "00_enterprise_profile",
+    "dimension_name": "Enterprise Profile",
+    "summary_title": "A synthetic integrated delivery network and health plan under modernization",
+    "executive_summary": "The context describes Meridian as an integrated delivery network and health plan spanning clinical delivery, health-plan operations, finance, and analytics transformation. This is source-backed synthetic demo context, not real Meridian production data. Leadership, revenue, and footprint figures are planning-grade and require client validation before display as facts.",
+    "what_nexus_knows": [
+      "Healthcare integrated delivery network and health plan with Sacramento and Northern/Central California and Nevada service areas",
+      "Stated mission and vision center on access, affordability, member experience, and a governed clinical, claims, pharmacy, and financial data foundation"
+    ],
+    "why_it_matters": "A clear enterprise anchor lets every downstream bet be framed against member service, clinical, and health-plan realities rather than generic assumptions.",
+    "questions_supported": [
+      "What kind of healthcare organization is this and what does it prioritize?",
+      "What customer segments and operating regions define scope?"
+    ],
+    "current_caveats": [
+      "Source-backed synthetic demo context; not real Meridian production data",
+      "Revenue, employee count, and leadership must be validated by a client answer material before being treated as fact"
+    ],
+    "next_validation_actions": [
+      "Confirm entity metadata and leadership through a client-supplied profile answer material",
+      "Reconcile the two profile entries into one canonical enterprise record"
+    ],
+    "module_usage": [
+      "Knowledge frames the enterprise story and business context boundaries",
+      "Intelligence uses the profile to scope AI investment reasoning"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-00_enterprise_profile-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:dad4dee623f5f8191c819fc48f1c4eec0213c45d96489927ce3c36e93570303f",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "01_business_functions",
+    "dimension_name": "Business Functions",
+    "summary_title": "Functions that carry the member service and Agent Assist story",
+    "executive_summary": "The context captures clinical operations, health plan operations, quality, finance, contact center and member experience, technology platform, and enterprise data and analytics, each with a named executive owner. Contact Center and Member Experience anchors the Agent Assist worked example. All entries are planning-grade synthetic context, not current production certification.",
+    "what_nexus_knows": [
+      "Contact Center and Member Experience owns call handling, CRM case management, and next-best-action workflows under a Chief Experience Officer",
+      "Health Plan Operations covers prior authorization, utilization management, claims operations, and member support"
+    ],
+    "why_it_matters": "Mapping owned capabilities to functions shows which teams must collaborate for member service Agent Assist and where accountability sits.",
+    "questions_supported": [
+      "Which functions and owners support the contact center Agent Assist example?",
+      "What capabilities does each core function claim?"
+    ],
+    "current_caveats": [
+      "Confidence is medium and owners are titles, not validated named individuals",
+      "Capabilities are planning hypotheses, not audited operating facts"
+    ],
+    "next_validation_actions": [
+      "Confirm executive owners and capability inventories in a client workshop",
+      "Validate cross-function dependencies for the Agent Assist workflow"
+    ],
+    "module_usage": [
+      "Knowledge explains function ownership and dependencies",
+      "Moves aligns candidate bets to accountable functions"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-01_business_functions-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:25e1cf998e2040561d375b7d31fd3db377cd10e785e3145e424121498d97f361",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "02_org_ownership",
+    "dimension_name": "Org Ownership",
+    "summary_title": "Ownership inferred from function executives, not yet a validated org model",
+    "executive_summary": "Ownership signals come through function-level executive owners such as CDAO, CMO, Chief Health Plan Officer, CFO, Chief Experience Officer, and CDIO. A dedicated, validated organizational ownership structure is not separately loaded, so accountability chains for member service and data governance remain to be confirmed.",
+    "what_nexus_knows": [
+      "Function records name executive owners spanning clinical, health plan, finance, experience, technology, and data and analytics",
+      "Data platform and program ownership is repeatedly noted as owner_to_confirm_in_workshop"
+    ],
+    "why_it_matters": "Clear ownership determines who signs off on Agent Assist, knowledge base governance, and the target-state data foundation.",
+    "questions_supported": [
+      "Which executive owns each major function?",
+      "Where are ownership gaps for programs and data assets?"
+    ],
+    "current_caveats": [
+      "No standalone validated org ownership records are loaded",
+      "Several data and program owners are explicitly unconfirmed"
+    ],
+    "next_validation_actions": [
+      "Confirm accountable owners for data governance, knowledge base, and Agent Assist",
+      "Establish a decision and escalation model across contributing functions"
+    ],
+    "module_usage": [
+      "Knowledge surfaces owner gaps",
+      "Moves assigns accountable owners to phase gates"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-02_org_ownership-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:2aa8de75148cb4715538d538c28655e098a9844b9a513d2f741902c6fd543810",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "03_workforce_roles",
+    "dimension_name": "Workforce Roles",
+    "summary_title": "Roles implied by the member service worked example",
+    "executive_summary": "The Agent Assist example implies roles including contact center agents, supervisors, knowledge stewards, health plan operations staff, claims and eligibility specialists, and analytics practitioners using Tableau and SAS. A discrete, validated workforce role inventory with counts is not yet available and must be confirmed.",
+    "what_nexus_knows": [
+      "Analytics practitioners are described at Tableau and SAS estate scale across the enterprise",
+      "Member service depends on agents, supervisors, and knowledge stewards for Agent Assist"
+    ],
+    "why_it_matters": "Role clarity drives adoption planning, human-in-the-loop design, and change management for any AI-assisted workflow.",
+    "questions_supported": [
+      "Which roles are touched by the Agent Assist example?",
+      "Who maintains the knowledge base and analytics estate?"
+    ],
+    "current_caveats": [
+      "Employee and role counts are not validated as production facts",
+      "Role responsibilities are inferred from function context, not a workforce dataset"
+    ],
+    "next_validation_actions": [
+      "Confirm agent, supervisor, and steward counts and responsibilities",
+      "Define human-in-the-loop roles for member service automation"
+    ],
+    "module_usage": [
+      "Knowledge describes role dependencies",
+      "Intelligence weighs adoption and readiness by role"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-03_workforce_roles-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:dfc51603b234819527a44c157f28b4c91a6db7ea7af003d0546fd2a576bb11e0",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "04_applications_systems",
+    "dimension_name": "Applications & Systems",
+    "summary_title": "A current mixed estate of clinical, claims, and reporting systems",
+    "executive_summary": "The context shows current-state systems including Epic Hyperspace, Epic Clarity, Epic Caboodle, a claims administration platform, on-prem SQL Server reporting marts, Tableau, SAS, and Power BI, plus CRM member case management and contact center telephony. AWS and Databricks appear only as target-state direction and are not certified current production for this tenant.",
+    "what_nexus_knows": [
+      "Epic Clarity and Caboodle, claims administration, and on-prem SQL Server reporting marts are current-state critical systems",
+      "Tableau, SAS, and Power BI form the current reporting and analytics estate"
+    ],
+    "why_it_matters": "The Agent Assist example depends on CRM, claims, eligibility, knowledge base, and Epic-derived data, so current system readiness governs feasibility.",
+    "questions_supported": [
+      "What systems support member service, claims, and clinical reporting today?",
+      "Which platforms are current versus target-state only?"
+    ],
+    "current_caveats": [
+      "AWS and Databricks are target-state, not current production for this tenant",
+      "Deployment and hosting are recorded as current_mixed and need confirmation"
+    ],
+    "next_validation_actions": [
+      "Validate API and integration readiness for CRM, claims, eligibility, knowledge, and Epic-derived data",
+      "Confirm which reporting marts feed member service workflows"
+    ],
+    "module_usage": [
+      "Knowledge explains the current estate and target-state caveats",
+      "Source scopes system and platform context once commercial business context loads"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-04_applications_systems-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:8d333cdb0d049d28174c8c78e9ebdc4cb5e4e345f70085e17a6e93cc9d153f46",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "05_data_assets_integrations",
+    "dimension_name": "Data Assets & Integrations",
+    "summary_title": "Fragmented current marts moving toward a governed lakehouse",
+    "executive_summary": "Current analytics are on-premise and fragmented across Epic Clarity and Caboodle, SQL Server reporting marts, a DB2 or Netezza-style integration warehouse where applicable, Tableau, and SAS. Named lakehouse and governed data foundation assets are candidate, workshop-refresh planning constructs on a future medallion and Unity Catalog direction, not current production data products.",
+    "what_nexus_knows": [
+      "Unified clinical and claims lakehouse constructs span EMR clinical, claims, pharmacy, and patient/member identity as target-state assets",
+      "Data owners for these assets are recorded as owner_to_confirm_in_workshop"
+    ],
+    "why_it_matters": "Agent Assist and downstream automation need harmonized, governed data; fragmented marts and unconfirmed owners are the core constraint.",
+    "questions_supported": [
+      "What data feeds member service and clinical reporting today?",
+      "What governed lakehouse and identity spine are planned as target-state?"
+    ],
+    "current_caveats": [
+      "No certified medallion architecture, business layer, or identity spine is loaded",
+      "Governed data products are target-state planning constructs, not current production"
+    ],
+    "next_validation_actions": [
+      "Confirm asset owners, refresh cadence, and lineage for priority marts",
+      "Validate a patient/member identity spine plan and claims/pharmacy harmonization"
+    ],
+    "module_usage": [
+      "Knowledge explains fragmentation and target-state direction",
+      "Moves frames the governed data foundation as a phase-gated bet"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-05_data_assets_integrations-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:b4464ebc6130620b8bad35c9a197da39d821f7153ffbfdc3dd64970352ce01e0",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "06_infrastructure_platforms",
+    "dimension_name": "Infrastructure & Platforms",
+    "summary_title": "Target-state AWS and Databricks foundation, not yet certified",
+    "executive_summary": "The technology platform function names an AWS landing zone, a Databricks foundation, network and security controls, and interface operations as target-state ambitions. No certified medallion architecture and no platform, network, or security foundation business context is loaded, so AWS and Databricks must be treated as target-state, not current production.",
+    "what_nexus_knows": [
+      "Technology Platform and Security under a CDIO owns AWS landing zone and Databricks foundation ambitions",
+      "A named Databricks on AWS lakehouse foundation program is in mobilize phase with baseline business context still required"
+    ],
+    "why_it_matters": "Every AI and data bet, including member service Agent Assist, depends on a governed platform whose foundation readiness is unproven today.",
+    "questions_supported": [
+      "What is the target platform direction and its current readiness?",
+      "What foundation business context is still missing?"
+    ],
+    "current_caveats": [
+      "AWS and Databricks are not certified current production for this tenant",
+      "No platform, network, or security foundation business context is loaded"
+    ],
+    "next_validation_actions": [
+      "Confirm landing zone, network, and security foundation status and controls",
+      "Validate medallion certification and PHI control readiness"
+    ],
+    "module_usage": [
+      "Knowledge separates target-state ambition from certified readiness",
+      "Moves sequences foundation gates before dependent bets"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-06_infrastructure_platforms-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:b150ab1f281f42dfc7c4fe99f1e3c1e085af304ed2df9986b89ce8baa60b996c",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "07_vendors_contracts",
+    "dimension_name": "Vendors & Contracts",
+    "summary_title": "Named strategic vendors without validated commercial terms",
+    "executive_summary": "The context names vendors including Epic, Microsoft, Tableau, SAS, an outsourced analytics managed services provider, Amazon Web Services, and Databricks. These are planning-grade entries at medium confidence with duplicate names to reconcile. Contract economics, spend, and realized savings are not proven and must not be claimed.",
+    "what_nexus_knows": [
+      "Strategic vendors span EHR, cloud, BI, advanced analytics, and outsourced analytics services",
+      "Eleven duplicate vendor names indicate reconciliation is needed"
+    ],
+    "why_it_matters": "Sourcing scope and contract optimization for member service, analytics, and the target platform depend on validated commercial business context not yet present.",
+    "questions_supported": [
+      "Which vendors underpin the current and target estate?",
+      "Where are duplicate vendor records to be reconciled?"
+    ],
+    "current_caveats": [
+      "No validated contract terms, spend, or savings are loaded",
+      "Duplicate vendor entries require de-duplication"
+    ],
+    "next_validation_actions": [
+      "Load commercial terms, renewal dates, and spend for priority vendors",
+      "Reconcile duplicate vendor records into canonical entries"
+    ],
+    "module_usage": [
+      "Knowledge lists vendors and business context gaps",
+      "Source drives sourcing scope once commercial business context loads"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-07_vendors_contracts-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:b5f80913bbc0fc0942bb9a9ec8565604781265d354ef0ec70075fab4af0aedd9",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "08_it_budget_spend_value",
+    "dimension_name": "IT Budget, Spend & Value",
+    "summary_title": "Planning-grade budget signals awaiting financial validation",
+    "executive_summary": "The context includes a planning-grade technology budget figure and program-level budget and expected-value numbers for the Databricks on AWS foundation. These are synthetic planning hypotheses, not audited financials. ROI, savings, or Tower value should not be claimed until measured actuals exist.",
+    "what_nexus_knows": [
+      "A technology budget figure and a program budget with expected value are present as planning inputs",
+      "Program value claims are explicitly conditioned on adoption, control business context, and an accountable owner"
+    ],
+    "why_it_matters": "Investment prioritization for member service and data foundation bets needs validated spend and value baselines, not planning placeholders.",
+    "questions_supported": [
+      "What planning-grade budget and value signals exist?",
+      "What conditions gate any value claim?"
+    ],
+    "current_caveats": [
+      "Figures are synthetic planning-grade, not audited financials",
+      "No realized ROI, savings, or value has been proven"
+    ],
+    "next_validation_actions": [
+      "Validate budget baselines and cost allocation with finance",
+      "Define outcome and value baselines before any realization claim"
+    ],
+    "module_usage": [
+      "Knowledge flags value as unproven",
+      "Tower holds value realization pending measured actuals"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-08_it_budget_spend_value-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:93c0c0c545b9de8524886ff787252b2f501a22012476657fc6ce5b70fd0d9d39",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "09_programs_initiatives",
+    "dimension_name": "Programs & Initiatives",
+    "summary_title": "Candidate bets in early business context framing",
+    "executive_summary": "The context captures candidate programs including the unified clinical and claims lakehouse, governed data foundation for AI and LLM automation, call center optimization, provider quality, cost transparency, payment integrity, and automated close. Most are candidate moves in P0/P1 business context framing with baselines still required; the Databricks foundation program is in mobilize.",
+    "what_nexus_knows": [
+      "Call center optimization depends on contact center transcript and telephony, CRM, claims administration, and Power BI",
+      "Most programs are candidate moves needing business context owner, baseline, and gate criteria"
+    ],
+    "why_it_matters": "These initiatives are the raw material for phase-gated execution, with member service optimization the natural Agent Assist worked example.",
+    "questions_supported": [
+      "Which programs are candidates and what do they depend on?",
+      "What business context is required to advance each bet?"
+    ],
+    "current_caveats": [
+      "Most programs are candidate moves, not funded or in delivery",
+      "Target outcomes are recorded as baseline_required"
+    ],
+    "next_validation_actions": [
+      "Confirm sponsors, owners, baselines, and gate criteria per program",
+      "Prioritize the call center optimization bet for the Agent Assist example"
+    ],
+    "module_usage": [
+      "Knowledge frames candidate bets and dependencies",
+      "Moves converts selected bets into phase-gated execution"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-09_programs_initiatives-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:793f90f19761548584aa742daaa6e4005cd13c63abb74e1006776879c128b1b5",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "10_ai_automation_use_cases",
+    "dimension_name": "AI & Automation Use Cases",
+    "summary_title": "Member service Agent Assist as the anchor use case",
+    "executive_summary": "Agent Assist for member service and contact center is the worked example, drawing on CRM, claims, eligibility, knowledge base, and Epic-derived data. Governed data foundation constructs target prior authorization, coding, and utilization management automation. These remain target-state, PHI-controlled, human-in-the-loop concepts, not deployed automation.",
+    "what_nexus_knows": [
+      "Governed data foundation assets target prior authorization, coding, and utilization management automation",
+      "Agent Assist depends on member service operations, knowledge stewards, claims, eligibility, and clinical reporting"
+    ],
+    "why_it_matters": "A concrete, governed use case shows how the context layer would power AI with human-in-the-loop and audit controls once foundations exist.",
+    "questions_supported": [
+      "What is the anchor AI use case and its dependencies?",
+      "Which automation concepts are target-state candidates?"
+    ],
+    "current_caveats": [
+      "Use cases are target-state; no automation is deployed or certified",
+      "Transcript and call-recording governance is not validated"
+    ],
+    "next_validation_actions": [
+      "Validate transcript and PHI governance and human-in-the-loop design",
+      "Confirm data readiness for the Agent Assist knowledge and case flows"
+    ],
+    "module_usage": [
+      "Knowledge explains the anchor use case and boundaries",
+      "Intelligence reasons about AI focus, readiness, and risk"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-10_ai_automation_use_cases-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:9e3a5f0fcb4d90aaf9db95c510725acd135dfbac459b6075083b6a4694c4e52c",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "11_risks_controls",
+    "dimension_name": "Risks & Controls",
+    "summary_title": "Open high-severity foundation and governance risks",
+    "executive_summary": "The context records open high-severity risks: no certified medallion architecture, no patient/member identity spine, unproven claims and pharmacy harmonization, an AWS/Databricks foundation not ready, no formal data governance, no certified business layer, no AI audit trail business context, and data quality rules not yet available. Each requires workshop business context to close.",
+    "what_nexus_knows": [
+      "Foundation risks include no certified medallion and an AWS/Databricks foundation not ready",
+      "Governance risks include no formal data governance, no AI audit trail business context, and missing data quality rules"
+    ],
+    "why_it_matters": "These open risks directly gate any member service Agent Assist or automation bet that must operate under PHI and audit controls.",
+    "questions_supported": [
+      "What open risks block the data foundation and AI bets?",
+      "What business context is required to close each control?"
+    ],
+    "current_caveats": [
+      "All listed controls are open with medium confidence",
+      "Control owners are recorded generically as Operations"
+    ],
+    "next_validation_actions": [
+      "Assign named control owners and business context to each open risk",
+      "Prioritize governance, audit trail, and identity spine closure"
+    ],
+    "module_usage": [
+      "Knowledge surfaces open risks and required business context",
+      "Intelligence weighs risk against readiness for bet sequencing"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-11_risks_controls-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:6eb877be8a8b6475d0aae424eb8ad03ff7540042ddc29843b3fd327c2a258d82",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "12_relationships",
+    "dimension_name": "Relationships",
+    "summary_title": "Validated relationships not yet present in this context",
+    "executive_summary": "The relationship domain is empty in this answer material; all 85 source records were skipped as specific source gap and relationship coverage is zero. Functions, systems, programs, and risks carry relationship_not_validated status. Cross-dimension links are implied but not yet governed connections that can be treated as active tenant truth.",
+    "what_nexus_knows": [
+      "Relationship coverage is zero and no validated relationships are loaded",
+      "Records across domains are marked relationship_not_validated"
+    ],
+    "why_it_matters": "Without validated relationships, the context can describe entities but cannot yet prove how member service, systems, and data assets formally connect.",
+    "questions_supported": [
+      "Are validated cross-dimension relationships available?",
+      "Which records still lack relationship validation?"
+    ],
+    "current_caveats": [
+      "No validated relationships are present in this answer material",
+      "Implied links must not be treated as governed connections"
+    ],
+    "next_validation_actions": [
+      "Validate priority edges linking functions, systems, data, and programs",
+      "Establish relationships for the Agent Assist dependency chain"
+    ],
+    "module_usage": [
+      "Knowledge notes the relationship gap",
+      "Intelligence defers dependency reasoning pending validated edges"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-12_relationships-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:c3f35821ab8ec9ec5a14449c45db1f29ecf78f8df7473ab5207139d216614776",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "13_evidence_sources",
+    "dimension_name": "business context Sources",
+    "summary_title": "Synthetic, PHI-free, manifest-gated planning sources",
+    "executive_summary": "business context is sourced from repo-generated current-state packs marked synthetic, PHI-free, planning-grade, and manifest-gated, dated mid-2026. business context coverage is complete for the represented records, but the sources are synthetic demo context, not real Meridian production data, and duplicate source entries need reconciliation.",
+    "what_nexus_knows": [
+      "Sources are synthetic PHI-free planning-grade current-state packs, manifest-gated for loading",
+      "business context coverage is complete for represented records with citable status"
+    ],
+    "why_it_matters": "Transparent, synthetic, PHI-free provenance keeps the story honest and prevents planning hypotheses from being read as audited facts.",
+    "questions_supported": [
+      "Where does this context come from and what is its confidentiality?",
+      "Is the business context real production data or synthetic planning material?"
+    ],
+    "current_caveats": [
+      "All business context is synthetic demo context, not real Meridian production data",
+      "Duplicate business context source entries require reconciliation"
+    ],
+    "next_validation_actions": [
+      "Replace synthetic sources with client-supplied business context where available",
+      "Reconcile duplicate business context source records"
+    ],
+    "module_usage": [
+      "Knowledge grounds every claim in citable sources",
+      "Tower requires measured actuals before any value business context"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-13_evidence_sources-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:13d98ed0f9d48b94038e881b656f6cd1030466d4280e293c5d66982f64678cf3",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "14_metrics_outcomes",
+    "dimension_name": "Metrics & Outcomes",
+    "summary_title": "Baseline-readiness metrics without proven outcomes",
+    "executive_summary": "The context defines metrics such as analytics maintenance share, net-new analytics capacity share, medallion certification status, governance operating model status, and per-program baseline readiness. These are definitions and readiness checks, not measured outcomes. KPI baselines are incomplete and no realized outcomes may be claimed.",
+    "what_nexus_knows": [
+      "Metrics capture analytics maintenance versus net-new capacity and foundation certification status",
+      "Per-program baseline-readiness metrics track business context via phase checklists"
+    ],
+    "why_it_matters": "Sound metric definitions and readiness signals set the stage for value tracking once baselines and actuals for member service and data bets exist.",
+    "questions_supported": [
+      "What metrics frame analytics capacity and foundation readiness?",
+      "What baseline readiness exists per program?"
+    ],
+    "current_caveats": [
+      "Metrics are definitions and readiness checks, not measured actuals",
+      "KPI baselines are incomplete and outcomes are unproven"
+    ],
+    "next_validation_actions": [
+      "Establish measured baselines for priority metrics with named owners",
+      "Define Agent Assist outcome measures before value claims"
+    ],
+    "module_usage": [
+      "Knowledge explains metric definitions and gaps",
+      "Tower uses baselines and owners once actuals are measured"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-14_metrics_outcomes-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:5509db53f46aa7e494d2d396a91a057ffddff50c6f336a560990a1b04398dd2f",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "15_industry_context_patterns",
+    "dimension_name": "Industry Context & Patterns",
+    "summary_title": "Payer-provider patterns framing the modernization story",
+    "executive_summary": "The profile positions Meridian as a regional integrated delivery network with payer and services complexity, facing familiar healthcare patterns: fragmented on-prem analytics, Epic-centric clinical data, claims and eligibility operations, and a move toward a governed lakehouse. These patterns are context framing, not benchmarked or certified industry claims.",
+    "what_nexus_knows": [
+      "Profile references a Sutter-scale provider with Kaiser/Humana-style payer and services complexity",
+      "Modernization mirrors common payer-provider shifts from fragmented marts to governed lakehouse"
+    ],
+    "why_it_matters": "Industry framing helps prioritize member service, quality, cost transparency, and payment integrity bets against recognizable healthcare pressures.",
+    "questions_supported": [
+      "What industry patterns shape this modernization?",
+      "How does the payer-provider profile influence priorities?"
+    ],
+    "current_caveats": [
+      "Comparisons are illustrative framing, not benchmarked facts",
+      "No certified external benchmarks are loaded"
+    ],
+    "next_validation_actions": [
+      "Confirm relevant peer benchmarks with the client",
+      "Validate which industry pressures most affect member service"
+    ],
+    "module_usage": [
+      "Knowledge frames industry patterns",
+      "Intelligence contextualizes bets against sector pressures"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-15_industry_context_patterns-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:6602a07e81bf66ca1fbf11f6a347c56dd2eb3723a5a9b7e261b712ec30fee342",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "16_expert_lenses",
+    "dimension_name": "Expert Lenses",
+    "summary_title": "Advisory lenses on data, clinical, plan, finance, and experience",
+    "executive_summary": "The function owners imply distinct advisory lenses: data and analytics under a CDAO, clinical under a CMO, health plan operations, finance and actuarial under a CFO, member experience under a CXO, and platform and security under a CDIO. These lenses guide interpretation but are not separately validated expert assessments.",
+    "what_nexus_knows": [
+      "Distinct executive lenses span data, clinical, health plan, finance, experience, and technology",
+      "The member experience lens anchors the Agent Assist worked example"
+    ],
+    "why_it_matters": "Multiple expert lenses ensure member service, clinical safety, financial integrity, and governance perspectives all inform the modernization story.",
+    "questions_supported": [
+      "Which expert perspectives shape this tenant's decisions?",
+      "How does the experience lens frame Agent Assist?"
+    ],
+    "current_caveats": [
+      "Lenses are inferred from function ownership, not validated expert input",
+      "No standalone expert-lens dataset is loaded"
+    ],
+    "next_validation_actions": [
+      "Convene each executive lens in validation workshops",
+      "Capture clinical safety and privacy lenses for Agent Assist"
+    ],
+    "module_usage": [
+      "Knowledge organizes the story by expert lens",
+      "Intelligence balances lenses in recommendations"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-16_expert_lenses-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:e19b955be610b9dbcbb76f109a4610ccea4cc793d5809fff6db5ebd50488ac7b",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "17_managed_services_scope",
+    "dimension_name": "Managed Services Scope",
+    "summary_title": "Outsourced analytics services present but scope unvalidated",
+    "executive_summary": "The context names an outsourced analytics managed services provider among the vendors, signaling that analytics maintenance and ad hoc reporting may be partly delivered through managed services. The precise scope, terms, and coverage are not validated and must be confirmed before any commercial or operating conclusions.",
+    "what_nexus_knows": [
+      "An outsourced analytics managed services provider is named in the vendor context",
+      "Analytics resources are described as heavily consumed by maintenance and ad hoc work"
+    ],
+    "why_it_matters": "Managed-services scope shapes who runs the fragmented analytics estate and how member service and data bets would be resourced and governed.",
+    "questions_supported": [
+      "Is analytics delivery partly outsourced?",
+      "What managed-services scope supports the current estate?"
+    ],
+    "current_caveats": [
+      "Managed-services scope and terms are not validated",
+      "No contract detail confirms coverage or responsibilities"
+    ],
+    "next_validation_actions": [
+      "Confirm managed-services scope, terms, and responsibilities",
+      "Clarify in-house versus outsourced roles for the data foundation"
+    ],
+    "module_usage": [
+      "Knowledge flags the managed-services signal",
+      "Source assesses scope once commercial business context loads"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-17_managed_services_scope-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:89249eb53df794514f93d7923adb621b4b22cc8af703470c269e9c88593ac4c8",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  },
+  {
+    "dimension_key": "18_operational_process_evidence",
+    "dimension_name": "Operational Process business context",
+    "summary_title": "Process detail implied by capabilities, not yet documented",
+    "executive_summary": "Operational processes are implied through function capabilities such as call handling and CRM case management, claims and utilization management, measure logic, and close automation. Detailed process business context, cycle times, and transcript governance for member service are not yet available and remain to be validated in workshops.",
+    "what_nexus_knows": [
+      "Function capabilities imply call handling, CRM case management, and next-best-action processes",
+      "Claims, utilization management, and financial close processes are named at a capability level"
+    ],
+    "why_it_matters": "Agent Assist redesign depends on documented member service process flows, handoffs, and transcript governance that are not yet evidenced.",
+    "questions_supported": [
+      "What operational processes underpin member service and claims?",
+      "Where is process business context still missing?"
+    ],
+    "current_caveats": [
+      "Detailed process business context and cycle times are not yet available",
+      "Transcript and call-recording governance is not validated"
+    ],
+    "next_validation_actions": [
+      "Document member service process flows and handoffs",
+      "Validate transcript governance and PHI handling for Agent Assist"
+    ],
+    "module_usage": [
+      "Knowledge maps implied processes and gaps",
+      "Moves grounds execution steps in validated process business context"
+    ],
+    "tenant_key": "meridian-health",
+    "tenant_name": "Meridian Health",
+    "safe_demo_claims": [
+      "This is synthetic Meridian-style demo context, not real Meridian production data.",
+      "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
+      "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
+      "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
+    ],
+    "do_not_claim": [
+      "Do not claim real Meridian production data was loaded.",
+      "Do not claim AWS or Databricks is certified current production for this tenant.",
+      "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
+      "Do not claim PHI-bearing transcripts have been ingested or approved.",
+      "Do not treat candidate or generated graph rows as approved active tenant truth."
+    ],
+    "evidence_refs_used": [
+      "meridian-enterprise-profile",
+      "meridian-member-service-context",
+      "meridian-current-analytics-estate",
+      "meridian-agent-assist-use-case",
+      "meridian-risk-control-context",
+      "meridian-metrics-baseline-context"
+    ],
+    "source_fact_ids_used": [
+      "fact-18_operational_process_evidence-meridian",
+      "fact-meridian-agent-assist"
+    ],
+    "entity_profile_ids_used": [
+      "profile-meridian-member-service",
+      "profile-meridian-agent-assist"
+    ],
+    "relationship_edge_ids_used": [
+      "rel-agent-assist-cross-dimension"
+    ],
+    "context_gap_ids_used": [
+      "gap-validation-needed"
+    ],
+    "source_context_hash": "sha256:ba3695846585e210fb52a30ee2911d6a087d442e13ce37ecfe812336084c4bde",
+    "generated_by": "claude",
+    "generated_model": "claude-opus-4-8",
+    "generated_at": "2026-07-15T17:53:58.088Z",
+    "validation_status": "passed",
+    "validation_errors": [],
+    "unsupported_claims": [],
+    "active_or_candidate_status": "active"
+  }
+] satisfies KnowledgeDimensionNarrativeSummary[];

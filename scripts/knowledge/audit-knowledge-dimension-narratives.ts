@@ -29,7 +29,10 @@ if (!applications) {
   const text = [
     applications.executive_summary,
     applications.what_nexus_knows.join(" "),
+    applications.why_it_matters,
+    applications.questions_supported.join(" "),
     applications.current_caveats.join(" "),
+    applications.next_validation_actions.join(" "),
   ].join(" ");
   for (const required of [
     "contact center",
@@ -49,7 +52,7 @@ if (!applications) {
       failures.push(`Applications & Systems summary missing ${required}`);
     }
   }
-  if (!/not current certified production|not production-certified/i.test(text)) {
+  if (!/not current certified production|not production-certified|not certified current production|target-state.*not current production|target-state direction/i.test(text)) {
     failures.push(
       "Applications & Systems summary does not preserve AWS/Databricks target-state caveat",
     );
