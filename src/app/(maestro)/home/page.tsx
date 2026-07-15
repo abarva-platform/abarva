@@ -14,14 +14,23 @@ import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence
 import { buildHomeDataQualityModel } from "@/lib/home/home-data-quality";
 import { buildHomeEnglishSummary } from "@/lib/home/home-english-summary";
 import { buildHomeRuntimeSummarySnapshot } from "@/lib/home/home-summary-runtime";
+import { buildHomeSummarySnapshotFromModuleContext } from "@/lib/home/home-summary-snapshot";
 import { getHomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
 import { getHomeV7ContextBrowser } from "@/lib/home/v7-context-browser";
 import { getIntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
+import type {
+  ModuleContextReadRequest,
+  ModuleContextRequestedDomain,
+} from "@/lib/enterprise-data/contracts/module-context-apis";
+import {
+  explainModuleContext,
+  getModuleContext,
+} from "@/lib/enterprise-data/module-context-serving/module-context-serving";
 
 export const metadata: Metadata = {
-  title: "Home · Enterprise Knowledge | AbarVa",
+  title: "Knowledge · Enterprise Context | AbarVa",
   description:
-    "Browse known facts, source-backed evidence, evidence gaps, and relationships.",
+    "Browse governed enterprise context, source-backed evidence, gaps, relationships, and module readiness.",
 };
 
 export const dynamic = "force-dynamic";
@@ -50,6 +59,19 @@ function bindingTenantKey(value: string | null | undefined): string | null {
   return key;
 }
 
+const HOME_KNOWLEDGE_DOMAINS: ModuleContextRequestedDomain[] = [
+  "enterprise_profile",
+  "functions",
+  "applications_systems",
+  "vendors_contracts",
+  "data_assets_integrations",
+  "programs_priorities",
+  "risks_controls",
+  "metrics_outcomes",
+  "relationships",
+  "evidence_sources",
+];
+
 export default async function HomePage({ searchParams }: HomePageProps) {
   const params = await searchParams;
   const requestedClient = firstSearchParam(params?.client);
@@ -73,6 +95,32 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     ? getClientOption(displayClientKey)
     : null;
   const binding = getIntelligenceBindingPayload(homeTenantKey);
+  const moduleContextRequest =
+    homeTenantKey || activeClient?.key || requestedClient
+      ? ({
+          tenantKey:
+            homeTenantKey ??
+            bindingTenantKey(activeClient?.key ?? requestedClient) ??
+            activeClient?.key ??
+            requestedClient ??
+            "skyharbor-air",
+          moduleKey: "home",
+          purpose: "context_summary",
+          mode: candidatePreviewEnabled ? "candidate_preview" : "active",
+          requestedDomains: HOME_KNOWLEDGE_DOMAINS,
+          evidencePolicy: "lineage_required",
+          relationshipPolicy: "validated_and_candidates",
+          actorKey: "home-knowledge-default",
+        } satisfies ModuleContextReadRequest)
+      : null;
+  const moduleContextBundle = moduleContextRequest
+    ? await Promise.all([
+        getModuleContext(moduleContextRequest, { repoRoot: process.cwd() }),
+        explainModuleContext(moduleContextRequest, { repoRoot: process.cwd() }),
+      ]).catch(() => null)
+    : null;
+  const moduleContext = moduleContextBundle?.[0] ?? null;
+  const moduleContextExplanation = moduleContextBundle?.[1] ?? null;
   const v7Browser = await getHomeV7ContextBrowser({
     tenantKey: activeClient?.key ?? homeTenantKey,
   }).catch(() => null);
@@ -100,17 +148,35 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     browser,
   });
   const englishSummary = buildHomeEnglishSummary(dataQuality);
-  const summarySnapshot = await buildHomeRuntimeSummarySnapshot({
-    tenantId: activeClient?.id ?? null,
-    tenantKey: homeTenantKey ?? activeClient?.key ?? requestedClient,
-    displayName: activeTenantName,
-    industry: clientOption?.vertical ?? null,
-    mode: candidatePreviewEnabled ? "candidate_preview" : "active_home_context",
-    browser,
-    setupControl,
-    dataQuality,
-    englishSummary,
-  });
+  const summarySnapshot =
+    moduleContext && moduleContextExplanation
+      ? buildHomeSummarySnapshotFromModuleContext({
+          tenantId: activeClient?.id ?? null,
+          tenantKey:
+            homeTenantKey ??
+            bindingTenantKey(activeClient?.key ?? requestedClient) ??
+            activeClient?.key ??
+            requestedClient ??
+            moduleContext.tenantKey,
+          displayName: activeTenantName,
+          industry: clientOption?.vertical ?? null,
+          moduleContext,
+          moduleContextExplanation,
+          repoRoot: process.cwd(),
+        })
+      : await buildHomeRuntimeSummarySnapshot({
+          tenantId: activeClient?.id ?? null,
+          tenantKey: homeTenantKey ?? activeClient?.key ?? requestedClient,
+          displayName: activeTenantName,
+          industry: clientOption?.vertical ?? null,
+          mode: candidatePreviewEnabled
+            ? "candidate_preview"
+            : "active_home_context",
+          browser,
+          setupControl,
+          dataQuality,
+          englishSummary,
+        });
 
   return (
     <AppShell
@@ -119,8 +185,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         tenantName: activeTenantName,
         showLocked: Boolean(activeClient?.key),
         context: clientOption?.vertical
-          ? `Home · ${clientOption.vertical}`
-          : "Home",
+          ? `Knowledge · ${clientOption.vertical}`
+          : "Knowledge",
       }}
       hasTenantKey={Boolean(activeClient?.key)}
     >
@@ -135,6 +201,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <HomeSurface
           candidatePreviewEnabled={candidatePreviewEnabled}
           clientKey={activeClient?.key ?? homeTenantKey}
+          moduleContext={moduleContext}
+          moduleContextExplanation={moduleContextExplanation}
+          knowledgeCutover={{
+            defaultUsesKnowledgeLayer: Boolean(moduleContext),
+            fallbackUsed: !moduleContext,
+            sourceMode: moduleContext?.sourceMode ?? "active_not_available",
+          }}
           payload={binding}
           setupControl={setupControl}
           dataQuality={dataQuality}

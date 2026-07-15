@@ -1,0 +1,12 @@
+{
+  "defaultRouteUsesKnowledgeLayer": true,
+  "previewOnly": false,
+  "legacyFallbackStillPresent": true,
+  "supplierContractPassedToSurface": true,
+  "requiredTabsPresent": true,
+  "requiredDimensionsPresent": true,
+  "doubleClickProfilesPresent": true,
+  "technicalDiagnosticsCollapsed": true,
+  "duplicateModuleLeftNavRemoved": true,
+  "forbiddenPrimaryLanguageAbsent": true
+}
