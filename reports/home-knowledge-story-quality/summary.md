@@ -4,10 +4,10 @@ Status: passed
 
 - Tenant: Meridian Health / Healthcare Demo
 - Model: claude-opus-4-8
-- Context pack hash: sha256:03d68e65ea27528d9b53dfcc3f6ec18379dca66d83555eed5b1d71966483e70b
-- Prompt hash: sha256:95ea1fda8a877fdd20528dd52cb00d27495cfd5dc094770eed2475b285d3b72d
+- Context pack hash: sha256:22dc8141edb81f614656dc4f957932afd1a62456e55b43a6af743fa5011e1817
+- Prompt hash: sha256:c4ab3f215cb4dc202801daa64bda0f0782531f497affa60234b273b4fa41279a
 - Claude prompt: reports/home-knowledge-story-quality/claude-prompts/meridian-home-story-prompt.txt
 - Claude raw response: reports/home-knowledge-story-quality/claude-responses/meridian-home-story-response.txt
-- Approved runtime artifact: src/lib/enterprise-knowledge/narratives/generated/meridian-claude-approved.ts
+- Approved data-plane narrative artifact: src/data/enterprise-knowledge/narratives/generated/meridian-claude-approved.ts
 
 Validation: passed

@@ -2,7 +2,7 @@ import type { HomeSummarySnapshot } from "@/lib/home/home-summary-snapshot";
 import {
   MERIDIAN_CLAUDE_DIMENSION_NARRATIVES,
   MERIDIAN_CLAUDE_HOME_INSIGHTS,
-} from "@/lib/enterprise-knowledge/narratives/generated/meridian-claude-approved";
+} from "@/data/enterprise-knowledge/narratives/generated/meridian-claude-approved";
 
 export type KnowledgeDimensionNarrativeSummary = {
   tenant_key: string;

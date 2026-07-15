@@ -32,7 +32,7 @@ This release candidate tightens Home / Knowledge around the CXO storytelling bar
 
 - `src/components/home/HomeSurface.tsx`
 - `src/lib/enterprise-knowledge/narratives/knowledge-narrative-store.ts`
-- `src/lib/enterprise-knowledge/narratives/generated/meridian-claude-approved.ts`
+- `src/data/enterprise-knowledge/narratives/generated/meridian-claude-approved.ts`
 - `scripts/knowledge/generate-home-knowledge-claude-narratives.ts`
 - `scripts/knowledge/audit-home-knowledge-story-quality.ts`
 - `scripts/knowledge/audit-home-cxo-story-quality.ts`
@@ -51,6 +51,7 @@ This release candidate tightens Home / Knowledge around the CXO storytelling bar
 - Pass: `npm run audit:home-ava-context-contract`
 - Pass: `npm run audit:knowledge-home-insights`
 - Pass: `npm run audit:knowledge-dimension-narratives`
+- Pass: `npm run audit:control-plane-purity:check`
 - Pass: `npm run audit:enterprise-naming`
 - Pass: `npm run release:check`
 - Pass: targeted ESLint for Home / Knowledge narrative scripts and HomeSurface.

@@ -316,7 +316,7 @@
   ],
   "tenant_key": "meridian-health",
   "tenant_name": "Meridian Health",
-  "source_context_hash": "sha256:03d68e65ea27528d9b53dfcc3f6ec18379dca66d83555eed5b1d71966483e70b",
+  "source_context_hash": "sha256:22dc8141edb81f614656dc4f957932afd1a62456e55b43a6af743fa5011e1817",
   "evidence_refs_used": [
     "meridian-enterprise-profile",
     "meridian-member-service-context",
@@ -340,7 +340,7 @@
   ],
   "generated_by": "claude",
   "generated_model": "claude-opus-4-8",
-  "generated_at": "2026-07-15T17:53:58.088Z",
+  "generated_at": "2026-07-15T18:06:18.633Z",
   "validation_status": "passed",
   "validation_errors": []
 }

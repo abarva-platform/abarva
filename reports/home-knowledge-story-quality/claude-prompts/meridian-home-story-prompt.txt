@@ -2073,7 +2073,7 @@ Coverage rules:
       "purpose": "context_summary",
       "mode": "active",
       "sourceMode": "active_tenant_access",
-      "generatedAt": "2026-07-15T17:53:58.088Z",
+      "generatedAt": "2026-07-15T18:06:18.633Z",
       "summary": "Home context has 62 readable records, 62 evidence references, and 9 of 10 requested domains with represented data. Active Tenant Access metadata is available, but module runtime consumption is unchanged by this contract.",
       "strengths": [
         "9 requested domains have represented context.",

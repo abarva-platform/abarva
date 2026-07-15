@@ -23,7 +23,7 @@ if (!process.env.ANTHROPIC_API_KEY && existsSync(path.join(fallbackRepoRoot, ".e
 const outDir = path.join(repoRoot, "reports/home-knowledge-story-quality");
 const generatedDir = path.join(
   repoRoot,
-  "src/lib/enterprise-knowledge/narratives/generated",
+  "src/data/enterprise-knowledge/narratives/generated",
 );
 const generatedTsPath = path.join(generatedDir, "meridian-claude-approved.ts");
 const model = process.env.HOME_KNOWLEDGE_STORY_CLAUDE_MODEL || "claude-opus-4-8";
@@ -730,7 +730,7 @@ function writeGeneratedTs(approved: {
   const body = `import type {
   KnowledgeDimensionNarrativeSummary,
   KnowledgeHomeInsightSummary,
-} from "../knowledge-narrative-store";
+} from "@/lib/enterprise-knowledge/narratives/knowledge-narrative-store";
 
 export const MERIDIAN_CLAUDE_HOME_INSIGHTS = ${JSON.stringify(
     approved.homeInsightSummary,
@@ -758,7 +758,7 @@ Status: ${status}
 - Prompt hash: sha256:${promptHash}
 - Claude prompt: reports/home-knowledge-story-quality/claude-prompts/meridian-home-story-prompt.txt
 - Claude raw response: reports/home-knowledge-story-quality/claude-responses/meridian-home-story-response.txt
-- Approved runtime artifact: src/lib/enterprise-knowledge/narratives/generated/meridian-claude-approved.ts
+- Approved data-plane narrative artifact: src/data/enterprise-knowledge/narratives/generated/meridian-claude-approved.ts
 
 ${validation.length ? validation.map((item) => `- FAIL: ${item}`).join("\n") : "Validation: passed"}
 `;
