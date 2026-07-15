@@ -22,6 +22,7 @@ Status: PASS
 - Required dimensions present: true
 - Double-click profiles present: true
 - Duplicate module left-nav removed: true
+- Runtime active access metadata packaged: true
 
 ## Quality Findings
 

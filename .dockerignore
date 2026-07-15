@@ -15,6 +15,15 @@ out
 coverage
 reports/
 
+# Runtime Knowledge/Home active mode reads the promoted Active Tenant Access
+# records. Keep the rest of reports/ out of the image, but ship this narrow
+# read-only control-plane metadata so default module-context serving does not
+# fall back to an empty active state in ACA.
+!reports/
+reports/*
+!reports/active-tenant-access/
+!reports/active-tenant-access/**
+
 # Local env / secrets — never ship these into an image
 .env
 .env.*
