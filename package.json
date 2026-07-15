@@ -281,6 +281,7 @@
     "audit:enterprise-knowledge-cache": "npx tsx scripts/audit/build-enterprise-knowledge-cache-proof.ts",
     "audit:knowledge-module-preview": "npx tsx scripts/audit/build-knowledge-module-preview-proof.ts",
     "audit:moves-knowledge-runtime": "npx tsx scripts/audit/build-moves-knowledge-runtime-proof.ts",
+    "audit:home-knowledge-preview": "npx tsx scripts/audit/build-home-knowledge-preview-proof.ts",
     "audit:moves-context-pack-dry-run": "npx tsx scripts/audit/build-moves-context-pack-dry-run-proof.ts",
     "audit:intelligence-context-pack-dry-run": "npx tsx scripts/audit/build-intelligence-context-pack-dry-run-proof.ts",
     "test:home-english-summary": "jest src/lib/home/__tests__/home-english-summary.test.ts --runInBand",
