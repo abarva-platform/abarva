@@ -75,6 +75,11 @@ export const TOWER_V3_SOURCE_DIMENSION_KEYS = TOWER_DIMENSION_DEFINITIONS.map(
 ) as TowerV3SourceDimensionKey[];
 
 function dimensionForFact(fact: CanonicalFact): TowerV3SourceDimensionKey {
+  const explicitDimension = TOWER_DIMENSION_DEFINITIONS.find((dimension) =>
+    fact.factId.includes(`-${dimension.dimensionKey}-`),
+  );
+  if (explicitDimension) return explicitDimension.dimensionKey;
+
   const predicate = fact.predicate.toLowerCase();
   if (
     predicate.includes("spend") ||
