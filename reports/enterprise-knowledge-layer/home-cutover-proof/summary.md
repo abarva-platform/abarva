@@ -35,21 +35,21 @@ Status: PASS
 ## Dimensions
 
 - Enterprise Profile: EnterpriseProfile; represented; 2 records; 2 evidence refs; tabs present
-- Business Functions: FunctionProfile; represented; 30 records; 8 evidence refs; tabs present
-- Org Ownership: FunctionProfile; represented; 30 records; 8 evidence refs; tabs present
-- Workforce Roles: FunctionProfile; represented; 30 records; 8 evidence refs; tabs present
-- Applications & Systems: SystemProfile; represented; 116 records; 8 evidence refs; tabs present
-- Data Assets & Integrations: DataDomainProfile; represented; 147 records; 8 evidence refs; tabs present
-- Infrastructure & Platforms: InfrastructureProfile; represented; 116 records; 8 evidence refs; tabs present
-- Vendors & Contracts: VendorProfile; represented; 109 records; 8 evidence refs; tabs present
-- IT Budget, Spend & Value: MetricProfile; represented; 116 records; 8 evidence refs; tabs present
-- Programs & Initiatives: ProgramProfile; represented; 86 records; 8 evidence refs; tabs present
-- AI & Automation Use Cases: UseCaseProfile; represented; 86 records; 8 evidence refs; tabs present
-- Risks & Controls: RiskProfile; represented; 172 records; 8 evidence refs; tabs present
+- Business Functions: FunctionProfile; represented; 24 records; 8 evidence refs; tabs present
+- Org Ownership: FunctionProfile; represented; 24 records; 8 evidence refs; tabs present
+- Workforce Roles: FunctionProfile; represented; 24 records; 8 evidence refs; tabs present
+- Applications & Systems: SystemProfile; represented; 613 records; 8 evidence refs; tabs present
+- Data Assets & Integrations: DataDomainProfile; represented; 570 records; 8 evidence refs; tabs present
+- Infrastructure & Platforms: InfrastructureProfile; represented; 613 records; 8 evidence refs; tabs present
+- Vendors & Contracts: VendorProfile; represented; 71 records; 8 evidence refs; tabs present
+- IT Budget, Spend & Value: MetricProfile; represented; 12 records; 8 evidence refs; tabs present
+- Programs & Initiatives: ProgramProfile; represented; 7 records; 7 evidence refs; tabs present
+- AI & Automation Use Cases: UseCaseProfile; represented; 7 records; 7 evidence refs; tabs present
+- Risks & Controls: RiskProfile; represented; 28 records; 8 evidence refs; tabs present
 - Relationships: EnterpriseProfile; mapped/no direct records; 0 records; 0 evidence refs; tabs present
-- Evidence Sources: EnterpriseProfile; represented; 4 records; 62 evidence refs; tabs present
-- Metrics & Outcomes: MetricProfile; represented; 116 records; 8 evidence refs; tabs present
-- Industry Context Patterns: EnterpriseProfile; represented; 4 records; 4 evidence refs; tabs present
-- Expert Lenses: EnterpriseProfile; represented; 4 records; 4 evidence refs; tabs present
-- Managed Services Scope: ContractProfile; represented; 109 records; 8 evidence refs; tabs present
-- Operational Process Evidence: ProcessProfile; represented; 4 records; 4 evidence refs; tabs present
+- Evidence Sources: EnterpriseProfile; represented; 3 records; 60 evidence refs; tabs present
+- Metrics & Outcomes: MetricProfile; represented; 12 records; 8 evidence refs; tabs present
+- Industry Context Patterns: EnterpriseProfile; represented; 3 records; 3 evidence refs; tabs present
+- Expert Lenses: EnterpriseProfile; represented; 3 records; 3 evidence refs; tabs present
+- Managed Services Scope: ContractProfile; represented; 71 records; 8 evidence refs; tabs present
+- Operational Process Evidence: ProcessProfile; represented; 3 records; 3 evidence refs; tabs present

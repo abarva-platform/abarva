@@ -9,5 +9,6 @@
   "technicalDiagnosticsCollapsed": true,
   "duplicateModuleLeftNavRemoved": true,
   "forbiddenPrimaryLanguageAbsent": true,
-  "runtimeActiveAccessMetadataPackaged": true
+  "runtimeActiveAccessMetadataPackaged": true,
+  "appClientAliasesCanonicalized": true
 }

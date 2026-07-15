@@ -56,6 +56,8 @@ function bindingTenantKey(value: string | null | undefined): string | null {
   if (key === "arcturus" || key === "firstcapital") return "first-capital";
   if (key === "meridian") return "meridian-health";
   if (key === "apexretail") return "apex-retail";
+  if (key === "skyharbor") return "skyharbor-air";
+  if (key === "lakeshore") return "lakeshore-holdings";
   return key;
 }
 

@@ -14,6 +14,7 @@ import type {
 import { buildHomeSummarySnapshotFromModuleContext } from "../../src/lib/home/home-summary-snapshot";
 
 type ScenarioKey =
+  | "skyharbor-enterprise-overview"
   | "meridian-enterprise-overview"
   | "meridian-finance-analytics"
   | "meridian-agent-assist"
@@ -120,6 +121,15 @@ const dimensions: Array<{
 }));
 
 const scenarios: Scenario[] = [
+  {
+    key: "skyharbor-enterprise-overview",
+    tenantKey: "skyharbor-air",
+    displayName: "Airline Demo",
+    industry: "Global Airline",
+    prompt:
+      "Show the active Knowledge context for the Airline Demo persona after app-client alias normalization.",
+    requestedDomains: requiredDomains,
+  },
   {
     key: "meridian-enterprise-overview",
     tenantKey: "meridian-health",
@@ -321,6 +331,11 @@ function analyzeRouteCutover({
       dockerIgnoreSource.includes("reports/*") &&
       dockerIgnoreSource.includes("!reports/active-tenant-access/") &&
       dockerIgnoreSource.includes("!reports/active-tenant-access/**"),
+    appClientAliasesCanonicalized:
+      pageSource.includes('key === "skyharbor"') &&
+      pageSource.includes('"skyharbor-air"') &&
+      pageSource.includes('key === "lakeshore"') &&
+      pageSource.includes('"lakeshore-holdings"'),
   };
 }
 
@@ -461,6 +476,11 @@ function assessQuality(args: {
   if (!route.runtimeActiveAccessMetadataPackaged) {
     p0.push(
       "Runtime image does not package reports/active-tenant-access metadata required for active Knowledge serving.",
+    );
+  }
+  if (!route.appClientAliasesCanonicalized) {
+    p0.push(
+      "Home route does not canonicalize app-client aliases before requesting active Knowledge context.",
     );
   }
   for (const scenario of args.scenarioOutputs) {
