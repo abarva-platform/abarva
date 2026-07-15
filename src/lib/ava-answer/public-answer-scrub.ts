@@ -23,7 +23,9 @@ export function scrubInternalVisibleAvaTerms(value: string): string {
     .replace(/\bV\d+\s+substrate\b/gi, "active enterprise context")
     .replace(/\bV\d+\s+data\s+layer\b/gi, "active enterprise context")
     .replace(/\bV\d+\s+context\s+layer\b/gi, "active enterprise context")
+    .replace(/\bIntelligence\s+V\d+\b/gi, "enterprise context")
     .replace(/\bV\d+[_-][A-Za-z0-9_.-]+\b/gi, "source file")
+    .replace(/\bV\d+\b/gi, "enterprise context")
     .replace(/\bcandidate_move\b/gi, "candidate opportunity")
     .replace(/\bmove_id\b/gi, "Move reference")
     .replace(/\bphase_id\b/gi, "phase reference")
@@ -216,18 +218,24 @@ export function scrubPublicAvaAnswerText(value: string): string {
 }
 
 export function scrubPublicAvaSourceText(value: string): string {
-  return scrubPublicAvaAnswerText(value)
+  const sourceReady = value
     .replace(/\bV\d+[_-]\d+\s*/gi, "")
     .replace(/\bV\d+\s+/gi, "")
+    .replace(/\bIntelligence\s+V\d+\b/gi, "enterprise context")
     .replace(/\bintelligence_v\d+\b/gi, "enterprise context")
     .replace(/\bnot_loaded\b/gi, "not yet available")
     .replace(/\bsynthetic_demo_manifest_gated\b/gi, "demo validation gate")
+    .replace(/\bsynthetic\s+demo\s+manifest\s+gated\b/gi, "demo validation gate");
+
+  return scrubPublicAvaAnswerText(sourceReady)
+    .replace(/\bdemo\s+manifest\s+gated\b/gi, "demo validation gate")
     .replace(/\bsynthetic demo\b/gi, "demo")
     .replace(
       /\b\d[\d,]*\s+(?:business records|field facts|graph nodes|relationship edges|retrieval chunks)\b/gi,
       "available source material",
     )
     .replace(/\bSelected for this question:\s*/gi, "")
+    .replace(/\bsource file\s+(?=candidate opportunity\b)/gi, "")
     .replace(/\bUse these as business-language grounding\.\s*/gi, "")
     .replace(/\s{2,}/g, " ")
     .replace(/\n{3,}/g, "\n\n")
