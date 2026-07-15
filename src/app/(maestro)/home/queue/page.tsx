@@ -1,4 +1,4 @@
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
@@ -58,10 +58,6 @@ export default async function QueuePage() {
   const session = await auth();
   if (!session.userId) redirect('/sign-in');
 
-  const clerk = await clerkClient();
-  const user = await clerk.users.getUser(session.userId);
-  const myEmail = user.emailAddresses[0]?.emailAddress ?? '';
-
   // C2-10 · Prefer the stakeholder identity (persons.name · e.g. "Dr. L.
   // Morales, CMIO") over the Clerk account display name ("Meridian Demo").
   // Crawler flagged the mismatch: sponsors saw themselves addressed by the
@@ -69,8 +65,27 @@ export default async function QueuePage() {
   // linked persons row when one exists, falls back to Clerk metadata.
   const currentUser = await getCurrentUser();
   const activeClient = await getActiveClientRow().catch(() => null);
-  const clerkDisplay = [user.firstName, user.lastName].filter(Boolean).join(' ');
-  const myName = currentUser?.name ?? clerkDisplay ?? myEmail;
+  const claims = session.sessionClaims as
+    | {
+        email?: string;
+        emailAddress?: string;
+        email_addresses?: Array<{ emailAddress?: string }>;
+        emailAddresses?: Array<{ emailAddress?: string }>;
+        firstName?: string;
+        lastName?: string;
+      }
+    | undefined;
+  const claimEmail =
+    claims?.emailAddress ??
+    claims?.email ??
+    claims?.emailAddresses?.[0]?.emailAddress ??
+    claims?.email_addresses?.[0]?.emailAddress ??
+    "";
+  const myEmail = currentUser?.email ?? claimEmail;
+  const claimDisplay = [claims?.firstName, claims?.lastName]
+    .filter(Boolean)
+    .join(' ');
+  const myName = currentUser?.name ?? claimDisplay ?? myEmail ?? 'User';
 
   const tasksLedger = readJson<{ entries: TaskEntry[] }>(join(process.cwd(), '.approvals/tasks.json'));
   const approvalsLedger = readJson<{ entries: ApprovalEntry[] }>(join(process.cwd(), '.approvals/ledger.json'));

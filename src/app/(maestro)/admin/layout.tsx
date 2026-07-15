@@ -64,12 +64,34 @@ export default async function AdminLayout({
     return <AdminAccessDenied />;
   }
 
-  const user = await currentUser();
-  const role = (user?.publicMetadata?.role as string | undefined) ?? "";
+  const claims = session.sessionClaims as
+    | {
+        publicMetadata?: {
+          role?: string;
+          legacyRole?: string;
+        };
+        email?: string;
+        emailAddress?: string;
+        email_addresses?: Array<{ emailAddress?: string }>;
+        emailAddresses?: Array<{ emailAddress?: string }>;
+      }
+    | undefined;
+  const user = await currentUser().catch(() => null);
+  const role =
+    (claims?.publicMetadata?.role as string | undefined) ??
+    (user?.publicMetadata?.role as string | undefined) ??
+    "";
   const fallbackRole =
+    (claims?.publicMetadata?.legacyRole as string | undefined) ??
     (user?.unsafeMetadata?.role as string | undefined) ??
     (user?.publicMetadata?.legacyRole as string | undefined);
-  const primaryEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase();
+  const primaryEmail = (
+    claims?.emailAddress ??
+    claims?.email ??
+    claims?.emailAddresses?.[0]?.emailAddress ??
+    claims?.email_addresses?.[0]?.emailAddress ??
+    user?.primaryEmailAddress?.emailAddress
+  )?.toLowerCase();
   const isPlatformAdmin =
     role === "admin" ||
     fallbackRole === "admin" ||

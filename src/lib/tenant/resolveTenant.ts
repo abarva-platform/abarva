@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import { currentUser } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { hasExplicitTenantAlias, isLockedTenantRole, resolveSessionRole } from '@/lib/auth/access-routing';
 import {
   DEFAULT_CLIENT_KEY,
@@ -35,18 +35,53 @@ export interface ResolveTenantInput {
 }
 
 async function getSessionClientContext(): Promise<SessionClientContext> {
+  let session: Awaited<ReturnType<typeof auth>> | null = null;
+  try {
+    session = await auth();
+  } catch {
+    session = null;
+  }
+  const claims = session?.sessionClaims as
+    | {
+        publicMetadata?: {
+          role?: string;
+          clientId?: string;
+          defaultClientId?: string;
+        };
+        email?: string;
+        emailAddress?: string;
+        email_addresses?: Array<{ emailAddress?: string }>;
+        emailAddresses?: Array<{ emailAddress?: string }>;
+      }
+    | undefined;
+  const claimEmail =
+    claims?.emailAddress ??
+    claims?.email ??
+    claims?.emailAddresses?.[0]?.emailAddress ??
+    claims?.email_addresses?.[0]?.emailAddress ??
+    undefined;
+  const claimContext: SessionClientContext = {
+    role: claims?.publicMetadata?.role,
+    clientId: claims?.publicMetadata?.clientId,
+    defaultClientId: claims?.publicMetadata?.defaultClientId,
+    email: claimEmail,
+  };
+
   try {
     const user = await currentUser();
     return {
-      role: user?.publicMetadata?.role as string | undefined,
-      clientId: user?.publicMetadata?.clientId as string | undefined,
-      defaultClientId: user?.publicMetadata?.defaultClientId as string | undefined,
+      role: claimContext.role ?? (user?.publicMetadata?.role as string | undefined),
+      clientId:
+        claimContext.clientId ?? (user?.publicMetadata?.clientId as string | undefined),
+      defaultClientId:
+        claimContext.defaultClientId ??
+        (user?.publicMetadata?.defaultClientId as string | undefined),
       email: user?.primaryEmailAddress?.emailAddress
         ?? user?.emailAddresses?.[0]?.emailAddress
-        ?? undefined,
+        ?? claimContext.email,
     };
   } catch {
-    return {};
+    return claimContext;
   }
 }
 
