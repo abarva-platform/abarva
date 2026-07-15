@@ -31,6 +31,7 @@ const PRODUCTION_READINESS_NO_STORE_HEADERS = {
 export const ACTIVE_ADMIN_SUBROUTES = new Set<string>([
   "/admin/candidate-preview",
   "/admin/data-layer-explorer",
+  "/admin/knowledge-preview",
 ] as const);
 
 export const PUBLIC_ROUTE_PATTERNS = [

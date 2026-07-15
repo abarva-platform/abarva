@@ -33,4 +33,14 @@ describe("proxy active admin subroutes", () => {
     expect(isActiveAdminSubroute(request.nextUrl.pathname)).toBe(true);
     expect(isActiveAdminSubroute("/admin/data-loads")).toBe(false);
   });
+
+  it("allows the hidden knowledge layer preview proof route to render", () => {
+    const request = new NextRequest(
+      "https://app.abarva.ai/admin/knowledge-preview?proof=knowledge-layer-live-preview",
+    );
+
+    expect(isAuthRequiredRoute(request)).toBe(true);
+    expect(isPublicRoute(request)).toBe(false);
+    expect(isActiveAdminSubroute(request.nextUrl.pathname)).toBe(true);
+  });
 });
