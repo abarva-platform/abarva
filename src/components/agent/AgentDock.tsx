@@ -243,7 +243,7 @@ async function downloadChatSessionExport(
 }
 
 /**
- * Auto-measure the dock's distance from the top of the viewport.
+ * Auto-measure the dock's natural distance from the top of the viewport.
  *
  * The PR #1773 fix hardcoded `--agent-dock-top-offset` to 64px
  * (AppTopBar height). That works for surfaces with no other sticky
@@ -251,13 +251,15 @@ async function downloadChatSessionExport(
  * or sourcing-journey strip sits above the dock — height is
  * over-computed and the composer drops below the fold.
  *
- * Solution: the dock measures its own viewport-top on mount, on
- * resize, on scroll (when sticky), and on layout shifts via a
- * MutationObserver. The measured value is written to a CSS custom
- * property `--agent-dock-self-top` on the shell element itself, and
- * the calc() expressions use it as the primary source — falling back
- * to the legacy `--agent-dock-top-offset` (or 64px) only if
- * measurement hasn't run yet (SSR) or returns a clearly broken value.
+ * The measured value is useful for viewport-bounded height, but it must
+ * not become the sticky `top` offset. Feeding the dock's own current
+ * position back into `position: sticky; top:` is self-referential: pages
+ * with a secondary header can permanently bake a large natural offset
+ * into the sticky point and leave a dead zone above the dock.
+ *
+ * The shell therefore writes `--agent-dock-self-top` for height only.
+ * Sticky positioning uses a stable chrome offset:
+ * `--agent-dock-sticky-top`, then `--agent-dock-top-offset`, then 72px.
  */
 function useDockSelfTop(ref: RefObject<HTMLDivElement | null>) {
   useIsoLayoutEffect(() => {
@@ -777,11 +779,9 @@ export function AgentDock(props: AgentDockProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const dropZoneRef = useRef<HTMLDivElement | null>(null);
 
-  // Outer-shell ref for self-measurement of the dock's top y-offset. A
-  // single ref is shared across side-rail / pin-top / pin-bottom modes
-  // since only one of those renders at a time. The hook updates the
-  // `--agent-dock-self-top` custom property on whatever element is
-  // currently mounted at this ref.
+  // Outer-shell ref for measuring the dock's natural top y-offset for
+  // height calculations. Sticky top intentionally uses a stable shell
+  // chrome offset, not this measured value.
   const shellRef = useRef<HTMLDivElement | null>(null);
   useDockSelfTop(shellRef);
 
@@ -1385,11 +1385,9 @@ export function AgentDock(props: AgentDockProps) {
     // the workspace pane. This guarantees the composer is always above the
     // fold even when the workspace renders a 3000px-tall scroll body.
     //
-    // The shell self-measures its viewport-top y-offset on mount/resize/
-    // scroll/layout-shift via useDockSelfTop, writing the value to
-    // `--agent-dock-self-top`. The calc() expressions consume it. Surfaces
-    // with custom chrome don't need to set anything; the dock figures out
-    // its own offset.
+    // The shell self-measures its natural viewport-top y-offset for height.
+    // Sticky top remains the stable chrome offset so the dock cannot feed
+    // its own current position back into its sticky point.
     const dockOnRight = mode === "side-rail-right";
     return (
       <div
@@ -1880,30 +1878,28 @@ function CloseIcon() {
 // dvh shrinks the cap so the composer remains in view. Older browsers
 // without dvh ignore the maxHeight and fall back to the vh height.
 //
-// **Top offset resolution order**
-//   1. `--agent-dock-self-top` — measured at runtime by useDockSelfTop.
-//      Reflects every piece of chrome above the dock (AppTopBar, secondary
-//      nav, progress rail, banners, sourcing-journey strip) without any
-//      per-surface configuration.
-//   2. `--agent-dock-top-offset` — legacy override; honoured when the
-//      measurement hasn't run yet (SSR initial paint) or as an explicit
-//      escape hatch.
-//   3. `64px` — final fallback, AppTopBar-only baseline.
+// **Offset resolution order**
+//   Sticky top:
+//     1. `--agent-dock-sticky-top` — explicit page override.
+//     2. `--agent-dock-top-offset` — legacy shell-chrome override.
+//     3. `72px` — NexusTopNav baseline.
+//   Height subtractor:
+//     1. `--agent-dock-self-top` — measured natural top for the mounted dock.
+//     2. `--agent-dock-top-offset`.
+//     3. `72px`.
 //
-// `position: sticky; top: <self-top>` keeps the dock pinned in the
-// visible viewport when the page scrolls. The same self-top value is
-// subtracted from 100vh to keep height in lockstep, so the composer
-// never falls below the fold.
+// Separating sticky top from measured height prevents the dock's own
+// natural position from being fed back into `position: sticky; top:`.
 const SIDE_RAIL_SHELL_STYLE: CSSProperties = {
   position: "sticky",
-  top: "var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px))",
+  top: "var(--agent-dock-sticky-top, var(--agent-dock-top-offset, 72px))",
   display: "flex",
   alignItems: "stretch",
   width: "100%",
   height:
-    "calc(100vh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px)) - var(--agent-dock-bottom-padding, 0px))",
+    "calc(100vh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 72px)) - var(--agent-dock-bottom-padding, 0px))",
   maxHeight:
-    "calc(100dvh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px)) - var(--agent-dock-bottom-padding, 0px))",
+    "calc(100dvh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 72px)) - var(--agent-dock-bottom-padding, 0px))",
   minHeight: 0,
   overflow: "hidden",
 };
@@ -2383,16 +2379,16 @@ const WORKSPACE_PANE_STYLE: CSSProperties = {
 // Pin layout — same viewport-bound contract as the side-rail shell so
 // pin-top / pin-bottom never let the composer drift below the fold. The
 // workspace pane keeps internal scroll behavior; the dock bar stays
-// visible above the fold. Same self-top measurement applies.
+// visible above the fold. Same measured-height contract applies.
 const PIN_LAYOUT_STYLE: CSSProperties = {
   position: "sticky",
-  top: "var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px))",
+  top: "var(--agent-dock-sticky-top, var(--agent-dock-top-offset, 72px))",
   display: "flex",
   flexDirection: "column",
   height:
-    "calc(100vh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px)) - var(--agent-dock-bottom-padding, 0px))",
+    "calc(100vh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 72px)) - var(--agent-dock-bottom-padding, 0px))",
   maxHeight:
-    "calc(100dvh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 64px)) - var(--agent-dock-bottom-padding, 0px))",
+    "calc(100dvh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 72px)) - var(--agent-dock-bottom-padding, 0px))",
   width: "100%",
   minHeight: 0,
   overflow: "hidden",

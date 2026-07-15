@@ -105,6 +105,25 @@ describe("AgentDock · default mode", () => {
     expect(screen.getByTestId("workspace")).toBeInTheDocument();
   });
 
+  it("does not feed the measured dock top back into sticky positioning", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface={SURFACE}
+        thread={[]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const shell = screen.getByTestId("agent-dock-side-rail-shell");
+    expect(shell).toHaveStyle({
+      top: "var(--agent-dock-sticky-top, var(--agent-dock-top-offset, 72px))",
+    });
+    expect(shell.getAttribute("style")).toContain("--agent-dock-self-top");
+    expect(shell.getAttribute("style")).toContain("height:");
+  });
+
   it("honours an explicit defaultMode when no stored preference", () => {
     render(
       <AgentDock
@@ -1616,7 +1635,7 @@ describe("AgentDock · self-measured top offset", () => {
     }
   });
 
-  it("uses the measured value as the primary source in the height calc", () => {
+  it("uses the measured value for height while keeping sticky top stable", () => {
     render(
       <AgentDock
         agent={AGENT}
@@ -1628,14 +1647,16 @@ describe("AgentDock · self-measured top offset", () => {
     );
     const shell = screen.getByTestId("agent-dock-side-rail-shell");
     // The height calc must consume --agent-dock-self-top with a fallback
-    // chain to --agent-dock-top-offset → 64px.
+    // chain to --agent-dock-top-offset → 72px.
     expect(shell.style.height).toContain("var(--agent-dock-self-top");
-    expect(shell.style.height).toContain("var(--agent-dock-top-offset, 64px)");
-    // The sticky `top` uses the same measured value.
-    expect(shell.style.top).toContain("var(--agent-dock-self-top");
+    expect(shell.style.height).toContain("var(--agent-dock-top-offset, 72px)");
+    // The sticky `top` must not use the measured self-top value, otherwise
+    // secondary headers can bake a large natural offset into the sticky point.
+    expect(shell.style.top).toContain("var(--agent-dock-sticky-top");
+    expect(shell.style.top).not.toContain("var(--agent-dock-self-top");
   });
 
-  it("also applies the measured top to pin-top and pin-bottom layouts", () => {
+  it("also separates measured height from sticky top in pin layouts", () => {
     window.localStorage.setItem(modeStorageKey(SURFACE), "pin-bottom");
     render(
       <AgentDock
@@ -1648,7 +1669,8 @@ describe("AgentDock · self-measured top offset", () => {
     );
     const pinShell = screen.getByTestId("agent-dock-pin-shell");
     expect(pinShell.style.height).toContain("var(--agent-dock-self-top");
-    expect(pinShell.style.top).toContain("var(--agent-dock-self-top");
+    expect(pinShell.style.top).toContain("var(--agent-dock-sticky-top");
+    expect(pinShell.style.top).not.toContain("var(--agent-dock-self-top");
   });
 });
 
