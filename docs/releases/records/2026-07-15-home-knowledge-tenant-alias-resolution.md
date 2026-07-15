@@ -11,11 +11,12 @@
 ## Plain-English Summary
 
 Home was cut over to the Enterprise Knowledge module-context supplier, but the
-live Airline Demo persona still used the app-client alias `skyharbor` while the
-active Knowledge access record is keyed as `skyharbor-air`. This change
-canonicalizes app-client aliases before Home requests active Knowledge context,
-so signed-in personas can resolve the active context records that were already
-packaged and promoted through the data-layer runway.
+live Airline Demo persona could still resolve through an app-client or DB row
+alias while the active Knowledge access record is keyed as `skyharbor-air`. This
+change canonicalizes requested-client, active-client, and display-name aliases
+before Home requests active Knowledge context, so signed-in personas can resolve
+the active context records that were already packaged and promoted through the
+data-layer runway.
 
 ## Layer Impact
 
@@ -35,8 +36,9 @@ packaged and promoted through the data-layer runway.
 
 ## Changes Included
 
-- `src/app/(maestro)/home/page.tsx`: maps `skyharbor` to `skyharbor-air` and
-  `lakeshore` to `lakeshore-holdings` before `getModuleContext`.
+- `src/app/(maestro)/home/page.tsx`: maps requested-client, active-client, and
+  display-name aliases such as `skyharbor`, `Airline Demo`, and `lakeshore`
+  before `getModuleContext`.
 - `scripts/audit/build-home-knowledge-cutover-proof.ts`: adds a SkyHarbor
   active-context proof scenario and fails if app-client aliases are not
   canonicalized before active Knowledge reads.

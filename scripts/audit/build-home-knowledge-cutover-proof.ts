@@ -334,8 +334,13 @@ function analyzeRouteCutover({
     appClientAliasesCanonicalized:
       pageSource.includes('key === "skyharbor"') &&
       pageSource.includes('"skyharbor-air"') &&
+      pageSource.includes('"airline-demo"') &&
+      pageSource.includes('key.includes("airline")') &&
       pageSource.includes('key === "lakeshore"') &&
-      pageSource.includes('"lakeshore-holdings"'),
+      pageSource.includes('"lakeshore-holdings"') &&
+      /const\s+homeTenantKey\s*=\s*[\s\S]*?bindingTenantKey\(requestedClient\)[\s\S]*?bindingTenantKey\(activeClient\?\.key\)[\s\S]*?bindingTenantKey\(activeClient\?\.name\)/.test(
+        pageSource,
+      ),
   };
 }
 
