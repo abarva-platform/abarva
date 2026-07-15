@@ -377,7 +377,7 @@ export function AdvisoryIntelligencePage({
             <span className={styles.sep}>·</span>
             <span className={styles.fresh}>
               <i className={styles.freshDot} />
-              refreshed from loaded context
+              refreshed from active enterprise context
             </span>
           </div>
         </header>
