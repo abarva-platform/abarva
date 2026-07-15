@@ -3,7 +3,6 @@ import { AppRail } from "./AppRail";
 import { AppMiddleStrip } from "./AppMiddleStrip";
 // GlobalSearchModal is mounted in the maestro layout for app-wide coverage.
 import { AtlasPageStateProvider } from "./AtlasPageStateProvider";
-import { NexusTopNav } from "@/components/navigation/NexusTopNav";
 import type { SurfaceId, StageId } from "@/lib/shell/atlas-page-state";
 
 interface AppShellProps {
@@ -51,7 +50,6 @@ interface AppShellProps {
    * Cockpit shell defaults: product/module navigation lives in the top bar.
    * The old left app rail is retained only for explicit legacy opt-in.
    */
-  showProductNav?: boolean;
   showAppRail?: boolean;
   /**
    * Secondary navigation strip rendered directly below the top bar — a
@@ -78,7 +76,6 @@ export function AppShell({
   hasTenantKey = false,
   agentName,
   middleStrip,
-  showProductNav = true,
   showAppRail = false,
   subNav,
   onArtifact,
@@ -94,7 +91,9 @@ export function AppShell({
         overflow: "hidden",
       }}
     >
-      {/* Legacy left rail: explicit opt-in only. Product nav belongs in NexusTopNav. */}
+      {/* Legacy left rail: explicit opt-in only. Product nav belongs in NexusTopNav,
+          mounted once by MaestroChrome above this shell so it survives
+          client-side navigation between shell-native routes. */}
       {showAppRail ? <AppRail /> : null}
 
       {/* Right main column */}
@@ -107,15 +106,6 @@ export function AppShell({
           overflow: "hidden",
         }}
       >
-        <NexusTopNav
-          tenantName={topBarProps?.tenantName}
-          preserveTenantName={topBarProps?.preserveTenantName}
-          showLocked={topBarProps?.showLocked}
-          context={topBarProps?.context}
-          timeString={topBarProps?.timeString}
-          showProductNav={showProductNav}
-        />
-
         {subNav}
 
         {middleStrip && <AppMiddleStrip>{middleStrip}</AppMiddleStrip>}

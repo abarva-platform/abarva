@@ -156,9 +156,14 @@ describe("SHELL-V2 Rule 5 — cockpit shell uses a single top product nav", () =
   test("AppShell does not render the legacy AppRail unless explicitly opted in", () => {
     const content = read("components/shell/AppShell.tsx");
 
-    expect(content).toContain("showProductNav = true");
     expect(content).toContain("showAppRail = false");
     expect(content).toContain("showAppRail ? <AppRail /> : null");
+  });
+
+  test("NexusTopNav (mounted once by MaestroChrome) defaults product nav to visible", () => {
+    const content = read("components/navigation/NexusTopNav.tsx");
+
+    expect(content).toContain("showProductNav: showProductNavProp = true");
   });
 
   test("AppTopBar owns the authenticated product nav labels", () => {

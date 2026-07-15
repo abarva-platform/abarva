@@ -86,11 +86,17 @@ function NavLinks({
   );
 }
 
-export function NexusTopNav({ showProductNav = true }: NexusTopNavProps = {}) {
+export function NexusTopNav({ showProductNav: showProductNavProp = true }: NexusTopNavProps = {}) {
   const pathname = usePathname() ?? "";
   const { isLoaded, user } = useUser();
   const signOut = useSignOut();
   const signedIn = isLoaded && Boolean(user);
+  // NexusTopNav is now mounted once in MaestroChrome's persisted layout
+  // subtree (not per-page), so a page can no longer pass showProductNav
+  // directly. The Setup landing page is the only current caller that wants
+  // product nav hidden, so that one case is handled here by exact route
+  // instead — every other /admin/* subpage still wants it shown.
+  const showProductNav = showProductNavProp && pathname !== "/admin";
   const navItems = showProductNav && signedIn ? getVisibleNavItems(user) : [];
   const displayName = userDisplayName(user);
   const initials = initialsFor(displayName);
