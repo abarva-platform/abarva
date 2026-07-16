@@ -6,6 +6,7 @@ import {
   parseVisibleAnswerContract,
   type CioTowerPromptContext,
 } from '../answer';
+import type { TowerV3RuntimeViewModel } from '@/lib/tower/tower-v3-runtime-view';
 
 function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPromptContext {
   return {
@@ -83,6 +84,107 @@ function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPrompt
   };
 }
 
+function towerV3RuntimeView(): TowerV3RuntimeViewModel {
+  return {
+    enabled: true,
+    tenantKey: 'meridian-health',
+    tenantName: 'Healthcare Demo',
+    contextPackId: 'meridian-health-tower-v3-live-context-pack',
+    headline:
+      'Tower is using the governed context pack for measurement planning, readiness, and value-hypothesis control.',
+    mode: 'active',
+    truthStatus: 'active',
+    metricCount: 140,
+    valueRecordCount: 79,
+    valueClaimCount: 79,
+    gateCounts: { allowed: 0, caveated: 79, blocked: 0 },
+    measurementLanguageAllowed: true,
+    blockedOutcomeProof: true,
+    metricFamilies: [],
+    valueHypotheses: [
+      {
+        label: 'Agent Assist non-clinical adoption',
+        value: '$93.0M',
+        claimBasis: 'forecast',
+        gateStatus: 'caveated',
+        evidenceIds: ['evidence-agent-assist'],
+      },
+      {
+        label: 'Contact-center workflow automation',
+        value: '$41.0M',
+        claimBasis: 'forecast',
+        gateStatus: 'caveated',
+        evidenceIds: ['evidence-contact-center'],
+      },
+    ],
+    defaultTabs: [],
+    executiveInsights: [
+      {
+        role: 'CIO',
+        insightTitle: 'The data foundation is the critical path.',
+        insightSummary:
+          'The technology team can steer the measurement plan, but scale decisions need certified data, integration, and control readiness.',
+        whyItMatters:
+          'Without the foundation, AI programs create operational risk faster than they create board-ready value evidence.',
+        evidenceBasis: 'TowerContextPack evidence',
+        decisionImplication:
+          'Do not expand the portfolio until the measurement spine and source ownership are explicit.',
+        nextAction:
+          'Name the accountable owner for baseline metrics and source-system lineage.',
+        moduleHandoff: 'Tower',
+        claimStrength: 'hypothesis',
+        evidenceRefsUsed: ['evidence-cio'],
+        contextGapsUsed: ['gap-baseline'],
+        valueClaimGateStatus: 'caveated',
+      },
+      {
+        role: 'CFO',
+        insightTitle: 'Value is visible, but not claimable yet.',
+        insightSummary:
+          'The finance team can see where forecast value sits, but the evidence does not yet support board claims.',
+        whyItMatters:
+          'The CFO should protect claim quality before the dashboard is used in a funding committee.',
+        evidenceBasis: 'TowerContextPack value-claim gates',
+        decisionImplication:
+          'Hold value language to forecast and measurement readiness until baselines and actuals are attached.',
+        nextAction:
+          'Approve the value formula and finance-attested baseline package before the next review.',
+        moduleHandoff: 'Tower',
+        claimStrength: 'evidence_gap',
+        evidenceRefsUsed: ['evidence-cfo'],
+        contextGapsUsed: ['gap-finance'],
+        valueClaimGateStatus: 'caveated',
+      },
+    ],
+    gapThemes: [
+      {
+        themeId: 'baseline_metrics',
+        title: 'Baseline metrics need validation',
+        whyItMatters:
+          'The dashboard can sequence measurement work, but board use needs validated baselines and formula lineage.',
+        affectedRecordCount: 117,
+        representativeEvidenceRefs: ['evidence-baseline'],
+        requiredEvidence: [
+          'baseline extract',
+          'measurement period',
+          'formula owner attestation',
+        ],
+        ownerOrSteward: 'CFO / Value Office',
+        moduleHandoff: 'Tower',
+      },
+    ],
+    caveats: [],
+    nextMeasurementActions: [],
+    bridgeDiagnostics: {
+      source: 'cio_tower',
+      projectionRole: 'derived_read_model',
+      sourceOfTruthStatus: 'bridge_only',
+      v3ReconciliationStatus: 'not_v3_reconciled',
+      message: 'Bridge diagnostics only.',
+    },
+  };
+}
+
 describe('cio tower answer contract', () => {
   it('normalizes app tenant aliases into cio_tower package keys', () => {
     expect(canonicalCioTowerTenantKey('skyharbor')).toBe('skyharbor-air');
@@ -101,6 +203,9 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('AbarVa will render the strings exactly as returned');
     expect(prompt).toContain('It will not rewrite, summarize, scrub, relabel, infer, or improve them');
     expect(prompt).toContain('Shape the answer as a point of view');
+    expect(prompt).toContain('Valid JSON is more important than a longer answer');
+    expect(prompt).toContain('Do not duplicate table content inside answer. Use tables[] only.');
+    expect(prompt).toContain('Never use markdown code fences');
     expect(prompt).toContain('must directly continue from your answer');
     expect(prompt).toContain('Do not use generic menu choices');
     expect(prompt).toContain('Answer the current question literally');
@@ -109,6 +214,9 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('Projection role: derived_read_model');
     expect(prompt).toContain('Crew Recovery & Legality Modernization');
     expect(prompt).toContain('$28.3M');
+    expect(prompt).not.toContain('GFM markdown table');
+    expect(prompt).not.toContain('```chart');
+    expect(prompt).not.toContain('CHART');
   });
 
   it('parses the visible answer contract without changing prose or table labels', () => {
@@ -155,6 +263,50 @@ describe('cio tower answer contract', () => {
       ],
       followUpQuestion: 'Do you want the value-proof view next?',
     });
+  });
+
+  it('tolerates harmless wrapper text around a valid Tower answer packet', () => {
+    const raw = [
+      'Here is the packet:',
+      JSON.stringify({
+        version: 'cio_tower_visible_answer_v1',
+        answer: 'The CIO should close the measurement gate before expanding Agent Assist.',
+        tables: [],
+        tabs: [],
+        followUpQuestion: null,
+      }),
+    ].join('\n');
+
+    expect(parseVisibleAnswerContract(raw).answer).toBe(
+      'The CIO should close the measurement gate before expanding Agent Assist.',
+    );
+  });
+
+  it('rejects malformed raw output and incomplete Tower tables instead of rendering partial content', () => {
+    expect(() =>
+      parseVisibleAnswerContract(
+        '{"version":"cio_tower_visible_answer_v1","answer":"Truncated","tables":[{"id":"x","title":"Bad","columns":["A"],"rows":[["open"',
+      ),
+    ).toThrow();
+
+    expect(() =>
+      parseVisibleAnswerContract(
+        JSON.stringify({
+          version: 'cio_tower_visible_answer_v1',
+          answer: 'The table is incomplete.',
+          tables: [
+            {
+              id: 'bad_table',
+              title: 'Incomplete table',
+              columns: ['Owner', 'Decision'],
+              rows: [['CIO']],
+            },
+          ],
+          tabs: [],
+          followUpQuestion: null,
+        }),
+      ),
+    ).toThrow('cio_tower_visible_contract_invalid_table_shape');
   });
 
   it('routes portfolio-company budget and value-proof questions to the right Tower contracts', () => {
@@ -226,8 +378,9 @@ describe('cio tower answer contract', () => {
 
     expect(fallback.version).toBe('cio_tower_visible_answer_v1');
     expect(fallback.answer).toContain(
-      'My read: this is a run-cost pressure question, not a value-realization win yet.',
+      'This is a run-cost pressure question, not a value-realization win yet.',
     );
+    expect(fallback.answer).not.toContain('My read:');
     expect(fallback.answer).toContain(
       'In the Healthcare Demo synthetic Tower planning context, $1.1B of FY26 technology budget is in view',
     );
@@ -299,7 +452,8 @@ describe('cio tower answer contract', () => {
       }),
     );
 
-    expect(fallback.answer).toContain('this is the right drill-down');
+    expect(fallback.answer).toContain('This is the right drill-down');
+    expect(fallback.answer).not.toContain('My read:');
     expect(fallback.answer).toContain('does not yet prove the service-by-service or vendor-by-vendor drivers');
     expect(fallback.answer).toContain('run allocation, contract owner, renewal date, and application dependency fields');
     expect(fallback.answer).not.toContain(
@@ -308,5 +462,59 @@ describe('cio tower answer contract', () => {
     expect(fallback.followUpQuestion).toBe(
       'Which vendor, service, and contract-owner fields should be loaded first to rank run-cost exposure without guessing?',
     );
+  });
+
+  it('makes the Tower v3 fallback board-ready when Claude raw output fails', () => {
+    const fallback = buildCioTowerFallbackAnswer(
+      context({
+        tenantName: 'Healthcare Demo',
+        question: 'What evidence is missing before Tower can claim value?',
+        contract: {
+          contract_key: 'tower_value_realization',
+          intent: 'evidence_gap',
+          question_family: 'value_readiness',
+          measure_key: null,
+          artifact_type: 'executive_summary',
+          examples: [],
+        },
+        towerV3RuntimeView: towerV3RuntimeView(),
+      }),
+    );
+    const visible = [
+      fallback.answer,
+      ...(fallback.tables ?? []).flatMap((table) => [
+        table.title,
+        ...table.columns,
+        ...table.rows.flat(),
+      ]),
+      ...(fallback.tabs ?? []).flatMap((tab) => [tab.label, tab.prose]),
+      fallback.followUpQuestion ?? '',
+    ].join(' ');
+
+    expect(fallback.answer).toContain('claim discipline');
+    expect(fallback.answer).not.toContain('My read:');
+    expect(fallback.answer).toContain('140 metric records');
+    expect(fallback.answer).toContain('79 value records');
+    expect(fallback.answer).toContain('79 value-claim gates: 0 allowed, 79 caveated, 0 blocked');
+    expect(fallback.answer).toContain('CIO');
+    expect(fallback.answer).toContain('CFO');
+    expect(fallback.tables?.[0]?.title).toBe('Board-readiness inspection path');
+    expect(fallback.tables?.[0]?.columns).toEqual([
+      'Owner',
+      'Inspect first',
+      'Why it matters',
+      'Decision to unlock',
+    ]);
+    expect(fallback.tabs?.map((tab) => tab.label)).toEqual([
+      'CIO view',
+      'CFO view',
+      'Proof close path',
+    ]);
+    expect(fallback.followUpQuestion).toBe(
+      'Should Tower turn "Baseline metrics need validation" into a 30-day measurement plan with owners and evidence requests?',
+    );
+    expect(visible).not.toMatch(/valid Tower answer contract|No fallback answer|JSON|source key|record ID/i);
+    expect(visible).not.toMatch(/\bROI\b|savings|achieved|realized value|measured outcome|proven value|delivered value|value captured/i);
+    expect(visible).not.toMatch(/\b(Read|Evidence|Implication|Next move|Next):/i);
   });
 });
