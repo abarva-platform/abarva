@@ -7,6 +7,8 @@
 
 import { NAV_ITEMS } from '@/components/shell/topbar-nav-items';
 import { TOP_NAV_ITEMS } from '@/lib/home/top-nav-items';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 describe('Top-nav · Home and Admin remain separate', () => {
   it('topbar-nav-items NAV_ITEMS "home" entry is labeled Knowledge and points at /home', () => {
@@ -54,5 +56,16 @@ describe('Top-nav · Home and Admin remain separate', () => {
     expect(learn?.match('/learn')).toBe(true);
     expect(home?.match('/home/learn')).toBe(false);
     expect(home?.match('/home/learn/source')).toBe(false);
+  });
+
+  it('NEXUS top nav keeps product navigation on App Router links instead of full document reloads', () => {
+    const source = readFileSync(
+      join(process.cwd(), 'src/components/navigation/NexusTopNav.tsx'),
+      'utf8',
+    );
+
+    expect(source).toContain('href={item.href}');
+    expect(source).toContain('prefetch');
+    expect(source).not.toContain('window.location.assign');
   });
 });

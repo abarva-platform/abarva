@@ -585,11 +585,10 @@ const clerkProtectedProxy = clerkMiddleware(
       }
     }
 
-    if (
-      userId &&
-      (request.nextUrl.pathname === "/" ||
-        request.nextUrl.pathname.startsWith("/sign-in"))
-    ) {
+    // Keep the bare domain as the public marketing/request-access landing page
+    // even when a visitor still has a Clerk session. App entry continues through
+    // /sign-in and /auth-redirect.
+    if (userId && request.nextUrl.pathname.startsWith("/sign-in")) {
       return withProductionReadinessNoStoreHeaders(
         request,
         NextResponse.redirect(new URL("/auth-redirect", request.url)),
