@@ -165,11 +165,16 @@ async function readV7TowerRecords(tenantKey: string): Promise<V7TowerRecordRow[]
        r.source_row_number, r.source_as_of_date as as_of_date, null::date as period_end,
        r.source_artifact_name, r.source_validation_status, r.values_json
      from intelligence_v7.business_records r
-     join intelligence_v7.current_tenant_pack_runs run
+     join intelligence_v7.tenant_pack_runs run
        on run.tenant_key = r.tenant_key
       and run.contract_version = r.contract_version
       and run.run_key = r.run_key
+     join intelligence_v7.active_tenant_contract_versions active
+       on active.tenant_key = run.tenant_key
+      and active.active_contract_version = run.contract_version
+      and active.promotion_status = 'active'
      where r.tenant_key = $1
+       and run.load_status in ('loaded', 'validated')
        and lower(r.dimension_key) = any($2::text[])
        and coalesce(r.fact_status, 'active') = 'active'
      order by r.dimension_key, r.source_row_number nulls last, r.record_key

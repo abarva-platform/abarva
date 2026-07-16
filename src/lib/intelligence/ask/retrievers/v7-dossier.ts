@@ -266,16 +266,24 @@ export async function retrieveV7DossierSources(
     return await session(async (run) => {
       const runs = await run<V7RunRow>(
         contractVersion
-          ? `select tenant_key, tenant_name, contract_version, row_count::int, field_count::int,
-          graph_node_count::int, relationship_edge_count::int, chunk_count::int, loaded_at::text
-         from intelligence_v7.tenant_pack_runs
-         where tenant_key = $1 and contract_version = $2 and load_status in ('loaded', 'validated')
+          ? `select run.tenant_key, run.tenant_name, run.contract_version, run.row_count::int, run.field_count::int,
+          run.graph_node_count::int, run.relationship_edge_count::int, run.chunk_count::int, run.loaded_at::text
+         from intelligence_v7.tenant_pack_runs run
+         join intelligence_v7.active_tenant_contract_versions active
+           on active.tenant_key = run.tenant_key
+          and active.active_contract_version = run.contract_version
+          and active.promotion_status = 'active'
+         where run.tenant_key = $1 and run.contract_version = $2 and run.load_status in ('loaded', 'validated')
          order by loaded_at desc
          limit 1`
-          : `select tenant_key, tenant_name, contract_version, row_count::int, field_count::int,
-          graph_node_count::int, relationship_edge_count::int, chunk_count::int, loaded_at::text
-         from intelligence_v7.current_tenant_pack_runs
-         where tenant_key = $1
+          : `select run.tenant_key, run.tenant_name, run.contract_version, run.row_count::int, run.field_count::int,
+          run.graph_node_count::int, run.relationship_edge_count::int, run.chunk_count::int, run.loaded_at::text
+         from intelligence_v7.tenant_pack_runs run
+         join intelligence_v7.active_tenant_contract_versions active
+           on active.tenant_key = run.tenant_key
+          and active.active_contract_version = run.contract_version
+          and active.promotion_status = 'active'
+         where run.tenant_key = $1 and run.load_status in ('loaded', 'validated')
          limit 1`,
         contractVersion ? [tenantKey, contractVersion] : [tenantKey],
       );

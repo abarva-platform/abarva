@@ -10,7 +10,8 @@ function fakeSession(): SessionRunner {
             tenant_key: params[0],
             tenant_name: "SkyHarbor Air Group",
             contract_version: "v7.0.0-synthetic-depth-v2-20260703",
-            source_dataset: "/Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703",
+            source_dataset:
+              "/Users/anand/Downloads/abarva-v7-synthetic-client-data-v2-20260703",
             load_status: "validated",
             file_count: 24,
             row_count: 5473,
@@ -22,7 +23,10 @@ function fakeSession(): SessionRunner {
           },
         ] as R[];
       }
-      if (sql.includes("with record_counts") || sql.includes("from intelligence_v7.dimension_registry")) {
+      if (
+        sql.includes("with record_counts") ||
+        sql.includes("from intelligence_v7.dimension_registry")
+      ) {
         return [
           {
             dimension_key: "v7_05_applications_systems",
@@ -36,10 +40,34 @@ function fakeSession(): SessionRunner {
       }
       if (sql.includes("from intelligence_v7.column_registry")) {
         return [
-          { dimension_key: "v7_05_applications_systems", column_name: "system_name", client_field: "System", client_instruction: "System name", module_use: "Loaded Facts" },
-          { dimension_key: "v7_05_applications_systems", column_name: "system_category", client_field: "System category", client_instruction: "Category", module_use: "Context" },
-          { dimension_key: "v7_05_applications_systems", column_name: "system_owner", client_field: "Owner", client_instruction: "Owner", module_use: "Loaded Facts" },
-          { dimension_key: "v7_05_applications_systems", column_name: "criticality", client_field: "Criticality", client_instruction: "Criticality", module_use: "Loaded Facts" },
+          {
+            dimension_key: "v7_05_applications_systems",
+            column_name: "system_name",
+            client_field: "System",
+            client_instruction: "System name",
+            module_use: "Loaded Facts",
+          },
+          {
+            dimension_key: "v7_05_applications_systems",
+            column_name: "system_category",
+            client_field: "System category",
+            client_instruction: "Category",
+            module_use: "Context",
+          },
+          {
+            dimension_key: "v7_05_applications_systems",
+            column_name: "system_owner",
+            client_field: "Owner",
+            client_instruction: "Owner",
+            module_use: "Loaded Facts",
+          },
+          {
+            dimension_key: "v7_05_applications_systems",
+            column_name: "criticality",
+            client_field: "Criticality",
+            client_instruction: "Criticality",
+            module_use: "Loaded Facts",
+          },
         ] as R[];
       }
       if (sql.includes("from intelligence_v7.business_records")) {
@@ -74,14 +102,201 @@ describe("getHomeV7ContextBrowser", () => {
 
     expect(browser?.contractLabel).toBe("V7");
     expect(browser?.bindingContext).toHaveLength(1);
-    expect(browser?.bindingContext?.[0]?.dimension).toBe("Applications Systems");
-    expect(browser?.bindingContext?.[0]?.description).not.toMatch(/V7_|\.csv|V7 uses/);
+    expect(browser?.bindingContext?.[0]?.dimension).toBe(
+      "Applications Systems",
+    );
+    expect(browser?.bindingContext?.[0]?.description).not.toMatch(
+      /V7_|\.csv|V7 uses/,
+    );
     const preview = browser?.dimensions["Applications Systems"];
     expect(preview?.rowCount).toBe(200);
     expect(preview?.title).toBe("Applications Systems loaded records");
     expect(preview?.columns.map((column) => column.label)).toContain("System");
     expect(preview?.rows[0]).toContain("SkyOps Recovery Platform");
     expect(JSON.stringify(preview)).not.toContain("internal-key-hidden");
+  });
+});
+
+function activePointerSession(opts: {
+  activeContractVersion?: string | null;
+  candidateContractVersion?: string | null;
+  candidateTenantKey?: string;
+  onRunQuery?: (sql: string, params: unknown[]) => void;
+}): SessionRunner {
+  const dim = "v7_01_enterprise_profile";
+  const rowFor = (contractVersion: string, tenantKey: unknown) => ({
+    tenant_key: tenantKey,
+    tenant_name: "Meridian Health System",
+    contract_version: contractVersion,
+    source_dataset: `dataset/${contractVersion}`,
+    load_status: "validated",
+    file_count: 1,
+    row_count: contractVersion.includes("candidate") ? 999 : 12,
+    field_count: 24,
+    graph_node_count: 0,
+    relationship_edge_count: 0,
+    chunk_count: 0,
+    loaded_at: contractVersion.includes("candidate")
+      ? "2026-07-16T20:00:00.000Z"
+      : "2026-07-15T20:00:00.000Z",
+  });
+  return async (fn) =>
+    fn(async <R>(sql: string, params: unknown[]) => {
+      if (sql.includes("from intelligence_v7.tenant_pack_runs run")) {
+        opts.onRunQuery?.(sql, params);
+        if (sql.includes("join intelligence_v7.contract_versions cv")) {
+          const requestedContract = String(params[1] ?? "");
+          if (
+            opts.candidateContractVersion === requestedContract &&
+            (opts.candidateTenantKey ?? params[0]) === params[0]
+          ) {
+            return [rowFor(requestedContract, params[0])] as R[];
+          }
+          return [] as R[];
+        }
+        if (opts.activeContractVersion) {
+          return [rowFor(opts.activeContractVersion, params[0])] as R[];
+        }
+        return [] as R[];
+      }
+      if (
+        sql.includes("with record_counts") ||
+        sql.includes("from intelligence_v7.dimension_registry")
+      ) {
+        return [
+          {
+            dimension_key: dim,
+            dimension_file: "V7_01_enterprise_profile.csv",
+            dimension_label: "Enterprise Profile",
+            column_count: 2,
+            record_count: 1,
+            source_files: 1,
+          },
+        ] as R[];
+      }
+      if (sql.includes("from intelligence_v7.column_registry")) {
+        return [
+          {
+            dimension_key: dim,
+            column_name: "entity_name",
+            client_field: "Company / unit",
+            client_instruction: "Name",
+            module_use: "Home",
+          },
+          {
+            dimension_key: dim,
+            column_name: "industry",
+            client_field: "Industry",
+            client_instruction: "Industry",
+            module_use: "Home",
+          },
+        ] as R[];
+      }
+      if (
+        sql.includes("cr.required_level") ||
+        sql.includes("kv.key <> all($4::text[])")
+      ) {
+        return [] as R[];
+      }
+      if (sql.includes("from intelligence_v7.business_records")) {
+        return [
+          {
+            dimension_key: dim,
+            record_key: "hidden",
+            record_name: "Meridian Health System",
+            source_file: "V7_01_enterprise_profile.csv",
+            source_row_number: 1,
+            source_artifact_name: "V7_01_enterprise_profile.csv",
+            source_validation_status: "validated",
+            values_json: {
+              entity_name: "Meridian Health System",
+              industry: "Healthcare",
+            },
+          },
+        ] as R[];
+      }
+      return [] as R[];
+    });
+}
+
+describe("getHomeV7ContextBrowser — candidate invisibility", () => {
+  it("does not select a newer validated candidate by default", async () => {
+    const runQueries: string[] = [];
+    const browser = await getHomeV7ContextBrowser({
+      tenantKey: "meridian",
+      session: activePointerSession({
+        activeContractVersion: "v7.active-20260715",
+        candidateContractVersion: "v7.candidate-20260716",
+        onRunQuery: (sql) => runQueries.push(sql),
+      }),
+    });
+
+    expect(browser?.datasetDir).toBe("dataset/v7.active-20260715");
+    expect(browser?.contextMode).toBe("active");
+    expect(runQueries.join("\n")).toContain(
+      "join intelligence_v7.active_tenant_contract_versions active",
+    );
+    expect(runQueries.join("\n")).not.toContain(
+      "join intelligence_v7.contract_versions cv",
+    );
+  });
+
+  it("selects the active pointer even when a newer candidate exists", async () => {
+    const browser = await getHomeV7ContextBrowser({
+      tenantKey: "meridian",
+      session: activePointerSession({
+        activeContractVersion: "v7.active-older",
+        candidateContractVersion: "v7.candidate-newer",
+      }),
+    });
+
+    expect(browser?.generatedAt).toBe("2026-07-15T20:00:00.000Z");
+    expect(browser?.datasetDir).toBe("dataset/v7.active-older");
+  });
+
+  it("returns safe fallback when no active pointer exists", async () => {
+    const browser = await getHomeV7ContextBrowser({
+      tenantKey: "meridian",
+      session: activePointerSession({
+        activeContractVersion: null,
+        candidateContractVersion: "v7.candidate-only",
+      }),
+    });
+
+    expect(browser).toBeNull();
+  });
+
+  it("retrieves candidate content only through explicit candidate preview", async () => {
+    const browser = await getHomeV7ContextBrowser({
+      tenantKey: "meridian",
+      session: activePointerSession({
+        activeContractVersion: "v7.active-20260715",
+        candidateContractVersion: "v7.candidate-20260716",
+      }),
+      candidatePreview: { contractVersion: "v7.candidate-20260716" },
+    });
+
+    expect(browser?.datasetDir).toBe("dataset/v7.candidate-20260716");
+    expect(browser?.contextMode).toBe("candidate-preview");
+    expect(browser?.contextWarnings).toEqual([
+      "Candidate preview",
+      "Not active tenant truth",
+      "Not used by default module runtime",
+    ]);
+  });
+
+  it("keeps candidate preview tenant-isolated", async () => {
+    const browser = await getHomeV7ContextBrowser({
+      tenantKey: "meridian",
+      session: activePointerSession({
+        activeContractVersion: null,
+        candidateContractVersion: "v7.candidate-first-capital",
+        candidateTenantKey: "first-capital-financial",
+      }),
+      candidatePreview: { contractVersion: "v7.candidate-first-capital" },
+    });
+
+    expect(browser).toBeNull();
   });
 });
 
@@ -114,7 +329,10 @@ function routingSession(opts: {
           },
         ] as R[];
       }
-      if (sql.includes("with record_counts") || sql.includes("from intelligence_v7.dimension_registry")) {
+      if (
+        sql.includes("with record_counts") ||
+        sql.includes("from intelligence_v7.dimension_registry")
+      ) {
         return [
           {
             dimension_key: dim,
@@ -145,8 +363,20 @@ function routingSession(opts: {
       }
       if (sql.includes("from intelligence_v7.column_registry")) {
         return [
-          { dimension_key: dim, column_name: "executive_owner", client_field: "Executive owner", client_instruction: "Owner", module_use: "Loaded Facts" },
-          { dimension_key: dim, column_name: "parent_entity_name", client_field: "Parent entity name", client_instruction: "Parent", module_use: "Context" },
+          {
+            dimension_key: dim,
+            column_name: "executive_owner",
+            client_field: "Executive owner",
+            client_instruction: "Owner",
+            module_use: "Loaded Facts",
+          },
+          {
+            dimension_key: dim,
+            column_name: "parent_entity_name",
+            client_field: "Parent entity name",
+            client_instruction: "Parent",
+            module_use: "Context",
+          },
         ] as R[];
       }
       if (sql.includes("from intelligence_v7.business_records")) {
@@ -189,7 +419,10 @@ function chunkRegistrySession(): SessionRunner {
           },
         ] as R[];
       }
-      if (sql.includes("with record_counts") || sql.includes("from intelligence_v7.dimension_registry")) {
+      if (
+        sql.includes("with record_counts") ||
+        sql.includes("from intelligence_v7.dimension_registry")
+      ) {
         return [
           {
             dimension_key: dim,
@@ -205,11 +438,41 @@ function chunkRegistrySession(): SessionRunner {
       }
       if (sql.includes("from intelligence_v7.column_registry")) {
         return [
-          { dimension_key: dim, column_name: "source_artifact_ref", client_field: "Source artifact ref", client_instruction: "", module_use: "" },
-          { dimension_key: dim, column_name: "semantic_tags", client_field: "Semantic tags", client_instruction: "", module_use: "" },
-          { dimension_key: dim, column_name: "retrieval_eligibility", client_field: "Retrieval eligibility", client_instruction: "", module_use: "" },
-          { dimension_key: dim, column_name: "chunk_id", client_field: "Chunk id", client_instruction: "", module_use: "" },
-          { dimension_key: dim, column_name: "entity_name", client_field: "Entity name", client_instruction: "", module_use: "" },
+          {
+            dimension_key: dim,
+            column_name: "source_artifact_ref",
+            client_field: "Source artifact ref",
+            client_instruction: "",
+            module_use: "",
+          },
+          {
+            dimension_key: dim,
+            column_name: "semantic_tags",
+            client_field: "Semantic tags",
+            client_instruction: "",
+            module_use: "",
+          },
+          {
+            dimension_key: dim,
+            column_name: "retrieval_eligibility",
+            client_field: "Retrieval eligibility",
+            client_instruction: "",
+            module_use: "",
+          },
+          {
+            dimension_key: dim,
+            column_name: "chunk_id",
+            client_field: "Chunk id",
+            client_instruction: "",
+            module_use: "",
+          },
+          {
+            dimension_key: dim,
+            column_name: "entity_name",
+            client_field: "Entity name",
+            client_instruction: "",
+            module_use: "",
+          },
         ] as R[];
       }
       if (sql.includes("from intelligence_v7.business_records")) {
@@ -269,11 +532,15 @@ describe("getHomeV7ContextBrowser — plain-English labels for CXO readability",
     const preview = browser?.dimensions["AI Search Coverage"];
     const keys = preview!.columns.map((column) => column.key);
     expect(keys).not.toContain("chunk_id");
-    expect(JSON.stringify(preview)).not.toContain("lakeshore-industries-v2-chunk-00003");
+    expect(JSON.stringify(preview)).not.toContain(
+      "lakeshore-industries-v2-chunk-00003",
+    );
   });
 });
 
-function holdcoHierarchySession(onRunParams?: (params: unknown[]) => void): SessionRunner {
+function holdcoHierarchySession(
+  onRunParams?: (params: unknown[]) => void,
+): SessionRunner {
   const dim = "v7_00_portfolio_entity_registry";
   return async (fn) =>
     fn(async <R>(sql: string, params: unknown[]) => {
@@ -296,7 +563,10 @@ function holdcoHierarchySession(onRunParams?: (params: unknown[]) => void): Sess
           },
         ] as R[];
       }
-      if (sql.includes("with record_counts") || sql.includes("from intelligence_v7.dimension_registry")) {
+      if (
+        sql.includes("with record_counts") ||
+        sql.includes("from intelligence_v7.dimension_registry")
+      ) {
         return [
           {
             dimension_key: dim,
@@ -310,13 +580,55 @@ function holdcoHierarchySession(onRunParams?: (params: unknown[]) => void): Sess
       }
       if (sql.includes("from intelligence_v7.column_registry")) {
         return [
-          { dimension_key: dim, column_name: "entity_id", client_field: "Entity ID", client_instruction: "Stable ID", module_use: "Home" },
-          { dimension_key: dim, column_name: "entity_name", client_field: "Entity name", client_instruction: "Name", module_use: "Home" },
-          { dimension_key: dim, column_name: "entity_scope", client_field: "Entity scope", client_instruction: "Scope", module_use: "Home" },
-          { dimension_key: dim, column_name: "parent_entity_name", client_field: "Parent entity name", client_instruction: "Parent", module_use: "Home" },
-          { dimension_key: dim, column_name: "revenue_usd", client_field: "Revenue USD", client_instruction: "Revenue", module_use: "Home" },
-          { dimension_key: dim, column_name: "employee_count", client_field: "Employee count", client_instruction: "Employees", module_use: "Home" },
-          { dimension_key: dim, column_name: "total_direct_technology_budget_usd", client_field: "Technology budget USD", client_instruction: "Budget", module_use: "Home" },
+          {
+            dimension_key: dim,
+            column_name: "entity_id",
+            client_field: "Entity ID",
+            client_instruction: "Stable ID",
+            module_use: "Home",
+          },
+          {
+            dimension_key: dim,
+            column_name: "entity_name",
+            client_field: "Entity name",
+            client_instruction: "Name",
+            module_use: "Home",
+          },
+          {
+            dimension_key: dim,
+            column_name: "entity_scope",
+            client_field: "Entity scope",
+            client_instruction: "Scope",
+            module_use: "Home",
+          },
+          {
+            dimension_key: dim,
+            column_name: "parent_entity_name",
+            client_field: "Parent entity name",
+            client_instruction: "Parent",
+            module_use: "Home",
+          },
+          {
+            dimension_key: dim,
+            column_name: "revenue_usd",
+            client_field: "Revenue USD",
+            client_instruction: "Revenue",
+            module_use: "Home",
+          },
+          {
+            dimension_key: dim,
+            column_name: "employee_count",
+            client_field: "Employee count",
+            client_instruction: "Employees",
+            module_use: "Home",
+          },
+          {
+            dimension_key: dim,
+            column_name: "total_direct_technology_budget_usd",
+            client_field: "Technology budget USD",
+            client_instruction: "Budget",
+            module_use: "Home",
+          },
         ] as R[];
       }
       if (sql.includes("from intelligence_v7.business_records")) {
@@ -364,7 +676,7 @@ function holdcoHierarchySession(onRunParams?: (params: unknown[]) => void): Sess
 }
 
 describe("getHomeV7ContextBrowser — holdco entity spine", () => {
-  it("uses the latest validated tenant contract when Home is not explicitly pinned", async () => {
+  it("uses the active tenant contract when Home is not explicitly pinned", async () => {
     let runParams: unknown[] | null = null;
     const browser = await getHomeV7ContextBrowser({
       tenantKey: "lakeshore",
@@ -375,7 +687,9 @@ describe("getHomeV7ContextBrowser — holdco entity spine", () => {
 
     expect(runParams?.[1]).toBeNull();
     expect(browser?.datasetDir).toBe("lakeshore-holdco-v7");
-    expect(browser?.dimensions["Portfolio Company Hierarchy"]?.rowCount).toBe(8);
+    expect(browser?.dimensions["Portfolio Company Hierarchy"]?.rowCount).toBe(
+      8,
+    );
   });
 
   it("surfaces portfolio company hierarchy as a first-class Home dimension", async () => {
@@ -385,7 +699,9 @@ describe("getHomeV7ContextBrowser — holdco entity spine", () => {
       contractVersion: "v7.1.0-holdco-entity-spine-20260706",
     });
 
-    expect(browser?.bindingContext?.[0]?.dimension).toBe("Portfolio Company Hierarchy");
+    expect(browser?.bindingContext?.[0]?.dimension).toBe(
+      "Portfolio Company Hierarchy",
+    );
     const preview = browser?.dimensions["Portfolio Company Hierarchy"];
     expect(preview?.columns.map((column) => column.label)).toEqual([
       "Company / Unit",
@@ -413,7 +729,9 @@ describe("getHomeV7ContextBrowser — evidence-gap scoping", () => {
     const preview = browser?.dimensions["Business Functions"];
     // Primary contract query wins (5), not the denylist's 99.
     expect(preview?.dataThinCells).toBe(5);
-    expect(preview?.knownGaps.map((gap) => gap.label)).toContain("Parent Entity Name");
+    expect(preview?.knownGaps.map((gap) => gap.label)).toContain(
+      "Parent Entity Name",
+    );
   });
 
   it("shows 0 gaps (NOT the preview sample) when the contract query returns none", async () => {

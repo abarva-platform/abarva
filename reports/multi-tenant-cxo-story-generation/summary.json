@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-07-17T00:00:00.715Z",
+  "audit_status": "Pass",
+  "results": [
+    {
+      "tenantKey": "meridian-health",
+      "canonicalInput": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3",
+      "status": "Pass",
+      "failures": [],
+      "storyBlocks": 20,
+      "visualSpecs": 12,
+      "score": 4.65,
+      "storyStore": "approved tenant-key Home/Knowledge advisory artifact store",
+      "visualStore": "approved tenant-key Home/Knowledge visual artifact store"
+    },
+    {
+      "tenantKey": "skyharbor-air",
+      "canonicalInput": "datasets/tenant-inputs/skyharbor-air/standard-2026-07-v3",
+      "status": "Pass",
+      "failures": [],
+      "storyBlocks": 20,
+      "visualSpecs": 12,
+      "score": 4.65,
+      "storyStore": "approved tenant-key Home/Knowledge advisory artifact store",
+      "visualStore": "approved tenant-key Home/Knowledge visual artifact store"
+    },
+    {
+      "tenantKey": "first-capital",
+      "canonicalInput": "datasets/tenant-inputs/first-capital/standard-2026-07-v3",
+      "status": "Pass",
+      "failures": [],
+      "storyBlocks": 20,
+      "visualSpecs": 12,
+      "score": 4.65,
+      "storyStore": "approved tenant-key Home/Knowledge advisory artifact store",
+      "visualStore": "approved tenant-key Home/Knowledge visual artifact store"
+    }
+  ]
+}

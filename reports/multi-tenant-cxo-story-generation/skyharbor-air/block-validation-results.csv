@@ -1,0 +1,21 @@
+block_id,dimension,status,approved_for_render,hard_fail_count
+SHA-BLK-000,Overview,pass,true,0
+SHA-BLK-01,00 Enterprise Profile,pass,true,0
+SHA-BLK-02,01 Business Functions,pass,true,0
+SHA-BLK-03,02 Org Ownership,pass,true,0
+SHA-BLK-04,03 Workforce Roles,pass,true,0
+SHA-BLK-05,04 Applications & Systems,pass,true,0
+SHA-BLK-06,05 Data Assets & Integrations,pass,true,0
+SHA-BLK-07,06 Infrastructure & Platforms,pass,true,0
+SHA-BLK-08,07 Vendors & Contracts,pass,true,0
+SHA-BLK-09,"08 IT Budget, Spend & Value",pass,true,0
+SHA-BLK-10,09 Programs & Initiatives,pass,true,0
+SHA-BLK-11,10 AI & Automation Use Cases,pass,true,0
+SHA-BLK-12,11 Risks & Controls,pass,true,0
+SHA-BLK-13,12 Relationships,pass,true,0
+SHA-BLK-14,13 Evidence Sources,pass,true,0
+SHA-BLK-15,14 Metrics & Outcomes,pass,true,0
+SHA-BLK-16,15 Industry Context Patterns,pass,true,0
+SHA-BLK-17,16 Expert Lenses,pass,true,0
+SHA-BLK-18,17 Managed Services Scope,pass,true,0
+SHA-BLK-19,18 Operational Process Evidence,pass,true,0

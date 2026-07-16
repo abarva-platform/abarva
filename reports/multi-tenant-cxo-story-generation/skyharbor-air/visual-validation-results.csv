@@ -1,0 +1,13 @@
+visual_id,type,status,chart_allowed,evidence_boundary
+SHA-VIZ-001,context_strength_snapshot,pass,false,Planning-grade only; no dimension is certified as production-ready evidence.
+SHA-VIZ-002,dimension_readiness_matrix,pass,false,All dimensions are planning-grade or needs-validation; none are certified.
+SHA-VIZ-003,top_evidence_requests,pass,false,Gaps are planning-grade hypotheses until validated by real documents or certified data.
+SHA-VIZ-004,use_case_portfolio,pass,false,All use cases are planning-grade; none have certified production readiness.
+SHA-VIZ-005,risk_control_heatmap,pass,false,Risk status is hypothesis-grade; no controls are certified as effective without audit evidence.
+SHA-VIZ-006,vendor_dependency_matrix,pass,false,Vendor analysis is planning-grade; no contract terms are legally validated at this stage.
+SHA-VIZ-007,data_foundation_gap_map,pass,false,All data domains are needs-validation; no domain has certified lineage or completeness proof.
+SHA-VIZ-008,module_next_actions,pass,false,Module actions are advisory; Source activation requires evidence gate clearance per use case.
+SHA-VIZ-009,value_hypothesis_vs_proof,pass,false,All value claims are hypothesis-grade; no realized savings or outcomes are claimed.
+SHA-VIZ-010,evidence_confidence_matrix,pass,false,Confidence ratings are planning-grade; all cells require real evidence validation to upgrade status.
+SHA-VIZ-011,program_readiness_matrix,pass,false,All programs are planning-grade; no program has certified readiness for production deployment.
+SHA-VIZ-012,cxo_insight_cards,pass,false,Insights are advisory and planning-grade; no claims reflect certified outcomes or validated decisions.
