@@ -18,6 +18,10 @@ export type KnowledgeDimensionNarrativeSummary = {
   current_caveats: string[];
   next_validation_actions: string[];
   module_usage: string[];
+  data_tab_intro?: string;
+  relationships_tab_intro?: string;
+  gaps_tab_intro?: string;
+  evidence_tab_intro?: string;
   safe_demo_claims: string[];
   do_not_claim: string[];
   evidence_refs_used: string[];
@@ -64,7 +68,12 @@ export type KnowledgeHomeInsightSummary = {
     title: string;
     what_nexus_sees: string;
     why_it_matters: string;
-    evidence_strength: "Strong" | "Medium" | "Partial" | "Gap" | "Target / Future";
+    evidence_strength:
+      | "Strong"
+      | "Medium"
+      | "Partial"
+      | "Gap"
+      | "Target / Future";
     related_dimensions: string[];
     next_action: string;
     module_handoff: string;
@@ -77,7 +86,12 @@ export type KnowledgeHomeInsightSummary = {
   }>;
   readiness_matrix: Array<{
     dimension: string;
-    readiness: "Strong" | "Partial" | "Gap" | "Target / Future" | "Not validated";
+    readiness:
+      | "Strong"
+      | "Partial"
+      | "Gap"
+      | "Target / Future"
+      | "Not validated";
     story: string;
   }>;
   evidence_heatmap: Array<{
@@ -166,8 +180,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "The tenant context is synthetic and source-backed for demo use, not real production data.",
       "Business, technology, data, risk, and metric dimensions are available for fact-based orientation.",
     ],
-    why:
-      "A credible Agent Assist conversation starts with who the enterprise is, what work matters, and what evidence boundaries apply before any module recommends action.",
+    why: "A credible Agent Assist conversation starts with who the enterprise is, what work matters, and what evidence boundaries apply before any module recommends action.",
     questions: [
       "What kind of enterprise is Meridian modeled as?",
       "Which strategic themes frame the Agent Assist opportunity?",
@@ -197,8 +210,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Claims, eligibility, clinical, quality, finance, and data teams are downstream participants.",
       "Business function records support discovery and phase-gated Moves framing.",
     ],
-    why:
-      "Agent Assist changes how work is performed across functions; it cannot be evaluated as only a technology feature.",
+    why: "Agent Assist changes how work is performed across functions; it cannot be evaluated as only a technology feature.",
     questions: [
       "Which business functions are affected by Agent Assist?",
       "Who should participate in the current-state workshop?",
@@ -228,8 +240,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Ownership context can support workshop planning and governance design.",
       "Unconfirmed owners should remain gaps, not synthetic facts.",
     ],
-    why:
-      "AI work fails when ownership is unclear; Nexus uses this dimension to prevent an AI idea from entering execution without decision rights.",
+    why: "AI work fails when ownership is unclear; Nexus uses this dimension to prevent an AI idea from entering execution without decision rights.",
     questions: [
       "Who must approve Agent Assist scope?",
       "Which owners must sign off on data, controls, and metrics?",
@@ -259,8 +270,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Knowledge, data, privacy, and platform roles are necessary enabling roles.",
       "Role context supports adoption planning and human-in-the-loop controls.",
     ],
-    why:
-      "Agent Assist only creates value if frontline roles can safely use it and supporting roles maintain knowledge, controls, and measurement.",
+    why: "Agent Assist only creates value if frontline roles can safely use it and supporting roles maintain knowledge, controls, and measurement.",
     questions: [
       "Which roles will use or govern Agent Assist?",
       "Where is human review required?",
@@ -292,8 +302,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Epic Clarity, Epic Caboodle, SQL Server reporting marts, DB2-style warehouse, Tableau, and SAS provide healthcare/data context.",
       "AWS and Databricks are target-state foundation signals, not current certified production.",
     ],
-    why:
-      "Agent Assist cannot be evaluated as a chatbot alone. It depends on systems, integrations, data, controls, and metrics across member service, claims, eligibility, knowledge, and analytics.",
+    why: "Agent Assist cannot be evaluated as a chatbot alone. It depends on systems, integrations, data, controls, and metrics across member service, claims, eligibility, knowledge, and analytics.",
     questions: [
       "Which systems do agents use today?",
       "Which integrations are required for safe answers?",
@@ -317,8 +326,15 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Source identifies vendor/platform dependencies.",
       "Tower defines metrics and measurement plan.",
     ],
-    relationshipRefs: ["rel-member-service-to-contact-center", "rel-member-service-to-claims"],
-    gapRefs: ["gap-transcript-governance", "gap-api-readiness", "gap-kpi-baselines"],
+    relationshipRefs: [
+      "rel-member-service-to-contact-center",
+      "rel-member-service-to-claims",
+    ],
+    gapRefs: [
+      "gap-transcript-governance",
+      "gap-api-readiness",
+      "gap-kpi-baselines",
+    ],
   },
   {
     dimension_key: "05_data_assets_integrations",
@@ -331,8 +347,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Epic Clarity/Caboodle, SQL Server marts, SAS, Tableau, and warehouse-style assets appear in the current-state context.",
       "A future AWS + Databricks lakehouse would need medallion architecture, governance, data products, and access controls.",
     ],
-    why:
-      "Agent Assist quality depends on governed data access, lineage, freshness, and controls; poor data readiness turns a promising AI use case into a risk.",
+    why: "Agent Assist quality depends on governed data access, lineage, freshness, and controls; poor data readiness turns a promising AI use case into a risk.",
     questions: [
       "Which data assets are needed for Agent Assist?",
       "Which integrations must be validated?",
@@ -364,8 +379,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "AWS landing zone, Databricks foundation, medallion architecture, and governance are target-state needs.",
       "Security, network, PHI, audit, and access controls are prerequisites.",
     ],
-    why:
-      "A technology target is only useful if Nexus keeps current state and future state distinct; otherwise the demo would claim capabilities the client has not built.",
+    why: "A technology target is only useful if Nexus keeps current state and future state distinct; otherwise the demo would claim capabilities the client has not built.",
     questions: [
       "What platform capabilities exist today?",
       "What target foundation must be designed before production Agent Assist?",
@@ -396,8 +410,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Source can use this context to prepare vendor/platform questions.",
       "Contract economics must remain caveated until source-backed agreements are loaded.",
     ],
-    why:
-      "Agent Assist will likely require vendor decisions; Source should help with scope and options without pretending contract economics are already proven.",
+    why: "Agent Assist will likely require vendor decisions; Source should help with scope and options without pretending contract economics are already proven.",
     questions: [
       "Which vendors or platforms are likely dependencies?",
       "What contract evidence is needed before sourcing decisions?",
@@ -427,8 +440,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Savings, avoided cost, and vendor economics are not approved facts without financial evidence.",
       "Tower will later need baseline and measured actuals.",
     ],
-    why:
-      "The platform should help executives avoid unfunded AI pilots and value claims that cannot be proved.",
+    why: "The platform should help executives avoid unfunded AI pilots and value claims that cannot be proved.",
     questions: [
       "What financial evidence is needed before business-case approval?",
       "Which cost categories need baseline validation?",
@@ -458,8 +470,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Data foundation and governance work are likely prerequisites.",
       "Moves can turn the idea into a phase-gated execution plan.",
     ],
-    why:
-      "Programs fail when an AI idea is funded without baseline, dependencies, controls, and execution ownership.",
+    why: "Programs fail when an AI idea is funded without baseline, dependencies, controls, and execution ownership.",
     questions: [
       "Should Agent Assist become a Move?",
       "What phase should it start in?",
@@ -490,8 +501,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Likely capabilities include agent support, intent detection, knowledge retrieval, and next-best-action.",
       "Data, transcript, control, and measurement readiness determine feasibility.",
     ],
-    why:
-      "AI value depends on the operating system around the model: data, workflow, controls, adoption, and measurable outcomes.",
+    why: "AI value depends on the operating system around the model: data, workflow, controls, adoption, and measurable outcomes.",
     questions: [
       "What would Agent Assist need to be safe?",
       "Which blockers must be resolved before design?",
@@ -522,8 +532,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Risk context is strong enough to shape readiness questions.",
       "Control effectiveness is not proven until evidence and owners are validated.",
     ],
-    why:
-      "Healthcare Agent Assist requires trust controls before speed; Nexus keeps risk visible in the same context used for decisions.",
+    why: "Healthcare Agent Assist requires trust controls before speed; Nexus keeps risk visible in the same context used for decisions.",
     questions: [
       "Which controls must be validated?",
       "What should not be claimed as ready?",
@@ -556,8 +565,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Agent Assist should connect systems, data, controls, and metrics.",
       "Relationship evidence exists directionally but should not be overstated as complete dependency mapping.",
     ],
-    why:
-      "The value of Knowledge is in connection, but unsupported relationship claims are more dangerous than missing rows.",
+    why: "The value of Knowledge is in connection, but unsupported relationship claims are more dangerous than missing rows.",
     questions: [
       "What is connected to Agent Assist?",
       "Which links are ready for discussion?",
@@ -575,7 +583,10 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Moves uses validated links for evidence attachment.",
       "Tower uses validated links for measurement lineage.",
     ],
-    relationshipRefs: ["rel-member-service-to-contact-center", "rel-agent-assist-to-data-foundation"],
+    relationshipRefs: [
+      "rel-member-service-to-contact-center",
+      "rel-agent-assist-to-data-foundation",
+    ],
   },
   {
     dimension_key: "13_evidence_sources",
@@ -588,8 +599,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "The UI should expose evidence without turning file names into the executive story.",
       "Missing evidence should remain visible as a gap.",
     ],
-    why:
-      "Evidence is what keeps aVa and downstream modules from converting plausible narrative into unsupported fact.",
+    why: "Evidence is what keeps aVa and downstream modules from converting plausible narrative into unsupported fact.",
     questions: [
       "What backs this claim?",
       "Which sources should be inspected next?",
@@ -617,8 +627,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Tower can help define a measurement plan after baselines are validated.",
       "Outcome value is not yet supported.",
     ],
-    why:
-      "AbarVa should convert AI ideas into measurable outcomes, but only when baseline and actual evidence exists.",
+    why: "AbarVa should convert AI ideas into measurable outcomes, but only when baseline and actual evidence exists.",
     questions: [
       "Which metrics should be baselined?",
       "What can Tower measure later?",
@@ -649,8 +658,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Industry patterns help identify likely gaps and workshop participants.",
       "Patterns are advisory until grounded in tenant evidence.",
     ],
-    why:
-      "Patterns make the product useful early, but Nexus must keep pattern-based assumptions separate from approved tenant truth.",
+    why: "Patterns make the product useful early, but Nexus must keep pattern-based assumptions separate from approved tenant truth.",
     questions: [
       "Which healthcare-specific risks should we validate?",
       "What evidence is usually needed for Agent Assist?",
@@ -680,8 +688,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Expert lenses help identify blind spots in data, controls, adoption, and measurement.",
       "They depend on the same source-backed context boundary.",
     ],
-    why:
-      "Executive decisions improve when the same evidence is examined through multiple accountable perspectives.",
+    why: "Executive decisions improve when the same evidence is examined through multiple accountable perspectives.",
     questions: [
       "What would a CDAO worry about?",
       "What would operations need to validate?",
@@ -711,8 +718,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Managed-services scope may matter for sourcing, transition, and ongoing value.",
       "Contract and service-level evidence remains required.",
     ],
-    why:
-      "AI programs fail when build scope ignores who will run, monitor, support, and improve the capability after launch.",
+    why: "AI programs fail when build scope ignores who will run, monitor, support, and improve the capability after launch.",
     questions: [
       "Who supports current reporting and analytics?",
       "Who would operate the target data foundation?",
@@ -742,8 +748,7 @@ const DIMENSION_NARRATIVE_INPUTS: Array<{
       "Operational process evidence is needed to move from idea to design.",
       "Transcript governance and workflow evidence remain priority gaps.",
     ],
-    why:
-      "Without process evidence, Agent Assist design becomes generic and risks missing the real work.",
+    why: "Without process evidence, Agent Assist design becomes generic and risks missing the real work.",
     questions: [
       "How do agents handle member service interactions today?",
       "Where do they use systems, data, and knowledge?",
@@ -840,7 +845,8 @@ const MERIDIAN_SEEDED_HOME_INSIGHTS: KnowledgeHomeInsightSummary = {
       module_handoff: "Moves P0/P1/P2 framing",
     },
     {
-      title: "Systems are known, but integration/API readiness is still a gate.",
+      title:
+        "Systems are known, but integration/API readiness is still a gate.",
       what_nexus_sees:
         "CRM, contact center, claims, eligibility, knowledge, Epic reporting context, SQL Server marts, Tableau, and SAS are visible in the landscape.",
       why_it_matters:
@@ -856,7 +862,8 @@ const MERIDIAN_SEEDED_HOME_INSIGHTS: KnowledgeHomeInsightSummary = {
       module_handoff: "Intelligence readiness assessment",
     },
     {
-      title: "AWS + Databricks is target-state foundation, not current production.",
+      title:
+        "AWS + Databricks is target-state foundation, not current production.",
       what_nexus_sees:
         "The future-state data foundation should include AWS, Databricks, medallion architecture, governed data products, catalog, lineage, and controls.",
       why_it_matters:
@@ -879,7 +886,10 @@ const MERIDIAN_SEEDED_HOME_INSIGHTS: KnowledgeHomeInsightSummary = {
       why_it_matters:
         "Tower can define the measurement plan now, but cannot claim realized value without baselines and actuals.",
       evidence_strength: "Partial",
-      related_dimensions: ["Metrics & Outcomes", "Operational Process Evidence"],
+      related_dimensions: [
+        "Metrics & Outcomes",
+        "Operational Process Evidence",
+      ],
       next_action:
         "Load baseline extracts and define measurement cadence before executive value claims.",
       module_handoff: "Tower baseline design",
@@ -903,13 +913,37 @@ const MERIDIAN_SEEDED_HOME_INSIGHTS: KnowledgeHomeInsightSummary = {
   ],
   enterprise_context_map: [
     { from: "Member Service", relation: "uses", to: "Contact Center Platform" },
-    { from: "Member Service", relation: "uses", to: "CRM / Member Service Platform" },
-    { from: "Member Service", relation: "integrates_with", to: "Claims Platform" },
-    { from: "Member Service", relation: "integrates_with", to: "Eligibility Platform" },
+    {
+      from: "Member Service",
+      relation: "uses",
+      to: "CRM / Member Service Platform",
+    },
+    {
+      from: "Member Service",
+      relation: "integrates_with",
+      to: "Claims Platform",
+    },
+    {
+      from: "Member Service",
+      relation: "integrates_with",
+      to: "Eligibility Platform",
+    },
     { from: "Member Service", relation: "uses", to: "Knowledge Base" },
-    { from: "Agent Assist", relation: "consumes", to: "Member / Claims / Eligibility / Knowledge data" },
-    { from: "Agent Assist", relation: "measured_by", to: "AHT / FCR / Transfer / Repeat Contact / CSAT / Cost per Contact" },
-    { from: "Agent Assist", relation: "has_risk", to: "PHI / HITL / Hallucination / Audit / Knowledge Governance" },
+    {
+      from: "Agent Assist",
+      relation: "consumes",
+      to: "Member / Claims / Eligibility / Knowledge data",
+    },
+    {
+      from: "Agent Assist",
+      relation: "measured_by",
+      to: "AHT / FCR / Transfer / Repeat Contact / CSAT / Cost per Contact",
+    },
+    {
+      from: "Agent Assist",
+      relation: "has_risk",
+      to: "PHI / HITL / Hallucination / Audit / Knowledge Governance",
+    },
     {
       from: "Agent Assist",
       relation: "target_platform_for",
@@ -921,32 +955,38 @@ const MERIDIAN_SEEDED_HOME_INSIGHTS: KnowledgeHomeInsightSummary = {
     {
       dimension: "Business Context",
       readiness: "Strong",
-      story: "Member Service and related operations are clear enough for discovery and chartering.",
+      story:
+        "Member Service and related operations are clear enough for discovery and chartering.",
     },
     {
       dimension: "Systems Context",
       readiness: "Strong",
-      story: "Core member-service, claims, eligibility, knowledge, reporting, and analytics systems are visible.",
+      story:
+        "Core member-service, claims, eligibility, knowledge, reporting, and analytics systems are visible.",
     },
     {
       dimension: "Data Context",
       readiness: "Partial",
-      story: "Required data assets are known, but lineage, freshness, and integration readiness need validation.",
+      story:
+        "Required data assets are known, but lineage, freshness, and integration readiness need validation.",
     },
     {
       dimension: "Metrics Baseline",
       readiness: "Partial",
-      story: "Measurement categories are known; baselines and actuals are not yet Tower-proof.",
+      story:
+        "Measurement categories are known; baselines and actuals are not yet Tower-proof.",
     },
     {
       dimension: "Risk / Controls",
       readiness: "Partial",
-      story: "PHI, HITL, audit, and knowledge governance are visible gates requiring evidence.",
+      story:
+        "PHI, HITL, audit, and knowledge governance are visible gates requiring evidence.",
     },
     {
       dimension: "Target Data Foundation",
       readiness: "Target / Future",
-      story: "AWS + Databricks is the recommended target-state direction, not certified current production.",
+      story:
+        "AWS + Databricks is the recommended target-state direction, not certified current production.",
     },
   ],
   evidence_heatmap: [
@@ -966,7 +1006,8 @@ const MERIDIAN_SEEDED_HOME_INSIGHTS: KnowledgeHomeInsightSummary = {
       dimension: "Data Assets & Integrations",
       evidence_coverage: "Medium",
       confidence: "Medium",
-      caveat: "Lineage, refresh cadence, and access controls require confirmation.",
+      caveat:
+        "Lineage, refresh cadence, and access controls require confirmation.",
     },
     {
       dimension: "Metrics & Outcomes",
@@ -990,33 +1031,41 @@ const MERIDIAN_SEEDED_HOME_INSIGHTS: KnowledgeHomeInsightSummary = {
   top_gaps: [
     {
       gap: "Transcript availability and governance not validated",
-      why_it_matters: "Agent Assist cannot be safely grounded without approved transcript and retention posture.",
+      why_it_matters:
+        "Agent Assist cannot be safely grounded without approved transcript and retention posture.",
       source_dimension: "Operational Process Evidence",
-      evidence_requested: "Transcript access policy, sample approval, consent/retention posture",
+      evidence_requested:
+        "Transcript access policy, sample approval, consent/retention posture",
       suggested_workshop_owner: "Member Service + Privacy",
       module_impacted: "Moves / Intelligence",
     },
     {
       gap: "KPI baselines incomplete",
-      why_it_matters: "Tower cannot claim value without baseline and actual measurement evidence.",
+      why_it_matters:
+        "Tower cannot claim value without baseline and actual measurement evidence.",
       source_dimension: "Metrics & Outcomes",
-      evidence_requested: "AHT, FCR, transfer, repeat contact, CSAT, quality, compliance, cost per contact",
+      evidence_requested:
+        "AHT, FCR, transfer, repeat contact, CSAT, quality, compliance, cost per contact",
       suggested_workshop_owner: "Operations Analytics",
       module_impacted: "Tower / Moves",
     },
     {
       gap: "API readiness unclear across CRM, claims, eligibility, and knowledge",
-      why_it_matters: "System names alone do not prove production integration feasibility.",
+      why_it_matters:
+        "System names alone do not prove production integration feasibility.",
       source_dimension: "Applications & Systems",
-      evidence_requested: "API inventory, integration map, owner signoff, latency/security constraints",
+      evidence_requested:
+        "API inventory, integration map, owner signoff, latency/security constraints",
       suggested_workshop_owner: "Technology Platform",
       module_impacted: "Moves / Source",
     },
     {
       gap: "AWS + Databricks production-readiness validation missing",
-      why_it_matters: "The target data foundation must be designed before production Agent Assist.",
+      why_it_matters:
+        "The target data foundation must be designed before production Agent Assist.",
       source_dimension: "Infrastructure & Platforms",
-      evidence_requested: "Landing zone, network/security, catalog, PHI controls, Databricks operating model",
+      evidence_requested:
+        "Landing zone, network/security, catalog, PHI controls, Databricks operating model",
       suggested_workshop_owner: "CDAO + CDIO",
       module_impacted: "Moves / Source / Tower",
     },
@@ -1025,27 +1074,32 @@ const MERIDIAN_SEEDED_HOME_INSIGHTS: KnowledgeHomeInsightSummary = {
     {
       module: "Knowledge",
       readiness: "Ready",
-      next_best_action: "Explain what is known, missing, and connected for Meridian Agent Assist.",
+      next_best_action:
+        "Explain what is known, missing, and connected for Meridian Agent Assist.",
     },
     {
       module: "Intelligence",
       readiness: "Ready with caveats",
-      next_best_action: "Assess readiness, risks, decision options, and evidence gaps.",
+      next_best_action:
+        "Assess readiness, risks, decision options, and evidence gaps.",
     },
     {
       module: "Moves",
       readiness: "Ready for P0/P1/P2",
-      next_best_action: "Frame, charter, and diagnose Agent Assist before future-state design.",
+      next_best_action:
+        "Frame, charter, and diagnose Agent Assist before future-state design.",
     },
     {
       module: "Source",
       readiness: "Partial",
-      next_best_action: "Identify likely vendor/platform dependencies; load contracts before optimization claims.",
+      next_best_action:
+        "Identify likely vendor/platform dependencies; load contracts before optimization claims.",
     },
     {
       module: "Tower",
       readiness: "Measurement planning only",
-      next_best_action: "Define baseline and measurement plan; do not claim realized value yet.",
+      next_best_action:
+        "Define baseline and measurement plan; do not claim realized value yet.",
     },
   ],
   safe_claims: COMMON_SAFE_CLAIMS,
@@ -1076,7 +1130,8 @@ const REALIZED_VALUE_CLAIM_PATTERN =
 
 export const MERIDIAN_KNOWLEDGE_DIMENSION_NARRATIVES: KnowledgeDimensionNarrativeSummary[] =
   MERIDIAN_CLAUDE_DIMENSION_NARRATIVES.length > 0 &&
-  MERIDIAN_CLAUDE_DIMENSION_NARRATIVES.flatMap(validateDimensionNarrative).length === 0
+  MERIDIAN_CLAUDE_DIMENSION_NARRATIVES.flatMap(validateDimensionNarrative)
+    .length === 0
     ? MERIDIAN_CLAUDE_DIMENSION_NARRATIVES
     : MERIDIAN_SEEDED_DIMENSION_NARRATIVES;
 
@@ -1154,6 +1209,10 @@ export function applyStoredKnowledgeDimensionNarratives(
         claudeSupportedQuestions: narrative.questions_supported,
         claudeUnsupportedQuestions: narrative.do_not_claim,
         claudeNextDataAction: narrative.next_validation_actions[0],
+        claudeDataTabIntro: narrative.data_tab_intro,
+        claudeRelationshipsTabIntro: narrative.relationships_tab_intro,
+        claudeGapsTabIntro: narrative.gaps_tab_intro,
+        claudeEvidenceTabIntro: narrative.evidence_tab_intro,
         caveats: narrative.current_caveats,
         safeQuestions: narrative.questions_supported,
         unsupportedQuestions: narrative.do_not_claim,
@@ -1165,7 +1224,9 @@ export function applyStoredKnowledgeDimensionNarratives(
 
 export function knowledgeNarrativeValidationFailures(): string[] {
   return [
-    ...MERIDIAN_KNOWLEDGE_DIMENSION_NARRATIVES.flatMap(validateDimensionNarrative),
+    ...MERIDIAN_KNOWLEDGE_DIMENSION_NARRATIVES.flatMap(
+      validateDimensionNarrative,
+    ),
     ...validateHomeInsightSummary(MERIDIAN_KNOWLEDGE_HOME_INSIGHTS),
   ];
 }
@@ -1174,21 +1235,36 @@ export function validateDimensionNarrative(
   summary: KnowledgeDimensionNarrativeSummary,
 ): string[] {
   const failures: string[] = [];
-  const text = stripSafeBoundaryLanguage([
-    summary.tenant_name,
-    summary.summary_title,
-    summary.executive_summary,
-    summary.what_nexus_knows.join(" "),
-    summary.why_it_matters,
-    summary.questions_supported.join(" "),
-    summary.current_caveats.join(" "),
-    summary.next_validation_actions.join(" "),
-    summary.module_usage.join(" "),
-  ].join(" "));
+  const text = stripSafeBoundaryLanguage(
+    [
+      summary.tenant_name,
+      summary.summary_title,
+      summary.executive_summary,
+      summary.what_nexus_knows.join(" "),
+      summary.why_it_matters,
+      summary.questions_supported.join(" "),
+      summary.current_caveats.join(" "),
+      summary.next_validation_actions.join(" "),
+      summary.module_usage.join(" "),
+      summary.data_tab_intro ?? "",
+      summary.relationships_tab_intro ?? "",
+      summary.gaps_tab_intro ?? "",
+      summary.evidence_tab_intro ?? "",
+    ].join(" "),
+  );
   const forbidden = [
-    ["wrong tenant", /\b(Airline Demo|SkyHarbor|Apex Retail|First Capital|Lakeshore)\b/i],
-    ["legacy data layer language", /\bV[4-7]\b|\bv[4-7]\b|current-state-pack|rich-pack/i],
-    ["production AWS Databricks overclaim", /\b(AWS|Databricks)\b.{0,80}\b(is|are|as)\s+(?:a\s+)?(?:current\s+)?(?:certified\s+)?production\b/i],
+    [
+      "wrong tenant",
+      /\b(Airline Demo|SkyHarbor|Apex Retail|First Capital|Lakeshore)\b/i,
+    ],
+    [
+      "legacy data layer language",
+      /\bV[4-7]\b|\bv[4-7]\b|current-state-pack|rich-pack/i,
+    ],
+    [
+      "production AWS Databricks overclaim",
+      /\b(AWS|Databricks)\b.{0,80}\b(is|are|as)\s+(?:a\s+)?(?:current\s+)?(?:certified\s+)?production\b/i,
+    ],
     [
       "PHI ingestion overclaim",
       /\bPHI-bearing transcripts? (were|are|have been) ingested\b(?![^.]{0,100}\bnot\b)/i,
@@ -1216,7 +1292,10 @@ export function validateDimensionNarrative(
     failures.push(`${summary.dimension_key}: missing caveats`);
   }
   failures.push(
-    ...validateCxoNarrativeStructure(summary.dimension_key, summary.executive_summary),
+    ...validateCxoNarrativeStructure(
+      summary.dimension_key,
+      summary.executive_summary,
+    ),
   );
   return failures;
 }
@@ -1225,14 +1304,25 @@ export function validateHomeInsightSummary(
   summary: KnowledgeHomeInsightSummary,
 ): string[] {
   const failures: string[] = [];
-  const text = stripSafeBoundaryLanguage(JSON.stringify({
-    ...summary,
-    do_not_claim: [],
-  }));
+  const text = stripSafeBoundaryLanguage(
+    JSON.stringify({
+      ...summary,
+      do_not_claim: [],
+    }),
+  );
   const forbidden = [
-    ["wrong tenant", /\b(Airline Demo|SkyHarbor|Apex Retail|First Capital|Lakeshore)\b/i],
-    ["legacy data layer language", /\bV[4-7]\b|\bv[4-7]\b|current-state-pack|rich-pack/i],
-    ["production AWS Databricks overclaim", /\b(AWS|Databricks)\b.{0,80}\b(is|are|as)\s+(?:a\s+)?(?:current\s+)?(?:certified\s+)?production\b/i],
+    [
+      "wrong tenant",
+      /\b(Airline Demo|SkyHarbor|Apex Retail|First Capital|Lakeshore)\b/i,
+    ],
+    [
+      "legacy data layer language",
+      /\bV[4-7]\b|\bv[4-7]\b|current-state-pack|rich-pack/i,
+    ],
+    [
+      "production AWS Databricks overclaim",
+      /\b(AWS|Databricks)\b.{0,80}\b(is|are|as)\s+(?:a\s+)?(?:current\s+)?(?:certified\s+)?production\b/i,
+    ],
     [
       "PHI ingestion overclaim",
       /\bPHI-bearing transcripts? (were|are|have been) ingested\b(?![^.]{0,100}\bnot\b)/i,
@@ -1260,7 +1350,10 @@ export function validateHomeInsightSummary(
     failures.push("home-insights: validation status is not passed");
   }
   failures.push(
-    ...validateCxoNarrativeStructure("home-insights", summary.executive_summary),
+    ...validateCxoNarrativeStructure(
+      "home-insights",
+      summary.executive_summary,
+    ),
   );
   if (summary.visual_blocks && summary.visual_blocks.length > 0) {
     failures.push(...validateHomeVisualBlocks(summary.visual_blocks));
@@ -1280,16 +1373,24 @@ export function validateCxoNarrativeStructure(
   const failures: string[] = [];
   const trimmed = (executiveSummary ?? "").trim();
   const firstSentenceMatch = trimmed.match(/^[^.!?]*[.!?]/);
-  const firstSentence = (firstSentenceMatch ? firstSentenceMatch[0] : trimmed).trim();
+  const firstSentence = (
+    firstSentenceMatch ? firstSentenceMatch[0] : trimmed
+  ).trim();
 
   const bannedOpenings: Array<[string, RegExp]> = [
-    ["opens with narrative-construction meta language", /^this narrative is built on/i],
-    ["opens with \"this story is\"", /^this story is/i],
-    ["opens with \"the story it tells\"", /^the story it tells/i],
-    ["opens with \"context layer is the hero\"", /^the enterprise context layer is the hero/i],
+    [
+      "opens with narrative-construction meta language",
+      /^this narrative is built on/i,
+    ],
+    ['opens with "this story is"', /^this story is/i],
+    ['opens with "the story it tells"', /^the story it tells/i],
+    [
+      'opens with "context layer is the hero"',
+      /^the enterprise context layer is the hero/i,
+    ],
     ["opens with a raw record count", /^home context has/i],
-    ["opens with \"this page shows\"", /^this page shows/i],
-    ["opens with \"this view explains\"", /^this view explains/i],
+    ['opens with "this page shows"', /^this page shows/i],
+    ['opens with "this view explains"', /^this view explains/i],
   ];
   for (const [issue, pattern] of bannedOpenings) {
     if (pattern.test(firstSentence)) {
@@ -1314,7 +1415,9 @@ export function validateCxoNarrativeStructure(
   const lowerFull = trimmed.toLowerCase();
   for (const phrase of forbiddenPhrases) {
     if (lowerFull.includes(phrase)) {
-      failures.push(`${label}: forbidden phrase "${phrase}" in executive summary`);
+      failures.push(
+        `${label}: forbidden phrase "${phrase}" in executive summary`,
+      );
     }
   }
   if (/\bv[4-7]\b/i.test(trimmed)) {
@@ -1331,7 +1434,9 @@ export function validateCxoNarrativeStructure(
   }
 
   if (trimmed.length > 0 && !/[.!?]$/.test(trimmed)) {
-    failures.push(`${label}: executive summary does not end in a complete sentence`);
+    failures.push(
+      `${label}: executive summary does not end in a complete sentence`,
+    );
   }
 
   return failures;
@@ -1347,7 +1452,10 @@ export function validateCxoNarrativeStructure(
  * any negation cue in that same sentence is far more robust to how a model
  * naturally phrases a caveat.
  */
-export function sentenceHasUnnegatedClaim(text: string, claimPattern: RegExp): boolean {
+export function sentenceHasUnnegatedClaim(
+  text: string,
+  claimPattern: RegExp,
+): boolean {
   const sentences = text.split(/(?<=[.!?])\s+/);
   const negationCue =
     /\b(no|not|n['’]t|never|unproven|unvalidated|unevidenced|hypothes\w*|until|before)\b/i;
@@ -1356,7 +1464,9 @@ export function sentenceHasUnnegatedClaim(text: string, claimPattern: RegExp): b
   );
 }
 
-export function validateHomeVisualBlocks(blocks: KnowledgeHomeVisualBlock[]): string[] {
+export function validateHomeVisualBlocks(
+  blocks: KnowledgeHomeVisualBlock[],
+): string[] {
   const failures: string[] = [];
   if (blocks.length > 4) {
     failures.push(
@@ -1372,28 +1482,45 @@ export function validateHomeVisualBlocks(blocks: KnowledgeHomeVisualBlock[]): st
   ]);
   blocks.forEach((block, index) => {
     if (!allowedTypes.has(block.type)) {
-      failures.push(`home-insights: visual block ${index} has unknown type "${block.type}"`);
+      failures.push(
+        `home-insights: visual block ${index} has unknown type "${block.type}"`,
+      );
     }
     if (!block.why_it_matters || block.why_it_matters.trim().length === 0) {
-      failures.push(`home-insights: visual block "${block.title}" missing why_it_matters`);
+      failures.push(
+        `home-insights: visual block "${block.title}" missing why_it_matters`,
+      );
     }
-    if (!block.executive_message || block.executive_message.trim().length === 0) {
-      failures.push(`home-insights: visual block "${block.title}" missing executive_message`);
+    if (
+      !block.executive_message ||
+      block.executive_message.trim().length === 0
+    ) {
+      failures.push(
+        `home-insights: visual block "${block.title}" missing executive_message`,
+      );
     }
     if (!Array.isArray(block.evidence_refs)) {
-      failures.push(`home-insights: visual block "${block.title}" evidence_refs is not an array`);
+      failures.push(
+        `home-insights: visual block "${block.title}" evidence_refs is not an array`,
+      );
     }
     if (!Array.isArray(block.caveats)) {
-      failures.push(`home-insights: visual block "${block.title}" caveats is not an array`);
+      failures.push(
+        `home-insights: visual block "${block.title}" caveats is not an array`,
+      );
     }
     if (!Number.isFinite(block.display_priority)) {
-      failures.push(`home-insights: visual block "${block.title}" missing display priority`);
+      failures.push(
+        `home-insights: visual block "${block.title}" missing display priority`,
+      );
     }
   });
   return failures;
 }
 
-function normalizeTenantKey(tenantKey: string | null | undefined): string | null {
+function normalizeTenantKey(
+  tenantKey: string | null | undefined,
+): string | null {
   const normalized = tenantKey?.trim().toLowerCase() ?? "";
   if (!normalized) return null;
   if (normalized === "meridian" || normalized === "healthcare-demo") {
@@ -1429,17 +1556,32 @@ function stripSafeBoundaryLanguage(value: string): string {
     .replace(/\bnot current production\b/gi, "")
     .replace(/\bnot certified current production\b/gi, "")
     .replace(/\bno realized (?:ROI|value|savings)\b/gi, "")
-    .replace(/\bno realized outcomes? (?:are|is|has been|have been)?\s*claimed\b/gi, "")
+    .replace(
+      /\bno realized outcomes? (?:are|is|has been|have been)?\s*claimed\b/gi,
+      "",
+    )
     .replace(/\bnot audited financials or realized ROI\b/gi, "")
     .replace(/\bwithout (?:proven controls or )?realized value\b/gi, "")
     .replace(/\brealized savings are not proven\b/gi, "")
     .replace(/\brealized (?:ROI|value|savings) (?:is|are) not proven\b/gi, "")
-    .replace(/\bplanning hypotheses, not audited spend or realized savings\b/gi, "")
+    .replace(
+      /\bplanning hypotheses, not audited spend or realized savings\b/gi,
+      "",
+    )
     .replace(/\bare the scaffolding for Tower value tracking\b/gi, "")
-    .replace(/\bROI, savings, or Tower value should not be claimed until measured actuals exist\b/gi, "")
+    .replace(
+      /\bROI, savings, or Tower value should not be claimed until measured actuals exist\b/gi,
+      "",
+    )
     .replace(/\bNo realized ROI, savings, or value has been proven\b/gi, "")
-    .replace(/\bNo realized ROI, ROI, savings, or Tower value should not be claimed until measured actuals exist\b/gi, "")
+    .replace(
+      /\bNo realized ROI, ROI, savings, or Tower value should not be claimed until measured actuals exist\b/gi,
+      "",
+    )
     .replace(/\bwill only track realized value once actuals exist\b/gi, "")
-    .replace(/\bnone imply that PHI[- ]?bearing transcripts? (?:have been|were|are) ingested or approved\b/gi, "")
+    .replace(
+      /\bnone imply that PHI[- ]?bearing transcripts? (?:have been|were|are) ingested or approved\b/gi,
+      "",
+    )
     .replace(/\bnot (?:yet )?ingested\b/gi, "");
 }

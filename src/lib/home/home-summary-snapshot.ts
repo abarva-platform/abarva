@@ -79,7 +79,14 @@ export interface HomeKnowledgeLayerVisualSpec {
     id: string;
     label: string;
     detail: string;
-    tone: "enterprise" | "technology" | "commercial" | "data" | "delivery" | "risk" | "value";
+    tone:
+      | "enterprise"
+      | "technology"
+      | "commercial"
+      | "data"
+      | "delivery"
+      | "risk"
+      | "value";
     moduleUses: string[];
   }>;
   flow: Array<{
@@ -109,6 +116,10 @@ export interface HomeContextAreaSummary {
   claudeSupportedQuestions?: string[];
   claudeUnsupportedQuestions?: string[];
   claudeNextDataAction?: string;
+  claudeDataTabIntro?: string;
+  claudeRelationshipsTabIntro?: string;
+  claudeGapsTabIntro?: string;
+  claudeEvidenceTabIntro?: string;
   executiveSummaryInputs: string[];
   loadedCount: number;
   mappedCount: number;
@@ -318,23 +329,22 @@ const DEFAULT_KNOWLEDGE_LAYER_VISUAL: HomeKnowledgeLayerVisualSpec = {
     {
       id: "programs",
       label: "Programs",
-      detail: "Priorities, initiatives, dependencies, and execution candidates.",
+      detail:
+        "Priorities, initiatives, dependencies, and execution candidates.",
       tone: "delivery",
       moduleUses: ["Moves", "Intelligence", "Tower"],
     },
     {
       id: "risks",
       label: "Risks & Controls",
-      detail:
-        "Controls, caveats, decision risks, and governance requirements.",
+      detail: "Controls, caveats, decision risks, and governance requirements.",
       tone: "risk",
       moduleUses: ["Intelligence", "Moves", "Source", "Tower"],
     },
     {
       id: "metrics",
       label: "Metrics & Outcomes",
-      detail:
-        "Measurement definitions, baselines, and value proof boundaries.",
+      detail: "Measurement definitions, baselines, and value proof boundaries.",
       tone: "value",
       moduleUses: ["Tower", "Moves", "Intelligence"],
     },
@@ -414,10 +424,7 @@ const CONTEXT_AREA_DIMENSIONS: Record<string, Set<string>> = {
     "AI Governance & Policy",
   ]),
   Relationships: new Set(["System & Business Relationships"]),
-  "Evidence Sources": new Set([
-    "Source Documents",
-    "Operational Evidence",
-  ]),
+  "Evidence Sources": new Set(["Source Documents", "Operational Evidence"]),
   "Metrics & Outcomes": new Set([
     "Business Metrics",
     "Metric Definitions",
@@ -879,7 +886,9 @@ function buildContextAreasFromModuleContext(args: {
           : [],
       decisionsNotReady:
         relationshipCount === 0
-          ? ["Cross-domain dependency decisions without validated relationships"]
+          ? [
+              "Cross-domain dependency decisions without validated relationships",
+            ]
           : args.explanation.unsupportedQuestions.slice(0, 2),
       nextDataActions:
         loadedCount > 0
@@ -896,8 +905,7 @@ function buildModuleContextSummary(args: {
 }): HomeModuleContextSummary {
   return {
     sourceMode: args.moduleContext.sourceMode,
-    activeTenantAccessVersionId:
-      args.moduleContext.activeTenantAccessVersionId,
+    activeTenantAccessVersionId: args.moduleContext.activeTenantAccessVersionId,
     candidateVersionId: args.moduleContext.candidateVersionId,
     requestedDomains: args.moduleContext.domains.map((domain) => ({
       domain: domain.domain,
@@ -978,7 +986,8 @@ function buildEnterpriseMetricsFromModuleContext(args: {
       key: "evidence_refs",
       label: "Evidence references",
       value: formatNumber(args.moduleContext.evidenceRefs.length),
-      detail: "Lineage references visible to Home through the supplier contract.",
+      detail:
+        "Lineage references visible to Home through the supplier contract.",
     },
     {
       key: "represented_domains",
@@ -1025,7 +1034,9 @@ function deriveModuleRecordSignals(
         record.title,
       ])
       .map((value) => String(value ?? "").trim())
-      .flatMap((value) => parseListField(value).length ? parseListField(value) : [value]),
+      .flatMap((value) =>
+        parseListField(value).length ? parseListField(value) : [value],
+      ),
   )
     .filter((value) => value.length > 0)
     .slice(0, 6);

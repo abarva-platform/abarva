@@ -6,7 +6,7 @@ Visual blocks: 4
 
 Narrative status: passed
 
-CXO prose gate: passed
+CXO prose gate: failed
 
 Truth split: visual blocks are structured data and are approved independently from prose. This file does not approve weak prose for runtime use.
 

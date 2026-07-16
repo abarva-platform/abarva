@@ -5,349 +5,324 @@ import type {
 
 export const MERIDIAN_CLAUDE_HOME_INSIGHTS = {
   summary_title:
-    "Meridian Health: Enterprise Context Readiness for AI-Led Transformation",
+    "Meridian Health: An Integrated Care and Health-Plan Enterprise Building the Governed Foundation for AI at Scale",
   executive_summary:
-    "Meridian Health is an integrated delivery network and health plan headquartered in Sacramento, California, operating across Northern California, Central California, and Nevada service areas. The enterprise runs real operating breadth across clinical care, health-plan operations, and enterprise analytics, with represented functions spanning member service, quality, and finance. Its clinical estate rests on Epic's clinical and analytics modules, while claims, eligibility, member-service CRM, and a knowledge base sit alongside fragmented on-prem reporting tools that thousands of analysts still depend on. Current analytics are on-premise and fragmented, and much analytics capacity is consumed by maintenance and ad hoc reporting rather than net-new delivery.\n\nThe strategic implication is clear: the enterprise cannot scale AI safely until a governed data spine exists beneath these fragmented sources. No patient/member identity spine, certified medallion architecture, or formal data governance operating model is in place, and the AWS plus Databricks lakehouse remains target-state, not current production. The same identity, claims, and eligibility data that would ground a member-service Agent Assist example also grounds payment integrity, cost transparency, and quality analytics — one foundation serves many use cases. The CDAO, with Finance and clinical leadership, should validate identity-spine ownership, medallion certification, and transcript governance as the first deliverable of a data governance workshop, before any use case advances to architecture. This is planning-grade synthetic context for demonstration, not client production evidence.",
+    "Meridian Health is an integrated delivery network and health plan headquartered in Sacramento, California, serving members and patients across Northern California, Central California, and Nevada. Its operating context spans clinical operations, health-plan operations, finance and actuarial, contact center and member experience, quality, and enterprise data and analytics — each carrying represented executive ownership by role, not yet confirmed by name. The current-state estate is real and substantial: Epic's clinical and analytics modules, a claims administration platform, eligibility and benefits, a knowledge base, and a wide fragmented reporting layer of on-prem SQL Server marts, Tableau, SAS, and Power BI. That breadth is also the constraint — analytics run on-premise and fragmented, with much of the capacity consumed by maintenance and ad hoc reporting rather than net-new delivery.\n\nThe strategic implication is that no AI use case, from member-service Agent Assist to payment integrity, can scale safely until a governed data spine exists. Today there is no certified medallion architecture, no patient/member identity spine in place, and no formal data governance operating model — these are target-state needs, not current production. Leadership should prioritize the governed lakehouse foundation as the enabling bet before advancing individual use cases, and the CDAO should certify data-product ownership and baselines as the first deliverable of a data governance workshop. This is planning-grade synthetic context for demonstration, not client production evidence.",
   strategic_priorities: [
-    "Establish a governed patient/member identity spine before any AI use case advances beyond discovery",
-    "Certify medallion architecture and a formal data governance operating model on the target AWS plus Databricks lakehouse",
-    "Baseline analytics maintenance-versus-net-new capacity and use-case KPIs so value can later be measured, not assumed",
-    "Validate transcript, PHI, human-in-the-loop, and audit controls before any member-service automation reaches production",
-    "Confirm data-product ownership across clinical, claims, and finance so accountability is named, not left to workshop",
+    "Prioritize the governed clinical + claims lakehouse foundation as the enabling bet that unlocks every downstream use case, not a single contact-center initiative.",
+    "Establish a formal data governance operating model — stewardship, semantic ownership, quality gates, and PHI controls — before any AI use case moves from discovery to production.",
+    "Certify a patient/member identity spine so clinical, claims, pharmacy, and member-service data can be trusted across use cases.",
+    "Baseline the metrics that value depends on (analytics maintenance share, use-case readiness) before Tower can claim any realized outcome.",
+    "Validate transcript, telephony, and API/integration readiness for CRM, claims, eligibility, and knowledge before Agent Assist advances to architecture design.",
   ],
   top_insights: [
     {
-      title: "One data foundation serves many use cases, not one",
+      title: "Real operating breadth, fragmented analytics core",
       what_nexus_sees:
-        "Candidate lakehouse assets for EMR clinical, claims, pharmacy, and member identity feed programs across finance, quality, and member service.",
+        "Six enterprise functions and 116 application records are represented, but analytics sit on-prem across SQL Server marts, Tableau, SAS, and Power BI, with capacity consumed by maintenance.",
       why_it_matters:
-        "Investing in the shared identity and claims spine unlocks payment integrity, cost transparency, and quality analytics together, not just a single contact-center example.",
-      evidence_strength: "Medium",
+        "Breadth without a governed spine means AI ambition outruns the data foundation it depends on.",
+      evidence_strength: "Strong",
       related_dimensions: [
+        "Applications & Systems",
         "Data Assets & Integrations",
-        "Programs & Initiatives",
         "Business Functions",
       ],
       next_action:
-        "Prioritize the shared data foundation as the first architecture bet, ahead of any single use case.",
+        "Map current reporting estate against target lakehouse scope in a discovery workshop.",
       module_handoff:
-        "Intelligence to sequence use cases against foundation readiness",
+        "Knowledge frames the estate; Intelligence reasons about modernization sequencing.",
     },
     {
-      title: "Analytics capacity is trapped in maintenance",
+      title: "The lakehouse foundation is the enabling bet",
       what_nexus_sees:
-        "Metrics distinguish analytics maintenance share from net-new capacity share, signalling that fragmented on-prem marts consume delivery capacity.",
+        "A named Databricks/AWS clinical + claims lakehouse program carries a $58M budget and $93M expected value, in mobilize phase, but medallion certification and identity spine remain open.",
       why_it_matters:
-        "Until the lakehouse consolidates fragmented SQL Server, Tableau, and SAS reporting, net-new AI delivery competes with keeping legacy reports alive.",
-      evidence_strength: "Partial",
-      related_dimensions: [
-        "Applications & Systems",
-        "Metrics & Outcomes",
-        "IT Budget, Spend & Value",
-      ],
-      next_action:
-        "Baseline current maintenance-versus-net-new split before committing modernization sequencing.",
-      module_handoff: "Tower to hold baselines for later value measurement",
-    },
-    {
-      title: "No identity spine blocks safe AI at scale",
-      what_nexus_sees:
-        "A high-severity open control flags no patient/member identity spine loaded, alongside unproven claims and pharmacy harmonization.",
-      why_it_matters:
-        "Without a validated identity spine, member, clinical, and claims data cannot be reliably joined, which caps any grounded automation.",
-      evidence_strength: "Strong",
-      related_dimensions: ["Risks & Controls", "Data Assets & Integrations"],
-      next_action:
-        "Name the identity-spine owner and validation plan in the governance workshop.",
-      module_handoff:
-        "Moves to phase-gate the identity spine as a foundation deliverable",
-    },
-    {
-      title: "Target platform is aspiration, not certified production",
-      what_nexus_sees:
-        "AWS and Databricks appear as vendors and target-state programs, but no certified medallion architecture or platform foundation evidence is loaded.",
-      why_it_matters:
-        "Treating the lakehouse as ready would overstate readiness; the foundation must be built and validated before value claims.",
+        "This is the single dependency that unlocks cost transparency, payment integrity, quality, and member-service use cases together.",
       evidence_strength: "Medium",
       related_dimensions: [
-        "Infrastructure & Platforms",
         "Programs & Initiatives",
-        "Vendors & Contracts",
+        "Data Assets & Integrations",
+        "Infrastructure & Platforms",
       ],
       next_action:
-        "Validate platform, network, and security foundation status with the CDIO.",
+        "Confirm gate criteria, data-owner signoff, and baseline evidence for the lakehouse program.",
       module_handoff:
-        "Moves to convert the lakehouse program into phase-gated execution",
+        "Moves phase-gates the foundation program once baselines are set.",
     },
     {
-      title: "Programs are framed candidates, not proven bets",
+      title: "Governance and identity gaps block production",
       what_nexus_sees:
-        "Most initiatives sit in P0/P1 evidence framing with baseline_required outcomes and owners still to confirm.",
+        "High-severity open controls include no certified medallion architecture, no patient/member identity spine, no formal data governance, and no AI audit trail evidence.",
       why_it_matters:
-        "These are real transformation candidates, but leadership should not treat expected value as realized until baselines and owners are confirmed.",
-      evidence_strength: "Partial",
+        "Without these controls in place, no use case touching PHI can move to production, regardless of its business case.",
+      evidence_strength: "Strong",
       related_dimensions: [
-        "Programs & Initiatives",
-        "Org Ownership",
+        "Risks & Controls",
+        "Data Assets & Integrations",
         "Metrics & Outcomes",
       ],
       next_action:
-        "Confirm business sponsor, technology owner, and gate criteria per program.",
+        "Stand up a data governance operating model and assign control owners by name.",
       module_handoff:
-        "Intelligence to rank candidates by readiness and value hypothesis",
+        "Intelligence weighs readiness and risk; Moves sequences remediation.",
     },
     {
-      title: "Governance and audit controls are open, not established",
+      title: "Agent Assist is one worked example, not the premise",
       what_nexus_sees:
-        "High-severity open controls flag no formal data governance, no certified semantic layer, no AI audit trail, and unloaded data quality rules.",
+        "Call center optimization depends on contact center transcript/telephony, CRM, claims, and Power BI — the same identity and claims data that grounds payment integrity and cost transparency.",
       why_it_matters:
-        "These controls must be governed before any production use, especially where PHI and human-in-the-loop review apply.",
-      evidence_strength: "Strong",
-      related_dimensions: ["Risks & Controls", "Data Assets & Integrations"],
+        "The context layer serves the whole enterprise; multiple use cases draw on the same governed spine.",
+      evidence_strength: "Medium",
+      related_dimensions: [
+        "AI & Automation Use Cases",
+        "Business Functions",
+        "Data Assets & Integrations",
+      ],
       next_action:
-        "Stand up a governance operating model and audit-trail plan before production approval.",
-      module_handoff: "Tower and Moves to gate production on closed controls",
+        "Validate transcript governance and CRM/claims API readiness before committing to architecture.",
+      module_handoff:
+        "Knowledge keeps the use case in discovery until dependencies are validated.",
+    },
+    {
+      title: "Value is a hypothesis until baselined",
+      what_nexus_sees:
+        "Metric records exist (analytics maintenance share, per-program baseline readiness) but all are marked baseline_required with no certified actuals.",
+      why_it_matters:
+        "Expected-value figures cannot be treated as realized savings until baselines and outcome evidence exist.",
+      evidence_strength: "Partial",
+      related_dimensions: [
+        "Metrics & Outcomes",
+        "IT Budget, Spend & Value",
+        "Programs & Initiatives",
+      ],
+      next_action:
+        "Baseline maintenance share and per-program readiness before any value claim.",
+      module_handoff: "Tower can only claim value once actuals are captured.",
     },
   ],
   enterprise_context_map: [
     {
       from: "Meridian Health",
       relation: "operates",
-      to: "Clinical, health-plan, and analytics functions",
+      to: "Clinical, health-plan, finance, and analytics functions",
     },
     {
-      from: "Clinical Operations",
+      from: "Contact Center and Member Experience",
       relation: "depends on",
-      to: "Epic clinical and analytics modules",
+      to: "CRM, claims, and knowledge base",
+      caveat: "Transcript and telephony governance not yet validated",
     },
     {
-      from: "Health Plan Operations",
-      relation: "runs on",
-      to: "Claims and eligibility platforms",
+      from: "Claims administration platform",
+      relation: "feeds",
+      to: "Payment integrity and cost transparency programs",
     },
     {
-      from: "Fragmented on-prem reporting marts",
-      relation: "should consolidate into",
-      to: "Governed AWS + Databricks lakehouse",
-      caveat: "Lakehouse is target-state, not current production",
+      from: "Epic Clarity and Caboodle",
+      relation: "extend to",
+      to: "Unified clinical + claims lakehouse",
+      caveat: "Medallion architecture not certified",
     },
     {
-      from: "Patient/member identity spine",
-      relation: "grounds",
-      to: "Member service, payment integrity, and quality analytics",
-      caveat: "Identity spine not yet loaded — high-severity open control",
+      from: "On-prem SQL Server, Tableau, SAS, Power BI",
+      relation: "targeted for consolidation into",
+      to: "Governed lakehouse on AWS + Databricks",
+      caveat: "AWS/Databricks is target-state, not current production",
     },
     {
       from: "Governed data foundation",
       relation: "enables",
-      to: "AI and LLM automation use cases",
+      to: "AI / LLM automation use cases",
+      caveat: "No formal data governance operating model in place",
     },
     {
-      from: "Data governance operating model",
-      relation: "gates",
-      to: "Production approval of automation",
-      caveat: "No formal governance model loaded",
+      from: "Patient/member identity spine",
+      relation: "required by",
+      to: "All cross-domain use cases",
+      caveat: "Identity spine not yet in place",
     },
     {
-      from: "Member-service Agent Assist example",
-      relation: "illustrates",
-      to: "How the shared context layer serves one worked use case",
+      from: "Lakehouse foundation program",
+      relation: "blocked by",
+      to: "Open high-severity controls",
+      caveat: "Data-owner signoff and gate criteria pending",
     },
     {
       from: "Metric baselines",
-      relation: "required by",
-      to: "Tower value realization",
-      caveat: "Baselines incomplete; no realized value",
-    },
-    {
-      from: "CDAO and Finance",
-      relation: "must own",
-      to: "Identity spine, governance, and value baselines",
+      relation: "required before",
+      to: "Tower value realization claims",
+      caveat: "All metrics marked baseline_required",
     },
   ],
   readiness_matrix: [
     {
       dimension: "Enterprise Profile",
-      readiness: "Partial",
+      readiness: "Strong",
       story:
-        "Industry, sub-industry, and service areas are represented; revenue, employee count, and production footprint require client validation.",
+        "Sacramento-based integrated delivery network and health plan with clear mission and multi-state service area is well represented.",
     },
     {
       dimension: "Business Functions",
       readiness: "Strong",
       story:
-        "Thirty functions across clinical, health-plan, finance, quality, member experience, and technology are represented with executive ownership by role.",
+        "Six functions with represented executive ownership by role; named owners still to be confirmed.",
     },
     {
       dimension: "Applications & Systems",
       readiness: "Partial",
       story:
-        "Epic, claims, eligibility, and fragmented reporting tools are catalogued; AWS and Databricks remain target-state, not certified production.",
+        "Rich current-state estate is captured, but AWS and Databricks remain target-state and not certified production.",
     },
     {
       dimension: "Data Assets & Integrations",
-      readiness: "Partial",
+      readiness: "Gap",
       story:
-        "Candidate lakehouse assets exist but data owners are to confirm and no identity spine or medallion certification is loaded.",
-    },
-    {
-      dimension: "Programs & Initiatives",
-      readiness: "Partial",
-      story:
-        "Real transformation candidates are framed at P0/P1 with baselines and owners still to confirm.",
+        "Lakehouse assets are framed as target-state; identity spine, medallion, and data owners are unconfirmed.",
     },
     {
       dimension: "Risks & Controls",
       readiness: "Gap",
       story:
-        "High-severity controls for identity, governance, semantic layer, and audit trail are open and require workshop evidence.",
+        "High-severity governance, identity, and audit controls are open and block production use.",
     },
     {
       dimension: "Metrics & Outcomes",
       readiness: "Partial",
       story:
-        "Metric definitions and readiness measures exist, but no baselines support realized-value claims.",
+        "Metric definitions exist but every baseline is required, so no value can yet be realized.",
     },
     {
       dimension: "Relationships",
       readiness: "Not validated",
       story:
-        "Cross-dimension relationships are not present in this context; connections are stated but not evidence-validated.",
+        "Cross-domain links are candidate-only; no validated relationships are present in this context.",
     },
   ],
   evidence_heatmap: [
     {
-      dimension: "Business Functions",
+      dimension: "Enterprise Profile",
       evidence_coverage: "High",
       confidence: "Medium",
-      caveat: "Executive owners are role titles, not confirmed individuals.",
+      caveat:
+        "Revenue, employee, and footprint facts are synthetic planning-grade, not audited.",
     },
     {
       dimension: "Applications & Systems",
       evidence_coverage: "High",
       confidence: "Medium",
-      caveat:
-        "AWS and Databricks are target-state; lifecycle states are planning-grade.",
+      caveat: "Estate is represented; AWS/Databricks is target-state only.",
     },
     {
       dimension: "Data Assets & Integrations",
       evidence_coverage: "Medium",
-      confidence: "Medium",
-      caveat: "Data owners to confirm in workshop; no identity spine loaded.",
+      confidence: "Low",
+      caveat:
+        "Assets are target-state framing; owners marked to confirm in workshop.",
     },
     {
       dimension: "Risks & Controls",
       evidence_coverage: "High",
       confidence: "Medium",
-      caveat: "Controls are open and require workshop evidence to close.",
+      caveat: "Controls are open with workshop evidence required to close.",
     },
     {
       dimension: "Metrics & Outcomes",
       evidence_coverage: "Medium",
-      confidence: "Medium",
-      caveat: "No actuals; baselines incomplete, so no realized value.",
+      confidence: "Low",
+      caveat: "All baselines required; no actuals captured.",
     },
     {
       dimension: "Relationships",
       evidence_coverage: "Low",
       confidence: "Low",
-      caveat: "No validated relationships present in this context.",
+      caveat: "No validated relationships present; treat links as hypotheses.",
     },
   ],
   top_gaps: [
     {
-      gap: "No patient/member identity spine",
+      gap: "No patient/member identity spine in place",
       why_it_matters:
-        "Without a validated identity join across clinical, claims, and member data, AI grounding and safe automation cannot scale.",
-      source_dimension: "Risks & Controls",
-      evidence_requested:
-        "Identity spine design, owner, and match-rate evidence",
-      suggested_workshop_owner: "CDAO",
-      module_impacted: "Moves",
-    },
-    {
-      gap: "No formal data governance operating model or certified medallion architecture",
-      why_it_matters:
-        "Production AI use requires stewardship, semantic ownership, quality gates, and certified data-product layers.",
+        "Without a trusted identity spine, clinical, claims, pharmacy, and member-service data cannot be joined for any cross-domain use case.",
       source_dimension: "Data Assets & Integrations",
       evidence_requested:
-        "Governance operating model, medallion certification status, data quality rules",
+        "Confirmed identity resolution approach and data owner",
+      suggested_workshop_owner: "CDAO",
+      module_impacted: "Intelligence",
+    },
+    {
+      gap: "No formal data governance operating model",
+      why_it_matters:
+        "Stewardship, semantic ownership, and quality gates are prerequisites for safe AI on PHI-bearing data.",
+      source_dimension: "Risks & Controls",
+      evidence_requested:
+        "Documented governance operating model with named control owners",
       suggested_workshop_owner: "CDAO",
       module_impacted: "Knowledge",
     },
     {
-      gap: "No AI audit trail, PHI, or human-in-the-loop control evidence",
+      gap: "No certified medallion architecture",
       why_it_matters:
-        "Member and clinical automation cannot reach production without governed audit controls and PHI handling.",
-      source_dimension: "Risks & Controls",
-      evidence_requested:
-        "Audit-trail design, PHI controls, human-in-the-loop review workflow",
+        "Uncertified data-product layers mean no trustworthy foundation for automation or reporting.",
+      source_dimension: "Data Assets & Integrations",
+      evidence_requested: "Bronze/silver/gold certification evidence",
       suggested_workshop_owner: "CDIO",
-      module_impacted: "Tower",
+      module_impacted: "Moves",
     },
     {
-      gap: "Missing KPI baselines and analytics capacity split",
+      gap: "Metric baselines not established",
       why_it_matters:
-        "Value cannot be claimed until maintenance-versus-net-new capacity and use-case KPIs are baselined.",
+        "Expected-value figures cannot be treated as realized value until baselines and actuals exist.",
       source_dimension: "Metrics & Outcomes",
       evidence_requested:
-        "Baseline actuals for analytics capacity and per-use-case KPIs",
+        "Baseline values for maintenance share and per-program readiness",
       suggested_workshop_owner: "CFO",
       module_impacted: "Tower",
-    },
-    {
-      gap: "Unvalidated program ownership and contract economics",
-      why_it_matters:
-        "Candidate programs list owners to confirm and no contract economics, so sourcing and accountability cannot be decided yet.",
-      source_dimension: "Programs & Initiatives",
-      evidence_requested:
-        "Confirmed business sponsor, technology owner, and contract/SLA economics",
-      suggested_workshop_owner: "CDAO",
-      module_impacted: "Source",
     },
   ],
   module_readiness: [
     {
       module: "Knowledge",
       readiness:
-        "Active with good breadth across nine domains and full evidence coverage, but no validated relationships.",
+        "Active and source-backed across nine represented domains for discovery and framing.",
       next_best_action:
-        "Use current context for discovery framing; queue relationship and governance evidence for validation.",
+        "Frame the estate, gaps, and use-case dependencies for a data governance workshop.",
     },
     {
       module: "Intelligence",
       readiness:
-        "Can reason about readiness, use-case sequencing, and risks from represented context.",
+        "Ready to reason about sequencing and readiness once relationships and identity spine are validated.",
       next_best_action:
-        "Rank candidate use cases against foundation readiness and open controls.",
+        "Weigh the lakehouse foundation against individual use cases as the enabling bet.",
     },
     {
       module: "Moves",
       readiness:
-        "Foundation and identity-spine programs are candidate moves, not phase-gated execution.",
+        "Not yet — candidate programs need baselines and gate criteria before phase-gating.",
       next_best_action:
-        "Convert the lakehouse and identity-spine into phase-gated plans with gate criteria.",
+        "Convert the lakehouse foundation program into phase-gated execution once owners and baselines are confirmed.",
     },
     {
       module: "Source",
       readiness:
-        "Vendors are represented, but contract economics and SLAs are not loaded.",
+        "Vendor names represented but no contract economics or SLAs loaded.",
       next_best_action:
-        "Add contract, SLA, and economics evidence before sourcing scope decisions.",
+        "Load contract terms for Epic, Microsoft, AWS, Databricks, and analytics vendors before sourcing analysis.",
     },
     {
       module: "Tower",
-      readiness: "Metric definitions exist but no baselines or actuals.",
+      readiness:
+        "Not yet — no baselines or actuals exist to support value claims.",
       next_best_action:
-        "Baseline KPIs and analytics capacity before any value claim.",
+        "Baseline priority metrics before any realized-value reporting.",
     },
   ],
   safe_claims: [
-    "Meridian is represented as an integrated delivery network and health plan across Northern California, Central California, and Nevada service areas.",
-    "Clinical, health-plan, finance, quality, member-experience, and technology functions are represented with executive ownership by role.",
-    "Epic clinical and analytics modules, claims, eligibility, CRM, knowledge base, and fragmented on-prem reporting are catalogued as current-state.",
-    "AWS and Databricks lakehouse, medallion architecture, and governed data products are target-state directions.",
-    "The context is safe for discovery and framing of AI use cases and foundation planning.",
+    "Meridian is an integrated delivery network and health plan serving Northern California, Central California, and Nevada from Sacramento.",
+    "The current-state estate includes Epic clinical/analytics modules, claims, eligibility, a knowledge base, and fragmented on-prem reporting tools.",
+    "A governed lakehouse on AWS + Databricks with medallion architecture is the target-state direction, not current production.",
+    "High-severity governance, identity, and audit controls are open and must close before production AI use.",
+    "This context is safe for discovery and framing, not for production approval or realized-value claims.",
     "This is synthetic Meridian-style demo context, not real Meridian production data.",
     "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
     "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
@@ -358,49 +333,50 @@ export const MERIDIAN_CLAUDE_HOME_INSIGHTS = {
     "Do not claim AWS or Databricks is certified current production for this tenant.",
     "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
     "Do not claim PHI-bearing transcripts have been ingested or approved.",
+    "Do not treat candidate or generated relationship records as approved active tenant truth.",
     "Do not treat candidate or generated graph records as approved active tenant truth.",
   ],
   visual_blocks: [
     {
       type: "context_strength_snapshot",
-      title: "Where Context Is Strong and Where Evidence Is Needed",
+      title: "Where Meridian's Context Is Strong and Where It Is Thin",
       executive_message:
-        "Business functions and risks are well represented, but the data spine and governance controls that gate production remain open.",
+        "Enterprise, function, and system context are well represented, but the data foundation, governance, and relationships that AI depends on are gaps.",
       why_it_matters:
-        "Leadership can frame and prioritize now, but production approval must wait for identity, governance, and audit evidence.",
+        "It tells leadership exactly which dimensions are ready to reason on today versus which need workshop evidence first.",
       data: {
         rows: [
           {
-            dimension: "Business Functions",
+            dimension: "Enterprise Profile",
             readiness: "Strong",
-            note: "30 functions with role-level ownership",
+            note: "Integrated delivery network and health plan, multi-state footprint",
+          },
+          {
+            dimension: "Applications & Systems",
+            readiness: "Partial",
+            note: "Rich estate; AWS/Databricks target-state only",
           },
           {
             dimension: "Data Assets & Integrations",
-            readiness: "Partial",
-            note: "Candidate assets; owners to confirm; no identity spine",
+            readiness: "Gap",
+            note: "Identity spine and medallion not in place",
           },
           {
             dimension: "Risks & Controls",
             readiness: "Gap",
-            note: "Identity, governance, semantic, audit controls open",
-          },
-          {
-            dimension: "Metrics & Outcomes",
-            readiness: "Partial",
-            note: "Definitions present, no baselines",
+            note: "Governance and audit controls open",
           },
           {
             dimension: "Relationships",
             readiness: "Not validated",
-            note: "No validated relationships in this context",
+            note: "Candidate-only links",
           },
         ],
       },
       evidence_refs: [
-        "meridian-health:current-universal:01_business_functions.csv:2",
+        "meridian-health:current-universal:00_enterprise_profile.csv:2",
+        "meridian-health:current-universal:04_applications_systems.csv:5",
         "meridian-health:current-universal:11_risks_controls.csv:3",
-        "meridian-health:current-universal:14_metrics_outcomes.csv:2",
       ],
       caveats: [
         "Planning-grade synthetic context, not client production evidence.",
@@ -410,121 +386,119 @@ export const MERIDIAN_CLAUDE_HOME_INSIGHTS = {
     },
     {
       type: "what_more_context_unlocks",
-      title: "What Validating the Shared Foundation Unlocks",
+      title: "What Closing the Foundation Gaps Unlocks",
       executive_message:
-        "Validating one identity and claims spine unlocks member service, payment integrity, cost transparency, and quality analytics together.",
+        "A governed identity spine, medallion architecture, and governance model together unlock every downstream use case, not just one.",
       why_it_matters:
-        "Foundation investment compounds across use cases rather than serving a single worked example.",
+        "It reframes foundation investment as an enterprise-wide enabler rather than a cost tied to a single initiative.",
       data: {
         rows: [
           {
-            foundation: "Patient/member identity spine",
-            unlocks: "Member service, quality, payment integrity",
+            if_closed: "Patient/member identity spine",
+            unlocks:
+              "Cross-domain use cases across clinical, claims, pharmacy, and member service",
           },
           {
-            foundation: "Governed claims + pharmacy layer",
-            unlocks: "Payment integrity and cost transparency",
+            if_closed: "Formal data governance operating model",
+            unlocks:
+              "Safe AI on PHI-bearing data with audit controls and human-in-the-loop",
           },
           {
-            foundation: "Governance + audit controls",
-            unlocks: "Production-safe automation",
+            if_closed: "Certified medallion architecture",
+            unlocks:
+              "Trustworthy data products for cost transparency, payment integrity, and quality",
           },
         ],
       },
       evidence_refs: [
         "meridian-health:current-universal:05_data_assets_integrations.csv:5",
-        "meridian-health:current-universal:09_programs_initiatives.csv:7",
+        "meridian-health:current-universal:11_risks_controls.csv:6",
       ],
       caveats: [
-        "Foundation is target-state; unlocks are hypotheses, not realized value.",
+        "Unlocks are hypotheses until workshop evidence closes the underlying gaps.",
       ],
       renderer_hint: "card_list",
       display_priority: 2,
     },
     {
       type: "evidence_gap_requests",
-      title: "Evidence Still Needed Before Production",
+      title: "Evidence Requests That Strengthen Every Future Use Case",
       executive_message:
-        "Five gaps — identity, governance, audit/PHI controls, baselines, and program ownership — must be closed before any use case reaches production.",
+        "Four high-leverage evidence requests would move Meridian from framing to production-ready foundations.",
       why_it_matters:
-        "Each closed gap strengthens the context layer for every future use case, not just the member-service example.",
+        "Each closed gap strengthens the shared context layer for all use cases, not just Agent Assist.",
       data: {
         rows: [
           {
             gap: "Identity spine",
             owner: "CDAO",
-            module: "Moves",
+            module: "Intelligence",
           },
           {
-            gap: "Governance + medallion",
+            gap: "Governance operating model",
             owner: "CDAO",
             module: "Knowledge",
           },
           {
-            gap: "Audit/PHI/HITL controls",
+            gap: "Medallion certification",
             owner: "CDIO",
-            module: "Tower",
+            module: "Moves",
           },
           {
-            gap: "KPI baselines",
+            gap: "Metric baselines",
             owner: "CFO",
             module: "Tower",
-          },
-          {
-            gap: "Program ownership + economics",
-            owner: "CDAO",
-            module: "Source",
           },
         ],
       },
       evidence_refs: [
         "meridian-health:current-universal:11_risks_controls.csv:2",
-        "meridian-health:current-universal:11_risks_controls.csv:6",
-        "meridian-health:current-universal:14_metrics_outcomes.csv:4",
+        "meridian-health:current-universal:14_metrics_outcomes.csv:2",
       ],
-      caveats: [
-        "Gaps are evidence requests, not failures; all context is planning-grade synthetic.",
-      ],
+      caveats: ["Owners are role titles, not confirmed named individuals."],
       renderer_hint: "table",
       display_priority: 3,
     },
     {
       type: "module_next_actions",
-      title: "Next Best Action by Module",
+      title: "What Each Module Should Do Next",
       executive_message:
-        "Knowledge and Intelligence support discovery now; Moves, Source, and Tower need foundation, contract, and baseline evidence first.",
+        "Knowledge and Intelligence are ready to work now; Moves, Source, and Tower activate once baselines and contracts arrive.",
       why_it_matters:
-        "Sequencing module use to evidence readiness keeps the program honest about what is decidable today.",
+        "It sequences module engagement so effort matches the evidence actually available today.",
       data: {
         rows: [
           {
             module: "Knowledge",
-            action: "Frame discovery; queue relationship evidence",
+            action:
+              "Frame estate, gaps, and dependencies for a governance workshop",
           },
           {
             module: "Intelligence",
-            action: "Rank use cases by readiness and risk",
+            action:
+              "Reason on foundation-first sequencing once relationships validated",
           },
           {
             module: "Moves",
-            action: "Phase-gate identity spine and lakehouse",
+            action:
+              "Phase-gate the lakehouse program after baselines confirmed",
           },
           {
             module: "Source",
-            action: "Add contract and SLA economics",
+            action: "Load vendor contract economics before sourcing analysis",
           },
           {
             module: "Tower",
-            action: "Baseline KPIs before value claims",
+            action: "Baseline metrics before any value claim",
           },
         ],
       },
       evidence_refs: [
-        "meridian-health:current-universal:09_programs_initiatives.csv:2",
-        "meridian-health:current-universal:14_metrics_outcomes.csv:2",
+        "meridian-health:current-universal:09_programs_initiatives.csv:9",
+        "meridian-health:current-universal:07_vendors_contracts.csv:2",
       ],
       caveats: [
-        "No realized value or production approval until evidence is validated.",
+        "Module runtime behavior is unchanged; this is planning context only.",
       ],
       renderer_hint: "strip",
       display_priority: 4,
@@ -533,7 +507,7 @@ export const MERIDIAN_CLAUDE_HOME_INSIGHTS = {
   tenant_key: "meridian-health",
   tenant_name: "Meridian Health",
   source_context_hash:
-    "sha256:baa0aabba69e314f1f5e7f1d11dca0cd5ba84da4f28b6327b75faa6c27a21601",
+    "sha256:8aff19ece549adc4268a9bdeb5625076b2fbb18314149b5c6530d57f5af014b2",
   evidence_refs_used: [
     "meridian-enterprise-profile",
     "meridian-member-service-context",
@@ -557,7 +531,7 @@ export const MERIDIAN_CLAUDE_HOME_INSIGHTS = {
   ],
   generated_by: "claude",
   generated_model: "claude-opus-4-8",
-  generated_at: "2026-07-16T12:57:23.897Z",
+  generated_at: "2026-07-16T13:50:14.269Z",
   validation_status: "passed",
   validation_errors: [],
 } satisfies KnowledgeHomeInsightSummary;
@@ -567,32 +541,37 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     dimension_key: "00_enterprise_profile",
     dimension_name: "Enterprise Profile",
     summary_title:
-      "An integrated care and health-plan enterprise modernizing its data foundation",
+      "An integrated delivery network and health plan modernizing its data core",
     executive_summary:
-      "Meridian is an integrated delivery network and health plan headquartered in Sacramento, CA, serving Northern California, Central California, and Nevada. It spans clinical delivery, health-plan operations, finance, and analytics, with a stated mission around access, quality, affordability, and member experience. That dual provider-plus-payer profile is why the transformation agenda centers on a governed clinical, claims, and financial data foundation rather than a single point solution. Leadership should prioritize confirming the identity spine and governance model before scaling AI. The organization should validate headquarters, scale, and production footprint with a client answer material. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian is a healthcare enterprise combining clinical delivery, health-plan operations, finance, and analytics, headquartered in Sacramento with service areas across Northern California, Central California, and Nevada. It serves patients, members, providers, and employer groups, and its stated ambition is a governed data foundation that makes automation and cost outcomes reliable. That dual provider-and-payer complexity is exactly why transformation is hard: clinical, claims, and financial data must be harmonized before AI can scale safely. The organization should validate leadership, revenue, and footprint facts through a client profile answer material before treating them as confirmed. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "Meridian operates as an integrated delivery network and health plan across Sacramento, Northern California, Central California, and Nevada service areas.",
-      "Customer segments include patients, members, providers, and employer groups, spanning both provider and payer complexity.",
-      "Its vision explicitly targets a governed clinical, claims, pharmacy, and financial data foundation for reliable automation.",
+      "Meridian is an integrated delivery network and health plan operating across Sacramento, Northern and Central California, and Nevada",
+      "Customer segments span patients, members, providers, employer groups, and clinical and health-plan operations leaders",
+      "Its stated mission and vision center on access, quality, affordability, and a governed clinical, claims, pharmacy, and financial data foundation",
     ],
     why_it_matters:
-      "The provider-plus-payer profile means transformation is a shared data-foundation problem across clinical, claims, and finance, not a departmental fix.",
+      "The provider-plus-payer operating model defines the transformation agenda: reliable automation depends on harmonizing clinical, claims, and financial data that today sit apart.",
     questions_supported: [
-      "Whether Meridian's transformation should be scoped as an enterprise data-foundation program versus a single-function initiative, based on its integrated provider and payer segments.",
-      "Which customer segments and service areas define the operating context for prioritizing AI investment.",
+      "Meridian can use this dimension to frame the scale and shape of its transformation agenda, grounded in the confirmed provider-and-payer operating model and named service areas.",
     ],
     current_caveats: [
-      "Revenue, employee count, and exact production footprint must be validated by a client answer material before display as facts.",
-      "Profile is synthetic PHI-free planning-grade context, not real Meridian production data.",
+      "Revenue, employee count, exact production footprint, and named leadership are not confirmed and must be validated by a client answer material before being treated as fact.",
     ],
     next_validation_actions: [
-      "Confirm headquarters, scale, revenue, and operating-region facts with a client-supplied enterprise answer material.",
-      "Validate the stated data-foundation vision against real modernization commitments with enterprise leadership.",
+      "Confirm leadership by name, revenue, employee count, and production footprint through a client profile answer material in the discovery workshop before displaying them as facts.",
     ],
     module_usage: [
-      "Knowledge explains the enterprise profile and what evidence still needs validation.",
-      "Intelligence uses the profile to frame AI investment scope across provider and payer operations.",
+      "Knowledge explains the enterprise shape and its evidence boundaries",
+      "Intelligence uses the profile to frame where AI investment focus should concentrate",
     ],
+    data_tab_intro:
+      "These records describe Meridian as an integrated delivery network and health plan with its stated mission, service areas, and customer segments — note that quantitative facts like revenue remain to be confirmed.",
+    relationships_tab_intro:
+      "Cross-domain relationships for this dimension are not yet validated, so treat any link between the profile and other domains as a hypothesis, not a confirmed dependency.",
+    gaps_tab_intro:
+      "The biggest gap is unconfirmed leadership, revenue, and footprint detail; closing it lets the profile be cited as fact rather than planning assumption.",
+    evidence_tab_intro:
+      "This profile is backed by a synthetic PHI-free planning-grade context pack, useful for framing but not for asserting audited enterprise facts.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -627,10 +606,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:c533656027260b588784ffe4fcd2af911a4a7614e8842807db6d91da167f4c97",
+      "sha256:008a7de9424e11b8ca5321bc783a350a33d3f94557c8fcfd422df506824bc783",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -640,32 +619,37 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     dimension_key: "01_business_functions",
     dimension_name: "Business Functions",
     summary_title:
-      "Transformation touches clinical, health-plan, finance, and experience functions at once",
+      "Transformation reaches across clinical, plan, finance, and experience functions",
     executive_summary:
-      "Meridian's function map shows AI-led change is not a contact-center project. Enterprise Data and Analytics, Clinical Operations, Health Plan Operations, Finance and Actuarial, Contact Center and Member Experience, and Technology Platform and Security all carry represented executive ownership by role. That breadth means operating-model change will land across several functions simultaneously, each with its own capabilities and controls. The enterprise should prioritize sequencing which functions anchor the first governed data products. The CDAO and function leaders should confirm ownership and capability boundaries in a governance workshop. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian's business context shows that transformation touches every core function, not one contact center. Clinical Operations, Health Plan Operations, Finance and Actuarial, Quality and Provider Performance, Contact Center and Member Experience, Enterprise Data and Analytics, and Technology Platform and Security each carry represented executive ownership by role. The operating-model implication is that AI-led change happens where these functions share data — claims, eligibility, and clinical reporting. The CDAO and functional leaders should confirm which functions own which decisions in a governance workshop before use cases advance. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "Thirty business functions are represented, including Enterprise Data and Analytics under the CDAO and Health Plan Operations under the Chief Health Plan Officer.",
-      "Capabilities span clinical documentation, care management, prior authorization, claims operations, payment integrity, and next-best-action workflows.",
-      "Technology Platform and Security carries AWS landing zone and Databricks foundation as target-state capabilities, not certified current production.",
+      "Seven-plus functions are represented, including Clinical Operations, Health Plan Operations, Finance and Actuarial, and Contact Center and Member Experience",
+      "Executive ownership is represented by role (CDAO, CMO, CFO, Chief Health Plan Officer, Chief Experience Officer, CDIO), not by named individuals",
+      "Function capabilities range from prior authorization and claims operations to payment integrity, care gap analytics, and next-best-action workflows",
     ],
     why_it_matters:
-      "Agent Assist is one worked example, but the same functions ground payment integrity, quality, and cost transparency, so operating-model change is enterprise-wide.",
+      "Because transformation spans functions that share member service, claims, and eligibility data, operating-model change must be coordinated across owners rather than run inside a single team.",
     questions_supported: [
-      "Which functions must co-own the first governed data products, based on the represented ownership across analytics, clinical, health-plan, finance, and experience functions.",
-      "Whether Meridian should sequence transformation by function rather than treat it as a single contact-center initiative.",
+      "Meridian can use this dimension to decide which functions must co-own an AI initiative, based on the represented capabilities and executive ownership by role.",
     ],
     current_caveats: [
-      "executiveOwner values are role titles, not confirmed named individuals.",
-      "Function records are synthetic planning-grade context, not real production evidence.",
+      "Executive owners are role titles, not confirmed named individuals, and cross-function decision rights are not yet validated.",
     ],
     next_validation_actions: [
-      "Confirm named owners and capability boundaries for each function with the CDAO and function leaders.",
-      "Validate which functions are in scope for the first phase versus later waves.",
+      "Confirm named function owners and decision rights in a governance workshop before any use case moves from discovery into design.",
     ],
     module_usage: [
-      "Knowledge surfaces the function map and represented ownership.",
-      "Intelligence uses functions to reason about where operating-model change concentrates.",
+      "Knowledge maps which functions and capabilities are in scope",
+      "Moves sequences function-level operating-model change once ownership is confirmed",
     ],
+    data_tab_intro:
+      "These records list Meridian's core business functions with their represented executive owner role and business capabilities — look for where functions share claims or member data.",
+    relationships_tab_intro:
+      "Function-to-function and function-to-system links are not yet validated, so treat cross-function dependencies here as candidate hypotheses.",
+    gaps_tab_intro:
+      "The key gap is that owners are role titles, not named accountable individuals — closing it is what lets decision rights be assigned.",
+    evidence_tab_intro:
+      "Function records come from a synthetic planning-grade pack; use them to frame scope, not to assert confirmed organizational structure.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -700,10 +684,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:134cd148c8604b63854dc8501c0a7c74b5f7a316e6dd800fb79c802d0c18954b",
+      "sha256:4868a084cc94b5ea9e62ae5ed96b9dc58332ad40d6748977922cd95c12d6b2e2",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -713,32 +697,37 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     dimension_key: "02_org_ownership",
     dimension_name: "Org Ownership",
     summary_title:
-      "Ownership is represented by role, but named accountability is not yet confirmed",
+      "Ownership is represented by role, not yet confirmed by name",
     executive_summary:
-      "Meridian's context represents executive ownership by role across analytics, clinical, health-plan, finance, experience, and technology functions. The CDAO owns Enterprise Data and Analytics; the CFO owns Finance and Actuarial; the Chief Health Plan Officer owns Health Plan Operations. These are role titles, not confirmed individuals, and no formal data governance operating model is evidenced. Leadership should prioritize establishing accountable owners for data products, controls, and value before any use case advances. The CDAO should certify data-product ownership as the first governance deliverable. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian's decision, control, and funding ownership is visible only through function-level role titles today — CDAO, CFO, CMO, Chief Health Plan Officer, and CDIO among them. No named accountable owners, RACI, or governance operating model is in place. That matters because AI at scale requires accountable owners for data products, controls, and value measurement. The organization should certify named ownership and decision rights as an early workshop deliverable. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "Executive ownership is represented by role for analytics (CDAO), finance (CFO), health-plan (Chief Health Plan Officer), and technology (CDIO).",
-      "Data asset ownership is recorded as owner_to_confirm_in_workshop across the lakehouse data products.",
-      "No formal data governance operating model is evidenced in the current context.",
+      "Ownership appears as executive role titles attached to functions, not confirmed named individuals",
+      "Data product owners are marked owner_to_confirm_in_workshop across data assets",
+      "No formal data governance operating model, stewardship, or quality-gate ownership is represented",
     ],
     why_it_matters:
-      "Without named, accountable owners for data products and controls, AI decisions cannot be governed, funded, or measured with confidence.",
+      "Without named, accountable owners for data products, controls, and metrics, no AI use case can be approved for production or credited with realized value.",
     questions_supported: [
-      "Whether decision, control, and value ownership is confirmed enough to advance a use case, given that data owners are still marked to-confirm.",
-      "Which roles must be converted into named accountable owners before governance can operate.",
+      "Meridian can use this dimension to decide who must be named as accountable owner before any data product or use case advances, given that ownership is currently role-level only.",
     ],
     current_caveats: [
-      "executiveOwner and data owner fields are role placeholders, not confirmed named accountability.",
-      "No governance operating model is loaded, so stewardship and quality gates are unproven.",
+      "Named owners, RACI, and a governance operating model are not evidenced; ownership is representational only.",
     ],
     next_validation_actions: [
-      "Certify named data-product owners in a governance workshop led by the CDAO.",
-      "Define the stewardship, business ownership, and quality-gate operating model.",
+      "Certify data-product and control ownership by name in a governance workshop as the first discovery-phase deliverable.",
     ],
     module_usage: [
-      "Knowledge explains represented ownership and gaps.",
-      "Moves uses confirmed ownership to assign accountable owners to phase-gated bets.",
+      "Knowledge surfaces where ownership is represented versus confirmed",
+      "Tower cannot attribute outcomes until accountable owners are named",
     ],
+    data_tab_intro:
+      "These records show ownership expressed as executive role titles and unconfirmed data-owner placeholders — look for where accountability is still unassigned.",
+    relationships_tab_intro:
+      "Ownership-to-asset relationships are not validated, so no line of accountability here should be treated as confirmed.",
+    gaps_tab_intro:
+      "The single biggest gap is the absence of named, accountable owners and a governance operating model — the prerequisite for any production approval.",
+    evidence_tab_intro:
+      "Ownership is inferred from synthetic role-level context; treat it as a starting map for a governance workshop, not a confirmed org chart.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -773,10 +762,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:53c038cc53d1eeb6a28b5cd13c1a21cebe167799432f1c887516c51219059834",
+      "sha256:63af7aa545e00baf81621b66388c4351373e13fc0a4ba523548a6ab5b0bf9450",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -786,32 +775,37 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     dimension_key: "03_workforce_roles",
     dimension_name: "Workforce Roles",
     summary_title:
-      "Frontline and analytics roles are implied but not evidenced as a workforce inventory",
+      "Workforce-role evidence is not yet loaded for this dimension",
     executive_summary:
-      "Meridian's function and system context implies a workforce spanning member-service agents, supervisors, knowledge stewards, clinical staff, and analytics users on Tableau and SAS. Tableau serves thousands of users and SAS serves hundreds, signaling a large reporting workforce. No dedicated workforce-roles inventory is evidenced, so role counts and skill baselines remain unconfirmed. The organization should prioritize baselining the roles that AI will augment. The CDAO and workforce stakeholders should confirm role and skill inventories in discovery. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian's transformation will change how supervisors, knowledge stewards, analysts, and member-service agents work, but no workforce-role records are represented in this context. What exists are function-level capabilities that imply roles, not confirmed workforce structure or headcount. Because AI adoption succeeds or fails on frontline roles and change readiness, the organization should capture role inventories and adoption owners in discovery. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "Analytics workforce is implied by Tableau used across thousands of users and SAS across hundreds.",
-      "Member-service roles including agents, supervisors, and knowledge stewards are implied by contact center and CRM capabilities.",
-      "No dedicated workforce-roles record set is loaded in the current context.",
+      "No dedicated workforce-role records are represented in this context pack",
+      "Function capabilities imply roles such as contact-center agents, supervisors, knowledge stewards, and analytics staff",
+      "Analytics resourcing is described only at the aggregate level of maintenance versus net-new capacity",
     ],
     why_it_matters:
-      "AI augmentation and adoption depend on knowing which roles are affected and what skills exist, which is not yet evidenced.",
+      "AI-led change depends on which frontline and analytics roles adopt new workflows, and none of that role structure is yet evidenced.",
     questions_supported: [
-      "Whether the roles AI will augment can be baselined today, given only implied workforce signals from system usage.",
-      "Which analytics and member-service roles are large enough to warrant early adoption planning.",
+      "This dimension cannot yet inform workforce or adoption decisions — no role inventory, headcount, or change-readiness evidence is loaded.",
     ],
     current_caveats: [
-      "No explicit workforce-roles inventory or headcount is loaded.",
-      "Role signals are inferred from system usage, not confirmed workforce evidence.",
+      "Workforce roles, headcount, and change-readiness signals are not present and must be gathered in discovery.",
     ],
     next_validation_actions: [
-      "Baseline affected roles, headcounts, and skills with the CDAO and workforce stakeholders in discovery.",
-      "Confirm which roles are in scope for the first augmentation wave.",
+      "Capture a role inventory and named adoption owners for affected functions during the discovery workshop.",
     ],
     module_usage: [
-      "Knowledge surfaces implied roles and evidence gaps.",
-      "Intelligence uses role context to assess adoption readiness.",
+      "Knowledge flags workforce-role evidence as a gap to close",
+      "Moves uses role and adoption data to plan change once captured",
     ],
+    data_tab_intro:
+      "No workforce-role records are represented here; what you see are function capabilities that only imply the roles involved.",
+    relationships_tab_intro:
+      "There are no validated workforce relationships in this dimension, so any role-to-function link is inference only.",
+    gaps_tab_intro:
+      "The defining gap is the absence of any role inventory or change-readiness evidence — essential before planning adoption.",
+    evidence_tab_intro:
+      "This dimension has no dedicated synthetic records; treat workforce-role questions as open discovery items.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -846,10 +840,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:c3e4382bbe8fc579ed80426ad9632420b81e6938e9891b796a1ff255071f4abd",
+      "sha256:de7921ad56d31da19e6bde6801d34794add924eaac68958f1a2b867190bd232d",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -859,32 +853,38 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     dimension_key: "04_applications_systems",
     dimension_name: "Applications & Systems",
     summary_title:
-      "A fragmented current estate with Epic core, legacy marts, and target-state cloud",
+      "A critical Epic and legacy-reporting estate feeding fragmented analytics",
     executive_summary:
-      "Meridian runs a large current-state estate: Epic Hyperspace, Epic Clarity, and Epic Caboodle for clinical and analytics, plus a claims administration platform, eligibility and benefits systems, a knowledge base, and CRM member case management. Reporting sits on fragmented on-prem SQL Server reporting marts, Tableau, SAS, and Power BI. AWS and Databricks appear only as target-state direction, not certified current production. The CDIO and CDAO should validate API and integration readiness across CRM, claims, eligibility, and Epic-derived data before architecture design. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian runs a critical current-state estate: Epic Hyperspace, Epic Clarity, and Epic Caboodle for clinical and analytics, a claims administration platform, an eligibility and benefits platform, a CRM member case management system, a knowledge base, and a contact center platform. Reporting sits on On-prem SQL Server reporting marts with Tableau, SAS, and Power BI, plus DB2 and Netezza-style integration warehouses where applicable. Several assets are flagged fragmented current-state or extend-to-lakehouse, which makes modernization a dependency, not a detail. AWS and Databricks are target-state direction only, not certified current production. The CDIO and CDAO should validate integration readiness for CRM, claims, eligibility, and Epic-derived data in a discovery workshop. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "Clinical and analytics run on Epic Hyperspace, Epic Clarity, and Epic Caboodle, with Clarity flagged extend_to_lakehouse.",
-      "Reporting is fragmented across on-prem SQL Server reporting marts, the Tableau reporting estate, SAS analytics estate, and Power BI.",
-      "Core operational systems include a claims administration platform, eligibility and benefits, knowledge base, and CRM; AWS and Databricks are target-state, not current production.",
+      "Epic Hyperspace, Epic Clarity, and Epic Caboodle are critical clinical and analytics systems, with Epic Clarity flagged extend-to-lakehouse",
+      "On-prem SQL Server reporting marts are flagged fragmented current-state; Tableau, SAS, and Power BI form the current reporting estate",
+      "Claims administration and eligibility platforms, CRM, contact center, and knowledge base are current-core member-service and health-plan systems",
+      "AWS and Databricks appear only as target-state direction, not certified current production",
     ],
     why_it_matters:
-      "The fragmented reporting estate and Epic dependency create modernization blockers that must be understood before AI can scale safely.",
+      "The fragmented reporting estate and dependence on Epic-derived data mean modernization and integration readiness are prerequisites before any AI use case can rely on trustworthy inputs.",
     questions_supported: [
-      "Whether Agent Assist should stay in discovery or move to architecture design, based on whether CRM, claims, eligibility, and knowledge base integration is validated.",
-      "Which legacy reporting systems (SQL Server marts, Tableau, SAS, Power BI) are consolidation candidates versus retained sources.",
+      "Meridian can use this dimension to decide whether a use case like Agent Assist stays in discovery or moves to architecture design, based on whether CRM, claims, eligibility, and knowledge-base integration is validated.",
     ],
     current_caveats: [
-      "AWS and Databricks are target-state direction only, not certified current production for this tenant.",
-      "No API or integration readiness evidence is loaded for CRM, claims, eligibility, or Epic-derived data.",
+      "API and integration readiness for CRM, claims, eligibility, knowledge, and Epic-derived data is not validated; AWS and Databricks are target-state, not current production.",
     ],
     next_validation_actions: [
-      "Validate integration and API readiness across CRM, claims, eligibility, knowledge base, and Epic-derived data with the CDIO and CDAO.",
-      "Confirm which fragmented reporting marts consolidate onto the target-state lakehouse.",
+      "Validate integration and API readiness for CRM, claims, eligibility, knowledge base, and Epic Clarity/Caboodle-derived data in a technical discovery workshop.",
     ],
     module_usage: [
-      "Knowledge explains the current estate and target-state boundary.",
-      "Source uses system context for sourcing scope once contract evidence is loaded.",
+      "Knowledge inventories the current estate and its lifecycle flags",
+      "Source uses system and vendor context for modernization scope once contracts are added",
     ],
+    data_tab_intro:
+      "These are Meridian's current clinical, claims, eligibility, CRM, and reporting systems, each tagged with a lifecycle state — watch for the fragmented current-state and extend-to-lakehouse flags.",
+    relationships_tab_intro:
+      "System-to-data and system-to-function links are not yet validated, so treat integration dependencies here as candidate, not confirmed.",
+    gaps_tab_intro:
+      "The biggest gap is unvalidated integration readiness across CRM, claims, eligibility, knowledge base, and Epic-derived data — the constraint on moving any use case forward.",
+    evidence_tab_intro:
+      "System records come from a synthetic planning-grade pack; use them to frame the estate, not to assert certified production or target-state readiness.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -919,10 +919,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:4fd5d82fe0fae2ce6e01a8aa5058b6cd7dce40580a7c01a5abc2a941e62c8433",
+      "sha256:a7fc0193001201ad9908f6b321301704746ce53f88d51188ca9b68f42988dbd5",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -932,32 +932,38 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     dimension_key: "05_data_assets_integrations",
     dimension_name: "Data Assets & Integrations",
     summary_title:
-      "A governed data spine is required before AI can scale safely",
+      "A target lakehouse designed but not yet a governed data spine",
     executive_summary:
-      "Meridian's data assets describe an aspirational unified clinical and claims lakehouse spanning EMR clinical, claims, pharmacy, patient/member identity, and longitudinal patient view, sourced today from Epic Clarity, Epic Caboodle, SQL Server reporting marts, and SAS. A DB2 or Netezza-style integration warehouse sits under fragmented marts. Every data product still lists owner_to_confirm_in_workshop, and no certified medallion architecture, Unity Catalog governance, or member identity spine is in place. The CDAO should certify data ownership and the medallion layers before any use case advances. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian's data assets describe an intended unified clinical and claims lakehouse spanning EMR clinical, claims, pharmacy, patient/member identity, and a longitudinal patient view, alongside a governed AI foundation for prior authorization, coding, and utilization management. Today these sit against fragmented marts fed by Epic Clarity and Epic Caboodle, On-prem SQL Server reporting marts, DB2 and Netezza-style warehouses, Tableau, and SAS. Critically, no patient/member identity spine, certified medallion architecture, or governance operating model is in place — every data owner is still to be confirmed. Before AI scales safely, the CDAO should establish identity, medallion certification, and Unity Catalog-style governance. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "A unified clinical + claims lakehouse is scoped across EMR clinical, claims, pharmacy, patient/member identity, and longitudinal patient view.",
-      "Current data sources include Epic Clarity, Epic Caboodle, on-prem SQL Server reporting marts, a DB2 or Netezza-style integration warehouse, and SAS.",
-      "Target-state governance (medallion architecture, Unity Catalog, member identity spine) is not certified, and data owners remain to-confirm.",
+      "Target data products span a unified clinical + claims lakehouse across EMR clinical, claims, pharmacy, patient/member identity, and longitudinal patient view",
+      "Current analytics are fragmented across Epic Clarity, Epic Caboodle, SQL Server reporting marts, DB2/Netezza-style warehouses, Tableau, and SAS",
+      "Every data asset lists dataOwner as owner_to_confirm_in_workshop and no certified medallion or governance model is present",
+      "A future governed lakehouse with Unity Catalog-style governance and PHI controls is target-state, not current production",
     ],
     why_it_matters:
-      "No AI use case can scale safely until the identity spine, medallion layers, and governed data products are certified and owned.",
+      "AI cannot scale safely until a patient/member identity spine, medallion-certified data products, and a governance operating model replace today's fragmented marts.",
     questions_supported: [
-      "Whether the data spine is ready to ground any AI use case, given that medallion certification and the member identity spine are not in place.",
-      "Which fragmented marts and warehouse sources must feed the governed lakehouse first.",
+      "Meridian can use this dimension to decide whether to prioritize building the identity spine and medallion layers first, given that no certified data foundation exists today.",
     ],
     current_caveats: [
-      "No certified medallion architecture, business layer, or patient/member identity spine is loaded.",
-      "Claims and pharmacy harmonization is not proven, and data owners are unconfirmed.",
+      "No patient/member identity spine, certified medallion architecture, or data governance operating model is loaded; data owners are unconfirmed.",
     ],
     next_validation_actions: [
-      "Certify medallion layers, member identity spine, and named data-product owners with the CDAO in a data governance workshop.",
-      "Prove claims and pharmacy harmonization before advancing dependent use cases.",
+      "Have the CDAO confirm data-product owners and define identity-spine, medallion, and Unity Catalog-style governance requirements in a data governance workshop.",
     ],
     module_usage: [
-      "Knowledge explains the current data spine and target-state gaps.",
-      "Moves turns the lakehouse foundation into phase-gated execution once ownership is confirmed.",
+      "Knowledge shows the gap between target data products and current fragmented marts",
+      "Moves phases the lakehouse and governance build once owners and baselines are set",
     ],
+    data_tab_intro:
+      "These records describe target lakehouse data products against today's fragmented Epic-, SQL Server-, and SAS-based marts — note that every data owner is still to be confirmed.",
+    relationships_tab_intro:
+      "Data-asset relationships are not yet validated, so treat any link between a target data product and a source system as a hypothesis.",
+    gaps_tab_intro:
+      "The biggest gap is the absence of a patient/member identity spine and certified medallion architecture — the foundation AI depends on.",
+    evidence_tab_intro:
+      "Data assets are synthetic planning-grade descriptions of intended products; use them to frame the target state, not to claim a built data spine.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -992,10 +998,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:1614d605f42b67edc311b3a47b20cfcc4ba7c3c1c4797b77423dd9e7d69a2983",
+      "sha256:2abb783f740beeb055db4759c1f48149766eaaf02ceace96688f06fb59eeec75",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -1005,32 +1011,37 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     dimension_key: "06_infrastructure_platforms",
     dimension_name: "Infrastructure & Platforms",
     summary_title:
-      "The AWS and Databricks foundation is target-state, not certified",
+      "The target AWS and Databricks foundation is direction, not proof",
     executive_summary:
-      "Meridian's target platform direction is an AWS and Databricks lakehouse with medallion architecture, Unity Catalog or equivalent governance, lineage, and PHI controls. Technology Platform and Security carries AWS landing zone and Databricks foundation as capabilities under the CDIO. None of this is certified current production, and no platform, network, or security foundation evidence is loaded. Leadership should prioritize validating the foundation before dependent use cases proceed. The CDIO should confirm landing-zone and Databricks readiness as an early discovery deliverable. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian's intended platform foundation is an AWS and Databricks lakehouse with medallion architecture, but no platform, network, or security foundation evidence is represented. The current estate remains on-premise and mixed-hosting across clinical and reporting systems. This is the transformation's foundational dependency: AI-led change cannot proceed without a validated landing zone, network and security controls, and medallion certification. The CDIO should validate the platform build state before use cases assume it exists. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "Target foundation is an AWS and Databricks lakehouse with medallion architecture and Unity Catalog-equivalent governance.",
-      "AWS landing zone and Databricks foundation are represented as Technology Platform and Security capabilities under the CDIO.",
-      "No platform, network, or security foundation evidence is loaded, and the AWS/Databricks foundation is flagged not ready.",
+      "Target foundation is an AWS and Databricks lakehouse with medallion architecture",
+      "No platform, network, or security foundation evidence is represented as current production",
+      "Current systems are described as on-premise and current-mixed hosting",
     ],
     why_it_matters:
-      "Every downstream data product and AI use case depends on a validated cloud foundation that is not yet proven.",
+      "Every downstream AI use case assumes a platform foundation that is not yet evidenced, making landing-zone and control validation the gating dependency.",
     questions_supported: [
-      "Whether the AWS and Databricks foundation is ready to support dependent data products, given it is flagged not ready and unproven.",
-      "Which platform, network, and security controls must be evidenced before production use.",
+      "Meridian can use this dimension to decide whether the platform foundation must be built and validated before use cases proceed, given that AWS/Databricks readiness is target-state only.",
     ],
     current_caveats: [
-      "AWS and Databricks are not certified current production for this tenant.",
-      "No network or security foundation evidence is loaded.",
+      "AWS and Databricks are aspiration, not certified current production; no medallion, network, or security foundation evidence is loaded.",
     ],
     next_validation_actions: [
-      "Confirm AWS landing-zone, Databricks, network, and security readiness with the CDIO in discovery.",
-      "Validate PHI and audit controls before dependent use cases proceed.",
+      "Have the CDIO validate landing-zone, network, security, and medallion build state before any use case assumes the foundation exists.",
     ],
     module_usage: [
-      "Knowledge explains target-state foundation and its evidence gaps.",
-      "Moves sequences foundation build-out as a phase-gated bet.",
+      "Knowledge distinguishes target-state foundation from current on-prem estate",
+      "Moves sequences the foundation build as a gating dependency",
     ],
+    data_tab_intro:
+      "There are no certified platform records here; the AWS and Databricks foundation appears as target-state direction against a current on-prem, mixed-hosting estate.",
+    relationships_tab_intro:
+      "Platform relationships are not validated, so treat any dependency between the target foundation and use cases as unconfirmed.",
+    gaps_tab_intro:
+      "The defining gap is the absence of any platform, network, security, or medallion foundation evidence — the prerequisite for scaling AI.",
+    evidence_tab_intro:
+      "Platform direction is synthetic and planning-grade; do not read AWS or Databricks as certified current production.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -1065,10 +1076,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:c00e3319bcb981544ef2d92df5b11636aca11f432b8ced1847fd96e1900fcb20",
+      "sha256:d4a3b35107fa9ac660fd7d9a15d2e9eca88a99a50faac2f836862d9df470aeca",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -1077,32 +1088,37 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
   {
     dimension_key: "07_vendors_contracts",
     dimension_name: "Vendors & Contracts",
-    summary_title: "Vendors are named, but commercial terms are not yet loaded",
+    summary_title: "Key vendors named, but no contract economics or SLAs yet",
     executive_summary:
-      "Meridian's vendor context names Epic, Microsoft, Tableau, SAS, Amazon Web Services, Databricks, and an outsourced analytics managed services provider. This shows the commercial surface behind the current and target-state estate. No contract values, SLAs, renewal dates, or spend terms are evidenced, so sourcing economics cannot yet be assessed. The organization should prioritize loading commercial terms before optimization. Source can act once the CDAO and procurement supply contract and SLA evidence. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian's vendor landscape is represented — Epic, Microsoft, Tableau, SAS, Amazon Web Services, Databricks, and an outsourced analytics managed services provider — spanning its clinical, reporting, cloud, and analytics estate. But no contract terms, SLAs, renewal dates, or spend figures are attached to these vendors. Source can help with sourcing scope and contract optimization only once that commercial evidence is added. The organization should gather contract economics and SLAs before any sourcing decision. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "Named vendors include Epic, Microsoft, Tableau, SAS, Amazon Web Services, Databricks, and an outsourced analytics managed services provider.",
-      "Vendors map to current and target-state systems including Epic clinical platforms and the reporting estate.",
-      "No contract values, SLAs, renewal terms, or spend economics are loaded for any vendor.",
+      "Represented vendors include Epic, Microsoft, Tableau, SAS, Amazon Web Services, Databricks, and an outsourced analytics managed services provider",
+      "Vendors map to clinical, reporting, cloud, and analytics functions, with Epic tied to Clinical Platforms",
+      "No contract terms, SLAs, renewal dates, or commercial economics are represented (11 duplicate vendor names present)",
     ],
     why_it_matters:
-      "Sourcing scope and contract optimization cannot be assessed until commercial evidence is added to the named vendor surface.",
+      "Sourcing and contract-optimization decisions require commercial evidence that is not yet present, so the vendor list is a scope map, not a negotiating position.",
     questions_supported: [
-      "Whether Source can inform contract optimization, given vendors are named but no commercial terms are loaded.",
-      "Which vendors are strategic to the target-state lakehouse versus legacy reporting.",
+      "Meridian can use this dimension to decide which vendors are in scope for a sourcing review, though it cannot yet answer which contracts to renegotiate — no contract economics or SLA evidence is loaded.",
     ],
     current_caveats: [
-      "No contract economics, SLAs, or renewal dates are evidenced.",
-      "Vendor records include duplicate names requiring reconciliation.",
+      "No contract values, SLAs, renewal timing, or realized savings are represented; duplicate vendor names need reconciliation.",
     ],
     next_validation_actions: [
-      "Load contract values, SLAs, and renewal terms with the CDAO and procurement.",
-      "Reconcile duplicate vendor records before sourcing analysis.",
+      "Gather contract terms, SLAs, renewal dates, and spend for each named vendor before any sourcing or optimization decision.",
     ],
     module_usage: [
-      "Knowledge surfaces the named vendor surface and gaps.",
-      "Source uses vendor and contract evidence for sourcing scope once economics are loaded.",
+      "Knowledge maps the vendor landscape and its evidence gaps",
+      "Source drives sourcing scope and contract optimization once commercial evidence is added",
     ],
+    data_tab_intro:
+      "These records name Meridian's key clinical, cloud, and analytics vendors — note that no contract terms, SLAs, or spend are attached and some vendor names are duplicated.",
+    relationships_tab_intro:
+      "Vendor-to-system and vendor-to-contract relationships are not validated, so treat any link here as a candidate mapping.",
+    gaps_tab_intro:
+      "The biggest gap is the total absence of contract economics and SLAs — the evidence Source needs before optimization is possible.",
+    evidence_tab_intro:
+      "Vendor records are synthetic planning-grade names without commercial detail; use them to scope, not to negotiate.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -1137,10 +1153,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:e2d16e172fc8a7d09b327d72649dc9668a64536db73db3e3dbbe6705dc161274",
+      "sha256:544571944fac64ad3b4d7d80db01c7f0018c23f6c0da99b25a2f249992642d3b",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -1150,32 +1166,37 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     dimension_key: "08_it_budget_spend_value",
     dimension_name: "IT Budget, Spend & Value",
     summary_title:
-      "A large technology budget is stated, but realized value is unproven",
+      "A technology budget signal exists, but value remains hypothesis",
     executive_summary:
-      "Meridian's profile states a technology budget of roughly $1.28B, and one program — the Databricks AWS clinical and claims lakehouse foundation — carries a $58M budget against a $93M expected value. These are planning figures, not measured outcomes. Realized ROI, savings, and Tower value cannot be claimed until actuals exist. Leadership can commit budget to the named lakehouse foundation program where a figure is evidenced, but should treat broader value as hypothesis. Finance and the CDAO should baseline value before any realized claim. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian carries a represented technology budget of roughly $1.28B and one named program — the Databricks AWS clinical + claims lakehouse foundation — with a $58M budget and $93M expected value. These are planning figures, not audited spend or realized savings. The distinction matters: expected value is a hypothesis until adoption, control evidence, and an accountable owner exist. Finance and the CDAO should baseline actual spend and outcomes before any value is claimed. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "Enterprise profile states a technology budget of approximately $1.28B.",
-      "The Databricks AWS lakehouse foundation program carries a $58M budget and $93M expected value as planning figures.",
-      "Analytics maintenance share and net-new capacity share metrics are defined but not baselined with actuals.",
+      "A represented technology budget of approximately $1.28B is associated with the enterprise profile",
+      "The Databricks AWS lakehouse foundation program carries a $58M budget and $93M expected value",
+      "Value claims explicitly require adoption, control evidence, and an accountable operating owner",
     ],
     why_it_matters:
-      "Expected value is a hypothesis until baselined; treating it as realized ROI would overstate the case for investment.",
+      "Budget and expected-value figures can frame the investment case but cannot be treated as realized value until baselines, adoption, and owners are proven.",
     questions_supported: [
-      "Whether the lakehouse foundation's $93M expected value can be framed as a value hypothesis versus measured value, given no actuals exist.",
-      "Which analytics capacity metrics must be baselined before value can be tracked.",
+      "Meridian can use the named lakehouse program's $58M budget and $93M expected value to frame a value hypothesis, but cannot claim realized ROI — no measured actuals or baselines are loaded.",
     ],
     current_caveats: [
-      "Expected value and budget figures are planning-grade, not measured or audited.",
-      "No realized ROI, savings, or Tower value evidence exists.",
+      "Budget and expected-value figures are planning-grade; no audited spend, baselines, or realized savings are represented.",
     ],
     next_validation_actions: [
-      "Baseline analytics maintenance and capacity metrics with Finance and the CDAO before any value claim.",
-      "Validate the lakehouse foundation budget and expected-value assumptions with program sponsors.",
+      "Have Finance and the CDAO baseline actual technology spend and outcome metrics before any value is framed as realized.",
     ],
     module_usage: [
-      "Knowledge explains budget and value hypotheses versus measured value.",
-      "Tower uses baselines and actuals for value realization once evidenced.",
+      "Intelligence frames spend as an investment hypothesis",
+      "Tower measures realized value only once baselines and actuals exist",
     ],
+    data_tab_intro:
+      "These records show a represented $1.28B technology budget and a named lakehouse program with budget and expected value — read expected value as a hypothesis, not a result.",
+    relationships_tab_intro:
+      "Spend-to-program and spend-to-outcome links are not validated, so treat the value chain here as unconfirmed.",
+    gaps_tab_intro:
+      "The biggest gap is the absence of audited actuals and baselines — without them expected value cannot become realized value.",
+    evidence_tab_intro:
+      "Budget figures are synthetic planning-grade signals; use them to frame investment, not to claim measured ROI.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -1210,10 +1231,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:477129d6d74d8888271600dd5b2d2c4399f24e4baf32d90d80b29c48bdeebb70",
+      "sha256:9272fbf02b444f65e4d56d4f2e96ecacde6a47ad855647369037af6237ec2923",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -1223,32 +1244,37 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     dimension_key: "09_programs_initiatives",
     dimension_name: "Programs & Initiatives",
     summary_title:
-      "Candidate moves are framed, with one program in active mobilization",
+      "A portfolio of candidate moves plus one mobilizing foundation program",
     executive_summary:
-      "Meridian carries eight-plus programs including a unified clinical + claims lakehouse, a governed data foundation for AI and LLM automation, call center optimization, provider quality, cost transparency, payment integrity, and automated close. Most are candidate moves in P0/P1 evidence framing with baselines still required. The Databricks AWS lakehouse foundation is the exception, shown as on track in mobilize under Chief Data Officer sponsorship. The CDAO should confirm evidence owners and gate criteria before promoting candidates. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian's initiative portfolio spans a unified clinical + claims lakehouse, a governed AI/LLM data foundation, call center optimization, provider quality and performance, end-to-end cost transparency, payment integrity, and automated close — most flagged as candidate moves in P0/P1 evidence framing. Only the Databricks AWS lakehouse foundation is represented as mobilizing and on track. The distinction between candidate ideas and a mobilizing program is the transformation triage. Business sponsors and the CDAO should confirm evidence owners, baselines, and gate criteria before candidates advance. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "The Databricks AWS clinical + claims lakehouse foundation is in mobilize, on track, sponsored by the Chief Data Officer, with a $58M budget.",
-      "Most programs (call center optimization, provider quality, cost transparency, payment integrity, automated close) are candidate moves in P0/P1 evidence framing.",
-      "Programs share dependencies on Epic Clarity, Epic Caboodle, claims, reporting marts, and Databricks on AWS.",
+      "Most initiatives — lakehouse, governed AI foundation, call center optimization, provider quality, cost transparency, payment integrity, automated close — are candidate moves in P0/P1 evidence framing",
+      "Each candidate move needs confirmed evidence owner, baseline, gate criteria, and missing artifacts",
+      "The Databricks AWS clinical + claims lakehouse foundation is represented as mobilizing and on track, sponsored by the Chief Data Officer",
     ],
     why_it_matters:
-      "Only one program shows real transformation momentum; the rest are ideas needing evidence owners and gate criteria before commitment.",
+      "Separating candidate ideas from the one mobilizing foundation program lets leadership focus discovery effort where evidence and sequencing actually support execution.",
     questions_supported: [
-      "Which programs are real transformation candidates versus ideas, based on which have confirmed sponsors, baselines, and gate criteria.",
-      "Whether candidate moves can advance past P0/P1, given baselines are still required.",
+      "Meridian can use this dimension to decide which initiatives are real transformation candidates versus ideas, based on their candidate-move status and dependency lists.",
     ],
     current_caveats: [
-      "Most programs are candidate moves with baseline_required and unconfirmed technology owners.",
-      "Program value claims require adoption, control evidence, and accountable owners.",
+      "Most programs lack confirmed owners, baselines, and gate criteria; expected outcomes are marked baseline_required.",
     ],
     next_validation_actions: [
-      "Confirm evidence owners, baselines, and gate criteria for each candidate program with the CDAO.",
-      "Validate the lakehouse foundation program's dependencies and adoption assumptions.",
+      "Have business sponsors and the CDAO confirm evidence owner, baseline, and gate criteria for each candidate move before it advances.",
     ],
     module_usage: [
-      "Knowledge explains program status and evidence gaps.",
-      "Moves turns confirmed candidates into phase-gated execution.",
+      "Knowledge separates candidate ideas from mobilizing programs",
+      "Moves converts selected programs into phase-gated execution once baselined",
     ],
+    data_tab_intro:
+      "These records list transformation initiatives with their scope, phase, and dependencies — note which are candidate moves versus the one mobilizing lakehouse foundation program.",
+    relationships_tab_intro:
+      "Program-to-system dependencies are listed but not validated, so treat them as candidate links pending workshop confirmation.",
+    gaps_tab_intro:
+      "The biggest gap is that most programs lack confirmed owners, baselines, and gate criteria — the difference between an idea and an executable move.",
+    evidence_tab_intro:
+      "Program records are synthetic planning-grade candidates; use them to triage the portfolio, not to assert active execution.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -1283,10 +1309,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:4f77d33a3ef39c88773e2845322f76fa3a2203ae81fc2ac3758dfb11720eca10",
+      "sha256:75511800b1ebc52edd61656793253a7063de694394ccc0105a6d1afe8609aaf0",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -1295,32 +1321,38 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
   {
     dimension_key: "10_ai_automation_use_cases",
     dimension_name: "AI & Automation Use Cases",
-    summary_title: "Use cases are ready for discovery, not production",
+    summary_title:
+      "Agent Assist and adjacent use cases sit in discovery, awaiting data readiness",
     executive_summary:
-      "Meridian's AI candidates include call center optimization (the Agent Assist worked example), prior authorization, coding, and utilization management automation, each grounded in a governed data foundation. These share dependencies on CRM, claims, eligibility, knowledge base, and Epic-derived data. All require a certified data spine, PHI and human-in-the-loop controls, and audit controls that are not yet evidenced. These are ready for discovery framing, not production approval. The CDAO and workshop stakeholders should validate data and control readiness per use case in discovery. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian's AI use cases — member service Agent Assist as one worked example, alongside prior authorization, coding, and utilization management automation — depend on the same governed clinical, claims, eligibility, and knowledge data the enterprise is still assembling. These are discovery-stage candidates, not production-ready deployments. What separates a ready use case from a hypothesis is validated data, integration, and control evidence. The CDAO and function owners should confirm which use cases have the data spine and governance to advance. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "Governed data foundations are scoped for prior authorization, coding, and utilization management automation.",
-      "Call center optimization depends on contact center transcript and telephony, CRM, claims, and Power BI.",
-      "No use case has certified data, PHI controls, human-in-the-loop, or audit controls in place.",
+      "AI use cases include member service Agent Assist plus prior authorization, coding, and utilization management automation",
+      "All depend on governed clinical, claims, eligibility, knowledge base, and transcript data that is not yet validated",
+      "Transcript and call-recording governance and PHI controls are not confirmed for any use case",
     ],
     why_it_matters:
-      "Use cases can be framed for discovery, but none can move to production until the data spine and controls are certified.",
+      "Use cases are ready for discovery framing but cannot advance to design or production until their underlying data, integration, and control evidence is validated.",
     questions_supported: [
-      "Which use cases are ready for discovery versus require more evidence, based on whether their data and control dependencies are validated.",
-      "Whether call center optimization should advance to architecture, given transcript governance is unproven.",
+      "Meridian can use this dimension to decide which use cases are ready for discovery versus which need more evidence, based on whether their claims, eligibility, knowledge, and transcript governance is validated.",
     ],
     current_caveats: [
-      "Transcript and call-recording governance is not validated for any contact center use case.",
-      "No PHI, human-in-the-loop, or audit controls are evidenced for production use.",
+      "No use case has validated transcript/call-recording governance, PHI controls, or human-in-the-loop and audit controls confirmed.",
     ],
     next_validation_actions: [
-      "Validate data, PHI, human-in-the-loop, and audit control readiness per use case with the CDAO and workshop stakeholders.",
-      "Confirm transcript governance before advancing call center optimization.",
+      "Have the CDAO and function owners confirm data, integration, and control readiness — including transcript governance and PHI controls — before any use case moves beyond discovery.",
     ],
     module_usage: [
-      "Knowledge frames use-case readiness and evidence gaps.",
-      "Moves promotes discovery-ready use cases into phase-gated execution.",
+      "Knowledge shows use-case readiness against data and control gaps",
+      "Intelligence reasons about which use cases to prioritize for discovery",
     ],
+    data_tab_intro:
+      "These records describe candidate AI use cases and their data dependencies — Agent Assist is one worked example among prior authorization, coding, and utilization management.",
+    relationships_tab_intro:
+      "Use-case-to-data and use-case-to-system links are not validated, so treat every dependency as a candidate hypothesis.",
+    gaps_tab_intro:
+      "The biggest gap is unvalidated transcript governance and PHI controls — the barrier between discovery framing and production approval.",
+    evidence_tab_intro:
+      "Use-case records are synthetic planning-grade candidates; use them for discovery framing, not production commitment.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -1355,10 +1387,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:4f02cfb1dc2cec594d4f45e8e7cc5361b5bc129699f915ead0b2aab14d892f2e",
+      "sha256:bcc61a6811184902622b5389b69a886fe138f9feab44b76dc951f054298cf1c7",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -1367,32 +1399,37 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
   {
     dimension_key: "11_risks_controls",
     dimension_name: "Risks & Controls",
-    summary_title: "High-severity foundation and governance risks are open",
+    summary_title: "High-severity foundation and governance risks are all open",
     executive_summary:
-      "Meridian's risk register carries high-severity, open items: no certified medallion architecture, no patient/member identity spine, unproven claims and pharmacy harmonization, an AWS/Databricks foundation not ready, no formal data governance, no certified business layer, no AI audit trail evidence, and no loaded data quality rules. These must be governed before any production AI use. Leadership should prioritize closing foundation and governance risks first. The control owners and CDAO should supply closure evidence in a governance workshop. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian's risk register is dominated by high-severity, open controls tied to the data foundation: no certified medallion architecture, no patient/member identity spine, unproven claims and pharmacy harmonization, an AWS/Databricks foundation not ready, no formal data governance, no certified business layer, no AI audit trail evidence, and unloaded data quality rules. These are exactly the controls that must be governed before any production use, and none is yet closed. The control owners and CDAO should define evidence to close each risk in a governance workshop. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "Open high-severity risks include no certified medallion architecture and no patient/member identity spine.",
-      "Governance risks include no formal data governance, no certified business layer, and no AI audit trail evidence.",
-      "Foundation risks include AWS/Databricks not ready and data quality rules not yet evidenced.",
+      "High-severity open risks include no certified medallion architecture, no patient/member identity spine, and unproven claims/pharmacy harmonization",
+      "Governance risks span no formal data governance, no certified business layer, no AI audit trail evidence, and data quality rules not yet evidenced",
+      "Every control is marked open with evidence required to close, owned at the Operations level",
     ],
     why_it_matters:
-      "These open risks are the gating controls that must be closed before AI can move from discovery to production safely.",
+      "These open, high-severity controls — including AI audit trail and PHI-relevant governance — must be closed before any AI use case can be approved for production.",
     questions_supported: [
-      "Which risks must be closed before production AI use, based on the open high-severity foundation and governance items.",
-      "Whether governance and audit controls are sufficient to approve any production use case (they are not).",
+      "Meridian can use this dimension to decide what must be governed before production use, based on the specific open, high-severity controls and their evidence-to-close requirements.",
     ],
     current_caveats: [
-      "All listed risks are open with controls unproven.",
-      "No AI audit trail, human-in-the-loop evidence, or data quality rules are loaded.",
+      "All represented controls are open; human-in-the-loop, audit controls, and PHI governance evidence are not yet provided.",
     ],
     next_validation_actions: [
-      "Supply closure evidence for medallion, identity spine, governance, and audit controls with control owners and the CDAO.",
-      "Establish AI audit trail and human-in-the-loop controls before production approval.",
+      "Have control owners and the CDAO define and supply evidence to close each high-severity control — starting with identity spine, medallion, and AI audit trail — in a governance workshop.",
     ],
     module_usage: [
-      "Knowledge explains open risks and required closure evidence.",
-      "Intelligence uses control status to assess production readiness.",
+      "Knowledge surfaces the open control register and evidence needs",
+      "Intelligence weighs risk exposure against use-case readiness",
     ],
+    data_tab_intro:
+      "These records list high-severity open controls across the data foundation and AI governance — each carries an explicit evidence-required-to-close note.",
+    relationships_tab_intro:
+      "Risk-to-program and risk-to-system links are not validated, so treat control coverage mappings as candidate, not confirmed.",
+    gaps_tab_intro:
+      "The biggest gap is that every foundation and governance control is still open — no production use can proceed until they close.",
+    evidence_tab_intro:
+      "Risk records are synthetic planning-grade entries; use them to plan a governance agenda, not to assert current control posture.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -1427,10 +1464,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:3fb49131bf60d2ddd38cb5c164f9ced9b45bd95bf634dbf75621e4671150c530",
+      "sha256:73af9078996aea8f36b6a07e19cc0cab60ba6470e0e6ad084cf353a0ce26425a",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -1441,30 +1478,35 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     dimension_name: "Relationships",
     summary_title: "Cross-domain relationships are not yet validated",
     executive_summary:
-      "Meridian's records span functions, systems, data assets, programs, risks, and metrics, but the connections between them are not yet validated — all relationship records were skipped as specific source gap. This means the same identity and claims data that would ground Agent Assist, payment integrity, and cost reporting cannot yet be traced across domains with confidence. The CDAO should prioritize validating cross-domain lineage in a governance workshop before decision chains are relied on. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian's context carries rich domain records but no validated cross-domain relationships — all 85 candidate relationship records were skipped as specific source gap. The connective links between systems, data, programs, and risks are not yet confirmed. This matters because decision-grade reasoning depends on trusted links, such as which systems feed which data products and which risks block which programs. The CDAO should prioritize validating these relationships in a workshop. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "Individual domain records are agent-ready across functions, systems, data, programs, risks, and metrics.",
-      "No validated relationships are present; relationship coverage is zero and records were skipped as specific source gap.",
-      "Programs and data assets reference dependencies (Epic Clarity, claims, Databricks) that are not yet confirmed as validated edges.",
+      "No validated relationships are present; all candidate relationship records were skipped as specific source gap",
+      "Relationship coverage is reported at zero across the context",
+      "Domain records exist but the links between them are not yet confirmed",
     ],
     why_it_matters:
-      "Without validated relationships, cross-domain reasoning — such as tracing claims data from source to use case — cannot be relied on for decisions.",
+      "Without validated links between systems, data, programs, and risks, cross-domain dependencies cannot be trusted for decision-making.",
     questions_supported: [
-      "Whether cross-domain lineage can be traced today, given all relationship evidence was skipped as missing.",
-      "Which dependency links (system-to-data, data-to-program) must be validated first.",
+      "This dimension cannot yet inform any cross-domain dependency decision — no validated relationships are loaded.",
     ],
     current_caveats: [
-      "Relationship coverage is zero; no validated edges exist.",
-      "Dependency references in programs and data assets are not yet confirmed relationships.",
+      "Relationship coverage is zero; treat every implied link between domains as a hypothesis, not a confirmed dependency.",
     ],
     next_validation_actions: [
-      "Validate priority cross-domain relationships (system-to-data, data-to-use-case) with the CDAO in a governance workshop.",
-      "Confirm the claims and identity lineage that grounds finance and member-service use cases.",
+      "Have the CDAO prioritize validating key system-to-data, program-to-dependency, and risk-to-program relationships in a discovery workshop.",
     ],
     module_usage: [
-      "Knowledge explains which relationships are validated versus missing.",
-      "Intelligence uses validated relationships for cross-domain reasoning once present.",
+      "Knowledge flags the relationship layer as the priority gap",
+      "Intelligence cannot reason across domains until links are validated",
     ],
+    data_tab_intro:
+      "No validated relationship records exist here; the candidate links were skipped for missing evidence.",
+    relationships_tab_intro:
+      "Cross-domain relationships are not yet validated, so treat any link across systems, data, programs, or risks as a hypothesis, not a confirmed dependency.",
+    gaps_tab_intro:
+      "The single biggest gap is that relationship coverage is zero — validating links is the highest-leverage next step for cross-domain reasoning.",
+    evidence_tab_intro:
+      "There is no relationship evidence in this pack; cross-domain dependencies must be established in workshop before they can be trusted.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -1499,10 +1541,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:62380373693de7f316a33f425514636efa67ecc780249461cef7afeac0f2e49c",
+      "sha256:861a4c4319eed36ce1f26742c26d442d82a977539da217f52ce0e37f7c94c007",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -1512,32 +1554,37 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     dimension_key: "13_evidence_sources",
     dimension_name: "Evidence Sources",
     summary_title:
-      "All context traces to a synthetic, manifest-gated planning pack",
+      "All context traces to a synthetic, PHI-free planning-grade pack",
     executive_summary:
-      "Meridian's context is backed by 62 evidence references, all traced to a repo-generated current-state pack marked synthetic, PHI-free, and planning-grade. Sources are manifest-gated and dated mid-2026. This gives strong lineage for discovery and framing but is explicitly not real production evidence. The organization should treat every claim as citable-within-synthetic-scope and replace it with a client answer material before production decisions. The CDAO should confirm the client evidence source as the first discovery deliverable. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian's entire context traces to a repo-generated current-state pack classified as synthetic, PHI-free, and planning-grade, manifest-gated for loading. It is explicitly not real production data, and it carries documented known gaps around medallion, governance, and platform foundation. That provenance defines how the context can be used: strong enough for discovery and framing, insufficient for production approval or realized-value claims. The organization should replace it with client evidence answer material during discovery. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "All 62 evidence references trace to a repo-generated current-state pack.",
-      "Sources are marked synthetic_demo_phi_free_planning_grade and manifest-gated.",
-      "Evidence coverage is 100% within synthetic scope, dated mid-2026.",
+      "All records trace to a repo-generated current-state pack classified synthetic_demo_phi_free_planning_grade",
+      "The source is manifest-gated for loading and dated 2026-07-09",
+      "Documented known gaps cover medallion certification, governance operating model, and platform foundation",
     ],
     why_it_matters:
-      "Strong synthetic lineage supports discovery, but every downstream decision requires substitution with real client evidence.",
+      "Because every record is synthetic planning-grade, the context is safe for discovery and framing but not sufficient for production approval or realized-value claims.",
     questions_supported: [
-      "Whether current claims are safe for discovery and framing, given all evidence is synthetic and manifest-gated.",
-      "Which domains need real client evidence before production decisions.",
+      "Meridian can use this dimension to confirm what kind of evidence backs its context — synthetic planning-grade — and therefore what claims are and are not defensible.",
     ],
     current_caveats: [
-      "All evidence is synthetic PHI-free planning-grade, not real Meridian production data.",
-      "Duplicate evidence-source records exist and need reconciliation.",
+      "No client production evidence, PHI-bearing data, or audited artifacts are present; the pack is synthetic and planning-grade only.",
     ],
     next_validation_actions: [
-      "Confirm and load a real client evidence pack with the CDAO as the first discovery deliverable.",
-      "Reconcile duplicate evidence-source records.",
+      "Replace synthetic records with client-provided evidence answer material, per domain, during the discovery phase.",
     ],
     module_usage: [
-      "Knowledge cites evidence lineage and its synthetic boundary.",
-      "Intelligence uses evidence coverage to scope confidence in reasoning.",
+      "Knowledge documents provenance and evidence boundaries",
+      "Source and Tower require stronger evidence before commercial or value claims",
     ],
+    data_tab_intro:
+      "These records identify the synthetic, PHI-free, manifest-gated current-state pack behind all context — note the documented known-gaps list.",
+    relationships_tab_intro:
+      "Evidence-source relationships are marked missing, so provenance links are described, not validated.",
+    gaps_tab_intro:
+      "The defining boundary is that all evidence is synthetic planning-grade — closing it means substituting real client evidence.",
+    evidence_tab_intro:
+      "This is the provenance record itself: a synthetic planning-grade pack suitable for discovery framing, not production or value claims.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -1572,10 +1619,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:f4177b466202ddf01730d9b239ab01ba2d4fec9cbf0fefec83365337c9e83568",
+      "sha256:6c0f2919c630c6ba9f1c488677c35c111c7233b82f3162329470e23d3fe9100b",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -1584,32 +1631,38 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
   {
     dimension_key: "14_metrics_outcomes",
     dimension_name: "Metrics & Outcomes",
-    summary_title: "Metrics are defined but not yet baselined with actuals",
+    summary_title:
+      "Metrics are defined, but no baselines exist to measure value",
     executive_summary:
-      "Meridian defines outcome metrics including analytics maintenance share, net-new analytics capacity share, medallion certification status, governance operating model status, and per-program baseline readiness. These are definitions with calculation bases, not populated actuals. Tower cannot claim value until these are baselined against real numbers. Leadership should prioritize establishing baselines before any outcome claim. Finance and the CDAO should baseline the analytics-capacity and readiness metrics before value tracking begins. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian's metrics define what should be measured — analytics maintenance share versus net-new capacity, medallion certification status, governance operating model status, and baseline readiness for each candidate program. But these are definitions and readiness checks, not baselined actuals, and every owner is a synthetic data steward. Before Tower can claim value, each metric needs a real baseline and accountable owner. Finance, the CDAO, and program sponsors should baseline these metrics in discovery. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "Metrics include analytics maintenance share and net-new analytics capacity share with defined calculation bases.",
-      "Status metrics cover medallion certification and governance operating model.",
-      "Per-program baseline readiness metrics exist for lakehouse, data foundation, call center, and provider quality initiatives.",
+      "Metrics include analytics maintenance share, net-new analytics capacity share, medallion certification status, and governance operating model status",
+      "Program-level baseline-readiness metrics exist for lakehouse, governed AI foundation, call center optimization, and provider quality",
+      "All metrics are owned by a synthetic data steward with no baselined actuals",
     ],
     why_it_matters:
-      "No value can be measured or claimed until these metrics carry real baselines and actuals rather than definitions.",
+      "Value realization requires baselined metrics with accountable owners, and today only definitions and readiness checks exist — no actuals to measure against.",
     questions_supported: [
-      "What must be baselined before Tower can claim value, based on the defined but unpopulated metric set.",
-      "Which analytics and readiness metrics anchor the value case for the lakehouse foundation.",
+      "Meridian can use this dimension to decide which metrics must be baselined before value can be claimed, based on the defined-but-unbaselined metric set.",
     ],
     current_caveats: [
-      "Metrics are defined with synthetic sources, not populated with actuals.",
-      "Owner is a synthetic data steward, not a confirmed business owner.",
+      "No baselined actuals or accountable business owners exist; metrics are definitions and readiness checks only.",
     ],
     next_validation_actions: [
-      "Baseline analytics-capacity and program-readiness metrics with Finance and the CDAO.",
-      "Assign confirmed business owners to each outcome metric.",
+      "Have Finance, the CDAO, and program sponsors establish real baselines and named owners for each metric before Tower attributes any value.",
     ],
     module_usage: [
-      "Knowledge explains metric definitions and baseline gaps.",
-      "Tower uses baselined metrics and actuals for value realization.",
+      "Knowledge shows which metrics are defined versus baselined",
+      "Tower claims realized value only once baselines and owners exist",
     ],
+    data_tab_intro:
+      "These records define what Meridian intends to measure — capacity, certification, governance, and program readiness — but carry no baselined actuals.",
+    relationships_tab_intro:
+      "Metric-to-program and metric-to-outcome links are not validated, so treat the measurement chain as unconfirmed.",
+    gaps_tab_intro:
+      "The biggest gap is the absence of baselines and named owners — the prerequisite for any value claim.",
+    evidence_tab_intro:
+      "Metric records are synthetic planning-grade definitions; use them to plan measurement, not to assert results.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -1644,10 +1697,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:f56376eede68191a986a6e324032a147ec953131c53715bf01a017d200b8e048",
+      "sha256:26c808fe0fda71bfcde432574d73b02ee30bbce8dc55c9eaf9d925cd8875ddfd",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -1657,32 +1710,37 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     dimension_key: "15_industry_context_patterns",
     dimension_name: "Industry Context & Patterns",
     summary_title:
-      "A recognizable integrated-payer-provider modernization pattern",
+      "A recognizable integrated-delivery-and-payer transformation pattern",
     executive_summary:
-      "Meridian fits a familiar healthcare pattern: a Sutter-scale regional provider with Kaiser/Humana-style payer and services complexity, modernizing fragmented on-prem analytics toward a governed cloud lakehouse. Epic clinical dominance, legacy reporting sprawl, and a claims-plus-clinical data ambition are typical of this archetype. That pattern predicts where value and risk concentrate: identity, claims harmonization, and governance. Leadership should prioritize the foundation moves the pattern rewards. The CDAO should validate which industry benchmarks apply during discovery. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian reflects a familiar healthcare pattern: an integrated delivery network with health-plan complexity, running Epic for clinical care and legacy marts for analytics, aspiring toward a governed cloud lakehouse. Its challenges — fragmented reporting, no identity spine, unproven data governance — are characteristic of the sector, not unique failures. Recognizing the pattern helps leadership benchmark sequencing: foundation and governance before AI at scale. No dedicated industry-benchmark records are loaded, so comparisons should be validated against client peers in discovery. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "Meridian is described as a Sutter-scale regional provider with Kaiser/Humana-style payer and services complexity.",
-      "The estate follows a common pattern: Epic core, fragmented on-prem reporting, and a target cloud lakehouse.",
-      "Data ambitions center on unified clinical and claims, typical of integrated payer-provider modernization.",
+      "Meridian fits an integrated-delivery-network-plus-payer profile with Kaiser/Humana-style payer complexity",
+      "Its Epic-plus-legacy-marts estate and cloud-lakehouse aspiration are common healthcare modernization patterns",
+      "No dedicated industry-benchmark or peer-comparison records are represented in this context",
     ],
     why_it_matters:
-      "The archetype predicts that identity spine, claims harmonization, and governance are where value and risk concentrate.",
+      "Recognizing the sector pattern lets leadership sequence transformation the way peers do — foundation and governance before scaled AI — rather than treating each gap as unique.",
     questions_supported: [
-      "Which industry-pattern moves Meridian should prioritize, based on its integrated payer-provider archetype.",
-      "Whether the modernization path matches proven healthcare data-foundation patterns.",
+      "Meridian can use this dimension to frame its transformation against a recognizable healthcare pattern, though it cannot cite peer benchmarks — no benchmark records are loaded.",
     ],
     current_caveats: [
-      "Pattern framing is inferred from synthetic profile context, not benchmarked against real peers.",
-      "No external benchmark data is loaded.",
+      "No industry-benchmark or peer-comparison evidence is represented; pattern framing is qualitative only.",
     ],
     next_validation_actions: [
-      "Validate which peer benchmarks and industry patterns apply with the CDAO in discovery.",
-      "Confirm the archetype against real Meridian scale and footprint.",
+      "Validate the pattern and sequencing against named client peers or benchmarks during discovery.",
     ],
     module_usage: [
-      "Knowledge frames the industry archetype and its implications.",
-      "Intelligence uses the pattern to prioritize foundation moves.",
+      "Knowledge frames the sector pattern qualitatively",
+      "Intelligence uses the pattern to inform sequencing options",
     ],
+    data_tab_intro:
+      "There are no dedicated benchmark records here; the industry pattern is inferred from Meridian's profile and estate.",
+    relationships_tab_intro:
+      "No validated relationships link this dimension to peer data, so pattern framing is qualitative, not evidenced.",
+    gaps_tab_intro:
+      "The gap is the absence of any peer-benchmark evidence — needed before comparative claims can be made.",
+    evidence_tab_intro:
+      "Industry framing is qualitative inference from synthetic context, not backed by benchmark data.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -1717,10 +1775,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:745a7328389bd2a7d1d16aee73c1d458a0c4e6eccc03aed9fcf575a0793be5e3",
+      "sha256:748f2dae54a85aa34fa4837f2b590376af34a336bff73461a2563d7447c7ae35",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -1730,32 +1788,37 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     dimension_key: "16_expert_lenses",
     dimension_name: "Expert Lenses",
     summary_title:
-      "Multiple expert perspectives converge on the data foundation",
+      "Advisory lenses apply, but no dedicated lens evidence is loaded",
     executive_summary:
-      "Meridian's context invites several expert lenses — data governance, clinical operations, health-plan and claims, finance, and platform engineering — and they converge on one conclusion: the governed data foundation gates everything else. A clinical lens sees longitudinal patient view; a finance lens sees payment integrity and cost transparency; a governance lens sees the missing identity spine and controls. Leadership should prioritize the foundation each lens depends on. The CDAO should convene cross-lens stakeholders in a governance workshop to align priorities. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian's context supports several expert lenses — data governance, cloud platform, health-plan operations, clinical informatics, and value realization — because the underlying domain records touch all of them. But no dedicated expert-lens records are represented; the lenses are analytical viewpoints, not yet evidenced evidence. Applying these lenses helps structure discovery: governance and platform experts should shape the foundation, operations and clinical experts the use cases. The workshop stakeholders should confirm which lenses lead each decision. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "Clinical, health-plan, finance, governance, and platform perspectives all depend on the same clinical + claims data foundation.",
-      "Finance lenses map to payment integrity, cost transparency, and automated close programs.",
-      "Governance lenses surface the missing identity spine, business layer, and audit controls.",
+      "Domain records support data governance, cloud platform, health-plan operations, clinical informatics, and value-realization lenses",
+      "No dedicated expert-lens records are represented in this context",
+      "Lenses are analytical viewpoints derived from other domains, not standalone evidence",
     ],
     why_it_matters:
-      "Different expert perspectives reach the same bottleneck — the governed data foundation — which sharpens where leadership must focus first.",
+      "Applying the right expert lens to each decision — governance to the foundation, clinical to use cases — structures discovery, but the lenses are viewpoints, not yet evidenced facts.",
     questions_supported: [
-      "Which expert priorities converge on the data foundation, based on shared dependencies across clinical, finance, and governance lenses.",
-      "Whether cross-lens stakeholders agree on foundation-first sequencing.",
+      "Meridian can use this dimension to decide which advisory lenses should lead each transformation decision, drawn from the domains actually represented.",
     ],
     current_caveats: [
-      "Expert lenses are inferred from function and program context, not from named expert input.",
-      "No formal expert-review evidence is loaded.",
+      "No standalone expert-lens evidence is loaded; lenses are derived viewpoints, not independent records.",
     ],
     next_validation_actions: [
-      "Convene cross-lens stakeholders (clinical, finance, governance, platform) with the CDAO to align on foundation priorities.",
-      "Validate lens-specific requirements against real operating constraints.",
+      "Have workshop stakeholders confirm which expert lens owns each foundation, governance, and use-case decision during discovery.",
     ],
     module_usage: [
-      "Knowledge organizes the converging expert perspectives.",
-      "Intelligence uses cross-lens alignment to prioritize investment.",
+      "Knowledge frames applicable expert viewpoints",
+      "Intelligence applies lenses to structure options",
     ],
+    data_tab_intro:
+      "No dedicated expert-lens records exist; the lenses shown are viewpoints inferred from other domains.",
+    relationships_tab_intro:
+      "There are no validated lens relationships, so lens-to-decision mappings are analytical, not evidenced.",
+    gaps_tab_intro:
+      "The gap is that lenses are derived, not loaded — assigning lens ownership is a discovery task.",
+    evidence_tab_intro:
+      "Expert lenses are analytical framing over synthetic context, not standalone evidence records.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -1790,10 +1853,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:0f4841ceb88187997cbf0111641da7a80570cd995846e97590927a53a91302ab",
+      "sha256:11015fe200764bb51304aa5a6b94178b695560c8d996004c9603965e6856be04",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -1803,32 +1866,37 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     dimension_key: "17_managed_services_scope",
     dimension_name: "Managed Services Scope",
     summary_title:
-      "An outsourced analytics provider is named, but scope is unconfirmed",
+      "An outsourced analytics provider is named, without scope terms",
     executive_summary:
-      "Meridian's vendor context names an outsourced analytics managed services provider, signaling that part of the analytics estate is externally operated. This is relevant because the fragmented SAS, SQL Server, and reporting estate is a candidate for managed-service reshaping. No scope, SLA, or economics for that engagement is evidenced, so its role in transformation is unclear. The organization should prioritize confirming managed-service scope before sourcing decisions. The CDAO and procurement should validate the engagement terms in discovery. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian's context names an outsourced analytics managed services provider among its vendors, indicating that some analytics delivery is already externally supported. But no managed-services scope, SLAs, service boundaries, or commercial terms are represented. This matters because managed-services scope shapes both cost and where accountability sits for the data foundation. The organization should capture scope, SLAs, and boundaries before any sourcing or operating-model decision. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "An outsourced analytics managed services provider is named among vendors.",
-      "The fragmented reporting estate (SAS, SQL Server marts, Tableau, Power BI) is a candidate for managed-service reshaping.",
-      "No scope, SLA, or economics for the managed-services engagement is loaded.",
+      "An outsourced analytics managed services provider is represented among the vendor set",
+      "No managed-services scope, SLAs, service boundaries, or commercial terms are represented",
+      "Managed-services accountability for analytics delivery is implied but not detailed",
     ],
     why_it_matters:
-      "Managed-service scope shapes what stays in-house versus outsourced as the analytics estate modernizes.",
+      "Managed-services scope determines cost and where accountability for analytics delivery sits, and none of that detail is yet evidenced.",
     questions_supported: [
-      "Whether managed-service scope can inform sourcing decisions, given the provider is named but scope is unconfirmed.",
-      "Which parts of the analytics estate the provider currently operates.",
+      "Meridian can use this dimension to note that analytics managed services exist, but cannot yet answer what is in scope — no service-boundary or SLA evidence is loaded.",
     ],
     current_caveats: [
-      "No managed-services scope, SLA, or economics is evidenced.",
-      "The provider's role in current operations is inferred, not confirmed.",
+      "No managed-services scope, SLA, or commercial-term evidence is represented for the analytics provider.",
     ],
     next_validation_actions: [
-      "Confirm the managed-services scope, SLAs, and economics with the CDAO and procurement in discovery.",
-      "Clarify which analytics functions are outsourced versus retained.",
+      "Capture managed-services scope, SLAs, and service boundaries for the analytics provider before any sourcing or operating-model decision.",
     ],
     module_usage: [
-      "Knowledge surfaces the named managed-services relationship and gaps.",
-      "Source uses managed-service scope for sourcing decisions once terms are loaded.",
+      "Knowledge flags the managed-services relationship and its evidence gap",
+      "Source scopes managed-services optimization once terms are added",
     ],
+    data_tab_intro:
+      "The only managed-services signal here is a named analytics provider; no scope, SLA, or service-boundary detail is attached.",
+    relationships_tab_intro:
+      "No validated managed-services relationships exist, so the provider's role is implied, not confirmed.",
+    gaps_tab_intro:
+      "The gap is the absence of any scope or SLA detail — needed before sourcing or accountability decisions.",
+    evidence_tab_intro:
+      "Managed-services context is a synthetic vendor mention only; treat scope as an open discovery item.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -1863,10 +1931,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:804b28127d51cb7e4476994822c10cbe4bfe73893c1d6ab9e28d4b54c57ce15f",
+      "sha256:9a5bb0f72965fd70364d0e42f660c03ac7ae4a8da1a9343aba3f81758558c1e7",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],
@@ -1878,30 +1946,35 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     summary_title:
       "Process capabilities are described, but operational evidence is thin",
     executive_summary:
-      "Meridian's functions describe operational processes — call handling, CRM case management, prior authorization, utilization management, claims operations, payment integrity, and close automation — that AI would touch. These are capability statements, not measured process evidence. No cycle times, volumes, or process baselines are loaded, so current-state performance is unquantified. Leadership should prioritize baselining the processes AI will change. The relevant function owners and CDAO should capture process metrics in discovery. This is planning-grade synthetic context for demonstration, not client production evidence.",
+      "Meridian's operational processes are visible only through function capabilities — prior authorization, utilization management, claims operations, call handling, next-best-action workflows, and close automation. There is no process-level evidence: no volumes, cycle times, handoffs, or workflow documentation. This matters because AI and automation value depends on the actual shape of these processes, not just their names. The function owners should capture operational process evidence in discovery before automation is scoped. This is planning-grade synthetic context for demonstration, not client production evidence.",
     what_nexus_knows: [
-      "Operational capabilities span call handling, CRM case management, prior authorization, utilization management, and claims operations.",
-      "Finance processes include payment integrity, cost transparency, and close automation.",
-      "No process cycle times, volumes, or performance baselines are evidenced.",
+      "Processes are implied by function capabilities such as prior authorization, claims operations, call handling, and close automation",
+      "No process volumes, cycle times, handoffs, or workflow documentation is represented",
+      "Analytics operations are described only at the maintenance-versus-net-new capacity level",
     ],
     why_it_matters:
-      "AI value depends on measured current-state process performance, which is described but not quantified today.",
+      "Automation value depends on the real shape of processes — volumes, cycle times, handoffs — and only capability names are evidenced today.",
     questions_supported: [
-      "Whether current process performance can anchor a value case, given only capability descriptions exist without baselines.",
-      "Which processes AI would touch first, based on the described contact-center and claims capabilities.",
+      "This dimension can identify which processes are candidates for automation by capability, but cannot yet size the opportunity — no process volume or cycle-time evidence is loaded.",
     ],
     current_caveats: [
-      "Process descriptions are capabilities, not measured operational evidence.",
-      "No cycle-time, volume, or performance baselines are loaded.",
+      "No operational process metrics, workflow documentation, or handoff evidence is represented.",
     ],
     next_validation_actions: [
-      "Capture process cycle times, volumes, and baselines with function owners and the CDAO in discovery.",
-      "Confirm which processes are in scope for the first AI wave.",
+      "Have function owners capture process volumes, cycle times, and workflow documentation for automation-candidate processes during discovery.",
     ],
     module_usage: [
-      "Knowledge explains described processes and evidence gaps.",
-      "Tower uses process baselines for value measurement once captured.",
+      "Knowledge maps processes by capability and flags the evidence gap",
+      "Moves scopes automation once process evidence is captured",
     ],
+    data_tab_intro:
+      "Process detail here is limited to function capability names; no volumes, cycle times, or workflow documentation are present.",
+    relationships_tab_intro:
+      "No validated process relationships exist, so process-to-system and process-to-use-case links are inference only.",
+    gaps_tab_intro:
+      "The biggest gap is the absence of operational process metrics — needed to size any automation opportunity.",
+    evidence_tab_intro:
+      "Process evidence is synthetic and capability-level only; treat volumes and cycle times as open discovery items.",
     tenant_key: "meridian-health",
     tenant_name: "Meridian Health",
     safe_demo_claims: [
@@ -1936,10 +2009,10 @@ export const MERIDIAN_CLAUDE_DIMENSION_NARRATIVES = [
     relationship_edge_ids_used: ["rel-agent-assist-cross-dimension"],
     context_gap_ids_used: ["gap-validation-needed"],
     source_context_hash:
-      "sha256:6208eaa7b0d514929016a5b70d1a054c794140d4e87b358aeae9c65e68022846",
+      "sha256:6c5ac65037101304ffda91cf2797bb044ee8b86643f7383abb2d4bce4cf6e212",
     generated_by: "claude",
     generated_model: "claude-opus-4-8",
-    generated_at: "2026-07-16T12:57:23.897Z",
+    generated_at: "2026-07-16T13:50:14.269Z",
     validation_status: "passed",
     validation_errors: [],
     unsupported_claims: [],

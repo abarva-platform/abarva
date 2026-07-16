@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-07-16T12:57:23.897Z",
+  "generated_at": "2026-07-16T13:50:14.269Z",
   "model": "claude-opus-4-8",
   "generation_status": "passed",
-  "cxo_pass": true,
+  "cxo_pass": false,
   "cxo_score": {
-    "situation_clarity": 4.5,
+    "situation_clarity": 4.6,
     "complication_clarity": 4.4,
-    "insight_quality": 4.2,
+    "insight_quality": 4,
     "decision_implication": 4.5,
-    "actionability": 4.3,
+    "actionability": 4.2,
     "evidence_discipline": 4.4,
-    "language_quality": 4.1,
-    "visual_usefulness": 5,
-    "clutter_control": 4,
-    "rationale": "The strongest remaining weakness is the insight: the 'one foundation serves many use cases' observation is genuinely useful but sits close to a familiar consulting truism, and the paragraph occasionally leans on stacked jargon (medallion certification, transcript governance, identity spine) that reads slightly assembled rather than distilled. Tightening the second paragraph to one crisp non-obvious throughline would lift both insight and clutter scores.",
-    "overall": 4.4
+    "language_quality": 4.3,
+    "visual_usefulness": 4,
+    "clutter_control": 3.9,
+    "rationale": "The single biggest remaining weakness is that the insight — 'no AI use case scales until a governed data spine exists' — is a sound but relatively conventional conclusion that follows almost mechanically from the stated fragmentation, rather than a genuinely non-obvious connection. The first paragraph also front-loads a dense inventory of the estate that slightly dilutes the throughline before the implication lands.",
+    "overall": 4.3
   },
   "validation": [],
   "visual_block_count": 4
