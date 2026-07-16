@@ -632,6 +632,9 @@ export function MovesPhaseStandaloneClient({
     const approval = (await approvalRes.json().catch(() => ({}))) as {
       ok?: boolean;
       missing?: string[];
+      blockedBy?: string[];
+      alreadyApproved?: boolean;
+      newPhase?: number | null;
       gate?: { failedChecks?: Array<{ severity: string; reason?: string; check: string }> };
       detail?: string;
       error?: string;
@@ -656,8 +659,21 @@ export function MovesPhaseStandaloneClient({
     setGateApproved(true);
     setGateApprovalStatus("approved");
     setGateApprovalMessage(
-      "Gate approved. The run status below is now the source of truth for which documents built, failed, or were held below gate.",
+      approval.newPhase != null || approval.alreadyApproved
+        ? `Gate approved. Opening P${approval.newPhase ?? phase.phase + 1}...`
+        : "Gate approved. The run status below is now the source of truth for which documents built, failed, or were held below gate.",
     );
+    const nextPhase =
+      typeof approval.newPhase === "number"
+        ? approval.newPhase
+        : approval.alreadyApproved
+          ? phase.phase + 1
+          : null;
+    if (nextPhase !== null) {
+      window.setTimeout(() => {
+        window.location.assign(`/strategic-moves/${move.id}/phase/${nextPhase}`);
+      }, 250);
+    }
   }
 
   async function approveP0Gate() {
@@ -1257,6 +1273,17 @@ function PhaseBody({
   }
 
   const nextPhaseContract = PHASES.find((item) => item.phase === phase.phase + 1) ?? null;
+  const hardGateCriteria = move.gateCriteria.filter(
+    (criterion) => criterion.severity === "hard",
+  );
+  const softGateCriteria = move.gateCriteria.filter(
+    (criterion) => criterion.severity === "soft",
+  );
+  const openHardCriteria = hardGateCriteria.filter((criterion) => !criterion.completed);
+  const p0ApprovalGeneratedCriteria = new Set([
+    "program_seed_recorded",
+    "value_hypothesis_seed",
+  ]);
   const readinessPack = buildNextPhaseReadinessPack({
     nextPhaseLabel: nextPhaseContract ? `${nextPhaseContract.code} ${nextPhaseContract.title}` : "Tower handoff",
     nextPhaseNum: phase.phase + 1,
@@ -1290,6 +1317,16 @@ function PhaseBody({
         {gateApprovalMessage ? (
           <div className={`mxw-gate-message ${gateApprovalStatus}`}>
             {gateApprovalMessage}
+          </div>
+        ) : null}
+        {phase.phase === 0 && openHardCriteria.length > 0 ? (
+          <div className="mxw-gate-note">
+            <strong>Why some checks are still open</strong>
+            <span>
+              P0 approval itself signs the origination brief, so the seed and value
+              checks turn green during approval. If anything remains blocked after
+              approval, the exact failed check will appear here.
+            </span>
           </div>
         ) : null}
         <div className="mxw-approve-build" id="mxw-approve-build-action">
@@ -1328,18 +1365,58 @@ function PhaseBody({
         ) : null}
       </section>
       <section className="mxw-gate">
-        <h2>Gate criteria</h2>
-        <div>
-          {move.gateCriteria.length > 0 ? (
-            move.gateCriteria.map((criterion) => (
-              <span className={criterion.completed ? "met" : ""} key={criterion.id}>
-                {criterion.completed ? "✓" : "○"} {criterion.label}
-              </span>
-            ))
-          ) : (
+        <header>
+          <div>
+            <h2>Gate criteria</h2>
+            <p>
+              Hard criteria block the next phase. Soft criteria can carry forward
+              as explicit caveats in the gate record.
+            </p>
+          </div>
+          <strong>
+            {hardGateCriteria.filter((criterion) => criterion.completed).length} of{" "}
+            {hardGateCriteria.length || move.gateCriteria.length}
+          </strong>
+        </header>
+        {move.gateCriteria.length > 0 ? (
+          <>
+            <div className="mxw-gate-group">
+              <span className="mxw-gate-group-label">Blocking hard gate</span>
+              {(hardGateCriteria.length ? hardGateCriteria : move.gateCriteria).map((criterion) => (
+                <span
+                  className={`${criterion.completed ? "met" : ""} ${
+                    phase.phase === 0 && p0ApprovalGeneratedCriteria.has(criterion.id)
+                      ? "approval-generated"
+                      : ""
+                  }`}
+                  key={criterion.id}
+                >
+                  {criterion.completed ? "✓" : "○"} {criterion.label}
+                  {phase.phase === 0 &&
+                  !criterion.completed &&
+                  p0ApprovalGeneratedCriteria.has(criterion.id) ? (
+                    <em>Completed by approving this gate</em>
+                  ) : null}
+                </span>
+              ))}
+            </div>
+            {softGateCriteria.length > 0 ? (
+              <div className="mxw-gate-group">
+                <span className="mxw-gate-group-label">Carry-forward soft criteria</span>
+                {softGateCriteria.map((criterion) => (
+                  <span className={criterion.completed ? "met" : "soft-open"} key={criterion.id}>
+                    {criterion.completed ? "✓" : "○"} {criterion.label}
+                    {!criterion.completed ? <em>Can carry as a caveat</em> : null}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <div>
             <span>No gate criteria are configured for this transition.</span>
-          )}
-        </div>
+          </div>
+        )}
       </section>
       <section className="mxw-readiness">
         <h2>Next: {readinessPack.nextPhaseLabel} readiness</h2>
@@ -2055,12 +2132,27 @@ function MovesStandaloneStyles() {
 .mxw-review-flow span.done{background:var(--green-tint);color:var(--green);border-color:var(--green)}
 .mxw-review-flow span.cur{background:var(--blue-tint);color:var(--blue);border-color:var(--blue)}
 .mxw-review-actions{display:flex;gap:10px;flex-wrap:wrap}
+.mxw-gate header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.mxw-gate header p{font-size:13px;color:var(--muted);line-height:1.45;margin:6px 0 0;max-width:660px}
+.mxw-gate header>strong{border:1px solid var(--line-2);border-radius:999px;padding:7px 12px;font-size:13px;white-space:nowrap}
 .mxw-gate div{display:grid;gap:8px;margin-top:12px}
+.mxw-gate-group{display:grid;gap:8px;margin-top:14px}
+.mxw-gate-group-label{border:0!important;background:transparent!important;padding:0!important;font-size:10px!important;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)!important;font-weight:800}
 .mxw-gate span{display:block;border:1px solid var(--line);border-radius:10px;background:var(--soft);padding:12px 14px;font-size:13px;color:var(--ink-2)}
 .mxw-gate span.met{background:var(--green-tint);color:var(--green);border-color:rgba(29,143,104,.25)}
+.mxw-gate span.soft-open{border-style:dashed;color:var(--muted)}
+.mxw-gate span.approval-generated{background:#fffdf7;border-color:rgba(176,115,15,.24)}
+.mxw-gate span em{display:block;margin-top:5px;font-style:normal;font-size:11px;color:var(--muted)}
 .mxw-gate-attest{display:flex;flex-direction:column;gap:10px;margin:15px 0}
 .mxw-gate-attest span{display:block;border:1px solid var(--line);border-radius:11px;background:var(--card);padding:13px 15px;font-size:13.5px;color:var(--ink-2)}
 .mxw-gate-attest span.met{border-color:rgba(29,143,104,.35);background:var(--green-tint);color:var(--green)}
+.mxw-gate-note{display:grid;gap:4px;margin:12px 0 4px;border:1px solid rgba(176,115,15,.24);background:#fffdf7;border-radius:11px;padding:11px 13px}
+.mxw-gate-note strong{font-size:12px}
+.mxw-gate-note span{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+.mxw-gate-message{border-radius:10px;padding:11px 13px;margin:12px 0 0;font-size:13px;font-weight:650;border:1px solid var(--line-2);background:var(--soft);color:var(--ink-2)}
+.mxw-gate-message.approved{border-color:rgba(29,143,104,.35);background:var(--green-tint);color:var(--green)}
+.mxw-gate-message.blocked{border-color:rgba(176,115,15,.35);background:var(--amber-tint);color:#6d4300}
+.mxw-gate-message.approving{border-color:rgba(0,87,184,.25);background:var(--blue-tint);color:var(--blue)}
 .mxw-deliverables{display:grid;gap:8px;margin:15px 0}
 .mxw-deliverables div{display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:11px;background:var(--soft);padding:11px 13px}
 .mxw-deliverables div.generated{background:var(--green-tint);border-color:rgba(29,143,104,.28)}
