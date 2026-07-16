@@ -16,6 +16,7 @@ const PROMPT_VERSION = "tower-cxo-claude-story-v1";
 const DEFAULT_MODEL = "claude-sonnet-4-6";
 const DEFAULT_MAX_TOKENS = 2_400;
 const DEFAULT_TIMEOUT_MS = 120_000;
+const TOWER_CXO_STORY_TOOL_NAME = "tower_cxo_story";
 
 const TAB_KEYS: TowerV3DefaultTabKey[] = [
   "overview",
@@ -123,8 +124,9 @@ export async function applyTowerCxoClaudeStory(args: {
       },
     });
     const message = await withTimeout(client.messages.create(request.payload), timeoutMs);
-    const rawText = extractMessageText(message).trim();
-    const parsed = parseClaudePayload(rawText);
+    const extracted = extractClaudePayload(message);
+    const rawText = extracted.rawText;
+    const parsed = extracted.payload;
     const validation = parsed
       ? validateTowerCxoClaudePayload(parsed, args.view)
       : { passed: false, issues: ["Claude response was not valid JSON."] };
@@ -199,6 +201,12 @@ export function buildTowerCxoClaudeRequest(args: {
     max_tokens: number;
     system: string;
     messages: Array<{ role: "user"; content: string }>;
+    tools: Array<{
+      name: string;
+      description: string;
+      input_schema: { type: "object" } & Record<string, unknown>;
+    }>;
+    tool_choice: { type: "tool"; name: string };
   };
   promptTrace: TowerCxoClaudePromptTrace;
 } {
@@ -210,6 +218,8 @@ export function buildTowerCxoClaudeRequest(args: {
     max_tokens: maxTokens,
     system: TOWER_CXO_CLAUDE_SYSTEM_PROMPT,
     messages: [{ role: "user" as const, content: user }],
+    tools: [TOWER_CXO_STORY_TOOL],
+    tool_choice: { type: "tool" as const, name: TOWER_CXO_STORY_TOOL_NAME },
   };
   const requestJson = JSON.stringify(payload);
   const fullPrompt = [TOWER_CXO_CLAUDE_SYSTEM_PROMPT, user].join("\n\n");
@@ -239,9 +249,9 @@ Critical language rules:
 - Preserve locked card values exactly. You may improve labels and captions, but never change the values.
 - Keep the executive brief concise, specific, and consultant-grade. Write like a senior partner briefing a CIO and CFO.
 - Every tab must have a point of view: what it means, why it matters, what decision it drives, and what happens next.
-- Return JSON only. No Markdown. No code fences.
+- Return the story by calling the ${TOWER_CXO_STORY_TOOL_NAME} tool. Do not answer in prose. No Markdown. No code fences.
 
-Return this exact JSON shape:
+The tool input must follow this exact shape:
 {
   "story": {
     "tenantDisplayName": "Meridian",
@@ -271,6 +281,43 @@ Return this exact JSON shape:
     "insights": {"key":"insights", "visualType":"role_decision_cards", "title":"...", "insight":"...", "dataRefs":["..."], "caveat":"..."}
   }
 }`;
+
+const TOWER_CXO_STORY_TOOL = {
+  name: TOWER_CXO_STORY_TOOL_NAME,
+  description:
+    "Submit the validated executive Tower story and visual exhibit specs for rendering.",
+  input_schema: {
+    type: "object",
+    additionalProperties: false,
+    required: ["story", "visualSpecs"],
+    properties: {
+      story: {
+        type: "object",
+        additionalProperties: true,
+        required: [
+          "tenantDisplayName",
+          "eyebrow",
+          "headline",
+          "executiveBrief",
+          "cards",
+          "tabs",
+        ],
+        properties: {
+          tenantDisplayName: { type: "string" },
+          eyebrow: { type: "string" },
+          headline: { type: "string" },
+          executiveBrief: { type: "string" },
+          cards: { type: "array", items: { type: "object", additionalProperties: true } },
+          tabs: { type: "object", additionalProperties: true },
+        },
+      },
+      visualSpecs: {
+        type: "object",
+        additionalProperties: true,
+      },
+    },
+  },
+} as const;
 
 function buildTowerCxoClaudePacket(args: {
   view: TowerV3RuntimeViewModel;
@@ -511,16 +558,36 @@ function parseClaudePayload(rawText: string): TowerCxoClaudePayload | null {
   }
 }
 
-function extractMessageText(message: unknown): string {
+function extractClaudePayload(message: unknown): {
+  payload: TowerCxoClaudePayload | null;
+  rawText: string;
+} {
   const content = (message as { content?: unknown }).content;
-  if (!Array.isArray(content)) return "";
-  return content
+  if (!Array.isArray(content)) return { payload: null, rawText: "" };
+  for (const part of content) {
+    if (!part || typeof part !== "object") continue;
+    const maybePart = part as { type?: unknown; name?: unknown; input?: unknown };
+    if (
+      maybePart.type === "tool_use" &&
+      maybePart.name === TOWER_CXO_STORY_TOOL_NAME &&
+      maybePart.input &&
+      typeof maybePart.input === "object"
+    ) {
+      return {
+        payload: maybePart.input as TowerCxoClaudePayload,
+        rawText: JSON.stringify(maybePart.input),
+      };
+    }
+  }
+  const rawText = content
     .map((part) => {
       if (!part || typeof part !== "object") return "";
       const maybeText = (part as { text?: unknown }).text;
       return typeof maybeText === "string" ? maybeText : "";
     })
-    .join("");
+    .join("")
+    .trim();
+  return { payload: parseClaudePayload(rawText), rawText };
 }
 
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {

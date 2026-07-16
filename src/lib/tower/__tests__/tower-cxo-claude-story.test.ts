@@ -116,11 +116,17 @@ describe("Tower CXO Claude story synthesis", () => {
       tenantName: "Healthcare Demo",
     });
 
-    expect(request.promptTrace.fullPrompt).toContain("Return this exact JSON shape");
+    expect(request.promptTrace.fullPrompt).toContain("tool input must follow this exact shape");
+    expect(request.promptTrace.fullPrompt).toContain("tower_cxo_story tool");
     expect(request.promptTrace.fullPrompt).toContain("visualSpecs");
     expect(request.promptTrace.fullPrompt).toContain("Do not invent");
     expect(request.promptTrace.fullPrompt).not.toContain("<html");
     expect(request.payload).not.toHaveProperty("temperature");
+    expect(request.payload.tool_choice).toEqual({
+      type: "tool",
+      name: "tower_cxo_story",
+    });
+    expect(request.payload.tools[0]?.name).toBe("tower_cxo_story");
     expect(request.promptTrace.promptByteLength).toBeGreaterThan(1000);
   });
 
@@ -162,6 +168,40 @@ describe("Tower CXO Claude story synthesis", () => {
       }),
     );
     expect(egressCall).not.toHaveProperty("artifactId");
+  });
+
+  it("accepts Claude structured tool input without relying on text JSON parsing", async () => {
+    const { contextPack, view } = proof();
+    const payload = goodClaudePayload(view);
+    mockedGetAuditedAnthropicClient.mockResolvedValue({
+      client: {
+        messages: {
+          create: jest.fn().mockResolvedValue({
+            content: [
+              {
+                type: "tool_use",
+                id: "toolu_tower_story_1",
+                name: "tower_cxo_story",
+                input: payload,
+              },
+            ],
+          }),
+        },
+      } as never,
+      auditId: "audit-tower-story-tool",
+      dataClass: "confidential",
+    });
+
+    const result = await applyTowerCxoClaudeStory({
+      view,
+      contextPack,
+      tenantName: "Healthcare Demo",
+    });
+
+    expect(result.used).toBe(true);
+    expect(result.view.cxoStorySource).toBe("claude_validated");
+    expect(result.auditId).toBe("audit-tower-story-tool");
+    expect(result.rawText).toContain("budget-to-value control conversation");
   });
 
   it("rejects Claude output that changes locked values or leaks internal language", () => {
