@@ -17,6 +17,7 @@ import {
   classifyAbarvaAnswerMode,
   enforceDecisionGradeAnswer,
 } from "@/lib/intelligence/ask/response-policy";
+import { stripGovernedArtifactPayloadsFromText } from "@/lib/intelligence/answer/structured-fence-stream-filter";
 
 export interface StructuredExhibitsInput {
   prose: string;
@@ -684,9 +685,14 @@ function parseDecisionTableFenceRows(
     return null;
   }
   const record = parsed as Record<string, unknown>;
-  if (!Array.isArray(record.rows)) return null;
+  const rawRows = Array.isArray(record.rows)
+    ? record.rows
+    : Array.isArray(record.records)
+      ? record.records
+      : null;
+  if (!rawRows) return null;
 
-  const rows: DecisionTableRow[] = record.rows
+  const rows: DecisionTableRow[] = rawRows
     .flatMap((entry): DecisionTableRow[] => {
       if (typeof entry !== "object" || entry === null || Array.isArray(entry)) {
         return [];
@@ -714,6 +720,74 @@ function parseDecisionTableFenceRows(
 
   if (rows.length === 0) return null;
   return { title: textOrNull(record.title), rows };
+}
+
+function readBalancedJsonPayload(
+  prose: string,
+  startIndex: number,
+): { raw: string; endIndex: number } | null {
+  let cursor = startIndex;
+  while (cursor < prose.length && /\s/.test(prose[cursor] ?? "")) {
+    cursor += 1;
+  }
+  const open = prose[cursor];
+  if (open !== "{" && open !== "[") return null;
+  const close = open === "{" ? "}" : "]";
+  let depth = 0;
+  let insideString = false;
+  let escaping = false;
+
+  for (let index = cursor; index < prose.length; index += 1) {
+    const char = prose[index] ?? "";
+    if (insideString) {
+      if (escaping) {
+        escaping = false;
+      } else if (char === "\\") {
+        escaping = true;
+      } else if (char === '"') {
+        insideString = false;
+      }
+      continue;
+    }
+    if (char === '"') {
+      insideString = true;
+      continue;
+    }
+    if (char === open || char === "{" || char === "[") {
+      depth += 1;
+      continue;
+    }
+    if (char === close || char === "}" || char === "]") {
+      depth -= 1;
+      if (depth <= 0) {
+        return {
+          raw: prose.slice(cursor, index + 1),
+          endIndex: index + 1,
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+function nearFencePayloadsFromProse(
+  prose: string,
+  label: "decision-table",
+): string[] {
+  const payloads: string[] = [];
+  const pattern = new RegExp(`\`{1,3}\\s*${label}\\s*(?=[\\[{])`, "gi");
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(prose))) {
+    const payload = readBalancedJsonPayload(
+      prose,
+      match.index + (match[0]?.length ?? 0),
+    );
+    if (!payload) continue;
+    payloads.push(payload.raw);
+    pattern.lastIndex = payload.endIndex;
+  }
+  return payloads;
 }
 
 function markDirectional(
@@ -762,9 +836,11 @@ function decisionTableFencesFromProse(
 } {
   const tables: AnswerTable[] = [];
   let decisionRows: DecisionTableRow[] = [];
+  const parsedPayloads = new Set<string>();
   const cleaned = prose.replace(
     /```decision-table\s*([\s\S]*?)```/gi,
     (_match, raw: string) => {
+      parsedPayloads.add(raw.trim());
       const parsedFence = parseDecisionTableFenceRows(raw);
       if (!parsedFence) return "\n";
       tables.push(
@@ -779,8 +855,26 @@ function decisionTableFencesFromProse(
       return "\n";
     },
   );
+
+  for (const raw of nearFencePayloadsFromProse(prose, "decision-table")) {
+    const trimmed = raw.trim();
+    if (parsedPayloads.has(trimmed)) continue;
+    parsedPayloads.add(trimmed);
+    const parsedFence = parseDecisionTableFenceRows(trimmed);
+    if (!parsedFence) continue;
+    tables.push(
+      decisionTableFromRows(
+        parsedFence.title,
+        parsedFence.rows,
+        citationIds,
+        tables.length,
+      ),
+    );
+    if (decisionRows.length === 0) decisionRows = parsedFence.rows;
+  }
+
   return {
-    prose: cleaned.replace(/\n{3,}/g, "\n\n").trim(),
+    prose: stripGovernedArtifactPayloadsFromText(cleaned),
     tables,
     decisionRows,
   };
@@ -1435,7 +1529,7 @@ export function buildStructuredExhibits(
     citations.map((citation) => citation.id),
   );
   const markdown = markdownTablesFromProse(
-    decisionFences.prose,
+    stripGovernedArtifactPayloadsFromText(decisionFences.prose),
     citations.map((citation) => citation.id),
   );
   const inline = inlineMarkdownTablesFromProse(

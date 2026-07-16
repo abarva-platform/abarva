@@ -1058,6 +1058,34 @@ Use the first wave to validate data access, compliance controls, and supervisor 
       expect(exhibits.tables[0]?.rows).toHaveLength(2);
       expect(exhibits.charts).toHaveLength(0);
     });
+
+    it("accepts records as a decision-table row alias and strips malformed chart/followup fragments from prose", () => {
+      const exhibits = buildStructuredExhibits({
+        routing: tableRouting(
+          "For Meridian agent assist, rank the top opportunities by value and complexity. Show the tradeoff in an executive-ready way.",
+        ),
+        sources,
+        prose: [
+          "Recommendation first.",
+          '```decision-table {"title":"Agent Assist Ranking","records":[{"initiative":"Clinical Documentation Assist","value":"High","valueScore":82,"complexity":"Medium","complexityScore":45,"readiness":"Medium-High","readinessScore":70,"evidenceBasis":"EHR workflow dependency","recommendation":"Start here","nextAction":"Scope pilot","directional":true},{"initiative":"Call Center Agent Assist","value":"High","valueScore":78,"complexity":"High","complexityScore":80,"readiness":"Low","readinessScore":28,"evidenceBasis":"Identity gap","recommendation":"Certify first","nextAction":"Close identity gate","directional":false}]} chart {"type":"horizontal-bar","title":"Value","xKey":"initiative","yKey":"valueScore","data":[{"initiative":"Clinical Doc","valueScore":82},{"initiative":"Call Center","valueScore":78}]} `',
+          "Sequence clinical documentation before call center deployment.",
+          '`followups ["What proof is missing?"] ``',
+        ].join("\n"),
+      });
+
+      expect(exhibits.prose).toContain("Recommendation first.");
+      expect(exhibits.prose).toContain(
+        "Sequence clinical documentation before call center deployment.",
+      );
+      expect(exhibits.prose).not.toContain("decision-table");
+      expect(exhibits.prose).not.toContain('"records"');
+      expect(exhibits.prose).not.toContain('"type":"horizontal-bar"');
+      expect(exhibits.prose).not.toContain("followups");
+      expect(exhibits.tables[0]?.rows).toHaveLength(2);
+      expect(exhibits.charts.map((chart) => chart.kind)).toContain(
+        "quadrant-matrix",
+      );
+    });
   });
 
   describe("contextual follow-up questions fence", () => {

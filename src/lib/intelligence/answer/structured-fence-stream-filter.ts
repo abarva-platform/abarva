@@ -1,8 +1,15 @@
-const STRUCTURED_FENCE_STARTS = [
-  "```decision-table",
-  "```chart",
-  "```followups",
-];
+const STRUCTURED_ARTIFACT_LABELS = [
+  "decision-table",
+  "chart",
+  "followups",
+] as const;
+
+const STRUCTURED_FENCE_STARTS = STRUCTURED_ARTIFACT_LABELS.flatMap((label) => [
+  `\`\`\`${label}`,
+  `\`\`${label}`,
+  `\`${label}`,
+  label,
+]);
 
 function longestStructuredFencePrefixSuffix(value: string): number {
   const lower = value.toLowerCase();
@@ -30,7 +37,129 @@ export function createStructuredFenceStreamFilter(): {
   flush: () => string;
 } {
   let buffer = "";
-  let insideStructuredFence = false;
+  let insideStructuredPayload = false;
+  let payloadStarted = false;
+  let payloadDepth = 0;
+  let payloadClose: "}" | "]" | null = null;
+  let insideString = false;
+  let escaping = false;
+  let suppressPostPayloadFenceTicks = false;
+
+  const resetPayloadState = () => {
+    insideStructuredPayload = false;
+    payloadStarted = false;
+    payloadDepth = 0;
+    payloadClose = null;
+    insideString = false;
+    escaping = false;
+  };
+
+  const consumePayload = (): boolean => {
+    let cursor = 0;
+
+    while (cursor < buffer.length) {
+      const char = buffer[cursor] ?? "";
+
+      if (!payloadStarted) {
+        if (char === "{" || char === "[") {
+          payloadStarted = true;
+          payloadDepth = 1;
+          payloadClose = char === "{" ? "}" : "]";
+          cursor += 1;
+          continue;
+        }
+        // Valid fences and malformed near-fences may carry whitespace,
+        // newlines, and stray ticks between the marker and JSON payload.
+        if (/[\s`]/.test(char)) {
+          cursor += 1;
+          continue;
+        }
+        // If the model emitted only a marker but no JSON payload, drop the
+        // marker and resume normal rendering from this character.
+        buffer = buffer.slice(cursor);
+        resetPayloadState();
+        return true;
+      }
+
+      if (insideString) {
+        if (escaping) {
+          escaping = false;
+        } else if (char === "\\") {
+          escaping = true;
+        } else if (char === '"') {
+          insideString = false;
+        }
+        cursor += 1;
+        continue;
+      }
+
+      if (char === '"') {
+        insideString = true;
+        cursor += 1;
+        continue;
+      }
+
+      if (char === "{" || char === "[") {
+        payloadDepth += 1;
+        cursor += 1;
+        continue;
+      }
+
+      if (char === payloadClose || char === "}" || char === "]") {
+        payloadDepth -= 1;
+        cursor += 1;
+        if (payloadDepth <= 0) {
+          while (cursor < buffer.length && /[\s`]/.test(buffer[cursor] ?? "")) {
+            cursor += 1;
+          }
+          buffer = buffer.slice(cursor);
+          resetPayloadState();
+          suppressPostPayloadFenceTicks = true;
+          return true;
+        }
+        continue;
+      }
+
+      cursor += 1;
+    }
+
+    buffer = "";
+    return false;
+  };
+
+  const findStructuredArtifactStart = (): {
+    index: number;
+    startLength: number;
+  } | null => {
+    const lower = buffer.toLowerCase();
+    let best: { index: number; startLength: number } | null = null;
+
+    for (const label of STRUCTURED_ARTIFACT_LABELS) {
+      const pattern = new RegExp(`(?:\`{1,3}\\s*)?${label}\\b\\s*`, "gi");
+      let match: RegExpExecArray | null;
+      while ((match = pattern.exec(lower))) {
+        const raw = match[0] ?? "";
+        const previous = lower[match.index - 1] ?? "";
+        const hasFenceTick = raw.includes("`");
+        const after = lower.slice(match.index + raw.length);
+        const followedByPayload = /^\s*[\[{]/.test(after);
+        const isBareArtifact =
+          !hasFenceTick &&
+          (!previous || /\s|[.;:!?)]/.test(previous)) &&
+          followedByPayload &&
+          (label === "chart" || label === "followups");
+        const isDecisionTable = label === "decision-table" && hasFenceTick;
+        if (!hasFenceTick && !isBareArtifact && !isDecisionTable) continue;
+        const candidate = {
+          index: match.index,
+          startLength: raw.length,
+        };
+        if (!best || candidate.index < best.index) best = candidate;
+      }
+    }
+
+    return best;
+  };
 
   return {
     push(chunk: string): string {
@@ -38,27 +167,26 @@ export function createStructuredFenceStreamFilter(): {
       let output = "";
 
       for (;;) {
-        if (insideStructuredFence) {
-          const closeIndex = buffer.indexOf("```");
-          if (closeIndex < 0) {
-            buffer = buffer.slice(-2);
-            return output;
-          }
-          buffer = buffer.slice(closeIndex + 3);
-          insideStructuredFence = false;
+        if (insideStructuredPayload) {
+          if (!consumePayload()) return output;
           continue;
         }
 
-        const lower = buffer.toLowerCase();
-        const starts = STRUCTURED_FENCE_STARTS.flatMap((start) => {
-          const index = lower.indexOf(start);
-          return index >= 0 ? [{ index, start }] : [];
-        }).sort((a, b) => a.index - b.index);
-        const firstStart = starts[0];
+        if (suppressPostPayloadFenceTicks) {
+          if (buffer.length === 0) return output;
+          const originalLength = buffer.length;
+          buffer = buffer.replace(/^\s*`+/, "");
+          if (buffer.length === originalLength) {
+            suppressPostPayloadFenceTicks = false;
+          }
+          if (buffer.length === 0) return output;
+        }
+
+        const firstStart = findStructuredArtifactStart();
         if (firstStart) {
           output += buffer.slice(0, firstStart.index);
-          buffer = buffer.slice(firstStart.index + firstStart.start.length);
-          insideStructuredFence = true;
+          buffer = buffer.slice(firstStart.index + firstStart.startLength);
+          insideStructuredPayload = true;
           continue;
         }
 
@@ -71,9 +199,9 @@ export function createStructuredFenceStreamFilter(): {
       }
     },
     flush(): string {
-      if (insideStructuredFence) {
+      if (insideStructuredPayload) {
         buffer = "";
-        insideStructuredFence = false;
+        resetPayloadState();
         return "";
       }
       const output = buffer;
@@ -81,4 +209,13 @@ export function createStructuredFenceStreamFilter(): {
       return output;
     },
   };
+}
+
+export function stripGovernedArtifactPayloadsFromText(text: string): string {
+  if (!text) return text;
+  const filter = createStructuredFenceStreamFilter();
+  return `${filter.push(text)}${filter.flush()}`
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
 }

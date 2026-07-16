@@ -12,6 +12,7 @@ import {
   shapeAvaAnswerPacket,
   shapePublicText,
 } from "@/lib/ava-answer/render-layer-shaper";
+import { stripGovernedArtifactPayloadsFromText } from "@/lib/intelligence/answer/structured-fence-stream-filter";
 
 const RAW_RECORD_ID_RE =
   /\b(?:[A-Z]{2,12}-[A-Z0-9]{2,12}-\d{2,6}|[A-Z]{2,12}-\d{3,6})\b/g;
@@ -74,7 +75,10 @@ export function sanitizePublicText(
     .replace(UUID_RE, fallback)
     .replace(RAW_RECORD_ID_RE, fallback)
     .replace(INTERNAL_FIELD_RE, "source field");
-  const cleaned = shapePublicText(scrubPublicAvaAnswerText(withoutUnsafeIds), fallback)
+  const cleaned = shapePublicText(
+    scrubPublicAvaAnswerText(withoutUnsafeIds),
+    fallback,
+  )
     .replace(/[ \t]{2,}/g, " ")
     .trim();
   return cleaned || fallback;
@@ -174,17 +178,20 @@ function sanitizeGraph<T extends AnswerGraph>(graph: T): T {
 export function sanitizeAvaAnswerForRender(
   answer: AvaAnswerPacket,
 ): AvaAnswerPacket {
+  const sanitizeAnswerText = (value: string, fallback = "") =>
+    stripGovernedArtifactPayloadsFromText(sanitizePublicText(value, fallback));
+
   return shapeAvaAnswerPacket({
     ...answer,
-    directAnswer: sanitizePublicText(answer.directAnswer, ""),
+    directAnswer: sanitizeAnswerText(answer.directAnswer),
     interpretation: answer.interpretation
-      ? sanitizePublicText(answer.interpretation, "")
+      ? sanitizeAnswerText(answer.interpretation)
       : answer.interpretation,
     businessImplication: answer.businessImplication
-      ? sanitizePublicText(answer.businessImplication, "")
+      ? sanitizeAnswerText(answer.businessImplication)
       : answer.businessImplication,
     recommendation: answer.recommendation
-      ? sanitizePublicText(answer.recommendation, "")
+      ? sanitizeAnswerText(answer.recommendation)
       : answer.recommendation,
     expertsUsed: (answer.expertsUsed ?? []).map((expert) => ({
       ...expert,
@@ -208,7 +215,7 @@ export function sanitizeAvaAnswerForRender(
         data: sanitizeUnknownForRender(artifact.data),
       };
     }),
-    prose: answer.prose ? sanitizePublicText(answer.prose, "") : answer.prose,
+    prose: answer.prose ? sanitizeAnswerText(answer.prose) : answer.prose,
     factsUsed: answer.factsUsed.map((fact) => ({
       ...fact,
       id: sanitizePublicSourceText(fact.id, "fact"),

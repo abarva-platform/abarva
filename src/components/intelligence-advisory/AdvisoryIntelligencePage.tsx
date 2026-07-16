@@ -21,6 +21,7 @@ import type {
   LandscapeTone,
 } from "@/lib/home/enterprise-landscape-view-model";
 import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
+import { stripGovernedArtifactPayloadsFromText } from "@/lib/intelligence/answer/structured-fence-stream-filter";
 import type {
   ChatMessage,
   SuggestedAction,
@@ -1654,12 +1655,12 @@ function isAvaAnswerPacket(value: unknown): value is AvaAnswerPacket {
 }
 
 function answerBodyFromPacket(answer: AvaAnswerPacket): string {
-  return (
+  const body =
     answer.prose?.trim() ||
     answer.directAnswer?.trim() ||
     [answer.interpretation, answer.businessImplication, answer.recommendation]
       .filter((p): p is string => Boolean(p?.trim()))
       .join("\n\n")
-      .trim()
-  );
+      .trim();
+  return stripGovernedArtifactPayloadsFromText(body);
 }
