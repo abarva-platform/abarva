@@ -1,4 +1,4 @@
-// Top nav inventory · canonical 5-item nav per
+// Top nav inventory · canonical product nav per
 // docs/build/home-refinement-package/NAV_REORGANIZATION.md.
 //
 // Today AbarvaNav.tsx renders these items inline (each `navLink(...)`
@@ -24,7 +24,7 @@ export interface TopNavItem {
 export const TOP_NAV_ITEMS: ReadonlyArray<TopNavItem> = [
   {
     id: 'home',
-    label: 'Home',
+    label: 'Knowledge',
     href: '/home',
     moduleKey: null,
     visibleToRoles: ['admin', 'cxo', 'analyst', 'end_user'],

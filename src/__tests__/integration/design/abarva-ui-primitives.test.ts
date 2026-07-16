@@ -169,18 +169,27 @@ describe('abarva-theme · statusAccent partition', () => {
 // ---------------------------------------------------------------------
 
 describe('AbarvaTopNav · surface list', () => {
-  it('exposes 5 canonical surfaces', () => {
-    expect(ABARVA_TOP_NAV_SURFACES.length).toBe(5);
+  it('exposes the canonical signed-in surfaces', () => {
+    expect(ABARVA_TOP_NAV_SURFACES.length).toBe(6);
   });
 
-  it('is in canonical order: programs, tower, intelligence, source, admin', () => {
+  it('is in canonical order: Knowledge, Intelligence, Moves, Source, Tower, Admin', () => {
     expect(ABARVA_TOP_NAV_SURFACES.map((s) => s.key)).toEqual([
-      'programs',
-      'tower',
+      'home',
       'intelligence',
+      'programs',
       'source',
+      'tower',
       'admin',
     ]);
+  });
+
+  it('keeps Knowledge as the first surface and routes it to /home', () => {
+    expect(ABARVA_TOP_NAV_SURFACES[0]).toMatchObject({
+      key: 'home',
+      label: 'Knowledge',
+      href: '/home',
+    });
   });
 
   it('every surface has an href starting with /', () => {
