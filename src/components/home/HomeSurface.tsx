@@ -551,7 +551,9 @@ function sanitizeVisibleStrings<T>(value: T, fieldName?: string): T {
   if (typeof value === "string" && isSourceLineageString(value)) {
     return value;
   }
-  if (typeof value === "string") return demoSafeClientText(value) as T;
+  if (typeof value === "string") {
+    return nexusProductText(demoSafeClientText(value)) as T;
+  }
   if (Array.isArray(value)) {
     return value.map((item) => sanitizeVisibleStrings(item)) as T;
   }
@@ -1822,6 +1824,14 @@ function firstMatchingSentence(
   return sentences.find((sentence) => pattern.test(sentence)) ?? fallback;
 }
 
+function compactCxoSentence(value: string, maxLength = 310): string {
+  const normalized = nexusProductText(value).replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLength) return normalized;
+  const boundary = normalized.lastIndexOf(" ", maxLength - 1);
+  const sliceAt = boundary > 180 ? boundary : maxLength;
+  return `${normalized.slice(0, sliceAt).trim()}...`;
+}
+
 function buildCxoBriefModel(
   summary: KnowledgeHomeInsightSummary | null | undefined,
   tenantName: string,
@@ -1829,45 +1839,54 @@ function buildCxoBriefModel(
 ): CxoBriefModel {
   const sentences = sentenceList(summary?.executive_summary);
   const lead =
-    sentences.slice(0, 2).join(" ") ||
+    sentences[0] ||
     `${tenantName} has source-backed Knowledge context ready for executive orientation, with evidence boundaries visible.`;
   const priorities = (summary?.strategic_priorities ?? [])
     .filter(Boolean)
-    .slice(0, 3);
+    .slice(0, 3)
+    .map((priority) => compactCxoSentence(priority, 190));
   return {
-    lead,
+    lead: compactCxoSentence(lead),
     priorities,
     cards: [
       {
         label: "Operating context",
-        body: firstMatchingSentence(
-          sentences,
-          /\b(operating context|clinical|health-plan|finance|contact center|member|analytics)\b/i,
-          `${tenantName} has enough active context for fact-based orientation across business, technology, data, risk, and measurement domains.`,
+        body: compactCxoSentence(
+          firstMatchingSentence(
+            sentences,
+            /\b(operating context|clinical|health-plan|finance|contact center|member|analytics)\b/i,
+            `${tenantName} has enough active context for fact-based orientation across business, technology, data, risk, and measurement domains.`,
+          ),
         ),
       },
       {
         label: "AI constraint",
-        body: firstMatchingSentence(
-          sentences,
-          /\b(no certified|no patient|no formal|constraint|on-premise|fragmented|governance)\b/i,
-          "AI use cases should not be advanced as production-ready until identity, governance, lineage, and measured baselines are validated.",
+        body: compactCxoSentence(
+          firstMatchingSentence(
+            sentences,
+            /\b(no certified|no patient|no formal|constraint|on-premise|fragmented|governance)\b/i,
+            "AI use cases should not be advanced as production-ready until identity, governance, lineage, and measured baselines are validated.",
+          ),
         ),
       },
       {
         label: "Strategic implication",
-        body: firstMatchingSentence(
-          sentences,
-          /\b(strategic implication|prioritize|leadership|foundation|enabling bet|lakehouse)\b/i,
-          "The executive decision is not which chatbot to build first; it is which governed data foundation must be funded so multiple AI and operations use cases can scale safely.",
+        body: compactCxoSentence(
+          firstMatchingSentence(
+            sentences,
+            /\b(strategic implication|prioritize|leadership|foundation|enabling bet|lakehouse)\b/i,
+            "The executive decision is not which chatbot to build first; it is which governed data foundation must be funded so multiple AI and operations use cases can scale safely.",
+          ),
         ),
       },
       {
         label: "Evidence boundary",
-        body: firstMatchingSentence(
-          sentences,
-          /\b(synthetic|demo|not client production|planning-grade|not real production)\b/i,
-          `This is planning-grade context for ${tenantName}; ${contextPosture.toLowerCase()} does not mean realized value, production readiness, or client-certified evidence.`,
+        body: compactCxoSentence(
+          firstMatchingSentence(
+            sentences,
+            /\b(synthetic|demo|not client production|planning-grade|not real production)\b/i,
+            `This is planning-grade context for ${tenantName}; ${contextPosture.toLowerCase()} does not mean realized value, production readiness, or client-certified evidence.`,
+          ),
         ),
       },
     ],
@@ -4159,7 +4178,7 @@ export function HomeSurface({
                                         <strong>
                                           Priority {index + 1}
                                         </strong>
-                                        {priority}
+                                        {nexusProductText(priority)}
                                       </div>
                                     ),
                                   )}
@@ -4532,7 +4551,7 @@ export function HomeSurface({
                         <div className="hx3-sectionHead">
                           <div>
                             <h2>How Nexus turns context into product action</h2>
-                            <p>{knowledgeLayerVisual.subtitle}</p>
+                            <p>{nexusProductText(knowledgeLayerVisual.subtitle)}</p>
                           </div>
                         </div>
                         <KnowledgeLayerVisual spec={knowledgeLayerVisual} />
