@@ -629,6 +629,12 @@ function fallbackMetricRows(
   });
 }
 
+function towerContextLabel(tenantName: string): string {
+  return /\bdemo\b/i.test(tenantName)
+    ? `the ${tenantName} synthetic Tower planning context`
+    : `${tenantName}'s Tower context`;
+}
+
 export function buildCioTowerFallbackAnswer(
   context: CioTowerPromptContext,
 ): CioTowerVisibleAnswerContract {
@@ -646,10 +652,11 @@ export function buildCioTowerFallbackAnswer(
 
   let answer: string;
   if (context.contract.contract_key === "tower_run_change_split" || hasRunChange) {
+    const contextLabel = towerContextLabel(context.tenantName);
     const budgetPart =
       totalBudget !== null
-        ? `${context.tenantName} has ${money(totalBudget)} of FY26 technology budget in view`
-        : `${context.tenantName} has a Tower budget view available`;
+        ? `In ${contextLabel}, Nexus shows ${money(totalBudget)} of FY26 technology budget in view`
+        : `In ${contextLabel}, Nexus has a Tower budget view available`;
     const splitPart =
       runBudget !== null && changeBudget !== null
         ? `: ${money(runBudget)} run and ${money(changeBudget)} change.`
@@ -660,14 +667,14 @@ export function buildCioTowerFallbackAnswer(
       promisedValue !== null ? `${money(promisedValue)} promised value` : "promised value";
     const measuredPart =
       measuredValue !== null ? `${money(measuredValue)} measured value` : "measured value evidence";
-    answer = `${context.tenantName} should treat the value story as measurement-grade, not outcome-proof. Tower shows ${promisedPart} against ${measuredPart}; the management action is to inspect the largest promise-to-measurement gaps before approving more funding.`;
+    answer = `In ${towerContextLabel(context.tenantName)}, treat the value story as measurement-grade, not outcome-proof. Tower shows ${promisedPart} against ${measuredPart}; the management action is to inspect the largest promise-to-measurement gaps before approving more funding.`;
   } else if (context.contract.contract_key === "tower_total_it_spend") {
     answer =
       totalBudget !== null
-        ? `${context.tenantName} has ${money(totalBudget)} of FY26 technology budget in view. Use that as the executive envelope, then inspect run/change mix, vendor concentration, and measured-value evidence before making funding moves.`
-        : `${context.tenantName} has Tower budget context, but the total FY26 technology budget is not available in the governed dashboard values yet.`;
+        ? `In ${towerContextLabel(context.tenantName)}, Nexus shows ${money(totalBudget)} of FY26 technology budget in view. Use that as the executive envelope, then inspect run/change mix, vendor concentration, and measured-value evidence before making funding moves.`
+        : `In ${towerContextLabel(context.tenantName)}, Tower budget context is available, but the total FY26 technology budget is not available in the governed dashboard values yet.`;
   } else {
-    answer = `${context.tenantName} can be read from the governed Tower dashboard values, but the advisory synthesis needs a clean re-run. The safe executive read is to inspect budget, vendor exposure, measured value, and evidence gaps before treating the dashboard as board-ready.`;
+    answer = `The governed Tower dashboard values can be read for ${context.tenantName}, but the advisory synthesis needs a clean re-run. The safe executive read is to inspect budget, vendor exposure, measured value, and evidence gaps before treating the dashboard as board-ready.`;
   }
 
   const rows = fallbackMetricRows(context);

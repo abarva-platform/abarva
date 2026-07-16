@@ -628,9 +628,12 @@ export async function loadCioTowerCxoView(args: {
     ];
     const gaps = Array.from(new Set(cards.map((card) => card.gap).filter((gap): gap is string => Boolean(gap))));
     const totalBudget = cards.find((card) => card.measureKey === 'total_it_budget_fy26');
+    const tenantContextLabel = /\bdemo\b/i.test(args.tenantName)
+      ? `The ${args.tenantName} synthetic Tower planning context`
+      : `${args.tenantName}'s Tower context`;
     const headline = totalBudget?.valueNumeric
-      ? `${args.tenantName} has ${totalBudget.displayValue} of FY26 technology budget in view. The executive question is how much of that spend has finance-attested measurement evidence.`
-      : `${args.tenantName}'s Tower command center is waiting for the FY26 technology budget before it can tell a board-grade measurement story.`;
+      ? `${tenantContextLabel} shows ${totalBudget.displayValue} of FY26 technology budget in view. The executive question is how much of that spend has finance-attested measurement evidence.`
+      : `${tenantContextLabel} is waiting for the FY26 technology budget before it can tell a board-grade measurement story.`;
 
     return {
       tenantKey,

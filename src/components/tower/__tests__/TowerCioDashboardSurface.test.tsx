@@ -278,7 +278,7 @@ const GOVERNED_CXO_VIEW: CioTowerCxoViewModel = {
       "Realized value requires finance-attested measured evidence; otherwise Tower must render value as promised, planned, forecast, or measurement-readiness.",
   },
   headline:
-    "Airline Demo has $2.6B of FY26 technology budget in view. The executive question is how much of that spend is turning into measurable value.",
+    "The Airline Demo synthetic Tower planning context shows $2.6B of FY26 technology budget in view. The executive question is how much of that spend is turning into measurable value.",
   sections: [],
   cards: [
     {
