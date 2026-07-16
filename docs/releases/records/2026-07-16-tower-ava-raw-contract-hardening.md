@@ -32,11 +32,13 @@ Tower aVa now has a tighter raw answer contract so normal Claude output is less 
 - `src/lib/cio-tower/answer.ts`
 - `src/lib/cio-tower/__tests__/answer.test.ts`
 - Follow-up hardening after live proof: refined internal-ID detection to avoid false positives on normal prose, allowed complete larger tables instead of forcing fallback, and strengthened prompt language to avoid the phrase `realized value` when claim gates do not allow it.
+- Second follow-up after production proof: blocks unsafe visible outcome-proof words such as `ROI`, `savings`, `realized value`, `measured outcome`, `proven value`, `delivered value`, and `value captured`; parsed Claude output that fails visible-answer validation is replaced by the deterministic Tower fallback; scaffold-label detection now catches real labels without rejecting normal advisory prose such as `contract evidence: service scope`.
 
 ## QA / Validation
 
 - Pass: `npx jest src/lib/cio-tower/__tests__/answer.test.ts --runInBand`
-- Pass: live Meridian proof identified follow-up fixes before final acceptance.
+- Pass: live Meridian proof after PR #4874 deploy identified remaining visible-language defects before final acceptance: 4/5 raw contracts passed, but only 3/5 visible safety checks passed.
+- Pass: focused test coverage now verifies unsafe outcome-proof language is blocked and normal prose punctuation is not misclassified as a scaffold label.
 - Pending: Tower lineage/runtime audits before merge.
 - Pending: release check before PR.
 - Pending: signed-in Meridian Tower proof after merge/deploy.
