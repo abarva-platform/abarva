@@ -34,6 +34,7 @@ import {
   applyDiscoveryShapeIfEnabled,
   embedDiscoveryPlanInCharter,
 } from "@/lib/programs/discovery/charter-transformers";
+import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture";
 import { planFromShape } from "@/lib/programs/discovery/discovery-intake";
 import type { DiscoveryShape } from "@/lib/programs/discovery/discovery-intake";
 import {
@@ -912,6 +913,14 @@ export async function submitOriginationBrief(
   const programId = (inserted as { id: string }).id;
   const programName = (inserted as { name: string }).name;
   try {
+    await persistP0PhaseCaptureFromSource(tenancy, programId, {
+      name: programName,
+      problemStatement: input.problemStatement,
+      targetOutcome: input.targetOutcome,
+      timelineHorizon: input.timeline,
+      charter: charterToWrite,
+    });
+
     const briefSnapshot: Record<string, unknown> = {
       program_name: input.programName,
       problem_statement: input.problemStatement,

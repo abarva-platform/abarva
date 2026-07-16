@@ -156,4 +156,13 @@ describe('origination submit insert contract', () => {
     expect(source).toContain('redirectTo: originationRedirectForSurface(input.surface, programId)');
     expect(source).toContain('redirectTo: originationRedirectForSurface(input.surface, row.id)');
   });
+
+  it('persists the P0 phase-capture rows from the submitted Originate brief', () => {
+    expect(source).toContain('import { persistP0PhaseCaptureFromSource }');
+    expect(source).toContain('await persistP0PhaseCaptureFromSource(tenancy, programId, {');
+    expect(source).toContain('problemStatement: input.problemStatement');
+    expect(source).toContain('targetOutcome: input.targetOutcome');
+    expect(source).toContain('timelineHorizon: input.timeline');
+    expect(source).toContain('charter: charterToWrite');
+  });
 });

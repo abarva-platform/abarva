@@ -569,6 +569,7 @@ export function MovesPhaseStandaloneClient({
     });
     const approval = (await approvalRes.json().catch(() => ({}))) as {
       ok?: boolean;
+      missing?: string[];
       gate?: { failedChecks?: Array<{ severity: string; reason?: string; check: string }> };
       detail?: string;
       error?: string;
@@ -581,6 +582,9 @@ export function MovesPhaseStandaloneClient({
       setGateApprovalStatus("blocked");
       throw new Error(
         hard ||
+          (approval.missing?.length
+            ? `P${phase.phase} capture is incomplete - missing: ${approval.missing.join(", ")}`
+            : "") ||
           approval.detail ||
           approval.error ||
           `Gate approval failed (HTTP ${approvalRes.status})`,
@@ -1162,6 +1166,7 @@ function PhaseBody({
 
   return (
     <>
+      {phase.phase === 0 ? <P0CapturedBriefReview move={move} /> : null}
       <section className="mxw-review">
         <h2>Gate approval</h2>
         <p>
@@ -1320,6 +1325,87 @@ const ORIGINATE_FIELDS = [
       "Confirm data quality, security posture, process ownership, and evaluation controls before automation expands.",
   },
 ];
+
+function charterText(
+  charter: Record<string, unknown> | null | undefined,
+  key: string,
+): string {
+  const scaffold = charter?.scaffold;
+  if (scaffold && typeof scaffold === "object") {
+    const value = (scaffold as Record<string, unknown>)[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  const value = charter?.[key];
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function P0CapturedBriefReview({ move }: { move: StrategicMove }) {
+  const rows = [
+    {
+      label: "Business problem / opportunity",
+      value: charterText(move.charter, "problem_statement"),
+    },
+    {
+      label: "Archetype classification",
+      value:
+        charterText(move.charter, "archetype") ||
+        charterText(move.charter, "classification") ||
+        move.archetype,
+    },
+    {
+      label: "Sponsor / title",
+      value: charterText(move.charter, "sponsor_candidate"),
+    },
+    {
+      label: "Scope / boundary",
+      value: charterText(move.charter, "scope_boundary"),
+    },
+    {
+      label: "Evidence families",
+      value: charterText(move.charter, "evidence_family"),
+    },
+    {
+      label: "Value hypothesis",
+      value: charterText(move.charter, "value_hypothesis"),
+    },
+    {
+      label: "Foundation readiness",
+      value: charterText(move.charter, "foundation_readiness"),
+    },
+  ];
+  const capturedCount = rows.filter((row) => row.value).length;
+
+  return (
+    <section className="mxw-p0-brief-review" aria-label="Captured P0 brief">
+      <header>
+        <div>
+          <span>P0 brief captured</span>
+          <h2>Review your seven Originate answers</h2>
+          <p>
+            These are the answers saved from Start a Move. Gate criteria below are
+            a separate governance checklist.
+          </p>
+        </div>
+        <strong>{capturedCount} of 7</strong>
+      </header>
+      <div className="mxw-p0-brief-name">
+        <span>Move name</span>
+        <strong>{move.name}</strong>
+      </div>
+      <div className="mxw-p0-brief-grid">
+        {rows.map((row, index) => (
+          <article className={row.value ? "captured" : "missing"} key={row.label}>
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            <div>
+              <strong>{row.label}</strong>
+              <p>{row.value || "Not captured in the saved P0 brief."}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 function P0OriginationHandoff({
   move,
@@ -1771,6 +1857,23 @@ function MovesStandaloneStyles() {
 .mxw-readiness-carry{border:1px solid rgba(0,87,184,.18);border-radius:11px;background:var(--blue-tint);padding:12px 14px;margin-top:8px}
 .mxw-readiness-carry strong{display:block;font-size:12.5px;color:var(--blue);margin-bottom:5px}
 .mxw-readiness-carry p{font-size:13px;color:var(--ink-2);line-height:1.5;margin:0}
+.mxw-p0-brief-review{border:1px solid rgba(29,143,104,.24);border-radius:14px;background:linear-gradient(180deg,var(--green-tint),var(--card) 58%);box-shadow:var(--shadow);padding:18px 20px;margin-top:20px}
+.mxw-p0-brief-review header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:1px solid rgba(29,143,104,.18);padding-bottom:14px;margin-bottom:14px}
+.mxw-p0-brief-review header span{display:block;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--green);font-weight:900;margin-bottom:5px}
+.mxw-p0-brief-review header h2{font-family:Georgia,serif;font-size:20px;font-weight:700;letter-spacing:-.4px;margin:0;color:var(--ink)}
+.mxw-p0-brief-review header p{font-size:13px;color:var(--ink-2);line-height:1.45;margin:6px 0 0;max-width:72ch}
+.mxw-p0-brief-review header>strong{white-space:nowrap;border:1px solid rgba(29,143,104,.34);border-radius:999px;background:var(--card);color:var(--green);font-size:12px;font-weight:900;padding:7px 11px}
+.mxw-p0-brief-name{display:grid;gap:3px;border:1px solid var(--line);border-radius:11px;background:var(--card);padding:12px 14px;margin-bottom:12px}
+.mxw-p0-brief-name span{font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);font-weight:900}
+.mxw-p0-brief-name strong{font-size:16px;color:var(--ink)}
+.mxw-p0-brief-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mxw-p0-brief-grid article{display:grid;grid-template-columns:32px 1fr;gap:10px;border:1px solid var(--line);border-radius:11px;background:var(--card);padding:12px 13px}
+.mxw-p0-brief-grid article.captured{border-color:rgba(29,143,104,.28)}
+.mxw-p0-brief-grid article.missing{background:var(--soft)}
+.mxw-p0-brief-grid article>span{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--green);color:#fff;font-size:10px;font-weight:900}
+.mxw-p0-brief-grid article.missing>span{background:var(--faint)}
+.mxw-p0-brief-grid strong{display:block;font-size:13px;color:var(--ink);margin-bottom:5px}
+.mxw-p0-brief-grid p{font-size:12.5px;color:var(--ink-2);line-height:1.45;margin:0;white-space:pre-wrap}
 .mxw-p0-handoff{border-color:rgba(0,87,184,.2);background:linear-gradient(180deg,var(--blue-tint),var(--card) 64%)}
 .mxw-p0-handoff-kicker{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--blue);font-weight:900;margin-bottom:8px}
 .mxw-p0-handoff-card{display:grid;gap:6px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:14px 16px;margin:16px 0}
@@ -1837,6 +1940,8 @@ function MovesStandaloneStyles() {
 }
 @media (max-width:720px){
   .mxw-howflow,.mxw-ts-grid,.mxw-file-cols{grid-template-columns:1fr}
+  .mxw-p0-brief-grid{grid-template-columns:1fr}
+  .mxw-p0-brief-review header{flex-direction:column}
   .mxw-stage-bar{align-items:flex-start;flex-direction:column}
   .mxw-upload,.mxw-inline-upload{align-items:flex-start;flex-direction:column}
   .mxw-upload-control{justify-content:flex-start;width:100%}
