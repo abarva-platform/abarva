@@ -129,6 +129,32 @@ function hasPacketArtifacts(answer: AvaAnswerPacket): boolean {
   );
 }
 
+/**
+ * Once the server has successfully extracted structured artifacts
+ * (tables/charts/graphs), always prefer its clean packet body over the raw
+ * streamed text. The raw stream is scrubbed PER CHUNK
+ * (displaySafeIntelligenceDelta in route.ts), and governed fence markers
+ * like ```decision-table are long enough to get split — and corrupted —
+ * across multiple small token chunks, so pattern-matching for a "leak" on
+ * the accumulated client-side text is unreliable. The server extracted the
+ * SAME underlying text server-side (on the unscrubbed accumulator), so
+ * packetBody is authoritative whenever it exists.
+ */
+export function resolveAssistantAnswerText(
+  rawStreamedAnswer: string,
+  packetBody: string,
+  hasArtifacts: boolean,
+): string {
+  const shouldUsePacketBody = hasArtifacts
+    ? Boolean(packetBody)
+    : Boolean(
+        packetBody &&
+        (!rawStreamedAnswer.trim() ||
+          packetBody.length >= rawStreamedAnswer.trim().length / 2),
+      );
+  return shouldUsePacketBody ? packetBody : rawStreamedAnswer;
+}
+
 export function AdvisoryIntelligencePage({
   viewModel,
 }: {
@@ -259,23 +285,18 @@ export function AdvisoryIntelligencePage({
         if (event.type === "agent-answer" && isAvaAnswerPacket(event.answer)) {
           const rawPacketBody = answerBodyFromPacket(event.answer);
           const hasArtifacts = hasPacketArtifacts(event.answer);
-          const hasRawTableLeak = hasRawMarkdownTableFragment(m.answer);
           const packetBody =
             hasArtifacts && hasRawMarkdownTableFragment(rawPacketBody)
               ? ""
               : rawPacketBody;
-          const shouldUsePacketBody =
-            hasArtifacts && hasRawTableLeak
-              ? true
-              : Boolean(
-                  packetBody &&
-                  (!m.answer.trim() ||
-                    packetBody.length >= m.answer.trim().length / 2),
-                );
           return {
             ...m,
             agentAnswer: event.answer,
-            answer: shouldUsePacketBody ? packetBody : m.answer,
+            answer: resolveAssistantAnswerText(
+              m.answer,
+              packetBody,
+              hasArtifacts,
+            ),
             sources: event.answer.citations.map((c) => ({
               id: c.id,
               type: askSourceTypeFromCitation(c.sourceClass),
