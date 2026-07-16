@@ -463,7 +463,8 @@
     "audit:intelligence-ava-quality": "npx tsx scripts/audit/build-intelligence-ava-quality-audit.ts",
     "audit:intelligence-ava-stream-polish": "npx tsx scripts/audit/intelligence-ava-stream-polish.ts --mode=stream",
     "audit:intelligence-ava-visual-contract": "npx tsx scripts/audit/intelligence-ava-stream-polish.ts --mode=visual",
-    "audit:intelligence-ava-cxo-narrative": "npx tsx scripts/audit/intelligence-ava-stream-polish.ts --mode=cxo"
+    "audit:intelligence-ava-cxo-narrative": "npx tsx scripts/audit/intelligence-ava-stream-polish.ts --mode=cxo",
+    "audit:route-archive": "node scripts/audit/route-archive-audit.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
