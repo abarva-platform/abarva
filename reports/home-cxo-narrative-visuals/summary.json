@@ -1,0 +1,24 @@
+{
+  "generated_at": "2026-07-16T02:43:47.593Z",
+  "model": "claude-opus-4-8",
+  "generation_status": "failed",
+  "cxo_pass": false,
+  "cxo_score": {
+    "situation_clarity": 5,
+    "complication_clarity": 5,
+    "insight_quality": 5,
+    "decision_implication": 5,
+    "actionability": 4,
+    "evidence_discipline": 5,
+    "language_quality": 4,
+    "visual_usefulness": 4,
+    "clutter_control": 4,
+    "overall": 4,
+    "rationale": "The concentration insight (one governed foundation serves many bets) is genuinely non-obvious and well-argued, and caveats land late. The main weakness is density: the middle sentences pack CIO, CDAO, and CFO implications plus multiple named systems into long clauses, slightly diffusing the single throughline, and the next-step laundry list (CRM, claims, eligibility, Epic) reads more like scope than a crisp first move."
+  },
+  "validation": [
+    "forbidden user-guide language",
+    "04_applications_systems missing required story term: eligibility"
+  ],
+  "visual_block_count": 4
+}
