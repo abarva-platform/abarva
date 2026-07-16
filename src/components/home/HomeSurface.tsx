@@ -40,11 +40,6 @@ import type {
   ServedModuleContextPacket,
 } from "@/lib/enterprise-data/contracts/module-context-apis";
 import type { KnowledgeHomeInsightSummary } from "@/lib/enterprise-knowledge/narratives/knowledge-narrative-store";
-import {
-  ContextStrengthGauge,
-  HomeRelationshipDiagram,
-  ReadinessBar,
-} from "./HomeBriefVisuals";
 import { HomeVisualBlocks } from "./HomeVisualBlockRenderer";
 
 const CSS = `
@@ -384,15 +379,15 @@ const HX3_CSS = `
 .homex .hx3-side{border-right:1px solid var(--line);background:#fbfcff;padding:20px 12px 28px;position:sticky;top:0;align-self:start;min-height:calc(100vh - 64px);display:flex;flex-direction:column;gap:6px}
 .homex .hx3-sideTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);font-weight:800;padding:0 12px 5px}.homex .hx3-sideGroup{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);font-weight:800;padding:18px 12px 7px}
 .homex .hx3-navBtn{width:100%;display:grid;grid-template-columns:22px minmax(0,1fr) auto;align-items:center;gap:10px;text-align:left;background:transparent;border:0;border-radius:9px;padding:9px 12px;cursor:pointer;color:var(--ink-2);font:inherit;font-size:13px;transition:background .13s,color .13s}.homex .hx3-navBtn:hover{background:#f2f6fb}.homex .hx3-navBtn[aria-pressed="true"]{background:var(--blue-bg);color:#0b346f;font-weight:800}.homex .hx3-navIcon{display:grid;place-items:center;width:22px;height:22px;color:#4e5f7d}.homex .hx3-navIcon svg{width:17px;height:17px}.homex .hx3-navCount{font-size:11px;color:var(--muted)}.homex .hx3-navMeta{display:block;color:var(--muted);font-size:11px;line-height:1.35;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.homex .hx3-recent{margin-top:auto;border-top:1px solid var(--line);padding-top:16px}.homex .hx3-recentItem{display:block;padding:7px 12px;color:var(--ink-2);font-size:12.5px;line-height:1.35}
-.homex .hx3-main{min-width:0;background:#fff}.homex .hx3-page{max-width:1040px;margin:0 auto;padding:34px 36px 120px}.homex .hx3-top{display:grid;grid-template-columns:minmax(0,1fr) 262px;gap:32px;align-items:start}.homex .hx3-crumb{font-size:12px;color:#6f7b91;margin-bottom:20px}.homex .hx3-crumb span{color:#9aa4b6;margin:0 8px}.homex .hx3-title{font-size:40px;line-height:1.04;letter-spacing:-.03em;margin:0;color:var(--ink);font-weight:820}.homex .hx3-demo{display:inline-flex;vertical-align:middle;margin-left:10px;border-radius:7px;background:#e5f0ff;color:#0b5fd3;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:5px 8px}.homex .hx3-subtitle{margin:14px 0 0;color:#394763;line-height:1.55;max-width:680px}
+.homex .hx3-main{min-width:0;background:#fff}.homex .hx3-page{max-width:1320px;margin:0 auto;padding:34px 46px 120px}.homex .hx3-top{display:grid;grid-template-columns:minmax(0,1fr) 292px;gap:34px;align-items:start}.homex .hx3-crumb{font-size:12px;color:#6f7b91;margin-bottom:20px}.homex .hx3-crumb span{color:#9aa4b6;margin:0 8px}.homex .hx3-title{font-size:40px;line-height:1.04;letter-spacing:-.03em;margin:0;color:var(--ink);font-weight:820}.homex .hx3-demo{display:inline-flex;vertical-align:middle;margin-left:10px;border-radius:7px;background:#e5f0ff;color:#0b5fd3;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;padding:5px 8px}.homex .hx3-subtitle{margin:14px 0 0;color:#394763;line-height:1.55;max-width:860px}
 .homex .hx3-statusCard{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:16px}.homex .hx3-statusLine{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:13px;font-weight:800}.homex .hx3-dot{width:9px;height:9px;border-radius:50%;background:var(--green);display:inline-block}.homex .hx3-statusMeta{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:12px;color:#42506b;font-size:12px}.homex .hx3-statusMeta span::before{content:'•';margin-right:8px;color:#9aa4b6}.homex .hx3-statusMeta span:first-child::before{content:'';margin:0}.homex .hx3-hair{height:1px;background:var(--line);margin:34px 0 24px}.homex .hx3-section{margin-top:28px}.homex .hx3-sectionHead{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:14px}.homex .hx3-section h2,.homex .hx3-sectionTitle{margin:0;font-size:20px;letter-spacing:-.015em;color:var(--ink)}.homex .hx3-section p{margin:5px 0 0;color:#657089;line-height:1.5}.homex .hx3-eyebrow{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:#9c7b3f;font-weight:800;margin-bottom:12px}
 .homex .hx3-snapshot{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.homex .hx3-card{border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:18px;min-width:0}.homex .hx3-cardTop{display:flex;align-items:center;gap:14px}.homex .hx3-cardIcon{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;background:#eaf2ff;color:#0b5fd3}.homex .hx3-card:nth-child(2) .hx3-cardIcon{background:#edf9f2;color:#168055}.homex .hx3-card:nth-child(3) .hx3-cardIcon{background:#f4efff;color:#6b46c1}.homex .hx3-card:nth-child(4) .hx3-cardIcon{background:#fff3e3;color:#c06812}.homex .hx3-cardIcon svg{width:21px;height:21px}.homex .hx3-card strong{display:block;font-size:21px;line-height:1.05;color:var(--ink)}.homex .hx3-card span{display:block;margin-top:6px;color:#42506b;font-size:12.5px;font-weight:700}.homex .hx3-card p{font-size:12px;margin-top:4px;color:#657089}
 .homex .hx3-actions,.homex .hx3-contextCards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.homex .hx3-action{display:grid;grid-template-columns:48px minmax(0,1fr) 18px;gap:14px;align-items:center;text-align:left;border:1px solid var(--line);border-radius:12px;background:#fff;box-shadow:var(--shadow);padding:17px;cursor:pointer;color:inherit;font:inherit}.homex .hx3-actionIcon{display:grid;place-items:center;width:44px;height:44px;border-radius:10px;background:#eaf2ff;color:#0b5fd3}.homex .hx3-action:nth-child(2) .hx3-actionIcon{background:#edf9f2;color:#168055}.homex .hx3-action:nth-child(3) .hx3-actionIcon{background:#f4efff;color:#6b46c1}.homex .hx3-action:nth-child(4) .hx3-actionIcon{background:#fff3e3;color:#c06812}.homex .hx3-action strong{display:block;color:var(--ink);font-size:14px}.homex .hx3-action span:last-child{color:#0b5fd3;font-size:20px}.homex .hx3-action p{font-size:12.5px;margin-top:4px;color:#42506b}.homex .hx3-tabs{display:flex;gap:28px;border-bottom:1px solid var(--line);margin-top:12px}.homex .hx3-tab{border:0;background:transparent;padding:13px 0 12px;color:#4c5b76;font:inherit;font-weight:750;cursor:pointer;border-bottom:2px solid transparent}.homex .hx3-tab[aria-selected="true"]{color:#0b346f;border-color:#0b5fd3}.homex .hx3-tableWrap{border:1px solid var(--line);border-radius:12px;overflow:auto;background:#fff;box-shadow:var(--shadow);margin-top:12px}.homex .hx3-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:720px}.homex .hx3-table th{background:#f8fafc;color:#657089;text-align:left;font-size:11px;padding:12px;border-bottom:1px solid var(--line);white-space:nowrap}.homex .hx3-table td{padding:12px;border-bottom:1px solid var(--line-2);color:#1c2940;vertical-align:top}.homex .hx3-table tr:last-child td{border-bottom:0}.homex .hx3-contextCard{text-align:left;border:0;background:transparent;border-radius:0;padding:0 0 12px;cursor:pointer;color:inherit}.homex .hx3-contextCard strong{display:block;color:#0c1a3a;font-size:14px}.homex .hx3-contextCard small{display:block;color:#657089;font-size:12px;margin-top:3px}.homex .hx3-contextCard[aria-pressed="true"] strong{color:#0b5fd3}.homex .hx3-empty{border:1px dashed var(--line);border-radius:12px;background:#fbfcff;padding:16px;color:#657089}.homex .hx3-chipRow{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.homex .hx3-chip{border:1px solid var(--line);border-radius:999px;background:#fff;padding:6px 10px;color:#42506b;font-size:12px}.homex .hx3-detailHeader{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:start}.homex .hx3-detailActions{display:flex;gap:10px;align-items:center}.homex .hx3-btn{border:1px solid var(--line);border-radius:9px;background:#fff;color:#0c1a3a;padding:10px 13px;font:inherit;font-size:12.5px;font-weight:800;cursor:pointer}.homex .hx3-btn.primary{background:#071526;border-color:#071526;color:#fff}.homex .hx3-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.homex .hx3-list{display:grid;gap:9px;margin:0;padding:0;list-style:none}.homex .hx3-list li{position:relative;padding-left:18px;color:#27364f;line-height:1.45}.homex .hx3-list li::before{content:'✓';position:absolute;left:0;color:#168055;font-weight:900}.homex .hx3-warn li::before{content:'–';color:#b7791f}.homex .hx3-tech{margin-top:28px;border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}.homex .hx3-tech summary{cursor:pointer;padding:16px 18px;font-weight:800;color:#0c1a3a}.homex .hx3-techBody{border-top:1px solid var(--line);padding:16px}.homex .hx3-gapCard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px}.homex .hx3-sourceCard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:14px}.homex .hx3-relRow{display:grid;grid-template-columns:28px minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px}.homex .hx3-relNode{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#eaf7f1;color:#168055;font-weight:900}.homex .hx3-relEdge{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#657089}.homex .hx3-relCaveat{display:block;margin-top:4px;color:#b7791f;font-size:11px;line-height:1.35}
-.homex .hx3-brief{border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#fff,#fbfcff);box-shadow:var(--shadow);padding:24px}.homex .hx3-brief h2{font-size:24px}.homex .hx3-briefLead{font-size:16px;color:#31415f;line-height:1.6;margin-top:8px;max-width:820px}.homex .hx3-storyGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}.homex .hx3-storyCard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:16px}.homex .hx3-storyCard h3{margin:0 0 10px;font-size:14px;color:var(--ink)}.homex .hx3-storyCard p{margin:0;color:#42506b;line-height:1.55}.homex .hx3-storyCard ul{display:grid;gap:8px;margin:0;padding:0;list-style:none}.homex .hx3-storyCard li{position:relative;padding-left:18px;color:#31415f;line-height:1.45}.homex .hx3-storyCard li::before{content:'✓';position:absolute;left:0;color:#168055;font-weight:900}.homex .hx3-storyCard.warn li::before{content:'–';color:#b7791f}.homex .hx3-nextAction{margin-top:16px;border-left:4px solid var(--green);background:#f2fbf6;border-radius:10px;padding:14px 16px;color:#173d2d;font-weight:750}.homex .hx3-recordControls{display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,1fr) minmax(220px,1.2fr);gap:10px;margin:14px 0}.homex .hx3-recordControls select,.homex .hx3-recordControls input{width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 12px;font:inherit;font-size:12.5px;color:#25344e}.homex .hx3-recordCount{font-size:12px;color:#657089;margin-top:8px}.homex .hx3-knowledgeVisual{border:1px solid var(--line);border-radius:18px;background:radial-gradient(circle at 50% 50%,#eef7ff 0,#fbfcff 44%,#fff 100%);box-shadow:var(--shadow);padding:24px;overflow:hidden}.homex .hx3-knowledgeMap{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;min-height:330px}.homex .hx3-knowledgeCenter{grid-column:2;grid-row:2;align-self:center;justify-self:center;width:220px;height:158px;border-radius:24px;background:#071526;color:#fff;display:grid;place-items:center;text-align:center;padding:22px;box-shadow:0 18px 44px rgba(7,21,38,.28);z-index:2}.homex .hx3-knowledgeCenter strong{display:block;font-size:20px;line-height:1.12}.homex .hx3-knowledgeCenter span{display:block;margin-top:8px;color:#c7d9f6;font-size:12px;line-height:1.35}.homex .hx3-knowledgeNode{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.92);padding:14px;min-height:98px;box-shadow:0 8px 24px rgba(12,26,58,.05);z-index:1}.homex .hx3-knowledgeNode strong{display:block;color:#0c1a3a;font-size:14px}.homex .hx3-knowledgeNode span{display:block;color:#657089;font-size:12px;line-height:1.4;margin-top:6px}.homex .hx3-knowledgeNode:nth-child(2),.homex .hx3-knowledgeNode:nth-child(5){background:#f5fbf7}.homex .hx3-knowledgeNode:nth-child(3),.homex .hx3-knowledgeNode:nth-child(6){background:#f5f8ff}.homex .hx3-knowledgeFlow{margin-top:14px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.homex .hx3-flowStep{border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px;font-size:12px;color:#42506b}.homex .hx3-flowStep strong{display:block;color:#0c1a3a;margin-bottom:4px}.homex .hx3-trustHero{border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:var(--shadow);padding:24px}.homex .hx3-trustCards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:18px}.homex .hx3-trustCard{border:1px solid var(--line);border-radius:12px;background:#fbfcff;padding:16px}.homex .hx3-trustCard strong{display:block;font-size:22px;color:#0c1a3a}.homex .hx3-trustCard span{display:block;margin-top:6px;font-size:12px;color:#657089;font-weight:750}.homex .hx3-trustLists{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}.homex .hx3-mutedDetails{margin-top:16px}.homex .hx3-mutedDetails summary{color:#657089;font-size:12.5px}
+.homex .hx3-brief{border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#fff,#fbfcff);box-shadow:var(--shadow);padding:24px}.homex .hx3-brief h2{font-size:24px}.homex .hx3-briefLead{font-size:16px;color:#31415f;line-height:1.6;margin-top:8px;max-width:960px}.homex .hx3-cxoBrief{padding:26px 28px}.homex .hx3-cxoLead{font-size:16px;line-height:1.55;color:#263755;max-width:1040px;margin:10px 0 0}.homex .hx3-cxoGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px}.homex .hx3-cxoCard{border:1px solid var(--line);border-radius:13px;background:#fff;padding:16px}.homex .hx3-cxoCard span{display:block;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#9c7b3f;font-weight:850;margin-bottom:8px}.homex .hx3-cxoCard p{margin:0;color:#31415f;line-height:1.52}.homex .hx3-priorityStrip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px}.homex .hx3-priorityStrip div{border:1px solid var(--line);border-radius:12px;background:#f8fbff;padding:12px;color:#25344e;line-height:1.4}.homex .hx3-priorityStrip strong{display:block;color:#0c1a3a;margin-bottom:4px}.homex .hx3-storyGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}.homex .hx3-storyCard{border:1px solid var(--line);border-radius:12px;background:#fff;padding:16px}.homex .hx3-storyCard h3{margin:0 0 10px;font-size:14px;color:var(--ink)}.homex .hx3-storyCard p{margin:0;color:#42506b;line-height:1.55}.homex .hx3-storyCard ul{display:grid;gap:8px;margin:0;padding:0;list-style:none}.homex .hx3-storyCard li{position:relative;padding-left:18px;color:#31415f;line-height:1.45}.homex .hx3-storyCard li::before{content:'✓';position:absolute;left:0;color:#168055;font-weight:900}.homex .hx3-storyCard.warn li::before{content:'–';color:#b7791f}.homex .hx3-nextAction{margin-top:16px;border-left:4px solid var(--green);background:#f2fbf6;border-radius:10px;padding:14px 16px;color:#173d2d;font-weight:750}.homex .hx3-useCaseGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}.homex .hx3-useCaseCard{border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:var(--shadow);padding:18px;display:grid;gap:12px}.homex .hx3-useCaseTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.homex .hx3-useCaseTop h3{margin:0;color:#0c1a3a;font-size:16px}.homex .hx3-useCasePill{border-radius:999px;background:#eef5ff;color:#0b346f;font-size:11px;font-weight:850;padding:5px 9px;white-space:nowrap}.homex .hx3-useCaseCard p{margin:0;color:#42506b;line-height:1.5}.homex .hx3-useCaseTwoCol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.homex .hx3-useCaseTwoCol div{border:1px solid var(--line);border-radius:10px;background:#fbfcff;padding:11px}.homex .hx3-useCaseTwoCol strong{display:block;color:#0c1a3a;font-size:12px;margin-bottom:5px}.homex .hx3-useCaseTwoCol span{display:block;color:#657089;font-size:12px;line-height:1.42}.homex .hx3-recordControls{display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,1fr) minmax(220px,1.2fr);gap:10px;margin:14px 0}.homex .hx3-recordControls select,.homex .hx3-recordControls input{width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 12px;font:inherit;font-size:12.5px;color:#25344e}.homex .hx3-recordCount{font-size:12px;color:#657089;margin-top:8px}.homex .hx3-knowledgeVisual{border:1px solid var(--line);border-radius:18px;background:radial-gradient(circle at 50% 50%,#eef7ff 0,#fbfcff 44%,#fff 100%);box-shadow:var(--shadow);padding:28px;overflow:hidden}.homex .hx3-knowledgeMap{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;min-height:380px}.homex .hx3-knowledgeCenter{grid-column:2;grid-row:2;align-self:center;justify-self:center;width:240px;height:172px;border-radius:24px;background:#071526;color:#fff;display:grid;place-items:center;text-align:center;padding:22px;box-shadow:0 18px 44px rgba(7,21,38,.28);z-index:2}.homex .hx3-knowledgeCenter strong{display:block;font-size:21px;line-height:1.12}.homex .hx3-knowledgeCenter span{display:block;margin-top:8px;color:#c7d9f6;font-size:12px;line-height:1.35}.homex .hx3-knowledgeNode{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.92);padding:14px;min-height:104px;box-shadow:0 8px 24px rgba(12,26,58,.05);z-index:1}.homex .hx3-knowledgeNode strong{display:block;color:#0c1a3a;font-size:14px}.homex .hx3-knowledgeNode span{display:block;color:#657089;font-size:12px;line-height:1.4;margin-top:6px}.homex .hx3-knowledgeNode:nth-child(2),.homex .hx3-knowledgeNode:nth-child(5){background:#f5fbf7}.homex .hx3-knowledgeNode:nth-child(3),.homex .hx3-knowledgeNode:nth-child(6){background:#f5f8ff}.homex .hx3-knowledgeFlow{margin-top:14px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}.homex .hx3-flowStep{border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px;font-size:12px;color:#42506b}.homex .hx3-flowStep strong{display:block;color:#0c1a3a;margin-bottom:4px}.homex .hx3-proofHero{margin-top:0}.homex .hx3-trustHero{border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:var(--shadow);padding:24px}.homex .hx3-trustCards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-top:18px}.homex .hx3-trustCard{border:1px solid var(--line);border-radius:12px;background:#fbfcff;padding:16px}.homex .hx3-trustCard strong{display:block;font-size:22px;color:#0c1a3a}.homex .hx3-trustCard span{display:block;margin-top:6px;font-size:12px;color:#657089;font-weight:750}.homex .hx3-trustLists{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}.homex .hx3-mutedDetails{margin-top:16px}.homex .hx3-mutedDetails summary{color:#657089;font-size:12.5px}
 .homex .hx2-avaLauncher{right:22px;bottom:22px;background:#071526;padding:11px 17px 11px 12px;border-radius:999px;box-shadow:0 12px 32px rgba(12,26,58,.34)}.homex .hx2-avaLauncherMark{width:26px;height:26px;border-radius:8px;background:rgba(76,155,232,.24);color:#42bff3;font-size:12px}.homex .hx2-rail{right:22px;bottom:22px;width:376px;max-height:76vh;border-radius:15px;border-color:var(--line);box-shadow:0 24px 60px rgba(13,21,38,.3)}.homex .hx2-rail.expanded{top:78px;bottom:22px;right:22px;left:auto;width:min(920px,calc(100vw - 300px));min-width:min(720px,calc(100vw - 44px))}.homex .hx2-avaMark{border-radius:999px;background:#f2f4f8;color:#0c1a3a}.homex .hx2-answerBox{background:#edf9f2;border-color:#ccebd8}.homex .hx2-answerBox.warn{background:#fff8eb;border-color:#ead8b6}.homex .hx2-suggestions button{border:1px solid var(--line);border-radius:9px;background:#fff;color:#0c1a3a;padding:11px 12px;cursor:pointer}.homex .hx2-ask button{border:0;border-radius:8px;background:#071526;color:#fff}.homex .hx2-ask input{border-color:var(--line)}
-.homex .hx3-knowledgeMeta{display:flex;justify-content:flex-end;margin-bottom:10px}.homex .hx3-knowledgeMeta span{border:1px solid var(--line);border-radius:999px;background:#fff;padding:5px 9px;color:#657089;font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}.homex .hx3-knowledgeNode.enterprise{border-color:#bdd7ff}.homex .hx3-knowledgeNode.technology{border-color:#c5d7ff;background:#f5f8ff}.homex .hx3-knowledgeNode.commercial{border-color:#efd6a6;background:#fffbf1}.homex .hx3-knowledgeNode.data{border-color:#afe1d1;background:#f5fbf7}.homex .hx3-knowledgeNode.delivery{border-color:#d6c6ff;background:#faf7ff}.homex .hx3-knowledgeNode.risk{border-color:#f1c2b8;background:#fff7f5}.homex .hx3-knowledgeNode.value{border-color:#bfdab8;background:#f8fff6}.homex .hx3-knowledgeNode em{display:block;margin-top:8px;color:#0a6b52;font-style:normal;font-size:10.5px;font-weight:850;letter-spacing:.05em;text-transform:uppercase}.homex .hx3-knowledgeCaveat{margin:14px 0 0;border-left:4px solid #d58a1f;background:#fff9ef;border-radius:10px;padding:12px 14px;color:#5f451f;font-size:12.5px;line-height:1.5}.homex .hx3-trustCards{grid-template-columns:repeat(5,minmax(0,1fr))}
+.homex .hx3-knowledgeMeta{display:none}.homex .hx3-knowledgeNode.enterprise{border-color:#bdd7ff}.homex .hx3-knowledgeNode.technology{border-color:#c5d7ff;background:#f5f8ff}.homex .hx3-knowledgeNode.commercial{border-color:#efd6a6;background:#fffbf1}.homex .hx3-knowledgeNode.data{border-color:#afe1d1;background:#f5fbf7}.homex .hx3-knowledgeNode.delivery{border-color:#d6c6ff;background:#faf7ff}.homex .hx3-knowledgeNode.risk{border-color:#f1c2b8;background:#fff7f5}.homex .hx3-knowledgeNode.value{border-color:#bfdab8;background:#f8fff6}.homex .hx3-knowledgeNode em{display:block;margin-top:8px;color:#0a6b52;font-style:normal;font-size:10.5px;font-weight:850;letter-spacing:.05em;text-transform:uppercase}.homex .hx3-knowledgeCaveat{margin:14px 0 0;border-left:4px solid #d58a1f;background:#fff9ef;border-radius:10px;padding:12px 14px;color:#5f451f;font-size:12.5px;line-height:1.5}
 @media(max-width:1180px){.homex .hx3-page{max-width:none}.homex .hx3-snapshot,.homex .hx3-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.homex .hx3-top{grid-template-columns:1fr}.homex .hx3-statusCard{max-width:360px}.homex .hx2-rail.expanded{left:20px;right:20px;width:auto;min-width:0}}
-@media(max-width:860px){.homex .hx3-shell{grid-template-columns:1fr}.homex .hx3-side{position:static;min-height:0;border-right:0;border-bottom:1px solid var(--line);display:block}.homex .hx3-page{padding:24px 18px 96px}.homex .hx3-title{font-size:32px}.homex .hx3-snapshot,.homex .hx3-actions,.homex .hx3-contextCards,.homex .hx3-grid2,.homex .hx3-storyGrid,.homex .hx3-recordControls,.homex .hx3-trustCards,.homex .hx3-trustLists,.homex .hx3-knowledgeMap,.homex .hx3-knowledgeFlow{grid-template-columns:1fr}.homex .hx3-knowledgeCenter{grid-column:auto;grid-row:auto;width:auto}.homex .hx3-detailHeader{grid-template-columns:1fr}.homex .hx3-detailActions{flex-wrap:wrap}.homex .hx3-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx3-relEdge{grid-column:2}.homex .hx2-rail{left:12px;right:12px;width:auto}.homex .hx2-rail.expanded{left:12px;right:12px;top:72px}}
+@media(max-width:860px){.homex .hx3-shell{grid-template-columns:1fr}.homex .hx3-side{position:static;min-height:0;border-right:0;border-bottom:1px solid var(--line);display:block}.homex .hx3-page{padding:24px 18px 96px}.homex .hx3-title{font-size:32px}.homex .hx3-snapshot,.homex .hx3-actions,.homex .hx3-contextCards,.homex .hx3-grid2,.homex .hx3-storyGrid,.homex .hx3-cxoGrid,.homex .hx3-priorityStrip,.homex .hx3-useCaseTwoCol,.homex .hx3-recordControls,.homex .hx3-trustCards,.homex .hx3-trustLists,.homex .hx3-knowledgeMap,.homex .hx3-knowledgeFlow{grid-template-columns:1fr}.homex .hx3-knowledgeCenter{grid-column:auto;grid-row:auto;width:auto}.homex .hx3-detailHeader{grid-template-columns:1fr}.homex .hx3-detailActions{flex-wrap:wrap}.homex .hx3-relRow{grid-template-columns:28px minmax(0,1fr)}.homex .hx3-relEdge{grid-column:2}.homex .hx2-rail{left:12px;right:12px;width:auto}.homex .hx2-rail.expanded{left:12px;right:12px;top:72px}}
 .homex .hx3-briefVisualRow{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap;border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:var(--shadow);padding:20px}
 .homex .hx3-diagramWrap{flex:1 1 320px;min-width:280px}
 .homex .hx3-gauge{display:flex;flex-direction:column;align-items:center;gap:4px;flex:none}
@@ -511,6 +506,26 @@ type AreaTabStories = {
   relationships: AreaTabStory;
   gaps: AreaTabStory;
   evidence: AreaTabStory;
+};
+
+type CxoBriefCard = {
+  label: string;
+  body: string;
+};
+
+type CxoBriefModel = {
+  lead: string;
+  cards: CxoBriefCard[];
+  priorities: string[];
+};
+
+type CandidateUseCase = {
+  title: string;
+  outcome: string;
+  readiness: string;
+  canDoNow: string;
+  needsNext: string;
+  module: string;
 };
 
 const TECHNICAL_STRING_FIELDS = new Set([
@@ -1156,7 +1171,7 @@ const HOME_AREA_DEFINITIONS: Array<{
 ];
 
 function areaDescription(area: HomeExplorerArea): string {
-  if (area.rows <= 0) return "Needs evidence before Home can browse it";
+  if (area.rows <= 0) return "Needs evidence before Nexus can browse it";
   if (area.gaps > 0)
     return `${shortMetric(area.rows)} records · needs evidence`;
   return `${shortMetric(area.rows)} records · source-backed`;
@@ -1167,7 +1182,7 @@ function storyForArea(
   tenantName: string,
 ): DimensionStory {
   const label = area.label;
-  const baseSummary = `${label} is available as source-backed enterprise context for ${tenantName}. Home uses it to explain what is known, what can be trusted, and what should be validated before the context is sent to another module.`;
+  const baseSummary = `${label} is available as source-backed enterprise context for ${tenantName}. Nexus uses it to explain what is known, what can be trusted, and what should be validated before the context is sent to another module.`;
   const storyByArea: Record<string, Omit<DimensionStory, "headline">> = {
     functions: {
       summary: "Shows how the enterprise is organized and where work happens.",
@@ -1338,7 +1353,7 @@ function storyForArea(
     whyItMatters:
       "This gives the team a governed way to inspect enterprise context before asking aVa or sending work to another module.",
     supportedQuestions: [
-      `What does AbarVa know about ${label.toLowerCase()}?`,
+      `What does Nexus know about ${label.toLowerCase()}?`,
       "What evidence backs this area?",
       "What should be validated next?",
     ],
@@ -1537,19 +1552,19 @@ function trustReadinessSummary(model: HomeDataQualityModel | null): {
   if (!model) {
     return {
       headline:
-        "Trust posture is unavailable until Home receives a data-quality packet.",
+        "Trust posture is unavailable until Nexus receives a data-quality packet.",
       posture: "Needs data",
       strengths: [],
       limits: ["Data-quality packet is missing."],
-      nextActions: ["Load and validate Home context."],
+      nextActions: ["Load and validate Nexus context."],
     };
   }
   return {
     headline:
-      "Home is safe for source-backed context browsing, with relationship and decision limits kept visible.",
+      "Nexus is safe for source-backed context browsing, with relationship and decision limits kept visible.",
     posture: model.answerability.label,
     strengths: [
-      `${model.evidenceQuality.factsWithEvidence.toLocaleString()} evidence items are visible in the active Home context.`,
+      `${model.evidenceQuality.factsWithEvidence.toLocaleString()} evidence items are visible in the active Nexus context.`,
       model.sourceCoverage.sourceRichCandidateThin
         ? "Source-rich areas are flagged before they can be overstated."
         : "No source-rich/candidate-thin warning is active in this view.",
@@ -1787,6 +1802,181 @@ function shortMetric(value: number): string {
   if (value >= 1_000_000) return `${trimCompactNumber(value / 1_000_000)}M`;
   if (value >= 1_000) return `${trimCompactNumber(value / 1_000)}K`;
   return value.toLocaleString();
+}
+
+function sentenceList(value: string | null | undefined): string[] {
+  return (
+    value
+      ?.replace(/\s+/g, " ")
+      .match(/[^.!?]+[.!?]+|[^.!?]+$/g)
+      ?.map((sentence) => sentence.trim())
+      .filter(Boolean) ?? []
+  );
+}
+
+function firstMatchingSentence(
+  sentences: string[],
+  pattern: RegExp,
+  fallback: string,
+): string {
+  return sentences.find((sentence) => pattern.test(sentence)) ?? fallback;
+}
+
+function buildCxoBriefModel(
+  summary: KnowledgeHomeInsightSummary | null | undefined,
+  tenantName: string,
+  contextPosture: string,
+): CxoBriefModel {
+  const sentences = sentenceList(summary?.executive_summary);
+  const lead =
+    sentences.slice(0, 2).join(" ") ||
+    `${tenantName} has source-backed Knowledge context ready for executive orientation, with evidence boundaries visible.`;
+  const priorities = (summary?.strategic_priorities ?? [])
+    .filter(Boolean)
+    .slice(0, 3);
+  return {
+    lead,
+    priorities,
+    cards: [
+      {
+        label: "Operating context",
+        body: firstMatchingSentence(
+          sentences,
+          /\b(operating context|clinical|health-plan|finance|contact center|member|analytics)\b/i,
+          `${tenantName} has enough active context for fact-based orientation across business, technology, data, risk, and measurement domains.`,
+        ),
+      },
+      {
+        label: "AI constraint",
+        body: firstMatchingSentence(
+          sentences,
+          /\b(no certified|no patient|no formal|constraint|on-premise|fragmented|governance)\b/i,
+          "AI use cases should not be advanced as production-ready until identity, governance, lineage, and measured baselines are validated.",
+        ),
+      },
+      {
+        label: "Strategic implication",
+        body: firstMatchingSentence(
+          sentences,
+          /\b(strategic implication|prioritize|leadership|foundation|enabling bet|lakehouse)\b/i,
+          "The executive decision is not which chatbot to build first; it is which governed data foundation must be funded so multiple AI and operations use cases can scale safely.",
+        ),
+      },
+      {
+        label: "Evidence boundary",
+        body: firstMatchingSentence(
+          sentences,
+          /\b(synthetic|demo|not client production|planning-grade|not real production)\b/i,
+          `This is planning-grade context for ${tenantName}; ${contextPosture.toLowerCase()} does not mean realized value, production readiness, or client-certified evidence.`,
+        ),
+      },
+    ],
+  };
+}
+
+function buildCandidateUseCases(
+  tenantName: string,
+  summary: KnowledgeHomeInsightSummary | null | undefined,
+  contextStrengthScore: number,
+): CandidateUseCase[] {
+  const gaps = summary?.top_gaps ?? [];
+  const gapText = (index: number, fallback: string) =>
+    gaps[index]?.evidence_requested ?? fallback;
+  const isHealthcareStory =
+    /health|clinical|claims|member|patient|pharmacy|prior auth/i.test(
+      [
+        tenantName,
+        summary?.summary_title,
+        summary?.executive_summary,
+        ...(summary?.strategic_priorities ?? []),
+      ].join(" "),
+    );
+  if (isHealthcareStory) {
+    return [
+      {
+        title: "Member Service Agent Assist",
+        outcome:
+          "Improve member experience and agent productivity across contact center, claims, eligibility, and knowledge-base workflows.",
+        readiness: contextStrengthScore >= 70 ? "Frame now" : "Frame with caveats",
+        canDoNow:
+          "Nexus can frame the business functions, current systems, data dependencies, risks, and evidence gaps for a governed Move.",
+        needsNext:
+          "Validated transcripts, telephony/CRM governance, knowledge-base ownership, and human-in-the-loop controls.",
+        module: "Intelligence → Moves",
+      },
+      {
+        title: "Prior Authorization Automation",
+        outcome:
+          "Reduce manual review friction by connecting clinical, claims, policy, and utilization-management context.",
+        readiness: "Assess now",
+        canDoNow:
+          "Nexus can show the current Epic, claims, data, governance, and workflow context that would constrain automation.",
+        needsNext: gapText(
+          0,
+          "Patient/member identity resolution, policy evidence, clinical data lineage, and approval controls.",
+        ),
+        module: "Intelligence → Moves",
+      },
+      {
+        title: "Unified Clinical + Claims Lakehouse",
+        outcome:
+          "Create the governed data foundation for longitudinal patient/member views and reusable analytics products.",
+        readiness: "Foundation bet",
+        canDoNow:
+          "Nexus can separate current on-premise marts/reporting from target AWS Databricks foundation needs.",
+        needsNext: gapText(
+          2,
+          "Medallion architecture certification, data-product ownership, security model, and platform/network readiness.",
+        ),
+        module: "Moves",
+      },
+      {
+        title: "Payment Integrity & Leakage Reduction",
+        outcome:
+          "Find claims, provider, pharmacy, and billing anomalies once cross-domain data is governed and traceable.",
+        readiness: "Evidence planning",
+        canDoNow:
+          "Nexus can identify systems, data domains, controls, and metric baselines needed before model work starts.",
+        needsNext:
+          "Claims history, provider patterns, contract rules, anomaly labels, and baseline leakage estimates.",
+        module: "Intelligence → Tower",
+      },
+      {
+        title: "Cost Transparency & Financial Reporting",
+        outcome:
+          "Connect claims, capitation, contracts, GL, and reporting marts for cost-of-care and margin insight.",
+        readiness: "Baseline first",
+        canDoNow:
+          "Nexus can frame the finance/data/reporting estate and identify why measured outcomes are not yet ready.",
+        needsNext: gapText(
+          3,
+          "Metric baselines, actuals, reconciliation rules, GL lineage, and finance owner signoff.",
+        ),
+        module: "Tower → Source",
+      },
+    ];
+  }
+  const insightRows = (summary?.top_insights ?? []).slice(0, 5);
+  if (insightRows.length) {
+    return insightRows.map((insight, index) => ({
+      title: insight.title,
+      outcome: insight.why_it_matters,
+      readiness: insight.evidence_strength,
+      canDoNow: insight.what_nexus_sees,
+      needsNext: insight.next_action || gapText(index, "Validate owners, baselines, evidence, and relationships."),
+      module: insight.module_handoff,
+    }));
+  }
+  return [
+    {
+      title: "Executive context orientation",
+      outcome: "Create a shared fact base before strategy, sourcing, execution, or value tracking.",
+      readiness: "Frame now",
+      canDoNow: "Nexus can explain loaded context, evidence, and known gaps.",
+      needsNext: "Validate relationships, baselines, owners, and source evidence before decisions.",
+      module: "Knowledge",
+    },
+  ];
 }
 
 function displayMetric(value: number, label: string): string {
@@ -2414,9 +2604,9 @@ function HomeDataQualityPanel({
       <div className="hx2-dqHead">
         <div>
           <div className="hx2-cardKicker">Technical diagnostics</div>
-          <h2>What Home can trust right now</h2>
+          <h2>What Nexus can trust right now</h2>
           <p>
-            Home is showing <strong>{model.activeContextLabel}</strong>. It
+            Nexus is showing <strong>{model.activeContextLabel}</strong>. It
             separates loaded context, evidence support, relationship coverage,
             known gaps, and answerability before any work is sent to another
             module.
@@ -2545,7 +2735,7 @@ function ExplorerRail({
     .mustRefuseOrMarkUnsupported ??
     englishSummary?.decisionCautions ?? [
       "strategy, use-case design, or advisory synthesis",
-      "facts outside the active Home context",
+      "facts outside the active Nexus context",
     ];
   const suggestions =
     summarySnapshot?.avaScope.suggestedPrompts ??
@@ -2715,7 +2905,7 @@ function fallbackKnowledgeLayerVisual(): HomeKnowledgeLayerVisualSpec {
   return {
     title: "Enterprise knowledge layer",
     subtitle:
-      "AbarVa turns source evidence into governed enterprise context, then serves that context to every module with the same trust boundary.",
+      "Nexus turns source evidence into governed enterprise context, then serves that context to every module with the same trust boundary.",
     centerLabel: "Enterprise Knowledge Layer",
     centerDetail:
       "Source-backed facts, gaps, caveats, and relationship candidates.",
@@ -2771,13 +2961,6 @@ function KnowledgeLayerVisual({
 }) {
   return (
     <div className="hx3-knowledgeVisual">
-      <div className="hx3-knowledgeMeta">
-        <span>
-          {spec.generatedBy === "claude"
-            ? "Claude-rendered visual spec"
-            : "Deterministic visual fallback"}
-        </span>
-      </div>
       <div className="hx3-knowledgeMap">
         {spec.nodes.slice(0, 3).map((node) => (
           <article className={`hx3-knowledgeNode ${node.tone}`} key={node.id}>
@@ -2887,7 +3070,7 @@ export function HomeSurface({
         ? dimensions.map((dimension) => ({
             dimension: dimension.dimension,
             status: "LOADED",
-            description: `${dimension.title} records with source-backed Home context.`,
+            description: `${dimension.title} records with source-backed Nexus context.`,
             evidence: dimension.rowCount,
             sources: dimension.sourceCount,
             trust: completenessScore({
@@ -3138,8 +3321,6 @@ export function HomeSurface({
     story: selectedStory,
   });
   const trustReadiness = trustReadinessSummary(safeDataQuality);
-  const focusAreas = explorerAreas.filter((area) => area.rows > 0).slice(0, 4);
-
   const READINESS_SCORE: Record<string, number> = {
     Strong: 100,
     Partial: 60,
@@ -3156,27 +3337,18 @@ export function HomeSurface({
         ) / readinessMatrixRows.length,
       )
     : 0;
-  const relationshipDiagramDomains = readinessMatrixRows
-    .slice(0, 6)
-    .map((row) => ({
-      label: row.dimension,
-      tone:
-        row.readiness === "Strong"
-          ? ("strong" as const)
-          : row.readiness === "Gap" || row.readiness === "Not validated"
-            ? ("weak" as const)
-            : ("partial" as const),
-    }));
   const hasVisualBlocks =
     (safeHomeInsightSummary?.visual_blocks?.length ?? 0) > 0;
-  const MODULE_HREF: Record<string, string> = {
-    Knowledge: "#overview",
-    Intelligence: "/intelligence",
-    Moves: "/strategic-moves",
-    Source: "/source",
-    Tower: "/tower",
-  };
-
+  const cxoBrief = buildCxoBriefModel(
+    safeHomeInsightSummary,
+    displayedTenantName,
+    contextPosture,
+  );
+  const candidateUseCases = buildCandidateUseCases(
+    displayedTenantName,
+    safeHomeInsightSummary,
+    contextStrengthScore,
+  );
   const selectOverview = () => {
     setDimKey(null);
     setSelectedTool(null);
@@ -3304,7 +3476,7 @@ export function HomeSurface({
                       </div>
                       <h1 className="hx3-title">Context Confidence</h1>
                       <p className="hx3-subtitle">
-                        This page explains why AbarVa collects enterprise
+                        This page explains why Nexus collects enterprise
                         context, which modules use each dimension, what can be
                         safely answered today, and what still needs validation.
                       </p>
@@ -3323,9 +3495,9 @@ export function HomeSurface({
 
                   <section className="hx3-trustHero">
                     <div className="hx3-eyebrow">Context Confidence</div>
-                    <h2>What Home can trust right now</h2>
+                    <h2>What Nexus can trust right now</h2>
                     <p className="hx3-briefLead">
-                      AbarVa has source-backed context across the major
+                      Nexus has source-backed context across the major
                       enterprise dimensions. This is strong enough for
                       enterprise orientation and fact-based questions.
                       Relationship depth and measured outcomes still need
@@ -3397,7 +3569,7 @@ export function HomeSurface({
                       <div>
                         <h2>Enterprise context powers the platform</h2>
                         <p>
-                          Each dimension gives AbarVa a different part of the
+                          Each dimension gives Nexus a different part of the
                           enterprise operating picture. Modules use that shared
                           context instead of inventing their own local truth.
                         </p>
@@ -3408,7 +3580,7 @@ export function HomeSurface({
                         <thead>
                           <tr>
                             <th>Dimension</th>
-                            <th>Why AbarVa collects it</th>
+                            <th>Why Nexus collects it</th>
                             <th>Primary module use</th>
                           </tr>
                         </thead>
@@ -3956,55 +4128,58 @@ export function HomeSurface({
                             className="hx3-section"
                             data-testid="knowledge-home-insights"
                           >
-                            <div className="hx3-brief">
+                            <div className="hx3-brief hx3-cxoBrief">
                               <div className="hx3-eyebrow">
                                 Enterprise Brief
                               </div>
                               <h2>{safeHomeInsightSummary.summary_title}</h2>
-                              <p className="hx3-briefLead">
-                                {safeHomeInsightSummary.executive_summary}
+                              <p className="hx3-cxoLead">
+                                {cxoBrief.lead}
                               </p>
+                              <div className="hx3-cxoGrid">
+                                {cxoBrief.cards.map((card) => (
+                                  <article
+                                    className="hx3-cxoCard"
+                                    key={card.label}
+                                  >
+                                    <span>{card.label}</span>
+                                    <p>{card.body}</p>
+                                  </article>
+                                ))}
+                              </div>
+                              {cxoBrief.priorities.length ? (
+                                <div className="hx3-priorityStrip">
+                                  {cxoBrief.priorities.map(
+                                    (priority, index) => (
+                                      <div key={priority}>
+                                        <strong>
+                                          Priority {index + 1}
+                                        </strong>
+                                        {priority}
+                                      </div>
+                                    ),
+                                  )}
+                                </div>
+                              ) : null}
                             </div>
                           </section>
 
-                          {hasVisualBlocks ? (
-                            <HomeVisualBlocks
-                              blocks={safeHomeInsightSummary.visual_blocks}
-                            />
-                          ) : (
-                            <section className="hx3-section">
-                              <div className="hx3-briefVisualRow">
-                                <ContextStrengthGauge
-                                  value={contextStrengthScore}
-                                  label="Context strength"
-                                />
-                                <div className="hx3-diagramWrap">
-                                  <div className="hx3-sectionHead">
-                                    <div>
-                                      <h3>How the context spine connects</h3>
-                                    </div>
-                                  </div>
-                                  <HomeRelationshipDiagram
-                                    spineLabel={`${displayedTenantName} governed context spine`}
-                                    domains={relationshipDiagramDomains}
-                                  />
-                                </div>
-                              </div>
-                            </section>
-                          )}
-
                           <section className="hx3-section">
                             <div className="hx3-storyGrid">
-                              <article className="hx3-storyCard">
-                                <h3>Strategic priorities</h3>
-                                <ul>
-                                  {safeHomeInsightSummary.strategic_priorities.map(
-                                    (priority) => (
-                                      <li key={priority}>{priority}</li>
-                                    ),
-                                  )}
-                                </ul>
-                              </article>
+                              {safeHomeInsightSummary.top_insights
+                                .slice(0, 2)
+                                .map((insight) => (
+                                  <article
+                                    className="hx3-storyCard"
+                                    key={insight.title}
+                                  >
+                                    <h3>{insight.title}</h3>
+                                    <p>{insight.what_nexus_sees}</p>
+                                    <div className="hx3-nextAction">
+                                      Next: {insight.next_action}
+                                    </div>
+                                  </article>
+                                ))}
                               {hasVisualBlocks ? null : (
                                 <article className="hx3-storyCard">
                                   <h3>What more context unlocks</h3>
@@ -4036,7 +4211,7 @@ export function HomeSurface({
                             </div>
                             <div className="hx3-grid2">
                               {safeHomeInsightSummary.top_insights
-                                .slice(0, 4)
+                                .slice(2, 6)
                                 .map((insight) => (
                                   <article
                                     className="hx3-storyCard"
@@ -4269,68 +4444,75 @@ export function HomeSurface({
                         <section className="hx3-section">
                           <div className="hx3-sectionHead">
                             <div>
-                              <h2>Use cases this context supports</h2>
+                              <h2>Top candidate use cases</h2>
                               <p>
-                                Agent Assist is one worked example among several
-                                module-level use cases.
+                                These are the strongest business problems Nexus
+                                can frame from the loaded context today. Each
+                                card separates what can be shaped now from what
+                                must be validated before execution or value
+                                claims.
                               </p>
                             </div>
                           </div>
-                          <div className="hx3-grid2">
-                            {safeHomeInsightSummary.module_readiness.map(
-                              (row) => (
-                                <article
-                                  className="hx3-storyCard"
-                                  key={row.module}
-                                >
-                                  <h3>{row.module}</h3>
-                                  <ReadinessBar
-                                    value={READINESS_SCORE[row.readiness] ?? 40}
-                                  />
-                                  <p>
-                                    <strong>Readiness: </strong>
-                                    {row.readiness}
-                                  </p>
-                                  <p>{row.next_best_action}</p>
-                                </article>
-                              ),
-                            )}
-                            <article className="hx3-storyCard">
-                              <h3>Agent Assist</h3>
-                              <ReadinessBar value={contextStrengthScore} />
-                              <p>
-                                The golden thread shows why Agent Assist is a
-                                cross-enterprise transformation, not a
-                                standalone chatbot.
-                              </p>
-                              <div className="hx3-grid2">
-                                {safeHomeInsightSummary.enterprise_context_map
-                                  .slice(0, 4)
-                                  .map((edge, index) => (
-                                    <div
-                                      className="hx3-relRow"
-                                      key={`${edge.from}-${edge.relation}-${edge.to}-${index}`}
-                                    >
-                                      <span className="hx3-relNode">
-                                        {index + 1}
-                                      </span>
-                                      <span>{edge.from}</span>
-                                      <span className="hx3-relEdge">
-                                        {edge.relation}
-                                      </span>
-                                      <span>
-                                        {edge.to}
-                                        {edge.caveat ? (
-                                          <small className="hx3-relCaveat">
-                                            {edge.caveat}
-                                          </small>
-                                        ) : null}
-                                      </span>
-                                    </div>
-                                  ))}
-                              </div>
-                            </article>
+                          <div className="hx3-useCaseGrid">
+                            {candidateUseCases.slice(0, 5).map((useCase) => (
+                              <article
+                                className="hx3-useCaseCard"
+                                key={useCase.title}
+                              >
+                                <div className="hx3-useCaseTop">
+                                  <h3>{useCase.title}</h3>
+                                  <span className="hx3-useCasePill">
+                                    {useCase.readiness}
+                                  </span>
+                                </div>
+                                <p>{useCase.outcome}</p>
+                                <div className="hx3-useCaseTwoCol">
+                                  <div>
+                                    <strong>Can frame now</strong>
+                                    <span>{useCase.canDoNow}</span>
+                                  </div>
+                                  <div>
+                                    <strong>Need next</strong>
+                                    <span>{useCase.needsNext}</span>
+                                  </div>
+                                </div>
+                                <div className="hx3-chipRow">
+                                  <span className="hx3-chip">
+                                    {useCase.module}
+                                  </span>
+                                </div>
+                              </article>
+                            ))}
                           </div>
+
+                          <details className="hx3-tech">
+                            <summary>Module readiness detail</summary>
+                            <div className="hx3-techBody">
+                              <div className="hx3-tableWrap">
+                                <table className="hx3-table">
+                                  <thead>
+                                    <tr>
+                                      <th>Module</th>
+                                      <th>Readiness</th>
+                                      <th>Next best action</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {safeHomeInsightSummary.module_readiness.map(
+                                      (row) => (
+                                        <tr key={row.module}>
+                                          <td>{row.module}</td>
+                                          <td>{row.readiness}</td>
+                                          <td>{row.next_best_action}</td>
+                                        </tr>
+                                      ),
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          </details>
                         </section>
                       ) : (
                         <p className="hx3-empty">
@@ -4342,6 +4524,34 @@ export function HomeSurface({
 
                   {briefTab === "proof" ? (
                     <div role="tabpanel" aria-label="Proof">
+                      <section className="hx3-section hx3-proofHero">
+                        <div className="hx3-sectionHead">
+                          <div>
+                            <h2>How Nexus turns context into product action</h2>
+                            <p>{knowledgeLayerVisual.subtitle}</p>
+                          </div>
+                        </div>
+                        <KnowledgeLayerVisual spec={knowledgeLayerVisual} />
+                      </section>
+
+                      {hasVisualBlocks ? (
+                        <section className="hx3-section">
+                          <div className="hx3-sectionHead">
+                            <div>
+                              <h2>Claude-derived visual story</h2>
+                              <p>
+                                Approved visual blocks translated into safe
+                                Nexus components. The page renders structured
+                                data, not model HTML.
+                              </p>
+                            </div>
+                          </div>
+                          <HomeVisualBlocks
+                            blocks={safeHomeInsightSummary?.visual_blocks}
+                          />
+                        </section>
+                      ) : null}
+
                       <section className="hx3-section">
                         <div className="hx3-sectionHead">
                           <div>
@@ -4544,69 +4754,6 @@ export function HomeSurface({
                         </>
                       ) : null}
 
-                      <section className="hx3-section">
-                        <div className="hx3-sectionHead">
-                          <div>
-                            <h2>{knowledgeLayerVisual.title}</h2>
-                            <p>{knowledgeLayerVisual.subtitle}</p>
-                          </div>
-                        </div>
-                        <KnowledgeLayerVisual spec={knowledgeLayerVisual} />
-                      </section>
-
-                      <section className="hx3-section">
-                        <div className="hx3-sectionHead">
-                          <div>
-                            <h2>Explore this context</h2>
-                            <p>
-                              Browse the areas of information AbarVa tracks.
-                            </p>
-                          </div>
-                        </div>
-                        <div
-                          className="hx3-tabs"
-                          role="tablist"
-                          aria-label="Context areas"
-                        >
-                          {focusAreas.map((area) => (
-                            <button
-                              aria-selected={false}
-                              className="hx3-tab"
-                              key={area.id}
-                              onClick={() => selectArea(area.id)}
-                              role="tab"
-                              type="button"
-                            >
-                              {area.label}
-                            </button>
-                          ))}
-                        </div>
-                        <div className="hx3-tableWrap">
-                          <table className="hx3-table">
-                            <thead>
-                              <tr>
-                                <th>Name</th>
-                                <th>Records</th>
-                                <th>Evidence</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {explorerAreas.map((area) => (
-                                <tr key={area.id}>
-                                  <td>{area.label}</td>
-                                  <td>{area.rows.toLocaleString()}</td>
-                                  <td>
-                                    {area.gaps > 0
-                                      ? "Needs validation"
-                                      : "Strong"}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </section>
-
                       <details className="hx3-tech">
                         <summary>
                           Technical details · data quality, source coverage,
@@ -4636,57 +4783,6 @@ export function HomeSurface({
                     </div>
                   ) : null}
 
-                  <nav className="hx3-moduleFooter" aria-label="Go to module">
-                    {(
-                      safeHomeInsightSummary?.module_readiness ?? [
-                        {
-                          module: "Knowledge" as const,
-                          readiness: "",
-                          next_best_action: "",
-                        },
-                        {
-                          module: "Intelligence" as const,
-                          readiness: "",
-                          next_best_action: "",
-                        },
-                        {
-                          module: "Moves" as const,
-                          readiness: "",
-                          next_best_action: "",
-                        },
-                        {
-                          module: "Source" as const,
-                          readiness: "",
-                          next_best_action: "",
-                        },
-                        {
-                          module: "Tower" as const,
-                          readiness: "",
-                          next_best_action: "",
-                        },
-                      ]
-                    ).map((row) => {
-                      const href = MODULE_HREF[row.module] ?? "#overview";
-                      return href === "#overview" ? (
-                        <button
-                          className="hx3-moduleLink"
-                          key={row.module}
-                          onClick={() => setBriefTab("overview")}
-                          type="button"
-                        >
-                          {row.module}
-                        </button>
-                      ) : (
-                        <a
-                          className="hx3-moduleLink"
-                          href={href}
-                          key={row.module}
-                        >
-                          {row.module}
-                        </a>
-                      );
-                    })}
-                  </nav>
                 </>
               )}
             </div>
