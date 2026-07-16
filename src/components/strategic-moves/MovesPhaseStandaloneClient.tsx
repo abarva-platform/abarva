@@ -1390,7 +1390,7 @@ function PhaseBody({
           <div className="mxw-approved">
             <strong>✓ {phase.code} is already approved.</strong>
             <span>
-              Continue to {nextOpenPhaseContract.code} {nextOpenPhaseContract.title}
+              Continue to {nextOpenPhaseContract.code} {nextOpenPhaseContract.title}{" "}
               to keep working from the current phase.
             </span>
           </div>
