@@ -1076,6 +1076,34 @@ function PhaseBody({
   }
 
   if (substep === "decide") {
+    if (phase.phase === 1) {
+      return (
+        <>
+          <section className="mxw-zone">
+            <h2>Initial transformation posture</h2>
+            <p>
+              Capture the starting hypothesis for P2 discovery. This is not the
+              selected solution approach; P3 will choose the approach after
+              current-state evidence, constraints, and readiness are proven.
+            </p>
+            <PostureCards selectedOption={selectedOption} onSelectOption={onSelectOption} />
+          </section>
+          <section className="mxw-upload">
+            <div>
+              <strong>Upload Charter Decision Notes</strong>
+              <span>Scope assumptions, sponsor direction, constraints, and what P2 must validate.</span>
+            </div>
+            <EvidenceUploadControl
+              buttonLabel="Upload"
+              moveId={move.id}
+              phase={phase.phase}
+              title="Charter Decision Notes"
+            />
+          </section>
+        </>
+      );
+    }
+
     return (
       <>
         <section className="mxw-zone">
@@ -1473,12 +1501,11 @@ function buildPhaseCaptureItems({
     };
   }
 
-  const selectedOptionLabel =
-    selectedOption === "A"
-      ? "Optimize the current workflow"
-      : selectedOption === "C"
-        ? "Large transformation program"
-        : "Phased platform + operating-model shift";
+  const selectedOptionLabel = optionLabelForPhase(phase.phase, selectedOption);
+  const optionContext =
+    phase.phase === 1
+      ? `Initial transformation posture to validate in P2: ${selectedOptionLabel}.`
+      : `Selected approach: ${selectedOptionLabel}.`;
   const evidenceSummary =
     move.linkedEvidence.length > 0
       ? move.linkedEvidence.map((item) => item.summary).join("; ")
@@ -1491,7 +1518,7 @@ function buildPhaseCaptureItems({
         `${section.label}: ${section.description}`,
         `Move: ${move.name}.`,
         `Phase: ${phase.code} ${phase.title}.`,
-        `Selected approach: ${selectedOptionLabel}.`,
+        optionContext,
         `Evidence basis: ${evidenceSummary}`,
         "Approval note: accountable owner review and caveats must remain attached to the gate record.",
       ].join(" "),
@@ -1663,6 +1690,62 @@ function OptionCards({
       ))}
     </div>
   );
+}
+
+function PostureCards({
+  selectedOption,
+  onSelectOption,
+}: {
+  selectedOption: string;
+  onSelectOption: (value: string) => void;
+}) {
+  const options = [
+    [
+      "A",
+      "Improve the current process",
+      "P2 validates whether focused workflow, knowledge, and metric fixes are enough before larger design work.",
+    ],
+    [
+      "B",
+      "Explore a balanced transformation",
+      "P2 keeps process, platform, operating model, and controls in scope so P3 can compare viable paths.",
+    ],
+    [
+      "C",
+      "Evaluate major transformation potential",
+      "P2 tests whether the value, readiness, and change appetite justify a broader redesign later.",
+    ],
+  ] as const;
+
+  return (
+    <div className="mxw-options mxw-posture-options">
+      {options.map(([code, title, detail]) => (
+        <button
+          className={selectedOption === code ? "selected" : ""}
+          key={code}
+          onClick={() => onSelectOption(code)}
+          type="button"
+        >
+          <span>{code}</span>
+          <strong>{title}</strong>
+          {selectedOption === code ? <em>Hypothesis to validate</em> : null}
+          <small>{detail}</small>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function optionLabelForPhase(phase: number, selectedOption: string): string {
+  if (phase === 1) {
+    if (selectedOption === "A") return "Improve the current process";
+    if (selectedOption === "C") return "Evaluate major transformation potential";
+    return "Explore a balanced transformation";
+  }
+
+  if (selectedOption === "A") return "Optimize the current workflow";
+  if (selectedOption === "C") return "Large transformation program";
+  return "Phased platform + operating-model shift";
 }
 
 function MovesStandaloneStyles() {
