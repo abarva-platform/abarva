@@ -127,6 +127,7 @@ describe("Tower CXO Claude story synthesis", () => {
       name: "tower_cxo_story",
     });
     expect(request.payload.tools[0]?.name).toBe("tower_cxo_story");
+    expect(request.payload.max_tokens).toBe(6000);
     expect(request.promptTrace.promptByteLength).toBeGreaterThan(1000);
   });
 
