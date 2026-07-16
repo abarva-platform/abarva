@@ -4,6 +4,7 @@ import {
   canonicalCioTowerTenantKey,
   matchContractKey,
   parseVisibleAnswerContract,
+  validateVisibleAnswer,
   type CioTowerPromptContext,
 } from '../answer';
 import type { TowerV3RuntimeViewModel } from '@/lib/tower/tower-v3-runtime-view';
@@ -206,6 +207,9 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('Valid JSON is more important than a longer answer');
     expect(prompt).toContain('Do not duplicate table content inside answer. Use tables[] only.');
     expect(prompt).toContain('Never use markdown code fences');
+    expect(prompt).toContain('"ROI"');
+    expect(prompt).toContain('"measured outcome"');
+    expect(prompt).toContain('finance-attestation gate');
     expect(prompt).toContain('must directly continue from your answer');
     expect(prompt).toContain('Do not use generic menu choices');
     expect(prompt).toContain('Answer the current question literally');
@@ -217,6 +221,27 @@ describe('cio tower answer contract', () => {
     expect(prompt).not.toContain('GFM markdown table');
     expect(prompt).not.toContain('```chart');
     expect(prompt).not.toContain('CHART');
+  });
+
+  it('blocks unsafe outcome-proof language while allowing natural prose punctuation', () => {
+    expect(
+      validateVisibleAnswer(
+        'The CIO cannot defend AI ROI until the finance-attestation gate clears.',
+      ),
+    ).toContain('unsupported_outcome_proof_language');
+    expect(
+      validateVisibleAnswer(
+        'None of the claims can move to realized value until baselines are signed.',
+      ),
+    ).toContain('unsupported_outcome_proof_language');
+    expect(
+      validateVisibleAnswer(
+        'Fifth, managed-service and contract evidence: service scope, SLA schedules, and vendor baselines are incomplete.',
+      ),
+    ).not.toContain('visible_scaffold_label');
+    expect(validateVisibleAnswer('Evidence: show the row-level proof.')).toContain(
+      'visible_scaffold_label',
+    );
   });
 
   it('parses the visible answer contract without changing prose or table labels', () => {
