@@ -14,7 +14,7 @@ import type {
 
 const PROMPT_VERSION = "tower-cxo-claude-story-v1";
 const DEFAULT_MODEL = "claude-sonnet-4-6";
-const DEFAULT_MAX_TOKENS = 2_400;
+const DEFAULT_MAX_TOKENS = 6_000;
 const DEFAULT_TIMEOUT_MS = 120_000;
 const TOWER_CXO_STORY_TOOL_NAME = "tower_cxo_story";
 
