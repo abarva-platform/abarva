@@ -1059,4 +1059,67 @@ Use the first wave to validate data access, compliance controls, and supervisor 
       expect(exhibits.charts).toHaveLength(0);
     });
   });
+
+  describe("contextual follow-up questions fence", () => {
+    it("extracts a governed ```followups fence into typed follow-up strings and strips it from prose", () => {
+      const exhibits = buildStructuredExhibits({
+        routing,
+        sources,
+        prose: [
+          "Payment integrity has the biggest recoverable dollar pool.",
+          "",
+          "```followups",
+          '["Should we pilot this with one business unit first?", "What would closing the readiness gap cost?"]',
+          "```",
+        ].join("\n"),
+      });
+
+      expect(exhibits.followups).toEqual([
+        "Should we pilot this with one business unit first?",
+        "What would closing the readiness gap cost?",
+      ]);
+      expect(exhibits.prose).toContain(
+        "Payment integrity has the biggest recoverable dollar pool.",
+      );
+      expect(exhibits.prose).not.toContain("followups");
+    });
+
+    it("caps follow-ups at 3 and ignores non-string entries", () => {
+      const exhibits = buildStructuredExhibits({
+        routing,
+        sources,
+        prose: [
+          "Answer body.",
+          "```followups",
+          '["Q1", "Q2", 42, "Q3", "Q4"]',
+          "```",
+        ].join("\n"),
+      });
+
+      expect(exhibits.followups).toEqual(["Q1", "Q2", "Q3"]);
+    });
+
+    it("returns an empty array when no followups fence is present", () => {
+      const exhibits = buildStructuredExhibits({
+        routing,
+        sources,
+        prose: "Answer body with no fence.",
+      });
+
+      expect(exhibits.followups).toEqual([]);
+    });
+
+    it("ignores a malformed followups fence without throwing", () => {
+      const exhibits = buildStructuredExhibits({
+        routing,
+        sources,
+        prose: ["Answer body.", "```followups", "not valid json", "```"].join(
+          "\n",
+        ),
+      });
+
+      expect(exhibits.followups).toEqual([]);
+      expect(exhibits.prose).toContain("Answer body.");
+    });
+  });
 });

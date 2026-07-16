@@ -658,7 +658,8 @@ ACTIVE INTELLIGENCE CANVAS RULES
     ? buildCxoAnswerModePromptDirective(answerMode)
     : "";
   const answerOnlyDirective = answerOnly
-    ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a crisp executive answer using full GitHub-Flavored Markdown. GFM tables, bold section headers, and bullet lists are REQUIRED for comparisons, ranked lists, and multi-attribute data — do not flatten these to prose. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — the canvas is handled separately. Length: prose-only answers ~120-180 words; table/chart answers may run to ~300 words. Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.`
+    ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a crisp executive answer using full GitHub-Flavored Markdown. GFM tables, bold section headers, and bullet lists are REQUIRED for comparisons, ranked lists, and multi-attribute data — do not flatten these to prose. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — the canvas is handled separately. Length: prose-only answers ~120-180 words; table/chart answers may run to ~300 words. Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.
+End every answer with a fenced \`\`\`followups block containing a JSON array of exactly 2-3 short follow-up questions a CXO would naturally ask next, directly grounded in what you just answered — not the user's own question restated, not generic starter prompts. Example: \`\`\`followups\n["Should we pilot this with one business unit first?", "What would it cost to close the readiness gap?"]\n\`\`\``
     : "";
   // For explicit visual asks, detect here so we can use the table-first contract
   // (which drops the prose-opener rule that would otherwise conflict with table-first).

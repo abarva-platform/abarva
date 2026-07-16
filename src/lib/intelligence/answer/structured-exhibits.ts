@@ -30,6 +30,7 @@ export interface StructuredExhibits {
   tables: AnswerTable[];
   charts: AnswerChart[];
   graphs: AnswerGraph[];
+  followups: string[];
 }
 
 function sourceClassForAskSource(
@@ -586,6 +587,35 @@ function chartFencesFromProse(
   return {
     prose: cleaned.replace(/\n{3,}/g, "\n\n").trim(),
     charts,
+  };
+}
+
+function followupsFenceFromProse(prose: string): {
+  prose: string;
+  followups: string[];
+} {
+  let followups: string[] = [];
+  const cleaned = prose.replace(
+    /```followups\s*([\s\S]*?)```/gi,
+    (_match, raw: string) => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        return "\n";
+      }
+      if (!Array.isArray(parsed)) return "\n";
+      followups = parsed
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0 && item.length <= 200)
+        .slice(0, 3);
+      return "\n";
+    },
+  );
+  return {
+    prose: cleaned.replace(/\n{3,}/g, "\n\n").trim(),
+    followups,
   };
 }
 
@@ -1395,8 +1425,9 @@ export function buildStructuredExhibits(
   const shouldBuildGraph =
     input.routing.outputShape === "graph" || wantsGraphArtifact(query);
   const sourceExhibits = structuredSourceExhibits(input.sources, input.routing);
+  const followupsResult = followupsFenceFromProse(input.prose);
   const chartFences = chartFencesFromProse(
-    input.prose,
+    followupsResult.prose,
     citations.map((citation) => citation.id),
   );
   const decisionFences = decisionTableFencesFromProse(
@@ -1507,6 +1538,7 @@ export function buildStructuredExhibits(
     tables,
     charts,
     graphs,
+    followups: followupsResult.followups,
   };
 }
 

@@ -69,14 +69,24 @@ function hasRenderableAvaArtifacts(
   return hasVisibleAvaArtifacts(answer);
 }
 
+// Governed fence types the server may emit mid-stream (decision-table,
+// chart, followups — see structured-exhibits.ts) that must never render as
+// raw text: treat them the same as a raw pipe-table leak.
+const RAW_STRUCTURED_FENCE_RE = /```(?:decision-table|chart|followups)\b/i;
+
 function hasRawMarkdownTableFragment(value: string): boolean {
+  if (RAW_STRUCTURED_FENCE_RE.test(value)) return true;
   return value
     .split(/\r?\n/)
     .some((line) => (line.match(/\|/g) ?? []).length >= 2);
 }
 
 function stripMarkdownTableFragments(value: string): string {
-  return value
+  const withoutFences = value.replace(
+    /```(?:decision-table|chart|followups)\b[\s\S]*?```/gi,
+    "\n",
+  );
+  return withoutFences
     .split(/\r?\n/)
     .filter((line) => (line.match(/\|/g) ?? []).length < 2)
     .join("\n")
@@ -540,7 +550,10 @@ function resolveCollapsedRestoreMode(
   defaultMode: DockMode,
   collapsedRestoreMode?: RestorableDockMode,
 ): RestorableDockMode {
-  return collapsedRestoreMode ?? (defaultMode === "collapsed" ? "side-rail" : defaultMode);
+  return (
+    collapsedRestoreMode ??
+    (defaultMode === "collapsed" ? "side-rail" : defaultMode)
+  );
 }
 
 // ── Mime allowlist (matches API + spec) ───────────────────────────────────
@@ -1514,7 +1527,9 @@ function SessionExportActions({
       >
         {pending === "pdf" ? "..." : "PDF"}
       </button>
-      {status ? <span style={SESSION_EXPORT_STATUS_STYLE}>{status}</span> : null}
+      {status ? (
+        <span style={SESSION_EXPORT_STATUS_STYLE}>{status}</span>
+      ) : null}
     </div>
   );
 }
