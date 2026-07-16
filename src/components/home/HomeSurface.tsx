@@ -3175,6 +3175,9 @@ export function HomeSurface({
   const candidatePreviewDetail = candidateState?.candidateVersionId
     ? `Candidate ${candidateState.candidateVersionId} is preview-only and not active tenant truth.`
     : "Candidate preview was requested, but no inactive candidate tenant version is available through setup-control yet.";
+  const candidatePreviewStatusLabel = candidatePreviewEnabled
+    ? "Candidate preview: viewing inactive data"
+    : "Candidate preview: inactive";
   const filteredAreas = explorerAreas.filter((area) => {
     const needle = search.trim().toLowerCase();
     if (!needle) return true;
@@ -3284,13 +3287,22 @@ export function HomeSurface({
     depth?.relationshipCount ??
     safeSetupControl?.relationshipGraph?.graphRelationships ??
     overviewModel.relationshipAreas.reduce((sum, area) => sum + area.rows, 0);
-  const evidenceCount =
-    depth?.evidenceCount ??
-    safeSetupControl?.evidenceRegistry?.evidenceSources ??
-    totalSources;
-  const knownFactCount =
-    safeSetupControl?.canonicalFacts?.canonicalObjects ?? evidenceCount;
   const sourceBackedRecords = depth?.loadedRecords ?? totalRows;
+  const evidenceRegistryItemCount =
+    safeSetupControl?.evidenceRegistry?.evidenceItems ??
+    depth?.evidenceCount ??
+    0;
+  const evidenceRegistryDisplay =
+    evidenceRegistryItemCount > 0
+      ? shortMetric(evidenceRegistryItemCount)
+      : sourceBackedRecords > 0
+        ? `0 - registry pending; ${shortMetric(sourceBackedRecords)} source-backed rows visible`
+        : "0 - no source-backed rows loaded";
+  const dataOriginLabel =
+    safeSummarySnapshot?.tenantProfileHeader.dataOrigin ??
+    (safeSetupControl?.tenant.realOrSyntheticStatus
+      ? "Demo-safe"
+      : "Source-backed");
   const contextPosture =
     depth?.contextPosture ??
     safeEnglishSummary?.statusLabel ??
@@ -4083,15 +4095,8 @@ export function HomeSurface({
                               ? formatShortUtcDate(safeV6Browser.generatedAt)
                               : "Unavailable"}
                         </span>
-                        <span>Candidate preview</span>
-                        <span>Not active</span>
-                        <span>
-                          {safeSummarySnapshot?.tenantProfileHeader
-                            .dataOrigin ??
-                            (safeSetupControl?.tenant.realOrSyntheticStatus
-                              ? "Demo-safe"
-                              : "Source-backed")}
-                        </span>
+                        <span>Active context: {dataOriginLabel}</span>
+                        <span>{candidatePreviewStatusLabel}</span>
                       </div>
                     </div>
                   </div>
@@ -4591,8 +4596,8 @@ export function HomeSurface({
                             </thead>
                             <tbody>
                               <tr>
-                                <td>Evidence items</td>
-                                <td>{shortMetric(knownFactCount)}</td>
+                                <td>Evidence registry items</td>
+                                <td>{evidenceRegistryDisplay}</td>
                               </tr>
                               <tr>
                                 <td>Total rows</td>

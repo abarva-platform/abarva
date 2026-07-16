@@ -546,12 +546,46 @@ describe("HomeSurface — Explorer context browser", () => {
       />,
     );
 
-    expect(screen.getByText("Demo-safe")).toBeInTheDocument();
+    expect(screen.getByText("Active context: Demo-safe")).toBeInTheDocument();
     expect(
       screen.getAllByText("Active Knowledge context").length,
     ).toBeGreaterThan(0);
-    expect(screen.getByText("Candidate preview")).toBeInTheDocument();
+    expect(screen.getByText("Candidate preview: inactive")).toBeInTheDocument();
+    expect(screen.queryByText("Not active")).not.toBeInTheDocument();
     expect(screen.queryByText("Canonical Fact Store")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Proof" }));
+    expect(screen.getByText("Evidence registry items")).toBeInTheDocument();
+    expect(screen.getByText("240")).toBeInTheDocument();
+  });
+
+  it("explains empty evidence registry counts when source rows are loaded", () => {
+    render(
+      <HomeSurface
+        clientKey="apexretail"
+        dataQuality={dataQuality}
+        payload={payload}
+        setupControl={{
+          ...setupControl,
+          evidenceRegistry: {
+            ...setupControl.evidenceRegistry,
+            evidenceItems: 0,
+          },
+          canonicalFacts: {
+            ...setupControl.canonicalFacts,
+            canonicalObjects: 0,
+          },
+        }}
+        v6Browser={v6Browser}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("tab", { name: "Proof" }));
+
+    expect(screen.getByText("Evidence registry items")).toBeInTheDocument();
+    expect(
+      screen.getByText(/0 - registry pending; .* source-backed rows visible/i),
+    ).toBeInTheDocument();
   });
 
   it("renders Context Confidence as a client-facing trust story with diagnostics collapsed", () => {
