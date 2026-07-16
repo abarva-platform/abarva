@@ -276,6 +276,30 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.queryByText(/Promote to P1 Charter/i)).not.toBeInTheDocument();
   });
 
+  it("shows completed P0 as read-only when the Move has already advanced to P1", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 1,
+          phaseLabel: "P1 Charter",
+        })}
+        phaseNum={0}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(screen.getAllByText(/already approved/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: /Continue to P1 Charter/i }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: "Approve gate →" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Gate criteria" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Blocking hard gate")).not.toBeInTheDocument();
+    expect(screen.queryByText("Carry-forward soft criteria")).not.toBeInTheDocument();
+    expect(screen.queryByText("Originate a strategic move")).not.toBeInTheDocument();
+  });
+
   it("shows the saved seven-answer P0 brief separately from gate criteria", () => {
     render(
       <MovesPhaseStandaloneClient

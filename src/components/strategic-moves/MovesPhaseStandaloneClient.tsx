@@ -356,6 +356,10 @@ export function MovesPhaseStandaloneClient({
   initialSubstepKey,
 }: MovesPhaseStandaloneClientProps) {
   const phase = phaseFor(phaseNum);
+  const currentPhase = move.currentPhase ?? 0;
+  const isHistoricalPhase = phase.phase < currentPhase;
+  const nextOpenPhase = Math.min(currentPhase, 5);
+  const nextOpenPhaseContract = phaseFor(nextOpenPhase);
   const initialSubstepIndex = Math.max(
     0,
     phase.substeps.findIndex((item) => item.key === initialSubstepKey),
@@ -369,10 +373,10 @@ export function MovesPhaseStandaloneClient({
   const avaThreadRef = useRef<AvaChatMessage[]>([]);
   avaThreadRef.current = avaThread;
   const [selectedOption, setSelectedOption] = useState("B");
-  const [gateApproved, setGateApproved] = useState(false);
+  const [gateApproved, setGateApproved] = useState(isHistoricalPhase);
   const [gateApprovalStatus, setGateApprovalStatus] = useState<
     "idle" | "approving" | "approved" | "blocked"
-  >("idle");
+  >(isHistoricalPhase ? "approved" : "idle");
   const [gateApprovalMessage, setGateApprovalMessage] = useState<string | null>(null);
   const [draftedBrief] = useState<Record<number, string>>({});
   const substep = phase.substeps[substepIndex] ?? phase.substeps[0];
@@ -563,6 +567,10 @@ export function MovesPhaseStandaloneClient({
     document
       .getElementById("mxw-approve-build-action")
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function continueToCurrentPhase() {
+    window.location.assign(`/strategic-moves/${move.id}/phase/${nextOpenPhase}`);
   }
 
   async function finalizePhaseCapture() {
@@ -839,7 +847,9 @@ export function MovesPhaseStandaloneClient({
                 <button
                   className="mxw-btn mxw-primary"
                   onClick={
-                    isFinalSubstep
+                    isHistoricalPhase
+                      ? continueToCurrentPhase
+                      : isFinalSubstep
                       ? phase.phase === 0
                         ? () => void approveP0Gate()
                         : focusGateAction
@@ -847,7 +857,9 @@ export function MovesPhaseStandaloneClient({
                   }
                   type="button"
                 >
-                  {isFinalSubstep
+                  {isHistoricalPhase
+                    ? `Continue to ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title} →`
+                    : isFinalSubstep
                     ? phase.phase === 0
                       ? gateApprovalStatus === "approving"
                         ? "Approving..."
@@ -887,13 +899,16 @@ export function MovesPhaseStandaloneClient({
                 gateApproved={gateApproved}
                 gateApprovalMessage={gateApprovalMessage}
                 gateApprovalStatus={gateApprovalStatus}
+                isHistoricalPhase={isHistoricalPhase}
                 move={move}
                 onApproveAfterBuild={approvePhaseGateAfterBuild}
+                onContinueCurrentPhase={continueToCurrentPhase}
                 onApproveP0Gate={approveP0Gate}
                 onFinalizePhaseCapture={finalizePhaseCapture}
                 onOpenFiles={openFilesWorkspace}
                 onSelectOption={setSelectedOption}
                 onShowGate={goToGateStep}
+                nextOpenPhaseContract={nextOpenPhaseContract}
                 p3OptionSet={p3OptionSet}
                 phase={phase}
                 selectedOption={selectedOption}
@@ -1001,13 +1016,16 @@ function PhaseBody({
   gateApproved,
   gateApprovalMessage,
   gateApprovalStatus,
+  isHistoricalPhase,
   move,
   onApproveAfterBuild,
+  onContinueCurrentPhase,
   onApproveP0Gate,
   onFinalizePhaseCapture,
   onOpenFiles,
   onSelectOption,
   onShowGate,
+  nextOpenPhaseContract,
   p3OptionSet,
   phase,
   selectedOption,
@@ -1020,15 +1038,18 @@ function PhaseBody({
   gateApproved: boolean;
   gateApprovalMessage: string | null;
   gateApprovalStatus: "idle" | "approving" | "approved" | "blocked";
+  isHistoricalPhase: boolean;
   move: StrategicMove;
   onApproveAfterBuild: (result: {
     deliverables: Array<{ status: "queued" | "error"; error?: string }>;
   }) => Promise<void>;
+  onContinueCurrentPhase: () => void;
   onApproveP0Gate: () => void | Promise<void>;
   onFinalizePhaseCapture: () => Promise<void>;
   onOpenFiles: () => void;
   onSelectOption: (value: string) => void;
   onShowGate: () => void;
+  nextOpenPhaseContract: PhaseContract;
   p3OptionSet: P3OptionSet;
   phase: PhaseContract;
   selectedOption: string;
@@ -1299,10 +1320,17 @@ function PhaseBody({
       {phase.phase === 0 ? <P0CapturedBriefReview move={move} /> : null}
       <section className="mxw-review">
         <h2>Gate approval</h2>
-        <p>
-          Approve only after the record is reviewed and decision evidence is on
-          file. The approved version is what carries forward.
-        </p>
+        {isHistoricalPhase ? (
+          <p>
+            This phase is already approved and read-only. The approved output is
+            carrying forward into {nextOpenPhaseContract.code} {nextOpenPhaseContract.title}.
+          </p>
+        ) : (
+          <p>
+            Approve only after the record is reviewed and decision evidence is on
+            file. The approved version is what carries forward.
+          </p>
+        )}
         <div className="mxw-gate-attest">
           {[
             "Record reviewed with the accountable owner.",
@@ -1319,7 +1347,7 @@ function PhaseBody({
             {gateApprovalMessage}
           </div>
         ) : null}
-        {phase.phase === 0 && openHardCriteria.length > 0 ? (
+        {phase.phase === 0 && !isHistoricalPhase && openHardCriteria.length > 0 ? (
           <div className="mxw-gate-note">
             <strong>Why some checks are still open</strong>
             <span>
@@ -1330,7 +1358,11 @@ function PhaseBody({
           </div>
         ) : null}
         <div className="mxw-approve-build" id="mxw-approve-build-action">
-          {phase.phase >= 1 ? (
+          {isHistoricalPhase ? (
+            <button className="mxw-gate-button" onClick={onContinueCurrentPhase} type="button">
+              Continue to {nextOpenPhaseContract.code} {nextOpenPhaseContract.title} →
+            </button>
+          ) : phase.phase >= 1 ? (
             <PhaseApproveAndBuild
               archetype={move.archetype}
               clientDisplayName={move.tenant.name}
@@ -1354,7 +1386,15 @@ function PhaseBody({
             </button>
           )}
         </div>
-        {gateApproved ? (
+        {isHistoricalPhase ? (
+          <div className="mxw-approved">
+            <strong>✓ {phase.code} is already approved.</strong>
+            <span>
+              Continue to {nextOpenPhaseContract.code} {nextOpenPhaseContract.title}
+              to keep working from the current phase.
+            </span>
+          </div>
+        ) : gateApproved ? (
           <div className="mxw-approved">
             <strong>✓ Gate approved.</strong>
             <span>
@@ -1364,6 +1404,7 @@ function PhaseBody({
           </div>
         ) : null}
       </section>
+      {!isHistoricalPhase ? (
       <section className="mxw-gate">
         <header>
           <div>
@@ -1418,6 +1459,7 @@ function PhaseBody({
           </div>
         )}
       </section>
+      ) : null}
       <section className="mxw-readiness">
         <h2>Next: {readinessPack.nextPhaseLabel} readiness</h2>
         <p>
