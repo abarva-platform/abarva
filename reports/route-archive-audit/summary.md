@@ -1,19 +1,19 @@
 # Route Archive Audit
 
-Generated: 2026-07-16T02:27:41.371Z
+Generated: 2026-07-16T03:08:05.408Z
 
-Source HEAD: `11b354b64a4215e63dd2aba5983f3e079d36b9d5`
+Source HEAD: `f81694e3f73d5e7ebd4a3872f02fcb01aef93203`
 
 ## Executive Summary
 
-This report inventories Next.js App Router page routes and classifies them for a controlled route-retirement review. It does **not** move, delete, or redirect any route.
+This report inventories Next.js App Router page routes and classifies them for a controlled route-retirement review. The audit script is read-only; it does **not** move, delete, or redirect any route by itself.
 
 | Classification | Count | Meaning |
 | --- | ---: | --- |
-| keep | 173 | Active, public, nav-linked, access, or referenced routes. |
-| redirect-candidate | 6 | Legacy alias routes that likely need redirects before retirement. |
-| archive-candidate | 2 | Demo/dev/preview/docs routes with no detected references; suitable for owner review as archive candidates. |
-| human-review | 27 | Product, admin, tenant, dynamic, or unclear routes that should not be archived automatically. |
+| keep | 174 | Active, public, nav-linked, access, or referenced routes. |
+| redirect-candidate | 0 | Legacy alias routes that likely need redirects before retirement. |
+| archive-candidate | 0 | Demo/dev/preview/docs routes with no detected references; suitable for owner review as archive candidates. |
+| human-review | 26 | Product, admin, tenant, dynamic, or unclear routes that should not be archived automatically. |
 
 Duplicate URL paths detected: 1
 
@@ -23,14 +23,14 @@ Duplicate URL paths detected: 1
 | --- | ---: |
 | access | 4 |
 | admin-internal | 67 |
-| demo-dev | 5 |
+| demo-dev | 4 |
 | docs | 8 |
 | intelligence | 1 |
 | knowledge-home | 6 |
-| moves | 12 |
+| moves | 10 |
 | other | 25 |
-| preview | 5 |
-| programs-legacy | 10 |
+| preview | 4 |
+| programs-legacy | 6 |
 | public-marketing | 26 |
 | public-root | 2 |
 | source | 26 |
@@ -52,8 +52,7 @@ These are the only routes this audit marks as potential archive candidates. They
 
 | Route | Confidence | Kind | Refs | Source | Reason |
 | --- | --- | --- | ---: | --- | --- |
-| `/_dev/agent-dock` | medium | demo-dev | 0 | `src/app/_dev/agent-dock/page.tsx` | demo/dev/preview route with no detected references |
-| `/preview/nexus` | medium | preview | 0 | `src/app/(maestro)/preview/nexus/page.tsx` | demo/dev/preview route with no detected references |
+| _None_ |  |  |  |  |  |
 
 ## Redirect Candidates
 
@@ -61,12 +60,7 @@ These should be handled with redirects or compatibility decisions before any sou
 
 | Route | Confidence | Kind | Refs | Source | Reason |
 | --- | --- | --- | ---: | --- | --- |
-| `/moves` | medium | moves | 33 | `src/app/(maestro)/moves/page.tsx` | legacy alias family; likely redirect to /strategic-moves |
-| `/moves/:moveId` | medium | moves | 7 | `src/app/(maestro)/moves/[moveId]/page.tsx` | legacy alias family; likely redirect to /strategic-moves |
-| `/programs/compare` | medium | programs-legacy | 5 | `src/app/programs/compare/page.tsx` | legacy alias family; likely redirect to /strategic-moves |
-| `/programs/expert-kernel` | medium | programs-legacy | 0 | `src/app/programs/expert-kernel/page.tsx` | legacy alias family; likely redirect to /strategic-moves |
-| `/programs/expert-kernel/expert-review` | medium | programs-legacy | 1 | `src/app/programs/expert-kernel/expert-review/page.tsx` | legacy alias family; likely redirect to /strategic-moves |
-| `/programs/patterns` | medium | programs-legacy | 9 | `src/app/programs/patterns/page.tsx` | legacy alias family; likely redirect to /strategic-moves |
+| _None_ |  |  |  |  |  |
 
 ## Human Review
 
@@ -100,7 +94,6 @@ These are unlinked or ambiguous routes that are **not** safe to archive automati
 | `/source/renewal/:contractId` | medium | source | 15 | `src/app/(maestro)/source/renewal/[contractId]/page.tsx` | dynamic or tenant-scoped route; may be deep-linked; has detected route-family references |
 | `/source/renewal/:contractId/execution` | medium | source | 15 | `src/app/(maestro)/source/renewal/[contractId]/execution/page.tsx` | dynamic or tenant-scoped route; may be deep-linked; has detected route-family references |
 | `/sponsor/:engagementId` | medium | sponsor | 7 | `src/app/sponsor/[engagementId]/page.tsx` | dynamic or tenant-scoped route; may be deep-linked; has detected route-family references |
-| `/strategic-moves/expert-kernel/dossier` | medium | moves | 0 | `src/app/(maestro)/strategic-moves/expert-kernel/dossier/page.tsx` | product/internal route with no literal refs; needs owner review |
 
 ## Keep Sample
 

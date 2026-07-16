@@ -1,17 +1,15 @@
 {
-  "generatedAt": "2026-07-16T02:27:41.371Z",
+  "generatedAt": "2026-07-16T03:08:05.408Z",
   "source": {
     "repoRoot": "/private/tmp/nexus-route-archive-audit",
-    "head": "11b354b64a4215e63dd2aba5983f3e079d36b9d5",
-    "scannedTextFiles": 12545
+    "head": "f81694e3f73d5e7ebd4a3872f02fcb01aef93203",
+    "scannedTextFiles": 12537
   },
   "summary": {
-    "total": 208,
+    "total": 200,
     "byClassification": {
-      "keep": 173,
-      "redirect-candidate": 6,
-      "archive-candidate": 2,
-      "human-review": 27
+      "keep": 174,
+      "human-review": 26
     },
     "byKind": {
       "public-root": 2,
@@ -19,15 +17,15 @@
       "admin-internal": 67,
       "public-marketing": 26,
       "other": 25,
-      "demo-dev": 5,
+      "demo-dev": 4,
       "docs": 8,
       "knowledge-home": 6,
       "intelligence": 1,
-      "preview": 5,
-      "programs-legacy": 10,
+      "preview": 4,
+      "programs-legacy": 6,
       "source": 26,
       "sponsor": 2,
-      "moves": 12,
+      "moves": 10,
       "tenant-deep-link": 8,
       "tower": 1
     }
@@ -4169,7 +4167,7 @@
       "kind": "knowledge-home",
       "classification": "keep",
       "confidence": "high",
-      "refCount": 421,
+      "refCount": 422,
       "navRefCount": 17,
       "referenceFiles": [
         {
@@ -6109,7 +6107,7 @@
       "kind": "programs-legacy",
       "classification": "keep",
       "confidence": "high",
-      "refCount": 252,
+      "refCount": 250,
       "navRefCount": 5,
       "referenceFiles": [
         {
@@ -6184,7 +6182,7 @@
       "kind": "programs-legacy",
       "classification": "keep",
       "confidence": "high",
-      "refCount": 544,
+      "refCount": 539,
       "navRefCount": 3,
       "referenceFiles": [
         {
@@ -6259,7 +6257,7 @@
       "kind": "programs-legacy",
       "classification": "keep",
       "confidence": "high",
-      "refCount": 544,
+      "refCount": 539,
       "navRefCount": 3,
       "referenceFiles": [
         {
@@ -6334,7 +6332,7 @@
       "kind": "programs-legacy",
       "classification": "keep",
       "confidence": "high",
-      "refCount": 543,
+      "refCount": 538,
       "navRefCount": 3,
       "referenceFiles": [
         {
@@ -6409,7 +6407,7 @@
       "kind": "programs-legacy",
       "classification": "keep",
       "confidence": "high",
-      "refCount": 543,
+      "refCount": 538,
       "navRefCount": 3,
       "referenceFiles": [
         {
@@ -6484,7 +6482,7 @@
       "kind": "programs-legacy",
       "classification": "keep",
       "confidence": "high",
-      "refCount": 144,
+      "refCount": 142,
       "navRefCount": 1,
       "referenceFiles": [
         {
@@ -7734,7 +7732,7 @@
       "kind": "moves",
       "classification": "keep",
       "confidence": "high",
-      "refCount": 185,
+      "refCount": 184,
       "navRefCount": 8,
       "referenceFiles": [
         {
@@ -7809,7 +7807,7 @@
       "kind": "moves",
       "classification": "keep",
       "confidence": "high",
-      "refCount": 321,
+      "refCount": 322,
       "navRefCount": 2,
       "referenceFiles": [
         {
@@ -7843,6 +7841,11 @@
           "isNavFile": false
         },
         {
+          "file": "next.config.ts",
+          "hits": 7,
+          "isNavFile": false
+        },
+        {
           "file": "src/components/strategic-moves/StrategicMoveOriginateClient.tsx",
           "hits": 7,
           "isNavFile": false
@@ -7864,11 +7867,6 @@
         },
         {
           "file": "docs/design/strategic-moves/specs/originate/02-state.md",
-          "hits": 6,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/design/strategic-moves/specs/originate/05-knowledge-surfacing.md",
           "hits": 6,
           "isNavFile": false
         }
@@ -7884,7 +7882,7 @@
       "kind": "moves",
       "classification": "keep",
       "confidence": "high",
-      "refCount": 319,
+      "refCount": 320,
       "navRefCount": 2,
       "referenceFiles": [
         {
@@ -7918,6 +7916,11 @@
           "isNavFile": false
         },
         {
+          "file": "next.config.ts",
+          "hits": 7,
+          "isNavFile": false
+        },
+        {
           "file": "src/components/strategic-moves/StrategicMoveOriginateClient.tsx",
           "hits": 7,
           "isNavFile": false
@@ -7939,11 +7942,6 @@
         },
         {
           "file": "docs/design/strategic-moves/specs/originate/02-state.md",
-          "hits": 6,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/design/strategic-moves/specs/originate/05-knowledge-surfacing.md",
           "hits": 6,
           "isNavFile": false
         }
@@ -7955,81 +7953,6 @@
     {
       "route": "/strategic-moves/:moveId/phase/:phaseNum",
       "sourcePath": "src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx",
-      "appGroup": "maestro",
-      "kind": "moves",
-      "classification": "keep",
-      "confidence": "high",
-      "refCount": 321,
-      "navRefCount": 2,
-      "referenceFiles": [
-        {
-          "file": "src/lib/agent/output-discipline/golden-fixtures.ts",
-          "hits": 12,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/design/strategic-moves/specs/originate/03-interactions.md",
-          "hits": 11,
-          "isNavFile": false
-        },
-        {
-          "file": "src/app/api/chat/agent/route.ts",
-          "hits": 10,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/design/strategic-moves/specs/acceptance/A2-acceptance-script-flow2.md",
-          "hits": 8,
-          "isNavFile": false
-        },
-        {
-          "file": "tests/e2e/moves-castillo-journey.spec.ts",
-          "hits": 8,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/design/strategic-moves/specs/acceptance/A3-cross-tenant-smoke-test.md",
-          "hits": 7,
-          "isNavFile": false
-        },
-        {
-          "file": "src/components/strategic-moves/StrategicMoveOriginateClient.tsx",
-          "hits": 7,
-          "isNavFile": false
-        },
-        {
-          "file": "src/components/strategic-moves/StrategicMovesHomeClient.tsx",
-          "hits": 7,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/build/azure-container-apps-runtime/AZURE_CONTAINER_APPS_RUNTIME_PROOF_2026-06-08.md",
-          "hits": 6,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/build/lakeshore-success-brief/cxo-hard-question-qa/questions.json",
-          "hits": 6,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/design/strategic-moves/specs/originate/02-state.md",
-          "hits": 6,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/design/strategic-moves/specs/originate/05-knowledge-surfacing.md",
-          "hits": 6,
-          "isNavFile": false
-        }
-      ],
-      "reasons": [
-        "referenced by shell/navigation config"
-      ]
-    },
-    {
-      "route": "/strategic-moves/:moveId/trace",
-      "sourcePath": "src/app/(maestro)/strategic-moves/[moveId]/trace/page.tsx",
       "appGroup": "maestro",
       "kind": "moves",
       "classification": "keep",
@@ -8068,6 +7991,11 @@
           "isNavFile": false
         },
         {
+          "file": "next.config.ts",
+          "hits": 7,
+          "isNavFile": false
+        },
+        {
           "file": "src/components/strategic-moves/StrategicMoveOriginateClient.tsx",
           "hits": 7,
           "isNavFile": false
@@ -8091,11 +8019,6 @@
           "file": "docs/design/strategic-moves/specs/originate/02-state.md",
           "hits": 6,
           "isNavFile": false
-        },
-        {
-          "file": "docs/design/strategic-moves/specs/originate/05-knowledge-surfacing.md",
-          "hits": 6,
-          "isNavFile": false
         }
       ],
       "reasons": [
@@ -8103,13 +8026,13 @@
       ]
     },
     {
-      "route": "/strategic-moves/:moveId/workspace",
-      "sourcePath": "src/app/(maestro)/strategic-moves/[moveId]/workspace/page.tsx",
+      "route": "/strategic-moves/:moveId/trace",
+      "sourcePath": "src/app/(maestro)/strategic-moves/[moveId]/trace/page.tsx",
       "appGroup": "maestro",
       "kind": "moves",
       "classification": "keep",
       "confidence": "high",
-      "refCount": 321,
+      "refCount": 323,
       "navRefCount": 2,
       "referenceFiles": [
         {
@@ -8143,6 +8066,11 @@
           "isNavFile": false
         },
         {
+          "file": "next.config.ts",
+          "hits": 7,
+          "isNavFile": false
+        },
+        {
           "file": "src/components/strategic-moves/StrategicMoveOriginateClient.tsx",
           "hits": 7,
           "isNavFile": false
@@ -8166,15 +8094,105 @@
           "file": "docs/design/strategic-moves/specs/originate/02-state.md",
           "hits": 6,
           "isNavFile": false
+        }
+      ],
+      "reasons": [
+        "referenced by shell/navigation config"
+      ]
+    },
+    {
+      "route": "/strategic-moves/:moveId/workspace",
+      "sourcePath": "src/app/(maestro)/strategic-moves/[moveId]/workspace/page.tsx",
+      "appGroup": "maestro",
+      "kind": "moves",
+      "classification": "keep",
+      "confidence": "high",
+      "refCount": 322,
+      "navRefCount": 2,
+      "referenceFiles": [
+        {
+          "file": "src/lib/agent/output-discipline/golden-fixtures.ts",
+          "hits": 12,
+          "isNavFile": false
         },
         {
-          "file": "docs/design/strategic-moves/specs/originate/05-knowledge-surfacing.md",
+          "file": "docs/design/strategic-moves/specs/originate/03-interactions.md",
+          "hits": 11,
+          "isNavFile": false
+        },
+        {
+          "file": "src/app/api/chat/agent/route.ts",
+          "hits": 10,
+          "isNavFile": false
+        },
+        {
+          "file": "docs/design/strategic-moves/specs/acceptance/A2-acceptance-script-flow2.md",
+          "hits": 8,
+          "isNavFile": false
+        },
+        {
+          "file": "tests/e2e/moves-castillo-journey.spec.ts",
+          "hits": 8,
+          "isNavFile": false
+        },
+        {
+          "file": "docs/design/strategic-moves/specs/acceptance/A3-cross-tenant-smoke-test.md",
+          "hits": 7,
+          "isNavFile": false
+        },
+        {
+          "file": "next.config.ts",
+          "hits": 7,
+          "isNavFile": false
+        },
+        {
+          "file": "src/components/strategic-moves/StrategicMoveOriginateClient.tsx",
+          "hits": 7,
+          "isNavFile": false
+        },
+        {
+          "file": "src/components/strategic-moves/StrategicMovesHomeClient.tsx",
+          "hits": 7,
+          "isNavFile": false
+        },
+        {
+          "file": "docs/build/azure-container-apps-runtime/AZURE_CONTAINER_APPS_RUNTIME_PROOF_2026-06-08.md",
+          "hits": 6,
+          "isNavFile": false
+        },
+        {
+          "file": "docs/build/lakeshore-success-brief/cxo-hard-question-qa/questions.json",
+          "hits": 6,
+          "isNavFile": false
+        },
+        {
+          "file": "docs/design/strategic-moves/specs/originate/02-state.md",
           "hits": 6,
           "isNavFile": false
         }
       ],
       "reasons": [
         "referenced by shell/navigation config"
+      ]
+    },
+    {
+      "route": "/strategic-moves/expert-kernel/dossier",
+      "sourcePath": "src/app/(maestro)/strategic-moves/expert-kernel/dossier/page.tsx",
+      "appGroup": "maestro",
+      "kind": "moves",
+      "classification": "keep",
+      "confidence": "medium",
+      "refCount": 2,
+      "navRefCount": 0,
+      "referenceFiles": [
+        {
+          "file": "next.config.ts",
+          "hits": 2,
+          "isNavFile": false
+        }
+      ],
+      "reasons": [
+        "has detected code/docs/test references"
       ]
     },
     {
@@ -9020,268 +9038,6 @@
       ],
       "reasons": [
         "primary app route"
-      ]
-    },
-    {
-      "route": "/moves",
-      "sourcePath": "src/app/(maestro)/moves/page.tsx",
-      "appGroup": "maestro",
-      "kind": "moves",
-      "classification": "redirect-candidate",
-      "confidence": "medium",
-      "refCount": 33,
-      "navRefCount": 0,
-      "referenceFiles": [
-        {
-          "file": "docs/build/SETUP_AUDIT_2026-05-30_VERDICT.md",
-          "hits": 3,
-          "isNavFile": false
-        },
-        {
-          "file": "src/lib/agent/voice-doctrine/__tests__/nexus.test.ts",
-          "hits": 3,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/build/CODEX_BRIEF_6_CONSULTANT_POSTURE_NEXUS_SOURCE.md",
-          "hits": 2,
-          "isNavFile": false
-        },
-        {
-          "file": "scripts/audit/route-archive-audit.mjs",
-          "hits": 2,
-          "isNavFile": false
-        },
-        {
-          "file": "src/app/api/chat/agent/route.ts",
-          "hits": 2,
-          "isNavFile": false
-        },
-        {
-          "file": "src/lib/agent/all-agent-doctrine.test.ts",
-          "hits": 2,
-          "isNavFile": false
-        },
-        {
-          "file": "src/lib/programs/expert-kernel/domain/apex-decision-home.ts",
-          "hits": 2,
-          "isNavFile": false
-        },
-        {
-          "file": "src/lib/programs/expert-kernel/domain/firstcapital-decision-home.ts",
-          "hits": 2,
-          "isNavFile": false
-        },
-        {
-          "file": "src/lib/programs/expert-kernel/domain/meridian-vbc-decision-home.ts",
-          "hits": 2,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/build/C8_PHASE_1_404_REMEDIATION.md",
-          "hits": 1,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/build/cxo-primers/demo/reports/live-capture-report.json",
-          "hits": 1,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/build/lakeshore-module-readiness/2026-06-08-browser-readiness-report.md",
-          "hits": 1,
-          "isNavFile": false
-        }
-      ],
-      "reasons": [
-        "legacy alias family; likely redirect to /strategic-moves"
-      ]
-    },
-    {
-      "route": "/moves/:moveId",
-      "sourcePath": "src/app/(maestro)/moves/[moveId]/page.tsx",
-      "appGroup": "maestro",
-      "kind": "moves",
-      "classification": "redirect-candidate",
-      "confidence": "medium",
-      "refCount": 7,
-      "navRefCount": 0,
-      "referenceFiles": [
-        {
-          "file": "docs/build/lakeshore-success-brief/cxo-hard-question-qa/questions.json",
-          "hits": 2,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/build/lakeshore/LAKESHORE_LIVE_DATA_AUDIT_2026-06-05.md",
-          "hits": 2,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/build/cxo-primers/demo/reports/live-capture-report.json",
-          "hits": 1,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/releases/records/2026-06-05-lakeshore-live-data-artifact-audit.md",
-          "hits": 1,
-          "isNavFile": false
-        },
-        {
-          "file": "next.config.ts",
-          "hits": 1,
-          "isNavFile": false
-        }
-      ],
-      "reasons": [
-        "legacy alias family; likely redirect to /strategic-moves"
-      ]
-    },
-    {
-      "route": "/programs/compare",
-      "sourcePath": "src/app/programs/compare/page.tsx",
-      "appGroup": "root",
-      "kind": "programs-legacy",
-      "classification": "redirect-candidate",
-      "confidence": "medium",
-      "refCount": 5,
-      "navRefCount": 0,
-      "referenceFiles": [
-        {
-          "file": "src/components/programs/ProgramsIndexPage.tsx",
-          "hits": 2,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/build/programs/WAVE-P1-PLAN.md",
-          "hits": 1,
-          "isNavFile": false
-        },
-        {
-          "file": "next.config.ts",
-          "hits": 1,
-          "isNavFile": false
-        },
-        {
-          "file": "scripts/audit/run-full-module-stress.mjs",
-          "hits": 1,
-          "isNavFile": false
-        }
-      ],
-      "reasons": [
-        "legacy alias family; likely redirect to /strategic-moves"
-      ]
-    },
-    {
-      "route": "/programs/expert-kernel",
-      "sourcePath": "src/app/programs/expert-kernel/page.tsx",
-      "appGroup": "root",
-      "kind": "programs-legacy",
-      "classification": "redirect-candidate",
-      "confidence": "medium",
-      "refCount": 0,
-      "navRefCount": 0,
-      "referenceFiles": [],
-      "reasons": [
-        "legacy alias family; likely redirect to /strategic-moves"
-      ]
-    },
-    {
-      "route": "/programs/expert-kernel/expert-review",
-      "sourcePath": "src/app/programs/expert-kernel/expert-review/page.tsx",
-      "appGroup": "root",
-      "kind": "programs-legacy",
-      "classification": "redirect-candidate",
-      "confidence": "medium",
-      "refCount": 1,
-      "navRefCount": 0,
-      "referenceFiles": [
-        {
-          "file": "src/app/programs/expert-kernel/expert-review/actions.ts",
-          "hits": 1,
-          "isNavFile": false
-        }
-      ],
-      "reasons": [
-        "legacy alias family; likely redirect to /strategic-moves"
-      ]
-    },
-    {
-      "route": "/programs/patterns",
-      "sourcePath": "src/app/programs/patterns/page.tsx",
-      "appGroup": "root",
-      "kind": "programs-legacy",
-      "classification": "redirect-candidate",
-      "confidence": "medium",
-      "refCount": 9,
-      "navRefCount": 0,
-      "referenceFiles": [
-        {
-          "file": "docs/build/programs/AUDIT.md",
-          "hits": 2,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/build/programs/WAVE-P1-PLAN.md",
-          "hits": 2,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/build/PROGRAMS_BUILD_SPEC.md",
-          "hits": 1,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/build/PROGRAMS_STRICT_COMPLETION_KICKOFF_V1.md",
-          "hits": 1,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/build/slices/S8_PROGRAMS_PAGE_READINESS_CONTRACT.md",
-          "hits": 1,
-          "isNavFile": false
-        },
-        {
-          "file": "docs/specs/programs/design-spec.md",
-          "hits": 1,
-          "isNavFile": false
-        },
-        {
-          "file": "next.config.ts",
-          "hits": 1,
-          "isNavFile": false
-        }
-      ],
-      "reasons": [
-        "legacy alias family; likely redirect to /strategic-moves"
-      ]
-    },
-    {
-      "route": "/_dev/agent-dock",
-      "sourcePath": "src/app/_dev/agent-dock/page.tsx",
-      "appGroup": "root",
-      "kind": "demo-dev",
-      "classification": "archive-candidate",
-      "confidence": "medium",
-      "refCount": 0,
-      "navRefCount": 0,
-      "referenceFiles": [],
-      "reasons": [
-        "demo/dev/preview route with no detected references"
-      ]
-    },
-    {
-      "route": "/preview/nexus",
-      "sourcePath": "src/app/(maestro)/preview/nexus/page.tsx",
-      "appGroup": "maestro",
-      "kind": "preview",
-      "classification": "archive-candidate",
-      "confidence": "medium",
-      "refCount": 0,
-      "navRefCount": 0,
-      "referenceFiles": [],
-      "reasons": [
-        "demo/dev/preview route with no detected references"
       ]
     },
     {
@@ -10823,20 +10579,6 @@
       "reasons": [
         "dynamic or tenant-scoped route; may be deep-linked",
         "has detected route-family references"
-      ]
-    },
-    {
-      "route": "/strategic-moves/expert-kernel/dossier",
-      "sourcePath": "src/app/(maestro)/strategic-moves/expert-kernel/dossier/page.tsx",
-      "appGroup": "maestro",
-      "kind": "moves",
-      "classification": "human-review",
-      "confidence": "medium",
-      "refCount": 0,
-      "navRefCount": 0,
-      "referenceFiles": [],
-      "reasons": [
-        "product/internal route with no literal refs; needs owner review"
       ]
     }
   ]

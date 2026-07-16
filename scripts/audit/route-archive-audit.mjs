@@ -450,7 +450,7 @@ Source HEAD: \`${report.source.head}\`
 
 ## Executive Summary
 
-This report inventories Next.js App Router page routes and classifies them for a controlled route-retirement review. It does **not** move, delete, or redirect any route.
+This report inventories Next.js App Router page routes and classifies them for a controlled route-retirement review. The audit script is read-only; it does **not** move, delete, or redirect any route by itself.
 
 | Classification | Count | Meaning |
 | --- | ---: | --- |

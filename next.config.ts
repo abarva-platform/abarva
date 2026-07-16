@@ -63,6 +63,17 @@ const nextConfig: NextConfig = {
       { source: '/programs/new', destination: '/strategic-moves/new', permanent: false },
       { source: '/programs/compare', destination: '/strategic-moves', permanent: false },
       { source: '/programs/patterns', destination: '/strategic-moves', permanent: false },
+      {
+        source: '/programs/expert-kernel',
+        destination: '/strategic-moves/expert-kernel/dossier',
+        permanent: false,
+      },
+      {
+        source: '/programs/expert-kernel/expert-review',
+        destination: '/strategic-moves/expert-kernel/dossier',
+        permanent: false,
+      },
+      { source: '/preview/nexus', destination: '/home', permanent: false },
       { source: '/programs/:id/report', destination: '/strategic-moves/:id', permanent: false },
       { source: '/programs/:id/:rest*', destination: '/strategic-moves/:id', permanent: false },
       { source: '/programs/:id', destination: '/strategic-moves/:id', permanent: false },
