@@ -12,6 +12,8 @@
 
 The bare `app.abarva.ai/` route now remains the public marketing and request-access landing page, even when the visitor has an existing Clerk session. Signed-in users still enter the product through `/sign-in` and `/auth-redirect`. Inside the authenticated product shell, the `Knowledge` nav item and NEXUS brand now use fast App Router navigation to `/home` instead of forcing a full browser reload. Legacy/compatibility shell primitives are also aligned so pages that still mount older chrome do not show `Home`, `Programs`, `Control Tower`, or tenant-specific Apex routes in shared navigation.
 
+Live signed-in proof after PR #4875 showed the nav links were corrected, but authenticated `/home` could still hang before the first response because optional Knowledge enrichment loaders ran inline with page render. This follow-up bounds those optional loaders and uses the deterministic governed Home summary as the fallback so product navigation can always land on Knowledge.
+
 ## Layer Impact
 
 - `public-demo`: The root route is restored as a public marketing/request-access surface instead of being intercepted into the authenticated app router.
@@ -40,7 +42,9 @@ The bare `app.abarva.ai/` route now remains the public marketing and request-acc
 - `src/components/shell/CommandPalette.tsx`: aligns command search entries with Knowledge, Moves, and Tower.
 - `src/lib/design/abarva-shell.ts`: removes tenant-specific Apex fallback hrefs from the shared shell config.
 - `src/lib/home/top-nav-items.ts`: aligns the metadata pendant label with `Knowledge`.
+- `src/app/(maestro)/home/page.tsx`: bounds optional module-context, V7 browser, inventory, source-file, and Claude summary enrichment so `/home` renders even if a data/enrichment path is slow.
 - `src/components/shell/__tests__/topbar-nav-home-admin.test.ts`: verifies the Knowledge nav contract.
+- `src/app/(maestro)/home/__tests__/home-admin-boundary-contract.test.ts`: verifies optional Knowledge enrichment is timeout-bounded and does not re-enter the runtime module-context loader as the fallback.
 - `src/__tests__/integration/design/abarva-app-shell.test.ts`: verifies shell config routes are global product routes, not tenant-specific fallbacks.
 - `src/__tests__/integration/design/abarva-ui-primitives.test.ts`: verifies the compatibility top-nav surface list starts with `Knowledge`.
 
@@ -51,16 +55,15 @@ The bare `app.abarva.ai/` route now remains the public marketing and request-acc
 - Pass: `npm run test:nav -- --runTestsByPath src/components/shell/__tests__/topbar-nav-home-admin.test.ts`
 - Pass: `npm run test:nav -- --runTestsByPath src/components/navigation/__tests__/NexusTopNav.test.tsx src/components/shell/__tests__/topbar-nav-home-admin.test.ts src/__tests__/integration/design/abarva-app-shell.test.ts --runInBand`
 - Pass: `npm run test:nav -- --runTestsByPath src/__tests__/integration/design/abarva-ui-primitives.test.ts --testNamePattern AbarvaTopNav --runInBand`
+- Pass after PR #4875 deploy: repo-owned ACA main deploy workflow published merge SHA `4163b569ab2ac9d5a010c4464cc8b28b6049652d` to revision `ca-abarva-web-lab-eastus--m4163b569`, image digest `sha256:ba7383dc8027187332fb96fc0711bf2d335e9d4e9aeae3ef095b1033710d8fbe`, 100% traffic, and healthy `/api/health`.
+- Failed after PR #4875 deploy: signed-in browser proof found `/tower`, `/intelligence`, `/source`, and `/strategic-moves` loaded, and their visible Knowledge links pointed at `/home`, but authenticated `/home` itself timed out before first response. Root cause: optional Home/Knowledge enrichment loaders were awaited inline with page render.
 - Blocked baseline: full `src/__tests__/integration/design/abarva-ui-primitives.test.ts` still has unrelated pre-existing failures around typography, agent list, and brand import expectations.
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`
 - Pass: `npm run release:check`
 - Pass: `git diff --check`
 - Pass: `git diff --check -- src/app/page.tsx src/proxy.ts src/components/navigation/NexusTopNav.tsx src/components/shell/__tests__/topbar-nav-home-admin.test.ts docs/releases/records/2026-07-16-root-marketing-and-knowledge-nav.md`
 - Pass: local webpack dev check on `http://localhost:3911/` returned `200 OK` and rendered the marketing/request-access page.
-- Not run: deploy through the repo-owned ACA main deploy workflow.
-- Not run: live signed-in browser proof that `https://app.abarva.ai/` renders the marketing/request-access page and does not pivot to `/auth-redirect`.
-- Not run: live signed-in browser proof that clicking `Knowledge` from Tower returns to `/home` without a full document reload.
-- Pending in this PR: signed-in browser proof after deploy.
+- Pending follow-up: deploy the bounded `/home` render fix, then rerun signed-in browser proof that direct `/home` loads and clicking `Knowledge`/NEXUS brand from other product surfaces reaches `/home`.
 
 ## Rollout Plan
 
