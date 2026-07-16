@@ -1986,6 +1986,10 @@ function displayMetric(value: number, label: string): string {
   return shortMetric(value);
 }
 
+function nexusProductText(value: string): string {
+  return value.replace(/\bAbarVa\b/g, "Nexus");
+}
+
 function formatShortUtcDate(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Unavailable";
@@ -2964,21 +2968,21 @@ function KnowledgeLayerVisual({
       <div className="hx3-knowledgeMap">
         {spec.nodes.slice(0, 3).map((node) => (
           <article className={`hx3-knowledgeNode ${node.tone}`} key={node.id}>
-            <strong>{node.label}</strong>
-            <span>{node.detail}</span>
+            <strong>{nexusProductText(node.label)}</strong>
+            <span>{nexusProductText(node.detail)}</span>
             <em>{node.moduleUses.join(" / ")}</em>
           </article>
         ))}
         <div className="hx3-knowledgeCenter">
           <div>
-            <strong>{spec.centerLabel}</strong>
-            <span>{spec.centerDetail}</span>
+            <strong>{nexusProductText(spec.centerLabel)}</strong>
+            <span>{nexusProductText(spec.centerDetail)}</span>
           </div>
         </div>
         {spec.nodes.slice(3).map((node) => (
           <article className={`hx3-knowledgeNode ${node.tone}`} key={node.id}>
-            <strong>{node.label}</strong>
-            <span>{node.detail}</span>
+            <strong>{nexusProductText(node.label)}</strong>
+            <span>{nexusProductText(node.detail)}</span>
             <em>{node.moduleUses.join(" / ")}</em>
           </article>
         ))}
@@ -2987,13 +2991,13 @@ function KnowledgeLayerVisual({
         {spec.flow.slice(0, 5).map((step, index) => (
           <div className="hx3-flowStep" key={`${step.label}-${index}`}>
             <strong>
-              {index + 1}. {step.label}
+              {index + 1}. {nexusProductText(step.label)}
             </strong>
-            {step.detail}
+            {nexusProductText(step.detail)}
           </div>
         ))}
       </div>
-      <p className="hx3-knowledgeCaveat">{spec.caveat}</p>
+      <p className="hx3-knowledgeCaveat">{nexusProductText(spec.caveat)}</p>
     </div>
   );
 }
