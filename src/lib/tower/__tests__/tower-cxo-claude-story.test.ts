@@ -151,6 +151,16 @@ describe("Tower CXO Claude story synthesis", () => {
     expect(result.view.cxoStory.cards.map((card) => card.value)).toEqual(
       view.cxoStory.cards.map((card) => card.value),
     );
+    const egressCall = mockedGetAuditedAnthropicClient.mock.calls[0]?.[0];
+    expect(egressCall).toEqual(
+      expect.objectContaining({
+        artifactType: "tower_cxo_story_block",
+        metadata: expect.objectContaining({
+          contextPackId: view.contextPackId,
+        }),
+      }),
+    );
+    expect(egressCall).not.toHaveProperty("artifactId");
   });
 
   it("rejects Claude output that changes locked values or leaks internal language", () => {

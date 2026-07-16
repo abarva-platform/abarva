@@ -112,7 +112,6 @@ export async function applyTowerCxoClaudeStory(args: {
       model,
       dataClass: "confidential",
       prompt: request.promptTrace.fullPrompt,
-      artifactId: args.view.contextPackId,
       artifactType: "tower_cxo_story_block",
       metadata: {
         promptVersion: PROMPT_VERSION,
