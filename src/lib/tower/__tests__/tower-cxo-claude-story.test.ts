@@ -326,6 +326,31 @@ describe("Tower CXO Claude story synthesis", () => {
     );
   });
 
+  it("allows outcome-proof terms only when they are clearly negated or caveated", () => {
+    const { view } = proof();
+    const payload = goodClaudePayload(view);
+    payload.story.executiveBrief =
+      "Meridian can use Tower for measurement readiness, not certified financial outcome.";
+    payload.visualSpecs.insights.insight =
+      "Do not treat this as measured outcome; use it as a planning hypothesis until finance-attested proof is loaded.";
+
+    const validation = validateTowerCxoClaudePayload(payload, view);
+
+    expect(validation.passed).toBe(true);
+  });
+
+  it("still rejects positive outcome-proof claims in Claude story or visuals", () => {
+    const { view } = proof();
+    const payload = goodClaudePayload(view);
+    payload.visualSpecs.value.insight =
+      "The portfolio now has proven value and measured savings for leadership.";
+
+    const validation = validateTowerCxoClaudePayload(payload, view);
+
+    expect(validation.passed).toBe(false);
+    expect(validation.issues).toContain("Visual spec value makes unsupported outcome claim.");
+  });
+
   it("falls back to deterministic story when Claude output fails validation", async () => {
     const { contextPack, view } = proof();
     const payload = goodClaudePayload(view);
