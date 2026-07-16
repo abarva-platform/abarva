@@ -204,6 +204,108 @@ describe("Tower CXO Claude story synthesis", () => {
     expect(result.rawText).toContain("budget-to-value control conversation");
   });
 
+  it("accepts nested Claude tool input when the provider wraps the contract body", async () => {
+    const { contextPack, view } = proof();
+    const payload = goodClaudePayload(view);
+    mockedGetAuditedAnthropicClient.mockResolvedValue({
+      client: {
+        messages: {
+          create: jest.fn().mockResolvedValue({
+            content: [
+              {
+                type: "tool_use",
+                id: "toolu_tower_story_wrapped",
+                name: "tower_cxo_story",
+                input: { input: payload },
+              },
+            ],
+          }),
+        },
+      } as never,
+      auditId: "audit-tower-story-wrapped",
+      dataClass: "confidential",
+    });
+
+    const result = await applyTowerCxoClaudeStory({
+      view,
+      contextPack,
+      tenantName: "Healthcare Demo",
+    });
+
+    expect(result.used).toBe(true);
+    expect(result.view.cxoStorySource).toBe("claude_validated");
+    expect(result.auditId).toBe("audit-tower-story-wrapped");
+  });
+
+  it("accepts Claude output that uses runtime field names for the same governed contract", async () => {
+    const { contextPack, view } = proof();
+    const payload = goodClaudePayload(view);
+    mockedGetAuditedAnthropicClient.mockResolvedValue({
+      client: {
+        messages: {
+          create: jest.fn().mockResolvedValue({
+            content: [
+              {
+                type: "tool_use",
+                id: "toolu_tower_story_runtime_names",
+                name: "tower_cxo_story",
+                input: {
+                  cxoStory: payload.story,
+                  cxoVisualSpecs: payload.visualSpecs,
+                },
+              },
+            ],
+          }),
+        },
+      } as never,
+      auditId: "audit-tower-story-runtime-names",
+      dataClass: "confidential",
+    });
+
+    const result = await applyTowerCxoClaudeStory({
+      view,
+      contextPack,
+      tenantName: "Healthcare Demo",
+    });
+
+    expect(result.used).toBe(true);
+    expect(result.view.cxoStorySource).toBe("claude_validated");
+    expect(result.auditId).toBe("audit-tower-story-runtime-names");
+  });
+
+  it("accepts a story-only tool object when tab visual specs can be derived from Claude tabs", async () => {
+    const { contextPack, view } = proof();
+    const payload = goodClaudePayload(view);
+    mockedGetAuditedAnthropicClient.mockResolvedValue({
+      client: {
+        messages: {
+          create: jest.fn().mockResolvedValue({
+            content: [
+              {
+                type: "tool_use",
+                id: "toolu_tower_story_root",
+                name: "tower_cxo_story",
+                input: payload.story,
+              },
+            ],
+          }),
+        },
+      } as never,
+      auditId: "audit-tower-story-root",
+      dataClass: "confidential",
+    });
+
+    const result = await applyTowerCxoClaudeStory({
+      view,
+      contextPack,
+      tenantName: "Healthcare Demo",
+    });
+
+    expect(result.used).toBe(true);
+    expect(result.view.cxoStorySource).toBe("claude_validated");
+    expect(result.view.cxoVisualSpecs.value.title).toBe(payload.story.tabs.value.headline);
+  });
+
   it("rejects Claude output that changes locked values or leaks internal language", () => {
     const { view } = proof();
     const payload = goodClaudePayload(view);

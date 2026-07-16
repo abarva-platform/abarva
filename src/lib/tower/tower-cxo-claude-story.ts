@@ -250,6 +250,7 @@ Critical language rules:
 - Keep the executive brief concise, specific, and consultant-grade. Write like a senior partner briefing a CIO and CFO.
 - Every tab must have a point of view: what it means, why it matters, what decision it drives, and what happens next.
 - Return the story by calling the ${TOWER_CXO_STORY_TOOL_NAME} tool. Do not answer in prose. No Markdown. No code fences.
+- Do not wrap the tool input inside another "input", "payload", "arguments", "data", or "result" object.
 
 The tool input must follow this exact shape:
 {
@@ -545,13 +546,13 @@ function parseClaudePayload(rawText: string): TowerCxoClaudePayload | null {
     .replace(/\s*```$/i, "")
     .trim();
   try {
-    return JSON.parse(trimmed) as TowerCxoClaudePayload;
+    return normalizeClaudePayload(JSON.parse(trimmed));
   } catch {
     const start = trimmed.indexOf("{");
     const end = trimmed.lastIndexOf("}");
     if (start < 0 || end <= start) return null;
     try {
-      return JSON.parse(trimmed.slice(start, end + 1)) as TowerCxoClaudePayload;
+      return normalizeClaudePayload(JSON.parse(trimmed.slice(start, end + 1)));
     } catch {
       return null;
     }
@@ -573,8 +574,9 @@ function extractClaudePayload(message: unknown): {
       maybePart.input &&
       typeof maybePart.input === "object"
     ) {
+      const normalized = normalizeClaudePayload(maybePart.input);
       return {
-        payload: maybePart.input as TowerCxoClaudePayload,
+        payload: normalized,
         rawText: JSON.stringify(maybePart.input),
       };
     }
@@ -587,7 +589,103 @@ function extractClaudePayload(message: unknown): {
     })
     .join("")
     .trim();
-  return { payload: parseClaudePayload(rawText), rawText };
+  return { payload: normalizeClaudePayload(parseClaudePayload(rawText)), rawText };
+}
+
+function normalizeClaudePayload(value: unknown, depth = 0): TowerCxoClaudePayload | null {
+  if (!isRecord(value) || depth > 4) return null;
+
+  const directStory = value.story;
+  const directSpecs = value.visualSpecs;
+  if (isRecord(directStory) && isRecord(directSpecs)) {
+    return {
+      story: directStory as unknown as TowerCxoStory,
+      visualSpecs: directSpecs as Record<TowerV3DefaultTabKey, TowerCxoVisualSpec>,
+    };
+  }
+
+  const cxoStory = value.cxoStory;
+  const cxoSpecs = value.cxoVisualSpecs;
+  if (isRecord(cxoStory) && isRecord(cxoSpecs)) {
+    return {
+      story: cxoStory as unknown as TowerCxoStory,
+      visualSpecs: cxoSpecs as Record<TowerV3DefaultTabKey, TowerCxoVisualSpec>,
+    };
+  }
+
+  const snakeSpecs = value.visual_specs;
+  if (isRecord(directStory) && isRecord(snakeSpecs)) {
+    return {
+      story: directStory as unknown as TowerCxoStory,
+      visualSpecs: snakeSpecs as Record<TowerV3DefaultTabKey, TowerCxoVisualSpec>,
+    };
+  }
+
+  if (looksLikeStory(value)) {
+    const specs = isRecord(directSpecs)
+      ? directSpecs
+      : isRecord(cxoSpecs)
+        ? cxoSpecs
+        : isRecord(snakeSpecs)
+          ? snakeSpecs
+          : buildVisualSpecsFromStoryTabs(value);
+    return {
+      story: value as unknown as TowerCxoStory,
+      visualSpecs: specs as Record<TowerV3DefaultTabKey, TowerCxoVisualSpec>,
+    };
+  }
+
+  for (const key of ["input", "payload", "arguments", "data", "result", "toolInput"]) {
+    const nested = value[key];
+    const normalized = normalizeClaudePayload(nested, depth + 1);
+    if (normalized) return normalized;
+  }
+
+  return null;
+}
+
+function buildVisualSpecsFromStoryTabs(
+  story: Record<string, unknown>,
+): Record<TowerV3DefaultTabKey, TowerCxoVisualSpec> | null {
+  const tabs = story.tabs;
+  if (!isRecord(tabs)) return null;
+  const specs = {} as Record<TowerV3DefaultTabKey, TowerCxoVisualSpec>;
+  for (const key of TAB_KEYS) {
+    const tab = tabs[key];
+    if (!isRecord(tab)) return null;
+    const visualType =
+      typeof tab.visualType === "string" && VISUAL_TYPES.includes(tab.visualType as TowerCxoVisualType)
+        ? (tab.visualType as TowerCxoVisualType)
+        : null;
+    if (!visualType) return null;
+    specs[key] = {
+      key,
+      visualType,
+      title: typeof tab.headline === "string" ? tab.headline : key,
+      insight: typeof tab.summary === "string" ? tab.summary : "",
+      dataRefs: [key],
+      caveat:
+        typeof tab.decisionImplication === "string"
+          ? tab.decisionImplication
+          : "Evidence and owner validation remain required before board use.",
+    };
+  }
+  return specs;
+}
+
+function looksLikeStory(value: Record<string, unknown>): boolean {
+  return (
+    typeof value.tenantDisplayName === "string" &&
+    typeof value.eyebrow === "string" &&
+    typeof value.headline === "string" &&
+    typeof value.executiveBrief === "string" &&
+    Array.isArray(value.cards) &&
+    isRecord(value.tabs)
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
