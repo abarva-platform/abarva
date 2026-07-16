@@ -23,6 +23,7 @@ import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
+import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,6 +47,7 @@ async function captureCompletion(
   ctx: Awaited<ReturnType<typeof requireTenancy>>,
   programId: string,
   phase: number,
+  program?: Awaited<ReturnType<typeof getProgramById>> | null,
 ): Promise<{ complete: boolean; missing: string[] }> {
   const modules = await getModuleState(ctx, programId);
   const missing: string[] = [];
@@ -57,7 +59,23 @@ async function captureCompletion(
       missing.push(section.label);
     }
   }
-  return { complete: missing.length === 0, missing };
+  if (missing.length === 0) return { complete: true, missing: [] };
+
+  if (phase === 0 && program?.charter) {
+    const repaired = await persistP0PhaseCaptureFromSource(ctx, programId, {
+      name: program.name,
+      problemStatement: program.problemStatement,
+      targetOutcome: program.targetOutcome,
+      timelineHorizon: program.timelineHorizon,
+      charter: program.charter,
+    });
+    if (repaired.complete) {
+      return { complete: true, missing: [] };
+    }
+    return { complete: false, missing: repaired.missing };
+  }
+
+  return { complete: false, missing };
 }
 
 async function isPhaseApproved(
@@ -170,7 +188,7 @@ export async function GET(
     const program = await getProgramById(ctx, programId);
     if (!program) return Response.json({ error: "not_found" }, { status: 404 });
     const [capture, approved] = await Promise.all([
-      captureCompletion(ctx, programId, phase),
+      captureCompletion(ctx, programId, phase, program),
       isPhaseApproved(ctx, programId, phase),
     ]);
     return Response.json({
@@ -228,7 +246,7 @@ export async function POST(
       );
     }
 
-    const capture = await captureCompletion(ctx, programId, phase);
+    const capture = await captureCompletion(ctx, programId, phase, program);
     if (!capture.complete) {
       return Response.json(
         {

@@ -191,6 +191,73 @@ describe("Moves signed-in phase capture/gate routes", () => {
     expect(closeP0OnApproval).not.toHaveBeenCalled();
   });
 
+  it("repairs missing P0 capture rows from the saved Originate charter before approval", async () => {
+    getProgramById.mockResolvedValue({
+      ...program,
+      name: "Member Service Agent Assist",
+      problemStatement:
+        "Members experience long calls because agents navigate multiple systems.",
+      targetOutcome:
+        "Reduce avoidable handle time, repeat contact, transfers, and after-call work.",
+      timelineHorizon:
+        "Cloud data foundation must prove source ownership, quality, access, and PHI controls.",
+      charter: {
+        scaffold: {
+          problem_statement:
+            "Members experience long calls because agents navigate multiple systems.",
+          archetype: "Contact Center Agent Assist",
+          sponsor_candidate: "Chief Digital and Information Officer",
+          scope_boundary:
+            "In: claims status, prior auth, eligibility, benefits, CRM history, knowledge lookup. Out: clinical decisions.",
+          evidence_family:
+            "Member-service metrics, call transcripts, CRM history, claims/auth/benefits samples, knowledge base, systems inventory.",
+          value_hypothesis:
+            "Reduce avoidable handle time, repeat contact, transfers, and after-call work.",
+          foundation_readiness:
+            "Cloud data foundation must prove source ownership, quality, access, and PHI controls.",
+        },
+      },
+    });
+
+    const { POST } = await import(
+      "@/app/api/v1/programs/[programId]/phase-gate-approval/route"
+    );
+    const res = await POST(
+      makeRequest({ phase: 0, rationale: "Sponsor approves P0." }) as never,
+      { params: Promise.resolve({ programId: "move_1" }) },
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      ok: true,
+      phase: 0,
+      approved: true,
+      newPhase: 1,
+    });
+    const insertCalls = (getAzureWriteFluentClient().__builder.insert as jest.Mock).mock.calls;
+    expect(insertCalls.length).toBeGreaterThanOrEqual(8);
+    expect(insertCalls).toEqual(
+      expect.arrayContaining([
+        [
+          expect.objectContaining({
+            module_key: "phase_0_problem_statement",
+            status: "completed",
+            state_jsonb: expect.objectContaining({
+              completed_from_origination_charter: true,
+            }),
+          }),
+        ],
+        [
+          expect.objectContaining({
+            module_key: "phase_0_recommendation_to_advance",
+            status: "completed",
+          }),
+        ],
+      ]),
+    );
+    expect(closeP0OnApproval).toHaveBeenCalled();
+  });
+
   it("approves P0 through the existing close helper after capture is complete", async () => {
     getModuleState.mockResolvedValue(
       [

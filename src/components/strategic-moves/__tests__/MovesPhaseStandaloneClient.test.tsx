@@ -276,6 +276,51 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.queryByText(/Promote to P1 Charter/i)).not.toBeInTheDocument();
   });
 
+  it("shows the saved seven-answer P0 brief separately from gate criteria", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 0,
+          phaseLabel: "P0 Originate",
+          name: "Member Service Agent Assist",
+          archetype: "Contact Center Agent Assist",
+          charter: {
+            scaffold: {
+              problem_statement:
+                "Members experience long calls because agents navigate multiple systems.",
+              archetype: "Contact Center Agent Assist",
+              sponsor_candidate: "Chief Digital and Information Officer",
+              scope_boundary:
+                "In: claims status, prior auth, eligibility, benefits, CRM history, knowledge lookup. Out: clinical decisions.",
+              evidence_family:
+                "Member-service metrics, call transcripts, CRM history, claims/auth/benefits samples, knowledge base, systems inventory.",
+              value_hypothesis:
+                "Reduce avoidable handle time, repeat contact, transfers, and after-call work.",
+              foundation_readiness:
+                "Cloud data foundation must prove source ownership, quality, access, and PHI controls.",
+            },
+          },
+        })}
+        phaseNum={0}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(screen.getByText("Review your seven Originate answers")).toBeInTheDocument();
+    expect(screen.getByText("7 of 7")).toBeInTheDocument();
+    expect(screen.getByText("Move name")).toBeInTheDocument();
+    expect(screen.getAllByText("Member Service Agent Assist").length).toBeGreaterThan(0);
+    expect(screen.getByText("Business problem / opportunity")).toBeInTheDocument();
+    expect(screen.getByText(/Members experience long calls/i)).toBeInTheDocument();
+    expect(screen.getByText("Sponsor / title")).toBeInTheDocument();
+    expect(screen.getByText(/Chief Digital and Information Officer/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Gate approval" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Gate criteria" })).toBeInTheDocument();
+  });
+
   it("surfaces a Next-Phase Readiness Pack with real evidence gaps at gate approval", () => {
     const evidenceNeedPackets: MoveEvidenceNeedPacket[] = [
       {
