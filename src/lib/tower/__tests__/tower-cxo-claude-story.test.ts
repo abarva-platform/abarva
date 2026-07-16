@@ -120,6 +120,7 @@ describe("Tower CXO Claude story synthesis", () => {
     expect(request.promptTrace.fullPrompt).toContain("visualSpecs");
     expect(request.promptTrace.fullPrompt).toContain("Do not invent");
     expect(request.promptTrace.fullPrompt).not.toContain("<html");
+    expect(request.payload).not.toHaveProperty("temperature");
     expect(request.promptTrace.promptByteLength).toBeGreaterThan(1000);
   });
 
