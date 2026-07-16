@@ -394,15 +394,34 @@ function hasDecisionTableFence(text: string): boolean {
   return /```decision-table\s*[\s\S]*?```/i.test(text);
 }
 
-const DECISION_TABLE_REPAIR_INSTRUCTION = [
-  "DECISION TABLE REPAIR: The user asked to rank or compare named items on decision criteria (for example value, complexity, readiness).",
-  "Keep the senior-advisor answer concise, then include exactly one fenced block using this exact format — no other Markdown table anywhere in the answer:",
+// Core decision-table format contract, reused for BOTH the answer-only
+// first-draft prompt (mandatoryDecisionTableFormatPrompt below — the primary
+// mechanism, always on, no feature flag) and the richText repair pass
+// (decisionTableRepairPrompt below — a secondary net gated behind
+// isBlockingIntelligenceRepairEnabled()). See structured-exhibits.ts's
+// decisionTableFencesFromProse() for the parser side of this contract.
+const DECISION_TABLE_FORMAT_CONTRACT = [
   "```decision-table",
   '{"title":"<short title>","rows":[{"initiative":"<item name>","value":"<qualitative value read, e.g. High — evidence detail>","valueScore":<0-100 int>,"complexity":"<qualitative complexity read>","complexityScore":<0-100 int>,"readiness":"<qualitative readiness read>","readinessScore":<0-100 int>,"evidenceBasis":"<what backs this row>","recommendation":"<one-line recommendation>","nextAction":"<one concrete next step>","directional":<true if any field in this row is your professional estimate rather than a value taken directly from cited evidence>}]}',
   "```",
   "Include exactly one row for every item the user named — never fewer than requested and never omit an item because evidence is thin.",
   'Where the loaded sources do not give you an exact value, use your best professional judgment as a senior advisor and set "directional": true on that row rather than refusing, inventing a fake citation, or leaving the row out.',
   "valueScore, complexityScore, and readinessScore are always required integers 0-100 reflecting relative ranking across the named items, even on directional rows.",
+].join("\n");
+
+function mandatoryDecisionTableFormatPrompt(): string {
+  return [
+    "MANDATORY OUTPUT FORMAT — FOLLOW EXACTLY: The user asked to rank or compare named items on decision criteria (for example value, complexity, readiness).",
+    "Write 1-2 bold sentences naming the key decision implication FIRST, then include exactly one fenced block using this exact format — no other Markdown table anywhere in the answer:",
+    DECISION_TABLE_FORMAT_CONTRACT,
+    "Do not emit tab markers or canvas payloads.",
+  ].join("\n");
+}
+
+const DECISION_TABLE_REPAIR_INSTRUCTION = [
+  "DECISION TABLE REPAIR: The user asked to rank or compare named items on decision criteria (for example value, complexity, readiness).",
+  "Keep the senior-advisor answer concise, then include exactly one fenced block using this exact format — no other Markdown table anywhere in the answer:",
+  DECISION_TABLE_FORMAT_CONTRACT,
   "Return only the final answer.",
 ].join("\n");
 
@@ -643,7 +662,16 @@ ACTIVE INTELLIGENCE CANVAS RULES
     : "";
   // For explicit visual asks, detect here so we can use the table-first contract
   // (which drops the prose-opener rule that would otherwise conflict with table-first).
-  const isVisualTableAsk = answerOnly && isExplicitVisualAsk(args.query);
+  // Ranked-decision asks ("rank X vs Y vs Z by value, complexity, readiness")
+  // get the governed decision-table format on THIS first pass, always on —
+  // not dependent on isExplicitVisualAsk's word list, and not dependent on
+  // isBlockingIntelligenceRepairEnabled() (that flag is off in production,
+  // which made the repair-pass version of this fix a no-op there).
+  const wantsDecisionTableFirstPass =
+    answerOnly && isRankedDecisionAsk(args.query);
+  const isVisualTableAsk =
+    answerOnly &&
+    (isExplicitVisualAsk(args.query) || wantsDecisionTableFirstPass);
   const shapeContract = answerOnly
     ? isVisualTableAsk
       ? CONSULTANT_ANSWER_SHAPE_CONTRACT_TABLE
@@ -654,14 +682,23 @@ ACTIVE INTELLIGENCE CANVAS RULES
       ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${shapeContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
       : `${rolePrompt}\n\n${shapeContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
   const rawPrompt = answerOnly
-    ? isVisualTableAsk
-      ? `MANDATORY OUTPUT FORMAT — FOLLOW EXACTLY:
+    ? wantsDecisionTableFirstPass
+      ? `${mandatoryDecisionTableFormatPrompt()}
+
+SOURCES PROVIDED:
+${formatSourcesBlock(args.sources)}
+
+USER QUESTION:
+${args.query}${strategyToAbarvaSolutionPromptDirective}`
+      : isVisualTableAsk
+        ? `MANDATORY OUTPUT FORMAT — FOLLOW EXACTLY:
 Your response must contain a GFM Markdown table. Write the table BEFORE any prose.
 Table format (use real pipe characters):
 | Column1 | Column2 | Column3 |
 |---------|---------|---------|
 | value   | value   | value   |
 
+If the loaded sources do not give an exact value for a cell, use your best professional judgment as a senior advisor and label that value directional rather than omitting the row or refusing to produce the table.
 After the table, write 1-2 bold sentences naming the key decision implication.
 Do NOT write any sentence or preamble before the table. Do NOT emit tab markers or canvas payloads.
 
@@ -670,7 +707,7 @@ ${formatSourcesBlock(args.sources)}
 
 USER QUESTION:
 ${args.query}${strategyToAbarvaSolutionPromptDirective}`
-      : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}\n\nRespond with a crisp executive answer. Open with a single **bold sentence** that states the key finding. Use a GFM table for comparisons, vendor matrices, ranked lists, or multi-attribute data (3+ items × 2+ attributes). Use a fenced \`\`\`chart JSON block for spend/trend/maturity data with ≥3 numeric rows. Do not emit right-canvas tab markers or a canvas payload.`
+        : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}\n\nRespond with a crisp executive answer. Open with a single **bold sentence** that states the key finding. Use a GFM table for comparisons, vendor matrices, ranked lists, or multi-attribute data (3+ items × 2+ attributes). Use a fenced \`\`\`chart JSON block for spend/trend/maturity data with ≥3 numeric rows. Do not emit right-canvas tab markers or a canvas payload.`
     : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when memory is present. Never mention the memory mechanism, prior conversation state, or phrases such as "this session", "as discussed", "previous conversation", "same answer", or "answer hasn\'t changed" in user-visible text.'
@@ -1006,7 +1043,7 @@ ${args.query}${strategyToAbarvaSolutionPromptDirective}`
     if (
       blockingRepairEnabled &&
       args.richText &&
-      isExplicitVisualAsk(args.query) &&
+      (isExplicitVisualAsk(args.query) || wantsDecisionTableRepair) &&
       !hasMarkdownDecisionTable(text) &&
       !hasDecisionTableFence(text)
     ) {
