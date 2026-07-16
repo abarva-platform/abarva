@@ -91,7 +91,7 @@ function tableResult(table: string) {
     return {
       select: jest.fn(() => ({
         eq: jest.fn(() => ({
-          eq: jest.fn(() => ({
+          in: jest.fn(() => ({
             limit: jest.fn(() => Promise.resolve({ data: evidenceFixture })),
           })),
         })),
@@ -419,6 +419,59 @@ describe('evaluateGate', () => {
 
     expect(result.failedChecks.map((check) => check.check)).not.toContain('value_hypothesis_seed');
     expect(result.failedChecks.filter((check) => check.severity === 'hard')).toEqual([]);
+    expect(result.requiresApproval).toBe(true);
+  });
+
+  it('evaluates P0 approval from the seven saved charter fields instead of brittle generated-brief keywords', async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 0,
+      archetype: 'ai_product_enablement',
+      problemStatement:
+        'Members experience long calls because agents navigate disconnected systems.',
+      targetOutcome:
+        'Lower avoidable handle time while improving first-call resolution.',
+      timelineHorizon:
+        'Trusted access to CRM, claims, eligibility, prior authorization, knowledge, audit logs, and PHI controls.',
+      charter: {
+        problem_statement:
+          'Members experience long calls because agents navigate disconnected systems.',
+        archetype:
+          'Contact Center Agent Assist - agent augmentation for member-service operations.',
+        sponsor_candidate:
+          'Chief Digital and Information Officer with VP Operations as operating owner.',
+        scope_boundary:
+          'In: claims status, prior authorization status, benefits, eligibility, CRM history, and agent knowledge lookup. Out: adjudication and direct clinical advice.',
+        evidence_family:
+          'Member-service metrics, call transcripts, CRM history, claims samples, knowledge base, system inventory, controls, and value assumptions.',
+        value_hypothesis:
+          'Lower avoidable handle time, repeat contact, transfers, and manual rework while improving first-call resolution.',
+        foundation_readiness:
+          'Integrated patient, claims, and call-center data on a governed cloud platform.',
+      },
+    });
+    deliverablesFixture = [
+      { id: 'origination-brief', deliverable_type_key: 'origination_brief', status: 'signed_off' },
+    ];
+    participantsFixture = [];
+    approvalRequestsFixture = [];
+    deliverableVersionsFixture = [
+      {
+        content: 'P0 record approved.',
+        structured_data: null,
+        generated_at: '2026-07-16T00:00:00.000Z',
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      0,
+      1,
+    );
+
+    expect(result.failedChecks).toEqual([]);
+    expect(result.pass).toBe(true);
     expect(result.requiresApproval).toBe(true);
   });
 

@@ -49,6 +49,34 @@ function assertTenancy(ctx: TenancyCtx): void {
   }
 }
 
+function cleanText(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function readRecordString(
+  record: Record<string, unknown> | null | undefined,
+  ...keys: string[]
+): string {
+  for (const key of keys) {
+    const value = cleanText(record?.[key]);
+    if (value) return value;
+  }
+  return '';
+}
+
+function readScaffoldString(
+  charter: Record<string, unknown> | null | undefined,
+  ...keys: string[]
+): string {
+  const scaffold = charter?.scaffold;
+  if (!scaffold || typeof scaffold !== 'object') return '';
+  return readRecordString(scaffold as Record<string, unknown>, ...keys);
+}
+
+function hasText(value: string | null | undefined): boolean {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
 interface GateRule {
   fromPhase: number;
   toPhase: number;
@@ -270,6 +298,48 @@ export async function evaluateGate(
     ].join('\n').toLowerCase();
   }
   const p0SeedEvidenceText = [briefString, latestOriginationBriefText].join('\n');
+  const charter = program.charter ?? null;
+  const p0ProblemText =
+    cleanText(program.problemStatement) ||
+    readScaffoldString(charter, 'problem_statement', 'problemStatement') ||
+    readRecordString(charter, 'problem_statement', 'problemStatement', 'business_trigger');
+  const p0ValueText =
+    cleanText(program.targetOutcome) ||
+    readScaffoldString(charter, 'value_hypothesis', 'valueHypothesis') ||
+    readRecordString(
+      charter,
+      'value_hypothesis',
+      'valueHypothesis',
+      'target_outcome',
+      'targetOutcome',
+      'initial_value_hypothesis',
+    );
+  const p0SponsorText =
+    readScaffoldString(charter, 'sponsor_candidate', 'sponsorCandidate') ||
+    readRecordString(charter, 'sponsor_candidate', 'sponsorCandidate', 'sponsor', 'stakeholder_owner_view');
+  const p0ScopeText =
+    readScaffoldString(charter, 'scope_boundary', 'scopeBoundary') ||
+    readRecordString(
+      charter,
+      'scope_boundary',
+      'scopeBoundary',
+      'initial_scope',
+      'affected_function_process',
+    );
+  const p0EvidenceText =
+    readScaffoldString(charter, 'evidence_family', 'evidenceFamily') ||
+    readRecordString(charter, 'evidence_family', 'evidenceFamily', 'known_evidence');
+  const p0FoundationText =
+    cleanText(program.timelineHorizon) ||
+    readScaffoldString(charter, 'foundation_readiness', 'foundationReadiness') ||
+    readRecordString(
+      charter,
+      'foundation_readiness',
+      'foundationReadiness',
+      'timeline',
+      'timeline_horizon',
+      'missing_evidence_open_questions',
+    );
 
   let latestDiscoveryReportText = '';
   if (discoveryReportRow) {
@@ -347,8 +417,13 @@ export async function evaluateGate(
       case 'value_hypothesis_seed': {
         pass =
           hasSignedOriginationBrief &&
-          /\b(problem|problem_statement|trigger|current pain|pain)\b/.test(p0SeedEvidenceText) &&
-          /\b(value hypothesis|target_outcome|target outcome|outcome|mechanism)\b/.test(p0SeedEvidenceText);
+          (
+            (hasText(p0ProblemText) && hasText(p0ValueText)) ||
+            (
+              /\b(problem|problem_statement|trigger|current pain|pain)\b/.test(p0SeedEvidenceText) &&
+              /\b(value hypothesis|target_outcome|target outcome|outcome|mechanism)\b/.test(p0SeedEvidenceText)
+            )
+          );
         break;
       }
       case 'charter_drafted': pass = Boolean(charterRow && charterRow.status !== null); break;
@@ -360,6 +435,7 @@ export async function evaluateGate(
             fromPhase === 0 &&
             hasSignedOriginationBrief &&
             (
+              hasText(p0SponsorText) ||
               briefString.includes('sponsor') ||
               p0SeedEvidenceText.includes('sponsor')
             )
@@ -441,6 +517,7 @@ export async function evaluateGate(
       case 'tower_handoff_plan_accepted': pass = isSignedOff(towerHandoffRow); break;
       case 'discovery_funding_envelope':
         pass =
+          hasText(p0FoundationText) ||
           briefString.includes('timeline') ||
           briefString.includes('funding') ||
           briefString.includes('capacity') ||
@@ -452,6 +529,7 @@ export async function evaluateGate(
         break;
       case 'initial_scope_boundary':
         pass =
+          hasText(p0ScopeText) ||
           briefString.includes('scope') ||
           briefString.includes('cohort') ||
           briefString.includes('internal teams') ||
@@ -463,6 +541,7 @@ export async function evaluateGate(
       case 'evidence_family_selected':
         pass =
           Boolean(program.archetype) ||
+          hasText(p0EvidenceText) ||
           briefString.includes('evidence') ||
           briefString.includes('dora') ||
           p0SeedEvidenceText.includes('evidence family') ||
