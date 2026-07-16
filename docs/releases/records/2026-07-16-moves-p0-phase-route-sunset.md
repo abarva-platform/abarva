@@ -67,7 +67,7 @@ Revert this PR and redeploy the prior digest-pinned ACA image. No database rollb
 
 ## Audit Evidence
 
-- PR URL: Pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/4882.
 - ACA revision: Pending.
 - Live proof bundle: Pending.
 
