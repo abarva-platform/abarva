@@ -30,6 +30,22 @@ describe("resolveAssistantAnswerText", () => {
     ).toBe(packetBody);
   });
 
+  it("prefers a clean packet body even when that body contains a normal Markdown table", () => {
+    const rawStreamed =
+      'Agent assist leads. ```decision-table {"title":"x","rows":[{"initiative":"Agent Assist"}]}```';
+    const packetBody = [
+      "Agent assist leads.",
+      "",
+      "| Opportunity | Posture |",
+      "|---|---|",
+      "| Agent assist | Scale first |",
+    ].join("\n");
+
+    expect(resolveAssistantAnswerText(rawStreamed, packetBody, true)).toBe(
+      packetBody,
+    );
+  });
+
   it("falls back to the raw stream when there are no structured artifacts and the packet body is too short", () => {
     const rawStreamed = "A full, detailed prose answer with real content.";
     const packetBody = "";

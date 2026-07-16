@@ -1,9 +1,20 @@
 import {
+  buildUniversalAnswerVisualContract,
   isExplicitVisualAsk,
   isRankedDecisionAsk,
 } from "@/lib/intelligence/ask/synthesizer";
 
 describe("isRankedDecisionAsk", () => {
+  it("keeps the decision-table instructions in the universal contract, not only in regex-gated prompts", () => {
+    const contract = buildUniversalAnswerVisualContract();
+
+    expect(contract).toContain("UNIVERSAL aVa ANSWER + VISUAL CONTRACT");
+    expect(contract).toContain("```decision-table");
+    expect(contract).toContain("```chart");
+    expect(contract).toContain("```followups");
+    expect(contract).toContain("not yet evidenced");
+  });
+
   it("matches the reported ranking query even though it lacks any isExplicitVisualAsk keyword", () => {
     const query =
       "rank agent assist vs payment integrity vs cost transparency by value, complexity, readiness";
