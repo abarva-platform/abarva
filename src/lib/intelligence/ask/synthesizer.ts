@@ -13,7 +13,6 @@ import {
   classifyAbarvaAnswerMode,
   CONSULTANT_ANSWER_SHAPE_CONTRACT,
   CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH,
-  CONSULTANT_ANSWER_SHAPE_CONTRACT_TABLE,
   enforceDecisionGradeAnswer,
   sanitizeAskSynthesis,
   stripInternalRecordIds,
@@ -394,11 +393,9 @@ function hasDecisionTableFence(text: string): boolean {
   return /```decision-table\s*[\s\S]*?```/i.test(text);
 }
 
-// Core decision-table format contract, reused for BOTH the answer-only
-// first-draft prompt (mandatoryDecisionTableFormatPrompt below — the primary
-// mechanism, always on, no feature flag) and the richText repair pass
-// (decisionTableRepairPrompt below — a secondary net gated behind
-// isBlockingIntelligenceRepairEnabled()). See structured-exhibits.ts's
+// Core decision-table format contract, reused by the universal answer/visual
+// contract (always on) and the richText repair pass (secondary net gated
+// behind isBlockingIntelligenceRepairEnabled()). See structured-exhibits.ts's
 // decisionTableFencesFromProse() for the parser side of this contract.
 const DECISION_TABLE_FORMAT_CONTRACT = [
   "```decision-table",
@@ -409,14 +406,12 @@ const DECISION_TABLE_FORMAT_CONTRACT = [
   "valueScore, complexityScore, and readinessScore are always required integers 0-100 reflecting relative ranking across the named items, even on directional rows.",
 ].join("\n");
 
-function mandatoryDecisionTableFormatPrompt(): string {
-  return [
-    "MANDATORY OUTPUT FORMAT — FOLLOW EXACTLY: The user asked to rank or compare named items on decision criteria (for example value, complexity, readiness).",
-    "Write 1-2 bold sentences naming the key decision implication FIRST, then include exactly one fenced block using this exact format — no other Markdown table anywhere in the answer:",
-    DECISION_TABLE_FORMAT_CONTRACT,
-    "Do not emit tab markers or canvas payloads.",
-  ].join("\n");
-}
+const CHART_FENCE_FORMAT_CONTRACT = [
+  "```chart",
+  '{"type":"bar|horizontal-bar|line|area|pie","title":"<short title>","subtitle":"<optional business caveat>","xKey":"<label field>","yKey":"<numeric field>","unit":"<optional unit>","data":[{"<label field>":"<label>","<numeric field>":<number>}]}',
+  "```",
+  "Use only when you have 2+ numeric rows. Values may be directional scores only when clearly labeled in subtitle or note; never invent precise money, dates, or percentages.",
+].join("\n");
 
 const DECISION_TABLE_REPAIR_INSTRUCTION = [
   "DECISION TABLE REPAIR: The user asked to rank or compare named items on decision criteria (for example value, complexity, readiness).",
@@ -424,6 +419,26 @@ const DECISION_TABLE_REPAIR_INSTRUCTION = [
   DECISION_TABLE_FORMAT_CONTRACT,
   "Return only the final answer.",
 ].join("\n");
+
+export function buildUniversalAnswerVisualContract(): string {
+  return [
+    "UNIVERSAL aVa ANSWER + VISUAL CONTRACT — ALWAYS ON:",
+    "- Treat the user's literal question as the task. Do not rewrite it into a canned workflow and do not answer a different starter prompt.",
+    "- Start with the executive answer in prose. Make the judgment clear before any exhibit.",
+    "- Claude owns the advisory judgment: which options matter, how to rank them, what is directional, what is not yet evidenced, and what the executive should do next.",
+    "- The renderer owns display only. Do not write HTML, SVG, Mermaid, canvas code, raw renderer instructions, or arbitrary JSON outside the governed fences below. In answer-only mode, do not emit tab markers; in tabbed mode, use only the exact tab markers supplied elsewhere.",
+    "- Use visuals when they materially improve the decision: ranking, comparison, prioritization, value/complexity/readiness tradeoff, spend, trend, roadmap, risk, dependency, or a user-requested table/chart/graph/visual.",
+    "- If no useful visual is warranted, skip the visual. If a visual is warranted, it must be populated; never emit an empty table, empty chart, placeholder row, or source-support/evidence-register table.",
+    "- Use business language. Never write 'not loaded', 'not ingested', or product/debug terms. Say 'not yet evidenced' or 'needs client validation' when a field is missing.",
+    "- Keep table cells compact: item/name fields under 8 words where possible, value/readiness/complexity fields under 18 words, recommendation/nextAction under 35 words.",
+    "- Put caveats in a short prose sentence or note, not repeated across every row.",
+    "When ranking, prioritizing, comparing, or trading off 2+ options, prefer this governed decision table fence after the opening answer:",
+    DECISION_TABLE_FORMAT_CONTRACT,
+    "When a chart materially helps and you have 2+ numeric rows, include exactly one governed chart fence using this existing parser-supported format:",
+    CHART_FENCE_FORMAT_CONTRACT,
+    'Every answer must end with a fenced ```followups block containing a JSON array of exactly 2-3 short follow-up questions grounded in the answer just given.',
+  ].join("\n");
+}
 
 function extractMessageText(response: unknown): string {
   const content = (response as { content?: unknown }).content;
@@ -657,58 +672,20 @@ ACTIVE INTELLIGENCE CANVAS RULES
   const strategyToAbarvaSolutionPromptDirective = strategyToAbarvaSolution
     ? buildCxoAnswerModePromptDirective(answerMode)
     : "";
+  const universalAnswerVisualContract = buildUniversalAnswerVisualContract();
   const answerOnlyDirective = answerOnly
     ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a crisp executive answer using full GitHub-Flavored Markdown. GFM tables, bold section headers, and bullet lists are REQUIRED for comparisons, ranked lists, and multi-attribute data — do not flatten these to prose. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — the canvas is handled separately. Length: prose-only answers ~120-180 words; table/chart answers may run to ~300 words. Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.
-End every answer with a fenced \`\`\`followups block containing a JSON array of exactly 2-3 short follow-up questions a CXO would naturally ask next, directly grounded in what you just answered — not the user's own question restated, not generic starter prompts. Example: \`\`\`followups\n["Should we pilot this with one business unit first?", "What would it cost to close the readiness gap?"]\n\`\`\``
+Use the universal answer + visual contract for any table, chart, ranking, and follow-up structure.`
     : "";
-  // For explicit visual asks, detect here so we can use the table-first contract
-  // (which drops the prose-opener rule that would otherwise conflict with table-first).
-  // Ranked-decision asks ("rank X vs Y vs Z by value, complexity, readiness")
-  // get the governed decision-table format on THIS first pass, always on —
-  // not dependent on isExplicitVisualAsk's word list, and not dependent on
-  // isBlockingIntelligenceRepairEnabled() (that flag is off in production,
-  // which made the repair-pass version of this fix a no-op there).
-  const wantsDecisionTableFirstPass =
-    answerOnly && isRankedDecisionAsk(args.query);
-  const isVisualTableAsk =
-    answerOnly &&
-    (isExplicitVisualAsk(args.query) || wantsDecisionTableFirstPass);
   const shapeContract = answerOnly
-    ? isVisualTableAsk
-      ? CONSULTANT_ANSWER_SHAPE_CONTRACT_TABLE
-      : CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH
+    ? CONSULTANT_ANSWER_SHAPE_CONTRACT_RICH
     : CONSULTANT_ANSWER_SHAPE_CONTRACT;
   const rawSystem =
     contextBlocks.length > 0
-      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${shapeContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
-      : `${rolePrompt}\n\n${shapeContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
+      ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
+      : `${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
   const rawPrompt = answerOnly
-    ? wantsDecisionTableFirstPass
-      ? `${mandatoryDecisionTableFormatPrompt()}
-
-SOURCES PROVIDED:
-${formatSourcesBlock(args.sources)}
-
-USER QUESTION:
-${args.query}${strategyToAbarvaSolutionPromptDirective}`
-      : isVisualTableAsk
-        ? `MANDATORY OUTPUT FORMAT — FOLLOW EXACTLY:
-Your response must contain a GFM Markdown table. Write the table BEFORE any prose.
-Table format (use real pipe characters):
-| Column1 | Column2 | Column3 |
-|---------|---------|---------|
-| value   | value   | value   |
-
-If the loaded sources do not give an exact value for a cell, use your best professional judgment as a senior advisor and label that value directional rather than omitting the row or refusing to produce the table.
-After the table, write 1-2 bold sentences naming the key decision implication.
-Do NOT write any sentence or preamble before the table. Do NOT emit tab markers or canvas payloads.
-
-SOURCES PROVIDED:
-${formatSourcesBlock(args.sources)}
-
-USER QUESTION:
-${args.query}${strategyToAbarvaSolutionPromptDirective}`
-        : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}\n\nRespond with a crisp executive answer. Open with a single **bold sentence** that states the key finding. Use a GFM table for comparisons, vendor matrices, ranked lists, or multi-attribute data (3+ items × 2+ attributes). Use a fenced \`\`\`chart JSON block for spend/trend/maturity data with ≥3 numeric rows. Do not emit right-canvas tab markers or a canvas payload.`
+    ? `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}\n\n${universalAnswerVisualContract}`
     : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when memory is present. Never mention the memory mechanism, prior conversation state, or phrases such as "this session", "as discussed", "previous conversation", "same answer", or "answer hasn\'t changed" in user-visible text.'

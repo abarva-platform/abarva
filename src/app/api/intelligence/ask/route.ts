@@ -41,6 +41,7 @@ import {
   buildStructuredExhibits,
   hasRenderableStructuredExhibits,
 } from "@/lib/intelligence/answer/structured-exhibits";
+import { createStructuredFenceStreamFilter } from "@/lib/intelligence/answer/structured-fence-stream-filter";
 import { parseIntelligenceTabbedResponse } from "@/lib/intelligence/tabbed-response";
 import { applyCxoAnswerModeFallbacks } from "@/lib/intelligence/ask/answer-mode-registry";
 import { classifyAbarvaAnswerMode } from "@/lib/intelligence/ask/response-policy";
@@ -246,6 +247,7 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
       let citationCount = 0;
       let patternId: string | null = null;
       let sawStreamError = false;
+      const structuredFenceStreamFilter = createStructuredFenceStreamFilter();
       // Agent-trace capture (aVa Intelligence path).
       let traceSources: RawAskSource[] = [];
       let traceModelInputHash: string | undefined;
@@ -754,7 +756,9 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           }
           if (event.type === "delta" && event.text) {
             assistantText += event.text;
-            const displayText = displaySafeIntelligenceDelta(event.text);
+            const displayText = displaySafeIntelligenceDelta(
+              structuredFenceStreamFilter.push(event.text),
+            );
             if (!displayText.trim() && !answerOnlyStreaming) continue;
             controller.enqueue(
               encoder.encode(
@@ -780,6 +784,19 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
           if (event.type === "error") sawStreamError = true;
           if (event.type === "done") continue;
           controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"));
+        }
+        const remainingStructuredSafeText = displaySafeIntelligenceDelta(
+          structuredFenceStreamFilter.flush(),
+        );
+        if (remainingStructuredSafeText.trim()) {
+          controller.enqueue(
+            encoder.encode(
+              JSON.stringify({
+                type: "delta",
+                text: remainingStructuredSafeText,
+              }) + "\n",
+            ),
+          );
         }
         if (!sawStreamError && assistantText.trim()) {
           const event = recordIntelligenceTelemetry({
