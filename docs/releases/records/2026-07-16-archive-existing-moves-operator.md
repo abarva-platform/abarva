@@ -12,6 +12,8 @@
 
 Adds a controlled operator job for resetting the Strategic Moves estate. The job inventories all active Move records, writes a proof bundle with the linked uploads, deliverables, evidence, approvals, workspace state, and blob paths, then can archive the top-level Move records and remove linked runtime Move content from active tables. It does not delete immutable audit history and it does not delete blob objects directly.
 
+Follow-up hardening after the first ACA dry-run: snapshot queries now tolerate legacy Move-linked tables that do not expose the expected timestamp ordering column. When that happens, the proof bundle records a `snapshot-query-warnings.json` note and continues the snapshot without `ORDER BY` instead of failing before proof generation.
+
 ## Layer Impact
 
 - `internal-admin`: adds an operator-only script and npm command for the Moves reset operation.
@@ -31,10 +33,12 @@ Adds a controlled operator job for resetting the Strategic Moves estate. The job
 - `scripts/ops/archive-existing-moves.ts`
 - `package.json` command: `ops:archive-existing-moves`
 - This release record.
+- Snapshot proof hardening for linked legacy tables without timestamp ordering columns.
 
 ## QA / Validation
 
 - `npm run ops:archive-existing-moves -- --self-test --out-dir /tmp/moves-archive-self-test`: Pass.
+- `ARCHIVE_EXISTING_MOVES_ARGS="--purge-linked-records --operator env-self-test" npm run ops:archive-existing-moves -- --self-test --out-dir /tmp/moves-archive-env-self-test`: Pass.
 - `npx eslint scripts/ops/archive-existing-moves.ts`: Pass.
 - `npm run release:check`: Pass.
 - `git diff --check`: Pass.
@@ -66,8 +70,10 @@ Because the operation archives top-level `engagements` rows rather than hard-del
 - `mutation-result.json`, when `--execute` is used.
 - `verification.json`, when `--execute` is used.
 - ACA operator-job logs and extracted proof bundle.
+- `snapshot-query-warnings.json`, when a table snapshot had to run without an ordering column.
 
 ## Known Gaps
 
 - This PR adds the operator job but does not execute the production cleanup by itself.
 - Physical Azure Blob deletion is out of scope and should be handled by a separate storage-retention job after proof review.
+- The first ACA dry-run exposed a legacy table without `created_at`; this record includes the follow-up snapshot-order hardening needed before rerunning the operator.

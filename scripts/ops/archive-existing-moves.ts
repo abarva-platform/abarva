@@ -411,13 +411,29 @@ async function snapshot(client: Client, outDir: string, moveIds: string[]) {
   const snapshotsDir = path.join(outDir, "snapshots");
   const counts: Record<string, number | "missing"> = {};
   const storageRefs: Array<Record<string, unknown>> = [];
+  const queryWarnings: Array<Record<string, string>> = [];
 
   for (const spec of linkedSnapshotSpecs(moveIds)) {
     if (!(await tableExists(client, spec.table))) {
       counts[spec.table] = "missing";
       continue;
     }
-    const result = await client.query(spec.sql, spec.params ?? []);
+    let result;
+    try {
+      result = await client.query(spec.sql, spec.params ?? []);
+    } catch (error) {
+      const code = typeof error === "object" && error !== null ? String((error as { code?: unknown }).code ?? "") : "";
+      if (code !== "42703" || !/\border by\b/i.test(spec.sql)) {
+        throw error;
+      }
+
+      const unorderedSql = spec.sql.replace(/\s+order\s+by\s+[^;]+$/i, "");
+      queryWarnings.push({
+        table: spec.table,
+        reason: "Snapshot query retried without ORDER BY because the deployed table lacks the requested ordering column.",
+      });
+      result = await client.query(unorderedSql, spec.params ?? []);
+    }
     counts[spec.table] = result.rowCount ?? 0;
     writeJson(path.join(snapshotsDir, spec.file), result.rows);
 
@@ -459,6 +475,9 @@ async function snapshot(client: Client, outDir: string, moveIds: string[]) {
 
   writeJson(path.join(outDir, "linked-record-counts.json"), counts);
   writeJson(path.join(outDir, "storage-paths.json"), storageRefs);
+  if (queryWarnings.length) {
+    writeJson(path.join(outDir, "snapshot-query-warnings.json"), queryWarnings);
+  }
   return { counts, storageRefs };
 }
 
