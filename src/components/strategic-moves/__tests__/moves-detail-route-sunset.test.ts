@@ -33,4 +33,16 @@ describe("Moves detail route sunset", () => {
     expect(source).not.toContain("mxw-topnav");
     expect(source).not.toContain("tenantInitials");
   });
+
+  it("does not keep the retired P0 originate form mounted in the phase workspace", () => {
+    const source = read("src/components/strategic-moves/MovesPhaseStandaloneClient.tsx");
+    const route = read("src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx");
+
+    expect(source).not.toContain("function OriginateConsole");
+    expect(source).not.toContain("mxw-originate");
+    expect(source).not.toContain("Let aVa draft this");
+    expect(source).not.toContain("Promote to P1 Charter");
+    expect(route).toContain("initialSubstepKey");
+    expect(route).toContain('resolvedSearchParams.focus === "gate"');
+  });
 });
