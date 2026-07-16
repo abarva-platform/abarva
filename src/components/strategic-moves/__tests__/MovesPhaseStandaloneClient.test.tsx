@@ -321,6 +321,53 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByRole("heading", { name: "Gate criteria" })).toBeInTheDocument();
   });
 
+  it("frames P1 as a posture hypothesis, not a solution approach recommendation", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="decide"
+        move={makeMove({
+          currentPhase: 1,
+          phaseLabel: "P1 Charter",
+        })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Initial transformation posture" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/starting hypothesis for P2 discovery/i)).toBeInTheDocument();
+    expect(screen.getByText("Improve the current process")).toBeInTheDocument();
+    expect(screen.getByText("Explore a balanced transformation")).toBeInTheDocument();
+    expect(screen.getByText("Evaluate major transformation potential")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Decide the approach" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Phased platform + operating-model shift")).not.toBeInTheDocument();
+    expect(screen.queryByText(/aVa recommends/i)).not.toBeInTheDocument();
+  });
+
+  it("keeps solution approach selection in P3 after discovery evidence", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="decide"
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Decide the approach" })).toBeInTheDocument();
+    expect(screen.getByText("Phased platform + operating-model shift")).toBeInTheDocument();
+    expect(screen.getAllByText(/aVa recommends/i).length).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole("heading", { name: "Initial transformation posture" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("surfaces a Next-Phase Readiness Pack with real evidence gaps at gate approval", () => {
     const evidenceNeedPackets: MoveEvidenceNeedPacket[] = [
       {
