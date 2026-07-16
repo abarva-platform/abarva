@@ -37,6 +37,7 @@ Tower now has a Claude-owned executive story layer for the Meridian CXO value co
 - Focused Tower/feature tests and this release record.
 - Follow-up correction: the Tower Claude egress call no longer passes the human-readable `contextPackId` as `artifactId`, because the audit table expects UUID-shaped artifact identifiers. The readable context-pack id remains in request metadata for traceability.
 - Follow-up correction: the Tower Claude request no longer sends `temperature`, because Claude Opus 4.7 rejects that deprecated parameter.
+- Follow-up correction: the Tower Claude story default model now uses `claude-sonnet-4-6` with a smaller response budget. This keeps the same bounded story/visual-spec contract but avoids server-side Opus timeouts on the live Tower page.
 
 ## QA / Validation
 
@@ -48,7 +49,8 @@ Tower now has a Claude-owned executive story layer for the Meridian CXO value co
 - Pass: `git diff --check`.
 - Partial live proof before correction: ACA served the Tower Claude code path, but the DOM marker showed `claude_fallback` because the audited egress write rejected the non-UUID `artifactId` value `meridian-health-tower-v3-live-context-pack`.
 - Partial live proof after artifact-id correction: ACA served the Tower Claude code path, but the DOM marker still showed `claude_fallback` because Claude rejected the deprecated `temperature` parameter for `claude-opus-4-7`.
-- Not run yet: signed-in ACA browser proof after the egress artifact-id and request-parameter corrections.
+- Partial live proof after request-parameter correction: ACA served the Tower Claude code path, but the DOM marker still showed `claude_fallback` because the Opus request exceeded the 45-second Tower story guardrail (`tower_cxo_claude_story_timeout`).
+- Not run yet: signed-in ACA browser proof after the egress artifact-id, request-parameter, and model-latency corrections.
 
 ## Rollout Plan
 
@@ -76,4 +78,4 @@ Disable the `tower_cxo_claude_story_blocks` flag or revert the PR. Deterministic
 
 ## Known Gaps
 
-Candidate is not yet deployed or browser-proven after the egress artifact-id and request-parameter corrections. This PR does not migrate additional Tower routes, change value calculations, or promote any data.
+Candidate is not yet deployed or browser-proven after the egress artifact-id, request-parameter, and model-latency corrections. This PR does not migrate additional Tower routes, change value calculations, or promote any data.
