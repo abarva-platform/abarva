@@ -14,8 +14,10 @@ import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence
 import { buildHomeDataQualityModel } from "@/lib/home/home-data-quality";
 import { buildHomeEnglishSummary } from "@/lib/home/home-english-summary";
 import { applyHomeSummaryClaudeRender } from "@/lib/home/home-summary-claude-render";
-import { buildHomeRuntimeSummarySnapshot } from "@/lib/home/home-summary-runtime";
-import { buildHomeSummarySnapshotFromModuleContext } from "@/lib/home/home-summary-snapshot";
+import {
+  buildHomeSummarySnapshot,
+  buildHomeSummarySnapshotFromModuleContext,
+} from "@/lib/home/home-summary-snapshot";
 import { getHomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
 import { getHomeV7ContextBrowser } from "@/lib/home/v7-context-browser";
 import { getIntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
@@ -40,6 +42,9 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+const HOME_OPTIONAL_DATA_TIMEOUT_MS = 3_000;
+const HOME_OPTIONAL_RENDER_TIMEOUT_MS = 4_500;
 
 type HomePageProps = {
   searchParams?: Promise<{
@@ -93,6 +98,33 @@ function bindingTenantKey(value: string | null | undefined): string | null {
   }
   if (key.includes("lakeshore")) return "lakeshore-holdings";
   return key;
+}
+
+async function withHomePageTimeout<T>(
+  label: string,
+  promise: Promise<T>,
+  fallback: T,
+  timeoutMs = HOME_OPTIONAL_DATA_TIMEOUT_MS,
+): Promise<T> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((resolve) => {
+        timeout = setTimeout(() => {
+          console.warn(
+            `[home] ${label} exceeded ${timeoutMs}ms; rendering Knowledge fallback.`,
+          );
+          resolve(fallback);
+        }, timeoutMs);
+      }),
+    ]);
+  } catch (error) {
+    console.warn(`[home] ${label} failed; rendering Knowledge fallback.`, error);
+    return fallback;
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
 }
 
 const HOME_KNOWLEDGE_DOMAINS: ModuleContextRequestedDomain[] = [
@@ -153,30 +185,53 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         } satisfies ModuleContextReadRequest)
       : null;
   const moduleContextBundle = moduleContextRequest
-    ? await Promise.all([
-        getModuleContext(moduleContextRequest, { repoRoot: process.cwd() }),
-        explainModuleContext(moduleContextRequest, { repoRoot: process.cwd() }),
-      ]).catch(() => null)
+    ? await withHomePageTimeout(
+        "module context",
+        Promise.all([
+          getModuleContext(moduleContextRequest, { repoRoot: process.cwd() }),
+          explainModuleContext(moduleContextRequest, {
+            repoRoot: process.cwd(),
+          }),
+        ]),
+        null,
+      )
     : null;
   const moduleContext = moduleContextBundle?.[0] ?? null;
   const moduleContextExplanation = moduleContextBundle?.[1] ?? null;
-  const v7Browser = await getHomeV7ContextBrowser({
-    tenantKey: activeClient?.key ?? homeTenantKey,
-  }).catch(() => null);
+  const v7Browser = await withHomePageTimeout(
+    "V7 context browser",
+    getHomeV7ContextBrowser({
+      tenantKey: activeClient?.key ?? homeTenantKey,
+    }),
+    null,
+  );
   const browser =
     v7Browser ?? getHomeV6ContextBrowser(activeClient?.key ?? homeTenantKey);
+  const [inventorySnapshot, sourceFiles] =
+    clientOption && activeClient?.key
+      ? await Promise.all([
+          withHomePageTimeout(
+            "inventory snapshot",
+            cachedInventorySnapshot(
+              clientKeyToInventorySubstrateKey(clientOption.id),
+            ),
+            null,
+          ),
+          withHomePageTimeout(
+            "tenant source files",
+            getTenantSourceFiles(activeClient.id),
+            [],
+          ),
+        ])
+      : [null, []];
   const setupControl =
     clientOption && activeClient?.key
       ? buildAdminSetupControlReadModel({
           tenantKey: clientOption.id,
           displayName: activeTenantName,
           coverName: clientOption.name,
-          snapshot: await cachedInventorySnapshot(
-            clientKeyToInventorySubstrateKey(clientOption.id),
-          ).catch(() => null),
-          sourceFiles: await getTenantSourceFiles(activeClient.id).catch(
-            () => [],
-          ),
+          snapshot: inventorySnapshot,
+          sourceFiles,
         })
       : null;
   const dataQuality = buildHomeDataQualityModel({
@@ -203,7 +258,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           moduleContextExplanation,
           repoRoot: process.cwd(),
         })
-      : await buildHomeRuntimeSummarySnapshot({
+      : buildHomeSummarySnapshot({
+          repoRoot: process.cwd(),
           tenantId: activeClient?.id ?? null,
           tenantKey: homeTenantKey ?? activeClient?.key ?? requestedClient,
           displayName: activeTenantName,
@@ -219,7 +275,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const renderedSummarySnapshot =
     candidatePreviewEnabled || !moduleContext
       ? baseSummarySnapshot
-      : await applyHomeSummaryClaudeRender({ snapshot: baseSummarySnapshot });
+      : await withHomePageTimeout(
+          "Claude summary render",
+          applyHomeSummaryClaudeRender({ snapshot: baseSummarySnapshot }),
+          baseSummarySnapshot,
+          HOME_OPTIONAL_RENDER_TIMEOUT_MS,
+        );
   const summarySnapshot = applyStoredKnowledgeDimensionNarratives(
     renderedSummarySnapshot,
     homeTenantKey ?? activeClient?.key ?? requestedClient,

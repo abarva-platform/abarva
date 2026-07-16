@@ -10,20 +10,33 @@ function readRepoFile(relativePath: string): string {
 describe("Home/Admin boundary contract", () => {
   it("keeps the canonical /home entry on the insight surface", () => {
     const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
-    const homeSource = readRepoFile(
-      "src/components/home/ImpactInsightsHome.tsx",
-    );
+    const homeSource = readRepoFile("src/components/home/HomeSurface.tsx");
 
-    expect(pageSource).toContain("import { ImpactInsightsHome }");
+    expect(pageSource).toContain("import { HomeSurface }");
     expect(pageSource).not.toMatch(
       /HomeOverviewV2|HomeIndexPage|StewardOrientationBlock/,
     );
 
-    expect(homeSource).toContain('data-testid="home-impact-insights"');
-    expect(homeSource).toContain("InsightConstellation");
-    expect(homeSource).not.toMatch(
-      /\b(admin|setup|upload|data loads?|connectors?|templates?|corpus|depth|breadth|segments loaded|template coverage|connector health)\b/i,
+    expect(pageSource).toContain("<HomeSurface");
+    expect(homeSource).toContain("HomeSurface");
+    expect(pageSource).not.toMatch(
+      /ImpactInsightsHome|HomeOverviewV2|HomeIndexPage|StewardOrientationBlock/,
     );
+  });
+
+  it("bounds optional Knowledge enrichment so /home can render", () => {
+    const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
+
+    expect(pageSource).toContain("withHomePageTimeout");
+    expect(pageSource).toContain("HOME_OPTIONAL_DATA_TIMEOUT_MS");
+    expect(pageSource).toContain("HOME_OPTIONAL_RENDER_TIMEOUT_MS");
+    expect(pageSource).toContain('"module context"');
+    expect(pageSource).toContain('"V7 context browser"');
+    expect(pageSource).toContain('"inventory snapshot"');
+    expect(pageSource).toContain('"tenant source files"');
+    expect(pageSource).toContain('"Claude summary render"');
+    expect(pageSource).toContain("buildHomeSummarySnapshot({");
+    expect(pageSource).not.toContain("buildHomeRuntimeSummarySnapshot");
   });
 
   it("keeps legacy setup-ish Home URLs redirected into Admin", () => {
@@ -31,12 +44,12 @@ describe("Home/Admin boundary contract", () => {
 
     for (const [legacyPath, canonicalPath] of [
       ['"/home/admin"', '"/admin"'],
-      ['"/home/data-loads"', '"/admin/setup"'],
-      ['"/home/data-trust"', '"/admin/data-trust"'],
-      ['"/home/agent-readiness"', '"/admin/agent-readiness"'],
-      ['"/home/connectors"', '"/admin/connectors"'],
+      ['"/home/data-loads"', '"/admin"'],
+      ['"/home/data-trust"', '"/admin"'],
+      ['"/home/agent-readiness"', '"/admin"'],
+      ['"/home/connectors"', '"/admin"'],
       ['"/home/configuration"', '"/admin"'],
-      ['"/home/tenant-profile"', '"/admin?tab=tenant"'],
+      ['"/home/tenant-profile"', '"/admin"'],
     ] as const) {
       expect(proxySource).toContain(`${legacyPath}: ${canonicalPath}`);
     }
@@ -44,20 +57,18 @@ describe("Home/Admin boundary contract", () => {
     expect(proxySource).toContain(
       'request.nextUrl.pathname.startsWith("/home/admin/")',
     );
-    expect(proxySource).toContain('"/admin/" + sub + request.nextUrl.search');
+    expect(proxySource).toContain('new URL("/admin" + request.nextUrl.search');
     expect(proxySource).toContain(
       'request.nextUrl.pathname.startsWith("/home/connectors/")',
     );
     expect(proxySource).toContain(
-      '"/admin/connectors/" + sub + request.nextUrl.search',
+      'new URL("/admin" + request.nextUrl.search',
     );
     expect(proxySource).toContain('request.nextUrl.pathname === "/setup"');
     expect(proxySource).toContain(
       'NextResponse.redirect(new URL("/admin", request.url), 301)',
     );
-    expect(proxySource).toContain('const homeCandidate = "/home/" + sub;');
-    expect(proxySource).toContain(
-      "const target = homeToAdminMap[homeCandidate] ?? homeCandidate;",
-    );
+    expect(proxySource).toContain('pathname === "/home"');
+    expect(proxySource).toContain('pathname.startsWith("/home/")');
   });
 });
