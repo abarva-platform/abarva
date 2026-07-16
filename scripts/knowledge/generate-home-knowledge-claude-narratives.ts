@@ -142,7 +142,7 @@ const contextPack = {
     candidate_preview_active: false,
     active_context_path: "Active module-context path where promoted data exists",
     required_wording:
-      "source-backed synthetic demo context; do not call it real Meridian production data",
+      "planning-grade synthetic context for demonstration, not client production evidence",
   },
   enterprise_profile: {
     company_story:
@@ -215,38 +215,65 @@ ROLE
 You are not writing a user guide, a data dictionary, an audit report, or internal engineering documentation. You are a senior enterprise advisor writing a McKinsey/Bain-quality CXO briefing. A CIO, CDAO, CFO, or COO must understand, in under 90 seconds, what the enterprise is, what Nexus understands, what is fragmented or risky, what decision follows, what evidence is missing, and what to do next.
 
 PRODUCT TRUTH
-AbarVa is the company. Nexus is the enterprise AI value platform. aVa is the intelligence layer. Knowledge is the enterprise context surface. The Context Layer is built for the whole enterprise, not for one use case. Agent Assist is ONE worked example that shows the layer in action — never describe the context layer as existing "for" Agent Assist, and never let Agent Assist read as the reason the layer exists.
+AbarVa is the company. Nexus is the enterprise AI value platform. aVa is the intelligence layer. Knowledge is the enterprise context surface. The Context Layer is built for the whole enterprise, not for one use case. Agent Assist is ONE worked example that shows the layer in action — never describe the context layer as existing "for" Agent Assist, and never let Agent Assist read as the reason the layer exists. Do not open executive_summary with Agent Assist and do not make Agent Assist the story: mention it at most ONCE, as one example among several, never as the premise.
 
-REQUIRED NARRATIVE STRUCTURE — Situation, Complication, Insight, Implication, Action
-Every executive_summary (home-level and per-dimension) must move through, in this order, inside flowing prose (do not use these words as literal labels):
-1. Situation — what kind of enterprise this is and what Nexus understands about it.
-2. Complication — what is fragmented, incomplete, risky, or blocking a higher-value decision.
-3. Insight — what organizing this context across systems, data, functions, risks, metrics, owners, and vendors reveals that was previously scattered.
-4. Implication — what a CIO/CDAO/CFO/COO should now fund, fix, govern, source, or measure.
-5. Action — what the client should validate or provide next.
+NARRATIVE STYLE — write like a senior McKinsey/Bain advisor, not a checklist
+You are writing a C-suite enterprise context brief. Do not write a guidebook, data dictionary, audit summary, or product explanation.
+Write TWO SHORT PARAGRAPHS separated by a blank line (\n\n) — never one dense block. Home executive_summary: 180-230 words total. Dimension executive_summary: roughly half that.
+Paragraph 1: who the enterprise is, what its operating context looks like, and what the current-state picture reveals (scale, structure, fragmentation, constraints — whichever are evidenced for this dimension).
+Paragraph 2: the strategic implication — what is holding back AI-led transformation, what leadership should prioritize, and what evidence should be validated next. End with one short evidence-boundary sentence.
+
+CLAIM-STRENGTH DISCIPLINE (applies to both paragraphs)
+- Default verb for what leadership should do is "prioritize," not "fund." Only use "fund," "commit budget to," or similar budget-authority language when the context pack contains an explicit evidenced budget figure for that specific item (e.g. a named program's budgetUsd) — and even then, tie the verb to that specific named program, not the general foundation.
+- "executiveOwner" fields in the context pack are ROLE TITLES (e.g. "CDAO," "Chief Health Plan Officer"), not named individuals. Never write "named executive owner" or imply a specific person is confirmed. Say "represented executive ownership" or "executive ownership by role, not yet confirmed by name" instead.
+- Geography, headquarters, and operating-region facts (e.g. service areas) may be stated plainly ONLY when they appear verbatim in the supplied context pack for this dimension — check before writing them. If a fact appears in the pack, state it directly and specifically (do not hedge into vague language like "a multi-region footprint" when the pack already names the regions) — specificity that IS grounded is a strength, not a risk. If it does NOT appear in the pack for this dimension, do not state it at all.
+Cover whichever of these ideas are evidenced, naturally, in your own words — do NOT force the literal words "Situation," "Complication," "Insight," "Implication," or "Action" into the response, and do not march through them as a rigid five-part sequence:
+- enterprise/dimension structure and scale
+- current-state fragmentation or constraint
+- leadership or strategic ambition, where evidenced
+- key metrics or operating signals, where evidenced
+- known challenges and constraints
+- what is critical for AI-led transformation
+- what to watch out for
+- what Nexus should help the enterprise decide, execute, source, or measure next
+Write each paragraph the way a senior partner actually talks — plain declarative sentences, a genuine point of view, not a checklist working through labeled beats.
 
 HARD RULE — FIRST SENTENCE
 The first sentence of every executive_summary must state the enterprise/business situation. It must NEVER open with provenance, methodology, data lineage, or how the narrative was built.
 Banned openings (regex-checked, will hard-fail): "This narrative is built on", "This story is", "The story it tells", "The enterprise context layer is the hero", "Home context has", "This page shows", "This view explains".
-Good opening (home level): "Healthcare Demo represents a scaled healthcare enterprise with clinical, claims, member-service, finance, technology, and analytics complexity."
+The first sentence names AT MOST 3 domain/function nouns — it is a framing statement, not an inventory. Save the rest of the domain list for sentence 2 (spread across 2 sentences if needed) rather than chaining 6+ nouns after "spanning" or "across."
+Good opening (home level): "Meridian represents a scaled healthcare enterprise spanning clinical care, health-plan operations, and enterprise analytics."
 Good opening (dimension level, Business Functions example): "Meridian's business context shows that Agent Assist is not a contact-center-only initiative."
 
+SYSTEM-NAME BUDGET (home executive_summary only)
+Name AT MOST 3 specific system/tool NAME TOKENS total across the ENTIRE home executive_summary — count every individual product name, including sub-products (e.g. "Epic Hyperspace," "Epic Clarity," and "Epic Caboodle" are THREE tokens, not one "Epic" token; if you use all three of those, you have zero budget left for SQL Server, Tableau, SAS, or Power BI). A full system inventory belongs in the Applications & Systems dimension narrative, not here. Prefer "Epic's clinical and analytics modules" (one token) over naming all three Epic products, and refer to the rest of the reporting stack as "fragmented on-prem reporting tools" rather than chaining SQL Server, Tableau, SAS, and Power BI by name. Dimension-level executive_summary is where the fuller system enumeration belongs.
+
+ROLE-TITLE BUDGET (home executive_summary only)
+Name AT MOST 2 executive role titles (e.g. "CDAO," "CFO") across the ENTIRE home executive_summary. Do not chain "under the CMO... under the Chief Health Plan Officer... under the CFO... under the CDAO" as a roster — pick the 1-2 roles central to the funding/ownership decision and refer to the rest as "its clinical, financial, and operating leadership" or similar.
+
+BANNED REPORT-SPEAK PHRASES (in addition to the FORBIDDEN LANGUAGE list below)
+"the current-state picture shows", "the picture that emerges", "one worked example of what this context supports", "what this shows is that", "what becomes clear is that", "loaded" (as a verb describing whether data/evidence exists — say "evidenced," "validated," or "in place" instead, e.g. "no patient/member identity spine is in place" not "no loaded patient/member identity spine") — these read as generated-report cadence, not a senior advisor's voice. State the fact or the insight directly instead: not "the current-state picture shows real operating breadth" but "Meridian runs real operating breadth across four functions."
+
+NEXT-STEP OWNERSHIP AND CONCRETENESS
+The next-step/validation sentence in paragraph 2 must name WHO validates, using a role already evidenced in the context pack (e.g. "the CDAO," "the workshop stakeholders," "Finance and the CDAO") — not just "the organization should validate X, Y, Z" with no owner attached. It must also name a concrete FIRST move or forum where that validation happens (e.g. "in a data governance workshop," "as the first deliverable of the discovery phase," "by certifying data-product ownership before any use case advances") — not just a list of things to validate with no venue or sequencing. Do not invent a specific calendar date if none is evidenced; naming the responsible role and the forum/sequencing is sufficient.
+
 TENANT NAME RULE
-Do not use the tenant name ("Healthcare Demo", "Meridian", "Meridian Health") more than TWICE inside any single executive_summary. Use "the enterprise," "the organization," "it," or omit the repeated subject once the tenant has been named. This is enforced mechanically — a third occurrence fails validation.
+Use exactly ONE name for the tenant, everywhere: "Meridian". Never write "Healthcare Demo" in visible narrative text (executive_summary, what_nexus_knows, why_it_matters, top_insights, or any other prose field) — it is internal plumbing language, not something a CXO reader should see, and mixing it with "Meridian" in the same paragraph reads as two different companies. Do not use "Meridian" more than TWICE inside any single executive_summary — use "the enterprise," "the organization," "it," or omit the repeated subject once named. This is enforced mechanically — a THIRD occurrence fails validation and blocks shipping. Budget your two uses deliberately: typically once in the opening sentence of paragraph 1, and once in the closing caveat sentence of paragraph 2 (the required_wording sentence). If you need a subject for any other sentence in paragraph 2 (e.g. "X should validate..."), use "The organization," "It," or "The enterprise" instead of "Meridian" — never spend your third occurrence there.
 
 CAVEAT PLACEMENT RULE
-The UI already shows synthetic/candidate-preview/source-backed status as visible badges directly above this text (Active Knowledge context / Candidate preview / Not active / Source-backed). Do not repeat that status as the opening idea of executive_summary. Caveats belong in exactly ONE short sentence near the END of executive_summary, phrased as a boundary, e.g.: "This is planning-grade synthetic context for demonstration, not client production evidence." required_wording must be satisfied by that closing sentence, not the opening one.
+The UI already shows synthetic/candidate-preview/source-backed status as visible badges directly above this text (Active Knowledge context / Candidate preview / Not active / Source-backed). Do not repeat that status as the opening idea of executive_summary. The caveat is exactly ONE short sentence, and it is the LAST sentence of paragraph 2, phrased as a boundary. Use exactly this sentence (or a close variant that preserves "planning-grade synthetic context" and "not client production evidence"): "This is planning-grade synthetic context for demonstration, not client production evidence." Do not use "Healthcare Demo" in that sentence. required_wording must be satisfied by that closing sentence, not the opening one.
 
 FORBIDDEN LANGUAGE IN VISIBLE NARRATIVE FIELDS (home + dimension executive_summary, what_nexus_knows, why_it_matters — case-insensitive)
-"packet generated", "loaded records", "route", "table" (as a UI noun), "Questions this supports", "Not yet supported", "user guide", "debug", "V4", "V5", "V6", "V7", "packet", "substrate", "runtime", "tenant packet", "source record", "record ID", "module behavior", "graph nodes" (as the main point), "relationship edges" (as the main point), "context layer is the hero", "this narrative is built on", "this story is deliberate", "reveals the real pattern", "reveals the pattern", "the real story", "organizing this ... reveals" (any phrase that describes the act of organizing/analyzing rather than stating the insight itself — state the insight directly, do not narrate how you arrived at it).
+"packet generated", "loaded records", "route", "table" (as a UI noun), "Questions this supports", "Not yet supported", "user guide", "debug", "V4", "V5", "V6", "V7", "packet", "substrate", "runtime", "tenant packet", "source record", "record ID", "module behavior", "graph nodes" (as the main point), "relationship edges" (as the main point), "context layer is the hero", "this narrative is built on", "this story is deliberate", "reveals the real pattern", "reveals the pattern", "the real story", "organizing this ... reveals" (any phrase that describes the act of organizing/analyzing rather than stating the insight itself — state the insight directly, do not narrate how you arrived at it), "Healthcare Demo".
 
 SENTENCE LENGTH AND DENSITY
-The constraint is DENSITY PER SENTENCE, not a fixed sentence count. Home executive_summary should cover Situation / Complication / Insight / Implication / Action plus a closing caveat sentence — use as many sentences as that takes (typically 6-9) as long as each individual sentence carries only ONE idea (roughly 20-30 words, one clause-pair). Never chain three or more sub-clauses with commas and "and"/"yet"/"while" into a single sentence, and never enumerate a long list of system names inside one sentence — if you need to name several systems, either pick the 2-3 most decision-relevant ones or split the enumeration across two short sentences. A senior partner writes many short declarative sentences, not few long compound ones.
-Dimension executive_summary: 2-4 sentences, same per-sentence density rule.
+The constraint is DENSITY PER SENTENCE, not a fixed sentence count. Home executive_summary is two paragraphs (Situation+Complication, then Insight+Implication+Action+caveat) — use as many sentences per paragraph as that takes (typically 3-5 each) as long as each individual sentence carries only ONE idea (roughly 20-30 words, one clause-pair). Never chain three or more sub-clauses with commas and "and"/"yet"/"while" into a single sentence, and never enumerate a long list of system names inside one sentence — if you need to name several systems, either pick the 2-3 most decision-relevant ones or split the enumeration across two short sentences. A senior partner writes many short declarative sentences, not few long compound ones.
+Dimension executive_summary: same two-paragraph shape, 2-3 sentences per paragraph.
 You do not need to name every required system/term inside the home executive_summary specifically — required-term coverage (Netezza, Unity Catalog, etc.) is checked across the full response, so it is fine for a specific system name to appear in a dimension narrative instead of being crammed into the home summary. Do not sacrifice required-term coverage anywhere in the response to keep the home summary short; that check runs against everything you return, not just the opening paragraph. top_insights must still have at least 5 entries, enterprise_context_map at least 8 edges, readiness_matrix and evidence_heatmap at least 5 entries each, top_gaps at least 4.
+REQUIRED-TERM COVERAGE BEATS DENSITY: if trimming executive_summary sentences down to 2-3 per paragraph would drop a required term (see required_terms in the context pack, and the Applications & Systems required list: Epic Clarity, Epic Caboodle, SQL Server, Tableau, SAS, claims, eligibility, knowledge base, AWS, Databricks, target-state), do not drop it — put it in that dimension's what_nexus_knows bullets instead, which are not subject to the paragraph-density rule. Every one of those Applications & Systems terms and every required_terms entry must appear somewhere in your full response, verbatim or near-verbatim, no exceptions.
 
 CONCRETENESS RULE
-Do not describe connections abstractly ("connective relationships that link these into decision-ready chains", "candidate context becomes decision-grade"). Name the actual things being connected instead, e.g. "the same identity and claims data that grounds Agent Assist also grounds payment integrity and cost reporting" — concrete nouns, not abstract category words like "chains," "decision-grade," or "connective tissue."
+Do not describe connections abstractly ("connective relationships that link these into decision-ready chains", "candidate context becomes decision-grade", "connective evidence", "decision-ready reasoning", "decision-ready chains"). Name the actual things being connected instead, e.g. "the same identity and claims data that grounds Agent Assist also grounds payment integrity and cost reporting" — concrete nouns, not abstract category words like "chains," "decision-grade," "reasoning," or "connective tissue."
 
 PREFERRED WORDING
 "What Nexus understands", "Why this matters", "Decision implication", "Evidence still needed", "What more context unlocks", "Recommended next action", "Safe for discovery and framing", "Not yet sufficient for production approval or realized-value claims".
@@ -303,6 +330,28 @@ Coverage rules:
 - For home summary, include cross-dimension insights, decision implications, and module handoffs.
 - For enterprise_context_map, include at least 8 edges so the Home visual can tell the context-layer story.
 - Keep do-not-claim as evidence boundary data; do not make it the main story.
+
+PER-DIMENSION LENS — each dimension continues the same Meridian story, from that dimension's angle. Frame executive_summary around the question below where the dimension's evidence supports it:
+- Enterprise Profile: what kind of organization is Meridian, and why does that shape the transformation agenda?
+- Business Functions: which functions are involved in AI/transformation, and where will operating-model change happen?
+- Org Ownership: who must own decisions, controls, funding, and measurement?
+- Applications & Systems: what technology estate creates dependencies or modernization blockers?
+- Data Assets & Integrations: what data spine is needed before AI can scale safely?
+- Infrastructure & Platforms: what target foundation must be built or validated?
+- Vendors & Contracts: where could Source help once contracts, SLAs, and economics are added?
+- IT Budget, Spend & Value: what can be framed as a value hypothesis versus measured value?
+- Programs & Initiatives: which initiatives are real transformation candidates versus ideas?
+- AI & Automation Use Cases: which use cases are ready for discovery, and which require more evidence?
+- Risks & Controls: what must be governed before production use?
+- Metrics & Outcomes: what must be baselined before Tower can claim value?
+
+DECISIONS THIS CAN INFORM (dimension narratives — the questions_supported field)
+questions_supported is a determination of what decision this dimension can actually inform right now, not a guide-style list of the generic questions this dimension's TYPE usually answers. Do not write it as a literal question. Write it as a decision-implication statement: name the actual decision, and ground it in whether the specific evidence this dimension carries is validated or not.
+Bad (generic guide question): "Which systems do agents use today?"
+Good (decision implication, grounded in this dimension's own what_nexus_knows): "Meridian can use this dimension to decide whether Agent Assist should stay in discovery or move into architecture design, based on whether CRM, claims, eligibility, knowledge, and transcript governance are validated."
+Every entry must be traceable to a specific fact in this dimension's own what_nexus_knows or the supplied context pack — if you cannot point to the fact, do not list the entry.
+questions_unsupported (do_not_claim / unsupportedQuestions) works the same way in reverse: name the SPECIFIC missing evidence that blocks that decision, not a generic caveat. Tie it to a named gap (e.g. "Which contact center vendor is under contract cannot be answered — no vendor contract evidence is loaded for this dimension" rather than "Vendor details are not available").
+next_validation_actions must follow from the same gap you just named in questions_unsupported or current_caveats — do not propose a generic "validate with the client" action that could apply to any dimension.
 
 VISUAL BLOCK RULES (home summary only)
 - Emit AT MOST 4 visual_blocks, ordered by display_priority ascending. Fewer, better blocks beat more blocks — do not emit a block just because data exists.
@@ -502,9 +551,7 @@ async function main() {
         );
   const cxoPass =
     cxoScore.overall >= 4.4 &&
-    Object.entries(cxoScore)
-      .filter(([key]) => key !== "overall")
-      .every(([, value]) => (value as number) >= 4.0);
+    CXO_SCORE_CATEGORIES.every((key) => cxoScore[key] >= 4.0);
   writeCxoProofOutputs({
     status,
     validation,
@@ -551,28 +598,49 @@ type CxoScore = {
   rationale: string;
 };
 
+const CXO_SCORE_CATEGORIES = [
+  "situation_clarity",
+  "complication_clarity",
+  "insight_quality",
+  "decision_implication",
+  "actionability",
+  "evidence_discipline",
+  "language_quality",
+  "visual_usefulness",
+  "clutter_control",
+] as const;
+
 async function scoreCxoNarrative(executiveSummary: string): Promise<CxoScore> {
   const judgeSystemPrompt = `You are a skeptical McKinsey/Bain-style editorial reviewer scoring a CXO enterprise briefing paragraph for a healthcare demo tenant. Score strictly. Return strict JSON only, no markdown.
 
-Score each 1-5 (5 = excellent, matches the bar of a senior partner's briefing note; 1 = reads like a system-generated report):
+Score each category on a 1.0-5.0 scale with ONE DECIMAL PLACE of precision (e.g. 4.3, 3.7) — do not round to whole numbers. 5.0 = excellent, matches the bar of a senior partner's briefing note; 1.0 = reads like a system-generated report. Use the full decimal range to express genuine differences in quality; a "very good, one small remaining gap" response should land around 4.3-4.6, not be flattened to a whole 4 or 5.
 - situation_clarity: does it name what enterprise this is and what Nexus understands, in the first sentence?
 - complication_clarity: is the business friction/risk/fragmentation clear?
 - insight_quality: does it reveal something non-obvious from connecting the context, not just list facts?
-- decision_implication: does it tell a CIO/CDAO/CFO what to fund, fix, govern, or validate?
+- decision_implication: does it tell a CIO/CDAO/CFO what to prioritize, fix, govern, or validate?
 - actionability: does the reader know the next step?
 - evidence_discipline: are caveats present but not dominant, and placed late rather than as the opening idea?
 - language_quality: does it read like a senior advisor, not a generated report (penalize meta-commentary like "this narrative is built on" or "the story it tells is deliberate")?
-- visual_usefulness: not applicable to plain prose scoring — score 5 if no visual claim is made that contradicts the text, otherwise judge on whether the text would pair well with a chart or table.
+- visual_usefulness: not applicable to plain prose scoring — score 5.0 if no visual claim is made that contradicts the text, otherwise judge on whether the text would pair well with a chart or table.
 - clutter_control: does the paragraph stay focused (single clear throughline) rather than trying to cover everything?
-- overall: your holistic 1-5 score.
 - rationale: 2-3 sentences on the single biggest remaining weakness, or "none" if genuinely excellent.
 
-Return: {"situation_clarity":n,"complication_clarity":n,"insight_quality":n,"decision_implication":n,"actionability":n,"evidence_discipline":n,"language_quality":n,"visual_usefulness":n,"clutter_control":n,"overall":n,"rationale":"..."}`;
+Return: {"situation_clarity":n,"complication_clarity":n,"insight_quality":n,"decision_implication":n,"actionability":n,"evidence_discipline":n,"language_quality":n,"visual_usefulness":n,"clutter_control":n,"rationale":"..."}`;
   const raw = await callClaudeText(judgeSystemPrompt, executiveSummary, 1200);
   const trimmed = raw.trim().replace(/^```json\s*/i, "").replace(/```$/i, "");
   const match = trimmed.match(/\{[\s\S]*\}/);
   if (!match) throw new Error("CXO judge response did not contain a JSON object.");
-  return JSON.parse(match[0]) as CxoScore;
+  const parsed = JSON.parse(match[0]) as CxoScore;
+  // `overall` is COMPUTED as the mean of the 9 judged categories, not a separately
+  // elicited holistic integer — a self-reported holistic score tends to anchor on a
+  // whole number (e.g. 4) even when every category scores 4-5, making the 4.4 pass
+  // bar mathematically unreachable regardless of actual quality. Averaging fixes the
+  // scale/precision bug without changing the quality bar itself.
+  const mean =
+    CXO_SCORE_CATEGORIES.reduce((sum, key) => sum + (parsed[key] as number), 0) /
+    CXO_SCORE_CATEGORIES.length;
+  parsed.overall = Math.round(mean * 10) / 10;
+  return parsed;
 }
 
 function fallbackBlockedCxoScore(rationale: string): CxoScore {
