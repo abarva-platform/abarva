@@ -15,6 +15,12 @@ import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { FeedForwardSignals } from "@/lib/programs/phase-templates/feed-forward";
+import {
+  assembleP3SolutionOptions,
+  buildP3DesignInputsPackFromSignals,
+  type P3OptionSet,
+} from "@/lib/programs/phase-templates/p3-option-assembler";
+import { buildingBlockLabel } from "@/lib/programs/phase-templates/building-blocks";
 import type { PhaseTask } from "@/lib/programs/phase-templates/phase-workflow";
 import { buildNextPhaseReadinessPack } from "@/lib/programs/phase-templates/next-phase-readiness-pack";
 import type { StrategicMove } from "@/lib/programs/types.ui";
@@ -328,8 +334,8 @@ function formatArchetype(value: string | null | undefined): string {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function moneyRange(move: StrategicMove): string {
-  const projected = move.valueAtStake.projected;
+function moneyRange(valueAtStake: StrategicMove["valueAtStake"]): string {
+  const projected = valueAtStake.projected;
   if (!projected) return "Value at stake to be quantified";
   const formatter = new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -380,6 +386,61 @@ export function MovesPhaseStandaloneClient({
   }, [move.archetype, move.tenant.industryCode, move.tenant.name]);
 
   const evidenceCount = evidenceNeedPackets.length || move.linkedEvidence.length;
+  const moveValueRange = useMemo(() => moneyRange(move.valueAtStake), [move.valueAtStake]);
+  const p3DesignInputsPack = useMemo(
+    () =>
+      buildP3DesignInputsPackFromSignals({
+        archetype: move.archetype,
+        carriesForwardContent,
+        charter: move.charter,
+        evidenceNeedPackets,
+        gateCriteria: move.gateCriteria,
+        linkedEvidence: move.linkedEvidence,
+        moveId: move.id,
+        moveName: move.name,
+        readiness: currentStateReadiness,
+      }),
+    [
+      carriesForwardContent,
+      currentStateReadiness,
+      evidenceNeedPackets,
+      move.archetype,
+      move.charter,
+      move.gateCriteria,
+      move.id,
+      move.linkedEvidence,
+      move.name,
+    ],
+  );
+  const p3OptionSet = useMemo(
+    () =>
+      assembleP3SolutionOptions({
+        archetype: move.archetype,
+        designInputs: p3DesignInputsPack,
+        evidenceNeedPackets,
+        industryCode: move.tenant.industryCode,
+        moveId: move.id,
+        moveName: move.name,
+        readiness: currentStateReadiness,
+        tenantName: move.tenant.name,
+        valueAtStake: moveValueRange,
+      }),
+    [
+      currentStateReadiness,
+      evidenceNeedPackets,
+      move.archetype,
+      move.id,
+      move.name,
+      move.tenant.industryCode,
+      move.tenant.name,
+      moveValueRange,
+      p3DesignInputsPack,
+    ],
+  );
+  const selectedP3OptionLabel = useMemo(
+    () => p3OptionSet.options.find((option) => option.id === selectedOption)?.label,
+    [p3OptionSet.options, selectedOption],
+  );
 
   // aVa chat send. Ported from the retired StrategicMovePhaseClient's `send`
   // — same endpoint, same surfaceContext shape. Critically keeps
@@ -516,6 +577,7 @@ export function MovesPhaseStandaloneClient({
         move,
         phase,
         selectedOption,
+        selectedOptionLabel: phase.phase === 3 ? selectedP3OptionLabel : undefined,
       }),
     };
     const finalizeRes = await fetch(`/api/v1/programs/${move.id}/phase-capture`, {
@@ -816,6 +878,7 @@ export function MovesPhaseStandaloneClient({
                 onOpenFiles={openFilesWorkspace}
                 onSelectOption={setSelectedOption}
                 onShowGate={goToGateStep}
+                p3OptionSet={p3OptionSet}
                 phase={phase}
                 selectedOption={selectedOption}
                 substep={substep.key}
@@ -929,6 +992,7 @@ function PhaseBody({
   onOpenFiles,
   onSelectOption,
   onShowGate,
+  p3OptionSet,
   phase,
   selectedOption,
   substep,
@@ -949,6 +1013,7 @@ function PhaseBody({
   onOpenFiles: () => void;
   onSelectOption: (value: string) => void;
   onShowGate: () => void;
+  p3OptionSet: P3OptionSet;
   phase: PhaseContract;
   selectedOption: string;
   substep: SubstepKey;
@@ -1062,14 +1127,19 @@ function PhaseBody({
           <div>Assembled from your evidence + readiness - not a blank prompt</div>
           <h2>Recommended strategy path</h2>
           <p>
-            The options are scored against what prior phases proved, where
-            readiness is still weak, and which design lane carries the value.
+            The options are scored from the P2 design inputs, readiness gaps,
+            controls, evidence constraints, and solution building blocks. aVa
+            can improve narrative, but the option scores are deterministic.
           </p>
         </section>
         <section className="mxw-zone">
           <h2>Options & recommendation</h2>
-          <p>Three approaches - aVa recommends one; you decide next.</p>
-          <OptionCards selectedOption={selectedOption} onSelectOption={onSelectOption} />
+          <P3OptionSummary optionSet={p3OptionSet} />
+          <OptionCards
+            optionSet={p3OptionSet}
+            selectedOption={selectedOption}
+            onSelectOption={onSelectOption}
+          />
         </section>
       </>
     );
@@ -1112,7 +1182,12 @@ function PhaseBody({
             Use the SME session to confirm, deviate, or define a new option.
             Deviations are allowed; the rationale must be captured.
           </p>
-          <OptionCards selectedOption={selectedOption} onSelectOption={onSelectOption} />
+          <P3OptionSummary optionSet={p3OptionSet} />
+          <OptionCards
+            optionSet={p3OptionSet}
+            selectedOption={selectedOption}
+            onSelectOption={onSelectOption}
+          />
         </section>
         <section className="mxw-upload">
           <div>
@@ -1166,7 +1241,7 @@ function PhaseBody({
         <div className="mxw-value-grid">
           <div>
             <span>Projected</span>
-            <strong>{moneyRange(move)}</strong>
+            <strong>{moneyRange(move.valueAtStake)}</strong>
           </div>
           <div>
             <span>Evidence posture</span>
@@ -1481,11 +1556,13 @@ function buildPhaseCaptureItems({
   move,
   phase,
   selectedOption,
+  selectedOptionLabel,
 }: {
   draftedBrief: Record<number, string>;
   move: StrategicMove;
   phase: PhaseContract;
   selectedOption: string;
+  selectedOptionLabel?: string;
 }): Record<string, string> {
   if (phase.phase === 0) {
     return {
@@ -1501,11 +1578,11 @@ function buildPhaseCaptureItems({
     };
   }
 
-  const selectedOptionLabel = optionLabelForPhase(phase.phase, selectedOption);
+  const selectedOptionDisplay = selectedOptionLabel || optionLabelForPhase(phase.phase, selectedOption);
   const optionContext =
     phase.phase === 1
-      ? `Initial transformation posture to validate in P2: ${selectedOptionLabel}.`
-      : `Selected approach: ${selectedOptionLabel}.`;
+      ? `Initial transformation posture to validate in P2: ${selectedOptionDisplay}.`
+      : `Selected approach: ${selectedOptionDisplay}.`;
   const evidenceSummary =
     move.linkedEvidence.length > 0
       ? move.linkedEvidence.map((item) => item.summary).join("; ")
@@ -1658,34 +1735,95 @@ function TemplatesAndSessions({ phase }: { phase: PhaseContract }) {
   );
 }
 
+function P3OptionSummary({ optionSet }: { optionSet: P3OptionSet }) {
+  const recommendation = optionSet.recommendedOptionId
+    ? optionSet.options.find((option) => option.id === optionSet.recommendedOptionId)
+    : null;
+
+  return (
+    <div className="mxw-option-summary">
+      <div>
+        <span>Source</span>
+        <strong>P2 design inputs pack</strong>
+        <small>{optionSet.evidenceBasis.length} evidence signal{optionSet.evidenceBasis.length === 1 ? "" : "s"}</small>
+      </div>
+      <div>
+        <span>Recommendation</span>
+        <strong>{recommendation ? recommendation.label : "Provisional only"}</strong>
+        <small>
+          {recommendation
+            ? `${recommendation.confidence} confidence - human decision still required`
+            : "More evidence needed before a recommendation is safe"}
+        </small>
+      </div>
+      <div>
+        <span>Open gaps</span>
+        <strong>{optionSet.missingEvidence.length}</strong>
+        <small>{optionSet.missingEvidence[0] ?? "No required gap listed"}</small>
+      </div>
+    </div>
+  );
+}
+
 function OptionCards({
+  optionSet,
   selectedOption,
   onSelectOption,
 }: {
+  optionSet: P3OptionSet;
   selectedOption: string;
   onSelectOption: (value: string) => void;
 }) {
-  const options = [
-    ["A", "Optimize the current workflow", "Lowest disruption; limited step-change value."],
-    ["B", "Phased platform + operating-model shift", "Balanced value, control, and adoption path.", true],
-    ["C", "Large transformation program", "Highest ambition; highest readiness burden."],
-  ] as const;
-
   return (
     <div className="mxw-options">
-      {options.map(([code, title, detail, recommended]) => (
+      {optionSet.options.map((option) => (
         <button
-          className={`${selectedOption === code ? "selected" : ""} ${
-            recommended ? "recommended" : ""
+          className={`${selectedOption === option.id ? "selected" : ""} ${
+            option.recommended ? "recommended" : ""
           }`}
-          key={code}
-          onClick={() => onSelectOption(code)}
+          key={option.id}
+          onClick={() => onSelectOption(option.id)}
           type="button"
         >
-          <span>{code}</span>
-          <strong>{title}</strong>
-          {recommended ? <em>✓ aVa recommends</em> : null}
-          <small>{detail}</small>
+          <span>{option.id}</span>
+          <strong>{option.label}</strong>
+          {option.recommended ? <em>✓ {option.recommendationLabel}</em> : null}
+          <small>{option.summary}</small>
+          <dl>
+            <div>
+              <dt>Impact</dt>
+              <dd>{option.businessImpact}</dd>
+            </div>
+            <div>
+              <dt>Data/platform</dt>
+              <dd>{option.dataPlatformImplications}</dd>
+            </div>
+            <div>
+              <dt>Human + AI split</dt>
+              <dd>{option.humanAiSplit}</dd>
+            </div>
+            <div>
+              <dt>Controls</dt>
+              <dd>{option.controls}</dd>
+            </div>
+          </dl>
+          <div className="mxw-option-meta">
+            <b>{option.timeToValue}</b>
+            <b>{option.effort}</b>
+            <b>Score {option.totalScore}</b>
+            <b>{option.confidence} confidence</b>
+          </div>
+          <div className="mxw-option-blocks">
+            {option.requiredBuildingBlocks.slice(0, 6).map((block) => (
+              <i key={block}>{buildingBlockLabel(block)}</i>
+            ))}
+          </div>
+          {option.notRecommendedYetReasons.length > 0 ? (
+            <div className="mxw-option-caution">
+              <b>Not recommended yet if:</b>
+              <span>{option.notRecommendedYetReasons.slice(0, 3).join(" ")}</span>
+            </div>
+          ) : null}
         </button>
       ))}
     </div>
@@ -1865,6 +2003,11 @@ function MovesStandaloneStyles() {
 .mxw-approach{border-color:rgba(0,87,184,.25);background:linear-gradient(180deg,var(--blue-tint),var(--card) 60%)}
 .mxw-approach div{font-size:9px;letter-spacing:1px;text-transform:uppercase;font-weight:700;color:var(--blue);margin-bottom:9px}
 .mxw-approach h2{font-family:Georgia,serif;font-size:21px;margin:0}
+.mxw-option-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 14px}
+.mxw-option-summary div{border:1px solid var(--line);border-radius:11px;background:var(--soft);padding:12px 14px;min-width:0}
+.mxw-option-summary span{display:block;font-size:9.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--faint);font-weight:800;margin-bottom:4px}
+.mxw-option-summary strong{display:block;font-size:13.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mxw-option-summary small{display:block;font-size:12px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mxw-options{display:grid;gap:10px}
 .mxw-options button{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:14px 16px;display:grid;grid-template-columns:28px 1fr auto;gap:10px;text-align:left;cursor:pointer;align-items:center}
 .mxw-options button.selected{border-color:var(--green);background:var(--green-tint)}
@@ -1872,6 +2015,17 @@ function MovesStandaloneStyles() {
 .mxw-options strong{font-size:14px;color:var(--ink)}
 .mxw-options em{font-style:normal;font-size:11px;font-weight:700;color:var(--green)}
 .mxw-options small{grid-column:2 / 4;font-size:12.5px;color:var(--muted)}
+.mxw-options dl{grid-column:2 / 4;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:2px 0 0}
+.mxw-options dl div{border:1px solid rgba(20,20,19,.07);border-radius:9px;background:rgba(255,255,255,.55);padding:9px 10px}
+.mxw-options dt{font-size:9.5px;letter-spacing:.45px;text-transform:uppercase;color:var(--faint);font-weight:800;margin:0 0 3px}
+.mxw-options dd{font-size:12px;line-height:1.4;color:var(--ink-2);margin:0}
+.mxw-option-meta,.mxw-option-blocks,.mxw-option-caution{grid-column:2 / 4}
+.mxw-option-meta{display:flex;flex-wrap:wrap;gap:7px}
+.mxw-option-meta b{border:1px solid var(--line);border-radius:999px;background:var(--card);padding:5px 9px;font-size:10.8px;color:var(--muted);font-weight:800}
+.mxw-option-blocks{display:flex;flex-wrap:wrap;gap:6px}
+.mxw-option-blocks i{border:1px solid rgba(0,87,184,.16);border-radius:999px;background:var(--blue-tint);color:var(--blue);font-style:normal;font-size:10.5px;font-weight:800;padding:5px 8px}
+.mxw-option-caution{border:1px solid rgba(176,115,15,.25);border-radius:10px;background:var(--amber-tint);padding:9px 10px;font-size:12px;color:var(--ink-2);line-height:1.4}
+.mxw-option-caution b{display:block;color:var(--amber);font-size:10.5px;letter-spacing:.4px;text-transform:uppercase;margin-bottom:3px}
 .mxw-upload{margin-top:20px;border:1px dashed var(--line-2);border-radius:13px;background:var(--soft);padding:18px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .mxw-upload strong{display:block;font-size:14px}
 .mxw-upload span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
@@ -2023,6 +2177,8 @@ function MovesStandaloneStyles() {
 }
 @media (max-width:720px){
   .mxw-howflow,.mxw-ts-grid,.mxw-file-cols{grid-template-columns:1fr}
+  .mxw-option-summary{grid-template-columns:1fr}
+  .mxw-options dl{grid-template-columns:1fr}
   .mxw-p0-brief-grid{grid-template-columns:1fr}
   .mxw-p0-brief-review header{flex-direction:column}
   .mxw-stage-bar{align-items:flex-start;flex-direction:column}
@@ -2031,6 +2187,7 @@ function MovesStandaloneStyles() {
   .mxw-options button{grid-template-columns:28px 1fr}
   .mxw-options em{grid-column:2}
   .mxw-options small{grid-column:2}
+  .mxw-options dl,.mxw-option-meta,.mxw-option-blocks,.mxw-option-caution{grid-column:2}
 }
       `}</style>
   );

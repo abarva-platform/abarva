@@ -129,6 +129,38 @@ export interface MoveTemplateUploadClassification {
 
 export interface P3DesignInputsPack {
   moveId: string;
+  /** Business outcome P2 proved or framed for P3 solutioning. */
+  businessOutcome?: string;
+  /** Evidence-backed current process findings. */
+  currentProcessFindings?: string[];
+  /** Pain points and root causes that explain why the current state fails. */
+  painPointsAndRootCauses?: string[];
+  /** Current application, workflow, integration, or platform systems. */
+  currentSystems?: string[];
+  /** Current data/platform state, including source ownership and quality posture. */
+  currentDataPlatformState?: string[];
+  /** Data readiness observations that affect solution viability. */
+  dataReadiness?: string[];
+  /** Organization, operating-model, adoption, or change-readiness observations. */
+  organizationChangeReadiness?: string[];
+  /** Compliance, privacy, security, audit, or governance requirements. */
+  controlRequirements?: string[];
+  /** Human decision points that should not be automated without approval. */
+  humanDecisionBoundaries?: string[];
+  /** Timing expectations, such as 90-day proof or board-cycle needs. */
+  timeToValueExpectations?: string[];
+  /** Budget, funding, or capacity posture that constrains P3 options. */
+  budgetFundingPosture?: string[];
+  /** Building blocks P2 suggests P3 should explicitly consider. */
+  selectedSolutionBuildingBlocks?: BuildingBlockKey[];
+  /** Evidence-backed constraints that P3 must respect. */
+  evidenceBackedConstraints?: string[];
+  /** Open questions P3 must answer or defer. */
+  unresolvedQuestions?: string[];
+  /** Explicit assumptions carried into P3, not asserted as fact. */
+  assumptions?: string[];
+  /** Conditions that make an ambitious option not ready yet. */
+  notReadyConditions?: string[];
   currentWorkflowWithPainPoints: string[];
   requiredFieldContract: string[];
   humanApprovalCheckpoints: string[];

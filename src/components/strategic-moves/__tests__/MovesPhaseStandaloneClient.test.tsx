@@ -354,14 +354,41 @@ describe("MovesPhaseStandaloneClient", () => {
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
         initialSubstepKey="decide"
-        move={makeMove()}
+        move={makeMove({
+          name: "Meridian Member Experience AI Assist",
+          archetype: "Contact Center Agent Assist",
+          tenant: {
+            id: "tenant-meridian",
+            name: "Healthcare Demo",
+            industryCode: "healthcare_provider",
+          },
+          charter: {
+            scaffold: {
+              problem_statement:
+                "Agents navigate CRM, claims, benefits, prior authorization, policy, and knowledge sources.",
+              scope_boundary:
+                "In: claims, eligibility, benefits, CRM history, and knowledge lookup. Out: clinical decisions.",
+              evidence_family:
+                "Member-service metrics, call transcripts, CRM history, claims samples, systems inventory.",
+              value_hypothesis:
+                "Improve member experience, reduce avoidable rework, and support a 90-day proof.",
+              foundation_readiness:
+                "Trusted data access, PHI controls, source freshness, quality, and lineage.",
+            },
+          },
+        })}
         phaseNum={3}
         phaseTallies={[...phaseTallies]}
       />,
     );
 
     expect(screen.getByRole("heading", { name: "Decide the approach" })).toBeInTheDocument();
-    expect(screen.getByText("Phased platform + operating-model shift")).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Governed agent-assist layer on current systems").length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByText("Phased platform + operating-model shift")).not.toBeInTheDocument();
+    expect(screen.queryByText("Optimize the current workflow")).not.toBeInTheDocument();
+    expect(screen.queryByText("Large transformation program")).not.toBeInTheDocument();
     expect(screen.getAllByText(/aVa recommends/i).length).toBeGreaterThan(0);
     expect(
       screen.queryByRole("heading", { name: "Initial transformation posture" }),
