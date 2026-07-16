@@ -1,9 +1,12 @@
 import {
   MERIDIAN_KNOWLEDGE_HOME_INSIGHTS,
-  validateHomeInsightSummary,
+  knowledgeNarrativeValidationFailures,
 } from "../../src/lib/enterprise-knowledge/narratives/knowledge-narrative-store";
 
-const failures = validateHomeInsightSummary(MERIDIAN_KNOWLEDGE_HOME_INSIGHTS);
+// Covers both the home summary and every dimension narrative, including the
+// CXO structural gate (first sentence must not open with provenance or
+// methodology, tenant name capped at 2 occurrences, forbidden meta-language).
+const failures = knowledgeNarrativeValidationFailures();
 
 const text = JSON.stringify(MERIDIAN_KNOWLEDGE_HOME_INSIGHTS).toLowerCase();
 for (const required of [

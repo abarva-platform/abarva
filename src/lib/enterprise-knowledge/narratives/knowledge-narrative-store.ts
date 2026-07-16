@@ -3,6 +3,7 @@ import {
   MERIDIAN_CLAUDE_DIMENSION_NARRATIVES,
   MERIDIAN_CLAUDE_HOME_INSIGHTS,
 } from "@/data/enterprise-knowledge/narratives/generated/meridian-claude-approved";
+import { MERIDIAN_CLAUDE_HOME_VISUAL_BLOCKS } from "@/data/enterprise-knowledge/narratives/generated/meridian-claude-visual-blocks-approved";
 
 export type KnowledgeDimensionNarrativeSummary = {
   tenant_key: string;
@@ -32,6 +33,25 @@ export type KnowledgeDimensionNarrativeSummary = {
   validation_errors: string[];
   unsupported_claims: string[];
   active_or_candidate_status: "active";
+};
+
+export type KnowledgeHomeVisualBlockType =
+  | "context_strength_snapshot"
+  | "what_more_context_unlocks"
+  | "evidence_gap_requests"
+  | "module_next_actions"
+  | "use_case_worked_example_map";
+
+export type KnowledgeHomeVisualBlock = {
+  type: KnowledgeHomeVisualBlockType;
+  title: string;
+  executive_message: string;
+  why_it_matters: string;
+  data: unknown;
+  evidence_refs: string[];
+  caveats: string[];
+  renderer_hint: "matrix" | "card_list" | "strip" | "table" | "graph";
+  display_priority: number;
 };
 
 export type KnowledgeHomeInsightSummary = {
@@ -81,6 +101,7 @@ export type KnowledgeHomeInsightSummary = {
   }>;
   safe_claims: string[];
   do_not_claim: string[];
+  visual_blocks?: KnowledgeHomeVisualBlock[];
   source_context_hash: string;
   evidence_refs_used: string[];
   relationship_edges_used: string[];
@@ -1050,13 +1071,37 @@ const MERIDIAN_SEEDED_HOME_INSIGHTS: KnowledgeHomeInsightSummary = {
   validation_errors: [],
 };
 
+const REALIZED_VALUE_CLAIM_PATTERN =
+  /\b(has|have|is|are|delivered|delivers|achieved|proved|proves|guaranteed|guarantees)\b.{0,60}\b(realized ROI|realized value|realized savings|actual savings|Tower value)\b/i;
+
 export const MERIDIAN_KNOWLEDGE_DIMENSION_NARRATIVES: KnowledgeDimensionNarrativeSummary[] =
-  MERIDIAN_CLAUDE_DIMENSION_NARRATIVES.length > 0
+  MERIDIAN_CLAUDE_DIMENSION_NARRATIVES.length > 0 &&
+  MERIDIAN_CLAUDE_DIMENSION_NARRATIVES.flatMap(validateDimensionNarrative).length === 0
     ? MERIDIAN_CLAUDE_DIMENSION_NARRATIVES
     : MERIDIAN_SEEDED_DIMENSION_NARRATIVES;
 
+const MERIDIAN_RUNTIME_HOME_BASE =
+  validateHomeInsightSummary(MERIDIAN_CLAUDE_HOME_INSIGHTS).length === 0
+    ? MERIDIAN_CLAUDE_HOME_INSIGHTS
+    : MERIDIAN_SEEDED_HOME_INSIGHTS;
+
 export const MERIDIAN_KNOWLEDGE_HOME_INSIGHTS: KnowledgeHomeInsightSummary =
-  MERIDIAN_CLAUDE_HOME_INSIGHTS ?? MERIDIAN_SEEDED_HOME_INSIGHTS;
+  attachApprovedHomeVisualBlocks(MERIDIAN_RUNTIME_HOME_BASE);
+
+function attachApprovedHomeVisualBlocks(
+  summary: KnowledgeHomeInsightSummary,
+): KnowledgeHomeInsightSummary {
+  if (
+    MERIDIAN_CLAUDE_HOME_VISUAL_BLOCKS.length > 0 &&
+    validateHomeVisualBlocks(MERIDIAN_CLAUDE_HOME_VISUAL_BLOCKS).length === 0
+  ) {
+    return {
+      ...summary,
+      visual_blocks: MERIDIAN_CLAUDE_HOME_VISUAL_BLOCKS,
+    };
+  }
+  return summary;
+}
 
 export function getStoredKnowledgeDimensionNarratives(
   tenantKey: string | null | undefined,
@@ -1145,16 +1190,15 @@ export function validateDimensionNarrative(
     ["legacy data layer language", /\bV[4-7]\b|\bv[4-7]\b|current-state-pack|rich-pack/i],
     ["production AWS Databricks overclaim", /\b(AWS|Databricks)\b.{0,80}\b(is|are|as)\s+(?:a\s+)?(?:current\s+)?(?:certified\s+)?production\b/i],
     [
-      "realized value overclaim",
-      /\b(has|have|is|are|delivered|delivers|achieved|proved|proves|guaranteed|guarantees)\b.{0,60}\b(realized ROI|realized value|realized savings|actual savings|Tower value)\b/i,
-    ],
-    [
       "PHI ingestion overclaim",
       /\bPHI-bearing transcripts? (were|are|have been) ingested\b(?![^.]{0,100}\bnot\b)/i,
     ],
   ] as const;
   for (const [label, pattern] of forbidden) {
     if (pattern.test(text)) failures.push(`${summary.dimension_key}: ${label}`);
+  }
+  if (sentenceHasUnnegatedClaim(text, REALIZED_VALUE_CLAIM_PATTERN)) {
+    failures.push(`${summary.dimension_key}: realized value overclaim`);
   }
   if (summary.tenant_key !== "meridian-health") {
     failures.push(`${summary.dimension_key}: tenant key mismatch`);
@@ -1171,6 +1215,9 @@ export function validateDimensionNarrative(
   if (summary.current_caveats.length === 0) {
     failures.push(`${summary.dimension_key}: missing caveats`);
   }
+  failures.push(
+    ...validateCxoNarrativeStructure(summary.dimension_key, summary.executive_summary),
+  );
   return failures;
 }
 
@@ -1187,16 +1234,15 @@ export function validateHomeInsightSummary(
     ["legacy data layer language", /\bV[4-7]\b|\bv[4-7]\b|current-state-pack|rich-pack/i],
     ["production AWS Databricks overclaim", /\b(AWS|Databricks)\b.{0,80}\b(is|are|as)\s+(?:a\s+)?(?:current\s+)?(?:certified\s+)?production\b/i],
     [
-      "realized value overclaim",
-      /\b(has|have|is|are|delivered|delivers|achieved|proved|proves|guaranteed|guarantees)\b.{0,60}\b(realized ROI|realized value|realized savings|actual savings|Tower value)\b/i,
-    ],
-    [
       "PHI ingestion overclaim",
       /\bPHI-bearing transcripts? (were|are|have been) ingested\b(?![^.]{0,100}\bnot\b)/i,
     ],
   ] as const;
   for (const [label, pattern] of forbidden) {
     if (pattern.test(text)) failures.push(`home-insights: ${label}`);
+  }
+  if (sentenceHasUnnegatedClaim(text, REALIZED_VALUE_CLAIM_PATTERN)) {
+    failures.push("home-insights: realized value overclaim");
   }
   if (summary.tenant_key !== "meridian-health") {
     failures.push("home-insights: tenant key mismatch");
@@ -1213,6 +1259,137 @@ export function validateHomeInsightSummary(
   if (summary.validation_status !== "passed") {
     failures.push("home-insights: validation status is not passed");
   }
+  failures.push(
+    ...validateCxoNarrativeStructure("home-insights", summary.executive_summary),
+  );
+  if (summary.visual_blocks && summary.visual_blocks.length > 0) {
+    failures.push(...validateHomeVisualBlocks(summary.visual_blocks));
+  }
+  return failures;
+}
+
+/**
+ * CXO narrative structural gate — catches the class of bug where generated
+ * prose echoes prompt/meta instructions or leads with provenance instead of
+ * the business situation. See HOME-CXO-NARRATIVE-GENERATION-PROMPT-FIX.
+ */
+export function validateCxoNarrativeStructure(
+  label: string,
+  executiveSummary: string,
+): string[] {
+  const failures: string[] = [];
+  const trimmed = (executiveSummary ?? "").trim();
+  const firstSentenceMatch = trimmed.match(/^[^.!?]*[.!?]/);
+  const firstSentence = (firstSentenceMatch ? firstSentenceMatch[0] : trimmed).trim();
+
+  const bannedOpenings: Array<[string, RegExp]> = [
+    ["opens with narrative-construction meta language", /^this narrative is built on/i],
+    ["opens with \"this story is\"", /^this story is/i],
+    ["opens with \"the story it tells\"", /^the story it tells/i],
+    ["opens with \"context layer is the hero\"", /^the enterprise context layer is the hero/i],
+    ["opens with a raw record count", /^home context has/i],
+    ["opens with \"this page shows\"", /^this page shows/i],
+    ["opens with \"this view explains\"", /^this view explains/i],
+  ];
+  for (const [issue, pattern] of bannedOpenings) {
+    if (pattern.test(firstSentence)) {
+      failures.push(`${label}: first sentence ${issue}`);
+    }
+  }
+
+  const forbiddenPhrases = [
+    "packet generated",
+    "loaded records",
+    "questions this supports",
+    "not yet supported",
+    "user guide",
+    "tenant packet",
+    "source record",
+    "record id",
+    "module behavior",
+    "context layer is the hero",
+    "this narrative is built on",
+    "this story is deliberate",
+  ];
+  const lowerFull = trimmed.toLowerCase();
+  for (const phrase of forbiddenPhrases) {
+    if (lowerFull.includes(phrase)) {
+      failures.push(`${label}: forbidden phrase "${phrase}" in executive summary`);
+    }
+  }
+  if (/\bv[4-7]\b/i.test(trimmed)) {
+    failures.push(`${label}: legacy V-generation label in executive summary`);
+  }
+
+  const tenantOccurrences =
+    (trimmed.match(/\bmeridian\b/gi)?.length ?? 0) +
+    (trimmed.match(/\bhealthcare demo\b/gi)?.length ?? 0);
+  if (tenantOccurrences > 2) {
+    failures.push(
+      `${label}: tenant name repeated ${tenantOccurrences} times in executive summary (max 2)`,
+    );
+  }
+
+  if (trimmed.length > 0 && !/[.!?]$/.test(trimmed)) {
+    failures.push(`${label}: executive summary does not end in a complete sentence`);
+  }
+
+  return failures;
+}
+
+/**
+ * Sentence-scoped overclaim check. A whole-blob regex like
+ * /\b(is|are)\b.{0,60}\brealized value\b/ produces false positives on
+ * correctly-hedged prose such as "no realized ROI, Tower value, or audited
+ * savings exist" — the claim words and the negation are both present, just
+ * not adjacent enough for a fixed-width lookahead/lookbehind to catch
+ * reliably. Scoping to one sentence at a time and requiring the ABSENCE of
+ * any negation cue in that same sentence is far more robust to how a model
+ * naturally phrases a caveat.
+ */
+export function sentenceHasUnnegatedClaim(text: string, claimPattern: RegExp): boolean {
+  const sentences = text.split(/(?<=[.!?])\s+/);
+  const negationCue =
+    /\b(no|not|n['’]t|never|unproven|unvalidated|unevidenced|hypothes\w*|until|before)\b/i;
+  return sentences.some(
+    (sentence) => claimPattern.test(sentence) && !negationCue.test(sentence),
+  );
+}
+
+export function validateHomeVisualBlocks(blocks: KnowledgeHomeVisualBlock[]): string[] {
+  const failures: string[] = [];
+  if (blocks.length > 4) {
+    failures.push(
+      `home-insights: too many visual blocks (${blocks.length}, max 4) — clutter guardrail`,
+    );
+  }
+  const allowedTypes = new Set<KnowledgeHomeVisualBlockType>([
+    "context_strength_snapshot",
+    "what_more_context_unlocks",
+    "evidence_gap_requests",
+    "module_next_actions",
+    "use_case_worked_example_map",
+  ]);
+  blocks.forEach((block, index) => {
+    if (!allowedTypes.has(block.type)) {
+      failures.push(`home-insights: visual block ${index} has unknown type "${block.type}"`);
+    }
+    if (!block.why_it_matters || block.why_it_matters.trim().length === 0) {
+      failures.push(`home-insights: visual block "${block.title}" missing why_it_matters`);
+    }
+    if (!block.executive_message || block.executive_message.trim().length === 0) {
+      failures.push(`home-insights: visual block "${block.title}" missing executive_message`);
+    }
+    if (!Array.isArray(block.evidence_refs)) {
+      failures.push(`home-insights: visual block "${block.title}" evidence_refs is not an array`);
+    }
+    if (!Array.isArray(block.caveats)) {
+      failures.push(`home-insights: visual block "${block.title}" caveats is not an array`);
+    }
+    if (!Number.isFinite(block.display_priority)) {
+      failures.push(`home-insights: visual block "${block.title}" missing display priority`);
+    }
+  });
   return failures;
 }
 
