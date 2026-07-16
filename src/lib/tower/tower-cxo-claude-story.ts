@@ -43,8 +43,18 @@ const BANNED_INTERNAL_RE =
 
 const BANNED_TENANT_RE = /\bHealthcare Demo\b/i;
 
-const BANNED_OUTCOME_RE =
-  /\b(?:realized value|proven value|delivered value|harvested savings|achieved ROI|value captured|measured savings|measured outcome|certified performance|certified financial outcome)\b/i;
+const OUTCOME_PROOF_TERMS = [
+  "realized value",
+  "proven value",
+  "delivered value",
+  "harvested savings",
+  "achieved ROI",
+  "value captured",
+  "measured savings",
+  "measured outcome",
+  "certified performance",
+  "certified financial outcome",
+] as const;
 
 export interface TowerCxoClaudePromptTrace {
   promptVersion: string;
@@ -246,6 +256,7 @@ Critical language rules:
 - Use the executive name "Meridian" for Healthcare Demo / Meridian inputs.
 - Do not expose implementation language: no TowerContextPack, v3, metric records, value records, claim gates, bridge diagnostics, evidence refs, source rows, read models, raw JSON, debug, route, or packet language.
 - Do not claim realized, proven, delivered, achieved, captured, measured, or certified value unless the packet says outcome language is allowed. In this packet it is blocked, so talk about planned value, hypotheses, measurement readiness, and proof required.
+- Avoid the exact phrases "certified performance", "certified financial outcome", "measured outcome", "proven value", and "realized value" even in caveats. Prefer "board-ready proof", "finance-attested proof", "measurement readiness", and "planning hypothesis".
 - Preserve locked card values exactly. You may improve labels and captions, but never change the values.
 - Keep the executive brief concise, specific, and consultant-grade. Write like a senior partner briefing a CIO and CFO.
 - Every tab must have a point of view: what it means, why it matters, what decision it drives, and what happens next.
@@ -461,7 +472,7 @@ export function validateTowerCxoClaudePayload(
     const text = collectStoryText(story);
     if (BANNED_INTERNAL_RE.test(text)) issues.push("Story leaks internal implementation language.");
     if (BANNED_TENANT_RE.test(text)) issues.push("Story uses Healthcare Demo instead of Meridian.");
-    if (BANNED_OUTCOME_RE.test(text)) issues.push("Story makes unsupported outcome-proof claims.");
+    if (hasUnsupportedOutcomeProofClaim(text)) issues.push("Story makes unsupported outcome-proof claims.");
   }
 
   for (const key of TAB_KEYS) {
@@ -482,10 +493,31 @@ export function validateTowerCxoClaudePayload(
     if (!Array.isArray(spec.dataRefs)) issues.push(`Visual spec ${key} dataRefs must be an array.`);
     const text = `${spec.title} ${spec.insight} ${spec.caveat}`;
     if (BANNED_INTERNAL_RE.test(text)) issues.push(`Visual spec ${key} leaks internal language.`);
-    if (BANNED_OUTCOME_RE.test(text)) issues.push(`Visual spec ${key} makes unsupported outcome claim.`);
+    if (hasUnsupportedOutcomeProofClaim(text)) {
+      issues.push(`Visual spec ${key} makes unsupported outcome claim.`);
+    }
   }
 
   return { passed: issues.length === 0, issues };
+}
+
+function hasUnsupportedOutcomeProofClaim(text: string): boolean {
+  const lower = text.toLowerCase();
+  return OUTCOME_PROOF_TERMS.some((term) => {
+    let index = lower.indexOf(term.toLowerCase());
+    while (index >= 0) {
+      const prefix = lower.slice(Math.max(0, index - 80), index);
+      if (!isNegatedOrCaveatedOutcomePhrase(prefix)) return true;
+      index = lower.indexOf(term.toLowerCase(), index + term.length);
+    }
+    return false;
+  });
+}
+
+function isNegatedOrCaveatedOutcomePhrase(prefix: string): boolean {
+  return /(?:\bnot\b|\bno\b|\bwithout\b|\bbefore\b|\buntil\b|\bunless\b|\bcannot\b|\bcan't\b|\bshould not\b|\bmust not\b|\bdo not\b[^.?!;]{0,80}|\bnot\b[^.?!;]{0,80}|\bblocked\b|\bcaveated\b|\brequires?\b|\bneeds?\b|\bmissing\b|\bproof required\b|\bmeasurement readiness\b|\bplanning hypothesis\b|held back by|hold .* until)\W*$/i.test(
+    prefix,
+  );
 }
 
 function validateCards(
