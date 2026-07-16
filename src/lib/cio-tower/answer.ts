@@ -380,6 +380,8 @@ export function buildCioTowerClaudePrompt(
     "- Write like a human senior advisor: direct, concise, specific, and willing to disagree.",
     "- Shape the answer as a point of view: what this means, why it matters, and what the executive should inspect next.",
     "- Prefer one strong advisory paragraph over mechanical explanation. Avoid robotic phrases like 'The CIO read is'.",
+    "- Answer the current question literally. If the user asks a follow-up about vendors, services, owners, or value gaps, do not repeat the generic budget-mix answer.",
+    "- If the follow-up data is not loaded, say exactly what cut is missing and why that prevents the next ranking.",
     "- Use short paragraphs or bullets when they improve readability.",
     "- End naturally based on the question. Do not append generic menu choices.",
     "",
@@ -642,8 +644,52 @@ function towerContextLabel(tenantName: string): string {
     : `${tenantName}'s Tower context`;
 }
 
+type CioTowerFallbackQuestionIntent =
+  | "run_drivers"
+  | "vendor_exposure"
+  | "value_gap"
+  | "budget_mix"
+  | "program_budget"
+  | "evidence_gap"
+  | "general";
+
+function fallbackQuestionIntent(context: CioTowerPromptContext): CioTowerFallbackQuestionIntent {
+  const question = context.question.toLowerCase();
+  if (
+    /(services?|vendors?|contracts?|owners?).*(driv|explain|behind|base|run)/i.test(question) ||
+    /(driv|explain|behind).*(services?|vendors?|contracts?|owners?)/i.test(question)
+  ) {
+    return "run_drivers";
+  }
+  if (/vendor|renewal|contract|concentration|supplier/i.test(question)) {
+    return "vendor_exposure";
+  }
+  if (/gap.*(promised|measured|value)|promised.*measured|value[-\s]?proof|measured value|funded programs.*gap/i.test(question)) {
+    return "value_gap";
+  }
+  if (/run.*change|change.*run|crowding|budget.*going|budget.*mix|run base|change pool/i.test(question)) {
+    return "budget_mix";
+  }
+  if (/program|initiative|ai investment|copilot|platform/i.test(question)) {
+    return "program_budget";
+  }
+  if (/evidence|board[-\s]?ready|missing|gap|trust|attest/i.test(question)) {
+    return "evidence_gap";
+  }
+  if (context.contract.contract_key === "tower_value_realization") return "value_gap";
+  if (
+    context.contract.contract_key === "tower_run_change_split" ||
+    context.contract.contract_key === "tower_total_it_spend" ||
+    context.contract.contract_key === "tower_trend_it_budget"
+  ) {
+    return "budget_mix";
+  }
+  return "general";
+}
+
 function buildCioTowerFallbackFollowUp(
   context: CioTowerPromptContext,
+  intent: CioTowerFallbackQuestionIntent,
   measures: {
     totalBudget: number | null;
     runBudget: number | null;
@@ -652,10 +698,13 @@ function buildCioTowerFallbackFollowUp(
     measuredValue: number | null;
   },
 ): string {
+  if (intent === "run_drivers" || intent === "vendor_exposure") {
+    return "Which vendor, service, and contract-owner fields should be loaded first to rank run-cost exposure without guessing?";
+  }
+
   if (
-    context.contract.contract_key === "tower_run_change_split" ||
-    measures.runBudget !== null ||
-    measures.changeBudget !== null
+    intent === "budget_mix" ||
+    context.contract.contract_key === "tower_run_change_split"
   ) {
     if (measures.runBudget !== null && measures.changeBudget !== null) {
       return `Which services or vendors are driving the ${money(measures.runBudget)} run base before we protect the ${money(measures.changeBudget)} change pool?`;
@@ -664,9 +713,8 @@ function buildCioTowerFallbackFollowUp(
   }
 
   if (
-    context.contract.contract_key === "tower_value_realization" ||
-    measures.promisedValue !== null ||
-    measures.measuredValue !== null
+    intent === "value_gap" ||
+    context.contract.contract_key === "tower_value_realization"
   ) {
     if (measures.promisedValue !== null && measures.measuredValue !== null) {
       return `Which funded programs explain the gap between ${money(measures.promisedValue)} promised value and ${money(measures.measuredValue)} measured value?`;
@@ -691,13 +739,41 @@ export function buildCioTowerFallbackAnswer(
   const promisedValue = measureNumber(context.measures, "promised_value_fy26");
   const measuredValue = measureNumber(context.measures, "measured_value_ytd");
   const hasRunChange = runBudget !== null || changeBudget !== null;
-  const hasValue = promisedValue !== null || measuredValue !== null || initiativeBudget !== null;
+  const intent = fallbackQuestionIntent(context);
   const valueLanguage = context.valueClaimPolicy.realizedValueLanguageAllowed
     ? "measured outcomes"
     : "measurement readiness";
 
   let answer: string;
-  if (context.contract.contract_key === "tower_run_change_split" || hasRunChange) {
+  if (intent === "run_drivers" || intent === "vendor_exposure") {
+    const runPart =
+      runBudget !== null
+        ? `${money(runBudget)} run base`
+        : "run base";
+    const changePart =
+      changeBudget !== null
+        ? ` and ${money(changeBudget)} change pool`
+        : "";
+    answer = `My read: this is the right drill-down, but the current Tower packet proves the enterprise ${runPart}${changePart}; it does not yet prove the service-by-service or vendor-by-vendor drivers. I would not rank vendors from this view until the run allocation, contract owner, renewal date, and application dependency fields are loaded.`;
+  } else if (intent === "value_gap" || context.contract.contract_key === "tower_value_realization") {
+    const promisedPart =
+      promisedValue !== null ? `${money(promisedValue)} promised value` : "promised value";
+    const measuredPart =
+      measuredValue !== null ? `${money(measuredValue)} measured value` : "measured value evidence";
+    answer = `My read: the value story is promising, but it is not outcome-proof yet. In ${towerContextLabel(context.tenantName)}, Tower shows ${promisedPart} against ${measuredPart}. I would inspect the largest promise-to-measurement gaps before approving more funding.`;
+  } else if (intent === "program_budget") {
+    const initiativePart =
+      initiativeBudget !== null
+        ? `${money(initiativeBudget)} of funded initiatives`
+        : "funded initiatives";
+    const measuredPart =
+      measuredValue !== null
+        ? `${money(measuredValue)} measured value`
+        : "measured-value evidence";
+    answer = `My read: treat the initiative list as a funding-control view, not a success story. In ${towerContextLabel(context.tenantName)}, Tower can inspect ${initiativePart}, but each program still needs ${measuredPart} and owner-attested evidence before it becomes a scale decision.`;
+  } else if (intent === "evidence_gap") {
+    answer = `My read: the board-readiness gap is evidence quality, not another dashboard view. In ${towerContextLabel(context.tenantName)}, use the loaded budget and value measures for inspection, but hold any realized-value claim until finance-attested baselines, owner signoff, and source-system lineage are complete.`;
+  } else if (intent === "budget_mix" || context.contract.contract_key === "tower_run_change_split" || hasRunChange) {
     const contextLabel = towerContextLabel(context.tenantName);
     const budgetPart = totalBudget !== null
       ? `In ${contextLabel}, ${money(totalBudget)} of FY26 technology budget is in view`
@@ -706,12 +782,6 @@ export function buildCioTowerFallbackAnswer(
       ? `, and the mix is the point: ${money(runBudget)} is run versus ${money(changeBudget)} change.`
       : ". The run/change split still needs a cleaner budget cut before it should drive a board decision.";
     answer = `My read: this is a run-cost pressure question, not a value-realization win yet. ${budgetPart}${splitPart} I would use this as a budget-control conversation until finance-attested ${valueLanguage} is complete.`;
-  } else if (context.contract.contract_key === "tower_value_realization" || hasValue) {
-    const promisedPart =
-      promisedValue !== null ? `${money(promisedValue)} promised value` : "promised value";
-    const measuredPart =
-      measuredValue !== null ? `${money(measuredValue)} measured value` : "measured value evidence";
-    answer = `My read: the value story is promising, but it is not outcome-proof yet. In ${towerContextLabel(context.tenantName)}, Tower shows ${promisedPart} against ${measuredPart}. I would inspect the largest promise-to-measurement gaps before approving more funding.`;
   } else if (context.contract.contract_key === "tower_total_it_spend") {
     answer =
       totalBudget !== null
@@ -746,7 +816,7 @@ export function buildCioTowerFallbackAnswer(
         tables: [],
       },
     ],
-    followUpQuestion: buildCioTowerFallbackFollowUp(context, {
+    followUpQuestion: buildCioTowerFallbackFollowUp(context, intent, {
       totalBudget,
       runBudget,
       changeBudget,

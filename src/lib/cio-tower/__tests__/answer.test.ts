@@ -103,6 +103,8 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('Shape the answer as a point of view');
     expect(prompt).toContain('must directly continue from your answer');
     expect(prompt).toContain('Do not use generic menu choices');
+    expect(prompt).toContain('Answer the current question literally');
+    expect(prompt).toContain('do not repeat the generic budget-mix answer');
     expect(prompt).toContain('Realized-value language allowed: no');
     expect(prompt).toContain('Projection role: derived_read_model');
     expect(prompt).toContain('Crew Recovery & Legality Modernization');
@@ -172,6 +174,7 @@ describe('cio tower answer contract', () => {
     const fallback = buildCioTowerFallbackAnswer(
       context({
         tenantName: 'Healthcare Demo',
+        question: 'Where is our technology budget actually going, and is run spend crowding out change?',
         contract: {
           contract_key: 'tower_total_it_spend',
           intent: 'budget_control',
@@ -239,5 +242,71 @@ describe('cio tower answer contract', () => {
       ['Run budget', '$713.0M'],
       ['Change budget', '$356.5M'],
     ]);
+  });
+
+  it('does not repeat the budget-mix fallback when the generated follow-up asks for run drivers', () => {
+    const fallback = buildCioTowerFallbackAnswer(
+      context({
+        tenantName: 'Healthcare Demo',
+        question:
+          'Which services or vendors are driving the $713.0M run base before we protect the $356.5M change pool?',
+        contract: {
+          contract_key: 'tower_run_change_split',
+          intent: 'budget_control',
+          question_family: 'run_change_split',
+          measure_key: 'run_budget_fy26',
+          artifact_type: 'summary_table',
+          examples: [],
+        },
+        measures: [
+          {
+            measure_key: 'total_it_budget_fy26',
+            label: 'FY26 IT budget',
+            description: 'Committed FY26 IT budget envelope.',
+            period: 'fy26',
+            basis: 'committed',
+            scope: 'enterprise_envelope',
+            value_numeric: '1069500000',
+            value_json: { row_count: 12 },
+            source_fact_keys: ['fact-budget-1'],
+            formula_version: 'cio_tower_v1',
+          },
+          {
+            measure_key: 'run_budget_fy26',
+            label: 'FY26 run budget',
+            description: 'Run budget.',
+            period: 'fy26',
+            basis: 'committed',
+            scope: 'enterprise_envelope',
+            value_numeric: '713000000',
+            value_json: { row_count: 12 },
+            source_fact_keys: ['fact-run-1'],
+            formula_version: 'cio_tower_v1',
+          },
+          {
+            measure_key: 'change_budget_fy26',
+            label: 'FY26 change budget',
+            description: 'Change budget.',
+            period: 'fy26',
+            basis: 'committed',
+            scope: 'enterprise_envelope',
+            value_numeric: '356500000',
+            value_json: { row_count: 12 },
+            source_fact_keys: ['fact-change-1'],
+            formula_version: 'cio_tower_v1',
+          },
+        ],
+      }),
+    );
+
+    expect(fallback.answer).toContain('this is the right drill-down');
+    expect(fallback.answer).toContain('does not yet prove the service-by-service or vendor-by-vendor drivers');
+    expect(fallback.answer).toContain('run allocation, contract owner, renewal date, and application dependency fields');
+    expect(fallback.answer).not.toContain(
+      'this is a run-cost pressure question, not a value-realization win yet',
+    );
+    expect(fallback.followUpQuestion).toBe(
+      'Which vendor, service, and contract-owner fields should be loaded first to rank run-cost exposure without guessing?',
+    );
   });
 });
