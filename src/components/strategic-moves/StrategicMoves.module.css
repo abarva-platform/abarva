@@ -348,7 +348,7 @@
   font-size: 13px;
 }
 
-.p0Promotion span {
+.p0PromotionStatus {
   color: var(--canon-gray-700);
   font-size: 12px;
 }
@@ -2467,6 +2467,12 @@
   transition: background 150ms var(--ease-out), transform 150ms var(--ease-out), box-shadow 150ms var(--ease-out);
 }
 
+.btnPromote span {
+  color: #fff;
+  font-size: inherit;
+  font-weight: 800;
+}
+
 .btnPromote:hover:not(:disabled) {
   background: var(--canon-gray-900);
   transform: translateY(-1px);
@@ -2477,6 +2483,10 @@
   background: rgba(10, 10, 11, 0.10);
   color: var(--abarva-stone);
   cursor: not-allowed;
+}
+
+.btnPromote:disabled span {
+  color: var(--abarva-stone);
 }
 
 .btnPromoteArrow {
