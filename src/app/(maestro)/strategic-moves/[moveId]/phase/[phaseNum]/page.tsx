@@ -32,10 +32,12 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ moveId: string; phaseNum: string }>;
+  searchParams?: Promise<{ focus?: string | string[] }>;
 }
 
 export default async function StrategicMovePhaseWorkspacePage({
   params,
+  searchParams,
 }: Props) {
   await requireProductModule("programs");
   const ctx = await getStrategicMovesTenancy();
@@ -44,6 +46,7 @@ export default async function StrategicMovePhaseWorkspacePage({
   }
 
   const { moveId, phaseNum } = await params;
+  const resolvedSearchParams = (await searchParams) ?? {};
   if (!isStrategicMoveRouteId(moveId)) {
     notFound();
   }
@@ -143,6 +146,11 @@ export default async function StrategicMovePhaseWorkspacePage({
         carriesForwardContent={carriesForwardContent}
         currentStateReadiness={currentStateReadiness}
         evidenceNeedPackets={evidenceNeedPackets}
+        initialSubstepKey={
+          parsedPhase === 0 && resolvedSearchParams.focus === "gate"
+            ? "approve"
+            : undefined
+        }
         move={move}
         phaseNum={parsedPhase}
         phaseTallies={getMovePhaseTallies(move)}

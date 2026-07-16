@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { extractArtifacts } from "@/lib/agent/artifacts";
@@ -70,6 +69,7 @@ interface MovesPhaseStandaloneClientProps {
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
   carriesForwardContent: DeliverableContentSignal[];
   currentStateReadiness?: ReadinessReport | null;
+  initialSubstepKey?: SubstepKey;
 }
 
 type WorkspaceView = "phase" | "files";
@@ -347,10 +347,15 @@ export function MovesPhaseStandaloneClient({
   evidenceNeedPackets,
   carriesForwardContent,
   currentStateReadiness = null,
+  initialSubstepKey,
 }: MovesPhaseStandaloneClientProps) {
   const phase = phaseFor(phaseNum);
+  const initialSubstepIndex = Math.max(
+    0,
+    phase.substeps.findIndex((item) => item.key === initialSubstepKey),
+  );
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("phase");
-  const [substepIndex, setSubstepIndex] = useState(0);
+  const [substepIndex, setSubstepIndex] = useState(initialSubstepIndex);
   const [avaOpen, setAvaOpen] = useState(false);
   const [avaThread, setAvaThread] = useState<AvaChatMessage[]>([]);
   const [avaInput, setAvaInput] = useState("");
@@ -363,7 +368,7 @@ export function MovesPhaseStandaloneClient({
     "idle" | "approving" | "approved" | "blocked"
   >("idle");
   const [gateApprovalMessage, setGateApprovalMessage] = useState<string | null>(null);
-  const [draftedBrief, setDraftedBrief] = useState<Record<number, string>>({});
+  const [draftedBrief] = useState<Record<number, string>>({});
   const substep = phase.substeps[substepIndex] ?? phase.substeps[0];
   const progressPct = Math.round(((substepIndex + 1) / phase.substeps.length) * 100);
   const isFinalSubstep = substepIndex === phase.substeps.length - 1;
@@ -591,7 +596,9 @@ export function MovesPhaseStandaloneClient({
 
   async function approveP0Gate() {
     try {
-      await finalizePhaseCapture();
+      setGateApproved(false);
+      setGateApprovalStatus("approving");
+      setGateApprovalMessage("Submitting P0 gate approval...");
       await approvePhaseGateAfterBuild({
         deliverables: [{ status: "queued" }],
       });
@@ -793,7 +800,6 @@ export function MovesPhaseStandaloneClient({
               <PhaseBody
                 carriesForwardContent={carriesForwardContent}
                 currentStateReadiness={currentStateReadiness}
-                draftedBrief={draftedBrief}
                 evidenceCount={evidenceCount}
                 evidenceNeedPackets={evidenceNeedPackets}
                 gateApproved={gateApproved}
@@ -803,7 +809,6 @@ export function MovesPhaseStandaloneClient({
                 onApproveAfterBuild={approvePhaseGateAfterBuild}
                 onApproveP0Gate={approveP0Gate}
                 onFinalizePhaseCapture={finalizePhaseCapture}
-                onDraftBrief={setDraftedBrief}
                 onOpenFiles={openFilesWorkspace}
                 onSelectOption={setSelectedOption}
                 onShowGate={goToGateStep}
@@ -908,7 +913,6 @@ export function MovesPhaseStandaloneClient({
 function PhaseBody({
   carriesForwardContent,
   currentStateReadiness,
-  draftedBrief,
   evidenceCount,
   evidenceNeedPackets,
   gateApproved,
@@ -918,7 +922,6 @@ function PhaseBody({
   onApproveAfterBuild,
   onApproveP0Gate,
   onFinalizePhaseCapture,
-  onDraftBrief,
   onOpenFiles,
   onSelectOption,
   onShowGate,
@@ -928,7 +931,6 @@ function PhaseBody({
 }: {
   carriesForwardContent: DeliverableContentSignal[];
   currentStateReadiness: ReadinessReport | null;
-  draftedBrief: Record<number, string>;
   evidenceCount: number;
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
   gateApproved: boolean;
@@ -940,7 +942,6 @@ function PhaseBody({
   }) => Promise<void>;
   onApproveP0Gate: () => void | Promise<void>;
   onFinalizePhaseCapture: () => Promise<void>;
-  onDraftBrief: Dispatch<SetStateAction<Record<number, string>>>;
   onOpenFiles: () => void;
   onSelectOption: (value: string) => void;
   onShowGate: () => void;
@@ -948,13 +949,9 @@ function PhaseBody({
   selectedOption: string;
   substep: SubstepKey;
 }) {
-  if (phase.phase === 0 && substep === "prepare") {
+  if (phase.phase === 0 && substep !== "approve") {
     return (
-      <OriginateConsole
-        draftedBrief={draftedBrief}
-        move={move}
-        onDraftBrief={onDraftBrief}
-      />
+      <P0OriginationHandoff move={move} onShowGate={onShowGate} />
     );
   }
 
@@ -1324,6 +1321,43 @@ const ORIGINATE_FIELDS = [
   },
 ];
 
+function P0OriginationHandoff({
+  move,
+  onShowGate,
+}: {
+  move: StrategicMove;
+  onShowGate: () => void;
+}) {
+  return (
+    <section className="mxw-zone mxw-p0-handoff">
+      <div className="mxw-p0-handoff-kicker">P0 origination captured</div>
+      <h2>Review the captured Move brief and approve the gate</h2>
+      <p>
+        The seven-question P0 origination flow now lives in the dedicated Start a
+        Move workspace. This phase route is the governed shell for review,
+        attestation, Files & Evidence, and gate approval.
+      </p>
+      <div className="mxw-p0-handoff-card">
+        <span>Move</span>
+        <strong>{move.name}</strong>
+        <em>
+          Continue to Gate approval when the brief, sponsor role, scope, value
+          hypothesis, evidence families, and readiness assumptions are ready to
+          carry into P1 Charter.
+        </em>
+      </div>
+      <div className="mxw-p0-handoff-actions">
+        <button className="mxw-btn mxw-primary" onClick={onShowGate} type="button">
+          Review P0 gate →
+        </button>
+        <Link className="mxw-btn mxw-secondary" href={`/strategic-moves/${move.id}/phase/0?focus=gate`}>
+          Open gate link
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 function textOrDraft(draftedBrief: Record<number, string>, index: number): string {
   return draftedBrief[index]?.trim() || ORIGINATE_FIELDS[index]?.draft || "";
 }
@@ -1376,83 +1410,6 @@ function buildPhaseCaptureItems({
         "Approval note: accountable owner review and caveats must remain attached to the gate record.",
       ].join(" "),
     ]),
-  );
-}
-
-function OriginateConsole({
-  draftedBrief,
-  move,
-  onDraftBrief,
-}: {
-  draftedBrief: Record<number, string>;
-  move: StrategicMove;
-  onDraftBrief: Dispatch<SetStateAction<Record<number, string>>>;
-}) {
-  const done = ORIGINATE_FIELDS.filter((_, index) => draftedBrief[index]?.trim()).length;
-  return (
-    <section className="mxw-originate">
-      <header>
-        <div className="mxw-of-crumb">Strategic Moves › {move.name} › New</div>
-        <div className="mxw-of-row">
-          <h2>Originate a strategic move</h2>
-          <span>{done === ORIGINATE_FIELDS.length ? "Ready" : "Untitled · Draft"}</span>
-        </div>
-        <p>Capture each section by talking to aVa or typing it directly.</p>
-      </header>
-      <div className="mxw-origin-timeline">
-        {["P0", "P1", "P2", "P3", "P4", "P5", "→ Tower"].map((item, index) => (
-          <span className={index === 0 ? "on" : ""} key={item}>
-            <i />
-            {item}
-          </span>
-        ))}
-      </div>
-      <div className="mxw-briefs">
-        {ORIGINATE_FIELDS.map((field, index) => {
-          const value = draftedBrief[index] ?? "";
-          return (
-            <label className={value ? "captured" : ""} key={field.title}>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <strong>{field.title}</strong>
-              <textarea
-                onChange={(event) =>
-                  onDraftBrief((current) => ({
-                    ...current,
-                    [index]: event.target.value,
-                  }))
-                }
-                placeholder={`Type ${field.title.toLowerCase()}...`}
-                value={value}
-              />
-              <button
-                onClick={() =>
-                  onDraftBrief((current) => ({
-                    ...current,
-                    [index]: field.draft,
-                  }))
-                }
-                type="button"
-              >
-                <span>a</span>
-                Let aVa draft this
-              </button>
-            </label>
-          );
-        })}
-      </div>
-      <div className="mxw-promote">
-        <input defaultValue={move.name} aria-label="Move name" />
-        <button disabled={done < ORIGINATE_FIELDS.length} type="button">
-          Promote to P1 Charter →
-        </button>
-      </div>
-      <p className="mxw-ob-foot">
-        {done} of {ORIGINATE_FIELDS.length} required sections complete
-        {done === ORIGINATE_FIELDS.length
-          ? " · ready to promote"
-          : ` · complete all ${ORIGINATE_FIELDS.length} to promote`}
-      </p>
-    </section>
   );
 }
 
@@ -1814,30 +1771,13 @@ function MovesStandaloneStyles() {
 .mxw-readiness-carry{border:1px solid rgba(0,87,184,.18);border-radius:11px;background:var(--blue-tint);padding:12px 14px;margin-top:8px}
 .mxw-readiness-carry strong{display:block;font-size:12.5px;color:var(--blue);margin-bottom:5px}
 .mxw-readiness-carry p{font-size:13px;color:var(--ink-2);line-height:1.5;margin:0}
-.mxw-originate{border:1px solid var(--line);border-radius:16px;background:var(--card);box-shadow:var(--shadow);padding:22px}
-.mxw-originate header{margin-bottom:18px}
-.mxw-of-crumb{font-size:12px;color:var(--muted);margin-bottom:8px}
-.mxw-of-row{display:flex;align-items:center;gap:12px;justify-content:space-between}
-.mxw-of-row h2{font-family:Georgia,serif;font-size:24px;letter-spacing:-.5px;margin:0}
-.mxw-of-row span{font-size:11px;border:1px solid var(--line-2);border-radius:999px;padding:5px 10px;color:var(--muted);font-weight:700}
-.mxw-originate header p{font-size:13px;color:var(--muted);margin:4px 0 0}
-.mxw-origin-timeline{display:flex;align-items:center;gap:10px;margin-bottom:18px;overflow-x:auto}
-.mxw-origin-timeline span{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap}
-.mxw-origin-timeline i{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--line-2);background:var(--card)}
-.mxw-origin-timeline span.on i{background:var(--green);border-color:var(--green)}
-.mxw-briefs{display:grid;gap:10px}
-.mxw-briefs label{display:grid;grid-template-columns:34px 1fr auto;gap:10px;border:1px solid var(--line);border-radius:12px;background:var(--soft);padding:12px}
-.mxw-briefs label.captured{border-color:rgba(29,143,104,.28);background:linear-gradient(180deg,var(--green-tint),var(--card) 68%)}
-.mxw-briefs label>span{width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}
-.mxw-briefs strong{font-size:13.5px;color:var(--ink)}
-.mxw-briefs textarea{grid-column:2 / 4;min-height:58px;border:1px solid var(--line);border-radius:9px;background:#fff;padding:10px;font:inherit;font-size:13px;color:var(--ink);resize:vertical}
-.mxw-briefs button{grid-column:2 / 4;justify-self:start;display:flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--line-2);border-radius:9px;padding:7px 11px;font-size:12px;font-weight:800;color:var(--teal);cursor:pointer}
-.mxw-briefs button span{width:18px;height:18px;border-radius:5px;background:#12332e;color:#5fd0c2;display:flex;align-items:center;justify-content:center;font-family:Georgia,serif}
-.mxw-promote{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:14px}
-.mxw-promote input{border:1px solid var(--line-2);border-radius:10px;padding:11px 13px;font:inherit;font-size:13.5px}
-.mxw-promote button{border:0;border-radius:10px;background:var(--ink);color:#fff;padding:11px 15px;font-weight:800}
-.mxw-promote button:disabled{background:rgba(20,20,19,.16);color:var(--faint)}
-.mxw-ob-foot{font-size:12px;color:var(--muted);margin:10px 0 0}
+.mxw-p0-handoff{border-color:rgba(0,87,184,.2);background:linear-gradient(180deg,var(--blue-tint),var(--card) 64%)}
+.mxw-p0-handoff-kicker{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--blue);font-weight:900;margin-bottom:8px}
+.mxw-p0-handoff-card{display:grid;gap:6px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:14px 16px;margin:16px 0}
+.mxw-p0-handoff-card span{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--faint);font-weight:800}
+.mxw-p0-handoff-card strong{font-size:17px;color:var(--ink)}
+.mxw-p0-handoff-card em{font-style:normal;font-size:13px;line-height:1.5;color:var(--ink-2)}
+.mxw-p0-handoff-actions{display:flex;gap:10px;flex-wrap:wrap}
 .mxw-files-legend{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 22px}
 .mxw-files-legend span{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;background:var(--card);padding:7px 11px;font-size:12px;color:var(--ink-2);font-weight:700}
 .mxw-files-legend i,.mxw-file-col header i{width:8px;height:8px;border-radius:50%}
@@ -1903,7 +1843,6 @@ function MovesStandaloneStyles() {
   .mxw-options button{grid-template-columns:28px 1fr}
   .mxw-options em{grid-column:2}
   .mxw-options small{grid-column:2}
-  .mxw-promote{grid-template-columns:1fr}
 }
       `}</style>
   );

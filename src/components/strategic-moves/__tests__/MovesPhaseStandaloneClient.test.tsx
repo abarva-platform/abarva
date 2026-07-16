@@ -227,6 +227,55 @@ describe("MovesPhaseStandaloneClient", () => {
     jest.restoreAllMocks();
   });
 
+  it("does not render the retired P0 originate form inside the phase workspace", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({
+          currentPhase: 0,
+          phaseLabel: "P0 Originate",
+        })}
+        phaseNum={0}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Review the captured Move brief and approve the gate",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Review P0 gate →" })).toBeInTheDocument();
+    expect(screen.queryByText("Originate a strategic move")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Capture each section by talking to aVa/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Let aVa draft this/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Promote to P1 Charter/i)).not.toBeInTheDocument();
+  });
+
+  it("honors P0 focus=gate by opening gate approval instead of the retired form", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 0,
+          phaseLabel: "P0 Originate",
+        })}
+        phaseNum={0}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Gate approval" })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Approve gate →" }).length).toBeGreaterThan(0);
+    expect(screen.queryByText("Originate a strategic move")).not.toBeInTheDocument();
+    expect(screen.queryByText(/What's the bet \/ hypothesis/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Let aVa draft this/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Promote to P1 Charter/i)).not.toBeInTheDocument();
+  });
+
   it("surfaces a Next-Phase Readiness Pack with real evidence gaps at gate approval", () => {
     const evidenceNeedPackets: MoveEvidenceNeedPacket[] = [
       {
