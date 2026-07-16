@@ -107,7 +107,14 @@ function payloadValue(
     : undefined;
 }
 
+// Governed fence types the server may emit mid-stream (decision-table,
+// chart, followups — see structured-exhibits.ts) that must never render as
+// raw text: the client should wait for the processed agent-answer packet
+// body instead of showing the raw JSON fence to the user.
+const RAW_STRUCTURED_FENCE_RE = /```(?:decision-table|chart|followups)\b/i;
+
 function hasRawMarkdownTableFragment(value: string): boolean {
+  if (RAW_STRUCTURED_FENCE_RE.test(value)) return true;
   return value
     .split(/\r?\n/)
     .some((line) => (line.match(/\|/g) ?? []).length >= 2);
@@ -262,8 +269,8 @@ export function AdvisoryIntelligencePage({
               ? true
               : Boolean(
                   packetBody &&
-                    (!m.answer.trim() ||
-                      packetBody.length >= m.answer.trim().length / 2),
+                  (!m.answer.trim() ||
+                    packetBody.length >= m.answer.trim().length / 2),
                 );
           return {
             ...m,

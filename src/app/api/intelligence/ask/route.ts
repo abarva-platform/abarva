@@ -771,7 +771,9 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
               event as unknown as Record<string, unknown>,
             );
             if (summary && payload.traceEnabled) {
-              controller.enqueue(encoder.encode(JSON.stringify(summary) + "\n"));
+              controller.enqueue(
+                encoder.encode(JSON.stringify(summary) + "\n"),
+              );
             }
             continue;
           }
@@ -1063,6 +1065,10 @@ async function handleAsk(payload: AskPayload, req: NextRequest) {
                     "Tables, charts, and graphs appear only when aVa has validated structured data.",
                 },
               ],
+              nextSteps: exhibits.followups.map((label, index) => ({
+                id: `followup-${index + 1}`,
+                label,
+              })),
               corpusUsed: exhibits.citations.some(
                 (citation) => citation.sourceClass !== "tenant-fact",
               )
@@ -1290,7 +1296,10 @@ function displaySafeContextSummary(
     return {
       type: "context-summary",
       summary: {
-        sourceRefs: arrayLengthFromPath(context, ["auditLineage", "sourceRefs"]),
+        sourceRefs: arrayLengthFromPath(context, [
+          "auditLineage",
+          "sourceRefs",
+        ]),
         visibleFacts: arrayLengthFromPath(context, [
           "modelVisiblePacket",
           "tenantFacts",
