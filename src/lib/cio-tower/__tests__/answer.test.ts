@@ -219,7 +219,9 @@ describe('cio tower answer contract', () => {
     );
 
     expect(fallback.version).toBe('cio_tower_visible_answer_v1');
-    expect(fallback.answer).toContain('Healthcare Demo has $1.1B of FY26 technology budget in view');
+    expect(fallback.answer).toContain(
+      'In the Healthcare Demo synthetic Tower planning context, Nexus shows $1.1B of FY26 technology budget in view',
+    );
     expect(fallback.answer).toContain('$713.0M run and $356.5M change');
     expect(fallback.answer).not.toMatch(/valid Tower answer contract|No fallback answer|JSON|source key|record ID/i);
     expect(fallback.answer).not.toMatch(/\brealized\b|\bproven\b|\bdelivered\b/i);
