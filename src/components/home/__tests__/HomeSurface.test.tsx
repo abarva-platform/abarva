@@ -509,14 +509,13 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(screen.getByTestId("home-context-detail")).toBeInTheDocument();
     expect(screen.queryByTestId("agent-dock-panel")).not.toBeInTheDocument();
     expect(screen.queryByTestId("home-ava-drawer")).not.toBeInTheDocument();
-    expect(screen.getByText("Executive snapshot")).toBeInTheDocument();
+    expect(screen.getAllByText("Enterprise Brief").length).toBeGreaterThan(0);
     expect(screen.getByText("What you can do")).toBeInTheDocument();
-    expect(screen.getByText("Explore this context")).toBeInTheDocument();
     expect(
-      screen.getByText(
+      screen.queryByText(
         "Technical details · data quality, source coverage, relationships, diagnostics",
       ),
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Ask aVa/i }),
     ).toBeInTheDocument();
@@ -548,7 +547,6 @@ describe("HomeSurface — Explorer context browser", () => {
     );
 
     expect(screen.getByText("Demo-safe")).toBeInTheDocument();
-    expect(screen.getByText("512")).toBeInTheDocument();
     expect(
       screen.getAllByText("Active Knowledge context").length,
     ).toBeGreaterThan(0);
@@ -572,10 +570,10 @@ describe("HomeSurface — Explorer context browser", () => {
     );
 
     expect(
-      screen.getByText("What Home can trust right now"),
+      screen.getByText("What Nexus can trust right now"),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/AbarVa has source-backed context across the major/i),
+      screen.getByText(/Nexus has source-backed context across the major/i),
     ).toBeInTheDocument();
     expect(screen.getByText("Enterprise context powers the platform")).toBeInTheDocument();
     expect(screen.getAllByText("Applications & Systems").length).toBeGreaterThan(0);
