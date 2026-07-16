@@ -29,7 +29,7 @@ const READINESS_SCORE: Record<string, number> = {
 };
 
 function text(value: unknown): string {
-  if (typeof value === "string") return value;
+  if (typeof value === "string") return value.replace(/\bAbarVa\b/g, "Nexus");
   if (typeof value === "number") return String(value);
   return "";
 }
@@ -73,8 +73,8 @@ function BlockHead({ block }: { block: KnowledgeHomeVisualBlock }) {
   return (
     <div className="hx3-sectionHead">
       <div>
-        <h3>{block.title}</h3>
-        <p>{block.executive_message}</p>
+        <h3>{text(block.title)}</h3>
+        <p>{text(block.executive_message)}</p>
       </div>
     </div>
   );
@@ -82,7 +82,7 @@ function BlockHead({ block }: { block: KnowledgeHomeVisualBlock }) {
 
 function BlockCaveat({ block }: { block: KnowledgeHomeVisualBlock }) {
   if (!block.caveats.length) return null;
-  return <p className="hx3-blockCaveat">{block.caveats[0]}</p>;
+  return <p className="hx3-blockCaveat">{text(block.caveats[0])}</p>;
 }
 
 function EmptyBlock({ block }: { block: KnowledgeHomeVisualBlock }) {

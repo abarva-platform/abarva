@@ -34,6 +34,8 @@ Home Knowledge now renders the stored, Claude-derived enterprise narrative as a 
   - Proof tab begins with the Nexus knowledge-layer visual and keeps raw proof artifacts lower on the page.
   - Duplicate module footer links removed.
   - Visible AbarVa product copy changed to Nexus where the page describes the product capability.
+- `src/components/home/HomeVisualBlockRenderer.tsx`
+  - Structured Claude visual block text is normalized at render time so approved stored visual text cannot display old product naming on the Nexus Knowledge surface.
 - `src/components/home/__tests__/HomeSurface.test.tsx`
   - Updated assertions for the new CXO rendering behavior.
 
