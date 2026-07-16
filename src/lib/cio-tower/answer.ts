@@ -7,11 +7,6 @@ import {
   assertVisibleAnswerContract,
   type VisibleAnswerContractResult,
 } from "@/lib/agent/visible-answer-contract";
-import { isExplicitVisualAsk } from "@/lib/intelligence/ask/synthesizer";
-import {
-  CHART_OUTPUT_CONTRACT,
-  isTrendAsk,
-} from "@/lib/intelligence/ask/response-policy";
 import {
   evaluateTowerValueClaimGate,
   TOWER_REALIZED_VALUE_REQUIRES_MEASURED_EVIDENCE,
@@ -24,9 +19,9 @@ import {
 import type { TowerValueClaim } from "@/lib/enterprise-knowledge/contracts";
 
 const MODEL_NAME = "claude-sonnet-4-6";
-const PROMPT_VERSION = "cio_tower_advisor_prompt_v1";
+const PROMPT_VERSION = "cio_tower_advisor_prompt_v2";
 const TEMPERATURE = 0;
-const MAX_TOKENS = 900;
+const MAX_TOKENS = 1800;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -301,9 +296,14 @@ export function parseVisibleAnswerContract(
   raw: string,
 ): CioTowerVisibleAnswerContract {
   const trimmed = raw.trim();
+  const fencedJson = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/)?.[1]?.trim();
+  const wrappedJson =
+    !trimmed.startsWith("{") && trimmed.includes("{") && trimmed.includes("}")
+      ? trimmed.slice(trimmed.indexOf("{"), trimmed.lastIndexOf("}") + 1)
+      : null;
   const jsonText = trimmed.startsWith("{")
     ? trimmed
-    : (trimmed.match(/```(?:json)?\s*([\s\S]*?)```/)?.[1]?.trim() ?? trimmed);
+    : (fencedJson ?? wrappedJson ?? trimmed);
   const parsed = JSON.parse(jsonText) as Partial<CioTowerVisibleAnswerContract>;
   if (parsed.version !== "cio_tower_visible_answer_v1") {
     throw new Error("cio_tower_visible_contract_invalid_version");
@@ -319,6 +319,19 @@ export function parseVisibleAnswerContract(
       !Array.isArray(table.rows)
     ) {
       throw new Error("cio_tower_visible_contract_invalid_table");
+    }
+    if (
+      table.columns.length === 0 ||
+      table.columns.length > 4 ||
+      table.rows.length > 5 ||
+      table.rows.some(
+        (row) =>
+          !Array.isArray(row) ||
+          row.length !== table.columns.length ||
+          row.some((cell) => typeof cell !== "string" || cell.trim().length === 0),
+      )
+    ) {
+      throw new Error("cio_tower_visible_contract_invalid_table_shape");
     }
   }
   for (const tab of parsed.tabs ?? []) {
@@ -412,12 +425,16 @@ export function buildCioTowerClaudePrompt(
     "- Do not mention Atlas. The agent is aVa.",
     "- If the data is incomplete, state the specific missing business field in plain English.",
     "- Do not describe value as realized, proven, harvested, or delivered unless the Tower value-claim policy below explicitly allows realized-value language.",
-    "- If realized-value language is not allowed, say the value is promised, planned, forecast, measured-value evidence, or measurement readiness depending on the loaded fields.",
+    "- If realized-value language is not allowed, say the value is promised, planned, forecast, finance-attestation pending, or measurement readiness depending on the loaded fields.",
     "- Write like a human senior advisor: direct, concise, specific, and willing to disagree.",
     "- Shape the answer as a point of view: what this means, why it matters, and what the executive should inspect next.",
-    "- Prefer one strong advisory paragraph over mechanical explanation. Avoid robotic phrases like 'The CIO read is'.",
+    "- Prefer 2-4 strong advisory paragraphs over mechanical explanation. Avoid robotic phrases like 'The CIO read is'.",
     "- Answer the current question literally. If the user asks a follow-up about vendors, services, owners, or value gaps, do not repeat the generic budget-mix answer.",
     "- If the follow-up data is not loaded, say exactly what cut is missing and why that prevents the next ranking.",
+    "- Make the answer specific to the loaded Tower posture: name the relevant blocker, owner, decision, or measurement gate in plain English.",
+    "- If you include a table, keep it board-readable: at most 5 rows, at most 4 columns, complete cells, no abbreviations that require internal knowledge.",
+    "- Never use markdown code fences, fenced chart blocks, inline JSON, or markdown tables inside the answer string.",
+    "- If the answer would be long, compress it. Valid JSON is more important than a longer answer.",
     ...(towerV3Runtime
       ? [
           "- For this tenant, use the governed context-pack section as the primary Tower source.",
@@ -435,25 +452,7 @@ export function buildCioTowerClaudePrompt(
     "- If a table helps, include tables[]. The renderer will display your title, column labels, and cell text exactly.",
     "- If multiple panes help, include tabs[]. The renderer will place your tab labels and prose exactly.",
     "- If no table is needed, return tables as an empty array.",
-    ...(isExplicitVisualAsk(context.question)
-      ? [
-          "",
-          "TABLE INSTRUCTION (this question asks for a comparison, ranking, or visual):",
-          "- You MUST include at least one table in tables[].",
-          "- Also embed the same table as a GFM markdown table directly in the answer field so the inline renderer can display it.",
-          "- In the answer field: table header row first (| Col | Col | ...), then separator (|---|---|...), then data rows. Follow with 1-2 bold analysis sentences.",
-        ]
-      : []),
-    ...(isTrendAsk(context.question)
-      ? [
-          "",
-          "TREND/CHART INSTRUCTION (this question asks about trends, changes over time, or time-series data):",
-          "- You MUST include a chart block in the answer field using the chart contract below.",
-          "- Embed a fenced ```chart block in the answer text with real numeric values from the Tower context.",
-          "- Use type 'line' or 'area' for time-series, 'horizontal-bar' for ranked lists.",
-          CHART_OUTPUT_CONTRACT,
-        ]
-      : []),
+    "- Do not duplicate table content inside answer. Use tables[] only.",
     "",
     "Required JSON shape:",
     "{",
@@ -678,7 +677,7 @@ function fallbackMetricRows(
     ["Change budget", "change_budget_fy26"],
     ["Funded initiatives", "initiative_budget_fy26"],
     ["Promised value", "promised_value_fy26"],
-    ["Measured value", "measured_value_ytd"],
+    ["Measurement evidence", "measured_value_ytd"],
     ["Actual spend YTD", "actual_spend_ytd"],
   ] as const;
   return keys.flatMap(([label, key]) => {
@@ -807,13 +806,13 @@ export function buildCioTowerFallbackAnswer(
       changeBudget !== null
         ? ` and ${money(changeBudget)} change pool`
         : "";
-    answer = `My read: this is the right drill-down, but the current Tower packet proves the enterprise ${runPart}${changePart}; it does not yet prove the service-by-service or vendor-by-vendor drivers. I would not rank vendors from this view until the run allocation, contract owner, renewal date, and application dependency fields are loaded.`;
+    answer = `This is the right drill-down, but the current Tower packet proves the enterprise ${runPart}${changePart}; it does not yet prove the service-by-service or vendor-by-vendor drivers. I would not rank vendors from this view until the run allocation, contract owner, renewal date, and application dependency fields are loaded.`;
   } else if (intent === "value_gap" || context.contract.contract_key === "tower_value_realization") {
     const promisedPart =
       promisedValue !== null ? `${money(promisedValue)} promised value` : "promised value";
     const measuredPart =
       measuredValue !== null ? `${money(measuredValue)} measured value` : "measured value evidence";
-    answer = `My read: the value story is promising, but it is not outcome-proof yet. In ${towerContextLabel(context.tenantName)}, Tower shows ${promisedPart} against ${measuredPart}. I would inspect the largest promise-to-measurement gaps before approving more funding.`;
+    answer = `The value story is promising, but it is not outcome-proof yet. In ${towerContextLabel(context.tenantName)}, Tower shows ${promisedPart} against ${measuredPart}. I would inspect the largest promise-to-measurement gaps before approving more funding.`;
   } else if (intent === "program_budget") {
     const initiativePart =
       initiativeBudget !== null
@@ -823,9 +822,9 @@ export function buildCioTowerFallbackAnswer(
       measuredValue !== null
         ? `${money(measuredValue)} measured value`
         : "measured-value evidence";
-    answer = `My read: treat the initiative list as a funding-control view, not a success story. In ${towerContextLabel(context.tenantName)}, Tower can inspect ${initiativePart}, but each program still needs ${measuredPart} and owner-attested evidence before it becomes a scale decision.`;
+    answer = `Treat the initiative list as a funding-control view, not a success story. In ${towerContextLabel(context.tenantName)}, Tower can inspect ${initiativePart}, but each program still needs ${measuredPart} and owner-attested evidence before it becomes a scale decision.`;
   } else if (intent === "evidence_gap") {
-    answer = `My read: the board-readiness gap is evidence quality, not another dashboard view. In ${towerContextLabel(context.tenantName)}, use the loaded budget and value measures for inspection, but hold any realized-value claim until finance-attested baselines, owner signoff, and source-system lineage are complete.`;
+    answer = `The board-readiness gap is evidence quality, not another dashboard view. In ${towerContextLabel(context.tenantName)}, use the loaded budget and value measures for inspection, but hold any realized-value claim until finance-attested baselines, owner signoff, and source-system lineage are complete.`;
   } else if (intent === "budget_mix" || context.contract.contract_key === "tower_run_change_split" || hasRunChange) {
     const contextLabel = towerContextLabel(context.tenantName);
     const budgetPart = totalBudget !== null
@@ -834,14 +833,14 @@ export function buildCioTowerFallbackAnswer(
     const splitPart = runBudget !== null && changeBudget !== null
       ? `, and the mix is the point: ${money(runBudget)} is run versus ${money(changeBudget)} change.`
       : ". The run/change split still needs a cleaner budget cut before it should drive a board decision.";
-    answer = `My read: this is a run-cost pressure question, not a value-realization win yet. ${budgetPart}${splitPart} I would use this as a budget-control conversation until finance-attested ${valueLanguage} is complete.`;
+    answer = `This is a run-cost pressure question, not a value-realization win yet. ${budgetPart}${splitPart} I would use this as a budget-control conversation until finance-attested ${valueLanguage} is complete.`;
   } else if (context.contract.contract_key === "tower_total_it_spend") {
     answer =
       totalBudget !== null
-        ? `My read: use ${money(totalBudget)} as the executive budget envelope, not as a value claim. In ${towerContextLabel(context.tenantName)}, the next useful inspection is the run/change mix, vendor concentration, and measured-value evidence before making funding moves.`
+        ? `Use ${money(totalBudget)} as the executive budget envelope, not as a value claim. In ${towerContextLabel(context.tenantName)}, the next useful inspection is the run/change mix, vendor concentration, and measurement evidence before making funding moves.`
         : `In ${towerContextLabel(context.tenantName)}, Tower budget context is available, but the total FY26 technology budget is not available in the governed dashboard values yet.`;
   } else {
-    answer = `My read: the Tower dashboard has enough governed values for a budget-control conversation, but not enough for a board-grade value claim. Inspect budget, vendor exposure, measured value, and evidence gaps before treating the dashboard as decision-ready.`;
+    answer = `The Tower dashboard has enough governed values for a budget-control conversation, but not enough for a board-grade value claim. Inspect budget, vendor exposure, measurement evidence, and evidence gaps before treating the dashboard as decision-ready.`;
   }
 
   const rows = fallbackMetricRows(context);
@@ -885,7 +884,7 @@ function buildTowerV3FallbackAnswer(
   const view = context.towerV3RuntimeView;
   if (!view) throw new Error("tower_v3_runtime_view_missing");
   const intent = fallbackQuestionIntent(context);
-  const topValueRows = view.valueHypotheses.slice(0, 6).map((item) => [
+  const topValueRows = view.valueHypotheses.slice(0, 5).map((item) => [
     item.label,
     item.value,
     item.claimBasis.replace(/_/g, " "),
@@ -894,40 +893,88 @@ function buildTowerV3FallbackAnswer(
   const topGap = view.gapThemes[0];
   const cioInsight = view.executiveInsights.find((insight) => insight.role === "CIO");
   const cfoInsight = view.executiveInsights.find((insight) => insight.role === "CFO");
+  const cleanTitle = (value: string | undefined, fallback: string): string =>
+    (value?.replace(/[.]+$/g, "").trim() || fallback);
+  const cioTitle = cleanTitle(cioInsight?.insightTitle, "data foundation readiness");
+  const cfoTitle = cleanTitle(cfoInsight?.insightTitle, "baseline and actuals ownership");
+  const gateSummary = `${view.valueClaimCount} value-claim gates: ${view.gateCounts.allowed} allowed, ${view.gateCounts.caveated} caveated, ${view.gateCounts.blocked} blocked`;
+  const inspectionRows = [
+    cioInsight
+      ? [
+          "CIO",
+          cioInsight.insightTitle,
+          cioInsight.decisionImplication,
+          cioInsight.nextAction,
+        ]
+      : [
+          "CIO",
+          "Data foundation readiness",
+          "Scale decisions need platform, data, integration, and control readiness.",
+          "Confirm the measurement path before expanding the portfolio.",
+        ],
+    cfoInsight
+      ? [
+          "CFO",
+          cfoInsight.insightTitle,
+          cfoInsight.decisionImplication,
+          cfoInsight.nextAction,
+        ]
+      : [
+          "CFO",
+          "Value claim discipline",
+          "Board use needs baselines, actuals, formulas, and claim gates.",
+          "Hold outcome language until finance evidence is attached.",
+        ],
+    ...view.gapThemes.slice(0, 3).map((theme) => [
+      theme.ownerOrSteward ?? theme.moduleHandoff,
+      theme.title,
+      theme.whyItMatters,
+      `Close with ${theme.requiredEvidence.slice(0, 2).join(" and ")}.`,
+    ]),
+  ].slice(0, 5);
 
   let answer: string;
   if (intent === "value_gap") {
-    answer = `My read: use Tower as a value-governance view, not an outcome scoreboard yet. ${view.tenantName} has ${view.valueRecordCount} value records in the governed context pack, but all ${view.valueClaimCount} value claim gates are caveated and none are allowed for outcome-proof language. The executive move is to rank the forecast value records, then close baseline, owner, and finance-evidence gaps before any board claim.`;
+    answer = `Use Tower as a value-governance view, not an outcome scoreboard. ${view.tenantName} has ${view.valueRecordCount} value records and ${gateSummary}, so the executive move is to rank forecast value while closing baseline, owner, and finance-attestation gaps. The CIO can use this to sequence measurement work; the CFO should hold board claims until the claim gates clear.`;
   } else if (intent === "run_drivers" || intent === "vendor_exposure") {
-    answer = `My read: Tower can show the service and vendor evidence blockers, but it should not rank commercial exposure from the bridge alone. The strongest current blocker is ${topGap?.title ?? "contract and service evidence"}. Send contract economics, SLA/KPI schedules, renewal windows, and vendor performance evidence to Source before converting this into a commercial-benefit claim.`;
+    answer = `Tower can point to the service and vendor evidence blockers, but it should not rank commercial exposure from bridge diagnostics alone. The strongest current blocker is ${topGap?.title ?? "contract and service evidence"}. Send contract economics, SLA/KPI schedules, renewal windows, and vendor performance evidence to Source before turning this into a commercial-benefit case.`;
   } else if (intent === "program_budget" || intent === "budget_mix") {
-    answer = `My read: this is a funding-control question. Tower has ${view.metricCount} metric records and ${view.valueRecordCount} value records from the governed context pack, but the budget and value cuts are still planning-grade until finance-controlled actuals and baselines are reconciled. I would fund measurement design first, then decide which programs move into Moves.`;
+    answer = `This is a funding-control question. Tower has ${view.metricCount} metric records and ${view.valueRecordCount} value records from the governed context pack, but the budget and value cuts are still planning-grade until finance-controlled actuals and baselines are reconciled. I would fund measurement design first, then move only the best-evidenced programs into Moves.`;
   } else if (intent === "evidence_gap") {
-    answer = `My read: the board-readiness gap is evidence quality. Tower has enough context to show where measurement should focus, but the claim gate says value should remain caveated until baselines, formula lineage, source-owner attestation, and finance evidence are loaded.`;
+    answer = `The board-readiness issue is claim discipline, not another dashboard. ${view.tenantName} has ${view.metricCount} metric records, ${view.valueRecordCount} value records, and ${gateSummary}; that is enough to design the measurement agenda, but not enough to make outcome-proof claims. I would have the CIO inspect ${cioTitle} first while the CFO locks ${cfoTitle}.`;
   } else {
-    answer = `My read: Tower is ready to guide measurement, readiness, and executive action, but not to certify outcomes. The CIO should focus on platform and operating-model gates; the CFO should focus on baselines, actuals, and claim discipline.`;
+    answer = `Tower is ready to guide measurement, readiness, and executive action, but not to certify outcomes. The CIO should focus on platform and operating-model gates; the CFO should focus on baselines, actuals, and claim discipline. The decision is not whether the dashboard is attractive; it is whether the claim gates are strong enough for the next executive meeting.`;
   }
 
   return {
     version: "cio_tower_visible_answer_v1",
     answer,
     tables:
-      topValueRows.length > 0
+      intent === "evidence_gap"
         ? [
             {
-              id: "tower_value_hypotheses",
-              title: "Value hypotheses and claim gates",
-              columns: ["Value record", "Value", "Basis", "Gate"],
-              rows: topValueRows,
+              id: "tower_board_readiness_path",
+              title: "Board-readiness inspection path",
+              columns: ["Owner", "Inspect first", "Why it matters", "Decision to unlock"],
+              rows: inspectionRows,
             },
           ]
+        : topValueRows.length > 0
+          ? [
+              {
+                id: "tower_value_hypotheses",
+                title: "Value hypotheses under claim gate",
+                columns: ["Value record", "Value", "Basis", "Gate"],
+                rows: topValueRows,
+              },
+            ]
         : [],
     tabs: [
       {
         id: "cio_view",
         label: "CIO view",
         prose: cioInsight
-          ? `${cioInsight.insightSummary} ${cioInsight.decisionImplication} Next: ${cioInsight.nextAction}`
+          ? `${cioInsight.insightSummary} ${cioInsight.decisionImplication} ${cioInsight.nextAction}`
           : "CIO view should focus on platform, data, integration, and control readiness before scale decisions.",
         tables: [],
       },
@@ -935,13 +982,21 @@ function buildTowerV3FallbackAnswer(
         id: "cfo_view",
         label: "CFO view",
         prose: cfoInsight
-          ? `${cfoInsight.insightSummary} ${cfoInsight.decisionImplication} Next: ${cfoInsight.nextAction}`
+          ? `${cfoInsight.insightSummary} ${cfoInsight.decisionImplication} ${cfoInsight.nextAction}`
           : "CFO view should focus on baselines, actuals, formulas, and claim gates before board use.",
+        tables: [],
+      },
+      {
+        id: "evidence_close_path",
+        label: "Proof close path",
+        prose: topGap
+          ? `${topGap.title} matters because ${topGap.whyItMatters} Close it with ${topGap.requiredEvidence.slice(0, 3).join(", ")}.`
+          : "Close the measurement plan with owner attestation, formula lineage, baseline evidence, and finance-controlled actuals before board use.",
         tables: [],
       },
     ],
     followUpQuestion: topGap?.title
-      ? `Should Tower turn "${topGap.title}" into the next measurement action plan?`
+      ? `Should Tower turn "${topGap.title}" into a 30-day measurement plan with owners and evidence requests?`
       : "Which claim gate should Tower close first?",
   };
 }
