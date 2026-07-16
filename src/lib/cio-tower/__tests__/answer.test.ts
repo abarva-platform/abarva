@@ -100,6 +100,9 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('You own every user-visible word');
     expect(prompt).toContain('AbarVa will render the strings exactly as returned');
     expect(prompt).toContain('It will not rewrite, summarize, scrub, relabel, infer, or improve them');
+    expect(prompt).toContain('Shape the answer as a point of view');
+    expect(prompt).toContain('must directly continue from your answer');
+    expect(prompt).toContain('Do not use generic menu choices');
     expect(prompt).toContain('Realized-value language allowed: no');
     expect(prompt).toContain('Projection role: derived_read_model');
     expect(prompt).toContain('Crew Recovery & Legality Modernization');
@@ -220,9 +223,15 @@ describe('cio tower answer contract', () => {
 
     expect(fallback.version).toBe('cio_tower_visible_answer_v1');
     expect(fallback.answer).toContain(
-      'In the Healthcare Demo synthetic Tower planning context, Nexus shows $1.1B of FY26 technology budget in view',
+      'My read: this is a run-cost pressure question, not a value-realization win yet.',
     );
-    expect(fallback.answer).toContain('$713.0M run and $356.5M change');
+    expect(fallback.answer).toContain(
+      'In the Healthcare Demo synthetic Tower planning context, $1.1B of FY26 technology budget is in view',
+    );
+    expect(fallback.answer).toContain('$713.0M is run versus $356.5M change');
+    expect(fallback.followUpQuestion).toBe(
+      'Which services or vendors are driving the $713.0M run base before we protect the $356.5M change pool?',
+    );
     expect(fallback.answer).not.toMatch(/valid Tower answer contract|No fallback answer|JSON|source key|record ID/i);
     expect(fallback.answer).not.toMatch(/\brealized\b|\bproven\b|\bdelivered\b/i);
     expect(fallback.tables?.[0]?.rows).toEqual([
