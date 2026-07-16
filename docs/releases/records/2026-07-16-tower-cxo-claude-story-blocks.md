@@ -35,15 +35,18 @@ Tower now has a Claude-owned executive story layer for the Meridian CXO value co
 - `src/components/tower/TowerIndexPage.tsx`
 - `scripts/audit/build-tower-cxo-claude-story-proof.ts`
 - Focused Tower/feature tests and this release record.
+- Follow-up correction: the Tower Claude egress call no longer passes the human-readable `contextPackId` as `artifactId`, because the audit table expects UUID-shaped artifact identifiers. The readable context-pack id remains in request metadata for traceability.
 
 ## QA / Validation
 
 - Pass: `npx jest src/lib/tower/__tests__/tower-cxo-claude-story.test.ts src/lib/tower/__tests__/tower-v3-runtime-view.test.ts src/lib/features/__tests__/is-feature-enabled.test.ts src/lib/cio-tower/__tests__/answer.test.ts --runInBand`.
+- Pass: `npx jest src/lib/tower/__tests__/tower-cxo-claude-story.test.ts --runInBand` after the egress artifact-id correction.
 - Pass: `NODE_OPTIONS='--max-old-space-size=8192' npx tsc --noEmit --pretty false`.
 - Blocked locally: `npm run audit:tower-cxo-claude-story` cannot complete on the laptop because the audited egress preflight needs Azure Postgres and the private host does not resolve outside ACA/VNet (`getaddrinfo ENOTFOUND pg-abarva-context-lab-001.postgres.database.azure.com`). This proof must run through the deployed ACA runtime.
 - Pass: `npm run release:check`.
 - Pass: `git diff --check`.
-- Not run yet: signed-in ACA browser proof.
+- Partial live proof before correction: ACA served the Tower Claude code path, but the DOM marker showed `claude_fallback` because the audited egress write rejected the non-UUID `artifactId` value `meridian-health-tower-v3-live-context-pack`.
+- Not run yet: signed-in ACA browser proof after the egress artifact-id correction.
 
 ## Rollout Plan
 
@@ -71,4 +74,4 @@ Disable the `tower_cxo_claude_story_blocks` flag or revert the PR. Deterministic
 
 ## Known Gaps
 
-Candidate is not yet merged, deployed, or browser-proven. This PR does not migrate additional Tower routes, change value calculations, or promote any data.
+Candidate is not yet deployed or browser-proven after the egress artifact-id correction. This PR does not migrate additional Tower routes, change value calculations, or promote any data.
