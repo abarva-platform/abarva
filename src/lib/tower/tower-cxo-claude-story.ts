@@ -197,7 +197,6 @@ export function buildTowerCxoClaudeRequest(args: {
   payload: {
     model: string;
     max_tokens: number;
-    temperature: number;
     system: string;
     messages: Array<{ role: "user"; content: string }>;
   };
@@ -209,7 +208,6 @@ export function buildTowerCxoClaudeRequest(args: {
   const payload = {
     model,
     max_tokens: maxTokens,
-    temperature: 0.2,
     system: TOWER_CXO_CLAUDE_SYSTEM_PROMPT,
     messages: [{ role: "user" as const, content: user }],
   };
