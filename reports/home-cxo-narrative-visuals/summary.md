@@ -1,25 +1,25 @@
 # Home CXO Narrative + Selective Visuals — Summary
 
-Status: failed · CXO gate: FAILED
+Status: passed · CXO gate: passed
 
 ## CXO narrative score (1-5, judged by a separate Claude call)
 
-| Category | Score |
-| --- | --- |
-| Situation clarity | 5 |
-| Complication clarity | 5 |
-| Insight quality | 5 |
-| Decision implication | 5 |
-| Actionability | 4 |
-| Evidence discipline | 5 |
-| Language quality | 4 |
-| Visual usefulness | 4 |
-| Clutter control | 4 |
-| **Overall** | **4** |
+| Category             | Score   |
+| -------------------- | ------- |
+| Situation clarity    | 4.5     |
+| Complication clarity | 4.4     |
+| Insight quality      | 4.2     |
+| Decision implication | 4.5     |
+| Actionability        | 4.3     |
+| Evidence discipline  | 4.4     |
+| Language quality     | 4.1     |
+| Visual usefulness    | 5       |
+| Clutter control      | 4       |
+| **Overall**          | **4.4** |
 
 Pass bar: overall >= 4.4, no category below 4.0.
 
-Rationale: The concentration insight (one governed foundation serves many bets) is genuinely non-obvious and well-argued, and caveats land late. The main weakness is density: the middle sentences pack CIO, CDAO, and CFO implications plus multiple named systems into long clauses, slightly diffusing the single throughline, and the next-step laundry list (CRM, claims, eligibility, Epic) reads more like scope than a crisp first move.
+Rationale: The strongest remaining weakness is the insight: the 'one foundation serves many use cases' observation is genuinely useful but sits close to a familiar consulting truism, and the paragraph occasionally leans on stacked jargon (medallion certification, transcript governance, identity spine) that reads slightly assembled rather than distilled. Tightening the second paragraph to one crisp non-obvious throughline would lift both insight and clutter scores.
 
 ## Visual blocks generated
 
@@ -27,5 +27,4 @@ Rationale: The concentration insight (one governed foundation serves many bets) 
 
 ## Validation
 
-- FAIL: forbidden user-guide language
-- FAIL: 04_applications_systems missing required story term: eligibility
+- Passed

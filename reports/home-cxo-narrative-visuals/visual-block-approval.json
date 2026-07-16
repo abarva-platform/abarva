@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-07-16T02:43:47.593Z",
+  "generated_at": "2026-07-16T12:57:23.897Z",
   "model": "claude-opus-4-8",
   "visual_blocks_pass": true,
   "visual_block_count": 4,
   "validation": [],
-  "narrative_status": "failed",
-  "cxo_pass": false,
+  "narrative_status": "passed",
+  "cxo_pass": true,
   "truth_split": "Visual blocks are approved independently from prose. A failed CXO narrative does not promote prose, but a valid structured visual payload may still be consumed by the renderer."
 }

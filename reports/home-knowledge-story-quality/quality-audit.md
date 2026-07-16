@@ -10,7 +10,7 @@ The prompt supplied a governed Meridian context pack with current-state systems,
 
 ## What Claude Returned
 
-- Home insights: 5
+- Home insights: 6
 - Dimension narratives: 19
 - Cross-dimension links: 10
 - Top gaps: 5

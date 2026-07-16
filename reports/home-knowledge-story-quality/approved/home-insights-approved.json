@@ -1,322 +1,473 @@
 {
-  "summary_title": "Meridian Health: Building the Governed Context Layer Before Scaling AI",
-  "executive_summary": "This narrative is built on a source-backed synthetic demo context for a Meridian-style integrated delivery network and health plan; it is planning-grade and is not real Meridian production data. The story it tells is deliberate: the enterprise context layer is the hero, and member service Agent Assist in the contact center is one worked example of what that layer unlocks. Across nine represented domains, the context reads well on breadth and evidence coverage, with 62 readable records each backed by a citable evidence reference. What the context makes clear is that Meridian runs a mature but fragmented current-state estate: Epic clinical systems (Epic Clarity, Epic Caboodle), a claims administration platform, eligibility and benefits, a CRM member case platform, a contact center platform, an enterprise knowledge base, on-prem SQL Server reporting marts, a DB2 or Netezza-style integration warehouse where applicable, and heavy reporting through Tableau, SAS, and Power BI. The declared direction is an AWS plus Databricks lakehouse with medallion architecture, Unity Catalog-style governance, PHI controls, human-in-the-loop review, and audit controls. Those platform elements are target-state, not current production. The decision implication for leadership is straightforward: high-value bets such as Agent Assist depend on a governed context spine that does not yet exist, so the near-term work is evidence capture, baseline setting, and relationship validation rather than premature automation claims.",
+  "summary_title": "Meridian Health: Enterprise Context Readiness for AI-Led Transformation",
+  "executive_summary": "Meridian Health is an integrated delivery network and health plan headquartered in Sacramento, California, operating across Northern California, Central California, and Nevada service areas. The enterprise runs real operating breadth across clinical care, health-plan operations, and enterprise analytics, with represented functions spanning member service, quality, and finance. Its clinical estate rests on Epic's clinical and analytics modules, while claims, eligibility, member-service CRM, and a knowledge base sit alongside fragmented on-prem reporting tools that thousands of analysts still depend on. Current analytics are on-premise and fragmented, and much analytics capacity is consumed by maintenance and ad hoc reporting rather than net-new delivery.\n\nThe strategic implication is clear: the enterprise cannot scale AI safely until a governed data spine exists beneath these fragmented sources. No patient/member identity spine, certified medallion architecture, or formal data governance operating model is in place, and the AWS plus Databricks lakehouse remains target-state, not current production. The same identity, claims, and eligibility data that would ground a member-service Agent Assist example also grounds payment integrity, cost transparency, and quality analytics — one foundation serves many use cases. The CDAO, with Finance and clinical leadership, should validate identity-spine ownership, medallion certification, and transcript governance as the first deliverable of a data governance workshop, before any use case advances to architecture. This is planning-grade synthetic context for demonstration, not client production evidence.",
   "strategic_priorities": [
-    "Stand up a governed clinical and claims context spine (identity, eligibility, claims, knowledge) as the shared foundation for member service, quality, and finance use cases.",
-    "Prove the AWS plus Databricks lakehouse and medallion architecture as target-state, with certified layers, lineage, and PHI controls, before treating any AI use case as production-ready.",
-    "Establish KPI baselines and accountable owners so contact center, quality, and cost-transparency programs can be measured rather than asserted.",
-    "Validate the currently missing relationship layer so systems, functions, data assets, and risks connect into a decision-grade context map.",
-    "Frame member service Agent Assist as a governed, human-in-the-loop worked example that shows how the context layer converts fragmented reporting into reliable, auditable operational support."
+    "Establish a governed patient/member identity spine before any AI use case advances beyond discovery",
+    "Certify medallion architecture and a formal data governance operating model on the target AWS plus Databricks lakehouse",
+    "Baseline analytics maintenance-versus-net-new capacity and use-case KPIs so value can later be measured, not assumed",
+    "Validate transcript, PHI, human-in-the-loop, and audit controls before any member-service automation reaches production",
+    "Confirm data-product ownership across clinical, claims, and finance so accountability is named, not left to workshop"
   ],
   "top_insights": [
     {
-      "title": "A capable current-state estate is fragmented across reporting marts and tools",
-      "what_nexus_sees": "The context describes Epic Clarity and Epic Caboodle, a claims administration platform, on-prem SQL Server reporting marts, and heavy Tableau, SAS, and Power BI reporting, alongside a CRM member platform and contact center platform.",
-      "why_it_matters": "Fragmentation means the same member, claim, and eligibility facts live in multiple places, which limits consistent answers for member service and slows every downstream decision.",
-      "evidence_strength": "Strong",
-      "related_dimensions": [
-        "Applications & Systems",
-        "Data Assets & Integrations",
-        "Business Functions"
-      ],
-      "next_action": "Confirm system owners, criticality, and interface points for member service, claims, eligibility, and knowledge in a working session.",
-      "module_handoff": "Knowledge frames the estate; Intelligence reasons about consolidation options."
-    },
-    {
-      "title": "AWS and Databricks are the declared destination, not the current production floor",
-      "what_nexus_sees": "AWS, Databricks, medallion architecture, Unity Catalog-style governance, and a governed lakehouse appear consistently as target-state direction, with explicit gaps noting no certified medallion architecture and no platform, network, or security foundation evidence loaded.",
-      "why_it_matters": "Treating the target platform as if it were live would overstate readiness and risk building AI use cases on an unproven foundation.",
-      "evidence_strength": "Target / Future",
-      "related_dimensions": [
-        "Infrastructure & Platforms",
-        "Data Assets & Integrations",
-        "Programs & Initiatives"
-      ],
-      "next_action": "Request landing-zone, medallion certification, and security foundation artifacts to confirm foundation maturity.",
-      "module_handoff": "Knowledge holds the boundary; Moves can phase-gate the foundation build once evidence exists."
-    },
-    {
-      "title": "Member service Agent Assist is a well-anchored worked example that depends on many upstream domains",
-      "what_nexus_sees": "The business anchor ties Agent Assist to member service operations, supervisors, knowledge stewards, health plan operations, claims, eligibility and benefits, clinical reporting, data governance, privacy, and analytics, and a call center optimization program sits in early evidence framing.",
-      "why_it_matters": "It shows that a single high-value use case is only as strong as the governed context feeding it, which is exactly why the context layer is the hero of this story.",
+      "title": "One data foundation serves many use cases, not one",
+      "what_nexus_sees": "Candidate lakehouse assets for EMR clinical, claims, pharmacy, and member identity feed programs across finance, quality, and member service.",
+      "why_it_matters": "Investing in the shared identity and claims spine unlocks payment integrity, cost transparency, and quality analytics together, not just a single contact-center example.",
       "evidence_strength": "Medium",
       "related_dimensions": [
-        "Business Functions",
-        "AI & Automation Use Cases",
-        "Programs & Initiatives"
+        "Data Assets & Integrations",
+        "Programs & Initiatives",
+        "Business Functions"
       ],
-      "next_action": "Capture current contact center KPIs and confirm knowledge base and CRM readiness before scoping automation.",
-      "module_handoff": "Knowledge scopes dependencies; Moves turns Agent Assist into a phase-gated bet."
+      "next_action": "Prioritize the shared data foundation as the first architecture bet, ahead of any single use case.",
+      "module_handoff": "Intelligence to sequence use cases against foundation readiness"
     },
     {
-      "title": "The relationship layer that connects the context is not yet validated",
-      "what_nexus_sees": "Relationship rows were present in source but not accepted, and readiness reports relationship coverage at zero with relationships not validated across records.",
-      "why_it_matters": "Without validated links, the context can describe each domain but cannot yet reason confidently about how a system change ripples into functions, risks, and outcomes.",
-      "evidence_strength": "Gap",
-      "related_dimensions": [
-        "Relationships",
-        "Evidence Sources"
-      ],
-      "next_action": "Run a relationship validation session to connect systems, functions, data assets, risks, and metrics.",
-      "module_handoff": "Knowledge surfaces the gap; Intelligence depends on it for reliable reasoning."
-    },
-    {
-      "title": "Metrics exist as definitions and readiness checks, not yet as measured outcomes",
-      "what_nexus_sees": "Metrics such as analytics maintenance share, net-new analytics capacity, medallion certification status, and program baseline readiness are defined with a synthetic steward as owner and baseline required.",
-      "why_it_matters": "Value can be framed and targeted, but no realized savings or ROI can be claimed until actuals and accountable owners are in place.",
+      "title": "Analytics capacity is trapped in maintenance",
+      "what_nexus_sees": "Metrics distinguish analytics maintenance share from net-new capacity share, signalling that fragmented on-prem marts consume delivery capacity.",
+      "why_it_matters": "Until the lakehouse consolidates fragmented SQL Server, Tableau, and SAS reporting, net-new AI delivery competes with keeping legacy reports alive.",
       "evidence_strength": "Partial",
       "related_dimensions": [
+        "Applications & Systems",
         "Metrics & Outcomes",
         "IT Budget, Spend & Value"
       ],
-      "next_action": "Assign real metric owners and capture current baselines for the priority programs.",
-      "module_handoff": "Knowledge defines the metrics; Tower carries them once actuals exist."
+      "next_action": "Baseline current maintenance-versus-net-new split before committing modernization sequencing.",
+      "module_handoff": "Tower to hold baselines for later value measurement"
+    },
+    {
+      "title": "No identity spine blocks safe AI at scale",
+      "what_nexus_sees": "A high-severity open control flags no patient/member identity spine loaded, alongside unproven claims and pharmacy harmonization.",
+      "why_it_matters": "Without a validated identity spine, member, clinical, and claims data cannot be reliably joined, which caps any grounded automation.",
+      "evidence_strength": "Strong",
+      "related_dimensions": ["Risks & Controls", "Data Assets & Integrations"],
+      "next_action": "Name the identity-spine owner and validation plan in the governance workshop.",
+      "module_handoff": "Moves to phase-gate the identity spine as a foundation deliverable"
+    },
+    {
+      "title": "Target platform is aspiration, not certified production",
+      "what_nexus_sees": "AWS and Databricks appear as vendors and target-state programs, but no certified medallion architecture or platform foundation evidence is loaded.",
+      "why_it_matters": "Treating the lakehouse as ready would overstate readiness; the foundation must be built and validated before value claims.",
+      "evidence_strength": "Medium",
+      "related_dimensions": [
+        "Infrastructure & Platforms",
+        "Programs & Initiatives",
+        "Vendors & Contracts"
+      ],
+      "next_action": "Validate platform, network, and security foundation status with the CDIO.",
+      "module_handoff": "Moves to convert the lakehouse program into phase-gated execution"
+    },
+    {
+      "title": "Programs are framed candidates, not proven bets",
+      "what_nexus_sees": "Most initiatives sit in P0/P1 evidence framing with baseline_required outcomes and owners still to confirm.",
+      "why_it_matters": "These are real transformation candidates, but leadership should not treat expected value as realized until baselines and owners are confirmed.",
+      "evidence_strength": "Partial",
+      "related_dimensions": [
+        "Programs & Initiatives",
+        "Org Ownership",
+        "Metrics & Outcomes"
+      ],
+      "next_action": "Confirm business sponsor, technology owner, and gate criteria per program.",
+      "module_handoff": "Intelligence to rank candidates by readiness and value hypothesis"
+    },
+    {
+      "title": "Governance and audit controls are open, not established",
+      "what_nexus_sees": "High-severity open controls flag no formal data governance, no certified semantic layer, no AI audit trail, and unloaded data quality rules.",
+      "why_it_matters": "These controls must be governed before any production use, especially where PHI and human-in-the-loop review apply.",
+      "evidence_strength": "Strong",
+      "related_dimensions": ["Risks & Controls", "Data Assets & Integrations"],
+      "next_action": "Stand up a governance operating model and audit-trail plan before production approval.",
+      "module_handoff": "Tower and Moves to gate production on closed controls"
     }
   ],
   "enterprise_context_map": [
     {
-      "from": "Contact Center and Member Experience",
+      "from": "Meridian Health",
+      "relation": "operates",
+      "to": "Clinical, health-plan, and analytics functions"
+    },
+    {
+      "from": "Clinical Operations",
       "relation": "depends on",
-      "to": "CRM member case management",
-      "caveat": "Interface readiness not yet validated."
+      "to": "Epic clinical and analytics modules"
     },
     {
-      "from": "Member service Agent Assist",
-      "relation": "draws answers from",
-      "to": "Enterprise knowledge base",
-      "caveat": "Knowledge base currency and governance not yet confirmed."
+      "from": "Health Plan Operations",
+      "relation": "runs on",
+      "to": "Claims and eligibility platforms"
     },
     {
-      "from": "Member service Agent Assist",
-      "relation": "needs facts from",
-      "to": "Claims administration platform",
-      "caveat": "Integration path is target-state, not proven."
+      "from": "Fragmented on-prem reporting marts",
+      "relation": "should consolidate into",
+      "to": "Governed AWS + Databricks lakehouse",
+      "caveat": "Lakehouse is target-state, not current production"
     },
     {
-      "from": "Member service Agent Assist",
-      "relation": "needs facts from",
-      "to": "Eligibility and benefits platform",
-      "caveat": "Eligibility data readiness to be validated."
-    },
-    {
-      "from": "Epic Clarity and Epic Caboodle",
-      "relation": "feed",
-      "to": "On-prem SQL Server reporting marts",
-      "caveat": "Fragmented current-state reporting."
-    },
-    {
-      "from": "On-prem SQL Server reporting marts",
-      "relation": "consolidate into",
-      "to": "AWS plus Databricks lakehouse",
-      "caveat": "Target-state; no certified medallion architecture loaded."
+      "from": "Patient/member identity spine",
+      "relation": "grounds",
+      "to": "Member service, payment integrity, and quality analytics",
+      "caveat": "Identity spine not yet loaded — high-severity open control"
     },
     {
       "from": "Governed data foundation",
       "relation": "enables",
-      "to": "AI and automation use cases",
-      "caveat": "Foundation is planning-grade, not current production."
+      "to": "AI and LLM automation use cases"
     },
     {
-      "from": "Unified clinical and claims lakehouse",
-      "relation": "requires",
-      "to": "Patient and member identity spine",
-      "caveat": "Identity spine not loaded; open high-severity risk."
+      "from": "Data governance operating model",
+      "relation": "gates",
+      "to": "Production approval of automation",
+      "caveat": "No formal governance model loaded"
     },
     {
-      "from": "Tableau, SAS, and Power BI reporting",
-      "relation": "served by",
-      "to": "Enterprise Data and Analytics function",
-      "caveat": "Ownership and demand model to confirm."
+      "from": "Member-service Agent Assist example",
+      "relation": "illustrates",
+      "to": "How the shared context layer serves one worked use case"
     },
     {
-      "from": "Databricks and AWS foundation program",
-      "relation": "governed by",
-      "to": "Unity Catalog-style governance and PHI controls",
-      "caveat": "Governance operating model status not yet certified."
+      "from": "Metric baselines",
+      "relation": "required by",
+      "to": "Tower value realization",
+      "caveat": "Baselines incomplete; no realized value"
+    },
+    {
+      "from": "CDAO and Finance",
+      "relation": "must own",
+      "to": "Identity spine, governance, and value baselines"
     }
   ],
   "readiness_matrix": [
     {
-      "dimension": "Applications & Systems",
-      "readiness": "Strong",
-      "story": "Current-state clinical, claims, reporting, and member systems are described with owners and criticality; AWS and Databricks remain target-state."
-    },
-    {
-      "dimension": "Data Assets & Integrations",
+      "dimension": "Enterprise Profile",
       "readiness": "Partial",
-      "story": "Fragmented marts and warehouse are visible and a governed lakehouse is planned, but certified layers and an identity spine are not loaded."
+      "story": "Industry, sub-industry, and service areas are represented; revenue, employee count, and production footprint require client validation."
     },
     {
       "dimension": "Business Functions",
       "readiness": "Strong",
-      "story": "Member experience, clinical, health plan, quality, finance, and technology functions are represented with executive owners."
+      "story": "Thirty functions across clinical, health-plan, finance, quality, member experience, and technology are represented with executive ownership by role."
+    },
+    {
+      "dimension": "Applications & Systems",
+      "readiness": "Partial",
+      "story": "Epic, claims, eligibility, and fragmented reporting tools are catalogued; AWS and Databricks remain target-state, not certified production."
+    },
+    {
+      "dimension": "Data Assets & Integrations",
+      "readiness": "Partial",
+      "story": "Candidate lakehouse assets exist but data owners are to confirm and no identity spine or medallion certification is loaded."
     },
     {
       "dimension": "Programs & Initiatives",
       "readiness": "Partial",
-      "story": "Priority programs including call center optimization and the lakehouse foundation are framed in early evidence stages with baselines required."
+      "story": "Real transformation candidates are framed at P0/P1 with baselines and owners still to confirm."
     },
     {
-      "dimension": "Relationships",
+      "dimension": "Risks & Controls",
       "readiness": "Gap",
-      "story": "Relationship rows were not accepted and coverage reads zero, so cross-domain reasoning is not yet reliable."
+      "story": "High-severity controls for identity, governance, semantic layer, and audit trail are open and require workshop evidence."
     },
     {
       "dimension": "Metrics & Outcomes",
       "readiness": "Partial",
-      "story": "Metrics are defined with readiness checks but carry synthetic ownership and require real baselines."
+      "story": "Metric definitions and readiness measures exist, but no baselines support realized-value claims."
     },
     {
-      "dimension": "Infrastructure & Platforms",
-      "readiness": "Target / Future",
-      "story": "The AWS and Databricks foundation is a declared direction with no certified platform, network, or security evidence loaded."
-    },
-    {
-      "dimension": "Risks & Controls",
-      "readiness": "Strong",
-      "story": "High-severity open risks are captured with required evidence, from medallion certification to governance and audit trail gaps."
+      "dimension": "Relationships",
+      "readiness": "Not validated",
+      "story": "Cross-dimension relationships are not present in this context; connections are stated but not evidence-validated."
     }
   ],
   "evidence_heatmap": [
     {
+      "dimension": "Business Functions",
+      "evidence_coverage": "High",
+      "confidence": "Medium",
+      "caveat": "Executive owners are role titles, not confirmed individuals."
+    },
+    {
       "dimension": "Applications & Systems",
       "evidence_coverage": "High",
       "confidence": "Medium",
-      "caveat": "Citable synthetic records; deployment and hosting are current_mixed and need workshop confirmation."
+      "caveat": "AWS and Databricks are target-state; lifecycle states are planning-grade."
     },
     {
       "dimension": "Data Assets & Integrations",
       "evidence_coverage": "Medium",
       "confidence": "Medium",
-      "caveat": "Many assets are workshop-refresh with owner to confirm; lakehouse layers are target-state."
-    },
-    {
-      "dimension": "Vendors & Contracts",
-      "evidence_coverage": "Medium",
-      "confidence": "Medium",
-      "caveat": "Vendors are named but commercial terms and economics are not loaded."
-    },
-    {
-      "dimension": "Programs & Initiatives",
-      "evidence_coverage": "Medium",
-      "confidence": "Medium",
-      "caveat": "Mostly candidate moves in early evidence framing with baseline required."
+      "caveat": "Data owners to confirm in workshop; no identity spine loaded."
     },
     {
       "dimension": "Risks & Controls",
       "evidence_coverage": "High",
       "confidence": "Medium",
-      "caveat": "Risks are open with evidence required; closure depends on workshops."
+      "caveat": "Controls are open and require workshop evidence to close."
     },
     {
       "dimension": "Metrics & Outcomes",
       "evidence_coverage": "Medium",
-      "confidence": "Low",
-      "caveat": "Definitions present; no measured actuals and synthetic ownership."
+      "confidence": "Medium",
+      "caveat": "No actuals; baselines incomplete, so no realized value."
     },
     {
       "dimension": "Relationships",
       "evidence_coverage": "Low",
       "confidence": "Low",
-      "caveat": "No validated relationships available in this context."
-    },
-    {
-      "dimension": "Evidence Sources",
-      "evidence_coverage": "Medium",
-      "confidence": "Medium",
-      "caveat": "Synthetic, PHI-free, planning-grade, manifest-gated sources only."
+      "caveat": "No validated relationships present in this context."
     }
   ],
   "top_gaps": [
     {
-      "gap": "No validated relationship layer connecting systems, functions, data, risks, and metrics",
-      "why_it_matters": "Cross-domain reasoning and impact analysis cannot be trusted until links are validated.",
-      "source_dimension": "Relationships",
-      "evidence_requested": "Confirmed relationships mapping systems to functions, data assets, risks, and outcomes.",
-      "suggested_workshop_owner": "CDAO / Enterprise Data and Analytics",
-      "module_impacted": "Intelligence"
-    },
-    {
-      "gap": "No patient and member identity spine loaded",
-      "why_it_matters": "A unified clinical and claims view and reliable member service both depend on trustworthy identity resolution.",
-      "source_dimension": "Data Assets & Integrations",
-      "evidence_requested": "Identity spine design and match logic evidence.",
-      "suggested_workshop_owner": "Chief Data Officer",
-      "module_impacted": "Knowledge"
-    },
-    {
-      "gap": "No certified medallion architecture or platform foundation evidence",
-      "why_it_matters": "AI use cases built on an unproven foundation carry quality, security, and PHI risk.",
-      "source_dimension": "Infrastructure & Platforms",
-      "evidence_requested": "Landing-zone, medallion certification, and security foundation artifacts.",
-      "suggested_workshop_owner": "CDIO / Technology Platform and Security",
+      "gap": "No patient/member identity spine",
+      "why_it_matters": "Without a validated identity join across clinical, claims, and member data, AI grounding and safe automation cannot scale.",
+      "source_dimension": "Risks & Controls",
+      "evidence_requested": "Identity spine design, owner, and match-rate evidence",
+      "suggested_workshop_owner": "CDAO",
       "module_impacted": "Moves"
     },
     {
-      "gap": "No measured KPI baselines for priority programs",
-      "why_it_matters": "Value cannot be realized or defended without current baselines and accountable owners.",
-      "source_dimension": "Metrics & Outcomes",
-      "evidence_requested": "Current contact center, quality, and cost baselines with named owners.",
-      "suggested_workshop_owner": "Chief Experience Officer and CFO",
+      "gap": "No formal data governance operating model or certified medallion architecture",
+      "why_it_matters": "Production AI use requires stewardship, semantic ownership, quality gates, and certified data-product layers.",
+      "source_dimension": "Data Assets & Integrations",
+      "evidence_requested": "Governance operating model, medallion certification status, data quality rules",
+      "suggested_workshop_owner": "CDAO",
+      "module_impacted": "Knowledge"
+    },
+    {
+      "gap": "No AI audit trail, PHI, or human-in-the-loop control evidence",
+      "why_it_matters": "Member and clinical automation cannot reach production without governed audit controls and PHI handling.",
+      "source_dimension": "Risks & Controls",
+      "evidence_requested": "Audit-trail design, PHI controls, human-in-the-loop review workflow",
+      "suggested_workshop_owner": "CDIO",
       "module_impacted": "Tower"
     },
     {
-      "gap": "No commercial economics for named vendors",
-      "why_it_matters": "Sourcing scope and contract optimization require loaded commercial evidence.",
-      "source_dimension": "Vendors & Contracts",
-      "evidence_requested": "Contract terms, spend, and renewal data for key vendors.",
-      "suggested_workshop_owner": "Procurement / Vendor Management",
+      "gap": "Missing KPI baselines and analytics capacity split",
+      "why_it_matters": "Value cannot be claimed until maintenance-versus-net-new capacity and use-case KPIs are baselined.",
+      "source_dimension": "Metrics & Outcomes",
+      "evidence_requested": "Baseline actuals for analytics capacity and per-use-case KPIs",
+      "suggested_workshop_owner": "CFO",
+      "module_impacted": "Tower"
+    },
+    {
+      "gap": "Unvalidated program ownership and contract economics",
+      "why_it_matters": "Candidate programs list owners to confirm and no contract economics, so sourcing and accountability cannot be decided yet.",
+      "source_dimension": "Programs & Initiatives",
+      "evidence_requested": "Confirmed business sponsor, technology owner, and contract/SLA economics",
+      "suggested_workshop_owner": "CDAO",
       "module_impacted": "Source"
     }
   ],
   "module_readiness": [
     {
       "module": "Knowledge",
-      "readiness": "Ready to narrate current-state context across nine represented domains with citable synthetic evidence.",
-      "next_best_action": "Confirm ownership, criticality, and dependencies for member service, claims, eligibility, and knowledge systems."
+      "readiness": "Active with good breadth across nine domains and full evidence coverage, but no validated relationships.",
+      "next_best_action": "Use current context for discovery framing; queue relationship and governance evidence for validation."
     },
     {
       "module": "Intelligence",
-      "readiness": "Partly ready; domain context is strong but the missing relationship layer limits confident cross-domain reasoning.",
-      "next_best_action": "Validate relationships so reasoning about AI focus and risk becomes decision-grade."
+      "readiness": "Can reason about readiness, use-case sequencing, and risks from represented context.",
+      "next_best_action": "Rank candidate use cases against foundation readiness and open controls."
     },
     {
       "module": "Moves",
-      "readiness": "Framing-ready; priority bets such as Agent Assist and the lakehouse foundation are captured as early-stage candidates.",
-      "next_best_action": "Convert the foundation and Agent Assist into phase-gated plans once baseline and foundation evidence exist."
+      "readiness": "Foundation and identity-spine programs are candidate moves, not phase-gated execution.",
+      "next_best_action": "Convert the lakehouse and identity-spine into phase-gated plans with gate criteria."
     },
     {
       "module": "Source",
-      "readiness": "Not yet enabled for commercial work; vendors are named but economics are absent.",
-      "next_best_action": "Load contract and spend evidence before sourcing and optimization analysis."
+      "readiness": "Vendors are represented, but contract economics and SLAs are not loaded.",
+      "next_best_action": "Add contract, SLA, and economics evidence before sourcing scope decisions."
     },
     {
       "module": "Tower",
-      "readiness": "Not yet enabled for value realization; metrics are defined but not measured.",
-      "next_best_action": "Capture actual baselines and assign real owners before any value claim."
+      "readiness": "Metric definitions exist but no baselines or actuals.",
+      "next_best_action": "Baseline KPIs and analytics capacity before any value claim."
     }
   ],
   "safe_claims": [
-    "This context is source-backed synthetic demo context and is not real Meridian production data.",
-    "The current-state estate includes Epic Clarity, Epic Caboodle, a claims administration platform, eligibility and benefits, a CRM member platform, a contact center platform, a knowledge base, on-prem SQL Server reporting marts, a DB2 or Netezza-style warehouse where applicable, and Tableau, SAS, and Power BI reporting.",
-    "AWS, Databricks, medallion architecture, Unity Catalog-style governance, PHI controls, human-in-the-loop review, and audit controls are described as target-state, not current production.",
-    "Member service Agent Assist is a worked example that depends on many upstream governed domains.",
-    "Priority programs and metrics are captured in early business context framing with baselines still required.",
+    "Meridian is represented as an integrated delivery network and health plan across Northern California, Central California, and Nevada service areas.",
+    "Clinical, health-plan, finance, quality, member-experience, and technology functions are represented with executive ownership by role.",
+    "Epic clinical and analytics modules, claims, eligibility, CRM, knowledge base, and fragmented on-prem reporting are catalogued as current-state.",
+    "AWS and Databricks lakehouse, medallion architecture, and governed data products are target-state directions.",
+    "The context is safe for discovery and framing of AI use cases and foundation planning.",
     "This is synthetic Meridian-style demo context, not real Meridian production data.",
     "Nexus has source-backed context for discovery, chartering, and current-state diagnosis.",
     "AWS and Databricks are represented as a target-state foundation, not a certified current production platform.",
-    "Agent Assist is ready for business context planning and phase-gated execution framing, not production launch."
+    "Agent Assist is ready for evidence planning and phase-gated execution framing, not production launch."
   ],
   "do_not_claim": [
     "Do not claim real Meridian production data was loaded.",
     "Do not claim AWS or Databricks is certified current production for this tenant.",
-    "Do not claim realized ROI, Tower value, or savings until measured business context exists.",
+    "Do not claim realized ROI, Tower value, or savings until measured evidence exists.",
     "Do not claim PHI-bearing transcripts have been ingested or approved.",
     "Do not treat candidate or generated graph records as approved active tenant truth."
   ],
+  "visual_blocks": [
+    {
+      "type": "context_strength_snapshot",
+      "title": "Where Context Is Strong and Where Evidence Is Needed",
+      "executive_message": "Business functions and risks are well represented, but the data spine and governance controls that gate production remain open.",
+      "why_it_matters": "Leadership can frame and prioritize now, but production approval must wait for identity, governance, and audit evidence.",
+      "data": {
+        "rows": [
+          {
+            "dimension": "Business Functions",
+            "readiness": "Strong",
+            "note": "30 functions with role-level ownership"
+          },
+          {
+            "dimension": "Data Assets & Integrations",
+            "readiness": "Partial",
+            "note": "Candidate assets; owners to confirm; no identity spine"
+          },
+          {
+            "dimension": "Risks & Controls",
+            "readiness": "Gap",
+            "note": "Identity, governance, semantic, audit controls open"
+          },
+          {
+            "dimension": "Metrics & Outcomes",
+            "readiness": "Partial",
+            "note": "Definitions present, no baselines"
+          },
+          {
+            "dimension": "Relationships",
+            "readiness": "Not validated",
+            "note": "No validated relationships in this context"
+          }
+        ]
+      },
+      "evidence_refs": [
+        "meridian-health:current-universal:01_business_functions.csv:2",
+        "meridian-health:current-universal:11_risks_controls.csv:3",
+        "meridian-health:current-universal:14_metrics_outcomes.csv:2"
+      ],
+      "caveats": [
+        "Planning-grade synthetic context, not client production evidence."
+      ],
+      "renderer_hint": "matrix",
+      "display_priority": 1
+    },
+    {
+      "type": "what_more_context_unlocks",
+      "title": "What Validating the Shared Foundation Unlocks",
+      "executive_message": "Validating one identity and claims spine unlocks member service, payment integrity, cost transparency, and quality analytics together.",
+      "why_it_matters": "Foundation investment compounds across use cases rather than serving a single worked example.",
+      "data": {
+        "rows": [
+          {
+            "foundation": "Patient/member identity spine",
+            "unlocks": "Member service, quality, payment integrity"
+          },
+          {
+            "foundation": "Governed claims + pharmacy layer",
+            "unlocks": "Payment integrity and cost transparency"
+          },
+          {
+            "foundation": "Governance + audit controls",
+            "unlocks": "Production-safe automation"
+          }
+        ]
+      },
+      "evidence_refs": [
+        "meridian-health:current-universal:05_data_assets_integrations.csv:5",
+        "meridian-health:current-universal:09_programs_initiatives.csv:7"
+      ],
+      "caveats": [
+        "Foundation is target-state; unlocks are hypotheses, not realized value."
+      ],
+      "renderer_hint": "card_list",
+      "display_priority": 2
+    },
+    {
+      "type": "evidence_gap_requests",
+      "title": "Evidence Still Needed Before Production",
+      "executive_message": "Five gaps — identity, governance, audit/PHI controls, baselines, and program ownership — must be closed before any use case reaches production.",
+      "why_it_matters": "Each closed gap strengthens the context layer for every future use case, not just the member-service example.",
+      "data": {
+        "rows": [
+          {
+            "gap": "Identity spine",
+            "owner": "CDAO",
+            "module": "Moves"
+          },
+          {
+            "gap": "Governance + medallion",
+            "owner": "CDAO",
+            "module": "Knowledge"
+          },
+          {
+            "gap": "Audit/PHI/HITL controls",
+            "owner": "CDIO",
+            "module": "Tower"
+          },
+          {
+            "gap": "KPI baselines",
+            "owner": "CFO",
+            "module": "Tower"
+          },
+          {
+            "gap": "Program ownership + economics",
+            "owner": "CDAO",
+            "module": "Source"
+          }
+        ]
+      },
+      "evidence_refs": [
+        "meridian-health:current-universal:11_risks_controls.csv:2",
+        "meridian-health:current-universal:11_risks_controls.csv:6",
+        "meridian-health:current-universal:14_metrics_outcomes.csv:4"
+      ],
+      "caveats": [
+        "Gaps are evidence requests, not failures; all context is planning-grade synthetic."
+      ],
+      "renderer_hint": "table",
+      "display_priority": 3
+    },
+    {
+      "type": "module_next_actions",
+      "title": "Next Best Action by Module",
+      "executive_message": "Knowledge and Intelligence support discovery now; Moves, Source, and Tower need foundation, contract, and baseline evidence first.",
+      "why_it_matters": "Sequencing module use to evidence readiness keeps the program honest about what is decidable today.",
+      "data": {
+        "rows": [
+          {
+            "module": "Knowledge",
+            "action": "Frame discovery; queue relationship evidence"
+          },
+          {
+            "module": "Intelligence",
+            "action": "Rank use cases by readiness and risk"
+          },
+          {
+            "module": "Moves",
+            "action": "Phase-gate identity spine and lakehouse"
+          },
+          {
+            "module": "Source",
+            "action": "Add contract and SLA economics"
+          },
+          {
+            "module": "Tower",
+            "action": "Baseline KPIs before value claims"
+          }
+        ]
+      },
+      "evidence_refs": [
+        "meridian-health:current-universal:09_programs_initiatives.csv:2",
+        "meridian-health:current-universal:14_metrics_outcomes.csv:2"
+      ],
+      "caveats": [
+        "No realized value or production approval until evidence is validated."
+      ],
+      "renderer_hint": "strip",
+      "display_priority": 4
+    }
+  ],
   "tenant_key": "meridian-health",
   "tenant_name": "Meridian Health",
-  "source_context_hash": "sha256:22dc8141edb81f614656dc4f957932afd1a62456e55b43a6af743fa5011e1817",
+  "source_context_hash": "sha256:baa0aabba69e314f1f5e7f1d11dca0cd5ba84da4f28b6327b75faa6c27a21601",
   "evidence_refs_used": [
     "meridian-enterprise-profile",
     "meridian-member-service-context",
@@ -340,7 +491,7 @@
   ],
   "generated_by": "claude",
   "generated_model": "claude-opus-4-8",
-  "generated_at": "2026-07-15T18:06:18.633Z",
+  "generated_at": "2026-07-16T12:57:23.897Z",
   "validation_status": "passed",
   "validation_errors": []
 }
