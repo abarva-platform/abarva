@@ -114,9 +114,21 @@ Required output JSON:
     "questions_supported": string[],
     "current_caveats": string[],
     "next_validation_actions": string[],
-    "module_usage": string[]
+    "module_usage": string[],
+    "data_tab_intro": string,
+    "relationships_tab_intro": string,
+    "gaps_tab_intro": string,
+    "evidence_tab_intro": string
   }]
 }
+
+TAB INTRO FIELDS (data_tab_intro, relationships_tab_intro, gaps_tab_intro, evidence_tab_intro)
+These are NOT executive summaries — they are 1 short sentence (max 2) that orients a reader who just clicked into that specific sub-tab, in the same advisor voice as everything else, grounded in this dimension's own evidence. They replace an existing algorithmic template sentence that says things like "Meridian's X context reports N loaded records" — do not just restate a record count; say what the reader is about to see and why it matters for THIS dimension.
+- data_tab_intro: what the underlying records show and the one thing to look for while scanning them. Not "N records loaded" — say what those records represent and what's notable, e.g. "These are Meridian's current claims and eligibility platforms, listed with their target-state replacement status."
+- relationships_tab_intro: whether cross-domain links for this dimension are validated or still candidate-only, and what that means for trusting them.
+- gaps_tab_intro: the single biggest evidence gap in this dimension and why closing it matters, not a generic "gaps exist" statement.
+- evidence_tab_intro: what kind of source backs this dimension's records (synthetic context pack vs. something stronger) and how a reader should use that evidence.
+Ground every one of these in this dimension's own data — if you don't have a specific basis for one, write the honest boundary version (e.g. "Cross-domain relationships for this dimension are not yet validated, so treat any link here as a hypothesis, not a confirmed dependency") rather than a generic filler sentence.
 
 Coverage rules:
 - Return every required dimension exactly once.
@@ -2183,7 +2195,7 @@ VISUAL BLOCK RULES (home summary only)
       "purpose": "context_summary",
       "mode": "active",
       "sourceMode": "active_tenant_access",
-      "generatedAt": "2026-07-16T12:57:23.897Z",
+      "generatedAt": "2026-07-16T13:50:14.269Z",
       "summary": "Home context has 62 readable records, 62 evidence references, and 9 of 10 requested domains with represented data. Active Tenant Access metadata is available, but module runtime consumption is unchanged by this contract.",
       "strengths": [
         "9 requested domains have represented context.",

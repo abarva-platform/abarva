@@ -413,7 +413,12 @@ const HX3_CSS = `
 const EMPTY_DIMS: BindingDimension[] = [];
 
 type ExplorerTool = "data-quality" | null;
-type KnowledgeAreaTab = "summary" | "data" | "relationships" | "gaps" | "evidence";
+type KnowledgeAreaTab =
+  | "summary"
+  | "data"
+  | "relationships"
+  | "gaps"
+  | "evidence";
 
 type DimensionStory = {
   headline: string;
@@ -423,6 +428,10 @@ type DimensionStory = {
   supportedQuestions: string[];
   notYetSupported: string[];
   nextAction: string;
+  dataTabIntro?: string;
+  relationshipsTabIntro?: string;
+  gapsTabIntro?: string;
+  evidenceTabIntro?: string;
 };
 
 type HomeContextAreaSnapshot = HomeSummarySnapshot["contextAreas"][number];
@@ -435,7 +444,8 @@ const DIMENSION_PLATFORM_USAGE = [
   },
   {
     dimension: "Applications & Systems",
-    purpose: "Shows the technology estate that enables or constrains the business.",
+    purpose:
+      "Shows the technology estate that enables or constrains the business.",
     modules: "Intelligence / Moves / Source / Tower",
   },
   {
@@ -975,8 +985,7 @@ const KNOWLEDGE_DIMENSION_DEFINITIONS: Array<{
     group: "Enterprise",
     moduleDomain: "vendors_contracts",
     match: /\b(vendors?|contracts?|providers?)\b/i,
-    description:
-      "Providers, commercial commitments, and sourcing context.",
+    description: "Providers, commercial commitments, and sourcing context.",
   },
   {
     id: "it-budget-spend-value",
@@ -993,8 +1002,7 @@ const KNOWLEDGE_DIMENSION_DEFINITIONS: Array<{
     group: "Delivery",
     moduleDomain: "programs_priorities",
     match: /\b(programs?|initiatives?|priorities|roadmap)\b/i,
-    description:
-      "What the enterprise is trying to change, fund, or improve.",
+    description: "What the enterprise is trying to change, fund, or improve.",
   },
   {
     id: "ai-automation-use-cases",
@@ -1038,8 +1046,7 @@ const KNOWLEDGE_DIMENSION_DEFINITIONS: Array<{
     group: "Delivery",
     moduleDomain: "metrics_outcomes",
     match: /\b(metrics?|outcomes?|kpis?|measurement)\b/i,
-    description:
-      "Success measures, baselines, and value-realization inputs.",
+    description: "Success measures, baselines, and value-realization inputs.",
   },
   {
     id: "industry-context-patterns",
@@ -1056,8 +1063,7 @@ const KNOWLEDGE_DIMENSION_DEFINITIONS: Array<{
     group: "Delivery",
     moduleDomain: "evidence_sources",
     match: /\b(expert|lenses?|perspective)\b/i,
-    description:
-      "Reusable expert frames that shape questions and caveats.",
+    description: "Reusable expert frames that shape questions and caveats.",
   },
   {
     id: "managed-services-scope",
@@ -1065,8 +1071,7 @@ const KNOWLEDGE_DIMENSION_DEFINITIONS: Array<{
     group: "Delivery",
     moduleDomain: "vendors_contracts",
     match: /\b(managed services?|service tower|outsourcing|ams)\b/i,
-    description:
-      "Service tower, outsourcing, and provider-scope context.",
+    description: "Service tower, outsourcing, and provider-scope context.",
   },
   {
     id: "operational-process-evidence",
@@ -1074,8 +1079,7 @@ const KNOWLEDGE_DIMENSION_DEFINITIONS: Array<{
     group: "Delivery",
     moduleDomain: "evidence_sources",
     match: /\b(operational|process|workflow|runbook|procedure)\b/i,
-    description:
-      "Process evidence that grounds how work runs today.",
+    description: "Process evidence that grounds how work runs today.",
   },
 ];
 
@@ -1166,8 +1170,7 @@ function storyForArea(
   const baseSummary = `${label} is available as source-backed enterprise context for ${tenantName}. Home uses it to explain what is known, what can be trusted, and what should be validated before the context is sent to another module.`;
   const storyByArea: Record<string, Omit<DimensionStory, "headline">> = {
     functions: {
-      summary:
-        "Shows how the enterprise is organized and where work happens.",
+      summary: "Shows how the enterprise is organized and where work happens.",
       knows: [
         "Major business and technology functions with executive ownership where loaded.",
         "Capability themes such as operations, analytics, finance, experience, platform, and controls.",
@@ -1258,8 +1261,7 @@ function storyForArea(
         "Separate current-state assets from target-state assets, then validate owners, source systems, integration types, and lineage relationships.",
     },
     programs: {
-      summary:
-        "Shows what the enterprise is trying to change or improve.",
+      summary: "Shows what the enterprise is trying to change or improve.",
       knows: [
         "Loaded transformation themes and priorities.",
         "Potential handoff candidates for Moves or Intelligence exploration.",
@@ -1304,8 +1306,7 @@ function storyForArea(
         "Attach risk owners, control evidence, dates, and disposition before treating this as a compliance-ready record.",
     },
     metrics: {
-      summary:
-        "Shows how success will be measured.",
+      summary: "Shows how success will be measured.",
       knows: [
         "Loaded metric names, outcome areas, and measurement themes.",
         "Which measures have source-backed definitions versus missing baselines.",
@@ -1418,22 +1419,19 @@ function storyFromSnapshot(
   const summaryInput = isUsefulTenantSummary(rawSummaryInput)
     ? rawSummaryInput
     : fallback.summary;
-  const whatAbarVaKnows =
-    snapshot.claudeWhatAbarVaKnows?.length
-      ? snapshot.claudeWhatAbarVaKnows
-      : buildFallbackKnowledgeBullets(area, tenantName, snapshot, fallback);
-  const supportedQuestions =
-    snapshot.claudeSupportedQuestions?.length
-      ? snapshot.claudeSupportedQuestions
-      : snapshot.safeQuestions.length > 0
-        ? snapshot.safeQuestions
-        : fallback.supportedQuestions;
-  const unsupportedQuestions =
-    snapshot.claudeUnsupportedQuestions?.length
-      ? snapshot.claudeUnsupportedQuestions
-      : snapshot.unsupportedQuestions.length > 0
-        ? snapshot.unsupportedQuestions
-        : fallback.notYetSupported;
+  const whatAbarVaKnows = snapshot.claudeWhatAbarVaKnows?.length
+    ? snapshot.claudeWhatAbarVaKnows
+    : buildFallbackKnowledgeBullets(area, tenantName, snapshot, fallback);
+  const supportedQuestions = snapshot.claudeSupportedQuestions?.length
+    ? snapshot.claudeSupportedQuestions
+    : snapshot.safeQuestions.length > 0
+      ? snapshot.safeQuestions
+      : fallback.supportedQuestions;
+  const unsupportedQuestions = snapshot.claudeUnsupportedQuestions?.length
+    ? snapshot.claudeUnsupportedQuestions
+    : snapshot.unsupportedQuestions.length > 0
+      ? snapshot.unsupportedQuestions
+      : fallback.notYetSupported;
   const nextActionCandidate =
     snapshot.claudeNextDataAction ??
     snapshot.nextDataActions[0] ??
@@ -1454,6 +1452,10 @@ function storyFromSnapshot(
     nextAction: isUsefulTenantNextAction(nextActionCandidate)
       ? nextActionCandidate
       : fallback.nextAction,
+    dataTabIntro: snapshot.claudeDataTabIntro,
+    relationshipsTabIntro: snapshot.claudeRelationshipsTabIntro,
+    gapsTabIntro: snapshot.claudeGapsTabIntro,
+    evidenceTabIntro: snapshot.claudeEvidenceTabIntro,
   };
 }
 
@@ -1477,7 +1479,9 @@ function buildFallbackKnowledgeBullets(
   ].filter(Boolean);
 }
 
-function isUsefulTenantSummary(summary: string | null | undefined): summary is string {
+function isUsefulTenantSummary(
+  summary: string | null | undefined,
+): summary is string {
   const trimmed = summary?.trim() ?? "";
   if (!trimmed) return false;
   if (trimmed.split(/\s+/).length < 8) return false;
@@ -1558,10 +1562,10 @@ function trustReadinessSummary(model: HomeDataQualityModel | null): {
     ].slice(0, 5),
     nextActions:
       model.gaps.length > 0
-        ? model.gaps
-            .slice(0, 4)
-            .map((gap) => `${gap.title}: ${gap.detail}`)
-        : ["Validate relationship depth before relying on cross-domain decisions."],
+        ? model.gaps.slice(0, 4).map((gap) => `${gap.title}: ${gap.detail}`)
+        : [
+            "Validate relationship depth before relying on cross-domain decisions.",
+          ],
   };
 }
 
@@ -1587,9 +1591,7 @@ function buildHomeExplorerAreas(
   if (snapshot?.contextAreas?.length) {
     return KNOWLEDGE_DIMENSION_DEFINITIONS.map((definition) => {
       const areaSnapshot =
-        snapshot.contextAreas.find(
-          (area) => area.areaKey === definition.id,
-        ) ??
+        snapshot.contextAreas.find((area) => area.areaKey === definition.id) ??
         snapshot.contextAreas.find(
           (area) =>
             area.displayName.toLowerCase() === definition.label.toLowerCase(),
@@ -1601,18 +1603,20 @@ function buildHomeExplorerAreas(
       const previews = matches
         .map((dimension) => previewForDimension(browser, dimension.dimension))
         .filter((preview): preview is HomeV6BrowserPreview => Boolean(preview));
-      const moduleRecords = moduleContext?.records.filter((record) =>
-        recordBelongsToKnowledgeDimension(record, definition),
-      ) ?? [];
+      const moduleRecords =
+        moduleContext?.records.filter((record) =>
+          recordBelongsToKnowledgeDimension(record, definition),
+        ) ?? [];
       const evidenceIds = new Set(
         moduleRecords.flatMap((record) => record.sourceEvidenceIds),
       );
-      const moduleEvidenceRefs = moduleContext?.evidenceRefs.filter(
-        (ref) =>
-          (ref.domain && ref.domain === definition.moduleDomain) ||
-          evidenceIds.has(ref.evidenceId) ||
-          definition.id === "evidence-sources",
-      ) ?? [];
+      const moduleEvidenceRefs =
+        moduleContext?.evidenceRefs.filter(
+          (ref) =>
+            (ref.domain && ref.domain === definition.moduleDomain) ||
+            evidenceIds.has(ref.evidenceId) ||
+            definition.id === "evidence-sources",
+        ) ?? [];
       const moduleRelationships = [
         ...(moduleContext?.validatedRelationships ?? []),
         ...(moduleContext?.relationshipCandidates ?? []),
@@ -1623,12 +1627,13 @@ function buildHomeExplorerAreas(
           definition,
         ),
       );
-      const moduleGaps = moduleContext?.gaps.filter(
-        (gap) =>
-          !gap.domain ||
-          gap.domain === definition.moduleDomain ||
-          definition.id === "relationships",
-      ) ?? [];
+      const moduleGaps =
+        moduleContext?.gaps.filter(
+          (gap) =>
+            !gap.domain ||
+            gap.domain === definition.moduleDomain ||
+            definition.id === "relationships",
+        ) ?? [];
       const rows =
         areaSnapshot?.loadedCount ??
         moduleRecords.length ??
@@ -1653,7 +1658,10 @@ function buildHomeExplorerAreas(
         sources,
         examples:
           areaSnapshot?.examples.slice(0, 2).join(", ") ??
-          moduleRecords.map((record) => record.title).slice(0, 2).join(", "),
+          moduleRecords
+            .map((record) => record.title)
+            .slice(0, 2)
+            .join(", "),
         primaryDimension: matches[0] ?? null,
         primaryPreview: previews[0] ?? null,
         previews,
@@ -1769,8 +1777,9 @@ function relationshipBelongsToKnowledgeDimension(
   if (definition.id === "relationships") return true;
   const recordIds = new Set(records.map((record) => record.recordId));
   return Boolean(
-    (relationship.sourceRecordId && recordIds.has(relationship.sourceRecordId)) ||
-      (relationship.targetRecordId && recordIds.has(relationship.targetRecordId)),
+    (relationship.sourceRecordId &&
+      recordIds.has(relationship.sourceRecordId)) ||
+    (relationship.targetRecordId && recordIds.has(relationship.targetRecordId)),
   );
 }
 
@@ -1899,10 +1908,7 @@ function normalizeDataCell(value: string | null | undefined): string {
   return trimmed;
 }
 
-function pickRowValue(
-  row: HomeV6BrowserSourceRow,
-  patterns: RegExp[],
-): string {
+function pickRowValue(row: HomeV6BrowserSourceRow, patterns: RegExp[]): string {
   for (const pattern of patterns) {
     const match = Object.entries(row.values).find(([label, value]) => {
       if (!pattern.test(label)) return false;
@@ -1995,14 +2001,14 @@ function buildAreaDataRows(area: HomeExplorerArea | null): AreaDataRow[] {
         pickRowValue(row, [
           /\b(criticality|status|state|risk|priority|maturity|readiness)\b/i,
         ]) || "Loaded";
-      const source = clientFacingFileName(row.v6File || preview.fileNames[0] || dataSet);
+      const source = clientFacingFileName(
+        row.v6File || preview.fileNames[0] || dataSet,
+      );
       const filterValues = Object.fromEntries(
         Object.entries(row.values)
           .map(([label, value]) => [
             label,
-            normalizeDataCell(
-              formatPreviewCell(value, { key: label, label }),
-            ),
+            normalizeDataCell(formatPreviewCell(value, { key: label, label })),
           ])
           .filter((entry): entry is [string, string] => Boolean(entry[1])),
       );
@@ -2033,7 +2039,9 @@ function buildAreaDataRows(area: HomeExplorerArea | null): AreaDataRow[] {
   );
 }
 
-function chooseSmartAreaFilter(rows: AreaDataRow[]): AreaDataTable["smartFilter"] {
+function chooseSmartAreaFilter(
+  rows: AreaDataRow[],
+): AreaDataTable["smartFilter"] {
   if (rows.length < 2) return null;
   const candidateLabels = new Map<string, Map<string, number>>();
   for (const row of rows) {
@@ -2056,7 +2064,10 @@ function chooseSmartAreaFilter(rows: AreaDataRow[]): AreaDataTable["smartFilter"
   const ranked = [...candidateLabels.entries()]
     .map(([label, counts]) => {
       const options = [...counts.entries()]
-        .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+        .sort(
+          (left, right) =>
+            right[1] - left[1] || left[0].localeCompare(right[0]),
+        )
         .map(([value]) => value);
       const optionCount = options.length;
       const preferred =
@@ -2065,7 +2076,8 @@ function chooseSmartAreaFilter(rows: AreaDataRow[]): AreaDataTable["smartFilter"
         )
           ? 1
           : 0;
-      const useful = optionCount >= 2 && optionCount <= Math.min(16, rows.length - 1);
+      const useful =
+        optionCount >= 2 && optionCount <= Math.min(16, rows.length - 1);
       return { label, options, preferred, optionCount, useful };
     })
     .filter((candidate) => candidate.useful)
@@ -2166,10 +2178,7 @@ function buildTenantTabStories(args: {
     ...(area?.primaryPreview?.fileNames.map(clientFacingFileName) ?? []),
   ]);
   const rowNoun = totalRows === 1 ? "record" : "records";
-  const sourceCount = Math.max(
-    area?.sources ?? 0,
-    sourceLabels.length,
-  );
+  const sourceCount = Math.max(area?.sources ?? 0, sourceLabels.length);
   const sourceNoun = sourceCount === 1 ? "source" : "sources";
   const representative = readableList(
     examples,
@@ -2183,7 +2192,11 @@ function buildTenantTabStories(args: {
     3,
   );
   const statusText = readableList(statuses, "loaded status", 3);
-  const sourceText = readableList(sourceLabels, "the active evidence packet", 3);
+  const sourceText = readableList(
+    sourceLabels,
+    "the active evidence packet",
+    3,
+  );
   const loadedText = `${totalRows.toLocaleString()} loaded ${rowNoun}`;
   const visibleRowNoun = shownRows === 1 ? "row" : "rows";
   const visibleText =
@@ -2204,22 +2217,22 @@ function buildTenantTabStories(args: {
     data: {
       title: `${tenantName} ${areaLabel} records`,
       status:
-        tableRows > 0
-          ? `${visibleText} · ${loadedText}`
-          : `${loadedText}`,
+        tableRows > 0 ? `${visibleText} · ${loadedText}` : `${loadedText}`,
       lead:
-        totalRows > 0
+        story?.dataTabIntro ??
+        (totalRows > 0
           ? `${tenantName}'s ${domain} context reports ${loadedText}. This view shows ${visibleText} for review. Representative entries include ${representative}. The loaded view is organized around ${categoryText}, with ${ownerText} and status signals such as ${statusText}.`
-          : `${tenantName} does not yet have loaded ${domain} rows in the active Knowledge packet, so this tab cannot support a client story until source-backed records are loaded.`,
+          : `${tenantName} does not yet have loaded ${domain} rows in the active Knowledge packet, so this tab cannot support a client story until source-backed records are loaded.`),
       empty: `${tenantName} has loaded ${domain} rows, but the current filters exclude them. Clear the filters to restore the tenant story.`,
     },
     relationships: {
       title: `${tenantName} relationship picture`,
       status: `${relationships.length.toLocaleString()} visible`,
       lead:
-        relationships.length > 0
+        story?.relationshipsTabIntro ??
+        (relationships.length > 0
           ? `${tenantName}'s ${domain} context includes ${relationships.length.toLocaleString()} visible relationship${relationships.length === 1 ? "" : "s"}. A representative link is ${relationshipExample}. Treat these as context links unless they are marked validated.`
-          : `${tenantName}'s ${domain} records are loaded, but validated cross-domain links are not visible for this selected view yet. Use the records for fact-based orientation, not dependency conclusions, until relationships are projected and reviewed.`,
+          : `${tenantName}'s ${domain} records are loaded, but validated cross-domain links are not visible for this selected view yet. Use the records for fact-based orientation, not dependency conclusions, until relationships are projected and reviewed.`),
       empty: `${tenantName} has no visible ${domain} relationship links in this view. Do not infer function-to-system, system-to-vendor, data-to-outcome, or risk-to-control dependency paths from this tab yet.`,
     },
     gaps: {
@@ -2229,18 +2242,20 @@ function buildTenantTabStories(args: {
           ? `${gaps.length.toLocaleString()} gap${gaps.length === 1 ? "" : "s"}`
           : "No repeated gap pattern",
       lead:
-        gaps.length > 0
+        story?.gapsTabIntro ??
+        (gaps.length > 0
           ? `${tenantName}'s ${domain} context has ${gaps.length.toLocaleString()} visible validation gap${gaps.length === 1 ? "" : "s"}. The first item to resolve is ${topGap}. ${nextAction}`
-          : `${tenantName}'s active ${domain} packet does not show a repeated missing-field pattern in this view. That means the current record fields are usable for orientation, while deeper owner, dependency, baseline, and outcome validation may still be needed before decisions.`,
+          : `${tenantName}'s active ${domain} packet does not show a repeated missing-field pattern in this view. That means the current record fields are usable for orientation, while deeper owner, dependency, baseline, and outcome validation may still be needed before decisions.`),
       empty: `${tenantName} has no repeated ${domain} gap pattern visible in the active packet. Keep validating decision-critical owners, dependencies, and measurement fields before using this area as final operating truth.`,
     },
     evidence: {
       title: `${tenantName} evidence trail`,
       status: `${sourceCount.toLocaleString()} ${sourceNoun}`,
       lead:
-        sourceCount > 0
+        story?.evidenceTabIntro ??
+        (sourceCount > 0
           ? `${tenantName}'s ${domain} story is backed by ${sourceCount.toLocaleString()} ${sourceNoun}. Visible references include ${sourceText}. Use these references to audit the records before sending the context into Intelligence, Moves, Source, or Tower.`
-          : `${tenantName}'s ${domain} records do not expose source references in this view yet. Until evidence is attached, this area should not be used for client-facing claims.`,
+          : `${tenantName}'s ${domain} records do not expose source references in this view yet. Until evidence is attached, this area should not be used for client-facing claims.`),
       empty: `${tenantName} has no visible ${domain} evidence references in this view. Load or attach source-backed evidence before treating this as board-ready context.`,
     },
   };
@@ -2253,7 +2268,8 @@ interface EnterpriseKnowledgeModel {
   loadedAreas: number;
   activeAccess: AdminSetupControlResponse["activeTenantAccess"] | null;
   candidateVersion:
-    AdminSetupControlResponse["candidateTenantDataVersion"] | null;
+    | AdminSetupControlResponse["candidateTenantDataVersion"]
+    | null;
   evidenceRegistry: AdminSetupControlResponse["evidenceRegistry"] | null;
   canonicalFacts: AdminSetupControlResponse["canonicalFacts"] | null;
   relationshipGraph: AdminSetupControlResponse["relationshipGraph"] | null;
@@ -2724,11 +2740,23 @@ function fallbackKnowledgeLayerVisual(): HomeKnowledgeLayerVisualSpec {
       moduleUses: item.modules.split(" / "),
     })),
     flow: [
-      { label: "Source evidence", detail: "Files, uploads, and enterprise records." },
-      { label: "Canonical context", detail: "Normalized facts and source lineage." },
+      {
+        label: "Source evidence",
+        detail: "Files, uploads, and enterprise records.",
+      },
+      {
+        label: "Canonical context",
+        detail: "Normalized facts and source lineage.",
+      },
       { label: "Knowledge layer", detail: "Relationships, gaps, and caveats." },
-      { label: "Module packet", detail: "Active context served through one contract." },
-      { label: "Product action", detail: "Home, Intelligence, Moves, Source, and Tower." },
+      {
+        label: "Module packet",
+        detail: "Active context served through one contract.",
+      },
+      {
+        label: "Product action",
+        detail: "Home, Intelligence, Moves, Source, and Tower.",
+      },
     ],
     caveat:
       "Relationship depth and measured outcomes must be validated before cross-domain dependency, sourcing savings, or Tower value claims.",
@@ -2752,10 +2780,7 @@ function KnowledgeLayerVisual({
       </div>
       <div className="hx3-knowledgeMap">
         {spec.nodes.slice(0, 3).map((node) => (
-          <article
-            className={`hx3-knowledgeNode ${node.tone}`}
-            key={node.id}
-          >
+          <article className={`hx3-knowledgeNode ${node.tone}`} key={node.id}>
             <strong>{node.label}</strong>
             <span>{node.detail}</span>
             <em>{node.moduleUses.join(" / ")}</em>
@@ -2768,10 +2793,7 @@ function KnowledgeLayerVisual({
           </div>
         </div>
         {spec.nodes.slice(3).map((node) => (
-          <article
-            className={`hx3-knowledgeNode ${node.tone}`}
-            key={node.id}
-          >
+          <article className={`hx3-knowledgeNode ${node.tone}`} key={node.id}>
             <strong>{node.label}</strong>
             <span>{node.detail}</span>
             <em>{node.moduleUses.join(" / ")}</em>
@@ -2920,11 +2942,7 @@ export function HomeSurface({
     safeSummarySnapshot,
   );
   const selectedStory = selectedArea
-    ? storyFromSnapshot(
-        selectedArea,
-        displayedTenantName,
-        selectedAreaSnapshot,
-      )
+    ? storyFromSnapshot(selectedArea, displayedTenantName, selectedAreaSnapshot)
     : null;
   const selectedAreaDataTable = buildAreaDataTable(selectedArea);
   const selectedRows = selectedAreaDataTable.rows.filter((row) => {
@@ -2947,11 +2965,10 @@ export function HomeSurface({
   const totalSources = new Set(
     dimensions.flatMap((dimension) => dimension.fileNames),
   ).size;
-  const dataStatusLabel =
-    safeKnowledgeCutover?.defaultUsesKnowledgeLayer
-      ? "Active Knowledge context"
-      : (safeSummarySnapshot?.tenantProfileHeader.activeContextStatus ??
-        "Active Knowledge context");
+  const dataStatusLabel = safeKnowledgeCutover?.defaultUsesKnowledgeLayer
+    ? "Active Knowledge context"
+    : (safeSummarySnapshot?.tenantProfileHeader.activeContextStatus ??
+      "Active Knowledge context");
   const candidateState = safeSetupControl?.candidateTenantDataVersion ?? null;
   const candidatePreviewDetail = candidateState?.candidateVersionId
     ? `Candidate ${candidateState.candidateVersionId} is preview-only and not active tenant truth.`
@@ -3107,7 +3124,10 @@ export function HomeSurface({
         whyItMatters: gap.source ?? null,
       }))
     : (selectedPreview?.knownGaps ?? []);
-  const selectedRelationships = relationshipItems(selectedPreview, selectedArea);
+  const selectedRelationships = relationshipItems(
+    selectedPreview,
+    selectedArea,
+  );
   const selectedTabStories = buildTenantTabStories({
     area: selectedArea,
     tenantName: displayedTenantName,
@@ -3147,7 +3167,8 @@ export function HomeSurface({
             ? ("weak" as const)
             : ("partial" as const),
     }));
-  const hasVisualBlocks = (safeHomeInsightSummary?.visual_blocks?.length ?? 0) > 0;
+  const hasVisualBlocks =
+    (safeHomeInsightSummary?.visual_blocks?.length ?? 0) > 0;
   const MODULE_HREF: Record<string, string> = {
     Knowledge: "#overview",
     Intelligence: "/intelligence",
@@ -3220,27 +3241,26 @@ export function HomeSurface({
               </span>
               <span>
                 Context Confidence
-                <small className="hx3-navMeta">Trust and module readiness</small>
+                <small className="hx3-navMeta">
+                  Trust and module readiness
+                </small>
               </span>
-              <span className="hx3-navCount">
-                {trustReadiness.posture}
-              </span>
+              <span className="hx3-navCount">{trustReadiness.posture}</span>
             </button>
             {filteredAreas.map((area) => {
-              const icon =
-                /function|ownership|workforce|profile/.test(area.id)
-                  ? "people"
-                  : /application|system|infrastructure|platform/.test(area.id)
-                    ? "app"
-                    : /vendor|contract|managed/.test(area.id)
-                      ? "vendor"
-                      : /data|integration/.test(area.id)
-                        ? "data"
-                        : /risk|control/.test(area.id)
-                          ? "risk"
-                          : /metric|outcome|spend|budget|value/.test(area.id)
-                            ? "chart"
-                            : "file";
+              const icon = /function|ownership|workforce|profile/.test(area.id)
+                ? "people"
+                : /application|system|infrastructure|platform/.test(area.id)
+                  ? "app"
+                  : /vendor|contract|managed/.test(area.id)
+                    ? "vendor"
+                    : /data|integration/.test(area.id)
+                      ? "data"
+                      : /risk|control/.test(area.id)
+                        ? "risk"
+                        : /metric|outcome|spend|budget|value/.test(area.id)
+                          ? "chart"
+                          : "file";
               return (
                 <button
                   aria-pressed={selectedArea?.id === area.id}
@@ -3302,40 +3322,40 @@ export function HomeSurface({
                   <div className="hx3-hair" />
 
                   <section className="hx3-trustHero">
-                      <div className="hx3-eyebrow">Context Confidence</div>
-                      <h2>What Home can trust right now</h2>
-                      <p className="hx3-briefLead">
-                        AbarVa has source-backed context across the major
-                        enterprise dimensions. This is strong enough for
-                        enterprise orientation and fact-based questions.
-                        Relationship depth and measured outcomes still need
-                        validation before using this context for cross-domain
-                        dependency reasoning, sourcing savings, or Tower value
-                        claims.
-                      </p>
-                      <div className="hx3-trustCards">
-                        <article className="hx3-trustCard">
-                          <strong>Available</strong>
-                          <span>Enterprise context</span>
-                        </article>
-                        <article className="hx3-trustCard">
-                          <strong>Available</strong>
-                          <span>Evidence support</span>
-                        </article>
-                        <article className="hx3-trustCard">
-                          <strong>{relationshipPosture}</strong>
-                          <span>Relationship depth</span>
-                        </article>
-                        <article className="hx3-trustCard">
-                          <strong>Advisory</strong>
-                          <span>Decision readiness</span>
-                        </article>
-                        <article className="hx3-trustCard">
-                          <strong>Not active</strong>
-                          <span>Candidate preview</span>
-                        </article>
-                      </div>
-                      <div className="hx3-trustLists">
+                    <div className="hx3-eyebrow">Context Confidence</div>
+                    <h2>What Home can trust right now</h2>
+                    <p className="hx3-briefLead">
+                      AbarVa has source-backed context across the major
+                      enterprise dimensions. This is strong enough for
+                      enterprise orientation and fact-based questions.
+                      Relationship depth and measured outcomes still need
+                      validation before using this context for cross-domain
+                      dependency reasoning, sourcing savings, or Tower value
+                      claims.
+                    </p>
+                    <div className="hx3-trustCards">
+                      <article className="hx3-trustCard">
+                        <strong>Available</strong>
+                        <span>Enterprise context</span>
+                      </article>
+                      <article className="hx3-trustCard">
+                        <strong>Available</strong>
+                        <span>Evidence support</span>
+                      </article>
+                      <article className="hx3-trustCard">
+                        <strong>{relationshipPosture}</strong>
+                        <span>Relationship depth</span>
+                      </article>
+                      <article className="hx3-trustCard">
+                        <strong>Advisory</strong>
+                        <span>Decision readiness</span>
+                      </article>
+                      <article className="hx3-trustCard">
+                        <strong>Not active</strong>
+                        <span>Candidate preview</span>
+                      </article>
+                    </div>
+                    <div className="hx3-trustLists">
                       <article className="hx3-storyCard">
                         <h3>Strong enough for</h3>
                         <ul>
@@ -3434,9 +3454,7 @@ export function HomeSurface({
                         {selectedArea.label}
                       </div>
                       <h1 className="hx3-title">{selectedArea.label}</h1>
-                      <p className="hx3-subtitle">
-                        {selectedStory?.headline}
-                      </p>
+                      <p className="hx3-subtitle">{selectedStory?.headline}</p>
                     </div>
                     <div className="hx3-detailActions">
                       <button
@@ -3486,118 +3504,101 @@ export function HomeSurface({
                     ))}
                   </div>
                   {areaTab === "summary" ? (
-                  <section className="hx3-section">
-                    <div className="hx3-brief">
-                      <div className="hx3-eyebrow">Executive Summary</div>
-                      <h2>{selectedArea.label}</h2>
-                      <p className="hx3-briefLead">
-                        {selectedStory?.summary}
-                      </p>
-                      <div className="hx3-storyGrid">
-                        <article className="hx3-storyCard">
-                          <h3>What Nexus knows</h3>
-                          <ul>
-                            {(selectedStory?.knows ?? [])
-                              .slice(0, 4)
-                              .map((item) => (
-                                <li key={item}>{item}</li>
-                              ))}
-                          </ul>
-                        </article>
-                        <article className="hx3-storyCard">
-                          <h3>Why it matters</h3>
-                          <p>{selectedStory?.whyItMatters}</p>
-                        </article>
-                        <article className="hx3-storyCard">
-                          <h3>Decisions this can inform</h3>
-                          <ul>
-                            {(selectedStory?.supportedQuestions ?? [])
-                              .slice(0, 4)
-                              .map((item) => (
-                                <li key={item}>{item}</li>
-                            ))}
-                          </ul>
-                        </article>
-                        <article className="hx3-storyCard warn">
-                          <h3>Validate before deciding</h3>
-                          <ul>
-                            {(selectedStory?.notYetSupported ?? [])
-                              .slice(0, 4)
-                              .map((item) => (
-                                <li key={item}>{item}</li>
-                              ))}
-                          </ul>
-                        </article>
-                      </div>
-                      <article className="hx3-storyCard">
-                        <h3>{selectedArea.label} story</h3>
-                        <p>
-                          This view explains how {selectedArea.label.toLowerCase()} fit into
-                          {` ${displayedTenantName}'s`} enterprise context layer:
-                          what matters now, what connects to other dimensions,
-                          and what must be validated before a module acts on it.
+                    <section className="hx3-section">
+                      <div className="hx3-brief">
+                        <div className="hx3-eyebrow">Executive Summary</div>
+                        <h2>{selectedArea.label}</h2>
+                        <p className="hx3-briefLead">
+                          {selectedStory?.summary}
                         </p>
-                        <ul>
-                          {selectedTabStories.data.lead ? (
-                            <li>{selectedTabStories.data.lead}</li>
-                          ) : null}
-                          {selectedTabStories.relationships.lead ? (
-                            <li>{selectedTabStories.relationships.lead}</li>
-                          ) : null}
-                          {selectedTabStories.gaps.lead ? (
-                            <li>{selectedTabStories.gaps.lead}</li>
-                          ) : null}
-                        </ul>
-                      </article>
-                      <div className="hx3-nextAction">
-                        Next validation action: {selectedStory?.nextAction}
+                        <div className="hx3-storyGrid">
+                          <article className="hx3-storyCard">
+                            <h3>What Nexus knows</h3>
+                            <ul>
+                              {(selectedStory?.knows ?? [])
+                                .slice(0, 4)
+                                .map((item) => (
+                                  <li key={item}>{item}</li>
+                                ))}
+                            </ul>
+                          </article>
+                          <article className="hx3-storyCard">
+                            <h3>Why it matters</h3>
+                            <p>{selectedStory?.whyItMatters}</p>
+                          </article>
+                          <article className="hx3-storyCard">
+                            <h3>Decisions this can inform</h3>
+                            <ul>
+                              {(selectedStory?.supportedQuestions ?? [])
+                                .slice(0, 4)
+                                .map((item) => (
+                                  <li key={item}>{item}</li>
+                                ))}
+                            </ul>
+                          </article>
+                          <article className="hx3-storyCard warn">
+                            <h3>Validate before deciding</h3>
+                            <ul>
+                              {(selectedStory?.notYetSupported ?? [])
+                                .slice(0, 4)
+                                .map((item) => (
+                                  <li key={item}>{item}</li>
+                                ))}
+                            </ul>
+                          </article>
+                        </div>
+                        <article className="hx3-storyCard">
+                          <h3>{selectedArea.label} story</h3>
+                          <p>
+                            This view explains how{" "}
+                            {selectedArea.label.toLowerCase()} fit into
+                            {` ${displayedTenantName}'s`} enterprise context
+                            layer: what matters now, what connects to other
+                            dimensions, and what must be validated before a
+                            module acts on it.
+                          </p>
+                          <ul>
+                            {selectedTabStories.data.lead ? (
+                              <li>{selectedTabStories.data.lead}</li>
+                            ) : null}
+                            {selectedTabStories.relationships.lead ? (
+                              <li>{selectedTabStories.relationships.lead}</li>
+                            ) : null}
+                            {selectedTabStories.gaps.lead ? (
+                              <li>{selectedTabStories.gaps.lead}</li>
+                            ) : null}
+                          </ul>
+                        </article>
+                        <div className="hx3-nextAction">
+                          Next validation action: {selectedStory?.nextAction}
+                        </div>
                       </div>
-                    </div>
-                  </section>
+                    </section>
                   ) : null}
 
                   {areaTab === "data" ? (
-                  <section className="hx3-section">
-                    <div className="hx3-sectionHead">
-                      <div>
-                        <h2>{selectedTabStories.data.title}</h2>
-                        <p>{selectedTabStories.data.lead}</p>
+                    <section className="hx3-section">
+                      <div className="hx3-sectionHead">
+                        <div>
+                          <h2>{selectedTabStories.data.title}</h2>
+                          <p>{selectedTabStories.data.lead}</p>
+                        </div>
+                        <span className="hx3-chip">
+                          {selectedTabStories.data.status}
+                        </span>
                       </div>
-                      <span className="hx3-chip">
-                        {selectedTabStories.data.status}
-                      </span>
-                    </div>
-                    {selectedAreaDataTable.rows.length > 0 ? (
-                      <>
-                        <div className="hx3-recordControls">
-                          <select
-                            aria-label="Filter by dataset"
-                            onChange={(event) =>
-                              setDataSetFilter(event.currentTarget.value)
-                            }
-                            value={dataSetFilter}
-                          >
-                            <option value="all">All datasets</option>
-                            {selectedAreaDataTable.dataSetOptions.map(
-                              (option) => (
-                                <option key={option} value={option}>
-                                  {option}
-                                </option>
-                              ),
-                            )}
-                          </select>
-                          {selectedAreaDataTable.smartFilter ? (
+                      {selectedAreaDataTable.rows.length > 0 ? (
+                        <>
+                          <div className="hx3-recordControls">
                             <select
-                              aria-label={`Filter by ${selectedAreaDataTable.smartFilter.label}`}
+                              aria-label="Filter by dataset"
                               onChange={(event) =>
-                                setSmartFilterValue(event.currentTarget.value)
+                                setDataSetFilter(event.currentTarget.value)
                               }
-                              value={smartFilterValue}
+                              value={dataSetFilter}
                             >
-                              <option value="all">
-                                All {selectedAreaDataTable.smartFilter.label}
-                              </option>
-                              {selectedAreaDataTable.smartFilter.options.map(
+                              <option value="all">All datasets</option>
+                              {selectedAreaDataTable.dataSetOptions.map(
                                 (option) => (
                                   <option key={option} value={option}>
                                     {option}
@@ -3605,56 +3606,75 @@ export function HomeSurface({
                                 ),
                               )}
                             </select>
-                          ) : (
-                            <span />
-                          )}
-                          <input
-                            aria-label="Search loaded records"
-                            onChange={(event) =>
-                              setRecordSearch(event.currentTarget.value)
-                            }
-                            placeholder="Search loaded records..."
-                            value={recordSearch}
-                          />
-                        </div>
-                        <div className="hx3-tableWrap">
-                          <table className="hx3-table">
-                            <thead>
-                              <tr>
-                                <th>Dataset</th>
-                                <th>Record</th>
-                                <th>Category</th>
-                                <th>Owner / System</th>
-                                <th>Status</th>
-                                <th>Source</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {selectedRows.map((row) => (
-                                <tr key={row.id}>
-                                  <td>{row.dataSet}</td>
-                                  <td>{row.record}</td>
-                                  <td>{row.category}</td>
-                                  <td>{row.ownerOrSystem}</td>
-                                  <td>{row.status}</td>
-                                  <td>{row.source}</td>
+                            {selectedAreaDataTable.smartFilter ? (
+                              <select
+                                aria-label={`Filter by ${selectedAreaDataTable.smartFilter.label}`}
+                                onChange={(event) =>
+                                  setSmartFilterValue(event.currentTarget.value)
+                                }
+                                value={smartFilterValue}
+                              >
+                                <option value="all">
+                                  All {selectedAreaDataTable.smartFilter.label}
+                                </option>
+                                {selectedAreaDataTable.smartFilter.options.map(
+                                  (option) => (
+                                    <option key={option} value={option}>
+                                      {option}
+                                    </option>
+                                  ),
+                                )}
+                              </select>
+                            ) : (
+                              <span />
+                            )}
+                            <input
+                              aria-label="Search loaded records"
+                              onChange={(event) =>
+                                setRecordSearch(event.currentTarget.value)
+                              }
+                              placeholder="Search loaded records..."
+                              value={recordSearch}
+                            />
+                          </div>
+                          <div className="hx3-tableWrap">
+                            <table className="hx3-table">
+                              <thead>
+                                <tr>
+                                  <th>Dataset</th>
+                                  <th>Record</th>
+                                  <th>Category</th>
+                                  <th>Owner / System</th>
+                                  <th>Status</th>
+                                  <th>Source</th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                        {selectedRows.length === 0 ? (
-                          <p className="hx3-recordCount">
-                            {selectedTabStories.data.empty}
-                          </p>
-                        ) : null}
-                      </>
-                    ) : (
-                      <p className="hx3-empty">
-                        {selectedTabStories.data.empty}
-                      </p>
-                    )}
-                  </section>
+                              </thead>
+                              <tbody>
+                                {selectedRows.map((row) => (
+                                  <tr key={row.id}>
+                                    <td>{row.dataSet}</td>
+                                    <td>{row.record}</td>
+                                    <td>{row.category}</td>
+                                    <td>{row.ownerOrSystem}</td>
+                                    <td>{row.status}</td>
+                                    <td>{row.source}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          {selectedRows.length === 0 ? (
+                            <p className="hx3-recordCount">
+                              {selectedTabStories.data.empty}
+                            </p>
+                          ) : null}
+                        </>
+                      ) : (
+                        <p className="hx3-empty">
+                          {selectedTabStories.data.empty}
+                        </p>
+                      )}
+                    </section>
                   ) : null}
 
                   {areaTab === "relationships" ? (
@@ -3765,7 +3785,9 @@ export function HomeSurface({
                                 className="hx3-sourceCard"
                                 key={`${fileName}-${index}`}
                               >
-                                <strong>{clientFacingFileName(fileName)}</strong>
+                                <strong>
+                                  {clientFacingFileName(fileName)}
+                                </strong>
                                 <p>Source lineage preserved for review.</p>
                               </article>
                             ))}
@@ -3779,7 +3801,9 @@ export function HomeSurface({
                   ) : null}
 
                   <details className="hx3-tech">
-                    <summary>Diagnostics, sources, gaps, and relationships</summary>
+                    <summary>
+                      Diagnostics, sources, gaps, and relationships
+                    </summary>
                     <div className="hx3-techBody">
                       <div className="hx3-grid2">
                         <article className="hx3-storyCard">
@@ -3851,9 +3875,7 @@ export function HomeSurface({
                           {isDemoContext ? "Demo" : "Active"}
                         </span>
                       </h1>
-                      <p className="hx3-subtitle">
-                        {executiveBriefingCopy}
-                      </p>
+                      <p className="hx3-subtitle">{executiveBriefingCopy}</p>
                     </div>
                     <div className="hx3-statusCard">
                       <div className="hx3-statusLine">
@@ -3935,7 +3957,9 @@ export function HomeSurface({
                             data-testid="knowledge-home-insights"
                           >
                             <div className="hx3-brief">
-                              <div className="hx3-eyebrow">Enterprise Brief</div>
+                              <div className="hx3-eyebrow">
+                                Enterprise Brief
+                              </div>
                               <h2>{safeHomeInsightSummary.summary_title}</h2>
                               <p className="hx3-briefLead">
                                 {safeHomeInsightSummary.executive_summary}
@@ -4247,15 +4271,18 @@ export function HomeSurface({
                             <div>
                               <h2>Use cases this context supports</h2>
                               <p>
-                                Agent Assist is one worked example among
-                                several module-level use cases.
+                                Agent Assist is one worked example among several
+                                module-level use cases.
                               </p>
                             </div>
                           </div>
                           <div className="hx3-grid2">
                             {safeHomeInsightSummary.module_readiness.map(
                               (row) => (
-                                <article className="hx3-storyCard" key={row.module}>
+                                <article
+                                  className="hx3-storyCard"
+                                  key={row.module}
+                                >
                                   <h3>{row.module}</h3>
                                   <ReadinessBar
                                     value={READINESS_SCORE[row.readiness] ?? 40}
@@ -4349,8 +4376,8 @@ export function HomeSurface({
                               <tr>
                                 <td>Relationship edges used</td>
                                 <td>
-                                  {safeHomeInsightSummary?.relationship_edges_used
-                                    .length ?? 0}
+                                  {safeHomeInsightSummary
+                                    ?.relationship_edges_used.length ?? 0}
                                 </td>
                               </tr>
                               <tr>
@@ -4531,7 +4558,9 @@ export function HomeSurface({
                         <div className="hx3-sectionHead">
                           <div>
                             <h2>Explore this context</h2>
-                            <p>Browse the areas of information AbarVa tracks.</p>
+                            <p>
+                              Browse the areas of information AbarVa tracks.
+                            </p>
                           </div>
                         </div>
                         <div
@@ -4610,11 +4639,31 @@ export function HomeSurface({
                   <nav className="hx3-moduleFooter" aria-label="Go to module">
                     {(
                       safeHomeInsightSummary?.module_readiness ?? [
-                        { module: "Knowledge" as const, readiness: "", next_best_action: "" },
-                        { module: "Intelligence" as const, readiness: "", next_best_action: "" },
-                        { module: "Moves" as const, readiness: "", next_best_action: "" },
-                        { module: "Source" as const, readiness: "", next_best_action: "" },
-                        { module: "Tower" as const, readiness: "", next_best_action: "" },
+                        {
+                          module: "Knowledge" as const,
+                          readiness: "",
+                          next_best_action: "",
+                        },
+                        {
+                          module: "Intelligence" as const,
+                          readiness: "",
+                          next_best_action: "",
+                        },
+                        {
+                          module: "Moves" as const,
+                          readiness: "",
+                          next_best_action: "",
+                        },
+                        {
+                          module: "Source" as const,
+                          readiness: "",
+                          next_best_action: "",
+                        },
+                        {
+                          module: "Tower" as const,
+                          readiness: "",
+                          next_best_action: "",
+                        },
                       ]
                     ).map((row) => {
                       const href = MODULE_HREF[row.module] ?? "#overview";
@@ -4628,7 +4677,11 @@ export function HomeSurface({
                           {row.module}
                         </button>
                       ) : (
-                        <a className="hx3-moduleLink" href={href} key={row.module}>
+                        <a
+                          className="hx3-moduleLink"
+                          href={href}
+                          key={row.module}
+                        >
                           {row.module}
                         </a>
                       );

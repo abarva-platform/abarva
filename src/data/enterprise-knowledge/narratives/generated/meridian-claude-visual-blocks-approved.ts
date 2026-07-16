@@ -7,44 +7,44 @@ import type { KnowledgeHomeVisualBlock } from "@/lib/enterprise-knowledge/narrat
 export const MERIDIAN_CLAUDE_HOME_VISUAL_BLOCKS = [
   {
     type: "context_strength_snapshot",
-    title: "Where Context Is Strong and Where Evidence Is Needed",
+    title: "Where Meridian's Context Is Strong and Where It Is Thin",
     executive_message:
-      "Business functions and risks are well represented, but the data spine and governance controls that gate production remain open.",
+      "Enterprise, function, and system context are well represented, but the data foundation, governance, and relationships that AI depends on are gaps.",
     why_it_matters:
-      "Leadership can frame and prioritize now, but production approval must wait for identity, governance, and audit evidence.",
+      "It tells leadership exactly which dimensions are ready to reason on today versus which need workshop evidence first.",
     data: {
       rows: [
         {
-          dimension: "Business Functions",
+          dimension: "Enterprise Profile",
           readiness: "Strong",
-          note: "30 functions with role-level ownership",
+          note: "Integrated delivery network and health plan, multi-state footprint",
+        },
+        {
+          dimension: "Applications & Systems",
+          readiness: "Partial",
+          note: "Rich estate; AWS/Databricks target-state only",
         },
         {
           dimension: "Data Assets & Integrations",
-          readiness: "Partial",
-          note: "Candidate assets; owners to confirm; no identity spine",
+          readiness: "Gap",
+          note: "Identity spine and medallion not in place",
         },
         {
           dimension: "Risks & Controls",
           readiness: "Gap",
-          note: "Identity, governance, semantic, audit controls open",
-        },
-        {
-          dimension: "Metrics & Outcomes",
-          readiness: "Partial",
-          note: "Definitions present, no baselines",
+          note: "Governance and audit controls open",
         },
         {
           dimension: "Relationships",
           readiness: "Not validated",
-          note: "No validated relationships in this context",
+          note: "Candidate-only links",
         },
       ],
     },
     evidence_refs: [
-      "meridian-health:current-universal:01_business_functions.csv:2",
+      "meridian-health:current-universal:00_enterprise_profile.csv:2",
+      "meridian-health:current-universal:04_applications_systems.csv:5",
       "meridian-health:current-universal:11_risks_controls.csv:3",
-      "meridian-health:current-universal:14_metrics_outcomes.csv:2",
     ],
     caveats: [
       "Planning-grade synthetic context, not client production evidence.",
@@ -54,121 +54,118 @@ export const MERIDIAN_CLAUDE_HOME_VISUAL_BLOCKS = [
   },
   {
     type: "what_more_context_unlocks",
-    title: "What Validating the Shared Foundation Unlocks",
+    title: "What Closing the Foundation Gaps Unlocks",
     executive_message:
-      "Validating one identity and claims spine unlocks member service, payment integrity, cost transparency, and quality analytics together.",
+      "A governed identity spine, medallion architecture, and governance model together unlock every downstream use case, not just one.",
     why_it_matters:
-      "Foundation investment compounds across use cases rather than serving a single worked example.",
+      "It reframes foundation investment as an enterprise-wide enabler rather than a cost tied to a single initiative.",
     data: {
       rows: [
         {
-          foundation: "Patient/member identity spine",
-          unlocks: "Member service, quality, payment integrity",
+          if_closed: "Patient/member identity spine",
+          unlocks:
+            "Cross-domain use cases across clinical, claims, pharmacy, and member service",
         },
         {
-          foundation: "Governed claims + pharmacy layer",
-          unlocks: "Payment integrity and cost transparency",
+          if_closed: "Formal data governance operating model",
+          unlocks:
+            "Safe AI on PHI-bearing data with audit controls and human-in-the-loop",
         },
         {
-          foundation: "Governance + audit controls",
-          unlocks: "Production-safe automation",
+          if_closed: "Certified medallion architecture",
+          unlocks:
+            "Trustworthy data products for cost transparency, payment integrity, and quality",
         },
       ],
     },
     evidence_refs: [
       "meridian-health:current-universal:05_data_assets_integrations.csv:5",
-      "meridian-health:current-universal:09_programs_initiatives.csv:7",
+      "meridian-health:current-universal:11_risks_controls.csv:6",
     ],
     caveats: [
-      "Foundation is target-state; unlocks are hypotheses, not realized value.",
+      "Unlocks are hypotheses until workshop evidence closes the underlying gaps.",
     ],
     renderer_hint: "card_list",
     display_priority: 2,
   },
   {
     type: "evidence_gap_requests",
-    title: "Evidence Still Needed Before Production",
+    title: "Evidence Requests That Strengthen Every Future Use Case",
     executive_message:
-      "Five gaps — identity, governance, audit/PHI controls, baselines, and program ownership — must be closed before any use case reaches production.",
+      "Four high-leverage evidence requests would move Meridian from framing to production-ready foundations.",
     why_it_matters:
-      "Each closed gap strengthens the context layer for every future use case, not just the member-service example.",
+      "Each closed gap strengthens the shared context layer for all use cases, not just Agent Assist.",
     data: {
       rows: [
         {
           gap: "Identity spine",
           owner: "CDAO",
-          module: "Moves",
+          module: "Intelligence",
         },
         {
-          gap: "Governance + medallion",
+          gap: "Governance operating model",
           owner: "CDAO",
           module: "Knowledge",
         },
         {
-          gap: "Audit/PHI/HITL controls",
+          gap: "Medallion certification",
           owner: "CDIO",
-          module: "Tower",
+          module: "Moves",
         },
         {
-          gap: "KPI baselines",
+          gap: "Metric baselines",
           owner: "CFO",
           module: "Tower",
-        },
-        {
-          gap: "Program ownership + economics",
-          owner: "CDAO",
-          module: "Source",
         },
       ],
     },
     evidence_refs: [
       "meridian-health:current-universal:11_risks_controls.csv:2",
-      "meridian-health:current-universal:11_risks_controls.csv:6",
-      "meridian-health:current-universal:14_metrics_outcomes.csv:4",
+      "meridian-health:current-universal:14_metrics_outcomes.csv:2",
     ],
-    caveats: [
-      "Gaps are evidence requests, not failures; all context is planning-grade synthetic.",
-    ],
+    caveats: ["Owners are role titles, not confirmed named individuals."],
     renderer_hint: "table",
     display_priority: 3,
   },
   {
     type: "module_next_actions",
-    title: "Next Best Action by Module",
+    title: "What Each Module Should Do Next",
     executive_message:
-      "Knowledge and Intelligence support discovery now; Moves, Source, and Tower need foundation, contract, and baseline evidence first.",
+      "Knowledge and Intelligence are ready to work now; Moves, Source, and Tower activate once baselines and contracts arrive.",
     why_it_matters:
-      "Sequencing module use to evidence readiness keeps the program honest about what is decidable today.",
+      "It sequences module engagement so effort matches the evidence actually available today.",
     data: {
       rows: [
         {
           module: "Knowledge",
-          action: "Frame discovery; queue relationship evidence",
+          action:
+            "Frame estate, gaps, and dependencies for a governance workshop",
         },
         {
           module: "Intelligence",
-          action: "Rank use cases by readiness and risk",
+          action:
+            "Reason on foundation-first sequencing once relationships validated",
         },
         {
           module: "Moves",
-          action: "Phase-gate identity spine and lakehouse",
+          action: "Phase-gate the lakehouse program after baselines confirmed",
         },
         {
           module: "Source",
-          action: "Add contract and SLA economics",
+          action: "Load vendor contract economics before sourcing analysis",
         },
         {
           module: "Tower",
-          action: "Baseline KPIs before value claims",
+          action: "Baseline metrics before any value claim",
         },
       ],
     },
     evidence_refs: [
-      "meridian-health:current-universal:09_programs_initiatives.csv:2",
-      "meridian-health:current-universal:14_metrics_outcomes.csv:2",
+      "meridian-health:current-universal:09_programs_initiatives.csv:9",
+      "meridian-health:current-universal:07_vendors_contracts.csv:2",
     ],
     caveats: [
-      "No realized value or production approval until evidence is validated.",
+      "Module runtime behavior is unchanged; this is planning context only.",
     ],
     renderer_hint: "strip",
     display_priority: 4,
