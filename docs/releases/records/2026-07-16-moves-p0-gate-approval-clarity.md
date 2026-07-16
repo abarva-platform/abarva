@@ -14,6 +14,8 @@ Moves P0 could show all seven Originate answers as captured while the Gate appro
 
 Follow-up live proof showed one more UI-state gap: opening an already-completed P0 URL after the Move advanced to P1 still displayed an active approval button and current-phase gate criteria. This release now also renders completed historical phases as read-only with a direct Continue-to-current-phase action.
 
+Final copy polish fixes the already-approved message spacing so the current-phase label reads cleanly.
+
 ## Layer Impact
 
 - `global-control-lane`: Updates shared Strategic Moves P0 gate evaluation and phase workspace behavior for all tenants.
@@ -40,6 +42,7 @@ Follow-up live proof showed one more UI-state gap: opening an already-completed 
   - Shows blocked/approved/approving messages with visible status styling.
   - Redirects to the approved next phase when the gate approval API returns `newPhase`.
   - Shows already-approved historical phases as read-only and routes the user back to the current phase instead of rendering another approval loop.
+  - Fixes spacing in the already-approved continuation message.
 - `src/lib/programs/__tests__/governance-evaluate-gates.test.ts`
   - Adds regression coverage for the Meridian-style seven-answer P0 charter.
   - Updates the test fake to support the real `.in('phase', ...)` evidence query shape.
@@ -84,6 +87,7 @@ Revert this PR and redeploy the prior digest-pinned ACA image. No schema rollbac
 - Follow-up PR URL: Pending.
 - Follow-up ACA revision: Pending.
 - Follow-up live proof bundle: Pending.
+- Copy-polish PR URL: Pending.
 
 ## Known Gaps
 
