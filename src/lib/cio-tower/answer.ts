@@ -16,6 +16,11 @@ import {
   evaluateTowerValueClaimGate,
   TOWER_REALIZED_VALUE_REQUIRES_MEASURED_EVIDENCE,
 } from "@/lib/tower/value-claim-gate";
+import { buildTowerV3ContextPackFromTenantInputs } from "@/lib/enterprise-knowledge/tower/tower-v3-context-pack-from-tenant-inputs";
+import {
+  buildTowerV3RuntimeViewModel,
+  type TowerV3RuntimeViewModel,
+} from "@/lib/tower/tower-v3-runtime-view";
 import type { TowerValueClaim } from "@/lib/enterprise-knowledge/contracts";
 
 const MODEL_NAME = "claude-sonnet-4-6";
@@ -98,6 +103,7 @@ export interface CioTowerPromptContext {
   relationships: CioTowerRelationshipRow[];
   gaps: string[];
   valueClaimPolicy: CioTowerValueClaimPolicy;
+  towerV3RuntimeView?: TowerV3RuntimeViewModel | null;
 }
 
 export interface CioTowerAnswerResult {
@@ -362,6 +368,36 @@ export function buildCioTowerClaudePrompt(
     `- Realized-value language allowed: ${context.valueClaimPolicy.realizedValueLanguageAllowed ? "yes" : "no"}.`,
     `- Claim gate: ${context.valueClaimPolicy.claim.gateStatus}; ${context.valueClaimPolicy.claim.reason}`,
   ];
+  const towerV3Runtime = context.towerV3RuntimeView;
+  const towerV3Lines = towerV3Runtime
+    ? [
+        `- Context pack: ${towerV3Runtime.contextPackId}; mode ${towerV3Runtime.mode}; truth ${towerV3Runtime.truthStatus}.`,
+        "- Default visible tabs are sourced from the governed context pack / derived projection, not the legacy bridge.",
+        `- Metric records: ${towerV3Runtime.metricCount}; value records: ${towerV3Runtime.valueRecordCount}; value claim gates: ${towerV3Runtime.valueClaimCount}.`,
+        `- Gate counts: ${towerV3Runtime.gateCounts.allowed} allowed, ${towerV3Runtime.gateCounts.caveated} caveated, ${towerV3Runtime.gateCounts.blocked} blocked.`,
+        `- Outcome-proof language allowed: ${towerV3Runtime.blockedOutcomeProof ? "no" : "yes"}.`,
+        "- Default tab postures:",
+        ...towerV3Runtime.defaultTabs.map(
+          (tab) =>
+            `  - ${tab.label}: ${tab.sourceClassification}; ${tab.sourcePosture}; ${tab.rows} rows; caveat: ${tab.caveat}`,
+        ),
+        "- Top value hypotheses:",
+        ...towerV3Runtime.valueHypotheses.slice(0, 8).map(
+          (item) =>
+            `  - ${item.label}: ${item.value}; basis ${item.claimBasis}; gate ${item.gateStatus}; evidence ${item.evidenceIds.join(", ") || "required"}`,
+        ),
+        "- Executive blocker themes:",
+        ...towerV3Runtime.gapThemes.map(
+          (theme) =>
+            `  - ${theme.title}: ${theme.whyItMatters}; required ${theme.requiredEvidence.join(", ")}`,
+        ),
+        "- CIO/CFO insights:",
+        ...towerV3Runtime.executiveInsights.map(
+          (insight) =>
+            `  - ${insight.role}: ${insight.insightTitle}; implication ${insight.decisionImplication}; next ${insight.nextAction}; claim strength ${insight.claimStrength}; gate ${insight.valueClaimGateStatus}`,
+        ),
+      ]
+    : [];
 
   return [
     `You are a senior CIO/CFO advisor for AbarVa speaking to ${context.tenantName}.`,
@@ -382,6 +418,12 @@ export function buildCioTowerClaudePrompt(
     "- Prefer one strong advisory paragraph over mechanical explanation. Avoid robotic phrases like 'The CIO read is'.",
     "- Answer the current question literally. If the user asks a follow-up about vendors, services, owners, or value gaps, do not repeat the generic budget-mix answer.",
     "- If the follow-up data is not loaded, say exactly what cut is missing and why that prevents the next ranking.",
+    ...(towerV3Runtime
+      ? [
+          "- For this tenant, use the governed context-pack section as the primary Tower source.",
+          "- Treat legacy bridge measures/facts as diagnostic fallback only. Do not let bridge facts override the context-pack posture.",
+        ]
+      : []),
     "- Use short paragraphs or bullets when they improve readability.",
     "- End naturally based on the question. Do not append generic menu choices.",
     "",
@@ -432,6 +474,13 @@ export function buildCioTowerClaudePrompt(
     `Question family: ${context.contract.question_family}`,
     `Preferred artifact shape: ${context.contract.artifact_type}`,
     "",
+    ...(towerV3Runtime
+      ? [
+          "Primary governed Tower context:",
+          towerV3Lines.join("\n"),
+          "",
+        ]
+      : []),
     "Governed measures:",
     measureLines.length
       ? measureLines.join("\n")
@@ -732,6 +781,10 @@ function buildCioTowerFallbackFollowUp(
 export function buildCioTowerFallbackAnswer(
   context: CioTowerPromptContext,
 ): CioTowerVisibleAnswerContract {
+  if (context.towerV3RuntimeView) {
+    return buildTowerV3FallbackAnswer(context);
+  }
+
   const totalBudget = measureNumber(context.measures, "total_it_budget_fy26");
   const runBudget = measureNumber(context.measures, "run_budget_fy26");
   const changeBudget = measureNumber(context.measures, "change_budget_fy26");
@@ -826,6 +879,73 @@ export function buildCioTowerFallbackAnswer(
   };
 }
 
+function buildTowerV3FallbackAnswer(
+  context: CioTowerPromptContext,
+): CioTowerVisibleAnswerContract {
+  const view = context.towerV3RuntimeView;
+  if (!view) throw new Error("tower_v3_runtime_view_missing");
+  const intent = fallbackQuestionIntent(context);
+  const topValueRows = view.valueHypotheses.slice(0, 6).map((item) => [
+    item.label,
+    item.value,
+    item.claimBasis.replace(/_/g, " "),
+    item.gateStatus,
+  ]);
+  const topGap = view.gapThemes[0];
+  const cioInsight = view.executiveInsights.find((insight) => insight.role === "CIO");
+  const cfoInsight = view.executiveInsights.find((insight) => insight.role === "CFO");
+
+  let answer: string;
+  if (intent === "value_gap") {
+    answer = `My read: use Tower as a value-governance view, not an outcome scoreboard yet. ${view.tenantName} has ${view.valueRecordCount} value records in the governed context pack, but all ${view.valueClaimCount} value claim gates are caveated and none are allowed for outcome-proof language. The executive move is to rank the forecast value records, then close baseline, owner, and finance-evidence gaps before any board claim.`;
+  } else if (intent === "run_drivers" || intent === "vendor_exposure") {
+    answer = `My read: Tower can show the service and vendor evidence blockers, but it should not rank commercial exposure from the bridge alone. The strongest current blocker is ${topGap?.title ?? "contract and service evidence"}. Send contract economics, SLA/KPI schedules, renewal windows, and vendor performance evidence to Source before converting this into a commercial-benefit claim.`;
+  } else if (intent === "program_budget" || intent === "budget_mix") {
+    answer = `My read: this is a funding-control question. Tower has ${view.metricCount} metric records and ${view.valueRecordCount} value records from the governed context pack, but the budget and value cuts are still planning-grade until finance-controlled actuals and baselines are reconciled. I would fund measurement design first, then decide which programs move into Moves.`;
+  } else if (intent === "evidence_gap") {
+    answer = `My read: the board-readiness gap is evidence quality. Tower has enough context to show where measurement should focus, but the claim gate says value should remain caveated until baselines, formula lineage, source-owner attestation, and finance evidence are loaded.`;
+  } else {
+    answer = `My read: Tower is ready to guide measurement, readiness, and executive action, but not to certify outcomes. The CIO should focus on platform and operating-model gates; the CFO should focus on baselines, actuals, and claim discipline.`;
+  }
+
+  return {
+    version: "cio_tower_visible_answer_v1",
+    answer,
+    tables:
+      topValueRows.length > 0
+        ? [
+            {
+              id: "tower_value_hypotheses",
+              title: "Value hypotheses and claim gates",
+              columns: ["Value record", "Value", "Basis", "Gate"],
+              rows: topValueRows,
+            },
+          ]
+        : [],
+    tabs: [
+      {
+        id: "cio_view",
+        label: "CIO view",
+        prose: cioInsight
+          ? `${cioInsight.insightSummary} ${cioInsight.decisionImplication} Next: ${cioInsight.nextAction}`
+          : "CIO view should focus on platform, data, integration, and control readiness before scale decisions.",
+        tables: [],
+      },
+      {
+        id: "cfo_view",
+        label: "CFO view",
+        prose: cfoInsight
+          ? `${cfoInsight.insightSummary} ${cfoInsight.decisionImplication} Next: ${cfoInsight.nextAction}`
+          : "CFO view should focus on baselines, actuals, formulas, and claim gates before board use.",
+        tables: [],
+      },
+    ],
+    followUpQuestion: topGap?.title
+      ? `Should Tower turn "${topGap.title}" into the next measurement action plan?`
+      : "Which claim gate should Tower close first?",
+  };
+}
+
 function deriveGaps(
   contract: CioTowerContract,
   measures: CioTowerMeasureResult[],
@@ -906,6 +1026,18 @@ export async function loadCioTowerPromptContext(args: {
     loadRelationships(args.tenantKey),
   ]);
   const valueClaimPolicy = buildCioTowerValueClaimPolicy(measures);
+  const towerV3RuntimeView =
+    args.tenantKey === "meridian-health"
+      ? buildTowerV3RuntimeViewModel({
+          tenantName: args.tenantName,
+          contextPack: buildTowerV3ContextPackFromTenantInputs({
+            tenantKey: "meridian-health",
+            tenantName: args.tenantName,
+            activeInputRoot:
+              "datasets/tenant-inputs/active/meridian-health/current",
+          }).contextPack,
+        })
+      : null;
   return {
     tenantKey: args.tenantKey,
     tenantName: args.tenantName,
@@ -916,6 +1048,7 @@ export async function loadCioTowerPromptContext(args: {
     relationships,
     gaps: deriveGaps(contract, measures, relevantFacts, valueClaimPolicy),
     valueClaimPolicy,
+    towerV3RuntimeView,
   };
 }
 
@@ -948,6 +1081,7 @@ async function persistPromptAndTrace(args: {
     relationships: args.context.relationships,
     gaps: args.context.gaps,
     valueClaimPolicy: args.context.valueClaimPolicy,
+    towerV3RuntimeView: args.context.towerV3RuntimeView,
   };
   const tx = createTxSession("abarva-cio-tower-answer-trace");
   await tx(async (run) => {

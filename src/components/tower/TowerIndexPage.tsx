@@ -3115,10 +3115,36 @@ function CxoGovernedCommandCenter({
   );
 }
 
+function v3DisplayValueNumber(value: string): number | null {
+  const match = value.match(/\$?([\d,.]+)\s*([BMK])?/i);
+  if (!match) return null;
+  const numeric = Number(match[1]?.replace(/,/g, ""));
+  if (!Number.isFinite(numeric)) return null;
+  const suffix = match[2]?.toUpperCase();
+  if (suffix === "B") return numeric * 1_000_000_000;
+  if (suffix === "M") return numeric * 1_000_000;
+  if (suffix === "K") return numeric * 1_000;
+  return numeric;
+}
+
 function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
+  const [activeSection, setActiveSection] =
+    useState<TowerV3RuntimeViewModel["defaultTabs"][number]["key"]>("overview");
+  const activeTab =
+    view.defaultTabs.find((tab) => tab.key === activeSection) ??
+    view.defaultTabs[0];
+  const maxHypothesisValue = Math.max(
+    ...view.valueHypotheses.map((item) => v3DisplayValueNumber(item.value) ?? 0),
+    1,
+  );
+  const insightRoles = Array.from(
+    new Set(view.executiveInsights.map((insight) => insight.role)),
+  );
+
   return (
     <div
       data-testid="tower-context-runtime-view"
+      data-source-classification={activeTab?.sourceClassification}
       style={{
         padding: "0 40px 90px",
         maxWidth: 1080,
@@ -3146,7 +3172,7 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
             marginBottom: 10,
           }}
         >
-          Measurement readiness
+          TowerContextPack default runtime
         </div>
         <div
           style={{
@@ -3168,7 +3194,7 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
                 letterSpacing: "-0.025em",
               }}
             >
-              {view.tenantName} measurement plan is ready for gating, not outcome proof.
+              {view.tenantName} Tower is now a v3 context-derived value governance view.
             </h2>
             <p
               style={{
@@ -3180,12 +3206,12 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
               }}
             >
               {view.headline} The page is showing metric families, value hypotheses,
-              evidence blockers, and next measurement actions from the governed context pack.
+              evidence blockers, and role-specific executive insights from the governed context pack.
             </p>
           </div>
           {[
-            ["Metric families", view.metricCount],
-            ["Value hypotheses", view.valueRecordCount],
+            ["Metric records", view.metricCount],
+            ["Value records", view.valueRecordCount],
             ["Claim gates", view.valueClaimCount],
           ].map(([label, value]) => (
             <div
@@ -3226,59 +3252,130 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
       </section>
 
       <section
+        aria-label="Tower v3 command center sections"
         style={{
-          display: "grid",
-          gridTemplateColumns: "1.2fr .8fr",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           gap: 18,
-          marginBottom: 18,
+          marginBottom: 14,
+          borderBottom: `1px solid ${T.RULE}`,
         }}
       >
-        <CioPanel
-          eyebrow="Metric Families"
-          title="What Tower should track before value is claimed."
-        >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-              gap: 10,
-            }}
-          >
-            {view.metricFamilies.slice(0, 10).map((metric) => (
-              <div
-                key={`${metric.sourceDimension}-${metric.label}`}
+        <div style={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          {view.defaultTabs.map((section) => {
+            const selected = section.key === activeSection;
+            return (
+              <button
+                key={section.key}
+                type="button"
+                onClick={() => setActiveSection(section.key)}
+                aria-pressed={selected}
                 style={{
-                  border: `1px solid ${T.BORDER}`,
-                  borderRadius: 8,
-                  padding: 12,
-                  background: T.CREAM,
-                  minHeight: 116,
+                  position: "relative",
+                  top: 1,
+                  border: "none",
+                  borderRadius: 0,
+                  borderBottom: selected
+                    ? `2px solid ${T.GREEN}`
+                    : "2px solid transparent",
+                  background: "transparent",
+                  color: selected ? T.INK : T.INK_2,
+                  padding: "12px 2px",
+                  marginRight: 26,
+                  fontSize: 16,
+                  fontWeight: 500,
+                  letterSpacing: "-0.01em",
+                  fontFamily: T.SERIF,
+                  cursor: "pointer",
                 }}
               >
+                {section.label}
+              </button>
+            );
+          })}
+        </div>
+        {activeTab ? (
+          <div
+            style={{
+              fontFamily: T.MONO,
+              fontSize: 9,
+              letterSpacing: "1.2px",
+              textTransform: "uppercase",
+              color: T.GREEN,
+              fontWeight: 900,
+              whiteSpace: "nowrap",
+            }}
+          >
+            {activeTab.sourcePosture}
+          </div>
+        ) : null}
+      </section>
+
+      {activeSection === "overview" ? (
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.15fr .85fr",
+            gap: 18,
+            marginBottom: 18,
+          }}
+        >
+          <CioPanel
+            eyebrow="Measurement Readiness"
+            title="What Tower can safely say today."
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: 10,
+              }}
+            >
+              {view.metricFamilies.slice(0, 8).map((metric) => (
                 <div
+                  key={`${metric.sourceDimension}-${metric.label}`}
                   style={{
-                    fontFamily: T.SERIF,
-                    fontSize: 16,
-                    lineHeight: 1.18,
-                    fontWeight: 750,
-                    color: T.INK,
+                    border: `1px solid ${T.BORDER}`,
+                    borderRadius: 8,
+                    padding: 12,
+                    background: T.CREAM,
+                    minHeight: 112,
                   }}
                 >
-                  {metric.label}
+                  <div
+                    style={{
+                      fontFamily: T.SERIF,
+                      fontSize: 16,
+                      lineHeight: 1.18,
+                      fontWeight: 750,
+                      color: T.INK,
+                    }}
+                  >
+                    {metric.label}
+                  </div>
+                  <div style={{ marginTop: 10, display: "grid", gap: 5 }}>
+                    <SmallEvidenceLine label="Baseline" value={metric.baselineStatus} />
+                    <SmallEvidenceLine label="Target" value={metric.targetStatus} />
+                    <SmallEvidenceLine label="Evidence" value={metric.evidenceStatus} />
+                  </div>
                 </div>
-                <div style={{ marginTop: 10, display: "grid", gap: 5 }}>
-                  <SmallEvidenceLine label="Baseline" value={metric.baselineStatus} />
-                  <SmallEvidenceLine label="Target" value={metric.targetStatus} />
-                  <SmallEvidenceLine label="Evidence" value={metric.evidenceStatus} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </CioPanel>
+              ))}
+            </div>
+          </CioPanel>
+          <CioPanel
+            eyebrow="Claim Gate"
+            title="What value language is currently safe."
+          >
+            <TowerV3ClaimGateSummary view={view} />
+          </CioPanel>
+        </section>
+      ) : null}
 
+      {activeSection === "value" ? (
         <CioPanel
           eyebrow="Value Hypothesis Gate"
-          title="What value language is currently safe."
+          title="Forecast value records with claim-gate status."
         >
           <div
             style={{
@@ -3295,8 +3392,11 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
             Finance-attested measurement evidence is not yet available. Tower can show
             value hypotheses with caveats, not outcome proof.
           </div>
-          <div style={{ display: "grid", gap: 9 }}>
-            {view.valueHypotheses.slice(0, 6).map((item) => (
+          <div style={{ display: "grid", gap: 12 }}>
+            {view.valueHypotheses.slice(0, 8).map((item) => {
+              const numeric = v3DisplayValueNumber(item.value) ?? 0;
+              const width = `${Math.max(8, Math.round((numeric / maxHypothesisValue) * 100))}%`;
+              return (
               <div
                 key={`${item.label}-${item.value}`}
                 style={{
@@ -3304,16 +3404,37 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
                   gridTemplateColumns: "minmax(0, 1fr) auto",
                   gap: 10,
                   alignItems: "center",
-                  borderBottom: `1px solid ${T.RULE}`,
-                  paddingBottom: 9,
+                  border: `1px solid ${T.BORDER}`,
+                  borderRadius: 10,
+                  padding: 12,
+                  background: "#fff",
                 }}
               >
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontWeight: 750, color: T.INK, fontSize: 13.5 }}>
-                    {item.label}
+                    {item.label} · {item.value}
                   </div>
                   <div style={{ color: T.INK_2, fontSize: 12.5, marginTop: 2 }}>
                     {item.claimBasis.replace(/_/g, " ")}
+                  </div>
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      height: 8,
+                      borderRadius: 999,
+                      background: T.CREAM_DEEP,
+                      marginTop: 9,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width,
+                        height: "100%",
+                        borderRadius: 999,
+                        background: T.GREEN,
+                      }}
+                    />
                   </div>
                 </div>
                 <span
@@ -3335,93 +3456,148 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
                   {item.gateStatus}
                 </span>
               </div>
-            ))}
+              );
+            })}
           </div>
         </CioPanel>
-      </section>
+      ) : null}
 
+      {activeSection === "budget" ? (
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr)",
+            gap: 18,
+            marginBottom: 18,
+          }}
+        >
+          <CioPanel
+            eyebrow="Budget and Spend Signals"
+            title="Planning-grade spend/value context from active v3 rows."
+          >
+            <div
+              style={{
+                border: `1px solid ${T.AMBER}`,
+                background: T.AMBER_BG,
+                borderRadius: 10,
+                padding: 13,
+                marginBottom: 12,
+                color: T.INK,
+                fontSize: 13.5,
+                lineHeight: 1.45,
+              }}
+            >
+              Tower is not using the bridge budget chart as source of truth here.
+              Actual budget rollups require a finance-controlled extract; this tab
+              shows the v3 spend/value signals available for measurement design.
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
+              {view.metricFamilies
+                .filter((metric) => metric.sourceDimension === "08_spend_value")
+                .slice(0, 10)
+                .map((metric) => (
+                  <div
+                    key={`${metric.sourceDimension}-${metric.label}`}
+                    style={{
+                      border: `1px solid ${T.BORDER}`,
+                      borderRadius: 8,
+                      padding: 12,
+                      background: T.CREAM,
+                    }}
+                  >
+                    <div style={{ fontFamily: T.SERIF, fontWeight: 750, fontSize: 16 }}>
+                      {metric.label}
+                    </div>
+                    <SmallEvidenceLine label="Signal" value={metric.targetStatus} />
+                    <SmallEvidenceLine label="Evidence" value={metric.evidenceStatus} />
+                  </div>
+                ))}
+            </div>
+          </CioPanel>
+        </section>
+      ) : null}
+
+      {activeSection === "portfolio" ? (
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr",
+            gap: 18,
+            marginBottom: 18,
+          }}
+        >
+          <CioPanel
+            eyebrow="Portfolio Programs"
+            title="Program value hypotheses from active v3 context."
+          >
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
+              {view.valueHypotheses.map((item) => (
+                <div
+                  key={`${item.label}-${item.value}-${item.evidenceIds.join("-")}`}
+                  style={{
+                    border: `1px solid ${T.BORDER}`,
+                    borderRadius: 10,
+                    padding: 14,
+                    background: "#fff",
+                  }}
+                >
+                  <div style={{ fontFamily: T.SERIF, fontSize: 18, fontWeight: 800 }}>
+                    {item.label}
+                  </div>
+                  <SmallEvidenceLine label="Value" value={item.value} />
+                  <SmallEvidenceLine label="Basis" value={item.claimBasis.replace(/_/g, " ")} />
+                  <SmallEvidenceLine label="Gate" value={item.gateStatus} />
+                  <SmallEvidenceLine label="Refs" value={item.evidenceIds.slice(0, 2).join("; ")} />
+                </div>
+              ))}
+            </div>
+          </CioPanel>
+        </section>
+      ) : null}
+
+      {activeSection === "benchmark" ? (
+        <CioPanel
+          eyebrow="Benchmark Context"
+          title="Useful comparator posture without pretending tenant performance is measured."
+        >
+          <div
+            style={{
+              border: `1px solid ${T.BORDER}`,
+              background: T.CREAM,
+              borderRadius: 10,
+              padding: 14,
+              marginBottom: 14,
+              lineHeight: 1.5,
+              color: T.INK_2,
+            }}
+          >
+            Benchmark context is used as an executive lens only. This tab does
+            not claim Meridian performance against a peer benchmark until the
+            tenant metric baselines and actuals are evidenced.
+          </div>
+          <TowerV3GapThemes view={view} />
+        </CioPanel>
+      ) : null}
+
+      {activeSection === "evidence" ? (
+        <section
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr)",
+            gap: 18,
+            marginBottom: 18,
+          }}
+        >
       <CioPanel
         eyebrow="Executive Blocker Themes"
         title="Repeated row-level caveats grouped for leadership action."
       >
-        <div
-          data-testid="tower-gap-themes"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-            gap: 12,
-          }}
-        >
-          {view.gapThemes.map((theme) => (
-            <div
-              key={theme.themeId}
-              style={{
-                border: `1px solid ${T.BORDER}`,
-                borderRadius: 10,
-                padding: 14,
-                background: "#fff",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  alignItems: "flex-start",
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: T.SERIF,
-                    fontSize: 17,
-                    fontWeight: 800,
-                    lineHeight: 1.15,
-                    color: T.INK,
-                  }}
-                >
-                  {theme.title}
-                </div>
-                <span
-                  style={{
-                    fontFamily: T.MONO,
-                    fontSize: 10,
-                    whiteSpace: "nowrap",
-                    color: T.GRAY_DK,
-                    fontWeight: 800,
-                  }}
-                >
-                  {theme.affectedRecordCount} records
-                </span>
-              </div>
-              <p style={{ color: T.INK_2, fontSize: 13, lineHeight: 1.45 }}>
-                {theme.whyItMatters}
-              </p>
-              <div style={{ display: "grid", gap: 5, marginTop: 10 }}>
-                <SmallEvidenceLine
-                  label="Required"
-                  value={theme.requiredEvidence.slice(0, 2).join("; ")}
-                />
-                <SmallEvidenceLine
-                  label="Handoff"
-                  value={`${theme.moduleHandoff}${theme.ownerOrSteward ? ` · ${theme.ownerOrSteward}` : ""}`}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+        <TowerV3GapThemes view={view} />
       </CioPanel>
 
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr)",
-          gap: 18,
-          marginTop: 18,
-        }}
-      >
         <CioPanel
           eyebrow="Next Measurement Actions"
-          title="What has to happen before the dashboard can move from plan to proof."
+          title="What has to happen before this view can support outcome proof."
         >
           <ol style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 8 }}>
             {view.nextMeasurementActions.map((action) => (
@@ -3461,6 +3637,186 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
           </div>
         </details>
       </section>
+      ) : null}
+
+      {activeSection === "insights" ? (
+        <section style={{ display: "grid", gap: 18, marginBottom: 18 }}>
+          {insightRoles.map((role) => {
+            const roleInsights = view.executiveInsights.filter(
+              (insight) => insight.role === role,
+            );
+            return (
+              <CioPanel
+                key={role}
+                eyebrow={`${role} View`}
+                title={`${role} decisions Tower should guide next.`}
+              >
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
+                  {roleInsights.map((insight) => (
+                    <div
+                      key={`${insight.role}-${insight.insightTitle}`}
+                      style={{
+                        border: `1px solid ${T.BORDER}`,
+                        borderRadius: 10,
+                        padding: 14,
+                        background: "#fff",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontFamily: T.SERIF,
+                          fontSize: 19,
+                          fontWeight: 850,
+                          lineHeight: 1.12,
+                          color: T.INK,
+                        }}
+                      >
+                        {insight.insightTitle}
+                      </div>
+                      <p style={{ color: T.INK_2, fontSize: 13.5, lineHeight: 1.48 }}>
+                        {insight.insightSummary}
+                      </p>
+                      <SmallEvidenceLine label="Why" value={insight.whyItMatters} />
+                      <SmallEvidenceLine label="Decision" value={insight.decisionImplication} />
+                      <SmallEvidenceLine label="Next" value={insight.nextAction} />
+                      <SmallEvidenceLine label="Strength" value={insight.claimStrength.replace(/_/g, " ")} />
+                      <SmallEvidenceLine label="Gate" value={insight.valueClaimGateStatus} />
+                      {insight.watchOut ? (
+                        <SmallEvidenceLine label="Watch" value={insight.watchOut} />
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </CioPanel>
+            );
+          })}
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+function TowerV3ClaimGateSummary({ view }: { view: TowerV3RuntimeViewModel }) {
+  return (
+    <div style={{ display: "grid", gap: 11 }}>
+      <div
+        style={{
+          border: `1px solid ${T.AMBER}`,
+          background: T.AMBER_BG,
+          borderRadius: 10,
+          padding: 13,
+          color: T.INK,
+          fontSize: 13.5,
+          lineHeight: 1.45,
+        }}
+      >
+        Outcome-proof language is blocked unless a TowerValueClaim has finance
+        evidence, baseline lineage, and v3 reconciliation. Current allowed
+        claims: {view.gateCounts.allowed}.
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 }}>
+        {[
+          ["Allowed", view.gateCounts.allowed],
+          ["Caveated", view.gateCounts.caveated],
+          ["Blocked", view.gateCounts.blocked],
+        ].map(([label, value]) => (
+          <div
+            key={label}
+            style={{
+              border: `1px solid ${T.BORDER}`,
+              borderRadius: 8,
+              padding: 11,
+              background: T.CREAM,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: T.MONO,
+                fontSize: 9,
+                letterSpacing: "1.2px",
+                textTransform: "uppercase",
+                color: T.GRAY_DK,
+                fontWeight: 800,
+              }}
+            >
+              {label}
+            </div>
+            <div style={{ fontFamily: T.SERIF, fontSize: 26, fontWeight: 850 }}>
+              {value}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TowerV3GapThemes({ view }: { view: TowerV3RuntimeViewModel }) {
+  return (
+    <div
+      data-testid="tower-gap-themes"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+        gap: 12,
+      }}
+    >
+      {view.gapThemes.map((theme) => (
+        <div
+          key={theme.themeId}
+          style={{
+            border: `1px solid ${T.BORDER}`,
+            borderRadius: 10,
+            padding: 14,
+            background: "#fff",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+              alignItems: "flex-start",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: T.SERIF,
+                fontSize: 17,
+                fontWeight: 800,
+                lineHeight: 1.15,
+                color: T.INK,
+              }}
+            >
+              {theme.title}
+            </div>
+            <span
+              style={{
+                fontFamily: T.MONO,
+                fontSize: 10,
+                whiteSpace: "nowrap",
+                color: T.GRAY_DK,
+                fontWeight: 800,
+              }}
+            >
+              {theme.affectedRecordCount} records
+            </span>
+          </div>
+          <p style={{ color: T.INK_2, fontSize: 13, lineHeight: 1.45 }}>
+            {theme.whyItMatters}
+          </p>
+          <div style={{ display: "grid", gap: 5, marginTop: 10 }}>
+            <SmallEvidenceLine
+              label="Required"
+              value={theme.requiredEvidence.slice(0, 2).join("; ")}
+            />
+            <SmallEvidenceLine
+              label="Handoff"
+              value={`${theme.moduleHandoff}${theme.ownerOrSteward ? ` · ${theme.ownerOrSteward}` : ""}`}
+            />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -6749,11 +7105,14 @@ export function TowerIndexPage({
     [sendToAtlas],
   );
 
-  const towerMastheadName = cxoView?.tenantName ?? tenantName;
-  const towerBudgetEnvelope = cxoView
+  const towerMastheadName =
+    towerV3RuntimeView?.tenantName ?? cxoView?.tenantName ?? tenantName;
+  const towerBudgetEnvelope = !towerV3RuntimeView && cxoView
     ? findCxoCard(cxoView.cards, "total_it_budget_fy26")
     : null;
-  const towerEntityCount = budgetRollups?.length ?? 0;
+  const towerEntityCount = towerV3RuntimeView
+    ? towerV3RuntimeView.metricCount + towerV3RuntimeView.valueRecordCount
+    : (budgetRollups?.length ?? 0);
 
   const handleAtlasSuggestion = useCallback(
     (suggestion: AtlasSuggestion) => {
@@ -6884,7 +7243,9 @@ export function TowerIndexPage({
                     <span style={{ color: T.GRAY }}>·</span>
                     <span>
                       {towerEntityCount} entit
-                      {towerEntityCount === 1 ? "y" : "ies"}
+                      {towerV3RuntimeView
+                        ? ` context record${towerEntityCount === 1 ? "" : "s"}`
+                        : ` entit${towerEntityCount === 1 ? "y" : "ies"}`}
                     </span>
                   </>
                 ) : null}

@@ -9,7 +9,6 @@ import { buildTowerV3ContextPackFromTenantInputs } from "@/lib/enterprise-knowle
 import { listTowerBudgetRollupsForClient } from "@/lib/tower/tower-budget-rollups";
 import {
   isMeridianTowerRuntimeTenant,
-  isTowerV3ContextRuntimeEnabled,
 } from "@/lib/tower/tower-v3-runtime-flag";
 import { buildTowerV3RuntimeViewModel } from "@/lib/tower/tower-v3-runtime-view";
 
@@ -48,7 +47,6 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
     }).catch(() => []),
   ]);
   const towerV3RuntimeView =
-    isTowerV3ContextRuntimeEnabled() &&
     (isMeridianTowerRuntimeTenant(client?.key) ||
       isMeridianTowerRuntimeTenant(requestedClient) ||
       isMeridianTowerRuntimeTenant(client?.name))
