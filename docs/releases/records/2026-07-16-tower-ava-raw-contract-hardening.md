@@ -34,6 +34,7 @@ Tower aVa now has a tighter raw answer contract so normal Claude output is less 
 - Follow-up hardening after live proof: refined internal-ID detection to avoid false positives on normal prose, allowed complete larger tables instead of forcing fallback, and strengthened prompt language to avoid the phrase `realized value` when claim gates do not allow it.
 - Second follow-up after production proof: blocks unsafe visible outcome-proof words such as `ROI`, `savings`, `realized value`, `measured outcome`, `proven value`, `delivered value`, and `value captured`; parsed Claude output that fails visible-answer validation is replaced by the deterministic Tower fallback; scaffold-label detection now catches real labels without rejecting normal advisory prose such as `contract evidence: service scope`.
 - Third follow-up after production proof: restores strict board-readable table shape by rejecting tables with more than 5 rows and instructing Claude to choose the top 5 or summarize the remainder.
+- Fourth follow-up after production proof: normalizes raw Tower measure/fact labels before prompt assembly so fields such as `measured_value_ytd` are described to Claude as finance-attestation pending value figures instead of outcome-proof evidence.
 
 ## QA / Validation
 
@@ -41,6 +42,7 @@ Tower aVa now has a tighter raw answer contract so normal Claude output is less 
 - Pass: live Meridian proof after PR #4874 deploy identified remaining visible-language defects before final acceptance: 4/5 raw contracts passed, but only 3/5 visible safety checks passed.
 - Pass: focused test coverage now verifies unsafe outcome-proof language is blocked and normal prose punctuation is not misclassified as a scaffold label.
 - Pass: live Meridian proof after PR #4876 deploy showed clean visible language and 5/5 raw contracts, but 2 tables exceeded the board-readable 5-row limit; this PR restores strict table-shape validation before final acceptance.
+- Pass: focused test coverage now verifies raw measured-value field labels are not exposed in the Claude prompt when outcome-proof language is blocked.
 - Pending: Tower lineage/runtime audits before merge.
 - Pending: release check before PR.
 - Pending: signed-in Meridian Tower proof after merge/deploy.

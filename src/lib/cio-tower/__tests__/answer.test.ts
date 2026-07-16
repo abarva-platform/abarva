@@ -224,6 +224,56 @@ describe('cio tower answer contract', () => {
     expect(prompt).not.toContain('CHART');
   });
 
+  it('does not expose raw measured-value labels to Claude when outcome proof is blocked', () => {
+    const prompt = buildCioTowerClaudePrompt(
+      context({
+        measures: [
+          {
+            measure_key: 'measured_value_ytd',
+            label: 'Measured value YTD',
+            description: 'Legacy bridge field.',
+            period: 'fy26',
+            basis: 'measured',
+            scope: 'enterprise_envelope',
+            value_numeric: '185700000',
+            value_json: {},
+            source_fact_keys: ['fact-value-1'],
+            formula_version: 'cio_tower_v1',
+          },
+        ],
+        relevantFacts: [
+          {
+            fact_key: 'fact-value-1',
+            entity_key: 'initiative-1',
+            entity_type: 'initiative',
+            entity_display_name: 'Agent Assist non-clinical adoption',
+            measure: 'measured_value_ytd',
+            scope: 'initiative',
+            view: 'value',
+            amount_type: 'none',
+            basis: 'measured',
+            period: 'fy26',
+            value_numeric: '93000000',
+            value_text: null,
+            unit: 'usd',
+            value_source: 'tenant_file',
+            confidence: 'high',
+            source_key: 'source-1',
+            source_row: '14',
+            attributes: {},
+          },
+        ],
+      }),
+    );
+
+    expect(prompt).toContain('Value figure awaiting finance attestation');
+    expect(prompt).toContain('finance-attestation pending');
+    expect(prompt).not.toContain('Measured value YTD');
+    expect(prompt).not.toContain('measured_value_ytd');
+    expect(prompt).not.toContain('formula cio_tower_v1');
+    expect(prompt).not.toContain('source source-1 row 14');
+  });
+
   it('blocks unsafe outcome-proof language while allowing natural prose punctuation', () => {
     expect(
       validateVisibleAnswer(
@@ -233,6 +283,11 @@ describe('cio tower answer contract', () => {
     expect(
       validateVisibleAnswer(
         'None of the claims can move to realized value until baselines are signed.',
+      ),
+    ).toContain('unsupported_outcome_proof_language');
+    expect(
+      validateVisibleAnswer(
+        'The dashboard shows $185.7M in measured-value-YTD figures.',
       ),
     ).toContain('unsupported_outcome_proof_language');
     expect(
