@@ -70,8 +70,8 @@ function NavInner({ activePage, compact = false }: NavProps) {
 
   // ── Active states · pathname first (truth), activePage prop fallback
   // for legacy callers.
-  // tenantProgramsActive removed in H1 nav reorganization (Programs
-  // / Engagements is no longer a top-nav surface; Moves replaces it).
+  // tenantProgramsActive removed in H1 nav reorganization. Moves
+  // replaces legacy Programs / Engagements in the signed-in top nav.
   const tenantIntelligenceActive = pathname.startsWith('/tenant/') && pathname.includes('/intelligence')
   const tenantTowerActive = pathname.startsWith('/tenant/') && pathname.includes('/tower')
   const homeActive         = pathname === '/home' || pathname.startsWith('/home/')
@@ -219,7 +219,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
       }}>
 
         {/* ── Wordmark ─────────────────────────────────────────────────────── */}
-        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: `${SPACING.md}px`, marginRight: `${SPACING.xl}px`, flexShrink: 0 }}>
+        <Link href="/home" aria-label="AbarVa Knowledge" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: `${SPACING.md}px`, marginRight: `${SPACING.xl}px`, flexShrink: 0 }}>
           <AbarVaLogo
             variant="wordmark"
             size="md"
@@ -230,13 +230,13 @@ function NavInner({ activePage, compact = false }: NavProps) {
 
         {/* ══════════════════════════════════════════════════════════════════
             SIGNED-IN OPERATORS (admin / investor / maestro) — product-map 5 items:
-            Home · Engagements · Intelligence · Control Tower · Platform
+            Knowledge · Moves · Intelligence · Source · Tower
             Client dropdown stays (elevated roles switch; maestro sees static label).
             When compact=true (MaestroChrome has PrimaryNav below), skip the
             primary items to avoid a duplicate nav row.
         ══════════════════════════════════════════════════════════════════ */}
         {/* H1 (2026-05-07) · Canonical 5-item nav per Home Refinement
-            Package NAV_REORGANIZATION.md. Order: Home · Intelligence ·
+            Package NAV_REORGANIZATION.md. Order: Knowledge · Intelligence ·
             Moves · Source · Tower. Labels: "Moves" (URL stays
             /strategic-moves for SEO), "Tower" (was "Control Tower").
             Metadata pendant: src/lib/home/top-nav-items.ts (PR-H5).
@@ -245,7 +245,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
         {signedIn && isOperator && (
           <>
             {staticClientLabel()}
-            {!compact && navLink('Home', '/home', homeActive)}
+            {!compact && navLink('Knowledge', '/home', homeActive)}
             {!compact && canShow('intelligence') && navLink('Intelligence', intelligencePath, intelligenceActive)}
             {!compact && canShow('programs') && navLink('Moves', '/strategic-moves', strategicMovesActive)}
             {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}
@@ -258,7 +258,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
         {signedIn && isClient && (
           <>
             {staticClientLabel()}
-            {!compact && navLink('Home', '/home', homeActive)}
+            {!compact && navLink('Knowledge', '/home', homeActive)}
             {!compact && canShow('intelligence') && navLink('Intelligence', intelligencePath, intelligenceActive)}
             {!compact && canShow('programs') && navLink('Moves', '/strategic-moves', strategicMovesActive)}
             {!compact && canShow('source') && navLink('Source', '/source', sourceActive)}

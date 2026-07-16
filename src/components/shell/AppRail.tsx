@@ -12,7 +12,7 @@ import { resolveModuleAccess, type ProductModule } from '@/lib/auth/module-acces
 export interface AppRailProps {}
 
 const NAV_ITEMS = [
-  { key: 'home',         label: 'Home',     glyph: 'Hm', href: '/home' },
+  { key: 'home',         label: 'Knowledge', glyph: 'Kn', href: '/home' },
   { key: 'setup',        label: 'Admin',    glyph: 'Ad', href: '/admin' },
   { key: 'programs',     label: 'Moves',    glyph: 'Mv', href: '/strategic-moves' },
   { key: 'source',       label: 'Source',   glyph: 'So', href: '/source' },

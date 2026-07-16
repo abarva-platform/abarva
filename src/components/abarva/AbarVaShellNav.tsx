@@ -45,15 +45,15 @@ export interface AbarVaShellNavSurface {
 export const ABARVA_SHELL_SURFACES: ReadonlyArray<AbarVaShellNavSurface> = [
   {
     key: 'home',
-    label: 'Home',
+    label: 'Knowledge',
     href: '/home',
-    workflowQuestion: 'Where am I in the program?',
+    workflowQuestion: 'What can I trust about the client context?',
   },
   {
     key: 'programs',
-    label: 'Programs',
-    href: '/engagements',
-    workflowQuestion: 'What programs need my attention?',
+    label: 'Moves',
+    href: '/strategic-moves',
+    workflowQuestion: 'What execution moves need my attention?',
   },
   {
     key: 'source',
@@ -69,7 +69,7 @@ export const ABARVA_SHELL_SURFACES: ReadonlyArray<AbarVaShellNavSurface> = [
   },
   {
     key: 'tower',
-    label: 'Control Tower',
+    label: 'Tower',
     href: '/tower',
     workflowQuestion: 'Where is risk concentrated?',
   },

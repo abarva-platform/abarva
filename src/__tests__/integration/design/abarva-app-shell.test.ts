@@ -35,6 +35,27 @@ describe('ABARVA_SHELL_CONFIG values', () => {
     expect(surfaces).toContain('programs');
   });
 
+  it('navItems starts with Knowledge routed to /home', () => {
+    expect(ABARVA_SHELL_CONFIG.navItems[0]).toMatchObject({
+      surface: 'home',
+      label: 'Knowledge',
+      href: '/home',
+    });
+  });
+
+  it('navItems use canonical global product routes, not tenant-specific fallbacks', () => {
+    expect(ABARVA_SHELL_CONFIG.navItems).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ surface: 'programs', label: 'Moves', href: '/strategic-moves' }),
+        expect.objectContaining({ surface: 'intelligence', href: '/intelligence' }),
+        expect.objectContaining({ surface: 'control_tower', label: 'Tower', href: '/tower' }),
+      ]),
+    );
+    for (const item of ABARVA_SHELL_CONFIG.navItems) {
+      expect(item.href).not.toContain('/tenant/apex-retail/');
+    }
+  });
+
   it('navItems includes source surface', () => {
     const surfaces = ABARVA_SHELL_CONFIG.navItems.map(i => i.surface);
     expect(surfaces).toContain('source');

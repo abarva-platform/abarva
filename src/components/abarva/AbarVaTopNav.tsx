@@ -17,16 +17,17 @@ import { AbarvaWordmark as AbarVaWordmarkPrimitive } from '@/components/abarva/A
 // ---------------------------------------------------------------------
 
 export interface AbarvaTopNavSurface {
-  key: 'programs' | 'tower' | 'intelligence' | 'source' | 'admin';
+  key: 'home' | 'intelligence' | 'programs' | 'source' | 'tower' | 'admin';
   label: string;
   href: string;
 }
 
 export const ABARVA_TOP_NAV_SURFACES: ReadonlyArray<AbarvaTopNavSurface> = [
-  { key: 'programs', label: 'Programs', href: '/engagements' },
-  { key: 'tower', label: 'Control Tower', href: '/tower' },
+  { key: 'home', label: 'Knowledge', href: '/home' },
   { key: 'intelligence', label: 'Intelligence', href: '/intelligence' },
+  { key: 'programs', label: 'Moves', href: '/strategic-moves' },
   { key: 'source', label: 'Source', href: '/source' },
+  { key: 'tower', label: 'Tower', href: '/tower' },
   { key: 'admin', label: 'Admin', href: '/admin' },
 ];
 
@@ -60,12 +61,13 @@ interface AbarvaTopNavProps {
    */
   active?: AbarvaTopNavSurface['key'];
   /**
-   * Optional homepage href for the wordmark. Defaults to "/".
+   * Optional homepage href for the wordmark. Defaults to the signed-in
+   * Knowledge surface so legacy callers do not fall back to marketing.
    */
   homeHref?: string;
 }
 
-export function AbarvaTopNav({ active, homeHref = '/' }: AbarvaTopNavProps) {
+export function AbarvaTopNav({ active, homeHref = '/home' }: AbarvaTopNavProps) {
   return (
     <nav
       aria-label="AbarVa top navigation"
