@@ -293,6 +293,7 @@
     "audit:tower-knowledge-pressure": "npx tsx scripts/audit/build-tower-knowledge-pressure-proof.ts",
     "audit:tower-v3-meridian-context-pack": "npx tsx scripts/audit/build-tower-v3-meridian-context-pack-proof.ts",
     "audit:tower-v3-runtime-wiring": "npx tsx scripts/audit/build-tower-v3-runtime-wiring-proof.ts",
+    "audit:tower-tab-data-lineage": "npx tsx scripts/audit/tower-v3-default-runtime-cutover.ts",
     "audit:tower-v3-source-of-truth-alignment": "npx tsx scripts/audit/check-tower-v3-source-of-truth-alignment.ts",
     "audit:knowledge-layer-signed-in-preview": "npx tsx scripts/audit/build-knowledge-layer-signed-in-preview-proof.ts",
     "audit:knowledge-layer-live-preview": "npx tsx scripts/audit/build-knowledge-layer-live-preview-proof.ts",

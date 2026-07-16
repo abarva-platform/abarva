@@ -25,6 +25,52 @@ export interface TowerV3RuntimeMetricFamily {
   evidenceIds: string[];
 }
 
+export type TowerV3DefaultTabKey =
+  | "overview"
+  | "value"
+  | "budget"
+  | "portfolio"
+  | "benchmark"
+  | "evidence"
+  | "insights";
+
+export type TowerV3TabSourceClassification =
+  | "tower_context_pack_v3_derived"
+  | "tower_projection_v3_derived";
+
+export interface TowerV3RuntimeTab {
+  key: TowerV3DefaultTabKey;
+  label: string;
+  sourceClassification: TowerV3TabSourceClassification;
+  sourcePosture: string;
+  rows: number;
+  evidenceRefs: string[];
+  caveat: string;
+}
+
+export type TowerExecutiveRole = "CIO" | "CFO";
+export type TowerExecutiveClaimStrength =
+  | "measured"
+  | "baseline_ready"
+  | "hypothesis"
+  | "evidence_gap";
+
+export interface TowerExecutiveInsight {
+  role: TowerExecutiveRole;
+  insightTitle: string;
+  insightSummary: string;
+  whyItMatters: string;
+  evidenceBasis: string;
+  decisionImplication: string;
+  nextAction: string;
+  moduleHandoff: "Tower" | "Moves" | "Source" | "Admin";
+  claimStrength: TowerExecutiveClaimStrength;
+  evidenceRefsUsed: string[];
+  contextGapsUsed: string[];
+  valueClaimGateStatus: TowerValueClaim["gateStatus"];
+  watchOut?: string;
+}
+
 export interface TowerV3RuntimeViewModel {
   enabled: true;
   tenantKey: string;
@@ -47,6 +93,8 @@ export interface TowerV3RuntimeViewModel {
     gateStatus: TowerValueClaim["gateStatus"];
     evidenceIds: string[];
   }>;
+  defaultTabs: TowerV3RuntimeTab[];
+  executiveInsights: TowerExecutiveInsight[];
   gapThemes: TowerV3GapTheme[];
   caveats: string[];
   nextMeasurementActions: string[];
@@ -82,6 +130,27 @@ function evidenceIdsForRecordsOrPack(
   const recordEvidence = evidenceIdsForRecords(records);
   if (recordEvidence.length > 0) return recordEvidence;
   return unique(pack.evidence.map((item) => item.evidenceId)).slice(0, 5);
+}
+
+function gapIdsForPack(pack: TowerContextPack, pattern: RegExp, limit = 4): string[] {
+  const matches = pack.gaps
+    .filter((gap) => pattern.test(`${gap.title} ${gap.description}`))
+    .map((gap) => gap.gapId);
+  if (matches.length > 0) return unique(matches).slice(0, limit);
+  return pack.gaps.map((gap) => gap.gapId).slice(0, limit);
+}
+
+function evidenceForPackPattern(
+  pack: TowerContextPack,
+  pattern: RegExp,
+  limit = 5,
+): string[] {
+  const records = [...pack.towerMetricRecords, ...pack.towerValueRecords].filter(
+    (record) => pattern.test(`${record.label} ${compactValue(record.value)} ${record.sourceDimension}`),
+  );
+  const evidence = evidenceIdsForRecords(records);
+  if (evidence.length > 0) return evidence.slice(0, limit);
+  return pack.evidence.map((item) => item.evidenceId).slice(0, limit);
 }
 
 function countRecords(
@@ -242,6 +311,195 @@ export function aggregateTowerV3GapThemes(pack: TowerContextPack): TowerV3GapThe
   return themes.filter((theme) => theme.affectedRecordCount > 0);
 }
 
+function buildTowerV3DefaultTabs(args: {
+  pack: TowerContextPack;
+  metricFamilies: TowerV3RuntimeMetricFamily[];
+  valueHypotheses: TowerV3RuntimeViewModel["valueHypotheses"];
+  gapThemes: TowerV3GapTheme[];
+  executiveInsights: TowerExecutiveInsight[];
+}): TowerV3RuntimeTab[] {
+  const { pack, metricFamilies, valueHypotheses, gapThemes, executiveInsights } = args;
+  const packEvidence = pack.evidence.map((item) => item.evidenceId);
+  return [
+    {
+      key: "overview",
+      label: "Overview",
+      sourceClassification: "tower_context_pack_v3_derived",
+      sourcePosture: "v3 context-derived measurement and readiness view",
+      rows: pack.towerMetricRecords.length + pack.towerValueRecords.length,
+      evidenceRefs: packEvidence.slice(0, 5),
+      caveat: "Outcome proof is blocked until value claims pass the TowerValueClaim gate.",
+    },
+    {
+      key: "value",
+      label: "Value",
+      sourceClassification: "tower_projection_v3_derived",
+      sourcePosture: "value hypotheses from active v3 program context",
+      rows: valueHypotheses.length,
+      evidenceRefs: unique(valueHypotheses.flatMap((item) => item.evidenceIds)).slice(0, 5),
+      caveat: "Values are forecast or planning-grade until finance evidence is reconciled.",
+    },
+    {
+      key: "budget",
+      label: "Budget",
+      sourceClassification: "tower_projection_v3_derived",
+      sourcePosture: "spend and value signals from v3 spend/value context",
+      rows: pack.towerMetricRecords.filter((record) => record.sourceDimension === "08_spend_value").length,
+      evidenceRefs: evidenceForPackPattern(pack, /spend|budget|maintenance|net-new|value/i),
+      caveat: "Budget actuals stay planning-grade unless a finance-controlled extract is loaded.",
+    },
+    {
+      key: "portfolio",
+      label: "Portfolio",
+      sourceClassification: "tower_projection_v3_derived",
+      sourcePosture: "program and initiative records from active v3 context",
+      rows: pack.towerValueRecords.filter((record) => record.sourceDimension === "09_programs_initiatives").length,
+      evidenceRefs: evidenceForPackPattern(pack, /program|initiative|agent|analytics|automation|platform/i),
+      caveat: "Programs are not approved investments unless promotion and governance evidence support them.",
+    },
+    {
+      key: "benchmark",
+      label: "Benchmark",
+      sourceClassification: "tower_context_pack_v3_derived",
+      sourcePosture: "benchmark context and blocker themes only",
+      rows: gapThemes.length,
+      evidenceRefs: unique(gapThemes.flatMap((theme) => theme.representativeEvidenceRefs)).slice(0, 5),
+      caveat: "This tab does not imply tenant performance against benchmark without tenant baselines and actuals.",
+    },
+    {
+      key: "evidence",
+      label: "Evidence",
+      sourceClassification: "tower_context_pack_v3_derived",
+      sourcePosture: "evidence refs, context gaps, and claim gates from TowerContextPack",
+      rows: pack.evidence.length + pack.gaps.length,
+      evidenceRefs: packEvidence.slice(0, 5),
+      caveat: "Bridge rows remain diagnostic only until reconciled to governed facts and evidence.",
+    },
+    {
+      key: "insights",
+      label: "Insights",
+      sourceClassification: "tower_projection_v3_derived",
+      sourcePosture: "role-specific executive insights derived from the same v3 pack",
+      rows: executiveInsights.length,
+      evidenceRefs: unique(executiveInsights.flatMap((item) => item.evidenceRefsUsed)).slice(0, 5),
+      caveat: "Insights are decision guidance, not financial outcome proof.",
+    },
+  ];
+}
+
+function buildTowerExecutiveInsights(args: {
+  pack: TowerContextPack;
+  gateCounts: Record<TowerValueClaim["gateStatus"], number>;
+}): TowerExecutiveInsight[] {
+  const { pack, gateCounts } = args;
+  const defaultGate: TowerValueClaim["gateStatus"] =
+    gateCounts.allowed > 0 ? "allowed" : gateCounts.caveated > 0 ? "caveated" : "blocked";
+  const foundationEvidence = evidenceForPackPattern(
+    pack,
+    /aws|databricks|medallion|semantic|lineage|freshness|quality|identity/i,
+  );
+  const agentAssistEvidence = evidenceForPackPattern(
+    pack,
+    /agent assist|contact|aht|first contact|repeat contact|transfer|csat|member/i,
+  );
+  const programEvidence = evidenceForPackPattern(
+    pack,
+    /program|initiative|expected|planned|forecast|automation|analytics/i,
+  );
+  const serviceEvidence = evidenceForPackPattern(pack, /service|contract|sla|vendor|managed/i);
+  const baselineGaps = gapIdsForPack(pack, /baseline|metric|actual|cadence|formula/i);
+  const foundationGaps = gapIdsForPack(pack, /aws|databricks|platform|lineage|identity|certif/i);
+  const valueGaps = gapIdsForPack(pack, /value|finance|actual|baseline|benefit/i);
+  const serviceGaps = gapIdsForPack(pack, /contract|sla|vendor|service|scope/i);
+
+  return [
+    {
+      role: "CIO",
+      insightTitle: "The data foundation is the critical path.",
+      insightSummary:
+        "The same readiness blockers show up across platform, analytics, and AI use cases: certified lineage, semantic ownership, identity, and operating controls.",
+      whyItMatters:
+        "If the CIO funds use cases before the shared foundation is certified, Tower will keep showing attractive hypotheses without production-safe execution gates.",
+      evidenceBasis:
+        "TowerMetricRecords from spend/value and metrics/outcomes context, plus foundation-related context gaps.",
+      decisionImplication:
+        "Treat AWS/Databricks and identity readiness as shared transformation infrastructure, not as a downstream enhancement.",
+      nextAction:
+        "Move the lakehouse foundation, identity spine, and data-product certification gates into a phase-gated Moves plan.",
+      moduleHandoff: "Moves",
+      claimStrength: "evidence_gap",
+      evidenceRefsUsed: foundationEvidence,
+      contextGapsUsed: foundationGaps,
+      valueClaimGateStatus: defaultGate,
+      watchOut:
+        "Do not move healthcare AI into production scale until PHI controls, lineage, and integration paths are evidenced.",
+    },
+    {
+      role: "CIO",
+      insightTitle: "Agent Assist is a transformation bet, not just a contact-center tool.",
+      insightSummary:
+        "Agent Assist depends on transcript, CRM, claims, intent, QA-label, and operating process evidence; those dependencies make it a platform and workflow readiness decision.",
+      whyItMatters:
+        "The value case can be framed, but the CIO needs baseline and workflow evidence before promising operational impact.",
+      evidenceBasis:
+        "TowerMetricRecords tied to contact-center and operational process context with evidence refs and gaps.",
+      decisionImplication:
+        "Keep Agent Assist in measurement design until AHT, containment, quality, PHI, and owner signoff are loaded.",
+      nextAction:
+        "Create a 30-day measurement sprint for contact-center baseline, QA-label evidence, and control ownership.",
+      moduleHandoff: "Tower",
+      claimStrength: "hypothesis",
+      evidenceRefsUsed: agentAssistEvidence,
+      contextGapsUsed: baselineGaps,
+      valueClaimGateStatus: defaultGate,
+      watchOut:
+        "A compelling use case can still fail the gate if the source system lineage and workflow owners are unclear.",
+    },
+    {
+      role: "CFO",
+      insightTitle: "Value is visible, but not claimable yet.",
+      insightSummary:
+        "Tower can show value hypotheses from active program context, but the claim gate blocks outcome-proof language because finance-attested actuals and baselines are not reconciled.",
+      whyItMatters:
+        "This protects board communications: the CFO can discuss expected value and measurement readiness without overstating results.",
+      evidenceBasis:
+        "TowerValueRecords and TowerValueClaims from program context, with caveated claim-gate status.",
+      decisionImplication:
+        "Approve measurement design and baseline ownership before approving value commitments.",
+      nextAction:
+        "Assign finance owners for baselines, actuals, benefit formulas, and reporting cadence before board use.",
+      moduleHandoff: "Tower",
+      claimStrength: "hypothesis",
+      evidenceRefsUsed: programEvidence,
+      contextGapsUsed: valueGaps,
+      valueClaimGateStatus: defaultGate,
+      watchOut:
+        "Do not present forecast value as certified performance until the TowerValueClaim gate allows it.",
+    },
+    {
+      role: "CFO",
+      insightTitle: "Source needs contract economics before commercial benefit claims.",
+      insightSummary:
+        "Managed-service, vendor, SLA, and scope evidence is still incomplete, so Tower should not convert sourcing or operational ideas into commercial benefit claims.",
+      whyItMatters:
+        "Without contract economics and service baselines, the CFO cannot separate cost avoidance, budget movement, and measurable benefit.",
+      evidenceBasis:
+        "Service-scope records, contract/SLA blocker themes, and supporting evidence refs from the v3 pack.",
+      decisionImplication:
+        "Use Source to gather contract, SLA, renewal, and vendor-performance evidence before commercial claims are made.",
+      nextAction:
+        "Create a Source evidence request for service scope, run baseline, SLA/KPI schedules, renewal windows, and vendor performance.",
+      moduleHandoff: "Source",
+      claimStrength: "evidence_gap",
+      evidenceRefsUsed: serviceEvidence,
+      contextGapsUsed: serviceGaps,
+      valueClaimGateStatus: defaultGate,
+      watchOut:
+        "Commercial opportunities should stay as negotiation hypotheses until contract evidence is loaded.",
+    },
+  ];
+}
+
 export function buildTowerV3RuntimeViewModel(args: {
   tenantName: string;
   contextPack: TowerContextPack;
@@ -264,6 +522,12 @@ export function buildTowerV3RuntimeViewModel(args: {
       evidenceIds: record.evidenceIds.slice(0, 3),
     };
   });
+  const gapThemes = aggregateTowerV3GapThemes(contextPack);
+  const executiveInsights = buildTowerExecutiveInsights({
+    pack: contextPack,
+    gateCounts,
+  });
+  const metricFamilies = buildMetricFamilies(contextPack);
 
   return {
     enabled: true,
@@ -284,9 +548,17 @@ export function buildTowerV3RuntimeViewModel(args: {
     blockedOutcomeProof: !contextPack.towerValueClaims.some(
       (claim) => claim.realizedValueLanguageAllowed,
     ),
-    metricFamilies: buildMetricFamilies(contextPack),
+    metricFamilies,
     valueHypotheses,
-    gapThemes: aggregateTowerV3GapThemes(contextPack),
+    defaultTabs: buildTowerV3DefaultTabs({
+      pack: contextPack,
+      metricFamilies,
+      valueHypotheses,
+      gapThemes,
+      executiveInsights,
+    }),
+    executiveInsights,
+    gapThemes,
     caveats: [
       "Measurement plan only: finance-attested measurement evidence is not yet available.",
       "Targets and value hypotheses require owner signoff before board use.",
