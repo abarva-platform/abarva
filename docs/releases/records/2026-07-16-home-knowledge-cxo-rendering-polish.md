@@ -12,7 +12,7 @@
 
 Home Knowledge now renders the stored, Claude-derived enterprise narrative as a CXO briefing instead of a long paragraph or diagnostic directory. The update widens the usable canvas, structures the overview into executive cards, moves the proof visual to the top of Proof, removes duplicate module footer links, changes visible product-language copy from AbarVa to Nexus, and replaces the Use Cases tab with the top five candidate business use cases plus what can be framed now and what evidence is still needed.
 
-Follow-up browser proof caught two renderer closure gaps after the first deploy: stored Proof visual copy could still surface old product naming, and an upstream long summary sentence could still dominate the Overview lead. This release record also covers the narrow closure patch that normalizes all Home-surface visible stored strings to Nexus and clamps CXO briefing sentences for executive readability.
+Follow-up browser proof caught two renderer closure gaps after the first deploy: stored Proof visual copy could still surface old product naming, and an upstream long summary sentence could still dominate the Overview lead. This release record also covers the narrow closure patch that normalizes all Home-surface visible stored strings to Nexus, clamps CXO briefing sentences for executive readability, forces the proof-boundary card to use explicit bounded language, and lets the Home canvas use the full available page width.
 
 ## Layer Impact
 
@@ -38,6 +38,8 @@ Follow-up browser proof caught two renderer closure gaps after the first deploy:
   - Duplicate module footer links removed.
   - Visible AbarVa product copy changed to Nexus where the page describes the product capability.
   - Home-surface visible stored strings are normalized to Nexus at sanitize/render time so stored Claude-derived text does not leak old product naming.
+  - Evidence-boundary card now uses deterministic bounded copy instead of re-selecting a model sentence that can repeat the opening brief.
+  - CXO cards use a wider four-column desktop treatment and the page no longer centers the brief inside a narrow fixed-width column.
 - `src/components/home/HomeVisualBlockRenderer.tsx`
   - Structured Claude visual block text is normalized at render time so approved stored visual text cannot display old product naming on the Nexus Knowledge surface.
 - `src/components/home/__tests__/HomeSurface.test.tsx`
@@ -47,6 +49,7 @@ Follow-up browser proof caught two renderer closure gaps after the first deploy:
 
 - Pass: `npx eslint src/components/home/HomeSurface.tsx src/components/home/HomeVisualBlockRenderer.tsx src/components/home/__tests__/HomeSurface.test.tsx`
 - Pass: `npx jest src/components/home/__tests__/HomeSurface.test.tsx --runInBand`
+- Pass: Re-run targeted validation after the proof-boundary/canvas closure patch.
 - Pass: `git diff --check`
 - Pass: First deployed signed-in browser proof reached Meridian / Healthcare Demo and verified Use Cases, Evidence Gaps, and Context Confidence. It intentionally remained not-live-proven because Proof still surfaced old product naming and Overview still tripped a long-paragraph risk check.
 - Blocked: Local signed-in browser proof. `next dev --webpack --port 3902` started successfully, but the saved Meridian Clerk storage state redirected to `/sign-in` on the local host-mapped route. Treat deployed `https://app.abarva.ai` signed-in proof as the required browser evidence.
