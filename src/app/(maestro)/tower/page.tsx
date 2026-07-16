@@ -6,6 +6,8 @@ import {
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { loadCioTowerCxoView } from "@/lib/cio-tower/cxo-view-model";
 import { buildTowerV3ContextPackFromTenantInputs } from "@/lib/enterprise-knowledge/tower/tower-v3-context-pack-from-tenant-inputs";
+import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
+import { applyTowerCxoClaudeStory } from "@/lib/tower/tower-cxo-claude-story";
 import { listTowerBudgetRollupsForClient } from "@/lib/tower/tower-budget-rollups";
 import {
   isMeridianTowerRuntimeTenant,
@@ -46,20 +48,43 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
       tenantKey: client?.key ?? requestedClient,
     }).catch(() => []),
   ]);
-  const towerV3RuntimeView =
+  let towerV3RuntimeView =
     (isMeridianTowerRuntimeTenant(client?.key) ||
       isMeridianTowerRuntimeTenant(requestedClient) ||
       isMeridianTowerRuntimeTenant(client?.name))
-      ? buildTowerV3RuntimeViewModel({
-          tenantName,
-          contextPack: buildTowerV3ContextPackFromTenantInputs({
+      ? (() => {
+          const { contextPack } = buildTowerV3ContextPackFromTenantInputs({
             tenantKey: "meridian-health",
             tenantName,
             activeInputRoot:
               "datasets/tenant-inputs/active/meridian-health/current",
-          }).contextPack,
-        })
+          });
+          return buildTowerV3RuntimeViewModel({
+            tenantName,
+            contextPack,
+          });
+        })()
       : null;
+
+  if (
+    towerV3RuntimeView &&
+    isFeatureEnabled(
+      { clientKey: client?.key ?? requestedClient ?? towerV3RuntimeView.tenantKey },
+      "tower_cxo_claude_story_blocks",
+    )
+  ) {
+    const { contextPack } = buildTowerV3ContextPackFromTenantInputs({
+      tenantKey: "meridian-health",
+      tenantName,
+      activeInputRoot: "datasets/tenant-inputs/active/meridian-health/current",
+    });
+    const claudeStory = await applyTowerCxoClaudeStory({
+      view: towerV3RuntimeView,
+      contextPack,
+      tenantName,
+    });
+    towerV3RuntimeView = claudeStory.view;
+  }
 
   return (
     <TowerIndexPage

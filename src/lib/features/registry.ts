@@ -87,11 +87,19 @@ export type FeatureFlagKey =
   | "deliverable_structured_exhibits"
   | "deliverable_quality_contract"
   | "intelligence_companion_canvas"
+  | "tower_cxo_claude_story_blocks"
   | "moves_phase_workspace_v2"
   | "moves_pattern_assembly"
   | "moves_ava_chat_hardening";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
+  {
+    key: "tower_cxo_claude_story_blocks",
+    summary:
+      "Tower CXO story blocks: uses audited Claude to synthesize the executive story and visual-spec contract from the deterministic TowerContextPack. AbarVa still owns facts, values, claim gates, and rendering; Claude only writes validated CIO/CFO business wording and exhibit intent. Tenant opt-in; Meridian first. Env allowlist: ABARVA_FEATURE_TOWER_CXO_CLAUDE_STORY_BLOCKS_TENANTS.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
+  },
   {
     key: "moves_ava_chat_hardening",
     summary:
