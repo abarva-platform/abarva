@@ -251,6 +251,42 @@ function factValue(row: CioTowerFactRow): string {
   return "not loaded";
 }
 
+function humanizeFieldName(value: string): string {
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\bfy(\d{2})\b/gi, "FY$1")
+    .replace(/\bytd\b/gi, "YTD")
+    .replace(/\bit\b/gi, "IT");
+}
+
+function safeBasisLabel(value: string | null | undefined): string {
+  if (!value) return "basis not loaded";
+  const normalized = value.trim().toLowerCase();
+  if (/measured|realized|actual/.test(normalized)) {
+    return "finance-attestation pending";
+  }
+  if (/committed/.test(normalized)) return "committed";
+  if (/forecast|planned|promise/.test(normalized)) return "forecast/planning";
+  return humanizeFieldName(value);
+}
+
+function safeMeasureLabel(labelOrKey: string | null | undefined): string {
+  const raw = (labelOrKey ?? "").trim();
+  if (!raw) return "Tower measure";
+  const normalized = raw.toLowerCase().replace(/[_-]+/g, " ");
+  if (/measured\s+value|realized\s+value|value\s+ytd/.test(normalized)) {
+    return "Value figure awaiting finance attestation";
+  }
+  if (/promised\s+value|committed\s+value/.test(normalized)) {
+    return "Forecast value commitment";
+  }
+  if (/\broi\b/.test(normalized)) return "Return case";
+  if (/savings/.test(normalized)) return "Cost-reduction estimate";
+  return humanizeFieldName(raw);
+}
+
 function normalizeVisibleText(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
@@ -265,7 +301,7 @@ export function validateVisibleAnswer(text: string): string[] {
     ["visible_scaffold_label", /(^|\n)\s*(Read|Evidence|Implication|Next move):/i],
     [
       "unsupported_outcome_proof_language",
-      /\b(ROI|savings|achieved|realized value|measured outcome|proven value|delivered value|value captured)\b/i,
+      /\b(ROI|savings|achieved|realized[-\s]?value|measured[-\s]?value|measured[-\s]?outcome|proven[-\s]?value|delivered[-\s]?value|value captured)\b/i,
     ],
     [
       "internal_data_plane_language",
@@ -360,22 +396,22 @@ export function buildCioTowerClaudePrompt(
   context: CioTowerPromptContext,
 ): string {
   const measureLines = context.measures.map((measure) => {
-    const label = measure.label ?? measure.measure_key;
+    const label = safeMeasureLabel(measure.label ?? measure.measure_key);
     const value =
       measure.value_numeric === null
         ? "not loaded"
         : money(measure.value_numeric);
-    return `- ${label}: ${value} (${measure.period}, ${measure.basis}; formula ${measure.formula_version}; ${measure.source_fact_keys.length} supporting facts)`;
+    return `- ${label}: ${value} (${humanizeFieldName(measure.period)}, ${safeBasisLabel(measure.basis)})`;
   });
 
   const factLines = context.relevantFacts.slice(0, 18).map((fact, index) => {
     const name =
       fact.entity_display_name ?? fact.entity_key ?? `Fact ${index + 1}`;
-    return `- ${name}: ${fact.measure} = ${factValue(fact)} (${fact.period}, ${fact.basis}, ${fact.confidence}; source ${fact.source_key ?? "unknown"} row ${fact.source_row ?? "unknown"})`;
+    return `- ${name}: ${safeMeasureLabel(fact.measure)} = ${factValue(fact)} (${humanizeFieldName(fact.period)}, ${safeBasisLabel(fact.basis)}, ${fact.confidence} confidence)`;
   });
 
   const relationshipLines = context.relationships.slice(0, 12).map((rel) => {
-    return `- ${rel.from_name ?? "unknown"} ${rel.relationship_type} ${rel.to_name ?? "unknown"} (${rel.confidence}; source ${rel.source_key ?? "unknown"} row ${rel.source_row ?? "unknown"})`;
+    return `- ${rel.from_name ?? "unknown"} ${humanizeFieldName(rel.relationship_type)} ${rel.to_name ?? "unknown"} (${rel.confidence} confidence)`;
   });
 
   const gapLines = context.gaps.map((gap) => `- ${gap}`);
@@ -383,7 +419,7 @@ export function buildCioTowerClaudePrompt(
     `- Projection role: ${context.valueClaimPolicy.projectionRole}.`,
     `- Source-of-truth status: ${context.valueClaimPolicy.sourceOfTruthStatus}; v3 reconciliation: ${context.valueClaimPolicy.v3ReconciliationStatus}.`,
     `- Realized-value language allowed: ${context.valueClaimPolicy.realizedValueLanguageAllowed ? "yes" : "no"}.`,
-    `- Claim gate: ${context.valueClaimPolicy.claim.gateStatus}; ${context.valueClaimPolicy.claim.reason}`,
+    `- Claim gate: ${context.valueClaimPolicy.claim.gateStatus}; outcome-proof language stays blocked until finance-attested baseline and actuals evidence is reconciled.`,
   ];
   const towerV3Runtime = context.towerV3RuntimeView;
   const towerV3Lines = towerV3Runtime
@@ -401,7 +437,7 @@ export function buildCioTowerClaudePrompt(
         "- Top value hypotheses:",
         ...towerV3Runtime.valueHypotheses.slice(0, 8).map(
           (item) =>
-            `  - ${item.label}: ${item.value}; basis ${item.claimBasis}; gate ${item.gateStatus}; evidence ${item.evidenceIds.join(", ") || "required"}`,
+            `  - ${item.label}: ${item.value}; basis ${safeBasisLabel(item.claimBasis)}; gate ${item.gateStatus}; proof still required`,
         ),
         "- Executive blocker themes:",
         ...towerV3Runtime.gapThemes.map(
