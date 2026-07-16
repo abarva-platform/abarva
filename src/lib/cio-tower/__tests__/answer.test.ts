@@ -309,6 +309,30 @@ describe('cio tower answer contract', () => {
     ).toThrow('cio_tower_visible_contract_invalid_table_shape');
   });
 
+  it('accepts complete larger tables while keeping malformed tables blocked', () => {
+    const parsed = parseVisibleAnswerContract(
+      JSON.stringify({
+        version: 'cio_tower_visible_answer_v1',
+        answer: 'Use the complete table for the executive read.',
+        tables: [
+          {
+            id: 'larger_table',
+            title: 'Complete ranked view',
+            columns: ['Initiative', 'Gate'],
+            rows: Array.from({ length: 8 }, (_, index) => [
+              `Initiative ${index + 1}`,
+              'Caveated',
+            ]),
+          },
+        ],
+        tabs: [],
+        followUpQuestion: null,
+      }),
+    );
+
+    expect(parsed.tables?.[0]?.rows).toHaveLength(8);
+  });
+
   it('routes portfolio-company budget and value-proof questions to the right Tower contracts', () => {
     expect(
       matchContractKey(

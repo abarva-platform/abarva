@@ -260,7 +260,7 @@ function validateVisibleAnswer(text: string): string[] {
   const checks: Array<[string, RegExp]> = [
     [
       "raw_id_or_internal_key",
-      /\b[A-Z]{2,}[A-Z0-9_-]*-\d{2,}\b|[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/i,
+      /\b[A-Z]{2,}[A-Z0-9_-]*-\d{2,}\b|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}/,
     ],
     ["visible_scaffold_label", /\b(Read|Evidence|Implication|Next move):/i],
     [
@@ -323,7 +323,6 @@ export function parseVisibleAnswerContract(
     if (
       table.columns.length === 0 ||
       table.columns.length > 4 ||
-      table.rows.length > 5 ||
       table.rows.some(
         (row) =>
           !Array.isArray(row) ||
@@ -425,7 +424,7 @@ export function buildCioTowerClaudePrompt(
     "- Do not mention Atlas. The agent is aVa.",
     "- If the data is incomplete, state the specific missing business field in plain English.",
     "- Do not describe value as realized, proven, harvested, or delivered unless the Tower value-claim policy below explicitly allows realized-value language.",
-    "- If realized-value language is not allowed, say the value is promised, planned, forecast, finance-attestation pending, or measurement readiness depending on the loaded fields.",
+    '- If realized-value language is not allowed, do not use the phrase "realized value" at all, even to say it is blocked. Say the value is promised, planned, forecast, finance-attestation pending, outcome-proof pending, or measurement readiness depending on the loaded fields.',
     "- Write like a human senior advisor: direct, concise, specific, and willing to disagree.",
     "- Shape the answer as a point of view: what this means, why it matters, and what the executive should inspect next.",
     "- Prefer 2-4 strong advisory paragraphs over mechanical explanation. Avoid robotic phrases like 'The CIO read is'.",

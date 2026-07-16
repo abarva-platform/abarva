@@ -31,10 +31,12 @@ Tower aVa now has a tighter raw answer contract so normal Claude output is less 
 
 - `src/lib/cio-tower/answer.ts`
 - `src/lib/cio-tower/__tests__/answer.test.ts`
+- Follow-up hardening after live proof: refined internal-ID detection to avoid false positives on normal prose, allowed complete larger tables instead of forcing fallback, and strengthened prompt language to avoid the phrase `realized value` when claim gates do not allow it.
 
 ## QA / Validation
 
 - Pass: `npx jest src/lib/cio-tower/__tests__/answer.test.ts --runInBand`
+- Pass: live Meridian proof identified follow-up fixes before final acceptance.
 - Pending: Tower lineage/runtime audits before merge.
 - Pending: release check before PR.
 - Pending: signed-in Meridian Tower proof after merge/deploy.
