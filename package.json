@@ -446,6 +446,7 @@
     "semantic2:l3-dossiers:eligibility": "npx tsx scripts/semantic2-dossier-eligibility-report.ts",
     "semantic2:l3-dossiers:proof-job": "node scripts/semantic2/run-l3-dossier-surface-proof.mjs",
     "moves:premium-artifacts:worker": "npx tsx src/scripts/process-deliverable-queue.ts",
+    "ops:archive-existing-moves": "npx tsx scripts/ops/archive-existing-moves.ts",
     "source:contract-optimization:load-skyharbor": "npx tsx scripts/source/load-skyharbor-contract-optimization.ts --apply",
     "ops:aca-job": "node scripts/ops/submit-aca-operator-job.mjs",
     "ops:semantic2:l3-dossiers:proof": "node scripts/ops/submit-aca-operator-job.mjs --script semantic2:l3-dossiers:proof-job",
