@@ -100,25 +100,59 @@ describe("Tower v3 runtime view", () => {
     ).toBe(true);
   });
 
-  it("does not expose raw JSON or unsupported outcome language in the visible runtime view model", () => {
+  it("creates a CXO-facing business story separate from runtime proof language", () => {
+    const { contextPack } = proof();
+    const view = buildTowerV3RuntimeViewModel({
+      tenantName: "Healthcare Demo",
+      contextPack,
+    });
+
+    expect(view.cxoStory.tenantDisplayName).toBe("Meridian");
+    expect(view.cxoStory.cards).toHaveLength(4);
+    expect(Object.keys(view.cxoStory.tabs)).toEqual([
+      "overview",
+      "value",
+      "budget",
+      "portfolio",
+      "benchmark",
+      "evidence",
+      "insights",
+    ]);
+    expect(
+      Object.values(view.cxoStory.tabs).every(
+        (tab) =>
+          tab.headline.length > 0 &&
+          tab.summary.length > 0 &&
+          tab.decisionImplication.length > 0 &&
+          tab.nextAction.length > 0,
+      ),
+    ).toBe(true);
+
+    const primaryStoryText = [
+      view.cxoStory.eyebrow,
+      view.cxoStory.headline,
+      view.cxoStory.executiveBrief,
+      ...view.cxoStory.cards.map((card) => `${card.label} ${card.value} ${card.caption}`),
+      ...Object.values(view.cxoStory.tabs).map(
+        (tab) => `${tab.headline} ${tab.summary} ${tab.decisionImplication} ${tab.nextAction}`,
+      ),
+    ].join(" ");
+
+    expect(primaryStoryText).not.toMatch(/\{|\}|raw json/i);
+    expect(primaryStoryText).not.toMatch(/\bTowerContextPack\b|\bv[467]\b|metric records|value records|claim gates|bridge diagnostics|evidence refs|context gaps/i);
+    expect(primaryStoryText).not.toMatch(/Healthcare Demo/i);
+    expect(primaryStoryText).not.toMatch(/realized value|proven value|delivered value|harvested savings|achieved ROI|value captured/i);
+  });
+
+  it("keeps proof posture available for diagnostics without using it as the CXO story", () => {
     const { contextPack } = proof();
     const view = buildTowerV3RuntimeViewModel({
       tenantName: "Meridian Health",
       contextPack,
     });
-    const visibleText = [
-      view.headline,
-      ...view.defaultTabs.map((item) => `${item.label} ${item.sourceClassification} ${item.sourcePosture} ${item.caveat}`),
-      ...view.caveats,
-      ...view.nextMeasurementActions,
-      ...view.metricFamilies.map((item) => `${item.label} ${item.baselineStatus} ${item.targetStatus}`),
-      ...view.valueHypotheses.map((item) => `${item.label} ${item.value} ${item.claimBasis} ${item.gateStatus}`),
-      ...view.gapThemes.map((item) => `${item.title} ${item.whyItMatters}`),
-      ...view.executiveInsights.map((item) => `${item.role} ${item.insightTitle} ${item.insightSummary} ${item.decisionImplication} ${item.nextAction}`),
-    ].join(" ");
 
-    expect(visibleText).not.toMatch(/\{|\}|raw json/i);
-    expect(visibleText).not.toMatch(/\bv[467]\b/i);
-    expect(visibleText).not.toMatch(/realized value|proven value|delivered value|harvested savings|achieved ROI|value captured/i);
+    expect(view.defaultTabs.some((item) => item.sourcePosture.includes("v3"))).toBe(true);
+    expect(view.defaultTabs.every((item) => item.businessPosture.length > 0)).toBe(true);
+    expect(view.bridgeDiagnostics.message).toMatch(/TowerContextPack/);
   });
 });

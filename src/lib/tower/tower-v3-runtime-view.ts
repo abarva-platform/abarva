@@ -43,9 +43,43 @@ export interface TowerV3RuntimeTab {
   label: string;
   sourceClassification: TowerV3TabSourceClassification;
   sourcePosture: string;
+  businessPosture: string;
   rows: number;
   evidenceRefs: string[];
   caveat: string;
+}
+
+export type TowerCxoVisualType =
+  | "executive_brief"
+  | "value_waterfall"
+  | "budget_mix"
+  | "portfolio_lanes"
+  | "benchmark_blockers"
+  | "evidence_checklist"
+  | "role_decision_cards";
+
+export interface TowerCxoStoryTab {
+  key: TowerV3DefaultTabKey;
+  headline: string;
+  summary: string;
+  decisionImplication: string;
+  nextAction: string;
+  visualType: TowerCxoVisualType;
+}
+
+export interface TowerCxoStoryCard {
+  label: string;
+  value: string;
+  caption: string;
+}
+
+export interface TowerCxoStory {
+  tenantDisplayName: string;
+  eyebrow: string;
+  headline: string;
+  executiveBrief: string;
+  cards: TowerCxoStoryCard[];
+  tabs: Record<TowerV3DefaultTabKey, TowerCxoStoryTab>;
 }
 
 export type TowerExecutiveRole = "CIO" | "CFO";
@@ -79,6 +113,7 @@ export interface TowerV3RuntimeViewModel {
   headline: string;
   mode: TowerContextPack["mode"];
   truthStatus: TowerContextPack["truthStatus"];
+  cxoStory: TowerCxoStory;
   metricCount: number;
   valueRecordCount: number;
   valueClaimCount: number;
@@ -153,13 +188,6 @@ function evidenceForPackPattern(
   return pack.evidence.map((item) => item.evidenceId).slice(0, limit);
 }
 
-function countRecords(
-  records: readonly (TowerMetricRecord | TowerValueRecord)[],
-  predicate: (record: TowerMetricRecord | TowerValueRecord) => boolean,
-): number {
-  return records.filter(predicate).length;
-}
-
 function compactValue(value: unknown): string {
   if (typeof value === "number") {
     if (Math.abs(value) >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(1)}B`;
@@ -170,6 +198,20 @@ function compactValue(value: unknown): string {
   if (Array.isArray(value)) return value.join(", ");
   if (value && typeof value === "object") return "structured value";
   return String(value ?? "not loaded");
+}
+
+function executiveTenantDisplayName(tenantKey: string, tenantName: string): string {
+  if (tenantKey === "meridian-health" || /meridian|healthcare demo/i.test(tenantName)) {
+    return "Meridian";
+  }
+  return tenantName.replace(/\s+Demo$/i, "").trim() || tenantName;
+}
+
+function sumNumericValues(records: readonly TowerValueRecord[]): number {
+  return records.reduce((total, record) => {
+    if (typeof record.value !== "number" || !Number.isFinite(record.value)) return total;
+    return total + record.value;
+  }, 0);
 }
 
 function firstValueClaimForRecord(
@@ -313,12 +355,11 @@ export function aggregateTowerV3GapThemes(pack: TowerContextPack): TowerV3GapThe
 
 function buildTowerV3DefaultTabs(args: {
   pack: TowerContextPack;
-  metricFamilies: TowerV3RuntimeMetricFamily[];
   valueHypotheses: TowerV3RuntimeViewModel["valueHypotheses"];
   gapThemes: TowerV3GapTheme[];
   executiveInsights: TowerExecutiveInsight[];
 }): TowerV3RuntimeTab[] {
-  const { pack, metricFamilies, valueHypotheses, gapThemes, executiveInsights } = args;
+  const { pack, valueHypotheses, gapThemes, executiveInsights } = args;
   const packEvidence = pack.evidence.map((item) => item.evidenceId);
   return [
     {
@@ -326,6 +367,7 @@ function buildTowerV3DefaultTabs(args: {
       label: "Overview",
       sourceClassification: "tower_context_pack_v3_derived",
       sourcePosture: "v3 context-derived measurement and readiness view",
+      businessPosture: "CIO/CFO value cockpit",
       rows: pack.towerMetricRecords.length + pack.towerValueRecords.length,
       evidenceRefs: packEvidence.slice(0, 5),
       caveat: "Outcome proof is blocked until value claims pass the TowerValueClaim gate.",
@@ -335,6 +377,7 @@ function buildTowerV3DefaultTabs(args: {
       label: "Value",
       sourceClassification: "tower_projection_v3_derived",
       sourcePosture: "value hypotheses from active v3 program context",
+      businessPosture: "Planned value and proof gaps",
       rows: valueHypotheses.length,
       evidenceRefs: unique(valueHypotheses.flatMap((item) => item.evidenceIds)).slice(0, 5),
       caveat: "Values are forecast or planning-grade until finance evidence is reconciled.",
@@ -344,6 +387,7 @@ function buildTowerV3DefaultTabs(args: {
       label: "Budget",
       sourceClassification: "tower_projection_v3_derived",
       sourcePosture: "spend and value signals from v3 spend/value context",
+      businessPosture: "Budget pressure and validation needs",
       rows: pack.towerMetricRecords.filter((record) => record.sourceDimension === "08_spend_value").length,
       evidenceRefs: evidenceForPackPattern(pack, /spend|budget|maintenance|net-new|value/i),
       caveat: "Budget actuals stay planning-grade unless a finance-controlled extract is loaded.",
@@ -353,6 +397,7 @@ function buildTowerV3DefaultTabs(args: {
       label: "Portfolio",
       sourceClassification: "tower_projection_v3_derived",
       sourcePosture: "program and initiative records from active v3 context",
+      businessPosture: "Programs to govern, fund, or hold",
       rows: pack.towerValueRecords.filter((record) => record.sourceDimension === "09_programs_initiatives").length,
       evidenceRefs: evidenceForPackPattern(pack, /program|initiative|agent|analytics|automation|platform/i),
       caveat: "Programs are not approved investments unless promotion and governance evidence support them.",
@@ -362,6 +407,7 @@ function buildTowerV3DefaultTabs(args: {
       label: "Benchmark",
       sourceClassification: "tower_context_pack_v3_derived",
       sourcePosture: "benchmark context and blocker themes only",
+      businessPosture: "Comparator lens and realization blockers",
       rows: gapThemes.length,
       evidenceRefs: unique(gapThemes.flatMap((theme) => theme.representativeEvidenceRefs)).slice(0, 5),
       caveat: "This tab does not imply tenant performance against benchmark without tenant baselines and actuals.",
@@ -371,6 +417,7 @@ function buildTowerV3DefaultTabs(args: {
       label: "Evidence",
       sourceClassification: "tower_context_pack_v3_derived",
       sourcePosture: "evidence refs, context gaps, and claim gates from TowerContextPack",
+      businessPosture: "Proof, lineage, and diagnostics",
       rows: pack.evidence.length + pack.gaps.length,
       evidenceRefs: packEvidence.slice(0, 5),
       caveat: "Bridge rows remain diagnostic only until reconciled to governed facts and evidence.",
@@ -380,6 +427,7 @@ function buildTowerV3DefaultTabs(args: {
       label: "Insights",
       sourceClassification: "tower_projection_v3_derived",
       sourcePosture: "role-specific executive insights derived from the same v3 pack",
+      businessPosture: "CIO and CFO decision moves",
       rows: executiveInsights.length,
       evidenceRefs: unique(executiveInsights.flatMap((item) => item.evidenceRefsUsed)).slice(0, 5),
       caveat: "Insights are decision guidance, not financial outcome proof.",
@@ -500,6 +548,134 @@ function buildTowerExecutiveInsights(args: {
   ];
 }
 
+function buildTowerCxoStory(args: {
+  tenantName: string;
+  pack: TowerContextPack;
+  gapThemes: TowerV3GapTheme[];
+  valueHypotheses: TowerV3RuntimeViewModel["valueHypotheses"];
+  gateCounts: Record<TowerValueClaim["gateStatus"], number>;
+}): TowerCxoStory {
+  const { tenantName, pack, gapThemes, valueHypotheses, gateCounts } = args;
+  const tenantDisplayName = executiveTenantDisplayName(pack.tenantKey, tenantName);
+  const plannedValueTotal = sumNumericValues(pack.towerValueRecords);
+  const plannedValueLabel =
+    plannedValueTotal > 0 ? compactValue(plannedValueTotal) : `${valueHypotheses.length} value areas`;
+  const gatedClaims = gateCounts.caveated + gateCounts.blocked;
+
+  return {
+    tenantDisplayName,
+    eyebrow: "Tower · CIO/CFO value cockpit",
+    headline: `${tenantDisplayName}'s technology value cockpit: budget, portfolio, evidence, and decisions.`,
+    executiveBrief:
+      `${tenantDisplayName}'s Tower view is ready for a leadership value conversation: where the technology portfolio is pointing, which value hypotheses need proof, and what the CIO/CFO must validate before any board-level claim. The safe story today is measurement readiness and decision control, not certified financial outcome.`,
+    cards: [
+      {
+        label: "Budget lens",
+        value: "In view",
+        caption:
+          "Spend and run/change signals are available for management review, with finance validation still required before board use.",
+      },
+      {
+        label: "Planned value",
+        value: plannedValueLabel,
+        caption:
+          "Portfolio value is visible as a planning hypothesis; it is not yet certified performance.",
+      },
+      {
+        label: "Proof posture",
+        value: `${gatedClaims} gated`,
+        caption:
+          "Value claims stay caveated until baseline, owner, and finance evidence are reconciled.",
+      },
+      {
+        label: "Leadership blockers",
+        value: `${gapThemes.length} themes`,
+        caption:
+          "Repeated evidence gaps are grouped into executive blockers instead of raw row-level exceptions.",
+      },
+    ],
+    tabs: {
+      overview: {
+        key: "overview",
+        headline: "What leadership should inspect this week.",
+        summary:
+          "Use this view to align the CIO and CFO on budget posture, planned value, blockers, and the next evidence pull required before value commitments move forward.",
+        decisionImplication:
+          "Treat Tower as the value-governance cockpit: fund measurement, assign owners, and hold outcome claims until proof is complete.",
+        nextAction:
+          "Confirm the top value areas, the accountable finance owner, and the baseline evidence required for the next steering meeting.",
+        visualType: "executive_brief",
+      },
+      value: {
+        key: "value",
+        headline: "Where planned value exists but proof is still missing.",
+        summary:
+          "The value view ranks planning hypotheses and shows which ones are blocked or caveated by missing baseline and finance evidence.",
+        decisionImplication:
+          "The CFO can discuss value at stake, but should not approve value claims until measurement evidence is complete.",
+        nextAction:
+          "Prioritize the highest-value hypotheses for baseline validation and benefit-formula ownership.",
+        visualType: "value_waterfall",
+      },
+      budget: {
+        key: "budget",
+        headline: "Where budget pressure needs finance validation.",
+        summary:
+          "The budget view separates usable spend signals from numbers that still need a finance-controlled extract and owner signoff.",
+        decisionImplication:
+          "Use the budget posture to decide where run spend, change spend, and measurement work need sharper ownership.",
+        nextAction:
+          "Load or attest the finance budget extract, run/change allocation, and reporting cadence for the next review.",
+        visualType: "budget_mix",
+      },
+      portfolio: {
+        key: "portfolio",
+        headline: "Which programs need governance before funding confidence improves.",
+        summary:
+          "The portfolio view keeps each initiative tied to value basis, proof posture, and the gate that prevents overclaiming.",
+        decisionImplication:
+          "Programs can be governed and sequenced now, but funding confidence should follow evidence readiness.",
+        nextAction:
+          "Assign owners to the top programs and decide which move into measurement design, sourcing evidence, or hold status.",
+        visualType: "portfolio_lanes",
+      },
+      benchmark: {
+        key: "benchmark",
+        headline: "Which external patterns are useful, and what Meridian must still prove.",
+        summary:
+          "Benchmark context frames the decision without pretending tenant performance has already been measured against peers.",
+        decisionImplication:
+          "Use comparators to choose the right questions, not to claim performance.",
+        nextAction:
+          "Pick the benchmark lens that matters most and validate the tenant baseline before using it in executive materials.",
+        visualType: "benchmark_blockers",
+      },
+      evidence: {
+        key: "evidence",
+        headline: "What proof is missing before the view becomes board-ready.",
+        summary:
+          "The evidence view is the right place for lineage, blockers, and diagnostic details that should not dominate the executive narrative.",
+        decisionImplication:
+          "Evidence gaps are not UI noise; they are the control list for making Tower credible with Finance and Audit.",
+        nextAction:
+          "Close blocker themes by assigning source owners, baseline extracts, formulas, and finance attestation.",
+        visualType: "evidence_checklist",
+      },
+      insights: {
+        key: "insights",
+        headline: "What the CIO and CFO should do next.",
+        summary:
+          "The insights view converts portfolio and proof posture into executive decisions: what to fund, what to measure, and what to hold.",
+        decisionImplication:
+          "The CIO owns readiness and execution gates; the CFO owns measurement confidence and claim discipline.",
+        nextAction:
+          "Create a joint CIO/CFO measurement sprint before value claims enter board or budget materials.",
+        visualType: "role_decision_cards",
+      },
+    },
+  };
+}
+
 export function buildTowerV3RuntimeViewModel(args: {
   tenantName: string;
   contextPack: TowerContextPack;
@@ -528,6 +704,13 @@ export function buildTowerV3RuntimeViewModel(args: {
     gateCounts,
   });
   const metricFamilies = buildMetricFamilies(contextPack);
+  const cxoStory = buildTowerCxoStory({
+    tenantName: args.tenantName,
+    pack: contextPack,
+    gapThemes,
+    valueHypotheses,
+    gateCounts,
+  });
 
   return {
     enabled: true,
@@ -538,6 +721,7 @@ export function buildTowerV3RuntimeViewModel(args: {
       "Tower is using the governed context pack for measurement planning, readiness, and value-hypothesis control.",
     mode: contextPack.mode,
     truthStatus: contextPack.truthStatus,
+    cxoStory,
     metricCount: contextPack.towerMetricRecords.length,
     valueRecordCount: contextPack.towerValueRecords.length,
     valueClaimCount: contextPack.towerValueClaims.length,
@@ -552,7 +736,6 @@ export function buildTowerV3RuntimeViewModel(args: {
     valueHypotheses,
     defaultTabs: buildTowerV3DefaultTabs({
       pack: contextPack,
-      metricFamilies,
       valueHypotheses,
       gapThemes,
       executiveInsights,

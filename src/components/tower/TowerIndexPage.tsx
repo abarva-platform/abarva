@@ -125,8 +125,6 @@ const T = {
   MONO: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
 } as const;
 
-const PANEL_SHADOW = "0 18px 42px rgba(15, 23, 42, 0.07)";
-
 export const TOWER_CIO_HOLDCO_STARTER_QUESTIONS = [
   "Show the holding-company IT budget by portfolio company and shared services.",
   "Which funded programs have the largest gap between promised and measured value?",
@@ -3133,6 +3131,8 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
   const activeTab =
     view.defaultTabs.find((tab) => tab.key === activeSection) ??
     view.defaultTabs[0];
+  const story = view.cxoStory;
+  const activeStory = story.tabs[activeSection];
   const maxHypothesisValue = Math.max(
     ...view.valueHypotheses.map((item) => v3DisplayValueNumber(item.value) ?? 0),
     1,
@@ -3153,11 +3153,11 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
     >
       <section
         style={{
-          border: `1px solid ${T.BORDER_STRONG}`,
-          background: "#fff",
-          borderRadius: 12,
-          boxShadow: PANEL_SHADOW,
-          padding: 24,
+          border: `1px solid ${T.RULE}`,
+          background: "linear-gradient(135deg, #ffffff 0%, #f9f8f4 58%, #f3f7f3 100%)",
+          borderRadius: 14,
+          boxShadow: "0 22px 48px rgba(15, 23, 42, 0.06)",
+          padding: 28,
           marginBottom: 18,
         }}
       >
@@ -3172,12 +3172,12 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
             marginBottom: 10,
           }}
         >
-          TowerContextPack default runtime
+          {story.eyebrow}
         </div>
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 1.45fr) repeat(3, minmax(0, .7fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
             gap: 18,
             alignItems: "start",
           }}
@@ -3194,33 +3194,35 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
                 letterSpacing: "-0.025em",
               }}
             >
-              {view.tenantName} Tower is now a v3 context-derived value governance view.
+              {story.headline}
             </h2>
             <p
               style={{
-                margin: "12px 0 0",
+                margin: "14px 0 0",
                 color: T.INK_2,
-                fontSize: 14,
-                lineHeight: 1.55,
-                maxWidth: 680,
+                fontSize: 15,
+                lineHeight: 1.6,
+                maxWidth: 760,
               }}
             >
-              {view.headline} The page is showing metric families, value hypotheses,
-              evidence blockers, and role-specific executive insights from the governed context pack.
+              {story.executiveBrief}
             </p>
           </div>
-          {[
-            ["Metric records", view.metricCount],
-            ["Value records", view.valueRecordCount],
-            ["Claim gates", view.valueClaimCount],
-          ].map(([label, value]) => (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gap: 10,
+            }}
+          >
+          {story.cards.map((card) => (
             <div
-              key={label}
+              key={card.label}
               style={{
-                border: `1px solid ${T.BORDER}`,
+                border: `1px solid ${T.RULE}`,
                 borderRadius: 10,
-                padding: 14,
-                background: T.CREAM,
+                padding: 13,
+                background: "rgba(255,255,255,0.82)",
               }}
             >
               <div
@@ -3233,21 +3235,25 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
                   fontWeight: 800,
                 }}
               >
-                {label}
+                {card.label}
               </div>
               <div
                 style={{
                   fontFamily: T.SERIF,
-                  fontSize: 30,
+                  fontSize: 25,
                   fontWeight: 800,
-                  marginTop: 8,
+                  marginTop: 7,
                   color: T.INK,
                 }}
               >
-                {value}
+                {card.value}
+              </div>
+              <div style={{ color: T.INK_2, fontSize: 12, lineHeight: 1.35, marginTop: 4 }}>
+                {card.caption}
               </div>
             </div>
           ))}
+          </div>
         </div>
       </section>
 
@@ -3307,7 +3313,7 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
               whiteSpace: "nowrap",
             }}
           >
-            {activeTab.sourcePosture}
+            {activeTab.businessPosture}
           </div>
         ) : null}
       </section>
@@ -3322,9 +3328,12 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
           }}
         >
           <CioPanel
-            eyebrow="Measurement Readiness"
-            title="What Tower can safely say today."
+            eyebrow="Executive Brief"
+            title={activeStory.headline}
           >
+            <p style={{ color: T.INK_2, fontSize: 14, lineHeight: 1.55, margin: "0 0 14px" }}>
+              {activeStory.summary}
+            </p>
             <div
               style={{
                 display: "grid",
@@ -3332,7 +3341,7 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
                 gap: 10,
               }}
             >
-              {view.metricFamilies.slice(0, 8).map((metric) => (
+              {view.metricFamilies.slice(0, 4).map((metric) => (
                 <div
                   key={`${metric.sourceDimension}-${metric.label}`}
                   style={{
@@ -3364,9 +3373,12 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
             </div>
           </CioPanel>
           <CioPanel
-            eyebrow="Claim Gate"
-            title="What value language is currently safe."
+            eyebrow="Decision Control"
+            title="What the CIO and CFO should hold constant."
           >
+            <p style={{ color: T.INK_2, fontSize: 14, lineHeight: 1.55, margin: "0 0 14px" }}>
+              {activeStory.decisionImplication}
+            </p>
             <TowerV3ClaimGateSummary view={view} />
           </CioPanel>
         </section>
@@ -3374,8 +3386,8 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
 
       {activeSection === "value" ? (
         <CioPanel
-          eyebrow="Value Hypothesis Gate"
-          title="Forecast value records with claim-gate status."
+          eyebrow="Value"
+          title={activeStory.headline}
         >
           <div
             style={{
@@ -3389,8 +3401,7 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
               lineHeight: 1.45,
             }}
           >
-            Finance-attested measurement evidence is not yet available. Tower can show
-            value hypotheses with caveats, not outcome proof.
+            {activeStory.summary}
           </div>
           <div style={{ display: "grid", gap: 12 }}>
             {view.valueHypotheses.slice(0, 8).map((item) => {
@@ -3472,8 +3483,8 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
           }}
         >
           <CioPanel
-            eyebrow="Budget and Spend Signals"
-            title="Planning-grade spend/value context from active v3 rows."
+            eyebrow="Budget"
+            title={activeStory.headline}
           >
             <div
               style={{
@@ -3487,9 +3498,7 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
                 lineHeight: 1.45,
               }}
             >
-              Tower is not using the bridge budget chart as source of truth here.
-              Actual budget rollups require a finance-controlled extract; this tab
-              shows the v3 spend/value signals available for measurement design.
+              {activeStory.summary}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
               {view.metricFamilies
@@ -3527,9 +3536,12 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
           }}
         >
           <CioPanel
-            eyebrow="Portfolio Programs"
-            title="Program value hypotheses from active v3 context."
+            eyebrow="Portfolio"
+            title={activeStory.headline}
           >
+            <p style={{ color: T.INK_2, fontSize: 14, lineHeight: 1.55, margin: "0 0 14px" }}>
+              {activeStory.summary}
+            </p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
               {view.valueHypotheses.map((item) => (
                 <div
@@ -3546,8 +3558,8 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
                   </div>
                   <SmallEvidenceLine label="Value" value={item.value} />
                   <SmallEvidenceLine label="Basis" value={item.claimBasis.replace(/_/g, " ")} />
-                  <SmallEvidenceLine label="Gate" value={item.gateStatus} />
-                  <SmallEvidenceLine label="Refs" value={item.evidenceIds.slice(0, 2).join("; ")} />
+                  <SmallEvidenceLine label="Posture" value={item.gateStatus === "allowed" ? "ready for claim review" : "needs proof before board use"} />
+                  <SmallEvidenceLine label="Evidence" value={item.evidenceIds.length > 0 ? "available in Evidence tab" : "needs source evidence"} />
                 </div>
               ))}
             </div>
@@ -3557,8 +3569,8 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
 
       {activeSection === "benchmark" ? (
         <CioPanel
-          eyebrow="Benchmark Context"
-          title="Useful comparator posture without pretending tenant performance is measured."
+          eyebrow="Benchmark"
+          title={activeStory.headline}
         >
           <div
             style={{
@@ -3571,9 +3583,7 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
               color: T.INK_2,
             }}
           >
-            Benchmark context is used as an executive lens only. This tab does
-            not claim Meridian performance against a peer benchmark until the
-            tenant metric baselines and actuals are evidenced.
+            {activeStory.summary}
           </div>
           <TowerV3GapThemes view={view} />
         </CioPanel>
@@ -3589,15 +3599,18 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
           }}
         >
       <CioPanel
-        eyebrow="Executive Blocker Themes"
-        title="Repeated row-level caveats grouped for leadership action."
+        eyebrow="Evidence"
+        title={activeStory.headline}
       >
+        <p style={{ color: T.INK_2, fontSize: 14, lineHeight: 1.55, margin: "0 0 14px" }}>
+          {activeStory.summary}
+        </p>
         <TowerV3GapThemes view={view} />
       </CioPanel>
 
         <CioPanel
           eyebrow="Next Measurement Actions"
-          title="What has to happen before this view can support outcome proof."
+          title={activeStory.nextAction}
         >
           <ol style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 8 }}>
             {view.nextMeasurementActions.map((action) => (
@@ -3631,9 +3644,9 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
             Bridge diagnostics
           </summary>
           <div style={{ marginTop: 10, lineHeight: 1.5 }}>
-            Existing Tower read model fallback is retained for diagnostics only. It is a
-            derived bridge view and has not been reconciled row by row to governed
-            context. {view.bridgeDiagnostics.message}
+             Existing Tower read model fallback is retained for diagnostics only. It is a
+             derived bridge view and has not been reconciled row by row to governed
+             context. {view.bridgeDiagnostics.message}
           </div>
         </details>
       </section>
@@ -3649,7 +3662,7 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
               <CioPanel
                 key={role}
                 eyebrow={`${role} View`}
-                title={`${role} decisions Tower should guide next.`}
+                title={activeStory.headline}
               >
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
                   {roleInsights.map((insight) => (
@@ -3697,6 +3710,7 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
 }
 
 function TowerV3ClaimGateSummary({ view }: { view: TowerV3RuntimeViewModel }) {
+  const waitingOnProof = view.gateCounts.caveated + view.gateCounts.blocked;
   return (
     <div style={{ display: "grid", gap: 11 }}>
       <div
@@ -3710,15 +3724,15 @@ function TowerV3ClaimGateSummary({ view }: { view: TowerV3RuntimeViewModel }) {
           lineHeight: 1.45,
         }}
       >
-        Outcome-proof language is blocked unless a TowerValueClaim has finance
-        evidence, baseline lineage, and v3 reconciliation. Current allowed
-        claims: {view.gateCounts.allowed}.
+        Tower can support a value-governance conversation today, but it should
+        not be used as certified performance evidence until Finance confirms the
+        baselines, formulas, and owners. Current claim-ready items: {view.gateCounts.allowed}.
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 }}>
         {[
-          ["Allowed", view.gateCounts.allowed],
-          ["Caveated", view.gateCounts.caveated],
-          ["Blocked", view.gateCounts.blocked],
+          ["Claim-ready", view.gateCounts.allowed],
+          ["Needs proof", waitingOnProof],
+          ["Board claim", view.gateCounts.allowed > 0 ? "review" : "hold"],
         ].map(([label, value]) => (
           <div
             key={label}
