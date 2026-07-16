@@ -327,6 +327,7 @@ export function parseVisibleAnswerContract(
     if (
       table.columns.length === 0 ||
       table.columns.length > 4 ||
+      table.rows.length > 5 ||
       table.rows.some(
         (row) =>
           !Array.isArray(row) ||
@@ -437,6 +438,7 @@ export function buildCioTowerClaudePrompt(
     "- If the follow-up data is not loaded, say exactly what cut is missing and why that prevents the next ranking.",
     "- Make the answer specific to the loaded Tower posture: name the relevant blocker, owner, decision, or measurement gate in plain English.",
     "- If you include a table, keep it board-readable: at most 5 rows, at most 4 columns, complete cells, no abbreviations that require internal knowledge.",
+    "- A table with 6 or more rows is invalid. If there are more than 5 candidates, choose the top 5 by executive relevance or use the fifth row to summarize the remaining group.",
     "- Never use markdown code fences, fenced chart blocks, inline JSON, or markdown tables inside the answer string.",
     "- If the answer would be long, compress it. Valid JSON is more important than a longer answer.",
     ...(towerV3Runtime
