@@ -1224,7 +1224,10 @@ export function StrategicMoveOriginateClient({
                               ? "Ready to promote"
                               : `${requiredFilled} of ${REQUIRED_FIELD_COUNT} required sections complete`}
                           </strong>
-                          <span id="orig-promote-bar-status-text">
+                          <span
+                            id="orig-promote-bar-status-text"
+                            className={styles.p0PromotionStatus}
+                          >
                             {canPromote
                               ? "P1 will use this brief as the charter seed."
                               : "Complete all 7 brief sections to promote."}
