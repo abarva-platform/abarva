@@ -148,4 +148,12 @@ describe('origination submit insert contract', () => {
     expect(source).toContain('fromInitiativeId?: string | null');
     expect(source).toContain('fromGapUsd?: number | null');
   });
+
+  it('keeps Strategic Moves origination out of the legacy Programs detail page', () => {
+    expect(source).toContain('function originationRedirectForSurface(');
+    expect(source).toContain('surface === "/strategic-moves/new"');
+    expect(source).toContain('`/strategic-moves/${programId}/phase/0?focus=gate`');
+    expect(source).toContain('redirectTo: originationRedirectForSurface(input.surface, programId)');
+    expect(source).toContain('redirectTo: originationRedirectForSurface(input.surface, row.id)');
+  });
 });

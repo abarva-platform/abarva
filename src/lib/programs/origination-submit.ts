@@ -133,6 +133,15 @@ function optionalText(value: string | null | undefined): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function originationRedirectForSurface(
+  surface: string,
+  programId: string,
+): string {
+  return surface === "/strategic-moves/new"
+    ? `/strategic-moves/${programId}/phase/0?focus=gate`
+    : `/programs/${programId}`;
+}
+
 function normalizeLabel(value: string): string {
   return value
     .toLowerCase()
@@ -772,7 +781,7 @@ export async function submitOriginationBrief(
       approvalRequestId: (approval as { id: string } | null)?.id ?? "",
       programName: row.name,
       lifecycleState: "submitted_for_approval",
-      redirectTo: `/programs/${row.id}`,
+      redirectTo: originationRedirectForSurface(input.surface, row.id),
       decisionThreadId: decisionThread?.id ?? null,
       dossierUrl: decisionThread ? `/dossier/${decisionThread.id}` : null,
     };
@@ -1006,7 +1015,7 @@ export async function submitOriginationBrief(
       approvalRequestId: approval.id,
       programName,
       lifecycleState: "submitted_for_approval",
-      redirectTo: `/programs/${programId}`,
+      redirectTo: originationRedirectForSurface(input.surface, programId),
       decisionThreadId: decisionThread.id,
       dossierUrl: `/dossier/${decisionThread.id}`,
     };

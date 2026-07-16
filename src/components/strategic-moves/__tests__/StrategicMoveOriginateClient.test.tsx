@@ -355,7 +355,7 @@ describe("StrategicMoveOriginateClient", () => {
           json: async () => ({
             ok: true,
             engagementId: "move-manual-p0",
-            redirectTo: "/strategic-moves/move-manual-p0",
+            redirectTo: "/programs/move-manual-p0",
           }),
         };
       }
@@ -402,7 +402,7 @@ describe("StrategicMoveOriginateClient", () => {
 
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith(
-        "/strategic-moves/move-manual-p0",
+        "/strategic-moves/move-manual-p0/phase/0?focus=gate",
       );
     });
     expect(fetchMock).toHaveBeenCalledWith(
@@ -440,7 +440,7 @@ describe("StrategicMoveOriginateClient", () => {
           json: async () => ({
             ok: true,
             engagementId: "move-short-name",
-            redirectTo: "/strategic-moves/move-short-name",
+            redirectTo: "/strategic-moves/move-short-name/phase/0?focus=gate",
           }),
         };
       }
