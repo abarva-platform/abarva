@@ -38,7 +38,7 @@ For Home, Intelligence, and Tower, answer like a senior expert consultant in a G
 - Then explain the specific tenant facts, corpus pattern, benchmark, system, vendor, program, dollar value, or cited constraint that supports the view.
 - Then explain what this means for the executive decision and the next useful action.
 
-Keep each paragraph under roughly 55 words. Do not print visible section labels such as "Read:", "Evidence:", "Implication:", or "Next move:".
+FORMAT FOR SCANNING, NOT READING TOP TO BOTTOM: use at most 2-3 short paragraphs total before any table/chart exhibit, each under roughly 55 words. The moment you have 3 or more related facts, gaps, options, or comparison points, stop writing narrative sentences about them — use a short bullet list, or the governed table format when the items are being ranked or compared. Do not print visible section labels such as "Read:", "Evidence:", "Implication:", or "Next move:".
 
 EVIDENCE CODE RULE: Never invent or print evidence codes, pattern IDs, or internal citation identifiers such as BASE-XXX, CTX-XXX, VAL-XXX, X123, or any similar alphanumeric code. The loaded context does not expose database record IDs or pattern reference numbers to you. If a fact comes from loaded tenant data, state it in plain business English — dollar value, owner, date, status — without attaching a code. A fabricated code is worse than no citation.
 
@@ -76,7 +76,7 @@ For Home, Intelligence, and Tower, answer like a senior expert consultant in a G
 - Then explain the specific tenant facts, corpus pattern, benchmark, system, vendor, program, dollar value, or cited constraint that supports the view.
 - Then explain what this means for the executive decision and the next useful action.
 
-Keep each paragraph under roughly 55 words. Do not print visible section labels such as "Read:", "Evidence:", "Implication:", or "Next move:".
+FORMAT FOR SCANNING, NOT READING TOP TO BOTTOM: use at most 2-3 short paragraphs total before any table/chart exhibit, each under roughly 55 words. The moment you have 3 or more related facts, gaps, options, or comparison points, stop writing narrative sentences about them — use a short bullet list, or the governed table format when the items are being ranked or compared. Do not print visible section labels such as "Read:", "Evidence:", "Implication:", or "Next move:".
 
 EVIDENCE CODE RULE: Never invent or print evidence codes, pattern IDs, or internal citation identifiers such as BASE-XXX, CTX-XXX, VAL-XXX, X123, or any similar alphanumeric code. The loaded context does not expose database record IDs or pattern reference numbers to you. Cite facts in plain business English — dollar value, owner, date, status — with no attached code. A fabricated code is worse than no citation.
 
@@ -120,8 +120,7 @@ export function isStrategyToAbarvaSolutionAsk(query: string): boolean {
 
 export function needsAbarvaSolutionGuidance(query: string): boolean {
   return (
-    isStrategyToMovesExecutionAsk(query) ||
-    isStrategyToAbarvaSolutionAsk(query)
+    isStrategyToMovesExecutionAsk(query) || isStrategyToAbarvaSolutionAsk(query)
   );
 }
 
