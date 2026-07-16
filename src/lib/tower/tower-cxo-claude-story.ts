@@ -15,7 +15,7 @@ import type {
 const PROMPT_VERSION = "tower-cxo-claude-story-v1";
 const DEFAULT_MODEL = "claude-sonnet-4-6";
 const DEFAULT_MAX_TOKENS = 2_400;
-const DEFAULT_TIMEOUT_MS = 45_000;
+const DEFAULT_TIMEOUT_MS = 120_000;
 
 const TAB_KEYS: TowerV3DefaultTabKey[] = [
   "overview",
