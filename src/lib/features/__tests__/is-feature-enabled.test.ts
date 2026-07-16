@@ -61,6 +61,12 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
           "first_capital_substrate_overlay",
         ),
       ).toBe(true);
+      expect(
+        isFeatureEnabled(
+          { clientKey: "meridian-health" },
+          "tower_cxo_claude_story_blocks",
+        ),
+      ).toBe(true);
     });
 
     it("is off when the context is missing a tenant key", () => {

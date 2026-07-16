@@ -3145,6 +3145,8 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
     <div
       data-testid="tower-context-runtime-view"
       data-source-classification={activeTab?.sourceClassification}
+      data-cxo-story-source={view.cxoStorySource}
+      data-cxo-story-model={view.cxoStoryModel ?? "deterministic"}
       style={{
         padding: "0 40px 90px",
         maxWidth: 1080,
@@ -3605,6 +3607,29 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
         <p style={{ color: T.INK_2, fontSize: 14, lineHeight: 1.55, margin: "0 0 14px" }}>
           {activeStory.summary}
         </p>
+        <div
+          data-testid="tower-cxo-story-source"
+          style={{
+            border: `1px solid ${T.BORDER}`,
+            borderRadius: 10,
+            padding: 12,
+            marginBottom: 14,
+            background: T.CREAM,
+            color: T.INK_2,
+            fontSize: 13,
+            lineHeight: 1.45,
+          }}
+        >
+          Executive story source:{" "}
+          <strong style={{ color: T.INK }}>
+            {view.cxoStorySource === "claude_validated"
+              ? "model-synthesized and validated from the Tower packet"
+              : view.cxoStorySource === "claude_fallback"
+                ? "deterministic fallback because model synthesis did not pass validation"
+                : "deterministic Tower story"}
+          </strong>
+          . Facts, values, and outcome-claim controls remain governed by Tower.
+        </div>
         <TowerV3GapThemes view={view} />
       </CioPanel>
 

@@ -82,6 +82,26 @@ export interface TowerCxoStory {
   tabs: Record<TowerV3DefaultTabKey, TowerCxoStoryTab>;
 }
 
+export interface TowerCxoVisualSpec {
+  key: TowerV3DefaultTabKey;
+  visualType: TowerCxoVisualType;
+  title: string;
+  insight: string;
+  dataRefs: string[];
+  caveat: string;
+}
+
+export type TowerCxoStorySource =
+  | "deterministic"
+  | "claude_validated"
+  | "claude_fallback";
+
+export interface TowerCxoStoryValidation {
+  attempted: boolean;
+  passed: boolean;
+  issues: string[];
+}
+
 export type TowerExecutiveRole = "CIO" | "CFO";
 export type TowerExecutiveClaimStrength =
   | "measured"
@@ -114,6 +134,11 @@ export interface TowerV3RuntimeViewModel {
   mode: TowerContextPack["mode"];
   truthStatus: TowerContextPack["truthStatus"];
   cxoStory: TowerCxoStory;
+  cxoStorySource: TowerCxoStorySource;
+  cxoStoryAuditId?: string;
+  cxoStoryModel?: string;
+  cxoStoryValidation: TowerCxoStoryValidation;
+  cxoVisualSpecs: Record<TowerV3DefaultTabKey, TowerCxoVisualSpec>;
   metricCount: number;
   valueRecordCount: number;
   valueClaimCount: number;
@@ -722,6 +747,9 @@ export function buildTowerV3RuntimeViewModel(args: {
     mode: contextPack.mode,
     truthStatus: contextPack.truthStatus,
     cxoStory,
+    cxoStorySource: "deterministic",
+    cxoStoryValidation: { attempted: false, passed: true, issues: [] },
+    cxoVisualSpecs: buildDeterministicTowerCxoVisualSpecs(cxoStory),
     metricCount: contextPack.towerMetricRecords.length,
     valueRecordCount: contextPack.towerValueRecords.length,
     valueClaimCount: contextPack.towerValueClaims.length,
@@ -762,4 +790,21 @@ export function buildTowerV3RuntimeViewModel(args: {
         "The existing Tower read model is retained as fallback diagnostics only; this selected view is rendered from TowerContextPack when the runtime flag is enabled.",
     },
   };
+}
+
+function buildDeterministicTowerCxoVisualSpecs(
+  story: TowerCxoStory,
+): Record<TowerV3DefaultTabKey, TowerCxoVisualSpec> {
+  const entries = Object.entries(story.tabs).map(([key, tab]) => [
+    key,
+    {
+      key: tab.key,
+      visualType: tab.visualType,
+      title: tab.headline,
+      insight: tab.summary,
+      dataRefs: [],
+      caveat: tab.decisionImplication,
+    },
+  ]);
+  return Object.fromEntries(entries) as Record<TowerV3DefaultTabKey, TowerCxoVisualSpec>;
 }
