@@ -19,7 +19,7 @@
 
 import { buildProgramDetailView } from '@/lib/programs/programs-detail-view';
 import { ProgramDetailPage } from '@/components/programs/ProgramDetailPage';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth/current-user';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getEngagementWithPhaseData } from '@/lib/programs/db-phase-queries';
@@ -32,6 +32,10 @@ import { APEX_PROGRAMS_FIXTURE } from '@/lib/programs/programs-fixture';
 import { MERIDIAN_PROGRAMS_FIXTURE } from '@/lib/programs/meridian-fixture';
 import type { Artifact } from '@/lib/agent/artifacts';
 import { canonicalClientDisplayName } from '@/lib/client-config';
+import {
+  isStrategicMoveRouteId,
+  parseStrategicMovePhaseNum,
+} from '@/lib/programs/strategic-move-route-params';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +50,10 @@ export default async function ProgramDetailRoute({
   const sp = await searchParams;
   const phase = typeof sp.phase === 'string' ? sp.phase : undefined;
   const viewingPhase = phase ? parseInt(phase, 10) : undefined;
+  if (isStrategicMoveRouteId(id)) {
+    const parsedPhase = phase ? parseStrategicMovePhaseNum(phase) : null;
+    redirect(`/strategic-moves/${id}/phase/${parsedPhase ?? 0}?focus=gate`);
+  }
 
   // Decode timeline filter URL params (`?tlKind=…&tlSince=…&tlSearch=…`).
   // Falls through to an empty object when no params are present.
