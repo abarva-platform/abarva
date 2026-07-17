@@ -396,10 +396,10 @@ export function getLocalCxoRuntimeBrowser(
     const previewRows = rows
       .filter((row) =>
         columns.some((column) => hasPreviewValue(row[column.key])),
-      )
-      .slice(0, 12);
+      );
     const gapRows = countEvidenceGaps(rows);
     const knownGaps = topKnownGaps(previewRows, gapRows);
+    const displayRows = previewRows.slice(0, 12);
     dimensions[label] = {
       dimension: label,
       title: `${label} evidence preview`,
@@ -408,7 +408,7 @@ export function getLocalCxoRuntimeBrowser(
       dataThinCells: gapRows || countDataThinCells(rows),
       sourceCount: 1,
       columns,
-      rows: previewRows
+      rows: displayRows
         .slice(0, 8)
         .map((row) => columns.map((column) => display(row[column.key]))),
       sourceRows: previewRows.map((row, index) =>
@@ -679,7 +679,7 @@ function isDefaultRuntimeRow(row: Record<string, string>): boolean {
   const status = String(row.active_candidate_status ?? "active")
     .trim()
     .toLowerCase();
-  return status !== "candidate";
+  return !/^(blocked|rejected|retired|inactive|deleted)$/.test(status);
 }
 
 function displayNameFromProfile(standardRoot: string): string | null {
