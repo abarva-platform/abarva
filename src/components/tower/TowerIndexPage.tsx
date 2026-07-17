@@ -2666,7 +2666,7 @@ function TowerValueFunnel({
       tone: T.AMBER,
     },
     {
-      label: "Realized value allowed",
+      label: "Claimable value allowed",
       card: realizedAllowed,
       note: "Booked/claimable outcome value gate",
       tone: T.RED,
@@ -4037,7 +4037,7 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
                 detail="Discovery/opportunity lens; not approved funding"
               />
               <TowerMartCompactCard
-                label="Finance-validated realized value"
+                label="Claimable value gate"
                 value="Gated"
                 detail="Not yet claimable — no value booked to P&L"
                 tone="gated"
@@ -5570,7 +5570,7 @@ function CxoGovernedCommandCenter({
                 <TowerCommandMini title="Approved programs" card={approvedPrograms} />
                 <TowerCommandMini title="Candidate AI opportunities" card={candidateAi} />
                 <TowerCommandMini title="Watch pressure signals" card={watchSignals} />
-                <TowerCommandMini title="Realized value allowed" card={realizedAllowed} gated />
+                <TowerCommandMini title="Claimable value allowed" card={realizedAllowed} gated />
               </div>
             </div>
           </section>
