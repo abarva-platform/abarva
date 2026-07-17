@@ -393,7 +393,7 @@ export function PhaseApproveAndBuild({
           </span>
           {typeof inputCount === "number" && (
             <span>
-              {inputCount} input{inputCount === 1 ? "" : "s"} uploaded
+              {inputCount} input{inputCount === 1 ? "" : "s"} available
             </span>
           )}
           <span>
@@ -401,7 +401,7 @@ export function PhaseApproveAndBuild({
           </span>
           {hasEvidenceGuidanceGaps && (
             <span style={{ color: ATTENTION }}>
-              {requiredGaps.length} required next-phase input gap
+              {requiredGaps.length} required next-phase prep item
               {requiredGaps.length === 1 ? "" : "s"}
             </span>
           )}
@@ -411,7 +411,7 @@ export function PhaseApproveAndBuild({
         </div>
         {hasEvidenceGuidanceGaps && (
           <div style={{ marginTop: 6, color: ATTENTION }}>
-            These gaps are carried forward as next-phase preparation. They do
+            These items are carried forward as next-phase preparation. They do
             not block this phase&apos;s governed build unless the phase explicitly
             marks them as current-phase blockers.
           </div>

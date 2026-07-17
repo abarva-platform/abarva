@@ -62,4 +62,16 @@ describe("getMovePhaseTallies", () => {
     expect(rows).toHaveLength(TOTAL_PHASES);
     expect(rows.map((r) => r.phase)).toEqual([0, 1, 2, 3, 4, 5]);
   });
+
+  it("marks P5 done when the terminal Tower handoff has completed", () => {
+    const rows = getMovePhaseTallies({
+      currentPhase: 5,
+      terminalComplete: true,
+      gateCriteria: [],
+    });
+    expect(rows.every((row) => row.state === "done")).toBe(true);
+    expect(rows.find((row) => row.phase === 5)?.met).toBe(
+      rows.find((row) => row.phase === 5)?.total,
+    );
+  });
 });

@@ -1,6 +1,7 @@
 import {
   artifactFormatLabel,
   artifactOutputRoleLabel,
+  artifactStatusLabel,
   buildContextExtractReviewModel,
   isContextExtractArtifact,
 } from "../FileCabinetPanel";
@@ -25,6 +26,11 @@ describe("FileCabinetPanel artifact labels", () => {
     expect(artifactFormatLabel("docx")).toBe("Word-equivalent");
     expect(artifactFormatLabel("html")).toBe("HTML review view");
     expect(artifactFormatLabel("xlsx")).toBe("Excel model");
+  });
+
+  it("translates quarantined artifacts into client-facing review language", () => {
+    expect(artifactStatusLabel("quarantined")).toBe("needs review");
+    expect(artifactStatusLabel("board_ready")).toBe("ready");
   });
 
   it("recognizes and summarizes Move Context Extract artifacts", () => {
