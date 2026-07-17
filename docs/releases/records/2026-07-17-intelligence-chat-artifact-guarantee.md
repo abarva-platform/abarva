@@ -31,6 +31,7 @@ This release hardens the Intelligence aVa chat so explicit table, chart, graph, 
 - `src/lib/intelligence/answer/structured-exhibits.ts`
 - `src/lib/intelligence/answer/__tests__/structured-exhibits.test.ts`
 - Follow-up polish after live proof: tighten CXO summary extraction so broad words like "operations" do not create irrelevant rows, avoid repeated executive-read rows, and include a visible chart-boundary artifact when a chart is requested but no validated chart rows are available.
+- Second follow-up polish after live proof: tighten the Finance/FP&A matcher so generic words like "close" do not create false finance rows, and prefix topic reads so payment integrity and prior authorization can appear as separate executive rows even when Claude mentions both in one sentence.
 
 ## QA / Validation
 
@@ -40,6 +41,7 @@ This release hardens the Intelligence aVa chat so explicit table, chart, graph, 
 - `npx eslint src/lib/intelligence/answer/structured-exhibits.ts src/lib/intelligence/answer/__tests__/structured-exhibits.test.ts`
   - Result: passed.
 - Live production proof after PR #4955 deploy showed the artifact contract was active but the generated summary table needed quality polish: the table rendered, but one broad topic match and repeated row text were below the CXO quality bar. This follow-up release candidate addresses that artifact-quality issue.
+- Live production proof after PR #4957 showed the artifact table no longer leaked Shared Services, but a broad Finance matcher created a false-positive Finance/FP&A row. This follow-up release candidate tightens that runtime matcher for healthcare trend prompts.
 
 ## Rollout Plan
 
