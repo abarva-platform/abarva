@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -15,6 +16,7 @@ const args = new Set(process.argv.slice(2));
 const OUT_DIR = valueArg("--out-dir") ?? DEFAULT_OUT_DIR;
 const WRITE = args.has("--write");
 const DRY_RUN = args.has("--dry-run") || !WRITE;
+const EMIT_PROOF_BUNDLE = args.has("--emit-proof-bundle");
 
 const SOURCE_DIR = path.join(ROOT, "datasets/tenant-inputs", TENANT_KEY, STANDARD_VERSION);
 const FILES = {
@@ -94,6 +96,12 @@ function number(value) {
   if (!cleaned || cleaned === "not_provided") return 0;
   const parsed = Number(cleaned);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function budgetAmountType(row) {
+  if (number(row.run_budget_usd) > 0 && number(row.change_budget_usd) === 0) return "run";
+  if (number(row.change_budget_usd) > 0 && number(row.run_budget_usd) === 0) return "change";
+  return "none";
 }
 
 function bool(value) {
@@ -453,7 +461,7 @@ function buildProjection() {
       measure: "ai_tagged_spend_fy26",
       scope: row.program_code ? "initiative" : "enterprise_envelope",
       view: row.program_code ? "initiative_budget" : "it_budget",
-      amountType: row.run_change_flag === "run" ? "run" : row.run_change_flag === "change" ? "change" : "none",
+      amountType: budgetAmountType(row),
       basis: "committed",
       period: "fy26",
       valueNumeric: number(row.ai_tagged_budget_usd),
@@ -1008,6 +1016,9 @@ async function writeToDatabase(projection) {
   if (!process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL is required for --write. Use the governed ACA data-build job path.");
   }
+  if (process.env.MERIDIAN_CIO_TOWER_WRITE_APPROVED !== "true") {
+    throw new Error("MERIDIAN_CIO_TOWER_WRITE_APPROVED=true is required for --write.");
+  }
   const { Client } = await import("pg");
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
@@ -1037,7 +1048,22 @@ async function writeToDatabase(projection) {
   }
 }
 
-function main() {
+function emitProofBundle(outDir) {
+  const tarPath = path.join(path.dirname(outDir), `${path.basename(outDir)}.tgz`);
+  const result = spawnSync("tar", ["-czf", tarPath, "-C", path.dirname(outDir), path.basename(outDir)], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  if (result.status !== 0) {
+    throw new Error(`Failed to create proof bundle: ${result.stderr || result.stdout}`);
+  }
+  const payload = fs.readFileSync(tarPath).toString("base64");
+  console.log("__SEMANTIC2_PROOF_TGZ_BEGIN__");
+  console.log(payload);
+  console.log("__SEMANTIC2_PROOF_TGZ_END__");
+}
+
+async function main() {
   const projection = buildProjection();
   fs.mkdirSync(OUT_DIR, { recursive: true });
   fs.writeFileSync(path.join(OUT_DIR, "projection.json"), JSON.stringify(projection, null, 2));
@@ -1050,15 +1076,17 @@ function main() {
   console.log(`Projection written to ${OUT_DIR}`);
   console.log(JSON.stringify(projection.headline, null, 2));
   if (WRITE) {
-    writeToDatabase(projection)
-      .then(() => console.log("Database write complete."))
-      .catch((error) => {
-        console.error(error);
-        process.exit(1);
-      });
+    await writeToDatabase(projection);
+    console.log("Database write complete.");
   } else {
     console.log("Dry-run only. No Azure/Postgres rows were written.");
   }
+  if (EMIT_PROOF_BUNDLE) {
+    emitProofBundle(OUT_DIR);
+  }
 }
 
-main();
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
