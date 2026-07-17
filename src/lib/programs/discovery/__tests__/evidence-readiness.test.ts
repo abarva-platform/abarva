@@ -1,4 +1,5 @@
 import {
+  buildDiscoveryBlueprintInputFromProgram,
   evaluateDiscoveryEvidenceReadiness,
   mapEvidenceToDiscoveryFamily,
   type DiscoveryEvidenceReadinessItem,
@@ -135,5 +136,30 @@ describe("discovery evidence readiness", () => {
         agentAssistBlueprint,
       ),
     ).toBe("contact_center_kpis");
+  });
+
+  it("builds blueprint input from plain Move classification and problem context", () => {
+    const blueprintInput = buildDiscoveryBlueprintInputFromProgram({
+      functionPackKey: null,
+      archetype: null,
+      name: "Postfix Evidence Agent Assist",
+      problemStatement:
+        "Meridian member service wants an AI agent assist move for claims, benefits, prior authorization, CRM history, and knowledge lookup.",
+      targetOutcome:
+        "Shape a governed contact-center Agent Assist move with evidence-backed readiness gates.",
+      charter: {
+        classification: "Contact Center Agent Assist",
+        scope_boundary:
+          "Member-service assisted-agent workflows only; no autonomous clinical, coverage, appeals, or payment decisions.",
+        evidence_family:
+          "contact-center metrics, transcripts, CRM, claims, benefits, prior authorization, knowledge, system inventory, PHI controls, value baseline",
+      },
+    });
+
+    const agentAssistBlueprint = getDiscoveryBlueprint(blueprintInput);
+
+    expect(agentAssistBlueprint.blueprintId).toBe(
+      "healthcare_contact_center_agent_assist",
+    );
   });
 });
