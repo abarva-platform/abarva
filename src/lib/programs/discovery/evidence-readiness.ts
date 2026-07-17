@@ -272,6 +272,58 @@ function nonEmptyString(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function firstNonEmptyString(...values: unknown[]): string | null {
+  for (const value of values) {
+    const normalized = nonEmptyString(value);
+    if (normalized) return normalized;
+  }
+  return null;
+}
+
+interface DiscoveryBlueprintProgramInput {
+  functionPackKey?: string | null;
+  archetype?: string | null;
+  name?: string | null;
+  problemStatement?: string | null;
+  targetOutcome?: string | null;
+  charter?: unknown;
+}
+
+export function buildDiscoveryBlueprintInputFromProgram(
+  program: DiscoveryBlueprintProgramInput | null | undefined,
+): string {
+  const charter =
+    typeof program?.charter === "object" && program.charter !== null
+      ? (program.charter as Record<string, unknown>)
+      : {};
+  const charterClassification = charter.classification;
+  const charterArchetype =
+    typeof charterClassification === "object" && charterClassification !== null
+      ? nonEmptyString((charterClassification as Record<string, unknown>).archetype)
+      : null;
+  const charterClassificationText =
+    typeof charterClassification === "string" ? charterClassification : null;
+
+  return [
+    firstNonEmptyString(
+      program?.functionPackKey,
+      charterArchetype,
+      program?.archetype,
+      charterClassificationText,
+    ) ?? "STRATEGIC_MOVE",
+    program?.name,
+    program?.problemStatement,
+    program?.targetOutcome,
+    charter.problem_statement,
+    charter.value_hypothesis,
+    charter.scope_boundary,
+    charter.evidence_family,
+  ]
+    .map((value) => nonEmptyString(value))
+    .filter(Boolean)
+    .join(" ");
+}
+
 function familyScore(
   item: DiscoveryEvidenceReadinessItem,
   family: EvidenceFamily,
@@ -406,19 +458,9 @@ export async function loadDiscoveryEvidenceReadiness(
   programId: string,
 ): Promise<DiscoveryEvidenceReadiness> {
   const program = await getProgramById(ctx, programId);
-  const charterArchetype =
-    typeof program?.charter?.classification === "object" &&
-    program.charter.classification !== null
-      ? nonEmptyString(
-          (program.charter.classification as Record<string, unknown>).archetype,
-        )
-      : null;
-  const useCaseArchetype =
-    nonEmptyString(program?.functionPackKey) ??
-    charterArchetype ??
-    nonEmptyString(program?.archetype) ??
-    "STRATEGIC_MOVE";
-  const blueprint = getDiscoveryBlueprint(useCaseArchetype);
+  const blueprint = getDiscoveryBlueprint(
+    buildDiscoveryBlueprintInputFromProgram(program),
+  );
   const tenantKey = ctx.clientKey ?? "";
   const rows = await azureRead
     .query<{
