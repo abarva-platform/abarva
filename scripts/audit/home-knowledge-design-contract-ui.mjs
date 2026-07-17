@@ -12,10 +12,6 @@ const MIRROR_PATH = path.join(
   ROOT,
   "datasets/context-artifacts/approved/meridian-health/home-knowledge/approved-home-knowledge-design-contract-pack.json",
 );
-const SOURCE_VALUE_MAP = path.join(
-  ROOT,
-  "reports/home-knowledge-design-contract/rendered-value-map.csv",
-);
 const SOURCE_COMPONENT_LINEAGE = path.join(
   ROOT,
   "reports/home-knowledge-design-contract/component-lineage.csv",
@@ -112,6 +108,207 @@ function loadCsvText(file) {
   return existsSync(file) ? readFileSync(file, "utf8") : "";
 }
 
+function previewRows(dataset) {
+  const rows = dataset?.rows ?? [];
+  const shown = rows.slice(0, 5).map((row, index) => `${index + 1}. ${asText(row)}`);
+  return [
+    `${rows.length} rows render from approved pack with search/filter controls`,
+    ...shown,
+  ].join("\n");
+}
+
+function sourceFilesForDimension(dim, pack) {
+  const csvSources = (dim.sources ?? []).filter((source) => String(source).includes(".csv"));
+  return csvSources.length ? csvSources.join("; ") : sourceFiles(pack);
+}
+
+function buildRenderedComponentRows(pack, slots, dims) {
+  const base = {
+    tenant: pack.tenant_key,
+    storage_location:
+      "datasets/tenant-inputs/meridian-health/approved-content/home/design-contract-pack.json",
+    refreshed_at: pack.generated_at,
+  };
+  const mainPrompt = "reports/home-knowledge-design-contract/actual-claude-prompt.txt";
+  const mainResponse = "reports/home-knowledge-design-contract/raw-claude-response.json";
+  const overviewPrompt = "reports/home-knowledge-design-contract/actual-claude-overview-prompt.txt";
+  const overviewResponse = "reports/home-knowledge-design-contract/raw-claude-response-overview.json";
+  const rows = [];
+  function push(row) {
+    rows.push({
+      ...base,
+      ...row,
+    });
+  }
+  push({
+    page: "Home / Knowledge",
+    tab: "Overview",
+    component: "Enterprise brief title",
+    rendered_value: pack.narrative_sections?.enterprise_brief_title ?? "",
+    generated_by: "Claude-authored executive consultant tool payload",
+    deterministic_object: "narrative_sections.enterprise_brief_title",
+    source_layer: "canonical tenant inputs + executive interviews + approved Home design contract",
+    source_files: "00-18 canonical CSVs; interviews/executive_interviews.csv",
+    claude_prompt_file: overviewPrompt,
+    claude_response_file: overviewResponse,
+    notes: "Renderer displays this string verbatim.",
+  });
+  push({
+    page: "Home / Knowledge",
+    tab: "Overview",
+    component: "Enterprise brief summary",
+    rendered_value: pack.narrative_sections?.enterprise_brief_summary ?? "",
+    generated_by: "Claude-authored executive consultant tool payload",
+    deterministic_object: "narrative_sections.enterprise_brief_summary",
+    source_layer: "canonical tenant inputs + executive interviews + approved Home design contract",
+    source_files: "00-18 canonical CSVs; interviews/executive_interviews.csv",
+    claude_prompt_file: overviewPrompt,
+    claude_response_file: overviewResponse,
+    notes: "Renderer displays this string verbatim.",
+  });
+  [
+    ["KPI facts", "design_slots.FACTS", slots.FACTS],
+    ["KPI strip", "design_slots.KPIS", slots.KPIS],
+    ["Boardroom brief columns", "design_slots.BRIEF_COLS", slots.BRIEF_COLS],
+    ["Leadership priorities", "design_slots.PRIORITIES", slots.PRIORITIES],
+    ["Leadership signals", "design_slots.SIGNALS", slots.SIGNALS],
+    ["Decision can support", "design_slots.DEC_CAN", slots.DEC_CAN],
+    ["Decision cannot support", "design_slots.DEC_CANNOT", slots.DEC_CANNOT],
+  ].forEach(([component, objectPath, value]) =>
+    push({
+      page: "Home / Knowledge",
+      tab: "Overview",
+      component,
+      rendered_value: asText(value),
+      generated_by: "Claude-authored tool payload",
+      deterministic_object: objectPath,
+      source_layer: "canonical tenant inputs + executive interviews + approved Home design contract",
+      source_files: "00-18 canonical CSVs; interviews/executive_interviews.csv",
+      claude_prompt_file: mainPrompt,
+      claude_response_file: mainResponse,
+      notes: "Renderer displays field values without prose rewriting.",
+    }),
+  );
+  [
+    ["Context Confidence", "Summary", pack.narrative_sections?.context_confidence_summary],
+    ["Evidence Gaps", "Summary", pack.narrative_sections?.evidence_gaps_summary],
+    ["Use Cases", "Summary", pack.narrative_sections?.use_cases_summary],
+    ["Use Cases", "Portfolio view", pack.narrative_sections?.use_cases_portfolio_view],
+    ["Proof", "Summary", pack.narrative_sections?.proof_summary],
+    ["Proof", "Relationship visual", pack.narrative_sections?.proof_relationship_visual],
+  ].forEach(([tab, component, value]) =>
+    push({
+      page: "Home / Knowledge",
+      tab,
+      component,
+      rendered_value: asText(value),
+      generated_by: "Claude-authored executive consultant tool payload",
+      deterministic_object: `narrative_sections.${component.toLowerCase().replaceAll(" ", "_")}`,
+      source_layer: "canonical tenant inputs + evidence boundaries",
+      source_files: "00-18 canonical CSVs; 12_relationships.csv; 13_evidence_sources.csv",
+      claude_prompt_file: overviewPrompt,
+      claude_response_file: overviewResponse,
+      notes: "Renderer displays this value verbatim.",
+    }),
+  );
+  for (const dim of dims) {
+    const key = dim.key;
+    const sourceFile = sourceFilesForDimension(dim, pack);
+    push({
+      page: `Enterprise Dimensions / ${dim.name}`,
+      tab: "Summary",
+      component: "Story card",
+      rendered_value: asText(slots.STORY[key]),
+      generated_by: "Claude-authored tool payload",
+      deterministic_object: `design_slots.STORY.${key}`,
+      source_layer: "canonical dimension rows + cross-dimension context",
+      source_files: sourceFile,
+      claude_prompt_file: mainPrompt,
+      claude_response_file: mainResponse,
+      notes: "Renderer displays this dimension story without prose rewriting.",
+    });
+    push({
+      page: `Enterprise Dimensions / ${dim.name}`,
+      tab: "Summary",
+      component: "Insight breakdown",
+      rendered_value: asText(slots.INSIGHTS[key]),
+      generated_by: "Claude-authored tool payload",
+      deterministic_object: `design_slots.INSIGHTS.${key}`,
+      source_layer: "canonical dimension rows + cross-dimension context",
+      source_files: sourceFile,
+      claude_prompt_file: mainPrompt,
+      claude_response_file: mainResponse,
+      notes: "Renderer displays this insight structure without prose rewriting.",
+    });
+    push({
+      page: `Enterprise Dimensions / ${dim.name}`,
+      tab: "Summary",
+      component: "Visual blocks",
+      rendered_value: asText(slots.VISUAL_BLOCKS[key]),
+      generated_by: "Claude-authored visual block payload",
+      deterministic_object: `design_slots.VISUAL_BLOCKS.${key}`,
+      source_layer: "canonical dimension rows + cross-dimension context",
+      source_files: sourceFile,
+      claude_prompt_file: mainPrompt,
+      claude_response_file: mainResponse,
+      notes: "Cards, charts, graphs, and dashboard panels render from this structure.",
+    });
+    push({
+      page: `Enterprise Dimensions / ${dim.name}`,
+      tab: "Data",
+      component: "Rows",
+      rendered_value: previewRows(slots.DATA[key]),
+      generated_by: "Deterministic full-row projection from canonical CSV",
+      deterministic_object: `design_slots.DATA.${key}`,
+      source_layer: "canonical tenant input rows",
+      source_files: sourceFile,
+      claude_prompt_file: "not_applicable",
+      claude_response_file: "not_applicable",
+      notes: "Review table previews five rows; UI has the full row set and filters.",
+    });
+    push({
+      page: `Enterprise Dimensions / ${dim.name}`,
+      tab: "Relationships",
+      component: "Relationship story",
+      rendered_value: asText(slots.REL[key]),
+      generated_by: "Claude-authored relationship interpretation",
+      deterministic_object: `design_slots.REL.${key}`,
+      source_layer: "canonical relationship rows plus source dimension",
+      source_files: `${sourceFile}; 12_relationships.csv`,
+      claude_prompt_file: mainPrompt,
+      claude_response_file: mainResponse,
+      notes: "Relationship interpretation remains evidence-bounded.",
+    });
+    push({
+      page: `Enterprise Dimensions / ${dim.name}`,
+      tab: "Gaps",
+      component: "Dimension gaps",
+      rendered_value: asText(slots.DGAPS[key]),
+      generated_by: "Claude-authored gap synthesis",
+      deterministic_object: `design_slots.DGAPS.${key}`,
+      source_layer: "canonical gaps, risks, metrics, and evidence boundaries",
+      source_files: `${sourceFile}; 11_risks_controls.csv; 13_evidence_sources.csv; 14_metrics_outcomes.csv`,
+      claude_prompt_file: mainPrompt,
+      claude_response_file: mainResponse,
+      notes: "Generator fails if this slot is empty.",
+    });
+    push({
+      page: `Enterprise Dimensions / ${dim.name}`,
+      tab: "Evidence",
+      component: "Evidence cards",
+      rendered_value: asText(slots.EVID[key]),
+      generated_by: "Claude-authored evidence summary",
+      deterministic_object: `design_slots.EVID.${key}`,
+      source_layer: "evidence registry plus dimension file",
+      source_files: `${sourceFile}; 13_evidence_sources.csv`,
+      claude_prompt_file: mainPrompt,
+      claude_response_file: mainResponse,
+      notes: "Generator fails if this slot is empty.",
+    });
+  }
+  return rows;
+}
+
 function main() {
   const pack = readJson(PACK_PATH);
   const mirror = readJson(MIRROR_PATH);
@@ -119,6 +316,27 @@ function main() {
   if (mirror.tenant_key !== TENANT) fail("Mirror pack tenant mismatch");
   if (pack.validation?.status !== "pass") fail("Primary pack validation is not pass");
   if (mirror.validation?.status !== "pass") fail("Mirror pack validation is not pass");
+  if (
+    pack.narrative_sections?.render_contract !==
+    "renderer_displays_claude_strings_and_visual_blocks_verbatim_no_rewrite"
+  ) {
+    fail("Primary pack is missing the Claude verbatim render contract");
+  }
+  if (pack.quality_assessment?.renderer_rewrite_allowed !== false) {
+    fail("Primary pack does not explicitly prohibit renderer rewriting");
+  }
+  if (pack.quality_assessment?.advisory_slots_source !== "claude_tool_payload_only") {
+    fail("Advisory slots are not declared as Claude tool payload only");
+  }
+  if (!pack.narrative_sections?.enterprise_brief_title) {
+    fail("Primary pack is missing Claude enterprise brief title");
+  }
+  if (!pack.narrative_sections?.enterprise_brief_summary) {
+    fail("Primary pack is missing Claude enterprise brief summary");
+  }
+  if (!pack.narrative_sections?.executive_overview_response_path) {
+    fail("Primary pack is missing Claude executive overview response lineage");
+  }
 
   mkdirSync(OUT_DIR, { recursive: true });
   const slots = pack.design_slots ?? {};
@@ -147,6 +365,9 @@ function main() {
     if (!slots.REL?.[key]) missing.push(`${key}: relationships`);
     if (!slots.DGAPS?.[key]?.length) missing.push(`${key}: gaps`);
     if (!slots.EVID?.[key]?.length) missing.push(`${key}: evidence`);
+    if (!slots.VISUAL_BLOCKS?.[key]?.length) {
+      missing.push(`${key}: Claude visual blocks`);
+    }
   }
   if (missing.length) fail(`Missing required dimension content: ${missing.join("; ")}`);
 
@@ -215,24 +436,27 @@ function main() {
     })),
   );
 
-  const renderedValueMap = loadCsvText(SOURCE_VALUE_MAP);
   const componentLineage = loadCsvText(SOURCE_COMPONENT_LINEAGE);
-  const renderedComponentMap = renderedValueMap || [
-    "tenant,page,tab,component,rendered_value,generated_by,source_layer,source_files,refreshed_at",
-    `${pack.tenant_key},Home / Knowledge,Overview,Design contract pack,${totalRows} rows,generated_render_pack,${sourceLayer(pack)},${sourceFiles(pack)},${pack.generated_at}`,
-  ].join("\n");
+  const renderedComponentRows = buildRenderedComponentRows(pack, slots, dims);
 
   const generationRows = [
     {
       component: "Boardroom summary",
-      generation_method: "claude_main_response_with_evidence_bounded_repair",
+      generation_method: "claude_tool_payload_only",
       source: "reports/home-knowledge-design-contract/raw-claude-response.json",
       prompt: "reports/home-knowledge-design-contract/actual-claude-prompt.txt",
       rendered_path: "design_slots.BRIEF_COLS / PRIORITIES / SIGNALS",
     },
     {
+      component: "Enterprise brief narrative",
+      generation_method: "claude_executive_consultant_tool_payload_only",
+      source: "reports/home-knowledge-design-contract/raw-claude-response-overview.json",
+      prompt: "reports/home-knowledge-design-contract/actual-claude-overview-prompt.txt",
+      rendered_path: "narrative_sections.enterprise_brief_title / enterprise_brief_summary",
+    },
+    {
       component: "Dimension summaries",
-      generation_method: "mixed_claude_main_response_approved_story_block_repair",
+      generation_method: "claude_tool_payload_only",
       source: "design_slots.STORY and design_slots.INSIGHTS",
       prompt: "reports/home-knowledge-design-contract/actual-claude-prompt.txt",
       rendered_path: "dimension Summary tab",
@@ -253,10 +477,17 @@ function main() {
     },
     {
       component: "Relationship and gap tabs",
-      generation_method: "evidence_bounded_synthesis_plus_canonical_projection",
+      generation_method: "claude_tool_payload_only_from_canonical_context",
       source: "design_slots.REL / design_slots.DGAPS",
       prompt: "reports/home-knowledge-design-contract/actual-claude-prompt.txt",
       rendered_path: "dimension Relationships and Gaps tabs",
+    },
+    {
+      component: "Visual blocks",
+      generation_method: "claude_tool_payload_only",
+      source: "design_slots.VISUAL_BLOCKS",
+      prompt: "reports/home-knowledge-design-contract/actual-claude-prompt.txt",
+      rendered_path: "dimension Summary tab visual blocks",
     },
   ];
 
@@ -299,7 +530,7 @@ function main() {
     fail(`Blocked content found: ${blockedFailures.map((row) => `${row.target}: ${row.reason}`).join("; ")}`);
   }
 
-  writeFileSync(path.join(OUT_DIR, "rendered-component-map.csv"), renderedComponentMap);
+  writeCsv(path.join(OUT_DIR, "rendered-component-map.csv"), renderedComponentRows);
   writeFileSync(
     path.join(OUT_DIR, "component-lineage-source.csv"),
     componentLineage,
@@ -321,7 +552,7 @@ Mode: ${MODE}
 ## Truth Split
 
 - UI wiring reads the approved design-contract render pack.
-- Boardroom and advisory story slots are Claude-assisted, evidence-bounded, and repaired where the main response did not cover all dimensions.
+- Boardroom and advisory story slots are Claude-authored tool payload fields displayed by the renderer without prose rewriting.
 - Data tabs are deterministic canonical projections from ${pack.source_context?.canonical_input_location}.
 - Evidence tabs are lineage projections from the approved render pack.
 - This audit does not mutate Postgres, promote candidate data, update Active Tenant Access, or deploy.
