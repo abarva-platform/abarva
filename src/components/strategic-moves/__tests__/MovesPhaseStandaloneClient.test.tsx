@@ -755,8 +755,14 @@ describe("MovesPhaseStandaloneClient", () => {
 
     expect(screen.getByRole("heading", { name: "Gate approval" })).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Final build blocked by required evidence/i }),
-    ).toBeDisabled();
+      screen.getByText(/1 required next-phase input gap/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/These gaps are carried forward as next-phase preparation/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Approve & Build P3 Choose the Approach/i }),
+    ).toBeEnabled();
   });
 
   it("Files & Evidence renders a real generated deliverable as an actual downloadable link", async () => {

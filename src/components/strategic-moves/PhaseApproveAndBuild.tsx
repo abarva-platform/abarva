@@ -106,8 +106,10 @@ interface Props {
   clientDisplayName: string;
   /** Optional readiness signal — number of Move-specific inputs uploaded for the phase. */
   inputCount?: number;
-  /** Evidence gaps that determine whether this is final-ready or preliminary only. */
+  /** Evidence gaps shown as phase/readiness guidance. Not a build blocker unless explicitly requested. */
   evidenceNeedPackets?: MoveEvidenceNeedPacket[];
+  /** Some older callers pass current-phase evidence blockers. The phase workspace passes next-phase readiness, so default false. */
+  blockOnEvidenceGaps?: boolean;
   /** Parent-owned prerequisite work, such as phase capture finalization. */
   onBeforeBuild?: () => Promise<void>;
   /** Parent-owned phase-gate approval after durable deliverable runs are queued. */
@@ -148,6 +150,7 @@ export function PhaseApproveAndBuild({
   clientDisplayName,
   inputCount,
   evidenceNeedPackets = [],
+  blockOnEvidenceGaps = false,
   onBeforeBuild,
   onBuildQueued,
   disabledReason = null,
@@ -340,7 +343,8 @@ export function PhaseApproveAndBuild({
   const requiredGaps = evidenceNeedPackets.filter(
     (packet) => packet.priority === "required" && packet.status !== "covered",
   );
-  const hasRequiredGaps = requiredGaps.length > 0;
+  const hasEvidenceGuidanceGaps = requiredGaps.length > 0;
+  const hasRequiredGaps = blockOnEvidenceGaps && hasEvidenceGuidanceGaps;
   const hasParentBlocker = Boolean(disabledReason);
   const buildLabel = hasRequiredGaps
     ? "Final build blocked by required evidence"
@@ -395,22 +399,21 @@ export function PhaseApproveAndBuild({
           <span>
             {builtCount}/{specs.length} built
           </span>
-          {hasRequiredGaps && (
+          {hasEvidenceGuidanceGaps && (
             <span style={{ color: ATTENTION }}>
-              {requiredGaps.length} required evidence gap
-              {requiredGaps.length === 1 ? "" : "s"} before final
+              {requiredGaps.length} required next-phase input gap
+              {requiredGaps.length === 1 ? "" : "s"}
             </span>
           )}
           {hasParentBlocker && (
             <span style={{ color: ATTENTION }}>{disabledReason}</span>
           )}
         </div>
-        {hasRequiredGaps && (
+        {hasEvidenceGuidanceGaps && (
           <div style={{ marginTop: 6, color: ATTENTION }}>
-            Final or board-ready output remains blocked until the missing
-            evidence is uploaded or explicitly waived. This phase does not have
-            an active preliminary-generation lane yet, so AbarVa will not imply
-            a draft can be generated when the governed API would reject it.
+            These gaps are carried forward as next-phase preparation. They do
+            not block this phase&apos;s governed build unless the phase explicitly
+            marks them as current-phase blockers.
           </div>
         )}
         {hasParentBlocker && (
