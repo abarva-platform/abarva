@@ -491,7 +491,7 @@ export async function evaluateGate(
           !discoveryReportHasHardGap
         ) || (
           fromPhase === 2 &&
-          /\b(stakeholder|owner|sponsor|business|technology|risk|finance)\b/.test(phaseCaptureText)
+          /\b(stakeholder|owner|ownership|sponsor|business|technology|risk|finance|operations|architecture|compliance|privacy|security|supervisor|steward|handoff|queue|role)\b/.test(phaseCaptureText)
         );
         break;
       case 'p2_readiness_cleared':
@@ -509,7 +509,11 @@ export async function evaluateGate(
         pass = isPresent(findDeliverable('discovery_notes', 'meeting_notes', 'workshop_notes')) ||
           moduleCompleted('discovery_notes_ingest', 'workshop_notes_ingest') ||
           (await hasProgramEvidence(programId, [1, 2], sb)) ||
-          discoveryReportHasWorkshopEvidence;
+          discoveryReportHasWorkshopEvidence ||
+          (
+            fromPhase === 2 &&
+            /\b(current state|finding|baseline|metric|gap|root cause|handoff|process|data quality|governance|evidence confidence|recommendation)\b/.test(phaseCaptureText)
+          );
         break;
       case 'current_state_summary_drafted':
         pass = isPresent(findDeliverable('current_state_summary', 'discovery_summary', 'current_state_assessment'));
