@@ -509,7 +509,8 @@
     "audit:meridian-interview-graph-edges": "node scripts/tenant-v3/audit-meridian-v3-derived-layer.mjs --scope interview-graph",
     "audit:home-v3-runtime-reachability": "npx tsx scripts/tenant-v3/audit-home-v3-runtime-reachability.ts",
     "audit:home-v3-preview-columns": "npx tsx scripts/tenant-v3/audit-home-v3-runtime-reachability.ts",
-    "audit:approved-content-path-convergence": "npx tsx scripts/tenant-v3/audit-home-v3-runtime-reachability.ts"
+    "audit:approved-content-path-convergence": "npx tsx scripts/tenant-v3/audit-home-v3-runtime-reachability.ts",
+    "audit:tower-governed-candidate-load": "npx tsx scripts/audit/build-tower-governed-candidate-load.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

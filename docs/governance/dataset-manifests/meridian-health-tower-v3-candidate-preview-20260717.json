@@ -1,0 +1,17 @@
+{
+  "dataset_id": "meridian-health-tower-v3-candidate-preview-20260717",
+  "title": "Meridian Health Tower V3 Candidate Preview Pack",
+  "client_key": "meridian-health",
+  "source_layer": "tenant_context",
+  "classification": "confidential",
+  "owner": "AbarVa Data Governance",
+  "source_basis": "approved_meridian_v3_tenant_inputs_and_tower_context_pack_projection",
+  "ingestion_method": "operator_aca_job",
+  "retrieval_plan": "fts_plus_search",
+  "retrieval_proof_required": true,
+  "pii_phi_handling": "Synthetic, PHI-free, planning-grade healthcare demo context. No patient, member, provider, claim-line, PHI, PII, or real production Meridian records are included. Candidate preview remains inactive until quality gate and human promotion approval pass.",
+  "expected_object_count": 410,
+  "approved_by": "Anand Sundaram",
+  "approved_at": "2026-07-17",
+  "notes": "Manifest gates a candidate-preview-only Tower load path from Meridian v3 dimensions 08, 09, 11, 14, 17, and 18. It does not update Active Tenant Access, promote a candidate, make Tower read candidate data by default, or authorize realized-value claims."
+}
