@@ -271,6 +271,79 @@ describe("strategic move transformer helpers", () => {
     expect(move.terminalComplete).toBe(true);
   });
 
+  it("marks the Strategic Move page model terminal-complete from the explicit P5 module row", async () => {
+    selectMock.mockImplementation(async (request) => {
+      if (
+        request.table === "module_state_log" &&
+        request.where &&
+        "module_key" in request.where
+      ) {
+        return [
+          {
+            created_at: "2026-07-17T07:01:06.000Z",
+            module_key: "phase_5",
+            new_state: "completed",
+            changed_by_user_id: null,
+          },
+        ] as never;
+      }
+      return [];
+    });
+
+    const move = await buildStrategicMove(
+      { clientId: "client-1", userId: "user-1" },
+      {
+        id: "move-1",
+        clientId: "client-1",
+        name: "Terminal handoff proof",
+        sponsorPersonId: null,
+        problemStatement: null,
+        targetOutcome: null,
+        timelineHorizon: null,
+        valueProjectedLowUsd: null,
+        valueProjectedHighUsd: null,
+        valueVerifiedUsd: null,
+        valueCurrency: null,
+        valueAssumptions: null,
+        valueVerifiedStatus: null,
+        archetype: null,
+        originSource: null,
+        originSourceRef: null,
+        status: "active",
+        lifecycleState: "active",
+        currentPhase: 5,
+        currentModuleKey: null,
+        maestroOversightLevel: null,
+        founderApprovalRequired: false,
+        phaseLockedAt: null,
+        phaseLockedByUserId: null,
+        dataResidencyRegion: null,
+        retentionPolicyYears: null,
+        archivedAt: null,
+        deletedAt: null,
+        createdAt: "2026-05-01T00:00:00.000Z",
+        updatedAt: null,
+        charter: null,
+        functionPackKey: null,
+        functionPackConfidence: null,
+        gatesPassed: [],
+      } as never,
+      { evaluateGateCriteria: false },
+    );
+
+    expect(move.terminalComplete).toBe(true);
+    expect(selectMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        table: "module_state_log",
+        where: expect.objectContaining({
+          engagement_id: "move-1",
+          module_key: "phase_5",
+        }),
+        limit: 1,
+      }),
+    );
+  });
+
   it("renders a sparse newly-created Move instead of throwing on missing optional state", async () => {
     maybeSingleMock.mockImplementation(async (request) => {
       if (request.table === "clients") {
