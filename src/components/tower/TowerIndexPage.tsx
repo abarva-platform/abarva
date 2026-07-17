@@ -3906,7 +3906,6 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
     acc[row.decisionLane] = (acc[row.decisionLane] ?? 0) + 1;
     return acc;
   }, {});
-  const visibleAiRows = model.aiPortfolio.slice(0, 12);
   const commandSteps = [
     ["Posture", "where the money is"],
     ["Signals", "what's misaligned"],
@@ -4357,7 +4356,7 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
         ) : null}
         {activeSection === "value" ? <TowerMartValueFunnelDesign model={model} /> : null}
         {activeSection === "lanes" ? <TowerMartDecisionLanesDesign rows={model.programLanes} /> : null}
-        {activeSection === "ai" ? <TowerMartAiPortfolioDesign rows={visibleAiRows} command={command} /> : null}
+        {activeSection === "ai" ? <TowerMartAiPortfolioDesign rows={model.aiPortfolio} command={command} /> : null}
         {activeSection === "actions" ? <TowerMartActionsDesign actions={model.cxoActions} /> : null}
         {activeSection === "evidence" ? <TowerMartEvidenceDesign rows={model.evidenceLineage} gaps={model.requiredFieldGaps} /> : null}
       </main>
