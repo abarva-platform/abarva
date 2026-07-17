@@ -81,6 +81,7 @@ interface MovesPhaseStandaloneClientProps {
 type WorkspaceView = "phase" | "files";
 
 type UploadWorkStatus = "idle" | "uploading" | "uploaded" | "error";
+type PhaseCaptureValues = Record<string, string>;
 
 const PHASES: PhaseContract[] = [
   {
@@ -445,6 +446,37 @@ export function MovesPhaseStandaloneClient({
     () => p3OptionSet.options.find((option) => option.id === selectedOption)?.label,
     [p3OptionSet.options, selectedOption],
   );
+  const [phaseCaptureValues, setPhaseCaptureValues] = useState<PhaseCaptureValues>(() =>
+    buildPhaseCaptureItems({
+      draftedBrief,
+      move,
+      phase,
+      selectedOption,
+      selectedOptionLabel: selectedP3OptionLabel,
+    }),
+  );
+  const phaseCaptureSections = useMemo(
+    () => getPhaseCaptureSections(phase.phase),
+    [phase.phase],
+  );
+  const phaseCaptureCompleteCount = useMemo(
+    () =>
+      phaseCaptureSections.filter((section) =>
+        String(phaseCaptureValues[section.key] ?? "").trim(),
+      ).length,
+    [phaseCaptureSections, phaseCaptureValues],
+  );
+  const phaseCaptureMissingCount =
+    phaseCaptureSections.length - phaseCaptureCompleteCount;
+  const phaseCaptureBlocker =
+    phase.phase >= 1 && phaseCaptureMissingCount > 0
+      ? `Complete ${phaseCaptureMissingCount} phase input${
+          phaseCaptureMissingCount === 1 ? "" : "s"
+        } before Approve & Build.`
+      : null;
+  const setPhaseCaptureValue = useCallback((key: string, value: string) => {
+    setPhaseCaptureValues((prev) => ({ ...prev, [key]: value }));
+  }, []);
 
   // aVa chat send. Ported from the retired StrategicMovePhaseClient's `send`
   // — same endpoint, same surfaceContext shape. Critically keeps
@@ -580,13 +612,7 @@ export function MovesPhaseStandaloneClient({
     const finalizeBody: Record<string, unknown> = {
       phase: phase.phase,
       complete: true,
-      sections: buildPhaseCaptureItems({
-        draftedBrief,
-        move,
-        phase,
-        selectedOption,
-        selectedOptionLabel: phase.phase === 3 ? selectedP3OptionLabel : undefined,
-      }),
+      sections: phaseCaptureValues,
     };
     const finalizeRes = await fetch(`/api/v1/programs/${move.id}/phase-capture`, {
       method: "POST",
@@ -906,11 +932,16 @@ export function MovesPhaseStandaloneClient({
                 onApproveP0Gate={approveP0Gate}
                 onFinalizePhaseCapture={finalizePhaseCapture}
                 onOpenFiles={openFilesWorkspace}
+                onPhaseCaptureValueChange={setPhaseCaptureValue}
                 onSelectOption={setSelectedOption}
                 onShowGate={goToGateStep}
                 nextOpenPhaseContract={nextOpenPhaseContract}
                 p3OptionSet={p3OptionSet}
                 phase={phase}
+                phaseCaptureBlocker={phaseCaptureBlocker}
+                phaseCaptureCompleteCount={phaseCaptureCompleteCount}
+                phaseCaptureSections={phaseCaptureSections}
+                phaseCaptureValues={phaseCaptureValues}
                 selectedOption={selectedOption}
                 substep={substep.key}
               />
@@ -1023,11 +1054,16 @@ function PhaseBody({
   onApproveP0Gate,
   onFinalizePhaseCapture,
   onOpenFiles,
+  onPhaseCaptureValueChange,
   onSelectOption,
   onShowGate,
   nextOpenPhaseContract,
   p3OptionSet,
   phase,
+  phaseCaptureBlocker,
+  phaseCaptureCompleteCount,
+  phaseCaptureSections,
+  phaseCaptureValues,
   selectedOption,
   substep,
 }: {
@@ -1047,11 +1083,16 @@ function PhaseBody({
   onApproveP0Gate: () => void | Promise<void>;
   onFinalizePhaseCapture: () => Promise<void>;
   onOpenFiles: () => void;
+  onPhaseCaptureValueChange: (key: string, value: string) => void;
   onSelectOption: (value: string) => void;
   onShowGate: () => void;
   nextOpenPhaseContract: PhaseContract;
   p3OptionSet: P3OptionSet;
   phase: PhaseContract;
+  phaseCaptureBlocker: string | null;
+  phaseCaptureCompleteCount: number;
+  phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
+  phaseCaptureValues: PhaseCaptureValues;
   selectedOption: string;
   substep: SubstepKey;
 }) {
@@ -1186,6 +1227,13 @@ function PhaseBody({
     if (phase.phase === 1) {
       return (
         <>
+          <PhaseCaptureEditor
+            completeCount={phaseCaptureCompleteCount}
+            onChange={onPhaseCaptureValueChange}
+            phase={phase}
+            sections={phaseCaptureSections}
+            values={phaseCaptureValues}
+          />
           <section className="mxw-zone">
             <h2>Initial transformation posture</h2>
             <p>
@@ -1318,6 +1366,16 @@ function PhaseBody({
   return (
     <>
       {phase.phase === 0 ? <P0CapturedBriefReview move={move} /> : null}
+      {phase.phase >= 1 && !isHistoricalPhase ? (
+        <PhaseCaptureEditor
+          compact
+          completeCount={phaseCaptureCompleteCount}
+          onChange={onPhaseCaptureValueChange}
+          phase={phase}
+          sections={phaseCaptureSections}
+          values={phaseCaptureValues}
+        />
+      ) : null}
       <section className="mxw-review">
         <h2>Gate approval</h2>
         {isHistoricalPhase ? (
@@ -1366,6 +1424,7 @@ function PhaseBody({
             <PhaseApproveAndBuild
               archetype={move.archetype}
               clientDisplayName={move.tenant.name}
+              disabledReason={phaseCaptureBlocker}
               evidenceNeedPackets={evidenceNeedPackets}
               inputCount={evidenceCount}
               moveId={move.id}
@@ -1670,6 +1729,25 @@ function textOrDraft(draftedBrief: Record<number, string>, index: number): strin
   return draftedBrief[index]?.trim() || ORIGINATE_FIELDS[index]?.draft || "";
 }
 
+function charterString(
+  charter: Record<string, unknown> | null | undefined,
+  ...keys: string[]
+): string {
+  const scaffold =
+    charter?.scaffold && typeof charter.scaffold === "object"
+      ? (charter.scaffold as Record<string, unknown>)
+      : null;
+  for (const key of keys) {
+    const value = charter?.[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+    const scaffoldValue = scaffold?.[key];
+    if (typeof scaffoldValue === "string" && scaffoldValue.trim()) {
+      return scaffoldValue.trim();
+    }
+  }
+  return "";
+}
+
 function buildPhaseCaptureItems({
   draftedBrief,
   move,
@@ -1698,6 +1776,55 @@ function buildPhaseCaptureItems({
   }
 
   const selectedOptionDisplay = selectedOptionLabel || optionLabelForPhase(phase.phase, selectedOption);
+  if (phase.phase === 1) {
+    const scope =
+      charterString(
+        move.charter,
+        "scope_boundary",
+        "scopeBoundary",
+        "affected_function_process",
+        "affectedFunctionProcess",
+      ) || "Scope boundary to be confirmed during Charter.";
+    const value =
+      charterString(
+        move.charter,
+        "value_hypothesis",
+        "valueHypothesis",
+        "initial_value_hypothesis",
+        "initialValueHypothesis",
+        "target_outcome",
+        "targetOutcome",
+      ) || "Directional value hypothesis to validate in P2.";
+    const evidence =
+      charterString(
+        move.charter,
+        "known_evidence",
+        "knownEvidence",
+        "evidence_family",
+        "evidenceFamily",
+      ) || "Evidence families and source owners to confirm in Discovery.";
+    const sponsor =
+      move.sponsor?.role ||
+      charterString(
+        move.charter,
+        "sponsor_candidate",
+        "sponsorCandidate",
+        "stakeholder_owner_view",
+        "stakeholderOwnerView",
+      ) ||
+      "Executive sponsor role to confirm.";
+    return {
+      sponsor_commitment: `Sponsor/title: ${sponsor}. Operating owners and technology/data co-sponsors must confirm cadence, authority, and phase-gate attendance.`,
+      scope_boundary: scope,
+      success_criteria: `${value} Discovery should validate baseline, target direction, measurement owner, evidence confidence, and what cannot yet be claimed.`,
+      stakeholder_map:
+        "Core roles: executive sponsor, operating owner, technology/data owner, risk/privacy/compliance owner, finance value owner, and change/adoption owner.",
+      decision_rights:
+        "Sponsor approves scope and phase advancement; operating owner approves process fit; technology/data owner approves platform and integration assumptions; risk/privacy/compliance approve controls and PHI boundaries; finance validates value logic.",
+      evidence_plan: `${evidence} P2 must collect enough process, technology, data, controls, org/change, and baseline metric evidence to decide whether to proceed, hold, or narrow the Move.`,
+    };
+  }
+
   const optionContext =
     phase.phase === 1
       ? `Initial transformation posture to validate in P2: ${selectedOptionDisplay}.`
@@ -1851,6 +1978,62 @@ function TemplatesAndSessions({ phase }: { phase: PhaseContract }) {
         ))}
       </div>
     </div>
+  );
+}
+
+function PhaseCaptureEditor({
+  compact = false,
+  completeCount,
+  onChange,
+  phase,
+  sections,
+  values,
+}: {
+  compact?: boolean;
+  completeCount: number;
+  onChange: (key: string, value: string) => void;
+  phase: PhaseContract;
+  sections: ReturnType<typeof getPhaseCaptureSections>;
+  values: PhaseCaptureValues;
+}) {
+  if (phase.phase === 0 || sections.length === 0) return null;
+
+  return (
+    <section className={`mxw-zone mxw-capture ${compact ? "compact" : ""}`}>
+      <header>
+        <div>
+          <span>{phase.code} source of truth</span>
+          <h2>{phase.phase === 1 ? "Charter inputs" : `${phase.title} inputs`}</h2>
+          <p>
+            These are the fields the gate saves and approves. Edit them here
+            before running Approve &amp; Build.
+          </p>
+        </div>
+        <strong>
+          {completeCount} / {sections.length}
+        </strong>
+      </header>
+      <div className="mxw-capture-grid">
+        {sections.map((section, index) => {
+          const value = values[section.key] ?? "";
+          const complete = value.trim().length > 0;
+          return (
+            <label className={`mxw-capture-card ${complete ? "complete" : ""}`} key={section.key}>
+              <span>{String(index + 1).padStart(2, "0")}</span>
+              <strong>{section.label}</strong>
+              <small>{section.description}</small>
+              <textarea
+                aria-label={section.label}
+                onChange={(event) => onChange(section.key, event.target.value)}
+                placeholder={section.description}
+                rows={compact ? 2 : 3}
+                value={value}
+              />
+            </label>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -2096,6 +2279,22 @@ function MovesStandaloneStyles() {
 .mxw-how-step small{display:block;font-size:12.5px;color:var(--muted);line-height:1.42;max-width:24ch}
 .mxw-zone{margin-top:24px}
 .mxw-zone>p{font-size:13px;color:var(--muted);margin:5px 0 15px;line-height:1.5;max-width:70ch}
+.mxw-capture{border:1px solid rgba(0,87,184,.16);border-radius:14px;background:linear-gradient(180deg,var(--blue-tint),var(--card) 58%);padding:16px 18px;box-shadow:var(--shadow)}
+.mxw-capture.compact{padding:14px 16px}
+.mxw-capture header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+.mxw-capture header span{display:block;font-size:10.5px;letter-spacing:1.1px;text-transform:uppercase;color:var(--blue);font-weight:900;margin-bottom:4px}
+.mxw-capture header h2{font-family:Georgia,serif;font-size:19px;font-weight:700;letter-spacing:-.4px;margin:0;color:var(--ink)}
+.mxw-capture header p{font-size:13px;color:var(--ink-2);line-height:1.45;margin:4px 0 0;max-width:72ch}
+.mxw-capture header strong{white-space:nowrap;border:1px solid rgba(0,87,184,.2);border-radius:999px;background:var(--card);color:var(--blue);font-size:12px;font-weight:900;padding:7px 10px}
+.mxw-capture-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mxw-capture-card{display:grid;grid-template-columns:32px minmax(0,1fr);gap:3px 10px;border:1px solid var(--line);border-radius:11px;background:var(--card);padding:12px 13px}
+.mxw-capture-card.complete{border-color:rgba(29,143,104,.28)}
+.mxw-capture-card>span{grid-row:1 / span 2;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--ink);color:#fff;font-size:10px;font-weight:900}
+.mxw-capture-card.complete>span{background:var(--green)}
+.mxw-capture-card strong{font-size:13.5px;color:var(--ink);line-height:1.25}
+.mxw-capture-card small{font-size:12px;color:var(--muted);line-height:1.35}
+.mxw-capture-card textarea{grid-column:1 / -1;width:100%;resize:vertical;border:1px solid var(--line-2);border-radius:9px;background:#fff;color:var(--ink);font:inherit;font-size:13px;line-height:1.45;padding:9px 10px;margin-top:7px;min-height:74px}
+.mxw-capture-card textarea:focus{outline:2px solid rgba(0,87,184,.22);border-color:rgba(0,87,184,.5)}
 .mxw-ts-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,1fr);gap:16px}
 .mxw-ts-col{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
 .mxw-ts-col header{padding:13px 16px;border-bottom:1px solid var(--line);background:var(--soft);display:flex;align-items:center;gap:9px}

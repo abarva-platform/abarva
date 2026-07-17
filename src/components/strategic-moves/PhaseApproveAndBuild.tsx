@@ -95,6 +95,8 @@ interface Props {
   onBeforeBuild?: () => Promise<void>;
   /** Parent-owned phase-gate approval after durable deliverable runs are queued. */
   onBuildQueued?: (result: ApproveAndBuildResult) => Promise<void>;
+  /** User-facing blocker owned by the parent, such as incomplete visible capture inputs. */
+  disabledReason?: string | null;
 }
 
 const POLL_MS = 4000;
@@ -131,6 +133,7 @@ export function PhaseApproveAndBuild({
   evidenceNeedPackets = [],
   onBeforeBuild,
   onBuildQueued,
+  disabledReason = null,
 }: Props) {
   const specs = (PHASE_CANONICAL_KEYS[phaseNum] ?? [])
     .map((key) =>
@@ -316,8 +319,11 @@ export function PhaseApproveAndBuild({
     (packet) => packet.priority === "required" && packet.status !== "covered",
   );
   const hasRequiredGaps = requiredGaps.length > 0;
+  const hasParentBlocker = Boolean(disabledReason);
   const buildLabel = hasRequiredGaps
     ? "Final build blocked by required evidence"
+    : hasParentBlocker
+      ? "Complete phase inputs before build"
     : builtCount > 0
       ? `Re-run & Build ${phaseLabel} →`
       : `Approve & Build ${phaseLabel} →`;
@@ -373,6 +379,9 @@ export function PhaseApproveAndBuild({
               {requiredGaps.length === 1 ? "" : "s"} before final
             </span>
           )}
+          {hasParentBlocker && (
+            <span style={{ color: ATTENTION }}>{disabledReason}</span>
+          )}
         </div>
         {hasRequiredGaps && (
           <div style={{ marginTop: 6, color: ATTENTION }}>
@@ -382,25 +391,34 @@ export function PhaseApproveAndBuild({
             a draft can be generated when the governed API would reject it.
           </div>
         )}
+        {hasParentBlocker && (
+          <div style={{ marginTop: 6, color: ATTENTION }}>
+            {disabledReason}
+          </div>
+        )}
       </div>
 
       {/* The single phase action */}
       <button
         type="button"
         onClick={() => void approveAndBuild()}
-        disabled={building || anyRunning || hasRequiredGaps}
+        disabled={building || anyRunning || hasRequiredGaps || hasParentBlocker}
         style={{
           alignSelf: "flex-start",
           padding: "9px 16px",
           background:
-            building || anyRunning || hasRequiredGaps ? "#C9C7BE" : NAVY,
+            building || anyRunning || hasRequiredGaps || hasParentBlocker
+              ? "#C9C7BE"
+              : NAVY,
           color: "#FFFFFF",
           border: "none",
           borderRadius: 8,
           fontSize: 13,
           fontWeight: 600,
           cursor:
-            building || anyRunning || hasRequiredGaps ? "default" : "pointer",
+            building || anyRunning || hasRequiredGaps || hasParentBlocker
+              ? "default"
+              : "pointer",
           fontFamily: "Fraunces, Georgia, serif",
         }}
       >
