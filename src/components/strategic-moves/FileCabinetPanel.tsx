@@ -540,20 +540,21 @@ function ArtifactRow({
     setBusy("open");
     setActionErr(null);
     try {
-      const blob = await fetchArtifact(`${a.downloadUrl}?inline=1`);
-      const url = URL.createObjectURL(blob);
-      const win = window.open(url, "_blank", "noopener");
+      const inlineUrl = `${a.downloadUrl}${a.downloadUrl.includes("?") ? "&" : "?"}inline=1`;
+      const win = window.open(
+        inlineUrl,
+        `moves-artifact-${a.artifactId}`,
+        "noopener,noreferrer",
+      );
       if (!win) {
-        // Popup blocked — fall back to a same-tab navigation so Open is never a no-op.
-        window.location.href = url;
+        setActionErr("Browser blocked the artifact tab. Use Download instead.");
       }
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch (e) {
       setActionErr(e instanceof Error ? e.message : "open failed");
     } finally {
       setBusy(null);
     }
-  }, [a.downloadUrl]);
+  }, [a.artifactId, a.downloadUrl]);
 
   const downloadArtifact = useCallback(async () => {
     setBusy("download");
@@ -988,7 +989,7 @@ function ArtifactRow({
                     letterSpacing: "0.06em",
                   }}
                 >
-                  P2 sponsor review packet
+                  Artifact review
                 </div>
                 <p
                   style={{
@@ -998,11 +999,25 @@ function ArtifactRow({
                     color: "#334155",
                   }}
                 >
-                  P2 diagnostic is review-ready. You can approve it for P3 draft
-                  shaping, request revisions, or hold for missing evidence.
-                  Approval for P3 draft shaping does not mark P2 final and does
-                  not bypass sponsor/signoff gates.
+                  <strong>{a.title}</strong>
+                  <br />
+                  Phase {a.phase ?? "not set"} · {artifactFormatLabel(a.fileFormat)} ·{" "}
+                  {metaLabel(a.family)} · {metaLabel(a.status)}
                 </p>
+                {sponsorReview ? (
+                  <p
+                    style={{
+                      margin: "8px 0 0",
+                      fontSize: 12.5,
+                      lineHeight: 1.45,
+                      color: "#334155",
+                    }}
+                  >
+                    This artifact also has a sponsor-review packet. You can approve
+                    it for draft shaping, request revisions, or hold for missing
+                    evidence without bypassing final phase gates.
+                  </p>
+                ) : null}
               </div>
               {packetLoading && (
                 <span style={{ fontSize: 11, color: "#64748B" }}>

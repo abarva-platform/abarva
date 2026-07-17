@@ -159,6 +159,7 @@ function makeCurrentStateReadiness(): ReadinessReport {
 describe("MovesPhaseStandaloneClient", () => {
   beforeEach(() => {
     window.scrollTo = jest.fn();
+    window.open = jest.fn(() => ({} as Window));
     global.fetch = jest.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
 
@@ -416,7 +417,7 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.queryByText(/aVa recommends/i)).not.toBeInTheDocument();
   });
 
-  it("uses P1 step 2 for uploading evidence, with multiple files enabled", () => {
+  it("uses P1 step 2 for uploading evidence, with multiple files enabled", async () => {
     render(
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
@@ -433,11 +434,26 @@ describe("MovesPhaseStandaloneClient", () => {
 
     expect(screen.getByRole("heading", { name: "Upload evidence for P1" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Files to upload" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Continue to Gate approval →" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue to Approve & Build →" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Charter inputs" })).not.toBeInTheDocument();
 
     const input = screen.getByLabelText("Upload decision files") as HTMLInputElement;
     expect(input).toHaveAttribute("multiple");
+
+    fireEvent.change(input, {
+      target: {
+        files: [
+          new File(["scope"], "scope-boundary.xlsx", { type: "application/vnd.ms-excel" }),
+          new File(["notes"], "sponsor-review.docx", { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }),
+        ],
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("scope-boundary.xlsx")).toBeInTheDocument();
+      expect(screen.getByText("sponsor-review.docx")).toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: "Open Files & Evidence" })).toBeInTheDocument();
   });
 
   it("shows the P1 charter capture fields at gate approval and blocks build until they are complete", () => {
@@ -561,7 +577,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: /Gate approval/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Approve & Build/i }));
 
     expect(screen.getByText(/Next: P4 Build the Plan readiness/i)).toBeInTheDocument();
     expect(screen.getByText("Cost baseline")).toBeInTheDocument();
@@ -592,7 +608,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: /Gate approval/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Approve & Build/i }));
 
     expect(
       screen.getByText("Carries forward from this phase's generated work"),
@@ -612,7 +628,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: /Gate approval/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Approve & Build/i }));
 
     expect(
       screen.queryByText("Carries forward from this phase's generated work"),
@@ -658,7 +674,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: /Current state/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Upload & review/i }));
 
     expect(screen.getByText("Current-state readiness")).toBeInTheDocument();
     expect(screen.getByText(/0% collected/i)).toBeInTheDocument();
@@ -878,15 +894,14 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
-    // Real click on the real "Open" action must reach the real downloadUrl —
-    // not a dead placeholder. FileCabinetPanel fetches the blob itself
-    // (rather than a bare <a href>) so it can retry transient 503s and avoid
-    // cookie/CORS dead-ends; the button click is the real user interaction.
+    // Real click on the real "Open" action must open the stable artifact route
+    // in a separate tab. It must never navigate the Moves workspace away.
     fireEvent.click(screen.getByRole("button", { name: /^Open$/i }));
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(window.open).toHaveBeenCalledWith(
         "/api/v1/artifacts/d74ed94a-a600-46ee-ad5d-a505556c4cac?inline=1",
-        expect.objectContaining({ credentials: "include" }),
+        "moves-artifact-d74ed94a-a600-46ee-ad5d-a505556c4cac",
+        "noopener,noreferrer",
       );
     });
   });
@@ -920,7 +935,7 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBe(false);
 
     fireEvent.click(screen.getByRole("button", { name: /CANARY - SkyHarbor/i }));
-    fireEvent.click(screen.getByRole("tab", { name: /Gate approval/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Approve & Build/i }));
     expect(screen.getByRole("button", { name: /Review governed build/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Approve & advance/i })).not.toBeInTheDocument();
     expect(
