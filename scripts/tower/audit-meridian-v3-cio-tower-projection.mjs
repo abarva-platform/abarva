@@ -55,6 +55,7 @@ if (projection.tenant_key !== "meridian-health") fail(`Wrong tenant_key ${projec
 if (projection.source_standard !== "standard-2026-07-v3") fail(`Wrong source_standard ${projection.source_standard}`);
 if (projection.truth_split?.azure_postgres_written_by_this_run !== false) fail("Dry-run projection must not claim Azure/Postgres write.");
 if (projection.truth_split?.active_tenant_access_updated !== false) fail("Projection must not claim Active Tenant Access update.");
+if (projection.truth_split?.tower_command_mart_projected !== true) fail("Projection must declare Tower command mart projection.");
 if (projection.truth_split?.realized_value_language_allowed !== false) fail("Projection must block realized/proven value wording.");
 
 approx(projection.headline?.total_it_budget_fy26, 650_000_000, "Headline FY26 total technology budget");
@@ -136,6 +137,63 @@ for (const category of ["copilot_productivity", "servicenow_ai", "workday_ai", "
   if (!aiCategories.has(category)) fail(`Missing AI spend category ${category}`);
 }
 
+const mart = projection.mart ?? {};
+if (!mart.command_center?.length) fail("Missing mart.command_center.");
+if (!mart.value_funnel?.length) fail("Missing mart.value_funnel.");
+if (!mart.program_decision_lanes?.length) fail("Missing mart.program_decision_lanes.");
+if (!mart.ai_portfolio?.length) fail("Missing mart.ai_portfolio.");
+if (!mart.cxo_actions?.length) fail("Missing mart.cxo_actions.");
+if (!mart.evidence_lineage?.length) fail("Missing mart.evidence_lineage.");
+const command = mart.command_center?.[0];
+if (command) {
+  approx(command.total_it_budget_fy26, 650_000_000, "Mart total IT budget");
+  approx(command.run_budget_fy26, 487_500_000, "Mart run budget");
+  approx(command.change_budget_fy26, 162_500_000, "Mart change budget");
+  approx(command.ai_tagged_spend_fy26_non_additive, 53_700_000, "Mart AI-tagged spend");
+  approx(command.promised_value_fy26, 35_500_000, "Mart promised value");
+  approx(command.partial_finance_validated_value_ytd, 3_800_000, "Mart partial finance value");
+  approx(command.realized_value_ytd_allowed, 0, "Mart realized value allowed");
+  if (!/fund, fix, freeze, or stop/i.test(command.decision_question || "")) fail("Mart decision question must use fund/fix/freeze/stop posture.");
+  if (!Array.isArray(command.source_files) || command.source_files.length < 8) fail("Mart command center must carry source_files lineage.");
+}
+const funnelStages = new Set((mart.value_funnel ?? []).map((row) => row.stage_key));
+for (const stage of ["funded_change_spend", "promised_value", "finance_validated_partial", "realized_allowed"]) {
+  if (!funnelStages.has(stage)) fail(`Missing mart value funnel stage ${stage}`);
+}
+const realizedStage = (mart.value_funnel ?? []).find((row) => row.stage_key === "realized_allowed");
+if (realizedStage) {
+  approx(realizedStage.value_numeric, 0, "Mart value funnel realized allowed");
+  if (!/blocked/i.test(realizedStage.claim_status || "")) fail("Realized value funnel stage must be blocked.");
+}
+if ((mart.program_decision_lanes ?? []).length < 12) fail(`Expected at least 12 mart program decision lanes, found ${(mart.program_decision_lanes ?? []).length}`);
+const laneSet = new Set((mart.program_decision_lanes ?? []).map((row) => row.decision_lane));
+for (const lane of ["fund", "fix", "freeze", "stop"]) {
+  if (!laneSet.has(lane)) warn(`Mart decision lanes do not currently include ${lane}; verify source data supports this posture.`);
+}
+const copilotLane = (mart.program_decision_lanes ?? []).find((row) => row.program_code === "PROG-COPILOT-ADOPT");
+if (!copilotLane) {
+  fail("Missing Copilot mart decision lane.");
+} else {
+  approx(copilotLane.approved_funding_usd, 10_500_000, "Copilot mart approved funding");
+  approx(copilotLane.finance_validated_value_usd, 2_100_000, "Copilot mart partial finance validated value");
+  if (!copilotLane.source_file || !copilotLane.source_row) fail("Copilot mart lane must retain source_file/source_row.");
+}
+const aiPortfolioNames = new Set((mart.ai_portfolio ?? []).map((row) => row.item_name));
+for (const item of ["Microsoft 365 Copilot", "ServiceNow AI Agent Assist", "Workday AI HR/Finance Assist", "GitHub Copilot Enterprise", "Member Service AI Assist"]) {
+  if (!aiPortfolioNames.has(item)) fail(`Missing mart AI portfolio item ${item}`);
+}
+const memberAssist = (mart.ai_portfolio ?? []).find((row) => row.item_name === "Member Service AI Assist");
+if (memberAssist) {
+  approx(memberAssist.approved_funding_usd, 0, "Member Service AI Assist mart approved funding");
+  approx(memberAssist.finance_validated_value_usd, 0, "Member Service AI Assist mart finance value");
+  if (memberAssist.tower_claim_allowed !== "no") fail("Member Service AI Assist mart row must not allow Tower claim.");
+  if (!/candidate/i.test(memberAssist.caveat || "")) fail("Member Service AI Assist mart caveat must preserve candidate boundary.");
+}
+const blockingGaps = (mart.required_field_gaps ?? []).filter((row) => row.blocking === true || row.severity === "blocking");
+if (blockingGaps.length) {
+  fail(`Tower mart has blocking required-field gaps: ${blockingGaps.map((row) => `${row.mart_record_key}:${row.required_field}`).slice(0, 10).join("; ")}`);
+}
+
 const sourceFiles = new Set(Object.values(projection.source_volumetrics ?? {}).map((row) => row.file));
 for (const file of [
   "08_it_budget_spend_value.csv",
@@ -157,6 +215,13 @@ for (const output of [
   "source-to-fact-lineage.csv",
   "program-portfolio-lens.csv",
   "usage-benefit-lens.csv",
+  "mart-command-center.csv",
+  "mart-value-funnel.csv",
+  "mart-program-decision-lanes.csv",
+  "mart-ai-portfolio.csv",
+  "mart-cxo-actions.csv",
+  "mart-evidence-lineage.csv",
+  "mart-required-field-gaps.csv",
 ]) {
   requireFile(path.join(reportDir, output));
 }

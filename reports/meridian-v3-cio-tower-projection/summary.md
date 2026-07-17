@@ -1,6 +1,6 @@
 # Meridian V3 to CIO Tower Projection
 
-Generated: 2026-07-17T14:58:15.458Z
+Generated: 2026-07-17T15:54:31.347Z
 
 This projection turns the refreshed Meridian V3 source packet into the row families Tower actually needs: budget, funded programs, AI spend by platform/vendor, usage/adoption/benefit evidence, candidate AI opportunities, and watch/pressure signals.
 
