@@ -95,7 +95,8 @@ Current real repo facts to preserve (verified 2026-07-16):
 - Existing SA07 interviews
   (datasets/tenant-inputs/meridian-health/interviews/executive_interviews.csv)
   have 216 rows across 18 stakeholder groups and already pass
-  scripts/tenant-v6/audit-meridian-executive-interviews.mjs. It currently has
+  `npm run audit:meridian-executive-interviews`
+  (scripts/tenant-v6/audit-meridian-executive-interviews.mjs). It currently has
   ZERO mentions of "AI Assist" or candidate/not-funded framing — that is the
   real gap to fill, not row count.
 - The prior generated bundle reduced 08/09/10 drastically (26/11/6 rows);
@@ -249,8 +250,8 @@ datasets/tenant-inputs/meridian-health/interviews/executive_interviews.csv.
   and audit logging before any pilot.
 - Use fresh interview_id/question_id values that do not collide with the
   existing MER-INT-*/Q* sequence.
-- Do not replace the existing file. Maintain
-  scripts/tenant-v6/audit-meridian-executive-interviews.mjs passing.
+- Do not replace the existing file. Keep `npm run audit:meridian-executive-interviews`
+  (scripts/tenant-v6/audit-meridian-executive-interviews.mjs) passing.
 
 8. Program-budget-AI reconciliation
 - First inspect package.json and identify existing scripts. At minimum use:

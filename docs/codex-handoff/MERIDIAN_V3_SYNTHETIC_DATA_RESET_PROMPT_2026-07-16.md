@@ -1,5 +1,11 @@
 # Meridian V3 Synthetic Data Reset — Corrected Codex Prompt (2026-07-16)
 
+> **DO NOT EXECUTE.** Superseded by
+> [MERIDIAN_V3_REAL_REPO_INTEGRATION_PROMPT_2026-07-16.md](MERIDIAN_V3_REAL_REPO_INTEGRATION_PROMPT_2026-07-16.md).
+> This v1 doc is kept for its diagnosis/history only. It also contains a
+> stale fact (SA07 row count below is off by one) that the v2 doc corrects —
+> use v2 for anything execution-related.
+
 **This replaces the earlier "MERIDIAN-V3-SYNTHETIC-DATA-AND-INTERVIEW-GENERATION-RESET" draft.**
 That draft assumed a schema, output path, and SA07 status that do not match what is
 actually on disk. Everything below was verified against the live repo on 2026-07-16
@@ -52,7 +58,7 @@ GROUND TRUTH — VERIFIED ON DISK, DO NOT ASSUME OTHERWISE
 
 4. SA07 already effectively exists — DO NOT CREATE A NEW FILE FOR IT.
    datasets/tenant-inputs/meridian-health/interviews/executive_interviews.csv
-   already has 217 rows (within the 140–220 target range) across a 28-column
+   already has 216 rows (within the 140–220 target range) across a 28-column
    schema (tenant_key, interview_id, interview_group, executive_area,
    stakeholder_role, question_id, question, synthetic_answer, priority_theme,
    business_priority, pain_point, known_challenge, key_initiative,
@@ -378,7 +384,7 @@ derived layer has been loaded and no runtime has been touched.
 | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | Output path `datasets/tenant-inputs/active/meridian-health/current/` | Real, audit-enforced path is `datasets/tenant-inputs/meridian-health/standard-2026-07-v3/`                                                                                                                       | `scripts/tenant-v6/audit-tenant-v3-inputs.mjs:65-66`   |
 | 08 "allows TBD"                                                      | 08 has **zero** dollar figures in **all 223 rows** (`amount_usd`/`realized_value_usd` = `not_provided`)                                                                                                          | Verified via CSV parse of the 2026-07-16 export        |
-| SA07 doesn't exist, needs 140-220 new rows generated                 | SA07 already exists as `interviews/executive_interviews.csv`, 217 rows, already audited by `audit-meridian-executive-interviews.mjs`, already labeled "Source adapter: SA07" internally                          | File + script inspection                               |
+| SA07 doesn't exist, needs 140-220 new rows generated                 | SA07 already exists as `interviews/executive_interviews.csv`, 216 rows, already audited by `audit-meridian-executive-interviews.mjs`, already labeled "Source adapter: SA07" internally                          | File + script inspection                               |
 | 09/10 just need new status columns                                   | 09 and 10 are **content-duplicates** — same 147 entities in both files today                                                                                                                                     | Verified via set comparison of `business_name` columns |
 | Propose 8 new audit script names                                     | `audit:tenant-v3-data` and `audit:meridian-executive-interviews` already exist and already validate this exact directory                                                                                         | `package.json` scripts + script source                 |
 | No manifest gap called out                                           | `meridian-health-v6-v7-current-state-v1.json` explicitly disclaims covering this directory; peer tenants (first-capital, skyharbor-air) gate their v3 tenant-inputs in their manifest `notes` — Meridian doesn't | Manifest file contents, compared across tenants        |
