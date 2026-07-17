@@ -913,6 +913,20 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
   });
 
   it("renders the Tower command mart ahead of legacy or bridge views", () => {
+    const candidateSeed = TOWER_MART_VIEW.aiPortfolio[1]!;
+    const fundedSeed = TOWER_MART_VIEW.aiPortfolio[0]!;
+    const candidateFirstTowerMart: TowerMartCommandViewModel = {
+      ...TOWER_MART_VIEW,
+      aiPortfolio: [
+        ...Array.from({ length: 13 }, (_, index) => ({
+          ...candidateSeed,
+          aiPortfolioKey: `${candidateSeed.aiPortfolioKey}-${index}`,
+          itemName: `${candidateSeed.itemName} ${index + 1}`,
+        })),
+        fundedSeed,
+      ],
+    };
+
     render(
       <TowerIndexPage
         tenantName="Healthcare Demo"
@@ -923,7 +937,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
         vendors={[]}
         activeTab="portfolio"
         cxoView={GOVERNED_CXO_VIEW}
-        towerMartView={TOWER_MART_VIEW}
+        towerMartView={candidateFirstTowerMart}
       />,
     );
 
@@ -957,8 +971,8 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       "Candidate ideas are not approved funding",
     );
     expect(screen.getByText("Fix proof")).toBeInTheDocument();
-    expect(screen.getByText("Hold until gates clear")).toBeInTheDocument();
-    expect(screen.getByText(/Member Service AI Assist/)).toBeInTheDocument();
+    expect(screen.getAllByText("Hold until gates clear").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Member Service AI Assist/).length).toBeGreaterThan(0);
     expect(screen.queryByText("not_approved")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Recommended Actions/ }));
     expect(screen.getByText("Fix Copilot adoption before expansion")).toBeInTheDocument();
