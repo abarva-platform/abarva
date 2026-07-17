@@ -199,17 +199,24 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     : null;
   const moduleContext = moduleContextBundle?.[0] ?? null;
   const moduleContextExplanation = moduleContextBundle?.[1] ?? null;
-  const v7Browser = await withHomePageTimeout(
-    "V7 context browser",
-    getHomeV7ContextBrowser({
-      tenantKey: activeClient?.key ?? homeTenantKey,
-    }),
-    null,
-  );
   const localBrowser = getLocalCxoRuntimeBrowser(
     activeClient?.key ?? homeTenantKey,
   );
+  const canonicalLocalBrowser =
+    localBrowser?.cxoContentSource === "canonical-v3-approved-content"
+      ? localBrowser
+      : null;
+  const v7Browser = canonicalLocalBrowser
+    ? null
+    : await withHomePageTimeout(
+        "V7 context browser",
+        getHomeV7ContextBrowser({
+          tenantKey: activeClient?.key ?? homeTenantKey,
+        }),
+        null,
+      );
   const browser =
+    canonicalLocalBrowser ??
     v7Browser ??
     localBrowser ??
     getHomeV6ContextBrowser(activeClient?.key ?? homeTenantKey);
