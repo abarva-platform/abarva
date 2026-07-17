@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Tower command-center labels now say `Claimable value gate` and `Claimable value allowed` instead of wording that could imply finance-validated realized value exists before the value-claim gate passes.
+Tower command-center and value-funnel labels now say `Claimable value gate` and `Claimable value allowed` instead of wording that could imply finance-validated realized value exists before the value-claim gate passes.
 
 ## Layer Impact
 
@@ -30,6 +30,8 @@ Tower command-center labels now say `Claimable value gate` and `Claimable value 
 ## Changes Included
 
 - `src/components/tower/TowerIndexPage.tsx`: updates Tower value-gate labels from realized-value wording to claimable-value wording.
+- `src/lib/cio-tower/tower-mart-view-model.ts`: normalizes the Tower mart `Realized value allowed` stage label to `Claimable value allowed` for UI consumption.
+- `src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx`: updates the Tower fixture to assert the claimable-value stage label.
 - `docs/releases/records/2026-07-17-tower-claimable-value-label.md`: release record for the copy fix.
 
 ## QA / Validation
@@ -66,4 +68,4 @@ Revert this PR and redeploy through the repo-owned ACA main deploy workflow.
 
 ## Known Gaps
 
-This PR does not redesign Tower layout, change Tower data, refresh Azure/Postgres, or alter aVa behavior. It only removes ambiguous realized-value wording from Tower labels.
+This PR does not redesign Tower layout, change Tower data, refresh Azure/Postgres, or alter aVa behavior. It only removes ambiguous realized-value wording from Tower UI/read-model labels.

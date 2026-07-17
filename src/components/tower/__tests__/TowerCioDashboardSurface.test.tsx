@@ -424,7 +424,7 @@ const TOWER_MART_VIEW: TowerMartCommandViewModel = {
       funnelKey: "meridian-health:realized_allowed",
       sequence: 4,
       stageKey: "realized_allowed",
-      stageLabel: "Realized value allowed",
+      stageLabel: "Claimable value allowed",
       valueNumeric: 0,
       denominatorStageKey: "promised_value",
       conversionRatio: 0,
