@@ -5,6 +5,7 @@ import {
   deriveMapLabel,
   hasTerminalTowerHandoffActivity,
   hasTerminalTowerHandoffPassed,
+  hasTerminalTowerHandoffSnapshot,
 } from "@/lib/programs/transformers";
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { evaluateGate } from "@/lib/programs/governance";
@@ -130,6 +131,33 @@ describe("strategic move transformer helpers", () => {
     ).toBe(false);
   });
 
+  it("recognizes an approved P5 phase snapshot as terminal Tower handoff completion", () => {
+    expect(
+      hasTerminalTowerHandoffSnapshot([
+        {
+          phase_number: 5,
+          approval_status: "approved",
+        },
+      ]),
+    ).toBe(true);
+    expect(
+      hasTerminalTowerHandoffSnapshot([
+        {
+          phase_number: 5,
+          approval_status: "pending",
+        },
+      ]),
+    ).toBe(false);
+    expect(
+      hasTerminalTowerHandoffSnapshot([
+        {
+          phase_number: 4,
+          approval_status: "approved",
+        },
+      ]),
+    ).toBe(false);
+  });
+
   it("keeps portfolio list hydration from running expensive gate evaluation by default", async () => {
     const move = {
       id: "move-1",
@@ -183,6 +211,64 @@ describe("strategic move transformer helpers", () => {
         completed: false,
       },
     ]);
+  });
+
+  it("marks the Strategic Move page model terminal-complete from an approved P5 snapshot", async () => {
+    selectMock.mockImplementation(async (request) => {
+      if (request.table === "phase_snapshots") {
+        return [
+          {
+            created_at: "2026-07-17T07:01:06.000Z",
+            phase_number: 5,
+            approval_status: "approved",
+          },
+        ] as never;
+      }
+      return [];
+    });
+
+    const move = await buildStrategicMove(
+      { clientId: "client-1", userId: "user-1" },
+      {
+        id: "move-1",
+        clientId: "client-1",
+        name: "Terminal handoff proof",
+        sponsorPersonId: null,
+        problemStatement: null,
+        targetOutcome: null,
+        timelineHorizon: null,
+        valueProjectedLowUsd: null,
+        valueProjectedHighUsd: null,
+        valueVerifiedUsd: null,
+        valueVerifiedStatus: null,
+        valueCurrency: null,
+        valueAssumptions: null,
+        archetype: null,
+        originSource: null,
+        originSourceRef: null,
+        status: "active",
+        lifecycleState: "active",
+        currentPhase: 5,
+        currentModuleKey: null,
+        maestroOversightLevel: null,
+        founderApprovalRequired: false,
+        phaseLockedAt: null,
+        phaseLockedByUserId: null,
+        dataResidencyRegion: null,
+        retentionPolicyYears: null,
+        archivedAt: null,
+        deletedAt: null,
+        createdAt: "2026-05-01T00:00:00.000Z",
+        updatedAt: null,
+        charter: null,
+        functionPackKey: null,
+        functionPackConfidence: null,
+        gatesPassed: [],
+      } as never,
+      { evaluateGateCriteria: false },
+    );
+
+    expect(move.terminalComplete).toBe(true);
   });
 
   it("renders a sparse newly-created Move instead of throwing on missing optional state", async () => {
