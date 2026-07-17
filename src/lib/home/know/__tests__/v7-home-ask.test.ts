@@ -136,7 +136,9 @@ describe('answerHomeKnowFromV7', () => {
     expect(result.ok).toBe(true);
     expect(result.tenant.datasetDir).toBe('datasets/meridian-health-v6-v7-current-state-v1');
     expect(seenBusinessRecordContracts).toEqual(['v7.latest-meridian-test', 'v7.latest-meridian-test']);
-    expect(seenRunQueries.join('\n')).toContain('from intelligence_v7.current_tenant_pack_runs');
+    expect(seenRunQueries.join('\n')).toContain('from intelligence_v7.tenant_pack_runs run');
+    expect(seenRunQueries.join('\n')).toContain('join intelligence_v7.active_tenant_contract_versions active');
+    expect(seenRunQueries.join('\n')).not.toContain('from intelligence_v7.current_tenant_pack_runs');
     expect(seenRunQueries.join('\n')).not.toContain('order by loaded_at desc');
   });
 

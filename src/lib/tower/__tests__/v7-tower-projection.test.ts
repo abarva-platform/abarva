@@ -92,7 +92,9 @@ describe('V7 Tower projection', () => {
       expect.arrayContaining(['lakeshore-industries']),
       { missingTable: 'empty' },
     );
-    expect(queryMock.mock.calls[0][0]).toContain('join intelligence_v7.current_tenant_pack_runs run');
+    expect(queryMock.mock.calls[0][0]).toContain('join intelligence_v7.tenant_pack_runs run');
+    expect(queryMock.mock.calls[0][0]).toContain('join intelligence_v7.active_tenant_contract_versions active');
+    expect(queryMock.mock.calls[0][0]).not.toContain('join intelligence_v7.current_tenant_pack_runs run');
     expect(queryMock.mock.calls[0][0]).toContain("coalesce(r.fact_status, 'active') = 'active'");
     expect(queryMock.mock.calls[0][0]).not.toContain('latest_run');
     expect(queryMock.mock.calls[0][0]).toContain('r.source_as_of_date as as_of_date');

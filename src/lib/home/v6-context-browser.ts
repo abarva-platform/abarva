@@ -38,12 +38,45 @@ export interface HomeV6BrowserPreview {
   }>;
 }
 
+export interface HomeCxoStoryBlock {
+  block_id: string;
+  surface: "home" | "knowledge" | string;
+  dimension: string;
+  title: string;
+  executive_summary: string;
+  what_context_reveals: string;
+  why_it_matters: string;
+  decision_implication: string;
+  evidence_still_needed: string;
+  module_usage: string;
+  next_validation_action: string;
+  approved_for_render: boolean;
+}
+
+export interface HomeCxoVisualSpec {
+  visual_id: string;
+  type: string;
+  surface: "home" | "knowledge" | string;
+  title: string;
+  purpose: string;
+  data_requirements: string[];
+  chart_allowed: boolean;
+  why_chart_allowed_or_not: string;
+  placement: string;
+  evidence_boundary: string;
+}
+
 export interface HomeV6ContextBrowser {
   tenantKey: string;
   displayName: string;
   datasetDir: string;
   generatedAt: string;
   contractLabel?: string;
+  runtimeSource?: "azure-v7" | "local-v3-standard" | "local-v3-v7" | "local-v6";
+  contextMode?: "active" | "candidate-preview";
+  contextWarnings?: string[];
+  cxoStoryBlocks?: HomeCxoStoryBlock[];
+  cxoVisualSpecs?: HomeCxoVisualSpec[];
   bindingContext?: Array<{
     dimension: string;
     status: string;
@@ -377,6 +410,7 @@ export function getHomeV6ContextBrowser(
       manifest.clientDisplayName || getClientOption(appClientKey).name,
     datasetDir,
     generatedAt: manifest.generatedAt,
+    runtimeSource: "local-v6",
     dimensions,
   };
 }

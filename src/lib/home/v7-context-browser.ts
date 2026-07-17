@@ -1,5 +1,12 @@
-import { createDefaultSession, type SessionRunner, type SqlRunner } from "@/lib/data-plane/read-adapters/azureSession";
-import { appClientKeyForTenant, tenantProfileForClientKey } from "@/lib/tenant/aliases";
+import {
+  createDefaultSession,
+  type SessionRunner,
+  type SqlRunner,
+} from "@/lib/data-plane/read-adapters/azureSession";
+import {
+  appClientKeyForTenant,
+  tenantProfileForClientKey,
+} from "@/lib/tenant/aliases";
 import type {
   HomeV6BrowserColumn,
   HomeV6BrowserSourceRow,
@@ -21,6 +28,11 @@ interface V7RunRow {
   relationship_edge_count: number;
   chunk_count: number;
   loaded_at: string;
+}
+
+interface CandidatePreviewRequest {
+  contractVersion: string;
+  previewLabel?: string | null;
 }
 
 interface V7DimensionRow {
@@ -67,31 +79,179 @@ const V7_TENANT_BY_APP_CLIENT: Record<string, string> = {
 // (entity_scope, shared_service_flag, budget_ownership_model), making the Data
 // preview useless. Every column below is present and populated in the data.
 const PREVIEW_COLUMNS: Record<string, string[]> = {
-  v7_00_portfolio_entity_registry: ["entity_name", "entity_scope", "parent_entity_name", "revenue_usd", "employee_count", "total_direct_technology_budget_usd"],
-  v7_01_enterprise_profile: ["entity_name", "entity_scope", "industry", "revenue_usd", "employee_count", "total_direct_technology_budget_usd"],
-  v7_02_business_functions: ["entity_name", "function_name", "executive_owner", "business_capability", "function_criticality"],
-  v7_03_org_ownership: ["entity_name", "org_unit", "leader_role", "reports_to_role", "decision_rights"],
-  v7_04_workforce_personas: ["entity_name", "persona_name", "role_family", "population_count", "change_readiness"],
-  v7_05_applications_systems: ["entity_name", "system_name", "system_scope", "served_entity_names", "system_category", "criticality"],
-  v7_06_data_assets_integrations: ["entity_name", "data_asset_name", "system_of_record", "integration_type", "data_owner"],
-  v7_07_vendors_contracts: ["entity_name", "vendor_name", "vendor_category", "annual_cost_usd", "renewal_date", "contract_risk"],
-  v7_08_spend_value: ["entity_name", "amount_usd", "spend_category", "run_change", "spend_owner"],
-  v7_09_programs_initiatives_business_priorities: ["entity_name", "priority_name", "priority_type", "business_sponsor", "current_status"],
-  v7_10_ai_initiatives: ["entity_name", "ai_use_case", "tool_or_model", "active_users", "production_status"],
-  v7_11_operations_risk_controls: ["entity_name", "process_control_name", "risk_category", "severity", "status"],
-  v7_12_relationships_graph_edges: ["from_object_ref", "relationship_type", "to_object_ref", "relationship_strength"],
-  v7_13_source_evidence_registry: ["entity_name", "source_artifact_uri", "validation_status", "sensitivity"],
-  v7_14_metric_definitions: ["metric_name", "metric_definition", "metric_owner", "unit", "target_value"],
-  v7_15_industry_market_knowledge_patterns: ["pattern_name", "industry_domain", "recommended_actions"],
-  v7_16_expert_lenses: ["expert_lens_name", "lens_domain", "question_families", "decision_criteria"],
-  v7_17_client_rate_card_cost_basis: ["service_tower", "role_family", "seniority", "delivery_location", "rate_usd_per_hour"],
-  v7_18_function_system_data_vendor_bridge: ["function_ref", "dependency_type", "object_ref", "role_in_function", "criticality_to_function"],
-  v7_19_service_tower_managed_services_scope: ["service_tower", "scope_item", "included_services", "sla", "pricing_unit"],
-  v7_20_chunk_retrieval_registry: ["source_artifact_ref", "dimension", "semantic_tags", "retrieval_eligibility"],
-  v7_21_graph_registry_relationship_dictionary: ["edge_type", "allowed_from", "allowed_to", "inverse_label", "evidence_required"],
-  v7_22_operational_evidence_process_intelligence: ["process", "work_item_type", "volume", "cycle_time", "bottleneck"],
-  v7_23_external_benchmark_market_corpus: ["benchmark_name", "industry", "geography", "range_low", "range_high"],
-  v7_24_infrastructure_cloud_estate: ["estate_item_name", "infrastructure_category", "hosting_deployment_model", "criticality", "primary_location_region"],
+  v7_00_portfolio_entity_registry: [
+    "entity_name",
+    "entity_scope",
+    "parent_entity_name",
+    "revenue_usd",
+    "employee_count",
+    "total_direct_technology_budget_usd",
+  ],
+  v7_01_enterprise_profile: [
+    "entity_name",
+    "entity_scope",
+    "industry",
+    "revenue_usd",
+    "employee_count",
+    "total_direct_technology_budget_usd",
+  ],
+  v7_02_business_functions: [
+    "entity_name",
+    "function_name",
+    "executive_owner",
+    "business_capability",
+    "function_criticality",
+  ],
+  v7_03_org_ownership: [
+    "entity_name",
+    "org_unit",
+    "leader_role",
+    "reports_to_role",
+    "decision_rights",
+  ],
+  v7_04_workforce_personas: [
+    "entity_name",
+    "persona_name",
+    "role_family",
+    "population_count",
+    "change_readiness",
+  ],
+  v7_05_applications_systems: [
+    "entity_name",
+    "system_name",
+    "system_scope",
+    "served_entity_names",
+    "system_category",
+    "criticality",
+  ],
+  v7_06_data_assets_integrations: [
+    "entity_name",
+    "data_asset_name",
+    "system_of_record",
+    "integration_type",
+    "data_owner",
+  ],
+  v7_07_vendors_contracts: [
+    "entity_name",
+    "vendor_name",
+    "vendor_category",
+    "annual_cost_usd",
+    "renewal_date",
+    "contract_risk",
+  ],
+  v7_08_spend_value: [
+    "entity_name",
+    "amount_usd",
+    "spend_category",
+    "run_change",
+    "spend_owner",
+  ],
+  v7_09_programs_initiatives_business_priorities: [
+    "entity_name",
+    "priority_name",
+    "priority_type",
+    "business_sponsor",
+    "current_status",
+  ],
+  v7_10_ai_initiatives: [
+    "entity_name",
+    "ai_use_case",
+    "tool_or_model",
+    "active_users",
+    "production_status",
+  ],
+  v7_11_operations_risk_controls: [
+    "entity_name",
+    "process_control_name",
+    "risk_category",
+    "severity",
+    "status",
+  ],
+  v7_12_relationships_graph_edges: [
+    "from_object_ref",
+    "relationship_type",
+    "to_object_ref",
+    "relationship_strength",
+  ],
+  v7_13_source_evidence_registry: [
+    "entity_name",
+    "source_artifact_uri",
+    "validation_status",
+    "sensitivity",
+  ],
+  v7_14_metric_definitions: [
+    "metric_name",
+    "metric_definition",
+    "metric_owner",
+    "unit",
+    "target_value",
+  ],
+  v7_15_industry_market_knowledge_patterns: [
+    "pattern_name",
+    "industry_domain",
+    "recommended_actions",
+  ],
+  v7_16_expert_lenses: [
+    "expert_lens_name",
+    "lens_domain",
+    "question_families",
+    "decision_criteria",
+  ],
+  v7_17_client_rate_card_cost_basis: [
+    "service_tower",
+    "role_family",
+    "seniority",
+    "delivery_location",
+    "rate_usd_per_hour",
+  ],
+  v7_18_function_system_data_vendor_bridge: [
+    "function_ref",
+    "dependency_type",
+    "object_ref",
+    "role_in_function",
+    "criticality_to_function",
+  ],
+  v7_19_service_tower_managed_services_scope: [
+    "service_tower",
+    "scope_item",
+    "included_services",
+    "sla",
+    "pricing_unit",
+  ],
+  v7_20_chunk_retrieval_registry: [
+    "source_artifact_ref",
+    "dimension",
+    "semantic_tags",
+    "retrieval_eligibility",
+  ],
+  v7_21_graph_registry_relationship_dictionary: [
+    "edge_type",
+    "allowed_from",
+    "allowed_to",
+    "inverse_label",
+    "evidence_required",
+  ],
+  v7_22_operational_evidence_process_intelligence: [
+    "process",
+    "work_item_type",
+    "volume",
+    "cycle_time",
+    "bottleneck",
+  ],
+  v7_23_external_benchmark_market_corpus: [
+    "benchmark_name",
+    "industry",
+    "geography",
+    "range_low",
+    "range_high",
+  ],
+  v7_24_infrastructure_cloud_estate: [
+    "estate_item_name",
+    "infrastructure_category",
+    "hosting_deployment_model",
+    "criticality",
+    "primary_location_region",
+  ],
 };
 
 const defaultSession = createDefaultSession("home-v7-context-browser");
@@ -100,6 +260,7 @@ export async function getHomeV7ContextBrowser(args: {
   tenantKey: string | null | undefined;
   session?: SessionRunner;
   contractVersion?: string;
+  candidatePreview?: CandidatePreviewRequest | null;
 }): Promise<HomeV6ContextBrowser | null> {
   const appClientKey = appClientKeyForTenant(args.tenantKey) ?? null;
   if (!appClientKey) return null;
@@ -107,23 +268,53 @@ export async function getHomeV7ContextBrowser(args: {
   const tenantKey = V7_TENANT_BY_APP_CLIENT[profile.appClientKey];
   if (!tenantKey) return null;
   const requestedContractVersion = args.contractVersion ?? null;
+  const candidatePreview = normalizeCandidatePreview(args.candidatePreview);
   const session = args.session ?? defaultSession;
 
   return session(async (run) => {
     await run("select set_config('app.tenant_key', $1, false)", [tenantKey]);
 
-    const runs = await run<V7RunRow>(
-      `select tenant_key, tenant_name, contract_version, source_dataset, load_status,
-        file_count::int, row_count::int, field_count::int, graph_node_count::int,
-        relationship_edge_count::int, chunk_count::int, loaded_at::text
-       from intelligence_v7.tenant_pack_runs
-       where tenant_key = $1
-         and ($2::text is null or contract_version = $2)
-         and load_status in ('loaded', 'validated')
-       order by loaded_at desc
-       limit 1`,
-      [tenantKey, requestedContractVersion],
-    );
+    const runs = candidatePreview
+      ? await run<V7RunRow>(
+          `select run.tenant_key, run.tenant_name, run.contract_version, run.source_dataset, run.load_status,
+            run.file_count::int, run.row_count::int, run.field_count::int, run.graph_node_count::int,
+            run.relationship_edge_count::int, run.chunk_count::int, run.loaded_at::text
+           from intelligence_v7.tenant_pack_runs run
+           join intelligence_v7.contract_versions cv
+             on cv.contract_version = run.contract_version
+            and cv.status = 'candidate'
+           where run.tenant_key = $1
+             and run.contract_version = $2
+             and run.load_status in ('loaded', 'validated')
+             and run.superseded_at is null
+             and not exists (
+               select 1
+               from intelligence_v7.active_tenant_contract_versions active
+               where active.tenant_key = run.tenant_key
+                 and active.active_contract_version = run.contract_version
+                 and active.promotion_status = 'active'
+             )
+           order by run.loaded_at desc
+           limit 1`,
+          [tenantKey, candidatePreview.contractVersion],
+        )
+      : await run<V7RunRow>(
+          `select run.tenant_key, run.tenant_name, run.contract_version, run.source_dataset, run.load_status,
+            run.file_count::int, run.row_count::int, run.field_count::int, run.graph_node_count::int,
+            run.relationship_edge_count::int, run.chunk_count::int, run.loaded_at::text
+           from intelligence_v7.tenant_pack_runs run
+           join intelligence_v7.active_tenant_contract_versions active
+             on active.tenant_key = run.tenant_key
+            and active.active_contract_version = run.contract_version
+           where run.tenant_key = $1
+             and ($2::text is null or active.active_contract_version = $2)
+             and active.promotion_status = 'active'
+             and run.load_status in ('loaded', 'validated')
+             and run.superseded_at is null
+           order by active.promoted_at desc, run.loaded_at desc
+           limit 1`,
+          [tenantKey, requestedContractVersion],
+        );
     const runRow = runs[0];
     if (!runRow) return null;
     const contractVersion = runRow.contract_version;
@@ -152,7 +343,9 @@ export async function getHomeV7ContextBrowser(args: {
       [tenantKey, contractVersion],
     );
 
-    const dimensionKeys = dimensionRows.map((dimension) => dimension.dimension_key);
+    const dimensionKeys = dimensionRows.map(
+      (dimension) => dimension.dimension_key,
+    );
     const allColumns = dimensionKeys.length
       ? await run<V7ColumnRow>(
           `select dimension_key, column_name, client_field, client_instruction, module_use
@@ -202,7 +395,11 @@ export async function getHomeV7ContextBrowser(args: {
     let gapLoadOk = false;
     if (dimensionKeys.length) {
       try {
-        gapRows = await loadGapRows(run, { tenantKey, contractVersion, dimensionKeys });
+        gapRows = await loadGapRows(run, {
+          tenantKey,
+          contractVersion,
+          dimensionKeys,
+        });
         gapLoadOk = true;
       } catch {
         gapLoadOk = false;
@@ -211,18 +408,28 @@ export async function getHomeV7ContextBrowser(args: {
       gapLoadOk = true;
     }
 
-    const columnsByDimension = groupBy(allColumns, (column) => column.dimension_key);
-    const recordsByDimension = groupBy(allRecords, (record) => record.dimension_key);
+    const columnsByDimension = groupBy(
+      allColumns,
+      (column) => column.dimension_key,
+    );
+    const recordsByDimension = groupBy(
+      allRecords,
+      (record) => record.dimension_key,
+    );
     const gapStatsByDimension = buildGapStats(gapRows);
 
     const dimensions: HomeV6ContextBrowser["dimensions"] = {};
-    const bindingContext: NonNullable<HomeV6ContextBrowser["bindingContext"]> = [];
+    const bindingContext: NonNullable<HomeV6ContextBrowser["bindingContext"]> =
+      [];
 
     for (const dimension of dimensionRows) {
       const columns = columnsByDimension.get(dimension.dimension_key) ?? [];
       const records = recordsByDimension.get(dimension.dimension_key) ?? [];
 
-      const label = friendlyDimensionLabel(dimension.dimension_key, dimension.dimension_label);
+      const label = friendlyDimensionLabel(
+        dimension.dimension_key,
+        dimension.dimension_label,
+      );
       const displayColumns = previewColumns(dimension, columns, records);
       const sourceRows = records.map((row) =>
         toSourceRow(dimension, row, displayColumns),
@@ -252,7 +459,9 @@ export async function getHomeV7ContextBrowser(args: {
         rows: records
           .slice(0, 8)
           .map((row) =>
-            displayColumns.map((column) => display(row.values_json[column.key])),
+            displayColumns.map((column) =>
+              display(row.values_json[column.key]),
+            ),
           ),
         sourceRows,
         knownGaps,
@@ -264,7 +473,9 @@ export async function getHomeV7ContextBrowser(args: {
         evidence: dimension.record_count,
         sources: Math.max(1, dimension.source_files),
         trust: scoreFromCount(dimension.record_count),
-        flag: knownGaps.length ? `${knownGaps.length} field groups need evidence` : undefined,
+        flag: knownGaps.length
+          ? `${knownGaps.length} field groups need evidence`
+          : undefined,
       });
     }
 
@@ -274,10 +485,30 @@ export async function getHomeV7ContextBrowser(args: {
       datasetDir: runRow.source_dataset,
       generatedAt: runRow.loaded_at,
       contractLabel: "V7",
+      runtimeSource: "azure-v7",
+      contextMode: candidatePreview ? "candidate-preview" : "active",
+      contextWarnings: candidatePreview
+        ? [
+            "Candidate preview",
+            "Not active tenant truth",
+            "Not used by default module runtime",
+          ]
+        : undefined,
       bindingContext,
       dimensions,
     };
   });
+}
+
+function normalizeCandidatePreview(
+  value: CandidatePreviewRequest | null | undefined,
+): CandidatePreviewRequest | null {
+  const contractVersion = value?.contractVersion?.trim();
+  if (!contractVersion) return null;
+  return {
+    contractVersion,
+    previewLabel: value?.previewLabel?.trim() || null,
+  };
 }
 
 function previewColumns(
@@ -300,7 +531,9 @@ function previewColumns(
   // about the dimension's schema, so it stays correct even if the loaded data
   // differs from what the CSV template implies.
   const hasSignalInPreview = (column: string) =>
-    records.some((record) => display(record.values_json[column]) !== "Needs evidence");
+    records.some(
+      (record) => display(record.values_json[column]) !== "Needs evidence",
+    );
   // Fill any remaining slots with real business columns only — never generic
   // structural (entity_scope, shared_service_flag…), provenance/lineage, or
   // relationship-reference columns. Columns explicitly listed in PREVIEW_COLUMNS
@@ -456,7 +689,12 @@ async function loadGapRows(
   args: { tenantKey: string; contractVersion: string; dimensionKeys: string[] },
 ): Promise<GapRow[]> {
   const { tenantKey, contractVersion, dimensionKeys } = args;
-  const params = [tenantKey, contractVersion, dimensionKeys, NON_EVIDENCE_COLUMNS];
+  const params = [
+    tenantKey,
+    contractVersion,
+    dimensionKeys,
+    NON_EVIDENCE_COLUMNS,
+  ];
   try {
     return await run<GapRow>(
       `select r.dimension_key, kv.key as column_name, count(*)::int as gap_count
@@ -499,7 +737,11 @@ interface DimensionGapStats {
 }
 
 function buildGapStats(
-  rows: Array<{ dimension_key?: string; column_name?: string; gap_count?: number }>,
+  rows: Array<{
+    dimension_key?: string;
+    column_name?: string;
+    gap_count?: number;
+  }>,
 ): Map<string, DimensionGapStats> {
   const stats = new Map<string, DimensionGapStats>();
   for (const row of rows) {
@@ -514,8 +756,10 @@ function buildGapStats(
     ) {
       continue;
     }
-    const entry =
-      stats.get(row.dimension_key) ?? { total: 0, perColumn: new Map() };
+    const entry = stats.get(row.dimension_key) ?? {
+      total: 0,
+      perColumn: new Map(),
+    };
     entry.total += row.gap_count;
     entry.perColumn.set(
       row.column_name,
@@ -572,7 +816,10 @@ function cleanMetadata(value: string | null | undefined): string | null {
   return text === "Needs evidence" ? null : text;
 }
 
-function gapWhyItMatters(label: string, moduleUse: string | null | undefined): string {
+function gapWhyItMatters(
+  label: string,
+  moduleUse: string | null | undefined,
+): string {
   const use = cleanMetadata(moduleUse);
   if (use) {
     return `${label} is part of the ${use.toLowerCase()} evidence contract. Without it, aVa can show that the row exists but should qualify conclusions that depend on this field.`;
@@ -580,7 +827,10 @@ function gapWhyItMatters(label: string, moduleUse: string | null | undefined): s
   return `${label} is needed to turn the loaded row from inventory context into decision-ready evidence. Without it, aVa should keep the answer caveated.`;
 }
 
-function gapHowItHelps(label: string, moduleUse: string | null | undefined): string {
+function gapHowItHelps(
+  label: string,
+  moduleUse: string | null | undefined,
+): string {
   const use = cleanMetadata(moduleUse);
   if (use) {
     return `Once supplied, ${label.toLowerCase()} helps ${use.toLowerCase()} answer more precise questions, route follow-ups, and separate confirmed facts from assumptions.`;
@@ -605,7 +855,10 @@ const FRIENDLY_DIMENSION_LABELS: Record<string, string> = {
   v7_23_external_benchmark_market_corpus: "Industry Benchmarks",
 };
 
-function friendlyDimensionLabel(dimensionKey: string, dimensionLabel: string): string {
+function friendlyDimensionLabel(
+  dimensionKey: string,
+  dimensionLabel: string,
+): string {
   return FRIENDLY_DIMENSION_LABELS[dimensionKey] ?? dimensionLabel;
 }
 
@@ -659,14 +912,23 @@ function display(value: unknown): string {
   if (/^data_thin:/i.test(text) || /^needs evidence$/i.test(text)) {
     return "Needs evidence";
   }
-  if (/^(synthetic_demo|v4_synthetic_pack|static_snapshot|confidential)$/i.test(text)) {
+  if (
+    /^(synthetic_demo|v4_synthetic_pack|static_snapshot|confidential)$/i.test(
+      text,
+    )
+  ) {
     return "Needs evidence";
   }
-  return text.replace(/_/g, " ").replace(/\|/g, ", ").replace(/\s+/g, " ").trim();
+  return text
+    .replace(/_/g, " ")
+    .replace(/\|/g, ", ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 // Common acronyms that title-casing would otherwise mangle ("Usd", "Ai", "Sla").
-const LABEL_ACRONYMS = /\b(usd|ai|kpi|sla|it|hr|erp|hcm|api|sso|rbac|rls|dr|roi|sql|etl|ui|ux)\b/gi;
+const LABEL_ACRONYMS =
+  /\b(usd|ai|kpi|sla|it|hr|erp|hcm|api|sso|rbac|rls|dr|roi|sql|etl|ui|ux)\b/gi;
 
 function humanize(value: string): string {
   return value
@@ -678,7 +940,9 @@ function humanize(value: string): string {
 }
 
 function isInternalOnlyColumn(column: string): boolean {
-  return /^(tenant_key|record_key|source_file_key|created_at|updated_at)$/i.test(column);
+  return /^(tenant_key|record_key|source_file_key|created_at|updated_at)$/i.test(
+    column,
+  );
 }
 
 // Columns that must never be auto-selected as preview fillers: internal keys,

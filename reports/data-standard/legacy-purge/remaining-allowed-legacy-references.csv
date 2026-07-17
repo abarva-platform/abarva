@@ -6,6 +6,7 @@ synthetic-v-folder-reference,datasets/enterprise-profile-foundation-v1/active-te
 legacy-v-dimension-token,datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv,non-loader historical reference
 legacy-v-file-name,datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv,non-loader historical reference
 v6-v7-current-state,datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv,non-loader historical reference
+v6-v7-current-state,datasets/tenant-inputs/meridian-health/standard-2026-07-v3/13_evidence_sources.csv,non-loader historical reference
 synthetic-v-folder-reference,docs/build/BRAIN_CONTRACT_CODEX_RUNBOOK.md,non-loader historical reference
 synthetic-v-folder-reference,docs/build/CODEX_STREAMS_D_E_F_2026-05-26.md,non-loader historical reference
 synthetic-v-folder-reference,docs/build/data-quality/enterprise-synthetic-data-depth-audit.json,non-loader historical reference
@@ -102,6 +103,10 @@ archive-path-reference,docs/releases/records/2026-07-14-data-input-canonical-con
 legacy-v-dimension-token,docs/releases/records/2026-07-14-meridian-active-module-context.md,release record
 legacy-v-file-name,docs/releases/records/2026-07-14-meridian-active-module-context.md,release record
 current-state-pack,docs/releases/records/2026-07-14-meridian-active-module-context.md,release record
+archive-path-reference,docs/releases/records/2026-07-15-legacy-template-purge-pr1.md,release record
+synthetic-v-folder-reference,docs/releases/records/2026-07-15-legacy-template-purge-pr1.md,release record
+current-state-pack,docs/releases/records/2026-07-15-legacy-template-purge-pr1.md,release record
+v6-v7-current-state,docs/releases/records/2026-07-16-multi-tenant-v3-cxo-context.md,release record
 synthetic-v-folder-reference,docs/skyharbor/AZURE_PRIVATE_LOAD_RUNBOOK.md,non-loader historical reference
 synthetic-v-folder-reference,docs/source/SKYHARBOR_DATASET_AND_INGESTION_PLAN.md,non-loader historical reference
 synthetic-v-folder-reference,docs/source/SOURCE_CONTEXT_BUNDLE_TRACE_PROOF_2026-06.md,non-loader historical reference
@@ -257,6 +262,20 @@ synthetic-v-folder-reference,reports/data-remediation/skyharbor-applications/lat
 legacy-v-dimension-token,reports/data-remediation/skyharbor-applications/latest/source-selection.json,generated/historical report
 legacy-v-file-name,reports/data-remediation/skyharbor-applications/latest/source-selection.json,generated/historical report
 synthetic-v-folder-reference,reports/data-remediation/skyharbor-applications/latest/summary.md,generated/historical report
+synthetic-v-folder-reference,reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv,generated/historical report
+legacy-v-dimension-token,reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv,generated/historical report
+legacy-v-file-name,reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv,generated/historical report
+v6-v7-current-state,reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv,generated/historical report
+current-state-pack,reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv,generated/historical report
+rich-enterprise-pack,reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv,generated/historical report
+rich-substrate-pack,reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv,generated/historical report
+upgrade-candidate-pack,reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv,generated/historical report
+archive-path-reference,reports/data-standard/legacy-purge/summary.json,generated/historical report
+synthetic-v-folder-reference,reports/data-standard/legacy-purge/summary.json,generated/historical report
+archive-path-reference,reports/data-standard/legacy-purge/summary.md,generated/historical report
+synthetic-v-folder-reference,reports/data-standard/legacy-purge/summary.md,generated/historical report
+current-state-pack,reports/demo-readiness/meridian-data-state/legacy-leakage-audit.csv,generated/historical report
+current-state-pack,reports/demo-readiness/meridian-data-state/source-inventory.csv,generated/historical report
 synthetic-v-folder-reference,reports/enterprise-profile-foundation/latest/canonical-profile-records.json,generated/historical report
 legacy-v-dimension-token,reports/enterprise-profile-foundation/latest/canonical-profile-records.json,generated/historical report
 legacy-v-file-name,reports/enterprise-profile-foundation/latest/canonical-profile-records.json,generated/historical report
@@ -308,6 +327,11 @@ legacy-v-file-name,reports/home-v6-critical-gap-report-final-2026-06-29/summary.
 synthetic-v-folder-reference,reports/home-v6-projection-final-2026-06-29/projected-question-results.json,generated/historical report
 synthetic-v-folder-reference,reports/home-v6-projection-final-2026-06-29/readme.md,generated/historical report
 synthetic-v-folder-reference,reports/home-v6-projection-final-2026-06-29/summary.json,generated/historical report
+synthetic-v-folder-reference,reports/legacy-context-retirement/inventory.csv,generated/historical report
+legacy-v-dimension-token,reports/legacy-context-retirement/inventory.csv,generated/historical report
+v6-v7-current-state,reports/legacy-context-retirement/inventory.csv,generated/historical report
+legacy-v-dimension-token,reports/legacy-dataset-sunset/default-runtime-read-scan.csv,generated/historical report
+v6-v7-current-state,reports/legacy-dataset-sunset/default-runtime-read-scan.csv,generated/historical report
 synthetic-v-folder-reference,reports/live-refresh-preflight-20260627/apex-retail.preflight.json,generated/historical report
 synthetic-v-folder-reference,reports/live-refresh-preflight-20260627/first-capital.preflight.json,generated/historical report
 synthetic-v-folder-reference,reports/live-refresh-preflight-20260627/lakeshore-holdings.preflight.json,generated/historical report
@@ -398,8 +422,23 @@ synthetic-v-folder-reference,scripts/audit/build-end-to-end-data-flow-report.mjs
 legacy-v-dimension-token,scripts/audit/build-end-to-end-data-flow-report.mjs,non-loader historical reference
 v6-v7-current-state,scripts/audit/build-end-to-end-data-flow-report.mjs,non-loader historical reference
 current-state-pack,scripts/audit/build-home-knowledge-cutover-proof.ts,non-loader historical reference
+current-state-pack,scripts/audit/build-intelligence-ava-quality-audit.ts,non-loader historical reference
 legacy-v-dimension-token,scripts/audit/check-enterprise-naming-conventions.mjs,non-loader historical reference
+archive-path-reference,scripts/audit/check-no-legacy-tenant-inputs.mjs,non-loader historical reference
+synthetic-v-folder-reference,scripts/audit/check-no-legacy-tenant-inputs.mjs,non-loader historical reference
+v6-v7-current-state,scripts/audit/check-no-legacy-tenant-inputs.mjs,non-loader historical reference
+current-state-pack,scripts/audit/check-no-legacy-tenant-inputs.mjs,non-loader historical reference
+rich-enterprise-pack,scripts/audit/check-no-legacy-tenant-inputs.mjs,non-loader historical reference
+rich-substrate-pack,scripts/audit/check-no-legacy-tenant-inputs.mjs,non-loader historical reference
+upgrade-candidate-pack,scripts/audit/check-no-legacy-tenant-inputs.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/audit/enterprise-synthetic-data-depth-audit.mjs,non-loader historical reference
+legacy-v-dimension-token,scripts/audit/legacy-dataset-sunset.mjs,non-loader historical reference
+v6-v7-current-state,scripts/audit/legacy-dataset-sunset.mjs,non-loader historical reference
+synthetic-v-folder-reference,scripts/audit/meridian-data-state-reconciliation.mjs,non-loader historical reference
+v6-v7-current-state,scripts/audit/meridian-data-state-reconciliation.mjs,non-loader historical reference
+current-state-pack,scripts/audit/meridian-data-state-reconciliation.mjs,non-loader historical reference
+rich-enterprise-pack,scripts/audit/meridian-data-state-reconciliation.mjs,non-loader historical reference
+upgrade-candidate-pack,scripts/audit/meridian-data-state-reconciliation.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/audit/run-full-module-stress.mjs,non-loader historical reference
 legacy-v-dimension-token,scripts/context-packs/embed-v4-tenants-postgres-only.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/context-packs/regenerate-v4-relationship-graphs.mjs,non-loader historical reference
@@ -408,6 +447,14 @@ legacy-v-dimension-token,scripts/intelligence/enrich-skyharbor-v6-cto-readiness.
 legacy-v-file-name,scripts/intelligence/enrich-skyharbor-v6-cto-readiness.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/jobs/load-first-capital-v2.ts,non-loader historical reference
 legacy-v-dimension-token,scripts/jobs/load-first-capital-v2.ts,non-loader historical reference
+legacy-v-dimension-token,scripts/knowledge/build-data-plane-load-plan.mjs,non-loader historical reference
+legacy-v-file-name,scripts/knowledge/build-data-plane-load-plan.mjs,non-loader historical reference
+legacy-v-dimension-token,scripts/knowledge/generate-module-cxo-content.mjs,non-loader historical reference
+legacy-v-file-name,scripts/knowledge/generate-module-cxo-content.mjs,non-loader historical reference
+legacy-v-dimension-token,scripts/knowledge/load-multi-tenant-data-plane.mjs,non-loader historical reference
+legacy-v-file-name,scripts/knowledge/load-multi-tenant-data-plane.mjs,non-loader historical reference
+legacy-v-dimension-token,scripts/knowledge/proof-gate-cxo-context.mjs,non-loader historical reference
+legacy-v-file-name,scripts/knowledge/proof-gate-cxo-context.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/lakeshore/generate-lakeshore-v6-holdco-pack.mjs,non-loader historical reference
 legacy-v-pack-label,scripts/lakeshore/generate-lakeshore-v6-holdco-pack.mjs,non-loader historical reference
 legacy-v-dimension-token,scripts/lakeshore/generate-lakeshore-v6-holdco-pack.mjs,non-loader historical reference
@@ -480,6 +527,8 @@ synthetic-v-folder-reference,src/lib/__tests__/control-plane-tenant-purity.test.
 synthetic-v-folder-reference,src/lib/admin/tenant-manifest-projection-audit.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/admin/tenant-manifest-projection-audit.ts,non-loader historical reference
 legacy-v-file-name,src/lib/admin/tenant-manifest-projection-audit.ts,non-loader historical reference
+legacy-v-dimension-token,src/lib/ava-answer/__tests__/public-answer-scrub.test.ts,non-loader historical reference
+legacy-v-file-name,src/lib/ava-answer/__tests__/public-answer-scrub.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/context-ingestion/__tests__/csv-upload-connector.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/demo/demo-dataset-registry.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/enterprise-context/derived-enterprise-read.ts,non-loader historical reference
@@ -494,6 +543,7 @@ current-state-pack,src/lib/enterprise-data/source-display-labels.ts,non-loader h
 rich-enterprise-pack,src/lib/enterprise-data/source-display-labels.ts,non-loader historical reference
 rich-substrate-pack,src/lib/enterprise-data/source-display-labels.ts,non-loader historical reference
 upgrade-candidate-pack,src/lib/enterprise-data/source-display-labels.ts,non-loader historical reference
+current-state-pack,src/lib/enterprise-knowledge/narratives/knowledge-narrative-store.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/home/__tests__/v6-context-browser.test.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/home/__tests__/v6-context-browser.test.ts,non-loader historical reference
 legacy-v-file-name,src/lib/home/__tests__/v6-context-browser.test.ts,non-loader historical reference

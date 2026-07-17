@@ -113,7 +113,9 @@ describe('retrieveV7DossierSources', () => {
       },
     );
 
-    expect(seenRunQueries.join('\n')).toContain('from intelligence_v7.current_tenant_pack_runs');
+    expect(seenRunQueries.join('\n')).toContain('from intelligence_v7.tenant_pack_runs run');
+    expect(seenRunQueries.join('\n')).toContain('join intelligence_v7.active_tenant_contract_versions active');
+    expect(seenRunQueries.join('\n')).not.toContain('from intelligence_v7.current_tenant_pack_runs');
     expect(seenRunQueries.join('\n')).not.toContain('contract_version = $2');
     expect(result.sources[0]).toEqual(expect.objectContaining({
       type: 'TENANT',

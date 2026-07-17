@@ -18,6 +18,7 @@ import {
   buildHomeSummarySnapshot,
   buildHomeSummarySnapshotFromModuleContext,
 } from "@/lib/home/home-summary-snapshot";
+import { getLocalCxoRuntimeBrowser } from "@/lib/home/local-cxo-runtime";
 import { getHomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
 import { getHomeV7ContextBrowser } from "@/lib/home/v7-context-browser";
 import { getIntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
@@ -205,8 +206,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     }),
     null,
   );
+  const localBrowser = getLocalCxoRuntimeBrowser(
+    activeClient?.key ?? homeTenantKey,
+  );
   const browser =
-    v7Browser ?? getHomeV6ContextBrowser(activeClient?.key ?? homeTenantKey);
+    v7Browser ??
+    localBrowser ??
+    getHomeV6ContextBrowser(activeClient?.key ?? homeTenantKey);
   const [inventorySnapshot, sourceFiles] =
     clientOption && activeClient?.key
       ? await Promise.all([
