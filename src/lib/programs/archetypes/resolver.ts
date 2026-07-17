@@ -93,7 +93,10 @@ export function resolveArchetypeRequirements(
 
     let severity = req.severity;
     let estateResolved = false;
-    let rationale = `${archetype.name} requires ${spec.label} at ${phaseKey}.`;
+    let rationale =
+      severity === "hard"
+        ? `${archetype.name} requires ${spec.label} at ${phaseKey}.`
+        : `${archetype.name} can use ${spec.label} at ${phaseKey} as optional context; it is not a hard blocker.`;
 
     if (req.estateScoped && profile) {
       const pred = ESTATE_PREDICATES[req.family];
@@ -106,7 +109,10 @@ export function resolveArchetypeRequirements(
         severity = pred.severityFor(profile);
         const estateLabel =
           profile.teamArchetypes.join(", ") || "estate not yet discovered";
-        rationale = `${archetype.name} requires ${spec.label}; estate-resolved severity ${severity} (${estateLabel}).`;
+        rationale =
+          severity === "hard"
+            ? `${archetype.name} requires ${spec.label}; estate-resolved severity ${severity} (${estateLabel}).`
+            : `${archetype.name} can use ${spec.label} as optional context; estate-resolved severity ${severity} (${estateLabel}).`;
       }
     }
 

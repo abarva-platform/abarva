@@ -7,6 +7,8 @@ import {
   CONTACT_CENTER_AGENT_ASSIST,
   IT_SOURCING_EVENT,
 } from "../registry";
+import { resolveArchetypeRequirements } from "../resolver";
+import { emptyProfile } from "@/lib/programs/current-state-readiness";
 
 describe("resolveProgramArchetype — per-Move archetype resolution", () => {
   it("routes an IROPS move name to the operations decision-support archetype", () => {
@@ -202,6 +204,31 @@ describe("CONTACT_CENTER_AGENT_ASSIST — registry shape", () => {
       diagnose.requiredEvidence.map((r) => [r.family, r.severity]),
     );
     expect(byFamily["solution_delivery_estimation_context"]).toBe("soft");
+  });
+
+  it("renders soft P2 delivery-estimation rationale as optional, not required", () => {
+    const resolved = resolveArchetypeRequirements(
+      CONTACT_CENTER_AGENT_ASSIST,
+      "diagnose",
+      emptyProfile(),
+    );
+    const byFamily = Object.fromEntries(
+      resolved.map((r) => [r.family.key, r]),
+    );
+
+    expect(byFamily["member_service_process_map"].severity).toBe("hard");
+    expect(byFamily["member_service_process_map"].rationale).toContain(
+      "requires Member-service process and escalation map",
+    );
+    expect(byFamily["solution_delivery_estimation_context"].severity).toBe(
+      "soft",
+    );
+    expect(byFamily["solution_delivery_estimation_context"].rationale).toContain(
+      "as optional context",
+    );
+    expect(
+      byFamily["solution_delivery_estimation_context"].rationale,
+    ).not.toContain("requires Solution delivery estimation context");
   });
 
   it("every required family at every phase is declared in evidenceFamilies", () => {
