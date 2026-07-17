@@ -1089,7 +1089,7 @@ export function resolveProgramArchetype(input: {
     return AI_PRODUCT_DEVELOPMENT_LIFECYCLE;
   }
   if (
-    /irops|operations|operational_optimization|ops |recovery|disruption|claims|exception|contact center|re-?accommodation/.test(
+    /irops|operations|operational_optimization|ops |recovery|disruption|claims|exception|contact center|call center|agent assist|member service|prior auth|prior authorization|eligibility|benefits|re-?accommodation/.test(
       haystack,
     )
   ) {
