@@ -73,12 +73,24 @@ describe('GET /api/v1/deliverables/runs/[runId]', () => {
   });
 
   it('returns blocked status with blockers and no blob url', async () => {
-    runRow = { id: 'run-2', status: 'blocked', artifactId: null, blockers: ['no source register'], warnings: [], error: 'quality gate blocked export', updatedAt: 't' };
+    runRow = { id: 'run-2', status: 'blocked', artifactId: null, retrievedEvidence: 0, blockers: ['no source register'], warnings: [], error: 'quality gate blocked export', updatedAt: 't' };
     const res = await GET({} as never, params('run-2'));
     expect(res.status).toBe(200);
     const json = (await res.json()) as Record<string, unknown>;
     expect(json.status).toBe('blocked');
     expect(json.blobUrl).toBeNull();
     expect(json.blockers).toContain('no source register');
+    expect(json.packageReadiness).toMatchObject({
+      label: 'Cannot assemble executive package',
+      evidenceCoveragePct: 0,
+      confidenceTier: 'bronze',
+      confidenceLabel: 'Internal working draft',
+      canShareExternally: false,
+      recommendedNextStep:
+        'Upload and approve the phase workshop outputs, source files, and decision evidence, then re-run Approve & Build.',
+    });
+    expect((json.packageReadiness as { missing: string[] }).missing).toContain(
+      'Source-backed evidence attached to this Move',
+    );
   });
 });
