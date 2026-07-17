@@ -63,7 +63,7 @@ const DETECTORS: readonly DetectorDefinition[] = [
     severity: "high",
     confidence: 0.9,
     pattern:
-      /\b(?:MRN|medical record number|patient(?:\s+id)?|member(?:\s+id)?|subscriber(?:\s+id)?)\s*[:#-]?\s*[A-Z0-9][A-Z0-9-]{5,}\b/gi,
+      /\b(?:MRN|medical record number|patient\s+(?:identifier|number|id)|member\s+(?:identifier|number|id)|subscriber\s+(?:identifier|number|id))\b\s*[:#-]?\s*[A-Z0-9][A-Z0-9-]{5,}\b/gi,
   },
   {
     ruleId: "phi.dob",

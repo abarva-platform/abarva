@@ -32,6 +32,23 @@ describe('sensitive upload guard', () => {
     expect(result.declaredClassification).toBe('confidential_business');
   });
 
+  it('allows de-identified healthcare operations evidence for member-service workflows', () => {
+    const result = evaluateSensitiveUpload({
+      filename: 'agent-assist-process-baseline.md',
+      mimeType: 'text/markdown',
+      bytes: bytes(
+        'Member service agents review claims status, benefits, eligibility, prior authorization, CRM history, and knowledge-base guidance. No member identifiers are included.',
+      ),
+      declaredClassification: 'confidential_business',
+    });
+
+    expect(result.decision).toBe('allow');
+    expect(result.suspectedPhi).toBe(false);
+    expect(result.matchedRules.map((rule) => rule.ruleId)).not.toContain(
+      'phi.mrn',
+    );
+  });
+
   it('quarantines declared regulated PHI/PII even without pattern hits', () => {
     const result = evaluateSensitiveUpload({
       filename: 'clinical-notes.csv',
