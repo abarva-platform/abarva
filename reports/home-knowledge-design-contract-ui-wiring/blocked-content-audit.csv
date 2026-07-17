@@ -33,7 +33,7 @@
 "UI component source","internal projection wording","pass","/\bprojection\b/i",""
 "UI component source","guidebook fallback wording","pass","/\bgeneric guidebook\b/i",""
 "UI component source","unsupported realized ROI wording","pass","/\brealized ROI\b/i",""
-"UI component source","unsupported realized savings wording","pass","/\brealized savings\b/i",""
+"UI component source","unsupported realized savings wording","pass","/\brealized savings\b/i","safe negation or diagnostic context"
 "UI component source","unsupported production AI readiness wording","pass","/\bproduction AI readiness\b/i",""
 "UI component source","AWS current certified production claim","pass","/\bAWS\b[^.]{0,80}\bcurrent certified production\b/i",""
 "UI component source","Databricks current certified production claim","pass","/\bDatabricks\b[^.]{0,80}\bcurrent certified production\b/i",""
