@@ -163,9 +163,11 @@ function SessionCard({ s, n }: { s: Session; n: number }) {
 export function SessionPlaybookPanel({
   moveId,
   phase,
+  readOnly = false,
 }: {
   moveId: string;
   phase?: number;
+  readOnly?: boolean;
 }) {
   const [pb, setPb] = useState<Playbook | null>(null);
   const [loading, setLoading] = useState(true);
@@ -292,7 +294,7 @@ export function SessionPlaybookPanel({
               "Facilitated working sessions for this phase — discussion guides, frameworks, capture templates, and alignment gates."}
           </p>
         </div>
-        {pb && (
+        {pb && !readOnly ? (
           <div
             style={{
               display: "flex",
@@ -339,7 +341,7 @@ export function SessionPlaybookPanel({
               {genState === "running" ? "Generating…" : "Generate Session Pack"}
             </button>
           </div>
-        )}
+        ) : null}
       </div>
       {(genMsg || packageMsg) && (
         <div

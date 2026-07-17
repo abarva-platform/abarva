@@ -1198,7 +1198,11 @@ function PhaseBody({
             completed={isHistoricalPhase}
           />
           <section className="mxw-zone">
-            <SessionPlaybookPanel moveId={move.id} phase={phase.phase} />
+            <SessionPlaybookPanel
+              moveId={move.id}
+              phase={phase.phase}
+              readOnly={isHistoricalPhase}
+            />
           </section>
         </>
       );

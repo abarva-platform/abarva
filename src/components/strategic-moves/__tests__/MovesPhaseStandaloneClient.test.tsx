@@ -329,6 +329,10 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.queryByText(/Complete this phase/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Attest and advance to Tower handoff/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Complete the steps above/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Generate Session Pack/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Generate Execution & Readiness/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Continue to P5 Prepare to Execute/i }),
     ).not.toBeInTheDocument();
