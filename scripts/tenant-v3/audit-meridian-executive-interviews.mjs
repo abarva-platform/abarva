@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs";
 import path from "node:path";
-import { readCsv, writeCsv } from "../lib/v6-v7/csv.mjs";
+import { readCsv, writeCsv } from "./lib/csv.mjs";
 
 const repoRoot = process.cwd();
 const tenantKey = "meridian-health";

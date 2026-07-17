@@ -1,0 +1,3 @@
+tenant_key,source_record_id,program_code,initiative_id,program_name,initiative_status,funding_status,approved_funding_usd,requested_funding_usd,linked_budget_record_ids,linked_sa02_records,linked_ai_spend_ids,ai_tagged_approved_funding_usd,ai_spend_flag,ai_spend_type,ai_spend_category,platform_embedded_ai_flag,executive_owner,finance_owner,tower_tracking_status,evidence_id,active_candidate_status,notes
+tenant-key,SA04-PROG-EXAMPLE,PROG-EXAMPLE,INIT-EXAMPLE,Example program,in_flight,approved,1000000,1000000,EXAMPLE-01,SA02-EXAMPLE-01,,0,false,none,not_ai,false,CIO,FP&A Technology Finance Lead,track_budget_and_measurement,TENANT-EVID-PROG-001,active,Approved program must reconcile to 08 and SA02.
+
