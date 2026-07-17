@@ -270,18 +270,18 @@ function buildRows() {
     for (const [term, pattern] of TERMS) {
       const lines = lineNumbers(text, new RegExp(pattern.source, pattern.flags));
       if (lines.length === 0) continue;
-      const module = moduleFor(file);
+      const area = moduleFor(file);
       const classification = classify(file, term, text);
       rows.push({
         file,
-        module,
+        module: area,
         term,
         references: lines.length,
         sample_lines: lines.slice(0, 8).join("|"),
         classification,
         deletion_phase: deletionPhase(classification),
         delete_decision: deleteDecision(classification),
-        replacement_required: replacementRequired(module, classification, file, term),
+        replacement_required: replacementRequired(area, classification, file, term),
       });
     }
   }
@@ -290,9 +290,9 @@ function buildRows() {
 
 function buildDependencyMap(rows) {
   const map = {};
-  for (const module of MODULES) {
-    const moduleRows = rows.filter((row) => row.module === module);
-    map[module] = {
+  for (const area of MODULES) {
+    const moduleRows = rows.filter((row) => row.module === area);
+    map[area] = {
       reference_groups: moduleRows.length,
       total_references: moduleRows.reduce((sum, row) => sum + row.references, 0),
       active_runtime_dependencies: moduleRows.filter((row) => row.classification === "active runtime dependency").map(toDependency),

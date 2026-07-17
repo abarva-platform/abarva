@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T01:53:24.908Z",
+  "generated_at": "2026-07-17T01:59:19.685Z",
   "rows": [
     {
       "file": "datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv",
@@ -6088,7 +6088,7 @@
       "file": "reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv",
       "module": "shared/platform",
       "term": "v6_label",
-      "references": 95,
+      "references": 99,
       "sample_lines": "8|9|10|40|42|43|44|79",
       "classification": "safe-to-delete candidate",
       "deletion_phase": "Phase 1 - dead generated artifact/dataset cleanup after proof",
@@ -6099,7 +6099,7 @@
       "file": "reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv",
       "module": "shared/platform",
       "term": "v6_v7_dataset",
-      "references": 33,
+      "references": 37,
       "sample_lines": "8|9|10|40|96|97|98|99",
       "classification": "safe-to-delete candidate",
       "deletion_phase": "Phase 1 - dead generated artifact/dataset cleanup after proof",
@@ -6110,7 +6110,7 @@
       "file": "reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv",
       "module": "shared/platform",
       "term": "v7_label",
-      "references": 55,
+      "references": 59,
       "sample_lines": "8|9|10|40|86|89|93|94",
       "classification": "safe-to-delete candidate",
       "deletion_phase": "Phase 1 - dead generated artifact/dataset cleanup after proof",
@@ -16984,7 +16984,7 @@
     },
     "shared/platform": {
       "reference_groups": 614,
-      "total_references": 9711,
+      "total_references": 9723,
       "blocked_delete_candidates": [
         {
           "file": "docs/architecture/naming-conventions.md",
@@ -19560,21 +19560,21 @@
         {
           "file": "reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv",
           "term": "v6_label",
-          "references": 95,
+          "references": 99,
           "classification": "safe-to-delete candidate",
           "replacement_required": "Archive/delete only after confirming no runtime import, package script, loader, release record, or proof harness references it."
         },
         {
           "file": "reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv",
           "term": "v6_v7_dataset",
-          "references": 33,
+          "references": 37,
           "classification": "safe-to-delete candidate",
           "replacement_required": "Archive/delete only after confirming no runtime import, package script, loader, release record, or proof harness references it."
         },
         {
           "file": "reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv",
           "term": "v7_label",
-          "references": 55,
+          "references": 59,
           "classification": "safe-to-delete candidate",
           "replacement_required": "Archive/delete only after confirming no runtime import, package script, loader, release record, or proof harness references it."
         },

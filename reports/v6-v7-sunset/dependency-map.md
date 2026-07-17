@@ -2,7 +2,7 @@
 
 Status: PASS for Phase 0 audit/report generation only.
 
-Generated: 2026-07-17T01:53:24.912Z
+Generated: 2026-07-17T01:59:19.690Z
 
 Scope: deletion-readiness audit and phased retirement plan. No runtime code deletion, no data deletion, no historical migration edits, no Azure/Postgres mutation, no deploy, and no tenant promotion were performed.
 
@@ -15,7 +15,7 @@ The current physical V3 dataset buildout is still in progress: Meridian is the c
 ## Totals
 
 - Reference groups: 1121
-- Total line references: 15718
+- Total line references: 15730
 - Active runtime dependency groups: 39
 - Bridge/read-model dependency groups: 93
 - Generated artifact dependency groups: 22
