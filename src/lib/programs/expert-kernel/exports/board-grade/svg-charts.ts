@@ -346,12 +346,7 @@ export function inlineChart(input: InlineChartInput): string {
   }
 
   if (rows.length === 0) {
-    svg += txt(28, 90, 'No numeric rows available for this chart.', {
-      size: 12,
-      fill: CHART.inkSoft,
-    });
-    svg += `</svg>`;
-    return svg;
+    return '';
   }
 
   if (input.type === 'pie') {

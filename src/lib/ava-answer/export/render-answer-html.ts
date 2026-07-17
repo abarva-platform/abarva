@@ -94,6 +94,12 @@ export function renderAnswerChartSvgForExport(chart: AnswerChart): {
   }
 }
 
+function isRenderableExportChart(
+  chart: AnswerChart,
+): chart is AnswerChart & { artifact: "chart" } {
+  return renderAnswerChartSvgForExport(chart).svg !== null;
+}
+
 function parseNumericCellValue(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value !== "string") return null;
@@ -328,7 +334,12 @@ function citationHtml(citations: readonly AnswerCitation[]): string {
 function answerBodyHtml(answer: AvaAnswerPacket): string {
   const display = sanitizeAvaAnswerForRender(answer);
   const artifacts = display.artifacts.filter(isVisibleAvaArtifact);
-  const charts = artifacts.filter((artifact) => artifact.artifact === "chart");
+  const charts = artifacts
+    .filter(
+      (artifact): artifact is AnswerChart & { artifact: "chart" } =>
+        artifact.artifact === "chart",
+    )
+    .filter(isRenderableExportChart);
   const graphs = artifacts.filter((artifact) => artifact.artifact === "graph");
   const tables = artifacts.filter((artifact) => artifact.artifact === "table");
 
@@ -354,8 +365,12 @@ function sessionStats(
     userTurns: session.turns.filter((turn) => turn.role === "user").length,
     agentTurns: session.turns.filter((turn) => turn.role === "agent").length,
     answerPackets: answers.length,
-    charts: visibleArtifacts.filter((artifact) => artifact.artifact === "chart")
-      .length,
+    charts: visibleArtifacts
+      .filter(
+        (artifact): artifact is AnswerChart & { artifact: "chart" } =>
+          artifact.artifact === "chart",
+      )
+      .filter(isRenderableExportChart).length,
     tables: visibleArtifacts.filter((artifact) => artifact.artifact === "table")
       .length,
     graphs: visibleArtifacts.filter((artifact) => artifact.artifact === "graph")

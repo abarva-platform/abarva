@@ -162,6 +162,40 @@ describe("renderAvaAnswerStandaloneHtml", () => {
     expect(html).not.toContain("inlineChart");
   });
 
+  it("suppresses non-renderable inlineChart artifacts from HTML export", () => {
+    const answer = answerFixture();
+    answer.artifacts = [
+      {
+        artifact: "chart",
+        id: "empty-ranking-chart",
+        kind: "bar",
+        title: "Empty ranking chart",
+        builder: "inlineChart",
+        data: {
+          type: "bar",
+          title: "Empty ranking chart",
+          xKey: "Use case",
+          yKey: "Value",
+          data: [{ "Use case": "Payment integrity", Value: "High" }],
+        },
+      },
+      {
+        artifact: "table",
+        id: "use-case-table",
+        title: "Ranked Use Cases",
+        columns: [{ key: "use_case", label: "Use case" }],
+        rows: [{ use_case: "Payment integrity" }],
+      },
+    ];
+
+    const html = renderAvaAnswerStandaloneHtml(answer);
+
+    expect(html).not.toContain("Empty ranking chart");
+    expect(html).not.toContain("Chart unavailable");
+    expect(html).toContain("Ranked Use Cases");
+    expect(html).toContain("Payment integrity");
+  });
+
   it("does not leak raw markdown tables or chart JSON in HTML export prose", () => {
     const answer = answerFixture();
     answer.directAnswer = `Here is the table:
@@ -183,7 +217,7 @@ Use the typed artifact if available.`;
     expect(html).not.toContain("```chart");
     expect(html).not.toContain('"type":"bar"');
     expect(html).toContain("table-shaped answer was detected");
-    expect(html).toContain("chart-shaped answer was detected");
+    expect(html).not.toContain("chart-shaped answer was detected");
   });
 
   it("decodes basic escaped characters before export escaping", () => {

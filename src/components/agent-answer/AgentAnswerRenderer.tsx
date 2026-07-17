@@ -142,6 +142,12 @@ export function renderAnswerChartSvg(chart: AnswerChart): RenderedChartSvg {
   }
 }
 
+function isRenderableAnswerChart(
+  chart: AnswerChart,
+): chart is AnswerChart & { artifact: "chart" } {
+  return renderAnswerChartSvg(chart).svg !== null;
+}
+
 function citationsFor(
   ids: string[] | undefined,
   citations: AnswerCitation[],
@@ -635,7 +641,7 @@ export function AgentAnswerRenderer({
   const charts = visibleArtifacts.filter(
     (artifact): artifact is AnswerChart & { artifact: "chart" } =>
       artifact.artifact === "chart",
-  );
+  ).filter(isRenderableAnswerChart);
   const graphs = visibleArtifacts.filter(
     (artifact): artifact is AnswerGraph & { artifact: "graph" } =>
       artifact.artifact === "graph",
