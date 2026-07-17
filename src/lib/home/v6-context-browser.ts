@@ -73,6 +73,10 @@ export interface HomeV6ContextBrowser {
   generatedAt: string;
   contractLabel?: string;
   runtimeSource?: "azure-v7" | "local-v3-standard" | "local-v3-v7" | "local-v6";
+  cxoContentSource?:
+    | "canonical-v3-approved-content"
+    | "legacy-approved-home-knowledge"
+    | "none";
   contextMode?: "active" | "candidate-preview";
   contextWarnings?: string[];
   cxoStoryBlocks?: HomeCxoStoryBlock[];
