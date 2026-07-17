@@ -1,16 +1,30 @@
 import { findGateRule } from '@/lib/programs/governance';
 
 describe('program governance gate map (6-phase doctrine)', () => {
-  it('defines five gate transitions: P0→P1, P1→P2, P2→P3, P3→P4, P4→P5', () => {
+  it('defines six gate transitions: P0→P1 through P5→Tower', () => {
     expect(findGateRule(0, 1)).toBeTruthy();
     expect(findGateRule(1, 2)).toBeTruthy();
     expect(findGateRule(2, 3)).toBeTruthy();
     expect(findGateRule(3, 4)).toBeTruthy();
     expect(findGateRule(4, 5)).toBeTruthy();
+    expect(findGateRule(5, 6)).toBeTruthy();
   });
 
-  it('does not define a P5→P6 transition (Tower owns post-P5 tracking)', () => {
-    expect(findGateRule(5, 6)).toBeNull();
+  it('treats P5 → Tower as the terminal mobilization handoff gate', () => {
+    const rule = findGateRule(5, 6);
+
+    expect(rule).toBeTruthy();
+    expect(rule?.hard).toBe(true);
+    expect(rule?.approverRole).toBe('sponsor');
+    expect(rule?.checks.map((check) => check.key)).toEqual(
+      expect.arrayContaining([
+        'handoff_package_signed_off',
+        'value_measurement_contract_signed_off',
+        'launch_readiness_attested',
+        'tower_cadence_defined',
+        'p5_open_risks_recorded',
+      ]),
+    );
   });
 
   it('treats P0 → P1 (Originate → Charter) as the chartering gate', () => {

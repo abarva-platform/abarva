@@ -28,12 +28,23 @@ import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const PHASE_GATE_DELIVERABLE: Record<number, { typeKey: string; title: string }> = {
-  1: { typeKey: "charter", title: "Program Charter" },
-  2: { typeKey: "discovery_report", title: "Discovery & Diagnosis Report" },
-  3: { typeKey: "design_spec", title: "Solution Design Specification" },
-  4: { typeKey: "business_case", title: "Business Case" },
-  5: { typeKey: "tower_handoff_plan", title: "Tower Handoff Plan" },
+const PHASE_GATE_DELIVERABLES: Record<number, Array<{ typeKey: string; title: string }>> = {
+  1: [{ typeKey: "charter", title: "Program Charter" }],
+  2: [{ typeKey: "discovery_report", title: "Discovery & Diagnosis Report" }],
+  3: [
+    { typeKey: "design_spec", title: "Solution Design Specification" },
+    { typeKey: "requirements_traceability", title: "Requirements Traceability Matrix" },
+  ],
+  4: [
+    { typeKey: "execution_roadmap", title: "Execution Roadmap" },
+    { typeKey: "business_case", title: "Business Case" },
+    { typeKey: "readiness_and_change_plan", title: "Readiness & Change Plan" },
+    { typeKey: "tower_metric_plan", title: "Tower Metrics Plan" },
+  ],
+  5: [
+    { typeKey: "handoff_package", title: "Mobilization & Tower Handoff Package" },
+    { typeKey: "value_measurement_contract", title: "Value Measurement Contract" },
+  ],
 };
 
 function parsePhase(value: unknown): number | null {
@@ -149,8 +160,8 @@ async function preparePhaseGateApprovalRecords(
   phase: number,
   rationale: string,
 ): Promise<void> {
-  const gate = PHASE_GATE_DELIVERABLE[phase];
-  if (gate) {
+  const gates = PHASE_GATE_DELIVERABLES[phase] ?? [];
+  for (const gate of gates) {
     const result = await ensurePhaseGateDeliverable(
       ctx,
       programId,
@@ -227,9 +238,9 @@ export async function POST(
       rationale?: string;
     };
     const phase = parsePhase(body.phase ?? program.currentPhase ?? 0);
-    if (phase === null || phase >= 5) {
+    if (phase === null || phase > 5) {
       return Response.json(
-        { error: "bad_request", detail: "phase must be an integer in [0,4]" },
+        { error: "bad_request", detail: "phase must be an integer in [0,5]" },
         { status: 400 },
       );
     }
@@ -370,6 +381,7 @@ export async function POST(
       phase,
       approved: true,
       newPhase: advanced.newPhase,
+      terminalHandoff: toPhase === 6,
       snapshotId: advanced.snapshotId,
       carriedGaps: carried.map((check) => check.check),
     });

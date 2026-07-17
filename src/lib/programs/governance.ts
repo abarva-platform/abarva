@@ -11,6 +11,8 @@
 //   • P2 → P3 — diagnosed baseline + readiness unlocks Design Future State
 //   • P3 → P4 — signed-off future-state design unlocks Roadmap & Business Case
 //   • P4 → P5 — approved roadmap + business case unlocks Mobilize & Handoff
+//   • P5 → Tower — mobilization package + value measurement contract hand off
+//     execution tracking to Tower
 //
 // Hard gates block advance until approval; soft gates allow advance
 // with an unresolved marker. Every check returns a GateCheck (shape in
@@ -160,6 +162,20 @@ const GATE_RULES: GateRule[] = [
       { key: 'tower_handoff_plan_accepted', describe: 'Tower handoff plan drafted (final acceptance occurs during P5)', severity: 'soft' },
     ],
   },
+  // P5 Mobilize & Handoff → Tower
+  // The Move leaves Strategic Moves only when the mobilization handoff and
+  // value-measurement contract are signed off. Tower then owns ongoing
+  // monitoring; Strategic Moves remains the auditable source record.
+  {
+    fromPhase: 5, toPhase: 6, hard: true, approverRole: 'sponsor',
+    checks: [
+      { key: 'handoff_package_signed_off', describe: 'Mobilization and Tower handoff package signed off', severity: 'hard' },
+      { key: 'value_measurement_contract_signed_off', describe: 'Value measurement contract signed off', severity: 'hard' },
+      { key: 'launch_readiness_attested', describe: 'Launch readiness and go/no-go criteria attested', severity: 'hard' },
+      { key: 'tower_cadence_defined', describe: 'Tower governance and measurement cadence defined', severity: 'hard' },
+      { key: 'p5_open_risks_recorded', describe: 'Open launch risks and client-to-complete items recorded', severity: 'soft' },
+    ],
+  },
 ];
 
 export function findGateRule(fromPhase: number, toPhase: number): GateRule | null {
@@ -238,7 +254,7 @@ export async function evaluateGate(
   // Collect state signals
   const [{ data: deliverables }, { data: modules }, { data: participants }, { data: approvalRequests }, { data: milestones }] = await Promise.all([
     sb.from('deliverables_v2').select('id, deliverable_type_key, status').eq('engagement_id', programId),
-    sb.from('program_modules').select('module_key, status').eq('engagement_id', programId),
+    sb.from('program_modules').select('module_key, status, state_jsonb').eq('engagement_id', programId),
     sb.from('engagement_participants').select('user_id, approval_authority').eq('engagement_id', programId),
     sb
       .from('program_approval_requests')
@@ -250,7 +266,7 @@ export async function evaluateGate(
   ]);
 
   const deliverableRows = (deliverables as Array<{ id: string; deliverable_type_key: string; status: string }> | null ?? []);
-  const moduleRows = (modules as Array<{ module_key: string; status: string }> | null ?? []);
+  const moduleRows = (modules as Array<{ module_key: string; status: string; state_jsonb?: Record<string, unknown> | null }> | null ?? []);
   const milestoneRows = (milestones as Array<{ id: string; name: string | null; status: string | null }> | null ?? []);
   const findDeliverable = (...keys: string[]) => deliverableRows
     .find((d) => keys.includes(d.deliverable_type_key));
@@ -270,6 +286,8 @@ export async function evaluateGate(
   const discoveryReportRow = findDeliverable('discovery_report', 'discovery_synthesis', 'discovery_findings');
   const changePlanRow = findDeliverable('change_management_plan', 'business_readiness_plan', 'readiness_and_change_plan');
   const towerHandoffRow = findDeliverable('tower_handoff_plan', 'execution_monitoring_plan', 'control_tower_handoff');
+  const handoffPackageRow = findDeliverable('handoff_package', 'mobilization_handoff_package', 'mobilization_package');
+  const valueMeasurementContractRow = findDeliverable('value_measurement_contract', 'benefits_realization_plan', 'value_contract');
   const cxoInterviewModule = moduleRows
     .find((m) => m.module_key === 'cxo_interview');
   const hasSponsor = (participants as Array<{ approval_authority: string | null }> | null ?? [])
@@ -279,6 +297,14 @@ export async function evaluateGate(
     brief_snapshot: Record<string, unknown> | null;
   }> | null) ?? [])[0]?.brief_snapshot ?? {};
   const briefString = JSON.stringify(latestSeedBrief).toLowerCase();
+  const phaseCaptureText = moduleRows
+    .filter((m) => m.module_key.startsWith(`phase_${fromPhase}_`))
+    .map((m) => {
+      const value = m.state_jsonb?.value;
+      return typeof value === 'string' ? value : JSON.stringify(m.state_jsonb ?? {});
+    })
+    .join('\n')
+    .toLowerCase();
 
   let latestOriginationBriefText = '';
   if (originationBriefRow) {
@@ -451,18 +477,33 @@ export async function evaluateGate(
       }
       case 'discovery_baseline_attested':
         pass = discoveryReportHasBaselineAttestation ||
-          isSignedOff(findDeliverable('baseline', 'baseline_metrics', 'value_baseline'));
+          isSignedOff(findDeliverable('baseline', 'baseline_metrics', 'value_baseline')) ||
+          (
+            fromPhase === 2 &&
+            /\bbaseline|current state|metric|volume|cost|quality|cycle time|handle time\b/.test(phaseCaptureText)
+          );
         break;
       case 'discovery_stakeholders_named':
-        pass = latestDiscoveryReportText.length > 0 &&
+        pass = (
+          latestDiscoveryReportText.length > 0 &&
           /\bstakeholder/.test(latestDiscoveryReportText) &&
           !discoveryReportHasNamedOwnerGap &&
-          !discoveryReportHasHardGap;
+          !discoveryReportHasHardGap
+        ) || (
+          fromPhase === 2 &&
+          /\b(stakeholder|owner|sponsor|business|technology|risk|finance)\b/.test(phaseCaptureText)
+        );
         break;
       case 'p2_readiness_cleared':
-        pass = latestDiscoveryReportText.length > 0 &&
+        pass = (
+          latestDiscoveryReportText.length > 0 &&
           !discoveryReportHasHardGap &&
-          !/\bconditional proceed\b/.test(latestDiscoveryReportText);
+          !/\bconditional proceed\b/.test(latestDiscoveryReportText)
+        ) || (
+          fromPhase === 2 &&
+          /\b(proceed|recommend|clear|ready|no unresolved hard)\b/.test(phaseCaptureText) &&
+          !/\b(do not advance|kill|stop|unresolved hard gap)\b/.test(phaseCaptureText)
+        );
         break;
       case 'discovery_notes_ingested':
         pass = isPresent(findDeliverable('discovery_notes', 'meeting_notes', 'workshop_notes')) ||
@@ -480,7 +521,13 @@ export async function evaluateGate(
       }
       case 'cxo_interview_complete': pass = cxoInterviewModule?.status === 'completed'; break;
       case 'design_approved': pass = isSignedOff(designRow); break;
-      case 'requirements_design_outcome_trace': pass = isPresent(requirementsTraceRow); break;
+      case 'requirements_design_outcome_trace':
+        pass = isPresent(requirementsTraceRow) ||
+          (
+            fromPhase === 3 &&
+            /\b(requirement|trace|outcome|root cause|design choice|evidence-backed|validation)\b/.test(phaseCaptureText)
+          );
+        break;
       case 'vendor_selection_approved': {
         const vendor = findDeliverable('vendor_selection', 'source_award_recommendation');
         pass = !vendor || vendor.status === 'signed_off';
@@ -492,19 +539,27 @@ export async function evaluateGate(
       }
       case 'execution_roadmap_drafted': pass = isPresent(executionRoadmapRow); break;
       case 'execution_milestones_defined':
-        pass = milestoneRows.length > 0 || briefString.includes('milestone');
+        pass = milestoneRows.length > 0 ||
+          briefString.includes('milestone') ||
+          (
+            fromPhase === 4 &&
+            /\b(milestone|30\/60\/90|30-60-90|roadmap|sequence|critical path)\b/.test(phaseCaptureText)
+          );
         break;
       case 'execution_success_criteria_defined':
         pass = isPresent(findDeliverable('execution_success_criteria', 'execution_roadmap', 'success_criteria')) ||
-          briefString.includes('success criteria');
+          briefString.includes('success criteria') ||
+          (fromPhase === 4 && /\b(success criteria|target|baseline|measurement|kpi)\b/.test(phaseCaptureText));
         break;
       case 'delivery_raci_named':
         pass = isPresent(findDeliverable('delivery_raci', 'raci', 'operating_model')) ||
-          briefString.includes('raci');
+          briefString.includes('raci') ||
+          (fromPhase === 4 && /\b(raci|owner|accountable|responsible|delivery lead)\b/.test(phaseCaptureText));
         break;
       case 'tower_metric_plan_drafted':
         pass = isPresent(findDeliverable('tower_metric_plan', 'execution_monitoring_plan', 'control_tower_metrics')) ||
-          briefString.includes('tower') || briefString.includes('monitoring');
+          briefString.includes('tower') || briefString.includes('monitoring') ||
+          (fromPhase === 4 && /\b(tower|monitoring|metric|cadence|outcome ledger)\b/.test(phaseCaptureText));
         break;
       case 'business_case_approved': pass = isSignedOff(businessCaseRow); break;
       case 'funding_approval_recorded':
@@ -515,6 +570,20 @@ export async function evaluateGate(
         break;
       case 'readiness_and_change_plan_signed_off': pass = isSignedOff(changePlanRow); break;
       case 'tower_handoff_plan_accepted': pass = isSignedOff(towerHandoffRow); break;
+      case 'handoff_package_signed_off': pass = isSignedOff(handoffPackageRow); break;
+      case 'value_measurement_contract_signed_off': pass = isSignedOff(valueMeasurementContractRow); break;
+      case 'launch_readiness_attested':
+        pass = fromPhase === 5 &&
+          /\b(launch readiness|go\/no-go|go-no-go|entry criteria|environment|access|ready)\b/.test(phaseCaptureText);
+        break;
+      case 'tower_cadence_defined':
+        pass = fromPhase === 5 &&
+          /\b(tower|cadence|governance|measurement|reporting|review)\b/.test(phaseCaptureText);
+        break;
+      case 'p5_open_risks_recorded':
+        pass = fromPhase === 5 &&
+          /\b(risk|open item|client-to-complete|caveat|mitigation)\b/.test(phaseCaptureText);
+        break;
       case 'discovery_funding_envelope':
         pass =
           hasText(p0FoundationText) ||

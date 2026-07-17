@@ -25,12 +25,23 @@ export const dynamic = "force-dynamic";
 // gate checks in governance.ts (e.g. P1 `charter_signed_off` reads a
 // `deliverables_v2` row of type `charter`). P0's gate deliverable is the
 // origination brief, created by the originate flow — not this path.
-const PHASE_GATE_DELIVERABLE: Record<number, { typeKey: string; title: string }> = {
-  1: { typeKey: "charter", title: "Program Charter" },
-  2: { typeKey: "discovery_report", title: "Discovery & Diagnosis Report" },
-  3: { typeKey: "design_spec", title: "Solution Design Specification" },
-  4: { typeKey: "business_case", title: "Business Case" },
-  5: { typeKey: "tower_handoff_plan", title: "Tower Handoff Plan" },
+const PHASE_GATE_DELIVERABLES: Record<number, Array<{ typeKey: string; title: string }>> = {
+  1: [{ typeKey: "charter", title: "Program Charter" }],
+  2: [{ typeKey: "discovery_report", title: "Discovery & Diagnosis Report" }],
+  3: [
+    { typeKey: "design_spec", title: "Solution Design Specification" },
+    { typeKey: "requirements_traceability", title: "Requirements Traceability Matrix" },
+  ],
+  4: [
+    { typeKey: "execution_roadmap", title: "Execution Roadmap" },
+    { typeKey: "business_case", title: "Business Case" },
+    { typeKey: "readiness_and_change_plan", title: "Readiness & Change Plan" },
+    { typeKey: "tower_metric_plan", title: "Tower Metrics Plan" },
+  ],
+  5: [
+    { typeKey: "handoff_package", title: "Mobilization & Tower Handoff Package" },
+    { typeKey: "value_measurement_contract", title: "Value Measurement Contract" },
+  ],
 };
 
 function parsePhase(value: string | null | undefined): number | null {
@@ -258,25 +269,27 @@ export async function POST(
     // on a `deliverableId` the Save response never returned, so no Move could
     // advance past its gate through the primary UI. Best-effort: a failure here
     // must not fail the capture write (the fields are already persisted).
-    const gate = PHASE_GATE_DELIVERABLE[phase];
+    const gates = PHASE_GATE_DELIVERABLES[phase] ?? [];
     let recordCreated = false;
-    let deliverableId: string | undefined;
+    const deliverableIds: string[] = [];
     let recordError: string | undefined;
-    if (gate && evaluation.complete) {
-      try {
-        const content = evaluation.sections
-          .map((section) => `## ${section.label}\n${section.value}`)
-          .join("\n\n");
-        const result = await ensurePhaseGateDeliverable(
-          ctx,
-          programId,
-          { deliverableTypeKey: gate.typeKey, title: gate.title, content },
-          { supabase: sb },
-        );
-        deliverableId = result.deliverableId;
-        recordCreated = result.created;
-      } catch (err) {
-        recordError = err instanceof Error ? err.message : "record creation failed";
+    if (gates.length > 0 && evaluation.complete) {
+      for (const gate of gates) {
+        try {
+          const content = evaluation.sections
+            .map((section) => `## ${section.label}\n${section.value}`)
+            .join("\n\n");
+          const result = await ensurePhaseGateDeliverable(
+            ctx,
+            programId,
+            { deliverableTypeKey: gate.typeKey, title: gate.title, content },
+            { supabase: sb },
+          );
+          deliverableIds.push(result.deliverableId);
+          recordCreated = recordCreated || result.created;
+        } catch (err) {
+          recordError = err instanceof Error ? err.message : "record creation failed";
+        }
       }
     }
 
@@ -290,7 +303,7 @@ export async function POST(
         .map((section) => section.key),
       allSaved: evaluation.complete,
       recordCreated,
-      ...(deliverableId ? { deliverableId } : {}),
+      ...(deliverableIds.length > 0 ? { deliverableIds, deliverableId: deliverableIds[0] } : {}),
       ...(recordError ? { recordError } : {}),
       capture: evaluation,
       generationEligibility: {

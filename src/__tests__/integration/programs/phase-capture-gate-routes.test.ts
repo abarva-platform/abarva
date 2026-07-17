@@ -7,6 +7,11 @@ const loadUserProgramAccessPolicy = jest.fn();
 const getAzureWriteFluentClient = jest.fn();
 const writeProgramAuditLogBestEffort = jest.fn();
 const closeP0OnApproval = jest.fn();
+const evaluateGate = jest.fn();
+const advancePhase = jest.fn();
+const ensurePhaseGateDeliverable = jest.fn();
+const signOffDeliverable = jest.fn();
+const saveGateDecisionArtifact = jest.fn();
 
 jest.mock("@/app/api/v1/programs/_auth", () => ({
   requireTenancy,
@@ -36,15 +41,17 @@ jest.mock("@/lib/programs/origination-close", () => ({
 }));
 
 jest.mock("@/lib/programs/governance", () => ({
-  evaluateGate: jest.fn(),
+  evaluateGate,
 }));
 
 jest.mock("@/lib/programs/mutations", () => ({
-  advancePhase: jest.fn(),
+  advancePhase,
+  ensurePhaseGateDeliverable,
+  signOffDeliverable,
 }));
 
 jest.mock("@/lib/programs/deliverables/gate-override-artifact", () => ({
-  saveGateDecisionArtifact: jest.fn(),
+  saveGateDecisionArtifact,
 }));
 
 function makeRequest(body: unknown): Request {
@@ -104,6 +111,15 @@ describe("Moves signed-in phase capture/gate routes", () => {
     loadUserProgramAccessPolicy.mockResolvedValue({ canApproveGates: true });
     getAzureWriteFluentClient.mockReturnValue(makeWriteClient());
     writeProgramAuditLogBestEffort.mockResolvedValue(undefined);
+    evaluateGate.mockResolvedValue({ pass: true, failedChecks: [] });
+    advancePhase.mockResolvedValue({ programId: "move_1", newPhase: 2, snapshotId: "snapshot_1" });
+    ensurePhaseGateDeliverable.mockResolvedValue({
+      deliverableId: "deliverable_1",
+      status: "in_review",
+      created: true,
+    });
+    signOffDeliverable.mockResolvedValue(true);
+    saveGateDecisionArtifact.mockResolvedValue(null);
     closeP0OnApproval.mockResolvedValue({
       briefEnsured: true,
       briefSigned: true,
@@ -295,6 +311,66 @@ describe("Moves signed-in phase capture/gate routes", () => {
         tenantKey: "lakeshore",
         actorTenancy: expect.objectContaining({ clientKey: "lakeshore" }),
       }),
+    );
+  });
+
+  it("approves P5 as the terminal Tower handoff instead of rejecting the phase", async () => {
+    getProgramById.mockResolvedValue({
+      ...program,
+      currentPhase: 5,
+    });
+    getModuleState.mockResolvedValue(
+      [
+        "mobilization_plan",
+        "launch_readiness",
+        "value_proof_rules",
+        "first_90_days",
+        "governance_cadence",
+        "risks_open_items",
+        "recommendation",
+      ].map((key) => ({
+        moduleKey: `phase_5_${key}`,
+        status: "completed",
+        state: { value: key },
+      })),
+    );
+    advancePhase.mockResolvedValue({
+      programId: "move_1",
+      newPhase: 6,
+      snapshotId: "snapshot_terminal",
+    });
+    const { POST } = await import(
+      "@/app/api/v1/programs/[programId]/phase-gate-approval/route"
+    );
+    const res = await POST(
+      makeRequest({ phase: 5, rationale: "Sponsor accepts Tower handoff." }) as never,
+      { params: Promise.resolve({ programId: "move_1" }) },
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      ok: true,
+      phase: 5,
+      approved: true,
+      newPhase: 6,
+      terminalHandoff: true,
+    });
+    expect(ensurePhaseGateDeliverable).toHaveBeenCalledWith(
+      expect.anything(),
+      "move_1",
+      expect.objectContaining({ deliverableTypeKey: "handoff_package" }),
+      expect.anything(),
+    );
+    expect(ensurePhaseGateDeliverable).toHaveBeenCalledWith(
+      expect.anything(),
+      "move_1",
+      expect.objectContaining({ deliverableTypeKey: "value_measurement_contract" }),
+      expect.anything(),
+    );
+    expect(advancePhase).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ fromPhase: 5, toPhase: 6 }),
+      expect.anything(),
     );
   });
 });
