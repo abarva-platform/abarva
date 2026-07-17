@@ -15,6 +15,7 @@ import type { HomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
 import type { AdminSetupControlResponse } from "@/lib/admin/setup-control";
 import { buildHomeDataQualityModel } from "@/lib/home/home-data-quality";
 import { buildHomeEnglishSummary } from "@/lib/home/home-english-summary";
+import { buildHomeSummarySnapshot } from "@/lib/home/home-summary-snapshot";
 
 const payload = {
   tenant: {
@@ -727,6 +728,128 @@ describe("HomeSurface — Explorer context browser", () => {
       screen.queryByText("apex/vendors-contracts.csv"),
     ).not.toBeInTheDocument();
     expect(screen.queryByText("synthetic demo")).not.toBeInTheDocument();
+  });
+
+  it("shows budget run/change/value fields in the Data tab instead of generic columns", () => {
+    const browserWithBudget = {
+      ...v6Browser,
+      dimensions: {
+        ...v6Browser.dimensions,
+        "IT Budget, Spend & Value": {
+          dimension: "IT Budget, Spend & Value",
+          title: "IT budget, spend, and value",
+          fileNames: ["08_it_budget_spend_value.csv"],
+          rowCount: 2,
+          dataThinCells: 0,
+          sourceCount: 1,
+          columns: [
+            { key: "business_name", label: "Business Name" },
+            { key: "financial_fact_name", label: "Financial Fact Name" },
+            { key: "financial_fact_type", label: "Financial Fact Type" },
+            { key: "fiscal_year", label: "Fiscal Year" },
+            { key: "budget_amount_usd", label: "Budget Amount Usd" },
+            { key: "run_budget_usd", label: "Run Budget Usd" },
+            { key: "change_budget_usd", label: "Change Budget Usd" },
+            {
+              key: "finance_attestation_status",
+              label: "Finance Attestation Status",
+            },
+          ],
+          rows: [
+            [
+              "Healthcare Demo",
+              "Epic clinical platform run support",
+              "run_budget",
+              "FY26",
+              "58000000",
+              "58000000",
+              "0",
+              "planning_grade",
+            ],
+            [
+              "Healthcare Demo",
+              "Databricks clinical claims lakehouse foundation",
+              "change_budget",
+              "FY26",
+              "14000000",
+              "0",
+              "14000000",
+              "planning_grade",
+            ],
+          ],
+          sourceRows: [
+            sourceRow(
+              "08_it_budget_spend_value.csv",
+              2,
+              "BUD-001",
+              "Epic clinical platform run support",
+              {
+                "Business Name": "Healthcare Demo",
+                "Financial Fact Name": "Epic clinical platform run support",
+                "Financial Fact Type": "run_budget",
+                "Fiscal Year": "FY26",
+                "Budget Amount Usd": "58000000",
+                "Run Budget Usd": "58000000",
+                "Change Budget Usd": "0",
+                "Finance Attestation Status": "planning_grade",
+              },
+              [],
+            ),
+            sourceRow(
+              "08_it_budget_spend_value.csv",
+              3,
+              "BUD-002",
+              "Databricks clinical claims lakehouse foundation",
+              {
+                "Business Name": "Healthcare Demo",
+                "Financial Fact Name":
+                  "Databricks clinical claims lakehouse foundation",
+                "Financial Fact Type": "change_budget",
+                "Fiscal Year": "FY26",
+                "Budget Amount Usd": "14000000",
+                "Run Budget Usd": "0",
+                "Change Budget Usd": "14000000",
+                "Finance Attestation Status": "planning_grade",
+              },
+              [],
+            ),
+          ],
+          knownGaps: [],
+        },
+      },
+    } satisfies HomeV6ContextBrowser;
+    const summarySnapshot = buildHomeSummarySnapshot({
+      tenantKey: "meridian-health",
+      displayName: "Healthcare Demo",
+      industry: "Healthcare",
+      browser: browserWithBudget,
+      mode: "active_home_context",
+      generatedAt: "2026-07-17T00:00:00.000Z",
+    });
+
+    render(
+      <HomeSurface
+        clientKey="meridian-health"
+        payload={payload}
+        summarySnapshot={summarySnapshot}
+        v6Browser={browserWithBudget}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /IT Budget, Spend & Value/i }),
+    );
+    fireEvent.click(screen.getByRole("tab", { name: "Data" }));
+
+    expect(screen.getByRole("columnheader", { name: "Run Budget USD" }))
+      .toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Change Budget USD" }))
+      .toBeInTheDocument();
+    expect(screen.getAllByText("$58M").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("$14M").length).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole("columnheader", { name: "Owner / System" }),
+    ).not.toBeInTheDocument();
   });
 
   it("resets the record filters when another Explorer node is selected", () => {
