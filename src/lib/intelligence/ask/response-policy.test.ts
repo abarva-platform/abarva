@@ -55,7 +55,13 @@ describe("Ask Intelligence response policy", () => {
       "what evidence is needed",
     );
     expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
-      "End with next moves",
+      "AbarVa Pyramid Brief",
+    );
+    expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
+      "Target 90-160 words",
+    );
+    expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
+      "queue exactly 3 short follow-up questions",
     );
   });
 
