@@ -1027,12 +1027,235 @@ export const AI_OPERATIONS_DECISION_SUPPORT: StrategicMoveArchetype = {
   },
 };
 
+// ── CONTACT_CENTER_AGENT_ASSIST (member/customer service agent assist) ───────
+// A specialized operations archetype for member/customer service Agent Assist.
+// It uses the operations spine but its evidence contract is call-center/current-
+// state evidence, not engineering delivery evidence. DORA/ITSM can help later
+// for implementation estimation, but they are never hard P2 strategy blockers.
+
+const CONTACT_CENTER_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
+  {
+    key: "member_service_process_map",
+    label: "Member-service process and escalation map",
+    kind: "qualitative",
+    whyNeeded:
+      "Shows how agents handle eligibility, benefits, claims, prior authorization, CRM history, knowledge lookup, transfers, and escalation today.",
+    sourceDocHint: "Current-state process map, SOP, or workshop notes",
+    acceptedFormats: ["docx", "pdf", "pptx"],
+    feedsMethods: ["two_gap", "leverage_ranking"],
+  },
+  {
+    key: "member_service_metrics_baseline",
+    label: "Contact-center performance baseline",
+    kind: "metric_baseline",
+    whyNeeded:
+      "AHT, after-call work, first-call resolution, repeat contact, transfer rate, backlog, abandonment, CSAT/NPS, QA score, and agent adoption are the baseline for the value case.",
+    sourceDocHint: "Contact-center KPI export or operations dashboard extract",
+    acceptedFormats: ["csv", "xlsx", "pdf"],
+    feedsMethods: ["maturity_scoring", "leverage_ranking"],
+  },
+  {
+    key: "contact_center_transcripts_intents",
+    label: "Call transcripts and intent taxonomy",
+    kind: "qualitative",
+    whyNeeded:
+      "Reveals the real question types, agent search patterns, repeat-contact drivers, transfer reasons, and knowledge gaps the agent-assist layer must handle.",
+    sourceDocHint: "Redacted call transcripts, intent taxonomy, QA samples, or speech analytics export",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["two_gap", "leverage_ranking"],
+  },
+  {
+    key: "member_service_systems_data_landscape",
+    label: "Member-service systems and data landscape",
+    kind: "inventory",
+    whyNeeded:
+      "Identifies the systems and data sources the agent-assist layer must read from or link to: CRM, claims, prior auth, eligibility/benefits, pharmacy, knowledge base, telephony, and data platform.",
+    sourceDocHint: "Application inventory, data-source inventory, integration map, or architecture notes",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf", "pptx"],
+    feedsMethods: ["maturity_scoring", "leverage_ranking"],
+  },
+  {
+    key: "knowledge_policy_content_inventory",
+    label: "Knowledge, policy, and script inventory",
+    kind: "inventory",
+    whyNeeded:
+      "Agent Assist can only answer consistently if the knowledge base, policies, scripts, and source-of-truth ownership are known and reviewable.",
+    sourceDocHint: "Knowledge-base export, policy inventory, script list, or content ownership matrix",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["two_gap"],
+  },
+  {
+    key: "phi_controls_and_human_approval",
+    label: "PHI controls and human-approval boundaries",
+    kind: "qualitative",
+    whyNeeded:
+      "Defines PHI handling, audit logging, role-based access, explainability, escalation, and where the assistant must inform rather than decide.",
+    sourceDocHint: "Security/privacy review notes, control matrix, PHI handling policy, or compliance attestation",
+    acceptedFormats: ["docx", "pdf", "xlsx"],
+    feedsMethods: ["maturity_scoring"],
+  },
+  {
+    key: "stakeholder_map",
+    label: "Stakeholder and decision-rights map",
+    kind: "qualitative",
+    whyNeeded:
+      "Names the executive sponsor role, operating owner, technology/data owners, risk/privacy approvers, finance value owner, and change owner for this Move.",
+    sourceDocHint: "Stakeholder map, RACI, sponsor notes, or governance workshop output",
+    acceptedFormats: ["csv", "xlsx", "docx", "pptx"],
+  },
+  {
+    key: "member_service_org_change_readiness",
+    label: "Member-service org and change readiness",
+    kind: "org",
+    whyNeeded:
+      "Shows supervisor/agent roles, training model, adoption risks, workforce impacts, decision rights, and operating ownership for the assistant.",
+    sourceDocHint: "Org chart, change-readiness assessment, training plan, or stakeholder workshop notes",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["maturity_scoring"],
+  },
+  {
+    key: "solution_delivery_estimation_context",
+    label: "Solution delivery estimation context",
+    kind: "qualitative",
+    whyNeeded:
+      "Optional later-phase context for sizing implementation effort: delivery cadence, change controls, ITSM/change windows, SDLC constraints, and vendor/platform team capacity. Useful for ROM estimates, not a P2 hard strategy blocker.",
+    sourceDocHint: "Optional delivery/ITSM/SDLC notes or implementation-capacity input",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["workpackage_roadmap_estimate"],
+  },
+];
+
+const CONTACT_CENTER_AGENT_ASSIST_PHASES: PhaseRequirements[] = [
+  {
+    phase: "originate",
+    requiredEvidence: [],
+    analysisMethods: [],
+    deliverables: ["origination_brief"],
+    gateRequirements: [
+      {
+        key: "program_seed_recorded",
+        describe: "Brief signed off with contact-center agent-assist archetype",
+        severity: "hard",
+      },
+      {
+        key: "value_hypothesis_seed",
+        describe: "Value hypothesis names member-service trigger + outcome",
+        severity: "hard",
+      },
+    ],
+  },
+  {
+    phase: "charter",
+    requiredEvidence: [
+      { family: "member_service_process_map", severity: "hard" },
+      { family: "member_service_metrics_baseline", severity: "hard" },
+      { family: "member_service_systems_data_landscape", severity: "hard" },
+      { family: "stakeholder_map", severity: "hard" },
+      { family: "member_service_org_change_readiness", severity: "soft" },
+    ],
+    analysisMethods: ["maturity_scoring", "two_gap", "leverage_ranking"],
+    deliverables: ["program_charter"],
+    gateRequirements: [
+      {
+        key: "charter_signed_off",
+        describe: "Charter signed off by member-service sponsor",
+        severity: "hard",
+      },
+    ],
+  },
+  {
+    phase: "diagnose",
+    requiredEvidence: [
+      { family: "member_service_process_map", severity: "hard" },
+      { family: "member_service_metrics_baseline", severity: "hard" },
+      { family: "contact_center_transcripts_intents", severity: "hard" },
+      { family: "member_service_systems_data_landscape", severity: "hard" },
+      { family: "knowledge_policy_content_inventory", severity: "hard" },
+      { family: "phi_controls_and_human_approval", severity: "hard" },
+      { family: "member_service_org_change_readiness", severity: "soft" },
+      { family: "solution_delivery_estimation_context", severity: "soft" },
+    ],
+    analysisMethods: [
+      "maturity_scoring",
+      "two_gap",
+      "leverage_ranking",
+      "workpackage_roadmap_estimate",
+    ],
+    deliverables: ["discovery_report"],
+    gateRequirements: [
+      {
+        key: "baseline_evidence_committed",
+        describe: "Member-service current-state baseline committed + cited",
+        severity: "hard",
+      },
+    ],
+  },
+];
+
+export const CONTACT_CENTER_AGENT_ASSIST: StrategicMoveArchetype = {
+  id: "CONTACT_CENTER_AGENT_ASSIST",
+  name: "Contact Center Agent Assist",
+  description:
+    "Design and scale an AI-assisted agent layer for member/customer service workflows. Grounded in call-center operations, knowledge content, CRM/claims/auth/benefits data, controls, and change readiness — not SDLC metrics.",
+  version: "0.1.0",
+  status: "draft",
+  applicableIndustries: ["healthcare", "insurance", "retail", "financial services", "*"],
+  applicableFunctions: [
+    "member services",
+    "customer operations",
+    "contact center",
+    "claims operations",
+    "operations",
+  ],
+  phaseModel: CONTACT_CENTER_AGENT_ASSIST_PHASES,
+  evidenceFamilies: CONTACT_CENTER_AGENT_ASSIST_FAMILIES,
+  analysisMethods: [
+    "maturity_scoring",
+    "two_gap",
+    "leverage_ranking",
+    "workpackage_roadmap_estimate",
+  ],
+  deliverablePack: AI_OPERATIONS_DECISION_SUPPORT.deliverablePack,
+  valueModel: {
+    key: "agent_assist_member_service_value",
+    label: "Member-service productivity and experience uplift",
+    method: "leverage_ranking",
+    baselineFamilies: [
+      "member_service_metrics_baseline",
+      "contact_center_transcripts_intents",
+    ],
+    ratifiedAtPhase: "charter",
+  },
+  riskModel: {
+    key: "agent_assist_healthcare_risk",
+    label: "Agent Assist operating and control risk",
+    dimensions: [
+      "answer accuracy / knowledge freshness",
+      "PHI, audit, and access controls",
+      "human approval and escalation boundaries",
+      "agent adoption and change readiness",
+      "systems/data integration reliability",
+    ],
+  },
+  agentGuidance: {
+    systemFraming:
+      "This Move is a Contact Center Agent Assist archetype. Reason over member-service process, contact-center metrics, transcripts/intents, CRM/claims/auth/benefits systems, knowledge content, PHI controls, and operating ownership. Do not require DORA, CI/CD, or engineering SDLC evidence for P2 strategy discovery; those are optional later-phase delivery-estimation inputs only.",
+    keyQuestions: [
+      "Which current member-service workflow, metric, transcript, system, knowledge, or control evidence is missing?",
+      "Which intents and handoffs create the strongest Agent Assist value opportunity?",
+      "Which data, knowledge, PHI, and human-approval foundations must be ready before scaling?",
+    ],
+    requiresGroundedAnswer: true,
+  },
+};
+
 // ── Registry ─────────────────────────────────────────────────────────────────
 
 export const ARCHETYPE_REGISTRY: Record<string, StrategicMoveArchetype> = {
   [AI_PRODUCT_DEVELOPMENT_LIFECYCLE.id]: AI_PRODUCT_DEVELOPMENT_LIFECYCLE,
   [IT_SOURCING_EVENT.id]: IT_SOURCING_EVENT,
   [AI_OPERATIONS_DECISION_SUPPORT.id]: AI_OPERATIONS_DECISION_SUPPORT,
+  [CONTACT_CENTER_AGENT_ASSIST.id]: CONTACT_CENTER_AGENT_ASSIST,
 };
 
 export const DEFAULT_ARCHETYPE_ID = AI_PRODUCT_DEVELOPMENT_LIFECYCLE.id;
@@ -1070,6 +1293,13 @@ export function resolveProgramArchetype(input: {
 
   if (/sourcing|vendor|renegoti/.test(haystack)) {
     return IT_SOURCING_EVENT;
+  }
+  if (
+    /contact center|call center|agent assist|member service|member experience|member ai assist|member.*assist|benefits|eligibility|prior auth|prior authorization/.test(
+      haystack,
+    )
+  ) {
+    return CONTACT_CENTER_AGENT_ASSIST;
   }
   // Strong operations tokens outrank PDLC: an IROPS Move whose classification
   // happens to mention "product development" must still resolve to ops

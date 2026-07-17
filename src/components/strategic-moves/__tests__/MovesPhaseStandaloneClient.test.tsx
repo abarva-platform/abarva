@@ -691,6 +691,12 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByText("Upload CI/CD export as CSV")).toBeInTheDocument();
     expect(screen.getByText("Findings to review")).toBeInTheDocument();
     expect(screen.getByText("Process")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Open Files & Evidence" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Continue to Approve & Build" }),
+    ).toBeInTheDocument();
   });
 
   it("does not load the legacy facilitated session playbook on the Prepare tab", () => {
