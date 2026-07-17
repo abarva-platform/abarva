@@ -29,6 +29,10 @@ import type {
 import { AvaChatShell } from "@/components/ava-chat/AvaChatShell";
 import type { AskSource } from "@/lib/intelligence/ask/types";
 import { getClientOption } from "@/lib/client-config";
+import {
+  getIntelligenceCanvasGovernance,
+  type CanvasPackGovernance,
+} from "@/lib/intelligence/canvas/governed-canvas-pack-registry";
 import styles from "./AdvisoryIntelligencePage.module.css";
 
 type CorpusTab = "outlook" | "peer" | "adoption" | "trends" | "value" | "risk";
@@ -396,9 +400,12 @@ export function AdvisoryIntelligencePage({
             <span className={styles.sep}>·</span>
             <span className={styles.fresh}>
               <i className={styles.freshDot} />
-              refreshed from active enterprise context
+              {briefing.governance.status === "approved"
+                ? "approved deterministic canvas pack"
+                : "candidate deterministic canvas pack"}
             </span>
           </div>
+          <CanvasGovernanceStrip governance={briefing.governance} />
         </header>
         <nav className={styles.tabbar} aria-label="Briefing tabs">
           {CORPUS_TABS.map((tab) => (
@@ -1243,6 +1250,65 @@ function MetricCards({ items, cite }: { items: MetricItem[]; cite: string }) {
   );
 }
 
+function CanvasGovernanceStrip({
+  governance,
+}: {
+  governance: CanvasPackGovernance;
+}) {
+  const statusLabel =
+    governance.status === "approved"
+      ? "Approved pack"
+      : governance.status === "candidate"
+        ? "Candidate pack"
+        : "Fallback pack";
+  const issueCount =
+    governance.validation.issues.length + governance.validation.warnings.length;
+  const sourceMode =
+    governance.sourceMode === "tenant_plus_industry"
+      ? "Tenant + industry context"
+      : "Industry fallback";
+  return (
+    <div
+      className={styles.canvasGovernance}
+      aria-label="Canvas content provenance"
+    >
+      <div className={styles.canvasGovernanceTop}>
+        <span className={styles.canvasPackId}>
+          {statusLabel} · v{governance.version}
+        </span>
+        <span className={styles.canvasPackMode}>{sourceMode}</span>
+        <span
+          className={`${styles.canvasPackStatus} ${
+            governance.validation.passed && issueCount === 0
+              ? styles.canvasPackOk
+              : styles.canvasPackWarn
+          }`}
+        >
+          {governance.validation.passed && issueCount === 0
+            ? "validation clear"
+            : `${issueCount} validation note${issueCount === 1 ? "" : "s"}`}
+        </span>
+      </div>
+      <div className={styles.canvasProvenance}>
+        {governance.provenance.slice(0, 4).map((item) => (
+          <span className={styles.canvasProvenancePill} key={item.basis}>
+            <b>{item.label}</b>
+            <span>{item.detail}</span>
+          </span>
+        ))}
+      </div>
+      {governance.validation.issues.length ||
+      governance.validation.warnings.length ? (
+        <div className={styles.canvasValidation}>
+          {[...governance.validation.issues, ...governance.validation.warnings]
+            .slice(0, 2)
+            .join(" ")}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /* ── Data model ── */
 interface MetricItem {
   label: string;
@@ -1297,6 +1363,7 @@ interface CorpusBriefing {
   tenantHighlightScore: number;
   outlookPunch: string;
   peerPunch: string;
+  governance: CanvasPackGovernance;
 }
 
 interface VerticalMover {
@@ -1675,6 +1742,13 @@ function buildCorpusBriefing(
   const topMaturity = sortedMaturity[0];
   const tenantHighlightArea = topMaturity?.label ?? "Finance & Treasury";
   const tenantHighlightScore = topMaturity?.score ?? 70;
+  const governance = getIntelligenceCanvasGovernance({
+    clientKey: viewModel.clientKey,
+    tenantName: viewModel.tenantName,
+    contextAreaCount: sectionList.length,
+    sourceCount,
+    strongestArea: tenantHighlightArea,
+  });
 
   const starterPrompts = pack.starterPrompts;
   const outlookPunch = pack.outlookPunch;
@@ -1894,6 +1968,7 @@ function buildCorpusBriefing(
     tenantHighlightScore,
     outlookPunch,
     peerPunch,
+    governance,
   };
 }
 

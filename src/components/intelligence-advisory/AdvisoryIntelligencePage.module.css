@@ -451,6 +451,92 @@
   background: var(--green);
 }
 
+.canvasGovernance {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.74);
+}
+
+.canvasGovernanceTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.canvasPackId,
+.canvasPackMode,
+.canvasPackStatus {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.canvasPackMode {
+  color: var(--teal);
+}
+
+.canvasPackOk {
+  border-color: #b8d8c6;
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.canvasPackWarn {
+  border-color: #e7cc98;
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+
+.canvasProvenance {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.canvasProvenancePill {
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid var(--line-2);
+  border-radius: 7px;
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.canvasProvenancePill b {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--ink);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.canvasProvenancePill span {
+  display: block;
+}
+
+.canvasValidation {
+  margin-top: 8px;
+  color: var(--amber);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 /* ══ Tab bar ══ */
 .tabbar {
   position: sticky;
