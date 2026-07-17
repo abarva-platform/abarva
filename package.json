@@ -236,6 +236,7 @@
     "audit:legacy-context-retirement": "node scripts/audit/legacy-context-retirement.mjs --mode retirement",
     "audit:legacy-dataset-sunset": "node scripts/audit/legacy-dataset-sunset.mjs",
     "audit:v6-v7-sunset": "node scripts/audit/v6-v7-sunset-deletion-readiness.mjs",
+    "audit:v6-v7-phase1-cleanup": "node scripts/audit/v6-v7-phase1-safe-delete-proof.mjs",
     "audit:v3-only-active-architecture": "node scripts/audit/legacy-context-retirement.mjs --mode v3-only",
     "audit:no-legacy-context-language": "node scripts/audit/legacy-context-retirement.mjs --mode no-language",
     "audit:tenant-packet-contract": "node scripts/audit/validate-tenant-packet-contract.mjs",
