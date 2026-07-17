@@ -32,6 +32,7 @@ This release candidate adds the explicit ACA operator job script needed to write
 - `scripts/tower/project-meridian-v3-to-cio-tower.mjs`: adds explicit write approval guard, proof-bundle emission, awaited write handling, and run/change classification from actual budget columns.
 - `scripts/tower/project-meridian-v3-to-cio-tower.mjs`: aligns the Meridian enterprise envelope entity to the persisted `cio_tower.entities` schema by using the allowed `holding_company` entity type while preserving `entity_role=enterprise_envelope` in attributes.
 - `scripts/tower/project-meridian-v3-to-cio-tower.mjs`: aligns program funding relationships to the persisted `cio_tower.relationships` schema by emitting `funds` from the enterprise envelope to each initiative instead of unsupported `funded_by`.
+- `scripts/tower/project-meridian-v3-to-cio-tower.mjs`: collapses repeated program funding edges into one relationship per funded initiative, preserving linked SA02 finance record IDs in relationship attributes so retries satisfy the persisted relationship uniqueness constraint.
 
 ## QA / Validation
 
@@ -44,6 +45,7 @@ Before merge:
 - Pass: `git diff --check`
 - Finding from first ACA write attempt: Azure/Postgres rejected `entity_type=enterprise` because `cio_tower.entities` allows `holding_company`, `portfolio_company`, `initiative`, `vendor`, `contract`, `system`, `application`, `platform`, `org_unit`, `business_function`, `capability`, `kpi`, `risk`, and `value_lever`. The projection now emits the enterprise envelope as `holding_company`.
 - Finding from second ACA write attempt: Azure/Postgres rejected `relationship_type=funded_by` because `cio_tower.relationships` allows `owns`, `funds`, `supports`, `depends_on`, `supplies`, `renews`, `measures`, `blocks`, `impacts`, `rolls_up_to`, `allocates_to`, `uses`, and `governed_by`. The projection now emits `funds` relationships.
+- Finding from third ACA write attempt: Azure/Postgres rejected duplicate `(tenant_key, from_entity_key, to_entity_key, relationship_type)` rows when multiple SA02 finance rows funded the same program. The projection now emits one `funds` relationship per program and stores the linked SA02 row IDs as an attribute array.
 
 After deploy:
 
