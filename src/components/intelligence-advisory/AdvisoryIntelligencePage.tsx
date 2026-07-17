@@ -530,7 +530,7 @@ function OutlookPanel({
         <div className={styles.blockHead}>
           <div>
             <div className={styles.blockTitle}>
-              Industrial-sector AI investment
+              {briefing.vertical} AI investment
             </div>
             <div className={styles.blockSub}>
               Indexed, 2022 = 100 &middot; industry corpus &middot; n=
@@ -995,7 +995,7 @@ function AdoptionPanel({ briefing }: { briefing: CorpusBriefing }) {
             <small></small>
           </div>
           <div className={`${styles.mcardDelta} ${styles.up}`}>
-            ▲ {briefing.adoptionStage >= 1 ? 4 : 1} in shared services
+            ▲ {briefing.adoptionStage >= 1 ? 4 : 1} in priority workflows
           </div>
         </div>
         <div className={styles.mcard}>
@@ -1077,7 +1077,8 @@ function ValuePanel({
             </div>
             <div className={styles.blockSub}>
               Modelled from {briefing.tenantName} estate profile × industry
-              corpus peer-median realization rates for diversified industrials.
+              corpus peer-median realization rates for{" "}
+              {briefing.vertical.toLowerCase()} peers.
               Tower financial integration anchors to actual financials.
             </div>
           </div>
@@ -1832,15 +1833,15 @@ function buildCorpusBriefing(
       {
         title: "Decision systems will beat generic AI portfolios",
         sub: "18-month horizon",
-        body: "The pattern across the corpus: peers who deploy AI into specific, governed decision flows (pricing, scheduling, procurement) outperform those with broad AI programmes. Evidence gates and Tower metrics are the differentiator.",
+        body: "The pattern across the corpus: peers who deploy AI into specific, governed decision flows outperform those with broad AI programmes. Evidence gates and Tower metrics are the differentiator.",
         horizon: "18 months",
         tone: "teal" as LandscapeTone,
         implication: pack.decisionSystemsImplication,
       },
       {
-        title: "Shared-services automation is the first scaling layer",
+        title: "Function-specific automation is the first scaling layer",
         sub: "12-month horizon",
-        body: "AP automation, contract analysis, HR case routing, and treasury forecasting are proving at scale. Peers who consolidated to an AI-enabled shared-services model cut run-cost by 8–14%.",
+        body: "Document review, case routing, forecasting, and workflow automation are proving at scale. Peers that focus AI on governed operating workflows see the strongest measurable run-cost and cycle-time improvements.",
         horizon: "12 months",
         tone: "teal" as LandscapeTone,
         implication: pack.scalingLayerImplication,
@@ -1856,10 +1857,10 @@ function buildCorpusBriefing(
       },
     ],
     valueBars: [
-      { label: "Shared-svc automation potential", pct: 72, value: "$12M" },
-      { label: "Contract / procurement AI", pct: 58, value: "$9M" },
-      { label: "Finance & treasury AI", pct: 44, value: "$5M" },
-      { label: "HR & workforce AI", pct: 38, value: "$4M" },
+      { label: "Workflow automation potential", pct: 72, value: "$12M" },
+      { label: "Document / decision AI", pct: 58, value: "$9M" },
+      { label: "Finance & forecasting AI", pct: 44, value: "$5M" },
+      { label: "Workforce AI", pct: 38, value: "$4M" },
       { label: "Data & reporting AI", pct: 28, value: "$3M" },
     ],
     risks: [
