@@ -3,6 +3,7 @@ import {
   buildStrategicMovePortfolio,
   deriveDisplayCode,
   deriveMapLabel,
+  hasTerminalTowerHandoffActivity,
   hasTerminalTowerHandoffPassed,
 } from "@/lib/programs/transformers";
 import { azureRead } from "@/lib/data-plane/azureRead";
@@ -99,6 +100,25 @@ describe("strategic move transformer helpers", () => {
         currentPhase: 4,
         gatesPassed: [5],
       } as never),
+    ).toBe(false);
+  });
+
+  it("recognizes persisted P5 terminal handoff activity when gates_passed is stale", () => {
+    expect(
+      hasTerminalTowerHandoffActivity([
+        {
+          title: "phase_5 · completed (was in_progress)",
+          detail: "Completed P5 terminal Tower handoff",
+        },
+      ]),
+    ).toBe(true);
+    expect(
+      hasTerminalTowerHandoffActivity([
+        {
+          title: "phase_5 · completed (was in_progress)",
+          detail: "Completed P5 launch checklist",
+        },
+      ]),
     ).toBe(false);
   });
 
