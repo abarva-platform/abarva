@@ -46,7 +46,8 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
-    expect(exhibits.tables[0]?.title).toBe("Supporting Material");
+    expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
+    expect(exhibits.tables[1]?.title).toBe("Supporting Material");
     expect(exhibits.charts).toHaveLength(0);
     expect(exhibits.prose).toContain("Epic integration work is $350K");
   });
@@ -209,8 +210,9 @@ describe("buildStructuredExhibits", () => {
         "The right breakdown is denial reason category, AR days, and overturn rate. Next move: ask Revenue Cycle Operations to validate the category extract from the evidence ledger.",
     });
 
-    expect(exhibits.tables[0]?.title).toBe("Supporting Material");
-    expect(exhibits.tables[0]?.rows).toEqual([
+    expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
+    expect(exhibits.tables[1]?.title).toBe("Supporting Material");
+    expect(exhibits.tables[1]?.rows).toEqual([
       expect.objectContaining({
         source: "F12 IT budget",
         type: "tenant material",
@@ -238,11 +240,37 @@ describe("buildStructuredExhibits", () => {
 
     expect(exhibits.citations).toHaveLength(1);
     expect(exhibits.citations[0]?.sourceClass).toBe("tenant-fact");
-    expect(exhibits.tables[0]?.title).toBe("Supporting Material");
+    expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
+    expect(exhibits.tables[1]?.title).toBe("Supporting Material");
     expect(exhibits.charts).toHaveLength(0);
     expect(exhibits.prose).toContain(
       "Medical Necessity is the highest-priority",
     );
+  });
+
+  it("renders a visible CXO summary table for executive trend asks without markdown tables", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: tableRouting(
+        "For Healthcare Demo, summarize the top AI trends for payer operations. Include one concise table and one chart if useful.",
+      ),
+      sources,
+      prose:
+        "Payment integrity is the cleanest first value pool because leakage recovery has measurable ownership. Prior authorization is the second bet, but clinical policy and appeal handling need governed workflow controls. Member service agent assist can improve productivity once call-center quality and deflection baselines are validated. A clinical and claims data foundation is the enabling move because repeatable AI depends on governed definitions.",
+    });
+
+    expect(exhibits.tables[0]).toEqual(
+      expect.objectContaining({
+        id: "answer-requested-summary-table",
+        title: "CXO Visual Summary",
+        rows: expect.arrayContaining([
+          expect.objectContaining({ theme: "Payment integrity" }),
+          expect.objectContaining({ theme: "Prior authorization" }),
+          expect.objectContaining({ theme: "Member or customer service" }),
+        ]),
+      }),
+    );
+    expect(exhibits.tables[1]?.title).toBe("Supporting Material");
+    expect(exhibits.charts).toHaveLength(0);
   });
 
   it("converts complete markdown tables from Ava prose into typed tables", () => {
@@ -722,7 +750,8 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
-    expect(exhibits.tables[0]?.title).toBe("Supporting Material");
+    expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
+    expect(exhibits.tables[1]?.title).toBe("Supporting Material");
     expect(exhibits.charts).toHaveLength(0);
     expect(exhibits.prose).toContain(
       "Medical necessity is the highest-priority",
@@ -737,8 +766,9 @@ describe("buildStructuredExhibits", () => {
         "The requested denial-category table is not in the connected tenant evidence. Next move: validate the source extract before approving numbers.",
     });
 
-    expect(exhibits.tables[0]?.title).toBe("Supporting Material");
-    expect(exhibits.tables[0]?.rows[0]).toEqual(
+    expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
+    expect(exhibits.tables[1]?.title).toBe("Supporting Material");
+    expect(exhibits.tables[1]?.rows[0]).toEqual(
       expect.objectContaining({
         source: "No cited source returned",
       }),
@@ -755,6 +785,16 @@ describe("buildStructuredExhibits", () => {
 
     expect(exhibits.charts).toHaveLength(0);
     expect(exhibits.tables[0]).toEqual(
+      expect.objectContaining({
+        title: "Requested Visual Boundary",
+        rows: [
+          expect.objectContaining({
+            request: "chart",
+          }),
+        ],
+      }),
+    );
+    expect(exhibits.tables[1]).toEqual(
       expect.objectContaining({
         title: "Supporting Material",
         rows: [
@@ -777,6 +817,16 @@ describe("buildStructuredExhibits", () => {
 
     expect(exhibits.graphs).toHaveLength(0);
     expect(exhibits.tables[0]).toEqual(
+      expect.objectContaining({
+        title: "Requested Visual Boundary",
+        rows: [
+          expect.objectContaining({
+            request: "graph",
+          }),
+        ],
+      }),
+    );
+    expect(exhibits.tables[1]).toEqual(
       expect.objectContaining({
         title: "Supporting Material",
         rows: [

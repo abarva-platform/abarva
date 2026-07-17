@@ -1032,6 +1032,164 @@ function stripResidualTableFragments(prose: string): string {
     .trim();
 }
 
+const CXO_ARTIFACT_TOPIC_PATTERNS: Array<{
+  label: string;
+  pattern: RegExp;
+  decisionUse: string;
+}> = [
+  {
+    label: "Payment integrity",
+    pattern: /\b(payment integrity|claim leakage|claims leakage|fraud|waste|abuse)\b/i,
+    decisionUse: "Prioritize where leakage, recoverability, and operational ownership are clear.",
+  },
+  {
+    label: "Prior authorization",
+    pattern: /\b(prior auth|prior authorization|authorization)\b/i,
+    decisionUse: "Sequence where clinical policy, workflow controls, and appeal handling are governed.",
+  },
+  {
+    label: "Member or customer service",
+    pattern: /\b(member service|customer service|contact center|call center|agent assist)\b/i,
+    decisionUse: "Use for productivity and experience cases with measurable volume and quality baselines.",
+  },
+  {
+    label: "Risk stratification",
+    pattern: /\b(risk stratification|risk adjustment|member risk|patient risk|care management)\b/i,
+    decisionUse: "Use where intervention owners can act on model outputs and close the feedback loop.",
+  },
+  {
+    label: "Clinical and claims data foundation",
+    pattern: /\b(clinical|claims|lakehouse|data foundation|data platform|interoperability)\b/i,
+    decisionUse: "Treat as the enabling layer for repeatable AI, analytics, and evidence reuse.",
+  },
+  {
+    label: "Governance and controls",
+    pattern: /\b(governance|control|risk|model risk|evidence|compliance|audit)\b/i,
+    decisionUse: "Use to decide which bets can move from advisory framing into governed execution.",
+  },
+  {
+    label: "Supply chain",
+    pattern: /\b(supply chain|procurement|inventory|logistics|fulfillment|sourcing)\b/i,
+    decisionUse: "Prioritize where service, working capital, and supplier constraints can be measured.",
+  },
+  {
+    label: "Finance and FP&A",
+    pattern: /\b(finance|fp&a|forecast|cash|working capital|close|budget)\b/i,
+    decisionUse: "Use where forecast accuracy, cycle time, and control requirements are explicit.",
+  },
+  {
+    label: "Shared services",
+    pattern: /\b(shared services|back office|hr|legal|operations)\b/i,
+    decisionUse: "Use to compare productivity, control, and operating-model tradeoffs across functions.",
+  },
+];
+
+function proseSentences(prose: string): string[] {
+  return prose
+    .replace(/\s+/g, " ")
+    .split(/(?<=[.!?])\s+/)
+    .map((sentence) => sentence.trim())
+    .filter((sentence) => sentence.length >= 32)
+    .filter((sentence) => !/^(next move|evidence boundary|caveat)\s*:/i.test(sentence))
+    .slice(0, 12);
+}
+
+function truncateCell(value: string, maxLength = 190): string {
+  const compact = value.replace(/\s+/g, " ").trim();
+  if (compact.length <= maxLength) return compact;
+  return `${compact.slice(0, maxLength - 1).trim()}...`;
+}
+
+function hasOrphanTableFragment(prose: string): boolean {
+  return prose
+    .split(/\r?\n/)
+    .some((line) => (line.match(/\|/g) ?? []).length >= 2);
+}
+
+function shouldBuildExecutiveSummaryTable(query: string): boolean {
+  return (
+    wantsTableArtifact(query) &&
+    /\b(top\s+\d+|rank|ranked|ranking|compare|comparison|trend|trends|use cases?|strategy|prioriti[sz]e|priority|summary|summari[sz]e|matrix|scorecard|cxo|executive)\b/.test(
+      query,
+    )
+  );
+}
+
+function requestedSummaryTableFromProse(
+  routing: RoutingDecision,
+  prose: string,
+  citationIds: string[],
+): AnswerTable | null {
+  if (!hasExplicitStructuredArtifactRequest(routing)) return null;
+  const query = routing.query.toLowerCase();
+  if (!shouldBuildExecutiveSummaryTable(query)) return null;
+  if (citationIds.length === 0) return null;
+  if (hasOrphanTableFragment(prose)) return null;
+  const sentences = proseSentences(prose);
+  if (sentences.length === 0) return null;
+  const rows: AnswerTable["rows"] = [];
+
+  CXO_ARTIFACT_TOPIC_PATTERNS.forEach((topic) => {
+    const sentence = sentences.find((candidate) =>
+      topic.pattern.test(candidate),
+    );
+    if (!sentence && !topic.pattern.test(query)) return;
+    rows.push({
+      theme: topic.label,
+      executiveRead: truncateCell(
+        sentence ??
+          "The user explicitly asked for a structured executive view, but the answer did not include validated row-level values.",
+      ),
+      decisionUse: topic.decisionUse,
+      evidenceBoundary:
+        citationIds.length > 0
+          ? "Directional unless each material claim is tied to the cited source packet."
+          : "Directional only; no cited source packet was available for this row.",
+    });
+  });
+
+  if (rows.length === 0) {
+    sentences.slice(0, 4).forEach((sentence, index) => {
+      rows.push({
+        theme: `Executive point ${index + 1}`,
+        executiveRead: truncateCell(sentence),
+        decisionUse:
+          index === 0
+            ? "Use as the opening read for the decision conversation."
+            : "Use as supporting logic only after evidence review.",
+        evidenceBoundary:
+          citationIds.length > 0
+            ? "Directional unless the cited source packet supports the specific claim."
+            : "Directional only; no cited source packet was available for this row.",
+      });
+    });
+  }
+
+  if (rows.length === 0) return null;
+  const wantsChart = wantsChartArtifact(query);
+  const wantsTable = wantsTableArtifact(query);
+
+  return {
+    id: "answer-requested-summary-table",
+    title:
+      wantsChart && wantsTable
+        ? "CXO Visual Summary"
+        : wantsTable
+          ? "CXO Summary Table"
+          : "CXO Decision Summary",
+    columns: [
+      { key: "theme", label: "Theme" },
+      { key: "executiveRead", label: "Executive read" },
+      { key: "decisionUse", label: "Decision use" },
+      { key: "evidenceBoundary", label: "Evidence boundary" },
+    ],
+    rows: rows.slice(0, 6),
+    note:
+      "Generated from the answer text so the chat shows a structured executive artifact without inventing unsupported values.",
+    citationIds,
+  };
+}
+
 function requestedVisualFallbackTable(
   routing: RoutingDecision,
   prose: string,
@@ -1039,10 +1197,7 @@ function requestedVisualFallbackTable(
 ): AnswerTable | null {
   if (!hasExplicitStructuredArtifactRequest(routing)) return null;
   const query = routing.query.toLowerCase();
-  const hasOrphanPipeHeader = prose
-    .split(/\r?\n/)
-    .some((line) => (line.match(/\|/g) ?? []).length >= 2);
-  if (!hasOrphanPipeHeader && !isQuadrantMatrixRequest(query)) return null;
+  void prose;
   const requested = [
     wantsTableArtifact(query) ? "table" : null,
     wantsChartArtifact(query) ? "chart" : null,
@@ -1061,12 +1216,14 @@ function requestedVisualFallbackTable(
     rows: [
       {
         request: requested || "structured exhibit",
-        status: "Needs validated rows before rendering as a decision artifact",
+        status: isQuadrantMatrixRequest(query)
+          ? "Needs validated value and complexity rows before rendering a 2x2 chart"
+          : "Needs validated rows before rendering as a decision artifact",
         evidenceNeeded:
           "Load or cite the ranked items, values, complexity/readiness scores, and source basis for each row.",
       },
     ],
-    note: "aVa did not expose unvalidated model text as a table or chart. Load source-backed rows to render the requested visual.",
+    note: "aVa did not expose unvalidated model text as a chart. Load source-backed rows to render the requested visual.",
     citationIds,
   };
 }
@@ -1612,13 +1769,19 @@ export function buildStructuredExhibits(
     (input.routing.outputShape === "table" ||
       input.routing.outputShape === "chart" ||
       input.routing.outputShape === "graph")
-  ) {
+) {
+    const summary = requestedSummaryTableFromProse(
+      input.routing,
+      inline.prose,
+      citations.map((citation) => citation.id),
+    );
     const fallback = requestedVisualFallbackTable(
       input.routing,
       inline.prose,
       citations.map((citation) => citation.id),
     );
-    if (fallback) tables.push(fallback);
+    if (summary) tables.push(summary);
+    else if (fallback) tables.push(fallback);
     tables.push(availableContextTable(citations));
   }
 
