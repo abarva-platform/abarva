@@ -4356,7 +4356,13 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
         ) : null}
         {activeSection === "value" ? <TowerMartValueFunnelDesign model={model} /> : null}
         {activeSection === "lanes" ? <TowerMartDecisionLanesDesign rows={model.programLanes} /> : null}
-        {activeSection === "ai" ? <TowerMartAiPortfolioDesign rows={model.aiPortfolio} command={command} /> : null}
+        {activeSection === "ai" ? (
+          <TowerMartAiPortfolioDesign
+            rows={model.aiPortfolio}
+            programRows={model.programLanes}
+            command={command}
+          />
+        ) : null}
         {activeSection === "actions" ? <TowerMartActionsDesign actions={model.cxoActions} /> : null}
         {activeSection === "evidence" ? <TowerMartEvidenceDesign rows={model.evidenceLineage} gaps={model.requiredFieldGaps} /> : null}
       </main>
@@ -4890,11 +4896,125 @@ function aiPortfolioDisplayReason(row: TowerMartAiPortfolioItem): string {
     : "Hold the next tranche until evidence gates clear.";
 }
 
+function inferAiPortfolioProgramVendor(row: TowerMartProgramLane): {
+  vendorName: string | null;
+  systemName: string | null;
+  aiSpendCategory: string | null;
+} {
+  const text = `${row.programName} ${row.programCode ?? ""}`.toLowerCase();
+  if (/m365|microsoft|copilot/.test(text)) {
+    return {
+      vendorName: "Microsoft",
+      systemName: "Microsoft 365 Copilot",
+      aiSpendCategory: "copilot_productivity",
+    };
+  }
+  if (/servicenow/.test(text)) {
+    return {
+      vendorName: "ServiceNow",
+      systemName: "ServiceNow AI",
+      aiSpendCategory: "servicenow_ai",
+    };
+  }
+  if (/workday/.test(text)) {
+    return {
+      vendorName: "Workday",
+      systemName: "Workday AI",
+      aiSpendCategory: "erp_ai",
+    };
+  }
+  if (/github|developer|sdlc/.test(text)) {
+    return {
+      vendorName: "GitHub",
+      systemName: "GitHub Copilot",
+      aiSpendCategory: "copilot_productivity",
+    };
+  }
+  if (/lakehouse|databricks|data foundation|data platform/.test(text)) {
+    return {
+      vendorName: "Databricks / AWS",
+      systemName: "Data and AI platform",
+      aiSpendCategory: "data_ai_platform",
+    };
+  }
+  if (/contact center|member service|crm/.test(text)) {
+    return {
+      vendorName: null,
+      systemName: "Contact center platform",
+      aiSpendCategory: "crm_contact_center_ai",
+    };
+  }
+  return {
+    vendorName: null,
+    systemName: row.ownerRole,
+    aiSpendCategory: "ai_enablement_foundation",
+  };
+}
+
+function isAiRelatedProgramLane(row: TowerMartProgramLane): boolean {
+  if (row.aiTaggedSpendUsd > 0) return true;
+  const text = `${row.programName} ${row.programCode ?? ""} ${row.usageMetric ?? ""} ${row.caveat}`.toLowerCase();
+  return /ai|copilot|servicenow|workday|github|sdlc|automation|lakehouse|databricks|contact center|model risk|governance/.test(text);
+}
+
+function aiPortfolioProgramValueScore(row: TowerMartProgramLane): number {
+  if (row.promisedValueUsd > 0) return 78;
+  if (row.aiTaggedSpendUsd > 0) return 68;
+  if (row.approvedFundingUsd > 0) return 60;
+  return 45;
+}
+
+function aiPortfolioProgramReadinessScore(row: TowerMartProgramLane): number {
+  if (row.promisedValueUsd > 0 && row.financeValidatedValueUsd > 0) {
+    const validationRatio = row.financeValidatedValueUsd / row.promisedValueUsd;
+    return Math.max(42, Math.min(74, 42 + validationRatio * 100));
+  }
+  if (row.usageActual !== null || row.adoptionRatePct !== null) return 52;
+  if (row.approvedFundingUsd > 0 || row.aiTaggedSpendUsd > 0) return 44;
+  return 30;
+}
+
+function aiProgramLaneToPortfolioItem(row: TowerMartProgramLane): TowerMartAiPortfolioItem {
+  const inferred = inferAiPortfolioProgramVendor(row);
+  return {
+    aiPortfolioKey: `program-proof:${row.laneKey}`,
+    itemName: row.programName,
+    itemKind: row.aiTaggedSpendUsd > 0 ? "approved_or_embedded_ai_program" : "ai_related_program",
+    vendorName: inferred.vendorName,
+    systemName: inferred.systemName,
+    aiSpendType: row.aiTaggedSpendUsd > 0 ? "approved_ai_program" : "ai_enablement_foundation",
+    aiSpendCategory: inferred.aiSpendCategory,
+    fundingStatus: row.approvedFundingUsd > 0 || row.aiTaggedSpendUsd > 0 ? "approved" : "not_approved",
+    decisionLane: row.decisionLane,
+    approvedFundingUsd: row.approvedFundingUsd,
+    aiTaggedSpendUsd: row.aiTaggedSpendUsd,
+    promisedValueUsd: row.promisedValueUsd,
+    financeValidatedValueUsd: row.financeValidatedValueUsd,
+    usageMetric: row.usageMetric,
+    usageActual: row.usageActual,
+    adoptionRatePct: row.adoptionRatePct,
+    valueScore: aiPortfolioProgramValueScore(row),
+    readinessScore: aiPortfolioProgramReadinessScore(row),
+    riskScore: row.decisionLane === "fix" ? 62 : row.decisionLane === "freeze" ? 76 : row.decisionLane === "stop" ? 82 : 48,
+    duplicateRisk: "low",
+    valueClaimStatus: row.valueClaimStatus,
+    towerClaimAllowed: row.towerClaimAllowed,
+    caveat: row.caveat || row.decisionRationale,
+    sourceFile: row.sourceFile,
+    sourceRow: row.sourceRow,
+  };
+}
+
 function buildAiPortfolioDisplayRows(
   rows: ReadonlyArray<TowerMartAiPortfolioItem>,
+  programRows: ReadonlyArray<TowerMartProgramLane> = [],
 ): TowerAiPortfolioDisplayRow[] {
   const byName = new Map<string, TowerMartAiPortfolioItem>();
-  rows.forEach((row) => {
+  const portfolioRows = [
+    ...rows,
+    ...programRows.filter(isAiRelatedProgramLane).map(aiProgramLaneToPortfolioItem),
+  ];
+  portfolioRows.forEach((row) => {
     const displayName = cleanAiPortfolioName(row);
     const key = displayName.toLowerCase();
     const existing = byName.get(key);
@@ -4931,12 +5051,14 @@ function buildAiPortfolioDisplayRows(
 
 function TowerMartAiPortfolioDesign({
   rows,
+  programRows,
   command,
 }: {
   rows: ReadonlyArray<TowerMartAiPortfolioItem>;
+  programRows: ReadonlyArray<TowerMartProgramLane>;
   command: TowerMartCommandCenterRow;
 }) {
-  const displayRows = buildAiPortfolioDisplayRows(rows);
+  const displayRows = buildAiPortfolioDisplayRows(rows, programRows);
   const fundedRows = displayRows.filter((row) => row.aiTaggedSpendUsd > 0 || row.approvedFundingUsd > 0);
   const candidateRows = displayRows.filter((row) => row.fundingStatus === "not_approved" || row.itemKind.includes("candidate"));
   const partialProofRows = displayRows.filter((row) => row.financeValidatedValueUsd > 0 || row.usageActual !== null);
