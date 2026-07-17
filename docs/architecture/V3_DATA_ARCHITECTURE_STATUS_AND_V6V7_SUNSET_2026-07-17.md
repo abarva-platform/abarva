@@ -1,14 +1,16 @@
 # V3 Data Architecture — Target Model, Real Status, and the V6/V7 Sunset
 
-**Status:** Draft architecture note, written 2026-07-17. Records a live decision
-(V6/V7 sunset) that is not yet reflected anywhere else in the repo. Not yet
-approved as a release-controlled architecture doc — needs Anand sign-off
-before anything in the "Formal retirement list" is actually deleted.
+**Status:** Draft architecture decision note, written 2026-07-17. Records the
+proposed V3 target architecture and the proposed V6/V7 runtime-sunset path.
+This is not yet approved as a release-controlled architecture record — it needs
+Anand sign-off before anything in the "Formal retirement list" is deprecated,
+removed from runtime use, or cleaned up.
 
 ## 1. Why this doc exists
 
 V6/V7 (both the per-tenant file-pack pipeline and the `intelligence_v6` /
-`intelligence_v7` Postgres schemas) are being sunset. This doc (a) locks the
+`intelligence_v7` Postgres schemas) are proposed to be sunset as runtime
+sources after their V3 replacements are live-proven. This doc (a) defines the
 target six-layer architecture that replaces them, (b) maps every layer to
 what's actually in the repo today — verified by opening files, not inferred
 from names — and (c) gives the two highest-leverage next actions.
@@ -31,7 +33,7 @@ it.
 ```
 1. Source input layer
    datasets/tenant-inputs/<tenant_key>/standard-2026-07-v3/
-   19 core CSVs + 7 source-adapter CSVs (SA01–SA07) = 26 files per tenant
+   19 core CSVs + source-adapter CSVs (SA01–SA08 where applicable)
         |
         v
 2. Validation & source governance
@@ -80,8 +82,9 @@ exist yet.
 | Component | Status | Note |
 |---|---|---|
 | 19 core v3 CSVs | 🟢 | `datasets/tenant-inputs/meridian-health/standard-2026-07-v3/` — verified row-by-row this session |
-| SA07 Executive Interviews | 🟢 | `datasets/tenant-inputs/<tenant>/interviews/executive_interviews.csv` — 216 rows live, 5 reviewed additions pending merge (see PR #4905) |
-| SA01–SA06 adapters | 🟣 | ServiceNow CMDB, Finance extract, Contracts, Portfolio, Cloud, Incidents — zero exist for any tenant |
+| SA07 Executive Interviews | 🟢 | `datasets/tenant-inputs/<tenant>/interviews/executive_interviews.csv` — PR #4909 carries the 221-row Meridian template packet and mapped interview evidence |
+| SA02 / SA04 / SA08 adapters | 🟡 | PR #4909 adds Meridian source-template artifacts for Finance, Program Portfolio, and AI Benefits Realization. They are source/template artifacts, not active runtime truth yet. |
+| SA01 / SA03 / SA05 / SA06 adapters | 🟣 | CMDB, Contracts, Cloud, and Incidents source adapters remain gaps for Meridian and future tenants |
 
 ### Layer 2 — Validation & governance
 
@@ -89,7 +92,7 @@ exist yet.
 |---|---|---|
 | `audit-tenant-v3-inputs.mjs` | 🟢 | `npm run audit:tenant-v3-data` |
 | `audit-meridian-executive-interviews.mjs` | 🟢 | `npm run audit:meridian-executive-interviews` |
-| Budget reconciliation / AI-boundary checks | 🟣 | Specified in the PR #4905 prompt; no script exists yet |
+| Budget reconciliation / AI-boundary checks | 🟡 | PR #4909 adds `npm run audit:meridian-v3-reload-readiness` for Meridian source-template readiness. This is not yet a universal runtime/candidate-promotion gate. |
 | Governed source store | 🟣 | `tenant_source_rows`, `evidence_registry`, `active_/candidate_context_versions` — no such Postgres tables exist. Genuinely new schema work, not a migration of anything |
 
 ### Layer 3 — Deterministic governed fact layer
@@ -148,7 +151,7 @@ Nothing in the repo currently marks any of the following as deprecated —
 `intelligence_v6_graph_physical.sql` (2026-07-02) and `intelligence_v7_moat_
 foundation.sql` (2026-07-09) are, as of this doc, this repo's two most
 recent core schema migrations. **This document is the first record of the
-decision to retire them.**
+proposed retirement path, not approval to remove or rewrite them.**
 
 - `supabase/migrations/20260702190000_intelligence_v6_graph_physical.sql`
   — business_records, graph_nodes/edges, graph_quality_reports
@@ -168,21 +171,20 @@ decision to retire them.**
 
 Retirement should be sequenced, not simultaneous: repoint the layer-4/5
 generator first (§4), prove Home/Tower render correctly off v3-sourced
-facts, *then* remove the V7 read paths and schemas. Do not delete the V7
-tables/files before the replacement is live and verified — several of these
+facts, *then* deprecate the V7 read paths and plan forward cleanup migrations.
+Do not remove the V7 runtime tables/files before the replacement is live and verified — several of these
 (`v7-tower-projection.ts`, `v7-home-ask.ts`) are the *current* production
 read path for Home and Tower.
 
 ## 6. Open questions for Anand
 
-1. Confirm scope of "V6/V7 sunset": does it include the `intelligence_v6`/
-   `intelligence_v7` Postgres schemas themselves (this doc assumes yes,
-   since no narrower scope was stated), or only the file-pack generation
-   pipeline?
-2. Who signs off before `supabase/migrations/202607*_intelligence_v6/v7_*`
-   get an actual down-migration / removal — this is a destructive,
-   hard-to-reverse action per repo governance and needs explicit approval,
-   not just this doc.
+1. Confirm scope of "V6/V7 sunset": should it include the `intelligence_v6`/
+   `intelligence_v7` Postgres schemas themselves after runtime replacement
+   is live-proven, or only the file-pack generation pipeline?
+2. Who signs off before `intelligence_v6` / `intelligence_v7` runtime
+   dependencies are deprecated, and before any forward cleanup/deprecation
+   migration is authored? Historical migration files should not be rewritten;
+   any schema cleanup must be a separately approved forward migration.
 3. Sequencing: should the `TowerBudgetFact`/`TowerValueClaim` typed layer
-   land before or after the SA01–SA06 adapters get built? They're
+   land before or after the remaining SA01/SA03/SA05/SA06 adapters get built? They're
    independent, but both compete for the same next-sprint slot.
