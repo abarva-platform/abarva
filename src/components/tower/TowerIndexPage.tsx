@@ -3686,8 +3686,8 @@ function TowerMartValueFunnel({ model }: { model: TowerMartCommandViewModel }) {
   const promised = model.command.promisedValueFy26 || 1;
   const normalizeValueProofCopy = (value: string) =>
     value
-      .replace(/realized value/gi, "claimable value")
       .replace(/realized savings/gi, "claimable savings")
+      .replace(/realized value/gi, "claimable value")
       .replace(/do not call claimable savings/gi, "do not call savings claimable")
       .replace(/booked to P&L/gi, "booked to P&L yet");
   return (
