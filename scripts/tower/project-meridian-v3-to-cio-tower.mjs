@@ -692,20 +692,23 @@ function buildProjection() {
 
   for (const row of programRows) {
     if (!row.program_code) continue;
-    for (const linked of (row.linked_sa02_records || "").split(";").map((item) => item.trim()).filter(Boolean)) {
-      const relKey = `${TENANT_KEY}::rel::${safeKey("enterprise", "funds", row.program_code, linked)}`;
-      relationships.set(relKey, {
-        relationship_key: relKey,
-        tenant_key: TENANT_KEY,
-        from_entity_key: ENTERPRISE_ENTITY_KEY,
-        to_entity_key: `${TENANT_KEY}::initiative::${safeKey(row.program_code)}`,
-        relationship_type: "funds",
-        confidence: row.confidence || "high",
-        source_key: sourceKey(FILES.programSa04),
-        source_row: sourceRowId(row),
-        attributes: json({ linked_sa02_record: linked, program_name: row.program_name }),
-      });
-    }
+    const linkedSa02Records = (row.linked_sa02_records || "").split(";").map((item) => item.trim()).filter(Boolean);
+    if (!linkedSa02Records.length) continue;
+    const relKey = `${TENANT_KEY}::rel::${safeKey("enterprise", "funds", row.program_code)}`;
+    relationships.set(relKey, {
+      relationship_key: relKey,
+      tenant_key: TENANT_KEY,
+      from_entity_key: ENTERPRISE_ENTITY_KEY,
+      to_entity_key: `${TENANT_KEY}::initiative::${safeKey(row.program_code)}`,
+      relationship_type: "funds",
+      confidence: row.confidence || "high",
+      source_key: sourceKey(FILES.programSa04),
+      source_row: sourceRowId(row),
+      attributes: json({
+        linked_sa02_records: linkedSa02Records,
+        program_name: row.program_name,
+      }),
+    });
   }
 
   const measures = [

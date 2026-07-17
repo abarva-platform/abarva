@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-17T14:41:11.194Z",
+  "generated_at": "2026-07-17T14:58:15.458Z",
   "mode": "dry_run",
   "tenant_key": "meridian-health",
   "tenant_label": "Healthcare Demo",
@@ -63,7 +63,7 @@
     "sources": 9,
     "entities": 130,
     "facts": 444,
-    "relationships": 49,
+    "relationships": 13,
     "measures": 12,
     "question_contracts": 6,
     "measure_results": 11
@@ -17235,7 +17235,7 @@
   ],
   "relationships": [
     {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-data-foundation::sa02-chg-data-01",
+      "relationship_key": "meridian-health::rel::enterprise::funds::prog-data-foundation",
       "tenant_key": "meridian-health",
       "from_entity_key": "meridian-health::enterprise",
       "to_entity_key": "meridian-health::initiative::prog-data-foundation",
@@ -17243,65 +17243,10 @@
       "confidence": "high",
       "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
       "source_row": "SA04-PROG-DATA-FOUNDATION",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-DATA-01\",\"program_name\":\"Data Foundation / Lakehouse Modernization\"}"
+      "attributes": "{\"linked_sa02_records\":[\"SA02-CHG-DATA-01\",\"SA02-CHG-DATA-02\",\"SA02-CHG-DATA-03\",\"SA02-CHG-DATA-04\",\"SA02-CHG-DATA-05\",\"SA02-CHG-DATA-06\"],\"program_name\":\"Data Foundation / Lakehouse Modernization\"}"
     },
     {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-data-foundation::sa02-chg-data-02",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-data-foundation",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-DATA-FOUNDATION",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-DATA-02\",\"program_name\":\"Data Foundation / Lakehouse Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-data-foundation::sa02-chg-data-03",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-data-foundation",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-DATA-FOUNDATION",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-DATA-03\",\"program_name\":\"Data Foundation / Lakehouse Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-data-foundation::sa02-chg-data-04",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-data-foundation",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-DATA-FOUNDATION",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-DATA-04\",\"program_name\":\"Data Foundation / Lakehouse Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-data-foundation::sa02-chg-data-05",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-data-foundation",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-DATA-FOUNDATION",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-DATA-05\",\"program_name\":\"Data Foundation / Lakehouse Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-data-foundation::sa02-chg-data-06",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-data-foundation",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-DATA-FOUNDATION",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-DATA-06\",\"program_name\":\"Data Foundation / Lakehouse Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-api-mod::sa02-chg-int-01",
+      "relationship_key": "meridian-health::rel::enterprise::funds::prog-api-mod",
       "tenant_key": "meridian-health",
       "from_entity_key": "meridian-health::enterprise",
       "to_entity_key": "meridian-health::initiative::prog-api-mod",
@@ -17309,54 +17254,10 @@
       "confidence": "high",
       "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
       "source_row": "SA04-PROG-API-MOD",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-INT-01\",\"program_name\":\"Integration / API Modernization\"}"
+      "attributes": "{\"linked_sa02_records\":[\"SA02-CHG-INT-01\",\"SA02-CHG-INT-02\",\"SA02-CHG-INT-03\",\"SA02-CHG-INT-04\",\"SA02-CHG-INT-05\"],\"program_name\":\"Integration / API Modernization\"}"
     },
     {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-api-mod::sa02-chg-int-02",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-api-mod",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-API-MOD",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-INT-02\",\"program_name\":\"Integration / API Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-api-mod::sa02-chg-int-03",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-api-mod",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-API-MOD",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-INT-03\",\"program_name\":\"Integration / API Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-api-mod::sa02-chg-int-04",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-api-mod",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-API-MOD",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-INT-04\",\"program_name\":\"Integration / API Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-api-mod::sa02-chg-int-05",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-api-mod",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-API-MOD",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-INT-05\",\"program_name\":\"Integration / API Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-dev-productivity::sa02-chg-int-06",
+      "relationship_key": "meridian-health::rel::enterprise::funds::prog-dev-productivity",
       "tenant_key": "meridian-health",
       "from_entity_key": "meridian-health::enterprise",
       "to_entity_key": "meridian-health::initiative::prog-dev-productivity",
@@ -17364,10 +17265,10 @@
       "confidence": "high",
       "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
       "source_row": "SA04-PROG-DEV-PRODUCTIVITY",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-INT-06\",\"program_name\":\"Developer Productivity AI / SDLC Automation\"}"
+      "attributes": "{\"linked_sa02_records\":[\"SA02-CHG-INT-06\"],\"program_name\":\"Developer Productivity AI / SDLC Automation\"}"
     },
     {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-phi-iam::sa02-chg-cyber-01",
+      "relationship_key": "meridian-health::rel::enterprise::funds::prog-phi-iam",
       "tenant_key": "meridian-health",
       "from_entity_key": "meridian-health::enterprise",
       "to_entity_key": "meridian-health::initiative::prog-phi-iam",
@@ -17375,54 +17276,10 @@
       "confidence": "high",
       "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
       "source_row": "SA04-PROG-PHI-IAM",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-CYBER-01\",\"program_name\":\"Cybersecurity / Identity / PHI Control Uplift\"}"
+      "attributes": "{\"linked_sa02_records\":[\"SA02-CHG-CYBER-01\",\"SA02-CHG-CYBER-02\",\"SA02-CHG-CYBER-03\",\"SA02-CHG-CYBER-04\",\"SA02-CHG-CYBER-05\"],\"program_name\":\"Cybersecurity / Identity / PHI Control Uplift\"}"
     },
     {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-phi-iam::sa02-chg-cyber-02",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-phi-iam",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-PHI-IAM",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-CYBER-02\",\"program_name\":\"Cybersecurity / Identity / PHI Control Uplift\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-phi-iam::sa02-chg-cyber-03",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-phi-iam",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-PHI-IAM",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-CYBER-03\",\"program_name\":\"Cybersecurity / Identity / PHI Control Uplift\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-phi-iam::sa02-chg-cyber-04",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-phi-iam",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-PHI-IAM",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-CYBER-04\",\"program_name\":\"Cybersecurity / Identity / PHI Control Uplift\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-phi-iam::sa02-chg-cyber-05",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-phi-iam",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-PHI-IAM",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-CYBER-05\",\"program_name\":\"Cybersecurity / Identity / PHI Control Uplift\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-ehr-clin::sa02-chg-ehr-01",
+      "relationship_key": "meridian-health::rel::enterprise::funds::prog-ehr-clin",
       "tenant_key": "meridian-health",
       "from_entity_key": "meridian-health::enterprise",
       "to_entity_key": "meridian-health::initiative::prog-ehr-clin",
@@ -17430,54 +17287,10 @@
       "confidence": "high",
       "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
       "source_row": "SA04-PROG-EHR-CLIN",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-EHR-01\",\"program_name\":\"EHR / Clinical Analytics Modernization\"}"
+      "attributes": "{\"linked_sa02_records\":[\"SA02-CHG-EHR-01\",\"SA02-CHG-EHR-02\",\"SA02-CHG-EHR-03\",\"SA02-CHG-EHR-04\",\"SA02-CHG-EHR-05\"],\"program_name\":\"EHR / Clinical Analytics Modernization\"}"
     },
     {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-ehr-clin::sa02-chg-ehr-02",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-ehr-clin",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-EHR-CLIN",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-EHR-02\",\"program_name\":\"EHR / Clinical Analytics Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-ehr-clin::sa02-chg-ehr-03",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-ehr-clin",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-EHR-CLIN",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-EHR-03\",\"program_name\":\"EHR / Clinical Analytics Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-ehr-clin::sa02-chg-ehr-04",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-ehr-clin",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-EHR-CLIN",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-EHR-04\",\"program_name\":\"EHR / Clinical Analytics Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-ehr-clin::sa02-chg-ehr-05",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-ehr-clin",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-EHR-CLIN",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-EHR-05\",\"program_name\":\"EHR / Clinical Analytics Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-contact-know::sa02-chg-mbr-01",
+      "relationship_key": "meridian-health::rel::enterprise::funds::prog-contact-know",
       "tenant_key": "meridian-health",
       "from_entity_key": "meridian-health::enterprise",
       "to_entity_key": "meridian-health::initiative::prog-contact-know",
@@ -17485,54 +17298,10 @@
       "confidence": "high",
       "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
       "source_row": "SA04-PROG-CONTACT-KNOW",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-MBR-01\",\"program_name\":\"Contact Center Platform / Knowledge Modernization\"}"
+      "attributes": "{\"linked_sa02_records\":[\"SA02-CHG-MBR-01\",\"SA02-CHG-MBR-02\",\"SA02-CHG-MBR-03\",\"SA02-CHG-MBR-04\",\"SA02-CHG-MBR-05\"],\"program_name\":\"Contact Center Platform / Knowledge Modernization\"}"
     },
     {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-contact-know::sa02-chg-mbr-02",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-contact-know",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-CONTACT-KNOW",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-MBR-02\",\"program_name\":\"Contact Center Platform / Knowledge Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-contact-know::sa02-chg-mbr-03",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-contact-know",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-CONTACT-KNOW",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-MBR-03\",\"program_name\":\"Contact Center Platform / Knowledge Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-contact-know::sa02-chg-mbr-04",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-contact-know",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-CONTACT-KNOW",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-MBR-04\",\"program_name\":\"Contact Center Platform / Knowledge Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-contact-know::sa02-chg-mbr-05",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-contact-know",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-CONTACT-KNOW",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-MBR-05\",\"program_name\":\"Contact Center Platform / Knowledge Modernization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-finops::sa02-chg-cloud-01",
+      "relationship_key": "meridian-health::rel::enterprise::funds::prog-finops",
       "tenant_key": "meridian-health",
       "from_entity_key": "meridian-health::enterprise",
       "to_entity_key": "meridian-health::initiative::prog-finops",
@@ -17540,43 +17309,10 @@
       "confidence": "high",
       "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
       "source_row": "SA04-PROG-FINOPS",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-CLOUD-01\",\"program_name\":\"Cloud Cost Governance / FinOps\"}"
+      "attributes": "{\"linked_sa02_records\":[\"SA02-CHG-CLOUD-01\",\"SA02-CHG-CLOUD-02\",\"SA02-CHG-CLOUD-03\",\"SA02-CHG-CLOUD-04\"],\"program_name\":\"Cloud Cost Governance / FinOps\"}"
     },
     {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-finops::sa02-chg-cloud-02",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-finops",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-FINOPS",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-CLOUD-02\",\"program_name\":\"Cloud Cost Governance / FinOps\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-finops::sa02-chg-cloud-03",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-finops",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-FINOPS",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-CLOUD-03\",\"program_name\":\"Cloud Cost Governance / FinOps\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-finops::sa02-chg-cloud-04",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-finops",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-FINOPS",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-CLOUD-04\",\"program_name\":\"Cloud Cost Governance / FinOps\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-data-product-ops::sa02-chg-opm-01",
+      "relationship_key": "meridian-health::rel::enterprise::funds::prog-data-product-ops",
       "tenant_key": "meridian-health",
       "from_entity_key": "meridian-health::enterprise",
       "to_entity_key": "meridian-health::initiative::prog-data-product-ops",
@@ -17584,43 +17320,10 @@
       "confidence": "high",
       "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
       "source_row": "SA04-PROG-DATA-PRODUCT-OPS",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-OPM-01\",\"program_name\":\"Enterprise Data Product Operating Model\"}"
+      "attributes": "{\"linked_sa02_records\":[\"SA02-CHG-OPM-01\",\"SA02-CHG-OPM-02\",\"SA02-CHG-OPM-03\",\"SA02-CHG-OPM-04\"],\"program_name\":\"Enterprise Data Product Operating Model\"}"
     },
     {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-data-product-ops::sa02-chg-opm-02",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-data-product-ops",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-DATA-PRODUCT-OPS",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-OPM-02\",\"program_name\":\"Enterprise Data Product Operating Model\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-data-product-ops::sa02-chg-opm-03",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-data-product-ops",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-DATA-PRODUCT-OPS",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-OPM-03\",\"program_name\":\"Enterprise Data Product Operating Model\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-data-product-ops::sa02-chg-opm-04",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-data-product-ops",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-DATA-PRODUCT-OPS",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-OPM-04\",\"program_name\":\"Enterprise Data Product Operating Model\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-ai-gov::sa02-chg-aigov-01",
+      "relationship_key": "meridian-health::rel::enterprise::funds::prog-ai-gov",
       "tenant_key": "meridian-health",
       "from_entity_key": "meridian-health::enterprise",
       "to_entity_key": "meridian-health::initiative::prog-ai-gov",
@@ -17628,43 +17331,10 @@
       "confidence": "high",
       "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
       "source_row": "SA04-PROG-AI-GOV",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-AIGOV-01\",\"program_name\":\"AI Governance / Model Risk Controls\"}"
+      "attributes": "{\"linked_sa02_records\":[\"SA02-CHG-AIGOV-01\",\"SA02-CHG-AIGOV-02\",\"SA02-CHG-AIGOV-03\",\"SA02-CHG-AIGOV-04\"],\"program_name\":\"AI Governance / Model Risk Controls\"}"
     },
     {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-ai-gov::sa02-chg-aigov-02",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-ai-gov",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-AI-GOV",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-AIGOV-02\",\"program_name\":\"AI Governance / Model Risk Controls\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-ai-gov::sa02-chg-aigov-03",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-ai-gov",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-AI-GOV",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-AIGOV-03\",\"program_name\":\"AI Governance / Model Risk Controls\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-ai-gov::sa02-chg-aigov-04",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-ai-gov",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-AI-GOV",
-      "attributes": "{\"linked_sa02_record\":\"SA02-CHG-AIGOV-04\",\"program_name\":\"AI Governance / Model Risk Controls\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-mso::sa02-run-mgs-01",
+      "relationship_key": "meridian-health::rel::enterprise::funds::prog-mso",
       "tenant_key": "meridian-health",
       "from_entity_key": "meridian-health::enterprise",
       "to_entity_key": "meridian-health::initiative::prog-mso",
@@ -17672,65 +17342,10 @@
       "confidence": "high",
       "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
       "source_row": "SA04-PROG-MSO",
-      "attributes": "{\"linked_sa02_record\":\"SA02-RUN-MGS-01\",\"program_name\":\"Managed Services Optimization\"}"
+      "attributes": "{\"linked_sa02_records\":[\"SA02-RUN-MGS-01\",\"SA02-RUN-MGS-02\",\"SA02-RUN-MGS-03\",\"SA02-RUN-MGS-04\",\"SA02-RUN-MGS-05\",\"SA02-RUN-MGS-06\"],\"program_name\":\"Managed Services Optimization\"}"
     },
     {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-mso::sa02-run-mgs-02",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-mso",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-MSO",
-      "attributes": "{\"linked_sa02_record\":\"SA02-RUN-MGS-02\",\"program_name\":\"Managed Services Optimization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-mso::sa02-run-mgs-03",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-mso",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-MSO",
-      "attributes": "{\"linked_sa02_record\":\"SA02-RUN-MGS-03\",\"program_name\":\"Managed Services Optimization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-mso::sa02-run-mgs-04",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-mso",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-MSO",
-      "attributes": "{\"linked_sa02_record\":\"SA02-RUN-MGS-04\",\"program_name\":\"Managed Services Optimization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-mso::sa02-run-mgs-05",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-mso",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-MSO",
-      "attributes": "{\"linked_sa02_record\":\"SA02-RUN-MGS-05\",\"program_name\":\"Managed Services Optimization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-mso::sa02-run-mgs-06",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-mso",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-MSO",
-      "attributes": "{\"linked_sa02_record\":\"SA02-RUN-MGS-06\",\"program_name\":\"Managed Services Optimization\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-copilot-adopt::sa02-run-wkpl-01",
+      "relationship_key": "meridian-health::rel::enterprise::funds::prog-copilot-adopt",
       "tenant_key": "meridian-health",
       "from_entity_key": "meridian-health::enterprise",
       "to_entity_key": "meridian-health::initiative::prog-copilot-adopt",
@@ -17738,21 +17353,10 @@
       "confidence": "high",
       "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
       "source_row": "SA04-PROG-COPILOT-ADOPT",
-      "attributes": "{\"linked_sa02_record\":\"SA02-RUN-WKPL-01\",\"program_name\":\"Microsoft 365 Copilot Productivity Enablement\"}"
+      "attributes": "{\"linked_sa02_records\":[\"SA02-RUN-WKPL-01\",\"SA02-RUN-WKPL-04\"],\"program_name\":\"Microsoft 365 Copilot Productivity Enablement\"}"
     },
     {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-copilot-adopt::sa02-run-wkpl-04",
-      "tenant_key": "meridian-health",
-      "from_entity_key": "meridian-health::enterprise",
-      "to_entity_key": "meridian-health::initiative::prog-copilot-adopt",
-      "relationship_type": "funds",
-      "confidence": "high",
-      "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
-      "source_row": "SA04-PROG-COPILOT-ADOPT",
-      "attributes": "{\"linked_sa02_record\":\"SA02-RUN-WKPL-04\",\"program_name\":\"Microsoft 365 Copilot Productivity Enablement\"}"
-    },
-    {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-snow-ai::sa02-run-mgs-05",
+      "relationship_key": "meridian-health::rel::enterprise::funds::prog-snow-ai",
       "tenant_key": "meridian-health",
       "from_entity_key": "meridian-health::enterprise",
       "to_entity_key": "meridian-health::initiative::prog-snow-ai",
@@ -17760,10 +17364,10 @@
       "confidence": "high",
       "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
       "source_row": "SA04-PROG-SNOW-AI",
-      "attributes": "{\"linked_sa02_record\":\"SA02-RUN-MGS-05\",\"program_name\":\"ServiceNow AI / ITSM Automation Pilot\"}"
+      "attributes": "{\"linked_sa02_records\":[\"SA02-RUN-MGS-05\"],\"program_name\":\"ServiceNow AI / ITSM Automation Pilot\"}"
     },
     {
-      "relationship_key": "meridian-health::rel::enterprise::funds::prog-workday-ai::sa02-run-app-06",
+      "relationship_key": "meridian-health::rel::enterprise::funds::prog-workday-ai",
       "tenant_key": "meridian-health",
       "from_entity_key": "meridian-health::enterprise",
       "to_entity_key": "meridian-health::initiative::prog-workday-ai",
@@ -17771,7 +17375,7 @@
       "confidence": "high",
       "source_key": "meridian-health::standard-2026-07-v3::SA04_Program_Portfolio_Extract.csv",
       "source_row": "SA04-PROG-WORKDAY-AI",
-      "attributes": "{\"linked_sa02_record\":\"SA02-RUN-APP-06\",\"program_name\":\"Workday HR/Finance AI Workflow Pilot\"}"
+      "attributes": "{\"linked_sa02_records\":[\"SA02-RUN-APP-06\"],\"program_name\":\"Workday HR/Finance AI Workflow Pilot\"}"
     }
   ],
   "measures": [

@@ -1,6 +1,6 @@
 # Meridian V3 to CIO Tower Projection
 
-Generated: 2026-07-17T14:41:11.194Z
+Generated: 2026-07-17T14:58:15.458Z
 
 This projection turns the refreshed Meridian V3 source packet into the row families Tower actually needs: budget, funded programs, AI spend by platform/vendor, usage/adoption/benefit evidence, candidate AI opportunities, and watch/pressure signals.
 
@@ -24,7 +24,7 @@ It is a dry-run artifact unless executed by the governed ACA data-build job with
 - Sources: 9
 - Entities: 130
 - Facts: 444
-- Relationships: 49
+- Relationships: 13
 - Measures: 12
 - Measure results: 11
 
