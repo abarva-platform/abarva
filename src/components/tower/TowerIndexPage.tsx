@@ -4640,6 +4640,12 @@ function TowerMartBackButton({
 function TowerMartValueFunnelDesign({ model }: { model: TowerMartCommandViewModel }) {
   const promised = Math.max(model.command.promisedValueFy26, 1);
   const measuredPct = safeRatio(model.command.partialFinanceValidatedValueYtd, promised);
+  const normalizeValueProofCopy = (value: string) =>
+    value
+      .replace(/realized savings/gi, "claimable savings")
+      .replace(/realized value/gi, "claimable value")
+      .replace(/do not call claimable savings/gi, "do not call savings claimable")
+      .replace(/booked to P&L/gi, "booked to P&L yet");
   return (
     <>
       <TowerMartBackButton onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
@@ -4650,7 +4656,7 @@ function TowerMartValueFunnelDesign({ model }: { model: TowerMartCommandViewMode
       <p style={towerDetailIntroStyle}>
         The value proof ladder shows how much promised value is actually
         measured, finance-validated, and claimable, so promised can never be
-        mistaken for realized.
+        mistaken for claimable.
       </p>
       <section style={{ ...towerBoardCardStyle, minHeight: 0 }}>
         <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, .9fr) minmax(0, 1.3fr)", gap: 26 }}>
@@ -4673,7 +4679,9 @@ function TowerMartValueFunnelDesign({ model }: { model: TowerMartCommandViewMode
                   <div style={{ display: "flex", justifyContent: "space-between", gap: 14, marginBottom: 7 }}>
                     <div>
                       <strong>{stage.stageLabel}</strong>
-                      <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 2 }}>{stage.caveat}</div>
+                      <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 2 }}>
+                        {normalizeValueProofCopy(stage.caveat)}
+                      </div>
                     </div>
                     <div style={{ fontFamily: T.SERIF, fontSize: 22, fontWeight: 900 }}>{formatMoneyGap(stage.valueNumeric)}</div>
                   </div>
