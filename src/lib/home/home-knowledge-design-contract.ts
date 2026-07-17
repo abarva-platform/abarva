@@ -74,6 +74,13 @@ export interface HomeKnowledgeEvidence {
   evidence_refs?: string[];
 }
 
+export interface HomeKnowledgeVisualBlock {
+  type?: "metric_strip" | "decision_matrix" | "dependency_flow" | "evidence_bar" | string;
+  title?: string;
+  subtitle?: string;
+  data?: Record<string, unknown>;
+}
+
 export interface HomeKnowledgeDesignSlots {
   DIMS: HomeKnowledgeDimension[];
   FACTS: HomeKnowledgeRecord[];
@@ -94,6 +101,7 @@ export interface HomeKnowledgeDesignSlots {
   REL: Record<string, HomeKnowledgeRelationship>;
   DGAPS: Record<string, HomeKnowledgeGap[]>;
   EVID: Record<string, HomeKnowledgeEvidence[]>;
+  VISUAL_BLOCKS?: Record<string, HomeKnowledgeVisualBlock[]>;
 }
 
 export interface HomeKnowledgeDesignContractPack {
