@@ -269,7 +269,13 @@ describe("buildStructuredExhibits", () => {
         ]),
       }),
     );
-    expect(exhibits.tables[1]?.title).toBe("Supporting Material");
+    expect(exhibits.tables[1]).toEqual(
+      expect.objectContaining({
+        id: "answer-requested-visual-fallback",
+        title: "Requested Visual Boundary",
+      }),
+    );
+    expect(exhibits.tables[2]?.title).toBe("Supporting Material");
     expect(exhibits.charts).toHaveLength(0);
   });
 
