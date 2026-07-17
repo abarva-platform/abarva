@@ -14,7 +14,7 @@ import type {
 
 type TopTab = "overview" | "gaps" | "usecases" | "proof";
 type DimensionTab = "summary" | "data" | "relationships" | "gaps" | "evidence";
-type SurfaceMode = "enterprise" | "dimension";
+type SurfaceMode = "enterprise" | "dimension" | "confidence";
 
 interface HomeKnowledgeDesignContractSurfaceProps {
   pack: HomeKnowledgeDesignContractPack;
@@ -31,7 +31,7 @@ const TOP_TABS: Array<{ key: TopTab; label: string }> = [
 ];
 
 const DIMENSION_TABS: Array<{ key: DimensionTab; label: string }> = [
-  { key: "summary", label: "Summary" },
+  { key: "summary", label: "Overview" },
   { key: "data", label: "Data" },
   { key: "relationships", label: "Relationships" },
   { key: "gaps", label: "Gaps" },
@@ -75,6 +75,10 @@ function paragraphLines(text: string): string[] {
     .split(/\n{2,}/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function csvCell(value: string): string {
+  return `"${value.replace(/"/g, '""')}"`;
 }
 
 function evidenceRefs(value: unknown): string[] {
@@ -131,6 +135,44 @@ function rowTitle(row: HomeKnowledgeRecord): string {
   );
 }
 
+function sourceStatus(status: unknown): string {
+  const value = asText(status);
+  if (value === "source-backed") return "Decision-grade";
+  if (value === "directional") return "Directional";
+  if (value === "needs-evidence") return "Weak";
+  if (value === "not-evidenced") return "Not evidenced";
+  return statusLabel(status);
+}
+
+function factValue(
+  facts: HomeKnowledgeRecord[],
+  label: string,
+): HomeKnowledgeRecord | null {
+  const wanted = label.toLowerCase();
+  return (
+    facts.find((fact) => asText(fact.label).toLowerCase() === wanted) ?? null
+  );
+}
+
+function enterpriseHeroSummary(pack: HomeKnowledgeDesignContractPack): string {
+  const facts = pack.design_slots.FACTS ?? [];
+  const tenant = factValue(facts, "Tenant")?.value ?? pack.tenant_name;
+  const ehr = factValue(facts, "Core EHR Platform")?.value;
+  const analytics = factValue(facts, "Analytics Estate")?.value;
+  const target = factValue(facts, "Target Cloud Platform")?.value;
+  const useCases = factValue(facts, "Priority Use Cases")?.value;
+  const risk = factValue(facts, "Managed Services Risk")?.value;
+  const parts = [
+    `${asText(tenant)} is an integrated health system and health plan.`,
+    ehr ? `The current clinical core is ${asText(ehr)}.` : "",
+    analytics ? `The analytics estate is ${asText(analytics)}.` : "",
+    target ? `${asText(target)} is the target direction, not certified production foundation.` : "",
+    useCases ? `${asText(useCases)} priority use cases are mapped.` : "",
+    risk ? `Managed services posture shows ${asText(risk)}.` : "",
+  ].filter(Boolean);
+  return parts.join(" ");
+}
+
 export function HomeKnowledgeDesignContractSurface({
   pack,
   selectedDimension,
@@ -150,6 +192,7 @@ export function HomeKnowledgeDesignContractSurface({
   const [navQuery, setNavQuery] = useState("");
   const [tableQuery, setTableQuery] = useState("");
   const [facetValue, setFacetValue] = useState("all");
+  const [confidenceValue, setConfidenceValue] = useState("all");
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
 
@@ -160,7 +203,10 @@ export function HomeKnowledgeDesignContractSurface({
     ? slots.DATA?.[activeDimension.key]
     : undefined;
   const activeRows = useMemo(() => activeData?.rows ?? [], [activeData?.rows]);
-  const activeColumns = activeData?.columns ?? [];
+  const activeColumns = useMemo(
+    () => activeData?.columns ?? [],
+    [activeData?.columns],
+  );
   const activeStory = activeDimension
     ? slots.STORY?.[activeDimension.key]
     : undefined;
@@ -195,6 +241,24 @@ export function HomeKnowledgeDesignContractSurface({
     ).sort((a, b) => a.localeCompare(b));
   }, [activeData?.facet, activeRows]);
 
+  const statusColumnKey = useMemo(() => {
+    const statusColumn =
+      activeColumns.find((column) => column.pill === "status") ??
+      activeColumns.find((column) => /status|confidence|readiness/i.test(column.k));
+    return statusColumn?.k ?? null;
+  }, [activeColumns]);
+
+  const confidenceOptions = useMemo(() => {
+    if (!statusColumnKey) return [];
+    return Array.from(
+      new Set(
+        activeRows
+          .map((row) => sourceStatus(row[statusColumnKey]))
+          .filter(Boolean),
+      ),
+    ).sort((a, b) => a.localeCompare(b));
+  }, [activeRows, statusColumnKey]);
+
   const visibleRows = useMemo(() => {
     const query = tableQuery.trim().toLowerCase();
     const facet = activeData?.facet;
@@ -202,13 +266,25 @@ export function HomeKnowledgeDesignContractSurface({
       const matchesQuery = !query || JSON.stringify(row).toLowerCase().includes(query);
       const matchesFacet =
         !facet || facetValue === "all" || asText(row[facet]) === facetValue;
-      return matchesQuery && matchesFacet;
+      const matchesConfidence =
+        !statusColumnKey ||
+        confidenceValue === "all" ||
+        sourceStatus(row[statusColumnKey]) === confidenceValue;
+      return matchesQuery && matchesFacet && matchesConfidence;
     });
     if (!sortKey) return rows;
     return [...rows].sort((a, b) =>
       asText(a[sortKey]).localeCompare(asText(b[sortKey])),
     );
-  }, [activeData?.facet, activeRows, facetValue, sortKey, tableQuery]);
+  }, [
+    activeData?.facet,
+    activeRows,
+    confidenceValue,
+    facetValue,
+    sortKey,
+    statusColumnKey,
+    tableQuery,
+  ]);
 
   const selectedRow =
     selectedRowIndex === null ? null : visibleRows[selectedRowIndex] ?? null;
@@ -216,11 +292,23 @@ export function HomeKnowledgeDesignContractSurface({
   function selectDimension(key: string) {
     setActiveDimensionKey(key);
     setSurfaceMode("dimension");
-    setTopTab("overview");
     setDimensionTab("summary");
     setTableQuery("");
     setFacetValue("all");
+    setConfidenceValue("all");
     setSortKey(null);
+    setSelectedRowIndex(null);
+  }
+
+  function showEnterpriseBrief() {
+    setSurfaceMode("enterprise");
+    setTopTab("overview");
+    setDimensionTab("summary");
+    setSelectedRowIndex(null);
+  }
+
+  function showContextConfidence() {
+    setSurfaceMode("confidence");
     setSelectedRowIndex(null);
   }
 
@@ -234,10 +322,7 @@ export function HomeKnowledgeDesignContractSurface({
               topTab === "overview" && surfaceMode === "enterprise" ? "is-active" : ""
             }`}
             type="button"
-            onClick={() => {
-              setSurfaceMode("enterprise");
-              setTopTab("overview");
-            }}
+            onClick={showEnterpriseBrief}
           >
             <span className="nkh-icon">⌂</span>
             <span>Enterprise Brief</span>
@@ -256,19 +341,16 @@ export function HomeKnowledgeDesignContractSurface({
             />
           </label>
           <button
-            className={`nkh-dim-link ${topTab === "proof" ? "is-active" : ""}`}
+            className={`nkh-dim-link ${surfaceMode === "confidence" ? "is-active" : ""}`}
             type="button"
-            onClick={() => {
-              setSurfaceMode("enterprise");
-              setTopTab("proof");
-            }}
+            onClick={showContextConfidence}
           >
             <span className="nkh-dot">✓</span>
             <span>
               <strong>Context Confidence</strong>
               <small>Trust and readiness</small>
             </span>
-            <em>Proof</em>
+            <em>Ready</em>
           </button>
           <div className="nkh-dim-list">
             {filteredDimensions.map((dimension) => (
@@ -302,41 +384,46 @@ export function HomeKnowledgeDesignContractSurface({
           <div>
             <div className="nkh-breadcrumb">
               Home <span>›</span> Enterprise Knowledge <span>›</span>{" "}
-              {topTab === "overview" && surfaceMode === "dimension" && activeDimension
-                ? activeDimension.name
-                : pack.tenant_name}
+              {pack.tenant_name}
+              {surfaceMode === "dimension" && activeDimension ? (
+                <>
+                  <span>›</span> {activeDimension.name}
+                </>
+              ) : null}
+              {surfaceMode === "confidence" ? (
+                <>
+                  <span>›</span> Context Confidence
+                </>
+              ) : null}
             </div>
             <h1>
-              {topTab === "overview" && surfaceMode === "dimension" && activeDimension
-                ? activeDimension.name
-                : pack.tenant_name}
-              {surfaceMode === "enterprise" ? <span className="nkh-demo-pill">Demo</span> : null}
+              {pack.tenant_name}
+              <span className="nkh-demo-pill">Demo</span>
             </h1>
-            <p>
-              {topTab === "overview" && surfaceMode === "dimension" && activeDimension
-                ? activeDimension.summary
-                : `Nexus has ${metricValue(slots.FACTS?.[2] ?? {}, "value") || "source-backed"} rows, ${metricValue(slots.FACTS?.[3] ?? {}, "value") || "evidence-backed"} evidence references, and ${dimensions.length} enterprise dimensions for Meridian's Knowledge surface.`}
-            </p>
+            <p>{enterpriseHeroSummary(pack)}</p>
           </div>
           <div className="nkh-status-card">
             <strong>Active Knowledge context</strong>
             <span>Updated {formatDate(pack.generated_at)}</span>
-            <span>{pack.validation?.status === "pass" ? "Source-backed" : "Needs review"}</span>
+            <span>Active context: {pack.validation?.status === "pass" ? "Source-backed" : "Needs review"}</span>
+            <span>Planning-grade · not client-certified</span>
           </div>
         </header>
 
-        <nav className="nkh-tabs" aria-label="Home Knowledge sections">
-          {TOP_TABS.map((tab) => (
-            <button
-              key={tab.key}
-              className={topTab === tab.key ? "is-active" : ""}
-              type="button"
-              onClick={() => setTopTab(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+        {surfaceMode === "enterprise" ? (
+          <nav className="nkh-tabs" aria-label="Home Knowledge sections">
+            {TOP_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                className={topTab === tab.key ? "is-active" : ""}
+                type="button"
+                onClick={() => setTopTab(tab.key)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        ) : null}
 
         {topTab === "overview" && surfaceMode === "enterprise" ? (
           <EnterpriseOverview
@@ -351,33 +438,60 @@ export function HomeKnowledgeDesignContractSurface({
           />
         ) : null}
 
-        {topTab === "overview" && surfaceMode === "dimension" && activeDimension ? (
-          <DimensionView
-            columns={activeColumns}
-            dimension={activeDimension}
-            evidence={activeEvidence}
-            facetOptions={facetOptions}
-            facetValue={facetValue}
-            gaps={activeGaps}
-            insight={activeInsight}
-            rows={visibleRows}
-            selectedRow={selectedRow}
-            selectedRowIndex={selectedRowIndex}
-            setDimensionTab={setDimensionTab}
-            setFacetValue={setFacetValue}
-            setSelectedRowIndex={setSelectedRowIndex}
-            setSortKey={setSortKey}
-            setTableQuery={setTableQuery}
-            sortKey={sortKey}
-            story={activeStory}
-            tab={dimensionTab}
-            tableQuery={tableQuery}
-            relationship={activeRelationship}
-            visualBlocks={slots.VISUAL_BLOCKS?.[activeDimension.key] ?? []}
+        {surfaceMode === "dimension" && activeDimension ? (
+          <div className="nkh-dimension-mode">
+            <button className="nkh-back-link" type="button" onClick={showEnterpriseBrief}>
+              ← Back to Enterprise Brief
+            </button>
+            <div className="nkh-dimension-heading">
+              <div>
+                <h2>{activeDimension.name}</h2>
+                <p>{activeStory?.meaning ?? activeDimension.summary}</p>
+              </div>
+              <span className={`nkh-state-pill is-${activeDimension.status ?? "source-backed"}`}>
+                {sourceStatus(activeDimension.status)}
+              </span>
+            </div>
+            <DimensionView
+              columns={activeColumns}
+              dimension={activeDimension}
+              evidence={activeEvidence}
+              confidenceOptions={confidenceOptions}
+              confidenceValue={confidenceValue}
+              facetOptions={facetOptions}
+              facetValue={facetValue}
+              gaps={activeGaps}
+              insight={activeInsight}
+              rows={visibleRows}
+              selectedRow={selectedRow}
+              selectedRowIndex={selectedRowIndex}
+              setDimensionTab={setDimensionTab}
+              setConfidenceValue={setConfidenceValue}
+              setFacetValue={setFacetValue}
+              setSelectedRowIndex={setSelectedRowIndex}
+              setSortKey={setSortKey}
+              setTableQuery={setTableQuery}
+              sortKey={sortKey}
+              story={activeStory}
+              tab={dimensionTab}
+              tableQuery={tableQuery}
+              relationship={activeRelationship}
+              visualBlocks={slots.VISUAL_BLOCKS?.[activeDimension.key] ?? []}
+            />
+          </div>
+        ) : null}
+
+        {surfaceMode === "confidence" ? (
+          <ContextConfidenceView
+            dimensions={dimensions}
+            kpis={slots.KPIS ?? []}
+            pack={pack}
+            table={slots.CONF_TABLE ?? []}
+            onOpenDimension={selectDimension}
           />
         ) : null}
 
-        {topTab === "gaps" ? (
+        {topTab === "gaps" && surfaceMode === "enterprise" ? (
           <EvidenceGapsView
             gaps={slots.GAPS ?? []}
             nextEvidence={slots.NEXT_EVIDENCE ?? []}
@@ -385,11 +499,11 @@ export function HomeKnowledgeDesignContractSurface({
           />
         ) : null}
 
-        {topTab === "usecases" ? (
+        {topTab === "usecases" && surfaceMode === "enterprise" ? (
           <UseCasesView pack={pack} useCases={slots.USE_CASES ?? []} />
         ) : null}
 
-        {topTab === "proof" ? (
+        {topTab === "proof" && surfaceMode === "enterprise" ? (
           <ProofView
             dimensions={dimensions}
             evidence={slots.EVIDENCE ?? []}
@@ -416,6 +530,8 @@ function DimensionView({
   columns,
   dimension,
   evidence,
+  confidenceOptions,
+  confidenceValue,
   facetOptions,
   facetValue,
   gaps,
@@ -424,6 +540,7 @@ function DimensionView({
   selectedRow,
   selectedRowIndex,
   setDimensionTab,
+  setConfidenceValue,
   setFacetValue,
   setSelectedRowIndex,
   setSortKey,
@@ -438,6 +555,8 @@ function DimensionView({
   columns: HomeKnowledgeDataColumn[];
   dimension: HomeKnowledgeDimension;
   evidence: HomeKnowledgeEvidence[];
+  confidenceOptions: string[];
+  confidenceValue: string;
   facetOptions: string[];
   facetValue: string;
   gaps: HomeKnowledgeGap[];
@@ -446,6 +565,7 @@ function DimensionView({
   selectedRow: HomeKnowledgeRecord | null;
   selectedRowIndex: number | null;
   setDimensionTab: (tab: DimensionTab) => void;
+  setConfidenceValue: (value: string) => void;
   setFacetValue: (value: string) => void;
   setSelectedRowIndex: (index: number | null) => void;
   setSortKey: (key: string | null) => void;
@@ -457,6 +577,26 @@ function DimensionView({
   relationship?: { chain?: string[]; note?: string };
   visualBlocks: HomeKnowledgeVisualBlock[];
 }) {
+  function exportCsv() {
+    const header = columns.map((column) => csvCell(column.label)).join(",");
+    const body = rows
+      .map((row) =>
+        columns.map((column) => csvCell(asText(row[column.k]))).join(","),
+      )
+      .join("\n");
+    const blob = new Blob([[header, body].filter(Boolean).join("\n")], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${dimension.key || "dimension"}-rows.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
   return (
     <div className="nkh-section">
       <nav className="nkh-subtabs" aria-label={`${dimension.name} tabs`}>
@@ -530,7 +670,7 @@ function DimensionView({
             </label>
             {facetOptions.length ? (
               <label>
-                Filter
+                Segment
                 <select
                   value={facetValue}
                   onChange={(event) => {
@@ -547,7 +687,31 @@ function DimensionView({
                 </select>
               </label>
             ) : null}
-            <span className="nkh-chip">{rows.length} rows shown</span>
+            {confidenceOptions.length ? (
+              <label>
+                Confidence
+                <select
+                  value={confidenceValue}
+                  onChange={(event) => {
+                    setConfidenceValue(event.target.value);
+                    setSelectedRowIndex(null);
+                  }}
+                >
+                  <option value="all">All confidence</option>
+                  {confidenceOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            <span className="nkh-chip">
+              Showing {rows.length} of {dimension.count ?? rows.length}
+            </span>
+            <button className="nkh-export" type="button" onClick={exportCsv}>
+              Export CSV
+            </button>
           </div>
           <div className="nkh-table-wrap">
             <table>
@@ -783,6 +947,133 @@ function EnterpriseOverview({
           <strong>Track value only after baselines and actuals are validated</strong>
         </article>
       </section>
+    </div>
+  );
+}
+
+function ContextConfidenceView({
+  dimensions,
+  kpis,
+  onOpenDimension,
+  pack,
+  table,
+}: {
+  dimensions: HomeKnowledgeDimension[];
+  kpis: HomeKnowledgeRecord[];
+  onOpenDimension: (key: string) => void;
+  pack: HomeKnowledgeDesignContractPack;
+  table: HomeKnowledgeRecord[];
+}) {
+  const summary = narrativeString(pack, "context_confidence_summary");
+  const decisionGrade = dimensions.filter(
+    (dimension) => dimension.status === "source-backed",
+  ).length;
+  const directional = dimensions.filter(
+    (dimension) => dimension.status === "directional",
+  ).length;
+  const weak = dimensions.filter(
+    (dimension) =>
+      dimension.status === "needs-evidence" ||
+      dimension.status === "not-evidenced",
+  ).length;
+
+  return (
+    <div className="nkh-section nkh-confidence-mode">
+      <section className="nkh-confidence-hero">
+        <div>
+          <div className="nkh-kicker">Context Confidence</div>
+          <h2>What Nexus can trust right now</h2>
+          <p>{summary}</p>
+        </div>
+        <div className="nkh-confidence-summary">
+          <div>
+            <strong>{decisionGrade}</strong>
+            <span>Decision-grade</span>
+          </div>
+          <div>
+            <strong>{directional}</strong>
+            <span>Directional</span>
+          </div>
+          <div>
+            <strong>{weak}</strong>
+            <span>Weak / needs evidence</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="nkh-confidence-grid" aria-label="Dimension confidence">
+        {dimensions.map((dimension) => (
+          <button
+            key={dimension.key}
+            className={`nkh-confidence-cell is-${dimension.status ?? "source-backed"}`}
+            type="button"
+            onClick={() => onOpenDimension(dimension.key)}
+            title={`${dimension.name} · ${sourceStatus(dimension.status)}`}
+          >
+            <span>{dimension.name}</span>
+            <strong>{dimension.pct ?? "—"}</strong>
+            <em>{sourceStatus(dimension.status)}</em>
+          </button>
+        ))}
+      </section>
+
+      <section className="nkh-proof-table">
+        <h2>Decision readiness by dimension</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Dimension</th>
+              <th>Readiness</th>
+              <th>CXO interpretation</th>
+            </tr>
+          </thead>
+          <tbody>
+            {table.map((row, index) => (
+              <tr key={`${row.dim}-${index}`}>
+                <td>{asText(row.dim)}</td>
+                <td>
+                  <span className={`nkh-state-pill is-${asText(row.status) || "source-backed"}`}>
+                    {sourceStatus(row.status)}
+                  </span>
+                </td>
+                <td>{asText(row.note)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <section className="nkh-support-grid">
+        <StoryBlock
+          title="Strong enough for"
+          items={[
+            "Enterprise orientation and executive briefing",
+            "Fact-based aVa questions with evidence boundaries",
+            "Use-case sequencing and evidence planning",
+          ]}
+        />
+        <StoryBlock
+          title="Do not yet infer"
+          tone="warn"
+          items={[
+            "Realized savings, ROI, or Tower value claims",
+            "Production-ready AWS / Databricks or AI foundation",
+            "Vendor savings without contract and SLA evidence",
+          ]}
+        />
+      </section>
+
+      {kpis.length ? (
+        <section className="nkh-proof-metrics nkh-confidence-kpis">
+          {kpis.slice(0, 5).map((kpi, index) => (
+            <div key={`${kpi.label}-${index}`}>
+              <strong>{metricValue(kpi, "value")}</strong>
+              <span>{metricValue(kpi, "label")}</span>
+              <em>{metricValue(kpi, "sub")}</em>
+            </div>
+          ))}
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -1219,12 +1510,16 @@ const styles = `
   --teal: #19c6b2;
   --green: #11845b;
   --amber: #a76b05;
+  --paper: #fbfbf8;
+  --paper-line: #eceae2;
+  --serif: "Source Serif 4", Georgia, serif;
+  --sans: "Source Sans 3", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   display: grid;
   grid-template-columns: 272px minmax(0, 1fr);
   min-height: calc(100vh - 72px);
   color: var(--ink);
-  background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
-  font-family: "Source Sans 3", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--paper);
+  font-family: var(--sans);
 }
 .nkh-rail {
   position: sticky;
@@ -1232,9 +1527,9 @@ const styles = `
   align-self: start;
   height: calc(100vh - 72px);
   overflow: auto;
-  border-right: 1px solid var(--line);
-  background: #f8fafc;
-  padding: 24px 14px;
+  border-right: 1px solid var(--paper-line);
+  background: #fff;
+  padding: 16px 10px 22px;
 }
 .nkh-rail-section + .nkh-rail-section { margin-top: 24px; }
 .nkh-rail-label {
@@ -1256,14 +1551,15 @@ const styles = `
   gap: 10px;
   align-items: center;
   text-align: left;
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 10px;
   cursor: pointer;
 }
 .nkh-rail-primary.is-active,
 .nkh-dim-link.is-active {
-  background: #eaf2ff;
-  color: #0a2d66;
+  background: #eef4ff;
+  color: #0d3975;
+  box-shadow: inset 2px 0 0 #2f5fd0;
 }
 .nkh-icon,
 .nkh-dot {
@@ -1312,15 +1608,15 @@ const styles = `
   background: transparent;
 }
 .nkh-main {
-  max-width: 1240px;
+  max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-  padding: 36px 40px 88px;
+  padding: 26px 40px 80px;
 }
 .nkh-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 32px;
+  grid-template-columns: minmax(0, 1fr) 262px;
+  gap: 28px;
   align-items: start;
 }
 .nkh-breadcrumb {
@@ -1334,11 +1630,12 @@ const styles = `
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin: 22px 0 12px;
-  font-size: 48px;
-  line-height: 1.02;
-  letter-spacing: 0;
-  color: var(--ink);
+  margin: 18px 0 12px;
+  font-family: var(--serif);
+  font-size: 40px;
+  line-height: 1.05;
+  letter-spacing: -.01em;
+  color: #15202f;
 }
 .nkh-demo-pill {
   display: inline-flex;
@@ -1353,18 +1650,18 @@ const styles = `
   text-transform: uppercase;
 }
 .nkh-hero p {
-  max-width: 740px;
+  max-width: 820px;
   margin: 0;
-  color: #41506f;
-  font-size: 18px;
-  line-height: 1.55;
+  color: #5a636f;
+  font-size: 15px;
+  line-height: 1.6;
 }
 .nkh-status-card {
-  border: 1px solid var(--line);
-  border-radius: 14px;
+  border: 1px solid var(--paper-line);
+  border-radius: 12px;
   background: #fff;
-  box-shadow: 0 18px 40px rgba(7, 23, 51, .08);
-  padding: 18px 20px;
+  box-shadow: none;
+  padding: 16px 18px;
 }
 .nkh-status-card strong {
   display: block;
@@ -1389,35 +1686,190 @@ const styles = `
 .nkh-tabs,
 .nkh-subtabs {
   display: flex;
-  gap: 22px;
-  border-bottom: 1px solid var(--line);
+  gap: 26px;
+  border-bottom: 1px solid #e7e5dc;
   margin-top: 26px;
 }
 .nkh-tabs button,
 .nkh-subtabs button {
   border: 0;
-  border-bottom: 3px solid transparent;
-  padding: 16px 0 14px;
-  color: #52607b;
+  border-bottom: 2.5px solid transparent;
+  padding: 0 2px 13px;
+  color: #8b93a0;
   background: transparent;
-  font-size: 15px;
-  font-weight: 850;
+  font-size: 14.5px;
+  font-weight: 700;
   cursor: pointer;
 }
 .nkh-tabs button.is-active,
 .nkh-subtabs button.is-active {
   color: #06214b;
-  border-color: var(--brand);
+  border-color: #2f5fd0;
 }
 .nkh-section {
   margin-top: 34px;
+}
+.nkh-dimension-mode,
+.nkh-confidence-mode {
+  margin-top: 26px;
+}
+.nkh-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 18px;
+  border: 0;
+  background: transparent;
+  color: #2f5fd0;
+  cursor: pointer;
+  font: 700 13px var(--sans);
+  padding: 0;
+}
+.nkh-back-link:hover { color: #22489f; }
+.nkh-dimension-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 8px;
+}
+.nkh-dimension-heading h2 {
+  margin: 0;
+  color: #15202f;
+  font: 700 28px/1.15 var(--serif);
+}
+.nkh-dimension-heading p {
+  margin: 8px 0 0;
+  max-width: 820px;
+  color: #3f4a5a;
+  font: 500 15px/1.5 var(--sans);
+}
+.nkh-state-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: #e9f6ef;
+  color: #1f9d63;
+  font: 700 11.5px var(--sans);
+  white-space: nowrap;
+}
+.nkh-state-pill::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: currentColor;
+}
+.nkh-state-pill.is-directional {
+  background: #f9f0d8;
+  color: #c99a2e;
+}
+.nkh-state-pill.is-needs-evidence {
+  background: #f7ebe3;
+  color: #c2703a;
+}
+.nkh-state-pill.is-not-evidenced {
+  background: #eff0f2;
+  color: #7f8894;
+}
+.nkh-confidence-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  border: 1px solid var(--paper-line);
+  border-radius: 14px;
+  background: #fff;
+  padding: 28px 30px;
+}
+.nkh-confidence-hero h2 {
+  margin: 10px 0 12px;
+  color: #15202f;
+  font: 700 27px/1.2 var(--serif);
+}
+.nkh-confidence-hero p {
+  margin: 0;
+  color: #4a5462;
+  font: 400 15.5px/1.6 var(--sans);
+}
+.nkh-confidence-summary {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.nkh-confidence-summary div {
+  border: 1px solid #efeee7;
+  border-radius: 12px;
+  background: #faf9f5;
+  padding: 14px 16px;
+}
+.nkh-confidence-summary strong {
+  display: block;
+  color: #15202f;
+  font: 700 24px/1 var(--serif);
+}
+.nkh-confidence-summary span {
+  display: block;
+  margin-top: 5px;
+  color: #6b7280;
+  font: 600 12px var(--sans);
+}
+.nkh-confidence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(126px, 1fr));
+  gap: 9px;
+  margin-top: 18px;
+}
+.nkh-confidence-cell {
+  min-height: 66px;
+  border: 1px solid rgba(31, 157, 99, .28);
+  border-radius: 8px;
+  background: #e9f6ef;
+  color: #1f9d63;
+  cursor: pointer;
+  padding: 11px 12px;
+  text-align: left;
+}
+.nkh-confidence-cell.is-directional {
+  border-color: rgba(201, 154, 46, .3);
+  background: #f9f0d8;
+  color: #9a7020;
+}
+.nkh-confidence-cell.is-needs-evidence,
+.nkh-confidence-cell.is-not-evidenced {
+  border-color: rgba(194, 112, 58, .32);
+  background: #f7ebe3;
+  color: #a25024;
+}
+.nkh-confidence-cell span {
+  display: block;
+  color: inherit;
+  font: 700 12px/1.25 var(--sans);
+}
+.nkh-confidence-cell strong {
+  display: block;
+  margin-top: 8px;
+  color: inherit;
+  font: 700 10px/1 "IBM Plex Mono", ui-monospace, monospace;
+}
+.nkh-confidence-cell em {
+  display: block;
+  margin-top: 6px;
+  color: inherit;
+  opacity: .8;
+  font: 600 10px/1.1 var(--sans);
+  font-style: normal;
+}
+.nkh-confidence-kpis {
+  margin-top: 18px;
 }
 .nkh-enterprise-overview {
   display: grid;
   gap: 22px;
 }
 .nkh-at-glance {
-  border-top: 1px solid var(--line);
+  border-top: 1px solid #e7e5dc;
   padding-top: 28px;
 }
 .nkh-section-head {
@@ -1444,11 +1896,11 @@ const styles = `
 }
 .nkh-fact-card {
   min-height: 128px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
+  border: 1px solid var(--paper-line);
+  border-radius: 12px;
   background: #fff;
-  padding: 18px;
-  box-shadow: 0 16px 32px rgba(7, 23, 51, .04);
+  padding: 17px 18px;
+  box-shadow: none;
 }
 .nkh-fact-card span {
   display: block;
@@ -1461,7 +1913,8 @@ const styles = `
 .nkh-fact-card strong {
   display: block;
   margin-top: 10px;
-  font-size: 24px;
+  font-family: var(--serif);
+  font-size: 22px;
   line-height: 1.15;
 }
 .nkh-fact-card p {
@@ -1475,14 +1928,14 @@ const styles = `
 .nkh-proof-hero,
 .nkh-layer-visual,
 .nkh-proof-table {
-  border: 1px solid var(--line);
-  border-radius: 16px;
+  border: 1px solid var(--paper-line);
+  border-radius: 14px;
   background: #fff;
-  box-shadow: 0 20px 46px rgba(7, 23, 51, .06);
-  padding: 28px;
+  box-shadow: none;
+  padding: 26px;
 }
 .nkh-boardroom-brief {
-  padding: 32px;
+  padding: 28px 30px;
 }
 .nkh-executive-summary {
   max-width: 940px;
@@ -1490,9 +1943,9 @@ const styles = `
 }
 .nkh-executive-summary p {
   margin: 0 0 14px;
-  color: #41506f;
-  font-size: 18px;
-  line-height: 1.58;
+  color: #5a636f;
+  font-size: 15.5px;
+  line-height: 1.6;
 }
 .nkh-kicker {
   color: #9b6a17;
@@ -1506,7 +1959,8 @@ const styles = `
 .nkh-layer-visual h2,
 .nkh-proof-table h2 {
   margin: 10px 0 12px;
-  font-size: 28px;
+  font-family: var(--serif);
+  font-size: 27px;
   line-height: 1.2;
 }
 .nkh-lede,
@@ -1514,9 +1968,9 @@ const styles = `
 .nkh-proof-hero > div > p,
 .nkh-layer-visual > p {
   margin: 0;
-  color: #41506f;
-  font-size: 18px;
-  line-height: 1.58;
+  color: #5a636f;
+  font-size: 15.5px;
+  line-height: 1.6;
 }
 .nkh-brief-grid {
   display: grid;
@@ -1793,6 +2247,16 @@ const styles = `
   font-size: 12px;
   font-weight: 850;
 }
+.nkh-export {
+  border: 1px solid #d7dfeb;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 850;
+  padding: 10px 14px;
+}
+.nkh-export:hover { border-color: #1167d8; color: #1167d8; }
 .nkh-table-wrap {
   max-height: 620px;
   overflow: auto;
