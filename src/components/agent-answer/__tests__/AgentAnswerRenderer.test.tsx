@@ -194,7 +194,7 @@ describe("AgentAnswerRenderer", () => {
 
     render(<AgentAnswerRenderer answer={answer} />);
 
-    expect(screen.getByText("Graphs")).toBeInTheDocument();
+    expect(screen.getByText("Relationship View")).toBeInTheDocument();
     expect(screen.getByText("risk control · 92")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Export HTML" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Export PDF" })).toBeInTheDocument();
@@ -309,7 +309,7 @@ describe("AgentAnswerRenderer", () => {
     expect(
       screen.getByText(/Fund IROPS recovery automation/),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Tables")).not.toBeInTheDocument();
+    expect(screen.queryByText("Decision Table")).not.toBeInTheDocument();
     expect(screen.queryByText("evidence")).not.toBeInTheDocument();
     expect(
       screen.queryByText("How IT Supports The Answer"),
