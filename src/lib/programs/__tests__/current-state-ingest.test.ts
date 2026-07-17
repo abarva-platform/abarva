@@ -9,6 +9,7 @@ import type { TenancyCtx } from "@/lib/programs/types.db";
 
 const writes: { table: string; op: string; row: Record<string, unknown> }[] =
   [];
+const upsertFailures: { table: string; message: string }[] = [];
 
 jest.mock("@/lib/data-plane/postgresCompat", () => ({
   getAzureWriteFluentClient: () => ({
@@ -16,6 +17,12 @@ jest.mock("@/lib/data-plane/postgresCompat", () => ({
       return {
         upsert: (row: Record<string, unknown>) => {
           writes.push({ table, op: "upsert", row });
+          const failure = upsertFailures.find((item) => item.table === table);
+          if (failure) {
+            return Promise.resolve({
+              error: { message: failure.message, code: "TEST_DB_ERROR" },
+            });
+          }
           return Promise.resolve({ error: null });
         },
         insert: (row: Record<string, unknown>) => {
@@ -50,6 +57,7 @@ const VALID_DORA = [
 
 beforeEach(() => {
   writes.length = 0;
+  upsertFailures.length = 0;
 });
 
 describe("parseCsv", () => {
@@ -263,6 +271,52 @@ describe("ingestCurrentStateCsv — CMDB + workforce families wired", () => {
     );
   });
 
+  it("normalizes common CMDB enum aliases before commit", async () => {
+    const csv = [
+      "ci_sys_id,ci_name,ci_type,ci_class,lifecycle_state,owner_team,business_service,criticality,environment",
+      "CI1,member-crm,application,cmdb_ci_appl,active,Member Ops,Member Service,high,production",
+    ].join("\n");
+    const r = await ingestCurrentStateCsv(
+      ctx,
+      "it_systems_landscape",
+      csv,
+      "cmdb.csv",
+      "representative_synthetic",
+      NOW,
+      TAGS,
+    );
+    expect(r.committedRows).toBe(1);
+    const upsert = writes.find((w) => w.table === "tower_cmdb_cis");
+    expect(upsert?.row).toMatchObject({
+      lifecycle_state: "production",
+      criticality: "tier_1",
+    });
+  });
+
+  it("returns row-level commit errors instead of a silent 422 with no errors", async () => {
+    upsertFailures.push({
+      table: "tower_cmdb_cis",
+      message: "relation \"tower_cmdb_cis\" does not exist",
+    });
+    const r = await ingestCurrentStateCsv(
+      ctx,
+      "it_systems_landscape",
+      VALID_CMDB,
+      "cmdb.csv",
+      "representative_synthetic",
+      NOW,
+      TAGS,
+    );
+    expect(r.parsedRows).toBe(2);
+    expect(r.committedRows).toBe(0);
+    expect(r.readinessState).toBe("missing");
+    expect(r.errors).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("tower_cmdb_cis row \"CI1\""),
+      ]),
+    );
+  });
+
   it("it_org_structure commits to tower_workforce", async () => {
     const r = await ingestCurrentStateCsv(
       ctx,
@@ -281,5 +335,28 @@ describe("ingestCurrentStateCsv — CMDB + workforce families wired", () => {
       employee_id: "E1",
       function: "Engineering",
     });
+  });
+
+  it("returns workforce commit errors when parsed rows cannot be committed", async () => {
+    upsertFailures.push({
+      table: "tower_workforce",
+      message: "permission denied for table tower_workforce",
+    });
+    const r = await ingestCurrentStateCsv(
+      ctx,
+      "it_org_structure",
+      VALID_WORKFORCE,
+      "workforce.csv",
+      "representative_synthetic",
+      NOW,
+      TAGS,
+    );
+    expect(r.parsedRows).toBe(2);
+    expect(r.committedRows).toBe(0);
+    expect(r.errors).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("tower_workforce row \"E1\""),
+      ]),
+    );
   });
 });

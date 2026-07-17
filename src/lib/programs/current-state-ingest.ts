@@ -49,6 +49,23 @@ export interface IngestResult {
   errors: string[];
 }
 
+interface CommitResult {
+  committed: number;
+  ledger: number;
+  errors: string[];
+}
+
+function formatCommitError(
+  table: string,
+  rowLabel: string,
+  error: { message?: string; code?: string; details?: string } | null,
+): string {
+  const message = error?.message || "unknown database error";
+  const detail = error?.details ? ` (${error.details})` : "";
+  const code = error?.code ? ` [${error.code}]` : "";
+  return `${table} ${rowLabel}: ${message}${detail}${code}`;
+}
+
 // ── CSV parsing (minimal, quote-aware) ───────────────────────────────────────
 
 /** Split a single CSV line, honoring double-quoted fields with embedded commas. */
@@ -179,9 +196,10 @@ async function commitDora(
   provenance: DatasetProvenance,
   nowIso: string,
   lineage: EvidenceLineage,
-): Promise<{ committed: number; ledger: number }> {
+): Promise<CommitResult> {
   const sb = getAzureWriteFluentClient();
   let committed = 0;
+  const errors: string[] = [];
   for (const r of rows) {
     const { error } = await sb.from("tower_dora_metrics").upsert(
       {
@@ -205,7 +223,11 @@ async function commitDora(
       },
       { onConflict: "client_id,repo,period_start,period_end" },
     );
-    if (!error) committed += 1;
+    if (error) {
+      errors.push(formatCommitError("tower_dora_metrics", `row "${r.repo}"`, error));
+    } else {
+      committed += 1;
+    }
   }
 
   let ledger = 0;
@@ -240,10 +262,14 @@ async function commitDora(
       not_enough_data_flag: false,
       created_by: ctx.userId ?? "system",
     });
-    if (!error) ledger = 1;
+    if (error) {
+      errors.push(formatCommitError("evidence_ledger", `file "${fileRef}"`, error));
+    } else {
+      ledger = 1;
+    }
   }
 
-  return { committed, ledger };
+  return { committed, ledger, errors };
 }
 
 // ── Shared evidence_ledger writer ────────────────────────────────────────────
@@ -259,7 +285,7 @@ async function writeLedger(
   nowIso: string,
   lineage: EvidenceLineage,
   claimText: string,
-): Promise<number> {
+): Promise<{ ledger: number; errors: string[] }> {
   const synthetic = provenance === "representative_synthetic";
   const { error } = await sb.from("evidence_ledger").insert({
     client_id: ctx.clientId,
@@ -288,7 +314,12 @@ async function writeLedger(
     not_enough_data_flag: false,
     created_by: ctx.userId ?? "system",
   });
-  return error ? 0 : 1;
+  return error
+    ? {
+        ledger: 0,
+        errors: [formatCommitError("evidence_ledger", `file "${fileRef}"`, error)],
+      }
+    : { ledger: 1, errors: [] };
 }
 
 // ── CMDB family (IT systems & application landscape) ──────────────────────────
@@ -326,6 +357,42 @@ export function parseCmdbCsv(text: string): {
   return { rows, errors };
 }
 
+function normalizeCmdbLifecycleState(value: string | undefined): string {
+  const normalized = (value || "production").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  const aliases: Record<string, string> = {
+    active: "production",
+    live: "production",
+    operational: "production",
+    prod: "production",
+    in_service: "production",
+    preprod: "pre_production",
+    pre_prod: "pre_production",
+    staging: "pre_production",
+    stage: "pre_production",
+    development: "dev",
+    qa: "test",
+    uat: "test",
+    decommissioned: "retired",
+    decommission: "retired",
+    future: "planned",
+    backlog: "planned",
+  };
+  const resolved = aliases[normalized] ?? normalized;
+  return ["production", "pre_production", "dev", "test", "retired", "planned"].includes(resolved)
+    ? resolved
+    : "production";
+}
+
+function normalizeCmdbCriticality(value: string | undefined): string {
+  const normalized = (value || "tier_3").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  if (/^tier_[1-4]$/.test(normalized)) return normalized;
+  if (["1", "p1", "critical", "high"].includes(normalized)) return "tier_1";
+  if (["2", "p2", "important", "medium_high"].includes(normalized)) return "tier_2";
+  if (["3", "p3", "medium", "standard"].includes(normalized)) return "tier_3";
+  if (["4", "p4", "low"].includes(normalized)) return "tier_4";
+  return "tier_3";
+}
+
 async function commitCmdb(
   ctx: TenancyCtx,
   rows: Record<string, string>[],
@@ -333,9 +400,10 @@ async function commitCmdb(
   provenance: DatasetProvenance,
   nowIso: string,
   lineage: EvidenceLineage,
-): Promise<{ committed: number; ledger: number }> {
+): Promise<CommitResult> {
   const sb = getAzureWriteFluentClient();
   let committed = 0;
+  const errors: string[] = [];
   for (const r of rows) {
     const { error } = await sb.from("tower_cmdb_cis").upsert(
       {
@@ -344,13 +412,10 @@ async function commitCmdb(
         ci_name: r.ci_name,
         ci_type: r.ci_type || "application",
         ci_class: r.ci_class || "cmdb_ci_appl",
-        lifecycle_state: r.lifecycle_state || "production",
+        lifecycle_state: normalizeCmdbLifecycleState(r.lifecycle_state),
         owner_team: r.owner_team || "unassigned",
         business_service: r.business_service || "unspecified",
-        // tower_cmdb_cis.criticality CHECK IN (tier_1..tier_4); normalize "1".."4".
-        criticality: /^tier_[1-4]$/.test(r.criticality)
-          ? r.criticality
-          : `tier_${["1", "2", "3", "4"].includes(r.criticality) ? r.criticality : "3"}`,
+        criticality: normalizeCmdbCriticality(r.criticality),
         environment: r.environment || "production",
         source_system:
           provenance === "representative_synthetic"
@@ -359,25 +424,31 @@ async function commitCmdb(
       },
       { onConflict: "client_id,ci_sys_id" },
     );
-    if (!error) committed += 1;
+    if (error) {
+      errors.push(formatCommitError("tower_cmdb_cis", `row "${r.ci_sys_id}"`, error));
+    } else {
+      committed += 1;
+    }
   }
   const sb2 = getAzureWriteFluentClient();
-  const ledger =
-    committed > 0
-      ? await writeLedger(
-          sb2,
-          ctx,
-          "it_systems_landscape",
-          "citation",
-          committed,
-          fileRef,
-          provenance,
-          nowIso,
-          lineage,
-          `IT systems & application landscape ingested: ${committed} configuration items (type, criticality, owner, environment)`,
-        )
-      : 0;
-  return { committed, ledger };
+  let ledger = 0;
+  if (committed > 0) {
+    const ledgerResult = await writeLedger(
+      sb2,
+      ctx,
+      "it_systems_landscape",
+      "citation",
+      committed,
+      fileRef,
+      provenance,
+      nowIso,
+      lineage,
+      `IT systems & application landscape ingested: ${committed} configuration items (type, criticality, owner, environment)`,
+    );
+    ledger = ledgerResult.ledger;
+    errors.push(...ledgerResult.errors);
+  }
+  return { committed, ledger, errors };
 }
 
 // ── Workforce family (IT / engineering org structure) ─────────────────────────
@@ -421,9 +492,10 @@ async function commitWorkforce(
   provenance: DatasetProvenance,
   nowIso: string,
   lineage: EvidenceLineage,
-): Promise<{ committed: number; ledger: number }> {
+): Promise<CommitResult> {
   const sb = getAzureWriteFluentClient();
   let committed = 0;
+  const errors: string[] = [];
   for (const r of rows) {
     const { error } = await sb.from("tower_workforce").upsert(
       {
@@ -439,25 +511,31 @@ async function commitWorkforce(
       },
       { onConflict: "client_id,employee_id,as_of_date" },
     );
-    if (!error) committed += 1;
+    if (error) {
+      errors.push(formatCommitError("tower_workforce", `row "${r.employee_id}"`, error));
+    } else {
+      committed += 1;
+    }
   }
   const sb2 = getAzureWriteFluentClient();
-  const ledger =
-    committed > 0
-      ? await writeLedger(
-          sb2,
-          ctx,
-          "it_org_structure",
-          "citation",
-          committed,
-          fileRef,
-          provenance,
-          nowIso,
-          lineage,
-          `IT / engineering org structure ingested: ${committed} workforce records (function, level, location, contractor mix)`,
-        )
-      : 0;
-  return { committed, ledger };
+  let ledger = 0;
+  if (committed > 0) {
+    const ledgerResult = await writeLedger(
+      sb2,
+      ctx,
+      "it_org_structure",
+      "citation",
+      committed,
+      fileRef,
+      provenance,
+      nowIso,
+      lineage,
+      `IT / engineering org structure ingested: ${committed} workforce records (function, level, location, contractor mix)`,
+    );
+    ledger = ledgerResult.ledger;
+    errors.push(...ledgerResult.errors);
+  }
+  return { committed, ledger, errors };
 }
 
 // ── Family registry + dispatch ───────────────────────────────────────────────
@@ -476,7 +554,7 @@ interface FamilyHandler {
     provenance: DatasetProvenance,
     nowIso: string,
     lineage: EvidenceLineage,
-  ) => Promise<{ committed: number; ledger: number }>;
+  ) => Promise<CommitResult>;
 }
 
 const FAMILY_INGESTORS: Record<IngestFamily, FamilyHandler> = {
@@ -543,7 +621,7 @@ export async function ingestCurrentStateCsv(
     };
   }
 
-  const { committed, ledger } = await handler.commit(
+  const { committed, ledger, errors: commitErrors } = await handler.commit(
     ctx,
     rows as never[],
     fileRef,
@@ -561,6 +639,6 @@ export async function ingestCurrentStateCsv(
     readinessState: committed > 0 ? "committed" : "missing",
     promotedToAgent: false,
     lineage,
-    errors,
+    errors: [...errors, ...commitErrors],
   };
 }
