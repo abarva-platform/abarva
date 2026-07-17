@@ -363,6 +363,12 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByRole("heading", { name: "Initial transformation posture" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Charter inputs" })).toBeInTheDocument();
+    expect((screen.getByLabelText("Sponsor commitment") as HTMLTextAreaElement).value).toContain(
+      "Sponsor/title:",
+    );
+    expect((screen.getByLabelText("Scope boundary") as HTMLTextAreaElement).value).not.toBe("");
+    expect((screen.getByLabelText("Success criteria") as HTMLTextAreaElement).value).not.toBe("");
     expect(screen.getByText(/starting hypothesis for P2 discovery/i)).toBeInTheDocument();
     expect(screen.getByText("Improve the current process")).toBeInTheDocument();
     expect(screen.getByText("Explore a balanced transformation")).toBeInTheDocument();
@@ -370,6 +376,33 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.queryByRole("heading", { name: "Decide the approach" })).not.toBeInTheDocument();
     expect(screen.queryByText("Phased platform + operating-model shift")).not.toBeInTheDocument();
     expect(screen.queryByText(/aVa recommends/i)).not.toBeInTheDocument();
+  });
+
+  it("shows the P1 charter capture fields at gate approval and blocks build until they are complete", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 1,
+          phaseLabel: "P1 Charter",
+        })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Charter inputs" })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Sponsor commitment"), {
+      target: { value: "" },
+    });
+
+    const buildButton = screen.getByRole("button", {
+      name: /Complete phase inputs before build/i,
+    });
+    expect(buildButton).toBeDisabled();
+    expect(screen.getAllByText(/Complete 1 phase input before Approve & Build/i).length).toBeGreaterThan(0);
   });
 
   it("keeps solution approach selection in P3 after discovery evidence", () => {

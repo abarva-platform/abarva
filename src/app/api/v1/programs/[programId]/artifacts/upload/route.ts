@@ -6,6 +6,7 @@
 // gates. Fields: file (required), phase, family, title.
 
 import { NextRequest } from "next/server";
+import { createHash } from "node:crypto";
 import { requireTenancy, tenancyErrorResponse } from "../../../_auth";
 import {
   saveMoveArtifact,
@@ -27,6 +28,32 @@ const UPLOAD_FAMILIES = new Set<ArtifactFamily>([
   "template",
   "approval_artifact",
 ]);
+
+export function safeArtifactSlug(value: string): string {
+  const slug = value
+    .toLowerCase()
+    .replace(/\.[^.]+$/, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 80);
+  return slug || "file";
+}
+
+export function artifactTypeForUpload({
+  body,
+  family,
+  fileName,
+  phase,
+}: {
+  body: Buffer;
+  family: ArtifactFamily;
+  fileName: string;
+  phase: number;
+}): string {
+  if (family !== "uploaded_evidence") return family;
+  const hash = createHash("sha256").update(body).digest("hex").slice(0, 12);
+  return `uploaded_evidence_p${phase}_${safeArtifactSlug(fileName)}_${hash}`;
+}
 
 export async function POST(
   req: NextRequest,
@@ -73,11 +100,17 @@ export async function POST(
     const title = String(form.get("title") ?? "").trim() || file.name;
     const ext = (file.name.split(".").pop() || "bin").toLowerCase();
     const body = Buffer.from(await file.arrayBuffer());
+    const artifactType = artifactTypeForUpload({
+      body,
+      family,
+      fileName: file.name,
+      phase,
+    });
 
     const saved = await saveMoveArtifact(ctx, {
       moveId: programId,
       phase,
-      artifactType: family,
+      artifactType,
       artifactFamily: family,
       title,
       description: "Uploaded evidence.",
@@ -98,6 +131,7 @@ export async function POST(
       version: saved.version,
       blobStored: saved.blobStored,
       family,
+      artifactType,
     });
   } catch (err) {
     return tenancyErrorResponse(err);
