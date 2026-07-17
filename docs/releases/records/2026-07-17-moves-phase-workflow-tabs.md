@@ -12,6 +12,8 @@
 
 This release makes the Strategic Moves phase workspace clearer for operators running P1-P5. Phase tabs now describe the actual workflow step, the page shows a compact guidance table for what to do now and what counts as done, uploaded phase files are listed immediately after upload, and File Cabinet artifact Open no longer risks navigating the current Moves workspace away.
 
+Follow-up correction in `codex/moves-remove-legacy-prepare-wall`: the P2-P5 Prepare tab now actually owns the visible body. The legacy long-form phase workspace and session playbook wall no longer render underneath the new tabs. Prepare now shows a compact command center, evidence checklist, and explicit Upload files / Review gate actions; Upload & review is the evidence action step; Review findings owns readiness/finding review.
+
 ## Layer Impact
 
 - `global-control-lane`: Updates the shared Strategic Moves phase shell and File Cabinet review/open behavior for all tenants.
@@ -30,13 +32,18 @@ This release makes the Strategic Moves phase workspace clearer for operators run
 - `src/components/strategic-moves/MovesPhaseStandaloneClient.tsx`
 - `src/components/strategic-moves/FileCabinetPanel.tsx`
 - `src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx`
+- Follow-up: `src/components/strategic-moves/MovesPhaseStandaloneClient.tsx`
+- Follow-up: `src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx`
 
 ## QA / Validation
 
 - Pass: `npx eslint src/components/strategic-moves/MovesPhaseStandaloneClient.tsx src/components/strategic-moves/FileCabinetPanel.tsx src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx`
 - Pass: `npx jest src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx --runInBand`
-- Pending before release: full typecheck, release check, diff whitespace check.
-- Pending after deploy: signed-in browser smoke across P1-P5 phase tabs, upload visibility, File Cabinet Open, and Approve & Build posture.
+- Pass follow-up: `npx eslint src/components/strategic-moves/MovesPhaseStandaloneClient.tsx src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx`
+- Pass follow-up: `npx jest src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx --runInBand`
+- Pass follow-up: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`
+- Pending before follow-up release: release check and diff whitespace check after release-record update.
+- Pending after follow-up deploy: signed-in browser smoke proving P2 Prepare no longer shows the legacy Phase Sessions / Generate Session Pack wall.
 
 ## Rollout Plan
 
@@ -61,8 +68,11 @@ Revert the PR and let the ACA main deploy workflow publish the previous Strategi
 - PR URL: Pending.
 - ACA deployment: Pending.
 - Signed-in browser proof: Pending.
+- Follow-up PR URL: Pending.
+- Follow-up ACA deployment: Pending.
+- Follow-up signed-in browser proof: Pending.
 
 ## Known Gaps
 
-- This does not redesign the full P2-P5 content model or generate richer session packs.
+- This does not redesign the full P2-P5 content model or generate richer session packs; it removes the confusing legacy session wall from the active Prepare tab.
 - File Cabinet review content is made artifact-specific at the header level; deeper packet logic remains governed by the existing review APIs.

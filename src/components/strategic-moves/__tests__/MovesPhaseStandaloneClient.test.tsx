@@ -635,7 +635,7 @@ describe("MovesPhaseStandaloneClient", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("mounts the platform-default phase workspace v2 for P2-P5 instead of the old static prepare cards", () => {
+  it("renders the compact phase command center for P2-P5 instead of the legacy prepare wall", () => {
     render(
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
@@ -649,10 +649,14 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByRole("heading", { name: "Choose the Approach" })).toBeInTheDocument();
     expect(screen.getByText("Files & Evidence")).toBeInTheDocument();
     expect(screen.getByText("Step 1 of 5")).toBeInTheDocument();
-    expect(screen.getByTestId("move-phase-workspace-v2")).toBeInTheDocument();
-    expect(screen.getByText("How to complete this phase")).toBeInTheDocument();
-    expect(screen.getByText("Sessions and templates for this phase")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Use the tabs to finish this phase" })).toBeInTheDocument();
+    expect(screen.getByText("1. Prepare")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Upload files" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Review gate" })).toBeInTheDocument();
     expect(screen.getByText("Solution Options Canvas")).toBeInTheDocument();
+    expect(screen.queryByText("How to complete this phase")).not.toBeInTheDocument();
+    expect(screen.queryByText("Sessions and templates for this phase")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Phase Sessions/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Templates & sessions" })).not.toBeInTheDocument();
     expect(screen.queryByText(/Phase complete/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/To advance to P4/i)).not.toBeInTheDocument();
@@ -674,7 +678,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: /Upload & review/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Review findings/i }));
 
     expect(screen.getByText("Current-state readiness")).toBeInTheDocument();
     expect(screen.getByText(/0% collected/i)).toBeInTheDocument();
@@ -687,66 +691,7 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByText("Process")).toBeInTheDocument();
   });
 
-  it("mounts the facilitated session playbook and generates a phase-scoped session pack", async () => {
-    (global.fetch as jest.Mock).mockImplementation(async (
-      input: RequestInfo | URL,
-      init?: RequestInit,
-    ) => {
-      const url = String(input);
-      if (url.includes("/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/playbook")) {
-        if (init?.method === "POST") {
-          return {
-            ok: true,
-            status: 200,
-            json: async () => ({
-              ok: true,
-              sessionCount: 1,
-              blobStored: true,
-            }),
-          } as Response;
-        }
-        return {
-          ok: true,
-          status: 200,
-          json: async () => ({
-            ok: true,
-            phase: 3,
-            playbook: {
-              phase: 3,
-              label: "P3 Design",
-              intent: "Run the facilitated design sessions.",
-              sessions: [
-                {
-                  id: "solution-options",
-                  label: "Solution options workshop",
-                  objective: "Compare viable solution approaches.",
-                  participants: ["Sponsor", "Architecture", "Operations"],
-                  discussionGuide: ["Compare option A and B."],
-                  frameworks: [
-                    {
-                      id: "tradeoff",
-                      label: "Tradeoff matrix",
-                      purpose: "Make the decision explicit.",
-                      dimensions: ["Value", "Risk"],
-                    },
-                  ],
-                  captureTemplate: ["Recommended option"],
-                  homework: ["Bring constraints."],
-                  gate: {
-                    criterion: "Preferred option is evidence-backed",
-                    alignedBy: "Sponsor",
-                    severity: "hard",
-                  },
-                  feedsDeliverables: ["solution_approach_options"],
-                },
-              ],
-            },
-          }),
-        } as Response;
-      }
-      return { ok: true, status: 200, json: async () => ({ ok: true }) } as Response;
-    });
-
+  it("does not load the legacy facilitated session playbook on the Prepare tab", () => {
     render(
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
@@ -757,28 +702,11 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText(/Phase Sessions · P3 Design/i)).toBeInTheDocument();
-    });
-    expect(screen.getByText("Solution options workshop")).toBeInTheDocument();
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(screen.queryByText(/Phase Sessions · P3 Design/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Generate Session Pack/i })).not.toBeInTheDocument();
+    expect(global.fetch).not.toHaveBeenCalledWith(
       "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/playbook?phase=3",
-      expect.objectContaining({ credentials: "include" }),
-    );
-
-    fireEvent.click(
-      screen.getByRole("button", { name: /Generate Session Pack/i }),
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(/Saved to the File Cabinet/i)).toBeInTheDocument();
-    });
-    expect(global.fetch).toHaveBeenCalledWith(
-      "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/playbook?phase=3",
-      expect.objectContaining({
-        credentials: "include",
-        method: "POST",
-      }),
+      expect.anything(),
     );
   });
 
@@ -818,7 +746,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Add evidence" }));
+    fireEvent.click(screen.getByRole("button", { name: "Upload files" }));
 
     expect(screen.getByRole("heading", { name: "Files & Evidence" })).toBeInTheDocument();
     await waitFor(() => {

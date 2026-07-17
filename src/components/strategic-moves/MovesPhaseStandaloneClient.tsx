@@ -7,21 +7,17 @@ import { extractArtifacts } from "@/lib/agent/artifacts";
 import type { DeliverableContentSignal } from "@/lib/deliverables/deliverable-content-signals";
 import { CurrentStateReadinessPanel } from "@/components/strategic-moves/CurrentStateReadinessPanel";
 import { FileCabinetPanel } from "@/components/strategic-moves/FileCabinetPanel";
-import { MovePhaseWorkspacePanel } from "@/components/strategic-moves/phase-workspace/MovePhaseWorkspacePanel";
 import { PhaseApproveAndBuild } from "@/components/strategic-moves/PhaseApproveAndBuild";
-import { SessionPlaybookPanel } from "@/components/strategic-moves/SessionPlaybookPanel";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
-import type { FeedForwardSignals } from "@/lib/programs/phase-templates/feed-forward";
 import {
   assembleP3SolutionOptions,
   buildP3DesignInputsPackFromSignals,
   type P3OptionSet,
 } from "@/lib/programs/phase-templates/p3-option-assembler";
 import { buildingBlockLabel } from "@/lib/programs/phase-templates/building-blocks";
-import type { PhaseTask } from "@/lib/programs/phase-templates/phase-workflow";
 import { buildNextPhaseReadinessPack } from "@/lib/programs/phase-templates/next-phase-readiness-pack";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
@@ -289,49 +285,6 @@ function nextPhaseFor(phase: PhaseContract): PhaseContract | null {
 
 function phaseWorkspaceLabel(phase: PhaseContract): string {
   return `${phase.code} · ${phase.title}`;
-}
-
-function buildFeedForwardSignals({
-  carriesForwardContent,
-  evidenceNeedPackets,
-  move,
-}: {
-  carriesForwardContent: DeliverableContentSignal[];
-  evidenceNeedPackets: MoveEvidenceNeedPacket[];
-  move: StrategicMove;
-}): FeedForwardSignals {
-  const unsatisfiedEvidence = evidenceNeedPackets.filter(
-    (packet) =>
-      packet.status !== "covered" &&
-      packet.status !== "waived" &&
-      packet.status !== "not_applicable",
-  );
-  const hardGaps = move.gateCriteria
-    .filter((criterion) => !criterion.completed && criterion.severity === "hard")
-    .map((criterion) => criterion.label);
-  const softGaps = move.gateCriteria
-    .filter((criterion) => !criterion.completed && criterion.severity === "soft")
-    .map((criterion) => criterion.label);
-  const snippetsByKey = new Map<string, string[]>();
-  for (const signal of carriesForwardContent) {
-    const snippet = signal.snippet.trim();
-    if (!snippet) continue;
-    const existing = snippetsByKey.get(signal.key) ?? [];
-    snippetsByKey.set(signal.key, [...existing, snippet]);
-  }
-
-  return {
-    hardGaps,
-    softGaps,
-    missingEvidence: unsatisfiedEvidence.map((packet) => packet.evidenceSlot),
-    openGateCriteria: move.gateCriteria
-      .filter((criterion) => !criterion.completed)
-      .map((criterion) => criterion.label),
-    workstreams: snippetsByKey.get("workstreams"),
-    owners: snippetsByKey.get("owners"),
-    metrics: snippetsByKey.get("metrics"),
-    controlConstraints: snippetsByKey.get("decisions"),
-  };
 }
 
 function formatArchetype(value: string | null | undefined): string {
@@ -1143,7 +1096,86 @@ function PhaseBody({
     );
   }
 
-  if (substep === "current" || substep === "findings") {
+  if (substep === "prepare") {
+    if (phase.phase === 1) {
+      return (
+        <>
+          <PhaseCaptureEditor
+            completeCount={phaseCaptureCompleteCount}
+            onChange={onPhaseCaptureValueChange}
+            phase={phase}
+            sections={phaseCaptureSections}
+            values={phaseCaptureValues}
+          />
+          <section className="mxw-zone">
+            <h2>Initial transformation posture</h2>
+            <p>
+              Capture the starting hypothesis for P2 discovery. This is not the
+              selected solution approach; P3 will choose the approach after
+              current-state evidence, constraints, and readiness are proven.
+            </p>
+            <PostureCards selectedOption={selectedOption} onSelectOption={onSelectOption} />
+          </section>
+        </>
+      );
+    }
+
+    if (phase.phase >= 2 && phase.phase <= 5) {
+      const nextPhase = nextPhaseFor(phase);
+
+      return (
+        <PhasePreparePanel
+          evidenceNeedPackets={evidenceNeedPackets}
+          move={move}
+          nextPhaseLabel={nextPhase ? phaseWorkspaceLabel(nextPhase) : "Tower handoff"}
+          onOpenFiles={onOpenFiles}
+          onShowGate={onShowGate}
+          phase={phase}
+          terminalComplete={terminalComplete}
+        />
+      );
+    }
+
+    return (
+      <>
+        <HowToCard />
+        <section className="mxw-zone">
+          <h2>Templates & sessions</h2>
+          <p>
+            Run the workshop with these templates; upload the completed output
+            to record the choice and carry evidence forward.
+          </p>
+          <TemplatesAndSessions phase={phase} />
+        </section>
+      </>
+    );
+  }
+
+  if (substep === "current") {
+    return (
+      <>
+        <DecisionEvidenceActionPanel
+          buttonLabel={`Upload ${phase.code} files`}
+          heading={`Upload and review evidence for ${phase.code}`}
+          moveId={move.id}
+          onOpenFiles={onOpenFiles}
+          phase={phase.phase}
+          title={`${phase.code} Evidence`}
+        />
+        <section className="mxw-zone">
+          <h2>Evidence checklist</h2>
+          <p>
+            Upload the completed workshop outputs, extracts, and source files
+            listed below. The File Cabinet is the source of truth for reviewing
+            and approving them.
+          </p>
+          <EvidenceNeedTable evidenceNeedPackets={evidenceNeedPackets} />
+        </section>
+      </>
+    );
+  }
+
+  if (substep === "findings") {
     return (
       <>
         <section className="mxw-assembly">
@@ -1178,115 +1210,6 @@ function PhaseBody({
               </article>
             ))}
           </div>
-        </section>
-      </>
-    );
-  }
-
-  if (substep === "prepare") {
-    if (phase.phase === 1) {
-      return (
-        <>
-          <PhaseCaptureEditor
-            completeCount={phaseCaptureCompleteCount}
-            onChange={onPhaseCaptureValueChange}
-            phase={phase}
-            sections={phaseCaptureSections}
-            values={phaseCaptureValues}
-          />
-          <section className="mxw-zone">
-            <h2>Initial transformation posture</h2>
-            <p>
-              Capture the starting hypothesis for P2 discovery. This is not the
-              selected solution approach; P3 will choose the approach after
-              current-state evidence, constraints, and readiness are proven.
-            </p>
-            <PostureCards selectedOption={selectedOption} onSelectOption={onSelectOption} />
-          </section>
-        </>
-      );
-    }
-
-    if (phase.phase >= 2 && phase.phase <= 5) {
-      const nextPhase = nextPhaseFor(phase);
-      const onTaskAction = (taskId: PhaseTask["id"]) => {
-        if (taskId === "evidence") {
-          onOpenFiles();
-          return;
-        }
-        onShowGate();
-      };
-
-      return (
-        <>
-          <MovePhaseWorkspacePanel
-            evidence={evidenceNeedPackets.map((packet) => ({
-              priority: packet.priority,
-              status: packet.status,
-            }))}
-            feedForward={buildFeedForwardSignals({
-              carriesForwardContent,
-              evidenceNeedPackets,
-              move,
-            })}
-            gate={move.gateCriteria.map((criterion) => ({
-              completed: criterion.completed,
-              severity: criterion.severity,
-            }))}
-            nextPhaseLabel={
-              nextPhase ? phaseWorkspaceLabel(nextPhase) : "Tower handoff"
-            }
-            onTaskAction={onTaskAction}
-            phaseLabel={phaseWorkspaceLabel(phase)}
-            phaseNum={phase.phase}
-            completed={isHistoricalPhase}
-          />
-          <section className="mxw-zone">
-            <SessionPlaybookPanel
-              moveId={move.id}
-              phase={phase.phase}
-              readOnly={isHistoricalPhase}
-            />
-          </section>
-        </>
-      );
-    }
-
-    return (
-      <>
-        <HowToCard />
-        <section className="mxw-zone">
-          <h2>Templates & sessions</h2>
-          <p>
-            Run the workshop with these templates; upload the completed output
-            to record the choice and carry evidence forward.
-          </p>
-          <TemplatesAndSessions phase={phase} />
-        </section>
-      </>
-    );
-  }
-
-  if (substep === "options") {
-    return (
-      <>
-        <section className="mxw-approach">
-          <div>Assembled from your evidence + readiness - not a blank prompt</div>
-          <h2>Recommended strategy path</h2>
-          <p>
-            The options are scored from the P2 design inputs, readiness gaps,
-            controls, evidence constraints, and solution building blocks. aVa
-            can improve narrative, but the option scores are deterministic.
-          </p>
-        </section>
-        <section className="mxw-zone">
-          <h2>Options & recommendation</h2>
-          <P3OptionSummary optionSet={p3OptionSet} />
-          <OptionCards
-            optionSet={p3OptionSet}
-            selectedOption={selectedOption}
-            onSelectOption={onSelectOption}
-          />
         </section>
       </>
     );
@@ -1341,6 +1264,31 @@ function PhaseBody({
           phase={phase.phase}
           title="Solution Approach Decision Summary"
         />
+      </>
+    );
+  }
+
+  if (substep === "options") {
+    return (
+      <>
+        <section className="mxw-approach">
+          <div>Assembled from your evidence + readiness - not a blank prompt</div>
+          <h2>Recommended strategy path</h2>
+          <p>
+            The options are scored from the P2 design inputs, readiness gaps,
+            controls, evidence constraints, and solution building blocks. aVa
+            can improve narrative, but the option scores are deterministic.
+          </p>
+        </section>
+        <section className="mxw-zone">
+          <h2>Options & recommendation</h2>
+          <P3OptionSummary optionSet={p3OptionSet} />
+          <OptionCards
+            optionSet={p3OptionSet}
+            selectedOption={selectedOption}
+            onSelectOption={onSelectOption}
+          />
+        </section>
       </>
     );
   }
@@ -2102,6 +2050,145 @@ function PhaseWorkflowGuide({
   );
 }
 
+function statusLabel(status: MoveEvidenceNeedPacket["status"]): string {
+  if (status === "covered") return "Covered";
+  if (status === "partial") return "Partial";
+  if (status === "waived") return "Waived";
+  if (status === "not_applicable") return "N/A";
+  return "Missing";
+}
+
+function PhasePreparePanel({
+  evidenceNeedPackets,
+  move,
+  nextPhaseLabel,
+  onOpenFiles,
+  onShowGate,
+  phase,
+  terminalComplete,
+}: {
+  evidenceNeedPackets: MoveEvidenceNeedPacket[];
+  move: StrategicMove;
+  nextPhaseLabel: string;
+  onOpenFiles: () => void;
+  onShowGate: () => void;
+  phase: PhaseContract;
+  terminalComplete: boolean;
+}) {
+  const openHardGateCount = move.gateCriteria.filter(
+    (criterion) => !criterion.completed && criterion.severity === "hard",
+  ).length;
+  const missingEvidenceCount = evidenceNeedPackets.filter(
+    (packet) => packet.status === "missing" || packet.status === "partial",
+  ).length;
+
+  return (
+    <section className="mxw-command" aria-label={`${phase.code} workflow command center`}>
+      <header>
+        <div>
+          <span>{phase.code} command center</span>
+          <h2>{terminalComplete ? "Tower handoff complete" : "Use the tabs to finish this phase"}</h2>
+          <p>
+            {terminalComplete
+              ? "This Move is complete. Tower is now the execution and value-tracking surface."
+              : "Start here to see what the phase needs. Then move across the tabs: upload evidence, review findings, and run Approve & Build."}
+          </p>
+        </div>
+        <strong>{phase.code}</strong>
+      </header>
+      <div className="mxw-command-table">
+        <div>
+          <span>1. Prepare</span>
+          <p>Confirm sessions, templates, and required evidence.</p>
+          <b>Current tab</b>
+        </div>
+        <div>
+          <span>2. Upload & review</span>
+          <p>Add completed workshop files and review them in Files &amp; Evidence.</p>
+          <button onClick={onOpenFiles} type="button">Upload files</button>
+        </div>
+        <div>
+          <span>3. Review findings</span>
+          <p>Inspect what AbarVa can safely claim and what remains a gap.</p>
+          <b>{missingEvidenceCount} evidence gaps</b>
+        </div>
+        <div>
+          <span>4. Approve & Build</span>
+          <p>Run the governed close: context extract, deliverables, gate, and handoff.</p>
+          <button onClick={onShowGate} type="button">Review gate</button>
+        </div>
+      </div>
+      <div className="mxw-command-grid">
+        <article>
+          <span>Recommended sessions</span>
+          <ul>
+            {phase.sessions.map((session) => (
+              <li key={session}>{session}</li>
+            ))}
+          </ul>
+        </article>
+        <article>
+          <span>Templates to complete</span>
+          <ul>
+            {phase.templates.map((template) => (
+              <li key={template.name}>
+                {template.name} <em>{template.type}</em>
+              </li>
+            ))}
+          </ul>
+        </article>
+        <article>
+          <span>Current blockers</span>
+          <ul>
+            <li>{missingEvidenceCount} evidence item{missingEvidenceCount === 1 ? "" : "s"} missing or partial</li>
+            <li>{openHardGateCount} hard gate{openHardGateCount === 1 ? "" : "s"} open</li>
+            <li>Next phase: {nextPhaseLabel}</li>
+          </ul>
+        </article>
+      </div>
+      <EvidenceNeedTable evidenceNeedPackets={evidenceNeedPackets} compact />
+    </section>
+  );
+}
+
+function EvidenceNeedTable({
+  compact = false,
+  evidenceNeedPackets,
+}: {
+  compact?: boolean;
+  evidenceNeedPackets: MoveEvidenceNeedPacket[];
+}) {
+  if (evidenceNeedPackets.length === 0) {
+    return (
+      <div className="mxw-evidence-table empty">
+        No required evidence checklist has been generated for this phase.
+      </div>
+    );
+  }
+
+  return (
+    <div className={`mxw-evidence-table ${compact ? "compact" : ""}`}>
+      <div className="mxw-evidence-row head">
+        <span>Evidence needed</span>
+        <span>Why it matters</span>
+        <span>Status</span>
+      </div>
+      {evidenceNeedPackets.slice(0, compact ? 5 : undefined).map((packet) => (
+        <div className="mxw-evidence-row" key={`${packet.familyId}-${packet.evidenceSlot}`}>
+          <strong>{packet.evidenceSlot}</strong>
+          <p>{packet.whyItMatters}</p>
+          <em className={packet.status}>{statusLabel(packet.status)}</em>
+        </div>
+      ))}
+      {compact && evidenceNeedPackets.length > 5 ? (
+        <div className="mxw-evidence-more">
+          +{evidenceNeedPackets.length - 5} more in Upload &amp; review
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 
 function DecisionEvidenceActionPanel({
   buttonLabel,
@@ -2664,6 +2751,36 @@ function MovesStandaloneStyles() {
 .mxw-template em{width:34px;height:34px;border-radius:8px;background:var(--blue-tint);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:8.5px;font-style:normal;font-weight:700}
 .mxw-template span{font-size:13.5px;font-weight:500;color:var(--ink)}
 .mxw-template small{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
+.mxw-command{border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:var(--shadow);padding:18px;margin-top:18px}
+.mxw-command>header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.mxw-command>header span{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--blue);font-weight:900;margin-bottom:4px}
+.mxw-command>header h2{font-family:Georgia,serif;font-size:22px;line-height:1.15;letter-spacing:-.4px;margin:0;color:var(--ink)}
+.mxw-command>header p{font-size:13px;color:var(--muted);line-height:1.45;margin:5px 0 0;max-width:74ch}
+.mxw-command>header strong{width:44px;height:44px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px}
+.mxw-command-table{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-top:14px}
+.mxw-command-table div{padding:12px;border-right:1px solid var(--line);background:var(--soft);min-height:116px}
+.mxw-command-table div:last-child{border-right:0}
+.mxw-command-table span{display:block;font-size:12px;font-weight:900;color:var(--ink);margin-bottom:6px}
+.mxw-command-table p{font-size:12px;color:var(--muted);line-height:1.4;margin:0 0 10px}
+.mxw-command-table b{display:inline-flex;border-radius:999px;background:var(--blue-tint);color:var(--blue);padding:4px 8px;font-size:10px}
+.mxw-command-table button{border:0;border-radius:8px;background:var(--ink);color:#fff;font-size:11px;font-weight:800;padding:7px 10px;cursor:pointer}
+.mxw-command-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+.mxw-command-grid article{border:1px solid var(--line);border-radius:11px;background:var(--soft);padding:12px}
+.mxw-command-grid span{display:block;font-size:9.5px;letter-spacing:.9px;text-transform:uppercase;color:var(--faint);font-weight:900;margin-bottom:7px}
+.mxw-command-grid ul{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.mxw-command-grid li{font-size:12.5px;color:var(--ink-2);line-height:1.35}
+.mxw-command-grid em{font-style:normal;font-size:10px;color:var(--blue);font-weight:900;margin-left:5px}
+.mxw-evidence-table{border:1px solid var(--line);border-radius:11px;overflow:hidden;background:var(--card);margin-top:14px}
+.mxw-evidence-table.empty{padding:14px;font-size:13px;color:var(--muted)}
+.mxw-evidence-row{display:grid;grid-template-columns:minmax(170px,.8fr) minmax(0,1.4fr) 96px;gap:12px;align-items:center;padding:11px 12px;border-bottom:1px solid var(--line)}
+.mxw-evidence-row:last-child{border-bottom:0}
+.mxw-evidence-row.head{background:var(--soft);font-size:9px;letter-spacing:.9px;text-transform:uppercase;color:var(--faint);font-weight:900}
+.mxw-evidence-row strong{font-size:12.5px;color:var(--ink);line-height:1.3}
+.mxw-evidence-row p{font-size:12px;color:var(--muted);line-height:1.35;margin:0}
+.mxw-evidence-row em{justify-self:start;border-radius:999px;border:1px solid var(--line-2);padding:4px 8px;font-style:normal;font-size:10px;font-weight:900;color:var(--muted)}
+.mxw-evidence-row em.covered,.mxw-evidence-row em.waived,.mxw-evidence-row em.not_applicable{border-color:rgba(29,143,104,.35);background:var(--green-tint);color:var(--green)}
+.mxw-evidence-row em.partial{border-color:rgba(176,115,15,.35);background:var(--amber-tint);color:var(--amber)}
+.mxw-evidence-more{padding:10px 12px;font-size:12px;color:var(--blue);font-weight:800;background:var(--blue-tint)}
 .mxw-assembly,.mxw-approach,.mxw-review,.mxw-gate{border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:var(--shadow);padding:18px 20px;margin-top:20px}
 .mxw-assembly{background:linear-gradient(180deg,#f4fbf9,var(--card) 60%)}
 .mxw-assembly div{display:flex;align-items:center;gap:11px}
