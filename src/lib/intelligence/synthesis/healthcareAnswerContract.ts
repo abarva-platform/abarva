@@ -3,7 +3,7 @@
  *
  * Background
  * ----------
- * Meridian Health (and other Healthcare-vertical tenants) need Sentinel answers
+ * Healthcare-vertical tenants need Sentinel answers
  * that read like a senior healthcare AI-transformation partner: specific,
  * evidence-aware, and decision-grade — not generic AI-strategy prose. This
  * module produces a SYNTHESIS-PROMPT contract (guidance, not a rigid template

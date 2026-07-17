@@ -1074,7 +1074,7 @@ const CXO_ARTIFACT_TOPIC_PATTERNS: Array<{
   },
   {
     label: "Finance and FP&A",
-    pattern: /\b(finance|fp&a|forecast|cash|working capital|close|budget)\b/i,
+    pattern: /\b(finance|fp&a|forecast|cash|working capital|financial close|monthly close|quarterly close|budget)\b/i,
     decisionUse: "Use where forecast accuracy, cycle time, and control requirements are explicit.",
   },
   {
@@ -1149,7 +1149,7 @@ function requestedSummaryTableFromProse(
       segments.find((candidate) => topic.pattern.test(candidate)) ??
       sentences.find((candidate) => topic.pattern.test(candidate));
     if (!segment) return;
-    const read = truncateCell(segment);
+    const read = truncateCell(`${topic.label}: ${segment}`);
     if (usedReads.has(read)) return;
     usedReads.add(read);
     rows.push({
