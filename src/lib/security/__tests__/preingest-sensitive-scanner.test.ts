@@ -31,6 +31,18 @@ describe("pre-ingest sensitive scanner", () => {
     );
   });
 
+  it("does not treat healthcare operations language as a patient identifier", () => {
+    const result = scanPreIngestSensitiveText(
+      "Member service agents review claims status, benefits, eligibility, prior authorization, CRM history, and knowledge-base guidance. No member identifiers are included.",
+    );
+
+    expect(result.suspectedPhi).toBe(false);
+    expect(result.requiresQuarantine).toBe(false);
+    expect(result.findings.map((finding) => finding.ruleId)).not.toContain(
+      "phi.mrn",
+    );
+  });
+
   it("detects SSN and financial identifiers before evidence extraction", () => {
     const result = scanPreIngestSensitiveText(
       "SSN 123-45-6789\nrouting number: 021000021\ncard: 4111 1111 1111 1111",
