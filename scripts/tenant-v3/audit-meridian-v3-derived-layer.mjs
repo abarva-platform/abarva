@@ -95,8 +95,10 @@ const artifacts = {
   entityProfiles: readJson("datasets/tenant-inputs/meridian-health/derived/entity-profiles.json") ?? [],
   relationshipGraph: readJson("datasets/tenant-inputs/meridian-health/derived/relationship-graph.json") ?? { nodes: [], edges: [] },
   contextGaps: readJson("datasets/tenant-inputs/meridian-health/derived/context-gaps.json") ?? [],
+  interviewInsights: readJson("datasets/tenant-inputs/meridian-health/derived/interview-insights.json") ?? [],
   businessUnitMap: readJson("datasets/tenant-inputs/meridian-health/derived/ai-use-case-business-unit-map.json") ?? [],
   homeContext: readJson("datasets/tenant-inputs/meridian-health/derived/module-context/home-context-view.json") ?? {},
+  movesContext: readJson("datasets/tenant-inputs/meridian-health/derived/module-context/moves-context-view.json") ?? {},
   towerView: readJson("datasets/tenant-inputs/meridian-health/derived/module-context/tower-dashboard-view.json") ?? {},
   sa08Posture: readJson("datasets/tenant-inputs/meridian-health/derived/module-context/sa08-benefits-posture.json") ?? {},
   homeStories: readJson("datasets/tenant-inputs/meridian-health/approved-content/home/story-blocks.json") ?? [],
@@ -106,6 +108,11 @@ const artifacts = {
 };
 
 const factIds = new Set(artifacts.canonicalFacts.map((fact) => fact.fact_id));
+const factsByType = artifacts.canonicalFacts.reduce((acc, fact) => {
+  acc[fact.fact_type] ??= [];
+  acc[fact.fact_type].push(fact);
+  return acc;
+}, {});
 const evidenceIds = new Set(artifacts.evidenceRegistry.map((entry) => entry.evidence_id));
 const gapIds = new Set(artifacts.contextGaps.map((gap) => gap.gap_id));
 
@@ -244,7 +251,91 @@ if (scope === "all" || scope === "candidate-ai") {
   }
 }
 
-const scannedFiles = [...listFiles(derivedDir), ...listFiles(approvedDir), ...listFiles(reportDir)].filter((file) => /\.(json|md|html|csv)$/.test(file));
+if (scope === "all" || scope === "interview-insights" || scope === "moves" || scope === "interview-graph") {
+  const interviewFacts = factsByType.interview_context_fact ?? [];
+  if (artifacts.interviewInsights.length !== 221) fail(`Expected 221 interview insights, found ${artifacts.interviewInsights.length}`);
+  if (interviewFacts.length !== 221) fail(`Expected 221 interview_context_fact records, found ${interviewFacts.length}`);
+  if (new Set(interviewFacts.map((fact) => fact.fact_id)).size !== interviewFacts.length) fail("Interview context fact IDs are not unique at row level");
+
+  for (const insight of artifacts.interviewInsights) {
+    for (const field of ["insight_id", "source_record_id", "source_fact_id", "source_fact_type", "stakeholder_role", "interview_group", "evidence_id", "confidence", "allowed_use", "blocked_use", "caveat"]) {
+      if (!insight[field]) fail(`Interview insight ${insight.insight_id ?? "unknown"} missing ${field}`);
+    }
+    if (insight.source_fact_type !== "interview_context_fact") fail(`Interview insight ${insight.insight_id} has wrong source_fact_type ${insight.source_fact_type}`);
+    if (!factIds.has(insight.source_fact_id)) fail(`Interview insight ${insight.insight_id} references missing fact ${insight.source_fact_id}`);
+    if (!evidenceIds.has(insight.evidence_id)) fail(`Interview insight ${insight.insight_id} references missing evidence ${insight.evidence_id}`);
+    if (/funding|realized/i.test(String(insight.allowed_use)) && !/not|blocked|without/i.test(String(insight.allowed_use))) {
+      fail(`Interview insight ${insight.insight_id} allowed_use may imply funding/value creation`);
+    }
+    if (!/funding|realized/i.test(String(insight.blocked_use))) fail(`Interview insight ${insight.insight_id} blocked_use must block funding/value creation`);
+  }
+
+  const interviewEdges = (artifacts.relationshipGraph.edges ?? []).filter((edge) => edge.source_fact_type === "interview_context_fact");
+  const requiredEdgeTypes = new Set(["supports_gate", "identifies_gap", "supports_priority", "informs_metric", "reinforces_risk", "supports_business_outcome", "constrains_scale", "requires_evidence"]);
+  const seenEdgeTypes = new Set(interviewEdges.map((edge) => edge.edge_type || edge.relationship_type));
+  for (const type of requiredEdgeTypes) {
+    if (!seenEdgeTypes.has(type)) fail(`Missing interview graph edge type ${type}`);
+  }
+
+  const candidateUseCaseIds = new Set((artifacts.homeContext.candidate_ai_opportunity_portfolio ?? []).map((row) => row.record_id));
+  const moveCandidateIds = new Set((artifacts.movesContext.candidate_move_opportunities ?? []).map((row) => row.move_candidate_id));
+  const validTarget = (edge) => {
+    const type = edge.target_type || edge.to_object_type;
+    const id = edge.target_id || edge.to_object_id;
+    if (type === "candidate_use_case") return candidateUseCaseIds.has(id);
+    if (type === "move_candidate") return moveCandidateIds.has(id);
+    if (type === "context_gap") return gapIds.has(id);
+    if (type === "evidence_gap") return Boolean(id);
+    if (["metric_fact", "risk_control_fact", "outcome_fact"].includes(type)) return factIds.has(id);
+    return false;
+  };
+
+  for (const edge of interviewEdges) {
+    const edgeType = edge.edge_type || edge.relationship_type;
+    const sourceFactId = edge.source_fact_ids?.[0] || edge.from_object_id;
+    if (!requiredEdgeTypes.has(edgeType)) fail(`Unexpected interview edge type ${edgeType}`);
+    if (!factIds.has(sourceFactId)) fail(`Interview edge ${edge.edge_id} references missing source fact ${sourceFactId}`);
+    if (!validTarget(edge)) fail(`Interview edge ${edge.edge_id} has missing/unresolved target ${edge.target_type}:${edge.target_id}`);
+    if (!evidenceIds.has(edge.evidence_id)) fail(`Interview edge ${edge.edge_id} references missing evidence ${edge.evidence_id}`);
+    for (const field of ["stakeholder_role", "interview_group", "confidence", "rationale", "module_usage", "active_candidate_status", "caveat"]) {
+      if (!edge[field]) fail(`Interview edge ${edge.edge_id} missing ${field}`);
+    }
+    if (/\b(?:approved funding|realized value|funded program)\b/i.test(String(edge.rationale)) && !/not|without|does not|cannot|until/i.test(String(edge.rationale))) {
+      fail(`Interview edge ${edge.edge_id} rationale may create funding/value: ${edge.rationale}`);
+    }
+  }
+
+  if (!artifacts.homeContext.interview_supported_enterprise_priorities?.length) fail("HomeContextView missing interview-supported enterprise priorities");
+  if (!artifacts.homeContext.interview_supported_evidence_gaps?.length) fail("HomeContextView missing interview-supported evidence gaps");
+  if (!artifacts.homeContext.interview_supported_candidate_gates?.length) fail("HomeContextView missing interview-supported candidate gates");
+  if (!artifacts.homeContext.stakeholder_signal_summary?.length) fail("HomeContextView missing stakeholder signal summary");
+  if (!artifacts.homeContext.what_leadership_is_asking_nexus_to_prove_next?.length) fail("HomeContextView missing leadership proof asks");
+
+  if (!artifacts.movesContext.candidate_move_opportunities?.length) fail("MovesContextView missing candidate move opportunities");
+  if (!/not loaded/i.test(String(artifacts.movesContext.caveat ?? ""))) fail("MovesContextView caveat must say artifact is not loaded to runtime");
+  if (!/do not create approved funding|cannot create approved funding/i.test((artifacts.movesContext.rules ?? []).join(" "))) fail("MovesContextView rules must block interview-created funding");
+  for (const candidate of artifacts.movesContext.candidate_move_opportunities ?? []) {
+    if (candidate.status !== "candidate_opportunity_not_funded_program") fail(`Move candidate ${candidate.move_candidate_id} has unsafe status ${candidate.status}`);
+    if (!/does not create approved funding|does not create.*realized value|does not create approved funding, realized value/i.test(String(candidate.boundary))) {
+      fail(`Move candidate ${candidate.move_candidate_id} boundary does not block funding/value creation`);
+    }
+    for (const factId of candidate.source_fact_ids ?? []) if (!factIds.has(factId)) fail(`Move candidate ${candidate.move_candidate_id} references missing source fact ${factId}`);
+    for (const evidenceId of candidate.evidence_ids ?? []) if (!evidenceIds.has(evidenceId)) fail(`Move candidate ${candidate.move_candidate_id} references missing evidence ${evidenceId}`);
+    for (const gapId of candidate.gap_ids ?? []) if (!gapIds.has(gapId)) fail(`Move candidate ${candidate.move_candidate_id} references missing gap ${gapId}`);
+  }
+
+  const supportRows = artifacts.movesContext.candidate_ai_portfolio_interview_support ?? [];
+  const dominantSupport = supportRows.reduce((max, row) => Math.max(max, Number(row.interview_support_count ?? 0)), 0);
+  const totalSupport = supportRows.reduce((sum, row) => sum + Number(row.interview_support_count ?? 0), 0);
+  if (totalSupport > 0 && dominantSupport / totalSupport > 0.45) fail("Single AI use case dominates interview support above 45% threshold");
+  for (const row of supportRows) {
+    if (row.funding_status === "approved" && row.interview_support_count > 0 && !/does not convert candidate funding status/i.test(String(row.boundary))) {
+      fail(`Candidate support row ${row.candidate_use_case_id} does not preserve funding boundary`);
+    }
+  }
+}
+
+const scannedFiles = [...listFiles(derivedDir), ...listFiles(approvedDir), ...listFiles(reportDir), ...listFiles(path.join(repoRoot, "reports/meridian-interview-insight-projection"))].filter((file) => /\.(json|md|html|csv)$/.test(file));
 for (const file of scannedFiles) {
   const text = fs.readFileSync(file, "utf8");
   const rel = path.relative(repoRoot, file);
@@ -278,7 +369,10 @@ const result = {
     canonical_facts: artifacts.canonicalFacts.length,
     entity_profiles: artifacts.entityProfiles.length,
     graph_edges: artifacts.relationshipGraph.edges?.length ?? 0,
+    interview_insights: artifacts.interviewInsights.length,
+    interview_edges: (artifacts.relationshipGraph.edges ?? []).filter((edge) => edge.source_fact_type === "interview_context_fact").length,
     context_gaps: artifacts.contextGaps.length,
+    moves_candidates: artifacts.movesContext.candidate_move_opportunities?.length ?? 0,
     ai_business_unit_mappings: artifacts.businessUnitMap.length,
     home_story_blocks: artifacts.homeStories.length,
     home_visual_specs: artifacts.homeVisuals.length,
