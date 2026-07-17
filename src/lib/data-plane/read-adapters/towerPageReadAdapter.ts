@@ -36,7 +36,7 @@ import { createDefaultSession, type SessionRunner } from './azureSession';
 import { resolveDataPlane } from './resolveDataPlane';
 import type { DataPlane } from './types';
 
-/** A P6 Tower-handoff `engagements` row, exactly as the page consumed it. */
+/** A completed P5 Tower-handoff `engagements` row, exactly as the page consumed it. */
 export interface TowerHandoffProgramRow {
   id: string;
   graph_node_id: string | null;
@@ -93,7 +93,7 @@ export interface TowerPageReadAdapter {
    */
   countByInitiatives(table: string, initiativeIds: ReadonlyArray<string>): Promise<number>;
   /**
-   * Read up to 6 P6 Tower-handoff `engagements` rows for a client.
+   * Read up to 6 completed P5 Tower-handoff `engagements` rows for a client.
    * `allowedIds` is the program-access policy's allow-list: `null` means
    * "no id filter" (caller has full scope). Throws on a read error — the page
    * keeps its own `try/catch` fail-soft wrapper.
@@ -166,7 +166,8 @@ export function createSupabaseTowerPageReadAdapter(
         .from('engagements')
         .select(HANDOFF_PROGRAM_COLUMNS)
         .eq('client_id', clientId)
-        .eq('current_phase', 6)
+        .eq('current_phase', 5)
+        .eq('lifecycle_state', 'completed')
         .is('archived_at', null)
         .is('deleted_at', null)
         .order('updated_at', { ascending: false })
@@ -252,7 +253,8 @@ export function createAzureTowerPageReadAdapter(
         const params: unknown[] = [clientId];
         let sql =
           `SELECT ${HANDOFF_PROGRAM_COLUMNS} FROM engagements
-            WHERE client_id = $1 AND current_phase = 6
+            WHERE client_id = $1 AND current_phase = 5
+              AND lifecycle_state = 'completed'
               AND archived_at IS NULL AND deleted_at IS NULL`;
         if (allowedIds && allowedIds.length > 0) {
           params.push([...allowedIds]);
