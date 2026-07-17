@@ -68,12 +68,32 @@ export interface TowerV3MeridianProof {
 const TOWER_V3_DIMENSIONS: TowerV3TenantInputDimension[] = [
   {
     dimensionKey: "08_spend_value",
-    fileName: "08_spend_value.csv",
-    label: "Spend and value",
+    fileName: "08_it_budget_spend_value.csv",
+    label: "IT budget, spend, and value",
     domain: "metrics_outcomes",
-    primaryLabelFields: ["spend_category", "value_driver", "cost_center_or_owner"],
-    valueFields: ["annual_spend_usd", "savings_opportunity_usd", "spend_category", "value_driver"],
-    gapFields: ["known_gaps", "calculation_basis"],
+    primaryLabelFields: [
+      "business_name",
+      "context_item",
+      "financial_fact_type",
+      "program_code",
+      "initiative_id",
+      "vendor_name",
+      "system_name",
+    ],
+    valueFields: [
+      "budget_amount_usd",
+      "approved_budget_usd",
+      "forecast_spend_usd",
+      "actual_spend_ytd_usd",
+      "run_budget_usd",
+      "change_budget_usd",
+      "planned_value_usd",
+      "target_value_usd",
+      "ai_tagged_budget_usd",
+      "amount_usd",
+      "value_hypothesis",
+    ],
+    gapFields: ["risk_or_gap", "evidence_needed", "caveat", "value_boundary", "forbidden_claims"],
   },
   {
     dimensionKey: "09_programs_initiatives",
@@ -104,12 +124,20 @@ const TOWER_V3_DIMENSIONS: TowerV3TenantInputDimension[] = [
   },
   {
     dimensionKey: "17_service_scope_managed_services",
-    fileName: "17_service_scope_managed_services.csv",
+    fileName: "17_managed_services_scope.csv",
     label: "Service scope and managed services",
     domain: "vendors_contracts",
-    primaryLabelFields: ["service_tower", "service_name", "scope_description"],
-    valueFields: ["run_cost_usd", "service_volume", "sla_or_kpi", "target_state_option"],
-    gapFields: ["known_gaps", "scope_description"],
+    primaryLabelFields: ["vendor_name", "service_tower", "service", "business_name", "context_item"],
+    valueFields: [
+      "annual_contract_value_usd",
+      "run_spend_usd",
+      "change_order_spend_usd",
+      "invoice_amount_ytd_usd",
+      "service_credit_ytd_usd",
+      "service",
+      "linked_systems",
+    ],
+    gapFields: ["contract_risk", "risk_or_gap", "evidence_needed", "caveat", "forbidden_claims"],
   },
   {
     dimensionKey: "18_operational_process_evidence",
@@ -207,11 +235,22 @@ function valueForRow(row: Record<string, string>, dimension: TowerV3TenantInputD
 
 function predicateForRow(row: Record<string, string>, dimension: TowerV3TenantInputDimension): string {
   if (dimension.dimensionKey === "08_spend_value") {
-    if (row.savings_opportunity_usd?.trim()) return "planned_value";
-    if (row.annual_spend_usd?.trim()) return "budget_spend";
+    if (row.realized_value_usd?.trim() && row.realized_value_usd !== "not_provided") return "measured_value";
+    if (row.actual_spend_ytd_usd?.trim() && row.actual_spend_ytd_usd !== "not_provided") return "actual_spend";
+    if (row.planned_value_usd?.trim() && row.planned_value_usd !== "not_provided") return "planned_value";
+    if (row.target_value_usd?.trim() && row.target_value_usd !== "not_provided") return "planned_value";
+    if (row.ai_tagged_budget_usd?.trim() && row.ai_tagged_budget_usd !== "not_provided") return "ai_budget_spend";
+    if (row.budget_amount_usd?.trim() && row.budget_amount_usd !== "not_provided") return "budget_spend";
+    if (row.run_budget_usd?.trim() && row.run_budget_usd !== "not_provided") return "run_budget_spend";
+    if (row.change_budget_usd?.trim() && row.change_budget_usd !== "not_provided") return "change_budget_spend";
     return "measurement_readiness";
   }
   if (dimension.dimensionKey === "09_programs_initiatives") {
+    if (row.planned_value_usd?.trim() && row.planned_value_usd !== "not_provided") return "planned_value";
+    if (row.approved_funding_usd?.trim() && row.approved_funding_usd !== "not_provided") return "budget";
+    if (row.ai_tagged_approved_funding_usd?.trim() && row.ai_tagged_approved_funding_usd !== "not_provided") {
+      return "ai_budget_spend";
+    }
     if (row.expected_value_usd?.trim() && row.expected_value_usd !== "not_provided") return "planned_value";
     if (row.budget_usd?.trim() && row.budget_usd !== "not_provided") return "budget";
     return "portfolio_readiness";

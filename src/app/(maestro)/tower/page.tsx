@@ -10,6 +10,7 @@ import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { applyTowerCxoClaudeStory } from "@/lib/tower/tower-cxo-claude-story";
 import { listTowerBudgetRollupsForClient } from "@/lib/tower/tower-budget-rollups";
 import {
+  isTowerV3ContextRuntimeEnabled,
   isMeridianTowerRuntimeTenant,
 } from "@/lib/tower/tower-v3-runtime-flag";
 import { buildTowerV3RuntimeViewModel } from "@/lib/tower/tower-v3-runtime-view";
@@ -76,6 +77,7 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
     ),
   ]);
   let towerV3RuntimeView =
+    isTowerV3ContextRuntimeEnabled() &&
     (isMeridianTowerRuntimeTenant(client?.key) ||
       isMeridianTowerRuntimeTenant(requestedClient) ||
       isMeridianTowerRuntimeTenant(client?.name))

@@ -6,7 +6,7 @@ synthetic-v-folder-reference,datasets/enterprise-profile-foundation-v1/active-te
 legacy-v-dimension-token,datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv,non-loader historical reference
 legacy-v-file-name,datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv,non-loader historical reference
 v6-v7-current-state,datasets/enterprise-profile-foundation-v1/active-tenants/enterprise_profile_foundation.csv,non-loader historical reference
-v6-v7-current-state,datasets/tenant-inputs/meridian-health/standard-2026-07-v3/13_evidence_sources.csv,non-loader historical reference
+v6-v7-current-state,docs/architecture/V3_DATA_ARCHITECTURE_STATUS_AND_V6V7_SUNSET_2026-07-17.md,non-loader historical reference
 synthetic-v-folder-reference,docs/build/BRAIN_CONTRACT_CODEX_RUNBOOK.md,non-loader historical reference
 synthetic-v-folder-reference,docs/build/CODEX_STREAMS_D_E_F_2026-05-26.md,non-loader historical reference
 synthetic-v-folder-reference,docs/build/data-quality/enterprise-synthetic-data-depth-audit.json,non-loader historical reference
@@ -111,30 +111,6 @@ synthetic-v-folder-reference,docs/skyharbor/AZURE_PRIVATE_LOAD_RUNBOOK.md,non-lo
 synthetic-v-folder-reference,docs/source/SKYHARBOR_DATASET_AND_INGESTION_PLAN.md,non-loader historical reference
 synthetic-v-folder-reference,docs/source/SOURCE_CONTEXT_BUNDLE_TRACE_PROOF_2026-06.md,non-loader historical reference
 synthetic-v-folder-reference,outputs/context-refresh/v4-pack-readiness/volumetric-summary.json,non-loader historical reference
-legacy-v-dimension-token,proof/home-context-boundary-20260706/advisory_ai_usecases.chrome-wrapper.json,non-loader historical reference
-legacy-v-file-name,proof/home-context-boundary-20260706/advisory_ai_usecases.chrome-wrapper.json,non-loader historical reference
-legacy-v-dimension-token,proof/home-context-boundary-20260706/advisory_ai_usecases.chrome.json,non-loader historical reference
-legacy-v-file-name,proof/home-context-boundary-20260706/advisory_ai_usecases.chrome.json,non-loader historical reference
-legacy-v-dimension-token,proof/home-context-boundary-20260706/final_advisory_ai_usecases.json,non-loader historical reference
-legacy-v-file-name,proof/home-context-boundary-20260706/final_advisory_ai_usecases.json,non-loader historical reference
-legacy-v-dimension-token,proof/home-context-boundary-20260706/final_home_context_profile.json,non-loader historical reference
-legacy-v-file-name,proof/home-context-boundary-20260706/final_home_context_profile.json,non-loader historical reference
-legacy-v-dimension-token,proof/home-context-boundary-20260706/final_trivia_uganda.json,non-loader historical reference
-legacy-v-file-name,proof/home-context-boundary-20260706/final_trivia_uganda.json,non-loader historical reference
-legacy-v-dimension-token,proof/home-context-boundary-20260706/home_context_profile.chrome-wrapper.json,non-loader historical reference
-legacy-v-file-name,proof/home-context-boundary-20260706/home_context_profile.chrome-wrapper.json,non-loader historical reference
-legacy-v-dimension-token,proof/home-context-boundary-20260706/home_context_profile.chrome.json,non-loader historical reference
-legacy-v-file-name,proof/home-context-boundary-20260706/home_context_profile.chrome.json,non-loader historical reference
-legacy-v-dimension-token,proof/home-context-boundary-20260706/hotfix_cookie_advisory_ai_usecases.json,non-loader historical reference
-legacy-v-file-name,proof/home-context-boundary-20260706/hotfix_cookie_advisory_ai_usecases.json,non-loader historical reference
-legacy-v-dimension-token,proof/home-context-boundary-20260706/hotfix_cookie_home_context_profile.json,non-loader historical reference
-legacy-v-file-name,proof/home-context-boundary-20260706/hotfix_cookie_home_context_profile.json,non-loader historical reference
-legacy-v-dimension-token,proof/home-context-boundary-20260706/hotfix_cookie_trivia_uganda.json,non-loader historical reference
-legacy-v-file-name,proof/home-context-boundary-20260706/hotfix_cookie_trivia_uganda.json,non-loader historical reference
-legacy-v-dimension-token,proof/home-context-boundary-20260706/trivia_uganda.chrome-wrapper.json,non-loader historical reference
-legacy-v-file-name,proof/home-context-boundary-20260706/trivia_uganda.chrome-wrapper.json,non-loader historical reference
-legacy-v-dimension-token,proof/home-context-boundary-20260706/trivia_uganda.chrome.json,non-loader historical reference
-legacy-v-file-name,proof/home-context-boundary-20260706/trivia_uganda.chrome.json,non-loader historical reference
 legacy-v-dimension-token,proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-SKY-001-prompt-reconstruction.txt,non-loader historical reference
 legacy-v-file-name,proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-SKY-001-prompt-reconstruction.txt,non-loader historical reference
 legacy-v-dimension-token,proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-SKY-002-prompt-reconstruction.txt,non-loader historical reference
@@ -171,9 +147,6 @@ legacy-v-dimension-token,proof/home-intelligence-50q-live-audit/2026-07-06T22-57
 legacy-v-file-name,proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-SKY-017-prompt-reconstruction.txt,non-loader historical reference
 legacy-v-dimension-token,proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-SKY-018-prompt-reconstruction.txt,non-loader historical reference
 legacy-v-file-name,proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-SKY-018-prompt-reconstruction.txt,non-loader historical reference
-legacy-v-pack-label,proof/industrial-cio-backoffice-readiness/01-decision-packet.json,non-loader historical reference
-legacy-v-dimension-token,proof/industrial-cio-backoffice-readiness/01-decision-packet.json,non-loader historical reference
-legacy-v-file-name,proof/industrial-cio-backoffice-readiness/01-decision-packet.json,non-loader historical reference
 synthetic-v-folder-reference,proof/skyharbor-v6-cto-readiness/01-decision-packet.json,non-loader historical reference
 legacy-v-pack-label,proof/skyharbor-v6-cto-readiness/01-decision-packet.json,non-loader historical reference
 legacy-v-dimension-token,proof/skyharbor-v6-cto-readiness/01-decision-packet.json,non-loader historical reference
@@ -209,22 +182,6 @@ synthetic-v-folder-reference,reports/candidate-module-workbench-previews/skyharb
 synthetic-v-folder-reference,reports/candidate-module-workbench-previews/skyharbor/tower-workbench-preview.json,generated/historical report
 legacy-v-dimension-token,reports/candidate-module-workbench-previews/skyharbor/tower-workbench-preview.json,generated/historical report
 legacy-v-file-name,reports/candidate-module-workbench-previews/skyharbor/tower-workbench-preview.json,generated/historical report
-archive-path-reference,reports/candidate-version-build/latest/candidate-read-model-samples.json,generated/historical report
-legacy-v-dimension-token,reports/candidate-version-build/latest/candidate-read-model-samples.json,generated/historical report
-legacy-v-file-name,reports/candidate-version-build/latest/candidate-read-model-samples.json,generated/historical report
-rich-enterprise-pack,reports/candidate-version-build/latest/candidate-read-model-samples.json,generated/historical report
-rich-substrate-pack,reports/candidate-version-build/latest/candidate-read-model-samples.json,generated/historical report
-archive-path-reference,reports/candidate-version-build/latest/meridian-candidate-preview.json,generated/historical report
-legacy-v-dimension-token,reports/candidate-version-build/latest/meridian-candidate-preview.json,generated/historical report
-legacy-v-file-name,reports/candidate-version-build/latest/meridian-candidate-preview.json,generated/historical report
-rich-enterprise-pack,reports/candidate-version-build/latest/meridian-candidate-preview.json,generated/historical report
-archive-path-reference,reports/candidate-version-build/latest/skyharbor-candidate-preview.json,generated/historical report
-rich-substrate-pack,reports/candidate-version-build/latest/skyharbor-candidate-preview.json,generated/historical report
-archive-path-reference,reports/candidate-version-build/latest/tenant-candidate-versions.json,generated/historical report
-legacy-v-dimension-token,reports/candidate-version-build/latest/tenant-candidate-versions.json,generated/historical report
-legacy-v-file-name,reports/candidate-version-build/latest/tenant-candidate-versions.json,generated/historical report
-rich-enterprise-pack,reports/candidate-version-build/latest/tenant-candidate-versions.json,generated/historical report
-rich-substrate-pack,reports/candidate-version-build/latest/tenant-candidate-versions.json,generated/historical report
 archive-path-reference,reports/canonical-data-build/latest/source-path-enforcement.json,generated/historical report
 legacy-v-dimension-token,reports/data-layer-design/active-input-file-inventory.json,generated/historical report
 legacy-v-file-name,reports/data-layer-design/active-input-file-inventory.json,generated/historical report
@@ -238,29 +195,8 @@ current-state-pack,reports/data-layer-design/active-input-file-inventory.md,gene
 rich-enterprise-pack,reports/data-layer-design/active-input-file-inventory.md,generated/historical report
 rich-substrate-pack,reports/data-layer-design/active-input-file-inventory.md,generated/historical report
 upgrade-candidate-pack,reports/data-layer-design/active-input-file-inventory.md,generated/historical report
-synthetic-v-folder-reference,reports/data-quality/manifest-projection/latest/full-audit.json,generated/historical report
-legacy-v-dimension-token,reports/data-quality/manifest-projection/latest/full-audit.json,generated/historical report
-legacy-v-file-name,reports/data-quality/manifest-projection/latest/full-audit.json,generated/historical report
-v6-v7-current-state,reports/data-quality/manifest-projection/latest/full-audit.json,generated/historical report
-synthetic-v-folder-reference,reports/data-quality/manifest-projection/latest/source-projection-lineage.json,generated/historical report
-legacy-v-dimension-token,reports/data-quality/manifest-projection/latest/source-projection-lineage.json,generated/historical report
-legacy-v-file-name,reports/data-quality/manifest-projection/latest/source-projection-lineage.json,generated/historical report
-v6-v7-current-state,reports/data-quality/manifest-projection/latest/source-projection-lineage.json,generated/historical report
-synthetic-v-folder-reference,reports/data-quality/manifest-projection/latest/summary.md,generated/historical report
-legacy-v-dimension-token,reports/data-quality/manifest-projection/latest/summary.md,generated/historical report
-legacy-v-file-name,reports/data-quality/manifest-projection/latest/summary.md,generated/historical report
-synthetic-v-folder-reference,reports/data-quality/manifest-projection/latest/transformed-template-usage.json,generated/historical report
-legacy-v-dimension-token,reports/data-quality/manifest-projection/latest/transformed-template-usage.json,generated/historical report
-legacy-v-file-name,reports/data-quality/manifest-projection/latest/transformed-template-usage.json,generated/historical report
-v6-v7-current-state,reports/data-quality/manifest-projection/latest/transformed-template-usage.json,generated/historical report
-synthetic-v-folder-reference,reports/data-remediation/skyharbor-applications/latest/candidate-preview-summary.json,generated/historical report
-legacy-v-dimension-token,reports/data-remediation/skyharbor-applications/latest/candidate-preview-summary.json,generated/historical report
-legacy-v-file-name,reports/data-remediation/skyharbor-applications/latest/candidate-preview-summary.json,generated/historical report
 synthetic-v-folder-reference,reports/data-remediation/skyharbor-applications/latest/canonical-records-summary.json,generated/historical report
 synthetic-v-folder-reference,reports/data-remediation/skyharbor-applications/latest/manifest-update.json,generated/historical report
-synthetic-v-folder-reference,reports/data-remediation/skyharbor-applications/latest/source-selection.json,generated/historical report
-legacy-v-dimension-token,reports/data-remediation/skyharbor-applications/latest/source-selection.json,generated/historical report
-legacy-v-file-name,reports/data-remediation/skyharbor-applications/latest/source-selection.json,generated/historical report
 synthetic-v-folder-reference,reports/data-remediation/skyharbor-applications/latest/summary.md,generated/historical report
 synthetic-v-folder-reference,reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv,generated/historical report
 legacy-v-dimension-token,reports/data-standard/legacy-purge/remaining-allowed-legacy-references.csv,generated/historical report
@@ -274,7 +210,6 @@ archive-path-reference,reports/data-standard/legacy-purge/summary.json,generated
 synthetic-v-folder-reference,reports/data-standard/legacy-purge/summary.json,generated/historical report
 archive-path-reference,reports/data-standard/legacy-purge/summary.md,generated/historical report
 synthetic-v-folder-reference,reports/data-standard/legacy-purge/summary.md,generated/historical report
-current-state-pack,reports/demo-readiness/meridian-data-state/legacy-leakage-audit.csv,generated/historical report
 current-state-pack,reports/demo-readiness/meridian-data-state/source-inventory.csv,generated/historical report
 synthetic-v-folder-reference,reports/enterprise-profile-foundation/latest/canonical-profile-records.json,generated/historical report
 legacy-v-dimension-token,reports/enterprise-profile-foundation/latest/canonical-profile-records.json,generated/historical report
@@ -292,41 +227,14 @@ synthetic-v-folder-reference,reports/enterprise-profile-foundation/latest/source
 legacy-v-dimension-token,reports/enterprise-profile-foundation/latest/source-lineage.json,generated/historical report
 legacy-v-file-name,reports/enterprise-profile-foundation/latest/source-lineage.json,generated/historical report
 v6-v7-current-state,reports/enterprise-profile-foundation/latest/source-lineage.json,generated/historical report
-legacy-v-dimension-token,reports/home-summary-snapshot/latest/home-module-context-snapshots.json,generated/historical report
-legacy-v-file-name,reports/home-summary-snapshot/latest/home-module-context-snapshots.json,generated/historical report
-rich-substrate-pack,reports/home-summary-snapshot/latest/home-module-context-snapshots.json,generated/historical report
-upgrade-candidate-pack,reports/home-summary-snapshot/latest/home-module-context-snapshots.json,generated/historical report
 legacy-v-dimension-token,reports/home-summary-snapshot/latest/home-summary-snapshots.json,generated/historical report
 legacy-v-file-name,reports/home-summary-snapshot/latest/home-summary-snapshots.json,generated/historical report
 rich-substrate-pack,reports/home-summary-snapshot/latest/home-summary-snapshots.json,generated/historical report
 upgrade-candidate-pack,reports/home-summary-snapshot/latest/home-summary-snapshots.json,generated/historical report
-legacy-v-dimension-token,reports/home-summary-snapshot/latest/lineage.json,generated/historical report
-legacy-v-file-name,reports/home-summary-snapshot/latest/lineage.json,generated/historical report
-rich-substrate-pack,reports/home-summary-snapshot/latest/lineage.json,generated/historical report
-upgrade-candidate-pack,reports/home-summary-snapshot/latest/lineage.json,generated/historical report
 legacy-v-dimension-token,reports/home-summary-snapshot/latest/skyharbor-module-context-snapshot.json,generated/historical report
 legacy-v-file-name,reports/home-summary-snapshot/latest/skyharbor-module-context-snapshot.json,generated/historical report
 rich-substrate-pack,reports/home-summary-snapshot/latest/skyharbor-module-context-snapshot.json,generated/historical report
 upgrade-candidate-pack,reports/home-summary-snapshot/latest/skyharbor-module-context-snapshot.json,generated/historical report
-legacy-v-dimension-token,reports/home-summary-snapshot/latest/skyharbor-snapshot.json,generated/historical report
-legacy-v-file-name,reports/home-summary-snapshot/latest/skyharbor-snapshot.json,generated/historical report
-rich-substrate-pack,reports/home-summary-snapshot/latest/skyharbor-snapshot.json,generated/historical report
-upgrade-candidate-pack,reports/home-summary-snapshot/latest/skyharbor-snapshot.json,generated/historical report
-synthetic-v-folder-reference,reports/home-v6-critical-gap-report-final-2026-06-29/file-gaps.csv,generated/historical report
-legacy-v-dimension-token,reports/home-v6-critical-gap-report-final-2026-06-29/file-gaps.csv,generated/historical report
-legacy-v-file-name,reports/home-v6-critical-gap-report-final-2026-06-29/file-gaps.csv,generated/historical report
-synthetic-v-folder-reference,reports/home-v6-critical-gap-report-final-2026-06-29/file-gaps.json,generated/historical report
-legacy-v-dimension-token,reports/home-v6-critical-gap-report-final-2026-06-29/file-gaps.json,generated/historical report
-legacy-v-file-name,reports/home-v6-critical-gap-report-final-2026-06-29/file-gaps.json,generated/historical report
-synthetic-v-folder-reference,reports/home-v6-critical-gap-report-final-2026-06-29/readme.md,generated/historical report
-legacy-v-dimension-token,reports/home-v6-critical-gap-report-final-2026-06-29/readme.md,generated/historical report
-legacy-v-file-name,reports/home-v6-critical-gap-report-final-2026-06-29/readme.md,generated/historical report
-synthetic-v-folder-reference,reports/home-v6-critical-gap-report-final-2026-06-29/summary.json,generated/historical report
-legacy-v-dimension-token,reports/home-v6-critical-gap-report-final-2026-06-29/summary.json,generated/historical report
-legacy-v-file-name,reports/home-v6-critical-gap-report-final-2026-06-29/summary.json,generated/historical report
-synthetic-v-folder-reference,reports/home-v6-projection-final-2026-06-29/projected-question-results.json,generated/historical report
-synthetic-v-folder-reference,reports/home-v6-projection-final-2026-06-29/readme.md,generated/historical report
-synthetic-v-folder-reference,reports/home-v6-projection-final-2026-06-29/summary.json,generated/historical report
 synthetic-v-folder-reference,reports/legacy-context-retirement/inventory.csv,generated/historical report
 legacy-v-dimension-token,reports/legacy-context-retirement/inventory.csv,generated/historical report
 v6-v7-current-state,reports/legacy-context-retirement/inventory.csv,generated/historical report
@@ -337,6 +245,7 @@ synthetic-v-folder-reference,reports/live-refresh-preflight-20260627/first-capit
 synthetic-v-folder-reference,reports/live-refresh-preflight-20260627/lakeshore-holdings.preflight.json,generated/historical report
 synthetic-v-folder-reference,reports/live-refresh-preflight-20260627/meridian-health.preflight.json,generated/historical report
 synthetic-v-folder-reference,reports/live-refresh-preflight-20260627/skyharbor-air.preflight.json,generated/historical report
+v6-v7-current-state,reports/meridian-v3-runtime-reachability/approved-content-paths.csv,generated/historical report
 synthetic-v-folder-reference,reports/module-readiness-proof/skyharbor/module-readiness-proof.json,generated/historical report
 legacy-v-dimension-token,reports/module-readiness-proof/skyharbor/module-readiness-proof.json,generated/historical report
 legacy-v-file-name,reports/module-readiness-proof/skyharbor/module-readiness-proof.json,generated/historical report
@@ -349,9 +258,6 @@ synthetic-v-folder-reference,reports/tenant-candidate-generation/all-tenant-elig
 v6-v7-current-state,reports/tenant-candidate-generation/all-tenant-eligibility-matrix.csv,generated/historical report
 synthetic-v-folder-reference,reports/tenant-candidate-generation/all-tenant-eligibility-matrix.json,generated/historical report
 v6-v7-current-state,reports/tenant-candidate-generation/all-tenant-eligibility-matrix.json,generated/historical report
-synthetic-v-folder-reference,reports/tenant-candidate-generation/skyharbor/packet/sources/evidence-registry.csv,generated/historical report
-legacy-v-dimension-token,reports/tenant-candidate-generation/skyharbor/packet/sources/evidence-registry.csv,generated/historical report
-legacy-v-file-name,reports/tenant-candidate-generation/skyharbor/packet/sources/evidence-registry.csv,generated/historical report
 archive-path-reference,reports/tenant-input-consolidation/latest/applications-systems-full-source-to-loaded.csv,generated/historical report
 legacy-v-dimension-token,reports/tenant-input-consolidation/latest/applications-systems-full-source-to-loaded.csv,generated/historical report
 legacy-v-file-name,reports/tenant-input-consolidation/latest/applications-systems-full-source-to-loaded.csv,generated/historical report
@@ -359,23 +265,6 @@ current-state-pack,reports/tenant-input-consolidation/latest/applications-system
 rich-enterprise-pack,reports/tenant-input-consolidation/latest/applications-systems-full-source-to-loaded.csv,generated/historical report
 rich-substrate-pack,reports/tenant-input-consolidation/latest/applications-systems-full-source-to-loaded.csv,generated/historical report
 upgrade-candidate-pack,reports/tenant-input-consolidation/latest/applications-systems-full-source-to-loaded.csv,generated/historical report
-archive-path-reference,reports/tenant-input-consolidation/latest/before-after-domain-counts.json,generated/historical report
-legacy-v-dimension-token,reports/tenant-input-consolidation/latest/before-after-domain-counts.json,generated/historical report
-legacy-v-file-name,reports/tenant-input-consolidation/latest/before-after-domain-counts.json,generated/historical report
-current-state-pack,reports/tenant-input-consolidation/latest/before-after-domain-counts.json,generated/historical report
-rich-enterprise-pack,reports/tenant-input-consolidation/latest/before-after-domain-counts.json,generated/historical report
-archive-path-reference,reports/tenant-input-consolidation/latest/before-after-file-inventory.json,generated/historical report
-legacy-v-dimension-token,reports/tenant-input-consolidation/latest/before-after-file-inventory.json,generated/historical report
-legacy-v-file-name,reports/tenant-input-consolidation/latest/before-after-file-inventory.json,generated/historical report
-current-state-pack,reports/tenant-input-consolidation/latest/before-after-file-inventory.json,generated/historical report
-rich-enterprise-pack,reports/tenant-input-consolidation/latest/before-after-file-inventory.json,generated/historical report
-rich-substrate-pack,reports/tenant-input-consolidation/latest/before-after-file-inventory.json,generated/historical report
-upgrade-candidate-pack,reports/tenant-input-consolidation/latest/before-after-file-inventory.json,generated/historical report
-archive-path-reference,reports/tenant-input-consolidation/latest/candidate-build-after-consolidation.json,generated/historical report
-legacy-v-dimension-token,reports/tenant-input-consolidation/latest/candidate-build-after-consolidation.json,generated/historical report
-legacy-v-file-name,reports/tenant-input-consolidation/latest/candidate-build-after-consolidation.json,generated/historical report
-rich-enterprise-pack,reports/tenant-input-consolidation/latest/candidate-build-after-consolidation.json,generated/historical report
-rich-substrate-pack,reports/tenant-input-consolidation/latest/candidate-build-after-consolidation.json,generated/historical report
 archive-path-reference,reports/tenant-input-consolidation/latest/conflict-resolution-report.json,generated/historical report
 legacy-v-pack-label,reports/tenant-input-consolidation/latest/conflict-resolution-report.json,generated/historical report
 legacy-v-dimension-token,reports/tenant-input-consolidation/latest/conflict-resolution-report.json,generated/historical report
@@ -414,6 +303,10 @@ legacy-v-file-name,reports/v4-v5-dataset-refresh-20260627/download-supplements-i
 synthetic-v-folder-reference,reports/v4-v5-dataset-refresh-20260627/file-volumetrics.csv,generated/historical report
 synthetic-v-folder-reference,reports/v4-v5-dataset-refresh-20260627/REPAIR_CHANGELOG.csv,generated/historical report
 synthetic-v-folder-reference,reports/v4-v5-dataset-refresh-20260627/validation.generated.json,generated/historical report
+v6-v7-current-state,reports/v6-v7-sunset/blocked-delete-candidates.csv,generated/historical report
+legacy-v-dimension-token,reports/v6-v7-sunset/dependency-map.json,generated/historical report
+v6-v7-current-state,reports/v6-v7-sunset/dependency-map.json,generated/historical report
+v6-v7-current-state,reports/v6-v7-sunset/replacement-required.csv,generated/historical report
 synthetic-v-folder-reference,scripts/audit/build-data-intelligence-redesign-report.mjs,non-loader historical reference
 legacy-v-dimension-token,scripts/audit/build-data-intelligence-redesign-report.mjs,non-loader historical reference
 legacy-v-file-name,scripts/audit/build-data-intelligence-redesign-report.mjs,non-loader historical reference
@@ -508,6 +401,8 @@ synthetic-v-folder-reference,scripts/skyharbor/stages/07_verify/coverage_report.
 synthetic-v-folder-reference,scripts/skyharbor/stages/07_verify/fact_fingerprint_check.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/skyharbor/verify-airline-pattern-overlay.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/skyharbor/verify-skyharbor-substrate.mjs,non-loader historical reference
+v6-v7-current-state,scripts/tenant-v3/audit-home-v3-runtime-reachability.ts,non-loader historical reference
+v6-v7-current-state,scripts/tenant-v3/configs/meridian-health.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/tower/tower-data-trust-gate.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/verify-retired-tenant-references.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/verify/apex-data-pack-scaffold.mjs,non-loader historical reference
@@ -522,7 +417,6 @@ synthetic-v-folder-reference,src/components/home/__tests__/HomeSurface.test.tsx,
 legacy-v-dimension-token,src/components/home/__tests__/HomeSurface.test.tsx,non-loader historical reference
 legacy-v-file-name,src/components/home/__tests__/HomeSurface.test.tsx,non-loader historical reference
 legacy-v-dimension-token,src/components/home/HomeSurface.tsx,non-loader historical reference
-legacy-v-dimension-token,src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx,non-loader historical reference
 synthetic-v-folder-reference,src/lib/__tests__/control-plane-tenant-purity.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/admin/tenant-manifest-projection-audit.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/admin/tenant-manifest-projection-audit.ts,non-loader historical reference

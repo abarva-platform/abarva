@@ -1,138 +1,138 @@
 {
-  "candidateVersionId": "candidate:meridian-health:5698b1a4c532",
+  "candidateVersionId": "candidate:meridian-health:7af66450ac65",
   "tenantId": "meridian-health",
   "tenantKey": "meridian-health",
   "tenantDisplayName": "Meridian Health",
   "sourceBuildId": "canonical-data-build:c6dba401db07",
   "sourceBuildFingerprint": "c6dba401db07e9a280869e59714a3c2374221cdf73c91843b1ef7b235b18c5a5",
-  "inputFingerprint": "e93617c424621fc54a61cb41ee8e924ddade2a0eab57c62d1be834b22ccdf09c",
-  "canonicalRecordCount": 1066,
-  "evidenceAttachmentCount": 1066,
-  "relationshipCandidateCount": 1662,
+  "inputFingerprint": "820757f7630232cea355e954f48fedc5f5f19258056553f0af6b5c63b20470ee",
+  "canonicalRecordCount": 3759,
+  "evidenceAttachmentCount": 3759,
+  "relationshipCandidateCount": 173,
   "domainCounts": [
     {
       "domain": "enterprise_profile",
       "sourceRows": 2,
       "acceptedRecords": 2,
       "skippedRows": 0,
-      "duplicateNames": 0
+      "duplicateNames": 1
     },
     {
       "domain": "business_functions",
-      "sourceRows": 30,
-      "acceptedRecords": 30,
+      "sourceRows": 228,
+      "acceptedRecords": 228,
       "skippedRows": 0,
       "duplicateNames": 0
     },
     {
       "domain": "org_ownership",
-      "sourceRows": 57,
-      "acceptedRecords": 57,
+      "sourceRows": 228,
+      "acceptedRecords": 228,
       "skippedRows": 0,
-      "duplicateNames": 1
+      "duplicateNames": 0
     },
     {
       "domain": "workforce_roles",
-      "sourceRows": 26,
-      "acceptedRecords": 26,
+      "sourceRows": 221,
+      "acceptedRecords": 221,
       "skippedRows": 0,
-      "duplicateNames": 6
+      "duplicateNames": 0
     },
     {
       "domain": "applications_systems",
-      "sourceRows": 116,
-      "acceptedRecords": 116,
+      "sourceRows": 241,
+      "acceptedRecords": 241,
       "skippedRows": 0,
       "duplicateNames": 0
     },
     {
       "domain": "data_assets_integrations",
-      "sourceRows": 147,
-      "acceptedRecords": 147,
+      "sourceRows": 242,
+      "acceptedRecords": 242,
       "skippedRows": 0,
-      "duplicateNames": 36
+      "duplicateNames": 0
     },
     {
       "domain": "infrastructure_platforms",
-      "sourceRows": 4,
-      "acceptedRecords": 0,
-      "skippedRows": 4,
+      "sourceRows": 15,
+      "acceptedRecords": 15,
+      "skippedRows": 0,
       "duplicateNames": 0
     },
     {
       "domain": "vendors_contracts",
-      "sourceRows": 109,
-      "acceptedRecords": 109,
+      "sourceRows": 231,
+      "acceptedRecords": 231,
       "skippedRows": 0,
-      "duplicateNames": 11
+      "duplicateNames": 0
     },
     {
       "domain": "spend_value",
-      "sourceRows": 24,
-      "acceptedRecords": 20,
-      "skippedRows": 4,
+      "sourceRows": 298,
+      "acceptedRecords": 298,
+      "skippedRows": 0,
       "duplicateNames": 0
     },
     {
       "domain": "programs_initiatives",
-      "sourceRows": 86,
-      "acceptedRecords": 86,
+      "sourceRows": 256,
+      "acceptedRecords": 256,
       "skippedRows": 0,
       "duplicateNames": 0
     },
     {
       "domain": "ai_automation_use_cases",
-      "sourceRows": 63,
-      "acceptedRecords": 63,
+      "sourceRows": 251,
+      "acceptedRecords": 251,
       "skippedRows": 0,
-      "duplicateNames": 0
+      "duplicateNames": 19
     },
     {
       "domain": "risks_controls",
-      "sourceRows": 172,
-      "acceptedRecords": 172,
+      "sourceRows": 249,
+      "acceptedRecords": 249,
       "skippedRows": 0,
       "duplicateNames": 0
     },
     {
       "domain": "relationships",
-      "sourceRows": 85,
-      "acceptedRecords": 0,
-      "skippedRows": 85,
+      "sourceRows": 298,
+      "acceptedRecords": 298,
+      "skippedRows": 0,
       "duplicateNames": 0
     },
     {
       "domain": "evidence_sources",
-      "sourceRows": 4,
-      "acceptedRecords": 4,
+      "sourceRows": 500,
+      "acceptedRecords": 500,
       "skippedRows": 0,
-      "duplicateNames": 3
+      "duplicateNames": 5
     },
     {
       "domain": "metrics_outcomes",
-      "sourceRows": 116,
-      "acceptedRecords": 116,
+      "sourceRows": 257,
+      "acceptedRecords": 257,
       "skippedRows": 0,
       "duplicateNames": 0
     },
     {
       "domain": "industry_context_patterns",
-      "sourceRows": 108,
-      "acceptedRecords": 106,
-      "skippedRows": 2,
+      "sourceRows": 7,
+      "acceptedRecords": 7,
+      "skippedRows": 0,
       "duplicateNames": 0
     },
     {
       "domain": "expert_lenses",
-      "sourceRows": 15,
-      "acceptedRecords": 10,
-      "skippedRows": 5,
+      "sourceRows": 7,
+      "acceptedRecords": 7,
+      "skippedRows": 0,
       "duplicateNames": 0
     },
     {
       "domain": "service_scope_managed_services",
-      "sourceRows": 2,
-      "acceptedRecords": 2,
+      "sourceRows": 228,
+      "acceptedRecords": 228,
       "skippedRows": 0,
       "duplicateNames": 0
     },
@@ -182,13 +182,13 @@
       "id": "source-lineage-present",
       "label": "Source lineage present for accepted records",
       "status": "pass",
-      "detail": "1066 accepted records checked for lineage."
+      "detail": "3759 accepted records checked for lineage."
     },
     {
       "id": "evidence-attached",
       "label": "Evidence attached to accepted records",
       "status": "pass",
-      "detail": "1066 evidence attachments for 1066 accepted records; 0 records without evidence."
+      "detail": "3759 evidence attachments for 3759 accepted records; 0 records without evidence."
     },
     {
       "id": "tenant-isolation",
@@ -200,7 +200,7 @@
       "id": "relationship-candidates",
       "label": "Relationship candidate generation",
       "status": "pass",
-      "detail": "1662 relationship candidates generated."
+      "detail": "173 relationship candidates generated."
     },
     {
       "id": "home-ava-readiness-artifact",
@@ -216,145 +216,166 @@
     }
   ],
   "promotionBlockers": [],
-  "generatedAt": "2026-07-14T15:50:19.110Z",
+  "generatedAt": "2026-07-17T11:49:02.663Z",
   "status": "inactive",
   "creationStatus": "created",
   "mode": "candidate_preview",
   "previewBanner": "Candidate Preview Mode - inactive candidate data. Not active tenant truth.",
   "sourceSnapshotIds": [
-    "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv@92f1002bc114",
-    "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv@7b820626adfb",
-    "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv@ef068ec4082b",
-    "datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv@285066c9c60b",
-    "datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv@9174ca26def1",
-    "datasets/tenant-inputs/active/meridian-health/current/05_data_assets_integrations.csv@e1c364e5fece",
-    "datasets/tenant-inputs/active/meridian-health/current/06_infrastructure_platforms.csv@09e5c7030bf2",
-    "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv@45dd5205d6ad",
-    "datasets/tenant-inputs/active/meridian-health/current/08_spend_value.csv@cbfc78572541",
-    "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv@cabeafa172bb",
-    "datasets/tenant-inputs/active/meridian-health/current/10_ai_automation_use_cases.csv@f1b906ed9209",
-    "datasets/tenant-inputs/active/meridian-health/current/11_risks_controls.csv@3b15b296d6d0",
-    "datasets/tenant-inputs/active/meridian-health/current/12_relationships.csv@aa5c7d25aab6",
-    "datasets/tenant-inputs/active/meridian-health/current/13_evidence_sources.csv@ecfe9000a59b",
-    "datasets/tenant-inputs/active/meridian-health/current/14_metrics_outcomes.csv@84de54ace705",
-    "datasets/tenant-inputs/active/meridian-health/current/15_industry_context_patterns.csv@98b9fbadf589",
-    "datasets/tenant-inputs/active/meridian-health/current/16_expert_lenses.csv@d7f5599e4d6b",
-    "datasets/tenant-inputs/active/meridian-health/current/17_service_scope_managed_services.csv@9ca80f834382",
-    "datasets/tenant-inputs/active/meridian-health/current/18_operational_process_evidence.csv@80b748f26119"
+    "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv@fe87be92ac7f",
+    "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv@9738f285fe0c",
+    "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv@fc7548ad6559",
+    "datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv@c3a64ab3d2c0",
+    "datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv@df1a3b53e5f6",
+    "datasets/tenant-inputs/active/meridian-health/current/05_data_assets_integrations.csv@95d0cca5ec09",
+    "datasets/tenant-inputs/active/meridian-health/current/06_infrastructure_platforms.csv@2dabafed9eaf",
+    "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv@75efa51e1f37",
+    "datasets/tenant-inputs/active/meridian-health/current/08_it_budget_spend_value.csv@e30ede2647d2",
+    "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv@88c8d3462875",
+    "datasets/tenant-inputs/active/meridian-health/current/10_ai_automation_use_cases.csv@19afcc955748",
+    "datasets/tenant-inputs/active/meridian-health/current/11_risks_controls.csv@bdc2c4954583",
+    "datasets/tenant-inputs/active/meridian-health/current/12_relationships.csv@22a84209eeb6",
+    "datasets/tenant-inputs/active/meridian-health/current/13_evidence_sources.csv@06497bf60dbe",
+    "datasets/tenant-inputs/active/meridian-health/current/14_metrics_outcomes.csv@61c04cad6ffe",
+    "datasets/tenant-inputs/active/meridian-health/current/15_industry_context_patterns.csv@72072e255081",
+    "datasets/tenant-inputs/active/meridian-health/current/16_expert_lenses.csv@b67b53ce016e",
+    "datasets/tenant-inputs/active/meridian-health/current/17_managed_services_scope.csv@246a62c72d95",
+    "datasets/tenant-inputs/active/meridian-health/current/18_operational_process_evidence.csv@c47fbd84032c",
+    "datasets/tenant-inputs/active/meridian-health/current/SA02_IT_Finance_Budget_Spend_Extract.csv@90b9f6425501",
+    "datasets/tenant-inputs/active/meridian-health/current/SA04_Program_Portfolio_Extract.csv@0320901d7f53",
+    "datasets/tenant-inputs/active/meridian-health/current/SA08_AI_Benefits_Realization_Usage_Ledger.csv@bc69f953f419"
   ],
   "sourceLineage": [
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/00_enterprise_profile.csv",
-      "fingerprint": "92f1002bc114b2c34f01d543f2f69954a060b7d1c79f8d048d744818a897b6e5",
+      "fingerprint": "fe87be92ac7f08b05c700cc2129fe5bffddb40ed8fe0b3710055dfc14656f677",
       "rowCount": 2,
       "domain": "enterprise_profile"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
-      "fingerprint": "7b820626adfb615b5a18d05a0d43881a9c3375127970ba091a0e5343669524c2",
-      "rowCount": 30,
+      "fingerprint": "9738f285fe0c99c4241a2ca7f682649e313e7a06573137861a6a17c777f1168e",
+      "rowCount": 228,
       "domain": "business_functions"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/02_org_ownership.csv",
-      "fingerprint": "ef068ec4082b1438a8a516e9b604f100fc174336b3cc95f3735a34a9ab940fe3",
-      "rowCount": 57,
+      "fingerprint": "fc7548ad655928b32c272ae4679b2b535510e9af546562ecbd7265d894b98cf9",
+      "rowCount": 228,
       "domain": "org_ownership"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/03_workforce_roles.csv",
-      "fingerprint": "285066c9c60b2dcdbfe7e3ea7e56021c87284377f7346d57161f8e921182a2cf",
-      "rowCount": 26,
+      "fingerprint": "c3a64ab3d2c030bd07741aab0fabbdd9b331e6e3135e3f47e8c6af4e274d1f76",
+      "rowCount": 221,
       "domain": "workforce_roles"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/04_applications_systems.csv",
-      "fingerprint": "9174ca26def1db3f2fd173eac048f8e9c3e81cd77624934ea0ba1cef20be9854",
-      "rowCount": 116,
+      "fingerprint": "df1a3b53e5f652fff6ae62389fa32a46a1916cd2ad4f02449243096820d03996",
+      "rowCount": 241,
       "domain": "applications_systems"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/05_data_assets_integrations.csv",
-      "fingerprint": "e1c364e5fece332170170c257fa58b3b8fb00641e8d755f9c1ab9bf54943ac47",
-      "rowCount": 147,
+      "fingerprint": "95d0cca5ec09cbf4df86f6526eb772a6ede94907690d59d0ff8567a283fb6752",
+      "rowCount": 242,
       "domain": "data_assets_integrations"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/06_infrastructure_platforms.csv",
-      "fingerprint": "09e5c7030bf2ca3096e298d4ae4f469dbc654c7c9cf9685525bb8767236a2526",
-      "rowCount": 4,
+      "fingerprint": "2dabafed9eafb477033d3c46f7641846125179ee4df1f33aca9626b79abc0652",
+      "rowCount": 15,
       "domain": "infrastructure_platforms"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/07_vendors_contracts.csv",
-      "fingerprint": "45dd5205d6ad8f2c143e3de5b604f4f048b436d5484b8e2e04daa566bb8a567d",
-      "rowCount": 109,
+      "fingerprint": "75efa51e1f3796206bcd98e5bec99fc852f057b2902bae76e72c2d1957f128a8",
+      "rowCount": 231,
       "domain": "vendors_contracts"
     },
     {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/08_spend_value.csv",
-      "fingerprint": "cbfc78572541cc83c570d012a5d3885b4ffb6430ae438e21c065718eb2c8be50",
-      "rowCount": 24,
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/08_it_budget_spend_value.csv",
+      "fingerprint": "e30ede2647d29cc68bfd3dd53a89b9bcd063eb5ec6aa617cb07448c39686dedf",
+      "rowCount": 298,
       "domain": "spend_value"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/09_programs_initiatives.csv",
-      "fingerprint": "cabeafa172bbe1909df75ef9f5507304dc746df62b546472bd2089a0ea6ca1a2",
-      "rowCount": 86,
+      "fingerprint": "88c8d3462875b6d27091f200f1e1b1cc8cde1c9bede1be50d0cf7cb853145929",
+      "rowCount": 256,
       "domain": "programs_initiatives"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/10_ai_automation_use_cases.csv",
-      "fingerprint": "f1b906ed9209035c41f25d1495c3bb45ee9ab238df38d575abe96253e99bc4a5",
-      "rowCount": 63,
+      "fingerprint": "19afcc955748f5148451ac250f59e8e734043c297d865b57d55d90c938596a59",
+      "rowCount": 251,
       "domain": "ai_automation_use_cases"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/11_risks_controls.csv",
-      "fingerprint": "3b15b296d6d01e73a2f0b4d95da52707b1b8922ceae9369a638a686b12644d01",
-      "rowCount": 172,
+      "fingerprint": "bdc2c4954583e87af3397edf0c2a0c2365b5dbf0095ffce4376daa21cd95a754",
+      "rowCount": 249,
       "domain": "risks_controls"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/12_relationships.csv",
-      "fingerprint": "aa5c7d25aab659c6016e2b127d6e5f731028396d3c118a2c2feab4953c823355",
-      "rowCount": 85,
+      "fingerprint": "22a84209eeb67e54a5c95f4626221a0a2ce6500feba0240f62bc2d07455afade",
+      "rowCount": 298,
       "domain": "relationships"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/13_evidence_sources.csv",
-      "fingerprint": "ecfe9000a59b047b180b05932ab2dc063df0fdaf78b0b7e71277a359b301addd",
-      "rowCount": 4,
+      "fingerprint": "06497bf60dbe892183a33f9eb6a65c8750f396e66479ece3ddd2e8f96dcd0139",
+      "rowCount": 500,
       "domain": "evidence_sources"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/14_metrics_outcomes.csv",
-      "fingerprint": "84de54ace705c4ba82168c2f5277e1aee1c95d2e436b158aaa119dfdceb20ee3",
-      "rowCount": 116,
+      "fingerprint": "61c04cad6ffe995c9ac6fe8d43c12ca4b6e4d927205c66f1baeb9b97ac40cec9",
+      "rowCount": 257,
       "domain": "metrics_outcomes"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/15_industry_context_patterns.csv",
-      "fingerprint": "98b9fbadf589c4e5b6afd37b3619b14bf911a43d845abfbe66d3828171da2b06",
-      "rowCount": 108,
+      "fingerprint": "72072e25508104856b1075ced8304f6be4e04bc58f10237fb78cbb7357c39bf8",
+      "rowCount": 7,
       "domain": "industry_context_patterns"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/16_expert_lenses.csv",
-      "fingerprint": "d7f5599e4d6b9e89a8dda933484a8048d24fe15347f76be67f12742fd697eaca",
-      "rowCount": 15,
+      "fingerprint": "b67b53ce016e6f99270d00f766b2adf8aaec10885820016fa8ed8d466a4773a1",
+      "rowCount": 7,
       "domain": "expert_lenses"
     },
     {
-      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/17_service_scope_managed_services.csv",
-      "fingerprint": "9ca80f834382666ffaaa7d85120837aa833a2006d1fb469eb723c514289e22f9",
-      "rowCount": 2,
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/17_managed_services_scope.csv",
+      "fingerprint": "246a62c72d958e841d79a1cfd538bb85be72a37fcd5d9b4b6ef71e206cb06192",
+      "rowCount": 228,
       "domain": "service_scope_managed_services"
     },
     {
       "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/18_operational_process_evidence.csv",
-      "fingerprint": "80b748f26119f94309f4b2bb7cd0658b597fada43ba9c38e5c08758411513cdf",
-      "rowCount": 10,
+      "fingerprint": "c47fbd84032cd20ba4ebec566db18bd9cdf492561806647f2c6c09b7ee032db5",
+      "rowCount": 228,
+      "domain": null
+    },
+    {
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/SA02_IT_Finance_Budget_Spend_Extract.csv",
+      "fingerprint": "90b9f6425501d697a89f9205150da4395698face50a2896e579eabe8bf9658f5",
+      "rowCount": 70,
+      "domain": null
+    },
+    {
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/SA04_Program_Portfolio_Extract.csv",
+      "fingerprint": "0320901d7f539714815ea12915e187d0adbd54bdd249a0b952ca069ed90b973a",
+      "rowCount": 14,
+      "domain": null
+    },
+    {
+      "sourcePath": "datasets/tenant-inputs/active/meridian-health/current/SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+      "fingerprint": "bc69f953f419625713708762bddd28792baf06bb0605519280c21a3874b3c76e",
+      "rowCount": 8,
       "domain": null
     }
   ],
@@ -364,10 +385,8 @@
     "evidenceReady": true,
     "relationshipReady": true,
     "caveats": [
-      "infrastructure_platforms below depth by 16 rows.",
-      "relationships below depth by 15 rows.",
-      "evidence_sources below depth by 16 rows.",
-      "service_scope_managed_services below depth by 8 rows.",
+      "infrastructure_platforms below depth by 5 rows.",
+      "industry_context_patterns below depth by 3 rows.",
       "operational_process_evidence below depth by 10 rows."
     ],
     "canAnswer": [
@@ -388,229 +407,229 @@
     {
       "domain": "unknown",
       "objectType": "tenant_profile",
-      "sourceObjectId": "enterprise_profile:meridian_health_system:2",
-      "displayName": "enterprise_profile:meridian_health_system:2",
+      "sourceObjectId": "enterprise_profile:meridian_health:2",
+      "displayName": "enterprise_profile:meridian_health:2",
       "evidenceKeys": [
         "meridian-health:current-universal:00_enterprise_profile.csv:2"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "entityName": "Meridian Health System",
-        "industry": "Healthcare",
-        "subIndustry": "Integrated delivery network and health plan",
-        "headquarters": "Sacramento, CA",
-        "operatingRegions": "[\"Sacramento, CA\",\"Northern California service area\",\"Central California service area\",\"Nevada service area\"]",
-        "businessModel": "Medium-to-large health organization with clinical delivery, health-plan operations, finance, and analytics modernization needs.",
-        "customerSegments": "[\"patients\",\"members\",\"providers\",\"employer groups\",\"clinical operations leaders\",\"health-plan operations teams\"]"
+        "recordId": "MER-V3-0001",
+        "entityId": "MER-HS",
+        "businessName": "Meridian Health System",
+        "contextItem": "Meridian Health System",
+        "dimension": "00_enterprise_profile",
+        "evidenceId": "MER-V3-EVID-0001",
+        "activeCandidateStatus": "active"
       }
     },
     {
       "domain": "unknown",
       "objectType": "tenant_profile",
-      "sourceObjectId": "enterprise_profile:healthcare_demo:3",
-      "displayName": "enterprise_profile:healthcare_demo:3",
+      "sourceObjectId": "enterprise_profile:meridian_health:3",
+      "displayName": "enterprise_profile:meridian_health:3",
       "evidenceKeys": [
         "meridian-health:current-universal:00_enterprise_profile.csv:3"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "entityName": "Healthcare Demo",
-        "industry": "Healthcare",
-        "subIndustry": "Sutter-scale regional provider with Kaiser/Humana-style payer/services complexity",
-        "revenueUsd": 39600000000,
-        "employeeCount": 88000,
-        "businessModel": "enterprise operating model",
-        "customerSegments": "[\"patients\",\"members\",\"providers\",\"employer groups\",\"clinical operations leaders\",\"health-plan operations teams\"]"
+        "recordId": "MER-V3-0002",
+        "entityId": "MER-HS",
+        "businessName": "Meridian Health System profile sizing and operating-model planning assumptions",
+        "contextItem": "Meridian Health System profile sizing and operating-model planning assumptions",
+        "dimension": "00_enterprise_profile",
+        "evidenceId": "MER-V3-EVID-0500",
+        "activeCandidateStatus": "active"
       }
     },
     {
       "domain": "unknown",
       "objectType": "business_function",
-      "sourceObjectId": "business_functions:enterprise_data_and_analytics:2",
-      "displayName": "business_functions:enterprise_data_and_analytics:2",
+      "sourceObjectId": "business_functions:mer_v3_0001:2",
+      "displayName": "business_functions:mer_v3_0001:2",
       "evidenceKeys": [
         "meridian-health:current-universal:01_business_functions.csv:2"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "functionName": "Enterprise Data and Analytics",
-        "executiveOwner": "CDAO",
-        "businessCapabilities": "[\"data intake\",\"data product certification\",\"dashboard modernization\",\"analytics demand management\"]",
-        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
-        "sourceDate": "2026-07-09",
-        "confidence": "medium",
-        "knownGaps": "[\"Synthetic PHI-free planning-grade substrate\",\"not real Meridian production data.\",\"AWS Databricks aspiration is not proof that the platform foundation is complete.\",\"No certified medallion architecture is loaded.\",\"No platform, network, or security foundation evidence is loaded.\",\"No formal data governance operating model is loaded.\",\"Do not convert planning hypotheses into realized ROI or audited clinical/financial claims.\"]"
+        "recordId": "MER-V3-0001",
+        "entityId": "MER-HS",
+        "businessName": "Enterprise Data and Analytics",
+        "contextItem": "Enterprise Data and Analytics",
+        "dimension": "01_business_functions",
+        "evidenceId": "MER-V3-EVID-0002",
+        "activeCandidateStatus": "active"
       }
     },
     {
       "domain": "unknown",
       "objectType": "business_function",
-      "sourceObjectId": "business_functions:clinical_operations:3",
-      "displayName": "business_functions:clinical_operations:3",
+      "sourceObjectId": "business_functions:mer_v3_0002:3",
+      "displayName": "business_functions:mer_v3_0002:3",
       "evidenceKeys": [
         "meridian-health:current-universal:01_business_functions.csv:3"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "functionName": "Clinical Operations",
-        "executiveOwner": "CMO",
-        "businessCapabilities": "[\"clinical documentation\",\"care management\",\"longitudinal patient view\"]",
-        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
-        "sourceDate": "2026-07-09",
-        "confidence": "medium",
-        "knownGaps": "[\"Synthetic PHI-free planning-grade substrate\",\"not real Meridian production data.\",\"AWS Databricks aspiration is not proof that the platform foundation is complete.\",\"No certified medallion architecture is loaded.\",\"No platform, network, or security foundation evidence is loaded.\",\"No formal data governance operating model is loaded.\",\"Do not convert planning hypotheses into realized ROI or audited clinical/financial claims.\"]"
+        "recordId": "MER-V3-0002",
+        "entityId": "MER-HS",
+        "businessName": "Clinical Operations",
+        "contextItem": "Clinical Operations",
+        "dimension": "01_business_functions",
+        "evidenceId": "MER-V3-EVID-0003",
+        "activeCandidateStatus": "active"
       }
     },
     {
       "domain": "unknown",
       "objectType": "business_function",
-      "sourceObjectId": "business_functions:health_plan_operations:4",
-      "displayName": "business_functions:health_plan_operations:4",
+      "sourceObjectId": "business_functions:mer_v3_0003:4",
+      "displayName": "business_functions:mer_v3_0003:4",
       "evidenceKeys": [
         "meridian-health:current-universal:01_business_functions.csv:4"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "functionName": "Health Plan Operations",
-        "executiveOwner": "Chief Health Plan Officer",
-        "businessCapabilities": "[\"prior authorization\",\"utilization management\",\"claims operations\",\"member support\"]",
-        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
-        "sourceDate": "2026-06-18",
-        "confidence": "medium",
-        "originalSourceFile": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv"
+        "recordId": "MER-V3-0003",
+        "entityId": "MER-HS",
+        "businessName": "Health Plan Operations",
+        "contextItem": "Health Plan Operations",
+        "dimension": "01_business_functions",
+        "evidenceId": "MER-V3-EVID-0004",
+        "activeCandidateStatus": "active"
       }
     },
     {
       "domain": "unknown",
       "objectType": "business_function",
-      "sourceObjectId": "business_functions:quality_and_provider_performance:5",
-      "displayName": "business_functions:quality_and_provider_performance:5",
+      "sourceObjectId": "business_functions:mer_v3_0004:5",
+      "displayName": "business_functions:mer_v3_0004:5",
       "evidenceKeys": [
         "meridian-health:current-universal:01_business_functions.csv:5"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "functionName": "Quality and Provider Performance",
-        "executiveOwner": "VP Quality",
-        "businessCapabilities": "[\"measure logic\",\"provider attribution\",\"care gap analytics\"]",
-        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
-        "sourceDate": "2026-07-09",
-        "confidence": "medium",
-        "knownGaps": "[\"Synthetic PHI-free planning-grade substrate\",\"not real Meridian production data.\",\"AWS Databricks aspiration is not proof that the platform foundation is complete.\",\"No certified medallion architecture is loaded.\",\"No platform, network, or security foundation evidence is loaded.\",\"No formal data governance operating model is loaded.\",\"Do not convert planning hypotheses into realized ROI or audited clinical/financial claims.\"]"
+        "recordId": "MER-V3-0004",
+        "entityId": "MER-HS",
+        "businessName": "Quality and Provider Performance",
+        "contextItem": "Quality and Provider Performance",
+        "dimension": "01_business_functions",
+        "evidenceId": "MER-V3-EVID-0005",
+        "activeCandidateStatus": "active"
       }
     },
     {
       "domain": "unknown",
       "objectType": "business_function",
-      "sourceObjectId": "business_functions:finance_and_actuarial:6",
-      "displayName": "business_functions:finance_and_actuarial:6",
+      "sourceObjectId": "business_functions:mer_v3_0005:6",
+      "displayName": "business_functions:mer_v3_0005:6",
       "evidenceKeys": [
         "meridian-health:current-universal:01_business_functions.csv:6"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "functionName": "Finance and Actuarial",
-        "executiveOwner": "CFO",
-        "businessCapabilities": "[\"financial reporting\",\"cost transparency\",\"payment integrity\",\"close automation\"]",
-        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
-        "sourceDate": "2026-06-18",
-        "confidence": "medium",
-        "originalSourceFile": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv"
+        "recordId": "MER-V3-0005",
+        "entityId": "MER-HS",
+        "businessName": "Finance and Actuarial",
+        "contextItem": "Finance and Actuarial",
+        "dimension": "01_business_functions",
+        "evidenceId": "MER-V3-EVID-0006",
+        "activeCandidateStatus": "candidate"
       }
     },
     {
       "domain": "unknown",
       "objectType": "business_function",
-      "sourceObjectId": "business_functions:contact_center_and_member_experience:7",
-      "displayName": "business_functions:contact_center_and_member_experience:7",
+      "sourceObjectId": "business_functions:mer_v3_0006:7",
+      "displayName": "business_functions:mer_v3_0006:7",
       "evidenceKeys": [
         "meridian-health:current-universal:01_business_functions.csv:7"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "functionName": "Contact Center and Member Experience",
-        "executiveOwner": "Chief Experience Officer",
-        "businessCapabilities": "[\"call handling\",\"CRM case management\",\"next-best-action workflows\"]",
-        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
-        "sourceDate": "2026-07-09",
-        "confidence": "medium",
-        "knownGaps": "[\"Synthetic PHI-free planning-grade substrate\",\"not real Meridian production data.\",\"AWS Databricks aspiration is not proof that the platform foundation is complete.\",\"No certified medallion architecture is loaded.\",\"No platform, network, or security foundation evidence is loaded.\",\"No formal data governance operating model is loaded.\",\"Do not convert planning hypotheses into realized ROI or audited clinical/financial claims.\"]"
+        "recordId": "MER-V3-0006",
+        "entityId": "MER-HS",
+        "businessName": "Contact Center and Member Experience",
+        "contextItem": "Contact Center and Member Experience",
+        "dimension": "01_business_functions",
+        "evidenceId": "MER-V3-EVID-0007",
+        "activeCandidateStatus": "active"
       }
     },
     {
       "domain": "unknown",
       "objectType": "business_function",
-      "sourceObjectId": "business_functions:technology_platform_and_security:8",
-      "displayName": "business_functions:technology_platform_and_security:8",
+      "sourceObjectId": "business_functions:mer_v3_0007:8",
+      "displayName": "business_functions:mer_v3_0007:8",
       "evidenceKeys": [
         "meridian-health:current-universal:01_business_functions.csv:8"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "functionName": "Technology Platform and Security",
-        "executiveOwner": "CDIO",
-        "businessCapabilities": "[\"AWS landing zone\",\"Databricks foundation\",\"network/security controls\",\"interface operations\"]",
-        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
-        "sourceDate": "2026-07-09",
-        "confidence": "medium",
-        "knownGaps": "[\"Synthetic PHI-free planning-grade substrate\",\"not real Meridian production data.\",\"AWS Databricks aspiration is not proof that the platform foundation is complete.\",\"No certified medallion architecture is loaded.\",\"No platform, network, or security foundation evidence is loaded.\",\"No formal data governance operating model is loaded.\",\"Do not convert planning hypotheses into realized ROI or audited clinical/financial claims.\"]"
+        "recordId": "MER-V3-0007",
+        "entityId": "MER-HS",
+        "businessName": "Technology Platform and Security",
+        "contextItem": "Technology Platform and Security",
+        "dimension": "01_business_functions",
+        "evidenceId": "MER-V3-EVID-0008",
+        "activeCandidateStatus": "active"
       }
     },
     {
       "domain": "unknown",
       "objectType": "business_function",
-      "sourceObjectId": "business_functions:ambulatory_and_primary_care:9",
-      "displayName": "business_functions:ambulatory_and_primary_care:9",
+      "sourceObjectId": "business_functions:mer_sa07_01_business_functions_0001:9",
+      "displayName": "business_functions:mer_sa07_01_business_functions_0001:9",
       "evidenceKeys": [
         "meridian-health:current-universal:01_business_functions.csv:9"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "functionName": "Ambulatory and Primary Care",
-        "executiveOwner": "Chief Medical Officer",
-        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
-        "sourceDate": "2026-06-18",
-        "confidence": "medium",
-        "originalSourceFile": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv",
-        "originalPacket": "rich-enterprise-pack"
+        "recordId": "MER-SA07-01_BUSINESS_FUNCTIONS-0001",
+        "entityId": "MER-HS",
+        "businessName": "CEO / Enterprise Strategy: Unified clinical + claims lakehouse",
+        "contextItem": "CEO / Enterprise Strategy says Unified clinical + claims lakehouse is promising, but strategy is not decision-grade until Epic Clarity evidence closes: No certified medallion architecture. The team wants Nexus to preserve this as context, not produce sourcing-event outputs yet.",
+        "dimension": "01_business_functions",
+        "evidenceId": "MER-SA07-INT-EVID-0001",
+        "activeCandidateStatus": "candidate"
       }
     },
     {
       "domain": "unknown",
       "objectType": "business_function",
-      "sourceObjectId": "business_functions:hospital_operations:10",
-      "displayName": "business_functions:hospital_operations:10",
+      "sourceObjectId": "business_functions:mer_sa07_01_business_functions_0002:10",
+      "displayName": "business_functions:mer_sa07_01_business_functions_0002:10",
       "evidenceKeys": [
         "meridian-health:current-universal:01_business_functions.csv:10"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "functionName": "Hospital Operations",
-        "executiveOwner": "Chief Operating Officer",
-        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
-        "sourceDate": "2026-06-18",
-        "confidence": "medium",
-        "originalSourceFile": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv",
-        "originalPacket": "rich-enterprise-pack"
+        "recordId": "MER-SA07-01_BUSINESS_FUNCTIONS-0002",
+        "entityId": "MER-HS",
+        "businessName": "CEO / Enterprise Strategy: Governed data foundation for AI / LLM automation",
+        "contextItem": "CEO / Enterprise Strategy says Governed data foundation for AI / LLM automation is promising, but operating model is not decision-grade until SQL Server reporting marts evidence closes: No certified semantic layer. The team wants Nexus to preserve this as context, not produce sourcing-event outputs yet.",
+        "dimension": "01_business_functions",
+        "evidenceId": "MER-SA07-INT-EVID-0002",
+        "activeCandidateStatus": "candidate"
       }
     },
     {
       "domain": "unknown",
       "objectType": "business_function",
-      "sourceObjectId": "business_functions:pharmacy_services:11",
-      "displayName": "business_functions:pharmacy_services:11",
+      "sourceObjectId": "business_functions:mer_sa07_01_business_functions_0003:11",
+      "displayName": "business_functions:mer_sa07_01_business_functions_0003:11",
       "evidenceKeys": [
         "meridian-health:current-universal:01_business_functions.csv:11"
       ],
       "attributes": {
         "tenantKey": "meridian-health",
-        "functionName": "Pharmacy Services",
-        "executiveOwner": "Chief Pharmacy Officer",
-        "sourceFile": "datasets/tenant-inputs/active/meridian-health/current/01_business_functions.csv",
-        "sourceDate": "2026-06-18",
-        "confidence": "medium",
-        "originalSourceFile": "datasets/tenant-inputs/archive/meridian-health/consolidated-20260714/rich-enterprise-pack/templates/V6_02_business_functions.csv",
-        "originalPacket": "rich-enterprise-pack"
+        "recordId": "MER-SA07-01_BUSINESS_FUNCTIONS-0003",
+        "entityId": "MER-HS",
+        "businessName": "CEO / Enterprise Strategy: Call center optimization",
+        "contextItem": "CEO / Enterprise Strategy says Call center optimization is promising, but vendor is not decision-grade until Claims administration platform evidence closes: Intent taxonomy not certified. The team wants Nexus to preserve this as context, not produce sourcing-event outputs yet.",
+        "dimension": "01_business_functions",
+        "evidenceId": "MER-SA07-INT-EVID-0003",
+        "activeCandidateStatus": "candidate"
       }
     }
   ],
