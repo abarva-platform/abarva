@@ -2668,7 +2668,7 @@ function TowerValueFunnel({
     {
       label: "Claimable value allowed",
       card: realizedAllowed,
-      note: "Booked/claimable outcome value gate",
+      note: "Claimable outcome value gate",
       tone: T.RED,
     },
   ];
@@ -2681,8 +2681,8 @@ function TowerValueFunnel({
       >
         <p style={{ margin: "0 0 18px", color: T.INK_2, lineHeight: 1.55 }}>
           Tower separates funded work, promised value, measured evidence, and
-          realized value. The purpose is to stop a business case from becoming
-          a savings claim before finance evidence exists.
+          claimable value. The purpose is to stop a business case from becoming
+          a savings claim before finance evidence clears the gate.
         </p>
         <div style={{ display: "grid", gap: 12 }}>
           {tiers.map((tier) => {
@@ -3684,11 +3684,17 @@ function TowerMartLaneSummary({ rows }: { rows: ReadonlyArray<TowerMartProgramLa
 
 function TowerMartValueFunnel({ model }: { model: TowerMartCommandViewModel }) {
   const promised = model.command.promisedValueFy26 || 1;
+  const normalizeValueProofCopy = (value: string) =>
+    value
+      .replace(/realized value/gi, "claimable value")
+      .replace(/realized savings/gi, "claimable savings")
+      .replace(/do not call claimable savings/gi, "do not call savings claimable")
+      .replace(/booked to P&L/gi, "booked to P&L yet");
   return (
     <CioPanel eyebrow="Funding vs. value proof" title="Value Proof Funnel">
       <p style={{ margin: "0 0 18px", color: T.INK_2, lineHeight: 1.55 }}>
         Tower keeps the CFO line clean: funded change spend, promised value,
-        partial finance validation, and realized value are separate stages.
+        partial finance validation, and claimable value are separate stages.
       </p>
       <div style={{ display: "grid", gap: 12 }}>
         {model.valueFunnel.map((stage) => {
@@ -3712,7 +3718,7 @@ function TowerMartValueFunnel({ model }: { model: TowerMartCommandViewModel }) {
               <div>
                 <div style={{ fontWeight: 900 }}>{stage.stageLabel}</div>
                 <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 2 }}>
-                  {stage.claimStatus} · {stage.caveat}
+                  {stage.claimStatus} · {normalizeValueProofCopy(stage.caveat)}
                 </div>
               </div>
               <div
@@ -3915,7 +3921,7 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
     {
       tone: "fix",
       title: "Value is still a hypothesis.",
-      body: `${formatMoneyGap(command.partialFinanceValidatedValueYtd)} is finance-validated against ${formatMoneyGap(command.promisedValueFy26)} promised; realized value remains ${formatMoneyGap(command.realizedValueYtdAllowed)} until claim gates pass.`,
+      body: `${formatMoneyGap(command.partialFinanceValidatedValueYtd)} is finance-validated against ${formatMoneyGap(command.promisedValueFy26)} promised; claimable value stays ${formatMoneyGap(command.realizedValueYtdAllowed)} until gates pass.`,
     },
     {
       tone: "freeze",
@@ -4039,7 +4045,7 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
               <TowerMartCompactCard
                 label="Claimable value gate"
                 value="Gated"
-                detail="Not yet claimable — no value booked to P&L"
+                detail="No value can be booked to P&L yet"
                 tone="gated"
               />
             </div>
@@ -4724,7 +4730,7 @@ function TowerMartValueFunnelDesign({ model }: { model: TowerMartCommandViewMode
           Of <b>{formatMoneyGap(model.command.promisedValueFy26)}</b> promised,
           only <b>{martRatioText(measuredPct)}</b> is finance-validated.{" "}
           <b>{formatMoneyGap(model.command.realizedValueYtdAllowed)}</b> is
-          claimable as realized value under the current gate.
+          claimable under the current value gate.
         </div>
       </section>
     </>
@@ -4771,7 +4777,7 @@ function TowerMartDecisionLanesDesign({ rows }: { rows: ReadonlyArray<TowerMartP
         value evidence, usage evidence, and claim status. Missing fields become
         blockers, not substitutions.
       </p>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
         {lanes.map(([lane, label, definition]) => {
           const laneRows = rows.filter((row) => row.decisionLane === lane);
           const tone = martLaneTone(lane);
@@ -4782,32 +4788,36 @@ function TowerMartDecisionLanesDesign({ rows }: { rows: ReadonlyArray<TowerMartP
                 border: `1px solid ${T.RULE_STRONG}`,
                 borderRadius: 18,
                 background: tone.bg,
-                padding: 18,
-                minHeight: 300,
+                padding: 14,
+                minHeight: 0,
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
                 <div>
-                  <h3 style={{ margin: 0, fontFamily: T.SERIF, fontSize: 25 }}>{label}</h3>
-                  <p style={{ margin: "4px 0 0", color: T.INK_2, fontSize: 13 }}>{definition}</p>
+                  <h3 style={{ margin: 0, fontFamily: T.SERIF, fontSize: 23 }}>{label}</h3>
+                  <p style={{ margin: "4px 0 0", color: T.INK_2, fontSize: 12.5, lineHeight: 1.35 }}>{definition}</p>
                 </div>
-                <span style={{ color: tone.fg, fontWeight: 950 }}>{laneRows.length} program{laneRows.length === 1 ? "" : "s"}</span>
+                <span style={{ color: tone.fg, fontWeight: 950, whiteSpace: "nowrap" }}>{laneRows.length}</span>
               </div>
-              <div style={{ display: "grid", gap: 10, marginTop: 15 }}>
-                {laneRows.length > 0 ? laneRows.slice(0, 5).map((row) => (
-                  <div key={row.laneKey} style={{ border: `1px solid ${T.RULE}`, borderRadius: 13, background: "rgba(255,255,255,.82)", padding: 13 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-                      <strong>{row.programName}</strong>
-                      <span style={{ color: tone.fg, fontWeight: 900 }}>{formatMoneyGap(row.approvedFundingUsd)}</span>
+              <div style={{ display: "grid", gap: 8, marginTop: 13 }}>
+                {laneRows.length > 0 ? laneRows.slice(0, 4).map((row) => (
+                  <div key={row.laneKey} style={{ border: `1px solid ${T.RULE}`, borderRadius: 12, background: "rgba(255,255,255,.86)", padding: 10 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" }}>
+                      <strong style={{ fontSize: 13.5, lineHeight: 1.2 }}>{row.programName}</strong>
+                      <span style={{ color: tone.fg, fontWeight: 900, fontSize: 13, whiteSpace: "nowrap" }}>{formatMoneyGap(row.approvedFundingUsd)}</span>
                     </div>
-                    <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 4 }}>
+                    <div style={{ color: T.GRAY_DK, fontSize: 11, marginTop: 5 }}>
                       {row.ownerRole ?? "owner gap"} · {formatMoneyGap(row.promisedValueUsd)} promised · {formatMoneyGap(row.financeValidatedValueUsd)} validated
                     </div>
-                    <div style={{ color: T.INK_2, fontSize: 12.5, lineHeight: 1.42, marginTop: 7 }}>{row.decisionRationale}</div>
                   </div>
                 )) : (
                   <div style={{ color: T.GRAY_DK, fontSize: 13, padding: "12px 0" }}>No current mart rows in this lane.</div>
                 )}
+                {laneRows.length > 4 ? (
+                  <div style={{ color: tone.fg, fontSize: 12, fontWeight: 900 }}>
+                    +{laneRows.length - 4} more in this lane
+                  </div>
+                ) : null}
               </div>
             </section>
           );
@@ -4821,6 +4831,8 @@ interface TowerAiPortfolioDisplayRow extends TowerMartAiPortfolioItem {
   displayName: string;
   displayValueScore: number;
   displayReadinessScore: number;
+  displayDotLeft: number;
+  displayDotTop: number;
   displayAction: string;
   displayReason: string;
 }
@@ -4892,7 +4904,7 @@ function aiPortfolioDisplayReason(row: TowerMartAiPortfolioItem): string {
     return "Do not release more attention or funding until the business case is rebuilt.";
   }
   return row.fundingStatus === "not_approved"
-    ? "Discovery-only. This is not approved funding and should not be counted as realized value."
+    ? "Discovery-only. This is not approved funding and is not claimable value."
     : "Hold the next tranche until evidence gates clear.";
 }
 
@@ -5027,7 +5039,8 @@ function buildAiPortfolioDisplayRows(
     .sort((a, b) => aiPortfolioRowWeight(b) - aiPortfolioRowWeight(a))
     .slice(0, 12);
 
-  return sorted.map((row, index) => {
+  const laneOffsets: Record<string, number> = {};
+  return sorted.map((row) => {
     const baseValue = normalizeAiScore(
       row.valueScore,
       row.promisedValueUsd > 0 ? 70 : row.aiTaggedSpendUsd > 0 ? 58 : 44,
@@ -5036,13 +5049,28 @@ function buildAiPortfolioDisplayRows(
       row.readinessScore,
       row.financeValidatedValueUsd > 0 ? 62 : row.usageActual ? 54 : row.fundingStatus === "not_approved" ? 30 : 42,
     );
-    const jitterX = ((index % 4) - 1.5) * 4;
-    const jitterY = ((Math.floor(index / 4) % 3) - 1) * 5;
+    const lane = row.decisionLane ?? "freeze";
+    const laneIndex = laneOffsets[lane] ?? 0;
+    laneOffsets[lane] = laneIndex + 1;
+    const laneColumn = laneIndex % 3;
+    const laneRow = Math.floor(laneIndex / 3);
+    const laneAnchor =
+      lane === "fund"
+        ? { left: 60, top: 28 }
+        : lane === "fix"
+          ? { left: 20, top: 30 }
+          : lane === "stop"
+            ? { left: 60, top: 68 }
+            : { left: 20, top: 68 };
+    const displayDotLeft = Math.max(9, Math.min(91, laneAnchor.left + laneColumn * 11 + laneRow * 2));
+    const displayDotTop = Math.max(11, Math.min(89, laneAnchor.top + laneRow * 11 + laneColumn * 2));
     return {
       ...row,
       displayName: cleanAiPortfolioName(row),
-      displayValueScore: Math.max(12, Math.min(88, baseValue + jitterY)),
-      displayReadinessScore: Math.max(12, Math.min(88, baseReadiness + jitterX)),
+      displayValueScore: baseValue,
+      displayReadinessScore: baseReadiness,
+      displayDotLeft,
+      displayDotTop,
       displayAction: aiPortfolioDisplayAction(row),
       displayReason: aiPortfolioDisplayReason(row),
     };
@@ -5075,18 +5103,18 @@ function TowerMartAiPortfolioDesign({
         what can scale with proof, what needs evidence fixed, and what must stay
         held until gates clear?
       </p>
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.25fr) minmax(360px, .75fr)", gap: 18 }}>
-        <section data-testid="tower-ai-portfolio-matrix" style={{ ...towerBoardCardStyle, minHeight: 560, position: "relative" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 420px)", gap: 18, alignItems: "start" }}>
+        <section data-testid="tower-ai-portfolio-matrix" style={{ ...towerBoardCardStyle, minHeight: 0, position: "relative", paddingBottom: 18 }}>
           <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>Value vs. readiness</div>
           <p style={{ margin: "8px 0 0", color: T.INK_2, fontSize: 13, lineHeight: 1.45, maxWidth: 690 }}>
-            Bubble numbers map to the watchlist. The upper-right is scale with
-            evidence; lower-right is fund readiness; lower-left stays in
-            discovery until proof improves.
+            Each numbered point maps to the watchlist. Placement is lane-aware:
+            scale with proof, fix adoption, fund readiness, or stop/re-scope.
           </p>
           <div
             style={{
-              position: "absolute",
-              inset: "112px 32px 56px 64px",
+              position: "relative",
+              height: 420,
+              margin: "24px 18px 12px 48px",
               borderLeft: `2px solid ${T.RULE_STRONG}`,
               borderBottom: `2px solid ${T.RULE_STRONG}`,
               background: "linear-gradient(90deg, transparent 49.6%, rgba(10,10,11,.12) 50%, transparent 50.4%), linear-gradient(0deg, transparent 49.6%, rgba(10,10,11,.12) 50%, transparent 50.4%), linear-gradient(90deg, rgba(32,178,148,.08) 50%, rgba(27,43,92,.05) 50%)",
@@ -5104,18 +5132,20 @@ function TowerMartAiPortfolioDesign({
                   title={`${index + 1}. ${row.displayName}`}
                   style={{
                     position: "absolute",
-                    left: `${row.displayReadinessScore}%`,
-                    top: `${100 - row.displayValueScore}%`,
+                    left: `${row.displayDotLeft}%`,
+                    top: `${row.displayDotTop}%`,
                     transform: "translate(-50%, -50%)",
-                    width: 34,
-                    height: 34,
+                    width: 30,
+                    height: 30,
                     borderRadius: 999,
                     display: "grid",
                     placeItems: "center",
                     background: tone.fg,
                     color: "#fff",
                     fontWeight: 950,
-                    boxShadow: "0 12px 26px rgba(15,23,42,.24)",
+                    fontSize: 13,
+                    border: "2px solid rgba(255,255,255,.92)",
+                    boxShadow: "0 10px 20px rgba(15,23,42,.20)",
                   }}
                 >
                   {index + 1}
@@ -5125,8 +5155,21 @@ function TowerMartAiPortfolioDesign({
             <div style={{ position: "absolute", left: "-54px", top: "38%", transform: "rotate(-90deg)", color: T.GRAY_DK, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Value</div>
             <div style={{ position: "absolute", right: 0, bottom: "-34px", color: T.GRAY_DK, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Readiness →</div>
           </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8, marginTop: 10 }}>
+            {[
+              ["Scale", "Protect or scale with proof", T.GREEN],
+              ["Fix", "Resolve proof or adoption gaps", T.AMBER],
+              ["Hold", "Keep gated until readiness improves", T.PURPLE],
+              ["Stop", "Re-scope before more funding", T.RED],
+            ].map(([label, copy, color]) => (
+              <div key={label} style={{ border: `1px solid ${T.RULE}`, borderRadius: 10, padding: "9px 10px", background: "rgba(255,255,255,.72)" }}>
+                <strong style={{ color }}>{label}</strong>
+                <div style={{ color: T.INK_2, fontSize: 11.5, lineHeight: 1.3, marginTop: 2 }}>{copy}</div>
+              </div>
+            ))}
+          </div>
         </section>
-        <section data-testid="tower-ai-watchlist" style={{ ...towerBoardCardStyle, minHeight: 0 }}>
+        <section data-testid="tower-ai-watchlist" style={{ ...towerBoardCardStyle, minHeight: 0, overflow: "hidden" }}>
           <div style={towerTinyLabelStyle}>AI spend lens</div>
           <div style={{ fontFamily: T.SERIF, fontSize: 31, fontWeight: 900, marginTop: 8 }}>{formatMoneyGap(command.aiTaggedSpendFy26NonAdditive)}</div>
           <p style={{ margin: "8px 0 16px", color: T.INK_2, lineHeight: 1.45 }}>
@@ -5154,10 +5197,15 @@ function TowerMartAiPortfolioDesign({
             {displayRows.map((row, index) => {
               const tone = martLaneTone(row.decisionLane);
               return (
-                <div key={row.aiPortfolioKey} style={{ display: "grid", gridTemplateColumns: "30px 1fr auto", gap: 9, alignItems: "start", borderTop: `1px solid ${T.RULE}`, paddingTop: 10 }}>
+                <div key={row.aiPortfolioKey} style={{ display: "grid", gridTemplateColumns: "30px minmax(0, 1fr)", gap: 9, alignItems: "start", borderTop: `1px solid ${T.RULE}`, paddingTop: 10 }}>
                   <span style={{ width: 24, height: 24, borderRadius: 999, display: "grid", placeItems: "center", background: tone.fg, color: "#fff", fontSize: 12, fontWeight: 900 }}>{index + 1}</span>
                   <span>
-                    <strong>{row.displayName}</strong>
+                    <span style={{ display: "flex", gap: 8, alignItems: "flex-start", justifyContent: "space-between" }}>
+                      <strong style={{ minWidth: 0, lineHeight: 1.2 }}>{row.displayName}</strong>
+                      <span style={{ borderRadius: 999, background: tone.bg, color: tone.fg, fontWeight: 900, fontSize: 11, padding: "4px 7px", whiteSpace: "nowrap" }}>
+                        {row.displayAction}
+                      </span>
+                    </span>
                     <span style={{ display: "block", color: T.GRAY_DK, fontSize: 11, marginTop: 2 }}>
                       {row.vendorName ?? row.systemName ?? humanizeTowerToken(row.aiSpendCategory)}
                       {" · "}
@@ -5169,7 +5217,6 @@ function TowerMartAiPortfolioDesign({
                     </span>
                     <span style={{ display: "block", color: T.INK_2, fontSize: 12, lineHeight: 1.35, marginTop: 5 }}>{row.displayReason}</span>
                   </span>
-                  <span style={{ color: tone.fg, fontWeight: 900, textAlign: "right" }}>{row.displayAction}</span>
                 </div>
               );
             })}
