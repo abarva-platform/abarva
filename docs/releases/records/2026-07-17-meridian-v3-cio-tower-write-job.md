@@ -30,6 +30,7 @@ This release candidate adds the explicit ACA operator job script needed to write
 
 - `package.json`: adds `project:meridian-v3-cio-tower:write-job`.
 - `scripts/tower/project-meridian-v3-to-cio-tower.mjs`: adds explicit write approval guard, proof-bundle emission, awaited write handling, and run/change classification from actual budget columns.
+- `scripts/tower/project-meridian-v3-to-cio-tower.mjs`: aligns the Meridian enterprise envelope entity to the persisted `cio_tower.entities` schema by using the allowed `holding_company` entity type while preserving `entity_role=enterprise_envelope` in attributes.
 
 ## QA / Validation
 
@@ -40,6 +41,7 @@ Before merge:
 - Pass: `node scripts/tower/project-meridian-v3-to-cio-tower.mjs --dry-run --emit-proof-bundle --out-dir=/tmp/meridian-v3-cio-tower-proof-smoke`
 - Pending: `npm run release:check`
 - Pass: `git diff --check`
+- Finding from first ACA write attempt: Azure/Postgres rejected `entity_type=enterprise` because `cio_tower.entities` allows `holding_company`, `portfolio_company`, `initiative`, `vendor`, `contract`, `system`, `application`, `platform`, `org_unit`, `business_function`, `capability`, `kpi`, `risk`, and `value_lever`. The projection now emits the enterprise envelope as `holding_company`.
 
 After deploy:
 
