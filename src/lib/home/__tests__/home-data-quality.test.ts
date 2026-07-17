@@ -38,9 +38,9 @@ describe("Home data quality read model", () => {
       moduleRuntimeConsumptionChanged: false,
       candidateReadByDefault: false,
     });
-    expect(model.gaps.some((gap) => gap.title.includes("Source coverage"))).toBe(
-      true,
-    );
+    expect(
+      model.gaps.some((gap) => gap.title.includes("Source coverage")),
+    ).toBe(true);
   });
 
   it("keeps candidate preview inactive by default and labeled when explicit", () => {
@@ -52,7 +52,7 @@ describe("Home data quality read model", () => {
     expect(
       defaultModel.summaryCards.find((card) => card.id === "candidate_coverage")
         ?.status,
-    ).toBe("Candidate preview not active");
+    ).toBe("Preview hidden by default");
 
     const previewModel = buildHomeDataQualityModel({
       repoRoot: process.cwd(),

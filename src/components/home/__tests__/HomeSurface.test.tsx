@@ -550,7 +550,7 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(
       screen.getAllByText("Active Knowledge context").length,
     ).toBeGreaterThan(0);
-    expect(screen.getByText("Candidate preview: inactive")).toBeInTheDocument();
+    expect(screen.getByText("Active context only")).toBeInTheDocument();
     expect(screen.queryByText("Not active")).not.toBeInTheDocument();
     expect(screen.queryByText("Canonical Fact Store")).not.toBeInTheDocument();
 
@@ -609,15 +609,23 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(
       screen.getByText(/Nexus has source-backed context across the major/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("Enterprise context powers the platform")).toBeInTheDocument();
-    expect(screen.getAllByText("Applications & Systems").length).toBeGreaterThan(0);
     expect(
-      screen.getByText(/Shows the technology estate that enables or constrains/i),
+      screen.getByText("Enterprise context powers the platform"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Applications & Systems").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByText(
+        /Shows the technology estate that enables or constrains/i,
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getAllByText(/Intelligence \/ Moves \/ Source \/ Tower/i).length,
     ).toBeGreaterThan(0);
-    expect(screen.queryByTestId("home-data-quality-panel")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("home-data-quality-panel"),
+    ).not.toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: /Show technical diagnostics/i }),
     );
@@ -737,7 +745,9 @@ describe("HomeSurface — Explorer context browser", () => {
     fireEvent.change(screen.getByLabelText("Search loaded records"), {
       target: { value: "Kyriba" },
     });
-    expect(screen.getByText(/1 visible row · 90 loaded records/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/1 visible row · 90 loaded records/i),
+    ).toBeInTheDocument();
 
     fireEvent.click(
       screen.getByRole("button", { name: /Applications & Systems/i }),
@@ -823,13 +833,19 @@ describe("HomeSurface — Explorer context browser", () => {
     expect(screen.getByText("Why it matters")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "Data" }));
     expect(
-      screen.getByText(/Retail Demo's applications & systems context reports 90 loaded records/i),
+      screen.getByText(
+        /Retail Demo's applications & systems context reports 90 loaded records/i,
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByText(/This view shows 1 visible row/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/This view shows 1 visible row/i),
+    ).toBeInTheDocument();
     expect(screen.getAllByText("ERP Core").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("tab", { name: "Relationships" }));
     expect(
-      screen.getByText(/Retail Demo's applications & systems context includes/i),
+      screen.getByText(
+        /Retail Demo's applications & systems context includes/i,
+      ),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "Gaps" }));
     expect(
@@ -841,7 +857,9 @@ describe("HomeSurface — Explorer context browser", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("7120000000")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByText("Diagnostics, sources, gaps, and relationships"));
+    fireEvent.click(
+      screen.getByText("Diagnostics, sources, gaps, and relationships"),
+    );
     expect(screen.getAllByText(/Lifecycle/i).length).toBeGreaterThan(0);
     expect(screen.queryByText("7120000000")).not.toBeInTheDocument();
     expect(screen.queryByText("11800")).not.toBeInTheDocument();
@@ -864,7 +882,9 @@ describe("HomeSurface — Explorer context browser", () => {
       screen.queryByText(/packet currently contains 1 record/i),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByText(/Retail Demo's applications & systems context includes 90 loaded records/i),
+      screen.getByText(
+        /Retail Demo's applications & systems context includes 90 loaded records/i,
+      ),
     ).toBeInTheDocument();
     expect(
       screen.queryByText(/^Candidate data is active tenant truth\.$/i),

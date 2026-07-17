@@ -185,7 +185,9 @@ const MISSING_AUDIT_CARD: HomeQualityCard = {
   tone: "unknown",
 };
 
-export function normalizeHomeQualityTenantKey(value: string | null | undefined): string {
+export function normalizeHomeQualityTenantKey(
+  value: string | null | undefined,
+): string {
   const normalized = value?.trim().toLowerCase().replace(/_/g, "-") ?? "";
   if (!normalized) return "unknown";
   if (normalized === "skyharbor") return "skyharbor-air";
@@ -193,7 +195,8 @@ export function normalizeHomeQualityTenantKey(value: string | null | undefined):
     return "lakeshore-holdings";
   }
   if (normalized === "apexretail") return "apex-retail";
-  if (normalized === "firstcapital" || normalized === "arcturus") return "first-capital";
+  if (normalized === "firstcapital" || normalized === "arcturus")
+    return "first-capital";
   if (normalized === "meridian") return "meridian-health";
   return normalized;
 }
@@ -224,7 +227,9 @@ export function buildHomeDataQualityModel(
     "This tenant";
 
   const browserRows = sum(
-    Object.values(options.browser?.dimensions ?? {}).map((dimension) => dimension.rowCount),
+    Object.values(options.browser?.dimensions ?? {}).map(
+      (dimension) => dimension.rowCount,
+    ),
   );
   const browserGaps = sum(
     Object.values(options.browser?.dimensions ?? {}).map(
@@ -338,17 +343,21 @@ export function buildHomeDataQualityModel(
       },
       {
         id: "candidate_coverage",
-        title: "Candidate Coverage",
+        title: options.candidatePreviewEnabled
+          ? "Candidate Coverage"
+          : "Inactive Preview",
         value: options.candidatePreviewEnabled
           ? formatCount(candidateRecords, "candidate record")
-          : "Not active",
+          : "Hidden",
         status: options.candidatePreviewEnabled
           ? candidatePreview.status
-          : "Candidate preview not active",
+          : "Preview hidden by default",
         detail: options.candidatePreviewEnabled
           ? "Candidate coverage is visible only as inactive preview posture."
-          : "Default Home does not read candidate-only facts.",
-        tone: options.candidatePreviewEnabled ? toneFromStatus(candidate?.coverageStatus) : "unknown",
+          : "Default Home reads active context only.",
+        tone: options.candidatePreviewEnabled
+          ? toneFromStatus(candidate?.coverageStatus)
+          : "unknown",
       },
       {
         id: "evidence_strength",
@@ -357,7 +366,7 @@ export function buildHomeDataQualityModel(
         status: evidenceQuality.status,
         detail:
           evidenceMissing > 0
-            ? `${formatNumber(evidenceMissing)} candidate facts still need evidence.`
+            ? `${formatNumber(evidenceMissing)} facts still need evidence.`
             : "Evidence support is visible for the active Home context.",
         tone: toneFromStatus(evidence?.status),
       },
@@ -389,14 +398,18 @@ export function buildHomeDataQualityModel(
       },
       {
         id: "active_candidate_status",
-        title: "Active / Candidate Status",
-        value: options.candidatePreviewEnabled ? "Preview mode" : "Active Home context",
+        title: options.candidatePreviewEnabled
+          ? "Active / Candidate Status"
+          : "Active Context Status",
+        value: options.candidatePreviewEnabled
+          ? "Preview mode"
+          : "Active Home context",
         status: options.candidatePreviewEnabled
           ? "Candidate preview only"
-          : "Candidate data not visible by default",
+          : "Inactive preview hidden by default",
         detail: options.candidatePreviewEnabled
           ? "Inactive candidate data is labeled and cannot become runtime truth from Home."
-          : "Home shows active context posture and caveats; candidate-only data stays hidden.",
+          : "Home shows active context posture and caveats; inactive preview data stays hidden.",
         tone: options.candidatePreviewEnabled ? "watch" : "good",
       },
       caveats.length
@@ -415,7 +428,11 @@ export function buildHomeDataQualityModel(
     relationshipCoverage,
     answerability,
     gaps,
-    contextBadges: buildContextBadges(options.browser ?? null, answerability, relationshipGap),
+    contextBadges: buildContextBadges(
+      options.browser ?? null,
+      answerability,
+      relationshipGap,
+    ),
     candidatePreview,
     caveats,
     skyHarborRegression:
@@ -440,7 +457,11 @@ export function buildHomeContextQualityBadges(
   model: HomeDataQualityModel | null | undefined,
   browser: HomeV6ContextBrowser | null | undefined,
 ): HomeContextQualityBadge[] {
-  return buildContextBadges(browser ?? null, model?.answerability ?? null, false);
+  return buildContextBadges(
+    browser ?? null,
+    model?.answerability ?? null,
+    false,
+  );
 }
 
 function readHomeQualityArtifacts(repoRoot: string) {
@@ -492,7 +513,9 @@ function readTenantArtifact<T>(
 ): { generatedAt: string | null; tenants: T[] } {
   const filePath = path.join(repoRoot, ARTIFACT_DIR, fileName);
   if (!fs.existsSync(filePath)) return { generatedAt: null, tenants: [] };
-  const parsed = JSON.parse(fs.readFileSync(filePath, "utf8")) as ArtifactEnvelope<T> | T[];
+  const parsed = JSON.parse(fs.readFileSync(filePath, "utf8")) as
+    | ArtifactEnvelope<T>
+    | T[];
   if (Array.isArray(parsed)) return { generatedAt: null, tenants: parsed };
   return {
     generatedAt: parsed.generatedAt ?? null,
@@ -505,8 +528,9 @@ function findTenant<T extends { tenantKey: string }>(
   tenantKey: string,
 ): T | null {
   return (
-    rows.find((row) => normalizeHomeQualityTenantKey(row.tenantKey) === tenantKey) ??
-    null
+    rows.find(
+      (row) => normalizeHomeQualityTenantKey(row.tenantKey) === tenantKey,
+    ) ?? null
   );
 }
 
@@ -537,7 +561,8 @@ function buildAnswerability(args: {
     return {
       status: "not_available_yet",
       label: "Not available yet",
-      rationale: "No Home context or data-quality audit payload is available for this tenant.",
+      rationale:
+        "No Home context or data-quality audit payload is available for this tenant.",
       safeToAnswer: ["which data is missing"],
       routeToIntelligence: ["all advisory synthesis"],
       limits: ["no source-backed Home context loaded"],
@@ -569,7 +594,8 @@ function buildAnswerability(args: {
     return {
       status: "needs_evidence",
       label: "Needs evidence",
-      rationale: "Loaded context exists, but source-backed evidence operations are not visible.",
+      rationale:
+        "Loaded context exists, but source-backed evidence operations are not visible.",
       safeToAnswer: ["what records are visible", "what evidence is missing"],
       routeToIntelligence: ["advisory synthesis"],
       limits: ["evidence strength is not available yet"],
@@ -578,7 +604,8 @@ function buildAnswerability(args: {
   return {
     status: "answerable",
     label: "Answerable",
-    rationale: "Home can answer context-browser questions from loaded, source-backed evidence.",
+    rationale:
+      "Home can answer context-browser questions from loaded, source-backed evidence.",
     safeToAnswer: ["known facts", "sources", "relationships", "gaps"],
     routeToIntelligence: ["recommendations and decisions"],
     limits: ["Home remains a context browser, not a strategy module"],
@@ -606,7 +633,9 @@ function buildSourceCoverageView(args: {
       tone: "blocked",
     });
   }
-  if ((args.source?.evidenceSignals ?? []).includes("synthetic-planning-grade")) {
+  if (
+    (args.source?.evidenceSignals ?? []).includes("synthetic-planning-grade")
+  ) {
     warnings.push({
       title: "Generated planning-grade source",
       detail: "Client validation is required before board-grade use.",
@@ -649,7 +678,11 @@ function buildEvidenceQualityView(args: {
     });
   }
   for (const finding of args.evidence?.findings ?? []) {
-    warnings.push({ title: "Evidence finding", detail: finding, tone: "watch" });
+    warnings.push({
+      title: "Evidence finding",
+      detail: finding,
+      tone: "watch",
+    });
   }
   if (args.generatedRisk?.narrativeCaveatRequired) {
     warnings.push({
@@ -673,7 +706,9 @@ function buildRelationshipCoverageView(args: {
   unresolvedRelationships: number;
   relationshipGap: boolean;
 }): HomeRelationshipCoverageView {
-  const warnings: HomeQualityWarning[] = (args.relationships?.findings ?? []).map((finding) => ({
+  const warnings: HomeQualityWarning[] = (
+    args.relationships?.findings ?? []
+  ).map((finding) => ({
     title: "Relationship finding",
     detail: finding,
     tone: "gap",
@@ -794,7 +829,8 @@ function buildHomeGaps(args: {
       source: "Evidence Strength",
     });
   }
-  for (const blocker of args.promotion?.requiredBeforeActiveTruth.slice(0, 3) ?? []) {
+  for (const blocker of args.promotion?.requiredBeforeActiveTruth.slice(0, 3) ??
+    []) {
     gaps.push({
       title: "Before active use",
       detail: blocker,
@@ -810,7 +846,10 @@ function buildHomeGaps(args: {
       source: "Context Explorer",
     });
   }
-  if (args.row?.recommendedNextAction && !gaps.some((gap) => gap.detail === args.row?.recommendedNextAction)) {
+  if (
+    args.row?.recommendedNextAction &&
+    !gaps.some((gap) => gap.detail === args.row?.recommendedNextAction)
+  ) {
     gaps.push({
       title: "Recommended next action",
       detail: args.row.recommendedNextAction,
@@ -828,9 +867,10 @@ function buildContextBadges(
 ): HomeContextQualityBadge[] {
   const dimensions = Object.values(browser?.dimensions ?? {});
   return dimensions.map((dimension) => {
-    const hasRelationshipName = /\b(relationship|dependency|dependencies|system|systems|application|applications|data|integration|vendor|vendors)\b/i.test(
-      dimension.dimension,
-    );
+    const hasRelationshipName =
+      /\b(relationship|dependency|dependencies|system|systems|application|applications|data|integration|vendor|vendors)\b/i.test(
+        dimension.dimension,
+      );
     const gapLabel =
       dimension.dataThinCells > 0
         ? `${formatNumber(dimension.dataThinCells)} gaps`
@@ -877,9 +917,13 @@ function formatCount(value: number, singular: string): string {
 }
 
 function formatNumber(value: number): string {
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(value);
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(
+    value,
+  );
 }
 
 function humanize(value: string): string {
-  return value.replace(/[_-]+/g, " ").replace(/\b\w/g, (match) => match.toUpperCase());
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (match) => match.toUpperCase());
 }

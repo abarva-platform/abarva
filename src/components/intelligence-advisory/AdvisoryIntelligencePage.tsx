@@ -517,7 +517,7 @@ function OutlookPanel({
       </div>
       <MetricCards
         items={briefing.outlookMetrics}
-        cite="V6 industry corpus · quarterly refresh"
+        cite="Industry corpus · quarterly refresh"
       />
       <div className={styles.block}>
         <div className={styles.blockHead}>
@@ -526,11 +526,11 @@ function OutlookPanel({
               Industrial-sector AI investment
             </div>
             <div className={styles.blockSub}>
-              Indexed, 2022 = 100 &middot; V6 corpus &middot; n=
+              Indexed, 2022 = 100 &middot; industry corpus &middot; n=
               {briefing.peerCount}
             </div>
           </div>
-          <span className={styles.blockTag}>V6 corpus</span>
+          <span className={styles.blockTag}>Industry corpus</span>
         </div>
         <div style={{ height: mounted ? 220 : 0, marginTop: 8 }}>
           {mounted && (
@@ -613,7 +613,7 @@ function OutlookPanel({
           />
           <span className={styles.legendLabel}>Top quartile</span>
           <span className={styles.legendSrc}>
-            Source · V6_15 industry corpus patterns
+            Source · Industry corpus patterns
           </span>
         </div>
       </div>
@@ -933,7 +933,7 @@ function AdoptionPanel({ briefing }: { briefing: CorpusBriefing }) {
           </div>
           <div className={styles.blockSub}>
             S-curve of enterprise AI maturity · peer set n={briefing.peerCount}{" "}
-            · V6 corpus maturity model
+            · industry corpus maturity model
           </div>
         </div>
       </div>
@@ -942,7 +942,7 @@ function AdoptionPanel({ briefing }: { briefing: CorpusBriefing }) {
       </div>
       <div className={styles.chartLegend} style={{ marginBottom: 16 }}>
         <span className={styles.legendSrc}>
-          Source · V6 corpus maturity model · n={briefing.peerCount}
+          Source · industry corpus maturity model · n={briefing.peerCount}
         </span>
       </div>
       {/* Stage descriptions */}
@@ -1060,7 +1060,7 @@ function ValuePanel({
     <>
       <MetricCards
         items={briefing.valueMetrics}
-        cite={`V6 corpus × ${briefing.tenantName} estate profile`}
+        cite={`Industry corpus × ${briefing.tenantName} estate profile`}
       />
       <div className={styles.block}>
         <div className={styles.blockHead}>
@@ -1069,9 +1069,9 @@ function ValuePanel({
               Addressable value pool by function
             </div>
             <div className={styles.blockSub}>
-              Modelled from {briefing.tenantName} estate profile × V6
-              peer-median realization rates for diversified industrials. Tower
-              financial integration anchors to actual financials.
+              Modelled from {briefing.tenantName} estate profile × industry
+              corpus peer-median realization rates for diversified industrials.
+              Tower financial integration anchors to actual financials.
             </div>
           </div>
         </div>
@@ -1128,7 +1128,7 @@ function ValuePanel({
         </div>
         <div className={styles.chartLegend}>
           <span className={styles.legendSrc}>
-            Source · V6 corpus benchmarks × {briefing.tenantName} estate
+            Source · industry corpus benchmarks × {briefing.tenantName} estate
           </span>
         </div>
       </div>

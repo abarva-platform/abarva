@@ -1119,7 +1119,7 @@ function deriveTenantProfile(args: {
     candidatePreviewStatus:
       args.mode === "candidate_preview"
         ? args.dataQuality.candidatePreview.candidateOnlyLabel
-        : "Not active",
+        : "Active context only",
   };
 }
 
