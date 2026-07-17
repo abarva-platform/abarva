@@ -388,7 +388,7 @@ describe("MovesPhaseStandaloneClient", () => {
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
         evidenceNeedPackets={[]}
-        initialSubstepKey="decide"
+        initialSubstepKey="prepare"
         move={makeMove({
           currentPhase: 1,
           phaseLabel: "P1 Charter",
@@ -414,6 +414,30 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.queryByRole("heading", { name: "Decide the approach" })).not.toBeInTheDocument();
     expect(screen.queryByText("Phased platform + operating-model shift")).not.toBeInTheDocument();
     expect(screen.queryByText(/aVa recommends/i)).not.toBeInTheDocument();
+  });
+
+  it("uses P1 step 2 for uploading evidence, with multiple files enabled", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="decide"
+        move={makeMove({
+          currentPhase: 1,
+          phaseLabel: "P1 Charter",
+        })}
+        phaseNum={1}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Upload evidence for P1" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Files to upload" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue to Gate approval →" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Charter inputs" })).not.toBeInTheDocument();
+
+    const input = screen.getByLabelText("Upload decision files") as HTMLInputElement;
+    expect(input).toHaveAttribute("multiple");
   });
 
   it("shows the P1 charter capture fields at gate approval and blocks build until they are complete", () => {
