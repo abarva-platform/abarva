@@ -402,10 +402,13 @@ async function resolveSponsorAndLead(
 function phaseStatesFor(
   program: ProgramCore,
   modules: ProgramModuleRow[],
+  activity: TerminalActivitySignal[] = [],
 ): PhaseState[] {
   const totalPhases = 6;
   const current = program.currentPhase ?? 0;
-  const terminalComplete = hasTerminalTowerHandoffPassed(program);
+  const terminalComplete =
+    hasTerminalTowerHandoffPassed(program) ||
+    hasTerminalTowerHandoffActivity(activity);
   const out: PhaseState[] = [];
   for (let i = 0; i < totalPhases; i += 1) {
     const phaseModules = modules.filter((m) => m.phaseNumber === i);
@@ -456,6 +459,35 @@ export function hasTerminalTowerHandoffPassed(
       record.completedPhase,
       record.completed_phase,
     ].some((value) => value === 5 || value === "5" || value === "P5");
+  });
+}
+
+type TerminalActivitySignal = {
+  title?: string | null;
+  detail?: string | null;
+  action?: string | null;
+  summary?: string | null;
+};
+
+export function hasTerminalTowerHandoffActivity(
+  activity: TerminalActivitySignal[],
+): boolean {
+  return activity.some((entry) => {
+    const text = [
+      entry.title,
+      entry.detail,
+      entry.action,
+      entry.summary,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return (
+      text.includes("completed p5 terminal tower handoff") ||
+      (text.includes("phase_5") &&
+        text.includes("completed") &&
+        (text.includes("tower") || text.includes("handoff")))
+    );
   });
 }
 
@@ -708,6 +740,7 @@ export async function buildProgramFullState(
     deliverables,
     threadRows,
     patternMatchRow,
+    activity,
   ] = await Promise.all([
     resolveSponsorAndLead(program.id).catch(() => ({
       sponsor: placeholderPerson("sponsor_missing"),
@@ -756,13 +789,14 @@ export async function buildProgramFullState(
         orderBy: { column: "acted_upon_at", direction: "desc" },
       })
       .catch(() => null),
+    buildActivity(program.id).catch(() => []),
   ]);
 
   const delivRows = deliverables;
   const modules: ModuleState[] = moduleRows.map((r) =>
     moduleRowToState(r, delivRows),
   );
-  const phases = phaseStatesFor(program, moduleRows);
+  const phases = phaseStatesFor(program, moduleRows, activity);
   const phaseStatus = programPhaseStatus(program, phases);
 
   const patternKey = patternMatchRow?.pattern_key ?? undefined;
@@ -801,7 +835,6 @@ export async function buildProgramFullState(
     ),
   };
 
-  const activity = await buildActivity(program.id);
   const deliverableSummaries: DeliverableSummary[] = await Promise.all(
     delivRows.slice(0, 20).map(async (d) => {
       const owner =
@@ -1638,7 +1671,9 @@ export async function buildStrategicMove(
     functionPackKey: move.functionPackKey,
     archetype: formatArchetype(move.archetype),
     currentPhase: phase,
-    terminalComplete: hasTerminalTowerHandoffPassed(move),
+    terminalComplete:
+      hasTerminalTowerHandoffPassed(move) ||
+      hasTerminalTowerHandoffActivity(recentActivity),
     phaseLabel: getPhaseLabel(phase),
     status: {
       key: moveStatus.statusKey,
