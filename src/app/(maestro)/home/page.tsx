@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { HomeKnowledgeDesignContractSurface } from "@/components/home/HomeKnowledgeDesignContractSurface";
 import { HomeSurface } from "@/components/home/HomeSurface";
 import { cachedInventorySnapshot } from "@/app/(maestro)/admin/_cached-helpers";
 import { AppShell } from "@/components/shell/AppShell";
@@ -18,6 +19,7 @@ import {
   buildHomeSummarySnapshot,
   buildHomeSummarySnapshotFromModuleContext,
 } from "@/lib/home/home-summary-snapshot";
+import { readHomeKnowledgeDesignContractForTenant } from "@/lib/home/home-knowledge-design-contract";
 import { getLocalCxoRuntimeBrowser } from "@/lib/home/local-cxo-runtime";
 import { getHomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
 import { getHomeV7ContextBrowser } from "@/lib/home/v7-context-browser";
@@ -50,6 +52,8 @@ const HOME_OPTIONAL_RENDER_TIMEOUT_MS = 4_500;
 type HomePageProps = {
   searchParams?: Promise<{
     client?: string | string[];
+    dimension?: string | string[];
+    tab?: string | string[];
     candidatePreview?: string | string[];
   }>;
 };
@@ -144,6 +148,8 @@ const HOME_KNOWLEDGE_DOMAINS: ModuleContextRequestedDomain[] = [
 export default async function HomePage({ searchParams }: HomePageProps) {
   const params = await searchParams;
   const requestedClient = firstSearchParam(params?.client);
+  const requestedDimension = firstSearchParam(params?.dimension);
+  const requestedTab = firstSearchParam(params?.tab);
   const candidatePreviewParam = firstSearchParam(params?.candidatePreview);
   const candidatePreviewEnabled = candidatePreviewParam === "true";
   const activeClient = await getActiveClientRow(requestedClient).catch(
@@ -166,6 +172,39 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const clientOption = displayClientKey
     ? getClientOption(displayClientKey)
     : null;
+  const designContract = readHomeKnowledgeDesignContractForTenant(homeTenantKey);
+  if (homeTenantKey === "meridian-health" && designContract.pack) {
+    return (
+      <AppShell
+        surface="home"
+        topBarProps={{
+          tenantName: activeTenantName,
+          showLocked: Boolean(activeClient?.key),
+          context: clientOption?.vertical
+            ? `Knowledge · ${clientOption.vertical}`
+            : "Knowledge",
+        }}
+        hasTenantKey={Boolean(activeClient?.key)}
+      >
+        <main
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            background: "#FBFAF7",
+          }}
+        >
+          <HomeKnowledgeDesignContractSurface
+            pack={designContract.pack}
+            selectedDimension={requestedDimension}
+            selectedSource={designContract.diagnostics.selectedSource}
+            selectedTab={requestedTab}
+          />
+        </main>
+      </AppShell>
+    );
+  }
+
   const binding = getIntelligenceBindingPayload(homeTenantKey);
   const moduleContextRequest =
     homeTenantKey || activeClient?.key || requestedClient
