@@ -16,6 +16,7 @@ import {
   buildTowerV3RuntimeViewModel,
   type TowerV3RuntimeViewModel,
 } from "@/lib/tower/tower-v3-runtime-view";
+import { isTowerV3ContextRuntimeEnabled } from "@/lib/tower/tower-v3-runtime-flag";
 import type { TowerValueClaim } from "@/lib/enterprise-knowledge/contracts";
 
 const MODEL_NAME = "claude-sonnet-4-6";
@@ -1124,7 +1125,7 @@ export async function loadCioTowerPromptContext(args: {
   ]);
   const valueClaimPolicy = buildCioTowerValueClaimPolicy(measures);
   const towerV3RuntimeView =
-    args.tenantKey === "meridian-health"
+    isTowerV3ContextRuntimeEnabled() && args.tenantKey === "meridian-health"
       ? buildTowerV3RuntimeViewModel({
           tenantName: args.tenantName,
           contextPack: buildTowerV3ContextPackFromTenantInputs({

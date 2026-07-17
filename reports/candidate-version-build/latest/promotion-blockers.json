@@ -2,37 +2,37 @@
   {
     "tenantKey": "apex-retail",
     "tenantDisplayName": "Apex Retail",
-    "candidateVersionId": "candidate:apex-retail:f778423b32c2",
+    "candidateVersionId": "candidate:apex-retail:97629a0a1371",
     "blockers": []
   },
   {
     "tenantKey": "first-capital-financial",
     "tenantDisplayName": "First Capital Financial",
-    "candidateVersionId": "candidate:first-capital-financial:4058ee9a40f9",
+    "candidateVersionId": "candidate:first-capital-financial:6ca133e3600d",
     "blockers": []
   },
   {
     "tenantKey": "lakeshore-holdings",
     "tenantDisplayName": "Lakeshore Holdings",
-    "candidateVersionId": "candidate:lakeshore-holdings:e16ad063e5bd",
+    "candidateVersionId": "candidate:lakeshore-holdings:375cb3c68e87",
     "blockers": []
   },
   {
     "tenantKey": "lakeshore-industries",
     "tenantDisplayName": "Lakeshore Industries",
-    "candidateVersionId": "candidate:lakeshore-industries:bde306214d94",
+    "candidateVersionId": "candidate:lakeshore-industries:927dec64b3f5",
     "blockers": []
   },
   {
     "tenantKey": "meridian-health",
     "tenantDisplayName": "Meridian Health",
-    "candidateVersionId": "candidate:meridian-health:5698b1a4c532",
+    "candidateVersionId": "candidate:meridian-health:7af66450ac65",
     "blockers": []
   },
   {
     "tenantKey": "skyharbor-air",
     "tenantDisplayName": "SkyHarbor Air",
-    "candidateVersionId": "candidate:skyharbor-air:3565f457b05d",
+    "candidateVersionId": "candidate:skyharbor-air:418046a98114",
     "blockers": []
   }
 ]

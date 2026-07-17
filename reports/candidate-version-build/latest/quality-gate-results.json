@@ -2,7 +2,7 @@
   {
     "tenantKey": "apex-retail",
     "tenantDisplayName": "Apex Retail",
-    "candidateVersionId": "candidate:apex-retail:f778423b32c2",
+    "candidateVersionId": "candidate:apex-retail:97629a0a1371",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -77,7 +77,7 @@
   {
     "tenantKey": "first-capital-financial",
     "tenantDisplayName": "First Capital Financial",
-    "candidateVersionId": "candidate:first-capital-financial:4058ee9a40f9",
+    "candidateVersionId": "candidate:first-capital-financial:6ca133e3600d",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -152,7 +152,7 @@
   {
     "tenantKey": "lakeshore-holdings",
     "tenantDisplayName": "Lakeshore Holdings",
-    "candidateVersionId": "candidate:lakeshore-holdings:e16ad063e5bd",
+    "candidateVersionId": "candidate:lakeshore-holdings:375cb3c68e87",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -227,7 +227,7 @@
   {
     "tenantKey": "lakeshore-industries",
     "tenantDisplayName": "Lakeshore Industries",
-    "candidateVersionId": "candidate:lakeshore-industries:bde306214d94",
+    "candidateVersionId": "candidate:lakeshore-industries:927dec64b3f5",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -302,7 +302,7 @@
   {
     "tenantKey": "meridian-health",
     "tenantDisplayName": "Meridian Health",
-    "candidateVersionId": "candidate:meridian-health:5698b1a4c532",
+    "candidateVersionId": "candidate:meridian-health:7af66450ac65",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [
@@ -340,13 +340,13 @@
         "id": "source-lineage-present",
         "label": "Source lineage present for accepted records",
         "status": "pass",
-        "detail": "1066 accepted records checked for lineage."
+        "detail": "3759 accepted records checked for lineage."
       },
       {
         "id": "evidence-attached",
         "label": "Evidence attached to accepted records",
         "status": "pass",
-        "detail": "1066 evidence attachments for 1066 accepted records; 0 records without evidence."
+        "detail": "3759 evidence attachments for 3759 accepted records; 0 records without evidence."
       },
       {
         "id": "tenant-isolation",
@@ -358,7 +358,7 @@
         "id": "relationship-candidates",
         "label": "Relationship candidate generation",
         "status": "pass",
-        "detail": "1662 relationship candidates generated."
+        "detail": "173 relationship candidates generated."
       },
       {
         "id": "home-ava-readiness-artifact",
@@ -377,7 +377,7 @@
   {
     "tenantKey": "skyharbor-air",
     "tenantDisplayName": "SkyHarbor Air",
-    "candidateVersionId": "candidate:skyharbor-air:3565f457b05d",
+    "candidateVersionId": "candidate:skyharbor-air:418046a98114",
     "qualityGateStatus": "pass",
     "creationStatus": "created",
     "gates": [

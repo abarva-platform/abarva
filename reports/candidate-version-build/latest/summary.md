@@ -1,6 +1,6 @@
 # Reviewed Canonical Build to Inactive Candidate Versions
 
-Generated: 2026-07-14T15:50:19.110Z
+Generated: 2026-07-17T11:49:02.663Z
 
 ## Truth Split
 
@@ -17,29 +17,29 @@ Generated: 2026-07-14T15:50:19.110Z
 - Tenants processed: 6
 - Candidate versions created: 6
 - Tenants blocked: 0
-- Canonical records represented: 6,593
-- Evidence attachments represented: 6,593
-- Relationship candidates represented: 9,330
+- Canonical records represented: 9,286
+- Evidence attachments represented: 9,286
+- Relationship candidates represented: 7,841
 
 ## Tenant Candidate Versions
 
 | Tenant | Candidate ID | Status | Records | Evidence | Relationships | Profile | Promotion blockers |
 | --- | --- | --- | ---: | ---: | ---: | --- | ---: |
-| Apex Retail | `candidate:apex-retail:f778423b32c2` | created / inactive | 1,046 | 1,046 | 1,730 | ready | 0 |
-| First Capital Financial | `candidate:first-capital-financial:4058ee9a40f9` | created / inactive | 1,327 | 1,327 | 1,991 | ready | 0 |
-| Lakeshore Holdings | `candidate:lakeshore-holdings:e16ad063e5bd` | created / inactive | 249 | 249 | 373 | ready | 0 |
-| Lakeshore Industries | `candidate:lakeshore-industries:bde306214d94` | created / inactive | 839 | 839 | 1,580 | ready | 0 |
-| Meridian Health | `candidate:meridian-health:5698b1a4c532` | created / inactive | 1,066 | 1,066 | 1,662 | ready | 0 |
-| SkyHarbor Air | `candidate:skyharbor-air:3565f457b05d` | created / inactive | 2,066 | 2,066 | 1,994 | ready | 0 |
+| Apex Retail | `candidate:apex-retail:97629a0a1371` | created / inactive | 1,046 | 1,046 | 1,730 | ready | 0 |
+| First Capital Financial | `candidate:first-capital-financial:6ca133e3600d` | created / inactive | 1,327 | 1,327 | 1,991 | ready | 0 |
+| Lakeshore Holdings | `candidate:lakeshore-holdings:375cb3c68e87` | created / inactive | 249 | 249 | 373 | ready | 0 |
+| Lakeshore Industries | `candidate:lakeshore-industries:927dec64b3f5` | created / inactive | 839 | 839 | 1,580 | ready | 0 |
+| Meridian Health | `candidate:meridian-health:7af66450ac65` | created / inactive | 3,759 | 3,759 | 173 | ready | 0 |
+| SkyHarbor Air | `candidate:skyharbor-air:418046a98114` | created / inactive | 2,066 | 2,066 | 1,994 | ready | 0 |
 
 ## Required Proof Points
 
 - SkyHarbor applications/systems: 613
 - SkyHarbor data assets/integrations: 570
 - SkyHarbor infrastructure/platforms: 686
-- Meridian applications/systems: 116
-- Meridian data assets/integrations: 147
-- Meridian infrastructure/platforms: 0
+- Meridian applications/systems: 241
+- Meridian data assets/integrations: 242
+- Meridian infrastructure/platforms: 15
 
 ## Proof Files
 

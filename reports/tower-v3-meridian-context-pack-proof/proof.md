@@ -10,10 +10,10 @@ It does not use `cio_tower` as source truth. `cio_tower` remains bridge-only unt
 - Context pack: `meridian-health-tower-v3-live-context-pack`
 - Mode: `active`
 - Truth status: `active`
-- Tower metric records: 140
-- Tower value records: 79
-- Tower value claims: 79
-- Blocked value claims: 0
+- Tower metric records: 555
+- Tower value records: 561
+- Tower value claims: 561
+- Blocked value claims: 80
 - Realized-value language allowed: No
 
 ## Truth Split

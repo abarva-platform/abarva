@@ -1,6 +1,6 @@
 # Active Module Context Promotion - meridian-health
 
-Generated: `2026-07-14T15:50:19.110Z`
+Generated: `2026-07-17T11:49:02.663Z`
 
 This promotes a reviewed candidate metadata pointer into Active Tenant Access for
 the selected safe demo tenant only. It does not write production tenant data,
@@ -9,11 +9,11 @@ candidate data by default, or claim realized value.
 
 ## Quality
 
-- Candidate version: `candidate:meridian-health:5698b1a4c532`
+- Candidate version: `candidate:meridian-health:7af66450ac65`
 - Enterprise profile: ready
-- Canonical records: 1066
-- Evidence attachments: 1066
-- Relationship candidates: 1662
+- Canonical records: 3759
+- Evidence attachments: 3759
+- Relationship candidates: 173
 - Promotion blockers: 0
 
 ## Module Read Proof
