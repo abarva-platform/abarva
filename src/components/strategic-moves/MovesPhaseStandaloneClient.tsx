@@ -1128,8 +1128,6 @@ function PhaseBody({
           evidenceNeedPackets={evidenceNeedPackets}
           move={move}
           nextPhaseLabel={nextPhase ? phaseWorkspaceLabel(nextPhase) : "Tower handoff"}
-          onOpenFiles={onOpenFiles}
-          onShowGate={onShowGate}
           phase={phase}
           terminalComplete={terminalComplete}
         />
@@ -2062,16 +2060,12 @@ function PhasePreparePanel({
   evidenceNeedPackets,
   move,
   nextPhaseLabel,
-  onOpenFiles,
-  onShowGate,
   phase,
   terminalComplete,
 }: {
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
   move: StrategicMove;
   nextPhaseLabel: string;
-  onOpenFiles: () => void;
-  onShowGate: () => void;
   phase: PhaseContract;
   terminalComplete: boolean;
 }) {
@@ -2105,7 +2099,7 @@ function PhasePreparePanel({
         <div>
           <span>2. Upload & review</span>
           <p>Add completed workshop files and review them in Files &amp; Evidence.</p>
-          <button onClick={onOpenFiles} type="button">Upload files</button>
+          <b>Next tab</b>
         </div>
         <div>
           <span>3. Review findings</span>
@@ -2115,7 +2109,7 @@ function PhasePreparePanel({
         <div>
           <span>4. Approve & Build</span>
           <p>Run the governed close: context extract, deliverables, gate, and handoff.</p>
-          <button onClick={onShowGate} type="button">Review gate</button>
+          <b>Final tab</b>
         </div>
       </div>
       <div className="mxw-command-grid">
@@ -2691,14 +2685,19 @@ function MovesStandaloneStyles() {
 .mxw-btn{padding:10px 18px;border-radius:9px;font-size:14px;font-weight:600;border:1px solid transparent;cursor:pointer}
 .mxw-primary{background:var(--ink);color:#fff}
 .mxw-primary:hover{background:#000}
-.mxw-substeps{display:flex;align-items:center;flex-wrap:nowrap;gap:1px;margin:22px 0 8px;padding-bottom:6px;overflow-x:auto}
-.mxw-substep{display:flex;align-items:center;gap:9px;padding:7px 8px;background:none;border:0;cursor:pointer;border-radius:9px;flex-shrink:0;color:var(--muted)}
-.mxw-substep:hover{background:rgba(20,20,19,.03)}
-.mxw-substep span{width:25px;height:25px;border-radius:50%;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;background:var(--card);border:1.5px solid var(--line-2);color:var(--faint)}
-.mxw-substep.done span{background:var(--ink);border-color:var(--ink);color:#fff}
-.mxw-substep.cur span{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 0 3px var(--blue-tint)}
-.mxw-substep b{font-size:13px;font-weight:500;white-space:nowrap}
-.mxw-substep.cur b{color:var(--ink);font-weight:600}
+.mxw-substeps{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(170px,1fr);gap:0;margin:20px 0 10px;padding:4px;border:1px solid var(--line);border-radius:14px;background:#eceae5;box-shadow:inset 0 1px 0 rgba(255,255,255,.8);overflow-x:auto}
+.mxw-substep{position:relative;display:flex;align-items:center;justify-content:center;gap:9px;min-height:46px;padding:10px 14px;background:transparent;border:1px solid transparent;border-radius:10px;cursor:pointer;color:var(--muted);white-space:nowrap;transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,color .16s ease}
+.mxw-substep:not(:last-child)::after{content:"";position:absolute;right:-1px;top:9px;bottom:9px;width:1px;background:rgba(20,20,19,.08)}
+.mxw-substep:hover{background:rgba(255,255,255,.72);color:var(--ink)}
+.mxw-substep.cur{z-index:1;background:#fff;border-color:rgba(0,87,184,.28);box-shadow:0 1px 2px rgba(20,20,19,.08)}
+.mxw-substep.cur::before{content:"";position:absolute;left:12px;right:12px;bottom:4px;height:3px;border-radius:999px;background:var(--blue)}
+.mxw-substep.done{color:var(--ink)}
+.mxw-substep.done::before{content:"";position:absolute;left:12px;right:12px;bottom:4px;height:3px;border-radius:999px;background:var(--green)}
+.mxw-substep span{width:23px;height:23px;border-radius:50%;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;background:var(--card);border:1.5px solid var(--line-2);color:var(--faint);flex:0 0 auto}
+.mxw-substep.done span{background:var(--green);border-color:var(--green);color:#fff}
+.mxw-substep.cur span{background:var(--blue);border-color:var(--blue);color:#fff}
+.mxw-substep b{font-size:13px;font-weight:700;line-height:1.1}
+.mxw-substep.cur b{color:var(--ink)}
 .mxw-workflow-guide{border:1px solid var(--line);border-radius:13px;background:var(--card);box-shadow:var(--shadow);padding:14px 16px;margin:8px 0 18px}
 .mxw-guide-head{display:flex;align-items:center;gap:10px;margin-bottom:11px}
 .mxw-guide-head span{font-size:10.5px;letter-spacing:.95px;text-transform:uppercase;color:var(--blue);font-weight:900}
