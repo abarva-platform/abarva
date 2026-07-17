@@ -126,6 +126,67 @@ describe("AgentAnswerRenderer", () => {
     expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
   });
 
+  it("suppresses non-renderable chart artifacts when other answer content is available", () => {
+    const answer: AvaAnswerPacket = {
+      surface: "intelligence",
+      mode: "ANALYZE",
+      tenantKey: "meridian",
+      question: "Rank AI bets by value and complexity.",
+      intent: "chart",
+      status: "answered",
+      directAnswer: "Payment integrity is the first evidence-gate bet.",
+      factsUsed: [],
+      metricsUsed: [],
+      relationshipsUsed: [],
+      artifacts: [
+        {
+          artifact: "chart",
+          id: "bad-chart",
+          kind: "bar",
+          title: "Empty ranking chart",
+          builder: "inlineChart",
+          data: {
+            type: "bar",
+            title: "Empty ranking chart",
+            xKey: "Use case",
+            yKey: "Value",
+            data: [{ "Use case": "Payment integrity", Value: "High" }],
+          },
+        },
+        {
+          artifact: "table",
+          id: "decision-table",
+          title: "Decision table",
+          columns: [{ key: "use_case", label: "Use case" }],
+          rows: [{ use_case: "Payment integrity" }],
+        },
+      ],
+      citations: [],
+      gaps: [],
+      caveats: [],
+      nextSteps: [],
+      quality: {
+        confidence: "medium",
+        evidenceStrength: "partial",
+        tenantGrounding: "partial",
+        answerCompleteness: "complete",
+      },
+      safety: {
+        tenantFencePassed: true,
+        rawIdsSuppressed: true,
+        forbiddenLanguagePassed: true,
+        unsupportedClaimsBlocked: true,
+      },
+    };
+
+    render(<AgentAnswerRenderer answer={answer} />);
+
+    expect(screen.queryByText("Empty ranking chart")).not.toBeInTheDocument();
+    expect(screen.queryByText("Visuals")).not.toBeInTheDocument();
+    expect(screen.getByText("Decision Table")).toBeInTheDocument();
+    expect(screen.getByText("Payment integrity")).toBeInTheDocument();
+  });
+
   it("formats numeric strings in inferred money columns", () => {
     const table: AnswerTable = {
       id: "table-strings",
