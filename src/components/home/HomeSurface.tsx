@@ -1658,17 +1658,26 @@ function buildHomeExplorerAreas(
             gap.domain === definition.moduleDomain ||
             definition.id === "relationships",
         ) ?? [];
-      const rows =
-        areaSnapshot?.loadedCount ??
-        moduleRecords.length ??
-        previews.reduce((sum, preview) => sum + preview.rowCount, 0);
+      const previewRowCount = previews.reduce(
+        (sum, preview) => sum + preview.rowCount,
+        0,
+      );
+      const rows = Math.max(
+        areaSnapshot?.loadedCount ?? 0,
+        moduleRecords.length,
+        previewRowCount,
+      );
       const gaps =
         areaSnapshot?.topGaps.reduce((sum, gap) => sum + gap.count, 0) ??
         moduleGaps.length;
-      const sources =
-        areaSnapshot?.sourceCount ??
-        moduleEvidenceRefs.length ??
-        new Set(previews.flatMap((preview) => preview.fileNames)).size;
+      const previewSourceCount = new Set(
+        previews.flatMap((preview) => preview.fileNames),
+      ).size;
+      const sources = Math.max(
+        areaSnapshot?.sourceCount ?? 0,
+        moduleEvidenceRefs.length,
+        previewSourceCount,
+      );
       return {
         id: definition.id,
         label: definition.label,
@@ -2150,6 +2159,71 @@ function pickRowValue(row: HomeV6BrowserSourceRow, patterns: RegExp[]): string {
 
 function buildAreaDataRows(area: HomeExplorerArea | null): AreaDataRow[] {
   if (!area) return [];
+  const sourceTemplateRows = area.previews.flatMap((preview) =>
+    preview.sourceRows.map((row, rowIndex) => {
+      const dataSet = preview.dimension;
+      const record = normalizeDataCell(row.label) || `${dataSet} row`;
+      const category =
+        pickRowValue(row, [
+          /\b(category|type|scope|domain|capability|function|segment)\b/i,
+        ]) || "Not classified";
+      const ownerOrSystem =
+        pickRowValue(row, [
+          /\b(owner|sponsor|accountable|system of record|source system|vendor|platform)\b/i,
+        ]) || "Not assigned";
+      const status =
+        pickRowValue(row, [
+          /\b(criticality|status|state|risk|priority|maturity|readiness)\b/i,
+        ]) || "Loaded";
+      const source = clientFacingFileName(
+        row.v6File || preview.fileNames[0] || dataSet,
+      );
+      const filterValues = Object.fromEntries(
+        Object.entries(row.values)
+          .map(([label, value]) => [
+            label,
+            normalizeDataCell(formatPreviewCell(value, { key: label, label })),
+          ])
+          .filter((entry): entry is [string, string] => Boolean(entry[1])),
+      );
+      const searchText = [
+        dataSet,
+        record,
+        category,
+        ownerOrSystem,
+        status,
+        source,
+        ...Object.values(filterValues),
+      ]
+        .join(" ")
+        .toLowerCase();
+      const displayValues = {
+        ...filterValues,
+        Dataset: dataSet,
+        Record: record,
+        Category: category,
+        "Owner / System": ownerOrSystem,
+        Status: status,
+        Source: source,
+      };
+
+      return {
+        id: `${preview.dimension}-${row.rowNumber || rowIndex}-${row.rowId || record}`,
+        dataSet,
+        record,
+        category,
+        ownerOrSystem,
+        status,
+        source,
+        filterValues,
+        displayValues,
+        searchText,
+      };
+    }),
+  );
+  if (sourceTemplateRows.length > 0) {
+    return sourceTemplateRows;
+  }
   if (area.moduleRecords.length > 0) {
     return area.moduleRecords.map((record, index) => {
       const fieldValues = Object.fromEntries(
@@ -2219,68 +2293,7 @@ function buildAreaDataRows(area: HomeExplorerArea | null): AreaDataRow[] {
       };
     });
   }
-  return area.previews.flatMap((preview) =>
-    preview.sourceRows.map((row, rowIndex) => {
-      const dataSet = preview.dimension;
-      const record = normalizeDataCell(row.label) || `${dataSet} row`;
-      const category =
-        pickRowValue(row, [
-          /\b(category|type|scope|domain|capability|function|segment)\b/i,
-        ]) || "Not classified";
-      const ownerOrSystem =
-        pickRowValue(row, [
-          /\b(owner|sponsor|accountable|system of record|source system|vendor|platform)\b/i,
-        ]) || "Not assigned";
-      const status =
-        pickRowValue(row, [
-          /\b(criticality|status|state|risk|priority|maturity|readiness)\b/i,
-        ]) || "Loaded";
-      const source = clientFacingFileName(
-        row.v6File || preview.fileNames[0] || dataSet,
-      );
-      const filterValues = Object.fromEntries(
-        Object.entries(row.values)
-          .map(([label, value]) => [
-            label,
-            normalizeDataCell(formatPreviewCell(value, { key: label, label })),
-          ])
-          .filter((entry): entry is [string, string] => Boolean(entry[1])),
-      );
-      const searchText = [
-        dataSet,
-        record,
-        category,
-        ownerOrSystem,
-        status,
-        source,
-        ...Object.values(filterValues),
-      ]
-        .join(" ")
-        .toLowerCase();
-      const displayValues = {
-        ...filterValues,
-        Dataset: dataSet,
-        Record: record,
-        Category: category,
-        "Owner / System": ownerOrSystem,
-        Status: status,
-        Source: source,
-      };
-
-      return {
-        id: `${preview.dimension}-${row.rowNumber || rowIndex}-${row.rowId || record}`,
-        dataSet,
-        record,
-        category,
-        ownerOrSystem,
-        status,
-        source,
-        filterValues,
-        displayValues,
-        searchText,
-      };
-    }),
-  );
+  return [];
 }
 
 const DEFAULT_AREA_DATA_COLUMNS = [
