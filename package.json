@@ -105,8 +105,6 @@
     "load:skyharbor-substrate": "TENANT_KEY=skyharbor npx tsx scripts/seed/load-tenant-substrate.ts",
     "generate:tenant-v3-data": "node scripts/tenant-v3/generate-tenant-v3-inputs.mjs",
     "generate:tenant-v3-data:all": "node scripts/tenant-v3/generate-tenant-v3-inputs.mjs --all",
-    "audit:tenant-v3-data": "node scripts/tenant-v3/audit-tenant-v3-inputs.mjs",
-    "audit:meridian-executive-interviews": "node scripts/tenant-v3/audit-meridian-executive-interviews.mjs",
     "demo:skyharbor:capture": "node scripts/demo/skyharbor-demo-capture.mjs",
     "demo:environment:verify": "tsx scripts/demo/verify-demo-environment-readiness.ts",
     "verify:apex-sentinel-canonical": "node scripts/verify/apex-sentinel-canonical.mjs",
@@ -502,7 +500,10 @@
     "audit:intelligence-ava-stream-polish": "npx tsx scripts/audit/intelligence-ava-stream-polish.ts --mode=stream",
     "audit:intelligence-ava-visual-contract": "npx tsx scripts/audit/intelligence-ava-stream-polish.ts --mode=visual",
     "audit:intelligence-ava-cxo-narrative": "npx tsx scripts/audit/intelligence-ava-stream-polish.ts --mode=cxo",
-    "audit:route-archive": "node scripts/audit/route-archive-audit.mjs"
+    "audit:route-archive": "node scripts/audit/route-archive-audit.mjs",
+    "audit:meridian-interview-insight-projection": "node scripts/tenant-v3/audit-meridian-v3-derived-layer.mjs --scope interview-insights",
+    "audit:meridian-moves-context-view": "node scripts/tenant-v3/audit-meridian-v3-derived-layer.mjs --scope moves",
+    "audit:meridian-interview-graph-edges": "node scripts/tenant-v3/audit-meridian-v3-derived-layer.mjs --scope interview-graph"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

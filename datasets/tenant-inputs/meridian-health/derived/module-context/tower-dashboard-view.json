@@ -1,7 +1,7 @@
 {
   "context_view_id": "tower-dashboard-view:meridian-health:v3-derived",
   "tenant_key": "meridian-health",
-  "generated_at": "2026-07-17T02:33:07.838Z",
+  "generated_at": "2026-07-17T03:03:00.709Z",
   "source_contract": "standard-2026-07-v3",
   "status": "active_source_derived_artifact_not_loaded_to_runtime",
   "caveat": "Derived artifact only. Not loaded into Azure/Postgres, Active Tenant Access, or runtime Tower.",
@@ -5434,7 +5434,7 @@
   ],
   "sa08_benefits_posture": {
     "tenant_key": "meridian-health",
-    "generated_at": "2026-07-17T02:33:07.838Z",
+    "generated_at": "2026-07-17T03:03:00.709Z",
     "source_file": "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
     "summary": {
       "claim_count": 8,

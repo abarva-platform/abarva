@@ -2,7 +2,7 @@
 
 Status: Generated
 
-Generated at: 2026-07-17T02:33:07.838Z
+Generated at: 2026-07-17T03:03:00.709Z
 
 ## Source
 
@@ -16,8 +16,11 @@ Generated at: 2026-07-17T02:33:07.838Z
 - Evidence registry entries: 4298
 - Canonical facts: 4298
 - Entity profiles: 1214
-- Relationship nodes: 1214
-- Relationship edges: 902
+- Relationship nodes: 1668
+- Relationship edges: 2670
+- Interview insights: 221
+- Interview graph edges: 1768
+- Interview-supported move candidates: 12
 - Context gaps: 2752
 - AI use-case business-unit mappings: 251
 
@@ -39,3 +42,10 @@ Generated at: 2026-07-17T02:33:07.838Z
 - Promised value posture: $35.5M
 - Finance-validated value: $3.8M
 - Promised value is not realized value.
+
+## Interview Insight Boundary
+
+- Interviews support gates, gaps, priorities, and candidate move opportunities.
+- Interviews do not create approved funding.
+- Interviews do not create realized value.
+- Interviews do not promote candidate AI opportunities into funded programs.

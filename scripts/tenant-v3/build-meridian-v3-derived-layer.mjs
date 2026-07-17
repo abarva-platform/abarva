@@ -13,6 +13,7 @@ const derivedDir = path.join(tenantDir, "derived");
 const moduleContextDir = path.join(derivedDir, "module-context");
 const approvedDir = path.join(tenantDir, "approved-content");
 const reportDir = path.join(repoRoot, "reports/meridian-v3-derived-and-claude-layer");
+const interviewReportDir = path.join(repoRoot, "reports/meridian-interview-insight-projection");
 const generatedAt = new Date().toISOString();
 const modelVersion = "claude-content-contract-v1-source-grounded";
 const contentGenerationMode = process.env.ANTHROPIC_API_KEY
@@ -108,6 +109,23 @@ function splitList(value) {
     .split(/[;|]/)
     .map((v) => v.trim())
     .filter(Boolean);
+}
+
+function slug(value) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function interviewRecordId(row) {
+  return [row.interview_id, row.question_id].filter(Boolean).join(":") || `interview-row-${row.__row_number}`;
+}
+
+function sourceRecordId(row) {
+  if (row.source_file === "interviews/executive_interviews.csv") return interviewRecordId(row);
+  return row.record_id || row.source_record_id || row.interview_id || `${row.source_file}:${row.__row_number}`;
 }
 
 function money(value) {
@@ -338,7 +356,12 @@ for (const file of [...coreFiles, ...adapterFiles]) {
   }
 }
 for (const row of interviewRows) {
-  sourceRows.push({ source_file: "interviews/executive_interviews.csv", ...row, evidence_id: row.evidence_id || `MER-SA07-INT-EVID-${String(row.__row_number - 1).padStart(4, "0")}` });
+  sourceRows.push({
+    source_file: "interviews/executive_interviews.csv",
+    record_id: interviewRecordId(row),
+    ...row,
+    evidence_id: row.evidence_id || `MER-SA07-INT-EVID-${String(row.__row_number - 1).padStart(4, "0")}`,
+  });
 }
 sourceEvidenceIds = new Set(sourceRows.map((row) => row.evidence_id).filter(Boolean));
 
@@ -355,8 +378,8 @@ const evidenceRegistry = sourceRows
       resolved: status.resolved,
       source_file: row.source_file,
       source_row_number: row.__row_number,
-      source_record_id: row.record_id || row.source_record_id || row.interview_id || "",
-      record_id: row.record_id || row.source_record_id || row.interview_id || "",
+      source_record_id: sourceRecordId(row),
+      record_id: sourceRecordId(row),
       business_name: row.business_name || row.program_name || row.context_item || row.interview_group || "",
       evidence_type: row.evidence_type || row.source_type || row.source_extract || "source_row",
       evidence_location: /v6|v7|dossier|projection/i.test(row.evidence_location || "")
@@ -382,7 +405,7 @@ function factType(row) {
 }
 
 const canonicalFacts = sourceRows.map((row) => {
-  const recordId = row.record_id || row.source_record_id || row.interview_id || `${row.source_file}:${row.__row_number}`;
+  const recordId = sourceRecordId(row);
   const sourceTruthRole =
     row.source_file === "08_it_budget_spend_value.csv" && isAtomicBudgetFact(row)
       ? "budget_truth_atomic"
@@ -434,6 +457,11 @@ const canonicalFacts = sourceRows.map((row) => {
   };
 });
 const factByRecordId = new Map(canonicalFacts.map((fact) => [fact.source_record_id, fact]));
+const factByScopedRecordId = new Map(canonicalFacts.map((fact) => [`${fact.source_file}:${fact.source_record_id}`, fact]));
+function sourceFactForRow(row) {
+  const id = sourceRecordId(row);
+  return factByScopedRecordId.get(`${row.source_file}:${id}`) || factByRecordId.get(id);
+}
 
 function profile(type, key, rows, label) {
   return {
@@ -486,7 +514,7 @@ const graphNodes = entityProfiles.map((p) => ({
   evidence_ids: p.evidence_ids,
 }));
 const graphEdges = [];
-function addEdge(type, fromType, fromId, toType, toId, evidenceId, sourceFactIds = [], note = "") {
+function addEdge(type, fromType, fromId, toType, toId, evidenceId, sourceFactIds = [], note = "", meta = {}) {
   if (!fromId || !toId) return;
   graphEdges.push({
     edge_id: `edge:${graphEdges.length + 1}`.padEnd(12, "0"),
@@ -500,6 +528,7 @@ function addEdge(type, fromType, fromId, toType, toId, evidenceId, sourceFactIds
     evidence_id: evidenceId || "",
     source_fact_ids: sourceFactIds,
     note,
+    ...meta,
   });
 }
 
@@ -556,6 +585,279 @@ for (const row of budgetRows.filter((r) => bool(r.ai_spend_flag) && r.duplicate_
   addGap("ai_spend_duplicate_counting_risk", row, row.duplicate_risk, "high", "Tower|Finance");
 }
 
+function normalizeText(value) {
+  return String(value ?? "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function includesMeaning(haystack, needle) {
+  const h = normalizeText(haystack);
+  const n = normalizeText(needle);
+  return Boolean(h && n && (h.includes(n) || n.includes(h)));
+}
+
+function bestFactMatch(rows, textFields, needle, fallbackUseCase = "") {
+  if (!nonEmpty(needle) && !nonEmpty(fallbackUseCase)) return null;
+  const candidates = rows
+    .map((row) => {
+      const blob = textFields.map((field) => row[field]).filter(Boolean).join(" ");
+      let score = 0;
+      if (includesMeaning(blob, needle)) score += 4;
+      if (includesMeaning(blob, fallbackUseCase)) score += 2;
+      if (row.use_case && includesMeaning(row.use_case, fallbackUseCase)) score += 2;
+      if (row.context_item && includesMeaning(row.context_item, needle)) score += 2;
+      return { row, score };
+    })
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score);
+  return candidates[0]?.row ?? null;
+}
+
+function confidenceRank(value) {
+  return { high: 3, medium: 2, low: 1 }[String(value || "").toLowerCase()] ?? 2;
+}
+
+const candidateUseCaseTargets = candidateAiRows.map((row) => ({
+  target_id: row.record_id,
+  source_fact_id: sourceFactForRow({ ...row, source_file: "10_ai_automation_use_cases.csv" })?.fact_id,
+  name: row.business_name || row.use_case,
+  related_move: row.related_move,
+  funding_status: row.funding_status,
+}));
+
+const interviewInsights = interviewRows.map((row) => {
+  const sourceRow = { source_file: "interviews/executive_interviews.csv", record_id: interviewRecordId(row), ...row };
+  const sourceFact = sourceFactForRow(sourceRow);
+  const matchedCandidate = bestFactMatch(
+    candidateAiRows,
+    ["business_name", "use_case", "related_move", "business_problem", "affected_process", "required_data_domains", "evidence_needed"],
+    row.key_initiative,
+    row.business_priority,
+  );
+  const matchedMetric = bestFactMatch(rowsByFile["14_metrics_outcomes.csv"], ["business_name", "context_item", "use_case", "metric_boundary", "evidence_needed", "data_domain"], row.metric_mentioned, row.key_initiative);
+  const matchedRisk = bestFactMatch(rowsByFile["11_risks_controls.csv"], ["business_name", "context_item", "risk_or_gap", "evidence_needed", "systems", "data_domain"], row.risk_or_control_mentioned || row.known_challenge, row.key_initiative);
+  const matchedOutcome = bestFactMatch(rowsByFile["14_metrics_outcomes.csv"], ["business_name", "context_item", "use_case", "value_hypothesis", "benefit_id"], row.decision_supported, row.key_initiative);
+  return {
+    insight_id: `interview_insight:${interviewRecordId(row)}`,
+    tenant_key: tenantKey,
+    source_file: "interviews/executive_interviews.csv",
+    source_row_number: row.__row_number,
+    source_record_id: interviewRecordId(row),
+    source_fact_id: sourceFact?.fact_id || "",
+    source_fact_type: "interview_context_fact",
+    interview_id: row.interview_id,
+    question_id: row.question_id,
+    interview_group: row.interview_group,
+    executive_area: row.executive_area,
+    stakeholder_role: row.stakeholder_role,
+    priority_theme: row.priority_theme,
+    business_priority: row.business_priority,
+    pain_point: row.pain_point,
+    known_challenge: row.known_challenge,
+    key_initiative: row.key_initiative,
+    initiative_link: row.initiative_link,
+    move_candidate_id: row.initiative_link ? `move_candidate:${row.initiative_link}` : "",
+    system_or_vendor_mentioned: row.system_or_vendor_mentioned,
+    data_domain_mentioned: row.data_domain_mentioned,
+    metric_mentioned: row.metric_mentioned,
+    risk_or_control_mentioned: row.risk_or_control_mentioned,
+    evidence_needed: row.evidence_needed,
+    decision_supported: row.decision_supported,
+    confidence: row.confidence || "medium",
+    confidence_rank: confidenceRank(row.confidence),
+    evidence_id: row.evidence_id,
+    module_usage: splitList(row.module_usage_notes),
+    active_candidate_status: row.active_candidate_status,
+    budget_or_value_mentioned: row.budget_or_value_mentioned,
+    matched_candidate_use_case_id: matchedCandidate?.record_id || "",
+    matched_candidate_use_case_fact_id: matchedCandidate ? sourceFactForRow({ ...matchedCandidate, source_file: "10_ai_automation_use_cases.csv" })?.fact_id || "" : "",
+    matched_metric_fact_id: matchedMetric ? sourceFactForRow({ ...matchedMetric, source_file: "14_metrics_outcomes.csv" })?.fact_id || "" : "",
+    matched_risk_control_fact_id: matchedRisk ? sourceFactForRow({ ...matchedRisk, source_file: "11_risks_controls.csv" })?.fact_id || "" : "",
+    matched_outcome_fact_id: matchedOutcome ? sourceFactForRow({ ...matchedOutcome, source_file: "14_metrics_outcomes.csv" })?.fact_id || "" : "",
+    source_truth_role: "qualitative_interview_context",
+    allowed_use: "prioritize_gaps_shape_moves_support_advisory_context",
+    blocked_use: "create_budget_or_funding_or_realized_value",
+    caveat: "Interview evidence supports gates, gaps, and priorities. It does not approve funding, promote candidates, or prove realized value.",
+  };
+});
+
+const interviewInsightsBySourceRecord = new Map(interviewInsights.map((insight) => [insight.source_record_id, insight]));
+const interviewSupportedGapIdsBySourceRecord = new Map();
+for (const gap of contextGaps) {
+  if (!interviewInsightsBySourceRecord.has(gap.source_record_id)) continue;
+  if (!interviewSupportedGapIdsBySourceRecord.has(gap.source_record_id)) interviewSupportedGapIdsBySourceRecord.set(gap.source_record_id, []);
+  interviewSupportedGapIdsBySourceRecord.get(gap.source_record_id).push(gap.gap_id);
+}
+
+const moveCandidateGroups = new Map();
+for (const insight of interviewInsights) {
+  if (!insight.move_candidate_id) continue;
+  if (!moveCandidateGroups.has(insight.move_candidate_id)) {
+    moveCandidateGroups.set(insight.move_candidate_id, []);
+  }
+  moveCandidateGroups.get(insight.move_candidate_id).push(insight);
+}
+
+const movesCandidates = [...moveCandidateGroups.entries()].map(([moveCandidateId, insights]) => {
+  const sorted = [...insights].sort((a, b) => b.confidence_rank - a.confidence_rank);
+  const top = sorted[0];
+  const gapIds = uniq(insights.flatMap((insight) => interviewSupportedGapIdsBySourceRecord.get(insight.source_record_id) || []));
+  const matchedUseCases = uniq(insights.map((insight) => insight.matched_candidate_use_case_id));
+  return {
+    move_candidate_id: moveCandidateId,
+    initiative_link: top.initiative_link,
+    candidate_name: top.key_initiative || top.business_priority || top.decision_supported,
+    status: "candidate_opportunity_not_funded_program",
+    likely_phase_entry_point: "discover_and_shape",
+    interview_count: insights.length,
+    stakeholder_roles: uniq(insights.map((insight) => insight.stakeholder_role)),
+    interview_groups: uniq(insights.map((insight) => insight.interview_group)),
+    priority_themes: uniq(insights.map((insight) => insight.priority_theme)),
+    business_priorities: uniq(insights.map((insight) => insight.business_priority)).slice(0, 12),
+    systems_vendors_mentioned: uniq(insights.map((insight) => insight.system_or_vendor_mentioned)).slice(0, 12),
+    data_domains_mentioned: uniq(insights.map((insight) => insight.data_domain_mentioned)).slice(0, 12),
+    metrics_mentioned: uniq(insights.map((insight) => insight.metric_mentioned)).slice(0, 12),
+    risks_controls_mentioned: uniq(insights.map((insight) => insight.risk_or_control_mentioned)).slice(0, 12),
+    required_evidence: uniq(insights.flatMap((insight) => splitList(insight.evidence_needed))).slice(0, 12),
+    readiness_blockers: uniq(insights.map((insight) => insight.known_challenge)).slice(0, 12),
+    matched_candidate_use_case_ids: matchedUseCases,
+    source_fact_ids: uniq(insights.map((insight) => insight.source_fact_id)),
+    evidence_ids: uniq(insights.map((insight) => insight.evidence_id)),
+    gap_ids: gapIds,
+    readiness_gates: [
+      "Confirm executive owner and phase entry point.",
+      "Load baseline metrics and workflow evidence.",
+      "Validate controls, data lineage, and source-system integration.",
+      "Keep funding status unchanged until approved program and budget rows exist.",
+    ],
+    boundary: "Interview support raises priority/readiness confidence only. It does not create approved funding, realized value, or program execution status.",
+  };
+});
+
+const stakeholderSignalSummary = Object.values(
+  interviewInsights.reduce((acc, insight) => {
+    const key = insight.stakeholder_role || insight.interview_group || "Unassigned";
+    acc[key] ??= { stakeholder_role: key, insight_count: 0, priority_themes: [], evidence_requests: [], move_candidates: [], confidence: "medium" };
+    acc[key].insight_count += 1;
+    acc[key].priority_themes.push(insight.priority_theme);
+    acc[key].evidence_requests.push(insight.evidence_needed);
+    acc[key].move_candidates.push(insight.move_candidate_id);
+    if (confidenceRank(insight.confidence) > confidenceRank(acc[key].confidence)) acc[key].confidence = insight.confidence;
+    return acc;
+  }, {}),
+).map((row) => ({
+  ...row,
+  priority_themes: uniq(row.priority_themes).slice(0, 8),
+  evidence_requests: uniq(row.evidence_requests).slice(0, 8),
+  move_candidates: uniq(row.move_candidates).slice(0, 8),
+}));
+
+const interviewGraphEdges = [];
+function addInterviewEdge(insight, edgeType, targetType, targetId, rationale, caveat = insight.caveat, targetSourceFactId = "") {
+  if (!targetId) return;
+  const before = graphEdges.length;
+  addEdge(edgeType, "interview_context_fact", insight.source_fact_id, targetType, targetId, insight.evidence_id, uniq([insight.source_fact_id, targetSourceFactId]), rationale, {
+    source_fact_type: "interview_context_fact",
+    edge_type: edgeType,
+    target_id: targetId,
+    target_type: targetType,
+    stakeholder_role: insight.stakeholder_role,
+    interview_group: insight.interview_group,
+    confidence: insight.confidence,
+    rationale,
+    module_usage: insight.module_usage.join("|"),
+    active_candidate_status: insight.active_candidate_status,
+    caveat,
+  });
+  if (graphEdges.length > before) interviewGraphEdges.push(graphEdges[graphEdges.length - 1]);
+}
+
+for (const insight of interviewInsights) {
+  addInterviewEdge(insight, "supports_priority", "move_candidate", insight.move_candidate_id, `${insight.stakeholder_role} linked ${insight.key_initiative || insight.business_priority} to a decision/evidence gate.`);
+  addInterviewEdge(insight, "requires_evidence", "evidence_gap", `evidence_gap:${slug(insight.evidence_needed).slice(0, 80)}`, insight.evidence_needed || "Interview names an evidence request.");
+  for (const gapId of interviewSupportedGapIdsBySourceRecord.get(insight.source_record_id) || []) {
+    addInterviewEdge(insight, "identifies_gap", "context_gap", gapId, "Interview row generated a source/evidence gap that should remain visible.");
+  }
+  if (insight.matched_candidate_use_case_id) {
+    addInterviewEdge(insight, "supports_gate", "candidate_use_case", insight.matched_candidate_use_case_id, "Interview evidence supports a readiness gate for a candidate AI/use-case row.", insight.caveat, insight.matched_candidate_use_case_fact_id);
+    addInterviewEdge(insight, "constrains_scale", "candidate_use_case", insight.matched_candidate_use_case_id, "Interview evidence constrains scale until evidence and controls are loaded.", insight.caveat, insight.matched_candidate_use_case_fact_id);
+  }
+  addInterviewEdge(insight, "informs_metric", "metric_fact", insight.matched_metric_fact_id, `Interview references ${insight.metric_mentioned || "a measurement need"}.`, insight.caveat, insight.matched_metric_fact_id);
+  addInterviewEdge(insight, "reinforces_risk", "risk_control_fact", insight.matched_risk_control_fact_id, `Interview reinforces ${insight.risk_or_control_mentioned || insight.known_challenge || "a risk/control constraint"}.`, insight.caveat, insight.matched_risk_control_fact_id);
+  addInterviewEdge(insight, "supports_business_outcome", "outcome_fact", insight.matched_outcome_fact_id, `Interview supports the business outcome decision: ${insight.decision_supported || insight.business_priority}.`, insight.caveat, insight.matched_outcome_fact_id);
+}
+
+for (const insight of interviewInsights) {
+  graphNodes.push({
+    node_id: insight.source_fact_id,
+    tenant_key: tenantKey,
+    node_type: "interview_context_fact",
+    label: `${insight.stakeholder_role} ${insight.question_id}`,
+    source_fact_ids: [insight.source_fact_id],
+    evidence_ids: [insight.evidence_id],
+  });
+}
+for (const candidate of movesCandidates) {
+  graphNodes.push({
+    node_id: candidate.move_candidate_id,
+    tenant_key: tenantKey,
+    node_type: "move_candidate",
+    label: candidate.candidate_name,
+    source_fact_ids: candidate.source_fact_ids,
+    evidence_ids: candidate.evidence_ids,
+  });
+}
+for (const gapId of uniq(interviewGraphEdges.filter((edge) => edge.to_object_type === "context_gap").map((edge) => edge.to_object_id))) {
+  const gap = contextGaps.find((item) => item.gap_id === gapId);
+  if (!gap) continue;
+  graphNodes.push({
+    node_id: gap.gap_id,
+    tenant_key: tenantKey,
+    node_type: "context_gap",
+    label: gap.description,
+    source_fact_ids: [gap.source_fact_id],
+    evidence_ids: [gap.evidence_id],
+  });
+}
+
+const movesContextView = {
+  context_view_id: "moves-context-view:meridian-health:v3-derived",
+  tenant_key: tenantKey,
+  generated_at: generatedAt,
+  source_contract: "standard-2026-07-v3",
+  status: "active_source_derived_artifact_not_loaded_to_runtime",
+  caveat: "Derived artifact only. Not loaded to runtime. Interviews shape candidate opportunities, gates, and evidence asks; they do not create approved funding, realized value, or program execution status.",
+  summary: {
+    interview_insights: interviewInsights.length,
+    interview_supported_move_candidates: movesCandidates.length,
+    interview_graph_edges: interviewGraphEdges.length,
+    candidate_ai_rows: candidateAiRows.length,
+    funding_created_by_interviews: 0,
+    realized_value_created_by_interviews: 0,
+  },
+  candidate_move_opportunities: movesCandidates,
+  candidate_ai_portfolio_interview_support: candidateUseCaseTargets.map((target) => {
+    const supportingInsights = interviewInsights.filter((insight) => insight.matched_candidate_use_case_id === target.target_id);
+    return {
+      candidate_use_case_id: target.target_id,
+      candidate_name: target.name,
+      funding_status: target.funding_status,
+      interview_support_count: supportingInsights.length,
+      stakeholder_roles: uniq(supportingInsights.map((insight) => insight.stakeholder_role)),
+      required_evidence: uniq(supportingInsights.flatMap((insight) => splitList(insight.evidence_needed))).slice(0, 12),
+      interview_source_fact_ids: uniq(supportingInsights.map((insight) => insight.source_fact_id)),
+      evidence_ids: uniq(supportingInsights.map((insight) => insight.evidence_id)),
+      boundary: "Interview support does not convert candidate funding status.",
+    };
+  }),
+  stakeholder_signal_summary: stakeholderSignalSummary,
+  rules: [
+    "Interviews can support priorities, gates, gaps, and candidate opportunities.",
+    "Interviews cannot create approved funding.",
+    "Interviews cannot create realized value.",
+    "Interviews cannot promote a candidate AI use case into a funded program.",
+  ],
+};
+
 const sa08BenefitsPosture = {
   tenant_key: tenantKey,
   generated_at: generatedAt,
@@ -603,6 +905,9 @@ const homeContextView = {
     entity_profiles: entityProfiles.length,
     relationship_edges: graphEdges.length,
     context_gaps: contextGaps.length,
+    interview_insights: interviewInsights.length,
+    interview_supported_move_candidates: movesCandidates.length,
+    interview_graph_edges: interviewGraphEdges.length,
   },
   enterprise_profile: rowsByFile["00_enterprise_profile.csv"].map((row) => ({
     business_name: row.business_name,
@@ -638,6 +943,45 @@ const homeContextView = {
     evidence_id: row.evidence_id,
   })),
   evidence_gaps: contextGaps.slice(0, 60),
+  interview_supported_enterprise_priorities: Object.values(
+    interviewInsights.reduce((acc, insight) => {
+      const key = insight.business_priority || insight.key_initiative || "Unassigned priority";
+      acc[key] ??= { priority: key, insight_count: 0, stakeholder_roles: [], priority_themes: [], required_evidence: [], move_candidates: [], evidence_ids: [], source_fact_ids: [] };
+      acc[key].insight_count += 1;
+      acc[key].stakeholder_roles.push(insight.stakeholder_role);
+      acc[key].priority_themes.push(insight.priority_theme);
+      acc[key].required_evidence.push(insight.evidence_needed);
+      acc[key].move_candidates.push(insight.move_candidate_id);
+      acc[key].evidence_ids.push(insight.evidence_id);
+      acc[key].source_fact_ids.push(insight.source_fact_id);
+      return acc;
+    }, {}),
+  )
+    .map((row) => ({
+      ...row,
+      stakeholder_roles: uniq(row.stakeholder_roles),
+      priority_themes: uniq(row.priority_themes),
+      required_evidence: uniq(row.required_evidence).slice(0, 8),
+      move_candidates: uniq(row.move_candidates),
+      evidence_ids: uniq(row.evidence_ids),
+      source_fact_ids: uniq(row.source_fact_ids),
+      boundary: "Interview-supported priority, not approved funding or realized value.",
+    }))
+    .sort((a, b) => b.insight_count - a.insight_count)
+    .slice(0, 20),
+  interview_supported_evidence_gaps: contextGaps.filter((gap) => interviewInsightsBySourceRecord.has(gap.source_record_id)).slice(0, 80),
+  interview_supported_candidate_gates: movesCandidates.map((candidate) => ({
+    move_candidate_id: candidate.move_candidate_id,
+    candidate_name: candidate.candidate_name,
+    interview_count: candidate.interview_count,
+    stakeholder_roles: candidate.stakeholder_roles,
+    readiness_gates: candidate.readiness_gates,
+    required_evidence: candidate.required_evidence,
+    gap_ids: candidate.gap_ids,
+    boundary: candidate.boundary,
+  })),
+  stakeholder_signal_summary: stakeholderSignalSummary,
+  what_leadership_is_asking_nexus_to_prove_next: uniq(interviewInsights.map((insight) => insight.decision_supported)).slice(0, 18),
   module_readiness: [
     { module: "Home", status: "context_browser_ready", caveat: "Business context exists but client validation remains visible." },
     { module: "Tower", status: "measurement_readiness_only", caveat: "Budget posture is source-backed; value claims remain gated by benefits validation." },
@@ -1067,13 +1411,17 @@ const towerVisualSpecs = [
   visual("tower", "evidenceGapBlockers", "Evidence gap blockers", "What blocks board-ready Tower claims?", Object.values(contextGaps.reduce((acc, g) => { acc[g.category] ??= { category: g.category, count: 0, sample: g.description }; acc[g.category].count += 1; return acc; }, {})), { source_fact_ids: uniq(contextGaps.map((g) => g.source_fact_id)), evidence_ids: uniq(contextGaps.map((g) => g.evidence_id)) }),
 ];
 
+const canonicalFactIdSet = new Set(canonicalFacts.map((fact) => fact.fact_id));
+
 writeJson(path.join(derivedDir, "evidence-registry.json"), evidenceRegistry);
 writeJson(path.join(derivedDir, "canonical-facts.json"), canonicalFacts);
 writeJson(path.join(derivedDir, "entity-profiles.json"), entityProfiles);
 writeJson(path.join(derivedDir, "relationship-graph.json"), { tenant_key: tenantKey, generated_at: generatedAt, nodes: graphNodes, edges: graphEdges });
 writeJson(path.join(derivedDir, "context-gaps.json"), contextGaps);
+writeJson(path.join(derivedDir, "interview-insights.json"), interviewInsights);
 writeJson(path.join(derivedDir, "ai-use-case-business-unit-map.json"), aiUseCaseBusinessUnitMap);
 writeJson(path.join(moduleContextDir, "home-context-view.json"), homeContextView);
+writeJson(path.join(moduleContextDir, "moves-context-view.json"), movesContextView);
 writeJson(path.join(moduleContextDir, "tower-dashboard-view.json"), towerDashboardView);
 writeJson(path.join(moduleContextDir, "sa08-benefits-posture.json"), sa08BenefitsPosture);
 writeJson(path.join(approvedDir, "home/story-blocks.json"), homeStoryBlocks);
@@ -1102,8 +1450,11 @@ writeCsv(path.join(reportDir, "canonical-facts-summary.csv"), canonicalFacts.map
 writeCsv(path.join(reportDir, "entity-profile-summary.csv"), entityProfiles, ["profile_id", "tenant_key", "entity_type", "entity_key", "display_name", "record_count", "confidence", "summary"]);
 writeCsv(path.join(reportDir, "relationship-graph-summary.csv"), graphEdges, ["edge_id", "relationship_type", "from_object_type", "from_object_id", "to_object_type", "to_object_id", "evidence_id", "note"]);
 writeCsv(path.join(reportDir, "context-gaps-summary.csv"), contextGaps, ["gap_id", "category", "severity", "description", "source_file", "source_record_id", "source_fact_id", "evidence_id", "recommended_next_evidence"]);
+writeCsv(path.join(reportDir, "interview-insights-summary.csv"), interviewInsights, ["insight_id", "source_record_id", "source_fact_id", "stakeholder_role", "interview_group", "priority_theme", "business_priority", "key_initiative", "move_candidate_id", "matched_candidate_use_case_id", "matched_metric_fact_id", "matched_risk_control_fact_id", "evidence_id", "confidence", "allowed_use", "blocked_use"]);
+writeCsv(path.join(reportDir, "interview-relationship-edges.csv"), interviewGraphEdges, ["edge_id", "edge_type", "source_fact_id", "source_fact_type", "target_type", "target_id", "stakeholder_role", "interview_group", "evidence_id", "confidence", "rationale", "module_usage", "active_candidate_status", "caveat"]);
 writeCsv(path.join(reportDir, "ai-use-case-business-unit-map.csv"), aiUseCaseBusinessUnitMap, ["record_id", "use_case_name", "use_case_status", "funding_status", "ai_spend_type", "data_domain", "affected_process", "derived_business_unit", "mapping_method", "source_fields_used", "evidence_id", "review_status"]);
 writeJson(path.join(reportDir, "home-context-view-preview.json"), homeContextView);
+writeJson(path.join(reportDir, "moves-context-view-preview.json"), movesContextView);
 writeJson(path.join(reportDir, "tower-dashboard-view-preview.json"), towerDashboardView);
 writeCsv(path.join(reportDir, "tower-budget-lineage.csv"), atomicBudgetRows.map((row) => ({
   record_id: row.record_id,
@@ -1125,6 +1476,22 @@ writeCsv(path.join(reportDir, "ai-spend-lens-lineage.csv"), budgetRows.filter((r
   source_fact_id: factByRecordId.get(row.record_id)?.fact_id,
 })), ["record_id", "business_name", "ai_tagged_budget_usd", "ai_spend_type", "ai_spend_category", "additive_status", "evidence_id", "source_fact_id"]);
 writeCsv(path.join(reportDir, "candidate-ai-portfolio-proof.csv"), homeContextView.candidate_ai_opportunity_portfolio, ["record_id", "business_unit", "use_case_name", "use_case_status", "readiness_status", "funding_status", "measurement_status", "risk_control_status", "tower_tracking_status", "evidence_id", "source_fact_id"]);
+writeCsv(path.join(reportDir, "candidate-ai-portfolio-interview-support.csv"), movesContextView.candidate_ai_portfolio_interview_support, ["candidate_use_case_id", "candidate_name", "funding_status", "interview_support_count", "stakeholder_roles", "required_evidence", "interview_source_fact_ids", "evidence_ids", "boundary"]);
+writeCsv(path.join(reportDir, "move-candidate-projection.csv"), movesCandidates, ["move_candidate_id", "initiative_link", "candidate_name", "status", "likely_phase_entry_point", "interview_count", "stakeholder_roles", "priority_themes", "business_priorities", "systems_vendors_mentioned", "data_domains_mentioned", "metrics_mentioned", "risks_controls_mentioned", "required_evidence", "gap_ids", "boundary"]);
+writeCsv(path.join(reportDir, "gap-projection.csv"), homeContextView.interview_supported_evidence_gaps, ["gap_id", "category", "severity", "description", "source_file", "source_record_id", "source_fact_id", "evidence_id", "module_applicability", "recommended_next_evidence"]);
+writeCsv(path.join(reportDir, "edge-validation.csv"), interviewGraphEdges.map((edge) => ({
+  edge_id: edge.edge_id,
+  edge_type: edge.edge_type,
+  source_fact_id: edge.source_fact_ids?.[0] || edge.from_object_id,
+  source_fact_valid: canonicalFactIdSet.has(edge.source_fact_ids?.[0] || edge.from_object_id) ? "yes" : "no",
+  target_type: edge.target_type,
+  target_id: edge.target_id,
+  evidence_id: edge.evidence_id,
+  evidence_present: edge.evidence_id ? "yes" : "no",
+  creates_funding: "no",
+  creates_realized_value: "no",
+  promotes_program: "no",
+})), ["edge_id", "edge_type", "source_fact_id", "source_fact_valid", "target_type", "target_id", "evidence_id", "evidence_present", "creates_funding", "creates_realized_value", "promotes_program"]);
 writeCsv(path.join(reportDir, "sa08-benefits-ledger-proof.csv"), sa08BenefitsPosture.claims, ["claim_id", "source_record_id", "program_name", "promised_value_usd", "finance_validated_value_usd", "usage_validation_status", "kpi_validation_status", "finance_validation_status", "value_claim_status", "claimable", "evidence_id"]);
 writeCsv(path.join(reportDir, "governed-object-compatibility.csv"), canonicalFacts.map((fact) => ({
   id: fact.governed_object.id,
@@ -1140,6 +1507,63 @@ writeCsv(path.join(reportDir, "governed-object-compatibility.csv"), canonicalFac
 })), ["id", "object_type", "source_layer", "tenant_id", "client_key", "source_basis", "confidence_level", "retrievability", "agent_readiness_status", "compatible"]);
 writeCsv(path.join(reportDir, "home-claude-content-audit.csv"), homeStoryBlocks.map((b) => ({ story_block_id: b.story_block_id, section: b.section, fact_refs: b.source_fact_ids.length, evidence_refs: b.evidence_ids.length, gap_refs: b.gap_ids.length, approved_status: b.approved_status })), ["story_block_id", "section", "fact_refs", "evidence_refs", "gap_refs", "approved_status"]);
 writeCsv(path.join(reportDir, "tower-claude-content-audit.csv"), towerStoryBlocks.map((b) => ({ story_block_id: b.story_block_id, section: b.section, fact_refs: b.source_fact_ids.length, evidence_refs: b.evidence_ids.length, gap_refs: b.gap_ids.length, approved_status: b.approved_status })), ["story_block_id", "section", "fact_refs", "evidence_refs", "gap_refs", "approved_status"]);
+
+fs.mkdirSync(interviewReportDir, { recursive: true });
+writeCsv(path.join(interviewReportDir, "interview-edge-inventory.csv"), interviewGraphEdges, ["edge_id", "edge_type", "source_fact_id", "source_fact_type", "target_type", "target_id", "stakeholder_role", "interview_group", "evidence_id", "confidence", "rationale", "module_usage", "active_candidate_status", "caveat"]);
+writeCsv(path.join(interviewReportDir, "gap-projection.csv"), homeContextView.interview_supported_evidence_gaps, ["gap_id", "category", "severity", "description", "source_file", "source_record_id", "source_fact_id", "evidence_id", "module_applicability", "recommended_next_evidence"]);
+writeCsv(path.join(interviewReportDir, "move-candidate-projection.csv"), movesCandidates, ["move_candidate_id", "initiative_link", "candidate_name", "status", "likely_phase_entry_point", "interview_count", "stakeholder_roles", "priority_themes", "business_priorities", "systems_vendors_mentioned", "data_domains_mentioned", "metrics_mentioned", "risks_controls_mentioned", "required_evidence", "gap_ids", "boundary"]);
+writeCsv(path.join(interviewReportDir, "candidate-ai-portfolio-interview-support.csv"), movesContextView.candidate_ai_portfolio_interview_support, ["candidate_use_case_id", "candidate_name", "funding_status", "interview_support_count", "stakeholder_roles", "required_evidence", "interview_source_fact_ids", "evidence_ids", "boundary"]);
+writeJson(path.join(interviewReportDir, "home-context-update-preview.json"), {
+  interview_supported_enterprise_priorities: homeContextView.interview_supported_enterprise_priorities,
+  interview_supported_evidence_gaps: homeContextView.interview_supported_evidence_gaps,
+  interview_supported_candidate_gates: homeContextView.interview_supported_candidate_gates,
+  stakeholder_signal_summary: homeContextView.stakeholder_signal_summary,
+  what_leadership_is_asking_nexus_to_prove_next: homeContextView.what_leadership_is_asking_nexus_to_prove_next,
+});
+writeJson(path.join(interviewReportDir, "moves-context-view-preview.json"), movesContextView);
+writeCsv(path.join(interviewReportDir, "edge-validation.csv"), interviewGraphEdges.map((edge) => ({
+  edge_id: edge.edge_id,
+  edge_type: edge.edge_type,
+  source_fact_id: edge.source_fact_ids?.[0] || edge.from_object_id,
+  source_fact_valid: canonicalFactIdSet.has(edge.source_fact_ids?.[0] || edge.from_object_id) ? "yes" : "no",
+  target_type: edge.target_type,
+  target_id: edge.target_id,
+  evidence_id: edge.evidence_id,
+  evidence_present: edge.evidence_id ? "yes" : "no",
+  creates_funding: "no",
+  creates_realized_value: "no",
+  promotes_program: "no",
+})), ["edge_id", "edge_type", "source_fact_id", "source_fact_valid", "target_type", "target_id", "evidence_id", "evidence_present", "creates_funding", "creates_realized_value", "promotes_program"]);
+
+const interviewSummary = `# Meridian Interview Insight Projection
+
+Status: Generated
+
+Generated at: ${generatedAt}
+
+## Boundary
+
+- Runtime/data-plane mutation: No
+- Active Tenant Access update: No
+- Candidate promotion: No
+- Deploy: No
+- Interview-created funding: No
+- Interview-created realized value: No
+
+## Outputs
+
+- Interview insights: ${interviewInsights.length}
+- Interview graph edges: ${interviewGraphEdges.length}
+- Interview-supported move candidates: ${movesCandidates.length}
+- Interview-supported Home gaps: ${homeContextView.interview_supported_evidence_gaps.length}
+- Candidate AI rows with interview support: ${movesContextView.candidate_ai_portfolio_interview_support.filter((row) => row.interview_support_count > 0).length}
+
+## Product Meaning
+
+Executive interviews now support gates, gaps, priorities, candidate opportunities, and Moves readiness context. They do not create approved programs, funding, realized value, or production readiness.
+`;
+fs.writeFileSync(path.join(interviewReportDir, "summary.md"), interviewSummary);
+fs.writeFileSync(path.join(interviewReportDir, "proof.html"), `<!doctype html><meta charset="utf-8"><title>Meridian Interview Insight Projection</title><style>body{font-family:Inter,Arial,sans-serif;max-width:1100px;margin:40px auto;color:#0b1633}table{border-collapse:collapse;width:100%;margin:16px 0}td,th{border:1px solid #d8dee9;padding:8px;text-align:left}th{background:#f5f7fb}.ok{color:#087f5b;font-weight:700}</style><h1>Meridian Interview Insight Projection</h1><p class="ok">Generated from Meridian V3 interviews and derived artifacts only. No runtime load. No deploy.</p><table><tr><th>Metric</th><th>Value</th></tr><tr><td>Interview insights</td><td>${interviewInsights.length}</td></tr><tr><td>Interview graph edges</td><td>${interviewGraphEdges.length}</td></tr><tr><td>Move candidates</td><td>${movesCandidates.length}</td></tr><tr><td>Interview-supported Home gaps</td><td>${homeContextView.interview_supported_evidence_gaps.length}</td></tr><tr><td>Funding created</td><td>0</td></tr><tr><td>Realized value created</td><td>0</td></tr></table>`);
 
 const summary = `# Meridian V3 Derived and Claude Context Layer Build
 
@@ -1161,6 +1585,9 @@ Generated at: ${generatedAt}
 - Entity profiles: ${entityProfiles.length}
 - Relationship nodes: ${graphNodes.length}
 - Relationship edges: ${graphEdges.length}
+- Interview insights: ${interviewInsights.length}
+- Interview graph edges: ${interviewGraphEdges.length}
+- Interview-supported move candidates: ${movesCandidates.length}
 - Context gaps: ${contextGaps.length}
 - AI use-case business-unit mappings: ${aiUseCaseBusinessUnitMap.length}
 
@@ -1182,9 +1609,16 @@ Generated at: ${generatedAt}
 - Promised value posture: ${money(sa08BenefitsPosture.summary.promised_value_usd)}
 - Finance-validated value: ${money(sa08BenefitsPosture.summary.finance_validated_value_usd)}
 - Promised value is not realized value.
+
+## Interview Insight Boundary
+
+- Interviews support gates, gaps, priorities, and candidate move opportunities.
+- Interviews do not create approved funding.
+- Interviews do not create realized value.
+- Interviews do not promote candidate AI opportunities into funded programs.
 `;
 fs.writeFileSync(path.join(reportDir, "summary.md"), summary);
-fs.writeFileSync(path.join(reportDir, "proof.html"), `<!doctype html><meta charset="utf-8"><title>Meridian V3 Derived Layer Proof</title><style>body{font-family:Inter,Arial,sans-serif;max-width:1100px;margin:40px auto;color:#0b1633}table{border-collapse:collapse;width:100%;margin:16px 0}td,th{border:1px solid #d8dee9;padding:8px;text-align:left}th{background:#f5f7fb}.ok{color:#087f5b;font-weight:700}.warn{color:#b7791f;font-weight:700}</style><h1>Meridian V3 Derived Layer Proof</h1><p class="ok">Generated from standard-2026-07-v3 sources only. No runtime load. No deploy.</p><table><tr><th>Metric</th><th>Value</th></tr><tr><td>FY26 IT budget</td><td>${money(totalBudget)}</td></tr><tr><td>Run</td><td>${money(runBudget)}</td></tr><tr><td>Change</td><td>${money(changeBudget)}</td></tr><tr><td>AI-tagged spend lens</td><td>${money(aiTaggedSpend)} non-additive</td></tr><tr><td>Candidate AI rows</td><td>${candidateAiRows.length}</td></tr><tr><td>SA08 promised posture</td><td>${money(sa08BenefitsPosture.summary.promised_value_usd)}</td></tr><tr><td>SA08 finance validated</td><td>${money(sa08BenefitsPosture.summary.finance_validated_value_usd)}</td></tr></table><h2>Artifacts</h2><ul><li>derived/evidence-registry.json</li><li>derived/canonical-facts.json</li><li>derived/module-context/home-context-view.json</li><li>derived/module-context/tower-dashboard-view.json</li><li>approved-content/home/story-blocks.json</li><li>approved-content/tower/story-blocks.json</li></ul>`);
+fs.writeFileSync(path.join(reportDir, "proof.html"), `<!doctype html><meta charset="utf-8"><title>Meridian V3 Derived Layer Proof</title><style>body{font-family:Inter,Arial,sans-serif;max-width:1100px;margin:40px auto;color:#0b1633}table{border-collapse:collapse;width:100%;margin:16px 0}td,th{border:1px solid #d8dee9;padding:8px;text-align:left}th{background:#f5f7fb}.ok{color:#087f5b;font-weight:700}.warn{color:#b7791f;font-weight:700}</style><h1>Meridian V3 Derived Layer Proof</h1><p class="ok">Generated from standard-2026-07-v3 sources only. No runtime load. No deploy.</p><table><tr><th>Metric</th><th>Value</th></tr><tr><td>FY26 IT budget</td><td>${money(totalBudget)}</td></tr><tr><td>Run</td><td>${money(runBudget)}</td></tr><tr><td>Change</td><td>${money(changeBudget)}</td></tr><tr><td>AI-tagged spend lens</td><td>${money(aiTaggedSpend)} non-additive</td></tr><tr><td>Candidate AI rows</td><td>${candidateAiRows.length}</td></tr><tr><td>Interview insights</td><td>${interviewInsights.length}</td></tr><tr><td>Interview graph edges</td><td>${interviewGraphEdges.length}</td></tr><tr><td>Interview-supported move candidates</td><td>${movesCandidates.length}</td></tr><tr><td>SA08 promised posture</td><td>${money(sa08BenefitsPosture.summary.promised_value_usd)}</td></tr><tr><td>SA08 finance validated</td><td>${money(sa08BenefitsPosture.summary.finance_validated_value_usd)}</td></tr></table><h2>Artifacts</h2><ul><li>derived/evidence-registry.json</li><li>derived/canonical-facts.json</li><li>derived/interview-insights.json</li><li>derived/module-context/home-context-view.json</li><li>derived/module-context/moves-context-view.json</li><li>derived/module-context/tower-dashboard-view.json</li><li>approved-content/home/story-blocks.json</li><li>approved-content/tower/story-blocks.json</li></ul>`);
 
 console.log(JSON.stringify({
   status: "generated",
@@ -1196,6 +1630,9 @@ console.log(JSON.stringify({
   canonicalFacts: canonicalFacts.length,
   entityProfiles: entityProfiles.length,
   graphEdges: graphEdges.length,
+  interviewInsights: interviewInsights.length,
+  interviewGraphEdges: interviewGraphEdges.length,
+  movesCandidates: movesCandidates.length,
   contextGaps: contextGaps.length,
   candidateAiRows: candidateAiRows.length,
 }, null, 2));
