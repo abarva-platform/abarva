@@ -7,6 +7,7 @@
 import type { NextRequest } from 'next/server';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { getDeliverableRun } from '@/lib/deliverables/orchestrator/runs-repository';
+import { buildEvidencePackageReadiness } from '@/lib/deliverables/evidence-package-readiness';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -32,6 +33,12 @@ export async function GET(_req: NextRequest, ctxParam: { params: Promise<{ runId
         ? `/api/v1/programs/${movePremiumArtifact.sourceArtifactRef}/artifacts/${run.artifactId}/download`
         : `/api/v1/artifacts/${run.artifactId}`
       : null;
+    const packageReadiness = buildEvidencePackageReadiness({
+      status: run.status,
+      retrievedEvidence: run.retrievedEvidence,
+      blockers: run.blockers,
+      warnings: run.warnings,
+    });
 
     return Response.json({
       runId: run.id,
@@ -61,6 +68,7 @@ export async function GET(_req: NextRequest, ctxParam: { params: Promise<{ runId
       },
       sectionCount: run.sectionCount,
       retrievedEvidence: run.retrievedEvidence,
+      packageReadiness,
       blockers: run.blockers,
       warnings: run.warnings,
       error: run.error,

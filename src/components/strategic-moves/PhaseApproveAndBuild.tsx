@@ -52,6 +52,7 @@ interface DeliverableRow {
   progressLabel: string | null;
   artifactId: string | null;
   blobUrl: string | null;
+  packageReadiness: PackageReadiness | null;
   error?: string;
 }
 
@@ -78,6 +79,22 @@ interface RunStatusResponse {
   blobUrl: string | null;
   progressPct?: number;
   progressLabel?: string | null;
+  blockers?: string[];
+  packageReadiness?: PackageReadiness | null;
+}
+
+interface PackageReadiness {
+  label: string;
+  headline: string;
+  evidenceCoveragePct: number;
+  executiveReadinessPct: number;
+  minimumEvidenceItems: number;
+  retrievedEvidence: number;
+  confidenceTier: "bronze" | "silver" | "gold" | "board";
+  confidenceLabel: string;
+  canShareExternally: boolean;
+  missing: string[];
+  recommendedNextStep: string;
 }
 
 interface Props {
@@ -152,6 +169,7 @@ export function PhaseApproveAndBuild({
       progressLabel: null,
       artifactId: null,
       blobUrl: null,
+      packageReadiness: null,
     })),
   );
   const [building, setBuilding] = useState(false);
@@ -192,6 +210,7 @@ export function PhaseApproveAndBuild({
             status: data.status,
             progressPct: data.progressPct ?? 0,
             progressLabel: data.progressLabel ?? null,
+            packageReadiness: data.packageReadiness ?? null,
           });
           if (Date.now() - startedAt.current < MAX_MS) {
             timers.current[key] = setTimeout(
@@ -207,6 +226,7 @@ export function PhaseApproveAndBuild({
           progressPct: 100,
           artifactId: data.artifactId,
           blobUrl: data.blobUrl,
+          packageReadiness: data.packageReadiness ?? null,
         });
       } catch {
         // transient — back off and retry within the window
@@ -235,6 +255,7 @@ export function PhaseApproveAndBuild({
         progressLabel: null,
         artifactId: null,
         blobUrl: null,
+        packageReadiness: null,
         error: undefined,
       })),
     );
@@ -268,6 +289,7 @@ export function PhaseApproveAndBuild({
           runId: d.runId,
           status: d.status === "error" ? "error" : "queued",
           error: d.error,
+          packageReadiness: null,
         });
         if (d.runId && d.status === "queued") {
           // Poll immediately for first status, then the poll loop self-schedules.
@@ -433,7 +455,8 @@ export function PhaseApproveAndBuild({
           <div
             key={r.deliverableTypeKey}
             style={{
-              display: "flex",
+              display: "grid",
+              gridTemplateColumns: "8px minmax(0, 1fr) auto auto",
               alignItems: "center",
               gap: 10,
               padding: "9px 12px",
@@ -506,6 +529,56 @@ export function PhaseApproveAndBuild({
                 Open →
               </Link>
             )}
+            {r.status === "blocked" && r.packageReadiness && (
+              <div
+                style={{
+                  gridColumn: "2 / -1",
+                  marginTop: 2,
+                  padding: "10px 12px",
+                  borderRadius: 6,
+                  border: "1px solid rgba(181,133,42,0.28)",
+                  background: "rgba(181,133,42,0.07)",
+                  color: "#5C4320",
+                  fontSize: 11.5,
+                  lineHeight: 1.45,
+                }}
+              >
+                <div style={{ fontWeight: 700, color: ATTENTION }}>
+                  {r.packageReadiness.label}
+                </div>
+                <div>{r.packageReadiness.headline}</div>
+                <div
+                  style={{
+                    marginTop: 8,
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                    gap: 8,
+                  }}
+                >
+                  <ReadinessMetric
+                    label="Evidence coverage"
+                    value={`${r.packageReadiness.evidenceCoveragePct}%`}
+                    detail={`${r.packageReadiness.retrievedEvidence}/${r.packageReadiness.minimumEvidenceItems} evidence items`}
+                  />
+                  <ReadinessMetric
+                    label="Package confidence"
+                    value={r.packageReadiness.confidenceLabel}
+                    detail={`${r.packageReadiness.executiveReadinessPct}% executive readiness`}
+                  />
+                  <ReadinessMetric
+                    label="Next action"
+                    value="Collect evidence"
+                    detail={r.packageReadiness.recommendedNextStep}
+                  />
+                </div>
+                {r.packageReadiness.missing.length > 0 && (
+                  <div style={{ marginTop: 8 }}>
+                    <span style={{ fontWeight: 700 }}>Missing: </span>
+                    {r.packageReadiness.missing.join("; ")}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -513,6 +586,54 @@ export function PhaseApproveAndBuild({
       <div style={{ fontSize: 10.5, color: MUTED }}>
         <span>{MOVES_AI_DRAFT_LABEL}</span> — review and edit every document
         before it informs a decision.
+      </div>
+    </div>
+  );
+}
+
+function ReadinessMetric({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div
+      style={{
+        minWidth: 0,
+        padding: "7px 8px",
+        borderRadius: 5,
+        background: "rgba(255,255,255,0.72)",
+        border: "1px solid rgba(181,133,42,0.16)",
+      }}
+    >
+      <div
+        style={{
+          fontSize: 9,
+          fontWeight: 700,
+          letterSpacing: "0.07em",
+          textTransform: "uppercase",
+          color: "#8A6728",
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          marginTop: 2,
+          fontSize: 12,
+          fontWeight: 700,
+          color: INK,
+          overflowWrap: "anywhere",
+        }}
+      >
+        {value}
+      </div>
+      <div style={{ marginTop: 2, color: "#6F6047", overflowWrap: "anywhere" }}>
+        {detail}
       </div>
     </div>
   );
