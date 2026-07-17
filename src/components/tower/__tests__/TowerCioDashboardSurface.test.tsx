@@ -914,17 +914,13 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
 
   it("renders the Tower command mart ahead of legacy or bridge views", () => {
     const candidateSeed = TOWER_MART_VIEW.aiPortfolio[1]!;
-    const fundedSeed = TOWER_MART_VIEW.aiPortfolio[0]!;
     const candidateFirstTowerMart: TowerMartCommandViewModel = {
       ...TOWER_MART_VIEW,
-      aiPortfolio: [
-        ...Array.from({ length: 13 }, (_, index) => ({
-          ...candidateSeed,
-          aiPortfolioKey: `${candidateSeed.aiPortfolioKey}-${index}`,
-          itemName: `${candidateSeed.itemName} ${index + 1}`,
-        })),
-        fundedSeed,
-      ],
+      aiPortfolio: Array.from({ length: 13 }, (_, index) => ({
+        ...candidateSeed,
+        aiPortfolioKey: `${candidateSeed.aiPortfolioKey}-${index}`,
+        itemName: `${candidateSeed.itemName} ${index + 1}`,
+      })),
     };
 
     render(
@@ -970,7 +966,9 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getByTestId("tower-ai-watchlist")).toHaveTextContent(
       "Candidate ideas are not approved funding",
     );
+    expect(screen.getByText("M365 Copilot Productivity")).toBeInTheDocument();
     expect(screen.getByText("Fix proof")).toBeInTheDocument();
+    expect(screen.getByText(/\$2\.1M validated/)).toBeInTheDocument();
     expect(screen.getAllByText("Hold until gates clear").length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Member Service AI Assist/).length).toBeGreaterThan(0);
     expect(screen.queryByText("not_approved")).not.toBeInTheDocument();
