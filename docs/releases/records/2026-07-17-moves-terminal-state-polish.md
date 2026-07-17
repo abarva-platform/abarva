@@ -29,6 +29,7 @@ Moves now renders the terminal P5 Tower handoff as complete after the P5 gate ha
 
 - Strategic Move view model now exposes a terminal-complete signal when P5 appears in `gates_passed`.
 - Strategic Move view model and full program API also honor the persisted `phase_5 · completed` Tower handoff activity when older rows did not backfill P5 into `gates_passed`.
+- Strategic Move page model also treats the compact `phase_5:completed` recent-activity signal as terminal handoff completion, while excluding section-level rows such as `phase_5_launch_readiness:signed_off`.
 - Phase state transformer and phase explorer tallies mark P5 complete after terminal Tower handoff.
 - Historical P5 gate panel now routes to Tower and explains the handoff state.
 - File Cabinet displays `quarantined` artifacts as `needs review` with the review caveat preserved in a tooltip.

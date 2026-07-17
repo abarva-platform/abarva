@@ -484,9 +484,7 @@ export function hasTerminalTowerHandoffActivity(
       .toLowerCase();
     return (
       text.includes("completed p5 terminal tower handoff") ||
-      (text.includes("phase_5") &&
-        text.includes("completed") &&
-        (text.includes("tower") || text.includes("handoff")))
+      (text.includes("phase_5") && text.includes("completed"))
     );
   });
 }

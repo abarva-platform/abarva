@@ -115,8 +115,16 @@ describe("strategic move transformer helpers", () => {
     expect(
       hasTerminalTowerHandoffActivity([
         {
-          title: "phase_5 · completed (was in_progress)",
-          detail: "Completed P5 launch checklist",
+          action: "phase_5:completed",
+          summary: "phase_5 moved to completed",
+        },
+      ]),
+    ).toBe(true);
+    expect(
+      hasTerminalTowerHandoffActivity([
+        {
+          action: "phase_5_launch_readiness:signed_off",
+          summary: "phase_5_launch_readiness moved to signed_off",
         },
       ]),
     ).toBe(false);
