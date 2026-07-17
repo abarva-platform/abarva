@@ -641,7 +641,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     fireEvent.click(screen.getByRole("button", { name: "Budget" }));
     expect(push).toHaveBeenCalledWith("/tower?dashboard=budget");
     expect(screen.getByText("Spending structure.")).toBeInTheDocument();
-    expect(screen.getAllByText("aVa").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("agent-dock-collapsed-chip")).toBeInTheDocument();
     expect(screen.queryByText("Atlas")).not.toBeInTheDocument();
     expect(screen.queryByText("LH-IT-001")).not.toBeInTheDocument();
     expect(screen.queryByText("LH-IT-002")).not.toBeInTheDocument();
@@ -691,7 +691,6 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(
       screen.getAllByText(/no measured value rows are loaded/i).length,
     ).toBeGreaterThan(0);
-    expect(screen.getAllByText(/review-required/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText("gap").length).toBeGreaterThan(0);
     expect(screen.queryByText("0.00x")).not.toBeInTheDocument();
   });
@@ -795,9 +794,6 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
 
     expect(screen.getAllByText("$877.9M").length).toBeGreaterThan(0);
     expect(screen.queryByText("$924.8M")).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/across 5 portfolio-company rollups/i),
-    ).toBeInTheDocument();
   });
 
   it("does not claim program or measured-value rows are absent when governed metric packets exist", () => {
@@ -819,9 +815,6 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getByText("$76.4M")).toBeInTheDocument();
     expect(screen.getByText("$91.7M")).toBeInTheDocument();
     expect(screen.getByText("2 attested programs")).toBeInTheDocument();
-    expect(
-      screen.getByText(/3 governed initiative budget entries/i),
-    ).toBeInTheDocument();
     expect(
       screen.queryByText(/No measured value rows are loaded/i),
     ).not.toBeInTheDocument();
@@ -902,7 +895,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getByRole("button", { name: "AI Portfolio" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Recommended Actions" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Evidence" })).toBeInTheDocument();
-    expect(screen.getByRole("form", { name: "Ask aVa" })).toBeInTheDocument();
+    expect(screen.getByTestId("agent-dock-collapsed-chip")).toBeInTheDocument();
     expect(screen.queryByText("Tower · CIO command center")).not.toBeInTheDocument();
     expect(screen.queryByText(/12:00 AM/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Tuesday/i)).not.toBeInTheDocument();
@@ -935,14 +928,14 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     );
 
     expect(screen.getByText("Investment Control Tower")).toBeInTheDocument();
-    expect(screen.getByText("Active Tower mart")).toBeInTheDocument();
+    expect(screen.getByText("Active portfolio context")).toBeInTheDocument();
     expect(screen.getByText("$650.0M")).toBeInTheDocument();
     expect(screen.getByText("$53.7M")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Decision Lanes" }));
+    fireEvent.click(screen.getByRole("button", { name: /Decision Lanes/ }));
     expect(screen.getByText("M365 Copilot Productivity")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "AI Portfolio" }));
+    fireEvent.click(screen.getByRole("button", { name: /AI Portfolio/ }));
     expect(screen.getByText(/Member Service AI Assist/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Recommended Actions" }));
+    fireEvent.click(screen.getByRole("button", { name: /Recommended Actions/ }));
     expect(screen.getByText("Fix Copilot adoption before expansion")).toBeInTheDocument();
     expect(screen.queryByText("$2.6B")).not.toBeInTheDocument();
   });
@@ -977,6 +970,8 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       />,
     );
 
+    fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
+
     expect(
       screen.getByText(
         "Show the holding-company IT budget by portfolio company and shared services.",
@@ -1002,6 +997,8 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
         cxoView={{ ...GOVERNED_CXO_VIEW, tenantName: "Healthcare Demo" }}
       />,
     );
+
+    fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
 
     expect(
       screen.getByText(

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AppShell } from "@/components/shell/AppShell";
@@ -58,8 +58,12 @@ import type {
 } from "@/lib/cio-tower/cxo-view-model";
 import type {
   TowerMartAiPortfolioItem,
+  TowerMartCommandCenter as TowerMartCommandCenterRow,
   TowerMartCommandViewModel,
+  TowerMartCxoAction,
+  TowerMartEvidenceLineage,
   TowerMartProgramLane,
+  TowerMartRequiredFieldGap,
 } from "@/lib/cio-tower/tower-mart-view-model";
 import type { TowerV3RuntimeViewModel } from "@/lib/tower/tower-v3-runtime-view";
 
@@ -3893,99 +3897,197 @@ function TowerMartAiPortfolio({ rows }: { rows: ReadonlyArray<TowerMartAiPortfol
 
 function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel }) {
   const [activeSection, setActiveSection] = useState<TowerMartSection>("command");
+  const [commandStep, setCommandStep] = useState<1 | 2 | 3>(1);
   const command = model.command;
   const blockingGaps = model.requiredFieldGaps.filter((gap) => gap.blocking);
-  return (
-    <div
-      style={{
-        padding: "0 32px 90px",
-        maxWidth: 1220,
-        margin: "0 auto",
-      }}
-      data-testid="tower-command-mart"
-    >
-      <section style={{ marginBottom: 24 }}>
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            borderRadius: 999,
-            padding: "6px 10px",
-            background: T.GREEN_BG,
-            color: T.GREEN,
-            fontFamily: T.MONO,
-            fontSize: 10,
-            fontWeight: 900,
-            letterSpacing: "1.3px",
-            textTransform: "uppercase",
-          }}
-        >
-          <span style={{ width: 8, height: 8, borderRadius: 999, background: T.GREEN, display: "inline-block" }} />
-          Active Tower mart
-        </div>
-        <h2
-          style={{
-            margin: "14px 0 0",
-            fontFamily: T.SERIF,
-            fontSize: 43,
-            lineHeight: 1.02,
-            letterSpacing: "-0.03em",
-            color: T.INK,
-            fontWeight: 680,
-          }}
-        >
-          Investment Control Tower
-        </h2>
-        <p style={{ margin: "10px 0 0", color: T.INK_2, fontSize: 15, lineHeight: 1.5, maxWidth: 900 }}>
-          {command.executiveSummary}
-        </p>
-      </section>
+  const runPct = Math.round((command.runRatio ?? 0) * 100);
+  const changePct = Math.round((command.changeRatio ?? 0) * 100);
+  const laneCounts = model.programLanes.reduce<Record<string, number>>((acc, row) => {
+    acc[row.decisionLane] = (acc[row.decisionLane] ?? 0) + 1;
+    return acc;
+  }, {});
+  const visibleAiRows = model.aiPortfolio.slice(0, 12);
+  const commandSteps = [
+    ["Posture", "where the money is"],
+    ["Signals", "what's misaligned"],
+    ["Decide", "what to do next"],
+  ] as const;
+  const signalCards = [
+    {
+      tone: "fix",
+      title: "Value is still a hypothesis.",
+      body: `${formatMoneyGap(command.partialFinanceValidatedValueYtd)} is finance-validated against ${formatMoneyGap(command.promisedValueFy26)} promised; realized value remains ${formatMoneyGap(command.realizedValueYtdAllowed)} until claim gates pass.`,
+    },
+    {
+      tone: "freeze",
+      title: "AI demand is broader than one use case.",
+      body: `${formatWholeNumber(command.candidateAiOpportunities)} candidate AI opportunities are visible; embedded platform spend must stay non-additive and tied to usage evidence.`,
+    },
+    {
+      tone: "stop",
+      title: "Required fields still block board-grade claims.",
+      body: blockingGaps.length > 0
+        ? `${blockingGaps.length} mart gap${blockingGaps.length === 1 ? "" : "s"} must be fixed upstream before Tower can strengthen claims.`
+        : "The current mart exposes no blocking required-field gaps, but outcome claims still require source-backed actuals.",
+    },
+  ];
 
-      <section
-        aria-label="Tower mart sections"
-        style={{ display: "flex", alignItems: "center", marginBottom: 22, borderBottom: `1px solid ${T.RULE}` }}
-      >
-        {TOWER_MART_SECTIONS.map((section) => {
-          const selected = section.key === activeSection;
-          return (
-            <button
-              key={section.key}
-              type="button"
-              onClick={() => setActiveSection(section.key)}
-              aria-pressed={selected}
-              style={{
-                position: "relative",
-                top: 1,
-                border: "none",
-                borderBottom: selected ? `2px solid ${T.GREEN}` : "2px solid transparent",
-                background: "transparent",
-                color: selected ? T.INK : T.INK_2,
-                padding: "12px 2px",
-                marginRight: 28,
-                fontSize: 16,
-                fontWeight: 500,
-                letterSpacing: "-0.01em",
-                fontFamily: T.SERIF,
-                cursor: "pointer",
-              }}
-            >
-              {section.label}
-            </button>
-          );
-        })}
-      </section>
-
-      {activeSection === "command" ? (
-        <section style={{ display: "grid", gap: 18 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
-            <TowerMartKpi label="Total IT budget FY26" value={formatMoneyGap(command.totalItBudgetFy26)} detail={`${command.sourceFiles.length} refreshed V3 source files`} />
-            <TowerMartKpi label="Run budget FY26" value={formatMoneyGap(command.runBudgetFy26)} detail={`${martRatioText(command.runRatio)} of total`} />
-            <TowerMartKpi label="Change budget FY26" value={formatMoneyGap(command.changeBudgetFy26)} detail={`${martRatioText(command.changeRatio)} of total`} />
-            <TowerMartKpi label="AI-tagged spend lens" value={formatMoneyGap(command.aiTaggedSpendFy26NonAdditive)} detail="Non-additive: already inside budget/program spend" />
-          </div>
-          <section
+  function renderCommandStep() {
+    if (commandStep === 1) {
+      return (
+        <section style={{ marginTop: 22 }}>
+          <div style={towerEyebrowStyle}>Where the money is</div>
+          <div
             style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr) minmax(260px, 420px)",
+              gap: 22,
+              alignItems: "stretch",
+            }}
+          >
+            <div style={towerBoardCardStyle}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
+                <div style={towerTinyLabelStyle}>FY26 technology budget</div>
+                <div
+                  style={{
+                    fontFamily: T.SERIF,
+                    fontSize: 34,
+                    fontWeight: 900,
+                    lineHeight: 1,
+                    color: T.INK,
+                    textDecoration: "underline",
+                    textDecorationColor: T.GOLD,
+                    textDecorationThickness: 1,
+                    textUnderlineOffset: 5,
+                  }}
+                >
+                  {formatMoneyGap(command.totalItBudgetFy26)}
+                </div>
+              </div>
+              <div
+                aria-label="Run and change budget split"
+                style={{
+                  display: "flex",
+                  height: 48,
+                  marginTop: 24,
+                  borderRadius: 8,
+                  overflow: "hidden",
+                  background: `repeating-linear-gradient(45deg, ${T.CREAM_DEEP}, ${T.CREAM_DEEP} 8px, #e5e2d8 8px, #e5e2d8 16px)`,
+                }}
+              >
+                <div
+                  style={{
+                    width: `${Math.max(0, Math.min(100, runPct))}%`,
+                    display: "grid",
+                    placeItems: "center",
+                    color: T.INK,
+                    fontWeight: 900,
+                    fontSize: 14,
+                  }}
+                >
+                  Run {formatMoneyGap(command.runBudgetFy26)}
+                </div>
+                <div
+                  style={{
+                    flex: 1,
+                    display: "grid",
+                    placeItems: "center",
+                    background: T.TEAL,
+                    color: "#fff",
+                    fontWeight: 900,
+                    fontSize: 14,
+                  }}
+                >
+                  Change {formatMoneyGap(command.changeBudgetFy26)}
+                </div>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 18,
+                  flexWrap: "wrap",
+                  marginTop: 16,
+                  color: T.INK_2,
+                  fontSize: 13,
+                }}
+              >
+                <span><span style={runSwatchStyle} /> Run — operate and maintain · <b>{runPct}%</b></span>
+                <span><span style={changeSwatchStyle} /> Change — build and transform · <b>{changePct}%</b></span>
+              </div>
+              <p style={{ margin: "18px 0 0", color: T.INK_2, lineHeight: 1.58, fontSize: 15 }}>
+                A healthcare-appropriate run-heavy posture. The leadership
+                question is not the ratio alone; it is whether enough of the{" "}
+                <b>{formatMoneyGap(command.runBudgetFy26)}</b> run base can be
+                optimized to fund the AI/data foundation and priority portfolio.
+              </p>
+            </div>
+            <div style={{ display: "grid", gap: 14 }}>
+              <TowerMartCompactCard
+                label="Approved programs"
+                value={formatWholeNumber(model.programLanes.length)}
+                detail="Governed in the portfolio"
+              />
+              <TowerMartCompactCard
+                label="AI-tagged spend lens"
+                value={formatMoneyGap(command.aiTaggedSpendFy26NonAdditive)}
+                detail="Non-additive view inside the budget"
+              />
+              <TowerMartCompactCard
+                label="Candidate AI opportunities"
+                value={formatWholeNumber(command.candidateAiOpportunities)}
+                detail="Discovery/opportunity lens; not approved funding"
+              />
+              <TowerMartCompactCard
+                label="Finance-validated realized value"
+                value="Gated"
+                detail="Not yet claimable — no value booked to P&L"
+                tone="gated"
+              />
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    if (commandStep === 2) {
+      return (
+        <section style={{ marginTop: 22 }}>
+          <div style={towerEyebrowStyle}>What&apos;s misaligned</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 14 }}>
+            {signalCards.map((card, index) => (
+              <div
+                key={card.title}
+                style={{
+                  border: `1px solid ${card.tone === "stop" ? "rgba(163,45,45,.28)" : card.tone === "freeze" ? "rgba(27,43,92,.22)" : "rgba(186,117,23,.28)"}`,
+                  borderRadius: 16,
+                  background: "#fff",
+                  padding: 18,
+                  boxShadow: "0 18px 38px rgba(15,23,42,.055)",
+                }}
+              >
+                <div
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 999,
+                    display: "grid",
+                    placeItems: "center",
+                    color: "#fff",
+                    background: card.tone === "stop" ? T.RED : card.tone === "freeze" ? T.PURPLE : T.AMBER,
+                    fontWeight: 900,
+                    marginBottom: 12,
+                  }}
+                >
+                  {index + 1}
+                </div>
+                <h4 style={{ margin: 0, color: T.INK, fontSize: 17 }}>{card.title}</h4>
+                <p style={{ margin: "8px 0 0", color: T.INK_2, lineHeight: 1.5, fontSize: 13.5 }}>{card.body}</p>
+              </div>
+            ))}
+          </div>
+          <div
+            style={{
+              marginTop: 20,
               border: `1px solid ${T.RULE_STRONG}`,
               background: T.INK,
               color: "#fff",
@@ -3993,84 +4095,880 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
               padding: 24,
             }}
           >
-            <div style={{ fontFamily: T.MONO, fontSize: 10, color: T.GOLD, letterSpacing: "1.6px", textTransform: "uppercase", fontWeight: 900, marginBottom: 10 }}>
-              The question Tower exists to answer
-            </div>
-            <div style={{ fontFamily: T.SERIF, fontSize: 29, lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 940 }}>
+            <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>The question Tower exists to answer</div>
+            <div style={{ marginTop: 10, fontFamily: T.SERIF, fontSize: 29, lineHeight: 1.14, maxWidth: 980 }}>
               {command.decisionQuestion}
             </div>
-            <TowerMartLaneSummary rows={model.programLanes} />
-          </section>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
-            <TowerMartKpi label="Approved program budget" value={formatMoneyGap(command.approvedProgramBudgetFy26)} detail={`${model.programLanes.length} program lane rows`} />
-            <TowerMartKpi label="Promised value FY26" value={formatMoneyGap(command.promisedValueFy26)} detail="Business-case value, not realized savings" />
-            <TowerMartKpi label="Partial finance validation" value={formatMoneyGap(command.partialFinanceValidatedValueYtd)} detail={`${martRatioText(command.financeValidationRatio)} of promised value`} tone="warn" />
-            <TowerMartKpi label="Realized value allowed" value={formatMoneyGap(command.realizedValueYtdAllowed)} detail="Blocked by claim gate" tone="blocked" />
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
+              {(["fund", "fix", "freeze", "stop"] as const).map((lane) => (
+                <TowerMartLanePill key={lane} lane={lane} count={laneCounts[lane] ?? 0} />
+              ))}
+            </div>
           </div>
-          {blockingGaps.length > 0 ? (
-            <CioPanel eyebrow="Blocking mart gaps" title="Required fields to fix upstream">
-              <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 8 }}>
-                {blockingGaps.map((gap) => (
-                  <li key={gap.gapKey}>{gap.sourceTemplate}: {gap.requiredField} — {gap.remediationAction}</li>
-                ))}
-              </ul>
-            </CioPanel>
-          ) : null}
         </section>
-      ) : null}
+      );
+    }
 
-      {activeSection === "value" ? <TowerMartValueFunnel model={model} /> : null}
-      {activeSection === "lanes" ? <TowerMartDecisionLanes rows={model.programLanes} /> : null}
-      {activeSection === "ai" ? <TowerMartAiPortfolio rows={model.aiPortfolio} /> : null}
-      {activeSection === "actions" ? (
-        <CioPanel eyebrow="Next CXO moves" title="Recommended CXO Actions">
-          <div style={{ display: "grid", gap: 11 }}>
-            {model.cxoActions.map((action) => {
-              const tone = martLaneTone(action.actionLane);
+    return (
+      <section style={{ marginTop: 22 }}>
+        <div
+          style={{
+            border: `1px solid ${T.RULE_STRONG}`,
+            borderRadius: 18,
+            background: "#fff",
+            padding: 22,
+            display: "grid",
+            gridTemplateColumns: "54px 1fr",
+            gap: 16,
+            boxShadow: "0 18px 38px rgba(15,23,42,.055)",
+          }}
+        >
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 14,
+              background: T.GREEN_BG,
+              display: "grid",
+              placeItems: "center",
+              color: T.GREEN,
+              fontWeight: 900,
+              fontSize: 24,
+            }}
+          >
+            ↗
+          </div>
+          <div>
+            <div style={towerTinyLabelStyle}>Top decision</div>
+            <div style={{ marginTop: 8, fontFamily: T.SERIF, fontSize: 28, lineHeight: 1.16, color: T.INK }}>
+              Fund the foundation before scaling AI use cases. Prove the
+              operating model on data-ready, owned initiatives, and do not
+              crown a hero use case until the evidence exists.
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12, marginTop: 20 }}>
+          {TOWER_MART_SECTIONS.filter((section) => section.key !== "command").map((section) => (
+            <button
+              key={section.key}
+              type="button"
+              onClick={() => setActiveSection(section.key)}
+              style={towerAnalysisCardStyle}
+            >
+              <span style={{ fontWeight: 900, color: T.INK }}>{section.label}</span>
+              <span style={{ marginTop: 8, color: T.INK_2, lineHeight: 1.45, fontSize: 13 }}>
+                {towerSectionDescription(section.key)}
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <div
+      data-testid="tower-command-mart"
+      style={{
+        background: "#f6f3ec",
+        borderTop: `1px solid ${T.RULE}`,
+        minHeight: "calc(100vh - 132px)",
+        margin: "0 -32px -90px",
+        display: "grid",
+        gridTemplateColumns: "222px minmax(0, 1fr)",
+      }}
+    >
+      <aside
+        aria-label="Investment control tower navigation"
+        style={{
+          borderRight: `1px solid ${T.RULE}`,
+          background: "rgba(255,255,255,.62)",
+          padding: "24px 12px",
+        }}
+      >
+        <TowerMartNavGroup label="Investment Control Tower">
+          <TowerMartNavButton
+            label="Command Center"
+            selected={activeSection === "command"}
+            onClick={() => setActiveSection("command")}
+          />
+        </TowerMartNavGroup>
+        <TowerMartNavGroup label="Analyses">
+          {TOWER_MART_SECTIONS.filter((section) => section.key !== "command" && section.key !== "evidence").map((section) => (
+            <TowerMartNavButton
+              key={section.key}
+              label={section.label}
+              count={towerSectionCount(section.key, model)}
+              selected={activeSection === section.key}
+              onClick={() => setActiveSection(section.key)}
+            />
+          ))}
+          {["Run vs Change", "Vendor & Spend Leverage", "Transformation Capacity"].map((label) => (
+            <TowerMartNavButton key={label} label={label} disabled />
+          ))}
+        </TowerMartNavGroup>
+        <TowerMartNavGroup label="Trace">
+          <TowerMartNavButton
+            label="Evidence"
+            selected={activeSection === "evidence"}
+            onClick={() => setActiveSection("evidence")}
+          />
+        </TowerMartNavGroup>
+      </aside>
+      <main style={{ padding: "34px clamp(28px, 3vw, 54px) 90px", minWidth: 0 }}>
+        {activeSection === "command" ? (
+          <>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 9,
+                color: T.INK_2,
+                fontSize: 13,
+                marginBottom: 18,
+              }}
+            >
+              <span style={{ width: 9, height: 9, borderRadius: 999, background: T.GREEN, display: "inline-block" }} />
+              <b style={{ color: T.INK }}>Active portfolio context</b>
+              <span>Last checked from Tower mart · deterministic · every figure traces to a source</span>
+            </div>
+            <h2
+              style={{
+                margin: 0,
+                fontFamily: T.SERIF,
+                color: T.INK,
+                fontSize: 43,
+                lineHeight: 1.02,
+                letterSpacing: "-0.035em",
+                fontWeight: 780,
+              }}
+            >
+              {command.tenantName}{" "}
+              <span
+                style={{
+                  display: "inline-flex",
+                  verticalAlign: "middle",
+                  borderRadius: 999,
+                  background: "rgba(32,178,148,.12)",
+                  color: T.TEAL,
+                  fontFamily: T.MONO,
+                  fontSize: 10,
+                  letterSpacing: "1.5px",
+                  textTransform: "uppercase",
+                  padding: "5px 10px",
+                  marginLeft: 8,
+                }}
+              >
+                Reference
+              </span>
+            </h2>
+            <p style={{ margin: "10px 0 0", color: T.INK_2, fontSize: 16 }}>
+              Investment control tower — <em>where money, risk and value are misaligned, and what to do next.</em>
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 38px 1fr 38px 1fr", gap: 0, alignItems: "center", marginTop: 24 }}>
+              {commandSteps.map((step, index) => {
+                const stepNumber = (index + 1) as 1 | 2 | 3;
+                const selected = commandStep === stepNumber;
+                return (
+                  <Fragment key={step[0]}>
+                    <button
+                      type="button"
+                      onClick={() => setCommandStep(stepNumber)}
+                      style={{
+                        border: `1px solid ${selected ? "#1677ff" : T.RULE}`,
+                        borderRadius: 14,
+                        background: selected ? "#eaf2ff" : "#fff",
+                        boxShadow: "0 10px 24px rgba(15,23,42,.08)",
+                        minHeight: 62,
+                        padding: "12px 18px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 14,
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 999,
+                          display: "grid",
+                          placeItems: "center",
+                          background: selected ? T.PURPLE : "#fff",
+                          color: selected ? "#fff" : T.INK_2,
+                          border: selected ? "none" : `1px solid ${T.RULE_STRONG}`,
+                          fontWeight: 900,
+                        }}
+                      >
+                        {stepNumber}
+                      </span>
+                      <span>
+                        <span style={{ ...towerTinyLabelStyle, display: "block", fontSize: 8 }}>Step {stepNumber}</span>
+                        <span style={{ fontWeight: 900, color: T.INK }}>{step[0]}</span>{" "}
+                        <span style={{ color: T.INK_2 }}>· {step[1]}</span>
+                      </span>
+                    </button>
+                    {index < commandSteps.length - 1 ? (
+                      <span style={{ color: T.GRAY_DK, textAlign: "center", fontSize: 25 }}>→</span>
+                    ) : null}
+                  </Fragment>
+                );
+              })}
+            </div>
+            {renderCommandStep()}
+            <div style={{ display: "flex", justifyContent: "space-between", borderTop: `1px solid ${T.RULE}`, marginTop: 34, paddingTop: 22 }}>
+              <button
+                type="button"
+                disabled={commandStep === 1}
+                onClick={() => setCommandStep(commandStep === 3 ? 2 : 1)}
+                style={commandStep === 1 ? towerGhostButtonDisabledStyle : towerGhostButtonStyle}
+              >
+                ← {commandStep === 3 ? "Signals" : "Posture"}
+              </button>
+              <button
+                type="button"
+                onClick={() => (commandStep < 3 ? setCommandStep((commandStep + 1) as 1 | 2 | 3) : setActiveSection("actions"))}
+                style={towerPrimaryButtonStyle}
+              >
+                {commandStep === 1 ? "Signals" : commandStep === 2 ? "Decide" : "See recommended actions"} →
+              </button>
+            </div>
+          </>
+        ) : null}
+        {activeSection === "value" ? <TowerMartValueFunnelDesign model={model} /> : null}
+        {activeSection === "lanes" ? <TowerMartDecisionLanesDesign rows={model.programLanes} /> : null}
+        {activeSection === "ai" ? <TowerMartAiPortfolioDesign rows={visibleAiRows} command={command} /> : null}
+        {activeSection === "actions" ? <TowerMartActionsDesign actions={model.cxoActions} /> : null}
+        {activeSection === "evidence" ? <TowerMartEvidenceDesign rows={model.evidenceLineage} gaps={model.requiredFieldGaps} /> : null}
+      </main>
+    </div>
+  );
+}
+
+const towerTinyLabelStyle: CSSProperties = {
+  fontFamily: T.MONO,
+  fontSize: 10,
+  letterSpacing: "1.45px",
+  textTransform: "uppercase",
+  color: T.GRAY_DK,
+  fontWeight: 900,
+};
+
+const towerEyebrowStyle: CSSProperties = {
+  ...towerTinyLabelStyle,
+  color: T.GOLD,
+  marginBottom: 14,
+};
+
+const towerBoardCardStyle: CSSProperties = {
+  border: `1px solid ${T.RULE_STRONG}`,
+  borderRadius: 16,
+  background: "#fff",
+  padding: 24,
+  minHeight: 306,
+  boxShadow: "0 22px 48px rgba(15,23,42,.08)",
+};
+
+const towerAnalysisCardStyle: CSSProperties = {
+  border: `1px solid ${T.RULE}`,
+  borderRadius: 16,
+  background: "#fff",
+  padding: 17,
+  minHeight: 132,
+  display: "flex",
+  flexDirection: "column",
+  textAlign: "left",
+  cursor: "pointer",
+  boxShadow: "0 16px 34px rgba(15,23,42,.055)",
+};
+
+const runSwatchStyle: CSSProperties = {
+  display: "inline-block",
+  width: 12,
+  height: 12,
+  borderRadius: 3,
+  background: T.CREAM_DEEP,
+  border: `1px solid ${T.RULE}`,
+  marginRight: 6,
+  verticalAlign: "-1px",
+};
+
+const changeSwatchStyle: CSSProperties = {
+  display: "inline-block",
+  width: 12,
+  height: 12,
+  borderRadius: 3,
+  background: T.TEAL,
+  marginRight: 6,
+  verticalAlign: "-1px",
+};
+
+const towerPrimaryButtonStyle: CSSProperties = {
+  border: "none",
+  borderRadius: 9,
+  background: T.PURPLE,
+  color: "#fff",
+  padding: "12px 18px",
+  fontWeight: 900,
+  cursor: "pointer",
+};
+
+const towerGhostButtonStyle: CSSProperties = {
+  border: `1px solid ${T.RULE_STRONG}`,
+  borderRadius: 9,
+  background: "#fff",
+  color: T.INK,
+  padding: "12px 18px",
+  fontWeight: 900,
+  cursor: "pointer",
+};
+
+const towerGhostButtonDisabledStyle: CSSProperties = {
+  ...towerGhostButtonStyle,
+  opacity: 0.35,
+  cursor: "not-allowed",
+};
+
+function towerSectionDescription(section: TowerMartSection): string {
+  if (section === "value") return "Committed change spend to promised, validated, and claimable value.";
+  if (section === "lanes") return "Fund, fix, freeze, and stop posture for each loaded program.";
+  if (section === "ai") return "AI opportunities by value, readiness, spend posture, and controls.";
+  if (section === "actions") return "CXO actions with handoffs to the execution modules.";
+  if (section === "evidence") return "Lineage back to mart facts, source files, rows, and caveats.";
+  return "Executive command path.";
+}
+
+function towerSectionCount(section: TowerMartSection, model: TowerMartCommandViewModel): number | undefined {
+  if (section === "lanes") return model.programLanes.length;
+  if (section === "ai") return Math.min(model.aiPortfolio.length, model.command.candidateAiOpportunities);
+  if (section === "actions") return model.cxoActions.length;
+  return undefined;
+}
+
+function TowerMartNavGroup({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div style={{ marginBottom: 26 }}>
+      <div
+        style={{
+          ...towerTinyLabelStyle,
+          fontSize: 8,
+          letterSpacing: "2.5px",
+          margin: "0 12px 9px",
+        }}
+      >
+        {label}
+      </div>
+      <div style={{ display: "grid", gap: 4 }}>{children}</div>
+    </div>
+  );
+}
+
+function TowerMartNavButton({
+  label,
+  count,
+  selected = false,
+  disabled = false,
+  onClick,
+}: {
+  label: string;
+  count?: number;
+  selected?: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      style={{
+        border: "none",
+        borderRadius: 9,
+        background: selected ? "#eaf2ff" : "transparent",
+        color: disabled ? T.GRAY : selected ? "#0756a7" : T.INK,
+        padding: "10px 12px",
+        display: "grid",
+        gridTemplateColumns: "1fr auto",
+        gap: 8,
+        alignItems: "center",
+        textAlign: "left",
+        fontWeight: selected ? 900 : 650,
+        cursor: disabled ? "not-allowed" : "pointer",
+      }}
+    >
+      <span>{label}</span>
+      {disabled ? (
+        <span style={{ ...towerTinyLabelStyle, fontSize: 8, background: T.CREAM_DEEP, borderRadius: 999, padding: "3px 7px" }}>
+          Soon
+        </span>
+      ) : count !== undefined ? (
+        <span style={{ color: T.GRAY_DK, fontSize: 11 }}>{count}</span>
+      ) : null}
+    </button>
+  );
+}
+
+function TowerMartCompactCard({
+  label,
+  value,
+  detail,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  tone?: "neutral" | "gated";
+}) {
+  return (
+    <div
+      style={{
+        ...towerBoardCardStyle,
+        minHeight: 0,
+        padding: 18,
+        boxShadow: "0 16px 34px rgba(15,23,42,.07)",
+      }}
+    >
+      <div style={towerTinyLabelStyle}>{label}</div>
+      <div
+        style={{
+          marginTop: 8,
+          fontFamily: T.SERIF,
+          fontSize: 28,
+          lineHeight: 1,
+          fontWeight: 900,
+          color: tone === "gated" ? T.AMBER : T.INK,
+        }}
+      >
+        {tone === "gated" ? <span style={{ color: T.AMBER }}>● </span> : null}
+        {value}
+      </div>
+      <div style={{ marginTop: 8, color: T.INK_2, lineHeight: 1.45, fontSize: 13 }}>{detail}</div>
+    </div>
+  );
+}
+
+function TowerMartLanePill({
+  lane,
+  count,
+}: {
+  lane: "fund" | "fix" | "freeze" | "stop";
+  count: number;
+}) {
+  const tone = martLaneTone(lane);
+  return (
+    <span
+      style={{
+        borderRadius: 999,
+        padding: "8px 11px",
+        background: tone.bg,
+        color: tone.fg,
+        fontWeight: 900,
+        fontSize: 12,
+        textTransform: "capitalize",
+      }}
+    >
+      {count} {lane}
+    </span>
+  );
+}
+
+function TowerMartBackButton({
+  onClick,
+}: {
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        border: "none",
+        background: "transparent",
+        color: T.GRAY_DK,
+        padding: 0,
+        marginBottom: 14,
+        cursor: "pointer",
+        fontWeight: 800,
+      }}
+    >
+      ← Command Center
+    </button>
+  );
+}
+
+function TowerMartValueFunnelDesign({ model }: { model: TowerMartCommandViewModel }) {
+  const promised = Math.max(model.command.promisedValueFy26, 1);
+  const measuredPct = safeRatio(model.command.partialFinanceValidatedValueYtd, promised);
+  return (
+    <>
+      <TowerMartBackButton onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+      <div style={towerDetailHeaderStyle}>
+        <div style={towerEyebrowStyle}>Funding vs. value realization</div>
+        <h2 style={towerDetailTitleStyle}>Value Proof Funnel</h2>
+      </div>
+      <p style={towerDetailIntroStyle}>
+        The value proof ladder shows how much promised value is actually
+        measured, finance-validated, and claimable, so promised can never be
+        mistaken for realized.
+      </p>
+      <section style={{ ...towerBoardCardStyle, minHeight: 0 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, .9fr) minmax(0, 1.3fr)", gap: 26 }}>
+          <div>
+            {model.valueFunnel.map((stage, index) => {
+              const denominator = index === 0 ? model.command.changeBudgetFy26 || promised : promised;
+              const width = stage.stageKey === "realized_allowed"
+                ? 12
+                : Math.max(12, Math.min(100, Math.round((stage.valueNumeric / Math.max(denominator, 1)) * 100)));
+              const tone =
+                stage.stageKey === "realized_allowed"
+                  ? T.RED
+                  : stage.stageKey === "finance_validated_partial"
+                    ? T.AMBER
+                    : stage.stageKey === "promised_value"
+                      ? T.GREEN
+                      : T.PURPLE;
               return (
-                <div key={action.actionKey} style={{ border: `1px solid ${T.RULE}`, borderRadius: 12, background: "#fff", padding: 14 }}>
-	                  <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-	                    <strong>{action.title}</strong>
-	                    {action.ownerHint ? (
-	                      <span style={{ color: tone.fg, fontWeight: 900 }}>
-	                        {action.ownerHint}
-	                      </span>
-	                    ) : null}
-	                  </div>
-                  <div style={{ color: T.INK_2, fontSize: 13, lineHeight: 1.45, marginTop: 7 }}>{action.actionBody}</div>
-                  <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 6 }}>Handoff: {action.moduleHandoff ?? "Tower"}</div>
+                <div key={stage.funnelKey} style={{ marginBottom: 18 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 14, marginBottom: 7 }}>
+                    <div>
+                      <strong>{stage.stageLabel}</strong>
+                      <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 2 }}>{stage.caveat}</div>
+                    </div>
+                    <div style={{ fontFamily: T.SERIF, fontSize: 22, fontWeight: 900 }}>{formatMoneyGap(stage.valueNumeric)}</div>
+                  </div>
+                  <div style={{ height: 20, borderRadius: 999, background: T.CREAM_DEEP, overflow: "hidden" }}>
+                    <div style={{ width: `${width}%`, height: "100%", background: tone }} />
+                  </div>
                 </div>
               );
             })}
           </div>
-        </CioPanel>
-      ) : null}
-      {activeSection === "evidence" ? (
-        <CioPanel eyebrow="Trace" title="Evidence Lineage">
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-              <thead>
-                <tr>
-                  {["Fact", "Value", "Source file", "Rule / caveat"].map((head) => (
-                    <th key={head} style={{ textAlign: "left", padding: "0 10px 10px", fontFamily: T.MONO, fontSize: 9, letterSpacing: "1.2px", color: T.GRAY_DK, textTransform: "uppercase" }}>{head}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {model.evidenceLineage.map((row) => (
-                  <tr key={row.lineageKey} style={{ borderTop: `1px solid ${T.RULE}` }}>
-                    <td style={{ padding: "12px 10px", fontWeight: 900 }}>{row.displayedFact}</td>
-                    <td style={{ padding: "12px 10px" }}>{row.displayedValueText ?? formatMoneyGap(row.displayedValueNumeric ?? 0)}</td>
-                    <td style={{ padding: "12px 10px" }}>{row.sourceFile} {row.sourceRow ? `· ${row.sourceRow}` : ""}</td>
-                    <td style={{ padding: "12px 10px", color: T.INK_2 }}>{row.caveat}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div>
+            <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>Value proven vs. promised · by program</div>
+            <div style={{ display: "grid", gap: 9, marginTop: 12 }}>
+              {[...model.programLanes]
+                .sort((a, b) => b.promisedValueUsd - a.promisedValueUsd)
+                .slice(0, 10)
+                .map((program) => {
+                  const pct = safeRatio(program.financeValidatedValueUsd, program.promisedValueUsd);
+                  return (
+                    <div
+                      key={program.laneKey}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "minmax(190px, .8fr) minmax(0, 1fr) 74px",
+                        gap: 12,
+                        alignItems: "center",
+                        borderTop: `1px solid ${T.RULE}`,
+                        paddingTop: 9,
+                      }}
+                    >
+                      <div>
+                        <strong>{program.programName}</strong>
+                        <div style={{ color: T.GRAY_DK, fontSize: 11 }}>{program.programCode ?? "program code gap"}</div>
+                      </div>
+                      <div style={{ height: 10, background: T.CREAM_DEEP, borderRadius: 999, overflow: "hidden" }}>
+                        <div style={{ width: `${Math.max(2, Math.round((pct ?? 0) * 100))}%`, height: "100%", background: T.GREEN }} />
+                      </div>
+                      <div style={{ textAlign: "right", fontWeight: 900 }}>{martRatioText(pct)}</div>
+                    </div>
+                  );
+                })}
+            </div>
           </div>
-        </CioPanel>
+        </div>
+        <div
+          style={{
+            marginTop: 20,
+            borderTop: `1px solid ${T.RULE}`,
+            paddingTop: 16,
+            color: T.INK_2,
+            lineHeight: 1.55,
+          }}
+        >
+          Of <b>{formatMoneyGap(model.command.promisedValueFy26)}</b> promised,
+          only <b>{martRatioText(measuredPct)}</b> is finance-validated.{" "}
+          <b>{formatMoneyGap(model.command.realizedValueYtdAllowed)}</b> is
+          claimable as realized value under the current gate.
+        </div>
+      </section>
+    </>
+  );
+}
+
+const towerDetailHeaderStyle: CSSProperties = {
+  marginBottom: 6,
+};
+
+const towerDetailTitleStyle: CSSProperties = {
+  margin: 0,
+  fontFamily: T.SERIF,
+  fontSize: 43,
+  lineHeight: 1.04,
+  letterSpacing: "-0.035em",
+  color: T.INK,
+};
+
+const towerDetailIntroStyle: CSSProperties = {
+  margin: "10px 0 22px",
+  color: T.INK_2,
+  fontSize: 16,
+  lineHeight: 1.55,
+  maxWidth: 1040,
+};
+
+function TowerMartDecisionLanesDesign({ rows }: { rows: ReadonlyArray<TowerMartProgramLane> }) {
+  const lanes = [
+    ["fund", "Fund", "Evidence-backed enough to protect or scale."],
+    ["fix", "Fix", "Promising but blocked by evidence, owner, or baseline gaps."],
+    ["freeze", "Freeze", "Hold funding until proof boundaries are cleared."],
+    ["stop", "Stop", "Stop or re-scope before more attention is consumed."],
+  ] as const;
+  return (
+    <>
+      <TowerMartBackButton onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+      <div style={towerDetailHeaderStyle}>
+        <div style={towerEyebrowStyle}>Initiative health · Fund / Fix / Freeze / Stop</div>
+        <h2 style={towerDetailTitleStyle}>Portfolio Decision Lanes</h2>
+      </div>
+      <p style={towerDetailIntroStyle}>
+        Each loaded program is placed into a decision lane from budget ties,
+        value evidence, usage evidence, and claim status. Missing fields become
+        blockers, not substitutions.
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 16 }}>
+        {lanes.map(([lane, label, definition]) => {
+          const laneRows = rows.filter((row) => row.decisionLane === lane);
+          const tone = martLaneTone(lane);
+          return (
+            <section
+              key={lane}
+              style={{
+                border: `1px solid ${T.RULE_STRONG}`,
+                borderRadius: 18,
+                background: tone.bg,
+                padding: 18,
+                minHeight: 300,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+                <div>
+                  <h3 style={{ margin: 0, fontFamily: T.SERIF, fontSize: 25 }}>{label}</h3>
+                  <p style={{ margin: "4px 0 0", color: T.INK_2, fontSize: 13 }}>{definition}</p>
+                </div>
+                <span style={{ color: tone.fg, fontWeight: 950 }}>{laneRows.length} program{laneRows.length === 1 ? "" : "s"}</span>
+              </div>
+              <div style={{ display: "grid", gap: 10, marginTop: 15 }}>
+                {laneRows.length > 0 ? laneRows.slice(0, 5).map((row) => (
+                  <div key={row.laneKey} style={{ border: `1px solid ${T.RULE}`, borderRadius: 13, background: "rgba(255,255,255,.82)", padding: 13 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                      <strong>{row.programName}</strong>
+                      <span style={{ color: tone.fg, fontWeight: 900 }}>{formatMoneyGap(row.approvedFundingUsd)}</span>
+                    </div>
+                    <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 4 }}>
+                      {row.ownerRole ?? "owner gap"} · {formatMoneyGap(row.promisedValueUsd)} promised · {formatMoneyGap(row.financeValidatedValueUsd)} validated
+                    </div>
+                    <div style={{ color: T.INK_2, fontSize: 12.5, lineHeight: 1.42, marginTop: 7 }}>{row.decisionRationale}</div>
+                  </div>
+                )) : (
+                  <div style={{ color: T.GRAY_DK, fontSize: 13, padding: "12px 0" }}>No current mart rows in this lane.</div>
+                )}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+function TowerMartAiPortfolioDesign({
+  rows,
+  command,
+}: {
+  rows: ReadonlyArray<TowerMartAiPortfolioItem>;
+  command: TowerMartCommandCenterRow;
+}) {
+  return (
+    <>
+      <TowerMartBackButton onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+      <div style={towerDetailHeaderStyle}>
+        <div style={towerEyebrowStyle}>AI portfolio readiness</div>
+        <h2 style={towerDetailTitleStyle}>AI Opportunity Portfolio</h2>
+      </div>
+      <p style={towerDetailIntroStyle}>
+        AI opportunities are plotted by value against readiness. Numbers avoid
+        text collisions on the canvas; the legend below maps every point back
+        to an opportunity.
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.25fr) minmax(360px, .75fr)", gap: 18 }}>
+        <section style={{ ...towerBoardCardStyle, minHeight: 520, position: "relative" }}>
+          <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>Value vs. readiness</div>
+          <div
+            style={{
+              position: "absolute",
+              inset: "72px 32px 56px 64px",
+              borderLeft: `2px solid ${T.RULE_STRONG}`,
+              borderBottom: `2px solid ${T.RULE_STRONG}`,
+              background: "linear-gradient(90deg, transparent 49.6%, rgba(10,10,11,.12) 50%, transparent 50.4%), linear-gradient(0deg, transparent 49.6%, rgba(10,10,11,.12) 50%, transparent 50.4%)",
+            }}
+          >
+            <div style={{ position: "absolute", right: 8, top: 8, color: T.TEAL, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Scale now</div>
+            <div style={{ position: "absolute", right: 8, bottom: 8, color: T.AMBER, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>De-risk first</div>
+            <div style={{ position: "absolute", left: 8, top: 8, color: T.INK_2, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Quick wins</div>
+            <div style={{ position: "absolute", left: 8, bottom: 8, color: T.GRAY_DK, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Park</div>
+            {rows.map((row, index) => {
+              const tone = martLaneTone(row.decisionLane);
+              return (
+                <div
+                  key={row.aiPortfolioKey}
+                  title={`${index + 1}. ${row.itemName}`}
+                  style={{
+                    position: "absolute",
+                    left: `${Math.max(8, Math.min(92, row.readinessScore))}%`,
+                    top: `${Math.max(8, Math.min(92, 100 - row.valueScore))}%`,
+                    transform: "translate(-50%, -50%)",
+                    width: 34,
+                    height: 34,
+                    borderRadius: 999,
+                    display: "grid",
+                    placeItems: "center",
+                    background: tone.fg,
+                    color: "#fff",
+                    fontWeight: 950,
+                    boxShadow: "0 12px 26px rgba(15,23,42,.24)",
+                  }}
+                >
+                  {index + 1}
+                </div>
+              );
+            })}
+            <div style={{ position: "absolute", left: "-54px", top: "38%", transform: "rotate(-90deg)", color: T.GRAY_DK, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Value</div>
+            <div style={{ position: "absolute", right: 0, bottom: "-34px", color: T.GRAY_DK, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Readiness →</div>
+          </div>
+        </section>
+        <section style={{ ...towerBoardCardStyle, minHeight: 0 }}>
+          <div style={towerTinyLabelStyle}>AI spend lens</div>
+          <div style={{ fontFamily: T.SERIF, fontSize: 31, fontWeight: 900, marginTop: 8 }}>{formatMoneyGap(command.aiTaggedSpendFy26NonAdditive)}</div>
+          <p style={{ margin: "8px 0 16px", color: T.INK_2, lineHeight: 1.45 }}>
+            Non-additive; already inside approved platform, program, governance,
+            and enablement spend.
+          </p>
+          <div style={{ display: "grid", gap: 8 }}>
+            {rows.map((row, index) => {
+              const tone = martLaneTone(row.decisionLane);
+              return (
+                <div key={row.aiPortfolioKey} style={{ display: "grid", gridTemplateColumns: "30px 1fr auto", gap: 9, alignItems: "start", borderTop: `1px solid ${T.RULE}`, paddingTop: 8 }}>
+                  <span style={{ width: 24, height: 24, borderRadius: 999, display: "grid", placeItems: "center", background: tone.fg, color: "#fff", fontSize: 12, fontWeight: 900 }}>{index + 1}</span>
+                  <span>
+                    <strong>{row.itemName}</strong>
+                    <span style={{ display: "block", color: T.GRAY_DK, fontSize: 11 }}>{row.vendorName ?? row.systemName ?? row.aiSpendCategory ?? "source detail gap"}</span>
+                  </span>
+                  <span style={{ color: tone.fg, fontWeight: 900, textTransform: "capitalize" }}>{row.decisionLane}</span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+    </>
+  );
+}
+
+function TowerMartActionsDesign({ actions }: { actions: ReadonlyArray<TowerMartCxoAction> }) {
+  return (
+    <>
+      <TowerMartBackButton onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+      <div style={towerDetailHeaderStyle}>
+        <div style={towerEyebrowStyle}>The north star</div>
+        <h2 style={towerDetailTitleStyle}>Recommended CXO Actions</h2>
+      </div>
+      <p style={towerDetailIntroStyle}>
+        Each action is a decision and a handoff, not a passive status update.
+      </p>
+      <section style={{ ...towerBoardCardStyle, minHeight: 0 }}>
+        <div style={{ display: "grid", gap: 0 }}>
+          {actions.map((action) => {
+            const normalizedLane = action.actionLane === "accelerate" ? "fund" : action.actionLane === "hold" ? "freeze" : action.actionLane;
+            const tone = martLaneTone(["fund", "fix", "freeze", "stop"].includes(normalizedLane) ? normalizedLane : "fix");
+            return (
+              <div key={action.actionKey} style={{ display: "grid", gridTemplateColumns: "118px 1fr 180px", gap: 18, alignItems: "start", borderTop: `1px solid ${T.RULE}`, padding: "18px 0" }}>
+                <span style={{ borderRadius: 999, background: tone.bg, color: tone.fg, padding: "8px 11px", fontWeight: 900, textAlign: "center", textTransform: "capitalize" }}>{action.actionLane}</span>
+                <div>
+                  <strong style={{ fontSize: 16 }}>{action.title}</strong>
+                  <p style={{ margin: "6px 0 0", color: T.INK_2, lineHeight: 1.5 }}>{action.actionBody}</p>
+                </div>
+                <div style={{ color: T.GRAY_DK, fontSize: 13, fontWeight: 800 }}>{action.moduleHandoff ?? "Tower"} →</div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    </>
+  );
+}
+
+function TowerMartEvidenceDesign({
+  rows,
+  gaps,
+}: {
+  rows: ReadonlyArray<TowerMartEvidenceLineage>;
+  gaps: ReadonlyArray<TowerMartRequiredFieldGap>;
+}) {
+  return (
+    <>
+      <TowerMartBackButton onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+      <div style={towerDetailHeaderStyle}>
+        <div style={towerEyebrowStyle}>Trace</div>
+        <h2 style={towerDetailTitleStyle}>Evidence</h2>
+      </div>
+      <div style={{ border: `1px solid ${T.GREEN}`, background: T.GREEN_BG, borderRadius: 13, padding: 14, margin: "16px 0", color: T.INK, fontWeight: 750 }}>
+        Every number in Tower traces to a mart fact, a formula posture, and a source row. Tower displays and narrates; it does not invent values.
+      </div>
+      <section style={{ ...towerBoardCardStyle, minHeight: 0, padding: 0, overflow: "hidden" }}>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr style={{ background: "#faf9f4" }}>
+                {["Fact", "Value", "Source", "Caveat"].map((head) => (
+                  <th key={head} style={{ ...towerTinyLabelStyle, textAlign: head === "Value" ? "right" : "left", padding: "14px 16px" }}>{head}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.lineageKey} style={{ borderTop: `1px solid ${T.RULE}` }}>
+                  <td style={{ padding: "14px 16px", fontWeight: 900 }}>{row.displayedFact}</td>
+                  <td style={{ padding: "14px 16px", textAlign: "right", fontWeight: 900 }}>{row.displayedValueText ?? formatMoneyGap(row.displayedValueNumeric)}</td>
+                  <td style={{ padding: "14px 16px", color: T.INK_2 }}>{row.sourceFile}{row.sourceRow ? ` · ${row.sourceRow}` : ""}</td>
+                  <td style={{ padding: "14px 16px", color: T.INK_2 }}>{row.caveat}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      {gaps.length > 0 ? (
+        <section style={{ ...towerBoardCardStyle, minHeight: 0, marginTop: 16 }}>
+          <div style={towerTinyLabelStyle}>Required field gaps</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10, marginTop: 12 }}>
+            {gaps.map((gap) => (
+              <div key={gap.gapKey} style={{ border: `1px solid ${gap.blocking ? "rgba(163,45,45,.28)" : T.RULE}`, borderRadius: 12, padding: 12, background: gap.blocking ? T.RED_BG : "#fff" }}>
+                <strong>{gap.requiredField}</strong>
+                <div style={{ color: T.INK_2, fontSize: 12.5, lineHeight: 1.45, marginTop: 5 }}>{gap.sourceTemplate} · {gap.remediationAction}</div>
+              </div>
+            ))}
+          </div>
+        </section>
       ) : null}
-    </div>
+    </>
   );
 }
 
@@ -8549,6 +9447,11 @@ export function TowerIndexPage({
     : towerV3RuntimeView
     ? towerV3RuntimeView.metricCount + towerV3RuntimeView.valueRecordCount
     : (budgetRollups?.length ?? 0);
+  const showLegacyTowerMasthead = !(
+    activeTab === "portfolio" &&
+    towerMartView &&
+    !activeDetailId
+  );
 
   const handleAtlasSuggestion = useCallback(
     (suggestion: AtlasSuggestion) => {
@@ -8613,6 +9516,7 @@ export function TowerIndexPage({
       {/* ─── MAIN COLUMN ─── */}
       <div style={{ minWidth: 0, padding: 0 }}>
         {/* Masthead */}
+        {showLegacyTowerMasthead ? (
         <div
           style={{
             padding: "28px 40px 24px",
@@ -8725,10 +9629,11 @@ export function TowerIndexPage({
             ) : null}
           </div>
         </div>
+        ) : null}
 
         {activeTab === "portfolio" ? (
           <>
-            {portfolioSequenceSlot}
+            {showLegacyTowerMasthead ? portfolioSequenceSlot : null}
 
             {activeDetailId ? (
               <TowerInlineDetailPanel
@@ -8810,7 +9715,7 @@ export function TowerIndexPage({
         suggestions={atlasSuggestions}
         onSuggestion={handleAtlasSuggestion}
         workspace={towerWorkspace}
-        surface="tower"
+        surface="tower-command"
         variant="focused"
         preserveVisibleText
         keepSuggestedActionsVisible
@@ -8820,6 +9725,7 @@ export function TowerIndexPage({
           activeTowerLens: activeLens,
           context,
         }}
+        defaultMode="collapsed"
         defaultLeftPercent={35}
         minLeftPx={320}
       />
