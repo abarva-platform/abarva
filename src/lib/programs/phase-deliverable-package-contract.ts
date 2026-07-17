@@ -55,6 +55,32 @@ const DEFAULT_PROVENANCE_RULES = [
   "Operator proof and QA screenshots are not client-loaded evidence and not client-facing deliverables.",
 ];
 
+const P1_CHARTER_SECTIONS = [
+  "Move name and P0 source",
+  "Business problem / opportunity captured in P0",
+  "Transformation pattern and why it fits",
+  "Sponsor role, operating owner roles, and decision rights by title only",
+  "Scope boundary: in, out, adjacent, and explicit caveats",
+  "Directional value hypothesis and success criteria to validate in P2",
+  "P2 evidence plan: required evidence families, sessions, and client-to-complete items",
+  "Gate decision, open assumptions, and next action",
+];
+
+const P1_CHARTER_EVIDENCE = [
+  "Approved P0 origination answers",
+  "Sponsor/title and operating-owner role attestation",
+  "Scope boundary attestation",
+  "Directional value hypothesis and success criteria",
+  "Evidence family plan for P2 discovery",
+];
+
+const P1_CHARTER_PROVENANCE_RULES = [
+  ...DEFAULT_PROVENANCE_RULES,
+  "P1 Charter may use only P0-captured fields and approved Move evidence.",
+  "Current-state process, system, org, metric, architecture, roadmap, estimate, or operating-model claims must be marked 'To validate in P2' unless already backed by approved evidence.",
+  "Do not invent insights, targets, owners, systems, solution options, delivery plans, or financial ranges after P0.",
+];
+
 function baseOutputs(): PhaseDeliverableOutput[] {
   return [
     {
@@ -91,6 +117,32 @@ function baseOutputs(): PhaseDeliverableOutput[] {
       clientFacingLabel: "Derived visualization inventory",
       purpose:
         "Lists process flows, architecture diagrams, data flows, charts, and tables generated from evidence.",
+    },
+  ];
+}
+
+function p1CharterOutputs(): PhaseDeliverableOutput[] {
+  return [
+    {
+      kind: "docx_editable_phase_record",
+      required: true,
+      clientFacingLabel: "P1 Charter brief / decision record",
+      purpose:
+        "Concise editable record of the approved P0 bet, sponsor/title, scope, value hypothesis, evidence plan, caveats, and P2 entry decision.",
+    },
+    {
+      kind: "evidence_provenance_manifest",
+      required: true,
+      clientFacingLabel: "Evidence and caveat manifest",
+      purpose:
+        "Separates P0 user-entered facts, approved Move evidence, assumptions to validate, and P2 evidence requests.",
+    },
+    {
+      kind: "html_visual_review_companion",
+      required: false,
+      clientFacingLabel: "Optional HTML review companion",
+      purpose:
+        "Browser-friendly copy for sponsor review; not a separate board pack.",
     },
   ];
 }
@@ -143,7 +195,14 @@ export function getPhaseDeliverablePackageContract(args: {
   artifact: DeliverableKey;
   phase: number;
 }): PhaseDeliverablePackageContract {
-  const outputs = args.artifact === "business_case" ? businessCaseOutputs(baseOutputs()) : baseOutputs();
+  const artifactKey = String(args.artifact);
+  const isP1Charter =
+    args.phase === 1 || artifactKey === "program_charter" || artifactKey === "charter";
+  const outputs = isP1Charter
+    ? p1CharterOutputs()
+    : args.artifact === "business_case"
+      ? businessCaseOutputs(baseOutputs())
+      : baseOutputs();
   const isP2CurrentState =
     args.phase === 2 || args.artifact === "discovery_report" || args.artifact === "root_cause_worksheet";
 
@@ -151,13 +210,23 @@ export function getPhaseDeliverablePackageContract(args: {
     artifact: args.artifact,
     phase: args.phase,
     formalEditableRecordRequired: true,
-    primaryEditableRecordLabel: isP2CurrentState
+    primaryEditableRecordLabel: isP1Charter
+      ? "P1 Charter Brief / Decision Record"
+      : isP2CurrentState
       ? "Current State Process and Diagnostic Word Document"
       : "Editable Phase Deliverable Word Document",
     outputs,
-    wordDocumentSections: isP2CurrentState ? p2CurrentStateSections() : DEFAULT_WORD_SECTIONS,
-    requiredWorkshopEvidence: isP2CurrentState ? p2WorkshopEvidence() : DEFAULT_WORKSHOP_EVIDENCE,
-    provenanceRules: DEFAULT_PROVENANCE_RULES,
+    wordDocumentSections: isP1Charter
+      ? P1_CHARTER_SECTIONS
+      : isP2CurrentState
+        ? p2CurrentStateSections()
+        : DEFAULT_WORD_SECTIONS,
+    requiredWorkshopEvidence: isP1Charter
+      ? P1_CHARTER_EVIDENCE
+      : isP2CurrentState
+        ? p2WorkshopEvidence()
+        : DEFAULT_WORKSHOP_EVIDENCE,
+    provenanceRules: isP1Charter ? P1_CHARTER_PROVENANCE_RULES : DEFAULT_PROVENANCE_RULES,
   };
 }
 
@@ -176,14 +245,23 @@ export function renderPhaseDeliverablePackagePrompt(args: {
   const workshopEvidence = contract.requiredWorkshopEvidence.map((item) => `- ${item}`).join("\n");
   const provenanceRules = contract.provenanceRules.map((rule) => `- ${rule}`).join("\n");
 
+  const isP1Charter =
+    contract.phase === 1 ||
+    String(contract.artifact) === "program_charter" ||
+    String(contract.artifact) === "charter";
+  const wordStandard = isP1Charter
+    ? `P1 charter standard:
+This is a concise governed charter brief / decision record, not a discovery report, board deck, solution architecture, roadmap, estimate, or implementation plan. Target 2-4 pages / 700-1,200 words. Do not include a table of contents, long appendix, narrative arc, current-state diagnosis, target-state design, detailed risks, detailed RACI, roadmap, financial ranges, or operating model unless approved evidence already exists. State unknowns as "To validate in P2" and keep every client-specific fact tied to P0 answers or approved evidence.`
+    : `Word document standard:
+The phase-end deliverable must have an editable Word-equivalent record. The HTML artifact is the visual review companion, not the only deliverable. Write the artifact with document-grade structure so it can be exported cleanly to Word with headings, TOC-ready sections, executive summary, storyline, narrative arc, tables, appendices, review notes, and client-editable language. Important deliverables must read like a human-authored consulting document: clear setup, evidence-backed diagnosis, implications, decision points, and next actions.`;
+
   return `PHASE DELIVERABLE PACKAGE CONTRACT
 Formal editable record: ${contract.primaryEditableRecordLabel}
 
 Required output package:
 ${outputs}
 
-Word document standard:
-The phase-end deliverable must have an editable Word-equivalent record. The HTML artifact is the visual review companion, not the only deliverable. Write the artifact with document-grade structure so it can be exported cleanly to Word with headings, TOC-ready sections, executive summary, storyline, narrative arc, tables, appendices, review notes, and client-editable language. Important deliverables must read like a human-authored consulting document: clear setup, evidence-backed diagnosis, implications, decision points, and next actions.
+${wordStandard}
 
 Required Word-equivalent sections:
 ${wordSections}

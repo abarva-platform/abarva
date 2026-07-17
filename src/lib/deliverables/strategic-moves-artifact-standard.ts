@@ -60,7 +60,7 @@ export interface ArtifactDepthStandard {
 }
 
 const DEPTH_BY_ARTIFACT: Partial<Record<DeliverableKey, ArtifactDepthStandard>> = {
-  charter: { targetWords: "2,000-3,500", minWords: 1500, maxTokens: 26000 },
+  charter: { targetWords: "700-1,200", minWords: 450, maxTokens: 6000 },
   discovery_report: { targetWords: "3,000-5,000", minWords: 2500, maxTokens: 34000 },
   root_cause_worksheet: { targetWords: "1,500-2,500", minWords: 1200, maxTokens: 24000 },
   solution_approach_options: { targetWords: "2,000-3,500", minWords: 1500, maxTokens: 30000 },
@@ -210,26 +210,30 @@ function clientMoveReference(ctx: SolutionContext): string {
 
 function p1Assignment(): string {
   return `PHASE-SPECIFIC ASSIGNMENT — P1 MOVE CHARTER
-Purpose: define the Move well enough for sponsor review and a phase-gate discussion.
-Do not over-design the future solution.
+Purpose: record the approved P0 bet well enough to authorize P2 Discovery.
+This is a concise charter brief / gate decision record, not a discovery report, solution design,
+architecture, roadmap, estimate, operating model, RACI appendix, or board pack.
 
 The artifact must answer:
-- what problem is being solved
+- what problem or opportunity P0 captured
+- what short Move name and transformation pattern were approved
+- which sponsor/title and operating-owner roles are accountable
 - what is in scope, out of scope, and adjacent
-- who owns the Move and who must decide
-- what outcomes and KPIs matter
-- what success means
-- what assumptions remain
-- what evidence is unresolved
-- what working session should happen next
+- what directional outcomes and success criteria P2 must validate
+- what assumptions, caveats, and missing evidence remain
+- what P2 evidence families, sessions, and client inputs are needed next
 
 Required structures:
+- Charter At-a-Glance table
 - Scope In / Out / Adjacent table
-- Stakeholder and Decision Rights table
-- Success Criteria table
-- Assumptions and Evidence Gaps table
-- Decision Log
-- Next Working Session Agenda`;
+- Decision Rights by Role/Title table
+- P2 Evidence Plan and Assumptions-to-Validate table
+
+Hard limits:
+- Target 700-1,200 words.
+- Do not invent current-state process, system landscape, org structure, baseline metrics, risks,
+  solution options, architecture, roadmap, operating model, estimates, owners, names, or dates.
+- If a detail is useful but not proved yet, write "To validate in P2."`;
 }
 
 function p2Assignment(): string {

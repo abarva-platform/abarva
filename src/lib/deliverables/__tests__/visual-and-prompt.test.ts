@@ -127,7 +127,7 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(p.user).toMatch(/Do not invent facts/);
   });
 
-  it("P1 charter prompt carries the premium charter assignment and target depth", () => {
+  it("P1 charter prompt carries the compact gate-record assignment and target depth", () => {
     const p = buildArtifactPrompt({
       artifact: "charter",
       phase: 1,
@@ -135,9 +135,47 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     });
     expect(p.user).toContain("STRATEGIC MOVES PREMIUM ARTIFACT BRIEF");
     expect(p.user).toContain("PHASE-SPECIFIC ASSIGNMENT — P1 MOVE CHARTER");
+    expect(p.user).toContain("concise charter brief / gate decision record");
     expect(p.user).toContain("Scope In / Out / Adjacent table");
-    expect(p.user).toContain("Stakeholder and Decision Rights table");
-    expect(p.user).toContain("Target depth: 2,000-3,500 words");
+    expect(p.user).toContain("Decision Rights by Role/Title table");
+    expect(p.user).toContain("Target depth: 700-1,200 words");
+    expect(p.user).toContain("Do not invent current-state process, system landscape");
+    expect(p.user).toContain("To validate in P2");
+  });
+
+  it("P1 package contract stays compact and does not ask for a board-pack charter", () => {
+    const contract = getPhaseDeliverablePackageContract({
+      artifact: "charter",
+      phase: 1,
+    });
+    expect(contract.primaryEditableRecordLabel).toBe(
+      "P1 Charter Brief / Decision Record",
+    );
+    expect(contract.outputs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: "docx_editable_phase_record",
+          clientFacingLabel: "P1 Charter brief / decision record",
+          required: true,
+        }),
+        expect.objectContaining({
+          kind: "html_visual_review_companion",
+          required: false,
+        }),
+      ]),
+    );
+    expect(contract.outputs.map((output) => output.kind)).not.toContain(
+      "workshop_evidence_pack",
+    );
+    expect(contract.outputs.map((output) => output.kind)).not.toContain(
+      "derived_visualization_inventory",
+    );
+    expect(contract.wordDocumentSections.join(" ")).not.toContain(
+      "Storyline and narrative arc",
+    );
+    expect(contract.wordDocumentSections.join(" ")).toContain(
+      "Directional value hypothesis and success criteria to validate in P2",
+    );
   });
 
   it("P2 diagnostic prompt requires handoffs, evidence matrix, and process-vs-AI analysis", () => {
@@ -268,6 +306,6 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(modelTokenBudgetForArtifact("discovery_report")).toBeGreaterThan(
       modelTokenBudgetForArtifact("charter"),
     );
-    expect(modelTokenBudgetForArtifact("charter")).toBeGreaterThan(20000);
+    expect(modelTokenBudgetForArtifact("charter")).toBeLessThanOrEqual(6000);
   });
 });
