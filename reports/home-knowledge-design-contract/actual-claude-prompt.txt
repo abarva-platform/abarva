@@ -3,10 +3,12 @@ You are generating the deterministic Home / Knowledge content pack for Nexus.
 This content will fill an existing HTML design exactly. Do not redesign the page.
 Your job is to generate consultant-grade content for the named slots from the supplied canonical context.
 
-Audience:
+Role and audience:
+- Act as a senior executive consultant briefing a C-suite executive.
 - CXO / EVP / CIO / CDAO level.
 - The page must tell the enterprise story, not explain UI intent.
 - Write like a top-tier strategy consultant synthesizing an enterprise context review.
+- Every sentence should help a senior leader understand what the loaded context implies, what decision it supports, and what evidence is still missing.
 
 Data boundary:
 - All facts are synthetic, PHI-free, planning-grade demo context.
@@ -21,13 +23,25 @@ Language rules:
 - Do not define dimensions generically. Every paragraph must say what the Meridian context implies.
 - Use short, scannable text. No giant paragraphs.
 - Preserve decision boundaries: what Nexus can support now vs what it cannot infer yet.
+- Use executive grain: issue, implication, decision, evidence gate. Do not write product help copy.
+
+Word budgets:
+- Home summary and proof summaries: 75-130 words.
+- Brief card text: 22-42 words.
+- Dimension summary: 14-24 words.
+- Dimension story fields: 22-45 words each.
+- Dimension findings: 18-35 words each.
+- Relationship notes: 25-45 words.
+- Gap fields: short, executive-readable fragments.
 
 Required output:
 - Fill the exact design slots listed in the schema.
 - Keep slot names stable.
 - Include source/evidence IDs from the supplied context where relevant.
 - Include gaps where the context is missing enough proof.
-- Include relationship and visual-ready content that can render as cards, tables, and diagrams.
+- Include relationship and visual_blocks content that can render as cards, tables, charts, graphs, and dashboard panels.
+- visual_blocks are model-authored display objects. Use only these types: metric_strip, decision_matrix, dependency_flow, evidence_bar.
+- The renderer will display returned strings and visual block labels/values with no prose rewriting.
 
 Canonical context follows:
 {
@@ -85,7 +99,7 @@ Canonical context follows:
       "source_id": "enterprise_profile",
       "label": "Enterprise Profile",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/00_enterprise_profile.csv",
-      "refreshed_at": "2026-07-17T18:37:45.270Z",
+      "refreshed_at": "2026-07-17T19:10:38.425Z",
       "rows_total": 2,
       "rows_active": 2,
       "candidate_rows": 0,
@@ -137,7 +151,7 @@ Canonical context follows:
       "source_id": "business_functions",
       "label": "Business Functions",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/01_business_functions.csv",
-      "refreshed_at": "2026-07-17T18:37:45.271Z",
+      "refreshed_at": "2026-07-17T19:10:38.425Z",
       "rows_total": 228,
       "rows_active": 6,
       "candidate_rows": 222,
@@ -616,7 +630,7 @@ Canonical context follows:
       "source_id": "org_ownership",
       "label": "Org Ownership",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/02_org_ownership.csv",
-      "refreshed_at": "2026-07-17T18:37:45.271Z",
+      "refreshed_at": "2026-07-17T19:10:38.426Z",
       "rows_total": 228,
       "rows_active": 6,
       "candidate_rows": 222,
@@ -1095,7 +1109,7 @@ Canonical context follows:
       "source_id": "workforce_roles",
       "label": "Workforce Roles",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/03_workforce_roles.csv",
-      "refreshed_at": "2026-07-17T18:37:45.271Z",
+      "refreshed_at": "2026-07-17T19:10:38.427Z",
       "rows_total": 221,
       "rows_active": 0,
       "candidate_rows": 221,
@@ -1583,7 +1597,7 @@ Canonical context follows:
       "source_id": "applications_systems",
       "label": "Applications & Systems",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/04_applications_systems.csv",
-      "refreshed_at": "2026-07-17T18:37:45.272Z",
+      "refreshed_at": "2026-07-17T19:10:38.428Z",
       "rows_total": 241,
       "rows_active": 17,
       "candidate_rows": 224,
@@ -2210,7 +2224,7 @@ Canonical context follows:
       "source_id": "data_assets_integrations",
       "label": "Data Assets & Integrations",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/05_data_assets_integrations.csv",
-      "refreshed_at": "2026-07-17T18:37:45.272Z",
+      "refreshed_at": "2026-07-17T19:10:38.428Z",
       "rows_total": 242,
       "rows_active": 17,
       "candidate_rows": 225,
@@ -2805,7 +2819,7 @@ Canonical context follows:
       "source_id": "infrastructure_platforms",
       "label": "Infrastructure & Platforms",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/06_infrastructure_platforms.csv",
-      "refreshed_at": "2026-07-17T18:37:45.272Z",
+      "refreshed_at": "2026-07-17T19:10:38.429Z",
       "rows_total": 15,
       "rows_active": 12,
       "candidate_rows": 3,
@@ -3120,7 +3134,7 @@ Canonical context follows:
       "source_id": "vendors_contracts",
       "label": "Vendors & Contracts",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/07_vendors_contracts.csv",
-      "refreshed_at": "2026-07-17T18:37:45.273Z",
+      "refreshed_at": "2026-07-17T19:10:38.429Z",
       "rows_total": 231,
       "rows_active": 9,
       "candidate_rows": 222,
@@ -3646,7 +3660,7 @@ Canonical context follows:
       "source_id": "it_budget_spend_value",
       "label": "IT Budget, Spend & Value",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/08_it_budget_spend_value.csv",
-      "refreshed_at": "2026-07-17T18:37:45.273Z",
+      "refreshed_at": "2026-07-17T19:10:38.429Z",
       "rows_total": 298,
       "rows_active": 76,
       "candidate_rows": 222,
@@ -4196,7 +4210,7 @@ Canonical context follows:
       "source_id": "programs_initiatives",
       "label": "Programs & Initiatives",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/09_programs_initiatives.csv",
-      "refreshed_at": "2026-07-17T18:37:45.273Z",
+      "refreshed_at": "2026-07-17T19:10:38.430Z",
       "rows_total": 256,
       "rows_active": 31,
       "candidate_rows": 225,
@@ -4832,7 +4846,7 @@ Canonical context follows:
       "source_id": "ai_automation_use_cases",
       "label": "AI & Automation Use Cases",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/10_ai_automation_use_cases.csv",
-      "refreshed_at": "2026-07-17T18:37:45.274Z",
+      "refreshed_at": "2026-07-17T19:10:38.431Z",
       "rows_total": 251,
       "rows_active": 26,
       "candidate_rows": 225,
@@ -5451,7 +5465,7 @@ Canonical context follows:
       "source_id": "risks_controls",
       "label": "Risks & Controls",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/11_risks_controls.csv",
-      "refreshed_at": "2026-07-17T18:37:45.274Z",
+      "refreshed_at": "2026-07-17T19:10:38.431Z",
       "rows_total": 249,
       "rows_active": 23,
       "candidate_rows": 226,
@@ -6065,7 +6079,7 @@ Canonical context follows:
       "source_id": "relationships",
       "label": "Relationships",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/12_relationships.csv",
-      "refreshed_at": "2026-07-17T18:37:45.274Z",
+      "refreshed_at": "2026-07-17T19:10:38.432Z",
       "rows_total": 298,
       "rows_active": 72,
       "candidate_rows": 226,
@@ -6759,7 +6773,7 @@ Canonical context follows:
       "source_id": "evidence_sources",
       "label": "Evidence Sources",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/13_evidence_sources.csv",
-      "refreshed_at": "2026-07-17T18:37:45.275Z",
+      "refreshed_at": "2026-07-17T19:10:38.432Z",
       "rows_total": 500,
       "rows_active": 276,
       "candidate_rows": 224,
@@ -7525,7 +7539,7 @@ Canonical context follows:
       "source_id": "metrics_outcomes",
       "label": "Metrics & Outcomes",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/14_metrics_outcomes.csv",
-      "refreshed_at": "2026-07-17T18:37:45.275Z",
+      "refreshed_at": "2026-07-17T19:10:38.433Z",
       "rows_total": 257,
       "rows_active": 31,
       "candidate_rows": 226,
@@ -8161,7 +8175,7 @@ Canonical context follows:
       "source_id": "industry_context",
       "label": "Industry Context",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/15_industry_context_patterns.csv",
-      "refreshed_at": "2026-07-17T18:37:45.275Z",
+      "refreshed_at": "2026-07-17T19:10:38.433Z",
       "rows_total": 7,
       "rows_active": 6,
       "candidate_rows": 1,
@@ -8262,7 +8276,7 @@ Canonical context follows:
       "source_id": "expert_lenses",
       "label": "Expert Lenses",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/16_expert_lenses.csv",
-      "refreshed_at": "2026-07-17T18:37:45.275Z",
+      "refreshed_at": "2026-07-17T19:10:38.433Z",
       "rows_total": 7,
       "rows_active": 6,
       "candidate_rows": 1,
@@ -8363,7 +8377,7 @@ Canonical context follows:
       "source_id": "managed_services",
       "label": "Managed Services",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/17_managed_services_scope.csv",
-      "refreshed_at": "2026-07-17T18:37:45.275Z",
+      "refreshed_at": "2026-07-17T19:10:38.434Z",
       "rows_total": 228,
       "rows_active": 6,
       "candidate_rows": 222,
@@ -8883,7 +8897,7 @@ Canonical context follows:
       "source_id": "operational_evidence",
       "label": "Operational Evidence",
       "file": "datasets/tenant-inputs/meridian-health/standard-2026-07-v3/18_operational_process_evidence.csv",
-      "refreshed_at": "2026-07-17T18:37:45.276Z",
+      "refreshed_at": "2026-07-17T19:10:38.434Z",
       "rows_total": 228,
       "rows_active": 6,
       "candidate_rows": 222,

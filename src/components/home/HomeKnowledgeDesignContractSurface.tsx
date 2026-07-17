@@ -378,11 +378,15 @@ export function HomeKnowledgeDesignContractSurface({
         ) : null}
 
         {topTab === "gaps" ? (
-          <EvidenceGapsView gaps={slots.GAPS ?? []} nextEvidence={slots.NEXT_EVIDENCE ?? []} />
+          <EvidenceGapsView
+            gaps={slots.GAPS ?? []}
+            nextEvidence={slots.NEXT_EVIDENCE ?? []}
+            pack={pack}
+          />
         ) : null}
 
         {topTab === "usecases" ? (
-          <UseCasesView useCases={slots.USE_CASES ?? []} />
+          <UseCasesView pack={pack} useCases={slots.USE_CASES ?? []} />
         ) : null}
 
         {topTab === "proof" ? (
@@ -477,14 +481,13 @@ function DimensionView({
           <h2>{dimension.name}</h2>
           <p className="nkh-lede">{story?.meaning ?? dimension.summary}</p>
           <div className="nkh-brief-grid">
-            <StoryBlock title="What Nexus knows" items={insight?.findings?.slice(0, 4)} fallback={story?.observed} />
-            <StoryBlock title="Why it matters" fallback={story?.matters} />
-            <StoryBlock title="Questions this supports" fallback={story?.supports} items={dimension.covers} />
+            <StoryBlock title="What Nexus knows" items={insight?.findings?.slice(0, 4)} body={story?.observed} />
+            <StoryBlock title="Why it matters" body={story?.matters} />
+            <StoryBlock title="Questions this supports" body={story?.supports} items={dimension.covers} />
             <StoryBlock
               title="Not yet supported"
               tone="warn"
               items={gaps.slice(0, 3).map((gap) => gap.missing ?? gap.blocks ?? "")}
-              fallback="Do not use this dimension for value or execution claims until the missing evidence is validated."
             />
           </div>
           {insight?.breakdown?.rows?.length ? (
@@ -652,12 +655,8 @@ function EnterpriseOverview({
   signals: HomeKnowledgeRecord[];
   summaryBlocks: HomeKnowledgeRecord[];
 }) {
-  const title =
-    narrativeString(pack, "enterprise_brief_title") ||
-    "Meridian Health System: Governed Foundation Before AI at Scale";
-  const summary =
-    narrativeString(pack, "enterprise_brief_summary") ||
-    "Meridian has source-backed healthcare context for executive orientation, but major AI and analytics decisions still require evidence closure before decision-grade claims.";
+  const title = narrativeString(pack, "enterprise_brief_title");
+  const summary = narrativeString(pack, "enterprise_brief_summary");
 
   return (
     <div className="nkh-section nkh-enterprise-overview">
@@ -789,12 +788,12 @@ function EnterpriseOverview({
 }
 
 function StoryBlock({
-  fallback,
+  body,
   items,
   title,
   tone = "ok",
 }: {
-  fallback?: string;
+  body?: string;
   items?: string[];
   title: string;
   tone?: "ok" | "warn";
@@ -810,7 +809,7 @@ function StoryBlock({
           ))}
         </ul>
       ) : (
-        <p>{fallback}</p>
+        <p>{body}</p>
       )}
     </div>
   );
@@ -952,20 +951,19 @@ function RowDetail({
 function EvidenceGapsView({
   gaps,
   nextEvidence,
+  pack,
 }: {
   gaps: HomeKnowledgeRecord[];
   nextEvidence: HomeKnowledgeRecord[];
+  pack: HomeKnowledgeDesignContractPack;
 }) {
+  const summary = narrativeString(pack, "evidence_gaps_summary");
   return (
     <div className="nkh-section">
       <div className="nkh-story-card">
         <div className="nkh-kicker">Evidence Gaps</div>
         <h2>What must be validated before decisions become board-grade</h2>
-        <p>
-          These are the proof gaps that keep the Meridian story honest. They are
-          not page instructions; they are evidence requests that block investment,
-          value, sourcing, and execution claims.
-        </p>
+        {summary ? <p>{summary}</p> : null}
       </div>
       <div className="nkh-card-grid">
         {gaps.map((gap, index) => (
@@ -994,17 +992,22 @@ function EvidenceGapsView({
   );
 }
 
-function UseCasesView({ useCases }: { useCases: HomeKnowledgeRecord[] }) {
+function UseCasesView({
+  pack,
+  useCases,
+}: {
+  pack: HomeKnowledgeDesignContractPack;
+  useCases: HomeKnowledgeRecord[];
+}) {
+  const summary = narrativeString(pack, "use_cases_summary");
+  const portfolioView = narrativeString(pack, "use_cases_portfolio_view");
   return (
     <div className="nkh-section">
       <div className="nkh-story-card">
         <div className="nkh-kicker">Candidate Use Cases</div>
         <h2>Top opportunities based on Meridian context</h2>
-        <p>
-          Nexus prioritizes these use cases because the enterprise context shows
-          repeated dependencies across systems, data, governance, operations,
-          risk, and value measurement.
-        </p>
+        {summary ? <p>{summary}</p> : null}
+        {portfolioView ? <p>{portfolioView}</p> : null}
       </div>
       <div className="nkh-usecase-list">
         {useCases.map((useCase, index) => (
@@ -1052,19 +1055,22 @@ function ProofView({
   selectedSource?: string | null;
   table: HomeKnowledgeRecord[];
 }) {
+  const proofSummary = narrativeString(pack, "proof_summary");
+  const relationshipVisual = pack.narrative_sections?.proof_relationship_visual as
+    | {
+        title?: string;
+        caption?: string;
+        nodes?: string[];
+        edges?: string[];
+      }
+    | undefined;
   return (
     <div className="nkh-section">
       <div className="nkh-proof-hero">
         <div>
           <div className="nkh-kicker">Context Confidence</div>
           <h2>What Nexus can trust right now</h2>
-          <p>
-            Meridian has source-backed context across major enterprise dimensions.
-            This is strong enough for enterprise orientation and fact-based
-            questions. Relationship depth and measured outcomes still need
-            validation before cross-domain dependency, sourcing savings, or Tower
-            value claims.
-          </p>
+          {proofSummary ? <p>{proofSummary}</p> : null}
         </div>
         <div className="nkh-proof-metrics">
           {kpis.slice(0, 5).map((kpi, index) => (
@@ -1078,16 +1084,16 @@ function ProofView({
       </div>
 
       <div className="nkh-layer-visual">
-        <h2>Enterprise knowledge layer</h2>
-        <p>
-          Nexus turns source evidence into governed enterprise context, then
-          serves that context to every module with the same trust boundary.
-        </p>
+        <h2>{relationshipVisual?.title}</h2>
+        {relationshipVisual?.caption ? <p>{relationshipVisual.caption}</p> : null}
         <div className="nkh-orbit">
-          {dimensions.slice(1, 8).map((dimension) => (
-            <div key={dimension.key}>
-              <strong>{dimension.name}</strong>
-              <span>{dimension.summary}</span>
+          {(relationshipVisual?.nodes?.length
+            ? relationshipVisual.nodes
+            : dimensions.slice(1, 8).map((dimension) => dimension.name)
+          ).slice(0, 8).map((node, index) => (
+            <div key={`${node}-${index}`}>
+              <strong>{node}</strong>
+              <span>{relationshipVisual?.edges?.[index] ?? dimensions[index + 1]?.summary}</span>
             </div>
           ))}
           <section>

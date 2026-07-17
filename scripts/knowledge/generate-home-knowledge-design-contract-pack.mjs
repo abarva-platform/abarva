@@ -36,7 +36,7 @@ const model =
   process.env.HOME_KNOWLEDGE_CLAUDE_MODEL ||
   process.env.KNOWLEDGE_CXO_CLAUDE_MODEL ||
   "claude-sonnet-4-6";
-const promptVersion = "home-knowledge-design-contract-v1";
+const promptVersion = "home-knowledge-design-contract-v2-claude-verbatim";
 
 const dimensions = [
   {
@@ -775,10 +775,12 @@ function buildPrompt(context) {
 This content will fill an existing HTML design exactly. Do not redesign the page.
 Your job is to generate consultant-grade content for the named slots from the supplied canonical context.
 
-Audience:
+Role and audience:
+- Act as a senior executive consultant briefing a C-suite executive.
 - CXO / EVP / CIO / CDAO level.
 - The page must tell the enterprise story, not explain UI intent.
 - Write like a top-tier strategy consultant synthesizing an enterprise context review.
+- Every sentence should help a senior leader understand what the loaded context implies, what decision it supports, and what evidence is still missing.
 
 Data boundary:
 - All facts are synthetic, PHI-free, planning-grade demo context.
@@ -793,13 +795,25 @@ Language rules:
 - Do not define dimensions generically. Every paragraph must say what the Meridian context implies.
 - Use short, scannable text. No giant paragraphs.
 - Preserve decision boundaries: what Nexus can support now vs what it cannot infer yet.
+- Use executive grain: issue, implication, decision, evidence gate. Do not write product help copy.
+
+Word budgets:
+- Home summary and proof summaries: 75-130 words.
+- Brief card text: 22-42 words.
+- Dimension summary: 14-24 words.
+- Dimension story fields: 22-45 words each.
+- Dimension findings: 18-35 words each.
+- Relationship notes: 25-45 words.
+- Gap fields: short, executive-readable fragments.
 
 Required output:
 - Fill the exact design slots listed in the schema.
 - Keep slot names stable.
 - Include source/evidence IDs from the supplied context where relevant.
 - Include gaps where the context is missing enough proof.
-- Include relationship and visual-ready content that can render as cards, tables, and diagrams.
+- Include relationship and visual_blocks content that can render as cards, tables, charts, graphs, and dashboard panels.
+- visual_blocks are model-authored display objects. Use only these types: metric_strip, decision_matrix, dependency_flow, evidence_bar.
+- The renderer will display returned strings and visual block labels/values with no prose rewriting.
 
 Canonical context follows:
 ${compactJson(context)}`;
@@ -822,6 +836,11 @@ Design contract:
 - No AbarVa, old version labels, record IDs, guidebook language, or unsupported realized-value claims.
 - This is synthetic, PHI-free, planning-grade demo context.
 - AWS/Databricks are target/future-state direction, not certified current production.
+- Act as a senior executive consultant briefing a C-suite executive.
+- The renderer will display your returned strings and visual block values verbatim.
+- Include one visual_blocks array using one of: metric_strip, decision_matrix, dependency_flow, evidence_bar.
+- Word budgets: summary 14-24 words; story fields 22-45 words; findings 18-35 words; relationship note 25-45 words; gap fields concise.
+- Write issue -> implication -> decision -> evidence gate. Do not write a user guide.
 
 Use the context below:
 ${compactJson({
@@ -855,6 +874,104 @@ ${compactJson({
     top_use_cases: currentPack.use_cases?.top_5?.slice(0, 5) ?? [],
   },
 })}`;
+}
+
+function buildExecutiveOverviewPrompt(context, currentPack) {
+  return `Generate final display-ready Nexus Home / Knowledge executive narrative fields.
+
+ROLE: Act as a senior executive consultant briefing a C-suite executive. This is not a user guide. The output should read like a boardroom synthesis of Meridian's loaded context: operating model, executive interview signals, technology/data reality, use-case agenda, blockers, and evidence boundary.
+
+DATA BOUNDARY: Use only supplied context. This is synthetic, PHI-free, planning-grade demo context. Do not claim real Meridian production data, realized ROI/savings, production AI readiness, or completed AWS/Databricks lakehouse. AWS and Databricks are target/future foundation unless explicitly evidenced otherwise.
+
+RENDERING CONTRACT: The renderer will display your returned strings and visual nodes/edges verbatim, with no rewriting.
+
+WORD BUDGETS:
+- enterprise_brief_title: 8-16 words.
+- enterprise_brief_summary: 115-155 words, split into exactly 2 short paragraphs using \\n\\n.
+- context_confidence_summary: 55-85 words.
+- evidence_gaps_summary: 45-75 words.
+- use_cases_summary: 45-75 words.
+- use_cases_portfolio_view: 35-65 words.
+- proof_summary: 45-75 words.
+- proof_relationship_visual.caption: 30-55 words.
+
+STYLE:
+- Issue -> implication -> next executive decision.
+- Product name is Nexus.
+- Do not use these strings: AbarVa, guidebook, runtime, packet, substrate, not loaded, record ID, V4, V5, V6, V7.
+
+Return only through the tool.
+
+CONTEXT:
+${compactJson({
+  tenant_key: context.tenant_key,
+  tenant_name: context.tenant_name,
+  boundary: context.boundary,
+  totals: context.totals,
+  critical_current_state: context.critical_current_state,
+  executive_interview_context: context.executive_interview_context,
+  dimensions: context.dimensions.map((dimension) => ({
+    key: dimension.key,
+    label: dimension.label,
+    rows_total: dimension.rows_total,
+    rows_active: dimension.rows_active,
+    candidate_rows: dimension.candidate_rows,
+    status: dimension.status,
+    evidence_ref_count: dimension.evidence_ref_count,
+    representative_items: dimension.representative_items.slice(0, 12),
+    owners: dimension.owners.slice(0, 8),
+    systems: dimension.systems.slice(0, 8),
+    use_cases: dimension.use_cases.slice(0, 8),
+    gaps: dimension.gaps.slice(0, 12),
+  })),
+  existing_home_overview: currentPack.home_overview,
+  existing_context_confidence: currentPack.context_confidence,
+  existing_evidence_gaps: currentPack.evidence_gaps,
+  existing_use_cases: currentPack.use_cases,
+  existing_proof: currentPack.proof,
+})}`;
+}
+
+function buildExecutiveOverviewToolSchema() {
+  return {
+    name: "emit_home_knowledge_executive_overview",
+    description:
+      "Emit display-ready executive overview narrative fields for Nexus Home Knowledge.",
+    input_schema: {
+      type: "object",
+      additionalProperties: false,
+      required: [
+        "enterprise_brief_title",
+        "enterprise_brief_summary",
+        "context_confidence_summary",
+        "evidence_gaps_summary",
+        "use_cases_summary",
+        "use_cases_portfolio_view",
+        "proof_summary",
+        "proof_relationship_visual",
+      ],
+      properties: {
+        enterprise_brief_title: { type: "string" },
+        enterprise_brief_summary: { type: "string" },
+        context_confidence_summary: { type: "string" },
+        evidence_gaps_summary: { type: "string" },
+        use_cases_summary: { type: "string" },
+        use_cases_portfolio_view: { type: "string" },
+        proof_summary: { type: "string" },
+        proof_relationship_visual: {
+          type: "object",
+          additionalProperties: false,
+          required: ["title", "caption", "nodes", "edges"],
+          properties: {
+            title: { type: "string" },
+            caption: { type: "string" },
+            nodes: stringArraySchema,
+            edges: stringArraySchema,
+          },
+        },
+      },
+    },
+  };
 }
 
 function buildDimensionToolSchema() {
@@ -1101,7 +1218,11 @@ function buildToolSchema() {
       },
       dimensions: {
         type: "object",
-        additionalProperties: dimensionSchema,
+        additionalProperties: false,
+        required: dimensions.map((dimension) => dimension.key),
+        properties: Object.fromEntries(
+          dimensions.map((dimension) => [dimension.key, dimensionSchema]),
+        ),
       },
       quality_assessment: {
         type: "object",
@@ -1126,6 +1247,19 @@ function buildToolSchema() {
 
 const stringArraySchema = {
   type: "array",
+  items: { type: "string" },
+};
+
+const requiredStringArraySchema = {
+  type: "array",
+  minItems: 1,
+  items: { type: "string" },
+};
+
+const findingArraySchema = {
+  type: "array",
+  minItems: 3,
+  maxItems: 4,
   items: { type: "string" },
 };
 
@@ -1167,12 +1301,13 @@ const dimensionSchema = {
     "relationships",
     "gaps",
     "evidence",
+    "visual_blocks",
   ],
   properties: {
     key: { type: "string" },
     summary: { type: "string" },
-    covers: stringArraySchema,
-    sources: stringArraySchema,
+    covers: requiredStringArraySchema,
+    sources: requiredStringArraySchema,
     story: {
       type: "object",
       additionalProperties: false,
@@ -1189,7 +1324,7 @@ const dimensionSchema = {
       additionalProperties: false,
       required: ["findings", "breakdown"],
       properties: {
-        findings: stringArraySchema,
+        findings: findingArraySchema,
         breakdown: {
           type: "object",
           additionalProperties: false,
@@ -1198,6 +1333,8 @@ const dimensionSchema = {
             title: { type: "string" },
             rows: {
               type: "array",
+              minItems: 2,
+              maxItems: 5,
               items: {
                 type: "object",
                 additionalProperties: false,
@@ -1218,12 +1355,14 @@ const dimensionSchema = {
       additionalProperties: false,
       required: ["chain", "note"],
       properties: {
-        chain: stringArraySchema,
+        chain: requiredStringArraySchema,
         note: { type: "string" },
       },
     },
     gaps: {
       type: "array",
+      minItems: 1,
+      maxItems: 5,
       items: {
         type: "object",
         additionalProperties: false,
@@ -1238,6 +1377,8 @@ const dimensionSchema = {
     },
     evidence: {
       type: "array",
+      minItems: 1,
+      maxItems: 6,
       items: {
         type: "object",
         additionalProperties: false,
@@ -1255,6 +1396,30 @@ const dimensionSchema = {
         },
       },
     },
+    visual_blocks: {
+      type: "array",
+      minItems: 1,
+      maxItems: 3,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["type", "title", "subtitle", "data"],
+        properties: {
+          type: {
+            type: "string",
+            enum: [
+              "metric_strip",
+              "decision_matrix",
+              "dependency_flow",
+              "evidence_bar",
+            ],
+          },
+          title: { type: "string" },
+          subtitle: { type: "string" },
+          data: { type: "object" },
+        },
+      },
+    },
   },
 };
 
@@ -1267,6 +1432,29 @@ function validatePack(pack, context) {
     {};
   for (const key of dimensions.map((dimension) => dimension.key)) {
     if (!dimensionContainer?.[key]) issues.push(`missing dimension ${key}`);
+    if (!pack.design_slots?.STORY?.[key]) issues.push(`missing story ${key}`);
+    if (!pack.design_slots?.INSIGHTS?.[key]) issues.push(`missing insights ${key}`);
+    if (!pack.design_slots?.REL?.[key]) issues.push(`missing relationships ${key}`);
+    if (!pack.design_slots?.DGAPS?.[key]?.length) issues.push(`missing gaps ${key}`);
+    if (!pack.design_slots?.EVID?.[key]?.length) issues.push(`missing evidence ${key}`);
+    if (!pack.design_slots?.VISUAL_BLOCKS?.[key]?.length) {
+      issues.push(`missing Claude visual blocks ${key}`);
+    }
+  }
+  if (pack.quality_assessment?.renderer_rewrite_allowed !== false) {
+    issues.push("renderer rewrite guard missing");
+  }
+  if (
+    pack.narrative_sections?.render_contract !==
+    "renderer_displays_claude_strings_and_visual_blocks_verbatim_no_rewrite"
+  ) {
+    issues.push("Claude verbatim render contract missing");
+  }
+  if (!pack.narrative_sections?.enterprise_brief_title) {
+    issues.push("missing Claude enterprise brief title");
+  }
+  if (!pack.narrative_sections?.enterprise_brief_summary) {
+    issues.push("missing Claude enterprise brief summary");
   }
   const text = JSON.stringify(pack);
   for (const pattern of bannedVisiblePatterns) {
@@ -1280,8 +1468,16 @@ function validatePack(pack, context) {
   const referenced = [...text.matchAll(/MER-[A-Z0-9-]+/g)]
     .map((m) => m[0])
     .filter((id) => id.includes("EVID"));
+  const allowedEvidenceList = [...allowedEvidence];
   for (const id of referenced) {
-    if (!allowedEvidence.has(id) && !id.startsWith("MER-SA07-INT-EVID")) {
+    const familyPrefix = id.endsWith("-") ? id : `${id}-`;
+    const hasEvidenceFamily =
+      allowedEvidenceList.some((allowedId) => allowedId.startsWith(familyPrefix));
+    if (
+      !allowedEvidence.has(id) &&
+      !hasEvidenceFamily &&
+      !id.startsWith("MER-SA07-INT-EVID")
+    ) {
       issues.push(`unsupported evidence id ${id}`);
     }
   }
@@ -1295,21 +1491,38 @@ async function generateMissingDimensions(anthropic, context, claudePack) {
   if (!claudePack.dimensions || typeof claudePack.dimensions !== "object") {
     claudePack.dimensions = {};
   }
+  const repairAll = process.env.HOME_KNOWLEDGE_REPAIR_ALL_DIMENSIONS === "1";
   const missing = dimensions
     .map((dimension) => dimension.key)
-    .filter((key) => !claudePack.dimensions[key]);
-  if (process.env.HOME_KNOWLEDGE_DIMENSION_REPAIR !== "claude") {
-    const storyBlocks = readExistingStoryBlocks();
-    for (const key of missing) {
-      claudePack.dimensions[key] = fallbackDimensionFromApprovedStory(
-        key,
-        context,
-        storyBlocks,
-      );
-    }
-    return missing.map((key) => `${key}:approved-story-fallback`);
+    .filter(
+      (key) =>
+        repairAll ||
+        !claudePack.dimensions[key] ||
+        !claudePack.dimensions[key].visual_blocks?.length,
+    );
+  if (!missing.length) return [];
+  if (!anthropic) {
+    throw new Error(
+      `Claude is required to repair missing Home Knowledge dimensions: ${missing.join(", ")}`,
+    );
   }
   for (const key of missing) {
+    const outFile = path.join(reportDir, `raw-claude-response-dimension-${key}.json`);
+    if (
+      process.env.HOME_KNOWLEDGE_REUSE_DIMENSION_RESPONSES === "1" &&
+      fs.existsSync(outFile)
+    ) {
+      const storedResponse = JSON.parse(fs.readFileSync(outFile, "utf8"));
+      const storedToolUse = storedResponse.content?.find((part) => part.type === "tool_use");
+      if (!storedToolUse) {
+        throw new Error(`Stored Claude response did not include dimension payload for ${key}`);
+      }
+      claudePack.dimensions[key] = {
+        ...storedToolUse.input,
+        key,
+      };
+      continue;
+    }
     const response = await anthropic.messages.create({
       model,
       max_tokens: 7000,
@@ -1320,7 +1533,6 @@ async function generateMissingDimensions(anthropic, context, claudePack) {
       tools: [buildDimensionToolSchema()],
       tool_choice: { type: "tool", name: "emit_home_knowledge_dimension" },
     });
-    const outFile = path.join(reportDir, `raw-claude-response-dimension-${key}.json`);
     fs.writeFileSync(outFile, compactJson(response));
     const toolUse = response.content.find((part) => part.type === "tool_use");
     if (!toolUse) throw new Error(`Claude did not return dimension payload for ${key}`);
@@ -1329,490 +1541,39 @@ async function generateMissingDimensions(anthropic, context, claudePack) {
       key,
     };
   }
-  return missing;
+  return missing.map((key) => `${key}:claude-direct-repair`);
 }
 
-function readExistingStoryBlocks() {
-  const candidates = [
-    path.join(approvedHomeDir, "story-blocks.json"),
-    path.join(approvedMirrorDir, "approved-cxo-story-blocks.json"),
-  ];
-  for (const candidate of candidates) {
-    if (!fs.existsSync(candidate)) continue;
-    try {
-      const parsed = JSON.parse(fs.readFileSync(candidate, "utf8"));
-      return Array.isArray(parsed) ? parsed : parsed.story_blocks ?? [];
-    } catch {
-      // Try the next candidate.
-    }
+async function generateExecutiveOverview(anthropic, context, claudePack) {
+  if (!anthropic) {
+    throw new Error("Claude is required to generate the Home Knowledge executive overview");
   }
-  return [];
-}
-
-function fallbackDimensionFromApprovedStory(key, context, storyBlocks) {
-  const dimension = context.dimensions.find((item) => item.key === key);
-  const label = dimension?.label ?? key;
-  const block = storyBlocks.find(
-    (candidate) =>
-      normalizeDimensionName(candidate.dimension) ===
-      normalizeDimensionName(label),
-  );
-  const curated = curatedDimensionFallback(key);
-  const topGaps = (dimension?.gaps ?? [])
-    .filter((gap) => !/^synthetic/i.test(gap))
-    .slice(0, 3);
-  const sourceFileName = dimension?.file?.split("/").pop() ?? `${key}.csv`;
-  return {
-    key,
-    summary:
-      curated.summary ||
-      clean(block?.executive_summary || block?.summary) ||
-      `${label} has source-backed Meridian context with named evidence boundaries.`,
-    covers: (dimension?.representative_items ?? []).slice(0, 4),
-    sources: [sourceFileName, ...(dimension?.evidence_refs ?? []).slice(0, 3)],
-    story: {
-      meaning:
-        curated.meaning ||
-        clean(block?.what_context_reveals || block?.narrative) ||
-        `${label} is represented in the Meridian context and should be interpreted with the visible evidence boundary.`,
-      observed:
-        curated.observed ||
-        clean(block?.summary) ||
-        `${dimension?.rows_total ?? 0} source rows are available for this dimension.`,
-      matters:
-        curated.matters ||
-        clean(block?.why_it_matters) ||
-        `${label} matters because it shapes which business decisions Nexus can support now and which decisions need more evidence.`,
-      supports:
-        curated.supports ||
-        clean(block?.decision_implication) ||
-        "Supports enterprise orientation and evidence review; does not support measured-value or production-readiness claims by itself.",
+  const prompt = buildExecutiveOverviewPrompt(context, claudePack);
+  const promptPath = path.join(reportDir, "actual-claude-overview-prompt.txt");
+  fs.writeFileSync(promptPath, prompt);
+  const response = await anthropic.messages.create({
+    model,
+    max_tokens: 5000,
+    temperature: 0.15,
+    system:
+      "You generate governed, evidence-bounded Nexus Home/Knowledge executive narrative fields. Use the supplied tool only.",
+    messages: [{ role: "user", content: prompt }],
+    tools: [buildExecutiveOverviewToolSchema()],
+    tool_choice: {
+      type: "tool",
+      name: "emit_home_knowledge_executive_overview",
     },
-    insights: {
-      findings: [
-        curated.findings?.[0] ||
-          clean(block?.what_context_reveals || block?.summary) ||
-          `${label} has source-backed context for orientation.`,
-        curated.findings?.[1] ||
-          clean(block?.why_it_matters) ||
-          "Decision usefulness depends on ownership, baseline, and evidence depth.",
-        curated.findings?.[2] ||
-          clean(block?.evidence_still_needed) ||
-          (topGaps[0] ? `Next evidence needed: ${topGaps[0]}` : "No priority gap surfaced beyond the standard synthetic boundary."),
-      ],
-      breakdown: {
-        title: `${label} evidence posture`,
-        rows: [
-          {
-            label: "Source rows",
-            value: String(dimension?.rows_total ?? 0),
-            note: "Canonical input rows available to the Home data tab.",
-          },
-          {
-            label: "Evidence references",
-            value: String(dimension?.evidence_ref_count ?? 0),
-            note: "Evidence identifiers visible in the context layer.",
-          },
-          {
-            label: "Readiness",
-            value: statusLabel(dimension?.status),
-            note: "Derived from confidence mix and known evidence boundaries.",
-          },
-        ],
-      },
-    },
-    relationships: {
-      chain: relationshipChainForDimension(key, label),
-      note:
-        "Relationship interpretation is advisory until cross-domain links are validated against source evidence.",
-    },
-    gaps:
-      topGaps.length > 0
-        ? topGaps.slice(0, 2).map((gap) => ({
-            missing: clean(gap),
-            blocks: "Decision-grade dependency, value, or execution claims",
-            needed:
-              "Client-confirmed ownership, baseline, lineage, or source evidence",
-            handoff: handoffForDimension(key),
-          }))
-        : defaultGapsForDimension(key, label),
-    evidence: [
-      {
-        name: sourceFileName,
-        type: "Canonical input",
-        date: "Jul 2026",
-        rows: String(dimension?.rows_total ?? 0),
-        facts: String(dimension?.evidence_ref_count ?? 0),
-        st: dimension?.status ?? "directional",
-        fields: (dimension?.examples?.[0]
-          ? Object.keys(dimension.examples[0]).slice(0, 5).join(", ")
-          : "business_name, confidence, evidence_id"),
-        supports: label,
-        missing: topGaps[0] ?? "Named client validation where required",
-      },
-    ],
+  });
+  const responsePath = path.join(reportDir, "raw-claude-response-overview.json");
+  fs.writeFileSync(responsePath, compactJson(response));
+  const toolUse = response.content.find((part) => part.type === "tool_use");
+  if (!toolUse) throw new Error("Claude did not return the executive overview payload");
+  claudePack.executive_overview = {
+    ...toolUse.input,
+    prompt_path: "reports/home-knowledge-design-contract/actual-claude-overview-prompt.txt",
+    response_path: "reports/home-knowledge-design-contract/raw-claude-response-overview.json",
   };
-}
-
-function defaultGapsForDimension(key, label) {
-  const defaultByKey = {
-    org: [
-      {
-        missing: "Named decision owners and steering cadence not yet confirmed",
-        blocks:
-          "Nexus can describe role-level ownership, but should not assign accountability or phase gates to named leaders until client confirmation.",
-        needed:
-          "Executive ownership map with decision rights, escalation path, and governance meeting cadence",
-        handoff: "Moves",
-      },
-      {
-        missing: "Cross-functional governance model still needs operating proof",
-        blocks:
-          "AI and lakehouse work spans clinical, health plan, finance, data, and platform teams; unclear governance slows execution sequencing.",
-        needed:
-          "CDAO/CDIO/CFO/CMO governance charter and accountable product-owner assignments",
-        handoff: "Knowledge",
-      },
-    ],
-    infra: [
-      {
-        missing: "AWS and Databricks target architecture not certified as current production",
-        blocks:
-          "Nexus can frame AWS/Databricks as the target foundation, but cannot claim production lakehouse readiness.",
-        needed:
-          "Landing-zone design, network/security controls, medallion architecture, Unity Catalog governance, and migration plan",
-        handoff: "Moves",
-      },
-      {
-        missing: "On-prem analytics dependency map needs lineage validation",
-        blocks:
-          "SQL Server marts, Tableau, SAS, and Power BI dependencies can be described, but not retired or sequenced without lineage proof.",
-        needed:
-          "Current-state reporting lineage from Epic/claims/pharmacy through SQL marts and BI tools",
-        handoff: "Knowledge",
-      },
-    ],
-    vendors: [
-      {
-        missing: "Vendor contracts, SLAs, and rate cards not loaded in governed form",
-        blocks:
-          "Source can frame vendor/provider scope, but cannot estimate sourcing savings or commercial leverage.",
-        needed:
-          "Signed contracts, SLAs, pricing schedules, renewal dates, service catalogs, and vendor owner mapping",
-        handoff: "Source",
-      },
-      {
-        missing: "Managed analytics service economics need validation",
-        blocks:
-          "The maintenance-heavy capacity signal cannot become a savings claim until ticket mix, rates, and service levels are evidenced.",
-        needed:
-          "Ticket volumes, maintenance/new-build split, service backlog, labor rates, and SLA performance",
-        handoff: "Source",
-      },
-    ],
-    evidence: [
-      {
-        missing: "Evidence coverage must be tied to decision-grade claims",
-        blocks:
-          "Nexus can cite loaded files, but should not treat every source row as sufficient for investment or value decisions.",
-        needed:
-          "Claim-to-evidence map showing which facts are source-backed, directional, or blocked",
-        handoff: "Knowledge",
-      },
-      {
-        missing: "Workshop-confirmed artifacts still needed for owner-sensitive claims",
-        blocks:
-          "Synthetic planning context should not become client production evidence without named confirmation.",
-        needed:
-          "Workshop notes, signed-off architecture artifacts, baseline extracts, and owner attestations",
-        handoff: "Knowledge",
-      },
-    ],
-    industry: [
-      {
-        missing: "External benchmark ranges not attached to Meridian-specific baselines",
-        blocks:
-          "Industry patterns can guide prioritization, but cannot quantify Meridian value or maturity without internal baseline evidence.",
-        needed:
-          "Peer benchmark source, internal baseline, owner sign-off, and applicability caveat",
-        handoff: "Intelligence",
-      },
-      {
-        missing: "Healthcare regulatory and privacy constraints need artifact-level evidence",
-        blocks:
-          "AI and analytics recommendations must be bounded until PHI, audit, security, and governance controls are evidenced.",
-        needed:
-          "HIPAA/PHI control evidence, AI audit trail design, and data-access governance controls",
-        handoff: "Knowledge",
-      },
-    ],
-    lenses: [
-      {
-        missing: "Expert-lens recommendations need client-specific evidence gates",
-        blocks:
-          "Expert lenses can shape hypotheses, but cannot override missing ownership, baseline, or platform proof.",
-        needed:
-          "Lens-to-evidence matrix mapping each recommendation to validated facts, gaps, and caveats",
-        handoff: "Intelligence",
-      },
-      {
-        missing: "Prioritization weights require executive calibration",
-        blocks:
-          "The page can show likely focus areas, but cannot rank enterprise investments definitively without leadership weighting.",
-        needed:
-          "CXO-weighted prioritization criteria across value, risk, feasibility, urgency, and dependency unlock",
-        handoff: "Knowledge",
-      },
-    ],
-    ms: [
-      {
-        missing: "Managed services contract economics and SLA evidence not loaded",
-        blocks:
-          "Nexus can identify a maintenance-heavy operating pattern, but cannot estimate outsourcing budget improvement.",
-        needed:
-          "Vendor contract, rate card, ticket backlog, SLA performance, staffing mix, and renewal timeline",
-        handoff: "Source",
-      },
-      {
-        missing: "Capacity-shift baseline not validated",
-        blocks:
-          "The 80 percent maintenance-load signal requires evidence before it can support a transformation business case.",
-        needed:
-          "Current analytics team capacity split, ad hoc request mix, service demand trend, and work intake baseline",
-        handoff: "Tower",
-      },
-    ],
-    opev: [
-      {
-        missing: "Operational workflow evidence not yet complete enough for execution gates",
-        blocks:
-          "Use cases can be framed, but Moves should not advance without workflow owners, baseline metrics, and handoff evidence.",
-        needed:
-          "Current-state process maps, workflow volumes, exception paths, control points, and owner attestations",
-        handoff: "Moves",
-      },
-      {
-        missing: "Outcome measurement chain needs baseline and actuals",
-        blocks:
-          "Tower value proof cannot start until baseline, target, calculation logic, and measurement cadence are validated.",
-        needed:
-          "Metric definitions, baseline extracts, owner sign-off, target rationale, and actuals capture plan",
-        handoff: "Tower",
-      },
-    ],
-  };
-  return (
-    defaultByKey[key] ?? [
-      {
-        missing: `${label} decision boundary needs client validation`,
-        blocks:
-          "Nexus can support orientation, but not decision-grade claims without owner-reviewed evidence.",
-        needed:
-          "Client-confirmed ownership, baseline, lineage, source evidence, or workshop attestation",
-        handoff: handoffForDimension(key),
-      },
-    ]
-  );
-}
-
-function curatedDimensionFallback(key) {
-  const fallback = {
-    org: {
-      summary:
-        "Ownership is mapped to CDAO, CMO, Health Plan COO, VP Quality, CFO, CXO, and CDIO roles, but named accountable executives and decision rights still need client confirmation.",
-      meaning:
-        "Meridian's operating model is cross-functional: enterprise data, clinical operations, health plan operations, finance, quality, experience, and platform security all have a stake in the AI foundation.",
-      observed:
-        "The ownership map shows CDAO-led data governance needs, CMO and health-plan operational demand, CFO value oversight, and CDIO platform/security dependencies.",
-      matters:
-        "A McKinsey-style read would not start with tools; it would align decision rights first, because AI Agent Assist and lakehouse work cut across clinical, claims, finance, contact center, and platform teams.",
-      supports:
-        "Supports executive alignment, governance workshop design, Moves phase gates, and owner-specific evidence asks.",
-      findings: [
-        "The CDAO/CDIO/CFO axis is the critical governance triangle: data ownership, platform readiness, and value proof must move together.",
-        "Clinical and health-plan owners create the demand signal, but cannot safely scale AI without certified data products and a patient/member identity spine.",
-        "Next validation: named accountable leaders, decision rights, and steering cadence for each priority use case.",
-      ],
-    },
-    workforce: {
-      summary:
-        "Executive interview evidence shows the workforce problem is not headcount; it is readiness to shift 120+ analytics resources from ad hoc maintenance toward governed data products and AI-enabled workflows.",
-      meaning:
-        "The workforce layer captures how strategy, operating model, vendor, platform, and data concerns show up in executive interviews and role-level adoption risk.",
-      observed:
-        "Interview-derived rows repeatedly point to maintenance-heavy analytics demand, unresolved governance, unclear ownership, and use-case teams waiting on the same data foundation prerequisites.",
-      matters:
-        "AI Agent Assist is a work redesign, not a chatbot deployment. Agent workflows, analytics teams, clinical informatics, and contact-center operators all need evidence-backed changes to roles, controls, and adoption metrics.",
-      supports:
-        "Supports change-impact framing, adoption risk review, workshop planning, and Moves evidence gates.",
-      findings: [
-        "The labor bottleneck is capacity trapped in maintenance and ad hoc reporting, not lack of AI ideas.",
-        "Agent Assist readiness depends on workflow ownership, transcript governance, identity linkage, and real-time integration evidence.",
-        "Next validation: current analytics staffing mix, call-center roles, operating procedures, and adoption baselines.",
-      ],
-    },
-    ai: {
-      summary:
-        "The AI portfolio is coherent but foundation-gated: seven use-case families are identified, led by unified clinical + claims, governed AI/LLM automation, call center optimization, payment integrity, cost transparency, provider quality, and close automation.",
-      meaning:
-        "Meridian has enough context to prioritize AI investments, but not enough validated evidence to treat any use case as production-ready.",
-      observed:
-        "Every major AI use case depends on the same blockers: no certified medallion architecture, no patient/member identity spine, no formal data governance, no certified semantic layer, and no AI audit trail.",
-      matters:
-        "The boardroom decision is sequencing. The lakehouse and governance foundation should be treated as the enabling bet before scaling individual AI use cases.",
-      supports:
-        "Supports AI portfolio triage, sequencing, and evidence-backed investment framing; blocks production-readiness and quantified value claims.",
-      findings: [
-        "Agent Assist is high-interest, but it depends on CRM/transcript governance, claims status integration, knowledge-base lineage, and member identity linkage.",
-        "Payment integrity and cost transparency are attractive finance use cases, but contract terms, GL alignment, and cost allocation rules are not yet governed.",
-        "Next validation: use-case baselines, data-product owners, audit/control requirements, and target-state platform evidence.",
-      ],
-    },
-    infra: {
-      summary:
-        "Infrastructure confirms the core case-study tension: Meridian is still anchored in Epic, SQL Server marts, Tableau, SAS, and Power BI, while AWS and Databricks are target-state foundations, not certified production platforms.",
-      meaning:
-        "The infrastructure layer separates current-state operating reality from future-state ambition, which is essential before recommending an AI or lakehouse roadmap.",
-      observed:
-        "The current analytics estate is fragmented and on-premise-heavy. AWS and Databricks appear as strategic targets, but the evidence still lacks certified landing zone, medallion, network/security, lineage, and operating controls.",
-      matters:
-        "For a CXO, this means the transformation is not to pick an AI use case first; it is to build the platform foundation that lets multiple clinical, financial, and member-experience use cases scale safely.",
-      supports:
-        "Supports architecture sequencing, platform readiness, cloud foundation planning, and evidence gates; blocks production lakehouse and production AI readiness claims.",
-      findings: [
-        "Current-state analytics remains fragmented across Epic analytics, SQL Server reporting marts, Tableau, SAS, and Power BI.",
-        "AWS and Databricks are the right target direction in the context, but the proof says they are not yet certified current production foundation.",
-        "Next validation: landing-zone design, network/security controls, medallion architecture, lineage, operating model, and migration plan.",
-      ],
-    },
-    rel: {
-      summary:
-        "Relationship rows expose the real dependency chain: use case -> blocker -> affected systems -> metric boundary -> forbidden claim.",
-      meaning:
-        "The relationship layer is the guardrail that prevents Nexus from turning attractive AI ideas into unsupported implementation or value claims.",
-      observed:
-        "Unified clinical + claims repeatedly links Epic, claims, pharmacy, and Databricks target-state dependencies to medallion, identity, harmonization, and governance gaps.",
-      matters:
-        "A CXO needs to know which investment unlocks multiple outcomes. Here, the data foundation unlocks multiple use cases; isolated pilots would likely stall.",
-      supports:
-        "Supports cross-domain dependency reasoning, evidence-gap prioritization, and module handoffs once relationships are validated.",
-      findings: [
-        "The same blockers recur across use cases, which argues for a platform foundation move rather than disconnected pilots.",
-        "Relationship depth is useful for sequencing but still needs validation before sourcing, value, or Tower outcome claims.",
-        "Next validation: confirm system-to-data-to-vendor-to-owner links and attach source evidence for each critical dependency.",
-      ],
-    },
-    metrics: {
-      summary:
-        "Metric rows define what value could be measured, but most current entries are boundary statements rather than validated baselines.",
-      meaning:
-        "The metric layer protects the executive story from overclaiming by separating hypotheses, baselines, targets, and measured outcomes.",
-      observed:
-        "Rows repeatedly mark baseline-required-before-value-claim across lakehouse, AI automation, call center, provider quality, cost transparency, payment integrity, and close automation.",
-      matters:
-        "This is where Tower must eventually prove value. Until finance, clinical, and operational baselines are confirmed, the right answer is readiness and sequencing, not ROI.",
-      supports:
-        "Supports baseline planning, Tower readiness, and value-governance design; blocks final value or savings claims.",
-      findings: [
-        "Metrics exist as a measurement agenda, not as realized benefits.",
-        "The most important next metrics are maintenance/ad hoc share, call containment, prior-auth turnaround, payment leakage, close cycle, and quality attribution accuracy.",
-        "Next validation: baseline owner, calculation logic, current value, target value, and finance tie-out for each priority outcome.",
-      ],
-    },
-    industry: {
-      summary:
-        "Industry patterns confirm Meridian is pursuing common health-system priorities, but the evidence shows foundational data maturity is behind the ambition.",
-      meaning:
-        "The industry lens turns generic healthcare trends into Meridian-specific implications: AI, quality, cost transparency, and member experience all depend on governed data.",
-      observed:
-        "Pattern rows repeatedly connect healthcare use cases to the same evidence gaps: medallion architecture, identity spine, transcript governance, contract terms, and semantic ownership.",
-      matters:
-        "This prevents a trend-led pitch. The story becomes: Meridian has the right use cases, but must prove the operating data foundation before scaling AI.",
-      supports:
-        "Supports executive positioning, peer-pattern framing, and prioritization; not benchmark claims or external market proof.",
-      findings: [
-        "Healthcare peers are moving toward longitudinal data, AI-enabled operations, and value-based performance, but Meridian's blockers are internal data and governance readiness.",
-        "The context supports a foundation-first transformation narrative instead of a point-solution AI narrative.",
-        "Next validation: external benchmark ranges only after internal baselines and evidence ownership are confirmed.",
-      ],
-    },
-    ms: {
-      summary:
-        "Managed services context shows a maintenance-heavy analytics operating model: Epic, Microsoft, Tableau, SAS, and outsourced analytics support are present, but contract economics and SLAs are not loaded.",
-      meaning:
-        "The managed services layer explains why transformation capacity is constrained and where Source may later investigate run-cost and service model leverage.",
-      observed:
-        "The analytics managed services provider is tied to SQL marts, Tableau, Power BI, and SAS, with an 80 percent maintenance-load signal and missing vendor identity/contract values.",
-      matters:
-        "This is a credible sourcing and operating-model opportunity only after contracts, rate cards, ticket volumes, SLAs, and ownership are validated.",
-      supports:
-        "Supports managed-services discovery, sourcing scope framing, and capacity-shift hypotheses; blocks vendor savings claims.",
-      findings: [
-        "The operating issue appears to be analytics capacity trapped in maintenance of fragmented reporting assets.",
-        "Vendor and contract details are deliberately not strong enough yet for commercial savings estimates.",
-        "Next validation: vendor identity, contract scope, rate card, ticket mix, SLA performance, and maintenance/new-build split.",
-      ],
-    },
-    opev: {
-      summary:
-        "Operational evidence rows translate the use-case portfolio into module next actions: Home brief, Intelligence retrieval, Moves evidence gates, Source context, and Tower baseline requests.",
-      meaning:
-        "This layer is the execution bridge from context to work: what must be uploaded, certified, or confirmed before each module can act.",
-      observed:
-        "Each use-case pattern carries specific blocker signals, from medallion architecture and identity spine to transcript governance, provider contract linkage, and close-control evidence.",
-      matters:
-        "Without this layer, Home becomes a brochure. With it, the executive brief can tell leaders exactly what evidence makes the next decision possible.",
-      supports:
-        "Supports next-evidence planning, phase-gate design, and module-specific handoffs.",
-      findings: [
-        "The evidence agenda is clear enough to run a focused governance and data-foundation workshop.",
-        "The strongest next move is to certify the lakehouse/identity/governance spine before individual AI use cases are advanced.",
-        "Next validation: upload architecture evidence, data governance artifacts, baselines, transcripts/CRM samples, and contract/economics files.",
-      ],
-    },
-  };
-  return fallback[key] ?? {};
-}
-
-function normalizeDimensionName(value) {
-  return clean(value)
-    .toLowerCase()
-    .replace(/^\d+\s+/, "")
-    .replace(/\band\b/g, "&")
-    .replace(/[^a-z0-9&]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function statusLabel(status) {
-  if (status === "source-backed") return "Decision-grade";
-  if (status === "needs-evidence") return "Needs evidence";
-  return "Directional";
-}
-
-function relationshipChainForDimension(key, label) {
-  const chains = {
-    profile: ["Enterprise", "Operating model", "Executive decisions"],
-    functions: ["Function", "Owner", "Capability", "Outcome"],
-    org: ["Function", "Decision owner", "Program", "Gate"],
-    workforce: ["Role", "Workflow", "Adoption", "Outcome"],
-    apps: ["Application", "Data dependency", "Vendor", "Modernization decision"],
-    data: ["Data domain", "Source system", "Use case", "AI readiness"],
-    infra: ["Platform", "Workload", "Control", "Cloud readiness"],
-    vendors: ["Vendor", "Contract", "Scope", "Value/risk"],
-    budget: ["Spend area", "Baseline", "Program", "Value proof"],
-    programs: ["Program", "Owner", "Evidence gate", "Outcome"],
-    ai: ["Use case", "Data spine", "Workflow owner", "Governance gate"],
-    risks: ["Risk", "Control", "Owner", "Decision boundary"],
-    rel: ["Business function", "Application", "Data", "Vendor", "Risk"],
-    evidence: ["Source", "Claim", "Dimension", "Decision"],
-    metrics: ["Metric", "Baseline", "Target", "Tower proof"],
-    industry: ["Pattern", "Peer signal", "Meridian implication"],
-    lenses: ["Expert lens", "Dimension", "Decision implication"],
-    ms: ["Managed service", "Provider", "Scope", "Commercial lever"],
-    opev: ["Operational artifact", "Adoption signal", "Workflow readiness"],
-  };
-  return chains[key] ?? [label, "Evidence", "Decision"];
+  return claudePack.executive_overview;
 }
 
 function handoffForDimension(key) {
@@ -1823,6 +1584,7 @@ function handoffForDimension(key) {
 }
 
 function assembleRenderPack(designContract, context, claudePack) {
+  const overview = claudePack.executive_overview ?? {};
   const dimensionByKey = Object.fromEntries(
     context.dimensions.map((dimension) => [dimension.key, dimension]),
   );
@@ -1905,16 +1667,45 @@ function assembleRenderPack(designContract, context, claudePack) {
           claudePack.dimensions[dimension.key].evidence,
         ]),
       ),
+      VISUAL_BLOCKS: Object.fromEntries(
+        dimensions.map((dimension) => [
+          dimension.key,
+          claudePack.dimensions[dimension.key].visual_blocks,
+        ]),
+      ),
     },
     narrative_sections: {
-      context_confidence_summary: claudePack.context_confidence.summary,
-      evidence_gaps_summary: claudePack.evidence_gaps.summary,
-      use_cases_summary: claudePack.use_cases.summary,
-      use_cases_portfolio_view: claudePack.use_cases.portfolio_view,
-      proof_summary: claudePack.proof.summary,
-      proof_relationship_visual: claudePack.proof.relationship_visual,
+      context_confidence_summary:
+        overview.context_confidence_summary ?? claudePack.context_confidence.summary,
+      evidence_gaps_summary:
+        overview.evidence_gaps_summary ?? claudePack.evidence_gaps.summary,
+      use_cases_summary:
+        overview.use_cases_summary ?? claudePack.use_cases.summary,
+      use_cases_portfolio_view:
+        overview.use_cases_portfolio_view ?? claudePack.use_cases.portfolio_view,
+      proof_summary: overview.proof_summary ?? claudePack.proof.summary,
+      proof_relationship_visual:
+        overview.proof_relationship_visual ?? claudePack.proof.relationship_visual,
+      enterprise_brief_title: overview.enterprise_brief_title,
+      enterprise_brief_summary: overview.enterprise_brief_summary,
+      render_contract: "renderer_displays_claude_strings_and_visual_blocks_verbatim_no_rewrite",
+      content_generation_prompt_path:
+        "reports/home-knowledge-design-contract/actual-claude-prompt.txt",
+      content_generation_response_path:
+        "reports/home-knowledge-design-contract/raw-claude-response.json",
+      executive_overview_prompt_path:
+        overview.prompt_path,
+      executive_overview_response_path:
+        overview.response_path,
+      visual_block_contract:
+        "visual_blocks_are_claude_authored_display_inputs_for_cards_tables_charts_graphs_and_dashboard_panels",
     },
-    quality_assessment: claudePack.quality_assessment,
+    quality_assessment: {
+      ...claudePack.quality_assessment,
+      renderer_rewrite_allowed: false,
+      advisory_slots_source: "claude_tool_payload_only",
+      deterministic_slots_source: "canonical_csv_row_projection_only",
+    },
   };
 }
 
@@ -1929,16 +1720,18 @@ function ensureDimensionGaps(key, label, gaps) {
         }))
         .filter((gap) => gap.missing || gap.blocks || gap.needed)
     : [];
-  return cleaned.length ? cleaned : defaultGapsForDimension(key, label);
+  return cleaned;
 }
 
 function buildLineageRows(renderPack, context, promptPath, responsePath) {
   const rows = [];
+  const relativePromptPath = path.relative(process.cwd(), promptPath);
+  const relativeResponsePath = path.relative(process.cwd(), responsePath);
   const base = {
     tenant: tenantKey,
     design_contract: designHtmlPath,
-    prompt_file: promptPath,
-    response_file: responsePath,
+    prompt_file: relativePromptPath,
+    response_file: relativeResponsePath,
   };
   function push(row) {
     rows.push({
@@ -1950,7 +1743,7 @@ function buildLineageRows(renderPack, context, promptPath, responsePath) {
     page: "Home / Knowledge",
     tab_or_component: "Overview / KPI facts",
     rendered_slot: "FACTS + KPIS",
-    generated_by: "Claude-derived advisory artifact",
+    generated_by: "Claude-authored tool payload",
     deterministic_object: "design_slots.FACTS, design_slots.KPIS",
     storage_location:
       "datasets/tenant-inputs/meridian-health/approved-content/home/design-contract-pack.json",
@@ -1965,7 +1758,7 @@ function buildLineageRows(renderPack, context, promptPath, responsePath) {
     page: "Home / Knowledge",
     tab_or_component: "Overview / Boardroom brief",
     rendered_slot: "BRIEF_COLS + PRIORITIES + SIGNALS",
-    generated_by: "Claude-derived advisory artifact",
+    generated_by: "Claude-authored tool payload",
     deterministic_object:
       "design_slots.BRIEF_COLS, design_slots.PRIORITIES, design_slots.SIGNALS",
     storage_location:
@@ -1980,7 +1773,7 @@ function buildLineageRows(renderPack, context, promptPath, responsePath) {
     page: "Home / Knowledge",
     tab_or_component: "Context Confidence",
     rendered_slot: "CONF_TABLE + context_confidence.summary",
-    generated_by: "Deterministic counts plus Claude advisory synthesis",
+    generated_by: "Deterministic counts plus Claude-authored advisory synthesis",
     deterministic_object: "design_slots.CONF_TABLE",
     storage_location:
       "datasets/tenant-inputs/meridian-health/approved-content/home/design-contract-pack.json",
@@ -1993,7 +1786,7 @@ function buildLineageRows(renderPack, context, promptPath, responsePath) {
     page: "Home / Knowledge",
     tab_or_component: "Evidence Gaps",
     rendered_slot: "GAPS + NEXT_EVIDENCE",
-    generated_by: "Claude-derived advisory artifact from canonical gaps",
+    generated_by: "Claude-authored tool payload from canonical gaps",
     deterministic_object: "design_slots.GAPS, design_slots.NEXT_EVIDENCE",
     storage_location:
       "datasets/tenant-inputs/meridian-health/approved-content/home/design-contract-pack.json",
@@ -2007,7 +1800,7 @@ function buildLineageRows(renderPack, context, promptPath, responsePath) {
     page: "Home / Knowledge",
     tab_or_component: "Use Cases",
     rendered_slot: "USE_CASES",
-    generated_by: "Claude-ranked from candidate use cases and evidence gates",
+    generated_by: "Claude-authored ranking from candidate use cases and evidence gates",
     deterministic_object: "design_slots.USE_CASES",
     storage_location:
       "datasets/tenant-inputs/meridian-health/approved-content/home/design-contract-pack.json",
@@ -2021,7 +1814,7 @@ function buildLineageRows(renderPack, context, promptPath, responsePath) {
     page: "Home / Knowledge",
     tab_or_component: "Proof / enterprise context visual",
     rendered_slot: "EVIDENCE + proof.relationship_visual",
-    generated_by: "Claude visual-ready narrative plus deterministic evidence list",
+    generated_by: "Claude-authored visual-ready narrative plus deterministic evidence list",
     deterministic_object: "design_slots.EVIDENCE, narrative_sections.proof_relationship_visual",
     storage_location:
       "datasets/tenant-inputs/meridian-health/approved-content/home/design-contract-pack.json",
@@ -2037,7 +1830,7 @@ function buildLineageRows(renderPack, context, promptPath, responsePath) {
       page: "Enterprise Dimensions",
       tab_or_component: `${dimension.label} / Overview`,
       rendered_slot: `DIMS[${dimension.key}] + INSIGHTS.${dimension.key} + STORY.${dimension.key}`,
-      generated_by: "Claude-derived advisory artifact",
+      generated_by: "Claude-authored tool payload",
       deterministic_object: `design_slots.DIMS, design_slots.INSIGHTS.${dimension.key}, design_slots.STORY.${dimension.key}`,
       storage_location:
         "datasets/tenant-inputs/meridian-health/approved-content/home/design-contract-pack.json",
@@ -2064,7 +1857,7 @@ function buildLineageRows(renderPack, context, promptPath, responsePath) {
       page: "Enterprise Dimensions",
       tab_or_component: `${dimension.label} / Relationships`,
       rendered_slot: `REL.${dimension.key}`,
-      generated_by: "Claude-derived relationship interpretation from canonical relationship rows",
+      generated_by: "Claude-authored relationship interpretation from canonical relationship rows",
       deterministic_object: `design_slots.REL.${dimension.key}`,
       storage_location:
         "datasets/tenant-inputs/meridian-health/approved-content/home/design-contract-pack.json",
@@ -2078,7 +1871,7 @@ function buildLineageRows(renderPack, context, promptPath, responsePath) {
       page: "Enterprise Dimensions",
       tab_or_component: `${dimension.label} / Gaps`,
       rendered_slot: `DGAPS.${dimension.key}`,
-      generated_by: "Claude-derived gap synthesis from canonical gaps and boundaries",
+      generated_by: "Claude-authored gap synthesis from canonical gaps and boundaries",
       deterministic_object: `design_slots.DGAPS.${dimension.key}`,
       storage_location:
         "datasets/tenant-inputs/meridian-health/approved-content/home/design-contract-pack.json",
@@ -2091,7 +1884,7 @@ function buildLineageRows(renderPack, context, promptPath, responsePath) {
       page: "Enterprise Dimensions",
       tab_or_component: `${dimension.label} / Evidence`,
       rendered_slot: `EVID.${dimension.key}`,
-      generated_by: "Claude-derived evidence summary with deterministic source file count",
+      generated_by: "Claude-authored evidence summary with deterministic source file count",
       deterministic_object: `design_slots.EVID.${dimension.key}`,
       storage_location:
         "datasets/tenant-inputs/meridian-health/approved-content/home/design-contract-pack.json",
@@ -2266,6 +2059,11 @@ async function main() {
   const toolUse = response.content.find((part) => part.type === "tool_use");
   if (!toolUse) throw new Error("Claude did not return the design pack tool payload");
   const claudePack = toolUse.input;
+  const executiveOverview = await generateExecutiveOverview(
+    anthropic,
+    context,
+    claudePack,
+  );
   const repairedDimensions = await generateMissingDimensions(
     anthropic,
     context,
@@ -2305,12 +2103,14 @@ async function main() {
       `Mirror artifact: ${path.relative(repoRoot, mirrorFile)}`,
       `Downloads JSON: ${downloadsPrefix}.json`,
       `Downloads lineage HTML: ${downloadsPrefix}-component-lineage.html`,
+      `Executive overview repair: ${executiveOverview.response_path}`,
       `Repaired dimensions: ${repairedDimensions.length}`,
       "",
       "## Truth Split",
       "",
       "- Claude generated the consultant-grade advisory slots.",
-      "- The main Claude response returned 4 dimensions; the remaining dimension slots were repaired from prior approved Claude-derived story blocks plus canonical tenant rows, then strengthened with tenant-specific evidence-bound summaries.",
+      "- Claude generated the boardroom overview through a dedicated executive-consultant prompt.",
+      "- Every dimension advisory slot is Claude-authored; if the main response misses a dimension, the generator performs a per-dimension Claude repair or fails.",
       "- The Data tab row values are deterministic projections from canonical tenant input CSVs.",
       "- This does not claim live UI wiring or production deployment.",
       "- Unsupported design placeholders were not adopted as truth unless supported by context.",
