@@ -4598,7 +4598,7 @@ function TowerMartBackButton({
         fontWeight: 800,
       }}
     >
-      ← Meridian Health · Command Center
+      ← Command Center
     </button>
   );
 }
