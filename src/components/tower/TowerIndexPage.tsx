@@ -4812,6 +4812,124 @@ function TowerMartDecisionLanesDesign({ rows }: { rows: ReadonlyArray<TowerMartP
   );
 }
 
+interface TowerAiPortfolioDisplayRow extends TowerMartAiPortfolioItem {
+  displayName: string;
+  displayValueScore: number;
+  displayReadinessScore: number;
+  displayAction: string;
+  displayReason: string;
+}
+
+function humanizeTowerToken(value: string | null | undefined): string {
+  if (!value) return "Evidence detail gap";
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function cleanAiPortfolioName(row: TowerMartAiPortfolioItem): string {
+  const raw = row.itemName
+    .replace(/^Application Owners\s*\/\s*Business Applications:\s*/i, "")
+    .replace(/^Business Applications:\s*/i, "")
+    .replace(/^AI\s*\/\s*Automation:\s*/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (/ai benefits realization ledger/i.test(raw)) return "AI benefits measurement ledger";
+  if (/automated close and reporting/i.test(raw)) return "Finance close automation";
+  if (/call center optimization/i.test(raw)) return "Contact center AI enablement";
+  return raw || humanizeTowerToken(row.aiSpendCategory ?? row.aiSpendType ?? row.itemKind);
+}
+
+function aiPortfolioRowWeight(row: TowerMartAiPortfolioItem): number {
+  const laneWeight =
+    row.decisionLane === "fund" ? 50 : row.decisionLane === "fix" ? 40 : row.decisionLane === "freeze" ? 20 : 10;
+  return (
+    laneWeight +
+    row.financeValidatedValueUsd / 1_000_000 +
+    row.promisedValueUsd / 2_000_000 +
+    row.aiTaggedSpendUsd / 2_000_000 +
+    row.approvedFundingUsd / 3_000_000 +
+    (row.usageActual ? 10 : 0) +
+    (row.adoptionRatePct ? row.adoptionRatePct * 10 : 0)
+  );
+}
+
+function normalizeAiScore(
+  score: number | null | undefined,
+  fallback: number,
+): number {
+  if (score === null || score === undefined || !Number.isFinite(score)) {
+    return fallback;
+  }
+  const normalized = score <= 10 ? score * 10 : score;
+  return Math.max(10, Math.min(90, normalized));
+}
+
+function aiPortfolioDisplayAction(row: TowerMartAiPortfolioItem): string {
+  if (row.decisionLane === "fund") return "Scale with proof";
+  if (row.decisionLane === "fix") return "Fix proof";
+  if (row.decisionLane === "stop") return "Stop or re-scope";
+  return "Hold until gates clear";
+}
+
+function aiPortfolioDisplayReason(row: TowerMartAiPortfolioItem): string {
+  if (row.decisionLane === "fund") {
+    return "Usage and value evidence are strong enough to protect or scale.";
+  }
+  if (row.decisionLane === "fix") {
+    return row.financeValidatedValueUsd > 0
+      ? `${formatMoneyGap(row.financeValidatedValueUsd)} is finance-validated, but the benefit story is still partial.`
+      : "Funding exists, but usage, adoption, or finance validation is not strong enough yet.";
+  }
+  if (row.decisionLane === "stop") {
+    return "Do not release more attention or funding until the business case is rebuilt.";
+  }
+  return row.fundingStatus === "not_approved"
+    ? "Discovery-only. This is not approved funding and should not be counted as realized value."
+    : "Hold the next tranche until evidence gates clear.";
+}
+
+function buildAiPortfolioDisplayRows(
+  rows: ReadonlyArray<TowerMartAiPortfolioItem>,
+): TowerAiPortfolioDisplayRow[] {
+  const byName = new Map<string, TowerMartAiPortfolioItem>();
+  rows.forEach((row) => {
+    const displayName = cleanAiPortfolioName(row);
+    const key = displayName.toLowerCase();
+    const existing = byName.get(key);
+    if (!existing || aiPortfolioRowWeight(row) > aiPortfolioRowWeight(existing)) {
+      byName.set(key, row);
+    }
+  });
+
+  const sorted = [...byName.values()]
+    .sort((a, b) => aiPortfolioRowWeight(b) - aiPortfolioRowWeight(a))
+    .slice(0, 12);
+
+  return sorted.map((row, index) => {
+    const baseValue = normalizeAiScore(
+      row.valueScore,
+      row.promisedValueUsd > 0 ? 70 : row.aiTaggedSpendUsd > 0 ? 58 : 44,
+    );
+    const baseReadiness = normalizeAiScore(
+      row.readinessScore,
+      row.financeValidatedValueUsd > 0 ? 62 : row.usageActual ? 54 : row.fundingStatus === "not_approved" ? 30 : 42,
+    );
+    const jitterX = ((index % 4) - 1.5) * 4;
+    const jitterY = ((Math.floor(index / 4) % 3) - 1) * 5;
+    return {
+      ...row,
+      displayName: cleanAiPortfolioName(row),
+      displayValueScore: Math.max(12, Math.min(88, baseValue + jitterY)),
+      displayReadinessScore: Math.max(12, Math.min(88, baseReadiness + jitterX)),
+      displayAction: aiPortfolioDisplayAction(row),
+      displayReason: aiPortfolioDisplayReason(row),
+    };
+  });
+}
+
 function TowerMartAiPortfolioDesign({
   rows,
   command,
@@ -4819,6 +4937,10 @@ function TowerMartAiPortfolioDesign({
   rows: ReadonlyArray<TowerMartAiPortfolioItem>;
   command: TowerMartCommandCenterRow;
 }) {
+  const displayRows = buildAiPortfolioDisplayRows(rows);
+  const fundedRows = displayRows.filter((row) => row.aiTaggedSpendUsd > 0 || row.approvedFundingUsd > 0);
+  const candidateRows = displayRows.filter((row) => row.fundingStatus === "not_approved" || row.itemKind.includes("candidate"));
+  const partialProofRows = displayRows.filter((row) => row.financeValidatedValueUsd > 0 || row.usageActual !== null);
   return (
     <>
       <TowerMartBackButton onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
@@ -4826,37 +4948,43 @@ function TowerMartAiPortfolioDesign({
         <div style={towerEyebrowStyle}>AI portfolio readiness</div>
         <h2 style={towerDetailTitleStyle}>AI Opportunity Portfolio</h2>
       </div>
-      <p style={towerDetailIntroStyle}>
-        AI opportunities are plotted by value against readiness. Numbers avoid
-        text collisions on the canvas; the legend below maps every point back
-        to an opportunity.
+      <p data-testid="tower-ai-portfolio-story" style={towerDetailIntroStyle}>
+        This is not an AI shopping list. Tower separates approved and embedded
+        AI spend from candidate ideas, then asks the capital-control question:
+        what can scale with proof, what needs evidence fixed, and what must stay
+        held until gates clear?
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.25fr) minmax(360px, .75fr)", gap: 18 }}>
-        <section style={{ ...towerBoardCardStyle, minHeight: 520, position: "relative" }}>
+        <section data-testid="tower-ai-portfolio-matrix" style={{ ...towerBoardCardStyle, minHeight: 560, position: "relative" }}>
           <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>Value vs. readiness</div>
+          <p style={{ margin: "8px 0 0", color: T.INK_2, fontSize: 13, lineHeight: 1.45, maxWidth: 690 }}>
+            Bubble numbers map to the watchlist. The upper-right is scale with
+            evidence; lower-right is fund readiness; lower-left stays in
+            discovery until proof improves.
+          </p>
           <div
             style={{
               position: "absolute",
-              inset: "72px 32px 56px 64px",
+              inset: "112px 32px 56px 64px",
               borderLeft: `2px solid ${T.RULE_STRONG}`,
               borderBottom: `2px solid ${T.RULE_STRONG}`,
-              background: "linear-gradient(90deg, transparent 49.6%, rgba(10,10,11,.12) 50%, transparent 50.4%), linear-gradient(0deg, transparent 49.6%, rgba(10,10,11,.12) 50%, transparent 50.4%)",
+              background: "linear-gradient(90deg, transparent 49.6%, rgba(10,10,11,.12) 50%, transparent 50.4%), linear-gradient(0deg, transparent 49.6%, rgba(10,10,11,.12) 50%, transparent 50.4%), linear-gradient(90deg, rgba(32,178,148,.08) 50%, rgba(27,43,92,.05) 50%)",
             }}
           >
-            <div style={{ position: "absolute", right: 8, top: 8, color: T.TEAL, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Scale now</div>
-            <div style={{ position: "absolute", right: 8, bottom: 8, color: T.AMBER, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>De-risk first</div>
-            <div style={{ position: "absolute", left: 8, top: 8, color: T.INK_2, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Quick wins</div>
-            <div style={{ position: "absolute", left: 8, bottom: 8, color: T.GRAY_DK, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Park</div>
-            {rows.map((row, index) => {
+            <div style={{ position: "absolute", right: 8, top: 8, color: T.TEAL, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Scale with proof</div>
+            <div style={{ position: "absolute", right: 8, bottom: 8, color: T.AMBER, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Fund readiness</div>
+            <div style={{ position: "absolute", left: 8, top: 8, color: T.INK_2, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Fix adoption</div>
+            <div style={{ position: "absolute", left: 8, bottom: 8, color: T.GRAY_DK, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Hold / discovery</div>
+            {displayRows.map((row, index) => {
               const tone = martLaneTone(row.decisionLane);
               return (
                 <div
                   key={row.aiPortfolioKey}
-                  title={`${index + 1}. ${row.itemName}`}
+                  title={`${index + 1}. ${row.displayName}`}
                   style={{
                     position: "absolute",
-                    left: `${Math.max(8, Math.min(92, row.readinessScore))}%`,
-                    top: `${Math.max(8, Math.min(92, 100 - row.valueScore))}%`,
+                    left: `${row.displayReadinessScore}%`,
+                    top: `${100 - row.displayValueScore}%`,
                     transform: "translate(-50%, -50%)",
                     width: 34,
                     height: 34,
@@ -4877,27 +5005,60 @@ function TowerMartAiPortfolioDesign({
             <div style={{ position: "absolute", right: 0, bottom: "-34px", color: T.GRAY_DK, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Readiness →</div>
           </div>
         </section>
-        <section style={{ ...towerBoardCardStyle, minHeight: 0 }}>
+        <section data-testid="tower-ai-watchlist" style={{ ...towerBoardCardStyle, minHeight: 0 }}>
           <div style={towerTinyLabelStyle}>AI spend lens</div>
           <div style={{ fontFamily: T.SERIF, fontSize: 31, fontWeight: 900, marginTop: 8 }}>{formatMoneyGap(command.aiTaggedSpendFy26NonAdditive)}</div>
           <p style={{ margin: "8px 0 16px", color: T.INK_2, lineHeight: 1.45 }}>
             Non-additive; already inside approved platform, program, governance,
-            and enablement spend.
+            and enablement spend. Candidate ideas are not approved funding.
           </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, marginBottom: 14 }}>
+            <TowerMartCompactCard
+              label="Funded lens"
+              value={formatWholeNumber(fundedRows.length)}
+              detail="Rows with approved or embedded spend"
+            />
+            <TowerMartCompactCard
+              label="Proof signal"
+              value={formatWholeNumber(partialProofRows.length)}
+              detail="Rows with usage or finance validation"
+            />
+            <TowerMartCompactCard
+              label="Candidate pool"
+              value={formatWholeNumber(command.candidateAiOpportunities)}
+              detail="Discovery only"
+            />
+          </div>
           <div style={{ display: "grid", gap: 8 }}>
-            {rows.map((row, index) => {
+            {displayRows.map((row, index) => {
               const tone = martLaneTone(row.decisionLane);
               return (
-                <div key={row.aiPortfolioKey} style={{ display: "grid", gridTemplateColumns: "30px 1fr auto", gap: 9, alignItems: "start", borderTop: `1px solid ${T.RULE}`, paddingTop: 8 }}>
+                <div key={row.aiPortfolioKey} style={{ display: "grid", gridTemplateColumns: "30px 1fr auto", gap: 9, alignItems: "start", borderTop: `1px solid ${T.RULE}`, paddingTop: 10 }}>
                   <span style={{ width: 24, height: 24, borderRadius: 999, display: "grid", placeItems: "center", background: tone.fg, color: "#fff", fontSize: 12, fontWeight: 900 }}>{index + 1}</span>
                   <span>
-                    <strong>{row.itemName}</strong>
-                    <span style={{ display: "block", color: T.GRAY_DK, fontSize: 11 }}>{row.vendorName ?? row.systemName ?? row.aiSpendCategory ?? "source detail gap"}</span>
+                    <strong>{row.displayName}</strong>
+                    <span style={{ display: "block", color: T.GRAY_DK, fontSize: 11, marginTop: 2 }}>
+                      {row.vendorName ?? row.systemName ?? humanizeTowerToken(row.aiSpendCategory)}
+                      {" · "}
+                      {row.financeValidatedValueUsd > 0
+                        ? `${formatMoneyGap(row.financeValidatedValueUsd)} validated`
+                        : row.usageActual !== null
+                          ? `usage ${formatWholeNumber(row.usageActual)}`
+                          : "proof gap"}
+                    </span>
+                    <span style={{ display: "block", color: T.INK_2, fontSize: 12, lineHeight: 1.35, marginTop: 5 }}>{row.displayReason}</span>
                   </span>
-                  <span style={{ color: tone.fg, fontWeight: 900, textTransform: "capitalize" }}>{row.decisionLane}</span>
+                  <span style={{ color: tone.fg, fontWeight: 900, textAlign: "right" }}>{row.displayAction}</span>
                 </div>
               );
             })}
+            {candidateRows.length > 0 ? (
+              <div style={{ borderTop: `1px solid ${T.RULE}`, paddingTop: 10, color: T.INK_2, fontSize: 12.5, lineHeight: 1.45 }}>
+                Candidate AI is intentionally visible here, but it remains a
+                discovery backlog until budget ties, usage baselines, control
+                gates, and finance evidence are loaded.
+              </div>
+            ) : null}
           </div>
         </section>
       </div>
