@@ -56,6 +56,11 @@ import type {
   CioTowerCxoTableRow,
   CioTowerCxoViewModel,
 } from "@/lib/cio-tower/cxo-view-model";
+import type {
+  TowerMartAiPortfolioItem,
+  TowerMartCommandViewModel,
+  TowerMartProgramLane,
+} from "@/lib/cio-tower/tower-mart-view-model";
 import type { TowerV3RuntimeViewModel } from "@/lib/tower/tower-v3-runtime-view";
 
 export interface TowerSubstrateCounts {
@@ -2370,6 +2375,725 @@ function DerivedCxoMetricCard({
   );
 }
 
+type TowerDecisionLane = "Fund" | "Fix" | "Freeze" | "Stop";
+
+interface TowerDecisionLaneRow {
+  program: string;
+  owner: string;
+  budget: string;
+  promisedValue: string;
+  measuredValue: string;
+  lane: TowerDecisionLane;
+  rationale: string;
+  source: string;
+  sourceFactKeys: string[];
+  valueScore: number;
+  readinessScore: number;
+}
+
+function cxoCardValue(card: CioTowerCxoMeasureCard | null | undefined): string {
+  return card?.displayValue ?? "Data gap";
+}
+
+function cxoCardSource(card: CioTowerCxoMeasureCard | null | undefined): string {
+  const first = card?.evidence[0];
+  if (!first) return "Required source link missing";
+  const file = first.sourceFile ?? first.sourceSystem ?? "source not populated";
+  return first.sourceRow ? `${file} row ${first.sourceRow}` : file;
+}
+
+function formatWholeNumber(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) {
+    return "Data gap";
+  }
+  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(
+    value,
+  );
+}
+
+function classifyDecisionLane(row: CioTowerPortfolioValueRow): TowerDecisionLane {
+  const promised = row.promisedValueNumeric ?? 0;
+  const measured = row.measuredValueNumeric ?? 0;
+  const budget = row.budgetNumeric ?? 0;
+  const realization = promised > 0 ? measured / promised : 0;
+  const hasOwner = row.owner !== "Owner not loaded";
+  const hasEvidence =
+    row.evidenceStatus !== "Evidence status not loaded" &&
+    !/missing|not loaded|gap/i.test(row.evidenceStatus);
+
+  if (!budget || !promised || !hasOwner) return "Stop";
+  if (!hasEvidence || realization === 0) return "Freeze";
+  if (realization < 0.18) return "Fix";
+  return "Fund";
+}
+
+function buildCxoDecisionLaneRows(
+  rows: ReadonlyArray<CioTowerPortfolioValueRow>,
+): TowerDecisionLaneRow[] {
+  return rows.map((row) => {
+    const promised = row.promisedValueNumeric ?? 0;
+    const measured = row.measuredValueNumeric ?? 0;
+    const budget = row.budgetNumeric ?? 0;
+    const lane = classifyDecisionLane(row);
+    const realization = promised > 0 ? measured / promised : 0;
+    const valueScore = Math.min(100, Math.round((promised / 60_000_000) * 100));
+    const readinessScore = Math.min(
+      100,
+      Math.round(
+        [
+          row.owner !== "Owner not loaded",
+          row.budgetNumeric !== null,
+          row.promisedValueNumeric !== null,
+          row.measuredValueNumeric !== null,
+          !/missing|not loaded|gap/i.test(row.evidenceStatus),
+        ].filter(Boolean).length * 20,
+      ),
+    );
+    const rationale =
+      lane === "Fund"
+        ? `Value evidence is active: ${row.measuredValue} measured against ${row.promisedValue} promised.`
+        : lane === "Fix"
+          ? `The value thesis is material, but only ${Math.round(realization * 100)}% of promised value is measured.`
+          : lane === "Freeze"
+            ? "Hold the next tranche until baseline, evidence, and finance validation are complete."
+            : "Do not scale until a named owner, budget tie, promised value, and proof path are loaded.";
+    return {
+      program: row.program,
+      owner: row.owner,
+      budget: budget > 0 ? row.budget : "Data gap",
+      promisedValue: promised > 0 ? row.promisedValue : "Data gap",
+      measuredValue: measured > 0 ? row.measuredValue : "Data gap",
+      lane,
+      rationale,
+      source: row.source,
+      sourceFactKeys: row.sourceFactKeys,
+      valueScore,
+      readinessScore,
+    };
+  });
+}
+
+function countDecisionLanes(rows: ReadonlyArray<TowerDecisionLaneRow>) {
+  return rows.reduce<Record<TowerDecisionLane, number>>(
+    (acc, row) => {
+      acc[row.lane] += 1;
+      return acc;
+    },
+    { Fund: 0, Fix: 0, Freeze: 0, Stop: 0 },
+  );
+}
+
+function buildCxoAiRows(
+  rows: ReadonlyArray<CioTowerPortfolioValueRow>,
+): TowerDecisionLaneRow[] {
+  const aiPattern =
+    /ai|agent|copilot|servicenow|workday|github|databricks|automation|clinical|contact|member|denial|prior auth/i;
+  const filtered = rows.filter((row) => aiPattern.test(row.program));
+  return buildCxoDecisionLaneRows(filtered.length > 0 ? filtered : rows).slice(
+    0,
+    12,
+  );
+}
+
+function TowerCommandKpi({
+  title,
+  card,
+  detail,
+}: {
+  title: string;
+  card: CioTowerCxoMeasureCard | null;
+  detail?: string;
+}) {
+  const missing = !card || card.valueNumeric === null;
+  return (
+    <article
+      data-cio-tower-measure-key={card?.measureKey ?? title}
+      style={{
+        border: `1px solid ${missing ? T.AMBER : T.RULE_STRONG}`,
+        borderRadius: 13,
+        background: "#fff",
+        padding: "16px 17px",
+        minHeight: 128,
+        boxShadow: "0 16px 34px rgba(15, 23, 42, 0.045)",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 10,
+          letterSpacing: "1.5px",
+          textTransform: "uppercase",
+          color: T.GRAY_DK,
+          fontWeight: 900,
+        }}
+      >
+        {title}
+      </div>
+      <div
+        style={{
+          marginTop: 10,
+          fontFamily: T.SERIF,
+          fontSize: 31,
+          lineHeight: 1,
+          fontWeight: 900,
+          color: missing ? T.AMBER : T.INK,
+        }}
+      >
+        {cxoCardValue(card)}
+      </div>
+      <div style={{ marginTop: 9, color: T.INK_2, fontSize: 13, lineHeight: 1.45 }}>
+        {missing ? "Required Tower fact missing from data layer." : detail ?? cxoCardSource(card)}
+      </div>
+    </article>
+  );
+}
+
+function TowerCommandMini({
+  title,
+  card,
+  gated = false,
+}: {
+  title: string;
+  card: CioTowerCxoMeasureCard | null;
+  gated?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        border: `1px solid ${T.RULE}`,
+        borderRadius: 12,
+        background: gated ? T.AMBER_BG : T.CREAM,
+        padding: 13,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 9,
+          letterSpacing: "1.2px",
+          color: T.GRAY_DK,
+          textTransform: "uppercase",
+          fontWeight: 900,
+        }}
+      >
+        {title}
+      </div>
+      <div
+        style={{
+          marginTop: 5,
+          fontFamily: T.SERIF,
+          fontSize: 24,
+          fontWeight: 900,
+          color: gated ? T.AMBER : T.INK,
+        }}
+      >
+        {card?.measureKey === "candidate_ai_opportunities" ||
+        card?.measureKey === "watch_pressure_signals"
+          ? formatWholeNumber(card.valueNumeric)
+          : cxoCardValue(card)}
+      </div>
+      <div style={{ color: T.INK_2, fontSize: 12, marginTop: 3 }}>
+        {card ? cxoCardSource(card) : "Required source link missing"}
+      </div>
+    </div>
+  );
+}
+
+function TowerLanePill({
+  lane,
+  count,
+}: {
+  lane: string;
+  count: number;
+}) {
+  const colors: Record<string, { bg: string; fg: string }> = {
+    Fund: { bg: T.GREEN_BG, fg: T.GREEN },
+    Fix: { bg: T.AMBER_BG, fg: T.AMBER },
+    Freeze: { bg: T.PURPLE_BG, fg: T.PURPLE },
+    Stop: { bg: T.RED_BG, fg: T.RED },
+  };
+  const tone = colors[lane] ?? { bg: T.CREAM, fg: T.INK };
+  return (
+    <span
+      style={{
+        borderRadius: 999,
+        padding: "7px 10px",
+        background: tone.bg,
+        color: tone.fg,
+        fontWeight: 900,
+        fontSize: 12,
+      }}
+    >
+      {count} {lane}
+    </span>
+  );
+}
+
+function TowerValueFunnel({
+  change,
+  promised,
+  financeValidated,
+  realizedAllowed,
+  rows,
+}: {
+  change: CioTowerCxoMeasureCard | null;
+  promised: CioTowerCxoMeasureCard | null;
+  financeValidated: CioTowerCxoMeasureCard | null;
+  realizedAllowed: CioTowerCxoMeasureCard | null;
+  rows: ReadonlyArray<CioTowerPortfolioValueRow>;
+}) {
+  const tiers = [
+    {
+      label: "Funded change spend",
+      card: change,
+      note: "FY26 approved change budget",
+      tone: T.INK,
+    },
+    {
+      label: "Promised value",
+      card: promised,
+      note: "Business-case value from funded programs",
+      tone: T.GREEN,
+    },
+    {
+      label: "Finance-validated value",
+      card: financeValidated,
+      note: "Partial measured value with finance validation",
+      tone: T.AMBER,
+    },
+    {
+      label: "Realized value allowed",
+      card: realizedAllowed,
+      note: "Booked/claimable outcome value gate",
+      tone: T.RED,
+    },
+  ];
+  const promisedValue = promised?.valueNumeric ?? 1;
+  return (
+    <section style={{ display: "grid", gap: 18 }}>
+      <CioPanel
+        eyebrow="Funding vs. value realization"
+        title="Value Proof Funnel"
+      >
+        <p style={{ margin: "0 0 18px", color: T.INK_2, lineHeight: 1.55 }}>
+          Tower separates funded work, promised value, measured evidence, and
+          realized value. The purpose is to stop a business case from becoming
+          a savings claim before finance evidence exists.
+        </p>
+        <div style={{ display: "grid", gap: 12 }}>
+          {tiers.map((tier) => {
+            const value = tier.card?.valueNumeric ?? 0;
+            const width = tier.card?.measureKey === "realized_value_ytd_allowed"
+              ? 8
+              : Math.max(12, Math.min(100, Math.round((value / promisedValue) * 100)));
+            return (
+              <div key={tier.label}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "220px 1fr",
+                    gap: 14,
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 900, color: T.INK }}>
+                      {tier.label}
+                    </div>
+                    <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 2 }}>
+                      {tier.note}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      height: 34,
+                      borderRadius: 999,
+                      background: T.CREAM_DEEP,
+                      overflow: "hidden",
+                      border: `1px solid ${T.RULE}`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${width}%`,
+                        height: "100%",
+                        minWidth: 70,
+                        background: tier.tone,
+                        color: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        paddingLeft: 12,
+                        fontWeight: 900,
+                        fontSize: 13,
+                      }}
+                    >
+                      {cxoCardValue(tier.card)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CioPanel>
+      <CioPanel
+        eyebrow="Value proven vs. promised"
+        title="Program proof ladder"
+      >
+        <div style={{ display: "grid", gap: 10 }}>
+          {rows.slice(0, 8).map((row) => {
+            const pct = safeRatio(row.measuredValueNumeric, row.promisedValueNumeric);
+            return (
+              <div
+                key={row.program}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(220px, .8fr) 1.2fr 110px",
+                  gap: 14,
+                  alignItems: "center",
+                  borderTop: `1px solid ${T.RULE}`,
+                  paddingTop: 10,
+                }}
+              >
+                <div>
+                  <strong>{row.program}</strong>
+                  <div style={{ color: T.GRAY_DK, fontSize: 12 }}>{row.owner}</div>
+                </div>
+                <div
+                  style={{
+                    height: 10,
+                    borderRadius: 999,
+                    background: T.CREAM_DEEP,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${Math.max(2, Math.round((pct ?? 0) * 100))}%`,
+                      background: T.GREEN,
+                    }}
+                  />
+                </div>
+                <div style={{ textAlign: "right", fontWeight: 900 }}>
+                  {formatPlainPercent(pct)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CioPanel>
+    </section>
+  );
+}
+
+function TowerDecisionLanes({ rows }: { rows: ReadonlyArray<TowerDecisionLaneRow> }) {
+  const lanes: TowerDecisionLane[] = ["Fund", "Fix", "Freeze", "Stop"];
+  return (
+    <section style={{ display: "grid", gap: 14 }}>
+      <CioPanel
+        eyebrow="Initiative health"
+        title="Portfolio Decision Lanes"
+      >
+        <p style={{ margin: "0 0 16px", color: T.INK_2, lineHeight: 1.55 }}>
+          Each loaded program is placed into a decision lane using budget,
+          promised value, measured value, owner, and evidence posture. Missing
+          required fields become blockers, not UI substitutions.
+        </p>
+        <div style={{ display: "grid", gap: 13 }}>
+          {lanes.map((lane) => {
+            const laneRows = rows.filter((row) => row.lane === lane);
+            if (laneRows.length === 0) return null;
+            return (
+              <section
+                key={lane}
+                style={{
+                  border: `1px solid ${T.RULE}`,
+                  borderRadius: 14,
+                  background: lane === "Fund" ? T.GREEN_BG : lane === "Fix" ? T.AMBER_BG : lane === "Freeze" ? T.PURPLE_BG : T.RED_BG,
+                  padding: 14,
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                  <h4 style={{ margin: 0, fontFamily: T.SERIF, fontSize: 21 }}>
+                    {lane}
+                  </h4>
+                  <span style={{ fontWeight: 900 }}>{laneRows.length} program{laneRows.length === 1 ? "" : "s"}</span>
+                </div>
+                <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+                  {laneRows.map((row) => (
+                    <div
+                      key={row.program}
+                      style={{
+                        border: `1px solid ${T.RULE}`,
+                        borderRadius: 12,
+                        background: "rgba(255,255,255,.78)",
+                        padding: 13,
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
+                        <div>
+                          <strong style={{ color: T.INK }}>{row.program}</strong>
+                          <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 3 }}>
+                            {row.owner} · {row.budget} budget · {row.promisedValue} promised · {row.measuredValue} measured
+                          </div>
+                        </div>
+                        <TowerLanePill lane={lane} count={1} />
+                      </div>
+                      <div style={{ color: T.INK_2, fontSize: 13, lineHeight: 1.45, marginTop: 9 }}>
+                        {row.rationale}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      </CioPanel>
+    </section>
+  );
+}
+
+function TowerAiPortfolio({
+  aiSpend,
+  candidateAi,
+  rows,
+}: {
+  aiSpend: CioTowerCxoMeasureCard | null;
+  candidateAi: CioTowerCxoMeasureCard | null;
+  rows: ReadonlyArray<TowerDecisionLaneRow>;
+}) {
+  return (
+    <section style={{ display: "grid", gap: 18 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+          gap: 12,
+        }}
+      >
+        <TowerCommandKpi title="AI-tagged spend lens" card={aiSpend} detail="Embedded, platform, governance, and enablement spend; non-additive." />
+        <TowerCommandKpi title="Candidate AI opportunities" card={candidateAi} detail="Discovery opportunities; not approved funding." />
+      </div>
+      <CioPanel eyebrow="AI portfolio readiness" title="Value vs. readiness">
+        <div
+          style={{
+            position: "relative",
+            minHeight: 420,
+            border: `1px solid ${T.RULE}`,
+            borderRadius: 14,
+            background: "linear-gradient(90deg, transparent 49.8%, rgba(10,10,11,.10) 50%, transparent 50.2%), linear-gradient(0deg, transparent 49.8%, rgba(10,10,11,.10) 50%, transparent 50.2%), #fff",
+            overflow: "hidden",
+          }}
+        >
+          {[
+            ["Fund readiness", 12, 18],
+            ["Scale now", 78, 18],
+            ["Park", 12, 88],
+            ["De-risk first", 75, 88],
+          ].map(([label, left, top]) => (
+            <span
+              key={label}
+              style={{
+                position: "absolute",
+                left: `${left}%`,
+                top: `${top}%`,
+                transform: "translate(-50%, -50%)",
+                color: T.GRAY_DK,
+                fontFamily: T.MONO,
+                fontSize: 10,
+                letterSpacing: "1px",
+                textTransform: "uppercase",
+                fontWeight: 900,
+              }}
+            >
+              {label}
+            </span>
+          ))}
+          {rows.map((row, index) => {
+            const left = Math.max(12, Math.min(88, row.readinessScore));
+            const top = Math.max(18, Math.min(84, 100 - row.valueScore));
+            return (
+              <div
+                key={row.program}
+                title={`${index + 1}. ${row.program}`}
+                style={{
+                  position: "absolute",
+                  left: `${left}%`,
+                  top: `${top}%`,
+                  transform: "translate(-50%, -50%)",
+                  display: "grid",
+                  placeItems: "center",
+                  width: 34,
+                  height: 34,
+                  borderRadius: 999,
+                  background: row.lane === "Fund" ? T.GREEN : row.lane === "Fix" ? T.AMBER : row.lane === "Freeze" ? T.PURPLE : T.RED,
+                  color: "#fff",
+                  fontWeight: 950,
+                  boxShadow: "0 10px 26px rgba(15,23,42,.22)",
+                }}
+              >
+                {index + 1}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8, marginTop: 14 }}>
+          {rows.map((row, index) => (
+            <div key={row.program} style={{ color: T.INK_2, fontSize: 12.5 }}>
+              <strong style={{ color: T.INK }}>{index + 1}</strong> {row.program} · {row.lane}
+            </div>
+          ))}
+        </div>
+      </CioPanel>
+    </section>
+  );
+}
+
+function TowerRecommendedActions({
+  run,
+  total,
+  aiSpend,
+  rows,
+}: {
+  run: CioTowerCxoMeasureCard | null;
+  total: CioTowerCxoMeasureCard | null;
+  aiSpend: CioTowerCxoMeasureCard | null;
+  rows: ReadonlyArray<TowerDecisionLaneRow>;
+}) {
+  const freeze = rows.filter((row) => row.lane === "Freeze");
+  const stop = rows.filter((row) => row.lane === "Stop");
+  return (
+    <CioPanel eyebrow="The north star" title="Recommended CXO Actions">
+      <div style={{ display: "grid", gap: 13 }}>
+        <TowerActionRow
+          lane="Fund"
+          title="Fund the data and AI foundation before scaling use cases."
+          body={`${aiSpend?.displayValue ?? "AI spend"} is already inside the budget lens. Keep it non-additive and tie every AI bet back to platform, data, governance, usage, and value evidence.`}
+          handoff="Open in Moves"
+        />
+        <TowerActionRow
+          lane="Freeze"
+          title="Freeze scale funding where value baselines or controls are incomplete."
+          body={`${freeze.length} loaded program${freeze.length === 1 ? "" : "s"} sit in Freeze. Do not let candidate AI demand become approved funding until the evidence gates clear.`}
+          handoff="Review in Moves"
+        />
+        <TowerActionRow
+          lane="Optimize"
+          title="Model run-spend optimization to create change capacity."
+          body={`${run?.displayValue ?? "Run budget"} is in the run base against ${total?.displayValue ?? "the total budget"}. Source and Tower should convert that into vendor, cloud, AMS, and application-rationalization levers, not a savings claim.`}
+          handoff="Model in Source"
+        />
+        <TowerActionRow
+          lane="Stop"
+          title="Stop or re-scope low-proof work before it consumes portfolio attention."
+          body={`${stop.length} loaded program${stop.length === 1 ? "" : "s"} currently lack enough owner, funding, value, or proof evidence for a defensible board read.`}
+          handoff="Open evidence"
+        />
+      </div>
+    </CioPanel>
+  );
+}
+
+function TowerActionRow({
+  lane,
+  title,
+  body,
+  handoff,
+}: {
+  lane: string;
+  title: string;
+  body: string;
+  handoff: string;
+}) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "110px 1fr auto",
+        gap: 16,
+        alignItems: "start",
+        borderTop: `1px solid ${T.RULE}`,
+        paddingTop: 13,
+      }}
+    >
+      <TowerLanePill lane={lane === "Optimize" ? "Fix" : lane} count={1} />
+      <div>
+        <strong style={{ color: T.INK }}>{title}</strong>
+        <p style={{ margin: "5px 0 0", color: T.INK_2, lineHeight: 1.45 }}>
+          {body}
+        </p>
+      </div>
+      <button
+        type="button"
+        style={{
+          border: `1px solid ${T.RULE_STRONG}`,
+          borderRadius: 999,
+          background: "#fff",
+          padding: "8px 10px",
+          fontWeight: 850,
+          color: T.INK,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {handoff} →
+      </button>
+    </div>
+  );
+}
+
+function TowerEvidenceTable({
+  rows,
+}: {
+  rows: ReadonlyArray<CioTowerCxoMeasureCard>;
+}) {
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+        <thead>
+          <tr>
+            {["Fact", "Value", "Formula version", "Source"].map((head) => (
+              <th
+                key={head}
+                style={{
+                  textAlign: head === "Value" ? "right" : "left",
+                  padding: "0 10px 10px",
+                  fontFamily: T.MONO,
+                  fontSize: 9,
+                  letterSpacing: "1.2px",
+                  color: T.GRAY_DK,
+                  textTransform: "uppercase",
+                }}
+              >
+                {head}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.measureKey} style={{ borderTop: `1px solid ${T.RULE}` }}>
+              <td style={{ padding: "12px 10px", fontWeight: 900 }}>
+                {row.label || labelizeCioMeasureKey(row.measureKey)}
+              </td>
+              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 900 }}>
+                {row.displayValue}
+              </td>
+              <td style={{ padding: "12px 10px", color: T.INK_2 }}>
+                {row.formulaVersion ?? "Formula version missing"}
+              </td>
+              <td style={{ padding: "12px 10px", color: T.INK_2 }}>
+                {cxoCardSource(row)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function CxoGovernedTable({
   rows,
   emptyTitle,
@@ -2838,11 +3562,524 @@ function CxoTenantBenchmark({ model }: { model: CioTowerCxoViewModel }) {
   );
 }
 
+type TowerMartSection = "command" | "value" | "lanes" | "ai" | "actions" | "evidence";
+
+const TOWER_MART_SECTIONS: Array<{ key: TowerMartSection; label: string }> = [
+  { key: "command", label: "Command Center" },
+  { key: "value", label: "Value Proof Funnel" },
+  { key: "lanes", label: "Decision Lanes" },
+  { key: "ai", label: "AI Portfolio" },
+  { key: "actions", label: "Recommended Actions" },
+  { key: "evidence", label: "Evidence" },
+];
+
+function laneLabel(lane: string): string {
+  return lane.slice(0, 1).toUpperCase() + lane.slice(1);
+}
+
+function martRatioText(value: number | null): string {
+  return value === null ? "n/a" : `${Math.round(value * 100)}%`;
+}
+
+function martLaneTone(lane: string): { bg: string; fg: string } {
+  if (lane === "fund") return { bg: T.GREEN_BG, fg: T.GREEN };
+  if (lane === "fix") return { bg: T.AMBER_BG, fg: T.AMBER };
+  if (lane === "freeze") return { bg: T.PURPLE_BG, fg: T.PURPLE };
+  return { bg: T.RED_BG, fg: T.RED };
+}
+
+function TowerMartKpi({
+  label,
+  value,
+  detail,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  tone?: "neutral" | "good" | "warn" | "blocked";
+}) {
+  const color =
+    tone === "good"
+      ? T.GREEN
+      : tone === "warn"
+        ? T.AMBER
+        : tone === "blocked"
+          ? T.RED
+          : T.INK;
+  return (
+    <article
+      style={{
+        border: `1px solid ${tone === "blocked" ? T.RED : T.RULE_STRONG}`,
+        borderRadius: 13,
+        background: "#fff",
+        padding: "16px 17px",
+        minHeight: 128,
+        boxShadow: "0 16px 34px rgba(15, 23, 42, 0.045)",
+      }}
+    >
+      <div
+        style={{
+          fontFamily: T.MONO,
+          fontSize: 10,
+          letterSpacing: "1.5px",
+          textTransform: "uppercase",
+          color: T.GRAY_DK,
+          fontWeight: 900,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          marginTop: 10,
+          fontFamily: T.SERIF,
+          fontSize: 31,
+          lineHeight: 1,
+          fontWeight: 900,
+          color,
+        }}
+      >
+        {value}
+      </div>
+      <div style={{ marginTop: 9, color: T.INK_2, fontSize: 13, lineHeight: 1.45 }}>
+        {detail}
+      </div>
+    </article>
+  );
+}
+
+function TowerMartLaneSummary({ rows }: { rows: ReadonlyArray<TowerMartProgramLane> }) {
+  const counts = rows.reduce<Record<string, number>>((acc, row) => {
+    acc[row.decisionLane] = (acc[row.decisionLane] ?? 0) + 1;
+    return acc;
+  }, {});
+  return (
+    <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
+      {["fund", "fix", "freeze", "stop"].map((lane) => {
+        const tone = martLaneTone(lane);
+        return (
+          <span
+            key={lane}
+            style={{
+              borderRadius: 999,
+              padding: "7px 10px",
+              background: tone.bg,
+              color: tone.fg,
+              fontWeight: 900,
+              fontSize: 12,
+            }}
+          >
+            {counts[lane] ?? 0} {laneLabel(lane)}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function TowerMartValueFunnel({ model }: { model: TowerMartCommandViewModel }) {
+  const promised = model.command.promisedValueFy26 || 1;
+  return (
+    <CioPanel eyebrow="Funding vs. value proof" title="Value Proof Funnel">
+      <p style={{ margin: "0 0 18px", color: T.INK_2, lineHeight: 1.55 }}>
+        Tower keeps the CFO line clean: funded change spend, promised value,
+        partial finance validation, and realized value are separate stages.
+      </p>
+      <div style={{ display: "grid", gap: 12 }}>
+        {model.valueFunnel.map((stage) => {
+          const width =
+            stage.stageKey === "realized_allowed"
+              ? 8
+              : Math.max(12, Math.min(100, Math.round((stage.valueNumeric / promised) * 100)));
+          const tone =
+            stage.stageKey === "realized_allowed"
+              ? T.RED
+              : stage.stageKey === "finance_validated_partial"
+                ? T.AMBER
+                : stage.stageKey === "promised_value"
+                  ? T.GREEN
+                  : T.INK;
+          return (
+            <div
+              key={stage.funnelKey}
+              style={{ display: "grid", gridTemplateColumns: "235px 1fr", gap: 14, alignItems: "center" }}
+            >
+              <div>
+                <div style={{ fontWeight: 900 }}>{stage.stageLabel}</div>
+                <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 2 }}>
+                  {stage.claimStatus} · {stage.caveat}
+                </div>
+              </div>
+              <div
+                style={{
+                  height: 35,
+                  borderRadius: 999,
+                  background: T.CREAM_DEEP,
+                  border: `1px solid ${T.RULE}`,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    width: `${width}%`,
+                    minWidth: 80,
+                    height: "100%",
+                    background: tone,
+                    color: "#fff",
+                    display: "flex",
+                    alignItems: "center",
+                    paddingLeft: 12,
+                    fontWeight: 900,
+                    fontSize: 13,
+                  }}
+                >
+                  {formatMoneyGap(stage.valueNumeric)}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </CioPanel>
+  );
+}
+
+function TowerMartDecisionLanes({ rows }: { rows: ReadonlyArray<TowerMartProgramLane> }) {
+  return (
+    <CioPanel eyebrow="Portfolio decision architecture" title="Portfolio Decision Lanes">
+      <p style={{ margin: "0 0 16px", color: T.INK_2, lineHeight: 1.55 }}>
+        The lane is computed in the Tower mart from budget ties, promised
+        value, usage, partial finance validation, claim gates, and source
+        caveats. Missing required fields become mart gaps.
+      </p>
+      <div style={{ display: "grid", gap: 13 }}>
+        {["fund", "fix", "freeze", "stop"].map((lane) => {
+          const laneRows = rows.filter((row) => row.decisionLane === lane);
+          const tone = martLaneTone(lane);
+          return (
+            <section
+              key={lane}
+              style={{
+                border: `1px solid ${T.RULE}`,
+                borderRadius: 14,
+                background: tone.bg,
+                padding: 14,
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                <h4 style={{ margin: 0, fontFamily: T.SERIF, fontSize: 21 }}>
+                  {laneLabel(lane)}
+                </h4>
+                <span style={{ fontWeight: 900, color: tone.fg }}>
+                  {laneRows.length} program{laneRows.length === 1 ? "" : "s"}
+                </span>
+              </div>
+              <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+                {laneRows.slice(0, 8).map((row) => (
+                  <div
+                    key={row.laneKey}
+                    style={{
+                      border: `1px solid ${T.RULE}`,
+                      borderRadius: 12,
+                      background: "rgba(255,255,255,.82)",
+                      padding: 13,
+                    }}
+                  >
+                    <strong>{row.programName}</strong>
+                    <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 3 }}>
+                      {row.ownerRole ?? "Owner gap"} · {formatMoneyGap(row.approvedFundingUsd)} funding · {formatMoneyGap(row.promisedValueUsd)} promised · {formatMoneyGap(row.financeValidatedValueUsd)} partial value
+                    </div>
+                    <div style={{ color: T.INK_2, fontSize: 13, lineHeight: 1.45, marginTop: 8 }}>
+                      {row.decisionRationale}
+                    </div>
+                  </div>
+                ))}
+                {laneRows.length === 0 ? (
+                  <div style={{ color: T.GRAY_DK, fontSize: 13 }}>
+                    No current mart rows in this lane.
+                  </div>
+                ) : null}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </CioPanel>
+  );
+}
+
+function TowerMartAiPortfolio({ rows }: { rows: ReadonlyArray<TowerMartAiPortfolioItem> }) {
+  const visibleRows = rows.slice(0, 18);
+  return (
+    <CioPanel eyebrow="AI spend, adoption, and readiness" title="AI Opportunity Portfolio">
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+          gap: 18,
+        }}
+      >
+        <div
+          style={{
+            position: "relative",
+            minHeight: 430,
+            border: `1px solid ${T.RULE}`,
+            borderRadius: 14,
+            background: "linear-gradient(90deg, transparent 49.8%, rgba(10,10,11,.10) 50%, transparent 50.2%), linear-gradient(0deg, transparent 49.8%, rgba(10,10,11,.10) 50%, transparent 50.2%), #fff",
+            overflow: "hidden",
+          }}
+        >
+          {visibleRows.slice(0, 14).map((row, index) => {
+            const left = Math.max(10, Math.min(90, row.readinessScore));
+            const top = Math.max(14, Math.min(88, 100 - row.valueScore));
+            const tone = martLaneTone(row.decisionLane);
+            return (
+              <div
+                key={row.aiPortfolioKey}
+                title={`${index + 1}. ${row.itemName}`}
+                style={{
+                  position: "absolute",
+                  left: `${left}%`,
+                  top: `${top}%`,
+                  transform: "translate(-50%, -50%)",
+                  display: "grid",
+                  placeItems: "center",
+                  width: 34,
+                  height: 34,
+                  borderRadius: 999,
+                  background: tone.fg,
+                  color: "#fff",
+                  fontWeight: 950,
+                  boxShadow: "0 10px 26px rgba(15,23,42,.22)",
+                }}
+              >
+                {index + 1}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{ display: "grid", gap: 9, alignContent: "start" }}>
+          {visibleRows.slice(0, 12).map((row, index) => {
+            const tone = martLaneTone(row.decisionLane);
+            return (
+              <div
+                key={row.aiPortfolioKey}
+                style={{
+                  border: `1px solid ${T.RULE}`,
+                  borderRadius: 12,
+                  background: "#fff",
+                  padding: 12,
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                  <strong>{index + 1}. {row.itemName}</strong>
+                  <span style={{ color: tone.fg, fontWeight: 900 }}>{laneLabel(row.decisionLane)}</span>
+                </div>
+                <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 4 }}>
+                  {row.vendorName ?? row.itemKind} · usage {row.usageActual ?? "n/a"} · adoption {martRatioText(row.adoptionRatePct)}
+                </div>
+                <div style={{ color: T.INK_2, fontSize: 12.5, lineHeight: 1.4, marginTop: 6 }}>
+                  {row.caveat}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </CioPanel>
+  );
+}
+
+function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel }) {
+  const [activeSection, setActiveSection] = useState<TowerMartSection>("command");
+  const command = model.command;
+  const blockingGaps = model.requiredFieldGaps.filter((gap) => gap.blocking);
+  return (
+    <div
+      style={{
+        padding: "0 32px 90px",
+        maxWidth: 1220,
+        margin: "0 auto",
+      }}
+      data-testid="tower-command-mart"
+    >
+      <section style={{ marginBottom: 24 }}>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            borderRadius: 999,
+            padding: "6px 10px",
+            background: T.GREEN_BG,
+            color: T.GREEN,
+            fontFamily: T.MONO,
+            fontSize: 10,
+            fontWeight: 900,
+            letterSpacing: "1.3px",
+            textTransform: "uppercase",
+          }}
+        >
+          <span style={{ width: 8, height: 8, borderRadius: 999, background: T.GREEN, display: "inline-block" }} />
+          Active Tower mart
+        </div>
+        <h2
+          style={{
+            margin: "14px 0 0",
+            fontFamily: T.SERIF,
+            fontSize: 43,
+            lineHeight: 1.02,
+            letterSpacing: "-0.03em",
+            color: T.INK,
+            fontWeight: 680,
+          }}
+        >
+          Investment Control Tower
+        </h2>
+        <p style={{ margin: "10px 0 0", color: T.INK_2, fontSize: 15, lineHeight: 1.5, maxWidth: 900 }}>
+          {command.executiveSummary}
+        </p>
+      </section>
+
+      <section
+        aria-label="Tower mart sections"
+        style={{ display: "flex", alignItems: "center", marginBottom: 22, borderBottom: `1px solid ${T.RULE}` }}
+      >
+        {TOWER_MART_SECTIONS.map((section) => {
+          const selected = section.key === activeSection;
+          return (
+            <button
+              key={section.key}
+              type="button"
+              onClick={() => setActiveSection(section.key)}
+              aria-pressed={selected}
+              style={{
+                position: "relative",
+                top: 1,
+                border: "none",
+                borderBottom: selected ? `2px solid ${T.GREEN}` : "2px solid transparent",
+                background: "transparent",
+                color: selected ? T.INK : T.INK_2,
+                padding: "12px 2px",
+                marginRight: 28,
+                fontSize: 16,
+                fontWeight: 500,
+                letterSpacing: "-0.01em",
+                fontFamily: T.SERIF,
+                cursor: "pointer",
+              }}
+            >
+              {section.label}
+            </button>
+          );
+        })}
+      </section>
+
+      {activeSection === "command" ? (
+        <section style={{ display: "grid", gap: 18 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
+            <TowerMartKpi label="Total IT budget FY26" value={formatMoneyGap(command.totalItBudgetFy26)} detail={`${command.sourceFiles.length} refreshed V3 source files`} />
+            <TowerMartKpi label="Run budget FY26" value={formatMoneyGap(command.runBudgetFy26)} detail={`${martRatioText(command.runRatio)} of total`} />
+            <TowerMartKpi label="Change budget FY26" value={formatMoneyGap(command.changeBudgetFy26)} detail={`${martRatioText(command.changeRatio)} of total`} />
+            <TowerMartKpi label="AI-tagged spend lens" value={formatMoneyGap(command.aiTaggedSpendFy26NonAdditive)} detail="Non-additive: already inside budget/program spend" />
+          </div>
+          <section
+            style={{
+              border: `1px solid ${T.RULE_STRONG}`,
+              background: T.INK,
+              color: "#fff",
+              borderRadius: 18,
+              padding: 24,
+            }}
+          >
+            <div style={{ fontFamily: T.MONO, fontSize: 10, color: T.GOLD, letterSpacing: "1.6px", textTransform: "uppercase", fontWeight: 900, marginBottom: 10 }}>
+              The question Tower exists to answer
+            </div>
+            <div style={{ fontFamily: T.SERIF, fontSize: 29, lineHeight: 1.15, letterSpacing: "-0.02em", maxWidth: 940 }}>
+              {command.decisionQuestion}
+            </div>
+            <TowerMartLaneSummary rows={model.programLanes} />
+          </section>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
+            <TowerMartKpi label="Approved program budget" value={formatMoneyGap(command.approvedProgramBudgetFy26)} detail={`${model.programLanes.length} program lane rows`} />
+            <TowerMartKpi label="Promised value FY26" value={formatMoneyGap(command.promisedValueFy26)} detail="Business-case value, not realized savings" />
+            <TowerMartKpi label="Partial finance validation" value={formatMoneyGap(command.partialFinanceValidatedValueYtd)} detail={`${martRatioText(command.financeValidationRatio)} of promised value`} tone="warn" />
+            <TowerMartKpi label="Realized value allowed" value={formatMoneyGap(command.realizedValueYtdAllowed)} detail="Blocked by claim gate" tone="blocked" />
+          </div>
+          {blockingGaps.length > 0 ? (
+            <CioPanel eyebrow="Blocking mart gaps" title="Required fields to fix upstream">
+              <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 8 }}>
+                {blockingGaps.map((gap) => (
+                  <li key={gap.gapKey}>{gap.sourceTemplate}: {gap.requiredField} — {gap.remediationAction}</li>
+                ))}
+              </ul>
+            </CioPanel>
+          ) : null}
+        </section>
+      ) : null}
+
+      {activeSection === "value" ? <TowerMartValueFunnel model={model} /> : null}
+      {activeSection === "lanes" ? <TowerMartDecisionLanes rows={model.programLanes} /> : null}
+      {activeSection === "ai" ? <TowerMartAiPortfolio rows={model.aiPortfolio} /> : null}
+      {activeSection === "actions" ? (
+        <CioPanel eyebrow="Next CXO moves" title="Recommended CXO Actions">
+          <div style={{ display: "grid", gap: 11 }}>
+            {model.cxoActions.map((action) => {
+              const tone = martLaneTone(action.actionLane);
+              return (
+                <div key={action.actionKey} style={{ border: `1px solid ${T.RULE}`, borderRadius: 12, background: "#fff", padding: 14 }}>
+	                  <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+	                    <strong>{action.title}</strong>
+	                    {action.ownerHint ? (
+	                      <span style={{ color: tone.fg, fontWeight: 900 }}>
+	                        {action.ownerHint}
+	                      </span>
+	                    ) : null}
+	                  </div>
+                  <div style={{ color: T.INK_2, fontSize: 13, lineHeight: 1.45, marginTop: 7 }}>{action.actionBody}</div>
+                  <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 6 }}>Handoff: {action.moduleHandoff ?? "Tower"}</div>
+                </div>
+              );
+            })}
+          </div>
+        </CioPanel>
+      ) : null}
+      {activeSection === "evidence" ? (
+        <CioPanel eyebrow="Trace" title="Evidence Lineage">
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <thead>
+                <tr>
+                  {["Fact", "Value", "Source file", "Rule / caveat"].map((head) => (
+                    <th key={head} style={{ textAlign: "left", padding: "0 10px 10px", fontFamily: T.MONO, fontSize: 9, letterSpacing: "1.2px", color: T.GRAY_DK, textTransform: "uppercase" }}>{head}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {model.evidenceLineage.map((row) => (
+                  <tr key={row.lineageKey} style={{ borderTop: `1px solid ${T.RULE}` }}>
+                    <td style={{ padding: "12px 10px", fontWeight: 900 }}>{row.displayedFact}</td>
+                    <td style={{ padding: "12px 10px" }}>{row.displayedValueText ?? formatMoneyGap(row.displayedValueNumeric ?? 0)}</td>
+                    <td style={{ padding: "12px 10px" }}>{row.sourceFile} {row.sourceRow ? `· ${row.sourceRow}` : ""}</td>
+                    <td style={{ padding: "12px 10px", color: T.INK_2 }}>{row.caveat}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CioPanel>
+      ) : null}
+    </div>
+  );
+}
+
 type CxoCommandSection =
+  | "command"
   | "value"
-  | "budget"
-  | "portfolio"
-  | "benchmark"
+  | "lanes"
+  | "ai"
+  | "actions"
   | "evidence";
 
 const CXO_COMMAND_SECTIONS: Array<{
@@ -2850,20 +4087,24 @@ const CXO_COMMAND_SECTIONS: Array<{
   label: string;
 }> = [
   {
+    key: "command",
+    label: "Command Center",
+  },
+  {
     key: "value",
-    label: "Value",
+    label: "Value Proof Funnel",
   },
   {
-    key: "budget",
-    label: "Budget",
+    key: "lanes",
+    label: "Decision Lanes",
   },
   {
-    key: "portfolio",
-    label: "Portfolio",
+    key: "ai",
+    label: "AI Portfolio",
   },
   {
-    key: "benchmark",
-    label: "Benchmark",
+    key: "actions",
+    label: "Recommended Actions",
   },
   {
     key: "evidence",
@@ -2879,40 +4120,119 @@ function CxoGovernedCommandCenter({
   budgetRollups?: ReadonlyArray<TowerBudgetRollup>;
 }) {
   const [activeSection, setActiveSection] =
-    useState<CxoCommandSection>("value");
-  const flagshipProgram = model.portfolioValueRows
-    .filter((row) => (row.promisedValueNumeric ?? 0) > 0)
-    .slice()
-    .sort(
-      (a, b) => (b.promisedValueNumeric ?? 0) - (a.promisedValueNumeric ?? 0),
-    )[0];
-  const commandCards = [
-    "total_it_budget_fy26",
-    "total_it_budget_fy25_baseline",
-    "run_budget_fy26",
-    "change_budget_fy26",
-    "initiative_budget_fy26",
-    "actual_spend_ytd",
-    "promised_value_fy26",
-    "measured_value_ytd",
-  ]
-    .map((measureKey) => findCxoCard(model.cards, measureKey))
-    .filter((card): card is CioTowerCxoMeasureCard => Boolean(card));
+    useState<CxoCommandSection>("command");
+  const total = findCxoCard(model.cards, "total_it_budget_fy26");
+  const run = findCxoCard(model.cards, "run_budget_fy26");
+  const change = findCxoCard(model.cards, "change_budget_fy26");
+  const approvedPrograms = findCxoCard(
+    model.cards,
+    "approved_program_budget_fy26",
+  ) ?? findCxoCard(model.cards, "initiative_budget_fy26");
+  const aiSpend = findCxoCard(
+    model.cards,
+    "ai_tagged_spend_fy26_non_additive",
+  );
+  const promised = findCxoCard(model.cards, "promised_value_fy26");
+  const financeValidated =
+    findCxoCard(model.cards, "partial_finance_validated_value_ytd") ??
+    findCxoCard(model.cards, "measured_value_ytd");
+  const realizedAllowed = findCxoCard(
+    model.cards,
+    "realized_value_ytd_allowed",
+  );
+  const candidateAi = findCxoCard(model.cards, "candidate_ai_opportunities");
+  const watchSignals = findCxoCard(model.cards, "watch_pressure_signals");
+  const runPct = Math.round((safeRatio(run?.valueNumeric, total?.valueNumeric) ?? 0) * 100);
+  const changePct = Math.round((safeRatio(change?.valueNumeric, total?.valueNumeric) ?? 0) * 100);
+  const visibleEvidenceCount = new Set(
+    model.cards.flatMap((card) => card.sourceFactKeys),
+  ).size;
+  const portfolioRows = model.portfolioValueRows.slice(0, 12);
+  const laneRows = buildCxoDecisionLaneRows(portfolioRows);
+  const aiRows = buildCxoAiRows(portfolioRows);
+  const evidenceRows = [
+    total,
+    run,
+    change,
+    approvedPrograms,
+    aiSpend,
+    promised,
+    financeValidated,
+    realizedAllowed,
+    candidateAi,
+    watchSignals,
+  ].filter((card): card is CioTowerCxoMeasureCard => Boolean(card));
   return (
     <div
       style={{
-        padding: "0 40px 90px",
-        maxWidth: 1080,
+        padding: "0 32px 90px",
+        maxWidth: 1220,
         margin: "0 auto",
       }}
+      data-testid="tower-investment-control-tower"
     >
+      <section style={{ marginBottom: 24 }}>
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            borderRadius: 999,
+            padding: "6px 10px",
+            background: T.GREEN_BG,
+            color: T.GREEN,
+            fontFamily: T.MONO,
+            fontSize: 10,
+            fontWeight: 900,
+            letterSpacing: "1.3px",
+            textTransform: "uppercase",
+          }}
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: 999,
+              background: T.GREEN,
+              display: "inline-block",
+            }}
+          />
+          Active portfolio context
+        </div>
+        <h2
+          style={{
+            margin: "14px 0 0",
+            fontFamily: T.SERIF,
+            fontSize: 43,
+            lineHeight: 1.02,
+            letterSpacing: "-0.03em",
+            color: T.INK,
+            fontWeight: 680,
+          }}
+        >
+          Investment Control Tower
+        </h2>
+        <p
+          style={{
+            margin: "10px 0 0",
+            color: T.INK_2,
+            fontSize: 15,
+            lineHeight: 1.5,
+            maxWidth: 860,
+          }}
+        >
+          Where money, risk, AI demand, and value evidence are misaligned, and
+          what a CIO/CFO should fund, fix, freeze, or stop next.
+        </p>
+      </section>
+
       <section
         aria-label="Tower command center sections"
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "flex-start",
-          marginBottom: 30,
+          marginBottom: 22,
           borderBottom: `1px solid ${T.RULE}`,
         }}
       >
@@ -2958,133 +4278,173 @@ function CxoGovernedCommandCenter({
         </div>
       </section>
 
-      {activeSection === "value" ? (
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr)",
-            gap: 18,
-            marginBottom: 18,
-          }}
-        >
-          {flagshipProgram ? (
-            <section style={{ minWidth: 0 }}>
-              <ValueBridgeChart program={flagshipProgram} />
-            </section>
-          ) : null}
+      {activeSection === "command" ? (
+        <section style={{ display: "grid", gap: 18 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              gap: 12,
+            }}
+          >
+            <TowerCommandKpi title="Total IT budget FY26" card={total} />
+            <TowerCommandKpi title="Run budget FY26" card={run} detail={`${runPct}% of total`} />
+            <TowerCommandKpi title="Change budget FY26" card={change} detail={`${changePct}% of total`} />
+            <TowerCommandKpi title="AI-tagged spend lens" card={aiSpend} detail="Non-additive; inside the total" />
+          </div>
 
-          <div>
+          <section
+            style={{
+              border: `1px solid ${T.RULE_STRONG}`,
+              background: "#fff",
+              borderRadius: 16,
+              padding: 20,
+              boxShadow: "0 18px 38px rgba(15, 23, 42, 0.045)",
+            }}
+          >
+            <div style={{ display: "grid", gridTemplateColumns: "1.1fr .9fr", gap: 24 }}>
+              <div>
+                <div
+                  style={{
+                    fontFamily: T.MONO,
+                    fontSize: 10,
+                    color: T.GOLD,
+                    letterSpacing: "1.6px",
+                    textTransform: "uppercase",
+                    fontWeight: 900,
+                    marginBottom: 12,
+                  }}
+                >
+                  Where the money is
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    height: 42,
+                    borderRadius: 999,
+                    overflow: "hidden",
+                    background: T.CREAM_DEEP,
+                    border: `1px solid ${T.RULE}`,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${Math.max(0, Math.min(100, runPct))}%`,
+                      background: T.INK,
+                      color: "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 850,
+                      fontSize: 13,
+                    }}
+                  >
+                    Run {run?.displayValue ?? "gap"}
+                  </div>
+                  <div
+                    style={{
+                      flex: 1,
+                      background: T.GREEN,
+                      color: "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 850,
+                      fontSize: 13,
+                    }}
+                  >
+                    Change {change?.displayValue ?? "gap"}
+                  </div>
+                </div>
+                <p style={{ color: T.INK_2, fontSize: 14, lineHeight: 1.55, margin: "14px 0 0" }}>
+                  This is a healthcare-appropriate run-heavy posture. The
+                  leadership question is whether enough of the run base can be
+                  optimized to fund the data/AI foundation and the priority
+                  portfolio without calling promised value realized.
+                </p>
+              </div>
+              <div style={{ display: "grid", gap: 10 }}>
+                <TowerCommandMini title="Approved programs" card={approvedPrograms} />
+                <TowerCommandMini title="Candidate AI opportunities" card={candidateAi} />
+                <TowerCommandMini title="Watch pressure signals" card={watchSignals} />
+                <TowerCommandMini title="Realized value allowed" card={realizedAllowed} gated />
+              </div>
+            </div>
+          </section>
+
+          <section
+            style={{
+              border: `1px solid ${T.RULE_STRONG}`,
+              background: T.INK,
+              color: "#fff",
+              borderRadius: 18,
+              padding: 24,
+            }}
+          >
             <div
               style={{
                 fontFamily: T.MONO,
-                fontSize: 9.5,
-                letterSpacing: "1.5px",
-                textTransform: "uppercase",
+                fontSize: 10,
                 color: T.GOLD,
+                letterSpacing: "1.6px",
+                textTransform: "uppercase",
                 fontWeight: 900,
-                marginBottom: 9,
+                marginBottom: 10,
               }}
             >
-              Value Command Center
+              The question Tower exists to answer
             </div>
             <div
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                gap: 12,
+                fontFamily: T.SERIF,
+                fontSize: 29,
+                lineHeight: 1.15,
+                letterSpacing: "-0.02em",
+                maxWidth: 940,
               }}
             >
-              {commandCards.map((card) => (
-                <CxoGovernedMeasureCard key={card.measureKey} card={card} />
+              Given our budget, programs, vendors, risks, AI demand, and
+              evidence gaps, which transformation investments should we{" "}
+              <b>fund, fix, freeze, or stop</b>, and why?
+            </div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
+              {Object.entries(countDecisionLanes(laneRows)).map(([lane, count]) => (
+                <TowerLanePill key={lane} lane={lane} count={count} />
               ))}
             </div>
-          </div>
+          </section>
         </section>
       ) : null}
 
-      {activeSection === "budget" ? (
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr)",
-            gap: 18,
-            marginBottom: 18,
-          }}
-        >
-          {budgetRollups.length > 0 ? (
-            <CioPanel
-              eyebrow="Budget by Entity"
-              title="Holdco and operating companies, run vs. change."
-            >
-              <BudgetRunChangeChart rows={budgetRollups} />
-            </CioPanel>
-          ) : null}
-
-          <CioPanel eyebrow="Budget Mix" title="Where the money is committed.">
-            <CxoBudgetMix cards={model.cards} />
-          </CioPanel>
-
-          <CioPanel
-            eyebrow="Value Realization"
-            title="Whether the portfolio is paying back."
-          >
-            <CxoValueRealization cards={model.cards} />
-          </CioPanel>
-        </section>
+      {activeSection === "value" ? (
+        <TowerValueFunnel
+          change={change}
+          promised={promised}
+          financeValidated={financeValidated}
+          realizedAllowed={realizedAllowed}
+          rows={portfolioRows}
+        />
       ) : null}
 
-      {activeSection === "portfolio" ? (
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr)",
-            gap: 18,
-            marginBottom: 18,
-          }}
-        >
-          {model.portfolioValueRows.length > 0 ? (
-            <CioPanel
-              eyebrow="Value Proven"
-              title="How much of the promise is proven, by program."
-            >
-              <ValueProvenBarChart rows={model.portfolioValueRows} />
-            </CioPanel>
-          ) : null}
-
-          <CioPanel
-            eyebrow="Portfolio Value Pack"
-            title="Which funded programs have value proof, owners, blockers, and gaps."
-          >
-            <CxoPortfolioValuePackTable rows={model.portfolioValueRows} />
-          </CioPanel>
-        </section>
+      {activeSection === "lanes" ? (
+        <TowerDecisionLanes rows={laneRows} />
       ) : null}
 
-      {activeSection === "benchmark" ? (
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr)",
-            gap: 18,
-            marginBottom: 18,
-          }}
-        >
-          {model.benchmarkRows.length > 0 ? (
-            <section style={{ minWidth: 0 }}>
-              <BenchmarkPeer2x2Chart
-                rows={model.benchmarkRows}
-                currentTenantName={model.tenantName}
-              />
-            </section>
-          ) : null}
+      {activeSection === "ai" ? (
+        <TowerAiPortfolio
+          aiSpend={aiSpend}
+          candidateAi={candidateAi}
+          rows={aiRows}
+        />
+      ) : null}
 
-          <CioPanel
-            eyebrow="Tenant Benchmark"
-            title="How this portfolio compares with peers."
-          >
-            <CxoTenantBenchmark model={model} />
-          </CioPanel>
-        </section>
+      {activeSection === "actions" ? (
+        <TowerRecommendedActions
+          run={run}
+          total={total}
+          aiSpend={aiSpend}
+          rows={laneRows}
+        />
       ) : null}
 
       {activeSection === "evidence" ? (
@@ -3097,14 +4457,40 @@ function CxoGovernedCommandCenter({
           }}
         >
           <CioPanel
-            eyebrow="Evidence and Trust"
-            title="Where leadership can inspect the numbers."
+            eyebrow="Trace"
+            title="Evidence"
           >
-            <CxoGovernedTable
-              rows={model.trustRows}
-              emptyTitle="Source detail is not ready yet."
-              emptyBody="Tower needs source references before it can show the inspection path."
-            />
+            <div
+              style={{
+                border: `1px solid ${T.GREEN}`,
+                background: T.GREEN_BG,
+                borderRadius: 12,
+                padding: 14,
+                marginBottom: 16,
+                color: T.INK,
+                lineHeight: 1.5,
+              }}
+            >
+              Every number shown here comes from the governed Tower read model.
+              This view has {visibleEvidenceCount} source fact reference
+              {visibleEvidenceCount === 1 ? "" : "s"} in the visible command
+              cards; Tower narrates and displays, it does not invent values.
+            </div>
+            <TowerEvidenceTable rows={evidenceRows} />
+            {model.gaps.length > 0 ? (
+              <div style={{ marginTop: 18 }}>
+                <h4 style={{ margin: "0 0 10px", color: T.INK }}>
+                  Data gaps to address
+                </h4>
+                <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 6 }}>
+                  {model.gaps.map((gap) => (
+                    <li key={gap} style={{ color: T.INK_2, lineHeight: 1.45 }}>
+                      {gap}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </CioPanel>
         </section>
       ) : null}
@@ -6823,6 +8209,8 @@ interface TowerIndexPageProps {
   metricPackets?: ReadonlyArray<CioTowerMetricPacket>;
   /** Derived CXO command-center projection from cio_tower.*; not the Tower source of truth. */
   cxoView?: CioTowerCxoViewModel | null;
+  /** Persistent Tower command-center mart derived from refreshed V3 source rows. */
+  towerMartView?: TowerMartCommandViewModel | null;
   /** Flagged TowerContextPack runtime view for selected measurement/readiness proof. */
   towerV3RuntimeView?: TowerV3RuntimeViewModel | null;
   /**
@@ -6874,6 +8262,7 @@ export function TowerIndexPage({
   budgetRollups,
   metricPackets,
   cxoView,
+  towerMartView,
   towerV3RuntimeView,
   bandMetrics,
   pressuresView,
@@ -6987,6 +8376,7 @@ export function TowerIndexPage({
     cxoView?.tenantName ?? tenantName,
   );
   const hasTowerEvidenceForAva =
+    Boolean(towerMartView) ||
     Boolean(cxoView) ||
     cioDashboardModel.initiativeCount > 0 ||
     cioDashboardModel.initiativeEvidenceCount > 0 ||
@@ -7002,8 +8392,10 @@ export function TowerIndexPage({
   const initialOpener: AtlasMessage = {
     id: "atlas-opener",
     role: "atlas",
-    content: cxoView
-      ? cxoView.headline
+    content: towerMartView
+      ? towerMartView.headline
+      : cxoView
+        ? cxoView.headline
       : hasTowerEvidenceForAva
         ? cioDashboardModel.executiveNarrative
         : (atlasObservationsView?.headline ??
@@ -7145,11 +8537,16 @@ export function TowerIndexPage({
   );
 
   const towerMastheadName =
-    towerV3RuntimeView?.tenantName ?? cxoView?.tenantName ?? tenantName;
-  const towerBudgetEnvelope = !towerV3RuntimeView && cxoView
+    towerMartView?.command.tenantName ??
+    towerV3RuntimeView?.tenantName ??
+    cxoView?.tenantName ??
+    tenantName;
+  const towerBudgetEnvelope = !towerMartView && !towerV3RuntimeView && cxoView
     ? findCxoCard(cxoView.cards, "total_it_budget_fy26")
     : null;
-  const towerEntityCount = towerV3RuntimeView
+  const towerEntityCount = towerMartView
+    ? towerMartView.programLanes.length + towerMartView.aiPortfolio.length
+    : towerV3RuntimeView
     ? towerV3RuntimeView.metricCount + towerV3RuntimeView.valueRecordCount
     : (budgetRollups?.length ?? 0);
 
@@ -7339,13 +8736,15 @@ export function TowerIndexPage({
                 pressure={detailPressure}
                 closeHref={closeDetailHref}
               />
-            ) : towerV3RuntimeView ? (
-              <TowerContextRuntimePanel view={towerV3RuntimeView} />
+            ) : towerMartView ? (
+              <TowerMartCommandCenter model={towerMartView} />
             ) : cxoView ? (
               <CxoGovernedCommandCenter
                 model={cxoView}
                 budgetRollups={budgetRollups}
               />
+            ) : towerV3RuntimeView ? (
+              <TowerContextRuntimePanel view={towerV3RuntimeView} />
             ) : (
               <>
                 <CioDashboardTabs

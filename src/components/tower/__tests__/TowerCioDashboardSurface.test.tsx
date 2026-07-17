@@ -20,6 +20,7 @@ import {
   type CioTowerMetricPacket,
 } from "@/lib/cio-tower/metric-packet";
 import type { CioTowerCxoViewModel } from "@/lib/cio-tower/cxo-view-model";
+import type { TowerMartCommandViewModel } from "@/lib/cio-tower/tower-mart-view-model";
 import type { TowerBudgetRollup } from "@/lib/tower/tower-budget-rollups";
 
 let query = new URLSearchParams();
@@ -371,6 +372,178 @@ const GOVERNED_CXO_VIEW: CioTowerCxoViewModel = {
   parityMeasureKey: "total_it_budget_fy26",
 };
 
+const TOWER_MART_VIEW: TowerMartCommandViewModel = {
+  generatedFrom: "cio_tower_mart",
+  headline:
+    "Healthcare Demo has $650.0M of FY26 technology budget, $53.7M of AI-tagged spend inside that envelope, and $0 of allowed realized value claims.",
+  command: {
+    commandCenterKey: "meridian-health:tower_command_mart_v1:command_center",
+    tenantKey: "meridian-health",
+    tenantName: "Healthcare Demo",
+    martVersion: "tower_command_mart_v1",
+    sourceStandard: "standard-2026-07-v3",
+    formulaVersion: "meridian_v3_tower_projection_v1",
+    totalItBudgetFy26: 650_000_000,
+    runBudgetFy26: 487_500_000,
+    changeBudgetFy26: 162_500_000,
+    approvedProgramBudgetFy26: 291_900_000,
+    aiTaggedSpendFy26NonAdditive: 53_700_000,
+    promisedValueFy26: 35_500_000,
+    partialFinanceValidatedValueYtd: 3_800_000,
+    realizedValueYtdAllowed: 0,
+    candidateAiOpportunities: 242,
+    watchPressureSignals: 80,
+    runRatio: 0.75,
+    changeRatio: 0.25,
+    financeValidationRatio: 0.107,
+    decisionQuestion:
+      "Given our budget, programs, vendors, risks and evidence gaps — which transformation investments should we fund, fix, freeze, or stop, and why?",
+    executiveSummary:
+      "The command-center mart ties the refreshed Meridian v3 budget, program, AI spend, benefit, usage, and interview context to deterministic Tower decisions.",
+    sourceFiles: [
+      "08_it_budget_spend_value.csv",
+      "09_programs_initiatives.csv",
+      "SA08_ai_benefits_realization_usage.csv",
+    ],
+  },
+  valueFunnel: [
+    {
+      funnelKey: "meridian-health:funded_change_spend",
+      sequence: 1,
+      stageKey: "funded_change_spend",
+      stageLabel: "Funded change spend",
+      valueNumeric: 162_500_000,
+      denominatorStageKey: null,
+      conversionRatio: null,
+      claimStatus: "funded",
+      caveat: "Funded spend is not realized value.",
+      sourceFile: "08_it_budget_spend_value.csv",
+      sourceRow: "rollup",
+    },
+    {
+      funnelKey: "meridian-health:realized_allowed",
+      sequence: 4,
+      stageKey: "realized_allowed",
+      stageLabel: "Realized value allowed",
+      valueNumeric: 0,
+      denominatorStageKey: "promised_value",
+      conversionRatio: 0,
+      claimStatus: "blocked",
+      caveat: "No row currently clears the Tower value-claim gate.",
+      sourceFile: "SA08_ai_benefits_realization_usage.csv",
+      sourceRow: "rollup",
+    },
+  ],
+  programLanes: [
+    {
+      laneKey: "meridian-health:m365-copilot-productivity",
+      programCode: "MER-PRG-018",
+      programName: "M365 Copilot Productivity",
+      ownerRole: "CIO",
+      financeOwnerRole: "CFO",
+      decisionLane: "fix",
+      decisionRationale:
+        "Usage and finance validation are partial; fix adoption before expanding license spend.",
+      approvedFundingUsd: 14_000_000,
+      aiTaggedSpendUsd: 14_000_000,
+      promisedValueUsd: 14_000_000,
+      financeValidatedValueUsd: 2_100_000,
+      usageMetric: "weekly_active_users",
+      usageActual: 8200,
+      adoptionRatePct: 0.62,
+      valueClaimStatus: "measured_partial",
+      towerClaimAllowed: "partial",
+      requiredGates: [],
+      caveat: "Measured partial; not realized value.",
+      sourceFile: "SA08_ai_benefits_realization_usage.csv",
+      sourceRow: "MER-SA08-001",
+    },
+  ],
+  aiPortfolio: [
+    {
+      aiPortfolioKey: "meridian-health:m365-copilot-productivity",
+      itemName: "M365 Copilot Productivity",
+      itemKind: "approved_program",
+      vendorName: "Microsoft",
+      systemName: "Microsoft 365",
+      aiSpendType: "embedded_platform_ai",
+      aiSpendCategory: "copilot_productivity",
+      fundingStatus: "approved",
+      decisionLane: "fix",
+      approvedFundingUsd: 14_000_000,
+      aiTaggedSpendUsd: 14_000_000,
+      promisedValueUsd: 14_000_000,
+      financeValidatedValueUsd: 2_100_000,
+      usageMetric: "weekly_active_users",
+      usageActual: 8200,
+      adoptionRatePct: 0.62,
+      valueScore: 7,
+      readinessScore: 5,
+      riskScore: 6,
+      duplicateRisk: "low",
+      valueClaimStatus: "measured_partial",
+      towerClaimAllowed: "partial",
+      caveat: "Usage exists, but benefit evidence remains partial.",
+      sourceFile: "SA08_ai_benefits_realization_usage.csv",
+      sourceRow: "MER-SA08-001",
+    },
+    {
+      aiPortfolioKey: "meridian-health:member-service-ai-assist",
+      itemName: "Member Service AI Assist",
+      itemKind: "candidate_opportunity",
+      vendorName: null,
+      systemName: "Contact center platform",
+      aiSpendType: "candidate_ai_opportunity",
+      aiSpendCategory: "crm_contact_center_ai",
+      fundingStatus: "not_approved",
+      decisionLane: "freeze",
+      approvedFundingUsd: 0,
+      aiTaggedSpendUsd: 0,
+      promisedValueUsd: 0,
+      financeValidatedValueUsd: 0,
+      usageMetric: null,
+      usageActual: null,
+      adoptionRatePct: null,
+      valueScore: 8,
+      readinessScore: 3,
+      riskScore: 8,
+      duplicateRisk: "none",
+      valueClaimStatus: "not_claimable",
+      towerClaimAllowed: "blocked",
+      caveat: "Candidate only; no approved funding or realized value.",
+      sourceFile: "10_ai_automation_use_cases.csv",
+      sourceRow: "MER-AI-ASSIST",
+    },
+  ],
+  cxoActions: [
+    {
+      actionKey: "meridian-health:inspect-copilot",
+      sequence: 1,
+      actionLane: "fix",
+      title: "Fix Copilot adoption before expansion",
+      actionBody:
+        "Inspect usage, cohort adoption, and finance validation before adding licenses.",
+      ownerHint: "CIO + CFO",
+      moduleHandoff: "Tower",
+    },
+  ],
+  evidenceLineage: [
+    {
+      lineageKey: "meridian-health:total-budget",
+      surfaceSection: "command_center",
+      displayedFact: "Total IT budget FY26",
+      displayedValueText: "$650.0M",
+      displayedValueNumeric: 650_000_000,
+      sourceFile: "08_it_budget_spend_value.csv",
+      sourceRow: "rollup",
+      sourceSystem: "Meridian v3 source packet",
+      caveat: "Budget fact; not value realized.",
+    },
+  ],
+  requiredFieldGaps: [],
+};
+
+
 const OVER_PROVEN_INITIATIVES: AIInitiative[] = INITIATIVES.map(
   (initiative, index) => ({
     ...initiative,
@@ -429,9 +602,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       />,
     );
 
-    expect(
-      screen.getByText("CIO portfolio command center"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("CXO Executive Dashboard")).toBeInTheDocument();
     expect(screen.queryByText("Tower · CIO command center")).not.toBeInTheDocument();
     expect(screen.queryByText(/12:00 AM/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Tuesday/i)).not.toBeInTheDocument();
@@ -724,28 +895,56 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       />,
     );
 
-    expect(screen.getByText("Executive operating view")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Value" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Budget" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Portfolio" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Benchmark" })).toBeInTheDocument();
+    expect(screen.getByText("Investment Control Tower")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Command Center" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Value Proof Funnel" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Decision Lanes" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "AI Portfolio" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Recommended Actions" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Evidence" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Ask aVa" })).toBeInTheDocument();
+    expect(screen.getByRole("form", { name: "Ask aVa" })).toBeInTheDocument();
     expect(screen.queryByText("Tower · CIO command center")).not.toBeInTheDocument();
     expect(screen.queryByText(/12:00 AM/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Tuesday/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Run\/change, funded work/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Start here: how much are we spending/i)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Portfolio" }));
-    expect(screen.getByText("Portfolio Value Pack")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Decision Lanes" }));
+    expect(screen.getByText("Portfolio Decision Lanes")).toBeInTheDocument();
     expect(screen.getByText("Crew Recovery & Legality Modernization")).toBeInTheDocument();
-    expect(screen.getByText("VP Integration")).toBeInTheDocument();
-    expect(screen.getByText("$28.3M")).toBeInTheDocument();
-    expect(screen.getByText("$270.0M")).toBeInTheDocument();
-    expect(screen.getByText("$91.8M")).toBeInTheDocument();
-    expect(screen.getByText("$178.2M")).toBeInTheDocument();
-    expect(screen.getByText("Crew legality and data readiness")).toBeInTheDocument();
+    expect(screen.getByText(/VP Integration/)).toBeInTheDocument();
+    expect(screen.getByText(/\$28\.3M/)).toBeInTheDocument();
+    expect(screen.getAllByText(/\$270\.0M/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/\$91\.8M/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Value evidence is active/)).toBeInTheDocument();
     expect(screen.queryByText("cio_tower")).not.toBeInTheDocument();
+  });
+
+  it("renders the Tower command mart ahead of legacy or bridge views", () => {
+    render(
+      <TowerIndexPage
+        tenantName="Healthcare Demo"
+        context="Tower"
+        towerToday="2026-07-17"
+        clientId="client-meridian"
+        initiatives={[]}
+        vendors={[]}
+        activeTab="portfolio"
+        cxoView={GOVERNED_CXO_VIEW}
+        towerMartView={TOWER_MART_VIEW}
+      />,
+    );
+
+    expect(screen.getByText("Investment Control Tower")).toBeInTheDocument();
+    expect(screen.getByText("Active Tower mart")).toBeInTheDocument();
+    expect(screen.getByText("$650.0M")).toBeInTheDocument();
+    expect(screen.getByText("$53.7M")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Decision Lanes" }));
+    expect(screen.getByText("M365 Copilot Productivity")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "AI Portfolio" }));
+    expect(screen.getByText(/Member Service AI Assist/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Recommended Actions" }));
+    expect(screen.getByText("Fix Copilot adoption before expansion")).toBeInTheDocument();
+    expect(screen.queryByText("$2.6B")).not.toBeInTheDocument();
   });
 
   it("uses executive-grade aVa starter questions for the CIO dock", () => {

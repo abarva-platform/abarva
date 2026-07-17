@@ -13,6 +13,7 @@ const ENTERPRISE_ENTITY_KEY = `${TENANT_KEY}::enterprise`;
 const ENTERPRISE_ENTITY_TYPE = "holding_company";
 const STANDARD_VERSION = "standard-2026-07-v3";
 const FORMULA_VERSION = "meridian_v3_cio_tower_projection_v1";
+const MART_VERSION = "tower_command_mart_v1";
 const DEFAULT_OUT_DIR = path.join(ROOT, "reports/meridian-v3-cio-tower-projection");
 const args = new Set(process.argv.slice(2));
 const OUT_DIR = valueArg("--out-dir") ?? DEFAULT_OUT_DIR;
@@ -819,6 +820,7 @@ function buildProjection() {
       source_packet_refreshed: true,
       azure_postgres_written_by_this_run: false,
       active_tenant_access_updated: false,
+      tower_command_mart_projected: true,
       realized_value_language_allowed: false,
       partial_value_language_allowed_with_caveat: true,
     },
@@ -853,6 +855,14 @@ function buildProjection() {
     question_contracts: questionContracts,
     measure_results: measureResults,
   };
+  projection.mart = buildTowerMart(projection);
+  projection.output_counts.mart_command_center = projection.mart.command_center.length;
+  projection.output_counts.mart_value_funnel = projection.mart.value_funnel.length;
+  projection.output_counts.mart_program_decision_lanes = projection.mart.program_decision_lanes.length;
+  projection.output_counts.mart_ai_portfolio = projection.mart.ai_portfolio.length;
+  projection.output_counts.mart_cxo_actions = projection.mart.cxo_actions.length;
+  projection.output_counts.mart_evidence_lineage = projection.mart.evidence_lineage.length;
+  projection.output_counts.mart_required_field_gaps = projection.mart.required_field_gaps.length;
 
   return projection;
 }
@@ -874,7 +884,6 @@ function buildDecisionLenses(data, { aiSpendRows, benefitRows, programRows, cand
     .filter((row) => row.initiative_status === "active" || row.funding_status === "approved")
     .map((row) => {
       const benefit = benefitsByProgram.get(row.program_code);
-      const spendRows = aiSpendRows.filter((spend) => spend.program_code === row.program_code);
       const posture =
         benefit?.tower_claim_allowed === "partial"
           ? "working_partial_value"
@@ -887,10 +896,15 @@ function buildDecisionLenses(data, { aiSpendRows, benefitRows, programRows, cand
         program_code: row.program_code,
         program_name: row.program_name,
         approved_funding_usd: number(row.approved_funding_usd),
-      ai_tagged_spend_usd: number(row.ai_tagged_approved_funding_usd),
+        ai_tagged_spend_usd: number(row.ai_tagged_approved_funding_usd),
+        promised_value_usd: benefit ? number(benefit.promised_value_usd) : 0,
         ai_spend_category: row.ai_spend_category || "not_ai",
         executive_owner: row.executive_owner,
         finance_owner: row.finance_owner,
+        evidence_id: row.evidence_id || benefit?.evidence_id || "",
+        source_record_id: row.source_record_id || row.program_code,
+        funding_status: row.funding_status,
+        initiative_status: row.initiative_status,
         usage_metric: benefit?.usage_metric || "",
         usage_actual: benefit ? number(benefit.usage_actual) : null,
         adoption_rate_pct: benefit ? number(benefit.adoption_rate_pct) : null,
@@ -927,6 +941,7 @@ function buildDecisionLenses(data, { aiSpendRows, benefitRows, programRows, cand
       caveat: row.caveat,
     })),
     candidate_ai_opportunities: candidateUseCases.map((row) => ({
+      source_record_id: row.source_record_id || row.record_id || row.business_name,
       use_case: row.use_case || row.business_name,
       business_problem: row.business_problem,
       affected_process: row.affected_process,
@@ -937,6 +952,361 @@ function buildDecisionLenses(data, { aiSpendRows, benefitRows, programRows, cand
       caveat: row.caveat,
     })),
     watch_pressure_themes: summarizePressureThemes(pressureFacts),
+  };
+}
+
+function ratio(numerator, denominator) {
+  const den = Number(denominator || 0);
+  if (!den) return null;
+  return Number(numerator || 0) / den;
+}
+
+function decisionLaneForProgram(row) {
+  if (row.tower_claim_allowed === "partial" && Number(row.partial_finance_validated_value_usd || 0) > 0) return "fund";
+  if (row.funding_status !== "approved" && row.funding_status !== "active") return "freeze";
+  if (!row.approved_funding_usd) return "stop";
+  if (!row.promised_value_usd) return "freeze";
+  if (["baseline_only", "readiness_only", "not_claimable"].includes(row.value_claim_status)) return "fix";
+  if (row.posture === "watch_foundation_or_not_claimable") return "freeze";
+  return "fix";
+}
+
+function decisionRationaleForProgram(row, lane) {
+  if (lane === "fund") {
+    return `${row.program_name} has usage and partial finance validation, but Tower still treats the value as partial, not realized.`;
+  }
+  if (lane === "fix") {
+    return `${row.program_name} has approved funding or promised value, but baseline, KPI, usage, or finance evidence must be completed before scaling the next tranche.`;
+  }
+  if (lane === "freeze") {
+    return `${row.program_name} should not receive incremental funding until its funding boundary, readiness gate, or evidence posture is resolved.`;
+  }
+  return `${row.program_name} is missing the required budget/value/proof chain and should not be treated as an active value bet.`;
+}
+
+function gatesForProgram(row) {
+  const gates = [];
+  if (!row.executive_owner) gates.push({ gate: "owner", status: "missing", ask: "Name accountable executive owner." });
+  if (!row.approved_funding_usd) gates.push({ gate: "budget", status: "missing", ask: "Tie the program to 08/SA02 budget rows." });
+  if (!row.promised_value_usd) gates.push({ gate: "value_case", status: "missing", ask: "Load promised value or mark as no-value/mandatory spend." });
+  if (!row.usage_metric) gates.push({ gate: "usage", status: "missing", ask: "Load usage/adoption metric from the benefits ledger." });
+  if (!row.partial_finance_validated_value_usd) gates.push({ gate: "finance_validation", status: "partial_or_missing", ask: "Load finance validation or keep value claim blocked." });
+  if (row.caveat) gates.push({ gate: "caveat", status: "open", ask: row.caveat });
+  return gates;
+}
+
+function factKeysForMeasure(facts, measure) {
+  return facts.filter((row) => row.measure === measure).map((row) => row.fact_key);
+}
+
+function sourceFilesForProjection() {
+  return Object.values(FILES).map((file) => `datasets/tenant-inputs/${TENANT_KEY}/${STANDARD_VERSION}/${file}`);
+}
+
+function buildTowerMart(projection) {
+  const headline = projection.headline;
+  const sourceFiles = sourceFilesForProjection();
+  const sourceFactKeys = [
+    ...factKeysForMeasure(projection.facts, "total_it_budget_fy26"),
+    ...factKeysForMeasure(projection.facts, "run_budget_fy26"),
+    ...factKeysForMeasure(projection.facts, "change_budget_fy26"),
+    ...factKeysForMeasure(projection.facts, "ai_tagged_spend_fy26"),
+    ...factKeysForMeasure(projection.facts, "promised_value_fy26"),
+    ...factKeysForMeasure(projection.facts, "partial_finance_validated_value_ytd"),
+  ];
+  const commandCenter = {
+    command_center_key: `${TENANT_KEY}::${MART_VERSION}::command-center`,
+    tenant_key: TENANT_KEY,
+    tenant_name: TENANT_LABEL,
+    mart_version: MART_VERSION,
+    source_standard: STANDARD_VERSION,
+    formula_version: FORMULA_VERSION,
+    source_run_id: "2026-07-17-meridian-v3-refresh",
+    total_it_budget_fy26: headline.total_it_budget_fy26,
+    run_budget_fy26: headline.run_budget_fy26,
+    change_budget_fy26: headline.change_budget_fy26,
+    approved_program_budget_fy26: headline.approved_program_budget_fy26,
+    ai_tagged_spend_fy26_non_additive: headline.ai_tagged_spend_fy26_non_additive,
+    promised_value_fy26: headline.promised_value_fy26,
+    partial_finance_validated_value_ytd: headline.partial_finance_validated_value_ytd,
+    realized_value_ytd_allowed: headline.realized_value_ytd_allowed,
+    candidate_ai_opportunities: headline.candidate_ai_opportunities,
+    watch_pressure_signals: headline.watch_pressure_signals,
+    run_ratio: ratio(headline.run_budget_fy26, headline.total_it_budget_fy26),
+    change_ratio: ratio(headline.change_budget_fy26, headline.total_it_budget_fy26),
+    finance_validation_ratio: ratio(headline.partial_finance_validated_value_ytd, headline.promised_value_fy26),
+    decision_question:
+      "Given our budget, programs, vendors, risks, AI demand, and evidence gaps, which transformation investments should we fund, fix, freeze, or stop, and why?",
+    executive_summary:
+      "Tower is a CXO command mart: it separates funded spend, promised value, partial finance validation, and blocked realized-value claims before recommending fund/fix/freeze/stop decisions.",
+    source_fact_keys: sourceFactKeys,
+    source_files: sourceFiles,
+  };
+
+  const valueFunnel = [
+    ["funded_change_spend", "Funded change spend", headline.change_budget_fy26, null, "committed", "FY26 change budget from 08 additive budget facts."],
+    ["promised_value", "Promised value", headline.promised_value_fy26, "funded_change_spend", "forecast", "Business-case value from SA08; not realized value."],
+    ["finance_validated_partial", "Finance-validated partial value", headline.partial_finance_validated_value_ytd, "promised_value", "partial", "Partial finance-validated evidence only; do not call realized savings."],
+    ["realized_allowed", "Realized value allowed", headline.realized_value_ytd_allowed, "promised_value", "blocked", "Blocked unless source rows explicitly allow realized/proven/delivered value."],
+  ].map(([stageKey, label, value, denominator, status, caveat], index) => ({
+    funnel_key: `${TENANT_KEY}::${MART_VERSION}::funnel::${stageKey}`,
+    tenant_key: TENANT_KEY,
+    sequence: index + 1,
+    stage_key: stageKey,
+    stage_label: label,
+    value_numeric: value,
+    denominator_stage_key: denominator,
+    conversion_ratio:
+      denominator === "promised_value"
+        ? ratio(value, headline.promised_value_fy26)
+        : denominator === "funded_change_spend"
+          ? ratio(value, headline.change_budget_fy26)
+          : null,
+    claim_status: status,
+    caveat,
+    source_fact_keys:
+      stageKey === "funded_change_spend"
+        ? factKeysForMeasure(projection.facts, "change_budget_fy26")
+        : stageKey === "promised_value"
+          ? factKeysForMeasure(projection.facts, "promised_value_fy26")
+          : stageKey === "finance_validated_partial"
+            ? factKeysForMeasure(projection.facts, "partial_finance_validated_value_ytd")
+            : [],
+    source_file: stageKey === "funded_change_spend" ? FILES.budget08 : FILES.benefitsSa08,
+    source_row: "rollup",
+    formula_version: FORMULA_VERSION,
+  }));
+
+  const programDecisionLanes = projection.decision_lenses.program_portfolio.map((row) => {
+    const lane = decisionLaneForProgram(row);
+    return {
+      lane_key: `${TENANT_KEY}::${MART_VERSION}::program-lane::${safeKey(row.program_code || row.program_name)}`,
+      tenant_key: TENANT_KEY,
+      program_code: row.program_code,
+      program_name: row.program_name,
+      owner_role: row.executive_owner || "",
+      finance_owner_role: row.finance_owner || "",
+      decision_lane: lane,
+      decision_rationale: decisionRationaleForProgram(row, lane),
+      approved_funding_usd: row.approved_funding_usd,
+      ai_tagged_spend_usd: row.ai_tagged_spend_usd,
+      promised_value_usd: row.promised_value_usd,
+      finance_validated_value_usd: row.partial_finance_validated_value_usd,
+      usage_metric: row.usage_metric,
+      usage_actual: row.usage_actual,
+      adoption_rate_pct: row.adoption_rate_pct,
+      value_claim_status: row.value_claim_status,
+      tower_claim_allowed: row.tower_claim_allowed,
+      required_gates: json(gatesForProgram(row)),
+      caveat: row.caveat || "",
+      evidence_ids: row.evidence_id ? [row.evidence_id] : [],
+      source_fact_keys: projection.facts
+        .filter((factRow) => {
+          const attrs = JSON.parse(factRow.attributes || "{}");
+          return attrs.program_code === row.program_code || attrs.program_name === row.program_name;
+        })
+        .map((factRow) => factRow.fact_key),
+      source_file: FILES.programSa04,
+      source_row: row.source_record_id || row.program_code,
+      formula_version: FORMULA_VERSION,
+    };
+  });
+
+  const aiBenefitRows = projection.decision_lenses.usage_and_benefits.map((row) => {
+    const lane =
+      row.tower_claim_allowed === "partial"
+        ? "fund"
+        : row.tower_claim_allowed === "no"
+          ? "fix"
+          : "freeze";
+    return {
+      ai_portfolio_key: `${TENANT_KEY}::${MART_VERSION}::ai-benefit::${safeKey(row.tool_name || row.program_name)}`,
+      tenant_key: TENANT_KEY,
+      item_name: row.tool_name || row.program_name,
+      item_kind: "usage_benefit",
+      vendor_name: row.vendor_name,
+      system_name: row.tool_name,
+      ai_spend_type: "",
+      ai_spend_category: "",
+      funding_status: "active",
+      decision_lane: lane,
+      approved_funding_usd: 0,
+      ai_tagged_spend_usd: 0,
+      promised_value_usd: row.promised_value_usd,
+      finance_validated_value_usd: row.finance_validated_value_usd,
+      usage_metric: row.usage_metric,
+      usage_actual: row.usage_actual,
+      adoption_rate_pct: row.adoption_rate_pct,
+      value_score: Math.max(0, Math.min(100, Math.round((row.promised_value_usd / 15_000_000) * 100))),
+      readiness_score: row.tower_claim_allowed === "partial" ? 72 : 45,
+      risk_score: row.tower_claim_allowed === "partial" ? 42 : 68,
+      platform_embedded_ai_flag: false,
+      duplicate_risk: "not_additive_to_budget",
+      value_claim_status: row.value_claim_status,
+      tower_claim_allowed: row.tower_claim_allowed,
+      caveat: row.caveat,
+      evidence_ids: [],
+      source_fact_keys: projection.facts
+        .filter((factRow) => {
+          const attrs = JSON.parse(factRow.attributes || "{}");
+          return attrs.tool_name === row.tool_name || attrs.program_name === row.program_name;
+        })
+        .map((factRow) => factRow.fact_key),
+      source_file: FILES.benefitsSa08,
+      source_row: row.tool_name || row.program_name,
+      formula_version: FORMULA_VERSION,
+    };
+  });
+
+  const candidateAiRows = projection.decision_lenses.candidate_ai_opportunities.map((row) => ({
+    ai_portfolio_key: `${TENANT_KEY}::${MART_VERSION}::ai-candidate::${safeKey(row.source_record_id || row.use_case, row.affected_process, row.expected_decision_path)}`,
+    tenant_key: TENANT_KEY,
+    item_name: row.use_case,
+    item_kind: "candidate_opportunity",
+    vendor_name: "",
+    system_name: row.affected_process,
+    ai_spend_type: "candidate_ai_opportunity",
+    ai_spend_category: "not_approved",
+    funding_status: row.funding_status,
+    decision_lane: row.approved_funding_usd > 0 ? "fix" : "freeze",
+    approved_funding_usd: row.approved_funding_usd,
+    ai_tagged_spend_usd: 0,
+    promised_value_usd: 0,
+    finance_validated_value_usd: 0,
+    usage_metric: "",
+    usage_actual: null,
+    adoption_rate_pct: null,
+    value_score: 58,
+    readiness_score: /ready|approved/i.test(row.readiness_status) ? 55 : 28,
+    risk_score: 82,
+    platform_embedded_ai_flag: false,
+    duplicate_risk: "candidate_not_funded",
+    value_claim_status: "not_claimable",
+    tower_claim_allowed: "no",
+    caveat: row.caveat || "Candidate opportunity; not approved funding.",
+    evidence_ids: [],
+    source_fact_keys: projection.facts
+      .filter((factRow) => {
+        const attrs = JSON.parse(factRow.attributes || "{}");
+        return attrs.use_case === row.use_case;
+      })
+      .map((factRow) => factRow.fact_key),
+    source_file: FILES.ai10,
+    source_row: row.source_record_id || row.use_case,
+    formula_version: FORMULA_VERSION,
+  }));
+
+  const aiPortfolio = [...aiBenefitRows, ...candidateAiRows];
+
+  const cxoActions = [
+    {
+      action_lane: "fund",
+      title: "Fund the programs with usage evidence, not realized-value labels.",
+      action_body:
+        "Protect the small set of programs with partial finance validation, but keep their value claims caveated until outcomes are baselined and certified.",
+      owner_hint: "CIO + CFO",
+      module_handoff: "Tower",
+    },
+    {
+      action_lane: "fix",
+      title: "Fix the measurement chain for Copilot, ServiceNow, Workday, and developer AI.",
+      action_body:
+        "Pull usage, adoption, KPI movement, and finance validation into the benefits ledger before using value claims in committee materials.",
+      owner_hint: "CIO + Value Office",
+      module_handoff: "Moves",
+    },
+    {
+      action_lane: "freeze",
+      title: "Freeze candidate AI opportunities until prerequisite data products and controls clear.",
+      action_body:
+        "Member Service AI Assist and similar candidates must stay discovery-stage unless the data, PHI, workflow, and funding boundaries are promoted.",
+      owner_hint: "CDAO + CISO + COO",
+      module_handoff: "Moves",
+    },
+    {
+      action_lane: "govern",
+      title: "Use the mart gaps as the next template/data remediation queue.",
+      action_body:
+        "Any blocking required-field gap belongs in the source templates or Azure data-build job, not as a renderer fallback.",
+      owner_hint: "Data Office",
+      module_handoff: "Admin",
+    },
+  ].map((row, index) => ({
+    action_key: `${TENANT_KEY}::${MART_VERSION}::action::${index + 1}`,
+    tenant_key: TENANT_KEY,
+    sequence: index + 1,
+    action_lane: row.action_lane,
+    title: row.title,
+    action_body: row.action_body,
+    owner_hint: row.owner_hint,
+    module_handoff: row.module_handoff,
+    evidence_ids: [],
+    source_fact_keys: sourceFactKeys,
+    formula_version: FORMULA_VERSION,
+  }));
+
+  const evidenceLineage = [
+    ["total_it_budget_fy26", "Total IT budget FY26", headline.total_it_budget_fy26, FILES.budget08, "SUM additive fy26_budget_line"],
+    ["run_budget_fy26", "Run budget FY26", headline.run_budget_fy26, FILES.budget08, "SUM run_budget_usd"],
+    ["change_budget_fy26", "Change budget FY26", headline.change_budget_fy26, FILES.budget08, "SUM change_budget_usd"],
+    ["ai_tagged_spend_fy26_non_additive", "AI-tagged spend lens", headline.ai_tagged_spend_fy26_non_additive, FILES.budget08, "SUM ai_tagged_budget_usd non-additive lens"],
+    ["promised_value_fy26", "Promised value FY26", headline.promised_value_fy26, FILES.benefitsSa08, "SUM promised_value_usd"],
+    ["partial_finance_validated_value_ytd", "Partial finance-validated value YTD", headline.partial_finance_validated_value_ytd, FILES.benefitsSa08, "SUM finance_validated_value_usd where tower_claim_allowed=partial"],
+    ["realized_value_ytd_allowed", "Realized value allowed", headline.realized_value_ytd_allowed, FILES.benefitsSa08, "Blocked by claim gate"],
+  ].map(([key, factName, value, file, caveat]) => ({
+    lineage_key: `${TENANT_KEY}::${MART_VERSION}::lineage::${key}`,
+    tenant_key: TENANT_KEY,
+    surface_section: "command_center",
+    displayed_fact: factName,
+    displayed_value_text: formatUsd(value),
+    displayed_value_numeric: value,
+    source_file: `datasets/tenant-inputs/${TENANT_KEY}/${STANDARD_VERSION}/${file}`,
+    source_row: "rollup",
+    source_system: STANDARD_VERSION,
+    source_fact_keys: factKeysForMeasure(
+      projection.facts,
+      key === "ai_tagged_spend_fy26_non_additive" ? "ai_tagged_spend_fy26" : key,
+    ),
+    formula_version: FORMULA_VERSION,
+    caveat,
+  }));
+
+  const requiredFieldGaps = [];
+  for (const laneRow of programDecisionLanes) {
+    const checks = [
+      ["owner_role", laneRow.owner_role],
+      ["approved_funding_usd", laneRow.approved_funding_usd],
+      ["promised_value_usd", laneRow.promised_value_usd],
+      ["source_file", laneRow.source_file],
+      ["source_row", laneRow.source_row],
+    ];
+    for (const [field, value] of checks) {
+      if (value !== null && value !== undefined && value !== "" && Number(value) !== 0) continue;
+      requiredFieldGaps.push({
+        gap_key: `${TENANT_KEY}::${MART_VERSION}::gap::program::${safeKey(laneRow.program_code || laneRow.program_name)}::${field}`,
+        tenant_key: TENANT_KEY,
+        mart_table: "cio_tower.mart_program_decision_lanes",
+        mart_record_key: laneRow.lane_key,
+        required_field: field,
+        source_template: FILES.programSa04,
+        source_record_id: laneRow.source_row,
+        severity: field === "source_file" || field === "source_row" ? "blocking" : "warning",
+        owner_hint: "Data Office",
+        remediation_action: `Populate ${field} in the source template and rerun the governed Tower mart projection.`,
+        blocking: field === "source_file" || field === "source_row",
+        formula_version: FORMULA_VERSION,
+      });
+    }
+  }
+
+  return {
+    command_center: [commandCenter],
+    value_funnel: valueFunnel,
+    program_decision_lanes: programDecisionLanes,
+    ai_portfolio: aiPortfolio,
+    cxo_actions: cxoActions,
+    evidence_lineage: evidenceLineage,
+    required_field_gaps: requiredFieldGaps,
   };
 }
 
@@ -970,6 +1340,7 @@ function renderMarkdown(projection) {
   ];
   const mdRows = rows.map((row) => `| ${row.join(" | ")} |`).join("\n");
   return `# Meridian V3 to CIO Tower Projection\n\nGenerated: ${projection.generated_at}\n\nThis projection turns the refreshed Meridian V3 source packet into the row families Tower actually needs: budget, funded programs, AI spend by platform/vendor, usage/adoption/benefit evidence, candidate AI opportunities, and watch/pressure signals.\n\nIt is a dry-run artifact unless executed by the governed ACA data-build job with \`--write\`.\n\n## Headline\n\n| Item | Value | Source |\n| --- | ---: | --- |\n${mdRows}\n\n## Counts\n\n- Sources: ${projection.output_counts.sources}\n- Entities: ${projection.output_counts.entities}\n- Facts: ${projection.output_counts.facts}\n- Relationships: ${projection.output_counts.relationships}\n- Measures: ${projection.output_counts.measures}\n- Measure results: ${projection.output_counts.measure_results}\n\n## Decision Lenses\n\n- Program portfolio rows: ${projection.decision_lenses.program_portfolio.length}\n- AI spend categories: ${projection.decision_lenses.ai_spend_by_category.length}\n- AI spend vendors/tools: ${projection.decision_lenses.ai_spend_by_vendor.length}\n- Usage/benefit rows: ${projection.decision_lenses.usage_and_benefits.length}\n- Candidate AI opportunities: ${projection.decision_lenses.candidate_ai_opportunities.length}\n- Watch/pressure themes: ${projection.decision_lenses.watch_pressure_themes.join(", ")}\n\n## Truth Split\n\n- No Azure/Postgres write is claimed by this dry-run artifact.\n- No Active Tenant Access update is claimed.\n- No realized/proven/delivered value language is allowed.\n- Partial finance-validated value may be shown only with the SA08 caveats.\n`;
+  return `# Meridian V3 to CIO Tower Projection\n\nGenerated: ${projection.generated_at}\n\nThis projection turns the refreshed Meridian V3 source packet into the row families Tower actually needs: budget, funded programs, AI spend by platform/vendor, usage/adoption/benefit evidence, candidate AI opportunities, and watch/pressure signals.\n\nIt is a dry-run artifact unless executed by the governed ACA data-build job with \`--write\`.\n\n## Headline\n\n| Item | Value | Source |\n| --- | ---: | --- |\n${mdRows}\n\n## Counts\n\n- Sources: ${projection.output_counts.sources}\n- Entities: ${projection.output_counts.entities}\n- Facts: ${projection.output_counts.facts}\n- Relationships: ${projection.output_counts.relationships}\n- Measures: ${projection.output_counts.measures}\n- Measure results: ${projection.output_counts.measure_results}\n- Mart command rows: ${projection.output_counts.mart_command_center}\n- Mart value funnel rows: ${projection.output_counts.mart_value_funnel}\n- Mart program decision lane rows: ${projection.output_counts.mart_program_decision_lanes}\n- Mart AI portfolio rows: ${projection.output_counts.mart_ai_portfolio}\n- Mart CXO action rows: ${projection.output_counts.mart_cxo_actions}\n- Mart evidence lineage rows: ${projection.output_counts.mart_evidence_lineage}\n- Mart required-field gaps: ${projection.output_counts.mart_required_field_gaps}\n\n## Decision Lenses\n\n- Program portfolio rows: ${projection.decision_lenses.program_portfolio.length}\n- AI spend categories: ${projection.decision_lenses.ai_spend_by_category.length}\n- AI spend vendors/tools: ${projection.decision_lenses.ai_spend_by_vendor.length}\n- Usage/benefit rows: ${projection.decision_lenses.usage_and_benefits.length}\n- Candidate AI opportunities: ${projection.decision_lenses.candidate_ai_opportunities.length}\n- Watch/pressure themes: ${projection.decision_lenses.watch_pressure_themes.join(", ")}\n\n## Truth Split\n\n- No Azure/Postgres write is claimed by this dry-run artifact.\n- No Active Tenant Access update is claimed.\n- No realized/proven/delivered value language is allowed.\n- Partial finance-validated value may be shown only with the SA08 caveats.\n- Tower command-center UI must consume \`cio_tower.mart_*\` after the governed ACA data-build job writes these rows.\n`;
 }
 
 function renderHtml(projection) {
@@ -1036,6 +1407,13 @@ async function writeToDatabase(projection) {
   await client.connect();
   try {
     await client.query("BEGIN");
+    await client.query("DELETE FROM cio_tower.mart_required_field_gaps WHERE tenant_key = $1", [TENANT_KEY]);
+    await client.query("DELETE FROM cio_tower.mart_evidence_lineage WHERE tenant_key = $1", [TENANT_KEY]);
+    await client.query("DELETE FROM cio_tower.mart_cxo_actions WHERE tenant_key = $1", [TENANT_KEY]);
+    await client.query("DELETE FROM cio_tower.mart_ai_portfolio WHERE tenant_key = $1", [TENANT_KEY]);
+    await client.query("DELETE FROM cio_tower.mart_program_decision_lanes WHERE tenant_key = $1", [TENANT_KEY]);
+    await client.query("DELETE FROM cio_tower.mart_value_funnel WHERE tenant_key = $1", [TENANT_KEY]);
+    await client.query("DELETE FROM cio_tower.mart_command_center WHERE tenant_key = $1", [TENANT_KEY]);
     await client.query("DELETE FROM cio_tower.measure_results WHERE tenant_key = $1", [TENANT_KEY]);
     await client.query("DELETE FROM cio_tower.relationships WHERE tenant_key = $1", [TENANT_KEY]);
     await client.query("DELETE FROM cio_tower.facts WHERE tenant_key = $1", [TENANT_KEY]);
@@ -1048,6 +1426,13 @@ async function writeToDatabase(projection) {
     await upsertBatch(client, "cio_tower.facts", projection.facts, ["fact_key"]);
     await upsertBatch(client, "cio_tower.relationships", projection.relationships, ["relationship_key"]);
     await upsertBatch(client, "cio_tower.measure_results", projection.measure_results, ["result_key"]);
+    await upsertBatch(client, "cio_tower.mart_command_center", projection.mart.command_center, ["command_center_key"]);
+    await upsertBatch(client, "cio_tower.mart_value_funnel", projection.mart.value_funnel, ["funnel_key"]);
+    await upsertBatch(client, "cio_tower.mart_program_decision_lanes", projection.mart.program_decision_lanes, ["lane_key"]);
+    await upsertBatch(client, "cio_tower.mart_ai_portfolio", projection.mart.ai_portfolio, ["ai_portfolio_key"]);
+    await upsertBatch(client, "cio_tower.mart_cxo_actions", projection.mart.cxo_actions, ["action_key"]);
+    await upsertBatch(client, "cio_tower.mart_evidence_lineage", projection.mart.evidence_lineage, ["lineage_key"]);
+    await upsertBatch(client, "cio_tower.mart_required_field_gaps", projection.mart.required_field_gaps, ["gap_key"]);
     await client.query("COMMIT");
   } catch (error) {
     await client.query("ROLLBACK");
@@ -1082,6 +1467,13 @@ async function main() {
   writeCsv(path.join(OUT_DIR, "source-to-fact-lineage.csv"), projection.facts, ["fact_key", "measure", "view", "scope", "basis", "period", "value_numeric", "source_key", "source_row", "attributes"]);
   writeCsv(path.join(OUT_DIR, "program-portfolio-lens.csv"), projection.decision_lenses.program_portfolio, ["program_code", "program_name", "approved_funding_usd", "ai_tagged_spend_usd", "ai_spend_category", "executive_owner", "usage_metric", "usage_actual", "adoption_rate_pct", "partial_finance_validated_value_usd", "value_claim_status", "tower_claim_allowed", "posture", "caveat"]);
   writeCsv(path.join(OUT_DIR, "usage-benefit-lens.csv"), projection.decision_lenses.usage_and_benefits, ["program_name", "vendor_name", "tool_name", "promised_value_usd", "usage_metric", "usage_actual", "adoption_rate_pct", "operational_kpi", "kpi_baseline", "kpi_actual", "finance_validated_value_usd", "value_claim_status", "tower_claim_allowed", "caveat"]);
+  writeCsv(path.join(OUT_DIR, "mart-command-center.csv"), projection.mart.command_center, ["command_center_key", "tenant_key", "tenant_name", "mart_version", "source_standard", "formula_version", "total_it_budget_fy26", "run_budget_fy26", "change_budget_fy26", "approved_program_budget_fy26", "ai_tagged_spend_fy26_non_additive", "promised_value_fy26", "partial_finance_validated_value_ytd", "realized_value_ytd_allowed", "candidate_ai_opportunities", "watch_pressure_signals", "run_ratio", "change_ratio", "finance_validation_ratio", "decision_question", "executive_summary", "source_files"]);
+  writeCsv(path.join(OUT_DIR, "mart-value-funnel.csv"), projection.mart.value_funnel, ["funnel_key", "tenant_key", "sequence", "stage_key", "stage_label", "value_numeric", "denominator_stage_key", "conversion_ratio", "claim_status", "caveat", "source_file", "source_row"]);
+  writeCsv(path.join(OUT_DIR, "mart-program-decision-lanes.csv"), projection.mart.program_decision_lanes, ["lane_key", "tenant_key", "program_code", "program_name", "owner_role", "finance_owner_role", "decision_lane", "decision_rationale", "approved_funding_usd", "ai_tagged_spend_usd", "promised_value_usd", "finance_validated_value_usd", "usage_metric", "usage_actual", "adoption_rate_pct", "value_claim_status", "tower_claim_allowed", "required_gates", "caveat", "source_file", "source_row"]);
+  writeCsv(path.join(OUT_DIR, "mart-ai-portfolio.csv"), projection.mart.ai_portfolio, ["ai_portfolio_key", "tenant_key", "item_name", "item_kind", "vendor_name", "system_name", "ai_spend_type", "ai_spend_category", "funding_status", "decision_lane", "approved_funding_usd", "ai_tagged_spend_usd", "promised_value_usd", "finance_validated_value_usd", "usage_metric", "usage_actual", "adoption_rate_pct", "value_score", "readiness_score", "risk_score", "duplicate_risk", "value_claim_status", "tower_claim_allowed", "caveat", "source_file", "source_row"]);
+  writeCsv(path.join(OUT_DIR, "mart-cxo-actions.csv"), projection.mart.cxo_actions, ["action_key", "tenant_key", "sequence", "action_lane", "title", "action_body", "owner_hint", "module_handoff", "formula_version"]);
+  writeCsv(path.join(OUT_DIR, "mart-evidence-lineage.csv"), projection.mart.evidence_lineage, ["lineage_key", "tenant_key", "surface_section", "displayed_fact", "displayed_value_text", "displayed_value_numeric", "source_file", "source_row", "source_system", "formula_version", "caveat"]);
+  writeCsv(path.join(OUT_DIR, "mart-required-field-gaps.csv"), projection.mart.required_field_gaps, ["gap_key", "tenant_key", "mart_table", "mart_record_key", "required_field", "source_template", "source_record_id", "severity", "owner_hint", "remediation_action", "blocking"]);
   console.log(`Projection written to ${OUT_DIR}`);
   console.log(JSON.stringify(projection.headline, null, 2));
   if (WRITE) {

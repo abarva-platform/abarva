@@ -5,6 +5,7 @@ import {
 } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { loadCioTowerCxoView } from "@/lib/cio-tower/cxo-view-model";
+import { loadTowerMartCommandView } from "@/lib/cio-tower/tower-mart-view-model";
 import { buildTowerV3ContextPackFromTenantInputs } from "@/lib/enterprise-knowledge/tower/tower-v3-context-pack-from-tenant-inputs";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { applyTowerCxoClaudeStory } from "@/lib/tower/tower-cxo-claude-story";
@@ -60,7 +61,13 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
     client?.name ??
     "AbarVa Client";
 
-  const [cxoView, budgetRollups] = await Promise.all([
+  const [towerMartView, cxoView, budgetRollups] = await Promise.all([
+    withTowerReadTimeout(
+      loadTowerMartCommandView({
+        tenantKeyCandidates: [client?.key, requestedClient, client?.id],
+      }),
+      null,
+    ),
     withTowerReadTimeout(
       loadCioTowerCxoView({
         tenantKeyCandidates: [client?.key, requestedClient, client?.id],
@@ -128,6 +135,7 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
       context={`Portfolio Command Center · ${tenantName}`}
       towerToday={new Date().toISOString().slice(0, 10)}
       clientId={client?.id}
+      towerMartView={towerMartView}
       cxoView={cxoView}
       towerV3RuntimeView={towerV3RuntimeView}
       budgetRollups={budgetRollups}
