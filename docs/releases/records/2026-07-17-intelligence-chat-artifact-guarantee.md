@@ -30,6 +30,7 @@ This release hardens the Intelligence aVa chat so explicit table, chart, graph, 
 
 - `src/lib/intelligence/answer/structured-exhibits.ts`
 - `src/lib/intelligence/answer/__tests__/structured-exhibits.test.ts`
+- Follow-up polish after live proof: tighten CXO summary extraction so broad words like "operations" do not create irrelevant rows, avoid repeated executive-read rows, and include a visible chart-boundary artifact when a chart is requested but no validated chart rows are available.
 
 ## QA / Validation
 
@@ -38,6 +39,7 @@ This release hardens the Intelligence aVa chat so explicit table, chart, graph, 
   - Note: Jest still reports pre-existing duplicate manual mock warnings unrelated to this change.
 - `npx eslint src/lib/intelligence/answer/structured-exhibits.ts src/lib/intelligence/answer/__tests__/structured-exhibits.test.ts`
   - Result: passed.
+- Live production proof after PR #4955 deploy showed the artifact contract was active but the generated summary table needed quality polish: the table rendered, but one broad topic match and repeated row text were below the CXO quality bar. This follow-up release candidate addresses that artifact-quality issue.
 
 ## Rollout Plan
 

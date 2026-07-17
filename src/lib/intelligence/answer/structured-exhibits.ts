@@ -1079,7 +1079,7 @@ const CXO_ARTIFACT_TOPIC_PATTERNS: Array<{
   },
   {
     label: "Shared services",
-    pattern: /\b(shared services|back office|hr|legal|operations)\b/i,
+    pattern: /\b(shared services|back office|hr operations|legal operations)\b/i,
     decisionUse: "Use to compare productivity, control, and operating-model tradeoffs across functions.",
   },
 ];
@@ -1092,6 +1092,19 @@ function proseSentences(prose: string): string[] {
     .filter((sentence) => sentence.length >= 32)
     .filter((sentence) => !/^(next move|evidence boundary|caveat)\s*:/i.test(sentence))
     .slice(0, 12);
+}
+
+function proseSegments(prose: string): string[] {
+  const normalized = prose
+    .replace(/\r/g, "\n")
+    .replace(/\n\s*[-*]\s+/g, "\n")
+    .replace(/\s+-\s+(?=[A-Z][A-Za-z /&-]{4,40}\\b)/g, "\n")
+    .replace(/\s+/g, " ");
+  return normalized
+    .split(/\n|(?<=[.!?])\s+/)
+    .map((segment) => segment.trim().replace(/^[-*]\s*/, ""))
+    .filter((segment) => segment.length >= 32)
+    .slice(0, 18);
 }
 
 function truncateCell(value: string, maxLength = 190): string {
@@ -1127,42 +1140,55 @@ function requestedSummaryTableFromProse(
   if (hasOrphanTableFragment(prose)) return null;
   const sentences = proseSentences(prose);
   if (sentences.length === 0) return null;
+  const segments = proseSegments(prose);
   const rows: AnswerTable["rows"] = [];
+  const usedReads = new Set<string>();
 
   CXO_ARTIFACT_TOPIC_PATTERNS.forEach((topic) => {
-    const sentence = sentences.find((candidate) =>
-      topic.pattern.test(candidate),
-    );
-    if (!sentence && !topic.pattern.test(query)) return;
+    const segment =
+      segments.find((candidate) => topic.pattern.test(candidate)) ??
+      sentences.find((candidate) => topic.pattern.test(candidate));
+    if (!segment) return;
+    const read = truncateCell(segment);
+    if (usedReads.has(read)) return;
+    usedReads.add(read);
     rows.push({
       theme: topic.label,
-      executiveRead: truncateCell(
-        sentence ??
-          "The user explicitly asked for a structured executive view, but the answer did not include validated row-level values.",
-      ),
+      executiveRead: read,
       decisionUse: topic.decisionUse,
       evidenceBoundary:
-        citationIds.length > 0
-          ? "Directional unless each material claim is tied to the cited source packet."
-          : "Directional only; no cited source packet was available for this row.",
+        "Directional unless each material claim is tied to the cited source answer material.",
     });
   });
 
-  if (rows.length === 0) {
-    sentences.slice(0, 4).forEach((sentence, index) => {
+  if (rows.length < 3) {
+    sentences.forEach((sentence) => {
+      if (rows.length >= 4) return;
+      const read = truncateCell(sentence);
+      if (usedReads.has(read)) return;
+      usedReads.add(read);
       rows.push({
-        theme: `Executive point ${index + 1}`,
-        executiveRead: truncateCell(sentence),
+        theme:
+          rows.length === 0
+            ? "Executive read"
+            : `Supporting point ${rows.length}`,
+        executiveRead: read,
         decisionUse:
-          index === 0
+          rows.length === 0
             ? "Use as the opening read for the decision conversation."
-            : "Use as supporting logic only after evidence review.",
+            : "Use as supporting logic after evidence review.",
         evidenceBoundary:
-          citationIds.length > 0
-            ? "Directional unless the cited source packet supports the specific claim."
-            : "Directional only; no cited source packet was available for this row.",
+          "Directional unless the cited source answer material supports the specific claim.",
       });
     });
+  }
+
+  if (rows.length > 1) {
+    rows.sort((a, b) =>
+      priorityForTheme(String(a.theme)).localeCompare(
+        priorityForTheme(String(b.theme)),
+      ),
+    );
   }
 
   if (rows.length === 0) return null;
@@ -1188,6 +1214,16 @@ function requestedSummaryTableFromProse(
       "Generated from the answer text so the chat shows a structured executive artifact without inventing unsupported values.",
     citationIds,
   };
+}
+
+function priorityForTheme(theme: string): string {
+  const normalized = theme.toLowerCase();
+  if (/payment integrity/.test(normalized)) return "01";
+  if (/prior authorization/.test(normalized)) return "02";
+  if (/member|customer/.test(normalized)) return "03";
+  if (/clinical|claims|foundation/.test(normalized)) return "04";
+  if (/governance|control/.test(normalized)) return "05";
+  return `9-${normalized}`;
 }
 
 function requestedVisualFallbackTable(
@@ -1780,8 +1816,14 @@ export function buildStructuredExhibits(
       inline.prose,
       citations.map((citation) => citation.id),
     );
+    const requestedMissingVisual =
+      (wantsChartArtifact(query) && charts.length === 0) ||
+      (wantsGraphArtifact(query) && graphs.length === 0) ||
+      (!summary && wantsTableArtifact(query));
     if (summary) tables.push(summary);
-    else if (fallback) tables.push(fallback);
+    if (fallback && requestedMissingVisual) {
+      tables.push(fallback);
+    }
     tables.push(availableContextTable(citations));
   }
 
