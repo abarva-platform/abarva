@@ -64,4 +64,17 @@ describe("createStructuredFenceStreamFilter", () => {
       "Recommendation first. Follow the EHR workflow first.",
     );
   });
+
+  it("strips markdown-rendered chart language labels plus orphan JSON", () => {
+    const visible = stripGovernedArtifactPayloadsFromText(
+      'Fund payment integrity first.chart{"type":"bar","title":"Value minus complexity","subtitle":"Directional scores","xKey":"initiative","yKey":"score","data":[{"initiative":"Payment integrity","score":45},{"initiative":"Clinical+claims lakehouse","score":-30}]}```Evidence boundary: validate production baselines.',
+    );
+
+    expect(visible).toBe(
+      "Fund payment integrity first.Evidence boundary: validate production baselines.",
+    );
+    expect(visible).not.toContain("chart");
+    expect(visible).not.toContain('"type":"bar"');
+    expect(visible).not.toContain("```");
+  });
 });
