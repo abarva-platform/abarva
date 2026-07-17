@@ -482,11 +482,18 @@ type AreaDataRow = {
   status: string;
   source: string;
   filterValues: Record<string, string>;
+  displayValues: Record<string, string>;
   searchText: string;
+};
+
+type AreaDataColumn = {
+  key: string;
+  label: string;
 };
 
 type AreaDataTable = {
   rows: AreaDataRow[];
+  columns: AreaDataColumn[];
   dataSetOptions: string[];
   smartFilter: {
     label: string;
@@ -2189,6 +2196,15 @@ function buildAreaDataRows(area: HomeExplorerArea | null): AreaDataRow[] {
       ]
         .join(" ")
         .toLowerCase();
+      const displayValues = {
+        ...fieldValues,
+        Dataset: area.label,
+        Record: record.title,
+        Category: category,
+        "Owner / System": ownerOrSystem,
+        Status: status,
+        Source: source,
+      };
       return {
         id: `${record.recordId}-${index}`,
         dataSet: area.label,
@@ -2198,6 +2214,7 @@ function buildAreaDataRows(area: HomeExplorerArea | null): AreaDataRow[] {
         status,
         source,
         filterValues: fieldValues,
+        displayValues,
         searchText,
       };
     });
@@ -2240,6 +2257,15 @@ function buildAreaDataRows(area: HomeExplorerArea | null): AreaDataRow[] {
       ]
         .join(" ")
         .toLowerCase();
+      const displayValues = {
+        ...filterValues,
+        Dataset: dataSet,
+        Record: record,
+        Category: category,
+        "Owner / System": ownerOrSystem,
+        Status: status,
+        Source: source,
+      };
 
       return {
         id: `${preview.dimension}-${row.rowNumber || rowIndex}-${row.rowId || record}`,
@@ -2250,10 +2276,119 @@ function buildAreaDataRows(area: HomeExplorerArea | null): AreaDataRow[] {
         status,
         source,
         filterValues,
+        displayValues,
         searchText,
       };
     }),
   );
+}
+
+const DEFAULT_AREA_DATA_COLUMNS = [
+  "Dataset",
+  "Record",
+  "Category",
+  "Owner / System",
+  "Status",
+  "Source",
+];
+
+const AREA_DATA_COLUMN_PREFERENCES: Array<{
+  match: RegExp;
+  labels: string[];
+}> = [
+  {
+    match: /\b(budget|spend|value|benefit|metric|outcome)\b/i,
+    labels: [
+      "Record",
+      "Business Name",
+      "Financial Fact Name",
+      "Financial Fact Type",
+      "Fiscal Year",
+      "Budget Amount Usd",
+      "Run Budget Usd",
+      "Change Budget Usd",
+      "Ai Spend Flag",
+      "Ai Spend Category",
+      "Finance Attestation Status",
+      "Source",
+    ],
+  },
+  {
+    match: /\b(program|initiative|priority|roadmap)\b/i,
+    labels: [
+      "Record",
+      "Business Name",
+      "Initiative Name",
+      "Program Code",
+      "Initiative Status",
+      "Funding Status",
+      "Approved Funding Usd",
+      "Requested Funding Usd",
+      "Value Claim Status",
+      "Tower Tracking Status",
+      "Source",
+    ],
+  },
+  {
+    match: /\b(ai|automation|use case)\b/i,
+    labels: [
+      "Record",
+      "Business Name",
+      "Use Case Name",
+      "Use Case",
+      "Data Domain",
+      "Affected Process",
+      "Use Case Status",
+      "Value Outcome",
+      "Funding Status",
+      "Readiness Status",
+      "Measurement Status",
+      "Risk Control Status",
+      "Evidence Needed",
+      "Source",
+    ],
+  },
+];
+
+function dataColumnKey(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function displayDataColumnLabel(label: string): string {
+  return label.replace(/\bUsd\b/g, "USD").replace(/\bAi\b/g, "AI");
+}
+
+function buildAreaDataColumns(
+  area: HomeExplorerArea | null,
+  rows: AreaDataRow[],
+): AreaDataColumn[] {
+  const availableByKey = new Map<string, string>();
+  for (const row of rows) {
+    for (const [label, value] of Object.entries(row.displayValues)) {
+      if (!normalizeDataCell(value)) continue;
+      const key = dataColumnKey(label);
+      if (!availableByKey.has(key)) availableByKey.set(key, label);
+    }
+  }
+
+  const areaLabel = area?.label ?? "";
+  const preferred =
+    AREA_DATA_COLUMN_PREFERENCES.find((entry) => entry.match.test(areaLabel))
+      ?.labels ?? DEFAULT_AREA_DATA_COLUMNS;
+  const selected: AreaDataColumn[] = [];
+  for (const label of preferred) {
+    const actual = availableByKey.get(dataColumnKey(label));
+    if (!actual) continue;
+    selected.push({ key: actual, label: displayDataColumnLabel(actual) });
+  }
+
+  if (selected.length > 0) return selected;
+  return DEFAULT_AREA_DATA_COLUMNS.flatMap((label) => {
+    const actual = availableByKey.get(dataColumnKey(label));
+    return actual
+      ? [{ key: actual, label: displayDataColumnLabel(actual) }]
+      : [];
+  });
 }
 
 function chooseSmartAreaFilter(
@@ -2320,6 +2455,7 @@ function buildAreaDataTable(area: HomeExplorerArea | null): AreaDataTable {
   );
   return {
     rows,
+    columns: buildAreaDataColumns(area, rows),
     dataSetOptions,
     smartFilter: chooseSmartAreaFilter(rows),
   };
@@ -3852,23 +3988,23 @@ export function HomeSurface({
                             <table className="hx3-table">
                               <thead>
                                 <tr>
-                                  <th>Dataset</th>
-                                  <th>Record</th>
-                                  <th>Category</th>
-                                  <th>Owner / System</th>
-                                  <th>Status</th>
-                                  <th>Source</th>
+                                  {selectedAreaDataTable.columns.map(
+                                    (column) => (
+                                      <th key={column.key}>{column.label}</th>
+                                    ),
+                                  )}
                                 </tr>
                               </thead>
                               <tbody>
                                 {selectedRows.map((row) => (
                                   <tr key={row.id}>
-                                    <td>{row.dataSet}</td>
-                                    <td>{row.record}</td>
-                                    <td>{row.category}</td>
-                                    <td>{row.ownerOrSystem}</td>
-                                    <td>{row.status}</td>
-                                    <td>{row.source}</td>
+                                    {selectedAreaDataTable.columns.map(
+                                      (column) => (
+                                        <td key={column.key}>
+                                          {row.displayValues[column.key] || "—"}
+                                        </td>
+                                      ),
+                                    )}
                                   </tr>
                                 ))}
                               </tbody>
