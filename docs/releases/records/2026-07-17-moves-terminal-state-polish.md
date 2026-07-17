@@ -35,6 +35,7 @@ Moves now renders the terminal P5 Tower handoff as complete after the P5 gate ha
 - Strategic Move shell now renders phase navigation from the reconciled phase tally state, so terminal P5 shows `Complete` instead of falling back to `currentPhase === 5` and displaying `In progress`.
 - Terminal P5 primary action now says `Open Tower →` instead of `Continue to P5 Prepare to Execute →`.
 - Terminal/historical phase workspace now renders a completion/handoff summary instead of the live `Complete this phase` checklist.
+- Terminal/historical phase session playbooks now render read-only so completed phases no longer show fresh generation actions.
 - Phase state transformer and phase explorer tallies mark P5 complete after terminal Tower handoff.
 - Historical P5 gate panel now routes to Tower and explains the handoff state.
 - File Cabinet displays `quarantined` artifacts as `needs review` with the review caveat preserved in a tooltip.
@@ -43,7 +44,7 @@ Moves now renders the terminal P5 Tower handoff as complete after the P5 gate ha
 ## QA / Validation
 
 - Pass: `npm test -- src/lib/programs/__tests__/phase-explorer-tallies.test.ts src/lib/programs/__tests__/strategic-moves-transformers.test.ts src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx src/components/strategic-moves/phase-workspace/__tests__/phase-workspace.test.tsx --runInBand`
-- Pass: `npx eslint src/lib/programs/phase-explorer-tallies.ts src/lib/programs/transformers.ts src/lib/programs/types.ui.ts src/components/strategic-moves/MovesPhaseStandaloneClient.tsx src/components/strategic-moves/FileCabinetPanel.tsx src/components/strategic-moves/PhaseApproveAndBuild.tsx src/components/strategic-moves/phase-workspace/MovePhaseWorkspacePanel.tsx src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts src/components/strategic-moves/phase-workspace/__tests__/phase-workspace.test.tsx src/lib/programs/__tests__/phase-explorer-tallies.test.ts src/lib/programs/__tests__/strategic-moves-transformers.test.ts`
+- Pass: `npx eslint src/lib/programs/phase-explorer-tallies.ts src/lib/programs/transformers.ts src/lib/programs/types.ui.ts src/components/strategic-moves/MovesPhaseStandaloneClient.tsx src/components/strategic-moves/FileCabinetPanel.tsx src/components/strategic-moves/PhaseApproveAndBuild.tsx src/components/strategic-moves/SessionPlaybookPanel.tsx src/components/strategic-moves/phase-workspace/MovePhaseWorkspacePanel.tsx src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts src/components/strategic-moves/phase-workspace/__tests__/phase-workspace.test.tsx src/lib/programs/__tests__/phase-explorer-tallies.test.ts src/lib/programs/__tests__/strategic-moves-transformers.test.ts`
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`
 - Pass: `git diff --check`
 - Pass: `npm run release:check`
