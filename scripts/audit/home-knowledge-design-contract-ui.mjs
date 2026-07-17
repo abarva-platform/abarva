@@ -41,6 +41,9 @@ const BLOCKED_PATTERNS = [
   { pattern: /\bAWS\b[^.]{0,80}\bcurrent certified production\b/i, reason: "AWS current certified production claim" },
   { pattern: /\bDatabricks\b[^.]{0,80}\bcurrent certified production\b/i, reason: "Databricks current certified production claim" },
   { pattern: /\$210M|\$16\.8B|208 items|96 vendors/i, reason: "unsupported design placeholder value" },
+  { pattern: /\bis represented in the Meridian context\b/i, reason: "generic dimension fallback wording" },
+  { pattern: /\bmatters because it shapes which business decisions\b/i, reason: "generic guidebook-style summary wording" },
+  { pattern: /\bthis selected area\b/i, reason: "generic UI helper wording" },
 ];
 
 function fail(message) {

@@ -1,6 +1,6 @@
 # Home Knowledge Design Contract UI Wiring Proof
 
-Generated: 2026-07-17T18:46:09.339Z
+Generated: 2026-07-17T19:28:58.537Z
 Tenant: Meridian Health System (meridian-health)
 Validation: pass
 Mode: story-claims
@@ -19,7 +19,7 @@ Mode: story-claims
 - Canonical rows rendered in data tabs: 3,987
 - Evidence cards: 19
 - Relationship tabs with chains: 19
-- Gap rows: 37
+- Gap rows: 38
 
 ## Required Outputs
 
