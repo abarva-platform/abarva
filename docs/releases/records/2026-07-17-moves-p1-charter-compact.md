@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -49,11 +49,11 @@ Open PR against `abarva-platform/abarva`, squash merge to main, then deploy thro
 
 - Repo-owned deploy workflow: Required.
 - Shared runtime mutators: Do not use ad-hoc ACA mutation.
-- Approved image digest: Pending deploy.
-- ACA runtime invariant: Pending deploy.
-- Worker image invariant: No worker image change expected beyond normal main deploy.
+- Approved image digest: `sha256:dfe02dba2753af7da1c743f5bc581728385ef0bb52e8356cdc641c7d5c79d2f2`.
+- ACA runtime invariant: Passed on `ca-abarva-web-lab-eastus--m8b8e1649` with 100% traffic.
+- Worker image invariant: Updated by ACA main deploy workflow.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Yes, fresh P1 Charter generation in app.abarva.ai.
+- Live signed-in proof required: Yes, fresh P1 Charter generation in app.abarva.ai. Pending browser-level regeneration proof.
 
 ## Rollback Plan
 
@@ -62,9 +62,10 @@ Revert this PR and redeploy the previous ACA image through the repo-owned deploy
 ## Audit Evidence
 
 - PR URL: https://github.com/abarva-platform/abarva/pull/4977.
-- Commit SHA: Pending.
-- ACA revision: Pending.
-- Signed-in proof: Pending.
+- ACA deploy run: https://github.com/abarva-platform/abarva/actions/runs/29617120013.
+- Commit SHA: `8b8e1649905935652f68059016f65213dd84b1d2`.
+- ACA revision: `ca-abarva-web-lab-eastus--m8b8e1649`.
+- Signed-in proof: Pending fresh P1 regeneration proof; route health and runtime invariant passed.
 
 ## Known Gaps
 
