@@ -44,6 +44,13 @@ const QUALITY_BASE = [
   "ends with an explicit recommendation, decision required, and 'do not proceed until' conditions",
 ];
 
+const P1_CHARTER_QUALITY = [
+  "reads like a concise executive gate record, not a board pack or discovery report",
+  "uses only P0-captured or approved-evidence facts; unproven details are marked 'To validate in P2'",
+  "does not invent current-state systems, org structure, metrics, risks, solution options, architecture, roadmap, operating model, estimates, owners, or dates",
+  "ends with an explicit decision to approve or hold P2 Discovery only",
+];
+
 // ── Use-case (archetype) exhibit intelligence ────────────────────────────────
 
 const ARCHETYPE_EXHIBITS: Record<string, string[]> = {
@@ -111,18 +118,18 @@ const DELIVERABLE_META: Record<
   }
 > = {
   program_charter: {
-    label: "Program Charter",
-    purpose: "Frame and authorize a strategic transformation initiative",
+    label: "P1 Charter Brief",
+    purpose: "Record the approved P0 bet and authorize P2 Discovery",
     audience:
-      "CIO, CFO, CDAO, transformation leader, sponsor, steering committee",
+      "executive sponsor, operating owner, technology/data owner, finance/risk owner, and phase-gate approver",
     decision:
-      "Authorize the initiative (scope, sponsorship, gates) and what must close before scale-up funding",
+      "Approve the charter as permission to run P2 Discovery; do not approve solution, architecture, roadmap, estimate, or scale funding",
     sections: [
-      "Operating model",
-      "Value hypothesis",
-      "Phase gates",
-      "Stakeholder / RACI",
-      "Risks / issues / dependencies",
+      "Charter summary",
+      "P0 bet and transformation pattern",
+      "Sponsor/title, scope, and decision rights",
+      "Directional value hypothesis and success criteria",
+      "P2 evidence plan and assumptions to validate",
     ],
   },
   ai_enabled_sdlc_architecture: {
@@ -259,7 +266,8 @@ export function resolveArtifactBrief(args: {
       `deep ${args.archetypeId.replace(/_/g, " ").toLowerCase()} domain expertise`,
       ...EXPERT_BASE,
     ],
-    qualityCriteria: QUALITY_BASE,
+    qualityCriteria:
+      args.deliverableType === "program_charter" ? P1_CHARTER_QUALITY : QUALITY_BASE,
   };
 }
 

@@ -177,6 +177,14 @@ const GOVERNANCE = [
   "- Use your full EXPERT knowledge freely for structure, frameworks, exhibits, standard sections, boilerplate, review-required legal/procurement placeholders, and executive language.",
 ].join("\n");
 
+const P1_CHARTER_COMPACT_RULES = [
+  "P1 CHARTER BOUNDARY (non-negotiable):",
+  "- This artifact is a concise P1 Charter Brief / gate decision record, not a discovery report, board pack, solution design, architecture, roadmap, estimate, or implementation plan.",
+  "- Target 700-1,200 words / 2-4 pages.",
+  "- Use only P0-captured facts and governed evidence. If current-state process, technology stack, org structure, baseline metrics, risks, solution options, architecture, roadmap, operating model, or financial ranges are not explicitly evidenced, write 'To validate in P2'.",
+  "- The decision supported is only: approve the charter so P2 Discovery can begin.",
+].join("\n");
+
 function evidenceBlock(
   facts: string[],
   openItems: string[],
@@ -215,6 +223,7 @@ export async function orchestrateDeliverable(args: {
   model?: string;
   confidentiality?: string;
 }): Promise<OrchestratorResult> {
+  const isP1Charter = args.deliverableType === "program_charter";
   const clientName = tenantDisplayName(args.clientKey);
   const brief: DeliverableArtifactBrief = resolveArtifactBrief({
     archetypeId: args.archetypeId,
@@ -240,10 +249,15 @@ export async function orchestrateDeliverable(args: {
   // ── Pass 1 — Architect ──
   const architectSystem = [
     role,
-    `You are designing the structure for a board-grade ${brief.label} for ${clientName} ("${args.moveName}").`,
-    `Use your expert knowledge to design the BEST possible artifact for this use case — you are NOT limited to a minimum section list. Add sections/exhibits/tables a senior consultant would include.`,
+    isP1Charter
+      ? `You are designing a concise P1 Charter Brief for ${clientName} ("${args.moveName}").`
+      : `You are designing the structure for a board-grade ${brief.label} for ${clientName} ("${args.moveName}").`,
+    isP1Charter
+      ? `Keep it to the minimum sections required to record the P0 bet, caveats, and P2 validation plan.`
+      : `Use your expert knowledge to design the BEST possible artifact for this use case — you are NOT limited to a minimum section list. Add sections/exhibits/tables a senior consultant would include.`,
     `Decision it must support: ${brief.decisionToSupport}.`,
     `Audience: ${brief.audience}.`,
+    ...(isP1Charter ? ["", P1_CHARTER_COMPACT_RULES] : []),
     `Do NOT draft the document. Return a tight outline: numbered H2 sections, and for each, the key exhibits/tables and any client-to-complete placeholders.`,
   ].join("\n");
   const architectPrompt = [
@@ -259,7 +273,7 @@ export async function orchestrateDeliverable(args: {
     "moves_deliverable_architect",
     architectSystem,
     architectPrompt,
-    1800,
+    isP1Charter ? 800 : 1800,
   );
 
   // ── Pass 2 — Full draft ──
@@ -267,9 +281,12 @@ export async function orchestrateDeliverable(args: {
     role,
     `MISSION: create the best possible ${brief.label} for ${clientName} ("${args.moveName}") for: ${brief.audience}.`,
     `It must support this decision: ${brief.decisionToSupport}.`,
-    `EXPERT LATITUDE: use your full expertise to make this a genuinely high-class artifact — strong structure, synthesis, exhibits, decision tables, and recommendations. Do not limit yourself to the minimum if a better artifact needs more.`,
+    isP1Charter
+      ? `Keep this as a compact gate record. Do not expand beyond the approved P0 facts and P2 validation plan.`
+      : `EXPERT LATITUDE: use your full expertise to make this a genuinely high-class artifact — strong structure, synthesis, exhibits, decision tables, and recommendations. Do not limit yourself to the minimum if a better artifact needs more.`,
     "",
     GOVERNANCE,
+    ...(isP1Charter ? ["", P1_CHARTER_COMPACT_RULES] : []),
     "",
     `Follow this approved structure (improve it where your expertise says so):`,
     plan,
@@ -279,25 +296,32 @@ export async function orchestrateDeliverable(args: {
   const draftPrompt = [
     evidenceBlock(facts, openItems, register),
     "",
-    `Write the full ${brief.label} now — executive, specific, decision-oriented, board-grade.`,
+    isP1Charter
+      ? `Write the concise ${brief.label} now. It should approve P2 Discovery only and mark unproven details as "To validate in P2."`
+      : `Write the full ${brief.label} now — executive, specific, decision-oriented, board-grade.`,
   ].join("\n");
   const draft = await callClaude(
     ctx,
     "moves_deliverable_draft",
     draftSystem,
     draftPrompt,
-    8000,
+    isP1Charter ? 2600 : 8000,
   );
 
   // ── Pass 3 — Red-team critique + board-grade rewrite ──
   const critiqueSystem = [
-    `You are a senior McKinsey partner and CIO advisor reviewing a draft ${brief.label}, then rewriting it to board-grade.`,
+    isP1Charter
+      ? `You are a senior CIO advisor reviewing a draft ${brief.label}, then rewriting it into a concise, evidence-bound P1 gate record.`
+      : `You are a senior McKinsey partner and CIO advisor reviewing a draft ${brief.label}, then rewriting it to board-grade.`,
     `Quality bar: ${brief.qualityCriteria.join("; ")}.`,
     "",
     GOVERNANCE,
+    ...(isP1Charter ? ["", P1_CHARTER_COMPACT_RULES] : []),
     "",
     `STEP 1: list the draft's weaknesses (generic language, thin sections, missing exhibits, weak implications, unclear decision asks, any unsupported client fact, any internal tag). Keep it terse.`,
-    `STEP 2: output the FINAL, revised, board-grade document in full Markdown. Strengthen synthesis, implications, decision asks, tables, and exhibits; keep governance discipline.`,
+    isP1Charter
+      ? `STEP 2: output the FINAL, revised P1 Charter Brief in full Markdown. Remove any discovery, design, roadmap, estimate, architecture, or operating-model detail that is not explicitly evidenced.`
+      : `STEP 2: output the FINAL, revised, board-grade document in full Markdown. Strengthen synthesis, implications, decision asks, tables, and exhibits; keep governance discipline.`,
     `Separate the two with a line containing exactly: ===FINAL===`,
   ].join("\n");
   const critiquePrompt = [
@@ -311,7 +335,7 @@ export async function orchestrateDeliverable(args: {
     "moves_deliverable_redteam",
     critiqueSystem,
     critiquePrompt,
-    8000,
+    isP1Charter ? 2600 : 8000,
   );
 
   const parts = reviewed.split(/^===FINAL===\s*$/m);
@@ -353,7 +377,9 @@ export async function orchestrateDeliverable(args: {
     sourceRegister: register,
     // Orchestrated docs are structured by Claude; require the universally-expected
     // executive sections + a couple of must-have tables, not the rigid 14.
-    requiredSections: ["Executive Summary", "Recommendation"],
+    requiredSections: isP1Charter
+      ? ["Charter Summary", "P2 Evidence Plan and Gate Decision"]
+      : ["Executive Summary", "Recommendation"],
     requiredTableSections: [],
     clientCompleteItems: result.clientCompleteItems,
     openItems,

@@ -259,13 +259,17 @@ export async function buildPhaseWordEquivalentDocx(
       artifact: input.artifact,
       phase: input.phase,
     });
+  const isP1Charter =
+    input.phase === 1 ||
+    String(input.artifact) === "program_charter" ||
+    String(input.artifact) === "charter";
   const status =
     input.reviewStatus ??
     (input.generationMode === "draft"
       ? "Pre-gate draft - sponsor review required"
       : "Draft - client review required");
   const extracted = stripHtml(input.html);
-  const children: DocChild[] = [
+  const coverChildren: DocChild[] = [
     paragraph(input.moveName, {
       alignment: AlignmentType.CENTER,
       size: 26,
@@ -295,8 +299,50 @@ export async function buildPhaseWordEquivalentDocx(
       alignment: AlignmentType.CENTER,
       size: 20,
       color: MUTED,
-      spacingAfter: 800,
+      spacingAfter: isP1Charter ? 360 : 800,
     }),
+  ];
+
+  const compactP1Children: DocChild[] = [
+    ...coverChildren,
+    heading("Charter Summary", 1),
+    paragraph(contextSummary(input.context)),
+    paragraph(
+      "This P1 Charter Brief records the approved P0 bet and authorizes P2 Discovery only. Current-state process, technology, organization, metrics, architecture, roadmap, operating model, and estimates remain to validate in P2 unless explicitly evidenced.",
+      { color: MUTED },
+    ),
+    heading("P1 Source of Truth", 1),
+    simpleTable([
+      ["Field", "Value"],
+      ["Status", status],
+      ["Primary editable record", contract.primaryEditableRecordLabel],
+      ["Visual companion", "Optional HTML review companion"],
+      ["Decision boundary", "Approve P2 Discovery only"],
+    ]),
+    ...sectionList(
+      "Required Charter Sections",
+      contract.wordDocumentSections,
+      "No P1 charter section list was captured.",
+    ),
+    ...sectionList(
+      "P2 Evidence Plan",
+      contract.requiredWorkshopEvidence,
+      "P2 evidence plan has not been captured yet.",
+    ),
+    heading("Client-to-Complete / Validate in P2", 1),
+    paragraph(
+      "Client to complete: sponsor approval, scope confirmation, completed P2 workshop outputs, evidence uploads, and current-state validation before design, roadmap, estimate, or Tower claims are generated.",
+      { italics: true, color: MUTED },
+    ),
+    heading("Extracted Review Text", 1),
+    paragraph(
+      extracted ||
+        "No HTML review text was available. Use the approved P0 brief and evidence plan as the P1 record.",
+    ),
+  ];
+
+  const children: DocChild[] = isP1Charter ? compactP1Children : [
+    ...coverChildren,
     paragraph("Contents", {
       heading: HeadingLevel.HEADING_1,
       pageBreakBefore: true,

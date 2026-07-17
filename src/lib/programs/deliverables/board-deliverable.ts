@@ -16,7 +16,6 @@ import type { GeneratedDeliverable } from "@/lib/programs/deliverable-refinement
 import {
   buildSourceRegister,
   applyCitationsToBody,
-  findForbiddenTags,
   resolveSourceLabel,
   type SourceRegisterEntry,
 } from "./source-labels";
@@ -140,8 +139,18 @@ function buildSystemPrompt(
       return `- ${s.title} (${s.mode})${tbl}${crit}`;
     })
     .join("\n");
+  const isP1Charter = contract.deliverableType === "program_charter";
+  const roleLine = isP1Charter
+    ? `You are drafting a concise P1 Charter Brief / gate decision record for ${clientName} for the "${moveName}" initiative.`
+    : `You are a senior partner at a top-tier strategy firm (McKinsey/BCG caliber) plus a CIO advisory partner, drafting a board-grade ${contract.label} for ${clientName} for the "${moveName}" initiative.`;
+  const styleLine = isP1Charter
+    ? "STYLE: concise, factual, plain-English, decision-record quality. Target 700-1,200 words / 2-4 pages. No table of contents, no appendix, no implementation plan, no target-state design, no roadmap, no estimate, no detailed RACI, and no current-state diagnosis beyond P0 facts."
+    : "STYLE: executive, concise but complete, advisory, specific (not generic, not salesy), with clear implications and explicit decision asks.";
+  const outputLine = isP1Charter
+    ? "Output GitHub-flavored Markdown only. Use exactly the H2 sections below, in order. Use only the specified concise tables. Start directly with the first section heading."
+    : `Output GitHub-flavored Markdown only (H2 sections, markdown tables). Start directly with the first section heading — no preamble, no title line, no "here is".`;
   return [
-    `You are a senior partner at a top-tier strategy firm (McKinsey/BCG caliber) plus a CIO advisory partner, drafting a board-grade ${contract.label} for ${clientName} for the "${moveName}" initiative.`,
+    roleLine,
     `Audience: ${contract.audience}.`,
     ``,
     `NON-NEGOTIABLE RULES:`,
@@ -149,17 +158,23 @@ function buildSystemPrompt(
     `2. Cite every evidence-based claim with a numeric [n] tied to the Source Register. NEVER write internal identifiers (table names, document_extract:*, chunk ids, fact keys, context tags) anywhere in the body.`,
     `3. Where required evidence is missing, insert an explicit placeholder: [CLIENT TO COMPLETE: ...], [CLIENT TO CONFIRM: ...], [VALUE TEAM TO CONFIRM: ...], or [LEGAL/PROCUREMENT REVIEW REQUIRED: ...]. Never hide a gap in prose.`,
     `4. Produce the TABLES specified for each section, with the exact columns. Tables must be readable and complete (use a placeholder cell rather than omitting a row).`,
+    ...(isP1Charter
+      ? [
+          `5. P1 is not Discovery. Current-state process, technology stack, org structure, baseline metrics, solution options, architecture, roadmap, estimates, and operating-model details must be written as "To validate in P2" unless they are explicitly present in governed evidence.`,
+        ]
+      : []),
     ``,
-    `STYLE: executive, concise but complete, advisory, specific (not generic, not salesy), with clear implications and explicit decision asks.`,
+    styleLine,
     ``,
     `REQUIRED SECTIONS (use exactly these as H2 headings, in this order):`,
     sectionLines,
     ``,
-    `Output GitHub-flavored Markdown only (H2 sections, markdown tables). Start directly with the first section heading — no preamble, no title line, no "here is".`,
+    outputLine,
   ].join("\n");
 }
 
 function buildUserPrompt(args: {
+  contract: DeliverableContract;
   clientName: string;
   moveName: string;
   facts: string[];
@@ -172,6 +187,7 @@ function buildUserPrompt(args: {
         `[${r.ref}] ${r.title} — ${r.family} (confidence: ${r.confidence})`,
     )
     .join("\n");
+  const isP1Charter = args.contract.deliverableType === "program_charter";
   return [
     `CLIENT: ${args.clientName}`,
     `INITIATIVE: ${args.moveName}`,
@@ -189,7 +205,9 @@ function buildUserPrompt(args: {
     `SOURCE REGISTER (use these exact [n] numbers):`,
     reg || "(none)",
     ``,
-    `Write the complete board-grade document now, following the required sections and tables.`,
+    isP1Charter
+      ? `Write the concise P1 Charter Brief now. It must record the P0-approved bet and define what P2 must validate. Do not expand into a discovery report, solution design, roadmap, estimate, or operating model.`
+      : `Write the complete board-grade document now, following the required sections and tables.`,
   ].join("\n");
 }
 
@@ -216,6 +234,7 @@ export async function generateBoardDeliverable(args: {
 
   const system = buildSystemPrompt(args.contract, clientName, args.moveName);
   const prompt = buildUserPrompt({
+    contract: args.contract,
     clientName,
     moveName: args.moveName,
     facts,
@@ -240,7 +259,7 @@ export async function generateBoardDeliverable(args: {
     });
     const stream = await client.messages.create({
       model,
-      max_tokens: 8000,
+      max_tokens: args.contract.deliverableType === "program_charter" ? 2600 : 8000,
       system,
       messages: [{ role: "user", content: prompt }],
       stream: true,
@@ -260,7 +279,6 @@ export async function generateBoardDeliverable(args: {
       args.contract,
       facts,
       openItems,
-      citationMap,
     );
   }
 
@@ -310,7 +328,6 @@ function buildFallbackBody(
   contract: DeliverableContract,
   facts: string[],
   openItems: string[],
-  _citationMap: Record<string, number>,
 ): string {
   const lines: string[] = [];
   for (const s of contract.sections) {
