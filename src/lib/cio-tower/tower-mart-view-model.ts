@@ -273,7 +273,7 @@ export async function loadTowerMartCommandView(args: {
 
     return {
       generatedFrom: 'cio_tower_mart',
-      headline: `${mappedCommand.tenantName} Tower mart shows ${towerMartMoney(mappedCommand.totalItBudgetFy26)} FY26 technology budget, ${towerMartMoney(mappedCommand.aiTaggedSpendFy26NonAdditive)} AI-tagged spend, and ${towerMartMoney(mappedCommand.partialFinanceValidatedValueYtd)} partial finance-validated value. Realized value remains blocked at ${towerMartMoney(mappedCommand.realizedValueYtdAllowed)}.`,
+      headline: `${mappedCommand.tenantName} Tower mart shows ${towerMartMoney(mappedCommand.totalItBudgetFy26)} FY26 technology budget, ${towerMartMoney(mappedCommand.aiTaggedSpendFy26NonAdditive)} AI-tagged spend, and ${towerMartMoney(mappedCommand.partialFinanceValidatedValueYtd)} partial finance-validated value. Claimable value remains blocked at ${towerMartMoney(mappedCommand.realizedValueYtdAllowed)}.`,
       command: mappedCommand,
       valueFunnel: valueFunnel.map((row) => ({
         funnelKey: String(row.funnel_key),
