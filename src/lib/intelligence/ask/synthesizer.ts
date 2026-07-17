@@ -135,7 +135,9 @@ LIVE ANSWER QUALITY CONTRACT
 
 Every answer must be decision-grade enough to survive an audit:
 
-- Keep paragraphs short. No paragraph should run past roughly 80 words. Use compact bullets when the answer compares multiple options, drivers, or next steps.
+- Use the AbarVa Pyramid Brief by default: Answer first, Proof second, Move third. Answer is one direct sentence. Proof is 2-3 compact evidence points or tradeoffs. Move is one concrete executive action, owner decision, or validation gate.
+- Keep normal answers to 90-160 words. For explicit table, chart, graph, matrix, ranking, or comparison asks, keep prose under 120 words before the exhibit and let the exhibit carry the detail. Only exceed this when the user explicitly asks for a deep dive, board memo, implementation plan, or roadmap.
+- Keep paragraphs short. No paragraph should run past roughly 60 words. Use compact bullets when the answer compares multiple options, drivers, or next steps.
 - If you write a dollar value, percentage, multiplier, bps value, rank, or range, attach a natural basis cue in the same sentence: "from the retrieved budget row," "based on the cited benchmark," "planning range," "evidence ledger," "source," "as of," or "directional estimate." Never leave precise numbers bare.
 - Define acronyms unless they are common executive terms like AI, ROI, KPI, API, CFO, CIO, COO, CISO, CXO, SLA, SOW, or NPS.
 - End with a concrete decision, owner action, or useful follow-up only when it naturally belongs in the answer. Do not append generic routing language about Source, Tower, or Moves.
@@ -156,7 +158,7 @@ ASK CLARIFYING QUESTIONS WHEN THEY WOULD HELP
 If the question is ambiguous, or the answer would change materially based on something you don't know, ask. "Before I answer — are you thinking about [X] or [Y]? My take is different on each." This is what a senior advisor does. It's not weakness; it's precision.
 
 CONVERSE NATURALLY
-You're in a conversation, not generating a report. Length should match the question. A simple question gets a 3-4 sentence answer. A complex strategic question gets 200-400 words. Don't pad. Don't bullet-point everything. Use bullets when they earn their place; otherwise, write in prose.
+You're in a conversation, not generating a report. Length should match the question. A simple question gets a 3-4 sentence answer. A complex strategic question still starts with the AbarVa Pyramid Brief; ask or queue follow-ups for the deeper board memo, evidence cut, value case, or execution plan instead of dumping everything in the first turn. Don't pad. Don't bullet-point everything. Use bullets when they earn their place; otherwise, write in prose.
 
 When the user makes a follow-up, build on the prior turn — don't restart from scratch.
 
@@ -425,6 +427,7 @@ export function buildUniversalAnswerVisualContract(): string {
     "UNIVERSAL aVa ANSWER + VISUAL CONTRACT — ALWAYS ON:",
     "- Treat the user's literal question as the task. Do not rewrite it into a canned workflow and do not answer a different starter prompt.",
     "- Start with the executive answer in prose. Make the judgment clear before any exhibit.",
+    "- Default to the AbarVa Pyramid Brief: Answer, Proof, Move. Target 90-160 words before followups; for table/chart/graph/matrix/ranking asks, target no more than 120 words before the exhibit.",
     "- Claude owns the advisory judgment: which options matter, how to rank them, what is directional, what is not yet evidenced, and what the executive should do next.",
     "- The renderer owns display only. Do not write HTML, SVG, Mermaid, canvas code, raw renderer instructions, or arbitrary JSON outside the governed fences below. In answer-only mode, do not emit tab markers; in tabbed mode, use only the exact tab markers supplied elsewhere.",
     "- Use visuals when they materially improve the decision: ranking, comparison, prioritization, value/complexity/readiness tradeoff, spend, trend, roadmap, risk, dependency, or a user-requested table/chart/graph/visual.",
@@ -436,7 +439,7 @@ export function buildUniversalAnswerVisualContract(): string {
     DECISION_TABLE_FORMAT_CONTRACT,
     "When a chart materially helps and you have 2+ numeric rows, include exactly one governed chart fence using this existing parser-supported format:",
     CHART_FENCE_FORMAT_CONTRACT,
-    'Every answer must end with a fenced ```followups block containing a JSON array of exactly 2-3 short follow-up questions grounded in the answer just given.',
+    'Every answer must end with a fenced ```followups block containing a JSON array of exactly 3 short follow-up questions grounded in the answer just given. Each follow-up should be under 18 words and should invite the next useful cut: board memo, evidence proof, value case, execution plan, source/vendor cut, or Tower metrics.',
   ].join("\n");
 }
 
@@ -629,12 +632,13 @@ export async function* synthesizeStream(args: {
     ? `\n\nRICH-TEXT SURFACE OVERRIDE — SUPERSEDES ALL PRIOR FORMATTING INSTRUCTIONS: This answer is rendered as Markdown with full GitHub-Flavored Markdown support. Decision exhibits should be structured as compact Markdown tables when that improves the executive read. The earlier instruction "Do not print visible section labels" is CANCELLED for this surface.
 
 MANDATORY FORMATTING RULES — follow every one of these exactly:
-1. Default answer shape is a crisp CXO brief: 2-3 short paragraphs, each under roughly 55 words.
-2. The first sentence must state the key finding directly. No hollow opener, no "great question", no process narration.
-3. Use bold sparingly for the single most decision-critical number or phrase. Do not turn the whole answer into bold headers.
-4. Use "- " bullets only when they improve scanning. Avoid long bullet decks in default answers.
-5. Use a GFM Markdown table only when the user asks for a table/chart/graph/matrix/ranking/comparison or the answer compares 3+ items across 2+ attributes. GFM table format: header row | col1 | col2, then separator row |---|---|, then one data row per line. 3–5 columns, 2–8 rows.
-6. If the user asks a broad strategy question and not a deep dive, offer 2-3 follow-up directions instead of dumping every detail.
+1. Default answer shape is the AbarVa Pyramid Brief: Answer, Proof, Move.
+2. Target 90-160 words total for normal answers; for table/chart/graph/matrix/ranking asks, keep prose under 120 words before the exhibit.
+3. The first sentence must state the key finding directly. No hollow opener, no "great question", no process narration.
+4. Use bold sparingly for the single most decision-critical number or phrase. Do not turn the whole answer into bold headers.
+5. Use "- " bullets only when they improve scanning. Avoid long bullet decks in default answers.
+6. Use a GFM Markdown table only when the user asks for a table/chart/graph/matrix/ranking/comparison or the answer compares 3+ items across 2+ attributes. GFM table format: header row | col1 | col2, then separator row |---|---|, then one data row per line. 3–5 columns, 2–8 rows.
+7. If the user asks a broad strategy question and not a deep dive, queue exactly 3 follow-up questions through the governed followups block instead of dumping every detail.
 
 ${CHART_OUTPUT_CONTRACT}`
     : "";
@@ -674,7 +678,7 @@ ACTIVE INTELLIGENCE CANVAS RULES
     : "";
   const universalAnswerVisualContract = buildUniversalAnswerVisualContract();
   const answerOnlyDirective = answerOnly
-    ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a crisp executive answer using full GitHub-Flavored Markdown. Default to 2-3 short paragraphs and a strong storyline. GFM tables are REQUIRED only for explicit visual/ranking/comparison asks or true multi-attribute data — do not flatten those to prose. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — the canvas is handled separately. Length: prose-only answers ~100-170 words; table/chart answers may run to ~300 words. Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.
+    ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a crisp executive answer using full GitHub-Flavored Markdown. Default to the AbarVa Pyramid Brief: Answer, Proof, Move. GFM tables are REQUIRED only for explicit visual/ranking/comparison asks or true multi-attribute data — do not flatten those to prose. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — the canvas is handled separately. Length: prose-only answers 90-160 words; table/chart answers must keep prose under 120 words before the exhibit and let the exhibit carry the detail. End only through the governed followups block with exactly 3 queued questions. Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.
 Use the universal answer + visual contract for any table, chart, ranking, and follow-up structure.`
     : "";
   const shapeContract = answerOnly
