@@ -57,6 +57,19 @@ Hard rules:
 - Do not delete existing source rows.
 - Do not wholesale replace existing files.
 - Preserve existing record IDs where possible.
+- PRESERVING A ROW IS NOT THE SAME AS PRESERVING ITS STATUS. "Preserve" means
+  keep the row's identity, evidence lineage, and narrative content. It does
+  NOT mean a row may keep (or be assigned) initiative_status=active/approved
+  or funding_status=approved unless it has a non-empty
+  linked_budget_record_ids or linked_sa02_records that reconciles into the
+  $650M/$487.5M/$162.5M totals. A row cannot be both "active"/"approved" and
+  financially unaccounted for — that is not a preserved row, it's a false
+  financial claim. If a row has no reconciling budget/SA02 link, its status
+  MUST be downgraded to candidate/proposed/not_approved/unknown (with a
+  caveat explaining why) — the row stays, the false status does not. This
+  applies identically to the 237 legacy rows and to any new row you add;
+  never fabricate a budget link just to justify keeping an existing active
+  label.
 - Add new columns where needed.
 - Backfill new columns for existing rows.
 - Reclassify existing rows into the improved schema.
@@ -171,9 +184,13 @@ Goal: make 09 genuinely about funded/proposed programs, not a duplicate of
   linked_budget_record_ids, linked_sa02_records, ai_spend_flag,
   ai_spend_type, ai_spend_category, additive_status, caveat.
 - Reclassify existing rows without deleting: these 237 narrative rows are not
-  structured funded programs today. Set initiative_status/funding_status
-  conservatively (do not claim approved funding with no budget tie) and mark
-  a caveat pointing to the newly added real program rows.
+  structured funded programs today and have no budget/SA02 link. Per the
+  reconciliation hard rule above, that means initiative_status=candidate (or
+  proposed) and funding_status=not_approved/unknown for essentially all of
+  them — none may be marked active/approved unless you also give them a real
+  linked_budget_record_ids/linked_sa02_records tie, which for the legacy rows
+  you should not fabricate. Mark a caveat pointing to the newly added real
+  program rows.
 - Add new curated program rows (Data Foundation/Lakehouse Modernization,
   Integration/API Modernization, Cyber/Identity/PHI Uplift, EHR/Clinical
   Analytics Modernization, Contact Center Platform/Knowledge Modernization,
@@ -266,9 +283,13 @@ datasets/tenant-inputs/meridian-health/interviews/executive_interviews.csv.
 - Checks these audits must cover: 08 control-total row = $650M with run =
   $487.5M and change = $162.5M; additive category rows reconcile to the
   totals when filtered by budget_row_level; AI-related spend is non-additive
-  and never summed into total spend; every approved/active 09 program ties
-  to a budget/SA02 row or carries an explicit caveat; every AI-tagged spend
-  row ties to SA02 and/or 08; every 10 use case has a funding boundary; AI
+  and never summed into total spend; ZERO rows anywhere in 09 (or 10) have
+  initiative_status=active/approved (or funding_status=approved) with an
+  empty linked_budget_record_ids and linked_sa02_records — a caveat does
+  NOT substitute for a real link; a row failing this must be downgraded to
+  candidate/not_approved, not merely caveated while staying "active"; every
+  AI-tagged spend row ties to SA02 and/or 08; every 10 use case has a
+  funding boundary; AI
   Assist is never funded, never an approved program, never has realized
   value; embedded AI spend (Copilot/ServiceNow/etc.) is never counted as AI
   Assist funding; no old $1.1B/$1.7B figures reappear; all new evidence_id
@@ -286,8 +307,11 @@ reports/meridian-v3-real-repo-integration/sa07-merge-report.csv
 reports/meridian-v3-real-repo-integration/evidence-resolution.csv
 reports/meridian-v3-real-repo-integration/proof.html
 The row-preservation report must show, per file: old row count, new row
-count, rows preserved, rows added, rows removed, rows reclassified, reason.
-Rows removed should be zero unless explicitly justified and approved.
+count, rows preserved, rows added, rows removed, rows reclassified, rows
+status-downgraded for lacking a budget/SA02 reconciliation link, reason.
+Rows removed should be zero unless explicitly justified and approved. Rows
+status-downgraded should be non-zero for 09/10 (see the reconciliation hard
+rule) — a zero here is a signal the reconciliation check wasn't actually run.
 
 10. Governance
 This directory (datasets/tenant-inputs/meridian-health/) is currently
