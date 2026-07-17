@@ -121,8 +121,8 @@ const PHASES: PhaseContract[] = [
     lede:
       "Turn the idea into a bounded charter: scope, owner, success measures, assumptions, and the gate that protects the next phase.",
     substeps: [
-      { key: "prepare", label: "Prepare" },
-      { key: "decide", label: "Scope" },
+      { key: "prepare", label: "Charter inputs" },
+      { key: "decide", label: "Upload evidence" },
       { key: "approve", label: "Gate approval" },
     ],
     sessions: ["Sponsor charter review", "Scope boundary workshop", "Success metric review"],
@@ -384,6 +384,20 @@ export function MovesPhaseStandaloneClient({
   const substep = phase.substeps[substepIndex] ?? phase.substeps[0];
   const progressPct = Math.round(((substepIndex + 1) / phase.substeps.length) * 100);
   const isFinalSubstep = substepIndex === phase.substeps.length - 1;
+  const nextSubstep = phase.substeps[substepIndex + 1] ?? null;
+  const primaryActionLabel = isHistoricalPhase
+    ? terminalComplete
+      ? "Open Tower →"
+      : `Continue to ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title} →`
+    : isFinalSubstep
+      ? phase.phase === 0
+        ? gateApprovalStatus === "approving"
+          ? "Approving..."
+          : "Approve gate →"
+        : "Review governed build →"
+      : nextSubstep
+        ? `Continue to ${nextSubstep.label} →`
+        : "Continue →";
   const supportLine = useMemo(() => {
     const industry = move.tenant.industryCode
       ? move.tenant.industryCode.toUpperCase()
@@ -898,17 +912,7 @@ export function MovesPhaseStandaloneClient({
                   }
                   type="button"
                 >
-                  {isHistoricalPhase
-                    ? terminalComplete
-                      ? "Open Tower →"
-                      : `Continue to ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title} →`
-                    : isFinalSubstep
-                    ? phase.phase === 0
-                      ? gateApprovalStatus === "approving"
-                        ? "Approving..."
-                        : "Approve gate →"
-                      : "Review governed build →"
-                    : "Continue →"}
+                  {primaryActionLabel}
                 </button>
               </div>
 
@@ -1163,6 +1167,29 @@ function PhaseBody({
   }
 
   if (substep === "prepare") {
+    if (phase.phase === 1) {
+      return (
+        <>
+          <PhaseCaptureEditor
+            completeCount={phaseCaptureCompleteCount}
+            onChange={onPhaseCaptureValueChange}
+            phase={phase}
+            sections={phaseCaptureSections}
+            values={phaseCaptureValues}
+          />
+          <section className="mxw-zone">
+            <h2>Initial transformation posture</h2>
+            <p>
+              Capture the starting hypothesis for P2 discovery. This is not the
+              selected solution approach; P3 will choose the approach after
+              current-state evidence, constraints, and readiness are proven.
+            </p>
+            <PostureCards selectedOption={selectedOption} onSelectOption={onSelectOption} />
+          </section>
+        </>
+      );
+    }
+
     if (phase.phase >= 2 && phase.phase <= 5) {
       const nextPhase = nextPhaseFor(phase);
       const onTaskAction = (taskId: PhaseTask["id"]) => {
@@ -1252,33 +1279,22 @@ function PhaseBody({
     if (phase.phase === 1) {
       return (
         <>
-          <PhaseCaptureEditor
-            completeCount={phaseCaptureCompleteCount}
-            onChange={onPhaseCaptureValueChange}
-            phase={phase}
-            sections={phaseCaptureSections}
-            values={phaseCaptureValues}
+          <DecisionEvidenceActionPanel
+            buttonLabel="Upload decision files"
+            heading="Upload evidence for P1"
+            moveId={move.id}
+            phase={phase.phase}
+            title="Charter Decision Notes"
           />
           <section className="mxw-zone">
-            <h2>Initial transformation posture</h2>
+            <h2>Files to upload</h2>
             <p>
-              Capture the starting hypothesis for P2 discovery. This is not the
-              selected solution approach; P3 will choose the approach after
-              current-state evidence, constraints, and readiness are proven.
+              Upload sponsor review notes, scope workshop notes, success metric
+              decisions, stakeholder map updates, or completed charter templates.
+              Multiple files are allowed; uploaded files stay as Move evidence
+              until reviewed.
             </p>
-            <PostureCards selectedOption={selectedOption} onSelectOption={onSelectOption} />
-          </section>
-          <section className="mxw-upload">
-            <div>
-              <strong>Upload Charter Decision Notes</strong>
-              <span>Scope assumptions, sponsor direction, constraints, and what P2 must validate.</span>
-            </div>
-            <EvidenceUploadControl
-              buttonLabel="Upload"
-              moveId={move.id}
-              phase={phase.phase}
-              title="Charter Decision Notes"
-            />
+            <TemplatesAndSessions phase={phase} />
           </section>
         </>
       );
@@ -1299,18 +1315,13 @@ function PhaseBody({
             onSelectOption={onSelectOption}
           />
         </section>
-        <section className="mxw-upload">
-          <div>
-            <strong>Upload Solution Approach Decision Summary</strong>
-            <span>Session notes, SME sign-off, tradeoffs, and rationale.</span>
-          </div>
-          <EvidenceUploadControl
-            buttonLabel="Upload"
-            moveId={move.id}
-            phase={phase.phase}
-            title="Solution Approach Decision Summary"
-          />
-        </section>
+        <DecisionEvidenceActionPanel
+          buttonLabel="Upload decision files"
+          heading="Upload evidence for approach decision"
+          moveId={move.id}
+          phase={phase.phase}
+          title="Solution Approach Decision Summary"
+        />
       </>
     );
   }
@@ -1387,6 +1398,38 @@ function PhaseBody({
     suggestedTemplates: nextPhaseContract?.templates ?? [],
     carriesForwardContent,
   });
+  const phaseInputsReady = phase.phase === 0 || !phaseCaptureBlocker;
+  const evidenceReady = evidenceCount > 0 || isHistoricalPhase || gateApproved;
+  const gateAttestationRows = [
+    {
+      item:
+        phase.phase === 0
+          ? "P0 brief reviewed for promotion."
+          : `${phase.code} inputs complete`,
+      meaning:
+        phase.phase === 0
+          ? "The seven origination answers are ready to become the P1 seed."
+          : "Required phase fields are filled before Approve & Build runs.",
+      met: isHistoricalPhase || gateApproved || phaseInputsReady,
+    },
+    {
+      item: "Evidence attached or carried as gap",
+      meaning:
+        "Uploaded files, reviewed evidence, or explicit caveats are visible before approval.",
+      met: evidenceReady,
+    },
+    {
+      item:
+        phase.phase >= 1
+          ? "Full phase close executed"
+          : "Gate approval advances to P1",
+      meaning:
+        phase.phase >= 1
+          ? "Approve & Build runs context extract, deliverable queue, gate approval, and next-phase handoff."
+          : "P0 approval promotes the Move into P1 Charter.",
+      met: isHistoricalPhase || gateApproved,
+    },
+  ];
 
   return (
     <>
@@ -1421,17 +1464,28 @@ function PhaseBody({
             file. The approved version is what carries forward.
           </p>
         )}
-        <div className="mxw-gate-attest">
-          {[
-            "Record reviewed with the accountable owner.",
-            "Evidence and caveats are attached.",
-            "Approved output becomes the next phase source of truth.",
-          ].map((item, index) => (
-            <span className={gateApproved || index < 2 ? "met" : "pending"} key={item}>
-              {gateApproved || index < 2 ? "✓" : "○"} {item}
-            </span>
-          ))}
-        </div>
+        <table className="mxw-gate-table">
+          <thead>
+            <tr>
+              <th>Gate item</th>
+              <th>What it means</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {gateAttestationRows.map((item) => (
+              <tr key={item.item}>
+                <td>{item.item}</td>
+                <td>{item.meaning}</td>
+                <td>
+                  <span className={item.met ? "met" : "pending"}>
+                    {item.met ? "Complete" : "Open"}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
         {gateApprovalMessage ? (
           <div className={`mxw-gate-message ${gateApprovalStatus}`}>
             {gateApprovalMessage}
@@ -1888,6 +1942,41 @@ function buildPhaseCaptureItems({
 }
 
 
+function DecisionEvidenceActionPanel({
+  buttonLabel,
+  heading,
+  moveId,
+  phase,
+  title,
+}: {
+  buttonLabel: string;
+  heading: string;
+  moveId: string;
+  phase: number;
+  title: string;
+}) {
+  return (
+    <section className="mxw-action-panel" aria-label={heading}>
+      <div>
+        <span>Action required</span>
+        <h2>{heading}</h2>
+        <p>
+          Upload the working-session files here. Then continue to Gate approval,
+          where AbarVa runs the governed phase build and advances only from the
+          approved record.
+        </p>
+      </div>
+      <EvidenceUploadControl
+        buttonLabel={buttonLabel}
+        moveId={moveId}
+        phase={phase}
+        title={title}
+      />
+    </section>
+  );
+}
+
+
 function EvidenceUploadControl({
   buttonLabel,
   moveId,
@@ -1903,33 +1992,53 @@ function EvidenceUploadControl({
   const [status, setStatus] = useState<UploadWorkStatus>("idle");
   const [message, setMessage] = useState("");
 
-  async function upload(file: File | null | undefined) {
-    if (!file) return;
+  async function uploadOne(file: File, totalCount: number) {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("phase", String(phase));
+    form.append("family", "uploaded_evidence");
+    form.append("title", totalCount > 1 ? `${title} - ${file.name}` : title || file.name);
+    const res = await fetch(`/api/v1/programs/${moveId}/artifacts/upload`, {
+      method: "POST",
+      credentials: "include",
+      body: form,
+    });
+    const payload = (await res.json().catch(() => ({}))) as {
+      ok?: boolean;
+      detail?: string;
+      error?: string;
+    };
+    if (!res.ok || !payload.ok) {
+      throw new Error(
+        payload.detail || payload.error || `Upload failed (HTTP ${res.status})`,
+      );
+    }
+  }
+
+  async function upload(files: FileList | null | undefined) {
+    const selectedFiles = Array.from(files ?? []);
+    if (selectedFiles.length === 0) return;
     setStatus("uploading");
-    setMessage(`Uploading ${file.name}...`);
+    setMessage(
+      selectedFiles.length === 1
+        ? `Uploading ${selectedFiles[0]?.name ?? "file"}...`
+        : `Uploading ${selectedFiles.length} files...`,
+    );
     try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("phase", String(phase));
-      form.append("family", "uploaded_evidence");
-      form.append("title", title || file.name);
-      const res = await fetch(`/api/v1/programs/${moveId}/artifacts/upload`, {
-        method: "POST",
-        credentials: "include",
-        body: form,
-      });
-      const payload = (await res.json().catch(() => ({}))) as {
-        ok?: boolean;
-        detail?: string;
-        error?: string;
-      };
-      if (!res.ok || !payload.ok) {
-        throw new Error(
-          payload.detail || payload.error || `Upload failed (HTTP ${res.status})`,
-        );
+      for (let index = 0; index < selectedFiles.length; index += 1) {
+        const file = selectedFiles[index];
+        if (!file) continue;
+        if (selectedFiles.length > 1) {
+          setMessage(`Uploading ${index + 1} of ${selectedFiles.length}: ${file.name}`);
+        }
+        await uploadOne(file, selectedFiles.length);
       }
       setStatus("uploaded");
-      setMessage(`Uploaded ${file.name}`);
+      setMessage(
+        selectedFiles.length === 1
+          ? `Uploaded ${selectedFiles[0]?.name ?? "file"}`
+          : `Uploaded ${selectedFiles.length} files`,
+      );
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : "Upload failed.");
@@ -1941,9 +2050,10 @@ function EvidenceUploadControl({
   return (
     <div className="mxw-upload-control">
       <input
-        aria-label={`${buttonLabel} file`}
+        aria-label={buttonLabel}
         className="mxw-hidden-file"
-        onChange={(event) => void upload(event.currentTarget.files?.[0])}
+        multiple
+        onChange={(event) => void upload(event.currentTarget.files)}
         ref={inputRef}
         type="file"
       />
@@ -2382,6 +2492,10 @@ function MovesStandaloneStyles() {
 .mxw-option-blocks i{border:1px solid rgba(0,87,184,.16);border-radius:999px;background:var(--blue-tint);color:var(--blue);font-style:normal;font-size:10.5px;font-weight:800;padding:5px 8px}
 .mxw-option-caution{border:1px solid rgba(176,115,15,.25);border-radius:10px;background:var(--amber-tint);padding:9px 10px;font-size:12px;color:var(--ink-2);line-height:1.4}
 .mxw-option-caution b{display:block;color:var(--amber);font-size:10.5px;letter-spacing:.4px;text-transform:uppercase;margin-bottom:3px}
+.mxw-action-panel{margin-top:18px;border:1px solid rgba(29,143,104,.28);border-radius:14px;background:linear-gradient(180deg,var(--green-tint),var(--card) 70%);box-shadow:var(--shadow);padding:16px 18px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center}
+.mxw-action-panel span{display:block;font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:var(--green);font-weight:900;margin-bottom:4px}
+.mxw-action-panel h2{font-family:Georgia,serif;font-size:20px;font-weight:700;letter-spacing:-.35px;line-height:1.15;margin:0;color:var(--ink)}
+.mxw-action-panel p{font-size:13px;color:var(--ink-2);line-height:1.45;margin:5px 0 0;max-width:72ch}
 .mxw-upload{margin-top:20px;border:1px dashed var(--line-2);border-radius:13px;background:var(--soft);padding:18px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .mxw-upload strong{display:block;font-size:14px}
 .mxw-upload span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
@@ -2422,9 +2536,15 @@ function MovesStandaloneStyles() {
 .mxw-gate span.soft-open{border-style:dashed;color:var(--muted)}
 .mxw-gate span.approval-generated{background:#fffdf7;border-color:rgba(176,115,15,.24)}
 .mxw-gate span em{display:block;margin-top:5px;font-style:normal;font-size:11px;color:var(--muted)}
-.mxw-gate-attest{display:flex;flex-direction:column;gap:10px;margin:15px 0}
-.mxw-gate-attest span{display:block;border:1px solid var(--line);border-radius:11px;background:var(--card);padding:13px 15px;font-size:13.5px;color:var(--ink-2)}
-.mxw-gate-attest span.met{border-color:rgba(29,143,104,.35);background:var(--green-tint);color:var(--green)}
+.mxw-gate-table{width:100%;border-collapse:separate;border-spacing:0;margin:15px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+.mxw-gate-table th{background:var(--soft);border-bottom:1px solid var(--line);color:var(--faint);font-size:10px;letter-spacing:.7px;text-transform:uppercase;text-align:left;padding:10px 12px}
+.mxw-gate-table td{border-bottom:1px solid var(--line);font-size:12.8px;line-height:1.42;color:var(--ink-2);padding:11px 12px;vertical-align:top}
+.mxw-gate-table tr:last-child td{border-bottom:0}
+.mxw-gate-table td:first-child{font-weight:800;color:var(--ink);width:28%}
+.mxw-gate-table td:last-child{width:110px}
+.mxw-gate-table .met,.mxw-gate-table .pending{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:900;white-space:nowrap}
+.mxw-gate-table .met{border:1px solid rgba(29,143,104,.35);background:var(--green-tint);color:var(--green)}
+.mxw-gate-table .pending{border:1px solid var(--line-2);background:var(--soft);color:var(--muted)}
 .mxw-gate-note{display:grid;gap:4px;margin:12px 0 4px;border:1px solid rgba(176,115,15,.24);background:#fffdf7;border-radius:11px;padding:11px 13px}
 .mxw-gate-note strong{font-size:12px}
 .mxw-gate-note span{font-size:12.5px;color:var(--ink-2);line-height:1.45}
@@ -2553,6 +2673,7 @@ function MovesStandaloneStyles() {
   .mxw-p0-brief-grid{grid-template-columns:1fr}
   .mxw-p0-brief-review header{flex-direction:column}
   .mxw-stage-bar{align-items:flex-start;flex-direction:column}
+  .mxw-action-panel{grid-template-columns:1fr;align-items:flex-start}
   .mxw-upload,.mxw-inline-upload{align-items:flex-start;flex-direction:column}
   .mxw-upload-control{justify-content:flex-start;width:100%}
   .mxw-options button{grid-template-columns:28px 1fr}
