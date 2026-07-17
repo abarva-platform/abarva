@@ -1074,7 +1074,7 @@ const CXO_ARTIFACT_TOPIC_PATTERNS: Array<{
   },
   {
     label: "Finance and FP&A",
-    pattern: /\b(finance|fp&a|forecast|cash|working capital|financial close|monthly close|quarterly close|budget)\b/i,
+    pattern: /\b(fp&a|financial planning|finance (?:forecast|budget|close|planning|reporting|automation)|forecast|cash|working capital|financial close|monthly close|quarterly close|budget)\b/i,
     decisionUse: "Use where forecast accuracy, cycle time, and control requirements are explicit.",
   },
   {
@@ -1253,13 +1253,13 @@ function requestedVisualFallbackTable(
       {
         request: requested || "structured exhibit",
         status: isQuadrantMatrixRequest(query)
-          ? "Needs validated value and complexity rows before rendering a 2x2 chart"
-          : "Needs validated rows before rendering as a decision artifact",
+          ? "Needs validated value and complexity data before rendering a 2x2 chart"
+          : "Needs validated source data before rendering as a decision artifact",
         evidenceNeeded:
-          "Load or cite the ranked items, values, complexity/readiness scores, and source basis for each row.",
+          "Load or cite ranked items with value, complexity/readiness, and source basis.",
       },
     ],
-    note: "aVa did not expose unvalidated model text as a chart. Load source-backed rows to render the requested visual.",
+    note: "aVa did not expose unvalidated model text as a chart. Load source-backed data to render the requested visual.",
     citationIds,
   };
 }
