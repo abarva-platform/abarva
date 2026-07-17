@@ -10,10 +10,42 @@ import {
   resolveCurrentStateReadiness,
 } from "@/lib/programs/current-state-readiness";
 import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
-import { getStrategicMoveById } from "@/lib/programs/queries";
+import { getProgramById } from "@/lib/programs/queries";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function textFromUnknown(value: unknown): string | null {
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (!value || typeof value !== "object") return null;
+
+  const record = value as Record<string, unknown>;
+  const parts = [
+    record.archetype,
+    record.classification,
+    record.label,
+    record.name,
+    record.title,
+    record.summary,
+  ].filter(
+    (part): part is string =>
+      typeof part === "string" && part.trim().length > 0,
+  );
+
+  return parts.length ? parts.join(" ") : null;
+}
+
+function scaffoldText(
+  charter: Record<string, unknown> | null,
+  key: string,
+): string | null {
+  if (!charter) return null;
+  const direct = textFromUnknown(charter[key]);
+  if (direct) return direct;
+  const scaffold = charter.scaffold;
+  if (!scaffold || typeof scaffold !== "object") return null;
+  return textFromUnknown((scaffold as Record<string, unknown>)[key]);
+}
 
 export async function GET(
   req: NextRequest,
@@ -29,17 +61,29 @@ export async function GET(
       return Response.json({ error: "invalid_phase" }, { status: 400 });
     }
 
-    // Archetype resolved from the Move's own row (best-effort) — never a
-    // hardcoded default for a Move we can read.
+    // Archetype resolved from the raw Move row/charter (best-effort). Do not
+    // use the display view model here; readiness gates need the P0 scaffold
+    // classification exactly as captured.
     let archetype = resolveProgramArchetype({});
     try {
-      const move = await getStrategicMoveById(ctx, programId);
-      if (move) {
+      const program = await getProgramById(ctx, programId);
+      if (program) {
+        const charter = program.charter ?? null;
+        const classification = [
+          scaffoldText(charter, "archetype"),
+          scaffoldText(charter, "classification"),
+          scaffoldText(charter, "resolved_program_archetype"),
+          scaffoldText(charter, "problem_statement"),
+          scaffoldText(charter, "scope_boundary"),
+          scaffoldText(charter, "evidence_family"),
+        ]
+          .filter((part): part is string => Boolean(part))
+          .join(" ");
+
         archetype = resolveProgramArchetype({
-          archetype: move.archetype,
-          classification: (move.charter as { classification?: string } | null)
-            ?.classification,
-          name: move.name,
+          archetype: program.archetype,
+          classification,
+          name: program.name,
         });
       }
     } catch {

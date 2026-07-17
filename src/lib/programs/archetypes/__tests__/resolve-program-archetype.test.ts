@@ -29,6 +29,17 @@ describe("resolveProgramArchetype — per-Move archetype resolution", () => {
     ).toBe("AI_OPERATIONS_DECISION_SUPPORT");
   });
 
+  it("routes healthcare agent-assist origination text to operations even when the row archetype is product enablement", () => {
+    expect(
+      resolveProgramArchetype({
+        archetype: "ai_product_enablement",
+        classification:
+          "Contact Center Agent Assist - AI-assisted member-service workflow for claims, benefits, eligibility, prior authorization, CRM, and knowledge lookup.",
+        name: "Member Service Agent Assist",
+      }).id,
+    ).toBe("AI_OPERATIONS_DECISION_SUPPORT");
+  });
+
   it("routes pdlc/sdlc/software language to AI-PDLC", () => {
     expect(resolveProgramArchetype({ name: "AI-led SDLC uplift" }).id).toBe(
       "AI_PRODUCT_DEVELOPMENT_LIFECYCLE",
