@@ -316,9 +316,16 @@ export function inlineChart(input: InlineChartInput): string {
   const padB = 58;
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
-  const rawMaxValue =
-    Math.max(1, ...rows.flatMap((row) => [row.value, row.value2 ?? 0])) * 1.12;
-  const maxValue = input.unit === '%' ? Math.max(100, rawMaxValue) : rawMaxValue;
+  const numericValues = rows.flatMap((row) => [row.value, row.value2 ?? 0]);
+  const rawMinValue = Math.min(0, ...numericValues);
+  const rawMaxValue = Math.max(0, ...numericValues);
+  const rawRange = Math.max(1, rawMaxValue - rawMinValue);
+  const minValue = rawMinValue < 0 ? rawMinValue - rawRange * 0.08 : 0;
+  const maxValue =
+    input.unit === '%' && rawMinValue >= 0
+      ? Math.max(100, rawMaxValue * 1.12)
+      : rawMaxValue + rawRange * 0.12;
+  const valueRange = Math.max(1, maxValue - minValue);
 
   let svg = open({
     width: W,
@@ -374,7 +381,7 @@ export function inlineChart(input: InlineChartInput): string {
   for (let i = 0; i <= 4; i++) {
     const y = padT + (plotH / 4) * i;
     svg += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="${CHART.grid}" stroke-width="1"/>`;
-    const labelValue = (maxValue / 4) * (4 - i);
+    const labelValue = maxValue - (valueRange / 4) * i;
     svg += txt(padL - 10, y + 3, inlineChartValueLabel(labelValue, input.unit), {
       size: 9,
       anchor: 'end',
@@ -383,7 +390,12 @@ export function inlineChart(input: InlineChartInput): string {
     });
   }
 
-  const yFor = (value: number): number => padT + plotH - (value / maxValue) * plotH;
+  const yFor = (value: number): number =>
+    padT + ((maxValue - value) / valueRange) * plotH;
+  const xFor = (value: number): number =>
+    padL + ((value - minValue) / valueRange) * plotW;
+  const zeroY = yFor(0);
+  const zeroX = xFor(0);
   const slot = plotW / rows.length;
 
   if (input.type === 'line' || input.type === 'area') {
@@ -392,9 +404,9 @@ export function inlineChart(input: InlineChartInput): string {
       return { x, y: yFor(row.value), row };
     });
     if (input.type === 'area') {
-      svg += `<path d="M${points[0]?.x ?? padL},${padT + plotH} ${points
+      svg += `<path d="M${points[0]?.x ?? padL},${zeroY} ${points
         .map((point) => `L${point.x},${point.y}`)
-        .join(' ')} L${points[points.length - 1]?.x ?? padL},${padT + plotH} Z" fill="${CHART.accentSoft}" opacity="0.8"/>`;
+        .join(' ')} L${points[points.length - 1]?.x ?? padL},${zeroY} Z" fill="${CHART.accentSoft}" opacity="0.8"/>`;
     }
     svg += `<polyline points="${points.map((point) => `${point.x},${point.y}`).join(' ')}" fill="none" stroke="${CHART.accent}" stroke-width="2.5"/>`;
     points.forEach((point) => {
@@ -417,18 +429,21 @@ export function inlineChart(input: InlineChartInput): string {
     const rowSlot = plotH / rows.length;
     rows.forEach((row, index) => {
       const y = padT + rowSlot * index + rowSlot * 0.22;
-      const width = (row.value / maxValue) * plotW;
+      const endX = xFor(row.value);
+      const width = Math.abs(endX - zeroX);
+      const x = Math.min(endX, zeroX);
       svg += txt(padL - 12, y + 16, row.label.slice(0, 24), {
         size: 10,
         anchor: 'end',
         fill: CHART.ink,
         weight: 700,
       });
-      svg += `<rect x="${padL}" y="${y}" width="${width}" height="${Math.min(24, rowSlot * 0.54)}" fill="${CHART.accent}" rx="3"/>`;
-      svg += txt(padL + width + 8, y + 16, inlineChartValueLabel(row.value, input.unit), {
+      svg += `<rect x="${x}" y="${y}" width="${Math.max(2, width)}" height="${Math.min(24, rowSlot * 0.54)}" fill="${row.value < 0 ? CHART.negative : CHART.accent}" rx="3"/>`;
+      svg += txt(row.value < 0 ? x - 8 : x + width + 8, y + 16, inlineChartValueLabel(row.value, input.unit), {
         size: 10,
         fill: CHART.inkSoft,
         weight: 800,
+        anchor: row.value < 0 ? 'end' : 'start',
         mono: true,
       });
     });
@@ -437,12 +452,15 @@ export function inlineChart(input: InlineChartInput): string {
     rows.forEach((row, index) => {
       const cx = padL + slot * index + slot / 2;
       const top = yFor(row.value);
-      svg += `<rect x="${cx - barW / 2}" y="${top}" width="${barW}" height="${padT + plotH - top}" fill="${CHART.accent}" rx="2"/>`;
-      svg += txt(cx, top - 7, inlineChartValueLabel(row.value, input.unit), {
+      const y = Math.min(top, zeroY);
+      const h = Math.max(2, Math.abs(zeroY - top));
+      svg += `<rect x="${cx - barW / 2}" y="${y}" width="${barW}" height="${h}" fill="${row.value < 0 ? CHART.negative : CHART.accent}" rx="2"/>`;
+      svg += txt(cx, row.value < 0 ? y + h + 13 : y - 7, inlineChartValueLabel(row.value, input.unit), {
         size: 9,
         anchor: 'middle',
         weight: 800,
         mono: true,
+        fill: row.value < 0 ? CHART.negative : CHART.ink,
       });
       svg += txt(cx, padT + plotH + 20, row.label.slice(0, 16), {
         size: 9,
@@ -453,7 +471,11 @@ export function inlineChart(input: InlineChartInput): string {
     });
   }
 
-  svg += `<line x1="${padL}" y1="${padT + plotH}" x2="${W - padR}" y2="${padT + plotH}" stroke="${CHART.ink}" stroke-width="1.4"/>`;
+  if (input.type === 'horizontal-bar') {
+    svg += `<line x1="${zeroX}" y1="${padT}" x2="${zeroX}" y2="${padT + plotH}" stroke="${CHART.ink}" stroke-width="1.4"/>`;
+  } else {
+    svg += `<line x1="${padL}" y1="${zeroY}" x2="${W - padR}" y2="${zeroY}" stroke="${CHART.ink}" stroke-width="1.4"/>`;
+  }
   if (input.note) {
     svg += txt(28, H - 18, input.note, { size: 10, fill: CHART.inkSoft });
   }
