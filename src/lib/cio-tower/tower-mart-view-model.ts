@@ -177,6 +177,13 @@ function nullableNum(value: string | number | null | undefined): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function towerMartStageLabel(value: string | null | undefined): string {
+  const label = String(value ?? '');
+  return label.toLowerCase() === 'realized value allowed'
+    ? 'Claimable value allowed'
+    : label;
+}
+
 export function towerMartMoney(value: number): string {
   return formatCioTowerMoney(value);
 }
@@ -272,7 +279,7 @@ export async function loadTowerMartCommandView(args: {
         funnelKey: String(row.funnel_key),
         sequence: Number(row.sequence ?? 0),
         stageKey: String(row.stage_key),
-        stageLabel: String(row.stage_label),
+        stageLabel: towerMartStageLabel(row.stage_label ? String(row.stage_label) : null),
         valueNumeric: num(row.value_numeric as string | number | null),
         denominatorStageKey: row.denominator_stage_key ? String(row.denominator_stage_key) : null,
         conversionRatio: nullableNum(row.conversion_ratio as string | number | null),
