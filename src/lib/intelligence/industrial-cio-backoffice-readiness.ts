@@ -161,7 +161,7 @@ export function buildIndustrialCioBackofficePacket(
   ];
 
   const planningAssumptions = [
-    "Use Treasury and Finance as Phase 1 lighthouse domains because the loaded V6 evidence is strongest there.",
+    "Use Treasury and Finance as Phase 1 lighthouse domains because the loaded context evidence is strongest there.",
     "Treat HR and Legal as Phase 2 discovery branches until Workday, CLM/eBilling, policy, matter, and service-volume evidence is loaded or confirmed by the client.",
     "Use directional value ranges only after the CIO/CFO authorizes assumptions or provides current process volumes and unit costs.",
     "Measure the Value Office by realized business value, governed reuse, and decision-cycle compression, not by number of AI pilots launched.",
@@ -379,7 +379,7 @@ function buildLighthouseUseCases(inputs: {
       name: "HR and Legal AI operating model discovery",
       function: "HR / Legal",
       posture: "hold_until_input",
-      why: "The Lakeshore Holdings office should include HR and Legal, but the current V6 tenant evidence is not deep enough to recommend scale.",
+      why: "The Lakeshore Holdings office should include HR and Legal, but the current tenant evidence is not deep enough to recommend scale.",
       tenantEvidence: [
         findName(inputs.systems, /Workday|ServiceNow/i),
         findName(inputs.dataAssets, /policy|contract|service/i),
@@ -396,7 +396,8 @@ function buildLighthouseUseCases(inputs: {
 
 function defaultDecisionBranch(): DecisionBranch {
   const branch: DecisionBranch = {
-    question: "How should aVa make the Lakeshore Holdings CIO case more precise?",
+    question:
+      "How should aVa make the Lakeshore Holdings CIO case more precise?",
     choices: [
       {
         id: "use_planning_assumptions",
@@ -454,7 +455,7 @@ function buildClaimMaturity(inputs: {
       statement:
         "Lakeshore Holdings has enough loaded evidence to start a Treasury/Finance Shared Services value-office proof.",
       maturity: "loaded_fact",
-      basis: `${inputs.functions.length} functions, ${inputs.systems.length} systems, ${inputs.aiInitiatives.length} AI initiatives, and ${inputs.risksControls.length} operations/control rows are selected from V6.`,
+      basis: `${inputs.functions.length} functions, ${inputs.systems.length} systems, ${inputs.aiInitiatives.length} AI initiatives, and ${inputs.risksControls.length} operations/control rows are selected from governed context evidence.`,
       confidence: "high",
       signoffRequired: false,
     },
@@ -530,7 +531,7 @@ function listValues(rows: V6Record[], key: string, limit: number): string {
 function readV6File(root: string, file: string): V6Record[] {
   const filePath = path.join(root, file);
   if (!existsSync(filePath))
-    throw new Error(`Missing Industrial V6 file: ${filePath}`);
+    throw new Error(`Missing Industrial context file: ${filePath}`);
   return parseCsv(readFileSync(filePath, "utf8"));
 }
 

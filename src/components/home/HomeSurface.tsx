@@ -1912,7 +1912,8 @@ function buildCandidateUseCases(
         title: "Member Service Agent Assist",
         outcome:
           "Improve member experience and agent productivity across contact center, claims, eligibility, and knowledge-base workflows.",
-        readiness: contextStrengthScore >= 70 ? "Frame now" : "Frame with caveats",
+        readiness:
+          contextStrengthScore >= 70 ? "Frame now" : "Frame with caveats",
         canDoNow:
           "Nexus can frame the business functions, current systems, data dependencies, risks, and evidence gaps for a governed Move.",
         needsNext:
@@ -1978,17 +1979,24 @@ function buildCandidateUseCases(
       outcome: insight.why_it_matters,
       readiness: insight.evidence_strength,
       canDoNow: insight.what_nexus_sees,
-      needsNext: insight.next_action || gapText(index, "Validate owners, baselines, evidence, and relationships."),
+      needsNext:
+        insight.next_action ||
+        gapText(
+          index,
+          "Validate owners, baselines, evidence, and relationships.",
+        ),
       module: insight.module_handoff,
     }));
   }
   return [
     {
       title: "Executive context orientation",
-      outcome: "Create a shared fact base before strategy, sourcing, execution, or value tracking.",
+      outcome:
+        "Create a shared fact base before strategy, sourcing, execution, or value tracking.",
       readiness: "Frame now",
       canDoNow: "Nexus can explain loaded context, evidence, and known gaps.",
-      needsNext: "Validate relationships, baselines, owners, and source evidence before decisions.",
+      needsNext:
+        "Validate relationships, baselines, owners, and source evidence before decisions.",
       module: "Knowledge",
     },
   ];
@@ -3177,7 +3185,7 @@ export function HomeSurface({
     : "Candidate preview was requested, but no inactive candidate tenant version is available through setup-control yet.";
   const candidatePreviewStatusLabel = candidatePreviewEnabled
     ? "Candidate preview: viewing inactive data"
-    : "Candidate preview: inactive";
+    : "Active context only";
   const filteredAreas = explorerAreas.filter((area) => {
     const needle = search.trim().toLowerCase();
     if (!needle) return true;
@@ -3508,8 +3516,8 @@ export function HomeSurface({
                       <h1 className="hx3-title">Context Confidence</h1>
                       <p className="hx3-subtitle">
                         A decision-readiness view of the enterprise context:
-                        what is strong enough to use, what remains advisory,
-                        and what evidence must be validated before Nexus turns
+                        what is strong enough to use, what remains advisory, and
+                        what evidence must be validated before Nexus turns
                         context into execution, sourcing, or value claims.
                       </p>
                     </div>
@@ -3519,7 +3527,7 @@ export function HomeSurface({
                       </div>
                       <div className="hx3-statusMeta">
                         <span>Fact-based answers ready</span>
-                        <span>Candidate preview not active</span>
+                        <span>Inactive preview hidden</span>
                       </div>
                     </div>
                   </div>
@@ -3555,7 +3563,7 @@ export function HomeSurface({
                       </article>
                       <article className="hx3-trustCard">
                         <strong>Not active</strong>
-                        <span>Candidate preview</span>
+                        <span>Inactive preview</span>
                       </article>
                     </div>
                     <div className="hx3-trustLists">
@@ -4157,9 +4165,7 @@ export function HomeSurface({
                                 Enterprise Brief
                               </div>
                               <h2>{safeHomeInsightSummary.summary_title}</h2>
-                              <p className="hx3-cxoLead">
-                                {cxoBrief.lead}
-                              </p>
+                              <p className="hx3-cxoLead">{cxoBrief.lead}</p>
                               <div className="hx3-cxoGrid">
                                 {cxoBrief.cards.map((card) => (
                                   <article
@@ -4176,9 +4182,7 @@ export function HomeSurface({
                                   {cxoBrief.priorities.map(
                                     (priority, index) => (
                                       <div key={priority}>
-                                        <strong>
-                                          Priority {index + 1}
-                                        </strong>
+                                        <strong>Priority {index + 1}</strong>
                                         {nexusProductText(priority)}
                                       </div>
                                     ),
@@ -4552,7 +4556,9 @@ export function HomeSurface({
                         <div className="hx3-sectionHead">
                           <div>
                             <h2>How Nexus turns context into product action</h2>
-                            <p>{nexusProductText(knowledgeLayerVisual.subtitle)}</p>
+                            <p>
+                              {nexusProductText(knowledgeLayerVisual.subtitle)}
+                            </p>
                           </div>
                         </div>
                         <KnowledgeLayerVisual spec={knowledgeLayerVisual} />
@@ -4806,7 +4812,6 @@ export function HomeSurface({
                       </details>
                     </div>
                   ) : null}
-
                 </>
               )}
             </div>
