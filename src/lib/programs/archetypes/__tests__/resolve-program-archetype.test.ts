@@ -4,6 +4,7 @@ import {
   DEFAULT_ARCHETYPE_ID,
   AI_OPERATIONS_DECISION_SUPPORT,
   AI_PRODUCT_DEVELOPMENT_LIFECYCLE,
+  CONTACT_CENTER_AGENT_ASSIST,
   IT_SOURCING_EVENT,
 } from "../registry";
 
@@ -29,7 +30,7 @@ describe("resolveProgramArchetype — per-Move archetype resolution", () => {
     ).toBe("AI_OPERATIONS_DECISION_SUPPORT");
   });
 
-  it("routes healthcare agent-assist origination text to operations even when the row archetype is product enablement", () => {
+  it("routes healthcare agent-assist origination text to the contact-center archetype even when the row archetype is product enablement", () => {
     expect(
       resolveProgramArchetype({
         archetype: "ai_product_enablement",
@@ -37,7 +38,16 @@ describe("resolveProgramArchetype — per-Move archetype resolution", () => {
           "Contact Center Agent Assist - AI-assisted member-service workflow for claims, benefits, eligibility, prior authorization, CRM, and knowledge lookup.",
         name: "Member Service Agent Assist",
       }).id,
-    ).toBe("AI_OPERATIONS_DECISION_SUPPORT");
+    ).toBe("CONTACT_CENTER_AGENT_ASSIST");
+  });
+
+  it("routes terse Meridian member AI assist naming to the contact-center archetype", () => {
+    expect(
+      resolveProgramArchetype({
+        archetype: "ai_product_enablement",
+        name: "MEMBER AI ASSIST",
+      }).id,
+    ).toBe("CONTACT_CENTER_AGENT_ASSIST");
   });
 
   it("routes pdlc/sdlc/software language to AI-PDLC", () => {
@@ -150,5 +160,58 @@ describe("AI_OPERATIONS_DECISION_SUPPORT — registry shape", () => {
 
   it("the sourcing archetype remains intact", () => {
     expect(IT_SOURCING_EVENT.id).toBe("IT_SOURCING_EVENT");
+  });
+});
+
+describe("CONTACT_CENTER_AGENT_ASSIST — registry shape", () => {
+  it("is registered and resolvable by id", () => {
+    expect(getArchetype("CONTACT_CENTER_AGENT_ASSIST")?.name).toBe(
+      "Contact Center Agent Assist",
+    );
+  });
+
+  it("does NOT require DORA, CI/CD, or engineering SDLC evidence for P2", () => {
+    const familyKeys = CONTACT_CENTER_AGENT_ASSIST.evidenceFamilies.map(
+      (f) => f.key,
+    );
+    expect(familyKeys).not.toContain("eng_performance_dora");
+    expect(familyKeys).not.toContain("delivery_quality_itsm");
+    const diagnose = CONTACT_CENTER_AGENT_ASSIST.phaseModel.find(
+      (p) => p.phase === "diagnose",
+    )!;
+    const required = diagnose.requiredEvidence.map((r) => r.family);
+    expect(required).not.toContain("eng_performance_dora");
+    expect(required).not.toContain("delivery_quality_itsm");
+    expect(required).toEqual(
+      expect.arrayContaining([
+        "member_service_process_map",
+        "member_service_metrics_baseline",
+        "contact_center_transcripts_intents",
+        "member_service_systems_data_landscape",
+        "knowledge_policy_content_inventory",
+        "phi_controls_and_human_approval",
+      ]),
+    );
+  });
+
+  it("keeps delivery-estimation context optional, not a P2 hard blocker", () => {
+    const diagnose = CONTACT_CENTER_AGENT_ASSIST.phaseModel.find(
+      (p) => p.phase === "diagnose",
+    )!;
+    const byFamily = Object.fromEntries(
+      diagnose.requiredEvidence.map((r) => [r.family, r.severity]),
+    );
+    expect(byFamily["solution_delivery_estimation_context"]).toBe("soft");
+  });
+
+  it("every required family at every phase is declared in evidenceFamilies", () => {
+    const declared = new Set(
+      CONTACT_CENTER_AGENT_ASSIST.evidenceFamilies.map((f) => f.key),
+    );
+    for (const phase of CONTACT_CENTER_AGENT_ASSIST.phaseModel) {
+      for (const r of phase.requiredEvidence) {
+        expect(declared.has(r.family)).toBe(true);
+      }
+    }
   });
 });

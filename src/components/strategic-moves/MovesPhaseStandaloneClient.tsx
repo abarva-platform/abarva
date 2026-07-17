@@ -1194,7 +1194,11 @@ function PhaseBody({
         />
         <section className="mxw-zone">
           <h2>Findings to review</h2>
-          <p>Accept, challenge, or comment before approving the phase.</p>
+          <p>
+            Review the evidence source or move to Approve &amp; Build. The gate
+            will show remaining blockers and will not let unsupported claims
+            become approved deliverables.
+          </p>
           <div className="mxw-findings">
             {[
               ["Process", "Current handoffs, delays, rework, and decision points."],
@@ -1207,6 +1211,14 @@ function PhaseBody({
                 <small>Evidence-backed when cited; otherwise held as a gap.</small>
               </article>
             ))}
+          </div>
+          <div className="mxw-findings-actions">
+            <button className="mxw-btn" onClick={onOpenFiles} type="button">
+              Open Files &amp; Evidence
+            </button>
+            <button className="mxw-btn mxw-primary" onClick={onShowGate} type="button">
+              Continue to Approve &amp; Build
+            </button>
           </div>
         </section>
       </>
@@ -2791,6 +2803,7 @@ function MovesStandaloneStyles() {
 .mxw-finding span{display:inline-block;font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--teal);font-weight:700;margin-bottom:5px}
 .mxw-finding strong{display:block;font-size:14px;color:var(--ink)}
 .mxw-finding small{display:block;font-size:12px;color:var(--muted);margin-top:5px}
+.mxw-findings-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:16px}
 .mxw-approach{border-color:rgba(0,87,184,.25);background:linear-gradient(180deg,var(--blue-tint),var(--card) 60%)}
 .mxw-approach div{font-size:9px;letter-spacing:1px;text-transform:uppercase;font-weight:700;color:var(--blue);margin-bottom:9px}
 .mxw-approach h2{font-family:Georgia,serif;font-size:21px;margin:0}
