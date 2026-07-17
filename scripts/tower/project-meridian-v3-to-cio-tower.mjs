@@ -693,13 +693,13 @@ function buildProjection() {
   for (const row of programRows) {
     if (!row.program_code) continue;
     for (const linked of (row.linked_sa02_records || "").split(";").map((item) => item.trim()).filter(Boolean)) {
-      const relKey = `${TENANT_KEY}::rel::${safeKey(row.program_code, "funded-by", linked)}`;
+      const relKey = `${TENANT_KEY}::rel::${safeKey("enterprise", "funds", row.program_code, linked)}`;
       relationships.set(relKey, {
         relationship_key: relKey,
         tenant_key: TENANT_KEY,
-        from_entity_key: `${TENANT_KEY}::initiative::${safeKey(row.program_code)}`,
-        to_entity_key: `${TENANT_KEY}::enterprise`,
-        relationship_type: "funded_by",
+        from_entity_key: ENTERPRISE_ENTITY_KEY,
+        to_entity_key: `${TENANT_KEY}::initiative::${safeKey(row.program_code)}`,
+        relationship_type: "funds",
         confidence: row.confidence || "high",
         source_key: sourceKey(FILES.programSa04),
         source_row: sourceRowId(row),
