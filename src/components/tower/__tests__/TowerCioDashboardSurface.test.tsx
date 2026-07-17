@@ -947,7 +947,19 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     fireEvent.click(screen.getByRole("button", { name: /Decision Lanes/ }));
     expect(screen.getByText("M365 Copilot Productivity")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /AI Portfolio/ }));
+    expect(screen.getByTestId("tower-ai-portfolio-story")).toHaveTextContent(
+      "This is not an AI shopping list",
+    );
+    expect(screen.getByTestId("tower-ai-portfolio-matrix")).toHaveTextContent(
+      "Scale with proof",
+    );
+    expect(screen.getByTestId("tower-ai-watchlist")).toHaveTextContent(
+      "Candidate ideas are not approved funding",
+    );
+    expect(screen.getByText("Fix proof")).toBeInTheDocument();
+    expect(screen.getByText("Hold until gates clear")).toBeInTheDocument();
     expect(screen.getByText(/Member Service AI Assist/)).toBeInTheDocument();
+    expect(screen.queryByText("not_approved")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Recommended Actions/ }));
     expect(screen.getByText("Fix Copilot adoption before expansion")).toBeInTheDocument();
     expect(screen.queryByText("$2.6B")).not.toBeInTheDocument();
