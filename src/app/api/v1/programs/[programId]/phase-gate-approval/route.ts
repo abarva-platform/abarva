@@ -182,6 +182,65 @@ async function preparePhaseGateApprovalRecords(
   }
 }
 
+async function completeTerminalTowerHandoff(
+  sb: ReturnType<typeof getAzureWriteFluentClient>,
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+  programId: string,
+  rationale: string,
+): Promise<{ snapshotId: string }> {
+  const nowIso = new Date().toISOString();
+  const snapshot = {
+    humanRationale: rationale,
+    signed_in_phase_gate_approval: true,
+    terminal_tower_handoff: true,
+    capture_path: `/api/v1/programs/${programId}/phase-capture`,
+  };
+  const { data: snap, error: snapError } = await sb
+    .from("phase_snapshots")
+    .insert({
+      engagement_id: programId,
+      phase_number: 5,
+      snapshot_jsonb: snapshot,
+      locked_by_user_id: ctx.userId,
+      locked_at: nowIso,
+      approval_status: "approved",
+    })
+    .select("id")
+    .single();
+  if (snapError) throw snapError;
+  const snapshotId = (snap as { id?: string } | null)?.id;
+  if (!snapshotId) throw new Error("P5 terminal handoff snapshot insert returned no id");
+
+  const { error: updateError } = await sb
+    .from("engagements")
+    .update({
+      lifecycle_state: "completed",
+      phase_locked_at: nowIso,
+      phase_locked_by_user_id: ctx.userId,
+      updated_at: nowIso,
+    })
+    .eq("id", programId)
+    .eq("client_id", ctx.clientId);
+  if (updateError) throw updateError;
+
+  const { error: logError } = await sb.from("module_state_log").insert({
+    engagement_id: programId,
+    module_key: "phase_5",
+    previous_state: "in_progress",
+    new_state: "completed",
+    changed_by_user_id: ctx.userId,
+    notes: "Completed P5 terminal Tower handoff",
+    context_jsonb: {
+      terminal_tower_handoff: true,
+      approved_by: ctx.userId,
+      snapshot_id: snapshotId,
+    },
+  });
+  if (logError) throw logError;
+
+  return { snapshotId };
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ programId: string }> },
@@ -335,22 +394,29 @@ export async function POST(
       );
     }
 
-    const advanced = await advancePhase(
-      ctx,
-      {
-        programId,
-        fromPhase: phase,
-        toPhase,
-        snapshot: {
-          humanRationale: rationale,
-          signed_in_phase_gate_approval: true,
-          capture_path: `/api/v1/programs/${programId}/phase-capture`,
-        },
-        approvedByUserId: ctx.userId,
-      },
-      { supabase: sb },
-    );
     const carried = gate.failedChecks.filter((check) => check.severity === "soft");
+    const advanced =
+      phase === 5
+        ? {
+            programId,
+            newPhase: 6,
+            ...(await completeTerminalTowerHandoff(sb, ctx, programId, rationale)),
+          }
+        : await advancePhase(
+            ctx,
+            {
+              programId,
+              fromPhase: phase,
+              toPhase,
+              snapshot: {
+                humanRationale: rationale,
+                signed_in_phase_gate_approval: true,
+                capture_path: `/api/v1/programs/${programId}/phase-capture`,
+              },
+              approvedByUserId: ctx.userId,
+            },
+            { supabase: sb },
+          );
     await saveGateDecisionArtifact(ctx, {
       moveId: programId,
       moveName: program.name ?? undefined,

@@ -140,6 +140,20 @@ describe('azureTowerPageReadAdapter', () => {
     expect(lastSql).not.toContain('id = ANY');
   });
 
+  it('reads Tower handoff programs as completed P5 rows, not impossible P6 rows', async () => {
+    let lastSql = '';
+    const adapter = createAzureTowerPageReadAdapter(
+      fakeSession((sql) => {
+        lastSql = sql;
+        return [];
+      }),
+    );
+    await adapter.listHandoffPrograms('c-1', null);
+    expect(lastSql).toContain('current_phase = 5');
+    expect(lastSql).toContain("lifecycle_state = 'completed'");
+    expect(lastSql).not.toContain('current_phase = 6');
+  });
+
   it('reads transitioned source events for a client key', async () => {
     const adapter = createAzureTowerPageReadAdapter(
       fakeSession((sql) =>

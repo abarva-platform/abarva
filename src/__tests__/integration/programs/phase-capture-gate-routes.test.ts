@@ -65,13 +65,17 @@ function makeRequest(body: unknown): Request {
 function makeWriteClient() {
   const builder: Record<string, unknown> = {
     select: jest.fn(() => builder),
+    single: jest.fn(async () => ({ data: { id: "snapshot_terminal" }, error: null })),
     eq: jest.fn(() => builder),
     in: jest.fn(async () => ({ data: [], error: null })),
     update: jest.fn(() => builder),
-    insert: jest.fn(async () => ({ data: null, error: null })),
+    insert: jest.fn(() => builder),
     order: jest.fn(() => builder),
     limit: jest.fn(() => builder),
     maybeSingle: jest.fn(async () => ({ data: null, error: null })),
+    then: jest.fn((resolve: (value: unknown) => unknown) =>
+      Promise.resolve({ data: null, error: null }).then(resolve),
+    ),
   };
   return {
     from: jest.fn(() => builder),
@@ -334,11 +338,6 @@ describe("Moves signed-in phase capture/gate routes", () => {
         state: { value: key },
       })),
     );
-    advancePhase.mockResolvedValue({
-      programId: "move_1",
-      newPhase: 6,
-      snapshotId: "snapshot_terminal",
-    });
     const { POST } = await import(
       "@/app/api/v1/programs/[programId]/phase-gate-approval/route"
     );
@@ -367,10 +366,22 @@ describe("Moves signed-in phase capture/gate routes", () => {
       expect.objectContaining({ deliverableTypeKey: "value_measurement_contract" }),
       expect.anything(),
     );
-    expect(advancePhase).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ fromPhase: 5, toPhase: 6 }),
-      expect.anything(),
+    expect(advancePhase).not.toHaveBeenCalled();
+    expect(getAzureWriteFluentClient().from).toHaveBeenCalledWith("phase_snapshots");
+    const updateCalls = (getAzureWriteFluentClient().__builder.update as jest.Mock).mock.calls;
+    expect(updateCalls).toEqual(
+      expect.arrayContaining([
+        [
+          expect.objectContaining({
+            lifecycle_state: "completed",
+          }),
+        ],
+      ]),
+    );
+    expect(updateCalls).not.toEqual(
+      expect.arrayContaining([
+        [expect.objectContaining({ current_phase: 6 })],
+      ]),
     );
   });
 });
