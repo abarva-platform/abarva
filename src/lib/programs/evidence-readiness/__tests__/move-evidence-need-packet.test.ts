@@ -3,6 +3,8 @@ import type { DiscoveryEvidenceReadiness } from "@/lib/programs/discovery/eviden
 
 function readiness(): DiscoveryEvidenceReadiness {
   return {
+    blueprintId: "general_default",
+    blueprintVersion: "2026-07-17",
     archetypeLabel: "General",
     requiredTotal: 4,
     requiredCovered: 0,

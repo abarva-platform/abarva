@@ -47,6 +47,10 @@ const PHASE_GATE_DELIVERABLES: Record<number, Array<{ typeKey: string; title: st
   ],
 };
 
+function gateIdFor(programId: string, phase: number): string {
+  return `moves-phase-gate:${programId}:P${phase}->P${phase + 1}`;
+}
+
 function parsePhase(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return 0;
   const parsed = Number(value);
@@ -265,6 +269,11 @@ export async function GET(
       ok: true,
       programId,
       phase,
+      gateId: gateIdFor(programId, phase),
+      transition: {
+        fromPhase: phase,
+        toPhase: phase + 1,
+      },
       currentPhase: program.currentPhase,
       capture,
       approved,
@@ -322,7 +331,9 @@ export async function POST(
         {
           error: "capture_incomplete",
           phase,
+          gateId: gateIdFor(programId, phase),
           missing: capture.missing,
+          capture,
           detail: `P${phase} capture is incomplete.`,
         },
         { status: 409 },
@@ -334,8 +345,13 @@ export async function POST(
         ok: true,
         programId,
         phase,
+        gateId: gateIdFor(programId, phase),
         approved: true,
         alreadyApproved: true,
+        nextAction:
+          phase >= 5
+            ? "tower_handoff_complete_or_already_terminal"
+            : `open_phase_${phase + 1}`,
       });
     }
 
@@ -369,8 +385,14 @@ export async function POST(
         ok: true,
         programId,
         phase,
+        gateId: gateIdFor(programId, phase),
         approved: true,
         newPhase: closed.newPhase,
+        transition: {
+          fromPhase: phase,
+          toPhase: closed.newPhase,
+        },
+        nextAction: `open_phase_${closed.newPhase}`,
         closeResult: closed,
       });
     }
@@ -385,7 +407,9 @@ export async function POST(
         {
           error: "gate_blocked",
           phase,
+          gateId: gateIdFor(programId, phase),
           gate,
+          capture,
           detail: `Hard-gate checks must pass before approval: ${hardFails
             .map((check) => check.reason || check.check)
             .join("; ")}`,
@@ -445,8 +469,14 @@ export async function POST(
       ok: true,
       programId,
       phase,
+      gateId: gateIdFor(programId, phase),
       approved: true,
       newPhase: advanced.newPhase,
+      transition: {
+        fromPhase: phase,
+        toPhase: advanced.newPhase,
+      },
+      nextAction: toPhase === 6 ? "open_tower_handoff" : `open_phase_${advanced.newPhase}`,
       terminalHandoff: toPhase === 6,
       snapshotId: advanced.snapshotId,
       carriedGaps: carried.map((check) => check.check),

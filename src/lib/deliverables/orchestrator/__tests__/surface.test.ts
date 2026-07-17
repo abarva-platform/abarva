@@ -158,7 +158,7 @@ describe("assembleGovernedEvidence", () => {
     expect(out.sourceRegister).toHaveLength(1);
   });
 
-  it("uses committed program evidence items as move citations when review rows are absent", async () => {
+  it("does not use unreviewed program evidence items as move citations", async () => {
     const fakeQuery = (async () => []) as never;
     const fakeDb = {
       from(table: string) {
@@ -236,20 +236,9 @@ describe("assembleGovernedEvidence", () => {
       { queryTenantContext: fakeQuery, db: fakeDb },
     );
 
-    expect(out.retrievedCount).toBe(1);
-    expect(out.sourceRegister).toHaveLength(1);
-    expect(out.sourceRegister[0].label).toBe(
-      "SkyHarbor IROPS workshop decision ledger",
-    );
-    expect(out.sourceRegister[0].evidenceFamily).toBe(
-      "program_evidence:architecture_approval",
-    );
-    expect(out.evidence[0].statement).toContain(
-      "Client approved the two-plane architecture",
-    );
-    expect(out.evidence[0].statement).toContain(
-      "Approve operational command center",
-    );
+    expect(out.retrievedCount).toBe(0);
+    expect(out.sourceRegister).toHaveLength(0);
+    expect(out.evidence).toHaveLength(0);
   });
 });
 
