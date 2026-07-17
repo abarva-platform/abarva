@@ -651,8 +651,10 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByText("Step 1 of 5")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Use the tabs to finish this phase" })).toBeInTheDocument();
     expect(screen.getByText("1. Prepare")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Upload files" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Review gate" })).toBeInTheDocument();
+    expect(screen.getByText("Next tab")).toBeInTheDocument();
+    expect(screen.getByText("Final tab")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Upload files" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Review gate" })).not.toBeInTheDocument();
     expect(screen.getByText("Solution Options Canvas")).toBeInTheDocument();
     expect(screen.queryByText("How to complete this phase")).not.toBeInTheDocument();
     expect(screen.queryByText("Sessions and templates for this phase")).not.toBeInTheDocument();
@@ -746,18 +748,12 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Upload files" }));
+    fireEvent.click(screen.getByRole("tab", { name: /Upload decision/i }));
 
-    expect(screen.getByRole("heading", { name: "Files & Evidence" })).toBeInTheDocument();
-    await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/artifacts",
-        expect.anything(),
-      );
-    });
+    expect(screen.getByRole("heading", { name: "Decide the approach" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Upload evidence for approach decision" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /CANARY - SkyHarbor/i }));
-    fireEvent.click(screen.getByRole("button", { name: "Review gate" }));
+    fireEvent.click(screen.getByRole("tab", { name: /Approve & Build/i }));
 
     expect(screen.getByRole("heading", { name: "Gate approval" })).toBeInTheDocument();
     expect(
