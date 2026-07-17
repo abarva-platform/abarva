@@ -175,6 +175,25 @@ describe('phase task checklist (increment 4) — Stripe-style, real-signal', () 
     expect(noSignals).toContain('How to complete this phase');
   });
 
+  it('completed phases show a completion summary instead of the live task checklist', () => {
+    const html = render(
+      <MovePhaseWorkspacePanel
+        phaseNum={5}
+        phaseLabel="P5 · Prepare to Execute"
+        nextPhaseLabel="Tower handoff"
+        evidence={[{ priority: 'required', status: 'covered' }]}
+        gate={[{ completed: true, severity: 'hard' }]}
+        completed
+      />,
+    );
+
+    expect(html).toContain('Tower handoff complete');
+    expect(html).not.toContain('How to complete this phase');
+    expect(html).not.toContain('What to do next');
+    expect(html).not.toContain('Attest and advance to Tower handoff');
+    expect(html).not.toContain('Complete the steps above');
+  });
+
   it('non-wired actions render as status hints, not fake buttons (single write path)', () => {
     const html = render(<PhaseTaskChecklist phaseLabel="P2" workflow={wf} />);
     expect(html).toContain('pw-task-hint');
