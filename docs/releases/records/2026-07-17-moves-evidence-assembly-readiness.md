@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -45,14 +45,14 @@ This does not weaken the quality gate. It helps the user understand why AbarVa c
 
 ## Rollout Plan
 
-Merge to `main`, deploy through the repo-owned Azure Container Apps main deploy workflow, then verify a signed-in Moves run with a blocked deliverable shows the new evidence/package readiness explanation.
+Merged to `main`, deployed through the repo-owned Azure Container Apps main deploy workflow, and verified against signed-in Meridian blocked-run status responses.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: Required for `app.abarva.ai`.
 - Shared runtime mutators: None in this PR.
-- Approved image digest: Pending deploy.
-- ACA runtime invariant: Pending deploy.
+- Approved image digest: `sha256:df15a7eca75b9bcc403c7ffa64fd5ba9b753a1cf9efaea6ecb29bc58fcf2d5be`
+- ACA runtime invariant: Pass. `ca-abarva-web-lab-eastus--mc0597048` is latest ready revision and receives 100% traffic.
 - Worker image invariant: No worker behavior change.
 - Feature/env flag update path: None.
 - Live signed-in proof required: Yes.
@@ -63,12 +63,16 @@ Revert the PR. The existing quality gate and run statuses remain unchanged; roll
 
 ## Audit Evidence
 
-Pending:
-
-- PR URL
-- CI / validation output
-- ACA deploy evidence
-- Signed-in Moves blocked-run proof
+- PR URL: https://github.com/abarva-platform/abarva/pull/4916
+- Merge SHA: `c05970482e7cf48662f673e708ad06bdd051e9f5`
+- ACA main deploy run: https://github.com/abarva-platform/abarva/actions/runs/29551263226
+- ACA revision: `ca-abarva-web-lab-eastus--mc0597048`
+- ACA image digest: `sha256:df15a7eca75b9bcc403c7ffa64fd5ba9b753a1cf9efaea6ecb29bc58fcf2d5be`
+- Traffic: 100% to `ca-abarva-web-lab-eastus--mc0597048`
+- Health endpoint: Pass, `https://app.abarva.ai/api/health`
+- Live proof bundle: `proof/moves-evidence-assembly-readiness-live-20260717`
+- Signed-in proof: Pass. Blocked Meridian P5 run `1d013772-19a1-461f-89a7-f32a5cf50118` returned `packageReadiness.label = "Cannot assemble executive package"`, `evidenceCoveragePct = 0`, `confidenceTier = "bronze"`, and next-step guidance.
+- Signed-in proof: Pass. Blocked Meridian P5 run `6423f262-8aa1-4212-a8ba-714107d7b512` returned `packageReadiness.label = "Cannot assemble executive package"`, `evidenceCoveragePct = 0`, `confidenceTier = "bronze"`, and missing evidence for cited metrics/baselines.
 
 ## Known Gaps
 
