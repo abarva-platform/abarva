@@ -2,7 +2,7 @@
 
 Status: PASS for Phase 0 audit/report generation only.
 
-Generated: 2026-07-17T01:59:19.690Z
+Generated: 2026-07-17T02:15:01.939Z
 
 Scope: deletion-readiness audit and phased retirement plan. No runtime code deletion, no data deletion, no historical migration edits, no Azure/Postgres mutation, no deploy, and no tenant promotion were performed.
 
@@ -14,15 +14,15 @@ The current physical V3 dataset buildout is still in progress: Meridian is the c
 
 ## Totals
 
-- Reference groups: 1121
-- Total line references: 15730
+- Reference groups: 923
+- Total line references: 9477
 - Active runtime dependency groups: 39
 - Bridge/read-model dependency groups: 93
 - Generated artifact dependency groups: 22
 - Test-only dependency groups: 50
 - Historical migration groups: 6
-- Safe-delete candidate groups after reference proof: 660
-- Blocked/do-not-delete groups: 263
+- Safe-delete candidate groups after reference proof: 456
+- Blocked/do-not-delete groups: 266
 
 ## Phase Plan
 
@@ -62,8 +62,8 @@ None identified.
 
 ## Tower
 
-- Reference groups: 35
-- Total references: 229
+- Reference groups: 31
+- Total references: 210
 - Active runtime dependency groups: 9
 - Bridge/read-model dependency groups: 1
 - Generated artifact dependency groups: 0
@@ -86,20 +86,18 @@ None identified.
 
 ### Safe-delete candidates after reference proof
 
-- proof/lakeshore-v7-home-tower-browser-20260706T200623Z/07-tower-overview.txt (v7_label, 5)
-- proof/lakeshore-v7-home-tower-browser-20260706T200623Z/browser-proof.json (v7_label, 8)
-- proof/lakeshore-v7-home-tower-browser-current-20260706T202240Z/current-proof.json (v7_label, 1)
-- proof/lakeshore-v7-home-tower-browser-current-20260706T202240Z/tower-current.txt (v7_label, 5)
 - proof/lakeshore-v7-home-tower-browser-final-20260706T202027Z/browser-proof.json (v7_label, 9)
 - proof/lakeshore-v7-home-tower-browser-restored-20260706T202414Z/restored-proof.json (v7_label, 1)
 - reports/candidate-module-workbench-previews/skyharbor/tower-workbench-preview.json (v6_label, 12)
 - reports/candidate-module-workbench-previews/skyharbor/tower-workbench-preview.json (v6_v7_dataset, 9)
+- reports/candidate-module-workbench-previews/skyharbor/tower-workbench-preview.json (v7_csv, 7)
+- reports/candidate-module-workbench-previews/skyharbor/tower-workbench-preview.json (v7_label, 15)
 
 
 ## Intelligence
 
-- Reference groups: 178
-- Total references: 1000
+- Reference groups: 158
+- Total references: 891
 - Active runtime dependency groups: 4
 - Bridge/read-model dependency groups: 5
 - Generated artifact dependency groups: 0
@@ -122,14 +120,14 @@ None identified.
 
 ### Safe-delete candidates after reference proof
 
-- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/INT-SKY-001.json (v7_label, 3)
-- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/INT-SKY-002.json (v7_label, 3)
-- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/INT-SKY-003.json (v7_label, 3)
-- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/INT-SKY-004.json (v7_label, 3)
-- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/INT-SKY-005.json (v7_label, 3)
-- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/INT-SKY-006.json (v7_label, 3)
-- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/INT-SKY-007.json (v7_label, 3)
-- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/INT-SKY-008.json (v7_label, 3)
+- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-LSH-001-prompt-reconstruction.txt (v6_label, 3)
+- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-LSH-003-prompt-reconstruction.txt (v6_label, 3)
+- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-LSH-004-prompt-reconstruction.txt (v6_label, 3)
+- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-LSH-005-prompt-reconstruction.txt (v6_label, 3)
+- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-LSH-006-prompt-reconstruction.txt (v6_label, 3)
+- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-LSH-007-prompt-reconstruction.txt (v6_label, 3)
+- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-LSH-008-prompt-reconstruction.txt (v6_label, 3)
+- proof/home-intelligence-50q-live-audit/2026-07-06T22-57-24-137Z/prompts/INT-LSH-009-prompt-reconstruction.txt (v6_label, 3)
 
 
 ## Moves
@@ -162,8 +160,8 @@ None identified.
 
 ## Source
 
-- Reference groups: 81
-- Total references: 2138
+- Reference groups: 68
+- Total references: 850
 - Active runtime dependency groups: 1
 - Bridge/read-model dependency groups: 0
 - Generated artifact dependency groups: 7
@@ -182,17 +180,17 @@ None identified.
 - reports/candidate-module-workbench-previews/skyharbor/source-workbench-preview.json (v6_label, 4)
 - reports/candidate-module-workbench-previews/skyharbor/source-workbench-preview.json (v6_v7_dataset, 1)
 - reports/candidate-module-workbench-previews/skyharbor/source-workbench-preview.json (v7_label, 4)
-- reports/data-quality/manifest-projection/latest/source-projection-lineage.json (v6_csv, 236)
-- reports/data-quality/manifest-projection/latest/source-projection-lineage.json (v6_label, 196)
-- reports/data-quality/manifest-projection/latest/source-projection-lineage.json (v6_v7_dataset, 92)
-- reports/data-quality/manifest-projection/latest/source-projection-lineage.json (v7_csv, 444)
-- reports/data-quality/manifest-projection/latest/source-projection-lineage.json (v7_label, 275)
+- reports/demo-readiness/meridian-data-state/source-inventory.csv (v6_label, 46)
+- reports/demo-readiness/meridian-data-state/source-inventory.csv (v7_label, 3)
+- reports/enterprise-profile-foundation/latest/source-lineage.json (v6_csv, 6)
+- reports/enterprise-profile-foundation/latest/source-lineage.json (v6_label, 8)
+- reports/enterprise-profile-foundation/latest/source-lineage.json (v6_v7_dataset, 2)
 
 
 ## Admin/data loaders
 
-- Reference groups: 93
-- Total references: 1766
+- Reference groups: 73
+- Total references: 1585
 - Active runtime dependency groups: 0
 - Bridge/read-model dependency groups: 28
 - Generated artifact dependency groups: 0
@@ -216,13 +214,13 @@ None identified.
 ### Safe-delete candidates after reference proof
 
 - proof/lakeshore-legal-upload-evidence-smoke-2026-07-04/proof-report.md (v7_label, 2)
-- proof/lakeshore-v7-holdco-load-20260706T180031Z/04-logs.txt (scripts_v7, 3)
-- proof/lakeshore-v7-holdco-load-20260706T180031Z/04-logs.txt (v7_label, 3)
-- proof/lakeshore-v7-holdco-load-20260706T180031Z/summary.json (v7_label, 1)
-- proof/lakeshore-v7-holdco-load-20260706T180231Z/04-logs.txt (scripts_v7, 1)
-- proof/lakeshore-v7-holdco-load-20260706T180231Z/04-logs.txt (v7_label, 26)
-- proof/lakeshore-v7-holdco-load-20260706T180231Z/summary.json (v7_label, 1)
-- proof/lakeshore-v7-holdco-load-20260706T191235Z/04-logs.txt (scripts_v7, 1)
+- reports/admin-data-layer-explorer/latest/tenant-manifest-projection-audit.json (v6_csv, 238)
+- reports/admin-data-layer-explorer/latest/tenant-manifest-projection-audit.json (v6_label, 198)
+- reports/admin-data-layer-explorer/latest/tenant-manifest-projection-audit.json (v6_v7_dataset, 93)
+- reports/admin-data-layer-explorer/latest/tenant-manifest-projection-audit.json (v7_csv, 444)
+- reports/admin-data-layer-explorer/latest/tenant-manifest-projection-audit.json (v7_label, 276)
+- reports/admin-home-design-smoke/latest/naming-audit.json (v6_label, 1)
+- reports/admin-home-design-smoke/latest/naming-audit.json (v7_label, 1)
 
 
 ## generated CXO/story-block pipeline
