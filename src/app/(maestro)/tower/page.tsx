@@ -18,6 +18,8 @@ export const metadata = { title: "Tower · AbarVa" };
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+const TOWER_READ_TIMEOUT_MS = 8_000;
+
 interface TowerPageProps {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
@@ -25,6 +27,25 @@ interface TowerPageProps {
 function firstSearchValue(value: string | string[] | undefined): string | null {
   if (Array.isArray(value)) return value[0] ?? null;
   return value ?? null;
+}
+
+async function withTowerReadTimeout<T>(
+  read: Promise<T>,
+  fallback: T,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  try {
+    return await Promise.race([
+      read,
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(fallback), TOWER_READ_TIMEOUT_MS);
+      }),
+    ]);
+  } catch {
+    return fallback;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
@@ -39,14 +60,20 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
     "AbarVa Client";
 
   const [cxoView, budgetRollups] = await Promise.all([
-    loadCioTowerCxoView({
-      tenantKeyCandidates: [client?.key, requestedClient, client?.id],
-      tenantName,
-    }).catch(() => null),
-    listTowerBudgetRollupsForClient({
-      clientId: client?.id ?? "",
-      tenantKey: client?.key ?? requestedClient,
-    }).catch(() => []),
+    withTowerReadTimeout(
+      loadCioTowerCxoView({
+        tenantKeyCandidates: [client?.key, requestedClient, client?.id],
+        tenantName,
+      }),
+      null,
+    ),
+    withTowerReadTimeout(
+      listTowerBudgetRollupsForClient({
+        clientId: client?.id ?? "",
+        tenantKey: client?.key ?? requestedClient,
+      }),
+      [],
+    ),
   ]);
   let towerV3RuntimeView =
     (isMeridianTowerRuntimeTenant(client?.key) ||
@@ -78,11 +105,18 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
       tenantName,
       activeInputRoot: "datasets/tenant-inputs/active/meridian-health/current",
     });
-    const claudeStory = await applyTowerCxoClaudeStory({
-      view: towerV3RuntimeView,
-      contextPack,
-      tenantName,
-    });
+    const claudeStory = await withTowerReadTimeout(
+      applyTowerCxoClaudeStory({
+        view: towerV3RuntimeView,
+        contextPack,
+        tenantName,
+      }),
+      {
+        used: false,
+        view: towerV3RuntimeView,
+        issues: ["Tower Claude story enrichment timed out; deterministic view rendered."],
+      },
+    );
     towerV3RuntimeView = claudeStory.view;
   }
 
