@@ -1486,6 +1486,7 @@ export async function buildStrategicMove(
     peopleRows,
     activityRows,
     moduleRows,
+    terminalPhaseRows,
     phaseSnapshots,
     linkedEvidence,
     deliverables,
@@ -1544,6 +1545,25 @@ export async function buildStrategicMove(
         where: { engagement_id: move.id },
         orderBy: { column: "created_at", direction: "desc" },
         limit: 8,
+      })
+      .catch(() => []),
+    azureRead
+      .select<{
+        created_at: string;
+        module_key: string;
+        new_state: string;
+        changed_by_user_id: string | null;
+      }>({
+        table: "module_state_log",
+        columns: [
+          "created_at",
+          "module_key",
+          "new_state",
+          "changed_by_user_id",
+        ],
+        where: { engagement_id: move.id, module_key: "phase_5" },
+        orderBy: { column: "created_at", direction: "desc" },
+        limit: 1,
       })
       .catch(() => []),
     azureRead
@@ -1639,6 +1659,15 @@ export async function buildStrategicMove(
     action: `${row.module_key}:${row.new_state}`,
     summary: `${row.module_key} moved to ${row.new_state}`,
   }));
+  const terminalPhaseActivity = terminalPhaseRows.map((row) => ({
+    at: row.created_at,
+    actor:
+      row.changed_by_user_id && personMap.get(row.changed_by_user_id)
+        ? personMap.get(row.changed_by_user_id)!.name
+        : "System",
+    action: `${row.module_key}:${row.new_state}`,
+    summary: `${row.module_key} moved to ${row.new_state}`,
+  }));
   const snapshotActivity = phaseSnapshots.map((row) => ({
     at: row.created_at,
     actor: "System",
@@ -1696,6 +1725,7 @@ export async function buildStrategicMove(
     currentPhase: phase,
     terminalComplete:
       hasTerminalTowerHandoffPassed(move) ||
+      hasTerminalTowerHandoffActivity(terminalPhaseActivity) ||
       hasTerminalTowerHandoffActivity(recentActivity) ||
       hasTerminalTowerHandoffSnapshot(phaseSnapshots),
     phaseLabel: getPhaseLabel(phase),
