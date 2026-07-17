@@ -3,14 +3,13 @@
  *
  * Exercises the complete Strategic Moves lifecycle under the 6-phase
  * model defined in docs/design/strategic-moves/PHASE_MODEL_V2_DOCTRINE.md:
- *   create → admin approve → P0 active → P1 → P2 → P3 → P4 → P5 complete
+ *   create → admin approve → P0 active → P1 → P2 → P3 → P4 → P5 → Tower handoff
  *
- * After P5 Mobilize & Handoff, Control Tower owns downstream tracking;
- * there is no P5→P6 gate inside Strategic Moves.
+ * After the P5 Mobilize & Handoff gate, Control Tower owns downstream tracking.
  *
  * Two layers:
  *   1. Pure gate-rule logic (always runs) — validates GATE_RULES shape
- *      and that the five adjacent gates exist with the right severity.
+ *      and that all adjacent gates exist with the right severity.
  *   2. DB integration (requires SUPABASE creds) — creates a real program,
  *      exercises mutations, advances through all five gates, then
  *      cleans up.
@@ -35,7 +34,7 @@ const describeIfDb = hasDbCreds ? describe : describe.skip;
 // ── Layer 1 · Pure gate-rule logic ────────────────────────────────────────────
 
 describe('Gate rule sequence · pure logic', () => {
-  it('GATE_RULES covers all five 6-phase doctrine transitions', async () => {
+  it('GATE_RULES covers P0 through terminal Tower handoff transitions', async () => {
     const { findGateRule } = await import('@/lib/programs/governance');
 
     // P0 Originate → P1 Charter — hard gate: signed seed + sponsor.
@@ -78,8 +77,13 @@ describe('Gate rule sequence · pure logic', () => {
     expect(r45HardKeys).toContain('execution_roadmap_drafted');
     expect(r45HardKeys).toContain('business_case_approved');
 
-    // No P5→P6: Tower owns post-P5 execution tracking.
-    expect(findGateRule(5, 6)).toBeNull();
+    // P5→Tower: terminal handoff gate.
+    const r56 = findGateRule(5, 6);
+    expect(r56).not.toBeNull();
+    expect(r56!.hard).toBe(true);
+    const r56HardKeys = r56!.checks.filter((c) => c.severity === 'hard').map((c) => c.key);
+    expect(r56HardKeys).toContain('handoff_package_signed_off');
+    expect(r56HardKeys).toContain('value_measurement_contract_signed_off');
   });
 
   it('design gate checks design_spec, design, and design_brief aliases', async () => {
@@ -305,9 +309,9 @@ describeIfDb('Full lifecycle DB crawl · P0→P5', () => {
     expect(result.newPhase).toBe(5);
   });
 
-  it('Step 8 · No P5→P6 gate exists (Tower owns post-P5 tracking)', async () => {
+  it('Step 8 · P5→Tower gate exists (Tower owns post-P5 tracking)', async () => {
     const { findGateRule } = await import('@/lib/programs/governance');
-    expect(findGateRule(5, 6)).toBeNull();
+    expect(findGateRule(5, 6)).not.toBeNull();
   });
 
   it('Step 9 · Complete program at P5 — lifecycle_state = completed', async () => {

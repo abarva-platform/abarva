@@ -602,6 +602,10 @@ export function MovesPhaseStandaloneClient({
   }
 
   function continueToCurrentPhase() {
+    if ((move.currentPhase ?? 0) > 5) {
+      window.location.assign("/tower");
+      return;
+    }
     window.location.assign(`/strategic-moves/${move.id}/phase/${nextOpenPhase}`);
   }
 
@@ -694,7 +698,9 @@ export function MovesPhaseStandaloneClient({
     setGateApprovalStatus("approved");
     setGateApprovalMessage(
       approval.newPhase != null || approval.alreadyApproved
-        ? `Gate approved. Opening P${approval.newPhase ?? phase.phase + 1}...`
+        ? approval.newPhase != null && approval.newPhase > 5
+          ? "Gate approved. Opening Tower..."
+          : `Gate approved. Opening P${approval.newPhase ?? phase.phase + 1}...`
         : "Gate approved. The run status below is now the source of truth for which documents built, failed, or were held below gate.",
     );
     const nextPhase =
@@ -705,7 +711,9 @@ export function MovesPhaseStandaloneClient({
           : null;
     if (nextPhase !== null) {
       window.setTimeout(() => {
-        window.location.assign(`/strategic-moves/${move.id}/phase/${nextPhase}`);
+        window.location.assign(
+          nextPhase > 5 ? "/tower" : `/strategic-moves/${move.id}/phase/${nextPhase}`,
+        );
       }, 250);
     }
   }

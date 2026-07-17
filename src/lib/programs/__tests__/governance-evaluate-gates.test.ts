@@ -2,7 +2,7 @@ const getProgramByIdMock = jest.fn();
 const fromMock = jest.fn();
 
 let deliverablesFixture: Array<{ id: string; deliverable_type_key: string; status: string }>;
-let modulesFixture: Array<{ module_key: string; status: string }>;
+let modulesFixture: Array<{ module_key: string; status: string; state_jsonb?: Record<string, unknown> | null }>;
 let participantsFixture: Array<{ approval_authority: string | null }>;
 let approvalRequestsFixture: Array<{
   request_status: string | null;
@@ -518,5 +518,51 @@ describe('evaluateGate', () => {
         }),
       ]),
     );
+  });
+
+  it('passes the P5 to Tower handoff when package, value contract, and launch cadence are signed off', async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 5,
+      archetype: 'agent_assist',
+    });
+    deliverablesFixture = [
+      { id: 'handoff', deliverable_type_key: 'handoff_package', status: 'signed_off' },
+      { id: 'value-contract', deliverable_type_key: 'value_measurement_contract', status: 'signed_off' },
+    ];
+    modulesFixture = [
+      {
+        module_key: 'phase_5_launch_readiness',
+        status: 'completed',
+        state_jsonb: {
+          value: 'Launch readiness: go/no-go criteria, environments, access, and owner attestation are ready.',
+        },
+      },
+      {
+        module_key: 'phase_5_governance_cadence',
+        status: 'completed',
+        state_jsonb: {
+          value: 'Tower governance cadence: weekly measurement review, reporting cadence, and escalation path.',
+        },
+      },
+      {
+        module_key: 'phase_5_risks_open_items',
+        status: 'completed',
+        state_jsonb: {
+          value: 'Open risks and client-to-complete items are recorded with mitigation owners.',
+        },
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      5,
+      6,
+    );
+
+    expect(result.pass).toBe(true);
+    expect(result.failedChecks).toEqual([]);
+    expect(result.requiresApproval).toBe(true);
   });
 });
