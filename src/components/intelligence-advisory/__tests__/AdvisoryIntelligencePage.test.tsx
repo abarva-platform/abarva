@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { AdvisoryIntelligencePage } from '../AdvisoryIntelligencePage';
 import { getEnterpriseLandscapeViewModel } from '@/lib/home/enterprise-landscape-view-model';
 
@@ -15,25 +15,31 @@ describe('AdvisoryIntelligencePage', () => {
   it('renders the analyst thread and executive briefing tabs without debug labels', () => {
     render(<AdvisoryIntelligencePage viewModel={viewModel} />);
 
-    expect(screen.getByTestId('intelligence-advisory-surface')).toBeTruthy();
-    expect(screen.getByText('Your Analyst')).toBeTruthy();
-    expect(screen.getByText('SkyHarbor Air decision intelligence canvas')).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Industry Signal/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Trends/i })).toBeTruthy();
+    expect(screen.getByTestId('agent-dock-side-rail-shell')).toBeTruthy();
+    expect(screen.getAllByText('Intelligence advisor').length).toBeGreaterThan(0);
+    expect(
+      screen.getByText('SkyHarbor Air — Industry & Estate Intelligence'),
+    ).toBeTruthy();
+    expect(screen.getByText(/Approved pack/i)).toBeTruthy();
+    expect(screen.getByText(/Tenant \+ industry context/i)).toBeTruthy();
+    expect(screen.getByText(/Tenant-loaded context/i)).toBeTruthy();
+    expect(screen.getAllByText(/Industry corpus/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: /Industry Outlook/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Future Trends/i })).toBeTruthy();
     expect(screen.queryByText(/<<<TAB:/i)).toBeNull();
     expect(screen.queryByText(/grounding:/i)).toBeNull();
   });
 
-  it('uses numbered trend markers and a legend instead of long labels inside the chart', () => {
+  it('keeps the future trends tab executive-ready without debug labels', () => {
     render(<AdvisoryIntelligencePage viewModel={viewModel} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Trends/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Future Trends/i }));
 
-    const map = screen.getByText('Opportunity map').closest('section');
-    expect(map).toBeTruthy();
-    expect(screen.getByText('Legend')).toBeTruthy();
-    expect(within(map as HTMLElement).getByText('1')).toBeTruthy();
-    expect(within(map as HTMLElement).getByText('2')).toBeTruthy();
-    expect(within(map as HTMLElement).queryByText(/IROPS and disruption recovery/i)).toBeNull();
+    expect(
+      screen.getByText('Decision systems will beat generic AI portfolios'),
+    ).toBeTruthy();
+    expect(screen.getAllByText(/For SkyHarbor Air/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/<<<TAB:/i)).toBeNull();
+    expect(screen.queryByText(/grounding:/i)).toBeNull();
   });
 });
