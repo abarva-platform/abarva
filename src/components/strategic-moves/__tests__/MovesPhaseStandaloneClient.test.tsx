@@ -755,10 +755,10 @@ describe("MovesPhaseStandaloneClient", () => {
 
     expect(screen.getByRole("heading", { name: "Gate approval" })).toBeInTheDocument();
     expect(
-      screen.getByText(/1 required next-phase input gap/i),
+      screen.getByText(/1 required next-phase prep item/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/These gaps are carried forward as next-phase preparation/i),
+      screen.getByText(/These items are carried forward as next-phase preparation/i),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Approve & Build P3 Choose the Approach/i }),

@@ -405,6 +405,7 @@ function phaseStatesFor(
 ): PhaseState[] {
   const totalPhases = 6;
   const current = program.currentPhase ?? 0;
+  const terminalComplete = hasTerminalTowerHandoffPassed(program);
   const out: PhaseState[] = [];
   for (let i = 0; i < totalPhases; i += 1) {
     const phaseModules = modules.filter((m) => m.phaseNumber === i);
@@ -414,7 +415,8 @@ function phaseStatesFor(
         (m) => m.status === "completed" || m.status === "skipped",
       );
     let state: PhaseState["state"];
-    if (i < current) state = "complete";
+    if (terminalComplete && i === 5) state = "complete";
+    else if (i < current) state = "complete";
     else if (i === current) state = allDone ? "pending_gate" : "active";
     else state = "locked";
     const gateType: PhaseState["gateType"] =
@@ -435,6 +437,26 @@ function phaseStatesFor(
     });
   }
   return out;
+}
+
+export function hasTerminalTowerHandoffPassed(
+  program: Pick<ProgramCore, "currentPhase" | "gatesPassed">,
+): boolean {
+  if ((program.currentPhase ?? 0) < 5) return false;
+  return program.gatesPassed.some((entry) => {
+    if (entry === 5 || entry === "5" || entry === "P5") return true;
+    if (!entry || typeof entry !== "object") return false;
+    const record = entry as Record<string, unknown>;
+    return [
+      record.phase,
+      record.phaseNumber,
+      record.phase_number,
+      record.fromPhase,
+      record.from_phase,
+      record.completedPhase,
+      record.completed_phase,
+    ].some((value) => value === 5 || value === "5" || value === "P5");
+  });
 }
 
 function programPhaseStatus(
@@ -1616,6 +1638,7 @@ export async function buildStrategicMove(
     functionPackKey: move.functionPackKey,
     archetype: formatArchetype(move.archetype),
     currentPhase: phase,
+    terminalComplete: hasTerminalTowerHandoffPassed(move),
     phaseLabel: getPhaseLabel(phase),
     status: {
       key: moveStatus.statusKey,

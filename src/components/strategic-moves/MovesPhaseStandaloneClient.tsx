@@ -358,7 +358,8 @@ export function MovesPhaseStandaloneClient({
 }: MovesPhaseStandaloneClientProps) {
   const phase = phaseFor(phaseNum);
   const currentPhase = move.currentPhase ?? 0;
-  const isHistoricalPhase = phase.phase < currentPhase;
+  const terminalComplete = Boolean(move.terminalComplete);
+  const isHistoricalPhase = terminalComplete || phase.phase < currentPhase;
   const nextOpenPhase = Math.min(currentPhase, 5);
   const nextOpenPhaseContract = phaseFor(nextOpenPhase);
   const initialSubstepIndex = Math.max(
@@ -606,7 +607,7 @@ export function MovesPhaseStandaloneClient({
   }
 
   function continueToCurrentPhase() {
-    if ((move.currentPhase ?? 0) > 5) {
+    if (terminalComplete || (move.currentPhase ?? 0) > 5) {
       window.location.assign("/tower");
       return;
     }
@@ -956,6 +957,7 @@ export function MovesPhaseStandaloneClient({
                 phaseCaptureValues={phaseCaptureValues}
                 selectedOption={selectedOption}
                 substep={substep.key}
+                terminalComplete={terminalComplete}
               />
             </>
           )}
@@ -1078,6 +1080,7 @@ function PhaseBody({
   phaseCaptureValues,
   selectedOption,
   substep,
+  terminalComplete,
 }: {
   carriesForwardContent: DeliverableContentSignal[];
   currentStateReadiness: ReadinessReport | null;
@@ -1107,6 +1110,7 @@ function PhaseBody({
   phaseCaptureValues: PhaseCaptureValues;
   selectedOption: string;
   substep: SubstepKey;
+  terminalComplete: boolean;
 }) {
   if (phase.phase === 0 && substep !== "approve") {
     return (
@@ -1391,10 +1395,17 @@ function PhaseBody({
       <section className="mxw-review">
         <h2>Gate approval</h2>
         {isHistoricalPhase ? (
-          <p>
-            This phase is already approved and read-only. The approved output is
-            carrying forward into {nextOpenPhaseContract.code} {nextOpenPhaseContract.title}.
-          </p>
+          terminalComplete ? (
+            <p>
+              This Move has completed P5 and handed off to Tower. The approved
+              output is carrying forward into the execution and value-tracking surface.
+            </p>
+          ) : (
+            <p>
+              This phase is already approved and read-only. The approved output is
+              carrying forward into {nextOpenPhaseContract.code} {nextOpenPhaseContract.title}.
+            </p>
+          )
         ) : (
           <p>
             Approve only after the record is reviewed and decision evidence is on
@@ -1430,7 +1441,9 @@ function PhaseBody({
         <div className="mxw-approve-build" id="mxw-approve-build-action">
           {isHistoricalPhase ? (
             <button className="mxw-gate-button" onClick={onContinueCurrentPhase} type="button">
-              Continue to {nextOpenPhaseContract.code} {nextOpenPhaseContract.title} →
+              {terminalComplete
+                ? "Open Tower →"
+                : `Continue to ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title} →`}
             </button>
           ) : phase.phase >= 1 ? (
             <PhaseApproveAndBuild
@@ -1459,10 +1472,14 @@ function PhaseBody({
         </div>
         {isHistoricalPhase ? (
           <div className="mxw-approved">
-            <strong>✓ {phase.code} is already approved.</strong>
+            <strong>
+              ✓ {phase.code} is already approved
+              {terminalComplete ? " and handed off to Tower" : ""}.
+            </strong>
             <span>
-              Continue to {nextOpenPhaseContract.code} {nextOpenPhaseContract.title}{" "}
-              to keep working from the current phase.
+              {terminalComplete
+                ? "Tower is now the execution and value-tracking surface for this Move."
+                : `Continue to ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title} to keep working from the current phase.`}
             </span>
           </div>
         ) : gateApproved ? (

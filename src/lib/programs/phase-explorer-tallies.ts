@@ -34,16 +34,17 @@ function hardScope<T extends { severity: "hard" | "soft" }>(criteria: T[]): T[] 
 }
 
 export function getMovePhaseTallies(
-  move: Pick<StrategicMove, "currentPhase" | "gateCriteria">,
+  move: Pick<StrategicMove, "currentPhase" | "gateCriteria" | "terminalComplete">,
 ): PhaseTallyRow[] {
   const currentPhase = move.currentPhase ?? 0;
+  const terminalComplete = Boolean(move.terminalComplete);
   const rows: PhaseTallyRow[] = [];
 
   for (let phase = 0; phase < TOTAL_PHASES; phase += 1) {
     const rule: GateRuleCriterion[] = gateCriteriaForPhase(phase) ?? [];
     const total = hardScope(rule).length;
 
-    if (phase < currentPhase) {
+    if (terminalComplete || phase < currentPhase) {
       rows.push({
         phase,
         label: PHASE_LABELS_SHORT[phase] ?? `P${phase}`,

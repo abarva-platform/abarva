@@ -157,6 +157,15 @@ const STATUS_TONE: Record<string, { bg: string; fg: string }> = {
   retired: { bg: "#EEF0F3", fg: "#9AA3B2" },
 };
 
+export function artifactStatusLabel(status: string): string {
+  if (status === "quarantined") return "needs review";
+  return status
+    .replace(/review_required/g, "needs review")
+    .replace(/client_to_complete/g, "client to complete")
+    .replace(/board_ready/g, "ready")
+    .replace(/_/g, " ");
+}
+
 function fmtBytes(n: number | null): string {
   if (!n) return "—";
   if (n < 1024) return `${n} B`;
@@ -178,14 +187,12 @@ function fmtDate(iso: string): string {
 }
 
 function StatusChip({ status }: { status: string }) {
-  const tone = STATUS_TONE[status] ?? { bg: "#EEF0F3", fg: "#5A6472" };
-  const label = status
-    .replace(/review_required/g, "needs review")
-    .replace(/client_to_complete/g, "client to complete")
-    .replace(/board_ready/g, "ready")
-    .replace(/_/g, " ");
+  const toneKey = status === "quarantined" ? "review_required" : status;
+  const tone = STATUS_TONE[toneKey] ?? { bg: "#EEF0F3", fg: "#5A6472" };
+  const label = artifactStatusLabel(status);
   return (
     <span
+      title={status === "quarantined" ? "Held for review before client-ready use." : undefined}
       style={{
         display: "inline-block",
         padding: "1px 8px",

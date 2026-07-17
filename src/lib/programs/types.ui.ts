@@ -467,6 +467,10 @@ export interface StrategicMove {
   functionPackKey: string | null;
   archetype: string;
   currentPhase: number;
+  // True once the terminal P5 gate has passed. `currentPhase` remains capped at
+  // P5 for route compatibility, so consumers need this explicit completion
+  // signal to render the last phase as complete instead of perpetually active.
+  terminalComplete?: boolean;
   phaseLabel: string;
   status: {
     key: string;

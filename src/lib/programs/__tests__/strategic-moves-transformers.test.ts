@@ -3,6 +3,7 @@ import {
   buildStrategicMovePortfolio,
   deriveDisplayCode,
   deriveMapLabel,
+  hasTerminalTowerHandoffPassed,
 } from "@/lib/programs/transformers";
 import { azureRead } from "@/lib/data-plane/azureRead";
 import { evaluateGate } from "@/lib/programs/governance";
@@ -78,6 +79,27 @@ describe("strategic move transformer helpers", () => {
         name: "Healthcare Data Analytics Modernization for Agentic Care",
       }),
     ).toBe("HDAM");
+  });
+
+  it("recognizes P5 gate pass as the terminal Tower handoff completion signal", () => {
+    expect(
+      hasTerminalTowerHandoffPassed({
+        currentPhase: 5,
+        gatesPassed: [0, 1, 2, 3, 4, 5],
+      } as never),
+    ).toBe(true);
+    expect(
+      hasTerminalTowerHandoffPassed({
+        currentPhase: 5,
+        gatesPassed: [{ phase: "P5" }],
+      } as never),
+    ).toBe(true);
+    expect(
+      hasTerminalTowerHandoffPassed({
+        currentPhase: 4,
+        gatesPassed: [5],
+      } as never),
+    ).toBe(false);
   });
 
   it("keeps portfolio list hydration from running expensive gate evaluation by default", async () => {
