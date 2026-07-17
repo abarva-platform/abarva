@@ -8678,9 +8678,11 @@ export function TowerIndexPage({
                   <>
                     <span style={{ color: T.GRAY }}>·</span>
                     <span>
-                      {towerEntityCount} entit
+                      {towerEntityCount}
                       {towerV3RuntimeView
                         ? ` context record${towerEntityCount === 1 ? "" : "s"}`
+                        : towerMartView
+                        ? ` portfolio item${towerEntityCount === 1 ? "" : "s"}`
                         : ` entit${towerEntityCount === 1 ? "y" : "ies"}`}
                     </span>
                   </>
