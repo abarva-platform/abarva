@@ -390,7 +390,11 @@ export function MovesPhaseStandaloneClient({
     return `${move.tenant.name} · ${formatArchetype(move.archetype)} · ${industry}`;
   }, [move.archetype, move.tenant.industryCode, move.tenant.name]);
 
-  const evidenceCount = evidenceNeedPackets.length || move.linkedEvidence.length;
+  const committedReadinessCount =
+    currentStateReadiness?.instruments.filter(
+      (instrument) => instrument.status === "committed",
+    ).length ?? 0;
+  const evidenceCount = committedReadinessCount || move.linkedEvidence.length;
   const moveValueRange = useMemo(() => moneyRange(move.valueAtStake), [move.valueAtStake]);
   const p3DesignInputsPack = useMemo(
     () =>
