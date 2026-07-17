@@ -9,6 +9,8 @@ import process from "node:process";
 const ROOT = process.cwd();
 const TENANT_KEY = "meridian-health";
 const TENANT_LABEL = "Healthcare Demo";
+const ENTERPRISE_ENTITY_KEY = `${TENANT_KEY}::enterprise`;
+const ENTERPRISE_ENTITY_TYPE = "holding_company";
 const STANDARD_VERSION = "standard-2026-07-v3";
 const FORMULA_VERSION = "meridian_v3_cio_tower_projection_v1";
 const DEFAULT_OUT_DIR = path.join(ROOT, "reports/meridian-v3-cio-tower-projection");
@@ -143,7 +145,7 @@ function entityForProgram(programCode, programName, sourceFile, sourceRow) {
     tenant_key: TENANT_KEY,
     entity_type: "initiative",
     display_name: programName || programCode,
-    parent_entity_key: `${TENANT_KEY}::enterprise`,
+    parent_entity_key: ENTERPRISE_ENTITY_KEY,
     source_key: sourceKey(sourceFile),
     source_row: sourceRowId(sourceRow),
     attributes: json({
@@ -165,7 +167,7 @@ function entityForVendor(vendorName, sourceFile, sourceRow) {
     tenant_key: TENANT_KEY,
     entity_type: "vendor",
     display_name: vendorName,
-    parent_entity_key: `${TENANT_KEY}::enterprise`,
+    parent_entity_key: ENTERPRISE_ENTITY_KEY,
     source_key: sourceKey(sourceFile),
     source_row: sourceRowId(sourceRow),
     attributes: json({ vendor_name: vendorName }),
@@ -178,7 +180,7 @@ function entityForSystem(systemName, sourceFile, sourceRow) {
     tenant_key: TENANT_KEY,
     entity_type: "system",
     display_name: systemName,
-    parent_entity_key: `${TENANT_KEY}::enterprise`,
+    parent_entity_key: ENTERPRISE_ENTITY_KEY,
     source_key: sourceKey(sourceFile),
     source_row: sourceRowId(sourceRow),
     attributes: json({ system_name: systemName }),
@@ -292,14 +294,18 @@ function buildProjection() {
 
   const entityMap = new Map();
   addUnique(entityMap, {
-    entity_key: `${TENANT_KEY}::enterprise`,
+    entity_key: ENTERPRISE_ENTITY_KEY,
     tenant_key: TENANT_KEY,
-    entity_type: "enterprise",
+    entity_type: ENTERPRISE_ENTITY_TYPE,
     display_name: TENANT_LABEL,
     parent_entity_key: null,
     source_key: sourceKey(FILES.budget08),
     source_row: "enterprise",
-    attributes: json({ tenant_key: TENANT_KEY, source_standard: STANDARD_VERSION }),
+    attributes: json({
+      tenant_key: TENANT_KEY,
+      source_standard: STANDARD_VERSION,
+      entity_role: "enterprise_envelope",
+    }),
   });
 
   const facts = [];
@@ -317,7 +323,7 @@ function buildProjection() {
       tenant_key: TENANT_KEY,
       entity_type: "org_unit",
       display_name: row.business_name || row.context_item || row.record_id,
-      parent_entity_key: `${TENANT_KEY}::enterprise`,
+      parent_entity_key: ENTERPRISE_ENTITY_KEY,
       source_key: sourceKey(FILES.budget08),
       source_row: sourceRowId(row),
       attributes: json({
@@ -377,8 +383,8 @@ function buildProjection() {
 
   const totalBudgetFact = fact({
     keyParts: ["budget", "total-it-budget", "fy26"],
-    entityKey: `${TENANT_KEY}::enterprise`,
-    entityType: "enterprise",
+    entityKey: ENTERPRISE_ENTITY_KEY,
+    entityType: ENTERPRISE_ENTITY_TYPE,
     measure: "total_it_budget_fy26",
     scope: "enterprise_envelope",
     view: "it_budget",
@@ -456,8 +462,8 @@ function buildProjection() {
     }
     const aiFact = fact({
       keyParts: ["ai-spend", row.record_id, "fy26"],
-      entityKey: row.program_code ? `${TENANT_KEY}::initiative::${safeKey(row.program_code)}` : `${TENANT_KEY}::enterprise`,
-      entityType: row.program_code ? "initiative" : "enterprise",
+      entityKey: row.program_code ? `${TENANT_KEY}::initiative::${safeKey(row.program_code)}` : ENTERPRISE_ENTITY_KEY,
+      entityType: row.program_code ? "initiative" : ENTERPRISE_ENTITY_TYPE,
       measure: "ai_tagged_spend_fy26",
       scope: row.program_code ? "initiative" : "enterprise_envelope",
       view: row.program_code ? "initiative_budget" : "it_budget",
@@ -618,8 +624,8 @@ function buildProjection() {
   for (const row of candidateUseCases) {
     const candidateFact = fact({
       keyParts: ["candidate-ai", row.record_id, row.use_case_status],
-      entityKey: `${TENANT_KEY}::enterprise`,
-      entityType: "enterprise",
+      entityKey: ENTERPRISE_ENTITY_KEY,
+      entityType: ENTERPRISE_ENTITY_TYPE,
       measure: "candidate_ai_opportunity_count",
       scope: "initiative",
       view: "risk",
@@ -656,8 +662,8 @@ function buildProjection() {
   for (const row of pressureRows.slice(0, 80)) {
     const pressureFact = fact({
       keyParts: ["pressure", row.record_id || row.source_record_id, row.risk_or_gap || row.signals || row.evidence_needed],
-      entityKey: `${TENANT_KEY}::enterprise`,
-      entityType: "enterprise",
+      entityKey: ENTERPRISE_ENTITY_KEY,
+      entityType: ENTERPRISE_ENTITY_TYPE,
       measure: "tower_watch_pressure_signal",
       scope: "enterprise_envelope",
       view: "risk",
