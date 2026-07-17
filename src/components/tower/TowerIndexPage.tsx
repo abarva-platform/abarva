@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AppShell } from "@/components/shell/AppShell";
@@ -3940,12 +3940,12 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "minmax(0, 1fr) minmax(260px, 420px)",
+              gridTemplateColumns: "minmax(420px, 1.35fr) minmax(260px, .65fr)",
               gap: 22,
-              alignItems: "stretch",
+              alignItems: "start",
             }}
           >
-            <div style={towerBoardCardStyle}>
+            <div data-testid="tower-budget-posture-card" style={towerBoardCardStyle}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
                 <div style={towerTinyLabelStyle}>FY26 technology budget</div>
                 <div
@@ -4021,7 +4021,7 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
                 optimized to fund the AI/data foundation and priority portfolio.
               </p>
             </div>
-            <div style={{ display: "grid", gap: 14 }}>
+            <div style={{ display: "grid", gap: 14, minWidth: 0 }}>
               <TowerMartCompactCard
                 label="Approved programs"
                 value={formatWholeNumber(model.programLanes.length)}
@@ -4173,9 +4173,12 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
         background: "#f6f3ec",
         borderTop: `1px solid ${T.RULE}`,
         minHeight: "calc(100vh - 132px)",
-        margin: "0 -32px -90px",
+        margin: 0,
+        width: "100%",
+        boxSizing: "border-box",
         display: "grid",
-        gridTemplateColumns: "222px minmax(0, 1fr)",
+        gridTemplateColumns: "clamp(210px, 15vw, 258px) minmax(0, 1fr)",
+        overflow: "hidden",
       }}
     >
       <aside
@@ -4183,7 +4186,8 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
         style={{
           borderRight: `1px solid ${T.RULE}`,
           background: "rgba(255,255,255,.62)",
-          padding: "24px 12px",
+          padding: "24px 14px",
+          minWidth: 0,
         }}
       >
         <TowerMartNavGroup label="Investment Control Tower">
@@ -4215,7 +4219,7 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
           />
         </TowerMartNavGroup>
       </aside>
-      <main style={{ padding: "34px clamp(28px, 3vw, 54px) 90px", minWidth: 0 }}>
+      <main style={{ padding: "34px clamp(24px, 2.8vw, 48px) 138px", minWidth: 0 }}>
         {activeSection === "command" ? (
           <>
             <div
@@ -4265,59 +4269,74 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
             <p style={{ margin: "10px 0 0", color: T.INK_2, fontSize: 16 }}>
               Investment control tower — <em>where money, risk and value are misaligned, and what to do next.</em>
             </p>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 38px 1fr 38px 1fr", gap: 0, alignItems: "center", marginTop: 24 }}>
+            <div
+              data-testid="tower-command-stepper"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, minmax(180px, 1fr))",
+                gap: 14,
+                alignItems: "stretch",
+                marginTop: 24,
+              }}
+            >
               {commandSteps.map((step, index) => {
                 const stepNumber = (index + 1) as 1 | 2 | 3;
                 const selected = commandStep === stepNumber;
                 return (
-                  <Fragment key={step[0]}>
-                    <button
-                      type="button"
-                      onClick={() => setCommandStep(stepNumber)}
+                  <button
+                    key={step[0]}
+                    type="button"
+                    onClick={() => setCommandStep(stepNumber)}
+                    style={{
+                      border: `1px solid ${selected ? "#1677ff" : T.RULE}`,
+                      borderRadius: 14,
+                      background: selected ? "#eaf2ff" : "#fff",
+                      boxShadow: "0 10px 24px rgba(15,23,42,.08)",
+                      minHeight: 62,
+                      padding: "12px 16px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                      cursor: "pointer",
+                      textAlign: "left",
+                      minWidth: 0,
+                    }}
+                  >
+                    <span
                       style={{
-                        border: `1px solid ${selected ? "#1677ff" : T.RULE}`,
-                        borderRadius: 14,
-                        background: selected ? "#eaf2ff" : "#fff",
-                        boxShadow: "0 10px 24px rgba(15,23,42,.08)",
-                        minHeight: 62,
-                        padding: "12px 18px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 14,
-                        cursor: "pointer",
-                        textAlign: "left",
+                        width: 28,
+                        height: 28,
+                        borderRadius: 999,
+                        display: "grid",
+                        placeItems: "center",
+                        background: selected ? T.PURPLE : "#fff",
+                        color: selected ? "#fff" : T.INK_2,
+                        border: selected ? "none" : `1px solid ${T.RULE_STRONG}`,
+                        fontWeight: 900,
                       }}
                     >
-                      <span
-                        style={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: 999,
-                          display: "grid",
-                          placeItems: "center",
-                          background: selected ? T.PURPLE : "#fff",
-                          color: selected ? "#fff" : T.INK_2,
-                          border: selected ? "none" : `1px solid ${T.RULE_STRONG}`,
-                          fontWeight: 900,
-                        }}
-                      >
-                        {stepNumber}
-                      </span>
-                      <span>
-                        <span style={{ ...towerTinyLabelStyle, display: "block", fontSize: 8 }}>Step {stepNumber}</span>
-                        <span style={{ fontWeight: 900, color: T.INK }}>{step[0]}</span>{" "}
-                        <span style={{ color: T.INK_2 }}>· {step[1]}</span>
-                      </span>
-                    </button>
-                    {index < commandSteps.length - 1 ? (
-                      <span style={{ color: T.GRAY_DK, textAlign: "center", fontSize: 25 }}>→</span>
-                    ) : null}
-                  </Fragment>
+                      {stepNumber}
+                    </span>
+                    <span style={{ minWidth: 0 }}>
+                      <span style={{ ...towerTinyLabelStyle, display: "block", fontSize: 8 }}>Step {stepNumber}</span>
+                      <span style={{ fontWeight: 900, color: T.INK }}>{step[0]}</span>{" "}
+                      <span style={{ color: T.INK_2 }}>· {step[1]}</span>
+                    </span>
+                  </button>
                 );
               })}
             </div>
             {renderCommandStep()}
-            <div style={{ display: "flex", justifyContent: "space-between", borderTop: `1px solid ${T.RULE}`, marginTop: 34, paddingTop: 22 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                borderTop: `1px solid ${T.RULE}`,
+                marginTop: 34,
+                paddingTop: 22,
+                paddingRight: 84,
+              }}
+            >
               <button
                 type="button"
                 disabled={commandStep === 1}
@@ -4366,7 +4385,7 @@ const towerBoardCardStyle: CSSProperties = {
   borderRadius: 16,
   background: "#fff",
   padding: 24,
-  minHeight: 306,
+  minHeight: 0,
   boxShadow: "0 22px 48px rgba(15,23,42,.08)",
 };
 
@@ -4459,8 +4478,9 @@ function TowerMartNavGroup({
         style={{
           ...towerTinyLabelStyle,
           fontSize: 8,
-          letterSpacing: "2.5px",
-          margin: "0 12px 9px",
+          letterSpacing: "2.1px",
+          margin: "0 10px 9px",
+          overflowWrap: "anywhere",
         }}
       >
         {label}
@@ -4499,11 +4519,14 @@ function TowerMartNavButton({
         gap: 8,
         alignItems: "center",
         textAlign: "left",
+        fontSize: 14,
+        lineHeight: 1.25,
         fontWeight: selected ? 900 : 650,
         cursor: disabled ? "not-allowed" : "pointer",
+        minWidth: 0,
       }}
     >
-      <span>{label}</span>
+      <span style={{ minWidth: 0, overflowWrap: "break-word" }}>{label}</span>
       {disabled ? (
         <span style={{ ...towerTinyLabelStyle, fontSize: 8, background: T.CREAM_DEEP, borderRadius: 999, padding: "3px 7px" }}>
           Soon
@@ -9726,8 +9749,8 @@ export function TowerIndexPage({
           context,
         }}
         defaultMode="collapsed"
-        defaultLeftPercent={35}
-        minLeftPx={320}
+        defaultLeftPercent={30}
+        minLeftPx={300}
       />
     </AppShell>
   );
