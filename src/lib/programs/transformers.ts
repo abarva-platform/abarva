@@ -469,6 +469,13 @@ type TerminalActivitySignal = {
   summary?: string | null;
 };
 
+type TerminalPhaseSnapshotSignal = {
+  phase_number?: number | null;
+  phaseNumber?: number | null;
+  approval_status?: string | null;
+  approvalStatus?: string | null;
+};
+
 export function hasTerminalTowerHandoffActivity(
   activity: TerminalActivitySignal[],
 ): boolean {
@@ -485,6 +492,24 @@ export function hasTerminalTowerHandoffActivity(
     return (
       text.includes("completed p5 terminal tower handoff") ||
       (text.includes("phase_5") && text.includes("completed"))
+    );
+  });
+}
+
+export function hasTerminalTowerHandoffSnapshot(
+  snapshots: TerminalPhaseSnapshotSignal[],
+): boolean {
+  return snapshots.some((entry) => {
+    const phase = entry.phase_number ?? entry.phaseNumber;
+    if (phase !== 5) return false;
+    const status = (entry.approval_status ?? entry.approvalStatus ?? "")
+      .toString()
+      .toLowerCase();
+    return (
+      status === "approved" ||
+      status === "signed_off" ||
+      status === "complete" ||
+      status === "completed"
     );
   });
 }
@@ -1671,7 +1696,8 @@ export async function buildStrategicMove(
     currentPhase: phase,
     terminalComplete:
       hasTerminalTowerHandoffPassed(move) ||
-      hasTerminalTowerHandoffActivity(recentActivity),
+      hasTerminalTowerHandoffActivity(recentActivity) ||
+      hasTerminalTowerHandoffSnapshot(phaseSnapshots),
     phaseLabel: getPhaseLabel(phase),
     status: {
       key: moveStatus.statusKey,
