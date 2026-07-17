@@ -927,6 +927,19 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       />,
     );
 
+    const commandMart = screen.getByTestId("tower-command-mart");
+    expect(commandMart).toHaveStyle({ margin: "0px", overflow: "hidden" });
+    expect(commandMart.getAttribute("style")).not.toContain("-32px");
+    expect(screen.getByLabelText("Investment control tower navigation")).toHaveStyle({
+      minWidth: "0",
+    });
+    expect(screen.getByTestId("tower-command-stepper")).toHaveStyle({
+      gridTemplateColumns: "repeat(3, minmax(180px, 1fr))",
+    });
+    expect(screen.getByTestId("tower-budget-posture-card")).toHaveStyle({
+      minHeight: "0",
+    });
+    expect(screen.getByTestId("agent-dock-collapsed-chip")).toBeInTheDocument();
     expect(screen.getByText("Investment Control Tower")).toBeInTheDocument();
     expect(screen.getByText("Active portfolio context")).toBeInTheDocument();
     expect(screen.getByText("$650.0M")).toBeInTheDocument();
