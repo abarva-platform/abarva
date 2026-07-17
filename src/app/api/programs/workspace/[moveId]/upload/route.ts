@@ -47,6 +47,7 @@ import {
   extractProgramEvidenceFromUploadBuffer,
   recordProgramEvidence,
 } from "@/lib/programs/evidence-ingestion";
+import { ensureEvidenceReviewForUploadedEvidence } from "@/lib/programs/current-state-doc-ingest";
 import {
   classifyUploadedMoveEvidence,
   mergeMoveEvidenceClassification,
@@ -322,6 +323,9 @@ export async function POST(
   let evidenceWarnings: string[] = [];
   let evidenceWhatFound: string[] = [];
   let evidenceWhereUsed: string[] = [];
+  let evidenceReview:
+    | Awaited<ReturnType<typeof ensureEvidenceReviewForUploadedEvidence>>
+    | null = null;
   let discoveryReceipt: ExtractionReceipt | null = null;
   let discoveryReadiness: Awaited<
     ReturnType<typeof loadDiscoveryEvidenceReadiness>
@@ -356,6 +360,33 @@ export async function POST(
       attachmentId: record.id,
       phase: effectivePhase ?? null,
       stepId: null,
+    });
+    evidenceReview = await ensureEvidenceReviewForUploadedEvidence(ctx, {
+      moveId,
+      evidenceId,
+      familyKey:
+        classification.slotIds[0] ??
+        classification.evidenceType ??
+        rawEvidence.evidenceType,
+      archetypeId:
+        typeof program.archetype === "string" ? program.archetype : null,
+      phase: effectivePhase ?? null,
+      filename,
+      mimeType,
+      parseMethod: evidenceParseMethod,
+      evidenceType: classification.evidenceType,
+      title: evidence.title,
+      confidence: evidence.confidence,
+      autoPromoted: false,
+      rationale:
+        "Workspace upload captured evidence and opened review before it can count toward readiness, context extract, or generation.",
+      sourceRef: {
+        source_type: classification.sourceType,
+        slot_ids: classification.slotIds,
+        artifact_consumers: classification.artifactConsumers,
+        what_found: classification.whatFound,
+        where_used: classification.whereUsed,
+      },
     });
     try {
       discoveryReceipt = await applyUploadedEvidenceToMove(ctx, {
@@ -400,11 +431,18 @@ export async function POST(
       evidence: evidenceId
         ? {
             id: evidenceId,
-            status: "captured",
+            status: evidenceReview?.reviewState ?? "captured",
             parseMethod: evidenceParseMethod,
             warnings: evidenceWarnings,
             whatFound: evidenceWhatFound,
             whereUsed: evidenceWhereUsed,
+            reviewId: evidenceReview?.reviewId ?? null,
+            reviewStatus: evidenceReview?.reviewState ?? "pending_review",
+            maturityLevel:
+              evidenceReview?.reviewState === "accepted"
+                ? "accepted"
+                : "uploaded",
+            attachmentStatus: "attached_to_move",
           }
         : { id: null, status: "not_captured", warning: evidenceWarning },
       discovery: discoveryReceipt ?? undefined,

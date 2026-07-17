@@ -102,4 +102,38 @@ describe("discovery evidence readiness", () => {
     expect(readiness.readyForP3).toBe(true);
     expect(readiness.readinessScore).toBe(100);
   });
+
+  it("uses a healthcare Agent Assist blueprint instead of generic AI operations", () => {
+    const agentAssistBlueprint = getDiscoveryBlueprint(
+      "Meridian member service contact center agent assist across claims, eligibility, benefits, CRM, and prior authorization",
+    );
+
+    expect(agentAssistBlueprint.blueprintId).toBe(
+      "healthcare_contact_center_agent_assist",
+    );
+    expect(agentAssistBlueprint.evidenceFamilies.map((family) => family.id)).toEqual(
+      expect.arrayContaining([
+        "current_state_workflow_map",
+        "contact_center_kpis",
+        "crm_contact_center_system_map",
+        "claims_eligibility_benefits_data_access",
+        "knowledge_base_ownership_freshness",
+        "phi_privacy_security_controls",
+        "human_in_loop_model",
+        "finance_baseline_value_plan",
+      ]),
+    );
+
+    expect(
+      mapEvidenceToDiscoveryFamily(
+        item(
+          "ev_health_1",
+          "Call center metrics baseline",
+          "Average handle time, after-call work, first-call resolution, transfer rate, repeat contact, abandonment, and agent occupancy.",
+          "baseline_evidence",
+        ),
+        agentAssistBlueprint,
+      ),
+    ).toBe("contact_center_kpis");
+  });
 });

@@ -350,8 +350,109 @@ describe("createMoveContextExtract", () => {
     expect(recordEvidence).not.toHaveBeenCalled();
   });
 
-  it("does not silently overwrite an existing current extract", async () => {
-    existingExtract.mockResolvedValue({ artifactId: "artifact-existing" });
+  it("rebuilds an existing current extract when accepted evidence changes", async () => {
+    queryContext.mockResolvedValue([]);
+    loadMoveEvidence.mockResolvedValue([
+      {
+        id: "ev-new",
+        tenantKey: "skyharbor-air",
+        programId: baseInput.moveId,
+        attachmentId: "att-new",
+        phase: 1,
+        evidenceType: "baseline_evidence",
+        title: "new-approved-evidence.txt",
+        summary: "Fresh approved evidence.",
+        extractedText: "Fresh approved evidence for the current phase.",
+        extractedStructured: {
+          source_type: "real_upload",
+          citation: "new-approved-evidence.txt",
+        },
+        confidence: 0.8,
+        createdAt: "2026-07-14T11:00:00Z",
+        reviewUpdatedAt: "2026-07-14T11:05:00Z",
+      },
+    ]);
+    existingExtract.mockResolvedValue({
+      artifactId: "artifact-existing",
+      createdAt: "2026-07-14T10:00:00Z",
+      metadata: {
+        moveContextExtract: {
+          extractId: "old-extract",
+          attachedEvidenceItems: [],
+          suggestedContextItems: [],
+          excludedContextItems: [],
+          gapItems: [],
+          freshness: {
+            evidenceFingerprint: "old",
+            attachedEvidenceCount: 0,
+            acceptedEvidenceCount: 0,
+            acceptedEvidenceLatestReviewAt: null,
+            blueprintId: "ai_operations_customer_digital",
+            blueprintVersion: "2026-07-17",
+            sourceMode: "active_home_context",
+          },
+        },
+      },
+    });
+
+    const result = await createMoveContextExtract(baseInput, {
+      queryContext,
+      saveArtifact,
+      recordEvidence,
+      loadMoveEvidence,
+      existingExtract,
+    });
+
+    expect(result.status).toBe("created");
+    expect(result.artifactId).toBe("artifact-1");
+    expect(result.attachedEvidenceItems.map((item) => item.evidenceId)).toEqual([
+      "ev-new",
+    ]);
+    expect(saveArtifact).toHaveBeenCalledWith(ctx, expect.objectContaining({
+      metadata: expect.objectContaining({
+        previousMoveContextExtract: expect.objectContaining({
+          artifactId: "artifact-existing",
+          freshnessStatus: "rebuild_required",
+        }),
+      }),
+    }));
+  });
+
+  it("reuses an existing current extract only when freshness metadata matches", async () => {
+    queryContext.mockResolvedValue([]);
+    loadMoveEvidence.mockResolvedValue([]);
+    existingExtract.mockResolvedValue({
+      artifactId: "artifact-existing",
+      createdAt: "2026-07-14T10:00:00Z",
+      metadata: {
+        moveContextExtract: {
+          status: "created",
+          extractId: "extract-existing",
+          moveId: baseInput.moveId,
+          tenantKey: "skyharbor-air",
+          sourceMode: "active_home_context",
+          phase: 3,
+          targetPhase: 3,
+          activeTenantAccessVersionId: null,
+          candidateVersionId: null,
+          sourceBuildId: null,
+          attachedEvidenceItems: [],
+          suggestedContextItems: [],
+          excludedContextItems: [],
+          gapItems: [],
+          generatedAt: "2026-07-14T10:00:00Z",
+          freshness: {
+            evidenceFingerprint: "no-accepted-evidence",
+            attachedEvidenceCount: 0,
+            acceptedEvidenceCount: 0,
+            acceptedEvidenceLatestReviewAt: null,
+            blueprintId: "ai_operations_customer_digital",
+            blueprintVersion: "2026-07-17",
+            sourceMode: "active_home_context",
+          },
+        },
+      },
+    });
 
     const result = await createMoveContextExtract(baseInput, {
       queryContext,
@@ -364,7 +465,7 @@ describe("createMoveContextExtract", () => {
     expect(result.status).toBe("skipped_existing");
     expect(result.artifactId).toBe("artifact-existing");
     expect(queryContext).not.toHaveBeenCalled();
-    expect(loadMoveEvidence).not.toHaveBeenCalled();
+    expect(loadMoveEvidence).toHaveBeenCalled();
     expect(saveArtifact).not.toHaveBeenCalled();
     expect(recordEvidence).not.toHaveBeenCalled();
   });

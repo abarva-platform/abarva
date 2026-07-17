@@ -22,6 +22,8 @@ export interface InterviewRole {
 }
 
 export interface DiscoveryBlueprint {
+  blueprintId: string;
+  blueprintVersion: string;
   /** matched archetype label, for display/provenance. */
   archetypeLabel: string;
   evidenceFamilies: EvidenceFamily[];
@@ -30,6 +32,8 @@ export interface DiscoveryBlueprint {
 
 // ── AI-Operations / Customer-Digital (IROPS-class) ──────────────────────────
 const AI_OPERATIONS: DiscoveryBlueprint = {
+  blueprintId: "ai_operations_customer_digital",
+  blueprintVersion: "2026-07-17",
   archetypeLabel: "AI Operations / Customer-Digital",
   evidenceFamilies: [
     {
@@ -250,8 +254,166 @@ const AI_OPERATIONS: DiscoveryBlueprint = {
   ],
 };
 
+// ── Healthcare / Member-Service Contact Center Agent Assist ────────────────
+const HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST: DiscoveryBlueprint = {
+  blueprintId: "healthcare_contact_center_agent_assist",
+  blueprintVersion: "2026-07-17",
+  archetypeLabel: "Healthcare Contact Center Agent Assist",
+  evidenceFamilies: [
+    {
+      id: "current_state_workflow_map",
+      label: "Current-state member-service workflow map",
+      grounds: "Current-State Assessment · Future-State Process",
+      required: true,
+      likelySource: "Member Operations / Contact Center Operations",
+      format: "Workshop notes or process map",
+    },
+    {
+      id: "contact_center_kpis",
+      label: "Contact center baseline KPIs",
+      grounds: "Value Hypothesis · Business Case · Tower Metrics",
+      required: true,
+      likelySource: "Operations Analytics / CCaaS reporting",
+      format: "CSV/XLSX",
+    },
+    {
+      id: "crm_contact_center_system_map",
+      label: "CRM/contact-center system and integration map",
+      grounds: "Current-State Systems · Target Architecture",
+      required: true,
+      likelySource: "Enterprise Architecture / Contact Center IT",
+      format: "CSV or architecture inventory",
+    },
+    {
+      id: "claims_eligibility_benefits_data_access",
+      label: "Claims, eligibility, benefits, and prior-auth data access",
+      grounds: "Data Foundation · Agent Assist Retrieval Scope",
+      required: true,
+      likelySource: "Claims, Benefits, Prior Authorization, Data Platform",
+      format: "Data inventory / interface catalog",
+    },
+    {
+      id: "knowledge_base_ownership_freshness",
+      label: "Knowledge base ownership and freshness",
+      grounds: "Answer Quality · Knowledge Governance · Operating Model",
+      required: true,
+      likelySource: "Knowledge Management / Policy Owners",
+      format: "Doc/export with owner and refresh cadence",
+    },
+    {
+      id: "call_recording_transcript_availability",
+      label: "Call transcript/recording availability and retention",
+      grounds: "Intent Taxonomy · Training/Evaluation Data · Compliance",
+      required: true,
+      likelySource: "CCaaS / Speech Analytics / Compliance",
+      format: "Retention policy + sample inventory",
+    },
+    {
+      id: "phi_privacy_security_controls",
+      label: "PHI, privacy, security, and audit controls",
+      grounds: "Risk Controls · Security Architecture · Gate Decision",
+      required: true,
+      likelySource: "Security / Privacy / Compliance",
+      format: "Controls matrix",
+    },
+    {
+      id: "human_in_loop_model",
+      label: "Human-in-the-loop decision model",
+      grounds: "Operating Model · Responsible AI Controls",
+      required: true,
+      likelySource: "Operations Leadership / Compliance / Clinical Policy",
+      format: "Decision-rights matrix",
+    },
+    {
+      id: "model_risk_responsible_ai_controls",
+      label: "Model risk and responsible AI controls",
+      grounds: "AI Governance · Approval Guardrails",
+      required: true,
+      likelySource: "Responsible AI / Model Risk / Compliance",
+      format: "Control checklist",
+    },
+    {
+      id: "measurement_owner_cadence",
+      label: "Measurement owner and cadence",
+      grounds: "Tower Handoff · Value Measurement Contract",
+      required: true,
+      likelySource: "Operations Analytics / Finance / PMO",
+      format: "Metric owner table",
+    },
+    {
+      id: "finance_baseline_value_plan",
+      label: "Finance baseline and value measurement plan",
+      grounds: "Business Case · Value Proof",
+      required: true,
+      likelySource: "Finance / FP&A",
+      format: "XLSX",
+    },
+    {
+      id: "change_adoption_owner",
+      label: "Operational change and adoption owner",
+      grounds: "Change Plan · Adoption Risk",
+      required: false,
+      likelySource: "Training / Workforce / Change Lead",
+      format: "RACI or adoption plan",
+    },
+  ],
+  interviewRoster: [
+    {
+      role: "Executive sponsor for member experience",
+      side: "business",
+      objectives: "Outcome, scope, value, and risk appetite",
+      questions: [
+        "Which member-service pain points must improve first: handle time, repeat contact, transfers, consistency, or satisfaction?",
+        "Which decisions must remain human-owned even if AI drafts the answer?",
+        "What would make this initiative not worth scaling?",
+      ],
+    },
+    {
+      role: "VP Member Operations / Contact Center Director",
+      side: "business",
+      objectives: "Workflow truth, agent pain, exceptions, and operating model",
+      questions: [
+        "Walk through a claims, eligibility, benefits, and prior-auth inquiry from answer to escalation.",
+        "Where do agents switch systems or interpret policy manually?",
+        "Which intents drive avoidable transfers, repeat contacts, and after-call work?",
+      ],
+    },
+    {
+      role: "Operations Analytics / Finance value owner",
+      side: "business",
+      objectives: "Baseline, target, measurement cadence, and value proof",
+      questions: [
+        "Which baseline metrics are reliable today: AHT, FCR, transfer rate, repeat contact, ACW, CSAT, cost per contact?",
+        "Who signs off the measurement method and value realization cadence?",
+      ],
+    },
+    {
+      role: "Enterprise architect / contact-center platform owner",
+      side: "it",
+      objectives: "CRM, CCaaS, claims/auth/benefits integration and target architecture",
+      questions: [
+        "Which systems must the agent-assist layer read from at answer time?",
+        "What is batch versus real-time today, and where are the API or data-product gaps?",
+        "How will AWS, Databricks, CRM, CCaaS, IAM, and audit logging fit together?",
+      ],
+    },
+    {
+      role: "Security / Privacy / Compliance / Responsible AI lead",
+      side: "it",
+      objectives: "PHI controls, auditability, model-risk gates, and human review",
+      questions: [
+        "Where can PHI appear in transcripts, CRM notes, claims data, or generated responses?",
+        "What answer types require human approval, suppression, or escalation?",
+        "What logs and evidence must exist before production scale?",
+      ],
+    },
+  ],
+};
+
 // ── Generic default (any non-ops archetype) ──
 const DEFAULT_BLUEPRINT: DiscoveryBlueprint = {
+  blueprintId: "general_default",
+  blueprintVersion: "2026-07-17",
   archetypeLabel: "General (default)",
   evidenceFamilies: [
     {
@@ -341,6 +503,13 @@ export function getDiscoveryBlueprint(
   useCaseArchetype: string,
 ): DiscoveryBlueprint {
   const a = (useCaseArchetype || "").toLowerCase();
+  if (
+    /health|meridian|member.?service|member.?experience|contact.?center|call.?center|agent.?assist|agentic.?assist|customer.?service.?ai|claims?|eligibility|benefits?|prior.?auth|authorization|crm/.test(
+      a,
+    )
+  ) {
+    return HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST;
+  }
   if (
     /irops|re-?accom|recovery|disrupt|operation|ai_ops|ai-operations|customer.?digital|operational_optimization|ai_operations/.test(
       a,

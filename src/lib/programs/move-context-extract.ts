@@ -1,5 +1,6 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
 import { queryTenantContext } from "@/lib/azure-search/tenant-context-retriever";
 import type { TenantContextChunk } from "@/lib/azure-search/tenant-context-retriever";
 import { findSkyHarborPreviewModule } from "@/lib/enterprise-data/candidate-preview-enablement/skyharbor-preview-package";
@@ -80,6 +81,25 @@ export interface MoveContextExtractItem {
   confidence?: number;
 }
 
+export type MoveContextExtractFreshnessStatus =
+  | "fresh"
+  | "stale"
+  | "rebuild_required";
+
+export interface MoveContextExtractFreshness {
+  extractId: string | null;
+  moveId: string;
+  tenantKey: string;
+  evidenceFingerprint: string;
+  attachedEvidenceCount: number;
+  acceptedEvidenceCount: number;
+  latestEvidenceUpdatedAt: string | null;
+  blueprintId: string;
+  blueprintVersion: string;
+  createdAt: string;
+  freshnessStatus: MoveContextExtractFreshnessStatus;
+}
+
 export interface MoveContextExtractResult {
   status: "created" | "skipped_existing" | "error";
   extractId: string | null;
@@ -97,6 +117,7 @@ export interface MoveContextExtractResult {
   suggestedContextItems: MoveContextExtractItem[];
   excludedContextItems: MoveContextExtractItem[];
   gapItems: MoveContextExtractItem[];
+  freshness: MoveContextExtractFreshness;
   generatedAt: string;
   message?: string;
 }
@@ -110,7 +131,13 @@ interface MoveContextExtractDeps {
     tenantKey: string;
     moveId: string;
     artifactType: string;
-  }) => Promise<{ artifactId: string } | null>;
+  }) => Promise<ExistingMoveContextExtract | null>;
+}
+
+interface ExistingMoveContextExtract {
+  artifactId: string;
+  createdAt: string | null;
+  metadata: Record<string, unknown>;
 }
 
 interface MoveEvidenceRow {
@@ -126,6 +153,7 @@ interface MoveEvidenceRow {
   extractedStructured: Record<string, unknown>;
   confidence: number | string | null;
   createdAt: string | null;
+  reviewUpdatedAt: string | null;
 }
 
 function compact(value: string, max = 900): string {
@@ -210,6 +238,28 @@ function numberOrNull(value: unknown): number | null {
     return Number(value);
   }
   return null;
+}
+
+function isoOrNull(value: unknown): string | null {
+  const text = stringOrNull(value);
+  if (!text) return null;
+  const time = Date.parse(text);
+  return Number.isFinite(time) ? new Date(time).toISOString() : text;
+}
+
+function maxIso(values: Array<string | null | undefined>): string | null {
+  let max = 0;
+  let out: string | null = null;
+  for (const value of values) {
+    const text = isoOrNull(value);
+    if (!text) continue;
+    const time = Date.parse(text);
+    if (Number.isFinite(time) && time >= max) {
+      max = time;
+      out = text;
+    }
+  }
+  return out;
 }
 
 function extractedStringArray(
@@ -312,31 +362,63 @@ async function defaultLoadMoveEvidenceRows(args: {
   moveId: string;
 }): Promise<MoveEvidenceRow[]> {
   const sb = getAzureWriteFluentClient();
-  const { data, error } = await sb
+  const { data: reviewData, error: reviewError } = await sb
+    .from("program_evidence_reviews")
+    .select(
+      "evidence_id, decision, reviewed_at, updated_at, created_at",
+    )
+    .eq("tenant_key", args.tenantKey)
+    .eq("program_id", args.moveId)
+    .eq("decision", "approved")
+    .order("updated_at", { ascending: false })
+    .limit(80);
+  if (reviewError || !Array.isArray(reviewData)) return [];
+
+  const reviewRows = reviewData as Array<Record<string, unknown>>;
+  const evidenceIds = reviewRows
+    .map((row) => stringOrNull(row.evidence_id))
+    .filter((id): id is string => Boolean(id));
+  if (evidenceIds.length === 0) return [];
+
+  const { data: evidenceData, error: evidenceError } = await sb
     .from("program_evidence_items")
     .select(
       "id, tenant_key, program_id, attachment_id, phase, evidence_type, title, summary, extracted_text, extracted_structured, confidence, created_at",
     )
-    .eq("tenant_key", args.tenantKey)
-    .eq("program_id", args.moveId)
-    .order("created_at", { ascending: false })
-    .limit(80);
-  if (error || !Array.isArray(data)) return [];
-  return (data as Array<Record<string, unknown>>)
-    .map((row) => ({
-      id: stringOrNull(row.id) ?? "",
-      tenantKey: stringOrNull(row.tenant_key) ?? args.tenantKey,
-      programId: stringOrNull(row.program_id) ?? args.moveId,
-      attachmentId: stringOrNull(row.attachment_id),
-      phase: numberOrNull(row.phase),
-      evidenceType: stringOrNull(row.evidence_type) ?? "uploaded_artifact",
-      title: stringOrNull(row.title) ?? "Untitled Move evidence",
-      summary: stringOrNull(row.summary) ?? "",
-      extractedText: stringOrNull(row.extracted_text),
-      extractedStructured: objectValue(row.extracted_structured),
-      confidence: row.confidence as number | string | null,
-      createdAt: stringOrNull(row.created_at),
-    }))
+    .in("id", evidenceIds);
+  if (evidenceError || !Array.isArray(evidenceData)) return [];
+
+  const evidenceById = new Map(
+    (evidenceData as Array<Record<string, unknown>>).map((row) => [
+      stringOrNull(row.id),
+      row,
+    ]),
+  );
+  return reviewRows
+    .map((reviewRow) => {
+      const evidenceId = stringOrNull(reviewRow.evidence_id);
+      const row = evidenceId ? evidenceById.get(evidenceId) : null;
+      if (!row) return null;
+      return {
+        id: stringOrNull(row.id) ?? evidenceId ?? "",
+        tenantKey: stringOrNull(row.tenant_key) ?? args.tenantKey,
+        programId: stringOrNull(row.program_id) ?? args.moveId,
+        attachmentId: stringOrNull(row.attachment_id),
+        phase: numberOrNull(row.phase),
+        evidenceType: stringOrNull(row.evidence_type) ?? "uploaded_artifact",
+        title: stringOrNull(row.title) ?? "Untitled Move evidence",
+        summary: stringOrNull(row.summary) ?? "",
+        extractedText: stringOrNull(row.extracted_text),
+        extractedStructured: objectValue(row.extracted_structured),
+        confidence: row.confidence as number | string | null,
+        createdAt: stringOrNull(row.created_at),
+        reviewUpdatedAt:
+          stringOrNull(reviewRow.reviewed_at) ??
+          stringOrNull(reviewRow.updated_at) ??
+          stringOrNull(reviewRow.created_at),
+      };
+    })
+    .filter((row): row is MoveEvidenceRow => row !== null)
     .filter((row) => row.id && row.programId === args.moveId && row.tenantKey === args.tenantKey);
 }
 
@@ -344,11 +426,11 @@ async function defaultExistingExtract(args: {
   tenantKey: string;
   moveId: string;
   artifactType: string;
-}): Promise<{ artifactId: string } | null> {
+}): Promise<ExistingMoveContextExtract | null> {
   const sb = getAzureWriteFluentClient();
   const { data, error } = await sb
     .from("move_artifacts")
-    .select("artifact_id")
+    .select("artifact_id, metadata, created_at, generated_at")
     .eq("tenant_key", args.tenantKey)
     .eq("move_id", args.moveId)
     .eq("artifact_type", args.artifactType)
@@ -356,7 +438,160 @@ async function defaultExistingExtract(args: {
     .limit(1)
     .maybeSingle();
   if (error || !data) return null;
-  return { artifactId: (data as { artifact_id: string }).artifact_id };
+  const row = data as {
+    artifact_id: string;
+    metadata?: Record<string, unknown> | null;
+    created_at?: string | null;
+    generated_at?: string | null;
+  };
+  return {
+    artifactId: row.artifact_id,
+    createdAt: stringOrNull(row.generated_at) ?? stringOrNull(row.created_at),
+    metadata: objectValue(row.metadata),
+  };
+}
+
+function evidenceFingerprint(args: {
+  rows: MoveEvidenceRow[];
+  blueprintId: string;
+  blueprintVersion: string;
+  sourceMode: MoveContextExtractSourceMode;
+}): string {
+  if (args.rows.length === 0) return "no-accepted-evidence";
+  const payload = {
+    sourceMode: args.sourceMode,
+    blueprintId: args.blueprintId,
+    blueprintVersion: args.blueprintVersion,
+    evidence: args.rows
+      .map((row) => ({
+        id: row.id,
+        phase: row.phase,
+        evidenceType: row.evidenceType,
+        attachmentId: row.attachmentId,
+        createdAt: row.createdAt,
+        reviewUpdatedAt: row.reviewUpdatedAt,
+      }))
+      .sort((a, b) => a.id.localeCompare(b.id)),
+  };
+  return createHash("sha256").update(JSON.stringify(payload)).digest("hex");
+}
+
+function freshnessFor(args: {
+  input: MoveContextExtractInput;
+  generatedAt: string;
+  extractId: string | null;
+  attachedEvidenceCount: number;
+  acceptedEvidenceRows: MoveEvidenceRow[];
+  blueprintId: string;
+  blueprintVersion: string;
+  sourceMode: MoveContextExtractSourceMode;
+  status: MoveContextExtractFreshnessStatus;
+}): MoveContextExtractFreshness {
+  return {
+    extractId: args.extractId,
+    moveId: args.input.moveId,
+    tenantKey: args.input.tenantKey,
+    evidenceFingerprint: evidenceFingerprint({
+      rows: args.acceptedEvidenceRows,
+      blueprintId: args.blueprintId,
+      blueprintVersion: args.blueprintVersion,
+      sourceMode: args.sourceMode,
+    }),
+    attachedEvidenceCount: args.attachedEvidenceCount,
+    acceptedEvidenceCount: args.acceptedEvidenceRows.length,
+    latestEvidenceUpdatedAt: maxIso(
+      args.acceptedEvidenceRows.map((row) => row.reviewUpdatedAt ?? row.createdAt),
+    ),
+    blueprintId: args.blueprintId,
+    blueprintVersion: args.blueprintVersion,
+    createdAt: args.generatedAt,
+    freshnessStatus: args.status,
+  };
+}
+
+function existingResultFromMetadata(args: {
+  input: MoveContextExtractInput;
+  existing: ExistingMoveContextExtract;
+  generatedAt: string;
+  targetPhase: number;
+  sourceMode: MoveContextExtractSourceMode;
+  currentFreshness: MoveContextExtractFreshness;
+}): MoveContextExtractResult {
+  const extract = objectValue(args.existing.metadata.moveContextExtract);
+  const array = (value: unknown): MoveContextExtractItem[] =>
+    Array.isArray(value) ? (value as MoveContextExtractItem[]) : [];
+  return {
+    status: "skipped_existing",
+    extractId: stringOrNull(extract.extractId),
+    artifactId: args.existing.artifactId,
+    evidenceId: null,
+    moveId: args.input.moveId,
+    tenantKey: args.input.tenantKey,
+    sourceMode: args.sourceMode,
+    phase: args.input.phase,
+    targetPhase: args.targetPhase,
+    activeTenantAccessVersionId: stringOrNull(extract.activeTenantAccessVersionId),
+    candidateVersionId: args.input.candidatePreview?.candidateVersionId ?? null,
+    sourceBuildId: stringOrNull(extract.sourceBuildId),
+    attachedEvidenceItems: array(extract.attachedEvidenceItems),
+    suggestedContextItems: array(extract.suggestedContextItems),
+    excludedContextItems: array(extract.excludedContextItems),
+    gapItems: array(extract.gapItems),
+    freshness: {
+      ...args.currentFreshness,
+      freshnessStatus: "fresh",
+      createdAt: args.existing.createdAt ?? args.currentFreshness.createdAt,
+    },
+    generatedAt: args.generatedAt,
+    message: "Existing current Move Context Extract found and fresh for the accepted evidence fingerprint and blueprint.",
+  };
+}
+
+function existingFreshness(value: ExistingMoveContextExtract | null): MoveContextExtractFreshness | null {
+  const extract = objectValue(value?.metadata.moveContextExtract);
+  const freshness = objectValue(extract.freshness);
+  const evidenceFingerprintValue = stringOrNull(freshness.evidenceFingerprint);
+  const blueprintId = stringOrNull(freshness.blueprintId);
+  const blueprintVersion = stringOrNull(freshness.blueprintVersion);
+  if (!evidenceFingerprintValue || !blueprintId || !blueprintVersion) return null;
+  return {
+    extractId: stringOrNull(freshness.extractId),
+    moveId: stringOrNull(freshness.moveId) ?? "",
+    tenantKey: stringOrNull(freshness.tenantKey) ?? "",
+    evidenceFingerprint: evidenceFingerprintValue,
+    attachedEvidenceCount: numberOrNull(freshness.attachedEvidenceCount) ?? 0,
+    acceptedEvidenceCount: numberOrNull(freshness.acceptedEvidenceCount) ?? 0,
+    latestEvidenceUpdatedAt: stringOrNull(freshness.latestEvidenceUpdatedAt),
+    blueprintId,
+    blueprintVersion,
+    createdAt: stringOrNull(freshness.createdAt) ?? value?.createdAt ?? "",
+    freshnessStatus:
+      freshness.freshnessStatus === "fresh" ||
+      freshness.freshnessStatus === "stale" ||
+      freshness.freshnessStatus === "rebuild_required"
+        ? freshness.freshnessStatus
+        : "rebuild_required",
+  };
+}
+
+function isExistingFresh(args: {
+  existing: ExistingMoveContextExtract | null;
+  current: MoveContextExtractFreshness;
+}): boolean {
+  const previous = existingFreshness(args.existing);
+  if (!previous) return false;
+  const latestTime = args.current.latestEvidenceUpdatedAt
+    ? Date.parse(args.current.latestEvidenceUpdatedAt)
+    : 0;
+  const createdTime = previous.createdAt ? Date.parse(previous.createdAt) : 0;
+  return (
+    previous.evidenceFingerprint === args.current.evidenceFingerprint &&
+    previous.attachedEvidenceCount === args.current.attachedEvidenceCount &&
+    previous.acceptedEvidenceCount === args.current.acceptedEvidenceCount &&
+    previous.blueprintId === args.current.blueprintId &&
+    previous.blueprintVersion === args.current.blueprintVersion &&
+    (!latestTime || !createdTime || latestTime <= createdTime)
+  );
 }
 
 function explicitCandidatePreview(input: MoveContextExtractInput): boolean {
@@ -513,51 +748,53 @@ export async function createMoveContextExtract(
     ? "candidate_preview"
     : "active_home_context";
   const artifactType = artifactTypeForPhase(input.phase);
+  const blueprint = getDiscoveryBlueprint(input.useCaseArchetype);
+  const loadMoveEvidence = deps.loadMoveEvidence ?? defaultLoadMoveEvidenceRows;
+  const moveEvidenceRows =
+    sourceMode === "active_home_context"
+      ? await loadMoveEvidence({
+          tenantKey: input.tenantKey,
+          moveId: input.moveId,
+        })
+      : [];
+  const acceptedEvidenceItems = moveEvidenceRows
+    .filter(evidencePolicyAllowsAttachment)
+    .map((row) => attachedItemFromEvidenceRow(input, row));
+  const preContextFreshness = freshnessFor({
+    input,
+    generatedAt,
+    extractId: null,
+    attachedEvidenceCount: acceptedEvidenceItems.length,
+    acceptedEvidenceRows: moveEvidenceRows.filter(evidencePolicyAllowsAttachment),
+    blueprintId: blueprint.blueprintId,
+    blueprintVersion: blueprint.blueprintVersion,
+    sourceMode,
+    status: "fresh",
+  });
   const existing = await (deps.existingExtract ?? defaultExistingExtract)({
     tenantKey: input.tenantKey,
     moveId: input.moveId,
     artifactType,
   });
-  if (existing) {
-    return {
-      status: "skipped_existing",
-      extractId: null,
-      artifactId: existing.artifactId,
-      evidenceId: null,
-      moveId: input.moveId,
-      tenantKey: input.tenantKey,
-      sourceMode,
-      phase: input.phase,
-      targetPhase,
-      activeTenantAccessVersionId: null,
-      candidateVersionId: input.candidatePreview?.candidateVersionId ?? null,
-      sourceBuildId: null,
-      attachedEvidenceItems: [],
-      suggestedContextItems: [],
-      excludedContextItems: [],
-      gapItems: [],
+  if (existing && isExistingFresh({ existing, current: preContextFreshness })) {
+    return existingResultFromMetadata({
+      input,
+      existing,
       generatedAt,
-      message: "Existing current Move Context Extract found; not regenerated.",
-    };
+      targetPhase,
+      sourceMode,
+      currentFreshness: preContextFreshness,
+    });
   }
 
   const queryContext = deps.queryContext ?? queryTenantContext;
-  let attachedEvidenceItems: MoveContextExtractItem[] = [];
+  let attachedEvidenceItems: MoveContextExtractItem[] = acceptedEvidenceItems;
   const suggestedContextItems = candidateSuggestedItems(input);
   const excludedContextItems = [candidateExcludedItem(input)].filter(
     (item): item is MoveContextExtractItem => item !== null,
   );
 
   if (sourceMode === "active_home_context") {
-    const loadMoveEvidence = deps.loadMoveEvidence ?? defaultLoadMoveEvidenceRows;
-    const moveEvidenceRows = await loadMoveEvidence({
-      tenantKey: input.tenantKey,
-      moveId: input.moveId,
-    });
-    attachedEvidenceItems = moveEvidenceRows
-      .filter(evidencePolicyAllowsAttachment)
-      .map((row) => attachedItemFromEvidenceRow(input, row));
-
     const chunks = await queryContext({
       tenantClientKey: input.tenantKey,
       query: queryFor(input),
@@ -592,6 +829,17 @@ export async function createMoveContextExtract(
     suggestedContextItems,
     excludedContextItems,
     gapItems: gapItems(attachedEvidenceItems),
+    freshness: freshnessFor({
+      input,
+      generatedAt,
+      extractId: extractId(input, generatedAt),
+      attachedEvidenceCount: attachedEvidenceItems.length,
+      acceptedEvidenceRows: moveEvidenceRows.filter(evidencePolicyAllowsAttachment),
+      blueprintId: blueprint.blueprintId,
+      blueprintVersion: blueprint.blueprintVersion,
+      sourceMode,
+      status: "fresh",
+    }),
     generatedAt,
   };
 
@@ -619,6 +867,15 @@ export async function createMoveContextExtract(
     citationReady: attachedEvidenceItems.length > 0,
     metadata: {
       moveContextExtract: resultBase,
+      previousMoveContextExtract:
+        existing && !isExistingFresh({ existing, current: preContextFreshness })
+          ? {
+              artifactId: existing.artifactId,
+              freshnessStatus: "rebuild_required",
+              reason:
+                "Accepted evidence fingerprint, counts, latest review timestamp, or blueprint changed.",
+            }
+          : null,
       guardrails: {
         candidateReadByDefault: false,
         activeAndCandidateMixed: false,

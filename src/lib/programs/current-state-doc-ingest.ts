@@ -114,6 +114,35 @@ export interface DocFamilyReviewState {
   committedSignals: string[];
 }
 
+export interface EnsureEvidenceReviewArgs {
+  moveId: string;
+  evidenceId: string;
+  familyKey: string;
+  archetypeId?: string | null;
+  phase?: number | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  parseMethod?: string | null;
+  evidenceType?: string | null;
+  title?: string | null;
+  confidence?: number | string | null;
+  autoPromoted?: boolean;
+  initialDecision?: ReviewDecision;
+  rationale?: string | null;
+  sourceRef?: Record<string, unknown>;
+}
+
+export interface EnsureEvidenceReviewResult {
+  ok: true;
+  reviewId: string;
+  evidenceId: string;
+  familyKey: string;
+  decision: ReviewDecision;
+  reviewState: "pending_review" | "accepted" | "rejected";
+  autoPromoted: boolean;
+  idempotent: boolean;
+}
+
 /** A family is DOCUMENT-eligible when it has no canonical committed-store table —
  *  it is satisfied through the governed document → review → commit path. */
 export function isDocumentFamily(family: EvidenceFamilySpec): boolean {
@@ -304,6 +333,152 @@ export async function ingestCurrentStateDoc(
   };
 }
 
+function normalizedFamilyKey(value: string | null | undefined): string {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed.slice(0, 120) : "uploaded_move_evidence";
+}
+
+function reviewStateForDecision(
+  decision: ReviewDecision,
+): EnsureEvidenceReviewResult["reviewState"] {
+  if (decision === "approved") return "accepted";
+  if (decision === "rejected") return "rejected";
+  return "pending_review";
+}
+
+/**
+ * Open or return the governed review row for workspace-uploaded Move evidence.
+ * This makes workspace upload follow the same append-only evidence + separate
+ * review/acceptance ledger as the current-state document path.
+ */
+export async function ensureEvidenceReviewForUploadedEvidence(
+  ctx: TenancyCtx,
+  args: EnsureEvidenceReviewArgs,
+): Promise<EnsureEvidenceReviewResult> {
+  const tenantKey = ctx.clientKey ?? "";
+  const familyKey = normalizedFamilyKey(args.familyKey);
+  const autoPromoted = args.autoPromoted === true;
+  const decision: ReviewDecision =
+    args.initialDecision ?? (autoPromoted ? "approved" : "pending");
+  const reviewedOnInsert = decision !== "pending";
+  const sourceRef = {
+    filename: args.filename ?? undefined,
+    mime_type: args.mimeType ?? undefined,
+    parse_method: args.parseMethod ?? undefined,
+    confidence: args.confidence ?? undefined,
+    evidence_type: args.evidenceType ?? undefined,
+    title: args.title ?? undefined,
+    lifecycle: {
+      evidence_status: "uploaded",
+      review_status:
+        decision === "approved"
+          ? autoPromoted
+            ? "auto_accepted"
+            : "accepted"
+          : decision === "rejected"
+            ? "rejected"
+            : "pending_review",
+      attachment_status: "attached_to_move",
+      maturity_level: decision === "pending" ? "uploaded" : reviewStateForDecision(decision),
+      accepted_by: decision === "approved" ? ctx.userId : null,
+      accepted_at: decision === "approved" ? new Date().toISOString() : null,
+      attached_to_move_id: args.moveId,
+      supported_phase: args.phase ?? null,
+      supported_gate: args.phase == null ? null : `P${args.phase}`,
+      blueprint_category: familyKey,
+    },
+    ...(args.sourceRef ?? {}),
+  };
+  const rationale =
+    args.rationale ??
+    (autoPromoted
+      ? "Structured/internal workspace evidence explicitly auto-accepted on upload."
+      : "Workspace-uploaded evidence requires human review before it counts toward readiness or generation.");
+  const sb = getAzureWriteFluentClient();
+
+  const { data: existing, error: existingError } = await sb
+    .from("program_evidence_reviews")
+    .select("id, evidence_id, family_key, decision, auto_promoted")
+    .eq("tenant_key", tenantKey)
+    .eq("program_id", args.moveId)
+    .eq("evidence_id", args.evidenceId)
+    .maybeSingle();
+  if (existingError) throw existingError;
+  if (existing) {
+    const row = existing as {
+      id: string;
+      evidence_id: string;
+      family_key: string;
+      decision: ReviewDecision;
+      auto_promoted: boolean;
+    };
+    return {
+      ok: true,
+      reviewId: row.id,
+      evidenceId: row.evidence_id,
+      familyKey: row.family_key,
+      decision: row.decision,
+      reviewState: reviewStateForDecision(row.decision),
+      autoPromoted: row.auto_promoted,
+      idempotent: true,
+    };
+  }
+
+  const { data, error } = await sb
+    .from("program_evidence_reviews")
+    .insert({
+      tenant_key: tenantKey,
+      program_id: args.moveId,
+      evidence_id: args.evidenceId,
+      family_key: familyKey,
+      archetype_id: args.archetypeId ?? null,
+      phase: args.phase ?? null,
+      decision,
+      auto_promoted: autoPromoted,
+      rationale,
+      source_ref: sourceRef,
+      submitted_by_user_id: ctx.userId,
+      reviewed_by_user_id: reviewedOnInsert ? ctx.userId : null,
+      reviewed_at: reviewedOnInsert ? new Date().toISOString() : null,
+    })
+    .select("id, evidence_id, family_key, decision, auto_promoted")
+    .single();
+  if (error) throw error;
+  const row = data as {
+    id: string;
+    evidence_id: string;
+    family_key: string;
+    decision: ReviewDecision;
+    auto_promoted: boolean;
+  };
+
+  await writeProgramAuditLogBestEffort(ctx, {
+    tenantKey,
+    programId: args.moveId,
+    engagementId: args.moveId,
+    action: decision === "approved" && !autoPromoted
+      ? "workspace_evidence_committed"
+      : autoPromoted
+      ? "workspace_evidence_auto_accepted"
+      : "workspace_evidence_review_opened",
+    fromState: "uploaded",
+    toState: reviewStateForDecision(decision),
+    rationale,
+    evidenceRefs: [args.evidenceId, row.id],
+  });
+
+  return {
+    ok: true,
+    reviewId: row.id,
+    evidenceId: row.evidence_id,
+    familyKey: row.family_key,
+    decision: row.decision,
+    reviewState: reviewStateForDecision(row.decision),
+    autoPromoted: row.auto_promoted,
+    idempotent: false,
+  };
+}
+
 /**
  * The governed promotion: flip a pending document review to approved/rejected.
  * This is what turns review_required → committed for the readiness resolver.
@@ -344,6 +519,87 @@ export async function decideEvidenceReview(
     .maybeSingle();
   if (error) throw error;
   if (!data) {
+    const { data: existingReview, error: existingReviewError } = await sb
+      .from("program_evidence_reviews")
+      .select("evidence_id, family_key, decision")
+      .eq("tenant_key", tenantKey)
+      .eq("program_id", args.moveId)
+      .eq("evidence_id", args.evidenceId)
+      .maybeSingle();
+    if (existingReviewError) throw existingReviewError;
+    if (existingReview) {
+      const existing = existingReview as {
+        evidence_id: string;
+        family_key: string | null;
+        decision: ReviewDecision;
+      };
+      if (existing.decision === args.decision) {
+        return {
+          ok: true,
+          evidenceId: existing.evidence_id,
+          familyKey: existing.family_key,
+          decision: existing.decision,
+        };
+      }
+      return {
+        ok: false,
+        evidenceId: args.evidenceId,
+        familyKey: existing.family_key,
+        decision: existing.decision,
+      };
+    }
+
+    const { data: evidenceRow, error: evidenceError } = await sb
+      .from("program_evidence_items")
+      .select("id, evidence_type, title, confidence, phase, extracted_structured")
+      .eq("tenant_key", tenantKey)
+      .eq("program_id", args.moveId)
+      .eq("id", args.evidenceId)
+      .maybeSingle();
+    if (evidenceError) throw evidenceError;
+    if (evidenceRow) {
+      const evidence = evidenceRow as {
+        id: string;
+        evidence_type: string | null;
+        title: string | null;
+        confidence: number | string | null;
+        phase: number | null;
+        extracted_structured: Record<string, unknown> | null;
+      };
+      const structured =
+        evidence.extracted_structured &&
+        typeof evidence.extracted_structured === "object"
+          ? evidence.extracted_structured
+          : {};
+      const familyKey = normalizedFamilyKey(
+        typeof structured.evidence_type === "string"
+          ? structured.evidence_type
+          : evidence.evidence_type,
+      );
+      const ensured = await ensureEvidenceReviewForUploadedEvidence(ctx, {
+        moveId: args.moveId,
+        evidenceId: args.evidenceId,
+        familyKey,
+        phase: evidence.phase,
+        evidenceType: evidence.evidence_type,
+        title: evidence.title,
+        confidence: evidence.confidence,
+        autoPromoted: false,
+        initialDecision: args.decision,
+        rationale:
+          args.rationale ??
+          "Human reviewer accepted existing workspace-uploaded evidence.",
+        sourceRef: {
+          late_review_created_from_approval: true,
+        },
+      });
+      return {
+        ok: true,
+        evidenceId: ensured.evidenceId,
+        familyKey: ensured.familyKey,
+        decision: ensured.decision,
+      };
+    }
     return {
       ok: false,
       evidenceId: args.evidenceId,

@@ -146,7 +146,6 @@ async function loadMoveCurrentStateCandidates(
   if (!clientId || !moveId) return [];
 
   const candidates: GovernedCandidateLike[] = [];
-  const reviewedEvidenceIds = new Set<string>();
 
   // Structured current-state CSVs land in canonical tower_* tables and write a
   // move-scoped evidence_ledger row. Pull those ledger claims into the governed
@@ -198,11 +197,10 @@ async function loadMoveCurrentStateCandidates(
       const evidenceIds = reviewRows
         .map((r) => stringOrNull(r.evidence_id))
         .filter((id): id is string => Boolean(id));
-      evidenceIds.forEach((id) => reviewedEvidenceIds.add(id));
       if (evidenceIds.length > 0) {
         const { data: evidenceRows } = await db
           .from('program_evidence_items')
-          .select('id, title, summary, extracted_text, extracted_structured, confidence, created_at')
+          .select('id, title, summary, extracted_text, extracted_structured, evidence_type, confidence, created_at')
           .in('id', evidenceIds);
         const byId = new Map(
           (Array.isArray(evidenceRows) ? evidenceRows : []).map((row) => [
@@ -215,6 +213,7 @@ async function loadMoveCurrentStateCandidates(
           if (!evidenceId) continue;
           const row = byId.get(evidenceId);
           if (!row) continue;
+          if (stringOrNull(row.evidence_type) === 'move_context_extract_attached') continue;
           const sourceRef = sourceRefObject(review.source_ref);
           const family = stringOrNull(review.family_key) ?? 'current_state_evidence';
           const title =
@@ -236,30 +235,9 @@ async function loadMoveCurrentStateCandidates(
     // crash the generator when older tenants lack the review tables.
   }
 
-  // Controlled canary/setup evidence can be committed directly to
-  // program_evidence_items before an explicit review workflow exists. Treat those
-  // move-scoped rows as internal governed evidence, preserving source register
-  // citations without exposing raw provenance handles in generated deliverables.
-  try {
-    const { data } = await db
-      .from('program_evidence_items')
-      .select('id, title, summary, extracted_text, extracted_structured, evidence_type, confidence, created_at')
-      .eq('tenant_key', params.tenantClientKey)
-      .eq('program_id', moveId)
-      .order('created_at', { ascending: false })
-      .limit(40);
-    if (Array.isArray(data)) {
-      for (const row of data as Array<Record<string, unknown>>) {
-        const id = stringOrNull(row.id);
-        if (id && reviewedEvidenceIds.has(id)) continue;
-        if (stringOrNull(row.evidence_type) === 'move_context_extract_attached') continue;
-        const candidate = evidenceItemToCandidate(row);
-        if (candidate) candidates.push(candidate);
-      }
-    }
-  } catch {
-    // Older schemas may not have program_evidence_items in all environments.
-  }
+  // Do not fall back to raw program_evidence_items. Uploaded Move evidence must
+  // clear the review lifecycle before generation can consume it; otherwise the
+  // context extract, readiness, and generated deliverables can diverge.
 
   const seen = new Set<string>();
   return candidates

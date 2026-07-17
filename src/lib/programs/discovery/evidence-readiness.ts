@@ -39,6 +39,8 @@ export interface DiscoveryGapRegisterItem {
 }
 
 export interface DiscoveryEvidenceReadiness {
+  blueprintId: string;
+  blueprintVersion: string;
   archetypeLabel: string;
   requiredTotal: number;
   requiredCovered: number;
@@ -145,6 +147,119 @@ const FAMILY_KEYWORDS: Record<string, string[]> = {
   kpi_baseline: ["kpi", "metric", "baseline", "target", "success"],
   cost_baseline: ["cost", "finance", "budget", "run-rate", "baseline"],
   org_workforce: ["org", "workforce", "role", "raci", "capacity"],
+  current_state_workflow_map: [
+    "workflow",
+    "process map",
+    "current state",
+    "member service",
+    "agent journey",
+    "call flow",
+    "handoff",
+  ],
+  contact_center_kpis: [
+    "aht",
+    "average handle time",
+    "first call resolution",
+    "fcr",
+    "transfer",
+    "repeat contact",
+    "after-call",
+    "after call",
+    "csat",
+    "cost per contact",
+    "metric",
+    "kpi",
+    "baseline",
+  ],
+  crm_contact_center_system_map: [
+    "crm",
+    "ccaas",
+    "genesys",
+    "nice",
+    "servicenow",
+    "contact center",
+    "call center",
+    "system map",
+    "integration",
+    "application",
+  ],
+  claims_eligibility_benefits_data_access: [
+    "claim",
+    "claims",
+    "eligibility",
+    "benefits",
+    "prior auth",
+    "authorization",
+    "pharmacy",
+    "data access",
+    "source",
+  ],
+  knowledge_base_ownership_freshness: [
+    "knowledge",
+    "policy",
+    "freshness",
+    "owner",
+    "content",
+    "article",
+    "knowledge base",
+  ],
+  call_recording_transcript_availability: [
+    "transcript",
+    "recording",
+    "speech",
+    "intent",
+    "retention",
+    "call sample",
+  ],
+  phi_privacy_security_controls: [
+    "phi",
+    "hipaa",
+    "privacy",
+    "security",
+    "audit",
+    "access",
+    "control",
+  ],
+  human_in_loop_model: [
+    "human",
+    "approval",
+    "review",
+    "escalation",
+    "decision rights",
+    "clinical decision",
+  ],
+  model_risk_responsible_ai_controls: [
+    "model risk",
+    "responsible ai",
+    "ai governance",
+    "guardrail",
+    "hallucination",
+    "evaluation",
+  ],
+  measurement_owner_cadence: [
+    "measurement",
+    "owner",
+    "cadence",
+    "metric owner",
+    "tower",
+    "scorecard",
+  ],
+  finance_baseline_value_plan: [
+    "finance",
+    "baseline",
+    "value",
+    "cost",
+    "business case",
+    "savings",
+  ],
+  change_adoption_owner: [
+    "training",
+    "adoption",
+    "change",
+    "workforce",
+    "supervisor",
+    "raci",
+  ],
 };
 
 function evidenceText(item: DiscoveryEvidenceReadinessItem): string {
@@ -267,6 +382,8 @@ export function evaluateDiscoveryEvidenceReadiness(args: {
     }));
 
   return {
+    blueprintId: args.blueprint.blueprintId,
+    blueprintVersion: args.blueprint.blueprintVersion,
     archetypeLabel: args.blueprint.archetypeLabel,
     requiredTotal: requiredFamilies.length,
     requiredCovered,
@@ -302,8 +419,9 @@ export async function loadDiscoveryEvidenceReadiness(
     nonEmptyString(program?.archetype) ??
     "STRATEGIC_MOVE";
   const blueprint = getDiscoveryBlueprint(useCaseArchetype);
+  const tenantKey = ctx.clientKey ?? "";
   const rows = await azureRead
-    .select<{
+    .query<{
       id: string;
       title: string | null;
       summary: string | null;
@@ -311,22 +429,30 @@ export async function loadDiscoveryEvidenceReadiness(
       phase: number | null;
       confidence: number | string | null;
       created_at: string | null;
-    }>({
-      table: "program_evidence_items",
-      columns: [
-        "id",
-        "title",
-        "summary",
-        "evidence_type",
-        "phase",
-        "confidence",
-        "created_at",
-      ],
-      where: { program_id: programId },
-      orderBy: { column: "created_at", direction: "desc" },
-      limit: 200,
-      missingTable: "empty",
-    })
+    }>(
+      `
+        SELECT
+          pei.id,
+          pei.title,
+          pei.summary,
+          pei.evidence_type,
+          pei.phase,
+          pei.confidence,
+          pei.created_at
+        FROM program_evidence_reviews per
+        INNER JOIN program_evidence_items pei
+          ON pei.id = per.evidence_id
+        WHERE per.program_id = $1
+          AND per.tenant_key = $2
+          AND per.decision = 'approved'
+          AND pei.program_id = per.program_id
+          AND pei.tenant_key = per.tenant_key
+        ORDER BY COALESCE(per.reviewed_at, per.updated_at, per.created_at) DESC
+        LIMIT 200
+      `,
+      [programId, tenantKey],
+      { missingTable: "empty" },
+    )
     .catch(() => []);
   return evaluateDiscoveryEvidenceReadiness({
     blueprint,
