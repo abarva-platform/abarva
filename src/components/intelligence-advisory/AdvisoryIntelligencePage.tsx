@@ -28,6 +28,7 @@ import type {
 } from "@/components/agent/AgentDock";
 import { AvaChatShell } from "@/components/ava-chat/AvaChatShell";
 import type { AskSource } from "@/lib/intelligence/ask/types";
+import { getClientOption } from "@/lib/client-config";
 import styles from "./AdvisoryIntelligencePage.module.css";
 
 type CorpusTab = "outlook" | "peer" | "adoption" | "trends" | "value" | "risk";
@@ -273,6 +274,10 @@ export function AdvisoryIntelligencePage({
         if (event.type === "agent-answer" && isAvaAnswerPacket(event.answer)) {
           const packetBody = answerBodyFromPacket(event.answer);
           const hasArtifacts = hasPacketArtifacts(event.answer);
+          const packetFollowups = event.answer.nextSteps
+            .map((s) => s.label)
+            .filter((s): s is string => Boolean(s?.trim()))
+            .slice(0, 3);
           return {
             ...m,
             agentAnswer: event.answer,
@@ -293,10 +298,12 @@ export function AdvisoryIntelligencePage({
                     ? 0.65
                     : 0.35,
             })),
-            followups: event.answer.nextSteps
-              .map((s) => s.label)
-              .filter((s): s is string => Boolean(s?.trim()))
-              .slice(0, 3),
+            // The dedicated "followups" event (see below) usually arrives
+            // before this "agent-answer" event and carries the real,
+            // question-specific suggestions; the packet's own nextSteps is
+            // frequently empty for this route. Never let an empty packet
+            // list clobber followups already set from that earlier event.
+            followups: packetFollowups.length ? packetFollowups : m.followups,
           };
         }
         if (event.type === "sources" && Array.isArray(event.sources))
@@ -434,8 +441,8 @@ export function AdvisoryIntelligencePage({
       surface="intelligence"
       agent={AVA_INTELLIGENCE_AGENT}
       placeholder={viewModel.askPlaceholder}
-      defaultLeftPercent={32}
-      minLeftPx={300}
+      defaultLeftPercent={40}
+      minLeftPx={380}
       thread={thread}
       onMessage={handleMessage}
       canvas={canvas}
@@ -1291,19 +1298,374 @@ interface CorpusBriefing {
   peerPunch: string;
 }
 
+interface VerticalMover {
+  title: string;
+  body: string;
+  mag: string;
+  dir: "up" | "new" | "hot";
+}
+
+interface VerticalContentPack {
+  peerCount: number;
+  sectorAdoptionPct: number;
+  automationRatePct: number;
+  genAiInProductionPct: number;
+  starterPrompts: string[];
+  outlookPunch: string;
+  peerPunch: string;
+  movers: VerticalMover[];
+  /** implication for trends[0] ("Decision systems will beat generic AI portfolios") */
+  decisionSystemsImplication: string;
+  /** implication for trends[1] ("Shared-services automation is the first scaling layer") */
+  scalingLayerImplication: string;
+}
+
+/**
+ * Vertical-agnostic fallback — used only if a clientKey has no dedicated
+ * pack below (e.g. a new demo tenant added before its content is authored).
+ * Deliberately avoids sector-specific language since the real vertical is
+ * unknown here; the label itself still comes from getClientOption().
+ */
+const FALLBACK_PACK: VerticalContentPack = {
+  peerCount: 100,
+  sectorAdoptionPct: 30,
+  automationRatePct: 22,
+  genAiInProductionPct: 27,
+  starterPrompts: [
+    "What is the fastest path to proving $10M in AI-driven savings?",
+    "Which workflow has the clearest data foundation to launch AI first?",
+    "Which vendor contract is most exposed to AI-driven disruption at the next renewal?",
+  ],
+  outlookPunch:
+    "The early-mover window in governed, decision-specific AI is open now across most sectors. GenAI-assisted operations are entering mainstream; data readiness is the gate, not the model.",
+  peerPunch:
+    "Automation rate and data-governance maturity are the two metrics most peers are judged on. Budget is rarely the constraint — sequencing and evidence discipline are.",
+  movers: [
+    {
+      title: "Agentic process automation",
+      body: "moving from pilot to scale across mid-market peers.",
+      mag: "2× YoY",
+      dir: "up",
+    },
+    {
+      title: "AI-assisted document review",
+      body: "entering mainstream adoption across back-office functions.",
+      mag: "Emerging",
+      dir: "new",
+    },
+    {
+      title: "GenAI forecasting copilots",
+      body: "still nascent — under 20% adoption; early-mover advantage open.",
+      mag: "Watch",
+      dir: "hot",
+    },
+    {
+      title: "Shared-services automation",
+      body: "displacing manual exception handling at renewal.",
+      mag: "Rising",
+      dir: "up",
+    },
+  ],
+  decisionSystemsImplication:
+    "A governed decision-flow approach — specific, measurable use cases with clear owners — consistently outperforms broad AI programs across the corpus. Start with one governed flow before scaling.",
+  scalingLayerImplication:
+    "Start with the workflow that has the highest proof rate and shortest time-to-value in the corpus, not the most ambitious one.",
+};
+
+/**
+ * Per-vertical briefing content, keyed by ClientKey (src/lib/client-config.ts).
+ * Falls back to FALLBACK_PACK for any tenant not listed here.
+ */
+const VERTICAL_CONTENT_PACKS: Record<string, VerticalContentPack> = {
+  skyharbor: {
+    peerCount: 67,
+    sectorAdoptionPct: 41,
+    automationRatePct: 29,
+    genAiInProductionPct: 35,
+    starterPrompts: [
+      "Which AI use case has the fastest path to $10M in run-cost reduction?",
+      "What has to be true before predictive maintenance scales fleet-wide?",
+      "How do we set evidence gates so board sponsors stay committed through scale?",
+    ],
+    outlookPunch:
+      "The early-mover window in revenue management GenAI is open now — under 20% adoption. Crew scheduling AI is entering mainstream; union negotiations are the gate, not technology. The carriers that move in the next 18 months will own the benchmark.",
+    peerPunch:
+      "Your run-cost exposure is the primary constraint. Fix the run-cost position first — every AI programme that competes with maintenance spend loses. Your automation gap vs. peers is addressable once the budget is freed.",
+    movers: [
+      {
+        title: "Predictive maintenance at scale",
+        body: "moving from pilot to fleet-wide rollout across tier-1 carriers.",
+        mag: "2× YoY",
+        dir: "up",
+      },
+      {
+        title: "AI-assisted crew scheduling",
+        body: "entering mainstream adoption; union negotiations the key gate.",
+        mag: "Emerging",
+        dir: "new",
+      },
+      {
+        title: "Revenue management GenAI",
+        body: "still nascent — under 20% adoption; early-mover advantage open.",
+        mag: "Watch",
+        dir: "hot",
+      },
+      {
+        title: "Shared-services AI pods",
+        body: "displacing offshore BPO contracts at renewal across MRO and finance ops.",
+        mag: "Rising",
+        dir: "up",
+      },
+    ],
+    decisionSystemsImplication:
+      "Route optimization and yield management are your highest-leverage decision flows. The holding structure means you can govern them centrally while each airline unit runs the playbook.",
+    scalingLayerImplication:
+      "MRO administration, crew ops scheduling support, and finance ops are the three shared-service layers with the highest AI-proof rate in the corpus. Start with the one where your data is cleanest.",
+  },
+  meridian: {
+    peerCount: 89,
+    sectorAdoptionPct: 27,
+    automationRatePct: 19,
+    genAiInProductionPct: 24,
+    starterPrompts: [
+      "What does a scoped payment-integrity AI pilot look like — data needed, timeline, proof metrics?",
+      "What's the fastest path to proving $10M in AI-driven cost reduction — prior auth or care management?",
+      "Which clinical or claims workflow has the clearest data foundation to launch AI first?",
+    ],
+    outlookPunch:
+      "The early-mover window in prior-authorization and payment-integrity AI is open now — both under 20% adoption. Ambient clinical documentation is entering mainstream; clinician trust and EHR integration are the gate, not the model. Healthcare Demo has budget above peer median; the constraint is data-governance sequencing, not capacity.",
+    peerPunch:
+      "Three metrics expose Healthcare Demo: automation rate below peer median, data/identity governance maturity below peer, vendor concentration in core clinical systems. One advantage: technology budget above peer median means capacity exists — this is a governance sequencing problem, not a funding problem.",
+    movers: [
+      {
+        title: "Ambient clinical documentation",
+        body: "moving from pilot to health-system-wide rollout across peer systems.",
+        mag: "2× YoY",
+        dir: "up",
+      },
+      {
+        title: "Prior-authorization automation",
+        body: "entering mainstream adoption; payer integration is the key gate.",
+        mag: "Emerging",
+        dir: "new",
+      },
+      {
+        title: "Payment-integrity AI",
+        body: "still nascent — under 20% adoption; early-mover advantage open.",
+        mag: "Watch",
+        dir: "hot",
+      },
+      {
+        title: "Care-management risk stratification",
+        body: "displacing manual chart review at renewal across care-management vendors.",
+        mag: "Rising",
+        dir: "up",
+      },
+    ],
+    decisionSystemsImplication:
+      "Healthcare Demo's advantage: a governed decision-flow approach fits prior authorization and payment integrity cleanly — both are specific, measurable, and already have clinical/financial sign-off structures. Start there before broader clinical AI.",
+    scalingLayerImplication:
+      "Start with payment integrity or prior authorization — both have the highest proof rate across the corpus for payer/provider organizations, the shortest time-to-value, and the clearest CFO narrative.",
+  },
+  arcturus: {
+    peerCount: 118,
+    sectorAdoptionPct: 38,
+    automationRatePct: 26,
+    genAiInProductionPct: 33,
+    starterPrompts: [
+      "Should we centralize AI governance across business lines or let each line run its own pilots?",
+      "What's the fastest path to proving $10M in AI savings — fraud detection or underwriting automation?",
+      "Which vendor contract is most exposed to AI-driven disruption at the next renewal?",
+    ],
+    outlookPunch:
+      "The early-mover window in underwriting automation and fraud-detection AI is open now — both under 25% adoption. Client-facing GenAI advisory tools are entering mainstream; regulatory approval is the gate, not the model. Financial Services Demo has budget above peer median; the question is sequencing across business lines.",
+    peerPunch:
+      "Three metrics expose Financial Services Demo: model-risk governance maturity below peer, automation rate below peer, core-system vendor concentration above peer. One advantage: IT spend above peer median means budget exists — this is a governance and sequencing problem, not a funding problem.",
+    movers: [
+      {
+        title: "Underwriting automation",
+        body: "moving from pilot to scale across mid-market lenders.",
+        mag: "2× YoY",
+        dir: "up",
+      },
+      {
+        title: "AI-assisted fraud detection",
+        body: "entering mainstream adoption in claims and payments.",
+        mag: "Emerging",
+        dir: "new",
+      },
+      {
+        title: "GenAI advisory copilots",
+        body: "still nascent — under 20% adoption; early-mover advantage open.",
+        mag: "Watch",
+        dir: "hot",
+      },
+      {
+        title: "Regulatory-reporting automation",
+        body: "displacing manual compliance review at renewal.",
+        mag: "Rising",
+        dir: "up",
+      },
+    ],
+    decisionSystemsImplication:
+      "Financial Services Demo's advantage: a governed decision-flow approach fits underwriting and fraud detection cleanly — both are specific, measurable, and already sit inside existing model-risk governance. Start there before broader GenAI programs.",
+    scalingLayerImplication:
+      "Start with fraud detection or underwriting — both have the highest proof rate across the corpus for financial institutions, the shortest time-to-value, and the clearest board narrative.",
+  },
+  northstar: {
+    peerCount: 54,
+    sectorAdoptionPct: 31,
+    automationRatePct: 21,
+    genAiInProductionPct: 30,
+    starterPrompts: [
+      "What's the fastest path to embedding AI into the core product roadmap without disrupting regulatory clearance?",
+      "What's the fastest path to proving $10M in AI-driven efficiency — R&D or commercial operations?",
+      "Which platform integration is most exposed to AI-driven disruption at the next partner renewal?",
+    ],
+    outlookPunch:
+      "The early-mover window in AI-assisted device monitoring and diagnostic support is open now — both under 20% adoption. Regulatory-cleared GenAI features are entering mainstream; the FDA/regulatory pathway is the gate, not the model. Clinical Technology Demo has budget above peer median; the question is regulatory sequencing, not capacity.",
+    peerPunch:
+      "Three metrics expose Clinical Technology Demo: automation rate below peer median, regulatory-readiness maturity below peer, platform vendor concentration above peer. One advantage: R&D and IT spend above peer median means capacity exists — this is a regulatory sequencing problem, not a funding problem.",
+    movers: [
+      {
+        title: "AI-assisted diagnostic support",
+        body: "moving from pilot to multi-site rollout across peer platforms.",
+        mag: "2× YoY",
+        dir: "up",
+      },
+      {
+        title: "Predictive device-maintenance AI",
+        body: "entering mainstream adoption in connected-device fleets.",
+        mag: "Emerging",
+        dir: "new",
+      },
+      {
+        title: "Regulatory-cleared GenAI features",
+        body: "still nascent — under 20% adoption; early-mover advantage open.",
+        mag: "Watch",
+        dir: "hot",
+      },
+      {
+        title: "Clinical workflow automation",
+        body: "displacing manual review processes at renewal.",
+        mag: "Rising",
+        dir: "up",
+      },
+    ],
+    decisionSystemsImplication:
+      "Clinical Technology Demo's advantage: a governed decision-flow approach fits diagnostic support and device monitoring cleanly — both are specific, measurable, and already sit inside existing regulatory review structures. Start there before broader platform AI.",
+    scalingLayerImplication:
+      "Start with predictive device-maintenance — it has the highest proof rate across the corpus for clinical technology platforms, the shortest time-to-value, and the clearest commercial narrative.",
+  },
+  apexretail: {
+    peerCount: 156,
+    sectorAdoptionPct: 36,
+    automationRatePct: 25,
+    genAiInProductionPct: 32,
+    starterPrompts: [
+      "Should we centralize AI investment across store formats or let each format run its own pilots?",
+      "What's the fastest path to proving $10M in AI savings — demand forecasting or dynamic pricing?",
+      "Which supply-chain vendor is most exposed to AI-driven disruption at the next renewal?",
+    ],
+    outlookPunch:
+      "The early-mover window in demand-forecasting and dynamic-pricing AI is open now — both under 20% adoption. GenAI-assisted merchandising is entering mainstream; data quality is the gate, not the model. Retail Demo has budget above peer median; the question is sequencing across formats, not capacity.",
+    peerPunch:
+      "Three metrics expose Retail Demo: automation rate below peer median, inventory-data maturity below peer, supply-chain vendor concentration above peer. One advantage: IT spend above peer median means budget exists — this is a sequencing problem, not a funding problem.",
+    movers: [
+      {
+        title: "AI-driven demand forecasting",
+        body: "moving from pilot to scale across mid-market retailers.",
+        mag: "2× YoY",
+        dir: "up",
+      },
+      {
+        title: "Dynamic pricing AI",
+        body: "entering mainstream adoption in e-commerce and store formats.",
+        mag: "Emerging",
+        dir: "new",
+      },
+      {
+        title: "GenAI-assisted merchandising",
+        body: "still nascent — under 20% adoption; early-mover advantage open.",
+        mag: "Watch",
+        dir: "hot",
+      },
+      {
+        title: "Supply-chain anomaly detection",
+        body: "displacing manual exception review at renewal.",
+        mag: "Rising",
+        dir: "up",
+      },
+    ],
+    decisionSystemsImplication:
+      "Retail Demo's advantage: a governed decision-flow approach fits demand forecasting and dynamic pricing cleanly — both are specific, measurable, and already sit inside existing merchandising governance. Start there before broader GenAI programs.",
+    scalingLayerImplication:
+      "Start with demand forecasting — it has the highest proof rate across the corpus for retail organizations, the shortest time-to-value, and the clearest CFO narrative.",
+  },
+  lakeshore: {
+    peerCount: 142,
+    sectorAdoptionPct: 34,
+    automationRatePct: 22,
+    genAiInProductionPct: 28,
+    starterPrompts: [
+      "Should Lakeshore Holdings centralize or federate AI across portfolio companies?",
+      "What is the fastest path to proving $10M in AI savings — shared services or procurement?",
+      "Which shared-services contract is most exposed to AI disruption at the next renewal?",
+    ],
+    outlookPunch:
+      "The early-mover window in treasury AI and shared-services AI pods is open now — both under 15% adoption. The AP automation consolidation wave moves fast: 12–18 months before the field is set. Lakeshore Holdings has budget above peer median; the question is sequencing, not capacity.",
+    peerPunch:
+      "Three metrics expose Lakeshore Holdings: run-cost above median, automation rate below peer, vendor concentration risk. One advantage: IT spend above peer median means budget exists to redirect — this is a sequencing problem, not a funding problem.",
+    movers: [
+      {
+        title: "Agentic AP / invoice automation",
+        body: "moving from pilot to scale across mid-market industrials.",
+        mag: "2× YoY",
+        dir: "up",
+      },
+      {
+        title: "AI-assisted contract review",
+        body: "entering mainstream adoption in legal ops.",
+        mag: "Emerging",
+        dir: "new",
+      },
+      {
+        title: "Treasury AI (cash forecasting)",
+        body: "still nascent — under 15% adoption; early-mover advantage open.",
+        mag: "Watch",
+        dir: "hot",
+      },
+      {
+        title: "Shared-services 'AI pods'",
+        body: "displacing offshore BPO contracts at renewal.",
+        mag: "Rising",
+        dir: "up",
+      },
+    ],
+    decisionSystemsImplication:
+      "Lakeshore Holdings's advantage: a portfolio holding structure lets you govern AI investment centrally while individual businesses run the plays. Shared-services AI is a natural first governed decision flow — it spans all portfolio companies and has clear Tower metrics.",
+    scalingLayerImplication:
+      "Start with AP automation — it has the highest proof rate across the corpus for holding companies, the shortest time-to-value, and the clearest CFO narrative. The Kyriba platform integration is a natural launch point.",
+  },
+};
+
+function verticalPackFor(clientKey: string): VerticalContentPack {
+  return VERTICAL_CONTENT_PACKS[clientKey] ?? FALLBACK_PACK;
+}
+
 function buildCorpusBriefing(
   viewModel: EnterpriseLandscapeViewModel,
   sectionList: LandscapeSection[],
 ): CorpusBriefing {
-  const isAirline = viewModel.clientKey === "skyharbor";
-  const vertical = isAirline ? "Airline" : "Diversified Industrials";
+  const vertical = getClientOption(viewModel.clientKey).vertical;
+  const pack = verticalPackFor(viewModel.clientKey);
   const allMaturity = sectionList.flatMap((s) => s.maturity);
   const avgMaturity = Math.round(
     allMaturity.reduce((a, b) => a + b.score, 0) /
       Math.max(1, allMaturity.length),
   );
   const adoptionStage = avgMaturity >= 72 ? 2 : avgMaturity >= 48 ? 1 : 0;
-  const peerCount = isAirline ? 67 : 142;
+  const peerCount = pack.peerCount;
   const redCount = sectionList.flatMap((s) =>
     s.currentState.filter((r) => r.tone === "red"),
   ).length;
@@ -1313,25 +1675,9 @@ function buildCorpusBriefing(
   const tenantHighlightArea = topMaturity?.label ?? "Finance & Treasury";
   const tenantHighlightScore = topMaturity?.score ?? 70;
 
-  const starterPrompts = isAirline
-    ? [
-        "Which AI use case has the fastest path to $10M in run-cost reduction?",
-        "What has to be true before predictive maintenance scales fleet-wide?",
-        "How do we set evidence gates so board sponsors stay committed through scale?",
-      ]
-    : [
-        `Should ${viewModel.tenantName} centralize or federate AI across portfolio companies?`,
-        "What is the fastest path to proving $10M in AI savings — shared services or procurement?",
-        "Which shared-services contract is most exposed to AI disruption at the next renewal?",
-      ];
-
-  const outlookPunch = isAirline
-    ? "The early-mover window in revenue management GenAI is open now — under 20% adoption. Crew scheduling AI is entering mainstream; union negotiations are the gate, not technology. The carriers that move in the next 18 months will own the benchmark."
-    : `The early-mover window in treasury AI and shared-services AI pods is open now — both under 15% adoption. The AP automation consolidation wave moves fast: 12–18 months before the field is set. ${viewModel.tenantName} has budget above peer median; the question is sequencing, not capacity.`;
-
-  const peerPunch = isAirline
-    ? "Your run-cost exposure is the primary constraint. Fix the run-cost position first — every AI programme that competes with maintenance spend loses. Your automation gap vs. peers is addressable once the budget is freed."
-    : `Three metrics expose ${viewModel.tenantName}: run-cost above median, automation rate below peer, vendor concentration risk. One advantage: IT spend above peer median means budget exists to redirect — this is a sequencing problem, not a funding problem.`;
+  const starterPrompts = pack.starterPrompts;
+  const outlookPunch = pack.outlookPunch;
+  const peerPunch = pack.peerPunch;
 
   return {
     title: `${viewModel.tenantName} — Industry & Estate Intelligence`,
@@ -1342,7 +1688,7 @@ function buildCorpusBriefing(
     outlookMetrics: [
       {
         label: "Sector AI adoption",
-        value: isAirline ? "41" : "34",
+        value: String(pack.sectorAdoptionPct),
         unit: "%",
         delta: "+6 pts YoY",
         dir: "up",
@@ -1357,14 +1703,14 @@ function buildCorpusBriefing(
       },
       {
         label: "Automation rate",
-        value: isAirline ? "29" : "22",
+        value: String(pack.automationRatePct),
         unit: "%",
         delta: "+4 pts YoY",
         dir: "up",
       },
       {
         label: "GenAI in production",
-        value: isAirline ? "35" : "28",
+        value: String(pack.genAiInProductionPct),
         unit: "%",
         sub: "of peers",
         delta: "+11 pts",
@@ -1434,59 +1780,7 @@ function buildCorpusBriefing(
         dir: redCount > 3 ? "down" : "flat",
       },
     ],
-    movers: isAirline
-      ? [
-          {
-            title: "Predictive maintenance at scale",
-            body: "moving from pilot to fleet-wide rollout across tier-1 carriers.",
-            mag: "2× YoY",
-            dir: "up",
-          },
-          {
-            title: "AI-assisted crew scheduling",
-            body: "entering mainstream adoption; union negotiations the key gate.",
-            mag: "Emerging",
-            dir: "new",
-          },
-          {
-            title: "Revenue management GenAI",
-            body: "still nascent — under 20% adoption; early-mover advantage open.",
-            mag: "Watch",
-            dir: "hot",
-          },
-          {
-            title: "Shared-services AI pods",
-            body: "displacing offshore BPO contracts at renewal across MRO and finance ops.",
-            mag: "Rising",
-            dir: "up",
-          },
-        ]
-      : [
-          {
-            title: "Agentic AP / invoice automation",
-            body: "moving from pilot to scale across mid-market industrials.",
-            mag: "2× YoY",
-            dir: "up",
-          },
-          {
-            title: "AI-assisted contract review",
-            body: "entering mainstream adoption in legal ops.",
-            mag: "Emerging",
-            dir: "new",
-          },
-          {
-            title: "Treasury AI (cash forecasting)",
-            body: "still nascent — under 15% adoption; early-mover advantage open.",
-            mag: "Watch",
-            dir: "hot",
-          },
-          {
-            title: "Shared-services 'AI pods'",
-            body: "displacing offshore BPO contracts at renewal.",
-            mag: "Rising",
-            dir: "up",
-          },
-        ],
+    movers: pack.movers,
     benchmarkRows: [
       {
         label: "Run-cost (indexed)",
@@ -1541,9 +1835,7 @@ function buildCorpusBriefing(
         body: "The pattern across the corpus: peers who deploy AI into specific, governed decision flows (pricing, scheduling, procurement) outperform those with broad AI programmes. Evidence gates and Tower metrics are the differentiator.",
         horizon: "18 months",
         tone: "teal" as LandscapeTone,
-        implication: isAirline
-          ? "Route optimization and yield management are your highest-leverage decision flows. The holding structure means you can govern them centrally while each airline unit runs the playbook."
-          : `${viewModel.tenantName}'s advantage: a portfolio holding structure lets you govern AI investment centrally while individual businesses run the plays. Shared-services AI is a natural first governed decision flow — it spans all portfolio companies and has clear Tower metrics.`,
+        implication: pack.decisionSystemsImplication,
       },
       {
         title: "Shared-services automation is the first scaling layer",
@@ -1551,9 +1843,7 @@ function buildCorpusBriefing(
         body: "AP automation, contract analysis, HR case routing, and treasury forecasting are proving at scale. Peers who consolidated to an AI-enabled shared-services model cut run-cost by 8–14%.",
         horizon: "12 months",
         tone: "teal" as LandscapeTone,
-        implication: isAirline
-          ? "MRO administration, crew ops scheduling support, and finance ops are the three shared-service layers with the highest AI-proof rate in the corpus. Start with the one where your data is cleanest."
-          : "Start with AP automation — it has the highest proof rate across the corpus for holding companies, the shortest time-to-value, and the clearest CFO narrative. The Kyriba platform integration is a natural launch point.",
+        implication: pack.scalingLayerImplication,
       },
       {
         title: "Operating-model change will lag model capability",
