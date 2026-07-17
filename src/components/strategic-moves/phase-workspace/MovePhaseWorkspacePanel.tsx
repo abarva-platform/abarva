@@ -68,6 +68,7 @@ export function MovePhaseWorkspacePanel({
   onAssemble,
   assembledItems = [],
   assembling = false,
+  completed = false,
 }: {
   phaseNum: number;
   /** The app's own phase label (e.g. "P2 · Discover"), kept authoritative. */
@@ -107,6 +108,8 @@ export function MovePhaseWorkspacePanel({
   assembledItems?: ValidatedPatternItem[];
   /** True while the assembly request is in flight. */
   assembling?: boolean;
+  /** True when the host is rendering an already-approved/historical phase. */
+  completed?: boolean;
 }): React.ReactElement | null {
   const code = PHASE_NUM_TO_CODE[phaseNum];
   if (!code) return null; // Originate/Charter (0/1) have no session catalog yet.
@@ -126,17 +129,33 @@ export function MovePhaseWorkspacePanel({
     <div className="pw" id="move-phase-workspace-v2" data-testid="move-phase-workspace-v2">
       <PhaseWorkspaceStyles />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '4px 0 8px' }}>
-        {workflow ? (
+        {completed ? (
+          <div className="pw-card" style={{ gap: 10 }}>
+            <div className="pw-card-head">
+              <span className="pw-kicker">Phase complete</span>
+              <h3 className="pw-title serif">
+                {phaseNum >= 5 ? 'Tower handoff complete' : `${phaseLabel} is approved`}
+              </h3>
+              <span className="pw-note">
+                {phaseNum >= 5
+                  ? 'The approved P5 output is carrying forward into Tower for execution and value tracking.'
+                  : `The approved output is carrying forward into ${nextPhaseLabel ?? 'the next phase'}.`}
+              </span>
+            </div>
+          </div>
+        ) : workflow ? (
           <PhaseTaskChecklist phaseLabel={phaseLabel} workflow={workflow} onAction={onTaskAction} />
         ) : null}
         {approvedPack ? (
           <ApprovedInputsPackCard pack={approvedPack} approvedOnLabel={approvedPackOnLabel} />
         ) : null}
-        <PhaseCompletionGuideCard phaseLabel={phaseLabel} templates={templates} steps={PHASE_STEPS} />
+        {!completed ? (
+          <PhaseCompletionGuideCard phaseLabel={phaseLabel} templates={templates} steps={PHASE_STEPS} />
+        ) : null}
         {feedForwardPack && !feedForwardPack.isBlank ? (
           <NextPhaseFeedForwardCard pack={feedForwardPack} />
         ) : null}
-        {onAssemble ? (
+        {!completed && onAssemble ? (
           <div className="pw-card" style={{ gap: 10 }}>
             <div className="pw-card-head">
               <span className="pw-kicker">Assemble options</span>
@@ -155,7 +174,7 @@ export function MovePhaseWorkspacePanel({
         ) : null}
         {assembledItems.length > 0 ? <AssembledPatternCard items={assembledItems} /> : null}
         <PhaseTemplatesAndSessionsCard templates={templates} />
-        {onUploadCompletedTemplate ? (
+        {!completed && onUploadCompletedTemplate ? (
           <div className="pw-card" style={{ gap: 10 }}>
             <div className="pw-card-head">
               <span className="pw-kicker">Upload</span>
@@ -172,10 +191,10 @@ export function MovePhaseWorkspacePanel({
             </div>
           </div>
         ) : null}
-        {uploadClassification ? (
+        {!completed && uploadClassification ? (
           <UploadMappingSummaryCard classification={uploadClassification} />
         ) : null}
-        {uploadClassification && onUploadFinalVersion ? (
+        {!completed && uploadClassification && onUploadFinalVersion ? (
           <div className="pw-card" style={{ gap: 10 }}>
             <div className="pw-card-head">
               <span className="pw-kicker">Client final review</span>
@@ -192,7 +211,7 @@ export function MovePhaseWorkspacePanel({
             </div>
           </div>
         ) : null}
-        {whatChanged ? (
+        {!completed && whatChanged ? (
           <WhatChangedCard
             result={whatChanged}
             onConfirm={onConfirmChanges}

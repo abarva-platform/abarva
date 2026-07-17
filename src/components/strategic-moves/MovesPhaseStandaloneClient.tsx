@@ -1195,6 +1195,7 @@ function PhaseBody({
             onTaskAction={onTaskAction}
             phaseLabel={phaseWorkspaceLabel(phase)}
             phaseNum={phase.phase}
+            completed={isHistoricalPhase}
           />
           <section className="mxw-zone">
             <SessionPlaybookPanel moveId={move.id} phase={phase.phase} />
