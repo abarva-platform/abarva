@@ -755,11 +755,13 @@ export function MovesPhaseStandaloneClient({
             {PHASES.map((item) => {
               const tally = phaseTallies.find((row) => row.phase === item.phase);
               const state =
-                item.phase < move.currentPhase
+                tally?.state === "done"
                   ? "done"
-                  : item.phase === move.currentPhase
-                    ? "current"
-                    : "up";
+                  : item.phase < move.currentPhase
+                    ? "done"
+                    : item.phase === move.currentPhase
+                      ? "current"
+                      : "up";
               const viewing = item.phase === phase.phase;
               const phaseBody = (
                 <>
@@ -897,7 +899,9 @@ export function MovesPhaseStandaloneClient({
                   type="button"
                 >
                   {isHistoricalPhase
-                    ? `Continue to ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title} →`
+                    ? terminalComplete
+                      ? "Open Tower →"
+                      : `Continue to ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title} →`
                     : isFinalSubstep
                     ? phase.phase === 0
                       ? gateApprovalStatus === "approving"

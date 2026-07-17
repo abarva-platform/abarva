@@ -32,6 +32,8 @@ Moves now renders the terminal P5 Tower handoff as complete after the P5 gate ha
 - Strategic Move page model also treats the compact `phase_5:completed` recent-activity signal as terminal handoff completion, while excluding section-level rows such as `phase_5_launch_readiness:signed_off`.
 - Strategic Move page model now also treats an approved P5 phase snapshot as terminal handoff completion, so the page shell follows the same persisted approval evidence as the full Program API even when the compact activity row is outside the recent-activity window.
 - Strategic Move page model now reads the latest explicit `phase_5` terminal module-state row, so P5 remains complete even when generic recent activity or snapshot reads do not include the terminal handoff row.
+- Strategic Move shell now renders phase navigation from the reconciled phase tally state, so terminal P5 shows `Complete` instead of falling back to `currentPhase === 5` and displaying `In progress`.
+- Terminal P5 primary action now says `Open Tower →` instead of `Continue to P5 Prepare to Execute →`.
 - Phase state transformer and phase explorer tallies mark P5 complete after terminal Tower handoff.
 - Historical P5 gate panel now routes to Tower and explains the handoff state.
 - File Cabinet displays `quarantined` artifacts as `needs review` with the review caveat preserved in a tooltip.

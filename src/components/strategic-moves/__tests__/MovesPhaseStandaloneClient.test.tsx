@@ -300,6 +300,36 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.queryByText("Originate a strategic move")).not.toBeInTheDocument();
   });
 
+  it("renders terminal P5 as complete and routes the primary action to Tower", () => {
+    const terminalTallies = phaseTallies.map((row) => ({
+      ...row,
+      met: row.total,
+      state: "done" as const,
+    }));
+
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({
+          currentPhase: 5,
+          phaseLabel: "P5 Prepare to Execute",
+          terminalComplete: true,
+        })}
+        phaseNum={5}
+        phaseTallies={terminalTallies}
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /Prepare to Execute\s+Complete/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open Tower →" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Continue to P5 Prepare to Execute/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("shows the saved seven-answer P0 brief separately from gate criteria", () => {
     render(
       <MovesPhaseStandaloneClient
