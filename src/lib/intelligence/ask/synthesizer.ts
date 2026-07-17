@@ -629,12 +629,12 @@ export async function* synthesizeStream(args: {
     ? `\n\nRICH-TEXT SURFACE OVERRIDE — SUPERSEDES ALL PRIOR FORMATTING INSTRUCTIONS: This answer is rendered as Markdown with full GitHub-Flavored Markdown support. Decision exhibits should be structured as compact Markdown tables when that improves the executive read. The earlier instruction "Do not print visible section labels" is CANCELLED for this surface.
 
 MANDATORY FORMATTING RULES — follow every one of these exactly:
-1. Open with a single **bold sentence** that states the key finding directly. No prose preamble before it.
-2. When the answer covers 3 or more distinct topics, use **Bold Section Headers** on their own line (e.g. **Demand Sensing**, **Supplier Intelligence**, **What to Do**).
-3. Use "- " bullet lists wherever items benefit from scanning rather than reading.
-4. ALWAYS use a GFM Markdown table for ANY comparison, ranked list, vendor matrix, spend breakdown, timeline, or multi-row data. GFM table format: header row | col1 | col2, then separator row |---|---|, then one data row per line. 3–5 columns, 2–8 rows. Never describe tabular data in prose if a table would be clearer.
-5. **Bold** the single most decision-critical number or phrase per section.
-6. Never write more than 4 sentences in a single paragraph. Depth over length. No hollow openers.
+1. Default answer shape is a crisp CXO brief: 2-3 short paragraphs, each under roughly 55 words.
+2. The first sentence must state the key finding directly. No hollow opener, no "great question", no process narration.
+3. Use bold sparingly for the single most decision-critical number or phrase. Do not turn the whole answer into bold headers.
+4. Use "- " bullets only when they improve scanning. Avoid long bullet decks in default answers.
+5. Use a GFM Markdown table only when the user asks for a table/chart/graph/matrix/ranking/comparison or the answer compares 3+ items across 2+ attributes. GFM table format: header row | col1 | col2, then separator row |---|---|, then one data row per line. 3–5 columns, 2–8 rows.
+6. If the user asks a broad strategy question and not a deep dive, offer 2-3 follow-up directions instead of dumping every detail.
 
 ${CHART_OUTPUT_CONTRACT}`
     : "";
@@ -674,7 +674,7 @@ ACTIVE INTELLIGENCE CANVAS RULES
     : "";
   const universalAnswerVisualContract = buildUniversalAnswerVisualContract();
   const answerOnlyDirective = answerOnly
-    ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a crisp executive answer using full GitHub-Flavored Markdown. GFM tables, bold section headers, and bullet lists are REQUIRED for comparisons, ranked lists, and multi-attribute data — do not flatten these to prose. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — the canvas is handled separately. Length: prose-only answers ~120-180 words; table/chart answers may run to ~300 words. Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.
+    ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a crisp executive answer using full GitHub-Flavored Markdown. Default to 2-3 short paragraphs and a strong storyline. GFM tables are REQUIRED only for explicit visual/ranking/comparison asks or true multi-attribute data — do not flatten those to prose. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — the canvas is handled separately. Length: prose-only answers ~100-170 words; table/chart answers may run to ~300 words. Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.
 Use the universal answer + visual contract for any table, chart, ranking, and follow-up structure.`
     : "";
   const shapeContract = answerOnly

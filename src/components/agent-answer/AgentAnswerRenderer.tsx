@@ -23,7 +23,7 @@ import type {
 import { isVisibleAvaArtifact } from "@/lib/ava-answer/renderable-artifacts";
 
 const CSS = `
-.agentAnswer{--aa-ink:#111827;--aa-muted:#6b7280;--aa-faint:#9ca3af;--aa-line:#e5e7eb;--aa-paper:#fff;--aa-soft:#f9fafb;--aa-green:#166534;--aa-green-bg:#eaf7ee;display:grid;gap:18px;color:var(--aa-ink)}
+.agentAnswer{--aa-ink:#111827;--aa-muted:#5f6b7a;--aa-faint:#8a94a3;--aa-line:#e4e7ec;--aa-line-strong:#cfd6df;--aa-paper:#fff;--aa-soft:#f7f8fa;--aa-soft-2:#fbfaf7;--aa-green:#166534;--aa-green-bg:#eaf7ee;--aa-blue:#164e9f;--aa-blue-bg:#eef5ff;display:grid;gap:18px;color:var(--aa-ink)}
 .agentAnswer .aaHeader{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;border-bottom:1px solid var(--aa-line);padding-bottom:14px}
 .agentAnswer .aaKicker{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;letter-spacing:.08em;color:var(--aa-green);font-weight:700}
 .agentAnswer .aaMeta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
@@ -35,24 +35,27 @@ const CSS = `
 .agentAnswer .aaExportStatus{font-size:12px;color:var(--aa-muted);min-width:68px;text-align:right}
 .agentAnswer .aaProse{font-size:14px;line-height:1.65}
 .agentAnswer .aaSection{display:grid;gap:12px}
-.agentAnswer .aaTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--aa-muted);font-weight:700}
-.agentAnswer .aaChart,.agentAnswer .aaGraph,.agentAnswer .aaTableWrap{border:1px solid var(--aa-line);border-radius:8px;background:var(--aa-paper);overflow:hidden}
-.agentAnswer .aaChartHead,.agentAnswer .aaTableHead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--aa-line);background:var(--aa-soft)}
-.agentAnswer .aaGraphHead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid var(--aa-line);background:var(--aa-soft)}
-.agentAnswer .aaChartTitle,.agentAnswer .aaGraphTitle,.agentAnswer .aaTableTitle{font-size:14px;font-weight:700}
-.agentAnswer .aaChartSubtitle{margin-top:2px;font-size:12px;color:var(--aa-muted)}
-.agentAnswer .aaBuilder{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;color:var(--aa-faint)}
-.agentAnswer .aaSvg{padding:12px;background:#fff}
-.agentAnswer .aaSvg svg{display:block;width:100%;height:auto}
-.agentAnswer .aaGraphSvg{display:block;width:100%;height:auto;background:#fff}
-.agentAnswer .aaGraphNode{fill:#eef7f0;stroke:#cfe8d7;stroke-width:1.5}
-.agentAnswer .aaGraphEdge{stroke:#77838f;stroke-width:1.6;marker-end:url(#aaArrow)}
-.agentAnswer .aaGraphLabel{font-size:11px;fill:#111827;font-weight:650}
-.agentAnswer .aaGraphEdgeLabel{font-size:10px;fill:#6b7280}
+.agentAnswer .aaTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--aa-muted);font-weight:800}
+.agentAnswer .aaChart,.agentAnswer .aaGraph,.agentAnswer .aaTableWrap{border:1px solid var(--aa-line);border-radius:10px;background:var(--aa-paper);box-shadow:0 1px 2px rgba(16,24,40,.05),0 10px 24px rgba(16,24,40,.06);overflow:hidden}
+.agentAnswer .aaChartHead,.agentAnswer .aaTableHead,.agentAnswer .aaGraphHead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:13px 15px;border-bottom:1px solid var(--aa-line);background:linear-gradient(180deg,var(--aa-soft-2),var(--aa-soft))}
+.agentAnswer .aaChartTitle,.agentAnswer .aaGraphTitle,.agentAnswer .aaTableTitle{font-size:14px;font-weight:800;line-height:1.35}
+.agentAnswer .aaChartSubtitle{margin-top:3px;font-size:12px;color:var(--aa-muted);line-height:1.45}
+.agentAnswer .aaArtifactBadge{display:inline-flex;align-items:center;white-space:nowrap;border:1px solid #bfd4ee;border-radius:999px;background:var(--aa-blue-bg);color:var(--aa-blue);padding:4px 9px;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.agentAnswer .aaSvg{padding:16px;background:radial-gradient(circle at 20% 0%,#ffffff 0,#ffffff 42%,#fbfcfd 100%);overflow-x:auto}
+.agentAnswer .aaSvg svg{display:block;width:100%;height:auto;min-width:520px}
+.agentAnswer .aaGraphSvg{display:block;width:100%;height:auto;background:radial-gradient(circle at 50% 0%,#ffffff 0,#ffffff 48%,#f8fafc 100%)}
+.agentAnswer .aaGraphNode{fill:#f6fbf8;stroke:#b9dac6;stroke-width:1.5;filter:drop-shadow(0 2px 4px rgba(17,24,39,.08))}
+.agentAnswer .aaGraphEdge{stroke:#738091;stroke-width:1.5;marker-end:url(#aaArrow)}
+.agentAnswer .aaGraphLabel{font-size:11px;fill:#111827;font-weight:700}
+.agentAnswer .aaGraphKind{font-size:9px;fill:#5f6b7a;text-transform:uppercase;letter-spacing:.08em}
+.agentAnswer .aaGraphEdgeLabel{font-size:10px;fill:#5f6b7a}
 .agentAnswer .aaFallback{padding:14px;color:var(--aa-muted);font-size:13px}
-.agentAnswer table{width:100%;border-collapse:collapse;font-size:13px}
-.agentAnswer th,.agentAnswer td{padding:10px 12px;border-bottom:1px solid var(--aa-line);vertical-align:top}
-.agentAnswer th{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--aa-muted);background:var(--aa-soft);font-weight:700}
+.agentAnswer .aaTableScroll{overflow-x:auto}
+.agentAnswer table{width:100%;min-width:620px;border-collapse:collapse;font-size:13px}
+.agentAnswer th,.agentAnswer td{padding:11px 13px;border-bottom:1px solid var(--aa-line);vertical-align:top}
+.agentAnswer th{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--aa-muted);background:var(--aa-soft);font-weight:800}
+.agentAnswer tbody tr:nth-child(even){background:#fcfcfb}
+.agentAnswer tbody tr:hover{background:#f6faf8}
 .agentAnswer tr:last-child td{border-bottom:0}
 .agentAnswer .aaRight{text-align:right}
 .agentAnswer .aaCenter{text-align:center}
@@ -313,6 +316,12 @@ function alignmentClass(column: AnswerTableColumn): string {
   return "";
 }
 
+function chartKindLabel(kind: AnswerChart["kind"]): string {
+  return kind
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 type ExportFormat = "html" | "pdf";
 
 function submitAnswerExport(answer: AvaAnswerPacket, format: ExportFormat) {
@@ -398,34 +407,39 @@ export function DataTable({
       {(table.title || table.note) && (
         <div className="aaTableHead">
           <div className="aaTableTitle">{table.title ?? "Table"}</div>
+          <span className="aaArtifactBadge">
+            {table.rows.length} row{table.rows.length === 1 ? "" : "s"}
+          </span>
         </div>
       )}
-      <table>
-        <thead>
-          <tr>
-            {table.columns.map((column) => (
-              <th
-                className={alignmentClass(column)}
-                key={column.key}
-                scope="col"
-              >
-                {column.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {table.rows.map((row, rowIndex) => (
-            <tr key={rowIndex}>
+      <div className="aaTableScroll">
+        <table>
+          <thead>
+            <tr>
               {table.columns.map((column) => (
-                <td className={alignmentClass(column)} key={column.key}>
-                  {formatCell(row[column.key] ?? null, column)}
-                </td>
+                <th
+                  className={alignmentClass(column)}
+                  key={column.key}
+                  scope="col"
+                >
+                  {column.label}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {table.rows.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                {table.columns.map((column) => (
+                  <td className={alignmentClass(column)} key={column.key}>
+                    {formatCell(row[column.key] ?? null, column)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {table.note ? <div className="aaNote">{table.note}</div> : null}
       <CitationChips citations={tableCitations} />
     </div>
@@ -450,6 +464,7 @@ export function AnswerChartRenderer({
             <div className="aaChartSubtitle">{chart.subtitle}</div>
           ) : null}
         </div>
+        <span className="aaArtifactBadge">{chartKindLabel(chart.kind)}</span>
       </div>
       {rendered.svg ? (
         <div
@@ -462,6 +477,7 @@ export function AnswerChartRenderer({
           Chart unavailable: {rendered.error}
         </div>
       )}
+      {chart.sourceNote ? <div className="aaNote">{chart.sourceNote}</div> : null}
       <CitationChips citations={chartCitations} />
     </div>
   );
@@ -503,7 +519,7 @@ export function AnswerGraphRenderer({
         <div className="aaGraphTitle">
           {graph.title ?? "Relationship graph"}
         </div>
-        <div className="aaBuilder">
+        <div className="aaArtifactBadge">
           {nodes.length} nodes · {edges.length} links
         </div>
       </div>
@@ -572,12 +588,24 @@ export function AnswerGraphRenderer({
                 className="aaGraphLabel"
                 textAnchor="middle"
                 x={position.x}
-                y={position.y + 4}
+                y={position.y + (node.kind ? 0 : 4)}
               >
                 {node.label.length > 25
                   ? `${node.label.slice(0, 22)}...`
                   : node.label}
               </text>
+              {node.kind ? (
+                <text
+                  className="aaGraphKind"
+                  textAnchor="middle"
+                  x={position.x}
+                  y={position.y + 14}
+                >
+                  {node.kind.length > 22
+                    ? `${node.kind.slice(0, 19)}...`
+                    : node.kind}
+                </text>
+              ) : null}
             </g>
           );
         })}
@@ -653,7 +681,7 @@ export function AgentAnswerRenderer({
 
       {charts.length > 0 ? (
         <div className="aaSection">
-          <div className="aaTitle">Charts</div>
+          <div className="aaTitle">Visuals</div>
           {charts.map((chart) => (
             <AnswerChartRenderer chart={chart} key={chart.id} />
           ))}
@@ -662,7 +690,7 @@ export function AgentAnswerRenderer({
 
       {graphs.length > 0 ? (
         <div className="aaSection">
-          <div className="aaTitle">Graphs</div>
+          <div className="aaTitle">Relationship View</div>
           {graphs.map((graph) => (
             <AnswerGraphRenderer graph={graph} key={graph.id} />
           ))}
@@ -671,7 +699,7 @@ export function AgentAnswerRenderer({
 
       {tables.length > 0 ? (
         <div className="aaSection">
-          <div className="aaTitle">Tables</div>
+          <div className="aaTitle">Decision Table</div>
           {tables.map((table) => (
             <DataTable table={table} key={table.id} />
           ))}
