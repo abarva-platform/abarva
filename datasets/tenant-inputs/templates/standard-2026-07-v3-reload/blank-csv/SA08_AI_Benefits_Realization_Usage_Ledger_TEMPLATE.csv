@@ -1,0 +1,3 @@
+tenant_key,source_record_id,ai_program_id,program_name,ai_use_case_id,vendor_name,tool_name,promised_benefit_type,promised_value_usd,baseline_metric,baseline_value,target_metric,target_value,usage_metric,usage_actual,adoption_rate_pct,operational_kpi,kpi_baseline,kpi_actual,finance_validated_value_usd,value_claim_status,evidence_id,source_extract,refresh_cadence,tower_claim_allowed,caveat
+tenant-key,SA08-BEN-001,PROG-EXAMPLE,Example AI program,AI-UC-001,Vendor,Tool,productivity_hours,1000000,baseline task hours,10,target task hours,8,monthly active users,0,0,cycle time days,10,,0,baseline_only,TENANT-EVID-BEN-001,Usage export and KPI report,monthly,no,No realized value until usage KPI and finance validation exist.
+

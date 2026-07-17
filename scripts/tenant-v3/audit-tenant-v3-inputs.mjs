@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { getTenantV6Config, tenantV6CanonicalConfigs } from "./configs/index.mjs";
-import { readCsv } from "../lib/v6-v7/csv.mjs";
+import { readCsv } from "./lib/csv.mjs";
 
 const repoRoot = process.cwd();
 
@@ -67,8 +67,10 @@ function auditTenant(config) {
   const interviewFile = path.join(inputDir, "interviews/executive_interviews.csv");
   assert(fs.existsSync(standardDir), `missing ${standardDir}`);
   assert(fs.existsSync(interviewFile), `missing ${interviewFile}`);
-  const files = fs.readdirSync(standardDir).filter((file) => file.endsWith(".csv")).sort();
-  assert(files.length === 19, `${config.tenantKey} expected 19 standard v3 files, found ${files.length}`);
+  const allCsvFiles = fs.readdirSync(standardDir).filter((file) => file.endsWith(".csv")).sort();
+  const files = allCsvFiles.filter((file) => /^\d{2}_/.test(file));
+  const sourceAdapterFiles = allCsvFiles.filter((file) => /^SA\d{2}_/.test(file));
+  assert(files.length === 19, `${config.tenantKey} expected 19 core standard v3 files, found ${files.length}`);
   let rowCount = 0;
   for (const file of files) {
     const rows = readCsv(path.join(standardDir, file));
@@ -115,6 +117,7 @@ function auditTenant(config) {
     tenantKey: config.tenantKey,
     status: "Pass",
     standardFiles: files.length,
+    sourceAdapterFiles: sourceAdapterFiles.length,
     standardRows: rowCount,
     interviewGroups: groups.size,
     interviewRows: interviews.length,
