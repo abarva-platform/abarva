@@ -171,17 +171,26 @@ export function createMovesGenerateArtifactDeps(
         return [promptBlock, evidenceBlock].filter(Boolean).join("\n\n");
       },
       async loadPriorDigests(moveId) {
+        // One row per deliverable type — the client-approved version
+        // (signed_off_version) when one exists, otherwise the newest draft.
+        // Previously this pulled every version of every deliverable with no
+        // dedup at all, so an approved version had no more weight in the
+        // generation context than any later unreviewed regeneration.
         const rows = await azureRead.query<{
           structured_data: unknown;
           version: number;
           created_at: string;
           deliverable_type_key: string;
         }>(
-          "SELECT dv.structured_data, dv.version, d.created_at, d.deliverable_type_key " +
+          "SELECT structured_data, version, created_at, deliverable_type_key FROM (" +
+            "SELECT DISTINCT ON (d.deliverable_type_key) " +
+            "dv.structured_data, dv.version, d.created_at, d.deliverable_type_key " +
             "FROM deliverable_versions dv " +
             "JOIN deliverables_v2 d ON d.id = dv.deliverable_id " +
             "WHERE d.engagement_id = $1 " +
-            "ORDER BY d.created_at ASC, dv.version ASC",
+            "ORDER BY d.deliverable_type_key, (dv.version = d.signed_off_version) DESC, dv.version DESC" +
+            ") latest_per_type " +
+            "ORDER BY created_at ASC, version ASC",
           [moveId],
           { missingTable: "empty" },
         );

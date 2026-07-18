@@ -30,6 +30,7 @@ import {
   MOVES_EDIT_BEFORE_COMMIT_REQUIREMENT,
 } from "@/lib/programs/deliverable-canvas-polish-view";
 import { MoveEvidenceNeedsPanel } from "./MoveEvidenceNeedsPanel";
+import { DeliverableApprovalAction } from "./DeliverableApprovalAction";
 
 interface Props {
   moveId: string;
@@ -55,6 +56,8 @@ interface DbDeliverable {
   current_version: number;
   updated_at: string | null;
   latest_content: string | null;
+  signed_off_version: number | null;
+  approved_artifact_id: string | null;
 }
 
 // ── Data helpers ──────────────────────────────────────────────────────────────
@@ -68,6 +71,7 @@ async function fetchDeliverablesByKey(
     .select(
       `
       id, deliverable_type_key, title, status, current_version, updated_at,
+      signed_off_version, approved_artifact_id,
       deliverable_versions!inner(content, version)
     `,
     )
@@ -84,6 +88,8 @@ async function fetchDeliverablesByKey(
     status: string;
     current_version: number;
     updated_at: string | null;
+    signed_off_version: number | null;
+    approved_artifact_id: string | null;
     deliverable_versions: Array<{ content: string | null; version: number }>;
   }>) {
     const versions = row.deliverable_versions ?? [];
@@ -104,6 +110,8 @@ async function fetchDeliverablesByKey(
         current_version: row.current_version,
         updated_at: row.updated_at,
         latest_content: latest?.content ?? null,
+        signed_off_version: row.signed_off_version,
+        approved_artifact_id: row.approved_artifact_id,
       });
     }
   }
@@ -202,6 +210,27 @@ function AiDraftBadge() {
       }}
     >
       {MOVES_AI_DRAFT_LABEL}
+    </span>
+  );
+}
+
+function ClientApprovedBadge({ version }: { version: number | null }) {
+  return (
+    <span
+      style={{
+        fontSize: 8,
+        fontWeight: 700,
+        letterSpacing: "0.08em",
+        color: "#14532D",
+        backgroundColor: "rgba(22,163,74,0.12)",
+        border: "1px solid rgba(22,163,74,0.28)",
+        padding: "1px 5px",
+        borderRadius: 2,
+        fontFamily: "JetBrains Mono, monospace",
+        textTransform: "uppercase",
+      }}
+    >
+      Client Approved{version ? ` · v${version}` : ""}
     </span>
   );
 }
@@ -350,7 +379,14 @@ function DocumentRow({
               Gate
             </span>
           )}
-          {!calmBrowse && <AiDraftBadge />}
+          {!calmBrowse && dbRow?.signed_off_version != null && (
+            <ClientApprovedBadge version={dbRow.signed_off_version} />
+          )}
+          {!calmBrowse &&
+            (dbRow?.signed_off_version == null ||
+              dbRow.signed_off_version !== dbRow.current_version) && (
+              <AiDraftBadge />
+            )}
         </div>
         <div
           style={{
@@ -460,6 +496,13 @@ function DocumentRow({
             <span style={{ fontSize: 10, color: "#b4b4b8" }}>
               {formatDate(dbRow.updated_at)}
             </span>
+            {!calmBrowse && (
+              <DeliverableApprovalAction
+                moveId={moveId}
+                deliverableId={dbRow.id}
+                alreadyApproved={dbRow.signed_off_version === dbRow.current_version}
+              />
+            )}
           </>
         ) : builtViaRun && runArtifact ? (
           // Approve & Build output (generated_artifacts), downloaded via the

@@ -38,8 +38,12 @@ describe("readDeliverableContentSignals", () => {
 
     const signals = await readDeliverableContentSignals("move-1", "execution_roadmap");
 
+    // Prefers the client-approved (signed_off_version) row over a later
+    // unreviewed draft; falls back to newest version when nothing's approved.
     expect(mockQuery).toHaveBeenCalledWith(
-      expect.stringContaining("ORDER BY dv.version DESC"),
+      expect.stringContaining(
+        "ORDER BY (dv.version = d.signed_off_version) DESC, dv.version DESC",
+      ),
       ["move-1", "execution_roadmap"],
       { missingTable: "empty" },
     );

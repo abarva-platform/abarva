@@ -619,17 +619,42 @@ export async function signOffDeliverable(
   ctx: TenancyCtx,
   programId: string,
   deliverableId: string,
-  opts: { supabase?: SupabaseClient } = {},
+  opts: {
+    supabase?: SupabaseClient;
+    /**
+     * Set when the client approved by uploading an edited replacement
+     * (move_artifacts row, artifact_family=generated_deliverable) rather
+     * than approving the AI-generated text as-is.
+     */
+    approvedArtifactId?: string;
+  } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
   const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
+
+  const { data: existing, error: readError } = await sb
+    .from("deliverables_v2")
+    .select("current_version")
+    .eq("id", deliverableId)
+    .eq("engagement_id", programId)
+    .maybeSingle();
+  if (readError) throw readError;
+  if (!existing) return false;
+  const approvedVersion = (existing as { current_version: number }).current_version;
+
   const { data, error } = await sb
     .from("deliverables_v2")
     .update({
       status: "signed_off",
       signed_off_by: ctx.userId,
       signed_off_at: new Date().toISOString(),
+      // The durable record of what was approved. Independent of
+      // current_version, which keeps advancing on later regeneration —
+      // this survives those regenerations until a newer version is
+      // explicitly approved (see moves-generate-deps.ts / v2-generator.ts).
+      signed_off_version: approvedVersion,
+      approved_artifact_id: opts.approvedArtifactId ?? null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", deliverableId)
