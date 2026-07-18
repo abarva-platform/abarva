@@ -185,6 +185,7 @@ function splitReadableSentences(text: string): string[] {
       sentence
         .replace(/^\*\*(?:Answer|Proof|Move|Read|Evidence|Next move):?\*\*\s*/i, "")
         .replace(/^(?:Answer|Proof|Move|Read|Evidence|Next move):\s*/i, "")
+        .replace(/^(?:Answer|Proof|Move|Read|Evidence|Next move)\.?\s+/i, "")
         .trim(),
     )
     .filter((sentence) => {
@@ -259,7 +260,7 @@ export function ensureAbarvaSolutionBrief(text: string): string {
   const answer =
     firstMatchingSentence(
       sentences,
-      /\b(should|must|recommend|priority|first|best|focus|fund|scale|hold|defer|run|start)\b/i,
+      /\b(should|must|recommend|priority|best|focus|fund|scale|hold|defer|run|start|pursue|proceed|advance|stop|pause)\b/i,
       used,
     ) ?? sentences[0]!;
   used.add(answer);
