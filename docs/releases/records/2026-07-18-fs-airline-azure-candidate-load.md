@@ -45,6 +45,14 @@ Runtime: no default runtime route is changed. Candidate rows remain invisible un
 - PASS: `npm run audit:synthetic-tenant-richness -- --tenant all`
 - NOT RUN YET: ACA private operator job execution. This waits until the PR is merged and the repo-owned ACA main workflow deploys an image containing the new script.
 
+### 2026-07-18 operator follow-up
+
+- PASS: `node --check scripts/knowledge/fs-airline-azure-candidate-load.mjs`
+- PASS: `env -u DATABASE_URL -u AZURE_LAB_DATABASE_URL -u TARGET_DATABASE_URL -u ABARVA_AZURE_DATABASE_URL -u AZURE_DATABASE_URL npm run preload:fs-airline-azure-candidate`
+- PASS: `npm run audit:default-runtime-invisibility`
+- The npm lifecycle pre-step is intentionally local-artifact-only when no database URL is present. The load and audit actions still enforce the approved Azure lab Postgres target before any database access or mutation.
+- The local lineage gate now requires source/evidence linkage and allows missing confidence to use the loader's conservative default for the generated evidence-source rows.
+
 ## Rollout Plan
 
 Merge by PR into `main`, let the repo-owned ACA main deploy workflow build and deploy the image, then run the private ACA operator job with `TENANT_CANDIDATE_LOAD_APPROVED=true` and `load:fs-airline-azure-candidate`. Do not promote active context in this release.
