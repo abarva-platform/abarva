@@ -1236,11 +1236,16 @@ function intelligenceSourcesFromCitations(
   return sources;
 }
 
-function displaySafeIntelligenceDelta(text: string): string {
-  const scrubForDisplay = (value: string) =>
-    scrubPublicAvaAnswerText(
+export function displaySafeIntelligenceDelta(text: string): string {
+  const scrubForDisplay = (value: string) => {
+    const leadingWhitespace = value.match(/^\s+/)?.[0] ?? "";
+    const trailingWhitespace = value.match(/\s+$/)?.[0] ?? "";
+    const scrubbed = scrubPublicAvaAnswerText(
       scrubVisibleAvaDataStateLanguage(scrubInternalVisibleAvaTerms(value)),
     );
+    if (!scrubbed) return value.trim() ? "" : value;
+    return `${leadingWhitespace && !/^\s/.test(scrubbed) ? leadingWhitespace : ""}${scrubbed}${trailingWhitespace && !/\s$/.test(scrubbed) ? trailingWhitespace : ""}`;
+  };
   if (!text.includes("<<<TAB:") && !text.includes("grounding:")) {
     return scrubForDisplay(text);
   }

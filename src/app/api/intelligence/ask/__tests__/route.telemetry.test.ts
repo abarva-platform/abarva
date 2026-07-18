@@ -1,4 +1,4 @@
-import { POST } from '../route';
+import { displaySafeIntelligenceDelta, POST } from '../route';
 import { askIntelligence } from '@/lib/intelligence/ask';
 import { recordSynthesisEvent } from '@/lib/reasoning/synthesis-telemetry';
 
@@ -151,6 +151,13 @@ async function readResponseText(response: Response): Promise<string> {
 }
 
 describe("POST /api/intelligence/ask telemetry", () => {
+  it("preserves chunk-boundary whitespace while display-scrubbing streamed deltas", () => {
+    const first = displaySafeIntelligenceDelta("foundation work. ");
+    const second = displaySafeIntelligenceDelta("Payment integrity");
+
+    expect(`${first}${second}`).toBe("foundation work. Payment integrity");
+  });
+
   it("records an Intelligence telemetry event and emits its id on the done event", async () => {
     const response = await POST(
       makeRequest({
