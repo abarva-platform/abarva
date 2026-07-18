@@ -847,15 +847,15 @@ async function loadV7(client, artifact, resultRows) {
   await insertRows(client, "intelligence_v7.record_fields", Object.keys(factRows[0]), factRows, "on conflict(record_field_key) do update set value_text=excluded.value_text, value_number=excluded.value_number, updated_at=now()");
   resultRows.push({ tenant_key: tenantKey, layer: "L2", target_table: "intelligence_v7.record_fields", rows_written: factRows.length, status: "Pass" });
 
-  const graphNodeRows = artifact.graphNodes.map((row) => ({
-    node_key: `${loadRunId}:node:${row.node_key}`,
-    tenant_key: tenantKey,
-    contract_version: contractVersion,
-    node_type: row.node_type || "entity",
-    node_ref: row.node_name || row.node_key,
-    entity_scope: "candidate",
-    entity_name: row.node_name || row.node_key,
-    source_record_key: null,
+	  const graphNodeRows = artifact.graphNodes.map((row) => ({
+	    node_key: `${loadRunId}:node:${row.node_key}`,
+	    tenant_key: tenantKey,
+	    contract_version: contractVersion,
+	    node_type: row.node_type || "entity",
+	    node_ref: row.node_key,
+	    entity_scope: "candidate",
+	    entity_name: row.node_name || row.node_key,
+	    source_record_key: null,
     values_json: JSON.stringify({ ...row, display_label: config.displayLabel, load_run_id: loadRunId }),
   }));
   await insertRows(client, "intelligence_v7.graph_nodes", Object.keys(graphNodeRows[0]), graphNodeRows, "on conflict(node_key) do update set values_json=excluded.values_json, updated_at=now()");

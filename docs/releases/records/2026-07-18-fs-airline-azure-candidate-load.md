@@ -58,6 +58,11 @@ Runtime: no default runtime route is changed. Candidate rows remain invisible un
 - The candidate pre-cleanup delete planner now passes exact bind parameters per table predicate.
 - This preserves rollback/idempotency scope while avoiding Postgres bind-count failures before candidate inserts.
 
+### 2026-07-18 graph-node reference follow-up
+
+- V7 graph node projection now uses the generated `node_key` as `node_ref`.
+- Display labels remain in `entity_name`; uniqueness no longer depends on repeated synthetic display names.
+
 ## Rollout Plan
 
 Merge by PR into `main`, let the repo-owned ACA main deploy workflow build and deploy the image, then run the private ACA operator job with `TENANT_CANDIDATE_LOAD_APPROVED=true` and `load:fs-airline-azure-candidate`. Do not promote active context in this release.
