@@ -105,7 +105,7 @@ export const CANONICAL_TENANTS = [
   },
   {
     key: "first-capital",
-    name: "First Capital",
+    name: "FS Demo",
     industry: "financial_services_banking",
     mimics: "Mid-tier banking institution",
     patternOverlays: ["core"],

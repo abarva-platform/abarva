@@ -89,15 +89,12 @@ function sanitizeRetiredTenantText(
   clientName?: ProgramSummary["clientName"] | null,
 ): string {
   const text = displayText(value);
-  const firstCapitalReplacement =
-    clientName === "First Capital Financial"
-      ? "First Capital"
-      : "First Capital";
+  const firstCapitalReplacement = "FS Demo";
   const meridianReplacement =
     clientName === "Meridian Health System" ? "Meridian" : "Meridian";
   return text
-    .replace(/\bBrindlemark Financial Group\b/g, "First Capital Financial")
-    .replace(/\bBrindlemark Financial\b/g, "First Capital Financial")
+    .replace(/\bBrindlemark Financial Group\b/g, "FS Demo")
+    .replace(/\bBrindlemark Financial\b/g, "FS Demo")
     .replace(/\bBRINDLEMARK\b/g, "FIRSTCAP")
     .replace(/\bBrindlemark\b/g, firstCapitalReplacement)
     .replace(/\bHeliara Health Alliance\b/g, "Meridian Health System")
@@ -155,7 +152,10 @@ function isUuidLike(value: string | null | undefined): value is string {
   return UUID_RE.test(value ?? "");
 }
 
-function legacyPersonFromLabel(label: string, fallbackClientName?: string): PersonRef {
+function legacyPersonFromLabel(
+  label: string,
+  fallbackClientName?: string,
+): PersonRef {
   return {
     id: label,
     name: label.trim() || "—",
@@ -480,12 +480,7 @@ export function hasTerminalTowerHandoffActivity(
   activity: TerminalActivitySignal[],
 ): boolean {
   return activity.some((entry) => {
-    const text = [
-      entry.title,
-      entry.detail,
-      entry.action,
-      entry.summary,
-    ]
+    const text = [entry.title, entry.detail, entry.action, entry.summary]
       .filter(Boolean)
       .join(" ")
       .toLowerCase();

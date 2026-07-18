@@ -210,7 +210,7 @@ const MERIDIAN_DATASET: DemoTenantDataset = {
 const FIRST_CAPITAL_DATASET: DemoTenantDataset = {
   tenantSlug: "first-capital",
   aliases: ["firstcapital", "arcturus"],
-  tenantName: "First Capital Financial",
+  tenantName: "FS Demo",
   overallTier: "rich",
   datasetRoot: "datasets/first-capital-financial-synthetic-v1",
   loaderTenantKey: "firstcapital",
@@ -278,7 +278,7 @@ const FIRST_CAPITAL_DATASET: DemoTenantDataset = {
   sourceProgramLinkage: false,
   knownLinkageFile: null,
   dataNote:
-    "First Capital Financial is a synthetic financial-services rehearsal tenant. The legacy arcturus key remains an alias only.",
+    "FS Demo is a synthetic financial-services rehearsal tenant. The legacy arcturus key remains an alias only.",
   deterministicSeed: true,
 };
 

@@ -1,0 +1,1601 @@
+tenant_key,node_key,node_type,node_name,source_entity_key,evidence_id,confidence,active_candidate_status
+skyharbor-air,SHA-NODE-00001,system,Airline Demo entity 0001,SHA-ENT-00001,SHA-EVID-00001,high,candidate
+skyharbor-air,SHA-NODE-00002,function,Airline Demo entity 0002,SHA-ENT-00002,SHA-EVID-00002,medium,candidate
+skyharbor-air,SHA-NODE-00003,data_asset,Airline Demo entity 0003,SHA-ENT-00003,SHA-EVID-00003,medium,candidate
+skyharbor-air,SHA-NODE-00004,vendor,Airline Demo entity 0004,SHA-ENT-00004,SHA-EVID-00004,high,candidate
+skyharbor-air,SHA-NODE-00005,program,Airline Demo entity 0005,SHA-ENT-00005,SHA-EVID-00005,high,candidate
+skyharbor-air,SHA-NODE-00006,control,Airline Demo entity 0006,SHA-ENT-00006,SHA-EVID-00006,medium,candidate
+skyharbor-air,SHA-NODE-00007,metric,Airline Demo entity 0007,SHA-ENT-00007,SHA-EVID-00007,medium,candidate
+skyharbor-air,SHA-NODE-00008,system,Airline Demo entity 0008,SHA-ENT-00008,SHA-EVID-00008,high,candidate
+skyharbor-air,SHA-NODE-00009,function,Airline Demo entity 0009,SHA-ENT-00009,SHA-EVID-00009,high,candidate
+skyharbor-air,SHA-NODE-00010,data_asset,Airline Demo entity 0010,SHA-ENT-00010,SHA-EVID-00010,medium,candidate
+skyharbor-air,SHA-NODE-00011,vendor,Airline Demo entity 0011,SHA-ENT-00011,SHA-EVID-00011,medium,candidate
+skyharbor-air,SHA-NODE-00012,program,Airline Demo entity 0012,SHA-ENT-00012,SHA-EVID-00012,high,candidate
+skyharbor-air,SHA-NODE-00013,control,Airline Demo entity 0013,SHA-ENT-00013,SHA-EVID-00013,high,candidate
+skyharbor-air,SHA-NODE-00014,metric,Airline Demo entity 0014,SHA-ENT-00014,SHA-EVID-00014,medium,candidate
+skyharbor-air,SHA-NODE-00015,system,Airline Demo entity 0015,SHA-ENT-00015,SHA-EVID-00015,medium,candidate
+skyharbor-air,SHA-NODE-00016,function,Airline Demo entity 0016,SHA-ENT-00016,SHA-EVID-00016,high,candidate
+skyharbor-air,SHA-NODE-00017,data_asset,Airline Demo entity 0017,SHA-ENT-00017,SHA-EVID-00017,high,candidate
+skyharbor-air,SHA-NODE-00018,vendor,Airline Demo entity 0018,SHA-ENT-00018,SHA-EVID-00018,medium,candidate
+skyharbor-air,SHA-NODE-00019,program,Airline Demo entity 0019,SHA-ENT-00019,SHA-EVID-00019,medium,candidate
+skyharbor-air,SHA-NODE-00020,control,Airline Demo entity 0020,SHA-ENT-00020,SHA-EVID-00020,high,candidate
+skyharbor-air,SHA-NODE-00021,metric,Airline Demo entity 0021,SHA-ENT-00021,SHA-EVID-00021,high,candidate
+skyharbor-air,SHA-NODE-00022,system,Airline Demo entity 0022,SHA-ENT-00022,SHA-EVID-00022,medium,candidate
+skyharbor-air,SHA-NODE-00023,function,Airline Demo entity 0023,SHA-ENT-00023,SHA-EVID-00023,medium,candidate
+skyharbor-air,SHA-NODE-00024,data_asset,Airline Demo entity 0024,SHA-ENT-00024,SHA-EVID-00024,high,candidate
+skyharbor-air,SHA-NODE-00025,vendor,flight operations capability 001 entity 0025,SHA-ENT-00025,SHA-EVID-00601,high,candidate
+skyharbor-air,SHA-NODE-00026,program,operations control center capability 002 entity 0026,SHA-ENT-00026,SHA-EVID-00602,medium,candidate
+skyharbor-air,SHA-NODE-00027,control,airport operations capability 003 entity 0027,SHA-ENT-00027,SHA-EVID-00603,medium,candidate
+skyharbor-air,SHA-NODE-00028,metric,customer service capability 004 entity 0028,SHA-ENT-00028,SHA-EVID-00604,high,candidate
+skyharbor-air,SHA-NODE-00029,system,loyalty capability 005 entity 0029,SHA-ENT-00029,SHA-EVID-00605,high,candidate
+skyharbor-air,SHA-NODE-00030,function,revenue management capability 006 entity 0030,SHA-ENT-00030,SHA-EVID-00606,medium,candidate
+skyharbor-air,SHA-NODE-00031,data_asset,network planning capability 007 entity 0031,SHA-ENT-00031,SHA-EVID-00607,medium,candidate
+skyharbor-air,SHA-NODE-00032,vendor,crew scheduling capability 008 entity 0032,SHA-ENT-00032,SHA-EVID-00608,high,candidate
+skyharbor-air,SHA-NODE-00033,program,maintenance engineering capability 009 entity 0033,SHA-ENT-00033,SHA-EVID-00609,high,candidate
+skyharbor-air,SHA-NODE-00034,control,cargo operations capability 010 entity 0034,SHA-ENT-00034,SHA-EVID-00610,medium,candidate
+skyharbor-air,SHA-NODE-00035,metric,digital ecommerce capability 011 entity 0035,SHA-ENT-00035,SHA-EVID-00611,medium,candidate
+skyharbor-air,SHA-NODE-00036,system,safety and security capability 012 entity 0036,SHA-ENT-00036,SHA-EVID-00612,high,candidate
+skyharbor-air,SHA-NODE-00037,function,finance capability 013 entity 0037,SHA-ENT-00037,SHA-EVID-00613,high,candidate
+skyharbor-air,SHA-NODE-00038,data_asset,procurement capability 014 entity 0038,SHA-ENT-00038,SHA-EVID-00614,medium,candidate
+skyharbor-air,SHA-NODE-00039,vendor,HR and workforce capability 015 entity 0039,SHA-ENT-00039,SHA-EVID-00615,medium,candidate
+skyharbor-air,SHA-NODE-00040,program,data and analytics capability 016 entity 0040,SHA-ENT-00040,SHA-EVID-00616,high,candidate
+skyharbor-air,SHA-NODE-00041,control,platform engineering capability 017 entity 0041,SHA-ENT-00041,SHA-EVID-00617,high,candidate
+skyharbor-air,SHA-NODE-00042,metric,baggage operations capability 018 entity 0042,SHA-ENT-00042,SHA-EVID-00618,medium,candidate
+skyharbor-air,SHA-NODE-00043,system,flight operations capability 019 entity 0043,SHA-ENT-00043,SHA-EVID-00619,medium,candidate
+skyharbor-air,SHA-NODE-00044,function,operations control center capability 020 entity 0044,SHA-ENT-00044,SHA-EVID-00620,high,candidate
+skyharbor-air,SHA-NODE-00045,data_asset,airport operations capability 021 entity 0045,SHA-ENT-00045,SHA-EVID-00621,high,candidate
+skyharbor-air,SHA-NODE-00046,vendor,customer service capability 022 entity 0046,SHA-ENT-00046,SHA-EVID-00622,medium,candidate
+skyharbor-air,SHA-NODE-00047,program,loyalty capability 023 entity 0047,SHA-ENT-00047,SHA-EVID-00623,medium,candidate
+skyharbor-air,SHA-NODE-00048,control,revenue management capability 024 entity 0048,SHA-ENT-00048,SHA-EVID-00624,high,candidate
+skyharbor-air,SHA-NODE-00049,metric,network planning capability 025 entity 0049,SHA-ENT-00049,SHA-EVID-00625,high,candidate
+skyharbor-air,SHA-NODE-00050,system,crew scheduling capability 026 entity 0050,SHA-ENT-00050,SHA-EVID-00626,medium,candidate
+skyharbor-air,SHA-NODE-00051,function,maintenance engineering capability 027 entity 0051,SHA-ENT-00051,SHA-EVID-00627,medium,candidate
+skyharbor-air,SHA-NODE-00052,data_asset,cargo operations capability 028 entity 0052,SHA-ENT-00052,SHA-EVID-00628,high,candidate
+skyharbor-air,SHA-NODE-00053,vendor,digital ecommerce capability 029 entity 0053,SHA-ENT-00053,SHA-EVID-00629,high,candidate
+skyharbor-air,SHA-NODE-00054,program,safety and security capability 030 entity 0054,SHA-ENT-00054,SHA-EVID-00630,medium,candidate
+skyharbor-air,SHA-NODE-00055,control,finance capability 031 entity 0055,SHA-ENT-00055,SHA-EVID-00631,medium,candidate
+skyharbor-air,SHA-NODE-00056,metric,procurement capability 032 entity 0056,SHA-ENT-00056,SHA-EVID-00632,high,candidate
+skyharbor-air,SHA-NODE-00057,system,HR and workforce capability 033 entity 0057,SHA-ENT-00057,SHA-EVID-00633,high,candidate
+skyharbor-air,SHA-NODE-00058,function,data and analytics capability 034 entity 0058,SHA-ENT-00058,SHA-EVID-00634,medium,candidate
+skyharbor-air,SHA-NODE-00059,data_asset,platform engineering capability 035 entity 0059,SHA-ENT-00059,SHA-EVID-00635,medium,candidate
+skyharbor-air,SHA-NODE-00060,vendor,baggage operations capability 036 entity 0060,SHA-ENT-00060,SHA-EVID-00636,high,candidate
+skyharbor-air,SHA-NODE-00061,program,flight operations capability 037 entity 0061,SHA-ENT-00061,SHA-EVID-00637,high,candidate
+skyharbor-air,SHA-NODE-00062,control,operations control center capability 038 entity 0062,SHA-ENT-00062,SHA-EVID-00638,medium,candidate
+skyharbor-air,SHA-NODE-00063,metric,airport operations capability 039 entity 0063,SHA-ENT-00063,SHA-EVID-00639,medium,candidate
+skyharbor-air,SHA-NODE-00064,system,customer service capability 040 entity 0064,SHA-ENT-00064,SHA-EVID-00640,high,candidate
+skyharbor-air,SHA-NODE-00065,function,loyalty capability 041 entity 0065,SHA-ENT-00065,SHA-EVID-00641,high,candidate
+skyharbor-air,SHA-NODE-00066,data_asset,revenue management capability 042 entity 0066,SHA-ENT-00066,SHA-EVID-00642,medium,candidate
+skyharbor-air,SHA-NODE-00067,vendor,network planning capability 043 entity 0067,SHA-ENT-00067,SHA-EVID-00643,medium,candidate
+skyharbor-air,SHA-NODE-00068,program,crew scheduling capability 044 entity 0068,SHA-ENT-00068,SHA-EVID-00644,high,candidate
+skyharbor-air,SHA-NODE-00069,control,maintenance engineering capability 045 entity 0069,SHA-ENT-00069,SHA-EVID-00645,high,candidate
+skyharbor-air,SHA-NODE-00070,metric,cargo operations capability 046 entity 0070,SHA-ENT-00070,SHA-EVID-00646,medium,candidate
+skyharbor-air,SHA-NODE-00071,system,digital ecommerce capability 047 entity 0071,SHA-ENT-00071,SHA-EVID-00647,medium,candidate
+skyharbor-air,SHA-NODE-00072,function,safety and security capability 048 entity 0072,SHA-ENT-00072,SHA-EVID-00648,high,candidate
+skyharbor-air,SHA-NODE-00073,data_asset,finance capability 049 entity 0073,SHA-ENT-00073,SHA-EVID-00649,high,candidate
+skyharbor-air,SHA-NODE-00074,vendor,procurement capability 050 entity 0074,SHA-ENT-00074,SHA-EVID-00650,medium,candidate
+skyharbor-air,SHA-NODE-00075,program,HR and workforce capability 051 entity 0075,SHA-ENT-00075,SHA-EVID-00651,medium,candidate
+skyharbor-air,SHA-NODE-00076,control,data and analytics capability 052 entity 0076,SHA-ENT-00076,SHA-EVID-00652,high,candidate
+skyharbor-air,SHA-NODE-00077,metric,platform engineering capability 053 entity 0077,SHA-ENT-00077,SHA-EVID-00653,high,candidate
+skyharbor-air,SHA-NODE-00078,system,baggage operations capability 054 entity 0078,SHA-ENT-00078,SHA-EVID-00654,medium,candidate
+skyharbor-air,SHA-NODE-00079,function,flight operations capability 055 entity 0079,SHA-ENT-00079,SHA-EVID-00655,medium,candidate
+skyharbor-air,SHA-NODE-00080,data_asset,operations control center capability 056 entity 0080,SHA-ENT-00080,SHA-EVID-00656,high,candidate
+skyharbor-air,SHA-NODE-00081,vendor,airport operations capability 057 entity 0081,SHA-ENT-00081,SHA-EVID-00657,high,candidate
+skyharbor-air,SHA-NODE-00082,program,customer service capability 058 entity 0082,SHA-ENT-00082,SHA-EVID-00658,medium,candidate
+skyharbor-air,SHA-NODE-00083,control,loyalty capability 059 entity 0083,SHA-ENT-00083,SHA-EVID-00659,medium,candidate
+skyharbor-air,SHA-NODE-00084,metric,revenue management capability 060 entity 0084,SHA-ENT-00084,SHA-EVID-00660,high,candidate
+skyharbor-air,SHA-NODE-00085,system,network planning capability 061 entity 0085,SHA-ENT-00085,SHA-EVID-00661,high,candidate
+skyharbor-air,SHA-NODE-00086,function,crew scheduling capability 062 entity 0086,SHA-ENT-00086,SHA-EVID-00662,medium,candidate
+skyharbor-air,SHA-NODE-00087,data_asset,maintenance engineering capability 063 entity 0087,SHA-ENT-00087,SHA-EVID-00663,medium,candidate
+skyharbor-air,SHA-NODE-00088,vendor,cargo operations capability 064 entity 0088,SHA-ENT-00088,SHA-EVID-00664,high,candidate
+skyharbor-air,SHA-NODE-00089,program,digital ecommerce capability 065 entity 0089,SHA-ENT-00089,SHA-EVID-00665,high,candidate
+skyharbor-air,SHA-NODE-00090,control,safety and security capability 066 entity 0090,SHA-ENT-00090,SHA-EVID-00666,medium,candidate
+skyharbor-air,SHA-NODE-00091,metric,finance capability 067 entity 0091,SHA-ENT-00091,SHA-EVID-00667,medium,candidate
+skyharbor-air,SHA-NODE-00092,system,procurement capability 068 entity 0092,SHA-ENT-00092,SHA-EVID-00668,high,candidate
+skyharbor-air,SHA-NODE-00093,function,HR and workforce capability 069 entity 0093,SHA-ENT-00093,SHA-EVID-00669,high,candidate
+skyharbor-air,SHA-NODE-00094,data_asset,data and analytics capability 070 entity 0094,SHA-ENT-00094,SHA-EVID-00670,medium,candidate
+skyharbor-air,SHA-NODE-00095,vendor,platform engineering capability 071 entity 0095,SHA-ENT-00095,SHA-EVID-00671,medium,candidate
+skyharbor-air,SHA-NODE-00096,program,baggage operations capability 072 entity 0096,SHA-ENT-00096,SHA-EVID-00672,high,candidate
+skyharbor-air,SHA-NODE-00097,control,flight operations capability 073 entity 0097,SHA-ENT-00097,SHA-EVID-00673,high,candidate
+skyharbor-air,SHA-NODE-00098,metric,operations control center capability 074 entity 0098,SHA-ENT-00098,SHA-EVID-00674,medium,candidate
+skyharbor-air,SHA-NODE-00099,system,airport operations capability 075 entity 0099,SHA-ENT-00099,SHA-EVID-00675,medium,candidate
+skyharbor-air,SHA-NODE-00100,function,customer service capability 076 entity 0100,SHA-ENT-00100,SHA-EVID-00676,high,candidate
+skyharbor-air,SHA-NODE-00101,data_asset,loyalty capability 077 entity 0101,SHA-ENT-00101,SHA-EVID-00677,high,candidate
+skyharbor-air,SHA-NODE-00102,vendor,revenue management capability 078 entity 0102,SHA-ENT-00102,SHA-EVID-00678,medium,candidate
+skyharbor-air,SHA-NODE-00103,program,network planning capability 079 entity 0103,SHA-ENT-00103,SHA-EVID-00679,medium,candidate
+skyharbor-air,SHA-NODE-00104,control,crew scheduling capability 080 entity 0104,SHA-ENT-00104,SHA-EVID-00680,high,candidate
+skyharbor-air,SHA-NODE-00105,metric,maintenance engineering capability 081 entity 0105,SHA-ENT-00105,SHA-EVID-00681,high,candidate
+skyharbor-air,SHA-NODE-00106,system,cargo operations capability 082 entity 0106,SHA-ENT-00106,SHA-EVID-00682,medium,candidate
+skyharbor-air,SHA-NODE-00107,function,digital ecommerce capability 083 entity 0107,SHA-ENT-00107,SHA-EVID-00683,medium,candidate
+skyharbor-air,SHA-NODE-00108,data_asset,safety and security capability 084 entity 0108,SHA-ENT-00108,SHA-EVID-00684,high,candidate
+skyharbor-air,SHA-NODE-00109,vendor,finance capability 085 entity 0109,SHA-ENT-00109,SHA-EVID-00685,high,candidate
+skyharbor-air,SHA-NODE-00110,program,procurement capability 086 entity 0110,SHA-ENT-00110,SHA-EVID-00686,medium,candidate
+skyharbor-air,SHA-NODE-00111,control,HR and workforce capability 087 entity 0111,SHA-ENT-00111,SHA-EVID-00687,medium,candidate
+skyharbor-air,SHA-NODE-00112,metric,data and analytics capability 088 entity 0112,SHA-ENT-00112,SHA-EVID-00688,high,candidate
+skyharbor-air,SHA-NODE-00113,system,platform engineering capability 089 entity 0113,SHA-ENT-00113,SHA-EVID-00689,high,candidate
+skyharbor-air,SHA-NODE-00114,function,baggage operations capability 090 entity 0114,SHA-ENT-00114,SHA-EVID-00690,medium,candidate
+skyharbor-air,SHA-NODE-00115,data_asset,flight operations capability 091 entity 0115,SHA-ENT-00115,SHA-EVID-00691,medium,candidate
+skyharbor-air,SHA-NODE-00116,vendor,operations control center capability 092 entity 0116,SHA-ENT-00116,SHA-EVID-00692,high,candidate
+skyharbor-air,SHA-NODE-00117,program,airport operations capability 093 entity 0117,SHA-ENT-00117,SHA-EVID-00693,high,candidate
+skyharbor-air,SHA-NODE-00118,control,customer service capability 094 entity 0118,SHA-ENT-00118,SHA-EVID-00694,medium,candidate
+skyharbor-air,SHA-NODE-00119,metric,loyalty capability 095 entity 0119,SHA-ENT-00119,SHA-EVID-00695,medium,candidate
+skyharbor-air,SHA-NODE-00120,system,revenue management capability 096 entity 0120,SHA-ENT-00120,SHA-EVID-00696,high,candidate
+skyharbor-air,SHA-NODE-00121,function,network planning capability 097 entity 0121,SHA-ENT-00121,SHA-EVID-00697,high,candidate
+skyharbor-air,SHA-NODE-00122,data_asset,crew scheduling capability 098 entity 0122,SHA-ENT-00122,SHA-EVID-00698,medium,candidate
+skyharbor-air,SHA-NODE-00123,vendor,maintenance engineering capability 099 entity 0123,SHA-ENT-00123,SHA-EVID-00699,medium,candidate
+skyharbor-air,SHA-NODE-00124,program,cargo operations capability 100 entity 0124,SHA-ENT-00124,SHA-EVID-00700,high,candidate
+skyharbor-air,SHA-NODE-00125,control,digital ecommerce capability 101 entity 0125,SHA-ENT-00125,SHA-EVID-00701,high,candidate
+skyharbor-air,SHA-NODE-00126,metric,safety and security capability 102 entity 0126,SHA-ENT-00126,SHA-EVID-00702,medium,candidate
+skyharbor-air,SHA-NODE-00127,system,finance capability 103 entity 0127,SHA-ENT-00127,SHA-EVID-00703,medium,candidate
+skyharbor-air,SHA-NODE-00128,function,procurement capability 104 entity 0128,SHA-ENT-00128,SHA-EVID-00704,high,candidate
+skyharbor-air,SHA-NODE-00129,data_asset,HR and workforce capability 105 entity 0129,SHA-ENT-00129,SHA-EVID-00705,high,candidate
+skyharbor-air,SHA-NODE-00130,vendor,data and analytics capability 106 entity 0130,SHA-ENT-00130,SHA-EVID-00706,medium,candidate
+skyharbor-air,SHA-NODE-00131,program,platform engineering capability 107 entity 0131,SHA-ENT-00131,SHA-EVID-00707,medium,candidate
+skyharbor-air,SHA-NODE-00132,control,baggage operations capability 108 entity 0132,SHA-ENT-00132,SHA-EVID-00708,high,candidate
+skyharbor-air,SHA-NODE-00133,metric,flight operations capability 109 entity 0133,SHA-ENT-00133,SHA-EVID-00709,high,candidate
+skyharbor-air,SHA-NODE-00134,system,operations control center capability 110 entity 0134,SHA-ENT-00134,SHA-EVID-00710,medium,candidate
+skyharbor-air,SHA-NODE-00135,function,airport operations capability 111 entity 0135,SHA-ENT-00135,SHA-EVID-00711,medium,candidate
+skyharbor-air,SHA-NODE-00136,data_asset,customer service capability 112 entity 0136,SHA-ENT-00136,SHA-EVID-00712,high,candidate
+skyharbor-air,SHA-NODE-00137,vendor,loyalty capability 113 entity 0137,SHA-ENT-00137,SHA-EVID-00713,high,candidate
+skyharbor-air,SHA-NODE-00138,program,revenue management capability 114 entity 0138,SHA-ENT-00138,SHA-EVID-00714,medium,candidate
+skyharbor-air,SHA-NODE-00139,control,network planning capability 115 entity 0139,SHA-ENT-00139,SHA-EVID-00715,medium,candidate
+skyharbor-air,SHA-NODE-00140,metric,crew scheduling capability 116 entity 0140,SHA-ENT-00140,SHA-EVID-00716,high,candidate
+skyharbor-air,SHA-NODE-00141,system,maintenance engineering capability 117 entity 0141,SHA-ENT-00141,SHA-EVID-00717,high,candidate
+skyharbor-air,SHA-NODE-00142,function,cargo operations capability 118 entity 0142,SHA-ENT-00142,SHA-EVID-00718,medium,candidate
+skyharbor-air,SHA-NODE-00143,data_asset,digital ecommerce capability 119 entity 0143,SHA-ENT-00143,SHA-EVID-00719,medium,candidate
+skyharbor-air,SHA-NODE-00144,vendor,safety and security capability 120 entity 0144,SHA-ENT-00144,SHA-EVID-00720,high,candidate
+skyharbor-air,SHA-NODE-00145,program,finance capability 121 entity 0145,SHA-ENT-00145,SHA-EVID-00721,high,candidate
+skyharbor-air,SHA-NODE-00146,control,procurement capability 122 entity 0146,SHA-ENT-00146,SHA-EVID-00722,medium,candidate
+skyharbor-air,SHA-NODE-00147,metric,HR and workforce capability 123 entity 0147,SHA-ENT-00147,SHA-EVID-00723,medium,candidate
+skyharbor-air,SHA-NODE-00148,system,data and analytics capability 124 entity 0148,SHA-ENT-00148,SHA-EVID-00724,high,candidate
+skyharbor-air,SHA-NODE-00149,function,platform engineering capability 125 entity 0149,SHA-ENT-00149,SHA-EVID-00725,high,candidate
+skyharbor-air,SHA-NODE-00150,data_asset,baggage operations capability 126 entity 0150,SHA-ENT-00150,SHA-EVID-00726,medium,candidate
+skyharbor-air,SHA-NODE-00151,vendor,flight operations capability 127 entity 0151,SHA-ENT-00151,SHA-EVID-00727,medium,candidate
+skyharbor-air,SHA-NODE-00152,program,operations control center capability 128 entity 0152,SHA-ENT-00152,SHA-EVID-00728,high,candidate
+skyharbor-air,SHA-NODE-00153,control,airport operations capability 129 entity 0153,SHA-ENT-00153,SHA-EVID-00729,high,candidate
+skyharbor-air,SHA-NODE-00154,metric,customer service capability 130 entity 0154,SHA-ENT-00154,SHA-EVID-00730,medium,candidate
+skyharbor-air,SHA-NODE-00155,system,loyalty capability 131 entity 0155,SHA-ENT-00155,SHA-EVID-00731,medium,candidate
+skyharbor-air,SHA-NODE-00156,function,revenue management capability 132 entity 0156,SHA-ENT-00156,SHA-EVID-00732,high,candidate
+skyharbor-air,SHA-NODE-00157,data_asset,network planning capability 133 entity 0157,SHA-ENT-00157,SHA-EVID-00733,high,candidate
+skyharbor-air,SHA-NODE-00158,vendor,crew scheduling capability 134 entity 0158,SHA-ENT-00158,SHA-EVID-00734,medium,candidate
+skyharbor-air,SHA-NODE-00159,program,maintenance engineering capability 135 entity 0159,SHA-ENT-00159,SHA-EVID-00735,medium,candidate
+skyharbor-air,SHA-NODE-00160,control,cargo operations capability 136 entity 0160,SHA-ENT-00160,SHA-EVID-00736,high,candidate
+skyharbor-air,SHA-NODE-00161,metric,digital ecommerce capability 137 entity 0161,SHA-ENT-00161,SHA-EVID-00737,high,candidate
+skyharbor-air,SHA-NODE-00162,system,safety and security capability 138 entity 0162,SHA-ENT-00162,SHA-EVID-00738,medium,candidate
+skyharbor-air,SHA-NODE-00163,function,finance capability 139 entity 0163,SHA-ENT-00163,SHA-EVID-00739,medium,candidate
+skyharbor-air,SHA-NODE-00164,data_asset,procurement capability 140 entity 0164,SHA-ENT-00164,SHA-EVID-00740,high,candidate
+skyharbor-air,SHA-NODE-00165,vendor,HR and workforce capability 141 entity 0165,SHA-ENT-00165,SHA-EVID-00741,high,candidate
+skyharbor-air,SHA-NODE-00166,program,data and analytics capability 142 entity 0166,SHA-ENT-00166,SHA-EVID-00742,medium,candidate
+skyharbor-air,SHA-NODE-00167,control,platform engineering capability 143 entity 0167,SHA-ENT-00167,SHA-EVID-00743,medium,candidate
+skyharbor-air,SHA-NODE-00168,metric,baggage operations capability 144 entity 0168,SHA-ENT-00168,SHA-EVID-00744,high,candidate
+skyharbor-air,SHA-NODE-00169,system,flight operations capability 145 entity 0169,SHA-ENT-00169,SHA-EVID-00745,high,candidate
+skyharbor-air,SHA-NODE-00170,function,operations control center capability 146 entity 0170,SHA-ENT-00170,SHA-EVID-00746,medium,candidate
+skyharbor-air,SHA-NODE-00171,data_asset,airport operations capability 147 entity 0171,SHA-ENT-00171,SHA-EVID-00747,medium,candidate
+skyharbor-air,SHA-NODE-00172,vendor,customer service capability 148 entity 0172,SHA-ENT-00172,SHA-EVID-00748,high,candidate
+skyharbor-air,SHA-NODE-00173,program,loyalty capability 149 entity 0173,SHA-ENT-00173,SHA-EVID-00749,high,candidate
+skyharbor-air,SHA-NODE-00174,control,revenue management capability 150 entity 0174,SHA-ENT-00174,SHA-EVID-00750,medium,candidate
+skyharbor-air,SHA-NODE-00175,metric,network planning capability 151 entity 0175,SHA-ENT-00175,SHA-EVID-00751,medium,candidate
+skyharbor-air,SHA-NODE-00176,system,crew scheduling capability 152 entity 0176,SHA-ENT-00176,SHA-EVID-00752,high,candidate
+skyharbor-air,SHA-NODE-00177,function,maintenance engineering capability 153 entity 0177,SHA-ENT-00177,SHA-EVID-00753,high,candidate
+skyharbor-air,SHA-NODE-00178,data_asset,cargo operations capability 154 entity 0178,SHA-ENT-00178,SHA-EVID-00754,medium,candidate
+skyharbor-air,SHA-NODE-00179,vendor,digital ecommerce capability 155 entity 0179,SHA-ENT-00179,SHA-EVID-00755,medium,candidate
+skyharbor-air,SHA-NODE-00180,program,safety and security capability 156 entity 0180,SHA-ENT-00180,SHA-EVID-00756,high,candidate
+skyharbor-air,SHA-NODE-00181,control,finance capability 157 entity 0181,SHA-ENT-00181,SHA-EVID-00757,high,candidate
+skyharbor-air,SHA-NODE-00182,metric,procurement capability 158 entity 0182,SHA-ENT-00182,SHA-EVID-00758,medium,candidate
+skyharbor-air,SHA-NODE-00183,system,HR and workforce capability 159 entity 0183,SHA-ENT-00183,SHA-EVID-00759,medium,candidate
+skyharbor-air,SHA-NODE-00184,function,data and analytics capability 160 entity 0184,SHA-ENT-00184,SHA-EVID-00760,high,candidate
+skyharbor-air,SHA-NODE-00185,data_asset,platform engineering capability 161 entity 0185,SHA-ENT-00185,SHA-EVID-00761,high,candidate
+skyharbor-air,SHA-NODE-00186,vendor,baggage operations capability 162 entity 0186,SHA-ENT-00186,SHA-EVID-00762,medium,candidate
+skyharbor-air,SHA-NODE-00187,program,flight operations capability 163 entity 0187,SHA-ENT-00187,SHA-EVID-00763,medium,candidate
+skyharbor-air,SHA-NODE-00188,control,operations control center capability 164 entity 0188,SHA-ENT-00188,SHA-EVID-00764,high,candidate
+skyharbor-air,SHA-NODE-00189,metric,airport operations capability 165 entity 0189,SHA-ENT-00189,SHA-EVID-00765,high,candidate
+skyharbor-air,SHA-NODE-00190,system,customer service capability 166 entity 0190,SHA-ENT-00190,SHA-EVID-00766,medium,candidate
+skyharbor-air,SHA-NODE-00191,function,loyalty capability 167 entity 0191,SHA-ENT-00191,SHA-EVID-00767,medium,candidate
+skyharbor-air,SHA-NODE-00192,data_asset,revenue management capability 168 entity 0192,SHA-ENT-00192,SHA-EVID-00768,high,candidate
+skyharbor-air,SHA-NODE-00193,vendor,network planning capability 169 entity 0193,SHA-ENT-00193,SHA-EVID-00769,high,candidate
+skyharbor-air,SHA-NODE-00194,program,crew scheduling capability 170 entity 0194,SHA-ENT-00194,SHA-EVID-00770,medium,candidate
+skyharbor-air,SHA-NODE-00195,control,maintenance engineering capability 171 entity 0195,SHA-ENT-00195,SHA-EVID-00771,medium,candidate
+skyharbor-air,SHA-NODE-00196,metric,cargo operations capability 172 entity 0196,SHA-ENT-00196,SHA-EVID-00772,high,candidate
+skyharbor-air,SHA-NODE-00197,system,digital ecommerce capability 173 entity 0197,SHA-ENT-00197,SHA-EVID-00773,high,candidate
+skyharbor-air,SHA-NODE-00198,function,safety and security capability 174 entity 0198,SHA-ENT-00198,SHA-EVID-00774,medium,candidate
+skyharbor-air,SHA-NODE-00199,data_asset,finance capability 175 entity 0199,SHA-ENT-00199,SHA-EVID-00775,medium,candidate
+skyharbor-air,SHA-NODE-00200,vendor,procurement capability 176 entity 0200,SHA-ENT-00200,SHA-EVID-00776,high,candidate
+skyharbor-air,SHA-NODE-00201,program,HR and workforce capability 177 entity 0201,SHA-ENT-00201,SHA-EVID-00777,high,candidate
+skyharbor-air,SHA-NODE-00202,control,data and analytics capability 178 entity 0202,SHA-ENT-00202,SHA-EVID-00778,medium,candidate
+skyharbor-air,SHA-NODE-00203,metric,platform engineering capability 179 entity 0203,SHA-ENT-00203,SHA-EVID-00779,medium,candidate
+skyharbor-air,SHA-NODE-00204,system,baggage operations capability 180 entity 0204,SHA-ENT-00204,SHA-EVID-00780,high,candidate
+skyharbor-air,SHA-NODE-00205,function,flight operations capability 181 entity 0205,SHA-ENT-00205,SHA-EVID-00781,high,candidate
+skyharbor-air,SHA-NODE-00206,data_asset,operations control center capability 182 entity 0206,SHA-ENT-00206,SHA-EVID-00782,medium,candidate
+skyharbor-air,SHA-NODE-00207,vendor,airport operations capability 183 entity 0207,SHA-ENT-00207,SHA-EVID-00783,medium,candidate
+skyharbor-air,SHA-NODE-00208,program,customer service capability 184 entity 0208,SHA-ENT-00208,SHA-EVID-00784,high,candidate
+skyharbor-air,SHA-NODE-00209,control,loyalty capability 185 entity 0209,SHA-ENT-00209,SHA-EVID-00785,high,candidate
+skyharbor-air,SHA-NODE-00210,metric,revenue management capability 186 entity 0210,SHA-ENT-00210,SHA-EVID-00786,medium,candidate
+skyharbor-air,SHA-NODE-00211,system,network planning capability 187 entity 0211,SHA-ENT-00211,SHA-EVID-00787,medium,candidate
+skyharbor-air,SHA-NODE-00212,function,crew scheduling capability 188 entity 0212,SHA-ENT-00212,SHA-EVID-00788,high,candidate
+skyharbor-air,SHA-NODE-00213,data_asset,maintenance engineering capability 189 entity 0213,SHA-ENT-00213,SHA-EVID-00789,high,candidate
+skyharbor-air,SHA-NODE-00214,vendor,cargo operations capability 190 entity 0214,SHA-ENT-00214,SHA-EVID-00790,medium,candidate
+skyharbor-air,SHA-NODE-00215,program,digital ecommerce capability 191 entity 0215,SHA-ENT-00215,SHA-EVID-00791,medium,candidate
+skyharbor-air,SHA-NODE-00216,control,safety and security capability 192 entity 0216,SHA-ENT-00216,SHA-EVID-00792,high,candidate
+skyharbor-air,SHA-NODE-00217,metric,finance capability 193 entity 0217,SHA-ENT-00217,SHA-EVID-00793,high,candidate
+skyharbor-air,SHA-NODE-00218,system,procurement capability 194 entity 0218,SHA-ENT-00218,SHA-EVID-00794,medium,candidate
+skyharbor-air,SHA-NODE-00219,function,HR and workforce capability 195 entity 0219,SHA-ENT-00219,SHA-EVID-00795,medium,candidate
+skyharbor-air,SHA-NODE-00220,data_asset,data and analytics capability 196 entity 0220,SHA-ENT-00220,SHA-EVID-00796,high,candidate
+skyharbor-air,SHA-NODE-00221,vendor,platform engineering capability 197 entity 0221,SHA-ENT-00221,SHA-EVID-00797,high,candidate
+skyharbor-air,SHA-NODE-00222,program,baggage operations capability 198 entity 0222,SHA-ENT-00222,SHA-EVID-00798,medium,candidate
+skyharbor-air,SHA-NODE-00223,control,flight operations capability 199 entity 0223,SHA-ENT-00223,SHA-EVID-00799,medium,candidate
+skyharbor-air,SHA-NODE-00224,metric,operations control center capability 200 entity 0224,SHA-ENT-00224,SHA-EVID-00800,high,candidate
+skyharbor-air,SHA-NODE-00225,system,airport operations capability 201 entity 0225,SHA-ENT-00225,SHA-EVID-00801,high,candidate
+skyharbor-air,SHA-NODE-00226,function,customer service capability 202 entity 0226,SHA-ENT-00226,SHA-EVID-00802,medium,candidate
+skyharbor-air,SHA-NODE-00227,data_asset,loyalty capability 203 entity 0227,SHA-ENT-00227,SHA-EVID-00803,medium,candidate
+skyharbor-air,SHA-NODE-00228,vendor,revenue management capability 204 entity 0228,SHA-ENT-00228,SHA-EVID-00804,high,candidate
+skyharbor-air,SHA-NODE-00229,program,network planning capability 205 entity 0229,SHA-ENT-00229,SHA-EVID-00805,high,candidate
+skyharbor-air,SHA-NODE-00230,control,crew scheduling capability 206 entity 0230,SHA-ENT-00230,SHA-EVID-00806,medium,candidate
+skyharbor-air,SHA-NODE-00231,metric,maintenance engineering capability 207 entity 0231,SHA-ENT-00231,SHA-EVID-00807,medium,candidate
+skyharbor-air,SHA-NODE-00232,system,cargo operations capability 208 entity 0232,SHA-ENT-00232,SHA-EVID-00808,high,candidate
+skyharbor-air,SHA-NODE-00233,function,digital ecommerce capability 209 entity 0233,SHA-ENT-00233,SHA-EVID-00809,high,candidate
+skyharbor-air,SHA-NODE-00234,data_asset,safety and security capability 210 entity 0234,SHA-ENT-00234,SHA-EVID-00810,medium,candidate
+skyharbor-air,SHA-NODE-00235,vendor,finance capability 211 entity 0235,SHA-ENT-00235,SHA-EVID-00811,medium,candidate
+skyharbor-air,SHA-NODE-00236,program,procurement capability 212 entity 0236,SHA-ENT-00236,SHA-EVID-00812,high,candidate
+skyharbor-air,SHA-NODE-00237,control,HR and workforce capability 213 entity 0237,SHA-ENT-00237,SHA-EVID-00813,high,candidate
+skyharbor-air,SHA-NODE-00238,metric,data and analytics capability 214 entity 0238,SHA-ENT-00238,SHA-EVID-00814,medium,candidate
+skyharbor-air,SHA-NODE-00239,system,platform engineering capability 215 entity 0239,SHA-ENT-00239,SHA-EVID-00815,medium,candidate
+skyharbor-air,SHA-NODE-00240,function,baggage operations capability 216 entity 0240,SHA-ENT-00240,SHA-EVID-00816,high,candidate
+skyharbor-air,SHA-NODE-00241,data_asset,flight operations capability 217 entity 0241,SHA-ENT-00241,SHA-EVID-00817,high,candidate
+skyharbor-air,SHA-NODE-00242,vendor,operations control center capability 218 entity 0242,SHA-ENT-00242,SHA-EVID-00818,medium,candidate
+skyharbor-air,SHA-NODE-00243,program,airport operations capability 219 entity 0243,SHA-ENT-00243,SHA-EVID-00819,medium,candidate
+skyharbor-air,SHA-NODE-00244,control,customer service capability 220 entity 0244,SHA-ENT-00244,SHA-EVID-00820,high,candidate
+skyharbor-air,SHA-NODE-00245,metric,loyalty capability 221 entity 0245,SHA-ENT-00245,SHA-EVID-00821,high,candidate
+skyharbor-air,SHA-NODE-00246,system,revenue management capability 222 entity 0246,SHA-ENT-00246,SHA-EVID-00822,medium,candidate
+skyharbor-air,SHA-NODE-00247,function,network planning capability 223 entity 0247,SHA-ENT-00247,SHA-EVID-00823,medium,candidate
+skyharbor-air,SHA-NODE-00248,data_asset,crew scheduling capability 224 entity 0248,SHA-ENT-00248,SHA-EVID-00824,high,candidate
+skyharbor-air,SHA-NODE-00249,vendor,maintenance engineering capability 225 entity 0249,SHA-ENT-00249,SHA-EVID-00825,high,candidate
+skyharbor-air,SHA-NODE-00250,program,cargo operations capability 226 entity 0250,SHA-ENT-00250,SHA-EVID-00826,medium,candidate
+skyharbor-air,SHA-NODE-00251,control,digital ecommerce capability 227 entity 0251,SHA-ENT-00251,SHA-EVID-00827,medium,candidate
+skyharbor-air,SHA-NODE-00252,metric,safety and security capability 228 entity 0252,SHA-ENT-00252,SHA-EVID-00828,high,candidate
+skyharbor-air,SHA-NODE-00253,system,finance capability 229 entity 0253,SHA-ENT-00253,SHA-EVID-00829,high,candidate
+skyharbor-air,SHA-NODE-00254,function,procurement capability 230 entity 0254,SHA-ENT-00254,SHA-EVID-00830,medium,candidate
+skyharbor-air,SHA-NODE-00255,data_asset,HR and workforce capability 231 entity 0255,SHA-ENT-00255,SHA-EVID-00831,medium,candidate
+skyharbor-air,SHA-NODE-00256,vendor,data and analytics capability 232 entity 0256,SHA-ENT-00256,SHA-EVID-00832,high,candidate
+skyharbor-air,SHA-NODE-00257,program,platform engineering capability 233 entity 0257,SHA-ENT-00257,SHA-EVID-00833,high,candidate
+skyharbor-air,SHA-NODE-00258,control,baggage operations capability 234 entity 0258,SHA-ENT-00258,SHA-EVID-00834,medium,candidate
+skyharbor-air,SHA-NODE-00259,metric,flight operations capability 235 entity 0259,SHA-ENT-00259,SHA-EVID-00835,medium,candidate
+skyharbor-air,SHA-NODE-00260,system,operations control center capability 236 entity 0260,SHA-ENT-00260,SHA-EVID-00836,high,candidate
+skyharbor-air,SHA-NODE-00261,function,airport operations capability 237 entity 0261,SHA-ENT-00261,SHA-EVID-00837,high,candidate
+skyharbor-air,SHA-NODE-00262,data_asset,customer service capability 238 entity 0262,SHA-ENT-00262,SHA-EVID-00838,medium,candidate
+skyharbor-air,SHA-NODE-00263,vendor,loyalty capability 239 entity 0263,SHA-ENT-00263,SHA-EVID-00839,medium,candidate
+skyharbor-air,SHA-NODE-00264,program,revenue management capability 240 entity 0264,SHA-ENT-00264,SHA-EVID-00840,high,candidate
+skyharbor-air,SHA-NODE-00265,control,network planning capability 241 entity 0265,SHA-ENT-00265,SHA-EVID-00841,high,candidate
+skyharbor-air,SHA-NODE-00266,metric,crew scheduling capability 242 entity 0266,SHA-ENT-00266,SHA-EVID-00842,medium,candidate
+skyharbor-air,SHA-NODE-00267,system,maintenance engineering capability 243 entity 0267,SHA-ENT-00267,SHA-EVID-00843,medium,candidate
+skyharbor-air,SHA-NODE-00268,function,cargo operations capability 244 entity 0268,SHA-ENT-00268,SHA-EVID-00844,high,candidate
+skyharbor-air,SHA-NODE-00269,data_asset,digital ecommerce capability 245 entity 0269,SHA-ENT-00269,SHA-EVID-00845,high,candidate
+skyharbor-air,SHA-NODE-00270,vendor,safety and security capability 246 entity 0270,SHA-ENT-00270,SHA-EVID-00846,medium,candidate
+skyharbor-air,SHA-NODE-00271,program,finance capability 247 entity 0271,SHA-ENT-00271,SHA-EVID-00847,medium,candidate
+skyharbor-air,SHA-NODE-00272,control,procurement capability 248 entity 0272,SHA-ENT-00272,SHA-EVID-00848,high,candidate
+skyharbor-air,SHA-NODE-00273,metric,HR and workforce capability 249 entity 0273,SHA-ENT-00273,SHA-EVID-00849,high,candidate
+skyharbor-air,SHA-NODE-00274,system,data and analytics capability 250 entity 0274,SHA-ENT-00274,SHA-EVID-00850,medium,candidate
+skyharbor-air,SHA-NODE-00275,function,platform engineering capability 251 entity 0275,SHA-ENT-00275,SHA-EVID-00851,medium,candidate
+skyharbor-air,SHA-NODE-00276,data_asset,baggage operations capability 252 entity 0276,SHA-ENT-00276,SHA-EVID-00852,high,candidate
+skyharbor-air,SHA-NODE-00277,vendor,flight operations capability 253 entity 0277,SHA-ENT-00277,SHA-EVID-00853,high,candidate
+skyharbor-air,SHA-NODE-00278,program,operations control center capability 254 entity 0278,SHA-ENT-00278,SHA-EVID-00854,medium,candidate
+skyharbor-air,SHA-NODE-00279,control,airport operations capability 255 entity 0279,SHA-ENT-00279,SHA-EVID-00855,medium,candidate
+skyharbor-air,SHA-NODE-00280,metric,customer service capability 256 entity 0280,SHA-ENT-00280,SHA-EVID-00856,high,candidate
+skyharbor-air,SHA-NODE-00281,system,loyalty capability 257 entity 0281,SHA-ENT-00281,SHA-EVID-00857,high,candidate
+skyharbor-air,SHA-NODE-00282,function,revenue management capability 258 entity 0282,SHA-ENT-00282,SHA-EVID-00858,medium,candidate
+skyharbor-air,SHA-NODE-00283,data_asset,network planning capability 259 entity 0283,SHA-ENT-00283,SHA-EVID-00859,medium,candidate
+skyharbor-air,SHA-NODE-00284,vendor,crew scheduling capability 260 entity 0284,SHA-ENT-00284,SHA-EVID-00860,high,candidate
+skyharbor-air,SHA-NODE-00285,program,maintenance engineering capability 261 entity 0285,SHA-ENT-00285,SHA-EVID-00861,high,candidate
+skyharbor-air,SHA-NODE-00286,control,cargo operations capability 262 entity 0286,SHA-ENT-00286,SHA-EVID-00862,medium,candidate
+skyharbor-air,SHA-NODE-00287,metric,digital ecommerce capability 263 entity 0287,SHA-ENT-00287,SHA-EVID-00863,medium,candidate
+skyharbor-air,SHA-NODE-00288,system,safety and security capability 264 entity 0288,SHA-ENT-00288,SHA-EVID-00864,high,candidate
+skyharbor-air,SHA-NODE-00289,function,finance capability 265 entity 0289,SHA-ENT-00289,SHA-EVID-00865,high,candidate
+skyharbor-air,SHA-NODE-00290,data_asset,procurement capability 266 entity 0290,SHA-ENT-00290,SHA-EVID-00866,medium,candidate
+skyharbor-air,SHA-NODE-00291,vendor,HR and workforce capability 267 entity 0291,SHA-ENT-00291,SHA-EVID-00867,medium,candidate
+skyharbor-air,SHA-NODE-00292,program,data and analytics capability 268 entity 0292,SHA-ENT-00292,SHA-EVID-00868,high,candidate
+skyharbor-air,SHA-NODE-00293,control,platform engineering capability 269 entity 0293,SHA-ENT-00293,SHA-EVID-00869,high,candidate
+skyharbor-air,SHA-NODE-00294,metric,baggage operations capability 270 entity 0294,SHA-ENT-00294,SHA-EVID-00870,medium,candidate
+skyharbor-air,SHA-NODE-00295,system,flight operations capability 271 entity 0295,SHA-ENT-00295,SHA-EVID-00871,medium,candidate
+skyharbor-air,SHA-NODE-00296,function,operations control center capability 272 entity 0296,SHA-ENT-00296,SHA-EVID-00872,high,candidate
+skyharbor-air,SHA-NODE-00297,data_asset,airport operations capability 273 entity 0297,SHA-ENT-00297,SHA-EVID-00873,high,candidate
+skyharbor-air,SHA-NODE-00298,vendor,customer service capability 274 entity 0298,SHA-ENT-00298,SHA-EVID-00874,medium,candidate
+skyharbor-air,SHA-NODE-00299,program,loyalty capability 275 entity 0299,SHA-ENT-00299,SHA-EVID-00875,medium,candidate
+skyharbor-air,SHA-NODE-00300,control,revenue management capability 276 entity 0300,SHA-ENT-00300,SHA-EVID-00876,high,candidate
+skyharbor-air,SHA-NODE-00301,metric,network planning capability 277 entity 0301,SHA-ENT-00301,SHA-EVID-00877,high,candidate
+skyharbor-air,SHA-NODE-00302,system,crew scheduling capability 278 entity 0302,SHA-ENT-00302,SHA-EVID-00878,medium,candidate
+skyharbor-air,SHA-NODE-00303,function,maintenance engineering capability 279 entity 0303,SHA-ENT-00303,SHA-EVID-00879,medium,candidate
+skyharbor-air,SHA-NODE-00304,data_asset,cargo operations capability 280 entity 0304,SHA-ENT-00304,SHA-EVID-00880,high,candidate
+skyharbor-air,SHA-NODE-00305,vendor,digital ecommerce capability 281 entity 0305,SHA-ENT-00305,SHA-EVID-00881,high,candidate
+skyharbor-air,SHA-NODE-00306,program,safety and security capability 282 entity 0306,SHA-ENT-00306,SHA-EVID-00882,medium,candidate
+skyharbor-air,SHA-NODE-00307,control,finance capability 283 entity 0307,SHA-ENT-00307,SHA-EVID-00883,medium,candidate
+skyharbor-air,SHA-NODE-00308,metric,procurement capability 284 entity 0308,SHA-ENT-00308,SHA-EVID-00884,high,candidate
+skyharbor-air,SHA-NODE-00309,system,HR and workforce capability 285 entity 0309,SHA-ENT-00309,SHA-EVID-00885,high,candidate
+skyharbor-air,SHA-NODE-00310,function,data and analytics capability 286 entity 0310,SHA-ENT-00310,SHA-EVID-00886,medium,candidate
+skyharbor-air,SHA-NODE-00311,data_asset,platform engineering capability 287 entity 0311,SHA-ENT-00311,SHA-EVID-00887,medium,candidate
+skyharbor-air,SHA-NODE-00312,vendor,baggage operations capability 288 entity 0312,SHA-ENT-00312,SHA-EVID-00888,high,candidate
+skyharbor-air,SHA-NODE-00313,program,flight operations capability 289 entity 0313,SHA-ENT-00313,SHA-EVID-00889,high,candidate
+skyharbor-air,SHA-NODE-00314,control,operations control center capability 290 entity 0314,SHA-ENT-00314,SHA-EVID-00890,medium,candidate
+skyharbor-air,SHA-NODE-00315,metric,airport operations capability 291 entity 0315,SHA-ENT-00315,SHA-EVID-00891,medium,candidate
+skyharbor-air,SHA-NODE-00316,system,customer service capability 292 entity 0316,SHA-ENT-00316,SHA-EVID-00892,high,candidate
+skyharbor-air,SHA-NODE-00317,function,loyalty capability 293 entity 0317,SHA-ENT-00317,SHA-EVID-00893,high,candidate
+skyharbor-air,SHA-NODE-00318,data_asset,revenue management capability 294 entity 0318,SHA-ENT-00318,SHA-EVID-00894,medium,candidate
+skyharbor-air,SHA-NODE-00319,vendor,network planning capability 295 entity 0319,SHA-ENT-00319,SHA-EVID-00895,medium,candidate
+skyharbor-air,SHA-NODE-00320,program,crew scheduling capability 296 entity 0320,SHA-ENT-00320,SHA-EVID-00896,high,candidate
+skyharbor-air,SHA-NODE-00321,control,maintenance engineering capability 297 entity 0321,SHA-ENT-00321,SHA-EVID-00897,high,candidate
+skyharbor-air,SHA-NODE-00322,metric,cargo operations capability 298 entity 0322,SHA-ENT-00322,SHA-EVID-00898,medium,candidate
+skyharbor-air,SHA-NODE-00323,system,digital ecommerce capability 299 entity 0323,SHA-ENT-00323,SHA-EVID-00899,medium,candidate
+skyharbor-air,SHA-NODE-00324,function,safety and security capability 300 entity 0324,SHA-ENT-00324,SHA-EVID-00900,high,candidate
+skyharbor-air,SHA-NODE-00325,data_asset,SHA-02-00001 entity 0325,SHA-ENT-00325,SHA-EVID-01201,high,candidate
+skyharbor-air,SHA-NODE-00326,vendor,SHA-02-00002 entity 0326,SHA-ENT-00326,SHA-EVID-01202,medium,candidate
+skyharbor-air,SHA-NODE-00327,program,SHA-02-00003 entity 0327,SHA-ENT-00327,SHA-EVID-01203,medium,candidate
+skyharbor-air,SHA-NODE-00328,control,SHA-02-00004 entity 0328,SHA-ENT-00328,SHA-EVID-01204,high,candidate
+skyharbor-air,SHA-NODE-00329,metric,SHA-02-00005 entity 0329,SHA-ENT-00329,SHA-EVID-01205,high,candidate
+skyharbor-air,SHA-NODE-00330,system,SHA-02-00006 entity 0330,SHA-ENT-00330,SHA-EVID-01206,medium,candidate
+skyharbor-air,SHA-NODE-00331,function,SHA-02-00007 entity 0331,SHA-ENT-00331,SHA-EVID-01207,medium,candidate
+skyharbor-air,SHA-NODE-00332,data_asset,SHA-02-00008 entity 0332,SHA-ENT-00332,SHA-EVID-01208,high,candidate
+skyharbor-air,SHA-NODE-00333,vendor,SHA-02-00009 entity 0333,SHA-ENT-00333,SHA-EVID-01209,high,candidate
+skyharbor-air,SHA-NODE-00334,program,SHA-02-00010 entity 0334,SHA-ENT-00334,SHA-EVID-01210,medium,candidate
+skyharbor-air,SHA-NODE-00335,control,SHA-02-00011 entity 0335,SHA-ENT-00335,SHA-EVID-01211,medium,candidate
+skyharbor-air,SHA-NODE-00336,metric,SHA-02-00012 entity 0336,SHA-ENT-00336,SHA-EVID-01212,high,candidate
+skyharbor-air,SHA-NODE-00337,system,SHA-02-00013 entity 0337,SHA-ENT-00337,SHA-EVID-01213,high,candidate
+skyharbor-air,SHA-NODE-00338,function,SHA-02-00014 entity 0338,SHA-ENT-00338,SHA-EVID-01214,medium,candidate
+skyharbor-air,SHA-NODE-00339,data_asset,SHA-02-00015 entity 0339,SHA-ENT-00339,SHA-EVID-01215,medium,candidate
+skyharbor-air,SHA-NODE-00340,vendor,SHA-02-00016 entity 0340,SHA-ENT-00340,SHA-EVID-01216,high,candidate
+skyharbor-air,SHA-NODE-00341,program,SHA-02-00017 entity 0341,SHA-ENT-00341,SHA-EVID-01217,high,candidate
+skyharbor-air,SHA-NODE-00342,control,SHA-02-00018 entity 0342,SHA-ENT-00342,SHA-EVID-01218,medium,candidate
+skyharbor-air,SHA-NODE-00343,metric,SHA-02-00019 entity 0343,SHA-ENT-00343,SHA-EVID-01219,medium,candidate
+skyharbor-air,SHA-NODE-00344,system,SHA-02-00020 entity 0344,SHA-ENT-00344,SHA-EVID-01220,high,candidate
+skyharbor-air,SHA-NODE-00345,function,SHA-02-00021 entity 0345,SHA-ENT-00345,SHA-EVID-01221,high,candidate
+skyharbor-air,SHA-NODE-00346,data_asset,SHA-02-00022 entity 0346,SHA-ENT-00346,SHA-EVID-01222,medium,candidate
+skyharbor-air,SHA-NODE-00347,vendor,SHA-02-00023 entity 0347,SHA-ENT-00347,SHA-EVID-01223,medium,candidate
+skyharbor-air,SHA-NODE-00348,program,SHA-02-00024 entity 0348,SHA-ENT-00348,SHA-EVID-01224,high,candidate
+skyharbor-air,SHA-NODE-00349,control,SHA-02-00025 entity 0349,SHA-ENT-00349,SHA-EVID-01225,high,candidate
+skyharbor-air,SHA-NODE-00350,metric,SHA-02-00026 entity 0350,SHA-ENT-00350,SHA-EVID-01226,medium,candidate
+skyharbor-air,SHA-NODE-00351,system,SHA-02-00027 entity 0351,SHA-ENT-00351,SHA-EVID-01227,medium,candidate
+skyharbor-air,SHA-NODE-00352,function,SHA-02-00028 entity 0352,SHA-ENT-00352,SHA-EVID-01228,high,candidate
+skyharbor-air,SHA-NODE-00353,data_asset,SHA-02-00029 entity 0353,SHA-ENT-00353,SHA-EVID-01229,high,candidate
+skyharbor-air,SHA-NODE-00354,vendor,SHA-02-00030 entity 0354,SHA-ENT-00354,SHA-EVID-01230,medium,candidate
+skyharbor-air,SHA-NODE-00355,program,SHA-02-00031 entity 0355,SHA-ENT-00355,SHA-EVID-01231,medium,candidate
+skyharbor-air,SHA-NODE-00356,control,SHA-02-00032 entity 0356,SHA-ENT-00356,SHA-EVID-01232,high,candidate
+skyharbor-air,SHA-NODE-00357,metric,SHA-02-00033 entity 0357,SHA-ENT-00357,SHA-EVID-01233,high,candidate
+skyharbor-air,SHA-NODE-00358,system,SHA-02-00034 entity 0358,SHA-ENT-00358,SHA-EVID-01234,medium,candidate
+skyharbor-air,SHA-NODE-00359,function,SHA-02-00035 entity 0359,SHA-ENT-00359,SHA-EVID-01235,medium,candidate
+skyharbor-air,SHA-NODE-00360,data_asset,SHA-02-00036 entity 0360,SHA-ENT-00360,SHA-EVID-01236,high,candidate
+skyharbor-air,SHA-NODE-00361,vendor,SHA-02-00037 entity 0361,SHA-ENT-00361,SHA-EVID-01237,high,candidate
+skyharbor-air,SHA-NODE-00362,program,SHA-02-00038 entity 0362,SHA-ENT-00362,SHA-EVID-01238,medium,candidate
+skyharbor-air,SHA-NODE-00363,control,SHA-02-00039 entity 0363,SHA-ENT-00363,SHA-EVID-01239,medium,candidate
+skyharbor-air,SHA-NODE-00364,metric,SHA-02-00040 entity 0364,SHA-ENT-00364,SHA-EVID-01240,high,candidate
+skyharbor-air,SHA-NODE-00365,system,SHA-02-00041 entity 0365,SHA-ENT-00365,SHA-EVID-01241,high,candidate
+skyharbor-air,SHA-NODE-00366,function,SHA-02-00042 entity 0366,SHA-ENT-00366,SHA-EVID-01242,medium,candidate
+skyharbor-air,SHA-NODE-00367,data_asset,SHA-02-00043 entity 0367,SHA-ENT-00367,SHA-EVID-01243,medium,candidate
+skyharbor-air,SHA-NODE-00368,vendor,SHA-02-00044 entity 0368,SHA-ENT-00368,SHA-EVID-01244,high,candidate
+skyharbor-air,SHA-NODE-00369,program,SHA-02-00045 entity 0369,SHA-ENT-00369,SHA-EVID-01245,high,candidate
+skyharbor-air,SHA-NODE-00370,control,SHA-02-00046 entity 0370,SHA-ENT-00370,SHA-EVID-01246,medium,candidate
+skyharbor-air,SHA-NODE-00371,metric,SHA-02-00047 entity 0371,SHA-ENT-00371,SHA-EVID-01247,medium,candidate
+skyharbor-air,SHA-NODE-00372,system,SHA-02-00048 entity 0372,SHA-ENT-00372,SHA-EVID-01248,high,candidate
+skyharbor-air,SHA-NODE-00373,function,SHA-02-00049 entity 0373,SHA-ENT-00373,SHA-EVID-01249,high,candidate
+skyharbor-air,SHA-NODE-00374,data_asset,SHA-02-00050 entity 0374,SHA-ENT-00374,SHA-EVID-01250,medium,candidate
+skyharbor-air,SHA-NODE-00375,vendor,SHA-02-00051 entity 0375,SHA-ENT-00375,SHA-EVID-01251,medium,candidate
+skyharbor-air,SHA-NODE-00376,program,SHA-02-00052 entity 0376,SHA-ENT-00376,SHA-EVID-01252,high,candidate
+skyharbor-air,SHA-NODE-00377,control,SHA-02-00053 entity 0377,SHA-ENT-00377,SHA-EVID-01253,high,candidate
+skyharbor-air,SHA-NODE-00378,metric,SHA-02-00054 entity 0378,SHA-ENT-00378,SHA-EVID-01254,medium,candidate
+skyharbor-air,SHA-NODE-00379,system,SHA-02-00055 entity 0379,SHA-ENT-00379,SHA-EVID-01255,medium,candidate
+skyharbor-air,SHA-NODE-00380,function,SHA-02-00056 entity 0380,SHA-ENT-00380,SHA-EVID-01256,high,candidate
+skyharbor-air,SHA-NODE-00381,data_asset,SHA-02-00057 entity 0381,SHA-ENT-00381,SHA-EVID-01257,high,candidate
+skyharbor-air,SHA-NODE-00382,vendor,SHA-02-00058 entity 0382,SHA-ENT-00382,SHA-EVID-01258,medium,candidate
+skyharbor-air,SHA-NODE-00383,program,SHA-02-00059 entity 0383,SHA-ENT-00383,SHA-EVID-01259,medium,candidate
+skyharbor-air,SHA-NODE-00384,control,SHA-02-00060 entity 0384,SHA-ENT-00384,SHA-EVID-01260,high,candidate
+skyharbor-air,SHA-NODE-00385,metric,SHA-02-00061 entity 0385,SHA-ENT-00385,SHA-EVID-01261,high,candidate
+skyharbor-air,SHA-NODE-00386,system,SHA-02-00062 entity 0386,SHA-ENT-00386,SHA-EVID-01262,medium,candidate
+skyharbor-air,SHA-NODE-00387,function,SHA-02-00063 entity 0387,SHA-ENT-00387,SHA-EVID-01263,medium,candidate
+skyharbor-air,SHA-NODE-00388,data_asset,SHA-02-00064 entity 0388,SHA-ENT-00388,SHA-EVID-01264,high,candidate
+skyharbor-air,SHA-NODE-00389,vendor,SHA-02-00065 entity 0389,SHA-ENT-00389,SHA-EVID-01265,high,candidate
+skyharbor-air,SHA-NODE-00390,program,SHA-02-00066 entity 0390,SHA-ENT-00390,SHA-EVID-01266,medium,candidate
+skyharbor-air,SHA-NODE-00391,control,SHA-02-00067 entity 0391,SHA-ENT-00391,SHA-EVID-01267,medium,candidate
+skyharbor-air,SHA-NODE-00392,metric,SHA-02-00068 entity 0392,SHA-ENT-00392,SHA-EVID-01268,high,candidate
+skyharbor-air,SHA-NODE-00393,system,SHA-02-00069 entity 0393,SHA-ENT-00393,SHA-EVID-01269,high,candidate
+skyharbor-air,SHA-NODE-00394,function,SHA-02-00070 entity 0394,SHA-ENT-00394,SHA-EVID-01270,medium,candidate
+skyharbor-air,SHA-NODE-00395,data_asset,SHA-02-00071 entity 0395,SHA-ENT-00395,SHA-EVID-01271,medium,candidate
+skyharbor-air,SHA-NODE-00396,vendor,SHA-02-00072 entity 0396,SHA-ENT-00396,SHA-EVID-01272,high,candidate
+skyharbor-air,SHA-NODE-00397,program,SHA-02-00073 entity 0397,SHA-ENT-00397,SHA-EVID-01273,high,candidate
+skyharbor-air,SHA-NODE-00398,control,SHA-02-00074 entity 0398,SHA-ENT-00398,SHA-EVID-01274,medium,candidate
+skyharbor-air,SHA-NODE-00399,metric,SHA-02-00075 entity 0399,SHA-ENT-00399,SHA-EVID-01275,medium,candidate
+skyharbor-air,SHA-NODE-00400,system,SHA-02-00076 entity 0400,SHA-ENT-00400,SHA-EVID-01276,high,candidate
+skyharbor-air,SHA-NODE-00401,function,SHA-02-00077 entity 0401,SHA-ENT-00401,SHA-EVID-01277,high,candidate
+skyharbor-air,SHA-NODE-00402,data_asset,SHA-02-00078 entity 0402,SHA-ENT-00402,SHA-EVID-01278,medium,candidate
+skyharbor-air,SHA-NODE-00403,vendor,SHA-02-00079 entity 0403,SHA-ENT-00403,SHA-EVID-01279,medium,candidate
+skyharbor-air,SHA-NODE-00404,program,SHA-02-00080 entity 0404,SHA-ENT-00404,SHA-EVID-01280,high,candidate
+skyharbor-air,SHA-NODE-00405,control,SHA-02-00081 entity 0405,SHA-ENT-00405,SHA-EVID-01281,high,candidate
+skyharbor-air,SHA-NODE-00406,metric,SHA-02-00082 entity 0406,SHA-ENT-00406,SHA-EVID-01282,medium,candidate
+skyharbor-air,SHA-NODE-00407,system,SHA-02-00083 entity 0407,SHA-ENT-00407,SHA-EVID-01283,medium,candidate
+skyharbor-air,SHA-NODE-00408,function,SHA-02-00084 entity 0408,SHA-ENT-00408,SHA-EVID-01284,high,candidate
+skyharbor-air,SHA-NODE-00409,data_asset,SHA-02-00085 entity 0409,SHA-ENT-00409,SHA-EVID-01285,high,candidate
+skyharbor-air,SHA-NODE-00410,vendor,SHA-02-00086 entity 0410,SHA-ENT-00410,SHA-EVID-01286,medium,candidate
+skyharbor-air,SHA-NODE-00411,program,SHA-02-00087 entity 0411,SHA-ENT-00411,SHA-EVID-01287,medium,candidate
+skyharbor-air,SHA-NODE-00412,control,SHA-02-00088 entity 0412,SHA-ENT-00412,SHA-EVID-01288,high,candidate
+skyharbor-air,SHA-NODE-00413,metric,SHA-02-00089 entity 0413,SHA-ENT-00413,SHA-EVID-01289,high,candidate
+skyharbor-air,SHA-NODE-00414,system,SHA-02-00090 entity 0414,SHA-ENT-00414,SHA-EVID-01290,medium,candidate
+skyharbor-air,SHA-NODE-00415,function,SHA-02-00091 entity 0415,SHA-ENT-00415,SHA-EVID-01291,medium,candidate
+skyharbor-air,SHA-NODE-00416,data_asset,SHA-02-00092 entity 0416,SHA-ENT-00416,SHA-EVID-01292,high,candidate
+skyharbor-air,SHA-NODE-00417,vendor,SHA-02-00093 entity 0417,SHA-ENT-00417,SHA-EVID-01293,high,candidate
+skyharbor-air,SHA-NODE-00418,program,SHA-02-00094 entity 0418,SHA-ENT-00418,SHA-EVID-01294,medium,candidate
+skyharbor-air,SHA-NODE-00419,control,SHA-02-00095 entity 0419,SHA-ENT-00419,SHA-EVID-01295,medium,candidate
+skyharbor-air,SHA-NODE-00420,metric,SHA-02-00096 entity 0420,SHA-ENT-00420,SHA-EVID-01296,high,candidate
+skyharbor-air,SHA-NODE-00421,system,SHA-02-00097 entity 0421,SHA-ENT-00421,SHA-EVID-01297,high,candidate
+skyharbor-air,SHA-NODE-00422,function,SHA-02-00098 entity 0422,SHA-ENT-00422,SHA-EVID-01298,medium,candidate
+skyharbor-air,SHA-NODE-00423,data_asset,SHA-02-00099 entity 0423,SHA-ENT-00423,SHA-EVID-01299,medium,candidate
+skyharbor-air,SHA-NODE-00424,vendor,SHA-02-00100 entity 0424,SHA-ENT-00424,SHA-EVID-01300,high,candidate
+skyharbor-air,SHA-NODE-00425,program,SHA-02-00101 entity 0425,SHA-ENT-00425,SHA-EVID-01301,high,candidate
+skyharbor-air,SHA-NODE-00426,control,SHA-02-00102 entity 0426,SHA-ENT-00426,SHA-EVID-01302,medium,candidate
+skyharbor-air,SHA-NODE-00427,metric,SHA-02-00103 entity 0427,SHA-ENT-00427,SHA-EVID-01303,medium,candidate
+skyharbor-air,SHA-NODE-00428,system,SHA-02-00104 entity 0428,SHA-ENT-00428,SHA-EVID-01304,high,candidate
+skyharbor-air,SHA-NODE-00429,function,SHA-02-00105 entity 0429,SHA-ENT-00429,SHA-EVID-01305,high,candidate
+skyharbor-air,SHA-NODE-00430,data_asset,SHA-02-00106 entity 0430,SHA-ENT-00430,SHA-EVID-01306,medium,candidate
+skyharbor-air,SHA-NODE-00431,vendor,SHA-02-00107 entity 0431,SHA-ENT-00431,SHA-EVID-01307,medium,candidate
+skyharbor-air,SHA-NODE-00432,program,SHA-02-00108 entity 0432,SHA-ENT-00432,SHA-EVID-01308,high,candidate
+skyharbor-air,SHA-NODE-00433,control,SHA-02-00109 entity 0433,SHA-ENT-00433,SHA-EVID-01309,high,candidate
+skyharbor-air,SHA-NODE-00434,metric,SHA-02-00110 entity 0434,SHA-ENT-00434,SHA-EVID-01310,medium,candidate
+skyharbor-air,SHA-NODE-00435,system,SHA-02-00111 entity 0435,SHA-ENT-00435,SHA-EVID-01311,medium,candidate
+skyharbor-air,SHA-NODE-00436,function,SHA-02-00112 entity 0436,SHA-ENT-00436,SHA-EVID-01312,high,candidate
+skyharbor-air,SHA-NODE-00437,data_asset,SHA-02-00113 entity 0437,SHA-ENT-00437,SHA-EVID-01313,high,candidate
+skyharbor-air,SHA-NODE-00438,vendor,SHA-02-00114 entity 0438,SHA-ENT-00438,SHA-EVID-01314,medium,candidate
+skyharbor-air,SHA-NODE-00439,program,SHA-02-00115 entity 0439,SHA-ENT-00439,SHA-EVID-01315,medium,candidate
+skyharbor-air,SHA-NODE-00440,control,SHA-02-00116 entity 0440,SHA-ENT-00440,SHA-EVID-01316,high,candidate
+skyharbor-air,SHA-NODE-00441,metric,SHA-02-00117 entity 0441,SHA-ENT-00441,SHA-EVID-01317,high,candidate
+skyharbor-air,SHA-NODE-00442,system,SHA-02-00118 entity 0442,SHA-ENT-00442,SHA-EVID-01318,medium,candidate
+skyharbor-air,SHA-NODE-00443,function,SHA-02-00119 entity 0443,SHA-ENT-00443,SHA-EVID-01319,medium,candidate
+skyharbor-air,SHA-NODE-00444,data_asset,SHA-02-00120 entity 0444,SHA-ENT-00444,SHA-EVID-01320,high,candidate
+skyharbor-air,SHA-NODE-00445,vendor,SHA-02-00121 entity 0445,SHA-ENT-00445,SHA-EVID-01321,high,candidate
+skyharbor-air,SHA-NODE-00446,program,SHA-02-00122 entity 0446,SHA-ENT-00446,SHA-EVID-01322,medium,candidate
+skyharbor-air,SHA-NODE-00447,control,SHA-02-00123 entity 0447,SHA-ENT-00447,SHA-EVID-01323,medium,candidate
+skyharbor-air,SHA-NODE-00448,metric,SHA-02-00124 entity 0448,SHA-ENT-00448,SHA-EVID-01324,high,candidate
+skyharbor-air,SHA-NODE-00449,system,SHA-02-00125 entity 0449,SHA-ENT-00449,SHA-EVID-01325,high,candidate
+skyharbor-air,SHA-NODE-00450,function,SHA-02-00126 entity 0450,SHA-ENT-00450,SHA-EVID-01326,medium,candidate
+skyharbor-air,SHA-NODE-00451,data_asset,SHA-02-00127 entity 0451,SHA-ENT-00451,SHA-EVID-01327,medium,candidate
+skyharbor-air,SHA-NODE-00452,vendor,SHA-02-00128 entity 0452,SHA-ENT-00452,SHA-EVID-01328,high,candidate
+skyharbor-air,SHA-NODE-00453,program,SHA-02-00129 entity 0453,SHA-ENT-00453,SHA-EVID-01329,high,candidate
+skyharbor-air,SHA-NODE-00454,control,SHA-02-00130 entity 0454,SHA-ENT-00454,SHA-EVID-01330,medium,candidate
+skyharbor-air,SHA-NODE-00455,metric,SHA-02-00131 entity 0455,SHA-ENT-00455,SHA-EVID-01331,medium,candidate
+skyharbor-air,SHA-NODE-00456,system,SHA-02-00132 entity 0456,SHA-ENT-00456,SHA-EVID-01332,high,candidate
+skyharbor-air,SHA-NODE-00457,function,SHA-02-00133 entity 0457,SHA-ENT-00457,SHA-EVID-01333,high,candidate
+skyharbor-air,SHA-NODE-00458,data_asset,SHA-02-00134 entity 0458,SHA-ENT-00458,SHA-EVID-01334,medium,candidate
+skyharbor-air,SHA-NODE-00459,vendor,SHA-02-00135 entity 0459,SHA-ENT-00459,SHA-EVID-01335,medium,candidate
+skyharbor-air,SHA-NODE-00460,program,SHA-02-00136 entity 0460,SHA-ENT-00460,SHA-EVID-01336,high,candidate
+skyharbor-air,SHA-NODE-00461,control,SHA-02-00137 entity 0461,SHA-ENT-00461,SHA-EVID-01337,high,candidate
+skyharbor-air,SHA-NODE-00462,metric,SHA-02-00138 entity 0462,SHA-ENT-00462,SHA-EVID-01338,medium,candidate
+skyharbor-air,SHA-NODE-00463,system,SHA-02-00139 entity 0463,SHA-ENT-00463,SHA-EVID-01339,medium,candidate
+skyharbor-air,SHA-NODE-00464,function,SHA-02-00140 entity 0464,SHA-ENT-00464,SHA-EVID-01340,high,candidate
+skyharbor-air,SHA-NODE-00465,data_asset,SHA-02-00141 entity 0465,SHA-ENT-00465,SHA-EVID-01341,high,candidate
+skyharbor-air,SHA-NODE-00466,vendor,SHA-02-00142 entity 0466,SHA-ENT-00466,SHA-EVID-01342,medium,candidate
+skyharbor-air,SHA-NODE-00467,program,SHA-02-00143 entity 0467,SHA-ENT-00467,SHA-EVID-01343,medium,candidate
+skyharbor-air,SHA-NODE-00468,control,SHA-02-00144 entity 0468,SHA-ENT-00468,SHA-EVID-01344,high,candidate
+skyharbor-air,SHA-NODE-00469,metric,SHA-02-00145 entity 0469,SHA-ENT-00469,SHA-EVID-01345,high,candidate
+skyharbor-air,SHA-NODE-00470,system,SHA-02-00146 entity 0470,SHA-ENT-00470,SHA-EVID-01346,medium,candidate
+skyharbor-air,SHA-NODE-00471,function,SHA-02-00147 entity 0471,SHA-ENT-00471,SHA-EVID-01347,medium,candidate
+skyharbor-air,SHA-NODE-00472,data_asset,SHA-02-00148 entity 0472,SHA-ENT-00472,SHA-EVID-01348,high,candidate
+skyharbor-air,SHA-NODE-00473,vendor,SHA-02-00149 entity 0473,SHA-ENT-00473,SHA-EVID-01349,high,candidate
+skyharbor-air,SHA-NODE-00474,program,SHA-02-00150 entity 0474,SHA-ENT-00474,SHA-EVID-01350,medium,candidate
+skyharbor-air,SHA-NODE-00475,control,SHA-02-00151 entity 0475,SHA-ENT-00475,SHA-EVID-01351,medium,candidate
+skyharbor-air,SHA-NODE-00476,metric,SHA-02-00152 entity 0476,SHA-ENT-00476,SHA-EVID-01352,high,candidate
+skyharbor-air,SHA-NODE-00477,system,SHA-02-00153 entity 0477,SHA-ENT-00477,SHA-EVID-01353,high,candidate
+skyharbor-air,SHA-NODE-00478,function,SHA-02-00154 entity 0478,SHA-ENT-00478,SHA-EVID-01354,medium,candidate
+skyharbor-air,SHA-NODE-00479,data_asset,SHA-02-00155 entity 0479,SHA-ENT-00479,SHA-EVID-01355,medium,candidate
+skyharbor-air,SHA-NODE-00480,vendor,SHA-02-00156 entity 0480,SHA-ENT-00480,SHA-EVID-01356,high,candidate
+skyharbor-air,SHA-NODE-00481,program,SHA-02-00157 entity 0481,SHA-ENT-00481,SHA-EVID-01357,high,candidate
+skyharbor-air,SHA-NODE-00482,control,SHA-02-00158 entity 0482,SHA-ENT-00482,SHA-EVID-01358,medium,candidate
+skyharbor-air,SHA-NODE-00483,metric,SHA-02-00159 entity 0483,SHA-ENT-00483,SHA-EVID-01359,medium,candidate
+skyharbor-air,SHA-NODE-00484,system,SHA-02-00160 entity 0484,SHA-ENT-00484,SHA-EVID-01360,high,candidate
+skyharbor-air,SHA-NODE-00485,function,SHA-02-00161 entity 0485,SHA-ENT-00485,SHA-EVID-01361,high,candidate
+skyharbor-air,SHA-NODE-00486,data_asset,SHA-02-00162 entity 0486,SHA-ENT-00486,SHA-EVID-01362,medium,candidate
+skyharbor-air,SHA-NODE-00487,vendor,SHA-02-00163 entity 0487,SHA-ENT-00487,SHA-EVID-01363,medium,candidate
+skyharbor-air,SHA-NODE-00488,program,SHA-02-00164 entity 0488,SHA-ENT-00488,SHA-EVID-01364,high,candidate
+skyharbor-air,SHA-NODE-00489,control,SHA-02-00165 entity 0489,SHA-ENT-00489,SHA-EVID-01365,high,candidate
+skyharbor-air,SHA-NODE-00490,metric,SHA-02-00166 entity 0490,SHA-ENT-00490,SHA-EVID-01366,medium,candidate
+skyharbor-air,SHA-NODE-00491,system,SHA-02-00167 entity 0491,SHA-ENT-00491,SHA-EVID-01367,medium,candidate
+skyharbor-air,SHA-NODE-00492,function,SHA-02-00168 entity 0492,SHA-ENT-00492,SHA-EVID-01368,high,candidate
+skyharbor-air,SHA-NODE-00493,data_asset,SHA-02-00169 entity 0493,SHA-ENT-00493,SHA-EVID-01369,high,candidate
+skyharbor-air,SHA-NODE-00494,vendor,SHA-02-00170 entity 0494,SHA-ENT-00494,SHA-EVID-01370,medium,candidate
+skyharbor-air,SHA-NODE-00495,program,SHA-02-00171 entity 0495,SHA-ENT-00495,SHA-EVID-01371,medium,candidate
+skyharbor-air,SHA-NODE-00496,control,SHA-02-00172 entity 0496,SHA-ENT-00496,SHA-EVID-01372,high,candidate
+skyharbor-air,SHA-NODE-00497,metric,SHA-02-00173 entity 0497,SHA-ENT-00497,SHA-EVID-01373,high,candidate
+skyharbor-air,SHA-NODE-00498,system,SHA-02-00174 entity 0498,SHA-ENT-00498,SHA-EVID-01374,medium,candidate
+skyharbor-air,SHA-NODE-00499,function,SHA-02-00175 entity 0499,SHA-ENT-00499,SHA-EVID-01375,medium,candidate
+skyharbor-air,SHA-NODE-00500,data_asset,SHA-02-00176 entity 0500,SHA-ENT-00500,SHA-EVID-01376,high,candidate
+skyharbor-air,SHA-NODE-00501,vendor,SHA-02-00177 entity 0501,SHA-ENT-00501,SHA-EVID-01377,high,candidate
+skyharbor-air,SHA-NODE-00502,program,SHA-02-00178 entity 0502,SHA-ENT-00502,SHA-EVID-01378,medium,candidate
+skyharbor-air,SHA-NODE-00503,control,SHA-02-00179 entity 0503,SHA-ENT-00503,SHA-EVID-01379,medium,candidate
+skyharbor-air,SHA-NODE-00504,metric,SHA-02-00180 entity 0504,SHA-ENT-00504,SHA-EVID-01380,high,candidate
+skyharbor-air,SHA-NODE-00505,system,SHA-02-00181 entity 0505,SHA-ENT-00505,SHA-EVID-01381,high,candidate
+skyharbor-air,SHA-NODE-00506,function,SHA-02-00182 entity 0506,SHA-ENT-00506,SHA-EVID-01382,medium,candidate
+skyharbor-air,SHA-NODE-00507,data_asset,SHA-02-00183 entity 0507,SHA-ENT-00507,SHA-EVID-01383,medium,candidate
+skyharbor-air,SHA-NODE-00508,vendor,SHA-02-00184 entity 0508,SHA-ENT-00508,SHA-EVID-01384,high,candidate
+skyharbor-air,SHA-NODE-00509,program,SHA-02-00185 entity 0509,SHA-ENT-00509,SHA-EVID-01385,high,candidate
+skyharbor-air,SHA-NODE-00510,control,SHA-02-00186 entity 0510,SHA-ENT-00510,SHA-EVID-01386,medium,candidate
+skyharbor-air,SHA-NODE-00511,metric,SHA-02-00187 entity 0511,SHA-ENT-00511,SHA-EVID-01387,medium,candidate
+skyharbor-air,SHA-NODE-00512,system,SHA-02-00188 entity 0512,SHA-ENT-00512,SHA-EVID-01388,high,candidate
+skyharbor-air,SHA-NODE-00513,function,SHA-02-00189 entity 0513,SHA-ENT-00513,SHA-EVID-01389,high,candidate
+skyharbor-air,SHA-NODE-00514,data_asset,SHA-02-00190 entity 0514,SHA-ENT-00514,SHA-EVID-01390,medium,candidate
+skyharbor-air,SHA-NODE-00515,vendor,SHA-02-00191 entity 0515,SHA-ENT-00515,SHA-EVID-01391,medium,candidate
+skyharbor-air,SHA-NODE-00516,program,SHA-02-00192 entity 0516,SHA-ENT-00516,SHA-EVID-01392,high,candidate
+skyharbor-air,SHA-NODE-00517,control,SHA-02-00193 entity 0517,SHA-ENT-00517,SHA-EVID-01393,high,candidate
+skyharbor-air,SHA-NODE-00518,metric,SHA-02-00194 entity 0518,SHA-ENT-00518,SHA-EVID-01394,medium,candidate
+skyharbor-air,SHA-NODE-00519,system,SHA-02-00195 entity 0519,SHA-ENT-00519,SHA-EVID-01395,medium,candidate
+skyharbor-air,SHA-NODE-00520,function,SHA-02-00196 entity 0520,SHA-ENT-00520,SHA-EVID-01396,high,candidate
+skyharbor-air,SHA-NODE-00521,data_asset,SHA-02-00197 entity 0521,SHA-ENT-00521,SHA-EVID-01397,high,candidate
+skyharbor-air,SHA-NODE-00522,vendor,SHA-02-00198 entity 0522,SHA-ENT-00522,SHA-EVID-01398,medium,candidate
+skyharbor-air,SHA-NODE-00523,program,SHA-02-00199 entity 0523,SHA-ENT-00523,SHA-EVID-01399,medium,candidate
+skyharbor-air,SHA-NODE-00524,control,SHA-02-00200 entity 0524,SHA-ENT-00524,SHA-EVID-01400,high,candidate
+skyharbor-air,SHA-NODE-00525,metric,SHA-02-00201 entity 0525,SHA-ENT-00525,SHA-EVID-01401,high,candidate
+skyharbor-air,SHA-NODE-00526,system,SHA-02-00202 entity 0526,SHA-ENT-00526,SHA-EVID-01402,medium,candidate
+skyharbor-air,SHA-NODE-00527,function,SHA-02-00203 entity 0527,SHA-ENT-00527,SHA-EVID-01403,medium,candidate
+skyharbor-air,SHA-NODE-00528,data_asset,SHA-02-00204 entity 0528,SHA-ENT-00528,SHA-EVID-01404,high,candidate
+skyharbor-air,SHA-NODE-00529,vendor,SHA-02-00205 entity 0529,SHA-ENT-00529,SHA-EVID-01405,high,candidate
+skyharbor-air,SHA-NODE-00530,program,SHA-02-00206 entity 0530,SHA-ENT-00530,SHA-EVID-01406,medium,candidate
+skyharbor-air,SHA-NODE-00531,control,SHA-02-00207 entity 0531,SHA-ENT-00531,SHA-EVID-01407,medium,candidate
+skyharbor-air,SHA-NODE-00532,metric,SHA-02-00208 entity 0532,SHA-ENT-00532,SHA-EVID-01408,high,candidate
+skyharbor-air,SHA-NODE-00533,system,SHA-02-00209 entity 0533,SHA-ENT-00533,SHA-EVID-01409,high,candidate
+skyharbor-air,SHA-NODE-00534,function,SHA-02-00210 entity 0534,SHA-ENT-00534,SHA-EVID-01410,medium,candidate
+skyharbor-air,SHA-NODE-00535,data_asset,SHA-02-00211 entity 0535,SHA-ENT-00535,SHA-EVID-01411,medium,candidate
+skyharbor-air,SHA-NODE-00536,vendor,SHA-02-00212 entity 0536,SHA-ENT-00536,SHA-EVID-01412,high,candidate
+skyharbor-air,SHA-NODE-00537,program,SHA-02-00213 entity 0537,SHA-ENT-00537,SHA-EVID-01413,high,candidate
+skyharbor-air,SHA-NODE-00538,control,SHA-02-00214 entity 0538,SHA-ENT-00538,SHA-EVID-01414,medium,candidate
+skyharbor-air,SHA-NODE-00539,metric,SHA-02-00215 entity 0539,SHA-ENT-00539,SHA-EVID-01415,medium,candidate
+skyharbor-air,SHA-NODE-00540,system,SHA-02-00216 entity 0540,SHA-ENT-00540,SHA-EVID-01416,high,candidate
+skyharbor-air,SHA-NODE-00541,function,SHA-02-00217 entity 0541,SHA-ENT-00541,SHA-EVID-01417,high,candidate
+skyharbor-air,SHA-NODE-00542,data_asset,SHA-02-00218 entity 0542,SHA-ENT-00542,SHA-EVID-01418,medium,candidate
+skyharbor-air,SHA-NODE-00543,vendor,SHA-02-00219 entity 0543,SHA-ENT-00543,SHA-EVID-01419,medium,candidate
+skyharbor-air,SHA-NODE-00544,program,SHA-02-00220 entity 0544,SHA-ENT-00544,SHA-EVID-01420,high,candidate
+skyharbor-air,SHA-NODE-00545,control,SHA-02-00221 entity 0545,SHA-ENT-00545,SHA-EVID-01421,high,candidate
+skyharbor-air,SHA-NODE-00546,metric,SHA-02-00222 entity 0546,SHA-ENT-00546,SHA-EVID-01422,medium,candidate
+skyharbor-air,SHA-NODE-00547,system,SHA-02-00223 entity 0547,SHA-ENT-00547,SHA-EVID-01423,medium,candidate
+skyharbor-air,SHA-NODE-00548,function,SHA-02-00224 entity 0548,SHA-ENT-00548,SHA-EVID-01424,high,candidate
+skyharbor-air,SHA-NODE-00549,data_asset,SHA-02-00225 entity 0549,SHA-ENT-00549,SHA-EVID-01425,high,candidate
+skyharbor-air,SHA-NODE-00550,vendor,SHA-02-00226 entity 0550,SHA-ENT-00550,SHA-EVID-01426,medium,candidate
+skyharbor-air,SHA-NODE-00551,program,SHA-02-00227 entity 0551,SHA-ENT-00551,SHA-EVID-01427,medium,candidate
+skyharbor-air,SHA-NODE-00552,control,SHA-02-00228 entity 0552,SHA-ENT-00552,SHA-EVID-01428,high,candidate
+skyharbor-air,SHA-NODE-00553,metric,SHA-02-00229 entity 0553,SHA-ENT-00553,SHA-EVID-01429,high,candidate
+skyharbor-air,SHA-NODE-00554,system,SHA-02-00230 entity 0554,SHA-ENT-00554,SHA-EVID-01430,medium,candidate
+skyharbor-air,SHA-NODE-00555,function,SHA-02-00231 entity 0555,SHA-ENT-00555,SHA-EVID-01431,medium,candidate
+skyharbor-air,SHA-NODE-00556,data_asset,SHA-02-00232 entity 0556,SHA-ENT-00556,SHA-EVID-01432,high,candidate
+skyharbor-air,SHA-NODE-00557,vendor,SHA-02-00233 entity 0557,SHA-ENT-00557,SHA-EVID-01433,high,candidate
+skyharbor-air,SHA-NODE-00558,program,SHA-02-00234 entity 0558,SHA-ENT-00558,SHA-EVID-01434,medium,candidate
+skyharbor-air,SHA-NODE-00559,control,SHA-02-00235 entity 0559,SHA-ENT-00559,SHA-EVID-01435,medium,candidate
+skyharbor-air,SHA-NODE-00560,metric,SHA-02-00236 entity 0560,SHA-ENT-00560,SHA-EVID-01436,high,candidate
+skyharbor-air,SHA-NODE-00561,system,SHA-02-00237 entity 0561,SHA-ENT-00561,SHA-EVID-01437,high,candidate
+skyharbor-air,SHA-NODE-00562,function,SHA-02-00238 entity 0562,SHA-ENT-00562,SHA-EVID-01438,medium,candidate
+skyharbor-air,SHA-NODE-00563,data_asset,SHA-02-00239 entity 0563,SHA-ENT-00563,SHA-EVID-01439,medium,candidate
+skyharbor-air,SHA-NODE-00564,vendor,SHA-02-00240 entity 0564,SHA-ENT-00564,SHA-EVID-01440,high,candidate
+skyharbor-air,SHA-NODE-00565,program,SHA-02-00241 entity 0565,SHA-ENT-00565,SHA-EVID-01441,high,candidate
+skyharbor-air,SHA-NODE-00566,control,SHA-02-00242 entity 0566,SHA-ENT-00566,SHA-EVID-01442,medium,candidate
+skyharbor-air,SHA-NODE-00567,metric,SHA-02-00243 entity 0567,SHA-ENT-00567,SHA-EVID-01443,medium,candidate
+skyharbor-air,SHA-NODE-00568,system,SHA-02-00244 entity 0568,SHA-ENT-00568,SHA-EVID-01444,high,candidate
+skyharbor-air,SHA-NODE-00569,function,SHA-02-00245 entity 0569,SHA-ENT-00569,SHA-EVID-01445,high,candidate
+skyharbor-air,SHA-NODE-00570,data_asset,SHA-02-00246 entity 0570,SHA-ENT-00570,SHA-EVID-01446,medium,candidate
+skyharbor-air,SHA-NODE-00571,vendor,SHA-02-00247 entity 0571,SHA-ENT-00571,SHA-EVID-01447,medium,candidate
+skyharbor-air,SHA-NODE-00572,program,SHA-02-00248 entity 0572,SHA-ENT-00572,SHA-EVID-01448,high,candidate
+skyharbor-air,SHA-NODE-00573,control,SHA-02-00249 entity 0573,SHA-ENT-00573,SHA-EVID-01449,high,candidate
+skyharbor-air,SHA-NODE-00574,metric,SHA-02-00250 entity 0574,SHA-ENT-00574,SHA-EVID-01450,medium,candidate
+skyharbor-air,SHA-NODE-00575,system,SHA-02-00251 entity 0575,SHA-ENT-00575,SHA-EVID-01451,medium,candidate
+skyharbor-air,SHA-NODE-00576,function,SHA-02-00252 entity 0576,SHA-ENT-00576,SHA-EVID-01452,high,candidate
+skyharbor-air,SHA-NODE-00577,data_asset,SHA-02-00253 entity 0577,SHA-ENT-00577,SHA-EVID-01453,high,candidate
+skyharbor-air,SHA-NODE-00578,vendor,SHA-02-00254 entity 0578,SHA-ENT-00578,SHA-EVID-01454,medium,candidate
+skyharbor-air,SHA-NODE-00579,program,SHA-02-00255 entity 0579,SHA-ENT-00579,SHA-EVID-01455,medium,candidate
+skyharbor-air,SHA-NODE-00580,control,SHA-02-00256 entity 0580,SHA-ENT-00580,SHA-EVID-01456,high,candidate
+skyharbor-air,SHA-NODE-00581,metric,SHA-02-00257 entity 0581,SHA-ENT-00581,SHA-EVID-01457,high,candidate
+skyharbor-air,SHA-NODE-00582,system,SHA-02-00258 entity 0582,SHA-ENT-00582,SHA-EVID-01458,medium,candidate
+skyharbor-air,SHA-NODE-00583,function,SHA-02-00259 entity 0583,SHA-ENT-00583,SHA-EVID-01459,medium,candidate
+skyharbor-air,SHA-NODE-00584,data_asset,SHA-02-00260 entity 0584,SHA-ENT-00584,SHA-EVID-01460,high,candidate
+skyharbor-air,SHA-NODE-00585,vendor,flight operations capability 001 entity 0585,SHA-ENT-00585,SHA-EVID-01801,high,candidate
+skyharbor-air,SHA-NODE-00586,program,operations control center capability 002 entity 0586,SHA-ENT-00586,SHA-EVID-01802,medium,candidate
+skyharbor-air,SHA-NODE-00587,control,airport operations capability 003 entity 0587,SHA-ENT-00587,SHA-EVID-01803,medium,candidate
+skyharbor-air,SHA-NODE-00588,metric,customer service capability 004 entity 0588,SHA-ENT-00588,SHA-EVID-01804,high,candidate
+skyharbor-air,SHA-NODE-00589,system,loyalty capability 005 entity 0589,SHA-ENT-00589,SHA-EVID-01805,high,candidate
+skyharbor-air,SHA-NODE-00590,function,revenue management capability 006 entity 0590,SHA-ENT-00590,SHA-EVID-01806,medium,candidate
+skyharbor-air,SHA-NODE-00591,data_asset,network planning capability 007 entity 0591,SHA-ENT-00591,SHA-EVID-01807,medium,candidate
+skyharbor-air,SHA-NODE-00592,vendor,crew scheduling capability 008 entity 0592,SHA-ENT-00592,SHA-EVID-01808,high,candidate
+skyharbor-air,SHA-NODE-00593,program,maintenance engineering capability 009 entity 0593,SHA-ENT-00593,SHA-EVID-01809,high,candidate
+skyharbor-air,SHA-NODE-00594,control,cargo operations capability 010 entity 0594,SHA-ENT-00594,SHA-EVID-01810,medium,candidate
+skyharbor-air,SHA-NODE-00595,metric,digital ecommerce capability 011 entity 0595,SHA-ENT-00595,SHA-EVID-01811,medium,candidate
+skyharbor-air,SHA-NODE-00596,system,safety and security capability 012 entity 0596,SHA-ENT-00596,SHA-EVID-01812,high,candidate
+skyharbor-air,SHA-NODE-00597,function,finance capability 013 entity 0597,SHA-ENT-00597,SHA-EVID-01813,high,candidate
+skyharbor-air,SHA-NODE-00598,data_asset,procurement capability 014 entity 0598,SHA-ENT-00598,SHA-EVID-01814,medium,candidate
+skyharbor-air,SHA-NODE-00599,vendor,HR and workforce capability 015 entity 0599,SHA-ENT-00599,SHA-EVID-01815,medium,candidate
+skyharbor-air,SHA-NODE-00600,program,data and analytics capability 016 entity 0600,SHA-ENT-00600,SHA-EVID-01816,high,candidate
+skyharbor-air,SHA-NODE-00601,control,platform engineering capability 017 entity 0601,SHA-ENT-00601,SHA-EVID-01817,high,candidate
+skyharbor-air,SHA-NODE-00602,metric,baggage operations capability 018 entity 0602,SHA-ENT-00602,SHA-EVID-01818,medium,candidate
+skyharbor-air,SHA-NODE-00603,system,flight operations capability 019 entity 0603,SHA-ENT-00603,SHA-EVID-01819,medium,candidate
+skyharbor-air,SHA-NODE-00604,function,operations control center capability 020 entity 0604,SHA-ENT-00604,SHA-EVID-01820,high,candidate
+skyharbor-air,SHA-NODE-00605,data_asset,airport operations capability 021 entity 0605,SHA-ENT-00605,SHA-EVID-01821,high,candidate
+skyharbor-air,SHA-NODE-00606,vendor,customer service capability 022 entity 0606,SHA-ENT-00606,SHA-EVID-01822,medium,candidate
+skyharbor-air,SHA-NODE-00607,program,loyalty capability 023 entity 0607,SHA-ENT-00607,SHA-EVID-01823,medium,candidate
+skyharbor-air,SHA-NODE-00608,control,revenue management capability 024 entity 0608,SHA-ENT-00608,SHA-EVID-01824,high,candidate
+skyharbor-air,SHA-NODE-00609,metric,network planning capability 025 entity 0609,SHA-ENT-00609,SHA-EVID-01825,high,candidate
+skyharbor-air,SHA-NODE-00610,system,crew scheduling capability 026 entity 0610,SHA-ENT-00610,SHA-EVID-01826,medium,candidate
+skyharbor-air,SHA-NODE-00611,function,maintenance engineering capability 027 entity 0611,SHA-ENT-00611,SHA-EVID-01827,medium,candidate
+skyharbor-air,SHA-NODE-00612,data_asset,cargo operations capability 028 entity 0612,SHA-ENT-00612,SHA-EVID-01828,high,candidate
+skyharbor-air,SHA-NODE-00613,vendor,digital ecommerce capability 029 entity 0613,SHA-ENT-00613,SHA-EVID-01829,high,candidate
+skyharbor-air,SHA-NODE-00614,program,safety and security capability 030 entity 0614,SHA-ENT-00614,SHA-EVID-01830,medium,candidate
+skyharbor-air,SHA-NODE-00615,control,finance capability 031 entity 0615,SHA-ENT-00615,SHA-EVID-01831,medium,candidate
+skyharbor-air,SHA-NODE-00616,metric,procurement capability 032 entity 0616,SHA-ENT-00616,SHA-EVID-01832,high,candidate
+skyharbor-air,SHA-NODE-00617,system,HR and workforce capability 033 entity 0617,SHA-ENT-00617,SHA-EVID-01833,high,candidate
+skyharbor-air,SHA-NODE-00618,function,data and analytics capability 034 entity 0618,SHA-ENT-00618,SHA-EVID-01834,medium,candidate
+skyharbor-air,SHA-NODE-00619,data_asset,platform engineering capability 035 entity 0619,SHA-ENT-00619,SHA-EVID-01835,medium,candidate
+skyharbor-air,SHA-NODE-00620,vendor,baggage operations capability 036 entity 0620,SHA-ENT-00620,SHA-EVID-01836,high,candidate
+skyharbor-air,SHA-NODE-00621,program,flight operations capability 037 entity 0621,SHA-ENT-00621,SHA-EVID-01837,high,candidate
+skyharbor-air,SHA-NODE-00622,control,operations control center capability 038 entity 0622,SHA-ENT-00622,SHA-EVID-01838,medium,candidate
+skyharbor-air,SHA-NODE-00623,metric,airport operations capability 039 entity 0623,SHA-ENT-00623,SHA-EVID-01839,medium,candidate
+skyharbor-air,SHA-NODE-00624,system,customer service capability 040 entity 0624,SHA-ENT-00624,SHA-EVID-01840,high,candidate
+skyharbor-air,SHA-NODE-00625,function,loyalty capability 041 entity 0625,SHA-ENT-00625,SHA-EVID-01841,high,candidate
+skyharbor-air,SHA-NODE-00626,data_asset,revenue management capability 042 entity 0626,SHA-ENT-00626,SHA-EVID-01842,medium,candidate
+skyharbor-air,SHA-NODE-00627,vendor,network planning capability 043 entity 0627,SHA-ENT-00627,SHA-EVID-01843,medium,candidate
+skyharbor-air,SHA-NODE-00628,program,crew scheduling capability 044 entity 0628,SHA-ENT-00628,SHA-EVID-01844,high,candidate
+skyharbor-air,SHA-NODE-00629,control,maintenance engineering capability 045 entity 0629,SHA-ENT-00629,SHA-EVID-01845,high,candidate
+skyharbor-air,SHA-NODE-00630,metric,cargo operations capability 046 entity 0630,SHA-ENT-00630,SHA-EVID-01846,medium,candidate
+skyharbor-air,SHA-NODE-00631,system,digital ecommerce capability 047 entity 0631,SHA-ENT-00631,SHA-EVID-01847,medium,candidate
+skyharbor-air,SHA-NODE-00632,function,safety and security capability 048 entity 0632,SHA-ENT-00632,SHA-EVID-01848,high,candidate
+skyharbor-air,SHA-NODE-00633,data_asset,finance capability 049 entity 0633,SHA-ENT-00633,SHA-EVID-01849,high,candidate
+skyharbor-air,SHA-NODE-00634,vendor,procurement capability 050 entity 0634,SHA-ENT-00634,SHA-EVID-01850,medium,candidate
+skyharbor-air,SHA-NODE-00635,program,HR and workforce capability 051 entity 0635,SHA-ENT-00635,SHA-EVID-01851,medium,candidate
+skyharbor-air,SHA-NODE-00636,control,data and analytics capability 052 entity 0636,SHA-ENT-00636,SHA-EVID-01852,high,candidate
+skyharbor-air,SHA-NODE-00637,metric,platform engineering capability 053 entity 0637,SHA-ENT-00637,SHA-EVID-01853,high,candidate
+skyharbor-air,SHA-NODE-00638,system,baggage operations capability 054 entity 0638,SHA-ENT-00638,SHA-EVID-01854,medium,candidate
+skyharbor-air,SHA-NODE-00639,function,flight operations capability 055 entity 0639,SHA-ENT-00639,SHA-EVID-01855,medium,candidate
+skyharbor-air,SHA-NODE-00640,data_asset,operations control center capability 056 entity 0640,SHA-ENT-00640,SHA-EVID-01856,high,candidate
+skyharbor-air,SHA-NODE-00641,vendor,airport operations capability 057 entity 0641,SHA-ENT-00641,SHA-EVID-01857,high,candidate
+skyharbor-air,SHA-NODE-00642,program,customer service capability 058 entity 0642,SHA-ENT-00642,SHA-EVID-01858,medium,candidate
+skyharbor-air,SHA-NODE-00643,control,loyalty capability 059 entity 0643,SHA-ENT-00643,SHA-EVID-01859,medium,candidate
+skyharbor-air,SHA-NODE-00644,metric,revenue management capability 060 entity 0644,SHA-ENT-00644,SHA-EVID-01860,high,candidate
+skyharbor-air,SHA-NODE-00645,system,network planning capability 061 entity 0645,SHA-ENT-00645,SHA-EVID-01861,high,candidate
+skyharbor-air,SHA-NODE-00646,function,crew scheduling capability 062 entity 0646,SHA-ENT-00646,SHA-EVID-01862,medium,candidate
+skyharbor-air,SHA-NODE-00647,data_asset,maintenance engineering capability 063 entity 0647,SHA-ENT-00647,SHA-EVID-01863,medium,candidate
+skyharbor-air,SHA-NODE-00648,vendor,cargo operations capability 064 entity 0648,SHA-ENT-00648,SHA-EVID-01864,high,candidate
+skyharbor-air,SHA-NODE-00649,program,digital ecommerce capability 065 entity 0649,SHA-ENT-00649,SHA-EVID-01865,high,candidate
+skyharbor-air,SHA-NODE-00650,control,safety and security capability 066 entity 0650,SHA-ENT-00650,SHA-EVID-01866,medium,candidate
+skyharbor-air,SHA-NODE-00651,metric,finance capability 067 entity 0651,SHA-ENT-00651,SHA-EVID-01867,medium,candidate
+skyharbor-air,SHA-NODE-00652,system,procurement capability 068 entity 0652,SHA-ENT-00652,SHA-EVID-01868,high,candidate
+skyharbor-air,SHA-NODE-00653,function,HR and workforce capability 069 entity 0653,SHA-ENT-00653,SHA-EVID-01869,high,candidate
+skyharbor-air,SHA-NODE-00654,data_asset,data and analytics capability 070 entity 0654,SHA-ENT-00654,SHA-EVID-01870,medium,candidate
+skyharbor-air,SHA-NODE-00655,vendor,platform engineering capability 071 entity 0655,SHA-ENT-00655,SHA-EVID-01871,medium,candidate
+skyharbor-air,SHA-NODE-00656,program,baggage operations capability 072 entity 0656,SHA-ENT-00656,SHA-EVID-01872,high,candidate
+skyharbor-air,SHA-NODE-00657,control,flight operations capability 073 entity 0657,SHA-ENT-00657,SHA-EVID-01873,high,candidate
+skyharbor-air,SHA-NODE-00658,metric,operations control center capability 074 entity 0658,SHA-ENT-00658,SHA-EVID-01874,medium,candidate
+skyharbor-air,SHA-NODE-00659,system,airport operations capability 075 entity 0659,SHA-ENT-00659,SHA-EVID-01875,medium,candidate
+skyharbor-air,SHA-NODE-00660,function,customer service capability 076 entity 0660,SHA-ENT-00660,SHA-EVID-01876,high,candidate
+skyharbor-air,SHA-NODE-00661,data_asset,loyalty capability 077 entity 0661,SHA-ENT-00661,SHA-EVID-01877,high,candidate
+skyharbor-air,SHA-NODE-00662,vendor,revenue management capability 078 entity 0662,SHA-ENT-00662,SHA-EVID-01878,medium,candidate
+skyharbor-air,SHA-NODE-00663,program,network planning capability 079 entity 0663,SHA-ENT-00663,SHA-EVID-01879,medium,candidate
+skyharbor-air,SHA-NODE-00664,control,crew scheduling capability 080 entity 0664,SHA-ENT-00664,SHA-EVID-01880,high,candidate
+skyharbor-air,SHA-NODE-00665,metric,maintenance engineering capability 081 entity 0665,SHA-ENT-00665,SHA-EVID-01881,high,candidate
+skyharbor-air,SHA-NODE-00666,system,cargo operations capability 082 entity 0666,SHA-ENT-00666,SHA-EVID-01882,medium,candidate
+skyharbor-air,SHA-NODE-00667,function,digital ecommerce capability 083 entity 0667,SHA-ENT-00667,SHA-EVID-01883,medium,candidate
+skyharbor-air,SHA-NODE-00668,data_asset,safety and security capability 084 entity 0668,SHA-ENT-00668,SHA-EVID-01884,high,candidate
+skyharbor-air,SHA-NODE-00669,vendor,finance capability 085 entity 0669,SHA-ENT-00669,SHA-EVID-01885,high,candidate
+skyharbor-air,SHA-NODE-00670,program,procurement capability 086 entity 0670,SHA-ENT-00670,SHA-EVID-01886,medium,candidate
+skyharbor-air,SHA-NODE-00671,control,HR and workforce capability 087 entity 0671,SHA-ENT-00671,SHA-EVID-01887,medium,candidate
+skyharbor-air,SHA-NODE-00672,metric,data and analytics capability 088 entity 0672,SHA-ENT-00672,SHA-EVID-01888,high,candidate
+skyharbor-air,SHA-NODE-00673,system,platform engineering capability 089 entity 0673,SHA-ENT-00673,SHA-EVID-01889,high,candidate
+skyharbor-air,SHA-NODE-00674,function,baggage operations capability 090 entity 0674,SHA-ENT-00674,SHA-EVID-01890,medium,candidate
+skyharbor-air,SHA-NODE-00675,data_asset,flight operations capability 091 entity 0675,SHA-ENT-00675,SHA-EVID-01891,medium,candidate
+skyharbor-air,SHA-NODE-00676,vendor,operations control center capability 092 entity 0676,SHA-ENT-00676,SHA-EVID-01892,high,candidate
+skyharbor-air,SHA-NODE-00677,program,airport operations capability 093 entity 0677,SHA-ENT-00677,SHA-EVID-01893,high,candidate
+skyharbor-air,SHA-NODE-00678,control,customer service capability 094 entity 0678,SHA-ENT-00678,SHA-EVID-01894,medium,candidate
+skyharbor-air,SHA-NODE-00679,metric,loyalty capability 095 entity 0679,SHA-ENT-00679,SHA-EVID-01895,medium,candidate
+skyharbor-air,SHA-NODE-00680,system,revenue management capability 096 entity 0680,SHA-ENT-00680,SHA-EVID-01896,high,candidate
+skyharbor-air,SHA-NODE-00681,function,network planning capability 097 entity 0681,SHA-ENT-00681,SHA-EVID-01897,high,candidate
+skyharbor-air,SHA-NODE-00682,data_asset,crew scheduling capability 098 entity 0682,SHA-ENT-00682,SHA-EVID-01898,medium,candidate
+skyharbor-air,SHA-NODE-00683,vendor,maintenance engineering capability 099 entity 0683,SHA-ENT-00683,SHA-EVID-01899,medium,candidate
+skyharbor-air,SHA-NODE-00684,program,cargo operations capability 100 entity 0684,SHA-ENT-00684,SHA-EVID-01900,high,candidate
+skyharbor-air,SHA-NODE-00685,control,digital ecommerce capability 101 entity 0685,SHA-ENT-00685,SHA-EVID-01901,high,candidate
+skyharbor-air,SHA-NODE-00686,metric,safety and security capability 102 entity 0686,SHA-ENT-00686,SHA-EVID-01902,medium,candidate
+skyharbor-air,SHA-NODE-00687,system,finance capability 103 entity 0687,SHA-ENT-00687,SHA-EVID-01903,medium,candidate
+skyharbor-air,SHA-NODE-00688,function,procurement capability 104 entity 0688,SHA-ENT-00688,SHA-EVID-01904,high,candidate
+skyharbor-air,SHA-NODE-00689,data_asset,HR and workforce capability 105 entity 0689,SHA-ENT-00689,SHA-EVID-01905,high,candidate
+skyharbor-air,SHA-NODE-00690,vendor,data and analytics capability 106 entity 0690,SHA-ENT-00690,SHA-EVID-01906,medium,candidate
+skyharbor-air,SHA-NODE-00691,program,platform engineering capability 107 entity 0691,SHA-ENT-00691,SHA-EVID-01907,medium,candidate
+skyharbor-air,SHA-NODE-00692,control,baggage operations capability 108 entity 0692,SHA-ENT-00692,SHA-EVID-01908,high,candidate
+skyharbor-air,SHA-NODE-00693,metric,flight operations capability 109 entity 0693,SHA-ENT-00693,SHA-EVID-01909,high,candidate
+skyharbor-air,SHA-NODE-00694,system,operations control center capability 110 entity 0694,SHA-ENT-00694,SHA-EVID-01910,medium,candidate
+skyharbor-air,SHA-NODE-00695,function,airport operations capability 111 entity 0695,SHA-ENT-00695,SHA-EVID-01911,medium,candidate
+skyharbor-air,SHA-NODE-00696,data_asset,customer service capability 112 entity 0696,SHA-ENT-00696,SHA-EVID-01912,high,candidate
+skyharbor-air,SHA-NODE-00697,vendor,loyalty capability 113 entity 0697,SHA-ENT-00697,SHA-EVID-01913,high,candidate
+skyharbor-air,SHA-NODE-00698,program,revenue management capability 114 entity 0698,SHA-ENT-00698,SHA-EVID-01914,medium,candidate
+skyharbor-air,SHA-NODE-00699,control,network planning capability 115 entity 0699,SHA-ENT-00699,SHA-EVID-01915,medium,candidate
+skyharbor-air,SHA-NODE-00700,metric,crew scheduling capability 116 entity 0700,SHA-ENT-00700,SHA-EVID-01916,high,candidate
+skyharbor-air,SHA-NODE-00701,system,maintenance engineering capability 117 entity 0701,SHA-ENT-00701,SHA-EVID-01917,high,candidate
+skyharbor-air,SHA-NODE-00702,function,cargo operations capability 118 entity 0702,SHA-ENT-00702,SHA-EVID-01918,medium,candidate
+skyharbor-air,SHA-NODE-00703,data_asset,digital ecommerce capability 119 entity 0703,SHA-ENT-00703,SHA-EVID-01919,medium,candidate
+skyharbor-air,SHA-NODE-00704,vendor,safety and security capability 120 entity 0704,SHA-ENT-00704,SHA-EVID-01920,high,candidate
+skyharbor-air,SHA-NODE-00705,program,finance capability 121 entity 0705,SHA-ENT-00705,SHA-EVID-01921,high,candidate
+skyharbor-air,SHA-NODE-00706,control,procurement capability 122 entity 0706,SHA-ENT-00706,SHA-EVID-01922,medium,candidate
+skyharbor-air,SHA-NODE-00707,metric,HR and workforce capability 123 entity 0707,SHA-ENT-00707,SHA-EVID-01923,medium,candidate
+skyharbor-air,SHA-NODE-00708,system,data and analytics capability 124 entity 0708,SHA-ENT-00708,SHA-EVID-01924,high,candidate
+skyharbor-air,SHA-NODE-00709,function,platform engineering capability 125 entity 0709,SHA-ENT-00709,SHA-EVID-01925,high,candidate
+skyharbor-air,SHA-NODE-00710,data_asset,baggage operations capability 126 entity 0710,SHA-ENT-00710,SHA-EVID-01926,medium,candidate
+skyharbor-air,SHA-NODE-00711,vendor,flight operations capability 127 entity 0711,SHA-ENT-00711,SHA-EVID-01927,medium,candidate
+skyharbor-air,SHA-NODE-00712,program,operations control center capability 128 entity 0712,SHA-ENT-00712,SHA-EVID-01928,high,candidate
+skyharbor-air,SHA-NODE-00713,control,airport operations capability 129 entity 0713,SHA-ENT-00713,SHA-EVID-01929,high,candidate
+skyharbor-air,SHA-NODE-00714,metric,customer service capability 130 entity 0714,SHA-ENT-00714,SHA-EVID-01930,medium,candidate
+skyharbor-air,SHA-NODE-00715,system,loyalty capability 131 entity 0715,SHA-ENT-00715,SHA-EVID-01931,medium,candidate
+skyharbor-air,SHA-NODE-00716,function,revenue management capability 132 entity 0716,SHA-ENT-00716,SHA-EVID-01932,high,candidate
+skyharbor-air,SHA-NODE-00717,data_asset,network planning capability 133 entity 0717,SHA-ENT-00717,SHA-EVID-01933,high,candidate
+skyharbor-air,SHA-NODE-00718,vendor,crew scheduling capability 134 entity 0718,SHA-ENT-00718,SHA-EVID-01934,medium,candidate
+skyharbor-air,SHA-NODE-00719,program,maintenance engineering capability 135 entity 0719,SHA-ENT-00719,SHA-EVID-01935,medium,candidate
+skyharbor-air,SHA-NODE-00720,control,cargo operations capability 136 entity 0720,SHA-ENT-00720,SHA-EVID-01936,high,candidate
+skyharbor-air,SHA-NODE-00721,metric,digital ecommerce capability 137 entity 0721,SHA-ENT-00721,SHA-EVID-01937,high,candidate
+skyharbor-air,SHA-NODE-00722,system,safety and security capability 138 entity 0722,SHA-ENT-00722,SHA-EVID-01938,medium,candidate
+skyharbor-air,SHA-NODE-00723,function,finance capability 139 entity 0723,SHA-ENT-00723,SHA-EVID-01939,medium,candidate
+skyharbor-air,SHA-NODE-00724,data_asset,procurement capability 140 entity 0724,SHA-ENT-00724,SHA-EVID-01940,high,candidate
+skyharbor-air,SHA-NODE-00725,vendor,HR and workforce capability 141 entity 0725,SHA-ENT-00725,SHA-EVID-01941,high,candidate
+skyharbor-air,SHA-NODE-00726,program,data and analytics capability 142 entity 0726,SHA-ENT-00726,SHA-EVID-01942,medium,candidate
+skyharbor-air,SHA-NODE-00727,control,platform engineering capability 143 entity 0727,SHA-ENT-00727,SHA-EVID-01943,medium,candidate
+skyharbor-air,SHA-NODE-00728,metric,baggage operations capability 144 entity 0728,SHA-ENT-00728,SHA-EVID-01944,high,candidate
+skyharbor-air,SHA-NODE-00729,system,flight operations capability 145 entity 0729,SHA-ENT-00729,SHA-EVID-01945,high,candidate
+skyharbor-air,SHA-NODE-00730,function,operations control center capability 146 entity 0730,SHA-ENT-00730,SHA-EVID-01946,medium,candidate
+skyharbor-air,SHA-NODE-00731,data_asset,airport operations capability 147 entity 0731,SHA-ENT-00731,SHA-EVID-01947,medium,candidate
+skyharbor-air,SHA-NODE-00732,vendor,customer service capability 148 entity 0732,SHA-ENT-00732,SHA-EVID-01948,high,candidate
+skyharbor-air,SHA-NODE-00733,program,loyalty capability 149 entity 0733,SHA-ENT-00733,SHA-EVID-01949,high,candidate
+skyharbor-air,SHA-NODE-00734,control,revenue management capability 150 entity 0734,SHA-ENT-00734,SHA-EVID-01950,medium,candidate
+skyharbor-air,SHA-NODE-00735,metric,network planning capability 151 entity 0735,SHA-ENT-00735,SHA-EVID-01951,medium,candidate
+skyharbor-air,SHA-NODE-00736,system,crew scheduling capability 152 entity 0736,SHA-ENT-00736,SHA-EVID-01952,high,candidate
+skyharbor-air,SHA-NODE-00737,function,maintenance engineering capability 153 entity 0737,SHA-ENT-00737,SHA-EVID-01953,high,candidate
+skyharbor-air,SHA-NODE-00738,data_asset,cargo operations capability 154 entity 0738,SHA-ENT-00738,SHA-EVID-01954,medium,candidate
+skyharbor-air,SHA-NODE-00739,vendor,digital ecommerce capability 155 entity 0739,SHA-ENT-00739,SHA-EVID-01955,medium,candidate
+skyharbor-air,SHA-NODE-00740,program,safety and security capability 156 entity 0740,SHA-ENT-00740,SHA-EVID-01956,high,candidate
+skyharbor-air,SHA-NODE-00741,control,finance capability 157 entity 0741,SHA-ENT-00741,SHA-EVID-01957,high,candidate
+skyharbor-air,SHA-NODE-00742,metric,procurement capability 158 entity 0742,SHA-ENT-00742,SHA-EVID-01958,medium,candidate
+skyharbor-air,SHA-NODE-00743,system,HR and workforce capability 159 entity 0743,SHA-ENT-00743,SHA-EVID-01959,medium,candidate
+skyharbor-air,SHA-NODE-00744,function,data and analytics capability 160 entity 0744,SHA-ENT-00744,SHA-EVID-01960,high,candidate
+skyharbor-air,SHA-NODE-00745,data_asset,platform engineering capability 161 entity 0745,SHA-ENT-00745,SHA-EVID-01961,high,candidate
+skyharbor-air,SHA-NODE-00746,vendor,baggage operations capability 162 entity 0746,SHA-ENT-00746,SHA-EVID-01962,medium,candidate
+skyharbor-air,SHA-NODE-00747,program,flight operations capability 163 entity 0747,SHA-ENT-00747,SHA-EVID-01963,medium,candidate
+skyharbor-air,SHA-NODE-00748,control,operations control center capability 164 entity 0748,SHA-ENT-00748,SHA-EVID-01964,high,candidate
+skyharbor-air,SHA-NODE-00749,metric,airport operations capability 165 entity 0749,SHA-ENT-00749,SHA-EVID-01965,high,candidate
+skyharbor-air,SHA-NODE-00750,system,customer service capability 166 entity 0750,SHA-ENT-00750,SHA-EVID-01966,medium,candidate
+skyharbor-air,SHA-NODE-00751,function,loyalty capability 167 entity 0751,SHA-ENT-00751,SHA-EVID-01967,medium,candidate
+skyharbor-air,SHA-NODE-00752,data_asset,revenue management capability 168 entity 0752,SHA-ENT-00752,SHA-EVID-01968,high,candidate
+skyharbor-air,SHA-NODE-00753,vendor,network planning capability 169 entity 0753,SHA-ENT-00753,SHA-EVID-01969,high,candidate
+skyharbor-air,SHA-NODE-00754,program,crew scheduling capability 170 entity 0754,SHA-ENT-00754,SHA-EVID-01970,medium,candidate
+skyharbor-air,SHA-NODE-00755,control,maintenance engineering capability 171 entity 0755,SHA-ENT-00755,SHA-EVID-01971,medium,candidate
+skyharbor-air,SHA-NODE-00756,metric,cargo operations capability 172 entity 0756,SHA-ENT-00756,SHA-EVID-01972,high,candidate
+skyharbor-air,SHA-NODE-00757,system,digital ecommerce capability 173 entity 0757,SHA-ENT-00757,SHA-EVID-01973,high,candidate
+skyharbor-air,SHA-NODE-00758,function,safety and security capability 174 entity 0758,SHA-ENT-00758,SHA-EVID-01974,medium,candidate
+skyharbor-air,SHA-NODE-00759,data_asset,finance capability 175 entity 0759,SHA-ENT-00759,SHA-EVID-01975,medium,candidate
+skyharbor-air,SHA-NODE-00760,vendor,procurement capability 176 entity 0760,SHA-ENT-00760,SHA-EVID-01976,high,candidate
+skyharbor-air,SHA-NODE-00761,program,HR and workforce capability 177 entity 0761,SHA-ENT-00761,SHA-EVID-01977,high,candidate
+skyharbor-air,SHA-NODE-00762,control,data and analytics capability 178 entity 0762,SHA-ENT-00762,SHA-EVID-01978,medium,candidate
+skyharbor-air,SHA-NODE-00763,metric,platform engineering capability 179 entity 0763,SHA-ENT-00763,SHA-EVID-01979,medium,candidate
+skyharbor-air,SHA-NODE-00764,system,baggage operations capability 180 entity 0764,SHA-ENT-00764,SHA-EVID-01980,high,candidate
+skyharbor-air,SHA-NODE-00765,function,flight operations capability 181 entity 0765,SHA-ENT-00765,SHA-EVID-01981,high,candidate
+skyharbor-air,SHA-NODE-00766,data_asset,operations control center capability 182 entity 0766,SHA-ENT-00766,SHA-EVID-01982,medium,candidate
+skyharbor-air,SHA-NODE-00767,vendor,airport operations capability 183 entity 0767,SHA-ENT-00767,SHA-EVID-01983,medium,candidate
+skyharbor-air,SHA-NODE-00768,program,customer service capability 184 entity 0768,SHA-ENT-00768,SHA-EVID-01984,high,candidate
+skyharbor-air,SHA-NODE-00769,control,loyalty capability 185 entity 0769,SHA-ENT-00769,SHA-EVID-01985,high,candidate
+skyharbor-air,SHA-NODE-00770,metric,revenue management capability 186 entity 0770,SHA-ENT-00770,SHA-EVID-01986,medium,candidate
+skyharbor-air,SHA-NODE-00771,system,network planning capability 187 entity 0771,SHA-ENT-00771,SHA-EVID-01987,medium,candidate
+skyharbor-air,SHA-NODE-00772,function,crew scheduling capability 188 entity 0772,SHA-ENT-00772,SHA-EVID-01988,high,candidate
+skyharbor-air,SHA-NODE-00773,data_asset,maintenance engineering capability 189 entity 0773,SHA-ENT-00773,SHA-EVID-01989,high,candidate
+skyharbor-air,SHA-NODE-00774,vendor,cargo operations capability 190 entity 0774,SHA-ENT-00774,SHA-EVID-01990,medium,candidate
+skyharbor-air,SHA-NODE-00775,program,digital ecommerce capability 191 entity 0775,SHA-ENT-00775,SHA-EVID-01991,medium,candidate
+skyharbor-air,SHA-NODE-00776,control,safety and security capability 192 entity 0776,SHA-ENT-00776,SHA-EVID-01992,high,candidate
+skyharbor-air,SHA-NODE-00777,metric,finance capability 193 entity 0777,SHA-ENT-00777,SHA-EVID-01993,high,candidate
+skyharbor-air,SHA-NODE-00778,system,procurement capability 194 entity 0778,SHA-ENT-00778,SHA-EVID-01994,medium,candidate
+skyharbor-air,SHA-NODE-00779,function,HR and workforce capability 195 entity 0779,SHA-ENT-00779,SHA-EVID-01995,medium,candidate
+skyharbor-air,SHA-NODE-00780,data_asset,data and analytics capability 196 entity 0780,SHA-ENT-00780,SHA-EVID-01996,high,candidate
+skyharbor-air,SHA-NODE-00781,vendor,platform engineering capability 197 entity 0781,SHA-ENT-00781,SHA-EVID-01997,high,candidate
+skyharbor-air,SHA-NODE-00782,program,baggage operations capability 198 entity 0782,SHA-ENT-00782,SHA-EVID-01998,medium,candidate
+skyharbor-air,SHA-NODE-00783,control,flight operations capability 199 entity 0783,SHA-ENT-00783,SHA-EVID-01999,medium,candidate
+skyharbor-air,SHA-NODE-00784,metric,operations control center capability 200 entity 0784,SHA-ENT-00784,SHA-EVID-02000,high,candidate
+skyharbor-air,SHA-NODE-00785,system,airport operations capability 201 entity 0785,SHA-ENT-00785,SHA-EVID-02001,high,candidate
+skyharbor-air,SHA-NODE-00786,function,customer service capability 202 entity 0786,SHA-ENT-00786,SHA-EVID-02002,medium,candidate
+skyharbor-air,SHA-NODE-00787,data_asset,loyalty capability 203 entity 0787,SHA-ENT-00787,SHA-EVID-02003,medium,candidate
+skyharbor-air,SHA-NODE-00788,vendor,revenue management capability 204 entity 0788,SHA-ENT-00788,SHA-EVID-02004,high,candidate
+skyharbor-air,SHA-NODE-00789,program,network planning capability 205 entity 0789,SHA-ENT-00789,SHA-EVID-02005,high,candidate
+skyharbor-air,SHA-NODE-00790,control,crew scheduling capability 206 entity 0790,SHA-ENT-00790,SHA-EVID-02006,medium,candidate
+skyharbor-air,SHA-NODE-00791,metric,maintenance engineering capability 207 entity 0791,SHA-ENT-00791,SHA-EVID-02007,medium,candidate
+skyharbor-air,SHA-NODE-00792,system,cargo operations capability 208 entity 0792,SHA-ENT-00792,SHA-EVID-02008,high,candidate
+skyharbor-air,SHA-NODE-00793,function,digital ecommerce capability 209 entity 0793,SHA-ENT-00793,SHA-EVID-02009,high,candidate
+skyharbor-air,SHA-NODE-00794,data_asset,safety and security capability 210 entity 0794,SHA-ENT-00794,SHA-EVID-02010,medium,candidate
+skyharbor-air,SHA-NODE-00795,vendor,finance capability 211 entity 0795,SHA-ENT-00795,SHA-EVID-02011,medium,candidate
+skyharbor-air,SHA-NODE-00796,program,procurement capability 212 entity 0796,SHA-ENT-00796,SHA-EVID-02012,high,candidate
+skyharbor-air,SHA-NODE-00797,control,HR and workforce capability 213 entity 0797,SHA-ENT-00797,SHA-EVID-02013,high,candidate
+skyharbor-air,SHA-NODE-00798,metric,data and analytics capability 214 entity 0798,SHA-ENT-00798,SHA-EVID-02014,medium,candidate
+skyharbor-air,SHA-NODE-00799,system,platform engineering capability 215 entity 0799,SHA-ENT-00799,SHA-EVID-02015,medium,candidate
+skyharbor-air,SHA-NODE-00800,function,baggage operations capability 216 entity 0800,SHA-ENT-00800,SHA-EVID-02016,high,candidate
+skyharbor-air,SHA-NODE-00801,data_asset,flight operations capability 217 entity 0801,SHA-ENT-00801,SHA-EVID-02017,high,candidate
+skyharbor-air,SHA-NODE-00802,vendor,operations control center capability 218 entity 0802,SHA-ENT-00802,SHA-EVID-02018,medium,candidate
+skyharbor-air,SHA-NODE-00803,program,airport operations capability 219 entity 0803,SHA-ENT-00803,SHA-EVID-02019,medium,candidate
+skyharbor-air,SHA-NODE-00804,control,customer service capability 220 entity 0804,SHA-ENT-00804,SHA-EVID-02020,high,candidate
+skyharbor-air,SHA-NODE-00805,metric,loyalty capability 221 entity 0805,SHA-ENT-00805,SHA-EVID-02021,high,candidate
+skyharbor-air,SHA-NODE-00806,system,revenue management capability 222 entity 0806,SHA-ENT-00806,SHA-EVID-02022,medium,candidate
+skyharbor-air,SHA-NODE-00807,function,network planning capability 223 entity 0807,SHA-ENT-00807,SHA-EVID-02023,medium,candidate
+skyharbor-air,SHA-NODE-00808,data_asset,crew scheduling capability 224 entity 0808,SHA-ENT-00808,SHA-EVID-02024,high,candidate
+skyharbor-air,SHA-NODE-00809,vendor,maintenance engineering capability 225 entity 0809,SHA-ENT-00809,SHA-EVID-02025,high,candidate
+skyharbor-air,SHA-NODE-00810,program,cargo operations capability 226 entity 0810,SHA-ENT-00810,SHA-EVID-02026,medium,candidate
+skyharbor-air,SHA-NODE-00811,control,digital ecommerce capability 227 entity 0811,SHA-ENT-00811,SHA-EVID-02027,medium,candidate
+skyharbor-air,SHA-NODE-00812,metric,safety and security capability 228 entity 0812,SHA-ENT-00812,SHA-EVID-02028,high,candidate
+skyharbor-air,SHA-NODE-00813,system,finance capability 229 entity 0813,SHA-ENT-00813,SHA-EVID-02029,high,candidate
+skyharbor-air,SHA-NODE-00814,function,procurement capability 230 entity 0814,SHA-ENT-00814,SHA-EVID-02030,medium,candidate
+skyharbor-air,SHA-NODE-00815,data_asset,HR and workforce capability 231 entity 0815,SHA-ENT-00815,SHA-EVID-02031,medium,candidate
+skyharbor-air,SHA-NODE-00816,vendor,data and analytics capability 232 entity 0816,SHA-ENT-00816,SHA-EVID-02032,high,candidate
+skyharbor-air,SHA-NODE-00817,program,platform engineering capability 233 entity 0817,SHA-ENT-00817,SHA-EVID-02033,high,candidate
+skyharbor-air,SHA-NODE-00818,control,baggage operations capability 234 entity 0818,SHA-ENT-00818,SHA-EVID-02034,medium,candidate
+skyharbor-air,SHA-NODE-00819,metric,flight operations capability 235 entity 0819,SHA-ENT-00819,SHA-EVID-02035,medium,candidate
+skyharbor-air,SHA-NODE-00820,system,operations control center capability 236 entity 0820,SHA-ENT-00820,SHA-EVID-02036,high,candidate
+skyharbor-air,SHA-NODE-00821,function,airport operations capability 237 entity 0821,SHA-ENT-00821,SHA-EVID-02037,high,candidate
+skyharbor-air,SHA-NODE-00822,data_asset,customer service capability 238 entity 0822,SHA-ENT-00822,SHA-EVID-02038,medium,candidate
+skyharbor-air,SHA-NODE-00823,vendor,loyalty capability 239 entity 0823,SHA-ENT-00823,SHA-EVID-02039,medium,candidate
+skyharbor-air,SHA-NODE-00824,program,revenue management capability 240 entity 0824,SHA-ENT-00824,SHA-EVID-02040,high,candidate
+skyharbor-air,SHA-NODE-00825,control,network planning capability 241 entity 0825,SHA-ENT-00825,SHA-EVID-02041,high,candidate
+skyharbor-air,SHA-NODE-00826,metric,crew scheduling capability 242 entity 0826,SHA-ENT-00826,SHA-EVID-02042,medium,candidate
+skyharbor-air,SHA-NODE-00827,system,maintenance engineering capability 243 entity 0827,SHA-ENT-00827,SHA-EVID-02043,medium,candidate
+skyharbor-air,SHA-NODE-00828,function,cargo operations capability 244 entity 0828,SHA-ENT-00828,SHA-EVID-02044,high,candidate
+skyharbor-air,SHA-NODE-00829,data_asset,digital ecommerce capability 245 entity 0829,SHA-ENT-00829,SHA-EVID-02045,high,candidate
+skyharbor-air,SHA-NODE-00830,vendor,safety and security capability 246 entity 0830,SHA-ENT-00830,SHA-EVID-02046,medium,candidate
+skyharbor-air,SHA-NODE-00831,program,finance capability 247 entity 0831,SHA-ENT-00831,SHA-EVID-02047,medium,candidate
+skyharbor-air,SHA-NODE-00832,control,procurement capability 248 entity 0832,SHA-ENT-00832,SHA-EVID-02048,high,candidate
+skyharbor-air,SHA-NODE-00833,metric,HR and workforce capability 249 entity 0833,SHA-ENT-00833,SHA-EVID-02049,high,candidate
+skyharbor-air,SHA-NODE-00834,system,data and analytics capability 250 entity 0834,SHA-ENT-00834,SHA-EVID-02050,medium,candidate
+skyharbor-air,SHA-NODE-00835,function,platform engineering capability 251 entity 0835,SHA-ENT-00835,SHA-EVID-02051,medium,candidate
+skyharbor-air,SHA-NODE-00836,data_asset,baggage operations capability 252 entity 0836,SHA-ENT-00836,SHA-EVID-02052,high,candidate
+skyharbor-air,SHA-NODE-00837,vendor,flight operations capability 253 entity 0837,SHA-ENT-00837,SHA-EVID-02053,high,candidate
+skyharbor-air,SHA-NODE-00838,program,operations control center capability 254 entity 0838,SHA-ENT-00838,SHA-EVID-02054,medium,candidate
+skyharbor-air,SHA-NODE-00839,control,airport operations capability 255 entity 0839,SHA-ENT-00839,SHA-EVID-02055,medium,candidate
+skyharbor-air,SHA-NODE-00840,metric,customer service capability 256 entity 0840,SHA-ENT-00840,SHA-EVID-02056,high,candidate
+skyharbor-air,SHA-NODE-00841,system,loyalty capability 257 entity 0841,SHA-ENT-00841,SHA-EVID-02057,high,candidate
+skyharbor-air,SHA-NODE-00842,function,revenue management capability 258 entity 0842,SHA-ENT-00842,SHA-EVID-02058,medium,candidate
+skyharbor-air,SHA-NODE-00843,data_asset,network planning capability 259 entity 0843,SHA-ENT-00843,SHA-EVID-02059,medium,candidate
+skyharbor-air,SHA-NODE-00844,vendor,crew scheduling capability 260 entity 0844,SHA-ENT-00844,SHA-EVID-02060,high,candidate
+skyharbor-air,SHA-NODE-00845,program,crew scheduling platform 001 entity 0845,SHA-ENT-00845,SHA-EVID-02401,high,candidate
+skyharbor-air,SHA-NODE-00846,control,flight planning platform 002 entity 0846,SHA-ENT-00846,SHA-EVID-02402,medium,candidate
+skyharbor-air,SHA-NODE-00847,metric,operations control and IROPS platform 003 entity 0847,SHA-ENT-00847,SHA-EVID-02403,medium,candidate
+skyharbor-air,SHA-NODE-00848,system,maintenance and MRO platform 004 entity 0848,SHA-ENT-00848,SHA-EVID-02404,high,candidate
+skyharbor-air,SHA-NODE-00849,function,cargo management platform 005 entity 0849,SHA-ENT-00849,SHA-EVID-02405,high,candidate
+skyharbor-air,SHA-NODE-00850,data_asset,revenue management platform 006 entity 0850,SHA-ENT-00850,SHA-EVID-02406,medium,candidate
+skyharbor-air,SHA-NODE-00851,vendor,loyalty platform 007 entity 0851,SHA-ENT-00851,SHA-EVID-02407,medium,candidate
+skyharbor-air,SHA-NODE-00852,program,ecommerce and mobile app 008 entity 0852,SHA-ENT-00852,SHA-EVID-02408,high,candidate
+skyharbor-air,SHA-NODE-00853,control,customer CRM 009 entity 0853,SHA-ENT-00853,SHA-EVID-02409,high,candidate
+skyharbor-air,SHA-NODE-00854,metric,contact center platform 010 entity 0854,SHA-ENT-00854,SHA-EVID-02410,medium,candidate
+skyharbor-air,SHA-NODE-00855,system,baggage tracking platform 011 entity 0855,SHA-ENT-00855,SHA-EVID-02411,medium,candidate
+skyharbor-air,SHA-NODE-00856,function,fuel management platform 012 entity 0856,SHA-ENT-00856,SHA-EVID-02412,high,candidate
+skyharbor-air,SHA-NODE-00857,data_asset,ERP and finance platform 013 entity 0857,SHA-ENT-00857,SHA-EVID-02413,high,candidate
+skyharbor-air,SHA-NODE-00858,vendor,airline data lakehouse 014 entity 0858,SHA-ENT-00858,SHA-EVID-02414,medium,candidate
+skyharbor-air,SHA-NODE-00859,program,identity and access management 015 entity 0859,SHA-ENT-00859,SHA-EVID-02415,medium,candidate
+skyharbor-air,SHA-NODE-00860,control,service management platform 016 entity 0860,SHA-ENT-00860,SHA-EVID-02416,high,candidate
+skyharbor-air,SHA-NODE-00861,metric,passenger service system 017 entity 0861,SHA-ENT-00861,SHA-EVID-02417,high,candidate
+skyharbor-air,SHA-NODE-00862,system,departure control system 018 entity 0862,SHA-ENT-00862,SHA-EVID-02418,medium,candidate
+skyharbor-air,SHA-NODE-00863,function,crew scheduling platform 019 entity 0863,SHA-ENT-00863,SHA-EVID-02419,medium,candidate
+skyharbor-air,SHA-NODE-00864,data_asset,flight planning platform 020 entity 0864,SHA-ENT-00864,SHA-EVID-02420,high,candidate
+skyharbor-air,SHA-NODE-00865,vendor,operations control and IROPS platform 021 entity 0865,SHA-ENT-00865,SHA-EVID-02421,high,candidate
+skyharbor-air,SHA-NODE-00866,program,maintenance and MRO platform 022 entity 0866,SHA-ENT-00866,SHA-EVID-02422,medium,candidate
+skyharbor-air,SHA-NODE-00867,control,cargo management platform 023 entity 0867,SHA-ENT-00867,SHA-EVID-02423,medium,candidate
+skyharbor-air,SHA-NODE-00868,metric,revenue management platform 024 entity 0868,SHA-ENT-00868,SHA-EVID-02424,high,candidate
+skyharbor-air,SHA-NODE-00869,system,loyalty platform 025 entity 0869,SHA-ENT-00869,SHA-EVID-02425,high,candidate
+skyharbor-air,SHA-NODE-00870,function,ecommerce and mobile app 026 entity 0870,SHA-ENT-00870,SHA-EVID-02426,medium,candidate
+skyharbor-air,SHA-NODE-00871,data_asset,customer CRM 027 entity 0871,SHA-ENT-00871,SHA-EVID-02427,medium,candidate
+skyharbor-air,SHA-NODE-00872,vendor,contact center platform 028 entity 0872,SHA-ENT-00872,SHA-EVID-02428,high,candidate
+skyharbor-air,SHA-NODE-00873,program,baggage tracking platform 029 entity 0873,SHA-ENT-00873,SHA-EVID-02429,high,candidate
+skyharbor-air,SHA-NODE-00874,control,fuel management platform 030 entity 0874,SHA-ENT-00874,SHA-EVID-02430,medium,candidate
+skyharbor-air,SHA-NODE-00875,metric,ERP and finance platform 031 entity 0875,SHA-ENT-00875,SHA-EVID-02431,medium,candidate
+skyharbor-air,SHA-NODE-00876,system,airline data lakehouse 032 entity 0876,SHA-ENT-00876,SHA-EVID-02432,high,candidate
+skyharbor-air,SHA-NODE-00877,function,identity and access management 033 entity 0877,SHA-ENT-00877,SHA-EVID-02433,high,candidate
+skyharbor-air,SHA-NODE-00878,data_asset,service management platform 034 entity 0878,SHA-ENT-00878,SHA-EVID-02434,medium,candidate
+skyharbor-air,SHA-NODE-00879,vendor,passenger service system 035 entity 0879,SHA-ENT-00879,SHA-EVID-02435,medium,candidate
+skyharbor-air,SHA-NODE-00880,program,departure control system 036 entity 0880,SHA-ENT-00880,SHA-EVID-02436,high,candidate
+skyharbor-air,SHA-NODE-00881,control,crew scheduling platform 037 entity 0881,SHA-ENT-00881,SHA-EVID-02437,high,candidate
+skyharbor-air,SHA-NODE-00882,metric,flight planning platform 038 entity 0882,SHA-ENT-00882,SHA-EVID-02438,medium,candidate
+skyharbor-air,SHA-NODE-00883,system,operations control and IROPS platform 039 entity 0883,SHA-ENT-00883,SHA-EVID-02439,medium,candidate
+skyharbor-air,SHA-NODE-00884,function,maintenance and MRO platform 040 entity 0884,SHA-ENT-00884,SHA-EVID-02440,high,candidate
+skyharbor-air,SHA-NODE-00885,data_asset,cargo management platform 041 entity 0885,SHA-ENT-00885,SHA-EVID-02441,high,candidate
+skyharbor-air,SHA-NODE-00886,vendor,revenue management platform 042 entity 0886,SHA-ENT-00886,SHA-EVID-02442,medium,candidate
+skyharbor-air,SHA-NODE-00887,program,loyalty platform 043 entity 0887,SHA-ENT-00887,SHA-EVID-02443,medium,candidate
+skyharbor-air,SHA-NODE-00888,control,ecommerce and mobile app 044 entity 0888,SHA-ENT-00888,SHA-EVID-02444,high,candidate
+skyharbor-air,SHA-NODE-00889,metric,customer CRM 045 entity 0889,SHA-ENT-00889,SHA-EVID-02445,high,candidate
+skyharbor-air,SHA-NODE-00890,system,contact center platform 046 entity 0890,SHA-ENT-00890,SHA-EVID-02446,medium,candidate
+skyharbor-air,SHA-NODE-00891,function,baggage tracking platform 047 entity 0891,SHA-ENT-00891,SHA-EVID-02447,medium,candidate
+skyharbor-air,SHA-NODE-00892,data_asset,fuel management platform 048 entity 0892,SHA-ENT-00892,SHA-EVID-02448,high,candidate
+skyharbor-air,SHA-NODE-00893,vendor,ERP and finance platform 049 entity 0893,SHA-ENT-00893,SHA-EVID-02449,high,candidate
+skyharbor-air,SHA-NODE-00894,program,airline data lakehouse 050 entity 0894,SHA-ENT-00894,SHA-EVID-02450,medium,candidate
+skyharbor-air,SHA-NODE-00895,control,identity and access management 051 entity 0895,SHA-ENT-00895,SHA-EVID-02451,medium,candidate
+skyharbor-air,SHA-NODE-00896,metric,service management platform 052 entity 0896,SHA-ENT-00896,SHA-EVID-02452,high,candidate
+skyharbor-air,SHA-NODE-00897,system,passenger service system 053 entity 0897,SHA-ENT-00897,SHA-EVID-02453,high,candidate
+skyharbor-air,SHA-NODE-00898,function,departure control system 054 entity 0898,SHA-ENT-00898,SHA-EVID-02454,medium,candidate
+skyharbor-air,SHA-NODE-00899,data_asset,crew scheduling platform 055 entity 0899,SHA-ENT-00899,SHA-EVID-02455,medium,candidate
+skyharbor-air,SHA-NODE-00900,vendor,flight planning platform 056 entity 0900,SHA-ENT-00900,SHA-EVID-02456,high,candidate
+skyharbor-air,SHA-NODE-00901,program,operations control and IROPS platform 057 entity 0901,SHA-ENT-00901,SHA-EVID-02457,high,candidate
+skyharbor-air,SHA-NODE-00902,control,maintenance and MRO platform 058 entity 0902,SHA-ENT-00902,SHA-EVID-02458,medium,candidate
+skyharbor-air,SHA-NODE-00903,metric,cargo management platform 059 entity 0903,SHA-ENT-00903,SHA-EVID-02459,medium,candidate
+skyharbor-air,SHA-NODE-00904,system,revenue management platform 060 entity 0904,SHA-ENT-00904,SHA-EVID-02460,high,candidate
+skyharbor-air,SHA-NODE-00905,function,loyalty platform 061 entity 0905,SHA-ENT-00905,SHA-EVID-02461,high,candidate
+skyharbor-air,SHA-NODE-00906,data_asset,ecommerce and mobile app 062 entity 0906,SHA-ENT-00906,SHA-EVID-02462,medium,candidate
+skyharbor-air,SHA-NODE-00907,vendor,customer CRM 063 entity 0907,SHA-ENT-00907,SHA-EVID-02463,medium,candidate
+skyharbor-air,SHA-NODE-00908,program,contact center platform 064 entity 0908,SHA-ENT-00908,SHA-EVID-02464,high,candidate
+skyharbor-air,SHA-NODE-00909,control,baggage tracking platform 065 entity 0909,SHA-ENT-00909,SHA-EVID-02465,high,candidate
+skyharbor-air,SHA-NODE-00910,metric,fuel management platform 066 entity 0910,SHA-ENT-00910,SHA-EVID-02466,medium,candidate
+skyharbor-air,SHA-NODE-00911,system,ERP and finance platform 067 entity 0911,SHA-ENT-00911,SHA-EVID-02467,medium,candidate
+skyharbor-air,SHA-NODE-00912,function,airline data lakehouse 068 entity 0912,SHA-ENT-00912,SHA-EVID-02468,high,candidate
+skyharbor-air,SHA-NODE-00913,data_asset,identity and access management 069 entity 0913,SHA-ENT-00913,SHA-EVID-02469,high,candidate
+skyharbor-air,SHA-NODE-00914,vendor,service management platform 070 entity 0914,SHA-ENT-00914,SHA-EVID-02470,medium,candidate
+skyharbor-air,SHA-NODE-00915,program,passenger service system 071 entity 0915,SHA-ENT-00915,SHA-EVID-02471,medium,candidate
+skyharbor-air,SHA-NODE-00916,control,departure control system 072 entity 0916,SHA-ENT-00916,SHA-EVID-02472,high,candidate
+skyharbor-air,SHA-NODE-00917,metric,crew scheduling platform 073 entity 0917,SHA-ENT-00917,SHA-EVID-02473,high,candidate
+skyharbor-air,SHA-NODE-00918,system,flight planning platform 074 entity 0918,SHA-ENT-00918,SHA-EVID-02474,medium,candidate
+skyharbor-air,SHA-NODE-00919,function,operations control and IROPS platform 075 entity 0919,SHA-ENT-00919,SHA-EVID-02475,medium,candidate
+skyharbor-air,SHA-NODE-00920,data_asset,maintenance and MRO platform 076 entity 0920,SHA-ENT-00920,SHA-EVID-02476,high,candidate
+skyharbor-air,SHA-NODE-00921,vendor,cargo management platform 077 entity 0921,SHA-ENT-00921,SHA-EVID-02477,high,candidate
+skyharbor-air,SHA-NODE-00922,program,revenue management platform 078 entity 0922,SHA-ENT-00922,SHA-EVID-02478,medium,candidate
+skyharbor-air,SHA-NODE-00923,control,loyalty platform 079 entity 0923,SHA-ENT-00923,SHA-EVID-02479,medium,candidate
+skyharbor-air,SHA-NODE-00924,metric,ecommerce and mobile app 080 entity 0924,SHA-ENT-00924,SHA-EVID-02480,high,candidate
+skyharbor-air,SHA-NODE-00925,system,customer CRM 081 entity 0925,SHA-ENT-00925,SHA-EVID-02481,high,candidate
+skyharbor-air,SHA-NODE-00926,function,contact center platform 082 entity 0926,SHA-ENT-00926,SHA-EVID-02482,medium,candidate
+skyharbor-air,SHA-NODE-00927,data_asset,baggage tracking platform 083 entity 0927,SHA-ENT-00927,SHA-EVID-02483,medium,candidate
+skyharbor-air,SHA-NODE-00928,vendor,fuel management platform 084 entity 0928,SHA-ENT-00928,SHA-EVID-02484,high,candidate
+skyharbor-air,SHA-NODE-00929,program,ERP and finance platform 085 entity 0929,SHA-ENT-00929,SHA-EVID-02485,high,candidate
+skyharbor-air,SHA-NODE-00930,control,airline data lakehouse 086 entity 0930,SHA-ENT-00930,SHA-EVID-02486,medium,candidate
+skyharbor-air,SHA-NODE-00931,metric,identity and access management 087 entity 0931,SHA-ENT-00931,SHA-EVID-02487,medium,candidate
+skyharbor-air,SHA-NODE-00932,system,service management platform 088 entity 0932,SHA-ENT-00932,SHA-EVID-02488,high,candidate
+skyharbor-air,SHA-NODE-00933,function,passenger service system 089 entity 0933,SHA-ENT-00933,SHA-EVID-02489,high,candidate
+skyharbor-air,SHA-NODE-00934,data_asset,departure control system 090 entity 0934,SHA-ENT-00934,SHA-EVID-02490,medium,candidate
+skyharbor-air,SHA-NODE-00935,vendor,crew scheduling platform 091 entity 0935,SHA-ENT-00935,SHA-EVID-02491,medium,candidate
+skyharbor-air,SHA-NODE-00936,program,flight planning platform 092 entity 0936,SHA-ENT-00936,SHA-EVID-02492,high,candidate
+skyharbor-air,SHA-NODE-00937,control,operations control and IROPS platform 093 entity 0937,SHA-ENT-00937,SHA-EVID-02493,high,candidate
+skyharbor-air,SHA-NODE-00938,metric,maintenance and MRO platform 094 entity 0938,SHA-ENT-00938,SHA-EVID-02494,medium,candidate
+skyharbor-air,SHA-NODE-00939,system,cargo management platform 095 entity 0939,SHA-ENT-00939,SHA-EVID-02495,medium,candidate
+skyharbor-air,SHA-NODE-00940,function,revenue management platform 096 entity 0940,SHA-ENT-00940,SHA-EVID-02496,high,candidate
+skyharbor-air,SHA-NODE-00941,data_asset,loyalty platform 097 entity 0941,SHA-ENT-00941,SHA-EVID-02497,high,candidate
+skyharbor-air,SHA-NODE-00942,vendor,ecommerce and mobile app 098 entity 0942,SHA-ENT-00942,SHA-EVID-02498,medium,candidate
+skyharbor-air,SHA-NODE-00943,program,customer CRM 099 entity 0943,SHA-ENT-00943,SHA-EVID-02499,medium,candidate
+skyharbor-air,SHA-NODE-00944,control,contact center platform 100 entity 0944,SHA-ENT-00944,SHA-EVID-02500,high,candidate
+skyharbor-air,SHA-NODE-00945,metric,baggage tracking platform 101 entity 0945,SHA-ENT-00945,SHA-EVID-02501,high,candidate
+skyharbor-air,SHA-NODE-00946,system,fuel management platform 102 entity 0946,SHA-ENT-00946,SHA-EVID-02502,medium,candidate
+skyharbor-air,SHA-NODE-00947,function,ERP and finance platform 103 entity 0947,SHA-ENT-00947,SHA-EVID-02503,medium,candidate
+skyharbor-air,SHA-NODE-00948,data_asset,airline data lakehouse 104 entity 0948,SHA-ENT-00948,SHA-EVID-02504,high,candidate
+skyharbor-air,SHA-NODE-00949,vendor,identity and access management 105 entity 0949,SHA-ENT-00949,SHA-EVID-02505,high,candidate
+skyharbor-air,SHA-NODE-00950,program,service management platform 106 entity 0950,SHA-ENT-00950,SHA-EVID-02506,medium,candidate
+skyharbor-air,SHA-NODE-00951,control,passenger service system 107 entity 0951,SHA-ENT-00951,SHA-EVID-02507,medium,candidate
+skyharbor-air,SHA-NODE-00952,metric,departure control system 108 entity 0952,SHA-ENT-00952,SHA-EVID-02508,high,candidate
+skyharbor-air,SHA-NODE-00953,system,crew scheduling platform 109 entity 0953,SHA-ENT-00953,SHA-EVID-02509,high,candidate
+skyharbor-air,SHA-NODE-00954,function,flight planning platform 110 entity 0954,SHA-ENT-00954,SHA-EVID-02510,medium,candidate
+skyharbor-air,SHA-NODE-00955,data_asset,operations control and IROPS platform 111 entity 0955,SHA-ENT-00955,SHA-EVID-02511,medium,candidate
+skyharbor-air,SHA-NODE-00956,vendor,maintenance and MRO platform 112 entity 0956,SHA-ENT-00956,SHA-EVID-02512,high,candidate
+skyharbor-air,SHA-NODE-00957,program,cargo management platform 113 entity 0957,SHA-ENT-00957,SHA-EVID-02513,high,candidate
+skyharbor-air,SHA-NODE-00958,control,revenue management platform 114 entity 0958,SHA-ENT-00958,SHA-EVID-02514,medium,candidate
+skyharbor-air,SHA-NODE-00959,metric,loyalty platform 115 entity 0959,SHA-ENT-00959,SHA-EVID-02515,medium,candidate
+skyharbor-air,SHA-NODE-00960,system,ecommerce and mobile app 116 entity 0960,SHA-ENT-00960,SHA-EVID-02516,high,candidate
+skyharbor-air,SHA-NODE-00961,function,customer CRM 117 entity 0961,SHA-ENT-00961,SHA-EVID-02517,high,candidate
+skyharbor-air,SHA-NODE-00962,data_asset,contact center platform 118 entity 0962,SHA-ENT-00962,SHA-EVID-02518,medium,candidate
+skyharbor-air,SHA-NODE-00963,vendor,baggage tracking platform 119 entity 0963,SHA-ENT-00963,SHA-EVID-02519,medium,candidate
+skyharbor-air,SHA-NODE-00964,program,fuel management platform 120 entity 0964,SHA-ENT-00964,SHA-EVID-02520,high,candidate
+skyharbor-air,SHA-NODE-00965,control,ERP and finance platform 121 entity 0965,SHA-ENT-00965,SHA-EVID-02521,high,candidate
+skyharbor-air,SHA-NODE-00966,metric,airline data lakehouse 122 entity 0966,SHA-ENT-00966,SHA-EVID-02522,medium,candidate
+skyharbor-air,SHA-NODE-00967,system,identity and access management 123 entity 0967,SHA-ENT-00967,SHA-EVID-02523,medium,candidate
+skyharbor-air,SHA-NODE-00968,function,service management platform 124 entity 0968,SHA-ENT-00968,SHA-EVID-02524,high,candidate
+skyharbor-air,SHA-NODE-00969,data_asset,passenger service system 125 entity 0969,SHA-ENT-00969,SHA-EVID-02525,high,candidate
+skyharbor-air,SHA-NODE-00970,vendor,departure control system 126 entity 0970,SHA-ENT-00970,SHA-EVID-02526,medium,candidate
+skyharbor-air,SHA-NODE-00971,program,crew scheduling platform 127 entity 0971,SHA-ENT-00971,SHA-EVID-02527,medium,candidate
+skyharbor-air,SHA-NODE-00972,control,flight planning platform 128 entity 0972,SHA-ENT-00972,SHA-EVID-02528,high,candidate
+skyharbor-air,SHA-NODE-00973,metric,operations control and IROPS platform 129 entity 0973,SHA-ENT-00973,SHA-EVID-02529,high,candidate
+skyharbor-air,SHA-NODE-00974,system,maintenance and MRO platform 130 entity 0974,SHA-ENT-00974,SHA-EVID-02530,medium,candidate
+skyharbor-air,SHA-NODE-00975,function,cargo management platform 131 entity 0975,SHA-ENT-00975,SHA-EVID-02531,medium,candidate
+skyharbor-air,SHA-NODE-00976,data_asset,revenue management platform 132 entity 0976,SHA-ENT-00976,SHA-EVID-02532,high,candidate
+skyharbor-air,SHA-NODE-00977,vendor,loyalty platform 133 entity 0977,SHA-ENT-00977,SHA-EVID-02533,high,candidate
+skyharbor-air,SHA-NODE-00978,program,ecommerce and mobile app 134 entity 0978,SHA-ENT-00978,SHA-EVID-02534,medium,candidate
+skyharbor-air,SHA-NODE-00979,control,customer CRM 135 entity 0979,SHA-ENT-00979,SHA-EVID-02535,medium,candidate
+skyharbor-air,SHA-NODE-00980,metric,contact center platform 136 entity 0980,SHA-ENT-00980,SHA-EVID-02536,high,candidate
+skyharbor-air,SHA-NODE-00981,system,baggage tracking platform 137 entity 0981,SHA-ENT-00981,SHA-EVID-02537,high,candidate
+skyharbor-air,SHA-NODE-00982,function,fuel management platform 138 entity 0982,SHA-ENT-00982,SHA-EVID-02538,medium,candidate
+skyharbor-air,SHA-NODE-00983,data_asset,ERP and finance platform 139 entity 0983,SHA-ENT-00983,SHA-EVID-02539,medium,candidate
+skyharbor-air,SHA-NODE-00984,vendor,airline data lakehouse 140 entity 0984,SHA-ENT-00984,SHA-EVID-02540,high,candidate
+skyharbor-air,SHA-NODE-00985,program,identity and access management 141 entity 0985,SHA-ENT-00985,SHA-EVID-02541,high,candidate
+skyharbor-air,SHA-NODE-00986,control,service management platform 142 entity 0986,SHA-ENT-00986,SHA-EVID-02542,medium,candidate
+skyharbor-air,SHA-NODE-00987,metric,passenger service system 143 entity 0987,SHA-ENT-00987,SHA-EVID-02543,medium,candidate
+skyharbor-air,SHA-NODE-00988,system,departure control system 144 entity 0988,SHA-ENT-00988,SHA-EVID-02544,high,candidate
+skyharbor-air,SHA-NODE-00989,function,crew scheduling platform 145 entity 0989,SHA-ENT-00989,SHA-EVID-02545,high,candidate
+skyharbor-air,SHA-NODE-00990,data_asset,flight planning platform 146 entity 0990,SHA-ENT-00990,SHA-EVID-02546,medium,candidate
+skyharbor-air,SHA-NODE-00991,vendor,operations control and IROPS platform 147 entity 0991,SHA-ENT-00991,SHA-EVID-02547,medium,candidate
+skyharbor-air,SHA-NODE-00992,program,maintenance and MRO platform 148 entity 0992,SHA-ENT-00992,SHA-EVID-02548,high,candidate
+skyharbor-air,SHA-NODE-00993,control,cargo management platform 149 entity 0993,SHA-ENT-00993,SHA-EVID-02549,high,candidate
+skyharbor-air,SHA-NODE-00994,metric,revenue management platform 150 entity 0994,SHA-ENT-00994,SHA-EVID-02550,medium,candidate
+skyharbor-air,SHA-NODE-00995,system,loyalty platform 151 entity 0995,SHA-ENT-00995,SHA-EVID-02551,medium,candidate
+skyharbor-air,SHA-NODE-00996,function,ecommerce and mobile app 152 entity 0996,SHA-ENT-00996,SHA-EVID-02552,high,candidate
+skyharbor-air,SHA-NODE-00997,data_asset,customer CRM 153 entity 0997,SHA-ENT-00997,SHA-EVID-02553,high,candidate
+skyharbor-air,SHA-NODE-00998,vendor,contact center platform 154 entity 0998,SHA-ENT-00998,SHA-EVID-02554,medium,candidate
+skyharbor-air,SHA-NODE-00999,program,baggage tracking platform 155 entity 0999,SHA-ENT-00999,SHA-EVID-02555,medium,candidate
+skyharbor-air,SHA-NODE-01000,control,fuel management platform 156 entity 1000,SHA-ENT-01000,SHA-EVID-02556,high,candidate
+skyharbor-air,SHA-NODE-01001,metric,ERP and finance platform 157 entity 1001,SHA-ENT-01001,SHA-EVID-02557,high,candidate
+skyharbor-air,SHA-NODE-01002,system,airline data lakehouse 158 entity 1002,SHA-ENT-01002,SHA-EVID-02558,medium,candidate
+skyharbor-air,SHA-NODE-01003,function,identity and access management 159 entity 1003,SHA-ENT-01003,SHA-EVID-02559,medium,candidate
+skyharbor-air,SHA-NODE-01004,data_asset,service management platform 160 entity 1004,SHA-ENT-01004,SHA-EVID-02560,high,candidate
+skyharbor-air,SHA-NODE-01005,vendor,passenger service system 161 entity 1005,SHA-ENT-01005,SHA-EVID-02561,high,candidate
+skyharbor-air,SHA-NODE-01006,program,departure control system 162 entity 1006,SHA-ENT-01006,SHA-EVID-02562,medium,candidate
+skyharbor-air,SHA-NODE-01007,control,crew scheduling platform 163 entity 1007,SHA-ENT-01007,SHA-EVID-02563,medium,candidate
+skyharbor-air,SHA-NODE-01008,metric,flight planning platform 164 entity 1008,SHA-ENT-01008,SHA-EVID-02564,high,candidate
+skyharbor-air,SHA-NODE-01009,system,operations control and IROPS platform 165 entity 1009,SHA-ENT-01009,SHA-EVID-02565,high,candidate
+skyharbor-air,SHA-NODE-01010,function,maintenance and MRO platform 166 entity 1010,SHA-ENT-01010,SHA-EVID-02566,medium,candidate
+skyharbor-air,SHA-NODE-01011,data_asset,cargo management platform 167 entity 1011,SHA-ENT-01011,SHA-EVID-02567,medium,candidate
+skyharbor-air,SHA-NODE-01012,vendor,revenue management platform 168 entity 1012,SHA-ENT-01012,SHA-EVID-02568,high,candidate
+skyharbor-air,SHA-NODE-01013,program,loyalty platform 169 entity 1013,SHA-ENT-01013,SHA-EVID-02569,high,candidate
+skyharbor-air,SHA-NODE-01014,control,ecommerce and mobile app 170 entity 1014,SHA-ENT-01014,SHA-EVID-02570,medium,candidate
+skyharbor-air,SHA-NODE-01015,metric,customer CRM 171 entity 1015,SHA-ENT-01015,SHA-EVID-02571,medium,candidate
+skyharbor-air,SHA-NODE-01016,system,contact center platform 172 entity 1016,SHA-ENT-01016,SHA-EVID-02572,high,candidate
+skyharbor-air,SHA-NODE-01017,function,baggage tracking platform 173 entity 1017,SHA-ENT-01017,SHA-EVID-02573,high,candidate
+skyharbor-air,SHA-NODE-01018,data_asset,fuel management platform 174 entity 1018,SHA-ENT-01018,SHA-EVID-02574,medium,candidate
+skyharbor-air,SHA-NODE-01019,vendor,ERP and finance platform 175 entity 1019,SHA-ENT-01019,SHA-EVID-02575,medium,candidate
+skyharbor-air,SHA-NODE-01020,program,airline data lakehouse 176 entity 1020,SHA-ENT-01020,SHA-EVID-02576,high,candidate
+skyharbor-air,SHA-NODE-01021,control,identity and access management 177 entity 1021,SHA-ENT-01021,SHA-EVID-02577,high,candidate
+skyharbor-air,SHA-NODE-01022,metric,service management platform 178 entity 1022,SHA-ENT-01022,SHA-EVID-02578,medium,candidate
+skyharbor-air,SHA-NODE-01023,system,passenger service system 179 entity 1023,SHA-ENT-01023,SHA-EVID-02579,medium,candidate
+skyharbor-air,SHA-NODE-01024,function,departure control system 180 entity 1024,SHA-ENT-01024,SHA-EVID-02580,high,candidate
+skyharbor-air,SHA-NODE-01025,data_asset,crew scheduling platform 181 entity 1025,SHA-ENT-01025,SHA-EVID-02581,high,candidate
+skyharbor-air,SHA-NODE-01026,vendor,flight planning platform 182 entity 1026,SHA-ENT-01026,SHA-EVID-02582,medium,candidate
+skyharbor-air,SHA-NODE-01027,program,operations control and IROPS platform 183 entity 1027,SHA-ENT-01027,SHA-EVID-02583,medium,candidate
+skyharbor-air,SHA-NODE-01028,control,maintenance and MRO platform 184 entity 1028,SHA-ENT-01028,SHA-EVID-02584,high,candidate
+skyharbor-air,SHA-NODE-01029,metric,cargo management platform 185 entity 1029,SHA-ENT-01029,SHA-EVID-02585,high,candidate
+skyharbor-air,SHA-NODE-01030,system,revenue management platform 186 entity 1030,SHA-ENT-01030,SHA-EVID-02586,medium,candidate
+skyharbor-air,SHA-NODE-01031,function,loyalty platform 187 entity 1031,SHA-ENT-01031,SHA-EVID-02587,medium,candidate
+skyharbor-air,SHA-NODE-01032,data_asset,ecommerce and mobile app 188 entity 1032,SHA-ENT-01032,SHA-EVID-02588,high,candidate
+skyharbor-air,SHA-NODE-01033,vendor,customer CRM 189 entity 1033,SHA-ENT-01033,SHA-EVID-02589,high,candidate
+skyharbor-air,SHA-NODE-01034,program,contact center platform 190 entity 1034,SHA-ENT-01034,SHA-EVID-02590,medium,candidate
+skyharbor-air,SHA-NODE-01035,control,baggage tracking platform 191 entity 1035,SHA-ENT-01035,SHA-EVID-02591,medium,candidate
+skyharbor-air,SHA-NODE-01036,metric,fuel management platform 192 entity 1036,SHA-ENT-01036,SHA-EVID-02592,high,candidate
+skyharbor-air,SHA-NODE-01037,system,ERP and finance platform 193 entity 1037,SHA-ENT-01037,SHA-EVID-02593,high,candidate
+skyharbor-air,SHA-NODE-01038,function,airline data lakehouse 194 entity 1038,SHA-ENT-01038,SHA-EVID-02594,medium,candidate
+skyharbor-air,SHA-NODE-01039,data_asset,identity and access management 195 entity 1039,SHA-ENT-01039,SHA-EVID-02595,medium,candidate
+skyharbor-air,SHA-NODE-01040,vendor,service management platform 196 entity 1040,SHA-ENT-01040,SHA-EVID-02596,high,candidate
+skyharbor-air,SHA-NODE-01041,program,passenger service system 197 entity 1041,SHA-ENT-01041,SHA-EVID-02597,high,candidate
+skyharbor-air,SHA-NODE-01042,control,departure control system 198 entity 1042,SHA-ENT-01042,SHA-EVID-02598,medium,candidate
+skyharbor-air,SHA-NODE-01043,metric,crew scheduling platform 199 entity 1043,SHA-ENT-01043,SHA-EVID-02599,medium,candidate
+skyharbor-air,SHA-NODE-01044,system,flight planning platform 200 entity 1044,SHA-ENT-01044,SHA-EVID-02600,high,candidate
+skyharbor-air,SHA-NODE-01045,function,operations control and IROPS platform 201 entity 1045,SHA-ENT-01045,SHA-EVID-02601,high,candidate
+skyharbor-air,SHA-NODE-01046,data_asset,maintenance and MRO platform 202 entity 1046,SHA-ENT-01046,SHA-EVID-02602,medium,candidate
+skyharbor-air,SHA-NODE-01047,vendor,cargo management platform 203 entity 1047,SHA-ENT-01047,SHA-EVID-02603,medium,candidate
+skyharbor-air,SHA-NODE-01048,program,revenue management platform 204 entity 1048,SHA-ENT-01048,SHA-EVID-02604,high,candidate
+skyharbor-air,SHA-NODE-01049,control,loyalty platform 205 entity 1049,SHA-ENT-01049,SHA-EVID-02605,high,candidate
+skyharbor-air,SHA-NODE-01050,metric,ecommerce and mobile app 206 entity 1050,SHA-ENT-01050,SHA-EVID-02606,medium,candidate
+skyharbor-air,SHA-NODE-01051,system,customer CRM 207 entity 1051,SHA-ENT-01051,SHA-EVID-02607,medium,candidate
+skyharbor-air,SHA-NODE-01052,function,contact center platform 208 entity 1052,SHA-ENT-01052,SHA-EVID-02608,high,candidate
+skyharbor-air,SHA-NODE-01053,data_asset,baggage tracking platform 209 entity 1053,SHA-ENT-01053,SHA-EVID-02609,high,candidate
+skyharbor-air,SHA-NODE-01054,vendor,fuel management platform 210 entity 1054,SHA-ENT-01054,SHA-EVID-02610,medium,candidate
+skyharbor-air,SHA-NODE-01055,program,ERP and finance platform 211 entity 1055,SHA-ENT-01055,SHA-EVID-02611,medium,candidate
+skyharbor-air,SHA-NODE-01056,control,airline data lakehouse 212 entity 1056,SHA-ENT-01056,SHA-EVID-02612,high,candidate
+skyharbor-air,SHA-NODE-01057,metric,identity and access management 213 entity 1057,SHA-ENT-01057,SHA-EVID-02613,high,candidate
+skyharbor-air,SHA-NODE-01058,system,service management platform 214 entity 1058,SHA-ENT-01058,SHA-EVID-02614,medium,candidate
+skyharbor-air,SHA-NODE-01059,function,passenger service system 215 entity 1059,SHA-ENT-01059,SHA-EVID-02615,medium,candidate
+skyharbor-air,SHA-NODE-01060,data_asset,departure control system 216 entity 1060,SHA-ENT-01060,SHA-EVID-02616,high,candidate
+skyharbor-air,SHA-NODE-01061,vendor,crew scheduling platform 217 entity 1061,SHA-ENT-01061,SHA-EVID-02617,high,candidate
+skyharbor-air,SHA-NODE-01062,program,flight planning platform 218 entity 1062,SHA-ENT-01062,SHA-EVID-02618,medium,candidate
+skyharbor-air,SHA-NODE-01063,control,operations control and IROPS platform 219 entity 1063,SHA-ENT-01063,SHA-EVID-02619,medium,candidate
+skyharbor-air,SHA-NODE-01064,metric,maintenance and MRO platform 220 entity 1064,SHA-ENT-01064,SHA-EVID-02620,high,candidate
+skyharbor-air,SHA-NODE-01065,system,cargo management platform 221 entity 1065,SHA-ENT-01065,SHA-EVID-02621,high,candidate
+skyharbor-air,SHA-NODE-01066,function,revenue management platform 222 entity 1066,SHA-ENT-01066,SHA-EVID-02622,medium,candidate
+skyharbor-air,SHA-NODE-01067,data_asset,loyalty platform 223 entity 1067,SHA-ENT-01067,SHA-EVID-02623,medium,candidate
+skyharbor-air,SHA-NODE-01068,vendor,ecommerce and mobile app 224 entity 1068,SHA-ENT-01068,SHA-EVID-02624,high,candidate
+skyharbor-air,SHA-NODE-01069,program,customer CRM 225 entity 1069,SHA-ENT-01069,SHA-EVID-02625,high,candidate
+skyharbor-air,SHA-NODE-01070,control,contact center platform 226 entity 1070,SHA-ENT-01070,SHA-EVID-02626,medium,candidate
+skyharbor-air,SHA-NODE-01071,metric,baggage tracking platform 227 entity 1071,SHA-ENT-01071,SHA-EVID-02627,medium,candidate
+skyharbor-air,SHA-NODE-01072,system,fuel management platform 228 entity 1072,SHA-ENT-01072,SHA-EVID-02628,high,candidate
+skyharbor-air,SHA-NODE-01073,function,ERP and finance platform 229 entity 1073,SHA-ENT-01073,SHA-EVID-02629,high,candidate
+skyharbor-air,SHA-NODE-01074,data_asset,airline data lakehouse 230 entity 1074,SHA-ENT-01074,SHA-EVID-02630,medium,candidate
+skyharbor-air,SHA-NODE-01075,vendor,identity and access management 231 entity 1075,SHA-ENT-01075,SHA-EVID-02631,medium,candidate
+skyharbor-air,SHA-NODE-01076,program,service management platform 232 entity 1076,SHA-ENT-01076,SHA-EVID-02632,high,candidate
+skyharbor-air,SHA-NODE-01077,control,passenger service system 233 entity 1077,SHA-ENT-01077,SHA-EVID-02633,high,candidate
+skyharbor-air,SHA-NODE-01078,metric,departure control system 234 entity 1078,SHA-ENT-01078,SHA-EVID-02634,medium,candidate
+skyharbor-air,SHA-NODE-01079,system,crew scheduling platform 235 entity 1079,SHA-ENT-01079,SHA-EVID-02635,medium,candidate
+skyharbor-air,SHA-NODE-01080,function,flight planning platform 236 entity 1080,SHA-ENT-01080,SHA-EVID-02636,high,candidate
+skyharbor-air,SHA-NODE-01081,data_asset,operations control and IROPS platform 237 entity 1081,SHA-ENT-01081,SHA-EVID-02637,high,candidate
+skyharbor-air,SHA-NODE-01082,vendor,maintenance and MRO platform 238 entity 1082,SHA-ENT-01082,SHA-EVID-02638,medium,candidate
+skyharbor-air,SHA-NODE-01083,program,cargo management platform 239 entity 1083,SHA-ENT-01083,SHA-EVID-02639,medium,candidate
+skyharbor-air,SHA-NODE-01084,control,revenue management platform 240 entity 1084,SHA-ENT-01084,SHA-EVID-02640,high,candidate
+skyharbor-air,SHA-NODE-01085,metric,loyalty platform 241 entity 1085,SHA-ENT-01085,SHA-EVID-02641,high,candidate
+skyharbor-air,SHA-NODE-01086,system,ecommerce and mobile app 242 entity 1086,SHA-ENT-01086,SHA-EVID-02642,medium,candidate
+skyharbor-air,SHA-NODE-01087,function,customer CRM 243 entity 1087,SHA-ENT-01087,SHA-EVID-02643,medium,candidate
+skyharbor-air,SHA-NODE-01088,data_asset,contact center platform 244 entity 1088,SHA-ENT-01088,SHA-EVID-02644,high,candidate
+skyharbor-air,SHA-NODE-01089,vendor,baggage tracking platform 245 entity 1089,SHA-ENT-01089,SHA-EVID-02645,high,candidate
+skyharbor-air,SHA-NODE-01090,program,fuel management platform 246 entity 1090,SHA-ENT-01090,SHA-EVID-02646,medium,candidate
+skyharbor-air,SHA-NODE-01091,control,ERP and finance platform 247 entity 1091,SHA-ENT-01091,SHA-EVID-02647,medium,candidate
+skyharbor-air,SHA-NODE-01092,metric,airline data lakehouse 248 entity 1092,SHA-ENT-01092,SHA-EVID-02648,high,candidate
+skyharbor-air,SHA-NODE-01093,system,identity and access management 249 entity 1093,SHA-ENT-01093,SHA-EVID-02649,high,candidate
+skyharbor-air,SHA-NODE-01094,function,service management platform 250 entity 1094,SHA-ENT-01094,SHA-EVID-02650,medium,candidate
+skyharbor-air,SHA-NODE-01095,data_asset,passenger service system 251 entity 1095,SHA-ENT-01095,SHA-EVID-02651,medium,candidate
+skyharbor-air,SHA-NODE-01096,vendor,departure control system 252 entity 1096,SHA-ENT-01096,SHA-EVID-02652,high,candidate
+skyharbor-air,SHA-NODE-01097,program,crew scheduling platform 253 entity 1097,SHA-ENT-01097,SHA-EVID-02653,high,candidate
+skyharbor-air,SHA-NODE-01098,control,flight planning platform 254 entity 1098,SHA-ENT-01098,SHA-EVID-02654,medium,candidate
+skyharbor-air,SHA-NODE-01099,metric,operations control and IROPS platform 255 entity 1099,SHA-ENT-01099,SHA-EVID-02655,medium,candidate
+skyharbor-air,SHA-NODE-01100,system,maintenance and MRO platform 256 entity 1100,SHA-ENT-01100,SHA-EVID-02656,high,candidate
+skyharbor-air,SHA-NODE-01101,system,Airline Demo entity 0001,SHA-ENT-00001,SHA-EVID-00001,high,candidate
+skyharbor-air,SHA-NODE-01102,function,Airline Demo entity 0002,SHA-ENT-00002,SHA-EVID-00002,medium,candidate
+skyharbor-air,SHA-NODE-01103,data_asset,Airline Demo entity 0003,SHA-ENT-00003,SHA-EVID-00003,medium,candidate
+skyharbor-air,SHA-NODE-01104,vendor,Airline Demo entity 0004,SHA-ENT-00004,SHA-EVID-00004,high,candidate
+skyharbor-air,SHA-NODE-01105,program,Airline Demo entity 0005,SHA-ENT-00005,SHA-EVID-00005,high,candidate
+skyharbor-air,SHA-NODE-01106,control,Airline Demo entity 0006,SHA-ENT-00006,SHA-EVID-00006,medium,candidate
+skyharbor-air,SHA-NODE-01107,metric,Airline Demo entity 0007,SHA-ENT-00007,SHA-EVID-00007,medium,candidate
+skyharbor-air,SHA-NODE-01108,system,Airline Demo entity 0008,SHA-ENT-00008,SHA-EVID-00008,high,candidate
+skyharbor-air,SHA-NODE-01109,function,Airline Demo entity 0009,SHA-ENT-00009,SHA-EVID-00009,high,candidate
+skyharbor-air,SHA-NODE-01110,data_asset,Airline Demo entity 0010,SHA-ENT-00010,SHA-EVID-00010,medium,candidate
+skyharbor-air,SHA-NODE-01111,vendor,Airline Demo entity 0011,SHA-ENT-00011,SHA-EVID-00011,medium,candidate
+skyharbor-air,SHA-NODE-01112,program,Airline Demo entity 0012,SHA-ENT-00012,SHA-EVID-00012,high,candidate
+skyharbor-air,SHA-NODE-01113,control,Airline Demo entity 0013,SHA-ENT-00013,SHA-EVID-00013,high,candidate
+skyharbor-air,SHA-NODE-01114,metric,Airline Demo entity 0014,SHA-ENT-00014,SHA-EVID-00014,medium,candidate
+skyharbor-air,SHA-NODE-01115,system,Airline Demo entity 0015,SHA-ENT-00015,SHA-EVID-00015,medium,candidate
+skyharbor-air,SHA-NODE-01116,function,Airline Demo entity 0016,SHA-ENT-00016,SHA-EVID-00016,high,candidate
+skyharbor-air,SHA-NODE-01117,data_asset,Airline Demo entity 0017,SHA-ENT-00017,SHA-EVID-00017,high,candidate
+skyharbor-air,SHA-NODE-01118,vendor,Airline Demo entity 0018,SHA-ENT-00018,SHA-EVID-00018,medium,candidate
+skyharbor-air,SHA-NODE-01119,program,Airline Demo entity 0019,SHA-ENT-00019,SHA-EVID-00019,medium,candidate
+skyharbor-air,SHA-NODE-01120,control,Airline Demo entity 0020,SHA-ENT-00020,SHA-EVID-00020,high,candidate
+skyharbor-air,SHA-NODE-01121,metric,Airline Demo entity 0021,SHA-ENT-00021,SHA-EVID-00021,high,candidate
+skyharbor-air,SHA-NODE-01122,system,Airline Demo entity 0022,SHA-ENT-00022,SHA-EVID-00022,medium,candidate
+skyharbor-air,SHA-NODE-01123,function,Airline Demo entity 0023,SHA-ENT-00023,SHA-EVID-00023,medium,candidate
+skyharbor-air,SHA-NODE-01124,data_asset,Airline Demo entity 0024,SHA-ENT-00024,SHA-EVID-00024,high,candidate
+skyharbor-air,SHA-NODE-01125,vendor,flight operations capability 001 entity 0025,SHA-ENT-00025,SHA-EVID-00601,high,candidate
+skyharbor-air,SHA-NODE-01126,program,operations control center capability 002 entity 0026,SHA-ENT-00026,SHA-EVID-00602,medium,candidate
+skyharbor-air,SHA-NODE-01127,control,airport operations capability 003 entity 0027,SHA-ENT-00027,SHA-EVID-00603,medium,candidate
+skyharbor-air,SHA-NODE-01128,metric,customer service capability 004 entity 0028,SHA-ENT-00028,SHA-EVID-00604,high,candidate
+skyharbor-air,SHA-NODE-01129,system,loyalty capability 005 entity 0029,SHA-ENT-00029,SHA-EVID-00605,high,candidate
+skyharbor-air,SHA-NODE-01130,function,revenue management capability 006 entity 0030,SHA-ENT-00030,SHA-EVID-00606,medium,candidate
+skyharbor-air,SHA-NODE-01131,data_asset,network planning capability 007 entity 0031,SHA-ENT-00031,SHA-EVID-00607,medium,candidate
+skyharbor-air,SHA-NODE-01132,vendor,crew scheduling capability 008 entity 0032,SHA-ENT-00032,SHA-EVID-00608,high,candidate
+skyharbor-air,SHA-NODE-01133,program,maintenance engineering capability 009 entity 0033,SHA-ENT-00033,SHA-EVID-00609,high,candidate
+skyharbor-air,SHA-NODE-01134,control,cargo operations capability 010 entity 0034,SHA-ENT-00034,SHA-EVID-00610,medium,candidate
+skyharbor-air,SHA-NODE-01135,metric,digital ecommerce capability 011 entity 0035,SHA-ENT-00035,SHA-EVID-00611,medium,candidate
+skyharbor-air,SHA-NODE-01136,system,safety and security capability 012 entity 0036,SHA-ENT-00036,SHA-EVID-00612,high,candidate
+skyharbor-air,SHA-NODE-01137,function,finance capability 013 entity 0037,SHA-ENT-00037,SHA-EVID-00613,high,candidate
+skyharbor-air,SHA-NODE-01138,data_asset,procurement capability 014 entity 0038,SHA-ENT-00038,SHA-EVID-00614,medium,candidate
+skyharbor-air,SHA-NODE-01139,vendor,HR and workforce capability 015 entity 0039,SHA-ENT-00039,SHA-EVID-00615,medium,candidate
+skyharbor-air,SHA-NODE-01140,program,data and analytics capability 016 entity 0040,SHA-ENT-00040,SHA-EVID-00616,high,candidate
+skyharbor-air,SHA-NODE-01141,control,platform engineering capability 017 entity 0041,SHA-ENT-00041,SHA-EVID-00617,high,candidate
+skyharbor-air,SHA-NODE-01142,metric,baggage operations capability 018 entity 0042,SHA-ENT-00042,SHA-EVID-00618,medium,candidate
+skyharbor-air,SHA-NODE-01143,system,flight operations capability 019 entity 0043,SHA-ENT-00043,SHA-EVID-00619,medium,candidate
+skyharbor-air,SHA-NODE-01144,function,operations control center capability 020 entity 0044,SHA-ENT-00044,SHA-EVID-00620,high,candidate
+skyharbor-air,SHA-NODE-01145,data_asset,airport operations capability 021 entity 0045,SHA-ENT-00045,SHA-EVID-00621,high,candidate
+skyharbor-air,SHA-NODE-01146,vendor,customer service capability 022 entity 0046,SHA-ENT-00046,SHA-EVID-00622,medium,candidate
+skyharbor-air,SHA-NODE-01147,program,loyalty capability 023 entity 0047,SHA-ENT-00047,SHA-EVID-00623,medium,candidate
+skyharbor-air,SHA-NODE-01148,control,revenue management capability 024 entity 0048,SHA-ENT-00048,SHA-EVID-00624,high,candidate
+skyharbor-air,SHA-NODE-01149,metric,network planning capability 025 entity 0049,SHA-ENT-00049,SHA-EVID-00625,high,candidate
+skyharbor-air,SHA-NODE-01150,system,crew scheduling capability 026 entity 0050,SHA-ENT-00050,SHA-EVID-00626,medium,candidate
+skyharbor-air,SHA-NODE-01151,function,maintenance engineering capability 027 entity 0051,SHA-ENT-00051,SHA-EVID-00627,medium,candidate
+skyharbor-air,SHA-NODE-01152,data_asset,cargo operations capability 028 entity 0052,SHA-ENT-00052,SHA-EVID-00628,high,candidate
+skyharbor-air,SHA-NODE-01153,vendor,digital ecommerce capability 029 entity 0053,SHA-ENT-00053,SHA-EVID-00629,high,candidate
+skyharbor-air,SHA-NODE-01154,program,safety and security capability 030 entity 0054,SHA-ENT-00054,SHA-EVID-00630,medium,candidate
+skyharbor-air,SHA-NODE-01155,control,finance capability 031 entity 0055,SHA-ENT-00055,SHA-EVID-00631,medium,candidate
+skyharbor-air,SHA-NODE-01156,metric,procurement capability 032 entity 0056,SHA-ENT-00056,SHA-EVID-00632,high,candidate
+skyharbor-air,SHA-NODE-01157,system,HR and workforce capability 033 entity 0057,SHA-ENT-00057,SHA-EVID-00633,high,candidate
+skyharbor-air,SHA-NODE-01158,function,data and analytics capability 034 entity 0058,SHA-ENT-00058,SHA-EVID-00634,medium,candidate
+skyharbor-air,SHA-NODE-01159,data_asset,platform engineering capability 035 entity 0059,SHA-ENT-00059,SHA-EVID-00635,medium,candidate
+skyharbor-air,SHA-NODE-01160,vendor,baggage operations capability 036 entity 0060,SHA-ENT-00060,SHA-EVID-00636,high,candidate
+skyharbor-air,SHA-NODE-01161,program,flight operations capability 037 entity 0061,SHA-ENT-00061,SHA-EVID-00637,high,candidate
+skyharbor-air,SHA-NODE-01162,control,operations control center capability 038 entity 0062,SHA-ENT-00062,SHA-EVID-00638,medium,candidate
+skyharbor-air,SHA-NODE-01163,metric,airport operations capability 039 entity 0063,SHA-ENT-00063,SHA-EVID-00639,medium,candidate
+skyharbor-air,SHA-NODE-01164,system,customer service capability 040 entity 0064,SHA-ENT-00064,SHA-EVID-00640,high,candidate
+skyharbor-air,SHA-NODE-01165,function,loyalty capability 041 entity 0065,SHA-ENT-00065,SHA-EVID-00641,high,candidate
+skyharbor-air,SHA-NODE-01166,data_asset,revenue management capability 042 entity 0066,SHA-ENT-00066,SHA-EVID-00642,medium,candidate
+skyharbor-air,SHA-NODE-01167,vendor,network planning capability 043 entity 0067,SHA-ENT-00067,SHA-EVID-00643,medium,candidate
+skyharbor-air,SHA-NODE-01168,program,crew scheduling capability 044 entity 0068,SHA-ENT-00068,SHA-EVID-00644,high,candidate
+skyharbor-air,SHA-NODE-01169,control,maintenance engineering capability 045 entity 0069,SHA-ENT-00069,SHA-EVID-00645,high,candidate
+skyharbor-air,SHA-NODE-01170,metric,cargo operations capability 046 entity 0070,SHA-ENT-00070,SHA-EVID-00646,medium,candidate
+skyharbor-air,SHA-NODE-01171,system,digital ecommerce capability 047 entity 0071,SHA-ENT-00071,SHA-EVID-00647,medium,candidate
+skyharbor-air,SHA-NODE-01172,function,safety and security capability 048 entity 0072,SHA-ENT-00072,SHA-EVID-00648,high,candidate
+skyharbor-air,SHA-NODE-01173,data_asset,finance capability 049 entity 0073,SHA-ENT-00073,SHA-EVID-00649,high,candidate
+skyharbor-air,SHA-NODE-01174,vendor,procurement capability 050 entity 0074,SHA-ENT-00074,SHA-EVID-00650,medium,candidate
+skyharbor-air,SHA-NODE-01175,program,HR and workforce capability 051 entity 0075,SHA-ENT-00075,SHA-EVID-00651,medium,candidate
+skyharbor-air,SHA-NODE-01176,control,data and analytics capability 052 entity 0076,SHA-ENT-00076,SHA-EVID-00652,high,candidate
+skyharbor-air,SHA-NODE-01177,metric,platform engineering capability 053 entity 0077,SHA-ENT-00077,SHA-EVID-00653,high,candidate
+skyharbor-air,SHA-NODE-01178,system,baggage operations capability 054 entity 0078,SHA-ENT-00078,SHA-EVID-00654,medium,candidate
+skyharbor-air,SHA-NODE-01179,function,flight operations capability 055 entity 0079,SHA-ENT-00079,SHA-EVID-00655,medium,candidate
+skyharbor-air,SHA-NODE-01180,data_asset,operations control center capability 056 entity 0080,SHA-ENT-00080,SHA-EVID-00656,high,candidate
+skyharbor-air,SHA-NODE-01181,vendor,airport operations capability 057 entity 0081,SHA-ENT-00081,SHA-EVID-00657,high,candidate
+skyharbor-air,SHA-NODE-01182,program,customer service capability 058 entity 0082,SHA-ENT-00082,SHA-EVID-00658,medium,candidate
+skyharbor-air,SHA-NODE-01183,control,loyalty capability 059 entity 0083,SHA-ENT-00083,SHA-EVID-00659,medium,candidate
+skyharbor-air,SHA-NODE-01184,metric,revenue management capability 060 entity 0084,SHA-ENT-00084,SHA-EVID-00660,high,candidate
+skyharbor-air,SHA-NODE-01185,system,network planning capability 061 entity 0085,SHA-ENT-00085,SHA-EVID-00661,high,candidate
+skyharbor-air,SHA-NODE-01186,function,crew scheduling capability 062 entity 0086,SHA-ENT-00086,SHA-EVID-00662,medium,candidate
+skyharbor-air,SHA-NODE-01187,data_asset,maintenance engineering capability 063 entity 0087,SHA-ENT-00087,SHA-EVID-00663,medium,candidate
+skyharbor-air,SHA-NODE-01188,vendor,cargo operations capability 064 entity 0088,SHA-ENT-00088,SHA-EVID-00664,high,candidate
+skyharbor-air,SHA-NODE-01189,program,digital ecommerce capability 065 entity 0089,SHA-ENT-00089,SHA-EVID-00665,high,candidate
+skyharbor-air,SHA-NODE-01190,control,safety and security capability 066 entity 0090,SHA-ENT-00090,SHA-EVID-00666,medium,candidate
+skyharbor-air,SHA-NODE-01191,metric,finance capability 067 entity 0091,SHA-ENT-00091,SHA-EVID-00667,medium,candidate
+skyharbor-air,SHA-NODE-01192,system,procurement capability 068 entity 0092,SHA-ENT-00092,SHA-EVID-00668,high,candidate
+skyharbor-air,SHA-NODE-01193,function,HR and workforce capability 069 entity 0093,SHA-ENT-00093,SHA-EVID-00669,high,candidate
+skyharbor-air,SHA-NODE-01194,data_asset,data and analytics capability 070 entity 0094,SHA-ENT-00094,SHA-EVID-00670,medium,candidate
+skyharbor-air,SHA-NODE-01195,vendor,platform engineering capability 071 entity 0095,SHA-ENT-00095,SHA-EVID-00671,medium,candidate
+skyharbor-air,SHA-NODE-01196,program,baggage operations capability 072 entity 0096,SHA-ENT-00096,SHA-EVID-00672,high,candidate
+skyharbor-air,SHA-NODE-01197,control,flight operations capability 073 entity 0097,SHA-ENT-00097,SHA-EVID-00673,high,candidate
+skyharbor-air,SHA-NODE-01198,metric,operations control center capability 074 entity 0098,SHA-ENT-00098,SHA-EVID-00674,medium,candidate
+skyharbor-air,SHA-NODE-01199,system,airport operations capability 075 entity 0099,SHA-ENT-00099,SHA-EVID-00675,medium,candidate
+skyharbor-air,SHA-NODE-01200,function,customer service capability 076 entity 0100,SHA-ENT-00100,SHA-EVID-00676,high,candidate
+skyharbor-air,SHA-NODE-01201,data_asset,loyalty capability 077 entity 0101,SHA-ENT-00101,SHA-EVID-00677,high,candidate
+skyharbor-air,SHA-NODE-01202,vendor,revenue management capability 078 entity 0102,SHA-ENT-00102,SHA-EVID-00678,medium,candidate
+skyharbor-air,SHA-NODE-01203,program,network planning capability 079 entity 0103,SHA-ENT-00103,SHA-EVID-00679,medium,candidate
+skyharbor-air,SHA-NODE-01204,control,crew scheduling capability 080 entity 0104,SHA-ENT-00104,SHA-EVID-00680,high,candidate
+skyharbor-air,SHA-NODE-01205,metric,maintenance engineering capability 081 entity 0105,SHA-ENT-00105,SHA-EVID-00681,high,candidate
+skyharbor-air,SHA-NODE-01206,system,cargo operations capability 082 entity 0106,SHA-ENT-00106,SHA-EVID-00682,medium,candidate
+skyharbor-air,SHA-NODE-01207,function,digital ecommerce capability 083 entity 0107,SHA-ENT-00107,SHA-EVID-00683,medium,candidate
+skyharbor-air,SHA-NODE-01208,data_asset,safety and security capability 084 entity 0108,SHA-ENT-00108,SHA-EVID-00684,high,candidate
+skyharbor-air,SHA-NODE-01209,vendor,finance capability 085 entity 0109,SHA-ENT-00109,SHA-EVID-00685,high,candidate
+skyharbor-air,SHA-NODE-01210,program,procurement capability 086 entity 0110,SHA-ENT-00110,SHA-EVID-00686,medium,candidate
+skyharbor-air,SHA-NODE-01211,control,HR and workforce capability 087 entity 0111,SHA-ENT-00111,SHA-EVID-00687,medium,candidate
+skyharbor-air,SHA-NODE-01212,metric,data and analytics capability 088 entity 0112,SHA-ENT-00112,SHA-EVID-00688,high,candidate
+skyharbor-air,SHA-NODE-01213,system,platform engineering capability 089 entity 0113,SHA-ENT-00113,SHA-EVID-00689,high,candidate
+skyharbor-air,SHA-NODE-01214,function,baggage operations capability 090 entity 0114,SHA-ENT-00114,SHA-EVID-00690,medium,candidate
+skyharbor-air,SHA-NODE-01215,data_asset,flight operations capability 091 entity 0115,SHA-ENT-00115,SHA-EVID-00691,medium,candidate
+skyharbor-air,SHA-NODE-01216,vendor,operations control center capability 092 entity 0116,SHA-ENT-00116,SHA-EVID-00692,high,candidate
+skyharbor-air,SHA-NODE-01217,program,airport operations capability 093 entity 0117,SHA-ENT-00117,SHA-EVID-00693,high,candidate
+skyharbor-air,SHA-NODE-01218,control,customer service capability 094 entity 0118,SHA-ENT-00118,SHA-EVID-00694,medium,candidate
+skyharbor-air,SHA-NODE-01219,metric,loyalty capability 095 entity 0119,SHA-ENT-00119,SHA-EVID-00695,medium,candidate
+skyharbor-air,SHA-NODE-01220,system,revenue management capability 096 entity 0120,SHA-ENT-00120,SHA-EVID-00696,high,candidate
+skyharbor-air,SHA-NODE-01221,function,network planning capability 097 entity 0121,SHA-ENT-00121,SHA-EVID-00697,high,candidate
+skyharbor-air,SHA-NODE-01222,data_asset,crew scheduling capability 098 entity 0122,SHA-ENT-00122,SHA-EVID-00698,medium,candidate
+skyharbor-air,SHA-NODE-01223,vendor,maintenance engineering capability 099 entity 0123,SHA-ENT-00123,SHA-EVID-00699,medium,candidate
+skyharbor-air,SHA-NODE-01224,program,cargo operations capability 100 entity 0124,SHA-ENT-00124,SHA-EVID-00700,high,candidate
+skyharbor-air,SHA-NODE-01225,control,digital ecommerce capability 101 entity 0125,SHA-ENT-00125,SHA-EVID-00701,high,candidate
+skyharbor-air,SHA-NODE-01226,metric,safety and security capability 102 entity 0126,SHA-ENT-00126,SHA-EVID-00702,medium,candidate
+skyharbor-air,SHA-NODE-01227,system,finance capability 103 entity 0127,SHA-ENT-00127,SHA-EVID-00703,medium,candidate
+skyharbor-air,SHA-NODE-01228,function,procurement capability 104 entity 0128,SHA-ENT-00128,SHA-EVID-00704,high,candidate
+skyharbor-air,SHA-NODE-01229,data_asset,HR and workforce capability 105 entity 0129,SHA-ENT-00129,SHA-EVID-00705,high,candidate
+skyharbor-air,SHA-NODE-01230,vendor,data and analytics capability 106 entity 0130,SHA-ENT-00130,SHA-EVID-00706,medium,candidate
+skyharbor-air,SHA-NODE-01231,program,platform engineering capability 107 entity 0131,SHA-ENT-00131,SHA-EVID-00707,medium,candidate
+skyharbor-air,SHA-NODE-01232,control,baggage operations capability 108 entity 0132,SHA-ENT-00132,SHA-EVID-00708,high,candidate
+skyharbor-air,SHA-NODE-01233,metric,flight operations capability 109 entity 0133,SHA-ENT-00133,SHA-EVID-00709,high,candidate
+skyharbor-air,SHA-NODE-01234,system,operations control center capability 110 entity 0134,SHA-ENT-00134,SHA-EVID-00710,medium,candidate
+skyharbor-air,SHA-NODE-01235,function,airport operations capability 111 entity 0135,SHA-ENT-00135,SHA-EVID-00711,medium,candidate
+skyharbor-air,SHA-NODE-01236,data_asset,customer service capability 112 entity 0136,SHA-ENT-00136,SHA-EVID-00712,high,candidate
+skyharbor-air,SHA-NODE-01237,vendor,loyalty capability 113 entity 0137,SHA-ENT-00137,SHA-EVID-00713,high,candidate
+skyharbor-air,SHA-NODE-01238,program,revenue management capability 114 entity 0138,SHA-ENT-00138,SHA-EVID-00714,medium,candidate
+skyharbor-air,SHA-NODE-01239,control,network planning capability 115 entity 0139,SHA-ENT-00139,SHA-EVID-00715,medium,candidate
+skyharbor-air,SHA-NODE-01240,metric,crew scheduling capability 116 entity 0140,SHA-ENT-00140,SHA-EVID-00716,high,candidate
+skyharbor-air,SHA-NODE-01241,system,maintenance engineering capability 117 entity 0141,SHA-ENT-00141,SHA-EVID-00717,high,candidate
+skyharbor-air,SHA-NODE-01242,function,cargo operations capability 118 entity 0142,SHA-ENT-00142,SHA-EVID-00718,medium,candidate
+skyharbor-air,SHA-NODE-01243,data_asset,digital ecommerce capability 119 entity 0143,SHA-ENT-00143,SHA-EVID-00719,medium,candidate
+skyharbor-air,SHA-NODE-01244,vendor,safety and security capability 120 entity 0144,SHA-ENT-00144,SHA-EVID-00720,high,candidate
+skyharbor-air,SHA-NODE-01245,program,finance capability 121 entity 0145,SHA-ENT-00145,SHA-EVID-00721,high,candidate
+skyharbor-air,SHA-NODE-01246,control,procurement capability 122 entity 0146,SHA-ENT-00146,SHA-EVID-00722,medium,candidate
+skyharbor-air,SHA-NODE-01247,metric,HR and workforce capability 123 entity 0147,SHA-ENT-00147,SHA-EVID-00723,medium,candidate
+skyharbor-air,SHA-NODE-01248,system,data and analytics capability 124 entity 0148,SHA-ENT-00148,SHA-EVID-00724,high,candidate
+skyharbor-air,SHA-NODE-01249,function,platform engineering capability 125 entity 0149,SHA-ENT-00149,SHA-EVID-00725,high,candidate
+skyharbor-air,SHA-NODE-01250,data_asset,baggage operations capability 126 entity 0150,SHA-ENT-00150,SHA-EVID-00726,medium,candidate
+skyharbor-air,SHA-NODE-01251,vendor,flight operations capability 127 entity 0151,SHA-ENT-00151,SHA-EVID-00727,medium,candidate
+skyharbor-air,SHA-NODE-01252,program,operations control center capability 128 entity 0152,SHA-ENT-00152,SHA-EVID-00728,high,candidate
+skyharbor-air,SHA-NODE-01253,control,airport operations capability 129 entity 0153,SHA-ENT-00153,SHA-EVID-00729,high,candidate
+skyharbor-air,SHA-NODE-01254,metric,customer service capability 130 entity 0154,SHA-ENT-00154,SHA-EVID-00730,medium,candidate
+skyharbor-air,SHA-NODE-01255,system,loyalty capability 131 entity 0155,SHA-ENT-00155,SHA-EVID-00731,medium,candidate
+skyharbor-air,SHA-NODE-01256,function,revenue management capability 132 entity 0156,SHA-ENT-00156,SHA-EVID-00732,high,candidate
+skyharbor-air,SHA-NODE-01257,data_asset,network planning capability 133 entity 0157,SHA-ENT-00157,SHA-EVID-00733,high,candidate
+skyharbor-air,SHA-NODE-01258,vendor,crew scheduling capability 134 entity 0158,SHA-ENT-00158,SHA-EVID-00734,medium,candidate
+skyharbor-air,SHA-NODE-01259,program,maintenance engineering capability 135 entity 0159,SHA-ENT-00159,SHA-EVID-00735,medium,candidate
+skyharbor-air,SHA-NODE-01260,control,cargo operations capability 136 entity 0160,SHA-ENT-00160,SHA-EVID-00736,high,candidate
+skyharbor-air,SHA-NODE-01261,metric,digital ecommerce capability 137 entity 0161,SHA-ENT-00161,SHA-EVID-00737,high,candidate
+skyharbor-air,SHA-NODE-01262,system,safety and security capability 138 entity 0162,SHA-ENT-00162,SHA-EVID-00738,medium,candidate
+skyharbor-air,SHA-NODE-01263,function,finance capability 139 entity 0163,SHA-ENT-00163,SHA-EVID-00739,medium,candidate
+skyharbor-air,SHA-NODE-01264,data_asset,procurement capability 140 entity 0164,SHA-ENT-00164,SHA-EVID-00740,high,candidate
+skyharbor-air,SHA-NODE-01265,vendor,HR and workforce capability 141 entity 0165,SHA-ENT-00165,SHA-EVID-00741,high,candidate
+skyharbor-air,SHA-NODE-01266,program,data and analytics capability 142 entity 0166,SHA-ENT-00166,SHA-EVID-00742,medium,candidate
+skyharbor-air,SHA-NODE-01267,control,platform engineering capability 143 entity 0167,SHA-ENT-00167,SHA-EVID-00743,medium,candidate
+skyharbor-air,SHA-NODE-01268,metric,baggage operations capability 144 entity 0168,SHA-ENT-00168,SHA-EVID-00744,high,candidate
+skyharbor-air,SHA-NODE-01269,system,flight operations capability 145 entity 0169,SHA-ENT-00169,SHA-EVID-00745,high,candidate
+skyharbor-air,SHA-NODE-01270,function,operations control center capability 146 entity 0170,SHA-ENT-00170,SHA-EVID-00746,medium,candidate
+skyharbor-air,SHA-NODE-01271,data_asset,airport operations capability 147 entity 0171,SHA-ENT-00171,SHA-EVID-00747,medium,candidate
+skyharbor-air,SHA-NODE-01272,vendor,customer service capability 148 entity 0172,SHA-ENT-00172,SHA-EVID-00748,high,candidate
+skyharbor-air,SHA-NODE-01273,program,loyalty capability 149 entity 0173,SHA-ENT-00173,SHA-EVID-00749,high,candidate
+skyharbor-air,SHA-NODE-01274,control,revenue management capability 150 entity 0174,SHA-ENT-00174,SHA-EVID-00750,medium,candidate
+skyharbor-air,SHA-NODE-01275,metric,network planning capability 151 entity 0175,SHA-ENT-00175,SHA-EVID-00751,medium,candidate
+skyharbor-air,SHA-NODE-01276,system,crew scheduling capability 152 entity 0176,SHA-ENT-00176,SHA-EVID-00752,high,candidate
+skyharbor-air,SHA-NODE-01277,function,maintenance engineering capability 153 entity 0177,SHA-ENT-00177,SHA-EVID-00753,high,candidate
+skyharbor-air,SHA-NODE-01278,data_asset,cargo operations capability 154 entity 0178,SHA-ENT-00178,SHA-EVID-00754,medium,candidate
+skyharbor-air,SHA-NODE-01279,vendor,digital ecommerce capability 155 entity 0179,SHA-ENT-00179,SHA-EVID-00755,medium,candidate
+skyharbor-air,SHA-NODE-01280,program,safety and security capability 156 entity 0180,SHA-ENT-00180,SHA-EVID-00756,high,candidate
+skyharbor-air,SHA-NODE-01281,control,finance capability 157 entity 0181,SHA-ENT-00181,SHA-EVID-00757,high,candidate
+skyharbor-air,SHA-NODE-01282,metric,procurement capability 158 entity 0182,SHA-ENT-00182,SHA-EVID-00758,medium,candidate
+skyharbor-air,SHA-NODE-01283,system,HR and workforce capability 159 entity 0183,SHA-ENT-00183,SHA-EVID-00759,medium,candidate
+skyharbor-air,SHA-NODE-01284,function,data and analytics capability 160 entity 0184,SHA-ENT-00184,SHA-EVID-00760,high,candidate
+skyharbor-air,SHA-NODE-01285,data_asset,platform engineering capability 161 entity 0185,SHA-ENT-00185,SHA-EVID-00761,high,candidate
+skyharbor-air,SHA-NODE-01286,vendor,baggage operations capability 162 entity 0186,SHA-ENT-00186,SHA-EVID-00762,medium,candidate
+skyharbor-air,SHA-NODE-01287,program,flight operations capability 163 entity 0187,SHA-ENT-00187,SHA-EVID-00763,medium,candidate
+skyharbor-air,SHA-NODE-01288,control,operations control center capability 164 entity 0188,SHA-ENT-00188,SHA-EVID-00764,high,candidate
+skyharbor-air,SHA-NODE-01289,metric,airport operations capability 165 entity 0189,SHA-ENT-00189,SHA-EVID-00765,high,candidate
+skyharbor-air,SHA-NODE-01290,system,customer service capability 166 entity 0190,SHA-ENT-00190,SHA-EVID-00766,medium,candidate
+skyharbor-air,SHA-NODE-01291,function,loyalty capability 167 entity 0191,SHA-ENT-00191,SHA-EVID-00767,medium,candidate
+skyharbor-air,SHA-NODE-01292,data_asset,revenue management capability 168 entity 0192,SHA-ENT-00192,SHA-EVID-00768,high,candidate
+skyharbor-air,SHA-NODE-01293,vendor,network planning capability 169 entity 0193,SHA-ENT-00193,SHA-EVID-00769,high,candidate
+skyharbor-air,SHA-NODE-01294,program,crew scheduling capability 170 entity 0194,SHA-ENT-00194,SHA-EVID-00770,medium,candidate
+skyharbor-air,SHA-NODE-01295,control,maintenance engineering capability 171 entity 0195,SHA-ENT-00195,SHA-EVID-00771,medium,candidate
+skyharbor-air,SHA-NODE-01296,metric,cargo operations capability 172 entity 0196,SHA-ENT-00196,SHA-EVID-00772,high,candidate
+skyharbor-air,SHA-NODE-01297,system,digital ecommerce capability 173 entity 0197,SHA-ENT-00197,SHA-EVID-00773,high,candidate
+skyharbor-air,SHA-NODE-01298,function,safety and security capability 174 entity 0198,SHA-ENT-00198,SHA-EVID-00774,medium,candidate
+skyharbor-air,SHA-NODE-01299,data_asset,finance capability 175 entity 0199,SHA-ENT-00199,SHA-EVID-00775,medium,candidate
+skyharbor-air,SHA-NODE-01300,vendor,procurement capability 176 entity 0200,SHA-ENT-00200,SHA-EVID-00776,high,candidate
+skyharbor-air,SHA-NODE-01301,program,HR and workforce capability 177 entity 0201,SHA-ENT-00201,SHA-EVID-00777,high,candidate
+skyharbor-air,SHA-NODE-01302,control,data and analytics capability 178 entity 0202,SHA-ENT-00202,SHA-EVID-00778,medium,candidate
+skyharbor-air,SHA-NODE-01303,metric,platform engineering capability 179 entity 0203,SHA-ENT-00203,SHA-EVID-00779,medium,candidate
+skyharbor-air,SHA-NODE-01304,system,baggage operations capability 180 entity 0204,SHA-ENT-00204,SHA-EVID-00780,high,candidate
+skyharbor-air,SHA-NODE-01305,function,flight operations capability 181 entity 0205,SHA-ENT-00205,SHA-EVID-00781,high,candidate
+skyharbor-air,SHA-NODE-01306,data_asset,operations control center capability 182 entity 0206,SHA-ENT-00206,SHA-EVID-00782,medium,candidate
+skyharbor-air,SHA-NODE-01307,vendor,airport operations capability 183 entity 0207,SHA-ENT-00207,SHA-EVID-00783,medium,candidate
+skyharbor-air,SHA-NODE-01308,program,customer service capability 184 entity 0208,SHA-ENT-00208,SHA-EVID-00784,high,candidate
+skyharbor-air,SHA-NODE-01309,control,loyalty capability 185 entity 0209,SHA-ENT-00209,SHA-EVID-00785,high,candidate
+skyharbor-air,SHA-NODE-01310,metric,revenue management capability 186 entity 0210,SHA-ENT-00210,SHA-EVID-00786,medium,candidate
+skyharbor-air,SHA-NODE-01311,system,network planning capability 187 entity 0211,SHA-ENT-00211,SHA-EVID-00787,medium,candidate
+skyharbor-air,SHA-NODE-01312,function,crew scheduling capability 188 entity 0212,SHA-ENT-00212,SHA-EVID-00788,high,candidate
+skyharbor-air,SHA-NODE-01313,data_asset,maintenance engineering capability 189 entity 0213,SHA-ENT-00213,SHA-EVID-00789,high,candidate
+skyharbor-air,SHA-NODE-01314,vendor,cargo operations capability 190 entity 0214,SHA-ENT-00214,SHA-EVID-00790,medium,candidate
+skyharbor-air,SHA-NODE-01315,program,digital ecommerce capability 191 entity 0215,SHA-ENT-00215,SHA-EVID-00791,medium,candidate
+skyharbor-air,SHA-NODE-01316,control,safety and security capability 192 entity 0216,SHA-ENT-00216,SHA-EVID-00792,high,candidate
+skyharbor-air,SHA-NODE-01317,metric,finance capability 193 entity 0217,SHA-ENT-00217,SHA-EVID-00793,high,candidate
+skyharbor-air,SHA-NODE-01318,system,procurement capability 194 entity 0218,SHA-ENT-00218,SHA-EVID-00794,medium,candidate
+skyharbor-air,SHA-NODE-01319,function,HR and workforce capability 195 entity 0219,SHA-ENT-00219,SHA-EVID-00795,medium,candidate
+skyharbor-air,SHA-NODE-01320,data_asset,data and analytics capability 196 entity 0220,SHA-ENT-00220,SHA-EVID-00796,high,candidate
+skyharbor-air,SHA-NODE-01321,vendor,platform engineering capability 197 entity 0221,SHA-ENT-00221,SHA-EVID-00797,high,candidate
+skyharbor-air,SHA-NODE-01322,program,baggage operations capability 198 entity 0222,SHA-ENT-00222,SHA-EVID-00798,medium,candidate
+skyharbor-air,SHA-NODE-01323,control,flight operations capability 199 entity 0223,SHA-ENT-00223,SHA-EVID-00799,medium,candidate
+skyharbor-air,SHA-NODE-01324,metric,operations control center capability 200 entity 0224,SHA-ENT-00224,SHA-EVID-00800,high,candidate
+skyharbor-air,SHA-NODE-01325,system,airport operations capability 201 entity 0225,SHA-ENT-00225,SHA-EVID-00801,high,candidate
+skyharbor-air,SHA-NODE-01326,function,customer service capability 202 entity 0226,SHA-ENT-00226,SHA-EVID-00802,medium,candidate
+skyharbor-air,SHA-NODE-01327,data_asset,loyalty capability 203 entity 0227,SHA-ENT-00227,SHA-EVID-00803,medium,candidate
+skyharbor-air,SHA-NODE-01328,vendor,revenue management capability 204 entity 0228,SHA-ENT-00228,SHA-EVID-00804,high,candidate
+skyharbor-air,SHA-NODE-01329,program,network planning capability 205 entity 0229,SHA-ENT-00229,SHA-EVID-00805,high,candidate
+skyharbor-air,SHA-NODE-01330,control,crew scheduling capability 206 entity 0230,SHA-ENT-00230,SHA-EVID-00806,medium,candidate
+skyharbor-air,SHA-NODE-01331,metric,maintenance engineering capability 207 entity 0231,SHA-ENT-00231,SHA-EVID-00807,medium,candidate
+skyharbor-air,SHA-NODE-01332,system,cargo operations capability 208 entity 0232,SHA-ENT-00232,SHA-EVID-00808,high,candidate
+skyharbor-air,SHA-NODE-01333,function,digital ecommerce capability 209 entity 0233,SHA-ENT-00233,SHA-EVID-00809,high,candidate
+skyharbor-air,SHA-NODE-01334,data_asset,safety and security capability 210 entity 0234,SHA-ENT-00234,SHA-EVID-00810,medium,candidate
+skyharbor-air,SHA-NODE-01335,vendor,finance capability 211 entity 0235,SHA-ENT-00235,SHA-EVID-00811,medium,candidate
+skyharbor-air,SHA-NODE-01336,program,procurement capability 212 entity 0236,SHA-ENT-00236,SHA-EVID-00812,high,candidate
+skyharbor-air,SHA-NODE-01337,control,HR and workforce capability 213 entity 0237,SHA-ENT-00237,SHA-EVID-00813,high,candidate
+skyharbor-air,SHA-NODE-01338,metric,data and analytics capability 214 entity 0238,SHA-ENT-00238,SHA-EVID-00814,medium,candidate
+skyharbor-air,SHA-NODE-01339,system,platform engineering capability 215 entity 0239,SHA-ENT-00239,SHA-EVID-00815,medium,candidate
+skyharbor-air,SHA-NODE-01340,function,baggage operations capability 216 entity 0240,SHA-ENT-00240,SHA-EVID-00816,high,candidate
+skyharbor-air,SHA-NODE-01341,data_asset,flight operations capability 217 entity 0241,SHA-ENT-00241,SHA-EVID-00817,high,candidate
+skyharbor-air,SHA-NODE-01342,vendor,operations control center capability 218 entity 0242,SHA-ENT-00242,SHA-EVID-00818,medium,candidate
+skyharbor-air,SHA-NODE-01343,program,airport operations capability 219 entity 0243,SHA-ENT-00243,SHA-EVID-00819,medium,candidate
+skyharbor-air,SHA-NODE-01344,control,customer service capability 220 entity 0244,SHA-ENT-00244,SHA-EVID-00820,high,candidate
+skyharbor-air,SHA-NODE-01345,metric,loyalty capability 221 entity 0245,SHA-ENT-00245,SHA-EVID-00821,high,candidate
+skyharbor-air,SHA-NODE-01346,system,revenue management capability 222 entity 0246,SHA-ENT-00246,SHA-EVID-00822,medium,candidate
+skyharbor-air,SHA-NODE-01347,function,network planning capability 223 entity 0247,SHA-ENT-00247,SHA-EVID-00823,medium,candidate
+skyharbor-air,SHA-NODE-01348,data_asset,crew scheduling capability 224 entity 0248,SHA-ENT-00248,SHA-EVID-00824,high,candidate
+skyharbor-air,SHA-NODE-01349,vendor,maintenance engineering capability 225 entity 0249,SHA-ENT-00249,SHA-EVID-00825,high,candidate
+skyharbor-air,SHA-NODE-01350,program,cargo operations capability 226 entity 0250,SHA-ENT-00250,SHA-EVID-00826,medium,candidate
+skyharbor-air,SHA-NODE-01351,control,digital ecommerce capability 227 entity 0251,SHA-ENT-00251,SHA-EVID-00827,medium,candidate
+skyharbor-air,SHA-NODE-01352,metric,safety and security capability 228 entity 0252,SHA-ENT-00252,SHA-EVID-00828,high,candidate
+skyharbor-air,SHA-NODE-01353,system,finance capability 229 entity 0253,SHA-ENT-00253,SHA-EVID-00829,high,candidate
+skyharbor-air,SHA-NODE-01354,function,procurement capability 230 entity 0254,SHA-ENT-00254,SHA-EVID-00830,medium,candidate
+skyharbor-air,SHA-NODE-01355,data_asset,HR and workforce capability 231 entity 0255,SHA-ENT-00255,SHA-EVID-00831,medium,candidate
+skyharbor-air,SHA-NODE-01356,vendor,data and analytics capability 232 entity 0256,SHA-ENT-00256,SHA-EVID-00832,high,candidate
+skyharbor-air,SHA-NODE-01357,program,platform engineering capability 233 entity 0257,SHA-ENT-00257,SHA-EVID-00833,high,candidate
+skyharbor-air,SHA-NODE-01358,control,baggage operations capability 234 entity 0258,SHA-ENT-00258,SHA-EVID-00834,medium,candidate
+skyharbor-air,SHA-NODE-01359,metric,flight operations capability 235 entity 0259,SHA-ENT-00259,SHA-EVID-00835,medium,candidate
+skyharbor-air,SHA-NODE-01360,system,operations control center capability 236 entity 0260,SHA-ENT-00260,SHA-EVID-00836,high,candidate
+skyharbor-air,SHA-NODE-01361,function,airport operations capability 237 entity 0261,SHA-ENT-00261,SHA-EVID-00837,high,candidate
+skyharbor-air,SHA-NODE-01362,data_asset,customer service capability 238 entity 0262,SHA-ENT-00262,SHA-EVID-00838,medium,candidate
+skyharbor-air,SHA-NODE-01363,vendor,loyalty capability 239 entity 0263,SHA-ENT-00263,SHA-EVID-00839,medium,candidate
+skyharbor-air,SHA-NODE-01364,program,revenue management capability 240 entity 0264,SHA-ENT-00264,SHA-EVID-00840,high,candidate
+skyharbor-air,SHA-NODE-01365,control,network planning capability 241 entity 0265,SHA-ENT-00265,SHA-EVID-00841,high,candidate
+skyharbor-air,SHA-NODE-01366,metric,crew scheduling capability 242 entity 0266,SHA-ENT-00266,SHA-EVID-00842,medium,candidate
+skyharbor-air,SHA-NODE-01367,system,maintenance engineering capability 243 entity 0267,SHA-ENT-00267,SHA-EVID-00843,medium,candidate
+skyharbor-air,SHA-NODE-01368,function,cargo operations capability 244 entity 0268,SHA-ENT-00268,SHA-EVID-00844,high,candidate
+skyharbor-air,SHA-NODE-01369,data_asset,digital ecommerce capability 245 entity 0269,SHA-ENT-00269,SHA-EVID-00845,high,candidate
+skyharbor-air,SHA-NODE-01370,vendor,safety and security capability 246 entity 0270,SHA-ENT-00270,SHA-EVID-00846,medium,candidate
+skyharbor-air,SHA-NODE-01371,program,finance capability 247 entity 0271,SHA-ENT-00271,SHA-EVID-00847,medium,candidate
+skyharbor-air,SHA-NODE-01372,control,procurement capability 248 entity 0272,SHA-ENT-00272,SHA-EVID-00848,high,candidate
+skyharbor-air,SHA-NODE-01373,metric,HR and workforce capability 249 entity 0273,SHA-ENT-00273,SHA-EVID-00849,high,candidate
+skyharbor-air,SHA-NODE-01374,system,data and analytics capability 250 entity 0274,SHA-ENT-00274,SHA-EVID-00850,medium,candidate
+skyharbor-air,SHA-NODE-01375,function,platform engineering capability 251 entity 0275,SHA-ENT-00275,SHA-EVID-00851,medium,candidate
+skyharbor-air,SHA-NODE-01376,data_asset,baggage operations capability 252 entity 0276,SHA-ENT-00276,SHA-EVID-00852,high,candidate
+skyharbor-air,SHA-NODE-01377,vendor,flight operations capability 253 entity 0277,SHA-ENT-00277,SHA-EVID-00853,high,candidate
+skyharbor-air,SHA-NODE-01378,program,operations control center capability 254 entity 0278,SHA-ENT-00278,SHA-EVID-00854,medium,candidate
+skyharbor-air,SHA-NODE-01379,control,airport operations capability 255 entity 0279,SHA-ENT-00279,SHA-EVID-00855,medium,candidate
+skyharbor-air,SHA-NODE-01380,metric,customer service capability 256 entity 0280,SHA-ENT-00280,SHA-EVID-00856,high,candidate
+skyharbor-air,SHA-NODE-01381,system,loyalty capability 257 entity 0281,SHA-ENT-00281,SHA-EVID-00857,high,candidate
+skyharbor-air,SHA-NODE-01382,function,revenue management capability 258 entity 0282,SHA-ENT-00282,SHA-EVID-00858,medium,candidate
+skyharbor-air,SHA-NODE-01383,data_asset,network planning capability 259 entity 0283,SHA-ENT-00283,SHA-EVID-00859,medium,candidate
+skyharbor-air,SHA-NODE-01384,vendor,crew scheduling capability 260 entity 0284,SHA-ENT-00284,SHA-EVID-00860,high,candidate
+skyharbor-air,SHA-NODE-01385,program,maintenance engineering capability 261 entity 0285,SHA-ENT-00285,SHA-EVID-00861,high,candidate
+skyharbor-air,SHA-NODE-01386,control,cargo operations capability 262 entity 0286,SHA-ENT-00286,SHA-EVID-00862,medium,candidate
+skyharbor-air,SHA-NODE-01387,metric,digital ecommerce capability 263 entity 0287,SHA-ENT-00287,SHA-EVID-00863,medium,candidate
+skyharbor-air,SHA-NODE-01388,system,safety and security capability 264 entity 0288,SHA-ENT-00288,SHA-EVID-00864,high,candidate
+skyharbor-air,SHA-NODE-01389,function,finance capability 265 entity 0289,SHA-ENT-00289,SHA-EVID-00865,high,candidate
+skyharbor-air,SHA-NODE-01390,data_asset,procurement capability 266 entity 0290,SHA-ENT-00290,SHA-EVID-00866,medium,candidate
+skyharbor-air,SHA-NODE-01391,vendor,HR and workforce capability 267 entity 0291,SHA-ENT-00291,SHA-EVID-00867,medium,candidate
+skyharbor-air,SHA-NODE-01392,program,data and analytics capability 268 entity 0292,SHA-ENT-00292,SHA-EVID-00868,high,candidate
+skyharbor-air,SHA-NODE-01393,control,platform engineering capability 269 entity 0293,SHA-ENT-00293,SHA-EVID-00869,high,candidate
+skyharbor-air,SHA-NODE-01394,metric,baggage operations capability 270 entity 0294,SHA-ENT-00294,SHA-EVID-00870,medium,candidate
+skyharbor-air,SHA-NODE-01395,system,flight operations capability 271 entity 0295,SHA-ENT-00295,SHA-EVID-00871,medium,candidate
+skyharbor-air,SHA-NODE-01396,function,operations control center capability 272 entity 0296,SHA-ENT-00296,SHA-EVID-00872,high,candidate
+skyharbor-air,SHA-NODE-01397,data_asset,airport operations capability 273 entity 0297,SHA-ENT-00297,SHA-EVID-00873,high,candidate
+skyharbor-air,SHA-NODE-01398,vendor,customer service capability 274 entity 0298,SHA-ENT-00298,SHA-EVID-00874,medium,candidate
+skyharbor-air,SHA-NODE-01399,program,loyalty capability 275 entity 0299,SHA-ENT-00299,SHA-EVID-00875,medium,candidate
+skyharbor-air,SHA-NODE-01400,control,revenue management capability 276 entity 0300,SHA-ENT-00300,SHA-EVID-00876,high,candidate
+skyharbor-air,SHA-NODE-01401,metric,network planning capability 277 entity 0301,SHA-ENT-00301,SHA-EVID-00877,high,candidate
+skyharbor-air,SHA-NODE-01402,system,crew scheduling capability 278 entity 0302,SHA-ENT-00302,SHA-EVID-00878,medium,candidate
+skyharbor-air,SHA-NODE-01403,function,maintenance engineering capability 279 entity 0303,SHA-ENT-00303,SHA-EVID-00879,medium,candidate
+skyharbor-air,SHA-NODE-01404,data_asset,cargo operations capability 280 entity 0304,SHA-ENT-00304,SHA-EVID-00880,high,candidate
+skyharbor-air,SHA-NODE-01405,vendor,digital ecommerce capability 281 entity 0305,SHA-ENT-00305,SHA-EVID-00881,high,candidate
+skyharbor-air,SHA-NODE-01406,program,safety and security capability 282 entity 0306,SHA-ENT-00306,SHA-EVID-00882,medium,candidate
+skyharbor-air,SHA-NODE-01407,control,finance capability 283 entity 0307,SHA-ENT-00307,SHA-EVID-00883,medium,candidate
+skyharbor-air,SHA-NODE-01408,metric,procurement capability 284 entity 0308,SHA-ENT-00308,SHA-EVID-00884,high,candidate
+skyharbor-air,SHA-NODE-01409,system,HR and workforce capability 285 entity 0309,SHA-ENT-00309,SHA-EVID-00885,high,candidate
+skyharbor-air,SHA-NODE-01410,function,data and analytics capability 286 entity 0310,SHA-ENT-00310,SHA-EVID-00886,medium,candidate
+skyharbor-air,SHA-NODE-01411,data_asset,platform engineering capability 287 entity 0311,SHA-ENT-00311,SHA-EVID-00887,medium,candidate
+skyharbor-air,SHA-NODE-01412,vendor,baggage operations capability 288 entity 0312,SHA-ENT-00312,SHA-EVID-00888,high,candidate
+skyharbor-air,SHA-NODE-01413,program,flight operations capability 289 entity 0313,SHA-ENT-00313,SHA-EVID-00889,high,candidate
+skyharbor-air,SHA-NODE-01414,control,operations control center capability 290 entity 0314,SHA-ENT-00314,SHA-EVID-00890,medium,candidate
+skyharbor-air,SHA-NODE-01415,metric,airport operations capability 291 entity 0315,SHA-ENT-00315,SHA-EVID-00891,medium,candidate
+skyharbor-air,SHA-NODE-01416,system,customer service capability 292 entity 0316,SHA-ENT-00316,SHA-EVID-00892,high,candidate
+skyharbor-air,SHA-NODE-01417,function,loyalty capability 293 entity 0317,SHA-ENT-00317,SHA-EVID-00893,high,candidate
+skyharbor-air,SHA-NODE-01418,data_asset,revenue management capability 294 entity 0318,SHA-ENT-00318,SHA-EVID-00894,medium,candidate
+skyharbor-air,SHA-NODE-01419,vendor,network planning capability 295 entity 0319,SHA-ENT-00319,SHA-EVID-00895,medium,candidate
+skyharbor-air,SHA-NODE-01420,program,crew scheduling capability 296 entity 0320,SHA-ENT-00320,SHA-EVID-00896,high,candidate
+skyharbor-air,SHA-NODE-01421,control,maintenance engineering capability 297 entity 0321,SHA-ENT-00321,SHA-EVID-00897,high,candidate
+skyharbor-air,SHA-NODE-01422,metric,cargo operations capability 298 entity 0322,SHA-ENT-00322,SHA-EVID-00898,medium,candidate
+skyharbor-air,SHA-NODE-01423,system,digital ecommerce capability 299 entity 0323,SHA-ENT-00323,SHA-EVID-00899,medium,candidate
+skyharbor-air,SHA-NODE-01424,function,safety and security capability 300 entity 0324,SHA-ENT-00324,SHA-EVID-00900,high,candidate
+skyharbor-air,SHA-NODE-01425,data_asset,SHA-02-00001 entity 0325,SHA-ENT-00325,SHA-EVID-01201,high,candidate
+skyharbor-air,SHA-NODE-01426,vendor,SHA-02-00002 entity 0326,SHA-ENT-00326,SHA-EVID-01202,medium,candidate
+skyharbor-air,SHA-NODE-01427,program,SHA-02-00003 entity 0327,SHA-ENT-00327,SHA-EVID-01203,medium,candidate
+skyharbor-air,SHA-NODE-01428,control,SHA-02-00004 entity 0328,SHA-ENT-00328,SHA-EVID-01204,high,candidate
+skyharbor-air,SHA-NODE-01429,metric,SHA-02-00005 entity 0329,SHA-ENT-00329,SHA-EVID-01205,high,candidate
+skyharbor-air,SHA-NODE-01430,system,SHA-02-00006 entity 0330,SHA-ENT-00330,SHA-EVID-01206,medium,candidate
+skyharbor-air,SHA-NODE-01431,function,SHA-02-00007 entity 0331,SHA-ENT-00331,SHA-EVID-01207,medium,candidate
+skyharbor-air,SHA-NODE-01432,data_asset,SHA-02-00008 entity 0332,SHA-ENT-00332,SHA-EVID-01208,high,candidate
+skyharbor-air,SHA-NODE-01433,vendor,SHA-02-00009 entity 0333,SHA-ENT-00333,SHA-EVID-01209,high,candidate
+skyharbor-air,SHA-NODE-01434,program,SHA-02-00010 entity 0334,SHA-ENT-00334,SHA-EVID-01210,medium,candidate
+skyharbor-air,SHA-NODE-01435,control,SHA-02-00011 entity 0335,SHA-ENT-00335,SHA-EVID-01211,medium,candidate
+skyharbor-air,SHA-NODE-01436,metric,SHA-02-00012 entity 0336,SHA-ENT-00336,SHA-EVID-01212,high,candidate
+skyharbor-air,SHA-NODE-01437,system,SHA-02-00013 entity 0337,SHA-ENT-00337,SHA-EVID-01213,high,candidate
+skyharbor-air,SHA-NODE-01438,function,SHA-02-00014 entity 0338,SHA-ENT-00338,SHA-EVID-01214,medium,candidate
+skyharbor-air,SHA-NODE-01439,data_asset,SHA-02-00015 entity 0339,SHA-ENT-00339,SHA-EVID-01215,medium,candidate
+skyharbor-air,SHA-NODE-01440,vendor,SHA-02-00016 entity 0340,SHA-ENT-00340,SHA-EVID-01216,high,candidate
+skyharbor-air,SHA-NODE-01441,program,SHA-02-00017 entity 0341,SHA-ENT-00341,SHA-EVID-01217,high,candidate
+skyharbor-air,SHA-NODE-01442,control,SHA-02-00018 entity 0342,SHA-ENT-00342,SHA-EVID-01218,medium,candidate
+skyharbor-air,SHA-NODE-01443,metric,SHA-02-00019 entity 0343,SHA-ENT-00343,SHA-EVID-01219,medium,candidate
+skyharbor-air,SHA-NODE-01444,system,SHA-02-00020 entity 0344,SHA-ENT-00344,SHA-EVID-01220,high,candidate
+skyharbor-air,SHA-NODE-01445,function,SHA-02-00021 entity 0345,SHA-ENT-00345,SHA-EVID-01221,high,candidate
+skyharbor-air,SHA-NODE-01446,data_asset,SHA-02-00022 entity 0346,SHA-ENT-00346,SHA-EVID-01222,medium,candidate
+skyharbor-air,SHA-NODE-01447,vendor,SHA-02-00023 entity 0347,SHA-ENT-00347,SHA-EVID-01223,medium,candidate
+skyharbor-air,SHA-NODE-01448,program,SHA-02-00024 entity 0348,SHA-ENT-00348,SHA-EVID-01224,high,candidate
+skyharbor-air,SHA-NODE-01449,control,SHA-02-00025 entity 0349,SHA-ENT-00349,SHA-EVID-01225,high,candidate
+skyharbor-air,SHA-NODE-01450,metric,SHA-02-00026 entity 0350,SHA-ENT-00350,SHA-EVID-01226,medium,candidate
+skyharbor-air,SHA-NODE-01451,system,SHA-02-00027 entity 0351,SHA-ENT-00351,SHA-EVID-01227,medium,candidate
+skyharbor-air,SHA-NODE-01452,function,SHA-02-00028 entity 0352,SHA-ENT-00352,SHA-EVID-01228,high,candidate
+skyharbor-air,SHA-NODE-01453,data_asset,SHA-02-00029 entity 0353,SHA-ENT-00353,SHA-EVID-01229,high,candidate
+skyharbor-air,SHA-NODE-01454,vendor,SHA-02-00030 entity 0354,SHA-ENT-00354,SHA-EVID-01230,medium,candidate
+skyharbor-air,SHA-NODE-01455,program,SHA-02-00031 entity 0355,SHA-ENT-00355,SHA-EVID-01231,medium,candidate
+skyharbor-air,SHA-NODE-01456,control,SHA-02-00032 entity 0356,SHA-ENT-00356,SHA-EVID-01232,high,candidate
+skyharbor-air,SHA-NODE-01457,metric,SHA-02-00033 entity 0357,SHA-ENT-00357,SHA-EVID-01233,high,candidate
+skyharbor-air,SHA-NODE-01458,system,SHA-02-00034 entity 0358,SHA-ENT-00358,SHA-EVID-01234,medium,candidate
+skyharbor-air,SHA-NODE-01459,function,SHA-02-00035 entity 0359,SHA-ENT-00359,SHA-EVID-01235,medium,candidate
+skyharbor-air,SHA-NODE-01460,data_asset,SHA-02-00036 entity 0360,SHA-ENT-00360,SHA-EVID-01236,high,candidate
+skyharbor-air,SHA-NODE-01461,vendor,SHA-02-00037 entity 0361,SHA-ENT-00361,SHA-EVID-01237,high,candidate
+skyharbor-air,SHA-NODE-01462,program,SHA-02-00038 entity 0362,SHA-ENT-00362,SHA-EVID-01238,medium,candidate
+skyharbor-air,SHA-NODE-01463,control,SHA-02-00039 entity 0363,SHA-ENT-00363,SHA-EVID-01239,medium,candidate
+skyharbor-air,SHA-NODE-01464,metric,SHA-02-00040 entity 0364,SHA-ENT-00364,SHA-EVID-01240,high,candidate
+skyharbor-air,SHA-NODE-01465,system,SHA-02-00041 entity 0365,SHA-ENT-00365,SHA-EVID-01241,high,candidate
+skyharbor-air,SHA-NODE-01466,function,SHA-02-00042 entity 0366,SHA-ENT-00366,SHA-EVID-01242,medium,candidate
+skyharbor-air,SHA-NODE-01467,data_asset,SHA-02-00043 entity 0367,SHA-ENT-00367,SHA-EVID-01243,medium,candidate
+skyharbor-air,SHA-NODE-01468,vendor,SHA-02-00044 entity 0368,SHA-ENT-00368,SHA-EVID-01244,high,candidate
+skyharbor-air,SHA-NODE-01469,program,SHA-02-00045 entity 0369,SHA-ENT-00369,SHA-EVID-01245,high,candidate
+skyharbor-air,SHA-NODE-01470,control,SHA-02-00046 entity 0370,SHA-ENT-00370,SHA-EVID-01246,medium,candidate
+skyharbor-air,SHA-NODE-01471,metric,SHA-02-00047 entity 0371,SHA-ENT-00371,SHA-EVID-01247,medium,candidate
+skyharbor-air,SHA-NODE-01472,system,SHA-02-00048 entity 0372,SHA-ENT-00372,SHA-EVID-01248,high,candidate
+skyharbor-air,SHA-NODE-01473,function,SHA-02-00049 entity 0373,SHA-ENT-00373,SHA-EVID-01249,high,candidate
+skyharbor-air,SHA-NODE-01474,data_asset,SHA-02-00050 entity 0374,SHA-ENT-00374,SHA-EVID-01250,medium,candidate
+skyharbor-air,SHA-NODE-01475,vendor,SHA-02-00051 entity 0375,SHA-ENT-00375,SHA-EVID-01251,medium,candidate
+skyharbor-air,SHA-NODE-01476,program,SHA-02-00052 entity 0376,SHA-ENT-00376,SHA-EVID-01252,high,candidate
+skyharbor-air,SHA-NODE-01477,control,SHA-02-00053 entity 0377,SHA-ENT-00377,SHA-EVID-01253,high,candidate
+skyharbor-air,SHA-NODE-01478,metric,SHA-02-00054 entity 0378,SHA-ENT-00378,SHA-EVID-01254,medium,candidate
+skyharbor-air,SHA-NODE-01479,system,SHA-02-00055 entity 0379,SHA-ENT-00379,SHA-EVID-01255,medium,candidate
+skyharbor-air,SHA-NODE-01480,function,SHA-02-00056 entity 0380,SHA-ENT-00380,SHA-EVID-01256,high,candidate
+skyharbor-air,SHA-NODE-01481,data_asset,SHA-02-00057 entity 0381,SHA-ENT-00381,SHA-EVID-01257,high,candidate
+skyharbor-air,SHA-NODE-01482,vendor,SHA-02-00058 entity 0382,SHA-ENT-00382,SHA-EVID-01258,medium,candidate
+skyharbor-air,SHA-NODE-01483,program,SHA-02-00059 entity 0383,SHA-ENT-00383,SHA-EVID-01259,medium,candidate
+skyharbor-air,SHA-NODE-01484,control,SHA-02-00060 entity 0384,SHA-ENT-00384,SHA-EVID-01260,high,candidate
+skyharbor-air,SHA-NODE-01485,metric,SHA-02-00061 entity 0385,SHA-ENT-00385,SHA-EVID-01261,high,candidate
+skyharbor-air,SHA-NODE-01486,system,SHA-02-00062 entity 0386,SHA-ENT-00386,SHA-EVID-01262,medium,candidate
+skyharbor-air,SHA-NODE-01487,function,SHA-02-00063 entity 0387,SHA-ENT-00387,SHA-EVID-01263,medium,candidate
+skyharbor-air,SHA-NODE-01488,data_asset,SHA-02-00064 entity 0388,SHA-ENT-00388,SHA-EVID-01264,high,candidate
+skyharbor-air,SHA-NODE-01489,vendor,SHA-02-00065 entity 0389,SHA-ENT-00389,SHA-EVID-01265,high,candidate
+skyharbor-air,SHA-NODE-01490,program,SHA-02-00066 entity 0390,SHA-ENT-00390,SHA-EVID-01266,medium,candidate
+skyharbor-air,SHA-NODE-01491,control,SHA-02-00067 entity 0391,SHA-ENT-00391,SHA-EVID-01267,medium,candidate
+skyharbor-air,SHA-NODE-01492,metric,SHA-02-00068 entity 0392,SHA-ENT-00392,SHA-EVID-01268,high,candidate
+skyharbor-air,SHA-NODE-01493,system,SHA-02-00069 entity 0393,SHA-ENT-00393,SHA-EVID-01269,high,candidate
+skyharbor-air,SHA-NODE-01494,function,SHA-02-00070 entity 0394,SHA-ENT-00394,SHA-EVID-01270,medium,candidate
+skyharbor-air,SHA-NODE-01495,data_asset,SHA-02-00071 entity 0395,SHA-ENT-00395,SHA-EVID-01271,medium,candidate
+skyharbor-air,SHA-NODE-01496,vendor,SHA-02-00072 entity 0396,SHA-ENT-00396,SHA-EVID-01272,high,candidate
+skyharbor-air,SHA-NODE-01497,program,SHA-02-00073 entity 0397,SHA-ENT-00397,SHA-EVID-01273,high,candidate
+skyharbor-air,SHA-NODE-01498,control,SHA-02-00074 entity 0398,SHA-ENT-00398,SHA-EVID-01274,medium,candidate
+skyharbor-air,SHA-NODE-01499,metric,SHA-02-00075 entity 0399,SHA-ENT-00399,SHA-EVID-01275,medium,candidate
+skyharbor-air,SHA-NODE-01500,system,SHA-02-00076 entity 0400,SHA-ENT-00400,SHA-EVID-01276,high,candidate
+skyharbor-air,SHA-NODE-01501,function,SHA-02-00077 entity 0401,SHA-ENT-00401,SHA-EVID-01277,high,candidate
+skyharbor-air,SHA-NODE-01502,data_asset,SHA-02-00078 entity 0402,SHA-ENT-00402,SHA-EVID-01278,medium,candidate
+skyharbor-air,SHA-NODE-01503,vendor,SHA-02-00079 entity 0403,SHA-ENT-00403,SHA-EVID-01279,medium,candidate
+skyharbor-air,SHA-NODE-01504,program,SHA-02-00080 entity 0404,SHA-ENT-00404,SHA-EVID-01280,high,candidate
+skyharbor-air,SHA-NODE-01505,control,SHA-02-00081 entity 0405,SHA-ENT-00405,SHA-EVID-01281,high,candidate
+skyharbor-air,SHA-NODE-01506,metric,SHA-02-00082 entity 0406,SHA-ENT-00406,SHA-EVID-01282,medium,candidate
+skyharbor-air,SHA-NODE-01507,system,SHA-02-00083 entity 0407,SHA-ENT-00407,SHA-EVID-01283,medium,candidate
+skyharbor-air,SHA-NODE-01508,function,SHA-02-00084 entity 0408,SHA-ENT-00408,SHA-EVID-01284,high,candidate
+skyharbor-air,SHA-NODE-01509,data_asset,SHA-02-00085 entity 0409,SHA-ENT-00409,SHA-EVID-01285,high,candidate
+skyharbor-air,SHA-NODE-01510,vendor,SHA-02-00086 entity 0410,SHA-ENT-00410,SHA-EVID-01286,medium,candidate
+skyharbor-air,SHA-NODE-01511,program,SHA-02-00087 entity 0411,SHA-ENT-00411,SHA-EVID-01287,medium,candidate
+skyharbor-air,SHA-NODE-01512,control,SHA-02-00088 entity 0412,SHA-ENT-00412,SHA-EVID-01288,high,candidate
+skyharbor-air,SHA-NODE-01513,metric,SHA-02-00089 entity 0413,SHA-ENT-00413,SHA-EVID-01289,high,candidate
+skyharbor-air,SHA-NODE-01514,system,SHA-02-00090 entity 0414,SHA-ENT-00414,SHA-EVID-01290,medium,candidate
+skyharbor-air,SHA-NODE-01515,function,SHA-02-00091 entity 0415,SHA-ENT-00415,SHA-EVID-01291,medium,candidate
+skyharbor-air,SHA-NODE-01516,data_asset,SHA-02-00092 entity 0416,SHA-ENT-00416,SHA-EVID-01292,high,candidate
+skyharbor-air,SHA-NODE-01517,vendor,SHA-02-00093 entity 0417,SHA-ENT-00417,SHA-EVID-01293,high,candidate
+skyharbor-air,SHA-NODE-01518,program,SHA-02-00094 entity 0418,SHA-ENT-00418,SHA-EVID-01294,medium,candidate
+skyharbor-air,SHA-NODE-01519,control,SHA-02-00095 entity 0419,SHA-ENT-00419,SHA-EVID-01295,medium,candidate
+skyharbor-air,SHA-NODE-01520,metric,SHA-02-00096 entity 0420,SHA-ENT-00420,SHA-EVID-01296,high,candidate
+skyharbor-air,SHA-NODE-01521,system,SHA-02-00097 entity 0421,SHA-ENT-00421,SHA-EVID-01297,high,candidate
+skyharbor-air,SHA-NODE-01522,function,SHA-02-00098 entity 0422,SHA-ENT-00422,SHA-EVID-01298,medium,candidate
+skyharbor-air,SHA-NODE-01523,data_asset,SHA-02-00099 entity 0423,SHA-ENT-00423,SHA-EVID-01299,medium,candidate
+skyharbor-air,SHA-NODE-01524,vendor,SHA-02-00100 entity 0424,SHA-ENT-00424,SHA-EVID-01300,high,candidate
+skyharbor-air,SHA-NODE-01525,program,SHA-02-00101 entity 0425,SHA-ENT-00425,SHA-EVID-01301,high,candidate
+skyharbor-air,SHA-NODE-01526,control,SHA-02-00102 entity 0426,SHA-ENT-00426,SHA-EVID-01302,medium,candidate
+skyharbor-air,SHA-NODE-01527,metric,SHA-02-00103 entity 0427,SHA-ENT-00427,SHA-EVID-01303,medium,candidate
+skyharbor-air,SHA-NODE-01528,system,SHA-02-00104 entity 0428,SHA-ENT-00428,SHA-EVID-01304,high,candidate
+skyharbor-air,SHA-NODE-01529,function,SHA-02-00105 entity 0429,SHA-ENT-00429,SHA-EVID-01305,high,candidate
+skyharbor-air,SHA-NODE-01530,data_asset,SHA-02-00106 entity 0430,SHA-ENT-00430,SHA-EVID-01306,medium,candidate
+skyharbor-air,SHA-NODE-01531,vendor,SHA-02-00107 entity 0431,SHA-ENT-00431,SHA-EVID-01307,medium,candidate
+skyharbor-air,SHA-NODE-01532,program,SHA-02-00108 entity 0432,SHA-ENT-00432,SHA-EVID-01308,high,candidate
+skyharbor-air,SHA-NODE-01533,control,SHA-02-00109 entity 0433,SHA-ENT-00433,SHA-EVID-01309,high,candidate
+skyharbor-air,SHA-NODE-01534,metric,SHA-02-00110 entity 0434,SHA-ENT-00434,SHA-EVID-01310,medium,candidate
+skyharbor-air,SHA-NODE-01535,system,SHA-02-00111 entity 0435,SHA-ENT-00435,SHA-EVID-01311,medium,candidate
+skyharbor-air,SHA-NODE-01536,function,SHA-02-00112 entity 0436,SHA-ENT-00436,SHA-EVID-01312,high,candidate
+skyharbor-air,SHA-NODE-01537,data_asset,SHA-02-00113 entity 0437,SHA-ENT-00437,SHA-EVID-01313,high,candidate
+skyharbor-air,SHA-NODE-01538,vendor,SHA-02-00114 entity 0438,SHA-ENT-00438,SHA-EVID-01314,medium,candidate
+skyharbor-air,SHA-NODE-01539,program,SHA-02-00115 entity 0439,SHA-ENT-00439,SHA-EVID-01315,medium,candidate
+skyharbor-air,SHA-NODE-01540,control,SHA-02-00116 entity 0440,SHA-ENT-00440,SHA-EVID-01316,high,candidate
+skyharbor-air,SHA-NODE-01541,metric,SHA-02-00117 entity 0441,SHA-ENT-00441,SHA-EVID-01317,high,candidate
+skyharbor-air,SHA-NODE-01542,system,SHA-02-00118 entity 0442,SHA-ENT-00442,SHA-EVID-01318,medium,candidate
+skyharbor-air,SHA-NODE-01543,function,SHA-02-00119 entity 0443,SHA-ENT-00443,SHA-EVID-01319,medium,candidate
+skyharbor-air,SHA-NODE-01544,data_asset,SHA-02-00120 entity 0444,SHA-ENT-00444,SHA-EVID-01320,high,candidate
+skyharbor-air,SHA-NODE-01545,vendor,SHA-02-00121 entity 0445,SHA-ENT-00445,SHA-EVID-01321,high,candidate
+skyharbor-air,SHA-NODE-01546,program,SHA-02-00122 entity 0446,SHA-ENT-00446,SHA-EVID-01322,medium,candidate
+skyharbor-air,SHA-NODE-01547,control,SHA-02-00123 entity 0447,SHA-ENT-00447,SHA-EVID-01323,medium,candidate
+skyharbor-air,SHA-NODE-01548,metric,SHA-02-00124 entity 0448,SHA-ENT-00448,SHA-EVID-01324,high,candidate
+skyharbor-air,SHA-NODE-01549,system,SHA-02-00125 entity 0449,SHA-ENT-00449,SHA-EVID-01325,high,candidate
+skyharbor-air,SHA-NODE-01550,function,SHA-02-00126 entity 0450,SHA-ENT-00450,SHA-EVID-01326,medium,candidate
+skyharbor-air,SHA-NODE-01551,data_asset,SHA-02-00127 entity 0451,SHA-ENT-00451,SHA-EVID-01327,medium,candidate
+skyharbor-air,SHA-NODE-01552,vendor,SHA-02-00128 entity 0452,SHA-ENT-00452,SHA-EVID-01328,high,candidate
+skyharbor-air,SHA-NODE-01553,program,SHA-02-00129 entity 0453,SHA-ENT-00453,SHA-EVID-01329,high,candidate
+skyharbor-air,SHA-NODE-01554,control,SHA-02-00130 entity 0454,SHA-ENT-00454,SHA-EVID-01330,medium,candidate
+skyharbor-air,SHA-NODE-01555,metric,SHA-02-00131 entity 0455,SHA-ENT-00455,SHA-EVID-01331,medium,candidate
+skyharbor-air,SHA-NODE-01556,system,SHA-02-00132 entity 0456,SHA-ENT-00456,SHA-EVID-01332,high,candidate
+skyharbor-air,SHA-NODE-01557,function,SHA-02-00133 entity 0457,SHA-ENT-00457,SHA-EVID-01333,high,candidate
+skyharbor-air,SHA-NODE-01558,data_asset,SHA-02-00134 entity 0458,SHA-ENT-00458,SHA-EVID-01334,medium,candidate
+skyharbor-air,SHA-NODE-01559,vendor,SHA-02-00135 entity 0459,SHA-ENT-00459,SHA-EVID-01335,medium,candidate
+skyharbor-air,SHA-NODE-01560,program,SHA-02-00136 entity 0460,SHA-ENT-00460,SHA-EVID-01336,high,candidate
+skyharbor-air,SHA-NODE-01561,control,SHA-02-00137 entity 0461,SHA-ENT-00461,SHA-EVID-01337,high,candidate
+skyharbor-air,SHA-NODE-01562,metric,SHA-02-00138 entity 0462,SHA-ENT-00462,SHA-EVID-01338,medium,candidate
+skyharbor-air,SHA-NODE-01563,system,SHA-02-00139 entity 0463,SHA-ENT-00463,SHA-EVID-01339,medium,candidate
+skyharbor-air,SHA-NODE-01564,function,SHA-02-00140 entity 0464,SHA-ENT-00464,SHA-EVID-01340,high,candidate
+skyharbor-air,SHA-NODE-01565,data_asset,SHA-02-00141 entity 0465,SHA-ENT-00465,SHA-EVID-01341,high,candidate
+skyharbor-air,SHA-NODE-01566,vendor,SHA-02-00142 entity 0466,SHA-ENT-00466,SHA-EVID-01342,medium,candidate
+skyharbor-air,SHA-NODE-01567,program,SHA-02-00143 entity 0467,SHA-ENT-00467,SHA-EVID-01343,medium,candidate
+skyharbor-air,SHA-NODE-01568,control,SHA-02-00144 entity 0468,SHA-ENT-00468,SHA-EVID-01344,high,candidate
+skyharbor-air,SHA-NODE-01569,metric,SHA-02-00145 entity 0469,SHA-ENT-00469,SHA-EVID-01345,high,candidate
+skyharbor-air,SHA-NODE-01570,system,SHA-02-00146 entity 0470,SHA-ENT-00470,SHA-EVID-01346,medium,candidate
+skyharbor-air,SHA-NODE-01571,function,SHA-02-00147 entity 0471,SHA-ENT-00471,SHA-EVID-01347,medium,candidate
+skyharbor-air,SHA-NODE-01572,data_asset,SHA-02-00148 entity 0472,SHA-ENT-00472,SHA-EVID-01348,high,candidate
+skyharbor-air,SHA-NODE-01573,vendor,SHA-02-00149 entity 0473,SHA-ENT-00473,SHA-EVID-01349,high,candidate
+skyharbor-air,SHA-NODE-01574,program,SHA-02-00150 entity 0474,SHA-ENT-00474,SHA-EVID-01350,medium,candidate
+skyharbor-air,SHA-NODE-01575,control,SHA-02-00151 entity 0475,SHA-ENT-00475,SHA-EVID-01351,medium,candidate
+skyharbor-air,SHA-NODE-01576,metric,SHA-02-00152 entity 0476,SHA-ENT-00476,SHA-EVID-01352,high,candidate
+skyharbor-air,SHA-NODE-01577,system,SHA-02-00153 entity 0477,SHA-ENT-00477,SHA-EVID-01353,high,candidate
+skyharbor-air,SHA-NODE-01578,function,SHA-02-00154 entity 0478,SHA-ENT-00478,SHA-EVID-01354,medium,candidate
+skyharbor-air,SHA-NODE-01579,data_asset,SHA-02-00155 entity 0479,SHA-ENT-00479,SHA-EVID-01355,medium,candidate
+skyharbor-air,SHA-NODE-01580,vendor,SHA-02-00156 entity 0480,SHA-ENT-00480,SHA-EVID-01356,high,candidate
+skyharbor-air,SHA-NODE-01581,program,SHA-02-00157 entity 0481,SHA-ENT-00481,SHA-EVID-01357,high,candidate
+skyharbor-air,SHA-NODE-01582,control,SHA-02-00158 entity 0482,SHA-ENT-00482,SHA-EVID-01358,medium,candidate
+skyharbor-air,SHA-NODE-01583,metric,SHA-02-00159 entity 0483,SHA-ENT-00483,SHA-EVID-01359,medium,candidate
+skyharbor-air,SHA-NODE-01584,system,SHA-02-00160 entity 0484,SHA-ENT-00484,SHA-EVID-01360,high,candidate
+skyharbor-air,SHA-NODE-01585,function,SHA-02-00161 entity 0485,SHA-ENT-00485,SHA-EVID-01361,high,candidate
+skyharbor-air,SHA-NODE-01586,data_asset,SHA-02-00162 entity 0486,SHA-ENT-00486,SHA-EVID-01362,medium,candidate
+skyharbor-air,SHA-NODE-01587,vendor,SHA-02-00163 entity 0487,SHA-ENT-00487,SHA-EVID-01363,medium,candidate
+skyharbor-air,SHA-NODE-01588,program,SHA-02-00164 entity 0488,SHA-ENT-00488,SHA-EVID-01364,high,candidate
+skyharbor-air,SHA-NODE-01589,control,SHA-02-00165 entity 0489,SHA-ENT-00489,SHA-EVID-01365,high,candidate
+skyharbor-air,SHA-NODE-01590,metric,SHA-02-00166 entity 0490,SHA-ENT-00490,SHA-EVID-01366,medium,candidate
+skyharbor-air,SHA-NODE-01591,system,SHA-02-00167 entity 0491,SHA-ENT-00491,SHA-EVID-01367,medium,candidate
+skyharbor-air,SHA-NODE-01592,function,SHA-02-00168 entity 0492,SHA-ENT-00492,SHA-EVID-01368,high,candidate
+skyharbor-air,SHA-NODE-01593,data_asset,SHA-02-00169 entity 0493,SHA-ENT-00493,SHA-EVID-01369,high,candidate
+skyharbor-air,SHA-NODE-01594,vendor,SHA-02-00170 entity 0494,SHA-ENT-00494,SHA-EVID-01370,medium,candidate
+skyharbor-air,SHA-NODE-01595,program,SHA-02-00171 entity 0495,SHA-ENT-00495,SHA-EVID-01371,medium,candidate
+skyharbor-air,SHA-NODE-01596,control,SHA-02-00172 entity 0496,SHA-ENT-00496,SHA-EVID-01372,high,candidate
+skyharbor-air,SHA-NODE-01597,metric,SHA-02-00173 entity 0497,SHA-ENT-00497,SHA-EVID-01373,high,candidate
+skyharbor-air,SHA-NODE-01598,system,SHA-02-00174 entity 0498,SHA-ENT-00498,SHA-EVID-01374,medium,candidate
+skyharbor-air,SHA-NODE-01599,function,SHA-02-00175 entity 0499,SHA-ENT-00499,SHA-EVID-01375,medium,candidate
+skyharbor-air,SHA-NODE-01600,data_asset,SHA-02-00176 entity 0500,SHA-ENT-00500,SHA-EVID-01376,high,candidate

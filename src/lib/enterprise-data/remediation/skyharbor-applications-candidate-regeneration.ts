@@ -5,7 +5,10 @@ import path from "node:path";
 
 import type { CanonicalIngestionRecord } from "../contracts/canonical-ingestion";
 import type { TenantPacketFile } from "../contracts/tenant-packet";
-import { CsvSourceAdapter, parseCsv } from "../source-adapters/csv-source-adapter";
+import {
+  CsvSourceAdapter,
+  parseCsv,
+} from "../source-adapters/csv-source-adapter";
 
 type SourceRole = "selected_authoritative" | "supporting" | "excluded";
 type SourceLocationType = "repo_dataset_path" | "repo_supporting_evidence_path";
@@ -79,7 +82,7 @@ export interface SkyHarborSourceConflict {
 export interface SkyHarborApplicationsRegenerationResult {
   generatedAt: string;
   tenantKey: "skyharbor-air";
-  tenantDisplayName: "SkyHarbor Air";
+  tenantDisplayName: "Airline Demo";
   dryRunOnly: true;
   productionTenantDataWritten: false;
   candidatePromoted: false;
@@ -197,7 +200,7 @@ interface BuildOptions {
 }
 
 const TENANT_KEY = "skyharbor-air" as const;
-const TENANT_DISPLAY_NAME = "SkyHarbor Air" as const;
+const TENANT_DISPLAY_NAME = "Airline Demo" as const;
 const SELECTED_SOURCE_PATH =
   "datasets/skyharbor-air-synthetic-v4/family-2-technology-estate/F05_applications-systems.csv";
 const SUPPORTING_412_SOURCE_PATH =
@@ -233,7 +236,9 @@ export async function buildSkyHarborApplicationsCandidateRegeneration(
     (source) => source.role === "selected_authoritative",
   );
   if (!selectedSource) {
-    throw new Error("SkyHarbor applications remediation has no selected source.");
+    throw new Error(
+      "SkyHarbor applications remediation has no selected source.",
+    );
   }
 
   const adapter = new CsvSourceAdapter();
@@ -256,8 +261,14 @@ export async function buildSkyHarborApplicationsCandidateRegeneration(
     .flatMap((source) =>
       readRows(repoRoot, source.path).map((row) => ({ source, row })),
     );
-  const quarantineReport = buildQuarantineReport(selectedRows, selectedSource.path);
-  const canonicalRecords = buildCandidateRecords(selectedRows, adapterResult.records);
+  const quarantineReport = buildQuarantineReport(
+    selectedRows,
+    selectedSource.path,
+  );
+  const canonicalRecords = buildCandidateRecords(
+    selectedRows,
+    adapterResult.records,
+  );
   const sourceConflicts = buildSourceConflicts(canonicalRecords, comparedRows);
   const relationshipCandidates = buildRelationshipCandidates(canonicalRecords);
   const relationshipSummary = summarizeRelationships(relationshipCandidates);
@@ -325,9 +336,12 @@ export async function buildSkyHarborApplicationsCandidateRegeneration(
         (record) => record.validationStatus === "warning",
       ).length,
       quarantinedRows: quarantineReport.length,
-      skippedRows: selectedRows.length - canonicalRecords.length - quarantineReport.length,
+      skippedRows:
+        selectedRows.length - canonicalRecords.length - quarantineReport.length,
       canonicalIngestionRecords: adapterResult.records.length,
-      evidenceReferencesAttached: canonicalRecords.filter((record) => record.evidenceKey).length,
+      evidenceReferencesAttached: canonicalRecords.filter(
+        (record) => record.evidenceKey,
+      ).length,
       relationshipCandidatesPlanned: relationshipCandidates.length,
       sourceConflictsReported: sourceConflicts.length,
     },
@@ -379,7 +393,11 @@ export async function buildSkyHarborApplicationsCandidateRegeneration(
 export function readLatestSkyHarborApplicationsRegeneration(
   repoRoot = process.cwd(),
 ): SkyHarborApplicationsRegenerationResult {
-  const reportPath = path.join(repoRoot, OUTPUT_DIR, "candidate-preview-summary.json");
+  const reportPath = path.join(
+    repoRoot,
+    OUTPUT_DIR,
+    "candidate-preview-summary.json",
+  );
   if (fs.existsSync(reportPath)) {
     const parsed = JSON.parse(fs.readFileSync(reportPath, "utf8")) as
       | SkyHarborApplicationsRegenerationResult
@@ -401,13 +419,17 @@ export function readLatestSkyHarborApplicationsRegeneration(
   return buildSynchronousResult(repoRoot);
 }
 
-function buildSynchronousResult(repoRoot: string): SkyHarborApplicationsRegenerationResult {
+function buildSynchronousResult(
+  repoRoot: string,
+): SkyHarborApplicationsRegenerationResult {
   const sourceSelection = buildSourceSelection(repoRoot);
   const selectedSource = sourceSelection.find(
     (source) => source.role === "selected_authoritative",
   );
   if (!selectedSource) {
-    throw new Error("SkyHarbor applications remediation has no selected source.");
+    throw new Error(
+      "SkyHarbor applications remediation has no selected source.",
+    );
   }
   const rows = readRows(repoRoot, selectedSource.path);
   const canonicalRecords = buildCandidateRecords(rows, []);
@@ -481,9 +503,12 @@ function buildSynchronousResult(repoRoot: string): SkyHarborApplicationsRegenera
         (record) => record.validationStatus === "warning",
       ).length,
       quarantinedRows: quarantineReport.length,
-      skippedRows: rows.length - canonicalRecords.length - quarantineReport.length,
+      skippedRows:
+        rows.length - canonicalRecords.length - quarantineReport.length,
       canonicalIngestionRecords: canonicalRecords.length,
-      evidenceReferencesAttached: canonicalRecords.filter((record) => record.evidenceKey).length,
+      evidenceReferencesAttached: canonicalRecords.filter(
+        (record) => record.evidenceKey,
+      ).length,
       relationshipCandidatesPlanned: relationshipCandidates.length,
       sourceConflictsReported: sourceConflicts.length,
     },
@@ -619,7 +644,9 @@ function sourceSelectionRow(input: {
   provenance: string;
 }): SkyHarborSourceSelection {
   const absolutePath = resolveSourcePath(input.repoRoot, input.sourcePath);
-  const content = fs.existsSync(absolutePath) ? fs.readFileSync(absolutePath, "utf8") : "";
+  const content = fs.existsSync(absolutePath)
+    ? fs.readFileSync(absolutePath, "utf8")
+    : "";
   const parsed = content ? parseCsv(content) : { headers: [], rows: [] };
   return {
     sourceId: input.sourceId,
@@ -636,7 +663,10 @@ function sourceSelectionRow(input: {
   };
 }
 
-function readRows(repoRoot: string, sourcePath: string): Record<string, string>[] {
+function readRows(
+  repoRoot: string,
+  sourcePath: string,
+): Record<string, string>[] {
   const absolutePath = resolveSourcePath(repoRoot, sourcePath);
   if (!fs.existsSync(absolutePath)) return [];
   return parseCsv(fs.readFileSync(absolutePath, "utf8")).rows;
@@ -646,7 +676,9 @@ function buildCandidateRecords(
   rows: Record<string, string>[],
   adapterRecords: CanonicalIngestionRecord[],
 ): SkyHarborApplicationCandidateRecord[] {
-  const adapterById = new Map(adapterRecords.map((record) => [record.sourceObjectId, record]));
+  const adapterById = new Map(
+    adapterRecords.map((record) => [record.sourceObjectId, record]),
+  );
   return rows
     .map((row, index) => {
       const systemId = row.app_id?.trim();
@@ -661,7 +693,8 @@ function buildCandidateRecords(
         candidateObjectKey: `${TENANT_KEY}:application_system:${systemId}`,
         systemId,
         systemName,
-        businessFunction: row.business_function || "needs_source_owner_validation",
+        businessFunction:
+          row.business_function || "needs_source_owner_validation",
         owner: row.it_owner_team || "needs_source_owner_validation",
         platformTechnology: row.deployment || "needs_platform_validation",
         vendorProduct: row.vendor || "needs_vendor_validation",
@@ -678,7 +711,10 @@ function buildCandidateRecords(
         qualityCaveats: caveats,
       } satisfies SkyHarborApplicationCandidateRecord;
     })
-    .filter((record): record is SkyHarborApplicationCandidateRecord => record !== null);
+    .filter(
+      (record): record is SkyHarborApplicationCandidateRecord =>
+        record !== null,
+    );
 }
 
 function buildQuarantineReport(
@@ -710,7 +746,10 @@ function buildQuarantineReport(
 
 function buildSourceConflicts(
   selectedRecords: SkyHarborApplicationCandidateRecord[],
-  comparedRows: Array<{ source: SkyHarborSourceSelection; row: Record<string, string> }>,
+  comparedRows: Array<{
+    source: SkyHarborSourceSelection;
+    row: Record<string, string>;
+  }>,
 ): SkyHarborSourceConflict[] {
   const selectedByNormalizedId = new Map(
     selectedRecords.map((record) => [normalizeId(record.systemId), record]),
@@ -719,7 +758,8 @@ function buildSourceConflicts(
 
   for (const { source, row } of comparedRows) {
     const comparedId = row.app_id || row.system_id || row.record_id;
-    const comparedName = row.app_name || row.name || row.system_name || row.record_name;
+    const comparedName =
+      row.app_name || row.name || row.system_name || row.record_name;
     if (!comparedId || !comparedName) continue;
 
     const selected = selectedByNormalizedId.get(normalizeId(comparedId));
@@ -741,7 +781,8 @@ function buildSourceConflicts(
         conflicts.push({
           conflictType: "placeholder_identity_in_transformed_template",
           sourceObjectId: comparedId,
-          selectedValue: "authoritative 900-row estate retains named application identity",
+          selectedValue:
+            "authoritative 900-row estate retains named application identity",
           comparedValue: systemName,
           comparedSource: source.label,
           action: "reported_not_merged",
@@ -803,7 +844,10 @@ function buildRelationshipCandidates(
 function pushRelationship(
   relationships: SkyHarborRelationshipCandidate[],
   record: SkyHarborApplicationCandidateRecord,
-  input: Omit<SkyHarborRelationshipCandidate, "relationshipId" | "evidenceKey" | "confidence">,
+  input: Omit<
+    SkyHarborRelationshipCandidate,
+    "relationshipId" | "evidenceKey" | "confidence"
+  >,
 ): void {
   if (input.toKey.includes("needs_")) return;
   relationships.push({
@@ -839,20 +883,36 @@ function buildQualityChecks(
   sourceConflicts: SkyHarborSourceConflict[],
   relationships: SkyHarborRelationshipCandidate[],
 ): SkyHarborApplicationsRegenerationResult["qualityChecks"] {
-  const duplicateCount = countDuplicates(records.map((record) => normalizeId(record.systemId)));
-  const missingOwner = records.filter((record) => isMissing(record.owner)).length;
-  const missingBusinessDomain = records.filter((record) => isMissing(record.businessFunction)).length;
-  const missingEvidence = records.filter((record) => !record.evidenceKey).length;
-  const invalidTenantKey = rows.filter((row) => row.tenant_key && row.tenant_key !== TENANT_KEY).length;
+  const duplicateCount = countDuplicates(
+    records.map((record) => normalizeId(record.systemId)),
+  );
+  const missingOwner = records.filter((record) =>
+    isMissing(record.owner),
+  ).length;
+  const missingBusinessDomain = records.filter((record) =>
+    isMissing(record.businessFunction),
+  ).length;
+  const missingEvidence = records.filter(
+    (record) => !record.evidenceKey,
+  ).length;
+  const invalidTenantKey = rows.filter(
+    (row) => row.tenant_key && row.tenant_key !== TENANT_KEY,
+  ).length;
   const generatedInconsistentRowRisk = rows.filter((row) =>
-    Object.values(row).some((value) => /application_system record|data_thin:/i.test(value)),
+    Object.values(row).some((value) =>
+      /application_system record|data_thin:/i.test(value),
+    ),
   ).length;
   const expectedRelationships = records.length * 5;
   return {
     duplicateApplicationSystemDetection:
-      duplicateCount === 0 ? "pass" : `${duplicateCount} duplicate identifiers detected`,
+      duplicateCount === 0
+        ? "pass"
+        : `${duplicateCount} duplicate identifiers detected`,
     conflictingAppSystemIdentitiesAcrossSources:
-      sourceConflicts.length === 0 ? "pass" : `${sourceConflicts.length} source conflicts reported`,
+      sourceConflicts.length === 0
+        ? "pass"
+        : `${sourceConflicts.length} source conflicts reported`,
     missingOwner,
     missingBusinessDomain,
     missingEvidence,
@@ -860,7 +920,10 @@ function buildQualityChecks(
     generatedInconsistentRowRisk,
     missingRequiredFields: quarantineReport.length,
     sourcePrecedenceConflicts: sourceConflicts.length,
-    orphanRelationshipCandidates: Math.max(0, expectedRelationships - relationships.length),
+    orphanRelationshipCandidates: Math.max(
+      0,
+      expectedRelationships - relationships.length,
+    ),
   };
 }
 
@@ -876,10 +939,14 @@ function buildPromotionBlockers(
     "Operator/source-owner approval is required before any candidate can become active tenant truth.",
   ];
   if (quarantineReport.length > 0) {
-    blockers.push(`${quarantineReport.length} source rows require quarantine review.`);
+    blockers.push(
+      `${quarantineReport.length} source rows require quarantine review.`,
+    );
   }
   if (sourceConflicts.length > 0) {
-    blockers.push(`${sourceConflicts.length} source conflicts were reported and not merged.`);
+    blockers.push(
+      `${sourceConflicts.length} source conflicts were reported and not merged.`,
+    );
   }
   if (qualityChecks.generatedInconsistentRowRisk > 0) {
     blockers.push(
@@ -915,13 +982,27 @@ async function writeReports(
   });
   await writeJson(outDir, "quarantine-report.json", result.quarantineReport);
   await writeJson(outDir, "source-conflicts.json", result.sourceConflicts);
-  await writeJson(outDir, "candidate-preview-summary.json", toReportSummary(result));
-  await writeJson(outDir, "home-admin-preview-impact.json", result.homeAdminPreviewImpact);
+  await writeJson(
+    outDir,
+    "candidate-preview-summary.json",
+    toReportSummary(result),
+  );
+  await writeJson(
+    outDir,
+    "home-admin-preview-impact.json",
+    result.homeAdminPreviewImpact,
+  );
   await writeJson(outDir, "promotion-blockers.json", result.promotionBlockers);
 
   await fsp.writeFile(path.join(outDir, "summary.md"), renderSummary(result));
-  await fsp.writeFile(path.join(outDir, "source-selection.md"), renderSourceSelection(result));
-  await fsp.writeFile(path.join(outDir, "upload-path-alignment.md"), renderUploadPathAlignment(result));
+  await fsp.writeFile(
+    path.join(outDir, "source-selection.md"),
+    renderSourceSelection(result),
+  );
+  await fsp.writeFile(
+    path.join(outDir, "upload-path-alignment.md"),
+    renderUploadPathAlignment(result),
+  );
 }
 
 function toReportSummary(
@@ -945,11 +1026,20 @@ function toReportSummary(
   };
 }
 
-async function writeJson(outDir: string, name: string, value: unknown): Promise<void> {
-  await fsp.writeFile(path.join(outDir, name), `${JSON.stringify(value, null, 2)}\n`);
+async function writeJson(
+  outDir: string,
+  name: string,
+  value: unknown,
+): Promise<void> {
+  await fsp.writeFile(
+    path.join(outDir, name),
+    `${JSON.stringify(value, null, 2)}\n`,
+  );
 }
 
-function renderSummary(result: SkyHarborApplicationsRegenerationResult): string {
+function renderSummary(
+  result: SkyHarborApplicationsRegenerationResult,
+): string {
   return [
     "# DATA-PR32 SkyHarbor Applications & Systems Candidate Regeneration",
     "",
@@ -993,7 +1083,9 @@ function renderSummary(result: SkyHarborApplicationsRegenerationResult): string 
   ].join("\n");
 }
 
-function renderSourceSelection(result: SkyHarborApplicationsRegenerationResult): string {
+function renderSourceSelection(
+  result: SkyHarborApplicationsRegenerationResult,
+): string {
   return [
     "# DATA-PR32 Source Selection",
     "",
@@ -1009,7 +1101,9 @@ function renderSourceSelection(result: SkyHarborApplicationsRegenerationResult):
   ].join("\n");
 }
 
-function renderUploadPathAlignment(result: SkyHarborApplicationsRegenerationResult): string {
+function renderUploadPathAlignment(
+  result: SkyHarborApplicationsRegenerationResult,
+): string {
   return [
     "# DATA-PR32 Upload Path Alignment",
     "",
@@ -1023,7 +1117,9 @@ function renderUploadPathAlignment(result: SkyHarborApplicationsRegenerationResu
   ].join("\n");
 }
 
-function assertGuardrails(result: SkyHarborApplicationsRegenerationResult): void {
+function assertGuardrails(
+  result: SkyHarborApplicationsRegenerationResult,
+): void {
   if (
     !result.dryRunOnly ||
     result.productionTenantDataWritten ||
@@ -1036,8 +1132,13 @@ function assertGuardrails(result: SkyHarborApplicationsRegenerationResult): void
   ) {
     throw new Error("DATA-PR32 guardrail violation detected.");
   }
-  if (result.counts.acceptedCandidateRecords <= result.candidatePreviewSummary.currentThinCandidateRows) {
-    throw new Error("DATA-PR32 did not materially expand the thin applications/systems candidate.");
+  if (
+    result.counts.acceptedCandidateRecords <=
+    result.candidatePreviewSummary.currentThinCandidateRows
+  ) {
+    throw new Error(
+      "DATA-PR32 did not materially expand the thin applications/systems candidate.",
+    );
   }
   if (result.qualityChecks.missingEvidence > 0) {
     throw new Error("DATA-PR32 accepted rows without evidence references.");
@@ -1047,11 +1148,16 @@ function assertGuardrails(result: SkyHarborApplicationsRegenerationResult): void
 function qualityCaveatsForRow(row: Record<string, string>): string[] {
   const caveats: string[] = [];
   if (isMissing(row.it_owner_team)) caveats.push("missing_owner");
-  if (isMissing(row.business_function)) caveats.push("missing_business_function");
+  if (isMissing(row.business_function))
+    caveats.push("missing_business_function");
   if (isMissing(row.vendor)) caveats.push("missing_vendor");
   if (isMissing(row.lifecycle_stage)) caveats.push("missing_lifecycle_status");
   if (isMissing(row.criticality)) caveats.push("missing_criticality");
-  if (Object.values(row).some((value) => /data_thin:|application_system record/i.test(value))) {
+  if (
+    Object.values(row).some((value) =>
+      /data_thin:|application_system record/i.test(value),
+    )
+  ) {
     caveats.push("generated_or_data_thin_signal");
   }
   return caveats;
@@ -1072,7 +1178,10 @@ function countDuplicates(values: string[]): number {
 }
 
 function normalizeId(value: string): string {
-  return value.toLowerCase().replace(/^app-0+/, "app-").replace(/[^a-z0-9]+/g, "");
+  return value
+    .toLowerCase()
+    .replace(/^app-0+/, "app-")
+    .replace(/[^a-z0-9]+/g, "");
 }
 
 function slug(value: string): string {
@@ -1084,7 +1193,9 @@ function slug(value: string): string {
 }
 
 function resolveSourcePath(repoRoot: string, sourcePath: string): string {
-  return path.isAbsolute(sourcePath) ? sourcePath : path.join(repoRoot, sourcePath);
+  return path.isAbsolute(sourcePath)
+    ? sourcePath
+    : path.join(repoRoot, sourcePath);
 }
 
 function fingerprint(content: string): string {

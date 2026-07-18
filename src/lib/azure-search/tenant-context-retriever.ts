@@ -624,9 +624,9 @@ function normalizeLegacyClientAliases(text: string): string {
     .replace(/\bHeliara Health Alliance\b/g, "Meridian Health")
     .replace(/\bHeliara Health\b/g, "Meridian Health")
     .replace(/\bHeliara\b/g, "Meridian")
-    .replace(/\bBrindlemark Financial Group\b/g, "First Capital Financial")
-    .replace(/\bBrindlemark Financial\b/g, "First Capital Financial")
-    .replace(/\bBrindlemark\b/g, "First Capital");
+    .replace(/\bBrindlemark Financial Group\b/g, "FS Demo")
+    .replace(/\bBrindlemark Financial\b/g, "FS Demo")
+    .replace(/\bBrindlemark\b/g, "FS Demo");
 }
 
 function normalizeClassification(

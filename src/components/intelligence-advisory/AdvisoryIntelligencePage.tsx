@@ -1080,8 +1080,8 @@ function ValuePanel({
             <div className={styles.blockSub}>
               Modelled from {briefing.tenantName} estate profile × industry
               corpus peer-median realization rates for{" "}
-              {briefing.vertical.toLowerCase()} peers.
-              Tower financial integration anchors to actual financials.
+              {briefing.vertical.toLowerCase()} peers. Tower financial
+              integration anchors to actual financials.
             </div>
           </div>
         </div>
@@ -1541,9 +1541,9 @@ const VERTICAL_CONTENT_PACKS: Record<string, VerticalContentPack> = {
       "Which vendor contract is most exposed to AI-driven disruption at the next renewal?",
     ],
     outlookPunch:
-      "The early-mover window in underwriting automation and fraud-detection AI is open now — both under 25% adoption. Client-facing GenAI advisory tools are entering mainstream; regulatory approval is the gate, not the model. Financial Services Demo has budget above peer median; the question is sequencing across business lines.",
+      "The early-mover window in underwriting automation and fraud-detection AI is open now — both under 25% adoption. Client-facing GenAI advisory tools are entering mainstream; regulatory approval is the gate, not the model. FS Demo has budget above peer median; the question is sequencing across business lines.",
     peerPunch:
-      "Three metrics expose Financial Services Demo: model-risk governance maturity below peer, automation rate below peer, core-system vendor concentration above peer. One advantage: IT spend above peer median means budget exists — this is a governance and sequencing problem, not a funding problem.",
+      "Three metrics expose FS Demo: model-risk governance maturity below peer, automation rate below peer, core-system vendor concentration above peer. One advantage: IT spend above peer median means budget exists — this is a governance and sequencing problem, not a funding problem.",
     movers: [
       {
         title: "Underwriting automation",
@@ -1571,7 +1571,7 @@ const VERTICAL_CONTENT_PACKS: Record<string, VerticalContentPack> = {
       },
     ],
     decisionSystemsImplication:
-      "Financial Services Demo's advantage: a governed decision-flow approach fits underwriting and fraud detection cleanly — both are specific, measurable, and already sit inside existing model-risk governance. Start there before broader GenAI programs.",
+      "FS Demo's advantage: a governed decision-flow approach fits underwriting and fraud detection cleanly — both are specific, measurable, and already sit inside existing model-risk governance. Start there before broader GenAI programs.",
     scalingLayerImplication:
       "Start with fraud detection or underwriting — both have the highest proof rate across the corpus for financial institutions, the shortest time-to-value, and the clearest board narrative.",
   },

@@ -1,0 +1,122 @@
+[
+  {
+    "tenant_key": "skyharbor-air",
+    "use_case_name": "IROPS recovery copilot",
+    "promised_value_status": "hypothesis",
+    "kpi_baseline_status": "required",
+    "finance_validation_status": "not_validated",
+    "realized_value_status": "not_realized",
+    "blocked_claim": "No realized value, savings, ROI, or production outcome may be claimed from this candidate context.",
+    "evidence_id": "SHA-EVID-00001"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "use_case_name": "Crew disruption assistant",
+    "promised_value_status": "hypothesis",
+    "kpi_baseline_status": "required",
+    "finance_validation_status": "not_validated",
+    "realized_value_status": "not_realized",
+    "blocked_claim": "No realized value, savings, ROI, or production outcome may be claimed from this candidate context.",
+    "evidence_id": "SHA-EVID-00002"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "use_case_name": "Maintenance troubleshooting assistant",
+    "promised_value_status": "hypothesis",
+    "kpi_baseline_status": "required",
+    "finance_validation_status": "not_validated",
+    "realized_value_status": "not_realized",
+    "blocked_claim": "No realized value, savings, ROI, or production outcome may be claimed from this candidate context.",
+    "evidence_id": "SHA-EVID-00003"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "use_case_name": "Contact center agent assist",
+    "promised_value_status": "hypothesis",
+    "kpi_baseline_status": "required",
+    "finance_validation_status": "not_validated",
+    "realized_value_status": "not_realized",
+    "blocked_claim": "No realized value, savings, ROI, or production outcome may be claimed from this candidate context.",
+    "evidence_id": "SHA-EVID-00004"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "use_case_name": "Passenger rebooking personalization",
+    "promised_value_status": "hypothesis",
+    "kpi_baseline_status": "required",
+    "finance_validation_status": "not_validated",
+    "realized_value_status": "not_realized",
+    "blocked_claim": "No realized value, savings, ROI, or production outcome may be claimed from this candidate context.",
+    "evidence_id": "SHA-EVID-00005"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "use_case_name": "Baggage recovery prediction",
+    "promised_value_status": "hypothesis",
+    "kpi_baseline_status": "required",
+    "finance_validation_status": "not_validated",
+    "realized_value_status": "not_realized",
+    "blocked_claim": "No realized value, savings, ROI, or production outcome may be claimed from this candidate context.",
+    "evidence_id": "SHA-EVID-00006"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "use_case_name": "Airport turnaround risk predictor",
+    "promised_value_status": "hypothesis",
+    "kpi_baseline_status": "required",
+    "finance_validation_status": "not_validated",
+    "realized_value_status": "not_realized",
+    "blocked_claim": "No realized value, savings, ROI, or production outcome may be claimed from this candidate context.",
+    "evidence_id": "SHA-EVID-00007"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "use_case_name": "Revenue management scenario assistant",
+    "promised_value_status": "hypothesis",
+    "kpi_baseline_status": "required",
+    "finance_validation_status": "not_validated",
+    "realized_value_status": "not_realized",
+    "blocked_claim": "No realized value, savings, ROI, or production outcome may be claimed from this candidate context.",
+    "evidence_id": "SHA-EVID-00008"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "use_case_name": "Loyalty next-best-action assistant",
+    "promised_value_status": "hypothesis",
+    "kpi_baseline_status": "required",
+    "finance_validation_status": "not_validated",
+    "realized_value_status": "not_realized",
+    "blocked_claim": "No realized value, savings, ROI, or production outcome may be claimed from this candidate context.",
+    "evidence_id": "SHA-EVID-00009"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "use_case_name": "Flight operations knowledge assistant",
+    "promised_value_status": "hypothesis",
+    "kpi_baseline_status": "required",
+    "finance_validation_status": "not_validated",
+    "realized_value_status": "not_realized",
+    "blocked_claim": "No realized value, savings, ROI, or production outcome may be claimed from this candidate context.",
+    "evidence_id": "SHA-EVID-00010"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "use_case_name": "IT incident and change-risk copilot",
+    "promised_value_status": "hypothesis",
+    "kpi_baseline_status": "required",
+    "finance_validation_status": "not_validated",
+    "realized_value_status": "not_realized",
+    "blocked_claim": "No realized value, savings, ROI, or production outcome may be claimed from this candidate context.",
+    "evidence_id": "SHA-EVID-00011"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "use_case_name": "Procurement and vendor contract intelligence",
+    "promised_value_status": "hypothesis",
+    "kpi_baseline_status": "required",
+    "finance_validation_status": "not_validated",
+    "realized_value_status": "not_realized",
+    "blocked_claim": "No realized value, savings, ROI, or production outcome may be claimed from this candidate context.",
+    "evidence_id": "SHA-EVID-00012"
+  }
+]

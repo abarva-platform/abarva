@@ -22,7 +22,7 @@ export const skyharbor_air_source_cxo_content = {
       tenant_key: "skyharbor-air",
       module: "source",
       artifact_type: "SourceReadinessBrief",
-      title: "SkyHarbor Air Source Readiness",
+      title: "Airline Demo Source Readiness",
       executive_summary:
         "Vendor and service context includes NorthSky Managed Services; AeroCore Systems; CrewLogic Suite; OpsBridge Recovery.",
       why_it_matters:

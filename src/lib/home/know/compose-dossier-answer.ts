@@ -369,14 +369,15 @@ function composeBranchOverview(
 
 function humanizeTenantKey(tenantKey: string): string {
   const knownTenantNames: Record<string, string> = {
-    skyharbor: "SkyHarbor",
+    skyharbor: "Airline Demo",
     "skyharbor-air": "Airline Demo",
     lakeshore: "Lakeshore Holdings",
     "lakeshore-holdings": "Lakeshore Holdings",
     apex: "Apex",
     "apex-retail": "Apex Retail",
     meridian: "Meridian",
-    "first-capital": "First Capital",
+    "first-capital": "FS Demo",
+    "first-capital-financial": "FS Demo",
   };
   if (knownTenantNames[tenantKey]) return knownTenantNames[tenantKey];
   return tenantKey

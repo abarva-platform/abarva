@@ -22,7 +22,7 @@ export const first_capital_intelligence_cxo_content = {
       tenant_key: "first-capital",
       module: "intelligence",
       artifact_type: "IntelligenceBriefingBlock",
-      title: "First Capital Financial Executive Briefing",
+      title: "FS Demo Executive Briefing",
       executive_summary:
         "Seven strategic AI use cases identified; all gated by lineage, auditability, and model-risk evidence needs.",
       why_it_matters:
@@ -149,8 +149,7 @@ export const first_capital_intelligence_cxo_content = {
       artifact_type: "IntelligenceCanvasVisualSpec",
       type: "module_next_actions",
       title: "Module Next Actions",
-      purpose:
-        "Route First Capital Financial evidence needs to the right Nexus surfaces.",
+      purpose: "Route FS Demo evidence needs to the right Nexus surfaces.",
       data_requirements: [
         "Evidence Registry",
         "Canonical Facts",

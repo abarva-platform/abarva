@@ -477,7 +477,7 @@ function displayTenantName(response: HomeKnowResponse): string {
     return firstFact.value.trim();
   }
   const proseMatch = response.prose.match(
-    /\b(Retail Demo|Healthcare Demo|Financial Services Demo|Lakeshore Holdings|Airline Demo)\b/,
+    /\b(Retail Demo|Healthcare Demo|FS Demo|Financial Services Demo|Lakeshore Holdings|Airline Demo)\b/,
   );
   return proseMatch?.[1] ?? "";
 }
@@ -501,7 +501,10 @@ function hasTenantOpening(text: string, tenantName: string): boolean {
   return opening.toLowerCase().includes(name.toLowerCase());
 }
 
-function collapseDuplicateTenantOpening(text: string, tenantName: string): string {
+function collapseDuplicateTenantOpening(
+  text: string,
+  tenantName: string,
+): string {
   const name = tenantName.trim();
   const trimmed = text.trim();
   if (!trimmed) return trimmed;
@@ -511,10 +514,7 @@ function collapseDuplicateTenantOpening(text: string, tenantName: string): strin
   );
   if (!name) return genericallyCollapsed;
   const escapedName = escapeRegExp(name);
-  const duplicateOpening = new RegExp(
-    `^(For\\s+${escapedName},\\s*){2,}`,
-    "i",
-  );
+  const duplicateOpening = new RegExp(`^(For\\s+${escapedName},\\s*){2,}`, "i");
   return genericallyCollapsed.replace(duplicateOpening, `For ${name}, `);
 }
 

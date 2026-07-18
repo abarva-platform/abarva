@@ -1,0 +1,1057 @@
+{
+  "tenant_key": "skyharbor-air",
+  "candidate_contract_version": "skyharbor-air-rich-standard-candidate-20260717",
+  "active_candidate_status": "candidate",
+  "default_runtime_visible": false,
+  "home_context_view": [
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "00_enterprise_profile",
+      "dimension_name": "Enterprise Profile",
+      "summary": "Airline Demo has candidate Enterprise Profile context for flight operations, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "IROPS Resilience and Recovery is approved as a program but still needs evidence-lined execution gates.",
+        "IROPS recovery copilot remains candidate and not funded by default.",
+        "safety criticality is the primary control theme for this dimension."
+      ],
+      "data_row_count": 24,
+      "relationship_count": 137,
+      "gap_count": 111,
+      "evidence_refs": [
+        "SHA-EVID-00001",
+        "SHA-EVID-00002",
+        "SHA-EVID-00003",
+        "SHA-EVID-00004",
+        "SHA-EVID-00005"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "01_business_functions",
+      "dimension_name": "Business Functions",
+      "summary": "Airline Demo has candidate Business Functions context for operations control center, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Passenger Service Modernization is approved as a program but still needs evidence-lined execution gates.",
+        "Crew disruption assistant remains candidate and not funded by default.",
+        "operational resilience is the primary control theme for this dimension."
+      ],
+      "data_row_count": 300,
+      "relationship_count": 137,
+      "gap_count": 111,
+      "evidence_refs": [
+        "SHA-EVID-00002",
+        "SHA-EVID-00003",
+        "SHA-EVID-00004",
+        "SHA-EVID-00005",
+        "SHA-EVID-00006"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "02_org_ownership",
+      "dimension_name": "Org Ownership",
+      "summary": "Airline Demo has candidate Org Ownership context for airport operations, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Loyalty Platform Modernization is approved as a program but still needs evidence-lined execution gates.",
+        "Maintenance troubleshooting assistant remains candidate and not funded by default.",
+        "crew and legal constraints is the primary control theme for this dimension."
+      ],
+      "data_row_count": 260,
+      "relationship_count": 137,
+      "gap_count": 111,
+      "evidence_refs": [
+        "SHA-EVID-00003",
+        "SHA-EVID-00004",
+        "SHA-EVID-00005",
+        "SHA-EVID-00006",
+        "SHA-EVID-00007"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "03_workforce_roles",
+      "dimension_name": "Workforce Roles",
+      "summary": "Airline Demo has candidate Workforce Roles context for customer service, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Crew Operations Optimization is approved as a program but still needs evidence-lined execution gates.",
+        "Contact center agent assist remains candidate and not funded by default.",
+        "DOT customer obligations is the primary control theme for this dimension."
+      ],
+      "data_row_count": 260,
+      "relationship_count": 137,
+      "gap_count": 111,
+      "evidence_refs": [
+        "SHA-EVID-00004",
+        "SHA-EVID-00005",
+        "SHA-EVID-00006",
+        "SHA-EVID-00007",
+        "SHA-EVID-00008"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "04_applications_systems",
+      "dimension_name": "Applications & Systems",
+      "summary": "Airline Demo has candidate Applications & Systems context for loyalty, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Maintenance Predictive Analytics Foundation is approved as a program but still needs evidence-lined execution gates.",
+        "Passenger rebooking personalization remains candidate and not funded by default.",
+        "data privacy is the primary control theme for this dimension."
+      ],
+      "data_row_count": 360,
+      "relationship_count": 137,
+      "gap_count": 111,
+      "evidence_refs": [
+        "SHA-EVID-00005",
+        "SHA-EVID-00006",
+        "SHA-EVID-00007",
+        "SHA-EVID-00008",
+        "SHA-EVID-00009"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "05_data_assets_integrations",
+      "dimension_name": "Data Assets & Integrations",
+      "summary": "Airline Demo has candidate Data Assets & Integrations context for revenue management, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Airport Turnaround Performance Program is approved as a program but still needs evidence-lined execution gates.",
+        "Baggage recovery prediction remains candidate and not funded by default.",
+        "PCI is the primary control theme for this dimension."
+      ],
+      "data_row_count": 360,
+      "relationship_count": 137,
+      "gap_count": 111,
+      "evidence_refs": [
+        "SHA-EVID-00006",
+        "SHA-EVID-00007",
+        "SHA-EVID-00008",
+        "SHA-EVID-00009",
+        "SHA-EVID-00010"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "06_infrastructure_platforms",
+      "dimension_name": "Infrastructure & Platforms",
+      "summary": "Airline Demo has candidate Infrastructure & Platforms context for network planning, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Data Platform and Lakehouse Foundation is approved as a program but still needs evidence-lined execution gates.",
+        "Airport turnaround risk predictor remains candidate and not funded by default.",
+        "cyber risk is the primary control theme for this dimension."
+      ],
+      "data_row_count": 240,
+      "relationship_count": 137,
+      "gap_count": 111,
+      "evidence_refs": [
+        "SHA-EVID-00007",
+        "SHA-EVID-00008",
+        "SHA-EVID-00009",
+        "SHA-EVID-00010",
+        "SHA-EVID-00011"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "07_vendors_contracts",
+      "dimension_name": "Vendors & Contracts",
+      "summary": "Airline Demo has candidate Vendors & Contracts context for crew scheduling, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Contact Center Experience Transformation is approved as a program but still needs evidence-lined execution gates.",
+        "Revenue management scenario assistant remains candidate and not funded by default.",
+        "identity and access is the primary control theme for this dimension."
+      ],
+      "data_row_count": 300,
+      "relationship_count": 137,
+      "gap_count": 111,
+      "evidence_refs": [
+        "SHA-EVID-00008",
+        "SHA-EVID-00009",
+        "SHA-EVID-00010",
+        "SHA-EVID-00011",
+        "SHA-EVID-00012"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "08_spend_value",
+      "dimension_name": "IT Budget, Spend & Value",
+      "summary": "Airline Demo has candidate IT Budget, Spend & Value context for maintenance engineering, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Revenue Management Modernization is approved as a program but still needs evidence-lined execution gates.",
+        "Loyalty next-best-action assistant remains candidate and not funded by default.",
+        "vendor concentration is the primary control theme for this dimension."
+      ],
+      "data_row_count": 76,
+      "relationship_count": 137,
+      "gap_count": 111,
+      "evidence_refs": [
+        "SHA-EVID-00009",
+        "SHA-EVID-00010",
+        "SHA-EVID-00011",
+        "SHA-EVID-00012",
+        "SHA-EVID-00013"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "09_programs_initiatives",
+      "dimension_name": "Programs & Initiatives",
+      "summary": "Airline Demo has candidate Programs & Initiatives context for cargo operations, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Cloud Resilience and Cyber Program is approved as a program but still needs evidence-lined execution gates.",
+        "Flight operations knowledge assistant remains candidate and not funded by default.",
+        "model explainability is the primary control theme for this dimension."
+      ],
+      "data_row_count": 300,
+      "relationship_count": 137,
+      "gap_count": 111,
+      "evidence_refs": [
+        "SHA-EVID-00010",
+        "SHA-EVID-00011",
+        "SHA-EVID-00012",
+        "SHA-EVID-00013",
+        "SHA-EVID-00014"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "10_ai_automation_use_cases",
+      "dimension_name": "AI & Automation Use Cases",
+      "summary": "Airline Demo has candidate AI & Automation Use Cases context for digital ecommerce, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Baggage Visibility and Recovery is approved as a program but still needs evidence-lined execution gates.",
+        "IT incident and change-risk copilot remains candidate and not funded by default.",
+        "human-in-the-loop operations is the primary control theme for this dimension."
+      ],
+      "data_row_count": 300,
+      "relationship_count": 137,
+      "gap_count": 110,
+      "evidence_refs": [
+        "SHA-EVID-00011",
+        "SHA-EVID-00012",
+        "SHA-EVID-00013",
+        "SHA-EVID-00014",
+        "SHA-EVID-00015"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "11_risks_controls",
+      "dimension_name": "Risks & Controls",
+      "summary": "Airline Demo has candidate Risks & Controls context for safety and security, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Finance and Procurement Spend Transparency is approved as a program but still needs evidence-lined execution gates.",
+        "Procurement and vendor contract intelligence remains candidate and not funded by default.",
+        "incident response is the primary control theme for this dimension."
+      ],
+      "data_row_count": 340,
+      "relationship_count": 137,
+      "gap_count": 110,
+      "evidence_refs": [
+        "SHA-EVID-00012",
+        "SHA-EVID-00013",
+        "SHA-EVID-00014",
+        "SHA-EVID-00015",
+        "SHA-EVID-00016"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "12_relationships",
+      "dimension_name": "Relationships",
+      "summary": "Airline Demo has candidate Relationships context for finance, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "IROPS Resilience and Recovery is approved as a program but still needs evidence-lined execution gates.",
+        "IROPS recovery copilot remains candidate and not funded by default.",
+        "airport-local operating variation is the primary control theme for this dimension."
+      ],
+      "data_row_count": 380,
+      "relationship_count": 137,
+      "gap_count": 110,
+      "evidence_refs": [
+        "SHA-EVID-00013",
+        "SHA-EVID-00014",
+        "SHA-EVID-00015",
+        "SHA-EVID-00016",
+        "SHA-EVID-00017"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "13_evidence_sources",
+      "dimension_name": "Evidence Sources",
+      "summary": "Airline Demo has candidate Evidence Sources context for procurement, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Passenger Service Modernization is approved as a program but still needs evidence-lined execution gates.",
+        "Crew disruption assistant remains candidate and not funded by default.",
+        "reservation-system dependency is the primary control theme for this dimension."
+      ],
+      "data_row_count": 140,
+      "relationship_count": 137,
+      "gap_count": 110,
+      "evidence_refs": [
+        "SHA-EVID-00014",
+        "SHA-EVID-00015",
+        "SHA-EVID-00016",
+        "SHA-EVID-00017",
+        "SHA-EVID-00018"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "14_metrics_outcomes",
+      "dimension_name": "Metrics & Outcomes",
+      "summary": "Airline Demo has candidate Metrics & Outcomes context for HR and workforce, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Loyalty Platform Modernization is approved as a program but still needs evidence-lined execution gates.",
+        "Maintenance troubleshooting assistant remains candidate and not funded by default.",
+        "cloud resilience is the primary control theme for this dimension."
+      ],
+      "data_row_count": 300,
+      "relationship_count": 137,
+      "gap_count": 110,
+      "evidence_refs": [
+        "SHA-EVID-00015",
+        "SHA-EVID-00016",
+        "SHA-EVID-00017",
+        "SHA-EVID-00018",
+        "SHA-EVID-00019"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "15_industry_context_patterns",
+      "dimension_name": "Industry Context Patterns",
+      "summary": "Airline Demo has candidate Industry Context Patterns context for data and analytics, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Crew Operations Optimization is approved as a program but still needs evidence-lined execution gates.",
+        "Contact center agent assist remains candidate and not funded by default.",
+        "safety criticality is the primary control theme for this dimension."
+      ],
+      "data_row_count": 220,
+      "relationship_count": 137,
+      "gap_count": 110,
+      "evidence_refs": [
+        "SHA-EVID-00016",
+        "SHA-EVID-00017",
+        "SHA-EVID-00018",
+        "SHA-EVID-00019",
+        "SHA-EVID-00020"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "16_expert_lenses",
+      "dimension_name": "Expert Lenses",
+      "summary": "Airline Demo has candidate Expert Lenses context for platform engineering, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Maintenance Predictive Analytics Foundation is approved as a program but still needs evidence-lined execution gates.",
+        "Passenger rebooking personalization remains candidate and not funded by default.",
+        "operational resilience is the primary control theme for this dimension."
+      ],
+      "data_row_count": 160,
+      "relationship_count": 136,
+      "gap_count": 110,
+      "evidence_refs": [
+        "SHA-EVID-00017",
+        "SHA-EVID-00018",
+        "SHA-EVID-00019",
+        "SHA-EVID-00020",
+        "SHA-EVID-00021"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "17_service_scope_managed_services",
+      "dimension_name": "Managed Services Scope",
+      "summary": "Airline Demo has candidate Managed Services Scope context for baggage operations, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Airport Turnaround Performance Program is approved as a program but still needs evidence-lined execution gates.",
+        "Baggage recovery prediction remains candidate and not funded by default.",
+        "crew and legal constraints is the primary control theme for this dimension."
+      ],
+      "data_row_count": 220,
+      "relationship_count": 136,
+      "gap_count": 110,
+      "evidence_refs": [
+        "SHA-EVID-00018",
+        "SHA-EVID-00019",
+        "SHA-EVID-00020",
+        "SHA-EVID-00021",
+        "SHA-EVID-00022"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    },
+    {
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "18_operational_process_evidence",
+      "dimension_name": "Operational Evidence",
+      "summary": "Airline Demo has candidate Operational Evidence context for flight operations, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "interesting_facts": [
+        "Data Platform and Lakehouse Foundation is approved as a program but still needs evidence-lined execution gates.",
+        "Airport turnaround risk predictor remains candidate and not funded by default.",
+        "DOT customer obligations is the primary control theme for this dimension."
+      ],
+      "data_row_count": 300,
+      "relationship_count": 136,
+      "gap_count": 110,
+      "evidence_refs": [
+        "SHA-EVID-00019",
+        "SHA-EVID-00020",
+        "SHA-EVID-00021",
+        "SHA-EVID-00022",
+        "SHA-EVID-00023"
+      ],
+      "generation_method": "deterministic source-to-render-pack assembly",
+      "active_candidate_status": "candidate"
+    }
+  ],
+  "story_blocks": [
+    {
+      "block_id": "SHA-BLK-000",
+      "tenant_key": "skyharbor-air",
+      "surface": "home",
+      "dimension": "Enterprise Profile",
+      "title": "Airline Demo: Enterprise Profile Candidate Story",
+      "executive_summary": "Airline Demo has candidate Enterprise Profile context for flight operations, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "IROPS Resilience and Recovery is approved as a program but still needs evidence-lined execution gates. IROPS recovery copilot remains candidate and not funded by default. safety criticality is the primary control theme for this dimension.",
+      "why_it_matters": "safety criticality can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "passenger service system lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for IROPS Resilience and Recovery.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-001",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Business Functions",
+      "title": "Airline Demo: Business Functions Candidate Story",
+      "executive_summary": "Airline Demo has candidate Business Functions context for operations control center, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Passenger Service Modernization is approved as a program but still needs evidence-lined execution gates. Crew disruption assistant remains candidate and not funded by default. operational resilience is the primary control theme for this dimension.",
+      "why_it_matters": "operational resilience can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "departure control system lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Passenger Service Modernization.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-002",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Org Ownership",
+      "title": "Airline Demo: Org Ownership Candidate Story",
+      "executive_summary": "Airline Demo has candidate Org Ownership context for airport operations, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Loyalty Platform Modernization is approved as a program but still needs evidence-lined execution gates. Maintenance troubleshooting assistant remains candidate and not funded by default. crew and legal constraints is the primary control theme for this dimension.",
+      "why_it_matters": "crew and legal constraints can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "crew scheduling platform lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Loyalty Platform Modernization.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-003",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Workforce Roles",
+      "title": "Airline Demo: Workforce Roles Candidate Story",
+      "executive_summary": "Airline Demo has candidate Workforce Roles context for customer service, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Crew Operations Optimization is approved as a program but still needs evidence-lined execution gates. Contact center agent assist remains candidate and not funded by default. DOT customer obligations is the primary control theme for this dimension.",
+      "why_it_matters": "DOT customer obligations can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "flight planning platform lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Crew Operations Optimization.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-004",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Applications & Systems",
+      "title": "Airline Demo: Applications & Systems Candidate Story",
+      "executive_summary": "Airline Demo has candidate Applications & Systems context for loyalty, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Maintenance Predictive Analytics Foundation is approved as a program but still needs evidence-lined execution gates. Passenger rebooking personalization remains candidate and not funded by default. data privacy is the primary control theme for this dimension.",
+      "why_it_matters": "data privacy can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "operations control and IROPS platform lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Maintenance Predictive Analytics Foundation.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-005",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Data Assets & Integrations",
+      "title": "Airline Demo: Data Assets & Integrations Candidate Story",
+      "executive_summary": "Airline Demo has candidate Data Assets & Integrations context for revenue management, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Airport Turnaround Performance Program is approved as a program but still needs evidence-lined execution gates. Baggage recovery prediction remains candidate and not funded by default. PCI is the primary control theme for this dimension.",
+      "why_it_matters": "PCI can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "maintenance and MRO platform lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Airport Turnaround Performance Program.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-006",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Infrastructure & Platforms",
+      "title": "Airline Demo: Infrastructure & Platforms Candidate Story",
+      "executive_summary": "Airline Demo has candidate Infrastructure & Platforms context for network planning, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Data Platform and Lakehouse Foundation is approved as a program but still needs evidence-lined execution gates. Airport turnaround risk predictor remains candidate and not funded by default. cyber risk is the primary control theme for this dimension.",
+      "why_it_matters": "cyber risk can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "cargo management platform lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Data Platform and Lakehouse Foundation.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-007",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Vendors & Contracts",
+      "title": "Airline Demo: Vendors & Contracts Candidate Story",
+      "executive_summary": "Airline Demo has candidate Vendors & Contracts context for crew scheduling, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Contact Center Experience Transformation is approved as a program but still needs evidence-lined execution gates. Revenue management scenario assistant remains candidate and not funded by default. identity and access is the primary control theme for this dimension.",
+      "why_it_matters": "identity and access can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "revenue management platform lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Contact Center Experience Transformation.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-008",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "IT Budget, Spend & Value",
+      "title": "Airline Demo: IT Budget, Spend & Value Candidate Story",
+      "executive_summary": "Airline Demo has candidate IT Budget, Spend & Value context for maintenance engineering, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Revenue Management Modernization is approved as a program but still needs evidence-lined execution gates. Loyalty next-best-action assistant remains candidate and not funded by default. vendor concentration is the primary control theme for this dimension.",
+      "why_it_matters": "vendor concentration can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "loyalty platform lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Revenue Management Modernization.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-009",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Programs & Initiatives",
+      "title": "Airline Demo: Programs & Initiatives Candidate Story",
+      "executive_summary": "Airline Demo has candidate Programs & Initiatives context for cargo operations, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Cloud Resilience and Cyber Program is approved as a program but still needs evidence-lined execution gates. Flight operations knowledge assistant remains candidate and not funded by default. model explainability is the primary control theme for this dimension.",
+      "why_it_matters": "model explainability can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "ecommerce and mobile app lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Cloud Resilience and Cyber Program.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-010",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "AI & Automation Use Cases",
+      "title": "Airline Demo: AI & Automation Use Cases Candidate Story",
+      "executive_summary": "Airline Demo has candidate AI & Automation Use Cases context for digital ecommerce, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Baggage Visibility and Recovery is approved as a program but still needs evidence-lined execution gates. IT incident and change-risk copilot remains candidate and not funded by default. human-in-the-loop operations is the primary control theme for this dimension.",
+      "why_it_matters": "human-in-the-loop operations can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "customer CRM lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Baggage Visibility and Recovery.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-011",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Risks & Controls",
+      "title": "Airline Demo: Risks & Controls Candidate Story",
+      "executive_summary": "Airline Demo has candidate Risks & Controls context for safety and security, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Finance and Procurement Spend Transparency is approved as a program but still needs evidence-lined execution gates. Procurement and vendor contract intelligence remains candidate and not funded by default. incident response is the primary control theme for this dimension.",
+      "why_it_matters": "incident response can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "contact center platform lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Finance and Procurement Spend Transparency.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-012",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Relationships",
+      "title": "Airline Demo: Relationships Candidate Story",
+      "executive_summary": "Airline Demo has candidate Relationships context for finance, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "IROPS Resilience and Recovery is approved as a program but still needs evidence-lined execution gates. IROPS recovery copilot remains candidate and not funded by default. airport-local operating variation is the primary control theme for this dimension.",
+      "why_it_matters": "airport-local operating variation can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "baggage tracking platform lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for IROPS Resilience and Recovery.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-013",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Evidence Sources",
+      "title": "Airline Demo: Evidence Sources Candidate Story",
+      "executive_summary": "Airline Demo has candidate Evidence Sources context for procurement, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Passenger Service Modernization is approved as a program but still needs evidence-lined execution gates. Crew disruption assistant remains candidate and not funded by default. reservation-system dependency is the primary control theme for this dimension.",
+      "why_it_matters": "reservation-system dependency can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "fuel management platform lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Passenger Service Modernization.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-014",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Metrics & Outcomes",
+      "title": "Airline Demo: Metrics & Outcomes Candidate Story",
+      "executive_summary": "Airline Demo has candidate Metrics & Outcomes context for HR and workforce, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Loyalty Platform Modernization is approved as a program but still needs evidence-lined execution gates. Maintenance troubleshooting assistant remains candidate and not funded by default. cloud resilience is the primary control theme for this dimension.",
+      "why_it_matters": "cloud resilience can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "ERP and finance platform lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Loyalty Platform Modernization.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-015",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Industry Context Patterns",
+      "title": "Airline Demo: Industry Context Patterns Candidate Story",
+      "executive_summary": "Airline Demo has candidate Industry Context Patterns context for data and analytics, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Crew Operations Optimization is approved as a program but still needs evidence-lined execution gates. Contact center agent assist remains candidate and not funded by default. safety criticality is the primary control theme for this dimension.",
+      "why_it_matters": "safety criticality can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "airline data lakehouse lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Crew Operations Optimization.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-016",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Expert Lenses",
+      "title": "Airline Demo: Expert Lenses Candidate Story",
+      "executive_summary": "Airline Demo has candidate Expert Lenses context for platform engineering, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Maintenance Predictive Analytics Foundation is approved as a program but still needs evidence-lined execution gates. Passenger rebooking personalization remains candidate and not funded by default. operational resilience is the primary control theme for this dimension.",
+      "why_it_matters": "operational resilience can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "identity and access management lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Maintenance Predictive Analytics Foundation.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-017",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Managed Services Scope",
+      "title": "Airline Demo: Managed Services Scope Candidate Story",
+      "executive_summary": "Airline Demo has candidate Managed Services Scope context for baggage operations, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Airport Turnaround Performance Program is approved as a program but still needs evidence-lined execution gates. Baggage recovery prediction remains candidate and not funded by default. crew and legal constraints is the primary control theme for this dimension.",
+      "why_it_matters": "crew and legal constraints can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "service management platform lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Airport Turnaround Performance Program.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    },
+    {
+      "block_id": "SHA-BLK-018",
+      "tenant_key": "skyharbor-air",
+      "surface": "knowledge",
+      "dimension": "Operational Evidence",
+      "title": "Airline Demo: Operational Evidence Candidate Story",
+      "executive_summary": "Airline Demo has candidate Operational Evidence context for flight operations, with deterministic Data, Relationships, Gaps, and Evidence tabs.",
+      "what_context_reveals": "Data Platform and Lakehouse Foundation is approved as a program but still needs evidence-lined execution gates. Airport turnaround risk predictor remains candidate and not funded by default. DOT customer obligations is the primary control theme for this dimension.",
+      "why_it_matters": "DOT customer obligations can block executive decisions if evidence is not reconciled.",
+      "decision_implication": "Use for candidate preview and planning only. Do not treat as active tenant truth.",
+      "evidence_still_needed": "passenger service system lineage, owner attestation, finance baseline, and source-file reconciliation.",
+      "module_usage": "Home, Knowledge, Tower, Intelligence, Moves, Source can use this only through candidate-preview scope before promotion.",
+      "next_validation_action": "Resolve evidence gaps for Data Platform and Lakehouse Foundation.",
+      "approved_for_candidate_preview": true,
+      "approved_for_default_runtime": false
+    }
+  ],
+  "visual_specs": [
+    {
+      "visual_id": "SHA-VIZ-001",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "00_enterprise_profile",
+      "surface": "home",
+      "title": "Airline Demo Enterprise Profile Candidate Readiness",
+      "purpose": "Show Enterprise Profile evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-002",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "01_business_functions",
+      "surface": "knowledge",
+      "title": "Airline Demo Business Functions Candidate Readiness",
+      "purpose": "Show Business Functions evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-003",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "02_org_ownership",
+      "surface": "knowledge",
+      "title": "Airline Demo Org Ownership Candidate Readiness",
+      "purpose": "Show Org Ownership evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-004",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "03_workforce_roles",
+      "surface": "knowledge",
+      "title": "Airline Demo Workforce Roles Candidate Readiness",
+      "purpose": "Show Workforce Roles evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-005",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "04_applications_systems",
+      "surface": "knowledge",
+      "title": "Airline Demo Applications & Systems Candidate Readiness",
+      "purpose": "Show Applications & Systems evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-006",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "05_data_assets_integrations",
+      "surface": "knowledge",
+      "title": "Airline Demo Data Assets & Integrations Candidate Readiness",
+      "purpose": "Show Data Assets & Integrations evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-007",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "06_infrastructure_platforms",
+      "surface": "knowledge",
+      "title": "Airline Demo Infrastructure & Platforms Candidate Readiness",
+      "purpose": "Show Infrastructure & Platforms evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-008",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "07_vendors_contracts",
+      "surface": "knowledge",
+      "title": "Airline Demo Vendors & Contracts Candidate Readiness",
+      "purpose": "Show Vendors & Contracts evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-009",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "08_spend_value",
+      "surface": "knowledge",
+      "title": "Airline Demo IT Budget, Spend & Value Candidate Readiness",
+      "purpose": "Show IT Budget, Spend & Value evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-010",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "09_programs_initiatives",
+      "surface": "knowledge",
+      "title": "Airline Demo Programs & Initiatives Candidate Readiness",
+      "purpose": "Show Programs & Initiatives evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-011",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "10_ai_automation_use_cases",
+      "surface": "knowledge",
+      "title": "Airline Demo AI & Automation Use Cases Candidate Readiness",
+      "purpose": "Show AI & Automation Use Cases evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-012",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "11_risks_controls",
+      "surface": "knowledge",
+      "title": "Airline Demo Risks & Controls Candidate Readiness",
+      "purpose": "Show Risks & Controls evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-013",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "12_relationships",
+      "surface": "knowledge",
+      "title": "Airline Demo Relationships Candidate Readiness",
+      "purpose": "Show Relationships evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-014",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "13_evidence_sources",
+      "surface": "knowledge",
+      "title": "Airline Demo Evidence Sources Candidate Readiness",
+      "purpose": "Show Evidence Sources evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-015",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "14_metrics_outcomes",
+      "surface": "knowledge",
+      "title": "Airline Demo Metrics & Outcomes Candidate Readiness",
+      "purpose": "Show Metrics & Outcomes evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-016",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "15_industry_context_patterns",
+      "surface": "knowledge",
+      "title": "Airline Demo Industry Context Patterns Candidate Readiness",
+      "purpose": "Show Industry Context Patterns evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-017",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "16_expert_lenses",
+      "surface": "knowledge",
+      "title": "Airline Demo Expert Lenses Candidate Readiness",
+      "purpose": "Show Expert Lenses evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-018",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "17_service_scope_managed_services",
+      "surface": "knowledge",
+      "title": "Airline Demo Managed Services Scope Candidate Readiness",
+      "purpose": "Show Managed Services Scope evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    },
+    {
+      "visual_id": "SHA-VIZ-019",
+      "tenant_key": "skyharbor-air",
+      "dimension_key": "18_operational_process_evidence",
+      "surface": "knowledge",
+      "title": "Airline Demo Operational Evidence Candidate Readiness",
+      "purpose": "Show Operational Evidence evidence strength, gaps, and module handoff readiness without claiming active truth.",
+      "data_requirements": [
+        "dimension rows",
+        "evidence references",
+        "relationship examples",
+        "gap counts"
+      ],
+      "chart_allowed": false,
+      "evidence_boundary": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value."
+    }
+  ]
+}

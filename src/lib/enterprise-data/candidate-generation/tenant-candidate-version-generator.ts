@@ -117,7 +117,7 @@ const ALL_TENANT_MATRIX_ROOT = "reports/tenant-candidate-generation";
 const INVENTORY_TENANTS = [
   {
     tenant: "skyharbor-air",
-    tenantDisplayName: "SkyHarbor Air",
+    tenantDisplayName: "Airline Demo",
     aliases: ["skyharbor"],
     requiredMappingsAvailable: true,
   },
@@ -547,7 +547,7 @@ function skyHarborManifestYaml(manifest: SkyHarborGeneratedManifest): string {
   return `contractVersion: tenant-packet/v1
 packetId: skyharbor-air-pr10-candidate
 tenantKey: skyharbor-air
-tenantDisplayName: SkyHarbor Air
+tenantDisplayName: Airline Demo
 sourceOwner: AbarVa synthetic data steward
 effectiveDate: 2026-07-10
 purpose: Existing tenant candidate-version proof through source adapter, canonical ingestion, target writer, module readiness, candidate metadata, and promotion gate.

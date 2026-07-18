@@ -181,11 +181,7 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
       normalized,
     )
   ) {
-    segments.push(
-      "risk_compliance_register",
-      "policies_procedures",
-      "risk",
-    );
+    segments.push("risk_compliance_register", "policies_procedures", "risk");
   }
   if (
     /\b(data\s+domain|data\s+domains|steward|stewardship|data\s+owner|data\s+asset|data\s+assets|master\s+data|golden\s+record)\b/.test(
@@ -199,11 +195,7 @@ export function selectTenantEnterpriseSegments(query: string): SegmentId[] {
       normalized,
     )
   ) {
-    segments.push(
-      "facilities_business_units",
-      "facility",
-      "business_unit",
-    );
+    segments.push("facilities_business_units", "facility", "business_unit");
   }
   if (
     /\b(incident|incidents|outage|outages|change|changes|problem|problems|sla|slas|service\s+level|ticket|tickets)\b/.test(
@@ -953,7 +945,12 @@ async function readStructuredTopApplicationsSource(
             { key: "vendor", label: "Vendor" },
             { key: "function", label: "Function" },
             { key: "criticality", label: "Criticality" },
-            { key: "annualCost", label: "Annual Cost", format: "currency", align: "right" },
+            {
+              key: "annualCost",
+              label: "Annual Cost",
+              format: "currency",
+              align: "right",
+            },
             { key: "status", label: "Status" },
           ],
           rows: rows.map((row) => ({
@@ -1051,9 +1048,19 @@ async function readStructuredTopVendorsSource(
           columns: [
             { key: "vendor", label: "Vendor" },
             { key: "category", label: "Category" },
-            { key: "annualValue", label: "Annual Value", format: "currency", align: "right" },
+            {
+              key: "annualValue",
+              label: "Annual Value",
+              format: "currency",
+              align: "right",
+            },
             { key: "renewalDate", label: "Renewal Date", format: "date" },
-            { key: "concentration", label: "Concentration", format: "percent", align: "right" },
+            {
+              key: "concentration",
+              label: "Concentration",
+              format: "percent",
+              align: "right",
+            },
           ],
           rows: rows.map((row) => ({
             vendor: row.vendor_name,
@@ -1126,7 +1133,12 @@ async function readStructuredVendorRenewalsSource(
           columns: [
             { key: "vendor", label: "Vendor" },
             { key: "renewalDate", label: "Renewal Date", format: "date" },
-            { key: "annualValue", label: "Annual Value", format: "currency", align: "right" },
+            {
+              key: "annualValue",
+              label: "Annual Value",
+              format: "currency",
+              align: "right",
+            },
             { key: "exitTerms", label: "Exit Terms" },
             { key: "aiClauses", label: "AI Clauses" },
             { key: "indemnity", label: "Indemnity" },
@@ -1217,7 +1229,12 @@ async function readStructuredInitiativesSource(
             title: "Active Initiatives by Stage",
             columns: [
               { key: "stage", label: "Stage" },
-              { key: "count", label: "Count", format: "number", align: "right" },
+              {
+                key: "count",
+                label: "Count",
+                format: "number",
+                align: "right",
+              },
             ],
             rows: Object.entries(counts).map(([stage, count]) => ({
               stage,
@@ -1262,8 +1279,18 @@ async function readStructuredInitiativesSource(
             { key: "stage", label: "Stage" },
             { key: "status", label: "Status" },
             { key: "posture", label: "Posture" },
-            { key: "committed", label: "Committed", format: "currency", align: "right" },
-            { key: "value", label: "Value", format: "currency", align: "right" },
+            {
+              key: "committed",
+              label: "Committed",
+              format: "currency",
+              align: "right",
+            },
+            {
+              key: "value",
+              label: "Value",
+              format: "currency",
+              align: "right",
+            },
           ],
           rows: rows.map((row) => {
             const posture =
@@ -1404,7 +1431,12 @@ async function readApplicationPortfolioSource(
             { key: "function", label: "Function" },
             { key: "deployment", label: "Deployment" },
             { key: "criticality", label: "Criticality" },
-            { key: "annualRunCost", label: "Annual Run Cost", format: "currency", align: "right" },
+            {
+              key: "annualRunCost",
+              label: "Annual Run Cost",
+              format: "currency",
+              align: "right",
+            },
             { key: "status", label: "Status" },
           ],
           rows: rows.map((row) => ({
@@ -1472,12 +1504,22 @@ async function readVendorContractsSource(
           columns: [
             { key: "vendor", label: "Vendor" },
             { key: "category", label: "Category" },
-            { key: "annualValue", label: "Annual Value", format: "currency", align: "right" },
+            {
+              key: "annualValue",
+              label: "Annual Value",
+              format: "currency",
+              align: "right",
+            },
             { key: "renewalDate", label: "Renewal Date", format: "date" },
             { key: "exitTerms", label: "Exit Terms" },
             { key: "aiClauses", label: "AI Clauses" },
             { key: "indemnity", label: "Indemnity" },
-            { key: "concentration", label: "Concentration", format: "percent", align: "right" },
+            {
+              key: "concentration",
+              label: "Concentration",
+              format: "percent",
+              align: "right",
+            },
           ],
           rows: rows.map((row) => ({
             vendor: row.vendor_name,
@@ -1553,8 +1595,18 @@ async function readInitiativesSource(
             { key: "stage", label: "Stage" },
             { key: "status", label: "Status" },
             { key: "posture", label: "Posture" },
-            { key: "committed", label: "Committed", format: "currency", align: "right" },
-            { key: "value", label: "Value", format: "currency", align: "right" },
+            {
+              key: "committed",
+              label: "Committed",
+              format: "currency",
+              align: "right",
+            },
+            {
+              key: "value",
+              label: "Value",
+              format: "currency",
+              align: "right",
+            },
           ],
           rows: rows.map((row) => {
             const posture =
@@ -1949,7 +2001,9 @@ function formatUsd(value: number | string | null | undefined): string | null {
   return `$${numeric.toLocaleString("en-US")}`;
 }
 
-function numericValue(value: number | string | null | undefined): number | null {
+function numericValue(
+  value: number | string | null | undefined,
+): number | null {
   if (value == null) return null;
   const numeric = typeof value === "number" ? value : Number(value);
   return Number.isFinite(numeric) ? numeric : null;
@@ -2073,9 +2127,9 @@ function normalizeLegacyClientAliases(text: string): string {
     .replace(/\bHeliara Health Alliance\b/g, "Meridian Health")
     .replace(/\bHeliara Health\b/g, "Meridian Health")
     .replace(/\bHeliara\b/g, "Meridian")
-    .replace(/\bBrindlemark Financial Group\b/g, "First Capital Financial")
-    .replace(/\bBrindlemark Financial\b/g, "First Capital Financial")
-    .replace(/\bBrindlemark\b/g, "First Capital");
+    .replace(/\bBrindlemark Financial Group\b/g, "FS Demo")
+    .replace(/\bBrindlemark Financial\b/g, "FS Demo")
+    .replace(/\bBrindlemark\b/g, "FS Demo");
 }
 
 function tokenize(value: string): string[] {

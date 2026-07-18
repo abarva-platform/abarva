@@ -43,7 +43,7 @@ describe("canonicalClientDisplayName", () => {
         "CANARY - SkyHarbor Recovery Command IROPS Architecture - skyharbor-canary-20260622161738",
       ),
     ).toBe(
-      "CANARY - SkyHarbor Air Recovery Command IROPS Architecture - SkyHarbor Air-canary-20260622161738",
+      "CANARY - Airline Demo Recovery Command IROPS Architecture - Airline Demo-canary-20260622161738",
     );
     expect(
       demoSafeClientText(
@@ -54,13 +54,13 @@ describe("canonicalClientDisplayName", () => {
 
   it("does not stack canonical tenant aliases into duplicated display names", () => {
     expect(demoSafeClientText("SkyHarbor Air Air Intelligence advisor")).toBe(
-      "SkyHarbor Air Intelligence advisor",
+      "Airline Demo Intelligence advisor",
     );
     expect(
       demoSafeClientText("Lakeshore Holdings Holdings Intelligence advisor"),
     ).toBe("Lakeshore Holdings Intelligence advisor");
     expect(canonicalClientDisplayName({ name: "SkyHarbor Air Air" })).toBe(
-      "SkyHarbor Air",
+      "Airline Demo",
     );
     expect(
       canonicalClientDisplayName({ name: "Lakeshore Holdings Holdings" }),
@@ -74,9 +74,9 @@ describe("canonicalClientDisplayName", () => {
     expect(canonicalClientDisplayName({ key: "lakeshore" })).toBe(
       "Lakeshore Holdings",
     );
-    expect(
-      canonicalClientDisplayName({ name: "Lakeshore Industries" }),
-    ).toBe("Lakeshore Holdings");
+    expect(canonicalClientDisplayName({ name: "Lakeshore Industries" })).toBe(
+      "Lakeshore Holdings",
+    );
     expect(
       canonicalClientDisplayName({ name: "Lakeshore Holdings Industries" }),
     ).toBe("Lakeshore Holdings");
@@ -84,9 +84,7 @@ describe("canonicalClientDisplayName", () => {
       demoSafeClientText(
         "For Lakeshore Holdings Industries, the stale alias must not surface.",
       ),
-    ).toBe(
-      "For Lakeshore Holdings, the stale alias must not surface.",
-    );
+    ).toBe("For Lakeshore Holdings, the stale alias must not surface.");
   });
 
   it("scrubs legacy names inside JSON-escaped prompt strings", () => {
@@ -95,19 +93,19 @@ describe("canonicalClientDisplayName", () => {
         String.raw`Current deterministic answer:\nSkyHarbor Air Group is using the V6 Home contract pack.`,
       ),
     ).toBe(
-      String.raw`Current deterministic answer:\nSkyHarbor Air is using the V6 Home contract pack.`,
+      String.raw`Current deterministic answer:\nAirline Demo is using the V6 Home contract pack.`,
     );
   });
 
   it("uses generic demo names for all launch-demo tenants", () => {
-    expect(getClientOption("skyharbor").name).toBe("SkyHarbor Air");
+    expect(getClientOption("skyharbor").name).toBe("Airline Demo");
     expect(getClientOption("lakeshore").name).toBe("Lakeshore Holdings");
-    expect(getClientOption("arcturus").name).toBe("Financial Services Demo");
-    expect(canonicalClientDisplayName({ name: "First Capital Financial" })).toBe(
-      "Financial Services Demo",
-    );
-    expect(canonicalClientDisplayName({ name: "Arcturus Financial Group" })).toBe(
-      "Financial Services Demo",
-    );
+    expect(getClientOption("arcturus").name).toBe("FS Demo");
+    expect(
+      canonicalClientDisplayName({ name: "First Capital Financial" }),
+    ).toBe("FS Demo");
+    expect(
+      canonicalClientDisplayName({ name: "Arcturus Financial Group" }),
+    ).toBe("FS Demo");
   });
 });

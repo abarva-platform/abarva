@@ -22,7 +22,7 @@ export const first_capital_home_cxo_content = {
       tenant_key: "first-capital",
       module: "home",
       artifact_type: "KnowledgeCxoStoryBlock",
-      title: "First Capital Financial Enterprise Story",
+      title: "FS Demo Enterprise Story",
       executive_summary:
         "A regulated regional bank with fragmented core, digital, risk, and data estate requiring evidence before AI activation.",
       why_it_matters:
@@ -148,8 +148,7 @@ export const first_capital_home_cxo_content = {
       artifact_type: "KnowledgeCxoVisualSpec",
       type: "module_next_actions",
       title: "Module Next Actions",
-      purpose:
-        "Route First Capital Financial evidence needs to the right Nexus surfaces.",
+      purpose: "Route FS Demo evidence needs to the right Nexus surfaces.",
       data_requirements: [
         "Evidence Registry",
         "Canonical Facts",

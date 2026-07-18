@@ -613,7 +613,7 @@ const TENANT_CONTEXT_BY_SLUG: Record<
   "apex-retail": { name: "Apex Retail", tier: "rich" },
   meridian: { name: "Meridian Health System", tier: "rich" },
   "meridian-health": { name: "Meridian Health System", tier: "rich" },
-  "first-capital": { name: "First Capital Financial", tier: "rich" },
+  "first-capital": { name: "FS Demo", tier: "rich" },
   "northstar-clinical": { name: NORTHSTAR_DISPLAY_NAME, tier: "rich" },
   "skyharbor-air": { name: "Airline Demo", tier: "rich" },
 };
@@ -939,7 +939,7 @@ function resolveTenant(
 
 const ALLOWED_CANONICAL_DISPLAY_NAMES: ReadonlySet<string> = new Set([
   "Meridian Health",
-  "First Capital Financial",
+  "FS Demo",
   NORTHSTAR_DISPLAY_NAME,
   "Airline Demo",
 ]);

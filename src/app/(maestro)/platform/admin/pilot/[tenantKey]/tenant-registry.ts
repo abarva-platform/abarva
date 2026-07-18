@@ -4,7 +4,7 @@
 // the tenant-bootstrap script accepts.
 
 export const CANONICAL_TENANTS_DISPLAY_NAMES: Record<string, string> = {
-  apexretail: 'Apex Retail Group',
-  meridian: 'Meridian Health System',
-  arcturus: 'First Capital Financial',
+  apexretail: "Apex Retail Group",
+  meridian: "Meridian Health System",
+  arcturus: "FS Demo",
 };

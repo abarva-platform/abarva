@@ -35,7 +35,7 @@ const CLIENT_KEY_BY_AUDIT_TENANT: Record<string, string> = {
 
 const DISPLAY_NAME_BY_TENANT: Record<string, string> = {
   "apex-retail": "Retail Demo",
-  "first-capital": "Financial Services Demo",
+  "first-capital": "FS Demo",
   "lakeshore-holdings": "Lakeshore Holdings",
   "meridian-health": "Healthcare Demo",
   "skyharbor-air": "Airline Demo",
