@@ -122,6 +122,13 @@ function hasPacketArtifacts(answer: AvaAnswerPacket): boolean {
   );
 }
 
+export function stripNestedCxoBriefLabels(text: string): string {
+  return text.replace(
+    /((?:\*\*)?(?:Answer|Proof|Move):?(?:\*\*)?:?\s+)(?:Answer|Proof|Move)\.?\s+/gi,
+    "$1",
+  );
+}
+
 /**
  * Once the server has successfully extracted structured artifacts
  * (tables/charts/graphs), always prefer its clean packet body over the raw
@@ -140,7 +147,9 @@ export function resolveAssistantAnswerText(
 ): string {
   void _hasArtifacts;
   const cleanPacketBody = packetBody.trim();
-  return cleanPacketBody ? packetBody : rawStreamedAnswer;
+  return stripNestedCxoBriefLabels(
+    cleanPacketBody ? packetBody : rawStreamedAnswer,
+  );
 }
 
 export function AdvisoryIntelligencePage({
@@ -268,7 +277,9 @@ export function AdvisoryIntelligencePage({
         if (m.id !== assistantId || m.role !== "assistant") return m;
         if (event.type === "delta") {
           const delta = eventText(event);
-          return delta ? { ...m, answer: `${m.answer}${delta}` } : m;
+          return delta
+            ? { ...m, answer: stripNestedCxoBriefLabels(`${m.answer}${delta}`) }
+            : m;
         }
         if (event.type === "agent-answer" && isAvaAnswerPacket(event.answer)) {
           const packetBody = answerBodyFromPacket(event.answer);

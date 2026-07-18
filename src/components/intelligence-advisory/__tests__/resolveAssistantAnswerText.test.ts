@@ -1,4 +1,7 @@
-import { resolveAssistantAnswerText } from "../AdvisoryIntelligencePage";
+import {
+  resolveAssistantAnswerText,
+  stripNestedCxoBriefLabels,
+} from "../AdvisoryIntelligencePage";
 
 describe("resolveAssistantAnswerText", () => {
   it("prefers the clean packet body whenever structured artifacts exist, even if the raw stream looks longer", () => {
@@ -69,6 +72,18 @@ describe("resolveAssistantAnswerText", () => {
 
     expect(resolveAssistantAnswerText(rawStreamed, packetBody, false)).toBe(
       packetBody,
+    );
+  });
+
+  it("strips nested CXO brief labels from the visible stream path", () => {
+    const rawStreamed =
+      "Answer: Healthcare Demo should proceed. Proof: Proof. The evidence is partial. Move: Move. Home should validate the gaps.";
+
+    expect(resolveAssistantAnswerText(rawStreamed, "", false)).toBe(
+      "Answer: Healthcare Demo should proceed. Proof: The evidence is partial. Move: Home should validate the gaps.",
+    );
+    expect(stripNestedCxoBriefLabels(rawStreamed)).not.toMatch(
+      /(?:Answer|Proof|Move):\s*(?:Answer|Proof|Move)\b/i,
     );
   });
 });
