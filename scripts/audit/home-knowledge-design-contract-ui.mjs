@@ -490,6 +490,46 @@ function main() {
     },
   ];
   const blockedRows = [];
+  const componentSource = readFileSync(
+    path.join(ROOT, "src/components/home/HomeKnowledgeDesignContractSurface.tsx"),
+    "utf8",
+  );
+  const requiredVisualMarkers = [
+    {
+      marker: "Newsreader, Georgia, serif",
+      reason: "Home Knowledge must use the same heading font token as Intelligence",
+    },
+    {
+      marker: "nkh-volume-chart",
+      reason: "Overview must include a visible context concentration chart",
+    },
+    {
+      marker: "nkh-confidence-benchmark",
+      reason: "Context Confidence must include a visible decision confidence distribution",
+    },
+    {
+      marker: "nkh-usecase-board",
+      reason: "Use Cases must include priority cards, not only a table",
+    },
+    {
+      marker: "nkh-proof-visual",
+      reason: "Proof must include the visible governed context flow diagram",
+    },
+    {
+      marker: "nkh-proof-flow",
+      reason: "Proof diagram must render as structured flow nodes",
+    },
+  ];
+  const missingVisualMarkers = requiredVisualMarkers.filter(
+    (item) => !componentSource.includes(item.marker),
+  );
+  if (missingVisualMarkers.length) {
+    fail(
+      `Missing required Home visual replacement markers: ${missingVisualMarkers
+        .map((item) => `${item.marker} (${item.reason})`)
+        .join("; ")}`,
+    );
+  }
   for (const target of scanTargets) {
     for (const rule of BLOCKED_PATTERNS) {
       if (rule.targets && !rule.targets.includes(target.name)) {

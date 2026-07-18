@@ -208,6 +208,24 @@ function enterpriseHeroSummary(pack: HomeKnowledgeDesignContractPack): string {
   );
 }
 
+function topDimensions(
+  dimensions: HomeKnowledgeDimension[],
+  limit = 8,
+): HomeKnowledgeDimension[] {
+  return [...dimensions]
+    .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
+    .slice(0, limit);
+}
+
+function dimensionShare(
+  dimension: HomeKnowledgeDimension,
+  dimensions: HomeKnowledgeDimension[],
+): number {
+  const total = dimensions.reduce((sum, item) => sum + (item.count ?? 0), 0);
+  if (!total) return 0;
+  return Math.round(((dimension.count ?? 0) / total) * 100);
+}
+
 export function HomeKnowledgeDesignContractSurface({
   pack,
   selectedDimension,
@@ -464,10 +482,12 @@ export function HomeKnowledgeDesignContractSurface({
           <EnterpriseOverview
             decisionCannot={slots.DEC_CANNOT ?? []}
             decisionCan={slots.DEC_CAN ?? []}
+            dimensions={dimensions}
             pack={pack}
             priorities={slots.PRIORITIES ?? []}
             signals={slots.SIGNALS ?? []}
             summaryBlocks={slots.BRIEF_COLS ?? []}
+            useCases={slots.USE_CASES ?? []}
           />
         ) : null}
 
@@ -863,17 +883,21 @@ function DimensionView({
 function EnterpriseOverview({
   decisionCannot,
   decisionCan,
+  dimensions,
   pack,
   priorities,
   signals,
   summaryBlocks,
+  useCases,
 }: {
   decisionCannot: string[];
   decisionCan: string[];
+  dimensions: HomeKnowledgeDimension[];
   pack: HomeKnowledgeDesignContractPack;
   priorities: HomeKnowledgeRecord[];
   signals: HomeKnowledgeRecord[];
   summaryBlocks: HomeKnowledgeRecord[];
+  useCases: HomeKnowledgeRecord[];
 }) {
   const title = narrativeString(pack, "enterprise_brief_title");
   const summary = narrativeString(pack, "enterprise_brief_summary");
@@ -895,6 +919,20 @@ function EnterpriseOverview({
             </article>
           ))}
         </div>
+      </section>
+
+      <section className="nkh-intel-canvas-card">
+        <div className="nkh-canvas-copy">
+          <div className="nkh-kicker">Context concentration</div>
+          <h2>Where the enterprise story is strongest</h2>
+          <p>
+            The largest loaded domains show where Nexus can already orient a
+            C-suite conversation. Thin or directional domains should become the
+            next evidence requests before value, sourcing, or operating-model
+            claims are treated as decision-grade.
+          </p>
+        </div>
+        <DimensionVolumeChart dimensions={dimensions} />
       </section>
 
       <section className="nkh-story-card nkh-boardroom-brief">
@@ -979,6 +1017,14 @@ function EnterpriseOverview({
           ))}
         </div>
       </section>
+
+      <section className="nkh-usecase-preview">
+        <div className="nkh-inline-head">
+          <h2>Top candidate use cases</h2>
+          <span>based on loaded context, not production certification</span>
+        </div>
+        <UseCasePriorityCards useCases={useCases} compact />
+      </section>
     </div>
   );
 }
@@ -1028,6 +1074,7 @@ function ContextConfidenceView({
           </div>
         </div>
         {summary ? <p className="nkh-confidence-summary-copy">{summary}</p> : null}
+        <ConfidenceBenchmarkStrip dimensions={dimensions} />
         <div className="nkh-kpi-grid">
           {kpis.slice(0, 5).map((kpi, index) => (
             <div key={`${kpi.label}-${index}`} className={`nkh-kpi-card is-${asText(kpi.tone) || "plain"}`}>
@@ -1275,6 +1322,7 @@ function UseCasesView({
         {summary ||
           "The candidate AI portfolio is a longlist for prioritization. No opportunity is production-ready until its evidence gate is cleared."}
       </p>
+      <UseCasePriorityCards useCases={useCases} />
       <div className="nkh-table-wrap">
         <table>
           <thead>
@@ -1332,6 +1380,12 @@ function ProofView({
   return (
     <div className="nkh-section">
       {proofSummary ? <p className="nkh-tab-intro">{proofSummary}</p> : null}
+      <KnowledgeLayerProofVisual
+        dimensions={dimensions}
+        evidence={evidence}
+        nextEvidence={nextEvidence}
+        relationshipVisual={relationshipVisual}
+      />
       <div className="nkh-proof-split">
         <section className="nkh-proof-table">
           <h2>Evidence sources</h2>
@@ -1365,6 +1419,186 @@ function ProofView({
         <span className="nkh-hidden-count">{formatDate(pack.generated_at)}</span>
       ) : null}
     </div>
+  );
+}
+
+function DimensionVolumeChart({
+  dimensions,
+}: {
+  dimensions: HomeKnowledgeDimension[];
+}) {
+  const visibleDimensions = topDimensions(dimensions, 9);
+  const maxCount = Math.max(...visibleDimensions.map((item) => item.count ?? 0), 1);
+  return (
+    <div className="nkh-volume-chart" aria-label="Loaded context by dimension">
+      {visibleDimensions.map((dimension) => {
+        const count = dimension.count ?? 0;
+        const width = Math.max(7, Math.round((count / maxCount) * 100));
+        return (
+          <div key={dimension.key} className="nkh-volume-row">
+            <span>{dimension.name}</span>
+            <b>
+              <i
+                style={{
+                  width: `${width}%`,
+                  background: statusColor(dimension.status),
+                }}
+              />
+            </b>
+            <strong>{count.toLocaleString()}</strong>
+            <em>{dimensionShare(dimension, dimensions)}%</em>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ConfidenceBenchmarkStrip({
+  dimensions,
+}: {
+  dimensions: HomeKnowledgeDimension[];
+}) {
+  const buckets = [
+    { key: "source-backed", label: "Decision-grade" },
+    { key: "directional", label: "Directional" },
+    { key: "needs-evidence", label: "Weak" },
+    { key: "not-evidenced", label: "Not evidenced" },
+  ].map((bucket) => {
+    const count = dimensions.filter((dimension) => dimension.status === bucket.key).length;
+    const pct = dimensions.length ? Math.round((count / dimensions.length) * 100) : 0;
+    return { ...bucket, count, pct };
+  });
+  return (
+    <section className="nkh-confidence-benchmark" aria-label="Decision confidence distribution">
+      <div>
+        <span>Decision confidence mix</span>
+        <strong>{dimensions.length} dimensions assessed</strong>
+      </div>
+      <div className="nkh-stacked-bar">
+        {buckets.map((bucket) => (
+          <i
+            key={bucket.key}
+            title={`${bucket.label}: ${bucket.count}`}
+            style={{
+              width: `${Math.max(bucket.count ? 6 : 0, bucket.pct)}%`,
+              background: statusColor(bucket.key),
+            }}
+          />
+        ))}
+      </div>
+      <dl>
+        {buckets.map((bucket) => (
+          <div key={bucket.key}>
+            <dt>
+              <i style={{ background: statusColor(bucket.key) }} />
+              {bucket.label}
+            </dt>
+            <dd>{bucket.count}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
+function UseCasePriorityCards({
+  compact = false,
+  useCases,
+}: {
+  compact?: boolean;
+  useCases: HomeKnowledgeRecord[];
+}) {
+  const visibleUseCases = useCases.slice(0, compact ? 4 : 5);
+  if (!visibleUseCases.length) {
+    return (
+      <EmptyState
+        title="No candidate use cases loaded"
+        body="Upload or validate use-case context before the opportunity board can rank priorities."
+      />
+    );
+  }
+  return (
+    <div className={`nkh-usecase-board ${compact ? "is-compact" : ""}`}>
+      {visibleUseCases.map((useCase, index) => (
+        <article key={`${useCase.name}-${index}`} className="nkh-usecase-priority">
+          <div className="nkh-usecase-rank">{String(index + 1).padStart(2, "0")}</div>
+          <div>
+            <span>{asText(useCase.fn) || "Enterprise"}</span>
+            <h3>{asText(useCase.name)}</h3>
+            <p>{asText(useCase.gate) || "Evidence gate must clear before scale."}</p>
+          </div>
+          <dl>
+            <div>
+              <dt>Stage</dt>
+              <dd>{asText(useCase.stage) || "candidate"}</dd>
+            </div>
+            <div>
+              <dt>Value signal</dt>
+              <dd>{asText(useCase.value) || "not certified"}</dd>
+            </div>
+          </dl>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function KnowledgeLayerProofVisual({
+  dimensions,
+  evidence,
+  nextEvidence,
+  relationshipVisual,
+}: {
+  dimensions: HomeKnowledgeDimension[];
+  evidence: HomeKnowledgeEvidence[];
+  nextEvidence: HomeKnowledgeRecord[];
+  relationshipVisual?: {
+    title?: string;
+    caption?: string;
+    nodes?: string[];
+    edges?: string[];
+  };
+}) {
+  const nodes = relationshipVisual?.nodes?.length
+    ? relationshipVisual.nodes
+    : [
+        "Source evidence",
+        "Canonical context",
+        "Knowledge layer",
+        "Module packet",
+        "Product action",
+      ];
+  return (
+    <section className="nkh-proof-visual" aria-label="Enterprise knowledge layer proof diagram">
+      <div className="nkh-proof-visual-copy">
+        <div className="nkh-kicker">Governed context flow</div>
+        <h2>{relationshipVisual?.title || "Source evidence becomes module-ready knowledge"}</h2>
+        <p>
+          {relationshipVisual?.caption ||
+            "The proof is not a static diagram. It shows the route from loaded evidence through canonical context, relationship caveats, module packets, and the next product action."}
+        </p>
+      </div>
+      <div className="nkh-proof-flow">
+        {nodes.slice(0, 5).map((node, index) => (
+          <div key={`${node}-${index}`} className={index === 2 ? "is-core" : ""}>
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            <strong>{node}</strong>
+            <em>
+              {index === 0
+                ? `${evidence.length} source cards`
+                : index === 1
+                  ? `${dimensions.length} dimensions`
+                  : index === 2
+                    ? "facts · gaps · relationships"
+                    : index === 3
+                      ? "Home · Intelligence · Moves · Source · Tower"
+                      : `${nextEvidence.length} evidence requests`}
+            </em>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -3482,6 +3716,404 @@ const styles = `
   background: #12345b;
   color: #5fd7ff;
 }
+
+/* Visible replacement pass: match the Intelligence canvas rather than the
+   older Knowledge directory styling. These rules intentionally override the
+   earlier compatibility tokens. */
+.nexus-home-contract {
+  --bg: #f7f4ee;
+  --surface: #fffdf8;
+  --surface-2: #fbf8f1;
+  --surface-3: #eee7dc;
+  --ink: #161411;
+  --ink-2: #34302a;
+  --ink-3: #6d675f;
+  --line: #ded5c8;
+  --line-2: #ece4d8;
+  --line-3: #cfc6b8;
+  --teal: #157f74;
+  --teal-2: #28b7a7;
+  --teal-bg: #e6f4f1;
+  --green: #218553;
+  --green-bg: #e7f4ec;
+  --amber: #a96d16;
+  --amber-bg: #fbefd9;
+  --red: #aa3a32;
+  --red-bg: #f7e4e1;
+  --muted: #8d8680;
+  --serif: Newsreader, Georgia, serif;
+  --sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.nkh-rail {
+  background: var(--surface-2);
+  border-right-color: var(--line);
+}
+.nkh-main {
+  max-width: none;
+  padding: 22px 28px 84px;
+}
+.nkh-hero {
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 26px;
+  border-bottom: 1px solid var(--line);
+}
+.nkh-breadcrumb,
+.nkh-hero p,
+.nkh-status-card span,
+.nkh-tab-intro {
+  color: var(--ink-3);
+}
+.nkh-hero h1 {
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 31px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.08;
+}
+.nkh-status-card,
+.nkh-at-glance,
+.nkh-story-card,
+.nkh-data-card,
+.nkh-proof-table,
+.nkh-next-evidence-panel,
+.nkh-observed-card,
+.nkh-relationship-card,
+.nkh-confidence-panel,
+.nkh-intel-canvas-card,
+.nkh-proof-visual,
+.nkh-usecase-preview {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(24, 20, 17, 0.04);
+}
+.nkh-tabs,
+.nkh-subtabs {
+  gap: 0;
+  border-bottom-color: var(--line);
+}
+.nkh-tabs button,
+.nkh-subtabs button {
+  padding: 13px 16px 12px;
+  color: var(--ink-3);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+.nkh-tabs button.is-active,
+.nkh-subtabs button.is-active {
+  color: var(--ink);
+  border-color: var(--teal);
+}
+.nkh-kicker,
+.nkh-fact-card span,
+.nkh-dashboard-tile span,
+.nkh-kpi-card span,
+.nkh-table-wrap th button,
+.nkh-proof-table th,
+.nkh-confidence-table th {
+  color: var(--teal);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+.nkh-story-card h2,
+.nkh-proof-table h2,
+.nkh-next-evidence-panel h2,
+.nkh-dimension-heading h2,
+.nkh-confidence-head h2,
+.nkh-intel-canvas-card h2,
+.nkh-proof-visual h2,
+.nkh-usecase-preview h2 {
+  color: var(--ink);
+  font-family: var(--serif);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.nkh-story-card p,
+.nkh-executive-summary p,
+.nkh-priority-list p,
+.nkh-signal-list p,
+.nkh-evidence-card p,
+.nkh-gap-card p {
+  color: var(--ink-2);
+}
+.nkh-intel-canvas-card {
+  display: grid;
+  grid-template-columns: minmax(280px, .72fr) minmax(460px, 1fr);
+  gap: 30px;
+  padding: 24px 26px;
+}
+.nkh-canvas-copy h2,
+.nkh-proof-visual h2 {
+  margin: 8px 0 10px;
+  font-size: 22px;
+  line-height: 1.18;
+}
+.nkh-canvas-copy p,
+.nkh-proof-visual p {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 13.5px;
+  line-height: 1.58;
+}
+.nkh-volume-chart {
+  display: grid;
+  gap: 10px;
+  padding-top: 2px;
+}
+.nkh-volume-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 220px) minmax(160px, 1fr) 72px 44px;
+  gap: 12px;
+  align-items: center;
+}
+.nkh-volume-row span {
+  color: var(--ink-2);
+  font-size: 12.5px;
+  font-weight: 720;
+  line-height: 1.25;
+}
+.nkh-volume-row b,
+.nkh-stacked-bar {
+  display: block;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+.nkh-volume-row i,
+.nkh-stacked-bar i {
+  display: block;
+  height: 100%;
+}
+.nkh-volume-row strong,
+.nkh-volume-row em {
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  text-align: right;
+}
+.nkh-volume-row em {
+  color: var(--ink-3);
+}
+.nkh-confidence-benchmark {
+  display: grid;
+  grid-template-columns: 220px minmax(220px, 1fr) minmax(320px, .75fr);
+  gap: 22px;
+  align-items: center;
+  margin: 20px 26px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+  padding: 16px 18px;
+}
+.nkh-confidence-benchmark span {
+  display: block;
+  color: var(--teal);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.nkh-confidence-benchmark strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--ink);
+  font-size: 16px;
+}
+.nkh-stacked-bar {
+  display: flex;
+  height: 16px;
+}
+.nkh-stacked-bar i + i {
+  border-left: 2px solid var(--surface-2);
+}
+.nkh-confidence-benchmark dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 14px;
+  margin: 0;
+}
+.nkh-confidence-benchmark div:has(dt) {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.nkh-confidence-benchmark dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-3);
+  font-size: 11.5px;
+}
+.nkh-confidence-benchmark dt i {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+.nkh-confidence-benchmark dd {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+}
+.nkh-usecase-board {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 22px;
+}
+.nkh-usecase-board.is-compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 0;
+}
+.nkh-usecase-priority {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--ink);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 16px 17px;
+}
+.nkh-usecase-rank {
+  color: var(--line-3);
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+.nkh-usecase-priority span {
+  display: block;
+  margin: 12px 0 8px;
+  color: var(--teal);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.nkh-usecase-priority h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.28;
+}
+.nkh-usecase-priority p {
+  margin: 9px 0 16px;
+  color: var(--ink-3);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.nkh-usecase-priority dl {
+  display: grid;
+  gap: 7px;
+  margin: auto 0 0;
+}
+.nkh-usecase-priority dt {
+  color: var(--ink-3);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.nkh-usecase-priority dd {
+  margin: 2px 0 0;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+.nkh-usecase-preview {
+  padding: 22px 24px;
+}
+.nkh-proof-visual {
+  display: grid;
+  grid-template-columns: minmax(280px, .56fr) minmax(520px, 1fr);
+  gap: 28px;
+  padding: 24px 26px;
+  margin-bottom: 20px;
+}
+.nkh-proof-flow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.nkh-proof-flow div {
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--line);
+  padding: 16px 15px;
+}
+.nkh-proof-flow div:last-child {
+  border-right: 0;
+}
+.nkh-proof-flow div.is-core {
+  background: var(--ink);
+}
+.nkh-proof-flow span {
+  color: var(--teal);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 900;
+}
+.nkh-proof-flow .is-core span {
+  color: var(--teal-2);
+}
+.nkh-proof-flow strong {
+  margin-top: 16px;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.14;
+}
+.nkh-proof-flow .is-core strong {
+  color: var(--surface);
+}
+.nkh-proof-flow em {
+  margin-top: auto;
+  color: var(--ink-3);
+  font-size: 11.5px;
+  font-style: normal;
+  line-height: 1.35;
+}
+.nkh-proof-flow .is-core em {
+  color: #c9d9d5;
+}
+.nkh-table-wrap table {
+  background: var(--surface);
+}
+.nkh-table-wrap th {
+  background: var(--surface-2);
+}
+.nkh-table-wrap td {
+  color: var(--ink-2);
+}
+.nkh-table-wrap tbody tr:nth-child(even) {
+  background: rgba(251, 248, 241, .62);
+}
+.nkh-table-wrap tbody tr:hover,
+.nkh-table-wrap tr.is-selected {
+  background: var(--teal-bg);
+}
 @media (max-width: 1100px) {
   .nexus-home-contract { grid-template-columns: 1fr; }
   .nkh-rail { position: static; height: auto; }
@@ -3502,6 +4134,12 @@ const styles = `
   .nkh-signal-list,
   .nkh-interesting-grid,
   .nkh-dashboard-grid,
+  .nkh-intel-canvas-card,
+  .nkh-confidence-benchmark,
+  .nkh-usecase-board,
+  .nkh-usecase-board.is-compact,
+  .nkh-proof-visual,
+  .nkh-proof-flow,
   .nkh-route-grid,
   .nkh-orbit,
   .nkh-render-facts { grid-template-columns: 1fr; }
