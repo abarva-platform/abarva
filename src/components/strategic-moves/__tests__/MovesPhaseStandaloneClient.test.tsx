@@ -247,7 +247,11 @@ describe("MovesPhaseStandaloneClient", () => {
         name: "Review the captured Move brief and approve the gate",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Review P0 gate →" })).toBeInTheDocument();
+    // Single primary CTA (the step-navigation bar) drives progress here now —
+    // the P0 handoff card no longer renders its own duplicate button/link.
+    expect(screen.getByRole("button", { name: "Continue to Frame →" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Review P0 gate →" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Open gate link" })).not.toBeInTheDocument();
     expect(screen.queryByText("Originate a strategic move")).not.toBeInTheDocument();
     expect(screen.queryByText(/Capture each section by talking to aVa/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Let aVa draft this/i)).not.toBeInTheDocument();
@@ -680,7 +684,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: /Review findings/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Review Insights/i }));
 
     expect(screen.getByText("Current-state readiness")).toBeInTheDocument();
     expect(screen.getByText(/0% collected/i)).toBeInTheDocument();
@@ -694,8 +698,13 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByRole("button", { name: "Open Files & Evidence" }),
     ).toBeInTheDocument();
+    // The duplicate local "Continue to Approve & Build" button was removed —
+    // the step-navigation bar's single primary CTA covers this now.
     expect(
-      screen.getByRole("button", { name: "Continue to Approve & Build" }),
+      screen.queryByRole("button", { name: "Continue to Approve & Build" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Continue to Approve & Build →" }),
     ).toBeInTheDocument();
   });
 

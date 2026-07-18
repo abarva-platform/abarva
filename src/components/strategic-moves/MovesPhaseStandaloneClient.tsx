@@ -124,8 +124,8 @@ const PHASES: PhaseContract[] = [
     lede:
       "Turn the idea into a bounded charter: scope, owner, success measures, assumptions, and the gate that protects the next phase.",
     substeps: [
-      { key: "prepare", label: "Charter inputs" },
-      { key: "decide", label: "Upload files" },
+      { key: "prepare", label: "Review Inputs" },
+      { key: "decide", label: "Upload Evidence" },
       { key: "approve", label: "Approve & Build" },
     ],
     sessions: ["Sponsor charter review", "Scope boundary workshop", "Success metric review"],
@@ -152,9 +152,9 @@ const PHASES: PhaseContract[] = [
     lede:
       "Use operational evidence, metrics, systems, workforce signals, and constraints to diagnose the current state before choosing a path.",
     substeps: [
-      { key: "prepare", label: "Prepare" },
-      { key: "current", label: "Upload & review" },
-      { key: "findings", label: "Review findings" },
+      { key: "prepare", label: "Review Inputs" },
+      { key: "current", label: "Upload Evidence" },
+      { key: "findings", label: "Review Insights" },
       { key: "approve", label: "Approve & Build" },
     ],
     sessions: ["Current-state walkthrough", "KPI and baseline review", "Systems and handoff review", "Root-cause review"],
@@ -182,7 +182,7 @@ const PHASES: PhaseContract[] = [
     lede:
       "Strategy-phase solutioning: we design each lane just enough to estimate effort, sequence the roadmap, and map the risks - not to build it here. aVa recommends; you decide with your SMEs and approve.",
     substeps: [
-      { key: "prepare", label: "Prepare" },
+      { key: "prepare", label: "Review Inputs" },
       { key: "options", label: "Compare options" },
       { key: "decide", label: "Upload decision" },
       { key: "canvas", label: "Design canvas" },
@@ -220,7 +220,7 @@ const PHASES: PhaseContract[] = [
     lede:
       "Convert the chosen approach into workstreams, delivery scenarios, economics, dependencies, and the executive commit package.",
     substeps: [
-      { key: "prepare", label: "Prepare" },
+      { key: "prepare", label: "Review Inputs" },
       { key: "value", label: "Value case" },
       { key: "workstreams", label: "Plan workstreams" },
       { key: "approve", label: "Approve & Build" },
@@ -250,7 +250,7 @@ const PHASES: PhaseContract[] = [
     lede:
       "Prepare ownership, controls, adoption, value tracking, and Tower handoff so approved value can be measured after launch.",
     substeps: [
-      { key: "prepare", label: "Prepare" },
+      { key: "prepare", label: "Review Inputs" },
       { key: "workstreams", label: "Execution readiness" },
       { key: "approve", label: "Approve & Build" },
     ],
@@ -561,15 +561,6 @@ export function MovesPhaseStandaloneClient({
     if (workspaceView === "files") return;
     setSubstepIndex((idx) => Math.min(idx + 1, phase.substeps.length - 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function goToGateStep() {
-    const approveIndex = phase.substeps.findIndex((item) => item.key === "approve");
-    if (approveIndex >= 0) {
-      setWorkspaceView("phase");
-      setSubstepIndex(approveIndex);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
   }
 
   function openFilesWorkspace() {
@@ -926,7 +917,6 @@ export function MovesPhaseStandaloneClient({
                 onOpenFiles={openFilesWorkspace}
                 onPhaseCaptureValueChange={setPhaseCaptureValue}
                 onSelectOption={setSelectedOption}
-                onShowGate={goToGateStep}
                 nextOpenPhaseContract={nextOpenPhaseContract}
                 p3OptionSet={p3OptionSet}
                 phase={phase}
@@ -1049,7 +1039,6 @@ function PhaseBody({
   onOpenFiles,
   onPhaseCaptureValueChange,
   onSelectOption,
-  onShowGate,
   nextOpenPhaseContract,
   p3OptionSet,
   phase,
@@ -1079,7 +1068,6 @@ function PhaseBody({
   onOpenFiles: () => void;
   onPhaseCaptureValueChange: (key: string, value: string) => void;
   onSelectOption: (value: string) => void;
-  onShowGate: () => void;
   nextOpenPhaseContract: PhaseContract;
   p3OptionSet: P3OptionSet;
   phase: PhaseContract;
@@ -1093,7 +1081,7 @@ function PhaseBody({
 }) {
   if (phase.phase === 0 && substep !== "approve") {
     return (
-      <P0OriginationHandoff move={move} onShowGate={onShowGate} />
+      <P0OriginationHandoff move={move} />
     );
   }
 
@@ -1216,9 +1204,6 @@ function PhaseBody({
           <div className="mxw-findings-actions">
             <button className="mxw-btn" onClick={onOpenFiles} type="button">
               Open Files &amp; Evidence
-            </button>
-            <button className="mxw-btn mxw-primary" onClick={onShowGate} type="button">
-              Continue to Approve &amp; Build
             </button>
           </div>
         </section>
@@ -1760,10 +1745,8 @@ function P0CapturedBriefReview({ move }: { move: StrategicMove }) {
 
 function P0OriginationHandoff({
   move,
-  onShowGate,
 }: {
   move: StrategicMove;
-  onShowGate: () => void;
 }) {
   return (
     <section className="mxw-zone mxw-p0-handoff">
@@ -1778,18 +1761,10 @@ function P0OriginationHandoff({
         <span>Move</span>
         <strong>{move.name}</strong>
         <em>
-          Continue to Gate approval when the brief, sponsor role, scope, value
-          hypothesis, evidence families, and readiness assumptions are ready to
-          carry into P1 Charter.
+          Use the step navigation above to continue to Gate approval when the
+          brief, sponsor role, scope, value hypothesis, evidence families, and
+          readiness assumptions are ready to carry into P1 Charter.
         </em>
-      </div>
-      <div className="mxw-p0-handoff-actions">
-        <button className="mxw-btn mxw-primary" onClick={onShowGate} type="button">
-          Review P0 gate →
-        </button>
-        <Link className="mxw-btn mxw-secondary" href={`/strategic-moves/${move.id}/phase/0?focus=gate`}>
-          Open gate link
-        </Link>
       </div>
     </section>
   );
