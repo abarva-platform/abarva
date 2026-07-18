@@ -376,14 +376,14 @@ function selectDimensions(query: string): string[] {
 function buildOverviewSource(run: V7RunRow, dimensions: string[]): AskSource {
   return {
     type: 'TENANT',
-    name: `${run.tenant_name} V7 executive dossier`,
-    id: `${run.tenant_key}:${run.contract_version}`,
+    name: `${run.tenant_name} active context dossier`,
+    id: `${run.tenant_key}:active-context-dossier`,
     confidence: 0.92,
     detail: [
-      `${run.tenant_name} has a readback-validated V7 corpus in Azure Postgres intelligence_v7.`,
-      `Loaded substrate: ${formatNumber(run.row_count)} business records, ${formatNumber(run.field_count)} field facts, ${formatNumber(run.graph_node_count)} graph nodes, ${formatNumber(run.relationship_edge_count)} relationship edges, and ${formatNumber(run.chunk_count)} retrieval chunks.`,
+      `${run.tenant_name} has a readback-validated active enterprise context pack.`,
+      `Context coverage: ${formatNumber(run.row_count)} business records, ${formatNumber(run.field_count)} field facts, ${formatNumber(run.graph_node_count)} graph nodes, ${formatNumber(run.relationship_edge_count)} relationship edges, and ${formatNumber(run.chunk_count)} retrieval chunks.`,
       `Selected for this question: ${dimensions.map((dimension) => DIMENSION_LABELS[dimension] ?? dimension).join('; ')}.`,
-      'Boundary: V7 is synthetic demo depth and not client validated; use it for directional demo intelligence, decision framing, evidence gaps, and client-to-confirm prompts. Do not describe synthetic assumptions as client-approved facts.',
+      'Boundary: the active context pack is demo-depth planning context until client validated; use it for directional demo intelligence, decision framing, evidence gaps, and client-to-confirm prompts. Do not describe planning assumptions as client-approved facts.',
     ].join('\n'),
   };
 }
@@ -396,13 +396,13 @@ function buildDimensionSource(dimension: string, rows: V7RecordRow[]): AskSource
 
   return {
     type: dimension === 'v7_15_industry_market_knowledge_patterns' ? 'PATTERN' : dimension === 'v7_23_external_benchmark_market_corpus' ? 'BENCHMARK' : 'TENANT',
-    name: `V7 ${label}`,
-    id: dimension,
+    name: label,
+    id: `context-dimension:${slugify(label)}`,
     confidence: dimension === 'v7_23_external_benchmark_market_corpus' ? 0.76 : 0.84,
     detail: [
-      `${label} from intelligence_v7 (${rows[0]?.source_file ?? 'V7 source file'}).`,
+      `${label} from the active enterprise context pack (${displaySourceName(rows[0], label)}).`,
       ...records.map((record) => `- ${record}`),
-      'Use these as business-language grounding. Keep source boundaries clear: synthetic demo until client validated.',
+      'Use these as business-language grounding. Keep source boundaries clear: demo-depth planning context until client validated.',
     ].join('\n'),
   };
 }
@@ -431,10 +431,27 @@ function summarizeRecord(dimension: string, row: V7RecordRow): string {
 
   const fieldText = fields.map(([key, value]) => `${key}: ${value}`).join('; ');
   const source = [
-    row.source_artifact_name ?? row.source_file,
+    displaySourceName(row, DIMENSION_LABELS[dimension] ?? humanize(dimension)),
     row.source_validation_status ? `validation: ${row.source_validation_status}` : null,
   ].filter(Boolean).join(', ');
   return `${title}${fieldText ? ` — ${fieldText}` : ''}${source ? ` (${source})` : ''}`;
+}
+
+function displaySourceName(row: V7RecordRow | undefined, fallbackLabel: string): string {
+  const raw = row?.source_artifact_name ?? row?.source_file ?? '';
+  if (!raw) return `${fallbackLabel} source`;
+  return raw
+    .replace(/^V\d+_\d+_?/i, '')
+    .replace(/^v\d+_\d+_?/i, '')
+    .replace(/\.(csv|xlsx|json)$/i, '')
+    .replace(/_/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (match) => match.toUpperCase()) || `${fallbackLabel} source`;
+}
+
+function slugify(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
 function firstValue(values: JsonRecord, keys: string[]): string | null {

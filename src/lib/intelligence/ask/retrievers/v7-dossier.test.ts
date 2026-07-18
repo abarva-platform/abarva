@@ -103,7 +103,7 @@ function fakeSession(seenRunQueries: string[] = []): SessionRunner {
 }
 
 describe('retrieveV7DossierSources', () => {
-  it('builds a Lakeshore v7 executive dossier for Intelligence synthesis', async () => {
+  it('builds a Lakeshore active context dossier for Intelligence synthesis without V-version language', async () => {
     const seenRunQueries: string[] = [];
     const result = await retrieveV7DossierSources(
       'How should the CIO prioritize AI across HR, finance, treasury, legal, and shared services?',
@@ -119,14 +119,19 @@ describe('retrieveV7DossierSources', () => {
     expect(seenRunQueries.join('\n')).not.toContain('contract_version = $2');
     expect(result.sources[0]).toEqual(expect.objectContaining({
       type: 'TENANT',
-      name: 'Lakeshore Holdings V7 executive dossier',
+      name: 'Lakeshore Holdings active context dossier',
+      id: 'lakeshore-industries:active-context-dossier',
       detail: expect.stringContaining('2,783 business records'),
     }));
-    expect(result.sources.map((source) => source.id)).toContain('v7_10_ai_initiatives');
-    expect(result.sources.map((source) => source.id)).toContain('v7_02_business_functions');
-    expect(result.sources.map((source) => source.id)).toContain('v7_15_industry_market_knowledge_patterns');
-    expect(result.sources.map((source) => source.detail).join('\n')).toMatch(/Shared HR exception triage/i);
-    expect(result.sources.map((source) => source.detail).join('\n')).toMatch(/synthetic demo until client validated/i);
+    expect(result.sources.map((source) => source.id)).toContain('context-dimension:ai-initiatives');
+    expect(result.sources.map((source) => source.id)).toContain('context-dimension:business-functions');
+    expect(result.sources.map((source) => source.id)).toContain('context-dimension:industry-and-market-patterns');
+    const sourcePacket = result.sources
+      .map((source) => `${source.name}\n${source.id}\n${source.detail}`)
+      .join('\n');
+    expect(sourcePacket).toMatch(/Shared HR exception triage/i);
+    expect(sourcePacket).toMatch(/demo-depth planning context until client validated/i);
+    expect(sourcePacket).not.toMatch(/\bV7\b|v7_|intelligence_v7|V7_|substrate/i);
   });
 
   it('selects system and data-estate evidence for analytics and reporting estate questions', async () => {
@@ -138,14 +143,15 @@ describe('retrieveV7DossierSources', () => {
       },
     );
 
-    expect(result.sources.map((source) => source.id)).toContain('v7_05_applications_systems');
-    expect(result.sources.map((source) => source.id)).toContain('v7_06_data_assets_integrations');
+    expect(result.sources.map((source) => source.id)).toContain('context-dimension:applications-and-systems');
+    expect(result.sources.map((source) => source.id)).toContain('context-dimension:data-assets-and-integrations');
     const details = result.sources.map((source) => source.detail).join('\n');
     expect(details).toMatch(/Epic Clarity/i);
     expect(details).toMatch(/SQL Server/i);
     expect(details).toMatch(/Tableau/i);
     expect(details).toMatch(/SAS/i);
     expect(details).toMatch(/Power BI/i);
+    expect(details).not.toMatch(/\bV7\b|v7_|intelligence_v7|V7_|substrate/i);
   });
 
   it('fails closed when the v7 schema is unavailable', async () => {
