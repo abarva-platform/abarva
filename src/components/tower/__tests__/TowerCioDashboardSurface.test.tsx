@@ -893,6 +893,9 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
 
     expect(screen.getByText("Investment Control Tower")).toBeInTheDocument();
     expect(
+      screen.queryByText("CXO Executive Dashboard"),
+    ).not.toBeInTheDocument();
+    expect(
       screen.getByRole("button", { name: "Command Center" }),
     ).toBeInTheDocument();
     expect(

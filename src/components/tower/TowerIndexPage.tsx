@@ -11171,7 +11171,7 @@ export function TowerIndexPage({
       : (budgetRollups?.length ?? 0);
   const showLegacyTowerMasthead = !(
     activeTab === "portfolio" &&
-    towerMartView &&
+    (towerMartView || cxoView) &&
     !activeDetailId
   );
 
