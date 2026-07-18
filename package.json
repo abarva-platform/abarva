@@ -116,6 +116,7 @@
     "preload:fs-airline-azure-candidate": "FS_AIRLINE_CANDIDATE_ACTION=preload node scripts/knowledge/fs-airline-azure-candidate-load.mjs",
     "load:fs-airline-azure-candidate": "FS_AIRLINE_CANDIDATE_ACTION=load EMIT_ACA_PROOF_BUNDLE=true node scripts/knowledge/fs-airline-azure-candidate-load.mjs",
     "audit:fs-airline-azure-candidate": "FS_AIRLINE_CANDIDATE_ACTION=audit EMIT_ACA_PROOF_BUNDLE=true node scripts/knowledge/fs-airline-azure-candidate-load.mjs",
+    "audit:fs-airline-active-promotion-review": "EMIT_ACA_PROOF_BUNDLE=true node scripts/knowledge/fs-airline-active-promotion-review.mjs",
     "reconcile:tenant-data-plane": "node scripts/knowledge/reconcile-tenant-data-plane.mjs",
     "audit:home-candidate-consumption": "node scripts/audit/candidate-consumption-proof.mjs --mode home",
     "audit:tower-candidate-consumption": "node scripts/audit/candidate-consumption-proof.mjs --mode tower",
