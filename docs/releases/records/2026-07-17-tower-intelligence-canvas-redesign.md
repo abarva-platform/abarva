@@ -32,6 +32,7 @@ This release updates the Tower command mart surface so it uses the same executiv
   - Aligns Tower design tokens with the Intelligence executive canvas palette.
   - Replaces the Tower left analysis rail with horizontal canvas tabs.
   - Adds Recharts-based budget split, value proof funnel, and AI value/readiness scatter matrix visuals.
+  - Adjusts the AI value/readiness scatter plot to use deterministic lane-aware display coordinates so numbered points do not collapse on top of each other when several AI rows share similar value/readiness scores.
   - Preserves existing Tower mart facts and evidence-safe wording.
 
 ## QA / Validation
@@ -39,6 +40,7 @@ This release updates the Tower command mart surface so it uses the same executiv
 - `npx eslint src/components/tower/TowerIndexPage.tsx` — passed with pre-existing unused-code warnings in the large Tower file.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false` — passed.
 - `npm test -- --runInBand src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx` — passed, 14/14 tests. Jest emitted existing duplicate mock warnings and Recharts jsdom sizing warnings.
+- Signed-in Healthcare Demo browser proof after the first deployment caught clustered AI scatter numbers; the follow-up patch separates display coordinates while keeping raw scores in tooltip copy.
 - `git diff --check` — passed.
 
 ## Rollout Plan

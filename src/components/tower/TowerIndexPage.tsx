@@ -4692,8 +4692,10 @@ function TowerAiPortfolioRechart({
     ...row,
     index: index + 1,
     name: row.displayName,
-    readiness: row.displayReadinessScore,
-    value: row.displayValueScore,
+    rawReadiness: row.displayReadinessScore,
+    rawValue: row.displayValueScore,
+    readiness: row.displayDotLeft,
+    value: Math.max(8, Math.min(92, 100 - row.displayDotTop)),
     size: Math.max(
       90,
       Math.min(
@@ -4756,6 +4758,8 @@ function TowerAiPortfolioRechart({
               const item = payload[0]?.payload as
                 | (TowerAiPortfolioDisplayRow & {
                     index: number;
+                    rawReadiness: number;
+                    rawValue: number;
                     readiness: number;
                     value: number;
                   })
@@ -4776,8 +4780,8 @@ function TowerAiPortfolioRechart({
                     {item.index}. {item.displayName}
                   </div>
                   <div style={{ color: T.INK_2, fontSize: 12, marginTop: 5 }}>
-                    Value {Math.round(item.value)} · readiness{" "}
-                    {Math.round(item.readiness)} · {item.displayAction}
+                    Value {Math.round(item.rawValue)} · readiness{" "}
+                    {Math.round(item.rawReadiness)} · {item.displayAction}
                   </div>
                   <div style={{ color: T.GRAY_DK, fontSize: 11.5, lineHeight: 1.35, marginTop: 7 }}>
                     {item.displayReason}
