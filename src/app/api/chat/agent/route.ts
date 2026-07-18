@@ -135,6 +135,7 @@ import {
   classifyMovesAvaQuestion,
   formatMovesAvaChatPacketForPrompt,
 } from "@/lib/programs/ava-chat";
+import { buildDeterministicMovesAvaStatusAnswer } from "@/lib/programs/ava-chat/deterministic-answer";
 import {
   getStagePack,
   formatStagePackForPrompt,
@@ -627,6 +628,7 @@ export async function POST(request: Request) {
   // alongside programData below. Additive — appended to contextLines, never
   // replaces the existing phase pack block. See src/lib/programs/ava-chat/.
   let movesAvaHardeningBlock = "";
+  let movesAvaDeterministicAnswer: string | null = null;
 
   // Reuse the earlier active-client lookup (resolved before voice doctrine
   // wiring so tenantName is authoritative). Aliased for downstream readers.
@@ -819,10 +821,15 @@ export async function POST(request: Request) {
             );
             const { mode } = classifyMovesAvaQuestion(message);
             movesAvaHardeningBlock = formatMovesAvaChatPacketForPrompt(packet, mode);
+            movesAvaDeterministicAnswer = buildDeterministicMovesAvaStatusAnswer(
+              packet,
+              mode,
+            );
           } catch {
             // Never block the chat turn on the hardening layer — fall back
             // to the existing phase-pack-only prompt.
             movesAvaHardeningBlock = "";
+            movesAvaDeterministicAnswer = null;
           }
         }
       }
@@ -2078,6 +2085,11 @@ export async function POST(request: Request) {
       { error: "no_client", detail: "No active client for AI egress policy." },
       { status: 403 },
     );
+  }
+  if (movesAvaDeterministicAnswer) {
+    return new Response(demoSafeClientText(movesAvaDeterministicAnswer), {
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
   }
   const nativePdfContentBlocks = await buildAgentNativePdfContentBlocks({
     surfaceContext,

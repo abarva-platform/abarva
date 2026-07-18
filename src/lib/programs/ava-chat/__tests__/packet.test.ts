@@ -1,5 +1,7 @@
 import { buildMovesAvaChatPacket } from "../packet";
 import { formatMovesAvaChatPacketForPrompt } from "../system-prompt";
+import { classifyMovesAvaQuestion } from "../answer-modes";
+import { buildDeterministicMovesAvaStatusAnswer } from "../deterministic-answer";
 
 const BASE_INPUT = {
   tenant: "lakeshore",
@@ -104,5 +106,48 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
     expect(prompt).toContain(
       "Checklist: evidence not done (0 evidence items visible); gate not met (1 hard gate open); can advance: no",
     );
+  });
+
+  it("classifies current gate status as a gate blocker so it can bypass generic phase-pack guidance", () => {
+    expect(classifyMovesAvaQuestion("What is the current gate status?").mode).toBe(
+      "gate_blocker",
+    );
+  });
+
+  it("builds a deterministic live-status answer without substituting old phase-pack gate counts", () => {
+    const packet = buildMovesAvaChatPacket(
+      {
+        ...BASE_INPUT,
+        moveTitle: "Meridian Member Experience AI Assist",
+        currentPhase: 1,
+        currentPhaseClientLabel: "P1 Charter",
+        checklistStatus: {
+          evidenceDone: false,
+          evidenceLabel: "0 evidence items visible",
+          gateDone: false,
+          gateLabel: "1 hard gate open",
+          canAdvance: false,
+          nextPhaseLabel: "P2",
+        },
+        evidenceNeedPackets: [
+          "HARD: Sponsor confirmation - missing. Next: Upload sponsor review notes.",
+        ],
+        gateCriteria: [
+          { label: "GC-P1-1 Sponsor engaged", met: false, severity: "hard" },
+          { label: "GC-P1-2 Primary success metric", met: false, severity: "hard" },
+          { label: "GC-P1-3 Value range locked", met: false, severity: "hard" },
+          { label: "GC-P1-4 Scope boundary confirmed", met: false, severity: "hard" },
+        ],
+      },
+      "What is the current gate status?",
+    );
+
+    const answer = buildDeterministicMovesAvaStatusAnswer(packet, "gate_blocker");
+
+    expect(answer).toContain(
+      "0 evidence items visible; 1 hard gate open; can advance: no",
+    );
+    expect(answer).toContain("The live Move page is the source of truth");
+    expect(answer).not.toMatch(/all four|four hard|all seven|seven criteria/i);
   });
 });

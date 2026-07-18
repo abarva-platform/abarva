@@ -35,7 +35,12 @@ const MODE_RULES: readonly ModeRule[] = [
   },
   {
     mode: "gate_blocker",
-    patterns: [/what('s| is) blocking/i, /gate (criteria|blocker)/i, /why can'?t (we|i) advance/i],
+    patterns: [
+      /what('s| is) blocking/i,
+      /gate (criteria|blocker|status|readiness)/i,
+      /current gate/i,
+      /why can'?t (we|i) advance/i,
+    ],
   },
   {
     mode: "next_phase_readiness",
