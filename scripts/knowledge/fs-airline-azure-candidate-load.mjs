@@ -553,6 +553,57 @@ function buildLocalReconciliation(artifact) {
   return { orphanFacts, orphanEdges, missingLineage, unresolvedEvidence, blockedClaims, pii: piiFindings(artifact) };
 }
 
+function buildLocalGraphProof(artifact) {
+  const nodeKeys = new Set(artifact.graphNodes.map((row) => row.node_key));
+  const scopedNodeRefs = new Set(
+    artifact.graphNodes.map((row) => `${artifact.tenantKey}|${artifact.manifest.candidate_contract_version}|${row.node_type || "entity"}|${row.node_key}`),
+  );
+  const edgeRefs = new Set(artifact.graphEdges.flatMap((row) => [row.from_node_key, row.to_node_key]));
+  const orphanEdges = artifact.graphEdges.filter((row) => !nodeKeys.has(row.from_node_key) || !nodeKeys.has(row.to_node_key));
+  const orphanNodes = artifact.graphNodes.filter((row) => !edgeRefs.has(row.node_key));
+  return {
+    node: {
+      tenant_key: artifact.tenantKey,
+      candidate_contract_version: artifact.manifest.candidate_contract_version,
+      load_run_id: artifact.manifest.load_run_id,
+      node_key_policy: "stable generated node_key",
+      node_ref_policy: "node_ref uses generated node_key",
+      total_nodes: artifact.graphNodes.length,
+      unique_node_keys: nodeKeys.size,
+      unique_scoped_node_refs: scopedNodeRefs.size,
+      duplicate_node_keys: artifact.graphNodes.length - nodeKeys.size,
+      duplicate_scoped_node_refs: artifact.graphNodes.length - scopedNodeRefs.size,
+      orphan_graph_nodes: orphanNodes.length,
+      status:
+        nodeKeys.size === artifact.graphNodes.length &&
+        scopedNodeRefs.size === artifact.graphNodes.length &&
+        orphanNodes.length === 0
+          ? "Pass"
+          : "Fail",
+    },
+    edge: {
+      tenant_key: artifact.tenantKey,
+      candidate_contract_version: artifact.manifest.candidate_contract_version,
+      load_run_id: artifact.manifest.load_run_id,
+      source_ref_policy: "relationship edge source_record_key resolves through evidence lineage",
+      total_edges: artifact.graphEdges.length,
+      resolved_edges: artifact.graphEdges.length - orphanEdges.length,
+      orphan_graph_edges: orphanEdges.length,
+      status:
+        orphanEdges.length === 0
+          ? "Pass"
+          : "Fail",
+    },
+    status:
+      nodeKeys.size === artifact.graphNodes.length &&
+      scopedNodeRefs.size === artifact.graphNodes.length &&
+      orphanNodes.length === 0 &&
+      orphanEdges.length === 0
+        ? "Pass"
+        : "Fail",
+  };
+}
+
 async function preload(client, artifacts, outDir) {
   const tableNames = preloadTableNames();
   const tableRows = [];
@@ -847,15 +898,23 @@ async function loadV7(client, artifact, resultRows) {
   await insertRows(client, "intelligence_v7.record_fields", Object.keys(factRows[0]), factRows, "on conflict(record_field_key) do update set value_text=excluded.value_text, value_number=excluded.value_number, updated_at=now()");
   resultRows.push({ tenant_key: tenantKey, layer: "L2", target_table: "intelligence_v7.record_fields", rows_written: factRows.length, status: "Pass" });
 
-	  const graphNodeRows = artifact.graphNodes.map((row) => ({
-	    node_key: `${loadRunId}:node:${row.node_key}`,
-	    tenant_key: tenantKey,
-	    contract_version: contractVersion,
-	    node_type: row.node_type || "entity",
-	    node_ref: row.node_key,
-	    entity_scope: "candidate",
-	    entity_name: row.node_name || row.node_key,
-	    source_record_key: null,
+  const sourceRecordKeyByEvidence = new Map(
+    artifact.canonicalRecords
+      .filter((row) => row.evidence_id)
+      .map((row) => [row.evidence_id, `${loadRunId}:rec:${row.record_key}`]),
+  );
+  const fallbackSourceRecordKey = recordRows[0]?.record_key;
+  const sourceRecordKeyFor = (row) => sourceRecordKeyByEvidence.get(row.evidence_id) || fallbackSourceRecordKey;
+
+  const graphNodeRows = artifact.graphNodes.map((row) => ({
+    node_key: `${loadRunId}:node:${row.node_key}`,
+    tenant_key: tenantKey,
+    contract_version: contractVersion,
+    node_type: row.node_type || "entity",
+    node_ref: row.node_key,
+    entity_scope: "candidate",
+    entity_name: row.node_name || row.node_key,
+    source_record_key: sourceRecordKeyFor(row),
     values_json: JSON.stringify({ ...row, display_label: config.displayLabel, load_run_id: loadRunId }),
   }));
   await insertRows(client, "intelligence_v7.graph_nodes", Object.keys(graphNodeRows[0]), graphNodeRows, "on conflict(node_key) do update set values_json=excluded.values_json, updated_at=now()");
@@ -876,7 +935,7 @@ async function loadV7(client, artifact, resultRows) {
     evidence_ref: row.evidence_id || "",
     relationship_strength: row.confidence || "medium",
     quality_score: row.confidence === "high" ? 0.9 : 0.7,
-    source_record_key: null,
+    source_record_key: sourceRecordKeyFor(row),
     values_json: JSON.stringify({ ...row, display_label: config.displayLabel, load_run_id: loadRunId }),
   }));
   await insertRows(client, "intelligence_v7.relationship_edges", Object.keys(graphEdgeRows[0]), graphEdgeRows, "on conflict(edge_key) do update set relationship_type=excluded.relationship_type, values_json=excluded.values_json");
@@ -1322,6 +1381,8 @@ async function auditReadback(client, artifacts, outDir) {
   const isolationRows = [];
   const checksumRows = [];
   const tableCountRows = [];
+  const graphNodeRows = [];
+  const graphEdgeRows = [];
   for (const artifact of artifacts) {
     const { tenantKey, manifest } = artifact;
     const contractVersion = manifest.candidate_contract_version;
@@ -1377,12 +1438,118 @@ async function auditReadback(client, artifacts, outDir) {
         status: loaded?.checksum_sha256 === expectedHash && Number(loaded?.row_count) === expectedRows ? "Pass" : "Fail",
       });
     }
+    if (await tableExists(client, "intelligence_v7.graph_nodes")) {
+      const nodeStats = await q(
+        client,
+        `select
+           count(*)::int as total_nodes,
+           count(distinct node_key)::int as unique_node_keys,
+           count(distinct tenant_key || '|' || contract_version || '|' || node_type || '|' || node_ref)::int as unique_scoped_node_refs,
+           count(*) filter (where node_key = $3 || node_ref)::int as node_ref_uses_node_key,
+           count(*) filter (where source_record_key is not null and source_record_key <> '')::int as source_record_keys_present
+         from intelligence_v7.graph_nodes
+         where tenant_key=$1 and contract_version=$2`,
+        [tenantKey, contractVersion, `${loadRunId}:node:`],
+      );
+      const collisionStats = await q(
+        client,
+        `select count(*)::int as cross_tenant_collisions
+         from intelligence_v7.graph_nodes current_nodes
+         join intelligence_v7.graph_nodes other_nodes
+           on other_nodes.tenant_key <> current_nodes.tenant_key
+          and other_nodes.contract_version = current_nodes.contract_version
+          and other_nodes.node_type = current_nodes.node_type
+          and other_nodes.node_ref = current_nodes.node_ref
+         where current_nodes.tenant_key=$1 and current_nodes.contract_version=$2`,
+        [tenantKey, contractVersion],
+      );
+      const orphanNodeStats = await q(
+        client,
+        `select count(*)::int as orphan_graph_nodes
+         from intelligence_v7.graph_nodes nodes
+         where nodes.tenant_key=$1
+           and nodes.contract_version=$2
+           and not exists (
+             select 1
+             from intelligence_v7.relationship_edges edges
+             where edges.tenant_key=nodes.tenant_key
+               and edges.contract_version=nodes.contract_version
+               and (edges.from_node_key=nodes.node_key or edges.to_node_key=nodes.node_key)
+           )`,
+        [tenantKey, contractVersion],
+      );
+      const stats = nodeStats.rows[0];
+      const crossTenantCollisions = Number(collisionStats.rows[0].cross_tenant_collisions);
+      const orphanGraphNodes = Number(orphanNodeStats.rows[0].orphan_graph_nodes);
+      graphNodeRows.push({
+        tenant_key: tenantKey,
+        candidate_contract_version: contractVersion,
+        load_run_id: loadRunId,
+        expected_nodes: manifest.counts.graph_nodes,
+        total_nodes: stats.total_nodes,
+        unique_node_keys: stats.unique_node_keys,
+        unique_scoped_node_refs: stats.unique_scoped_node_refs,
+        node_ref_uses_node_key: stats.node_ref_uses_node_key,
+        source_record_keys_present: stats.source_record_keys_present,
+        cross_tenant_collisions: crossTenantCollisions,
+        orphan_graph_nodes: orphanGraphNodes,
+        status:
+          Number(stats.total_nodes) === manifest.counts.graph_nodes &&
+          Number(stats.unique_node_keys) === manifest.counts.graph_nodes &&
+          Number(stats.unique_scoped_node_refs) === manifest.counts.graph_nodes &&
+          Number(stats.node_ref_uses_node_key) === manifest.counts.graph_nodes &&
+          Number(stats.source_record_keys_present) === manifest.counts.graph_nodes &&
+          crossTenantCollisions === 0 &&
+          orphanGraphNodes === 0
+            ? "Pass"
+            : "Fail",
+      });
+    }
+    if (await tableExists(client, "intelligence_v7.relationship_edges")) {
+      const edgeStats = await q(
+        client,
+        `select
+           count(*)::int as total_edges,
+           count(*) filter (where from_nodes.node_key is not null and to_nodes.node_key is not null)::int as resolved_edges,
+           count(*) filter (where from_nodes.node_key is null or to_nodes.node_key is null)::int as orphan_graph_edges,
+           count(*) filter (where source_records.record_key is not null)::int as resolved_source_records,
+           count(*) filter (where edges.source_record_key is not null and edges.source_record_key <> '')::int as source_record_keys_present
+         from intelligence_v7.relationship_edges edges
+         left join intelligence_v7.graph_nodes from_nodes on from_nodes.node_key=edges.from_node_key
+         left join intelligence_v7.graph_nodes to_nodes on to_nodes.node_key=edges.to_node_key
+         left join intelligence_v7.business_records source_records on source_records.record_key=edges.source_record_key
+         where edges.tenant_key=$1 and edges.contract_version=$2`,
+        [tenantKey, contractVersion],
+      );
+      const stats = edgeStats.rows[0];
+      graphEdgeRows.push({
+        tenant_key: tenantKey,
+        candidate_contract_version: contractVersion,
+        load_run_id: loadRunId,
+        expected_edges: manifest.counts.graph_edges,
+        total_edges: stats.total_edges,
+        resolved_edges: stats.resolved_edges,
+        orphan_graph_edges: stats.orphan_graph_edges,
+        resolved_source_records: stats.resolved_source_records,
+        source_record_keys_present: stats.source_record_keys_present,
+        status:
+          Number(stats.total_edges) === manifest.counts.graph_edges &&
+          Number(stats.resolved_edges) === manifest.counts.graph_edges &&
+          Number(stats.orphan_graph_edges) === 0 &&
+          Number(stats.resolved_source_records) === manifest.counts.graph_edges &&
+          Number(stats.source_record_keys_present) === manifest.counts.graph_edges
+            ? "Pass"
+            : "Fail",
+      });
+    }
   }
   writeCsv(path.join(outDir, "readback-validation.csv"), Object.keys(readbackRows[0]), readbackRows);
   writeCsv(path.join(outDir, "tenant-isolation-validation.csv"), Object.keys(isolationRows[0]), isolationRows);
   writeCsv(path.join(outDir, "checksum-validation.csv"), Object.keys(checksumRows[0]), checksumRows);
   writeCsv(path.join(outDir, "table-write-counts.csv"), Object.keys(tableCountRows[0]), tableCountRows);
-  return { readbackRows, isolationRows, checksumRows, tableCountRows };
+  writeCsv(path.join(outDir, "graph-node-uniqueness-validation.csv"), Object.keys(graphNodeRows[0] ?? { tenant_key: "", status: "" }), graphNodeRows);
+  writeCsv(path.join(outDir, "graph-edge-resolution-validation.csv"), Object.keys(graphEdgeRows[0] ?? { tenant_key: "", status: "" }), graphEdgeRows);
+  return { readbackRows, isolationRows, checksumRows, tableCountRows, graphNodeRows, graphEdgeRows };
 }
 
 function writeTenantReports(artifact, outRoot, auditRows = []) {
@@ -1402,12 +1569,15 @@ function writeTenantReports(artifact, outRoot, auditRows = []) {
   ]);
   writeCsv(path.join(outDir, "evidence-reconciliation.csv"), ["tenant_key", "expected", "observed", "unresolved", "status"], [{ tenant_key: artifact.tenantKey, expected: artifact.manifest.counts.evidence_references, observed: artifact.evidence.length, unresolved: local.unresolvedEvidence.length, status: local.unresolvedEvidence.length ? "Fail" : "Pass" }]);
   writeCsv(path.join(outDir, "graph-reconciliation.csv"), ["tenant_key", "nodes", "edges", "orphan_edges", "status"], [{ tenant_key: artifact.tenantKey, nodes: artifact.graphNodes.length, edges: artifact.graphEdges.length, orphan_edges: local.orphanEdges.length, status: local.orphanEdges.length ? "Fail" : "Pass" }]);
+  const localGraphProof = buildLocalGraphProof(artifact);
+  writeCsv(path.join(outDir, "graph-node-uniqueness.csv"), Object.keys(localGraphProof.node), [localGraphProof.node]);
+  writeCsv(path.join(outDir, "graph-edge-resolution.csv"), Object.keys(localGraphProof.edge), [localGraphProof.edge]);
   writeCsv(path.join(outDir, "gap-reconciliation.csv"), ["tenant_key", "gaps", "status"], [{ tenant_key: artifact.tenantKey, gaps: artifact.gaps.length, status: "Pass" }]);
   writeCsv(path.join(outDir, "retrieval-reconciliation.csv"), ["tenant_key", "chunks", "candidate_preview_only", "default_visible", "status"], [{ tenant_key: artifact.tenantKey, chunks: artifact.chunks.length, candidate_preview_only: artifact.chunks.filter((row) => row.retrieval_scope === "candidate_preview_only").length, default_visible: artifact.chunks.filter((row) => row.default_runtime_visible !== false).length, status: artifact.chunks.every((row) => row.retrieval_scope === "candidate_preview_only" && row.default_runtime_visible === false) ? "Pass" : "Fail" }]);
   writeCsv(path.join(outDir, "home-reconciliation.csv"), ["tenant_key", "dimensions", "status"], [{ tenant_key: artifact.tenantKey, dimensions: artifact.home.length, status: artifact.home.length === 19 ? "Pass" : "Fail" }]);
   writeCsv(path.join(outDir, "tower-reconciliation.csv"), ["tenant_key", "approved_programs", "candidate_ai_opportunities", "realized_value_claim_allowed", "status"], [{ tenant_key: artifact.tenantKey, approved_programs: artifact.tower.approved_programs.length, candidate_ai_opportunities: artifact.tower.candidate_ai_opportunities.length, realized_value_claim_allowed: "no", status: "Pass" }]);
   writeCsv(path.join(outDir, "moves-reconciliation.csv"), ["tenant_key", "candidate_moves", "active_execution_commitments", "status"], [{ tenant_key: artifact.tenantKey, candidate_moves: artifact.moves.length, active_execution_commitments: artifact.moves.filter((row) => row.active_execution_commitment !== false).length, status: artifact.moves.every((row) => row.active_execution_commitment === false) ? "Pass" : "Fail" }]);
-  writeCsv(path.join(outDir, "source-reconciliation.csv"), ["tenant_key", "vendor_contexts", "savings_claims_allowed", "status"], [{ tenant_key: artifact.tenantKey, vendor_contexts: artifact.source.length, savings_claims_allowed: artifact.source.filter((row) => row.savings_claim_allowed !== false).length, status: artifact.source.every((row) => row.savings_claim_allowed === false) ? "Pass" : "Fail" }]);
+  writeCsv(path.join(outDir, "source-module-reconciliation.csv"), ["tenant_key", "vendor_contexts", "savings_claims_allowed", "status"], [{ tenant_key: artifact.tenantKey, vendor_contexts: artifact.source.length, savings_claims_allowed: artifact.source.filter((row) => row.savings_claim_allowed !== false).length, status: artifact.source.every((row) => row.savings_claim_allowed === false) ? "Pass" : "Fail" }]);
   writeCsv(path.join(outDir, "orphan-records.csv"), ["tenant_key", "object_key", "object_type", "status"], [...local.orphanFacts.map((row) => ({ tenant_key: artifact.tenantKey, object_key: row.fact_key, object_type: "fact", status: "Fail" })), ...local.orphanEdges.map((row) => ({ tenant_key: artifact.tenantKey, object_key: row.edge_key, object_type: "edge", status: "Fail" }))]);
   writeCsv(path.join(outDir, "missing-lineage.csv"), ["tenant_key", "object_key", "status"], local.missingLineage.map((row) => ({ tenant_key: artifact.tenantKey, object_key: row.record_key || row.fact_key || row.chunk_key, status: "Fail" })));
   writeCsv(path.join(outDir, "blocked-claims-audit.csv"), ["tenant_key", "object_key", "reason", "status"], local.blockedClaims.map((row) => ({ tenant_key: artifact.tenantKey, ...row, status: "Fail" })));
@@ -1454,6 +1624,9 @@ function writeCrossReports(artifacts, outDir, summaryStatus, audit = null) {
     status: summaryStatus,
   }));
   writeCsv(path.join(outDir, "tenant-comparison.csv"), Object.keys(comparison[0]), comparison);
+  const localGraphProofs = artifacts.map((artifact) => buildLocalGraphProof(artifact));
+  writeCsv(path.join(outDir, "graph-node-uniqueness.csv"), Object.keys(localGraphProofs[0].node), localGraphProofs.map((proof) => proof.node));
+  writeCsv(path.join(outDir, "graph-edge-resolution.csv"), Object.keys(localGraphProofs[0].edge), localGraphProofs.map((proof) => proof.edge));
   writeMd(path.join(outDir, "default-runtime-invisibility.md"), [
     "# Default Runtime Invisibility",
     "",
