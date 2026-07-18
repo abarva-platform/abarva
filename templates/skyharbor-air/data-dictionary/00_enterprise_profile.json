@@ -1,0 +1,118 @@
+{
+  "tenant_key": "skyharbor-air",
+  "display_name": "Airline Demo",
+  "physical_source_label": "SkyHarbor Air",
+  "industry": "global airline",
+  "source_template_file": "00_enterprise_profile.csv",
+  "requested_template_file": "00_enterprise_profile.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "entity_name",
+      "required": true,
+      "description": "entity_name for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "industry",
+      "required": true,
+      "description": "industry for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "sub_industry",
+      "required": true,
+      "description": "sub_industry for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "revenue_usd",
+      "required": true,
+      "description": "revenue_usd for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "employee_count",
+      "required": true,
+      "description": "employee_count for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "headquarters",
+      "required": true,
+      "description": "headquarters for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "operating_regions",
+      "required": true,
+      "description": "operating_regions for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "business_model",
+      "required": true,
+      "description": "business_model for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "customer_segments",
+      "required": true,
+      "description": "customer_segments for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "mission",
+      "required": true,
+      "description": "mission for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "vision",
+      "required": true,
+      "description": "vision for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "strategic_priorities",
+      "required": true,
+      "description": "strategic_priorities for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "leadership_team",
+      "required": true,
+      "description": "leadership_team for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "current_state_notes",
+      "required": true,
+      "description": "current_state_notes for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "target_state_notes",
+      "required": true,
+      "description": "target_state_notes for Airline Demo 00_enterprise_profile candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for Airline Demo 00_enterprise_profile candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

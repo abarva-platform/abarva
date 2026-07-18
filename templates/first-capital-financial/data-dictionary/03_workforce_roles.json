@@ -1,0 +1,88 @@
+{
+  "tenant_key": "first-capital-financial",
+  "display_name": "FS Demo",
+  "physical_source_label": "First Capital Financial",
+  "industry": "diversified financial services",
+  "source_template_file": "03_workforce_roles.csv",
+  "requested_template_file": "03_workforce_roles.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for FS Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "persona_or_role",
+      "required": true,
+      "description": "persona_or_role for FS Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "function_name",
+      "required": true,
+      "description": "function_name for FS Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "role_count",
+      "required": true,
+      "description": "role_count for FS Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "location_model",
+      "required": true,
+      "description": "location_model for FS Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "employment_type",
+      "required": true,
+      "description": "employment_type for FS Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "vendor_supported",
+      "required": true,
+      "description": "vendor_supported for FS Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "skills",
+      "required": true,
+      "description": "skills for FS Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "pain_points",
+      "required": true,
+      "description": "pain_points for FS Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "automation_opportunity",
+      "required": true,
+      "description": "automation_opportunity for FS Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for FS Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for FS Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for FS Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for FS Demo 03_workforce_roles candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

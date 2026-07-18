@@ -1,0 +1,88 @@
+{
+  "tenant_key": "first-capital-financial",
+  "display_name": "FS Demo",
+  "physical_source_label": "First Capital Financial",
+  "industry": "diversified financial services",
+  "source_template_file": "02_org_ownership.csv",
+  "requested_template_file": "02_org_ownership.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for FS Demo 02_org_ownership candidate context."
+    },
+    {
+      "name": "org_unit",
+      "required": true,
+      "description": "org_unit for FS Demo 02_org_ownership candidate context."
+    },
+    {
+      "name": "parent_org_unit",
+      "required": true,
+      "description": "parent_org_unit for FS Demo 02_org_ownership candidate context."
+    },
+    {
+      "name": "leader_name_or_role",
+      "required": true,
+      "description": "leader_name_or_role for FS Demo 02_org_ownership candidate context."
+    },
+    {
+      "name": "role_level",
+      "required": true,
+      "description": "role_level for FS Demo 02_org_ownership candidate context."
+    },
+    {
+      "name": "decision_rights",
+      "required": true,
+      "description": "decision_rights for FS Demo 02_org_ownership candidate context."
+    },
+    {
+      "name": "owned_functions",
+      "required": true,
+      "description": "owned_functions for FS Demo 02_org_ownership candidate context."
+    },
+    {
+      "name": "owned_systems",
+      "required": true,
+      "description": "owned_systems for FS Demo 02_org_ownership candidate context."
+    },
+    {
+      "name": "owned_data_domains",
+      "required": true,
+      "description": "owned_data_domains for FS Demo 02_org_ownership candidate context."
+    },
+    {
+      "name": "location_scope",
+      "required": true,
+      "description": "location_scope for FS Demo 02_org_ownership candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for FS Demo 02_org_ownership candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for FS Demo 02_org_ownership candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for FS Demo 02_org_ownership candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for FS Demo 02_org_ownership candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

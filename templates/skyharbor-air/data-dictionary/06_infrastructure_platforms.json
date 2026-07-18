@@ -1,0 +1,98 @@
+{
+  "tenant_key": "skyharbor-air",
+  "display_name": "Airline Demo",
+  "physical_source_label": "SkyHarbor Air",
+  "industry": "global airline",
+  "source_template_file": "06_infrastructure_platforms.csv",
+  "requested_template_file": "06_infrastructure_platforms.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for Airline Demo 06_infrastructure_platforms candidate context."
+    },
+    {
+      "name": "platform_name",
+      "required": true,
+      "description": "platform_name for Airline Demo 06_infrastructure_platforms candidate context."
+    },
+    {
+      "name": "platform_type",
+      "required": true,
+      "description": "platform_type for Airline Demo 06_infrastructure_platforms candidate context."
+    },
+    {
+      "name": "hosting_model",
+      "required": true,
+      "description": "hosting_model for Airline Demo 06_infrastructure_platforms candidate context."
+    },
+    {
+      "name": "data_center_or_region",
+      "required": true,
+      "description": "data_center_or_region for Airline Demo 06_infrastructure_platforms candidate context."
+    },
+    {
+      "name": "technology_stack",
+      "required": true,
+      "description": "technology_stack for Airline Demo 06_infrastructure_platforms candidate context."
+    },
+    {
+      "name": "operational_owner",
+      "required": true,
+      "description": "operational_owner for Airline Demo 06_infrastructure_platforms candidate context."
+    },
+    {
+      "name": "criticality",
+      "required": true,
+      "description": "criticality for Airline Demo 06_infrastructure_platforms candidate context."
+    },
+    {
+      "name": "lifecycle_state",
+      "required": true,
+      "description": "lifecycle_state for Airline Demo 06_infrastructure_platforms candidate context."
+    },
+    {
+      "name": "capacity_or_scale",
+      "required": true,
+      "description": "capacity_or_scale for Airline Demo 06_infrastructure_platforms candidate context."
+    },
+    {
+      "name": "constraints",
+      "required": true,
+      "description": "constraints for Airline Demo 06_infrastructure_platforms candidate context."
+    },
+    {
+      "name": "future_target_flag",
+      "required": true,
+      "description": "future_target_flag for Airline Demo 06_infrastructure_platforms candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for Airline Demo 06_infrastructure_platforms candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for Airline Demo 06_infrastructure_platforms candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for Airline Demo 06_infrastructure_platforms candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for Airline Demo 06_infrastructure_platforms candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

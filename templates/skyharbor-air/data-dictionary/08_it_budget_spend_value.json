@@ -1,0 +1,83 @@
+{
+  "tenant_key": "skyharbor-air",
+  "display_name": "Airline Demo",
+  "physical_source_label": "SkyHarbor Air",
+  "industry": "global airline",
+  "source_template_file": "08_spend_value.csv",
+  "requested_template_file": "08_it_budget_spend_value.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for Airline Demo 08_it_budget_spend_value candidate context."
+    },
+    {
+      "name": "spend_category",
+      "required": true,
+      "description": "spend_category for Airline Demo 08_it_budget_spend_value candidate context."
+    },
+    {
+      "name": "cost_center_or_owner",
+      "required": true,
+      "description": "cost_center_or_owner for Airline Demo 08_it_budget_spend_value candidate context."
+    },
+    {
+      "name": "annual_spend_usd",
+      "required": true,
+      "description": "annual_spend_usd for Airline Demo 08_it_budget_spend_value candidate context."
+    },
+    {
+      "name": "run_change_transform_split",
+      "required": true,
+      "description": "run_change_transform_split for Airline Demo 08_it_budget_spend_value candidate context."
+    },
+    {
+      "name": "vendor_internal_split",
+      "required": true,
+      "description": "vendor_internal_split for Airline Demo 08_it_budget_spend_value candidate context."
+    },
+    {
+      "name": "value_driver",
+      "required": true,
+      "description": "value_driver for Airline Demo 08_it_budget_spend_value candidate context."
+    },
+    {
+      "name": "savings_opportunity_usd",
+      "required": true,
+      "description": "savings_opportunity_usd for Airline Demo 08_it_budget_spend_value candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for Airline Demo 08_it_budget_spend_value candidate context."
+    },
+    {
+      "name": "calculation_basis",
+      "required": true,
+      "description": "calculation_basis for Airline Demo 08_it_budget_spend_value candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for Airline Demo 08_it_budget_spend_value candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for Airline Demo 08_it_budget_spend_value candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for Airline Demo 08_it_budget_spend_value candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

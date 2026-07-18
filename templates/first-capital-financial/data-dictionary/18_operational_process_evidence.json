@@ -1,0 +1,88 @@
+{
+  "tenant_key": "first-capital-financial",
+  "display_name": "FS Demo",
+  "physical_source_label": "First Capital Financial",
+  "industry": "diversified financial services",
+  "source_template_file": "18_operational_process_evidence.csv",
+  "requested_template_file": "18_operational_process_evidence.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for FS Demo 18_operational_process_evidence candidate context."
+    },
+    {
+      "name": "process_name",
+      "required": true,
+      "description": "process_name for FS Demo 18_operational_process_evidence candidate context."
+    },
+    {
+      "name": "business_function",
+      "required": true,
+      "description": "business_function for FS Demo 18_operational_process_evidence candidate context."
+    },
+    {
+      "name": "process_owner",
+      "required": true,
+      "description": "process_owner for FS Demo 18_operational_process_evidence candidate context."
+    },
+    {
+      "name": "systems_used",
+      "required": true,
+      "description": "systems_used for FS Demo 18_operational_process_evidence candidate context."
+    },
+    {
+      "name": "volume_metric",
+      "required": true,
+      "description": "volume_metric for FS Demo 18_operational_process_evidence candidate context."
+    },
+    {
+      "name": "cycle_time",
+      "required": true,
+      "description": "cycle_time for FS Demo 18_operational_process_evidence candidate context."
+    },
+    {
+      "name": "pain_points",
+      "required": true,
+      "description": "pain_points for FS Demo 18_operational_process_evidence candidate context."
+    },
+    {
+      "name": "control_points",
+      "required": true,
+      "description": "control_points for FS Demo 18_operational_process_evidence candidate context."
+    },
+    {
+      "name": "automation_candidate",
+      "required": true,
+      "description": "automation_candidate for FS Demo 18_operational_process_evidence candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for FS Demo 18_operational_process_evidence candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for FS Demo 18_operational_process_evidence candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for FS Demo 18_operational_process_evidence candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for FS Demo 18_operational_process_evidence candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

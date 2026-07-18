@@ -1,0 +1,108 @@
+{
+  "tenant_key": "first-capital-financial",
+  "display_name": "FS Demo",
+  "physical_source_label": "First Capital Financial",
+  "industry": "diversified financial services",
+  "source_template_file": "05_data_assets_integrations.csv",
+  "requested_template_file": "05_data_assets_integrations.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "data_asset_name",
+      "required": true,
+      "description": "data_asset_name for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "data_domain",
+      "required": true,
+      "description": "data_domain for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "source_system",
+      "required": true,
+      "description": "source_system for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "target_system",
+      "required": true,
+      "description": "target_system for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "integration_type",
+      "required": true,
+      "description": "integration_type for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "platform_or_database",
+      "required": true,
+      "description": "platform_or_database for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "current_state_or_target_state",
+      "required": true,
+      "description": "current_state_or_target_state for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "refresh_frequency",
+      "required": true,
+      "description": "refresh_frequency for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "data_owner",
+      "required": true,
+      "description": "data_owner for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "data_steward",
+      "required": true,
+      "description": "data_steward for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "quality_status",
+      "required": true,
+      "description": "quality_status for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "regulated_data_flag",
+      "required": true,
+      "description": "regulated_data_flag for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "analytics_usage",
+      "required": true,
+      "description": "analytics_usage for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for FS Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for FS Demo 05_data_assets_integrations candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

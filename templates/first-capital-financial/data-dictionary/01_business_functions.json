@@ -1,0 +1,93 @@
+{
+  "tenant_key": "first-capital-financial",
+  "display_name": "FS Demo",
+  "physical_source_label": "First Capital Financial",
+  "industry": "diversified financial services",
+  "source_template_file": "01_business_functions.csv",
+  "requested_template_file": "01_business_functions.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for FS Demo 01_business_functions candidate context."
+    },
+    {
+      "name": "function_name",
+      "required": true,
+      "description": "function_name for FS Demo 01_business_functions candidate context."
+    },
+    {
+      "name": "parent_function",
+      "required": true,
+      "description": "parent_function for FS Demo 01_business_functions candidate context."
+    },
+    {
+      "name": "executive_owner",
+      "required": true,
+      "description": "executive_owner for FS Demo 01_business_functions candidate context."
+    },
+    {
+      "name": "business_capabilities",
+      "required": true,
+      "description": "business_capabilities for FS Demo 01_business_functions candidate context."
+    },
+    {
+      "name": "criticality",
+      "required": true,
+      "description": "criticality for FS Demo 01_business_functions candidate context."
+    },
+    {
+      "name": "annual_budget_usd",
+      "required": true,
+      "description": "annual_budget_usd for FS Demo 01_business_functions candidate context."
+    },
+    {
+      "name": "fte_count",
+      "required": true,
+      "description": "fte_count for FS Demo 01_business_functions candidate context."
+    },
+    {
+      "name": "outsourced_support",
+      "required": true,
+      "description": "outsourced_support for FS Demo 01_business_functions candidate context."
+    },
+    {
+      "name": "current_state_notes",
+      "required": true,
+      "description": "current_state_notes for FS Demo 01_business_functions candidate context."
+    },
+    {
+      "name": "target_state_notes",
+      "required": true,
+      "description": "target_state_notes for FS Demo 01_business_functions candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for FS Demo 01_business_functions candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for FS Demo 01_business_functions candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for FS Demo 01_business_functions candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for FS Demo 01_business_functions candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

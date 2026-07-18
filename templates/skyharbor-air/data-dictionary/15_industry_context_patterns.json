@@ -1,0 +1,73 @@
+{
+  "tenant_key": "skyharbor-air",
+  "display_name": "Airline Demo",
+  "physical_source_label": "SkyHarbor Air",
+  "industry": "global airline",
+  "source_template_file": "15_industry_context_patterns.csv",
+  "requested_template_file": "15_industry_context_patterns.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for Airline Demo 15_industry_context_patterns candidate context."
+    },
+    {
+      "name": "pattern_name",
+      "required": true,
+      "description": "pattern_name for Airline Demo 15_industry_context_patterns candidate context."
+    },
+    {
+      "name": "industry",
+      "required": true,
+      "description": "industry for Airline Demo 15_industry_context_patterns candidate context."
+    },
+    {
+      "name": "business_context",
+      "required": true,
+      "description": "business_context for Airline Demo 15_industry_context_patterns candidate context."
+    },
+    {
+      "name": "applicability",
+      "required": true,
+      "description": "applicability for Airline Demo 15_industry_context_patterns candidate context."
+    },
+    {
+      "name": "evidence_basis",
+      "required": true,
+      "description": "evidence_basis for Airline Demo 15_industry_context_patterns candidate context."
+    },
+    {
+      "name": "caveats",
+      "required": true,
+      "description": "caveats for Airline Demo 15_industry_context_patterns candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for Airline Demo 15_industry_context_patterns candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for Airline Demo 15_industry_context_patterns candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for Airline Demo 15_industry_context_patterns candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for Airline Demo 15_industry_context_patterns candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

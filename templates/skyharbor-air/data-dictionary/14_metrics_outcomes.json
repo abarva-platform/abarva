@@ -1,0 +1,93 @@
+{
+  "tenant_key": "skyharbor-air",
+  "display_name": "Airline Demo",
+  "physical_source_label": "SkyHarbor Air",
+  "industry": "global airline",
+  "source_template_file": "14_metrics_outcomes.csv",
+  "requested_template_file": "14_metrics_outcomes.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for Airline Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "metric_name",
+      "required": true,
+      "description": "metric_name for Airline Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "metric_domain",
+      "required": true,
+      "description": "metric_domain for Airline Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "business_function",
+      "required": true,
+      "description": "business_function for Airline Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "definition",
+      "required": true,
+      "description": "definition for Airline Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "baseline_value",
+      "required": true,
+      "description": "baseline_value for Airline Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "baseline_period",
+      "required": true,
+      "description": "baseline_period for Airline Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "target_value",
+      "required": true,
+      "description": "target_value for Airline Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "owner",
+      "required": true,
+      "description": "owner for Airline Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "data_source",
+      "required": true,
+      "description": "data_source for Airline Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "calculation_basis",
+      "required": true,
+      "description": "calculation_basis for Airline Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for Airline Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for Airline Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for Airline Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for Airline Demo 14_metrics_outcomes candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

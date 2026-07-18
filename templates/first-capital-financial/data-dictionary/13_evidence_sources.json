@@ -1,0 +1,78 @@
+{
+  "tenant_key": "first-capital-financial",
+  "display_name": "FS Demo",
+  "physical_source_label": "First Capital Financial",
+  "industry": "diversified financial services",
+  "source_template_file": "13_evidence_sources.csv",
+  "requested_template_file": "13_evidence_sources.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for FS Demo 13_evidence_sources candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for FS Demo 13_evidence_sources candidate context."
+    },
+    {
+      "name": "source_type",
+      "required": true,
+      "description": "source_type for FS Demo 13_evidence_sources candidate context."
+    },
+    {
+      "name": "source_owner",
+      "required": true,
+      "description": "source_owner for FS Demo 13_evidence_sources candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for FS Demo 13_evidence_sources candidate context."
+    },
+    {
+      "name": "as_of_date",
+      "required": true,
+      "description": "as_of_date for FS Demo 13_evidence_sources candidate context."
+    },
+    {
+      "name": "confidentiality",
+      "required": true,
+      "description": "confidentiality for FS Demo 13_evidence_sources candidate context."
+    },
+    {
+      "name": "domains_covered",
+      "required": true,
+      "description": "domains_covered for FS Demo 13_evidence_sources candidate context."
+    },
+    {
+      "name": "row_count_or_pages",
+      "required": true,
+      "description": "row_count_or_pages for FS Demo 13_evidence_sources candidate context."
+    },
+    {
+      "name": "quality_notes",
+      "required": true,
+      "description": "quality_notes for FS Demo 13_evidence_sources candidate context."
+    },
+    {
+      "name": "approved_for_loading",
+      "required": true,
+      "description": "approved_for_loading for FS Demo 13_evidence_sources candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for FS Demo 13_evidence_sources candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}
