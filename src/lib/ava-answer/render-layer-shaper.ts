@@ -63,6 +63,22 @@ const INTERNAL_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\banswer boundary\b/gi, "answer scope"],
 ];
 
+const EVIDENCE_BOUNDARY_PARAGRAPH_RE =
+  /^\s*Evidence boundary:\s*.+(?:\n(?!\s*$).*)*$/gim;
+
+function dedupeEvidenceBoundaryParagraphs(text: string): string {
+  const seen = new Set<string>();
+  return text
+    .replace(EVIDENCE_BOUNDARY_PARAGRAPH_RE, (paragraph) => {
+      const key = paragraph.replace(/\s+/g, " ").trim().toLowerCase();
+      if (seen.has(key)) return "";
+      seen.add(key);
+      return paragraph.trim();
+    })
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export function businessLabel(value: unknown, fallback = "Business context"): string {
   const raw = String(value ?? "").trim();
   if (!raw) return fallback;
@@ -99,6 +115,7 @@ export function shapePublicText(value: unknown, fallback = ""): string {
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+  text = dedupeEvidenceBoundaryParagraphs(text);
   return text || fallback;
 }
 

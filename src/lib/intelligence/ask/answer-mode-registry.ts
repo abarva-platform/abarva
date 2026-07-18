@@ -122,6 +122,37 @@ export function ensureMovesExecutionPhaseTable(text: string): string {
     .join("\n\n");
 }
 
+export function ensureAbarvaSurfacePlan(text: string): string {
+  const requiredSurfaceNames = [
+    "Intelligence",
+    "Home",
+    "Moves",
+    "Source",
+    "Tower",
+  ];
+  const mentioned = requiredSurfaceNames.filter((name) =>
+    new RegExp(`\\b${name}\\b`, "i").test(text),
+  );
+  if (mentioned.length >= 4 || /How AbarVa would solve this/i.test(text)) {
+    return text;
+  }
+
+  const firstTabIndex = text.search(/\n\s*<<<TAB:/);
+  const surfacePlan =
+    "**How AbarVa would run it:** Intelligence frames the executive bet; Home validates current-state systems, data, owners, and gaps; Moves turns the bet into governed phase work; Source checks vendor and commercial dependencies when relevant; Tower tracks adoption, value, risk, and funding evidence.";
+
+  if (firstTabIndex === -1) {
+    return [text.trim(), surfacePlan].filter(Boolean).join("\n\n");
+  }
+  return [
+    text.slice(0, firstTabIndex).trim(),
+    surfacePlan,
+    text.slice(firstTabIndex).trimStart(),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
 const COMMON_BANNED_PHRASES = [
   "ask Claude",
   "ask ChatGPT",
@@ -162,6 +193,7 @@ export const CXO_ANSWER_MODE_REGISTRY = {
     systemContract: STRATEGY_TO_ABARVA_SOLUTION_CONTRACT,
     promptDirective:
       'ACTIVE ANSWER MODE: strategy_to_abarva_solution. Build the answer as AbarVa product guidance, not generic advice. Include "How AbarVa would solve this" when execution is relevant. Use Intelligence for framing, Home for current-state evidence, Moves for governed execution, Source for vendor/commercial levers, and Tower for value/adoption tracking.',
+    deterministicFallback: ensureAbarvaSurfacePlan,
   },
   strategy_to_moves_execution: {
     mode: "strategy_to_moves_execution",

@@ -3,8 +3,10 @@ import { join } from "node:path";
 import {
   applyCxoAnswerModeFallbacks,
   CXO_ANSWER_MODE_REGISTRY,
+  ensureAbarvaSurfacePlan,
   MOVES_EXECUTION_PHASE_LABELS,
 } from "../answer-mode-registry";
+import { classifyAbarvaAnswerMode } from "../response-policy";
 
 describe("strategy-to-AbarVa solution synthesis contract", () => {
   const synthesizerCode = readFileSync(
@@ -84,6 +86,30 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
       active: false,
       exportRequired: true,
     });
+  });
+
+  it("classifies what-should-we-do-with asks as AbarVa solution mode", () => {
+    expect(
+      classifyAbarvaAnswerMode(
+        "What should we do with member service agent assist?",
+      ),
+    ).toBe("strategy_to_abarva_solution");
+    expect(
+      classifyAbarvaAnswerMode("What would AbarVa do next for this AI bet?"),
+    ).toBe("strategy_to_abarva_solution");
+  });
+
+  it("adds the AbarVa surface path when strategy mode omits it", () => {
+    const answer = ensureAbarvaSurfacePlan(
+      "Healthcare Demo should run a 45-day evidence sprint before deployment.",
+    );
+
+    expect(answer).toContain("How AbarVa would run it");
+    expect(answer).toContain("Intelligence frames");
+    expect(answer).toContain("Home validates");
+    expect(answer).toContain("Moves turns");
+    expect(answer).toContain("Source checks");
+    expect(answer).toContain("Tower tracks");
   });
 
   it("deterministically appends the Moves P0-P5 phase plan when Claude omits it", () => {

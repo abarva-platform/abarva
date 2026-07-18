@@ -55,6 +55,7 @@ import type {
   AvaChatSessionExport,
   AvaChatSessionExportFormat,
 } from "@/lib/ava-answer/export/session-types";
+import { shapePublicText } from "@/lib/ava-answer/render-layer-shaper";
 import type { AgentResponsePart } from "@/lib/agent/response-parts";
 
 // useLayoutEffect warns if executed during SSR. The dock only computes
@@ -112,9 +113,9 @@ function avaAnswerTextForDock(answer?: AvaAnswerPacket | null): string {
       .join("\n\n")
       .trim();
   if (hasRenderableAvaArtifacts(answer) && hasRawMarkdownTableFragment(text)) {
-    return stripMarkdownTableFragments(text);
+    return shapePublicText(stripMarkdownTableFragments(text), "");
   }
-  return text;
+  return shapePublicText(text, "");
 }
 
 const TECHNICAL_STRING_FIELDS = new Set([
@@ -206,7 +207,7 @@ function visibleAgentDockBody(
     hasRawMarkdownTableFragment(body)
       ? stripMarkdownTableFragments(body)
       : body;
-  const text = packetText || bodyText;
+  const text = shapePublicText(packetText || bodyText, "");
   return preserveVisibleText ? text : demoSafeClientText(text);
 }
 

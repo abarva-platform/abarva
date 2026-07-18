@@ -2,6 +2,7 @@ import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import {
   renderedLayerLeakIssues,
   shapeAvaAnswerPacket,
+  shapePublicText,
 } from "@/lib/ava-answer/render-layer-shaper";
 
 const baseAnswer: AvaAnswerPacket = {
@@ -94,5 +95,22 @@ describe("render-layer shaper", () => {
       expect(shaped.artifacts[0].rows[0]?.dimension).toBe("Operations & Process");
     }
     expect(renderedLayerLeakIssues(text)).toEqual([]);
+  });
+
+  it("collapses duplicate Evidence boundary paragraphs in rendered answers", () => {
+    const shaped = shapePublicText(
+      [
+        "Answer: pursue the evidence sprint first.",
+        "",
+        "Evidence boundary: treat any tenant-specific numbers as not client-ready unless loaded and reviewed.",
+        "",
+        "Evidence boundary: treat any tenant-specific numbers as not client-ready unless loaded and reviewed.",
+      ].join("\n"),
+      "",
+    );
+
+    expect(
+      shaped.match(/Evidence boundary:/g),
+    ).toHaveLength(1);
   });
 });
