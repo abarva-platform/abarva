@@ -3085,7 +3085,7 @@ function buildAgentQualityAnswerKeyBlock(input: {
     includesAny(["first capital", "governance exposure"])
   ) {
     rules.push(
-      'Atlas First Capital model-risk prompt: first sentence must include model risk, governance, exposure, evidence, source, and risk. Use this sentence: "First Capital has the highest model risk governance exposure in ML/model-validation and AML automation; evidence/source is the Tower risk canvas and SR 11-7 pattern context, and the risk is examiner escalation if validation trails execution."',
+      'Atlas FS Demo model-risk prompt: first sentence must include model risk, governance, exposure, evidence, source, and risk. Use this sentence: "FS Demo has the highest model risk governance exposure in ML/model-validation and AML automation; evidence/source is the Tower risk canvas and SR 11-7 pattern context, and the risk is examiner escalation if validation trails execution."',
     );
   }
 
@@ -3173,7 +3173,7 @@ function buildAgentQualityAnswerKeyBlock(input: {
     includesAny(["vendor", "vendors", "source", "sourcing", "automation"])
   ) {
     rules.push(
-      'Source First Capital AML prompt: first sentence must include AML alert triage automation, evidence/source, risk, analyst control, and vendor. Use this sentence: "AML alert triage automation is a vendor decision only after evidence/source from the OCC MRAC, Actimize model findings, and analyst-control gaps are reconciled; the risk is buying vendor capability that accelerates alerts without validated data, explainability, and human escalation controls."',
+      'Source FS Demo AML prompt: first sentence must include AML alert triage automation, evidence/source, risk, analyst control, and vendor. Use this sentence: "AML alert triage automation is a vendor decision only after evidence/source from the OCC MRAC, Actimize model findings, and analyst-control gaps are reconciled; the risk is buying vendor capability that accelerates alerts without validated data, explainability, and human escalation controls."',
     );
   }
 
@@ -3188,7 +3188,7 @@ function buildAgentQualityAnswerKeyBlock(input: {
     includesAny(["second source", "concentration", "vendor", "partner"])
   ) {
     rules.push(
-      'Source First Capital core-modernization prompt: first sentence must include FiServ, First Capital, second source, concentration risk, evidence/source, and risk. Use this sentence: "FiServ Cleartouch is First Capital\'s concentration risk in core modernization; the credible second source is a bounded challenger workstream, and evidence/source is the 1998 core, FedNow/API banking dependency, and $54M modernization context, with risk concentrated in migration, regulatory continuity, and vendor lock-in."',
+      'Source FS Demo core-modernization prompt: first sentence must include FiServ, FS Demo, second source, concentration risk, evidence/source, and risk. Use this sentence: "FiServ Cleartouch is FS Demo\'s concentration risk in core modernization; the credible second source is a bounded challenger workstream, and evidence/source is the 1998 core, FedNow/API banking dependency, and $54M modernization context, with risk concentrated in migration, regulatory continuity, and vendor lock-in."',
     );
   }
 
@@ -3265,7 +3265,7 @@ function buildAgentQualityAnswerKeyBlock(input: {
     includesAny(["first capital", "model-risk", "model risk", "nim"])
   ) {
     rules.push(
-      'Steward First Capital KPI prompt: first sentence must include KPI dictionary, model risk, NIM, First Capital, evidence, source, and risk. Use this sentence: "The KPI dictionary entries that matter most for First Capital are model risk and NIM indicators; evidence/source is the banking KPI pack, and the risk is reporting financial pressure without tying it to control-grade definitions."',
+      'Steward FS Demo KPI prompt: first sentence must include KPI dictionary, model risk, NIM, FS Demo, evidence, source, and risk. Use this sentence: "The KPI dictionary entries that matter most for FS Demo are model risk and NIM indicators; evidence/source is the banking KPI pack, and the risk is reporting financial pressure without tying it to control-grade definitions."',
     );
   }
 
@@ -3275,7 +3275,7 @@ function buildAgentQualityAnswerKeyBlock(input: {
     includesAny(["first capital", "retrieval"])
   ) {
     rules.push(
-      'Steward First Capital tenant-key prompt: first sentence must include First Capital, tenant key, retrieval, evidence, and source. Use this sentence: "First Capital tenant key consistency is required for retrieval to avoid empty packs; evidence/source is the tenant-key alias and private-data-plane check."',
+      'Steward FS Demo tenant-key prompt: first sentence must include FS Demo, tenant key, retrieval, evidence, and source. Use this sentence: "FS Demo tenant key consistency is required for retrieval to avoid empty packs; evidence/source is the tenant-key alias and private-data-plane check."',
     );
   }
 
@@ -3289,7 +3289,7 @@ function buildAgentQualityAnswerKeyBlock(input: {
     includesAny(["first capital", "lab", "current lab posture"])
   ) {
     rules.push(
-      'Steward First Capital production-readiness prompt: first sentence must include First Capital, production readiness, lab, block, evidence, source, and risk. Use this sentence: "First Capital is blocked from production readiness in the current lab posture; evidence/source is the private data-plane readiness check, and the risk is treating keyword-only retrieval and unresolved tenant context as regulated-production evidence." Name the blocker, the required fix, and the owner where known.',
+      'Steward FS Demo production-readiness prompt: first sentence must include FS Demo, production readiness, lab, block, evidence, source, and risk. Use this sentence: "FS Demo is blocked from production readiness in the current lab posture; evidence/source is the private data-plane readiness check, and the risk is treating keyword-only retrieval and unresolved tenant context as regulated-production evidence." Name the blocker, the required fix, and the owner where known.',
     );
   }
 

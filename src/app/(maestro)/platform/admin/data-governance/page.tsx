@@ -70,7 +70,7 @@ const PROMOTIONS: PromotionRequest[] = [
     note: 'Approved by Marcus Webb (CIO) — ready for master intelligence',
   },
   {
-    id: 'p2', engagement: 'First Capital — FedNow Deployment', org: 'First Capital Bank',
+    id: 'p2', engagement: 'FS Demo — FedNow Deployment', org: 'FS Demo Bank',
     maestro: 'Anand Sundaram', document: 'FedNow Vendor Evaluation — Final Scorecard', category: 'Vendor Contracts',
     requestedAt: 'Apr 13, 2026', status: 'pending',
     visibleTo: ['CIO', 'CFO', 'COO'],
@@ -133,7 +133,7 @@ const ENGAGEMENTS: Engagement[] = [
     ],
   },
   {
-    id: 'firstcapital-2026', name: 'First Capital — FedNow Deployment', org: 'First Capital Bank',
+    id: 'firstcapital-2026', name: 'FS Demo — FedNow Deployment', org: 'FS Demo Bank',
     maestro: 'Anand Sundaram', createdAt: 'Apr 10, 2026', pendingCount: 1,
     team: [
       { name: 'David Kim', role: 'CTO', email: 'dkim@firstcapitalbank.com', access: 'Technology, Infrastructure, AI Initiatives', addedAt: 'Apr 10' },

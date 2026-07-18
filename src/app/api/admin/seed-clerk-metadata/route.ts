@@ -43,7 +43,7 @@ const DEMO_USERS = [
     metadata: {
       role: 'client',
       clientId: 'arcturus',
-      clientName: 'First Capital',
+      clientName: 'FS Demo',
       defaultClientId: 'arcturus',
       clientLocked: true,
       accountType: 'demo_existing',
@@ -85,7 +85,7 @@ const DEMO_USERS = [
     metadata: {
       role: 'client',
       clientId: 'arcturus',
-      clientName: 'First Capital',
+      clientName: 'FS Demo',
       defaultClientId: 'arcturus',
       clientLocked: true,
       accountType: 'demo_program_user',
@@ -130,7 +130,7 @@ const DEMO_USERS = [
     metadata: {
       role: 'client',
       clientId: 'arcturus',
-      clientName: 'First Capital',
+      clientName: 'FS Demo',
       defaultClientId: 'arcturus',
       clientLocked: true,
       accountType: 'demo_source_operator',

@@ -114,7 +114,7 @@ const TENANTS: TenantSeed[] = [
   {
     key: "firstcapital",
     label: "FS Demo",
-    shortLabel: "First Capital",
+    shortLabel: "FS Demo",
     orgId: "firstcapital",
     queryCategory: "vendor",
     baseData: confidenceFirstCapital.score,
@@ -270,7 +270,7 @@ const BACKLOG_ITEMS: BacklogItem[] = [
     outcome:
       "Signed-in Clerk demo users can resolve tenant context without the old no-client dead end.",
     nextStep:
-      "Smoke-test the live app with Meridian and First Capital demo users.",
+      "Smoke-test the live app with Meridian and FS Demo users.",
   },
   {
     id: "chat-inputs",
