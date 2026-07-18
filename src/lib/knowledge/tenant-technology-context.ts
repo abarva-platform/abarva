@@ -16,6 +16,7 @@ const TECHNOLOGY_QUESTION_PATTERNS = [
   /\b(data\s*(?:&|and)?\s*analytics|analytics platforms?|data platforms?|data landscape|analytics landscape|data stack|bi|business intelligence)\b/i,
   /\b(warehouse|lakehouse|snowflake|databricks|tableau|power bi|dbt|fivetran|etl|elt)\b/i,
   /\b(ml platform|ai platform|vector database|model platform|activation stack)\b/i,
+  /\b(agent assist|copilot|virtual agent|contact.?center|call.?center|customer service|member service|patient access|service triage|case management|knowledge base|telephony|crm)\b/i,
 ];
 
 const ANALYTICS_TERMS = [

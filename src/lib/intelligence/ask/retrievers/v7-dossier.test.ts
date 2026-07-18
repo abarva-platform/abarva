@@ -154,6 +154,23 @@ describe('retrieveV7DossierSources', () => {
     expect(details).not.toMatch(/\bV7\b|v7_|intelligence_v7|V7_|substrate/i);
   });
 
+  it('selects current-state systems and data context for agent-assist questions', async () => {
+    const result = await retrieveV7DossierSources(
+      'For Meridian agent assist in member service, what should we prioritize next?',
+      {
+        tenantInventoryKey: 'meridian',
+        session: fakeSession(),
+      },
+    );
+
+    expect(result.sources.map((source) => source.id)).toContain('context-dimension:applications-and-systems');
+    expect(result.sources.map((source) => source.id)).toContain('context-dimension:data-assets-and-integrations');
+    const packet = result.sources.map((source) => `${source.name}\n${source.detail}`).join('\n');
+    expect(packet).toMatch(/Epic Clarity/i);
+    expect(packet).toMatch(/Reporting marts and BI layer/i);
+    expect(packet).not.toMatch(/\bV7\b|v7_|intelligence_v7|V7_|substrate/i);
+  });
+
   it('fails closed when the v7 schema is unavailable', async () => {
     const session: SessionRunner = async () => {
       throw new Error('relation intelligence_v7.tenant_pack_runs does not exist');
