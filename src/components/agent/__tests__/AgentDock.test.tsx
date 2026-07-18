@@ -264,9 +264,46 @@ describe("AgentDock · default mode", () => {
     });
     expect(form).toHaveStyle({
       position: "sticky",
-      bottom: "0px",
+      bottom: "10px",
     });
     expect(screen.getByTestId("agent-dock-input")).toBeInTheDocument();
+  });
+
+  it("renders a GPT-like composer with disclaimer and wired file attachment", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface="intelligence"
+        variant="focused"
+        placeholder="Ask aVa"
+        thread={[]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const attach = screen.getByTestId("agent-dock-attach");
+    const fileInput = screen.getByTestId(
+      "agent-dock-file-input",
+    ) as HTMLInputElement;
+    const fileClick = jest
+      .spyOn(fileInput, "click")
+      .mockImplementation(() => undefined);
+
+    expect(screen.getByTestId("agent-dock-disclaimer")).toHaveTextContent(
+      "aVa can make mistakes. Check important info.",
+    );
+    expect(screen.getByPlaceholderText("Ask aVa")).toBeInTheDocument();
+    expect(screen.getByTestId("agent-dock-form")).toHaveStyle({
+      borderRadius: "999px",
+      bottom: "10px",
+    });
+    expect(attach).toHaveTextContent("+");
+
+    fireEvent.click(attach);
+
+    expect(fileClick).toHaveBeenCalledTimes(1);
+    fileClick.mockRestore();
   });
 
   it("submits default suggested questions instead of only pre-filling the composer", async () => {
@@ -1619,7 +1656,7 @@ describe("AgentDock · viewport-bound side-rail", () => {
     expect(shell.style.height).not.toBe("100%");
   });
 
-  it("keeps the panel and composer using a single chat-panel background", () => {
+  it("keeps the composer as a raised rounded input bar", () => {
     render(
       <AgentDock
         agent={AGENT}
@@ -1633,13 +1670,14 @@ describe("AgentDock · viewport-bound side-rail", () => {
     const thread = screen.getByTestId("agent-dock-thread");
     const form = screen.getByTestId("agent-dock-form");
 
-    // Panel, thread, and composer all read from CANVAS.CHAT_BG. Tokens
-    // resolve to `rgb(253, 251, 247)` in jsdom. They must match — the
-    // user explicitly flagged background striping.
     const expected = "rgb(253, 251, 247)";
     expect(panel.style.background).toBe(expected);
     expect(thread.style.background).toBe(expected);
-    expect(form.style.background).toBe(expected);
+    expect(form.style.background).toBe("rgb(255, 255, 255)");
+    expect(form).toHaveStyle({
+      borderRadius: "999px",
+      boxShadow: "0 10px 30px rgba(12, 26, 58, 0.10)",
+    });
   });
 
   it("keeps the composer sticky as a guard against tall suggestion areas", () => {
@@ -1655,7 +1693,7 @@ describe("AgentDock · viewport-bound side-rail", () => {
     const form = screen.getByTestId("agent-dock-form");
     expect(form).toHaveStyle({
       position: "sticky",
-      bottom: "0px",
+      bottom: "10px",
     });
   });
 });
