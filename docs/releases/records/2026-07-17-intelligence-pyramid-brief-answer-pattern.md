@@ -31,16 +31,19 @@ This release tightens the Intelligence aVa answer contract so normal CXO chat an
 - `src/lib/intelligence/ask/synthesizer.ts`: Aligns the core system prompt, rich-text override, universal visual contract, and answer-only streaming directive to the same answer pattern.
 - `src/lib/intelligence/ask/response-policy.ts` and `src/lib/intelligence/ask/synthesizer.ts`: Follow-up hardening after live proof: broad prioritization, strategy, trend, and "what should we do next" questions stay in the Pyramid Brief. Tables, charts, decision fences, and visual exhibits are reserved for explicit table/chart/graph/matrix/top-N/named-comparison asks.
 - `src/lib/agent/product-truth/runtime-guard.ts`: Fills partial safe suggested-question lists with governed defaults so the chat queues three safe follow-ups instead of one.
+- `src/app/api/intelligence/ask/route.ts`: Preserves leading/trailing whitespace on streamed display chunks after public-answer scrubbing so adjacent chunks do not glue words together.
 - `src/lib/intelligence/ask/response-policy.test.ts`: Adds regression coverage for the Pyramid Brief, word target, and exactly three queued follow-ups.
 - `src/lib/agent/product-truth/__tests__/runtime-guard.test.ts`: Adds regression coverage for partial follow-up filling.
+- `src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts`: Adds regression coverage for streamed chunk-boundary spacing.
 
 ## QA / Validation
 
 - `npx jest src/lib/intelligence/ask/response-policy.test.ts src/lib/intelligence/ask/__tests__/strategy-to-moves-contract.test.ts --runInBand` passed: 2 suites, 26 tests. Jest printed pre-existing duplicate manual mock warnings for GFM parser mocks.
 - First deployed pass on SHA `2a6985f8892233f307419bfed4bbbd2ed7de087b` failed the live signed-in broad-prioritization proof: the answer still expanded into a long decision-table/visual payload and surfaced only one follow-up. This record keeps that as release evidence for the second-pass hardening.
+- Second deployed pass on SHA `2d7698f0166f32add35e4ec56488b16cb779eb0e` fixed the table/follow-up behavior but exposed a live streamed-display spacing defect (`work.Payment`, `pilot.The`, `Day 1.Decision`). This record keeps that as release evidence for the third-pass spacing hardening.
 - Second-pass local validation passed:
-  - `npx jest src/lib/intelligence/ask/response-policy.test.ts src/lib/intelligence/ask/__tests__/strategy-to-moves-contract.test.ts src/lib/intelligence/ask/__tests__/decision-table-gate.test.ts src/lib/agent/product-truth/__tests__/runtime-guard.test.ts --runInBand`: 4 suites, 41 tests.
-  - `npx eslint src/lib/intelligence/ask/response-policy.ts src/lib/intelligence/ask/synthesizer.ts src/lib/intelligence/ask/response-policy.test.ts src/lib/intelligence/ask/__tests__/decision-table-gate.test.ts src/lib/agent/product-truth/runtime-guard.ts src/lib/agent/product-truth/__tests__/runtime-guard.test.ts`
+  - `npx jest src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts src/lib/intelligence/ask/response-policy.test.ts src/lib/intelligence/ask/__tests__/strategy-to-moves-contract.test.ts src/lib/intelligence/ask/__tests__/decision-table-gate.test.ts src/lib/agent/product-truth/__tests__/runtime-guard.test.ts --runInBand`: 5 suites, 45 tests.
+  - `npx eslint src/app/api/intelligence/ask/route.ts src/app/api/intelligence/ask/__tests__/route.telemetry.test.ts src/lib/intelligence/ask/response-policy.ts src/lib/intelligence/ask/synthesizer.ts src/lib/intelligence/ask/response-policy.test.ts src/lib/intelligence/ask/__tests__/decision-table-gate.test.ts src/lib/agent/product-truth/runtime-guard.ts src/lib/agent/product-truth/__tests__/runtime-guard.test.ts` passed with one pre-existing warning in the route telemetry test fixture.
   - `npm run release:check`
 
 ## Rollout Plan
