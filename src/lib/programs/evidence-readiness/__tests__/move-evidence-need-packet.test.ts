@@ -107,4 +107,79 @@ describe("buildMoveEvidenceNeedPackets", () => {
     expect(packets[0]?.exampleContent.join(" ")).not.toMatch(/AP invoice/i);
     expect(packets[1]?.exampleContent.join(" ")).not.toMatch(/duplicate payment rate/i);
   });
+
+  it("turns Contact Center Agent Assist readiness gaps into member-service-specific client actions", () => {
+    const contactCenterReadiness: DiscoveryEvidenceReadiness = {
+      blueprintId: "healthcare_contact_center_agent_assist",
+      blueprintVersion: "2026-07-17",
+      archetypeLabel: "Healthcare Contact Center Agent Assist",
+      requiredTotal: 2,
+      requiredCovered: 0,
+      requiredMissing: 2,
+      optionalCovered: 0,
+      readinessScore: 0,
+      readyForP3: false,
+      families: [
+        {
+          familyId: "contact_center_kpis",
+          label: "Contact center baseline KPIs",
+          required: true,
+          status: "missing",
+          evidenceIds: [],
+          evidenceTitles: [],
+        },
+        {
+          familyId: "call_recording_transcript_availability",
+          label: "Call transcript/recording availability",
+          required: true,
+          status: "missing",
+          evidenceIds: [],
+          evidenceTitles: [],
+        },
+      ],
+      gapRegister: [
+        {
+          familyId: "contact_center_kpis",
+          label: "Contact center baseline KPIs",
+          required: true,
+          likelySource: "Operations Analytics / CCaaS reporting",
+          format: "CSV/XLSX",
+          grounds: "Value Hypothesis · Business Case · Tower Metrics",
+          remediation: "Upload CSV/XLSX from Operations Analytics / CCaaS reporting.",
+        },
+        {
+          familyId: "call_recording_transcript_availability",
+          label: "Call transcript/recording availability",
+          required: true,
+          likelySource: "CCaaS / Speech Analytics / Compliance",
+          format: "Retention policy + sample inventory",
+          grounds: "Intent Taxonomy · Training/Evaluation Data · Compliance",
+          remediation: "Upload retention policy + sample inventory from CCaaS / Speech Analytics / Compliance.",
+        },
+      ],
+    };
+
+    const packets = buildMoveEvidenceNeedPackets({
+      moveId: "move-1",
+      moveName: "Meridian Member Service Agent Assist",
+      currentPhase: 2,
+      readiness: contactCenterReadiness,
+    });
+
+    expect(packets).toHaveLength(2);
+    // Real, specific guidance -- not the generic "Evidence packet" fallback.
+    expect(packets[0]?.exampleTemplate).toBe("Contact center baseline KPIs");
+    expect(packets[0]?.exampleContent.join(" ")).toMatch(/AHT, FCR, transfer rate/i);
+    expect(packets[0]?.nextAction).toMatch(/CCaaS\/operations analytics/i);
+    expect(
+      packets[0]?.blockedArtifacts.map((artifact) => artifact.artifactType),
+    ).toContain("business_case");
+    expect(packets[1]?.exampleTemplate).toBe(
+      "Call transcript/recording availability",
+    );
+    expect(packets[1]?.exampleContent.join(" ")).toMatch(/redacted call transcripts/i);
+    // Never DORA/ITSM/engineering-delivery language for this archetype.
+    expect(packets[0]?.exampleContent.join(" ")).not.toMatch(/DORA|CI\/CD|sprint/i);
+    expect(packets[1]?.exampleContent.join(" ")).not.toMatch(/DORA|CI\/CD|sprint/i);
+  });
 });
