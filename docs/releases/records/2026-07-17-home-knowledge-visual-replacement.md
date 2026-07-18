@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Home Knowledge now receives a visible component-level replacement for the areas that previously still looked like the old dimension directory. The change aligns the Home Knowledge canvas with the Intelligence surface typography and introduces visible executive visuals for context concentration, confidence distribution, use-case prioritization, and the governed knowledge proof flow.
+Home Knowledge now receives a visible component-level replacement for the areas that previously still looked like the old dimension directory. The change aligns the Home Knowledge canvas with the Intelligence/Tower surface typography and introduces Recharts-backed executive visuals for context concentration, confidence distribution, use-case prioritization, and governed knowledge proof coverage.
 
 ## Layer Impact
 
@@ -31,17 +31,18 @@ Home Knowledge now receives a visible component-level replacement for the areas 
 
 - `src/components/home/HomeKnowledgeDesignContractSurface.tsx`
 - `scripts/audit/home-knowledge-design-contract-ui.mjs`
-- Adds visible dimension-volume charting, confidence distribution strip, use-case priority board, and governed proof-flow visual.
-- Aligns Home Knowledge typography tokens to the Intelligence surface (`Inter` body, `Newsreader`/Georgia serif headings, warm canvas palette).
-- Hardens the Home Knowledge UI audit so the visual replacement markers and Intelligence heading token cannot silently disappear.
+- Adds Recharts-backed dimension-volume charting, confidence distribution, use-case priority ranking, and governed proof-stage coverage visuals.
+- Keeps the governed proof-flow diagram for executive comprehension while requiring quantitative visuals to render through Recharts.
+- Aligns Home Knowledge typography tokens to the Intelligence/Tower surface (`Inter` body, `Fraunces`/Georgia serif headings, warm canvas palette).
+- Hardens the Home Knowledge UI audit so Recharts, `ResponsiveContainer`, Recharts test ids, and the shared heading token cannot silently disappear.
 
 ## QA / Validation
 
-- `npx eslint src/components/home/HomeKnowledgeDesignContractSurface.tsx` — passed.
+- `npx eslint src/components/home/HomeKnowledgeDesignContractSurface.tsx scripts/audit/home-knowledge-design-contract-ui.mjs` — passed.
 - `npm run audit:home-knowledge-design-contract-ui` — passed.
 - `npm run audit:home-cxo-story-quality` — passed.
+- `npm run release:check` — passed after this release record update.
 - `git diff --check` — passed.
-- `npm run release:check` — pending after this release record is added.
 
 ## Rollout Plan
 
@@ -69,4 +70,4 @@ Revert the PR or roll back to the prior ACA digest through the approved Azure Co
 
 ## Known Gaps
 
-This PR changes the visual component layer only. It does not regenerate Claude-derived narrative content, alter Home aVa behavior, or change active/candidate data promotion.
+This PR changes the visual component layer only. It does not regenerate Claude-derived narrative content, alter Home aVa behavior, or change active/candidate data promotion. The governed proof-flow remains a structured HTML explanation; the measurable charts on the surface are Recharts-backed.
