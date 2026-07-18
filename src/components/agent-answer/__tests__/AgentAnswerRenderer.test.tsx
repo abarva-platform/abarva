@@ -23,6 +23,17 @@ jest.mock("@/lib/agent/markdownRenderer", () => ({
   AgentMarkdown: ({ text }: { text: string }) => <div>{text}</div>,
 }));
 
+jest.mock("recharts", () => {
+  const React = jest.requireActual("react");
+  const actual = jest.requireActual("recharts");
+  return {
+    ...actual,
+    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="recharts-responsive">{children}</div>
+    ),
+  };
+});
+
 const citations: AnswerCitation[] = [
   {
     id: "c1",
@@ -57,8 +68,9 @@ describe("AgentAnswerRenderer", () => {
     expect(screen.getByText("Run/change cost mix")).toBeInTheDocument();
     expect(screen.queryByText("costStack")).not.toBeInTheDocument();
     expect(
-      container.querySelector("[data-chart-builder='costStack'] svg"),
+      container.querySelector("[data-chart-renderer='recharts']"),
     ).not.toBeNull();
+    expect(container.querySelector("[data-chart-builder='costStack']")).toBeNull();
     expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
   });
 
@@ -93,8 +105,11 @@ describe("AgentAnswerRenderer", () => {
       screen.getByText("Supply chain AI use-case matrix"),
     ).toBeInTheDocument();
     expect(
-      container.querySelector("[data-chart-builder='quadrantMatrix'] svg"),
+      container.querySelector("[data-chart-renderer='recharts']"),
     ).not.toBeNull();
+    expect(
+      container.querySelector("[data-chart-builder='quadrantMatrix']"),
+    ).toBeNull();
   });
 
   it("renders a typed AnswerTable with formatting and citations", () => {

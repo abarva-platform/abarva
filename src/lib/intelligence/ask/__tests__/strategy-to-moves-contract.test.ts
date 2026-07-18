@@ -3,6 +3,7 @@ import { join } from "node:path";
 import {
   applyCxoAnswerModeFallbacks,
   CXO_ANSWER_MODE_REGISTRY,
+  ensureAbarvaSolutionBrief,
   ensureAbarvaSurfacePlan,
   MOVES_EXECUTION_PHASE_LABELS,
 } from "../answer-mode-registry";
@@ -110,6 +111,29 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     expect(answer).toContain("Moves turns");
     expect(answer).toContain("Source checks");
     expect(answer).toContain("Tower tracks");
+  });
+
+  it("compacts strategy-to-AbarVa solution answers into the Pyramid Brief", () => {
+    const answer = ensureAbarvaSolutionBrief(
+      [
+        "Healthcare Demo should not scale member service agent assist as a generic AI pilot; it should use it as the proof point for a broader service-operations modernization decision.",
+        "The current-state evidence matters because the contact-center stack, data readiness, workflow ownership, and member-service priorities decide whether this is a safe production bet or just a chatbot demo.",
+        "Industry adoption patterns support the bet, but the tenant context still needs evidence on system integration, call reasons, escalation workflow, knowledge-base ownership, and benefit tracking.",
+        "AbarVa should frame the executive bet, validate the operating context, turn the work into execution gates, pressure-test vendor dependencies, and track value after launch.",
+        "This fourth paragraph should not survive as a separate mini-deck section because normal answers need to stay brief.",
+      ].join("\n\n"),
+    );
+
+    expect(answer).toMatch(/^\*\*Answer:\*\*/);
+    expect(answer).toContain("**Proof:**");
+    expect(answer).toContain("**Move:**");
+    expect(answer.split(/\n{2,}/)).toHaveLength(3);
+    expect(answer).toContain("Intelligence");
+    expect(answer).toContain("Home");
+    expect(answer).toContain("Moves");
+    expect(answer).toContain("Source");
+    expect(answer).toContain("Tower");
+    expect(answer).not.toContain("This fourth paragraph should not survive");
   });
 
   it("deterministically appends the Moves P0-P5 phase plan when Claude omits it", () => {
