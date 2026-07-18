@@ -35,6 +35,7 @@ const ctx: TenancyCtx = {
 function mockMove(overrides: Record<string, unknown> = {}) {
   return {
     id: "move-1",
+    displayCode: "MOVE-1",
     name: "Member Service Agent Assist",
     tenant: {
       id: "tenant-meridian",
@@ -43,6 +44,11 @@ function mockMove(overrides: Record<string, unknown> = {}) {
     },
     charter: { functionPackKey: "member_service_agent_assist" },
     functionPackKey: "member_service_agent_assist",
+    phaseLabel: "Understand Current State",
+    status: {
+      text: "In progress",
+      description: "Move is in progress.",
+    },
     ...overrides,
   };
 }
@@ -209,5 +215,36 @@ describe("buildPhaseIntelligenceSummary", () => {
     expect(summary.items[1].facts.join(" ")).toContain(
       "Binding source: deterministic classifier fallback",
     );
+  });
+
+  it("binds short legacy Meridian Agent Assist names that use healthcare_provider industry code", async () => {
+    getStrategicMoveById.mockResolvedValue(
+      mockMove({
+        name: "MEMBER AI ASSIST",
+        displayCode: "MEMBER AI ASSIST",
+        tenant: {
+          id: "tenant-meridian",
+          name: "Healthcare Demo",
+          industryCode: "healthcare_provider",
+        },
+        charter: null,
+        functionPackKey: null,
+        status: {
+          text: "In progress",
+          description: "Current-state discovery for member service AI assist.",
+        },
+      }),
+    );
+    const { buildPhaseIntelligenceSummary } = await import(
+      "@/lib/programs/phase-intelligence-summary"
+    );
+
+    const summary = await buildPhaseIntelligenceSummary(ctx, {
+      moveId: "move-1",
+      phase: 2,
+    });
+
+    expect(summary.items[1].sourceLabel).toBe("Member-service Agent Assist Function Pack");
+    expect(summary.items[1].facts).toContain("Function key: member_service_agent_assist");
   });
 });

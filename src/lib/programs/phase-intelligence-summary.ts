@@ -61,14 +61,38 @@ function safeCharterText(charter: unknown): string {
 
 function buildMoveFunctionBriefText(move: StrategicMoveForPhaseIntelligence): string {
   return [
+    move.displayCode,
     move.name,
     move.archetype,
+    move.phaseLabel,
+    move.status.text,
+    move.status.description,
     move.tenant.name,
     move.tenant.industryCode,
     safeCharterText(move.charter),
   ]
     .filter((part): part is string => typeof part === "string" && part.trim().length > 0)
     .join(" ");
+}
+
+function resolveKnownLegacyFunctionAlias(
+  industryKey: MoveFunctionIdentity["industryKey"],
+  briefText: string,
+): { functionKey: string; confidence: number } | null {
+  const normalized = briefText.toLowerCase();
+  if (industryKey !== "healthcare-provider") return null;
+
+  const namesAgentAssist =
+    /\b(agent|member|contact|call|service)\b/.test(normalized) &&
+    /\b(ai|assist|assistant|augmentation|copilot)\b/.test(normalized);
+  const namesMemberService =
+    /\b(member|contact|call)\b/.test(normalized) &&
+    /\b(service|center|centre|experience)\b/.test(normalized);
+  if (namesAgentAssist || namesMemberService) {
+    return { functionKey: "member_service_agent_assist", confidence: 0.95 };
+  }
+
+  return null;
 }
 
 function resolvePhaseIntelligenceFunctionIdentity(
@@ -94,7 +118,10 @@ function resolvePhaseIntelligenceFunctionIdentity(
   const industryKey = industryKeyForCode(move.tenant.industryCode);
   if (!industryKey) return null;
 
-  const classified = classifyFunctionKey(industryKey, buildMoveFunctionBriefText(move));
+  const briefText = buildMoveFunctionBriefText(move);
+  const classified =
+    classifyFunctionKey(industryKey, briefText) ??
+    resolveKnownLegacyFunctionAlias(industryKey, briefText);
   if (!classified) return null;
 
   return {
