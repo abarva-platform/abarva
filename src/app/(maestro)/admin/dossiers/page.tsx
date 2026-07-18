@@ -63,6 +63,7 @@ export default async function AdminDossiersPage() {
                   <Pill label="Moves" value={countSurface(dossier, 'moves')} />
                   <Pill label="Source" value={countSurface(dossier, 'source')} />
                   <Pill label="Tower" value={countSurface(dossier, 'tower')} />
+                  <Pill label="KDD options" value={dossier.options.length} />
                 </div>
                 <div style={rightStyle}>
                   <div style={statusStyle}>{dossier.thread.status.replace(/_/g, ' ')}</div>

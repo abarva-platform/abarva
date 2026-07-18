@@ -79,6 +79,7 @@ interface MovesPhaseStandaloneClientProps {
 type WorkspaceView = "phase" | "files" | "playbook";
 
 type UploadWorkStatus = "idle" | "uploading" | "uploaded" | "error";
+type DecisionOptionSaveStatus = "idle" | "saving" | "saved" | "error";
 interface PhaseEvidenceArtifact {
   artifactId: string;
   fileName: string | null;
@@ -1518,6 +1519,13 @@ function PhaseBody({
             </p>
           </article>
         </div>
+        {!isHistoricalPhase ? (
+          <DecisionOptionsActionPanel
+            moveId={move.id}
+            moveName={move.name}
+            phase={phase.phase}
+          />
+        ) : null}
         <table className="mxw-gate-table">
           <thead>
             <tr>
@@ -2271,6 +2279,158 @@ function EvidenceNeedTable({
   );
 }
 
+function DecisionOptionsActionPanel({
+  moveId,
+  moveName,
+  phase,
+}: {
+  moveId: string;
+  moveName: string;
+  phase: number;
+}) {
+  const defaultOptions = useMemo(
+    () => [
+      {
+        label: "Continue with current approach",
+        rationaleFor: "Lowest disruption and fastest validation path.",
+        rationaleAgainst: "May leave structural gaps unresolved.",
+      },
+      {
+        label: "Balanced transformation path",
+        rationaleFor: "Balances value, control, feasibility, and change readiness.",
+        rationaleAgainst: "Requires coordinated business, data, technology, and adoption work.",
+      },
+      {
+        label: "Full redesign",
+        rationaleFor: "Highest long-term value if evidence supports broader change.",
+        rationaleAgainst: "Highest readiness burden and sponsor commitment required.",
+      },
+    ],
+    [],
+  );
+  const [title, setTitle] = useState(`${moveName} P${phase} key design decision`);
+  const [ownerRole, setOwnerRole] = useState("Move sponsor");
+  const [selectedIndex, setSelectedIndex] = useState(1);
+  const [options, setOptions] = useState(defaultOptions);
+  const [status, setStatus] = useState<DecisionOptionSaveStatus>("idle");
+  const [message, setMessage] = useState("");
+  const [dossierPath, setDossierPath] = useState<string | null>(null);
+
+  function updateOption(
+    index: number,
+    key: "label" | "rationaleFor" | "rationaleAgainst",
+    value: string,
+  ) {
+    setOptions((prev) =>
+      prev.map((option, optionIndex) =>
+        optionIndex === index ? { ...option, [key]: value } : option,
+      ),
+    );
+  }
+
+  async function recordDecision() {
+    setStatus("saving");
+    setMessage("Recording decision options...");
+    setDossierPath(null);
+    const res = await fetch(`/api/v1/programs/${moveId}/decision-options`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title,
+        ownerRole,
+        options: options
+          .filter((option) => option.label.trim())
+          .map((option, index) => ({
+            ...option,
+            isSelected: index === selectedIndex,
+          })),
+      }),
+    });
+    const payload = (await res.json().catch(() => ({}))) as {
+      ok?: boolean;
+      detail?: string;
+      error?: string;
+      dossierPath?: string;
+    };
+    if (!res.ok || !payload.ok) {
+      setStatus("error");
+      setMessage(payload.detail || payload.error || `Decision record failed (HTTP ${res.status})`);
+      return;
+    }
+    setStatus("saved");
+    setMessage("Decision options recorded on the dossier.");
+    setDossierPath(payload.dossierPath ?? null);
+  }
+
+  return (
+    <section className="mxw-kdd" aria-label="Record key design decision">
+      <details>
+        <summary>
+          <span>Key design decision</span>
+          <strong>Record selected and rejected options</strong>
+          <em>{status === "saved" ? "Saved" : "Optional before approval"}</em>
+        </summary>
+        <div className="mxw-kdd-body">
+          <div className="mxw-kdd-fields">
+            <label>
+              Decision title
+              <input value={title} onChange={(event) => setTitle(event.target.value)} />
+            </label>
+            <label>
+              Owner role
+              <input value={ownerRole} onChange={(event) => setOwnerRole(event.target.value)} />
+            </label>
+          </div>
+          <div className="mxw-kdd-options">
+            {options.map((option, index) => (
+              <article className={selectedIndex === index ? "selected" : ""} key={index}>
+                <label className="mxw-kdd-radio">
+                  <input
+                    checked={selectedIndex === index}
+                    name="mxw-kdd-selected"
+                    onChange={() => setSelectedIndex(index)}
+                    type="radio"
+                  />
+                  Selected option
+                </label>
+                <input
+                  aria-label={`Option ${index + 1} label`}
+                  onChange={(event) => updateOption(index, "label", event.target.value)}
+                  value={option.label}
+                />
+                <textarea
+                  aria-label={`Option ${index + 1} rationale for`}
+                  onChange={(event) => updateOption(index, "rationaleFor", event.target.value)}
+                  rows={2}
+                  value={option.rationaleFor}
+                />
+                <textarea
+                  aria-label={`Option ${index + 1} rationale against`}
+                  onChange={(event) => updateOption(index, "rationaleAgainst", event.target.value)}
+                  rows={2}
+                  value={option.rationaleAgainst}
+                />
+              </article>
+            ))}
+          </div>
+          <div className="mxw-kdd-actions">
+            <button
+              className="mxw-btn mxw-primary"
+              disabled={status === "saving"}
+              onClick={() => void recordDecision()}
+              type="button"
+            >
+              {status === "saving" ? "Recording..." : "Record decision"}
+            </button>
+            {message ? <span className={status}>{message}</span> : null}
+            {dossierPath ? <Link href={dossierPath}>Open dossier</Link> : null}
+          </div>
+        </div>
+      </details>
+    </section>
+  );
+}
 
 function DecisionEvidenceActionPanel({
   buttonLabel,
@@ -2991,6 +3151,28 @@ function MovesStandaloneStyles() {
 .mxw-gate-table .met,.mxw-gate-table .pending{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:900;white-space:nowrap}
 .mxw-gate-table .met{border:1px solid rgba(29,143,104,.35);background:var(--green-tint);color:var(--green)}
 .mxw-gate-table .pending{border:1px solid var(--line-2);background:var(--soft);color:var(--muted)}
+.mxw-kdd{margin:15px 0;border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
+.mxw-kdd summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:160px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;background:var(--soft)}
+.mxw-kdd summary::-webkit-details-marker{display:none}
+.mxw-kdd summary span{font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--blue);font-weight:900}
+.mxw-kdd summary strong{font-size:13.5px;color:var(--ink)}
+.mxw-kdd summary em{font-style:normal;border:1px solid var(--line-2);border-radius:999px;background:#fff;color:var(--muted);font-size:11px;font-weight:850;padding:4px 8px;white-space:nowrap}
+.mxw-kdd-body{padding:14px;display:grid;gap:12px;border-top:1px solid var(--line)}
+.mxw-kdd-fields{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:10px}
+.mxw-kdd label{display:grid;gap:5px;font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--faint);font-weight:900}
+.mxw-kdd input,.mxw-kdd textarea{width:100%;border:1px solid var(--line-2);border-radius:9px;background:#fff;color:var(--ink);font:inherit;font-size:12.5px;line-height:1.4;padding:8px 9px;text-transform:none;letter-spacing:0;font-weight:500}
+.mxw-kdd textarea{resize:vertical}
+.mxw-kdd input:focus,.mxw-kdd textarea:focus{outline:2px solid rgba(0,87,184,.18);border-color:rgba(0,87,184,.45)}
+.mxw-kdd-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.mxw-kdd-options article{display:grid;gap:8px;border:1px solid var(--line);border-radius:11px;background:var(--soft);padding:10px}
+.mxw-kdd-options article.selected{border-color:rgba(29,143,104,.45);background:var(--green-tint)}
+.mxw-kdd-radio{display:flex!important;align-items:center;gap:7px;color:var(--ink-2)!important;text-transform:none!important;letter-spacing:0!important;font-size:12px!important;font-weight:800!important}
+.mxw-kdd-radio input{width:auto}
+.mxw-kdd-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mxw-kdd-actions span{font-size:12px;font-weight:750;color:var(--muted)}
+.mxw-kdd-actions span.saved{color:var(--green)}
+.mxw-kdd-actions span.error{color:#b42318}
+.mxw-kdd-actions a{font-size:12px;font-weight:850;color:var(--blue)}
 .mxw-gate-note{display:grid;gap:4px;margin:12px 0 4px;border:1px solid rgba(176,115,15,.24);background:#fffdf7;border-radius:11px;padding:11px 13px}
 .mxw-gate-note strong{font-size:12px}
 .mxw-gate-note span{font-size:12.5px;color:var(--ink-2);line-height:1.45}
@@ -3118,7 +3300,8 @@ function MovesStandaloneStyles() {
   .mxw-how-step:not(:last-child)::after{content:"↓";right:auto;left:20px;top:auto;bottom:-17px;transform:none;background:var(--card);width:16px}
 }
 @media (max-width:720px){
-  .mxw-howflow,.mxw-ts-grid,.mxw-file-cols{grid-template-columns:1fr}
+  .mxw-howflow,.mxw-ts-grid,.mxw-file-cols,.mxw-kdd-fields,.mxw-kdd-options{grid-template-columns:1fr}
+  .mxw-kdd summary{grid-template-columns:1fr}
   .mxw-option-summary{grid-template-columns:1fr}
   .mxw-options dl{grid-template-columns:1fr}
   .mxw-p0-brief-grid{grid-template-columns:1fr}
