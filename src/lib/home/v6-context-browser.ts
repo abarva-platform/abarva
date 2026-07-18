@@ -72,7 +72,12 @@ export interface HomeV6ContextBrowser {
   datasetDir: string;
   generatedAt: string;
   contractLabel?: string;
-  runtimeSource?: "azure-v7" | "local-v3-standard" | "local-v3-v7" | "local-v6";
+  runtimeSource?:
+    | "azure-v7"
+    | "local-v3-active"
+    | "local-v3-standard"
+    | "local-v3-v7"
+    | "local-v6";
   cxoContentSource?:
     | "canonical-v3-approved-content"
     | "legacy-approved-home-knowledge"

@@ -2414,7 +2414,9 @@ function cxoCardValue(card: CioTowerCxoMeasureCard | null | undefined): string {
   return card?.displayValue ?? "Data gap";
 }
 
-function cxoCardSource(card: CioTowerCxoMeasureCard | null | undefined): string {
+function cxoCardSource(
+  card: CioTowerCxoMeasureCard | null | undefined,
+): string {
   const first = card?.evidence[0];
   if (!first) return "Required source link missing";
   const file = first.sourceFile ?? first.sourceSystem ?? "source not populated";
@@ -2430,7 +2432,9 @@ function formatWholeNumber(value: number | null | undefined): string {
   );
 }
 
-function classifyDecisionLane(row: CioTowerPortfolioValueRow): TowerDecisionLane {
+function classifyDecisionLane(
+  row: CioTowerPortfolioValueRow,
+): TowerDecisionLane {
   const promised = row.promisedValueNumeric ?? 0;
   const measured = row.measuredValueNumeric ?? 0;
   const budget = row.budgetNumeric ?? 0;
@@ -2560,8 +2564,12 @@ function TowerCommandKpi({
       >
         {cxoCardValue(card)}
       </div>
-      <div style={{ marginTop: 9, color: T.INK_2, fontSize: 13, lineHeight: 1.45 }}>
-        {missing ? "Required Tower fact missing from data layer." : detail ?? cxoCardSource(card)}
+      <div
+        style={{ marginTop: 9, color: T.INK_2, fontSize: 13, lineHeight: 1.45 }}
+      >
+        {missing
+          ? "Required Tower fact missing from data layer."
+          : (detail ?? cxoCardSource(card))}
       </div>
     </article>
   );
@@ -2618,13 +2626,7 @@ function TowerCommandMini({
   );
 }
 
-function TowerLanePill({
-  lane,
-  count,
-}: {
-  lane: string;
-  count: number;
-}) {
+function TowerLanePill({ lane, count }: { lane: string; count: number }) {
   const colors: Record<string, { bg: string; fg: string }> = {
     Fund: { bg: T.GREEN_BG, fg: T.GREEN },
     Fix: { bg: T.AMBER_BG, fg: T.AMBER },
@@ -2702,9 +2704,13 @@ function TowerValueFunnel({
         <div style={{ display: "grid", gap: 12 }}>
           {tiers.map((tier) => {
             const value = tier.card?.valueNumeric ?? 0;
-            const width = tier.card?.measureKey === "realized_value_ytd_allowed"
-              ? 8
-              : Math.max(12, Math.min(100, Math.round((value / promisedValue) * 100)));
+            const width =
+              tier.card?.measureKey === "realized_value_ytd_allowed"
+                ? 8
+                : Math.max(
+                    12,
+                    Math.min(100, Math.round((value / promisedValue) * 100)),
+                  );
             return (
               <div key={tier.label}>
                 <div
@@ -2719,7 +2725,9 @@ function TowerValueFunnel({
                     <div style={{ fontWeight: 900, color: T.INK }}>
                       {tier.label}
                     </div>
-                    <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 2 }}>
+                    <div
+                      style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 2 }}
+                    >
                       {tier.note}
                     </div>
                   </div>
@@ -2761,7 +2769,10 @@ function TowerValueFunnel({
       >
         <div style={{ display: "grid", gap: 10 }}>
           {rows.slice(0, 8).map((row) => {
-            const pct = safeRatio(row.measuredValueNumeric, row.promisedValueNumeric);
+            const pct = safeRatio(
+              row.measuredValueNumeric,
+              row.promisedValueNumeric,
+            );
             return (
               <div
                 key={row.program}
@@ -2776,7 +2787,9 @@ function TowerValueFunnel({
               >
                 <div>
                   <strong>{row.program}</strong>
-                  <div style={{ color: T.GRAY_DK, fontSize: 12 }}>{row.owner}</div>
+                  <div style={{ color: T.GRAY_DK, fontSize: 12 }}>
+                    {row.owner}
+                  </div>
                 </div>
                 <div
                   style={{
@@ -2806,14 +2819,15 @@ function TowerValueFunnel({
   );
 }
 
-function TowerDecisionLanes({ rows }: { rows: ReadonlyArray<TowerDecisionLaneRow> }) {
+function TowerDecisionLanes({
+  rows,
+}: {
+  rows: ReadonlyArray<TowerDecisionLaneRow>;
+}) {
   const lanes: TowerDecisionLane[] = ["Fund", "Fix", "Freeze", "Stop"];
   return (
     <section style={{ display: "grid", gap: 14 }}>
-      <CioPanel
-        eyebrow="Initiative health"
-        title="Portfolio Decision Lanes"
-      >
+      <CioPanel eyebrow="Initiative health" title="Portfolio Decision Lanes">
         <p style={{ margin: "0 0 16px", color: T.INK_2, lineHeight: 1.55 }}>
           Each loaded program is placed into a decision lane using budget,
           promised value, measured value, owner, and evidence posture. Missing
@@ -2829,15 +2843,30 @@ function TowerDecisionLanes({ rows }: { rows: ReadonlyArray<TowerDecisionLaneRow
                 style={{
                   border: `1px solid ${T.RULE}`,
                   borderRadius: 14,
-                  background: lane === "Fund" ? T.GREEN_BG : lane === "Fix" ? T.AMBER_BG : lane === "Freeze" ? T.PURPLE_BG : T.RED_BG,
+                  background:
+                    lane === "Fund"
+                      ? T.GREEN_BG
+                      : lane === "Fix"
+                        ? T.AMBER_BG
+                        : lane === "Freeze"
+                          ? T.PURPLE_BG
+                          : T.RED_BG,
                   padding: 14,
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 12,
+                  }}
+                >
                   <h4 style={{ margin: 0, fontFamily: T.SERIF, fontSize: 21 }}>
                     {lane}
                   </h4>
-                  <span style={{ fontWeight: 900 }}>{laneRows.length} program{laneRows.length === 1 ? "" : "s"}</span>
+                  <span style={{ fontWeight: 900 }}>
+                    {laneRows.length} program{laneRows.length === 1 ? "" : "s"}
+                  </span>
                 </div>
                 <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
                   {laneRows.map((row) => (
@@ -2850,16 +2879,39 @@ function TowerDecisionLanes({ rows }: { rows: ReadonlyArray<TowerDecisionLaneRow
                         padding: 13,
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 16,
+                        }}
+                      >
                         <div>
-                          <strong style={{ color: T.INK }}>{row.program}</strong>
-                          <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 3 }}>
-                            {row.owner} · {row.budget} budget · {row.promisedValue} promised · {row.measuredValue} measured
+                          <strong style={{ color: T.INK }}>
+                            {row.program}
+                          </strong>
+                          <div
+                            style={{
+                              color: T.GRAY_DK,
+                              fontSize: 12,
+                              marginTop: 3,
+                            }}
+                          >
+                            {row.owner} · {row.budget} budget ·{" "}
+                            {row.promisedValue} promised · {row.measuredValue}{" "}
+                            measured
                           </div>
                         </div>
                         <TowerLanePill lane={lane} count={1} />
                       </div>
-                      <div style={{ color: T.INK_2, fontSize: 13, lineHeight: 1.45, marginTop: 9 }}>
+                      <div
+                        style={{
+                          color: T.INK_2,
+                          fontSize: 13,
+                          lineHeight: 1.45,
+                          marginTop: 9,
+                        }}
+                      >
                         {row.rationale}
                       </div>
                     </div>
@@ -2892,8 +2944,16 @@ function TowerAiPortfolio({
           gap: 12,
         }}
       >
-        <TowerCommandKpi title="AI-tagged spend lens" card={aiSpend} detail="Embedded, platform, governance, and enablement spend; non-additive." />
-        <TowerCommandKpi title="Candidate AI opportunities" card={candidateAi} detail="Discovery opportunities; not approved funding." />
+        <TowerCommandKpi
+          title="AI-tagged spend lens"
+          card={aiSpend}
+          detail="Embedded, platform, governance, and enablement spend; non-additive."
+        />
+        <TowerCommandKpi
+          title="Candidate AI opportunities"
+          card={candidateAi}
+          detail="Discovery opportunities; not approved funding."
+        />
       </div>
       <CioPanel eyebrow="AI portfolio readiness" title="Value vs. readiness">
         <div
@@ -2902,7 +2962,8 @@ function TowerAiPortfolio({
             minHeight: 420,
             border: `1px solid ${T.RULE}`,
             borderRadius: 14,
-            background: "linear-gradient(90deg, transparent 49.8%, rgba(10,10,11,.10) 50%, transparent 50.2%), linear-gradient(0deg, transparent 49.8%, rgba(10,10,11,.10) 50%, transparent 50.2%), #fff",
+            background:
+              "linear-gradient(90deg, transparent 49.8%, rgba(10,10,11,.10) 50%, transparent 50.2%), linear-gradient(0deg, transparent 49.8%, rgba(10,10,11,.10) 50%, transparent 50.2%), #fff",
             overflow: "hidden",
           }}
         >
@@ -2947,7 +3008,14 @@ function TowerAiPortfolio({
                   width: 34,
                   height: 34,
                   borderRadius: 999,
-                  background: row.lane === "Fund" ? T.GREEN : row.lane === "Fix" ? T.AMBER : row.lane === "Freeze" ? T.PURPLE : T.RED,
+                  background:
+                    row.lane === "Fund"
+                      ? T.GREEN
+                      : row.lane === "Fix"
+                        ? T.AMBER
+                        : row.lane === "Freeze"
+                          ? T.PURPLE
+                          : T.RED,
                   color: "#fff",
                   fontWeight: 950,
                   boxShadow: "0 10px 26px rgba(15,23,42,.22)",
@@ -2958,10 +3026,18 @@ function TowerAiPortfolio({
             );
           })}
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8, marginTop: 14 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            gap: 8,
+            marginTop: 14,
+          }}
+        >
           {rows.map((row, index) => (
             <div key={row.program} style={{ color: T.INK_2, fontSize: 12.5 }}>
-              <strong style={{ color: T.INK }}>{index + 1}</strong> {row.program} · {row.lane}
+              <strong style={{ color: T.INK }}>{index + 1}</strong>{" "}
+              {row.program} · {row.lane}
             </div>
           ))}
         </div>
@@ -3069,7 +3145,9 @@ function TowerEvidenceTable({
 }) {
   return (
     <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+      <table
+        style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+      >
         <thead>
           <tr>
             {["Fact", "Value", "Formula version", "Source"].map((head) => (
@@ -3092,11 +3170,20 @@ function TowerEvidenceTable({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.measureKey} style={{ borderTop: `1px solid ${T.RULE}` }}>
+            <tr
+              key={row.measureKey}
+              style={{ borderTop: `1px solid ${T.RULE}` }}
+            >
               <td style={{ padding: "12px 10px", fontWeight: 900 }}>
                 {row.label || labelizeCioMeasureKey(row.measureKey)}
               </td>
-              <td style={{ padding: "12px 10px", textAlign: "right", fontWeight: 900 }}>
+              <td
+                style={{
+                  padding: "12px 10px",
+                  textAlign: "right",
+                  fontWeight: 900,
+                }}
+              >
                 {row.displayValue}
               </td>
               <td style={{ padding: "12px 10px", color: T.INK_2 }}>
@@ -3581,7 +3668,13 @@ function CxoTenantBenchmark({ model }: { model: CioTowerCxoViewModel }) {
   );
 }
 
-type TowerMartSection = "command" | "value" | "lanes" | "ai" | "actions" | "evidence";
+type TowerMartSection =
+  | "command"
+  | "value"
+  | "lanes"
+  | "ai"
+  | "actions"
+  | "evidence";
 
 const TOWER_MART_SECTIONS: Array<{ key: TowerMartSection; label: string }> = [
   { key: "command", label: "Command Center" },
@@ -3661,14 +3754,20 @@ function TowerMartKpi({
       >
         {value}
       </div>
-      <div style={{ marginTop: 9, color: T.INK_2, fontSize: 13, lineHeight: 1.45 }}>
+      <div
+        style={{ marginTop: 9, color: T.INK_2, fontSize: 13, lineHeight: 1.45 }}
+      >
         {detail}
       </div>
     </article>
   );
 }
 
-function TowerMartLaneSummary({ rows }: { rows: ReadonlyArray<TowerMartProgramLane> }) {
+function TowerMartLaneSummary({
+  rows,
+}: {
+  rows: ReadonlyArray<TowerMartProgramLane>;
+}) {
   const counts = rows.reduce<Record<string, number>>((acc, row) => {
     acc[row.decisionLane] = (acc[row.decisionLane] ?? 0) + 1;
     return acc;
@@ -3703,7 +3802,10 @@ function TowerMartValueFunnel({ model }: { model: TowerMartCommandViewModel }) {
     value
       .replace(/realized savings/gi, "claimable savings")
       .replace(/realized value/gi, "claimable value")
-      .replace(/do not call claimable savings/gi, "do not call savings claimable")
+      .replace(
+        /do not call claimable savings/gi,
+        "do not call savings claimable",
+      )
       .replace(/booked to P&L/gi, "booked to P&L yet");
   return (
     <CioPanel eyebrow="Funding vs. value proof" title="Value Proof Funnel">
@@ -3716,7 +3818,13 @@ function TowerMartValueFunnel({ model }: { model: TowerMartCommandViewModel }) {
           const width =
             stage.stageKey === "realized_allowed"
               ? 8
-              : Math.max(12, Math.min(100, Math.round((stage.valueNumeric / promised) * 100)));
+              : Math.max(
+                  12,
+                  Math.min(
+                    100,
+                    Math.round((stage.valueNumeric / promised) * 100),
+                  ),
+                );
           const tone =
             stage.stageKey === "realized_allowed"
               ? T.RED
@@ -3728,7 +3836,12 @@ function TowerMartValueFunnel({ model }: { model: TowerMartCommandViewModel }) {
           return (
             <div
               key={stage.funnelKey}
-              style={{ display: "grid", gridTemplateColumns: "235px 1fr", gap: 14, alignItems: "center" }}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "235px 1fr",
+                gap: 14,
+                alignItems: "center",
+              }}
             >
               <div>
                 <div style={{ fontWeight: 900 }}>{stage.stageLabel}</div>
@@ -3770,13 +3883,20 @@ function TowerMartValueFunnel({ model }: { model: TowerMartCommandViewModel }) {
   );
 }
 
-function TowerMartDecisionLanes({ rows }: { rows: ReadonlyArray<TowerMartProgramLane> }) {
+function TowerMartDecisionLanes({
+  rows,
+}: {
+  rows: ReadonlyArray<TowerMartProgramLane>;
+}) {
   return (
-    <CioPanel eyebrow="Portfolio decision architecture" title="Portfolio Decision Lanes">
+    <CioPanel
+      eyebrow="Portfolio decision architecture"
+      title="Portfolio Decision Lanes"
+    >
       <p style={{ margin: "0 0 16px", color: T.INK_2, lineHeight: 1.55 }}>
-        The lane is computed in the Tower mart from budget ties, promised
-        value, usage, partial finance validation, claim gates, and source
-        caveats. Missing required fields become mart gaps.
+        The lane is computed in the Tower mart from budget ties, promised value,
+        usage, partial finance validation, claim gates, and source caveats.
+        Missing required fields become mart gaps.
       </p>
       <div style={{ display: "grid", gap: 13 }}>
         {["fund", "fix", "freeze", "stop"].map((lane) => {
@@ -3792,7 +3912,13 @@ function TowerMartDecisionLanes({ rows }: { rows: ReadonlyArray<TowerMartProgram
                 padding: 14,
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 12,
+                }}
+              >
                 <h4 style={{ margin: 0, fontFamily: T.SERIF, fontSize: 21 }}>
                   {laneLabel(lane)}
                 </h4>
@@ -3812,10 +3938,23 @@ function TowerMartDecisionLanes({ rows }: { rows: ReadonlyArray<TowerMartProgram
                     }}
                   >
                     <strong>{row.programName}</strong>
-                    <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 3 }}>
-                      {row.ownerRole ?? "Owner gap"} · {formatMoneyGap(row.approvedFundingUsd)} funding · {formatMoneyGap(row.promisedValueUsd)} promised · {formatMoneyGap(row.financeValidatedValueUsd)} partial value
+                    <div
+                      style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 3 }}
+                    >
+                      {row.ownerRole ?? "Owner gap"} ·{" "}
+                      {formatMoneyGap(row.approvedFundingUsd)} funding ·{" "}
+                      {formatMoneyGap(row.promisedValueUsd)} promised ·{" "}
+                      {formatMoneyGap(row.financeValidatedValueUsd)} partial
+                      value
                     </div>
-                    <div style={{ color: T.INK_2, fontSize: 13, lineHeight: 1.45, marginTop: 8 }}>
+                    <div
+                      style={{
+                        color: T.INK_2,
+                        fontSize: 13,
+                        lineHeight: 1.45,
+                        marginTop: 8,
+                      }}
+                    >
                       {row.decisionRationale}
                     </div>
                   </div>
@@ -3834,10 +3973,17 @@ function TowerMartDecisionLanes({ rows }: { rows: ReadonlyArray<TowerMartProgram
   );
 }
 
-function TowerMartAiPortfolio({ rows }: { rows: ReadonlyArray<TowerMartAiPortfolioItem> }) {
+function TowerMartAiPortfolio({
+  rows,
+}: {
+  rows: ReadonlyArray<TowerMartAiPortfolioItem>;
+}) {
   const visibleRows = rows.slice(0, 18);
   return (
-    <CioPanel eyebrow="AI spend, adoption, and readiness" title="AI Opportunity Portfolio">
+    <CioPanel
+      eyebrow="AI spend, adoption, and readiness"
+      title="AI Opportunity Portfolio"
+    >
       <div
         style={{
           display: "grid",
@@ -3851,7 +3997,8 @@ function TowerMartAiPortfolio({ rows }: { rows: ReadonlyArray<TowerMartAiPortfol
             minHeight: 430,
             border: `1px solid ${T.RULE}`,
             borderRadius: 14,
-            background: "linear-gradient(90deg, transparent 49.8%, rgba(10,10,11,.10) 50%, transparent 50.2%), linear-gradient(0deg, transparent 49.8%, rgba(10,10,11,.10) 50%, transparent 50.2%), #fff",
+            background:
+              "linear-gradient(90deg, transparent 49.8%, rgba(10,10,11,.10) 50%, transparent 50.2%), linear-gradient(0deg, transparent 49.8%, rgba(10,10,11,.10) 50%, transparent 50.2%), #fff",
             overflow: "hidden",
           }}
         >
@@ -3897,14 +4044,33 @@ function TowerMartAiPortfolio({ rows }: { rows: ReadonlyArray<TowerMartAiPortfol
                   padding: 12,
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                  <strong>{index + 1}. {row.itemName}</strong>
-                  <span style={{ color: tone.fg, fontWeight: 900 }}>{laneLabel(row.decisionLane)}</span>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 10,
+                  }}
+                >
+                  <strong>
+                    {index + 1}. {row.itemName}
+                  </strong>
+                  <span style={{ color: tone.fg, fontWeight: 900 }}>
+                    {laneLabel(row.decisionLane)}
+                  </span>
                 </div>
                 <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 4 }}>
-                  {row.vendorName ?? row.itemKind} · usage {row.usageActual ?? "n/a"} · adoption {martRatioText(row.adoptionRatePct)}
+                  {row.vendorName ?? row.itemKind} · usage{" "}
+                  {row.usageActual ?? "n/a"} · adoption{" "}
+                  {martRatioText(row.adoptionRatePct)}
                 </div>
-                <div style={{ color: T.INK_2, fontSize: 12.5, lineHeight: 1.4, marginTop: 6 }}>
+                <div
+                  style={{
+                    color: T.INK_2,
+                    fontSize: 12.5,
+                    lineHeight: 1.4,
+                    marginTop: 6,
+                  }}
+                >
                   {row.caveat}
                 </div>
               </div>
@@ -3916,17 +4082,26 @@ function TowerMartAiPortfolio({ rows }: { rows: ReadonlyArray<TowerMartAiPortfol
   );
 }
 
-function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel }) {
-  const [activeSection, setActiveSection] = useState<TowerMartSection>("command");
+function TowerMartCommandCenter({
+  model,
+}: {
+  model: TowerMartCommandViewModel;
+}) {
+  const [activeSection, setActiveSection] =
+    useState<TowerMartSection>("command");
   const [commandStep, setCommandStep] = useState<1 | 2 | 3>(1);
   const command = model.command;
+  const budgetPostureNarrative = towerBudgetPostureNarrative(command);
   const blockingGaps = model.requiredFieldGaps.filter((gap) => gap.blocking);
   const runPct = Math.round((command.runRatio ?? 0) * 100);
   const changePct = Math.round((command.changeRatio ?? 0) * 100);
-  const laneCounts = model.programLanes.reduce<Record<string, number>>((acc, row) => {
-    acc[row.decisionLane] = (acc[row.decisionLane] ?? 0) + 1;
-    return acc;
-  }, {});
+  const laneCounts = model.programLanes.reduce<Record<string, number>>(
+    (acc, row) => {
+      acc[row.decisionLane] = (acc[row.decisionLane] ?? 0) + 1;
+      return acc;
+    },
+    {},
+  );
   const commandSteps = [
     ["Posture", "where the money is"],
     ["Signals", "what's misaligned"],
@@ -3946,9 +4121,10 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
     {
       tone: "stop",
       title: "Required fields still block board-grade claims.",
-      body: blockingGaps.length > 0
-        ? `${blockingGaps.length} mart gap${blockingGaps.length === 1 ? "" : "s"} must be fixed upstream before Tower can strengthen claims.`
-        : "The current mart exposes no blocking required-field gaps, but outcome claims still require source-backed actuals.",
+      body:
+        blockingGaps.length > 0
+          ? `${blockingGaps.length} mart gap${blockingGaps.length === 1 ? "" : "s"} must be fixed upstream before Tower can strengthen claims.`
+          : "The current mart exposes no blocking required-field gaps, but outcome claims still require source-backed actuals.",
     },
   ];
 
@@ -3965,8 +4141,17 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
               alignItems: "start",
             }}
           >
-            <div data-testid="tower-budget-posture-card" style={towerBoardCardStyle}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 16 }}>
+            <div
+              data-testid="tower-budget-posture-card"
+              style={towerBoardCardStyle}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 16,
+                }}
+              >
                 <div style={towerTinyLabelStyle}>FY26 technology budget</div>
                 <div
                   style={{
@@ -3998,14 +4183,24 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
                   fontSize: 13,
                 }}
               >
-                <span><span style={runSwatchStyle} /> Run — operate and maintain · <b>{runPct}%</b></span>
-                <span><span style={changeSwatchStyle} /> Change — build and transform · <b>{changePct}%</b></span>
+                <span>
+                  <span style={runSwatchStyle} /> Run — operate and maintain ·{" "}
+                  <b>{runPct}%</b>
+                </span>
+                <span>
+                  <span style={changeSwatchStyle} /> Change — build and
+                  transform · <b>{changePct}%</b>
+                </span>
               </div>
-              <p style={{ margin: "18px 0 0", color: T.INK_2, lineHeight: 1.58, fontSize: 15 }}>
-                A healthcare-appropriate run-heavy posture. The leadership
-                question is not the ratio alone; it is whether enough of the{" "}
-                <b>{formatMoneyGap(command.runBudgetFy26)}</b> run base can be
-                optimized to fund the AI/data foundation and priority portfolio.
+              <p
+                style={{
+                  margin: "18px 0 0",
+                  color: T.INK_2,
+                  lineHeight: 1.58,
+                  fontSize: 15,
+                }}
+              >
+                {budgetPostureNarrative}
               </p>
             </div>
             <div style={{ display: "grid", gap: 14, minWidth: 0 }}>
@@ -4040,7 +4235,13 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
       return (
         <section style={{ marginTop: 22 }}>
           <div style={towerEyebrowStyle}>What&apos;s misaligned</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 14 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              gap: 14,
+            }}
+          >
             {signalCards.map((card, index) => (
               <div
                 key={card.title}
@@ -4060,15 +4261,31 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
                     display: "grid",
                     placeItems: "center",
                     color: "#fff",
-                    background: card.tone === "stop" ? T.RED : card.tone === "freeze" ? T.PURPLE : T.AMBER,
+                    background:
+                      card.tone === "stop"
+                        ? T.RED
+                        : card.tone === "freeze"
+                          ? T.PURPLE
+                          : T.AMBER,
                     fontWeight: 900,
                     marginBottom: 12,
                   }}
                 >
                   {index + 1}
                 </div>
-                <h4 style={{ margin: 0, color: T.INK, fontSize: 17 }}>{card.title}</h4>
-                <p style={{ margin: "8px 0 0", color: T.INK_2, lineHeight: 1.5, fontSize: 13.5 }}>{card.body}</p>
+                <h4 style={{ margin: 0, color: T.INK, fontSize: 17 }}>
+                  {card.title}
+                </h4>
+                <p
+                  style={{
+                    margin: "8px 0 0",
+                    color: T.INK_2,
+                    lineHeight: 1.5,
+                    fontSize: 13.5,
+                  }}
+                >
+                  {card.body}
+                </p>
               </div>
             ))}
           </div>
@@ -4082,13 +4299,34 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
               padding: 24,
             }}
           >
-            <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>The question Tower exists to answer</div>
-            <div style={{ marginTop: 10, fontFamily: T.SERIF, fontSize: 29, lineHeight: 1.14, maxWidth: 980 }}>
+            <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>
+              The question Tower exists to answer
+            </div>
+            <div
+              style={{
+                marginTop: 10,
+                fontFamily: T.SERIF,
+                fontSize: 29,
+                lineHeight: 1.14,
+                maxWidth: 980,
+              }}
+            >
               {command.decisionQuestion}
             </div>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                flexWrap: "wrap",
+                marginTop: 18,
+              }}
+            >
               {(["fund", "fix", "freeze", "stop"] as const).map((lane) => (
-                <TowerMartLanePill key={lane} lane={lane} count={laneCounts[lane] ?? 0} />
+                <TowerMartLanePill
+                  key={lane}
+                  lane={lane}
+                  count={laneCounts[lane] ?? 0}
+                />
               ))}
             </div>
           </div>
@@ -4127,23 +4365,49 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
           </div>
           <div>
             <div style={towerTinyLabelStyle}>Top decision</div>
-            <div style={{ marginTop: 8, fontFamily: T.SERIF, fontSize: 28, lineHeight: 1.16, color: T.INK }}>
+            <div
+              style={{
+                marginTop: 8,
+                fontFamily: T.SERIF,
+                fontSize: 28,
+                lineHeight: 1.16,
+                color: T.INK,
+              }}
+            >
               Fund the foundation before scaling AI use cases. Prove the
-              operating model on data-ready, owned initiatives, and do not
-              crown a hero use case until the evidence exists.
+              operating model on data-ready, owned initiatives, and do not crown
+              a hero use case until the evidence exists.
             </div>
           </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12, marginTop: 20 }}>
-          {TOWER_MART_SECTIONS.filter((section) => section.key !== "command").map((section) => (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+            gap: 12,
+            marginTop: 20,
+          }}
+        >
+          {TOWER_MART_SECTIONS.filter(
+            (section) => section.key !== "command",
+          ).map((section) => (
             <button
               key={section.key}
               type="button"
               onClick={() => setActiveSection(section.key)}
               style={towerAnalysisCardStyle}
             >
-              <span style={{ fontWeight: 900, color: T.INK }}>{section.label}</span>
-              <span style={{ marginTop: 8, color: T.INK_2, lineHeight: 1.45, fontSize: 13 }}>
+              <span style={{ fontWeight: 900, color: T.INK }}>
+                {section.label}
+              </span>
+              <span
+                style={{
+                  marginTop: 8,
+                  color: T.INK_2,
+                  lineHeight: 1.45,
+                  fontSize: 13,
+                }}
+              >
                 {towerSectionDescription(section.key)}
               </span>
             </button>
@@ -4185,7 +4449,10 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
           />
         </TowerMartNavGroup>
         <TowerMartNavGroup label="Analyses">
-          {TOWER_MART_SECTIONS.filter((section) => section.key !== "command" && section.key !== "evidence").map((section) => (
+          {TOWER_MART_SECTIONS.filter(
+            (section) =>
+              section.key !== "command" && section.key !== "evidence",
+          ).map((section) => (
             <TowerMartNavButton
               key={section.key}
               label={section.label}
@@ -4194,7 +4461,11 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
               onClick={() => setActiveSection(section.key)}
             />
           ))}
-          {["Run vs Change", "Vendor & Spend Leverage", "Transformation Capacity"].map((label) => (
+          {[
+            "Run vs Change",
+            "Vendor & Spend Leverage",
+            "Transformation Capacity",
+          ].map((label) => (
             <TowerMartNavButton key={label} label={label} disabled />
           ))}
         </TowerMartNavGroup>
@@ -4242,7 +4513,9 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
                     borderBottom: selected
                       ? `2px solid ${T.TEAL_TINT}`
                       : "2px solid transparent",
-                    background: selected ? "rgba(255,253,248,.62)" : "transparent",
+                    background: selected
+                      ? "rgba(255,253,248,.62)"
+                      : "transparent",
                     color: selected ? T.INK : T.GRAY_DK,
                     padding: "12px 8px",
                     marginRight: 18,
@@ -4255,7 +4528,13 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
                 >
                   {section.label}
                   {count !== undefined ? (
-                    <span style={{ color: selected ? T.TEAL : T.GRAY, marginLeft: 6, fontSize: 11 }}>
+                    <span
+                      style={{
+                        color: selected ? T.TEAL : T.GRAY,
+                        marginLeft: 6,
+                        fontSize: 11,
+                      }}
+                    >
                       {count}
                     </span>
                   ) : null}
@@ -4285,9 +4564,20 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
                 marginBottom: 18,
               }}
             >
-              <span style={{ width: 9, height: 9, borderRadius: 999, background: T.GREEN, display: "inline-block" }} />
+              <span
+                style={{
+                  width: 9,
+                  height: 9,
+                  borderRadius: 999,
+                  background: T.GREEN,
+                  display: "inline-block",
+                }}
+              />
               <b style={{ color: T.INK }}>Active portfolio context</b>
-              <span>Last checked from Tower mart · deterministic · every figure traces to a source</span>
+              <span>
+                Last checked from Tower mart · deterministic · every figure
+                traces to a source
+              </span>
             </div>
             <h2
               style={{
@@ -4320,7 +4610,11 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
               </span>
             </h2>
             <p style={{ margin: "10px 0 0", color: T.INK_2, fontSize: 16 }}>
-              Investment control tower — <em>where money, risk, AI demand, and value evidence are misaligned, and what to do next.</em>
+              Investment control tower —{" "}
+              <em>
+                where money, risk, AI demand, and value evidence are misaligned,
+                and what to do next.
+              </em>
             </p>
             <div
               data-testid="tower-command-stepper"
@@ -4366,15 +4660,27 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
                         placeItems: "center",
                         background: selected ? T.TEAL : "#fff",
                         color: selected ? "#fff" : T.INK_2,
-                        border: selected ? "none" : `1px solid ${T.RULE_STRONG}`,
+                        border: selected
+                          ? "none"
+                          : `1px solid ${T.RULE_STRONG}`,
                         fontWeight: 900,
                       }}
                     >
                       {stepNumber}
                     </span>
                     <span style={{ minWidth: 0 }}>
-                      <span style={{ ...towerTinyLabelStyle, display: "block", fontSize: 8 }}>Step {stepNumber}</span>
-                      <span style={{ fontWeight: 900, color: T.INK }}>{step[0]}</span>{" "}
+                      <span
+                        style={{
+                          ...towerTinyLabelStyle,
+                          display: "block",
+                          fontSize: 8,
+                        }}
+                      >
+                        Step {stepNumber}
+                      </span>
+                      <span style={{ fontWeight: 900, color: T.INK }}>
+                        {step[0]}
+                      </span>{" "}
                       <span style={{ color: T.INK_2 }}>· {step[1]}</span>
                     </span>
                   </button>
@@ -4396,22 +4702,39 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
                 type="button"
                 disabled={commandStep === 1}
                 onClick={() => setCommandStep(commandStep === 3 ? 2 : 1)}
-                style={commandStep === 1 ? towerGhostButtonDisabledStyle : towerGhostButtonStyle}
+                style={
+                  commandStep === 1
+                    ? towerGhostButtonDisabledStyle
+                    : towerGhostButtonStyle
+                }
               >
                 ← {commandStep === 3 ? "Signals" : "Posture"}
               </button>
               <button
                 type="button"
-                onClick={() => (commandStep < 3 ? setCommandStep((commandStep + 1) as 1 | 2 | 3) : setActiveSection("actions"))}
+                onClick={() =>
+                  commandStep < 3
+                    ? setCommandStep((commandStep + 1) as 1 | 2 | 3)
+                    : setActiveSection("actions")
+                }
                 style={towerPrimaryButtonStyle}
               >
-                {commandStep === 1 ? "Signals" : commandStep === 2 ? "Decide" : "See recommended actions"} →
+                {commandStep === 1
+                  ? "Signals"
+                  : commandStep === 2
+                    ? "Decide"
+                    : "See recommended actions"}{" "}
+                →
               </button>
             </div>
           </>
         ) : null}
-        {activeSection === "value" ? <TowerMartValueFunnelDesign model={model} /> : null}
-        {activeSection === "lanes" ? <TowerMartDecisionLanesDesign rows={model.programLanes} /> : null}
+        {activeSection === "value" ? (
+          <TowerMartValueFunnelDesign model={model} />
+        ) : null}
+        {activeSection === "lanes" ? (
+          <TowerMartDecisionLanesDesign rows={model.programLanes} />
+        ) : null}
         {activeSection === "ai" ? (
           <TowerMartAiPortfolioDesign
             rows={model.aiPortfolio}
@@ -4419,11 +4742,35 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
             command={command}
           />
         ) : null}
-        {activeSection === "actions" ? <TowerMartActionsDesign actions={model.cxoActions} /> : null}
-        {activeSection === "evidence" ? <TowerMartEvidenceDesign rows={model.evidenceLineage} gaps={model.requiredFieldGaps} /> : null}
+        {activeSection === "actions" ? (
+          <TowerMartActionsDesign actions={model.cxoActions} />
+        ) : null}
+        {activeSection === "evidence" ? (
+          <TowerMartEvidenceDesign
+            rows={model.evidenceLineage}
+            gaps={model.requiredFieldGaps}
+          />
+        ) : null}
       </main>
     </div>
   );
+}
+
+function towerBudgetPostureNarrative(
+  command: TowerMartCommandCenterRow,
+): string {
+  const runBase = formatMoneyGap(command.runBudgetFy26);
+  const tenant = String(command.tenantKey ?? "").toLowerCase();
+  if (tenant === "skyharbor-air") {
+    return `This is an airline operations run-heavy posture. The leadership question is whether enough of the ${runBase} run base can be stabilized and optimized while change funding protects IROPS recovery, crew operations, maintenance, customer disruption recovery, and the airline data foundation.`;
+  }
+  if (tenant === "first-capital-financial") {
+    return `This is a regulated-bank run-heavy posture. The leadership question is whether enough of the ${runBase} run base can be controlled while change funding protects core banking, payments, fraud/AML, digital servicing, data, and model-risk modernization.`;
+  }
+  if (tenant === "meridian-health") {
+    return `This is a healthcare-appropriate run-heavy posture. The leadership question is whether enough of the ${runBase} run base can be optimized to fund the data/AI foundation and priority portfolio without calling promised value realized.`;
+  }
+  return `This is a run-heavy technology posture. The leadership question is whether enough of the ${runBase} run base can be optimized while change funding protects the highest-value modernization, data, AI, and control priorities.`;
 }
 
 const towerTinyLabelStyle: CSSProperties = {
@@ -4528,8 +4875,7 @@ function TowerChartTooltip({
           key={`${item.name ?? "value"}-${item.value ?? ""}`}
           style={{ color: T.INK_2, fontSize: 12, lineHeight: 1.4 }}
         >
-          <span style={{ color: item.color ?? T.TEAL }}>●</span>{" "}
-          {item.name}:{" "}
+          <span style={{ color: item.color ?? T.TEAL }}>●</span> {item.name}:{" "}
           <b>
             {typeof item.value === "number"
               ? rechartsMoneyTick(item.value)
@@ -4538,7 +4884,14 @@ function TowerChartTooltip({
         </div>
       ))}
       {typeof row.detail === "string" ? (
-        <div style={{ color: T.GRAY_DK, fontSize: 11.5, lineHeight: 1.35, marginTop: 7 }}>
+        <div
+          style={{
+            color: T.GRAY_DK,
+            fontSize: 11.5,
+            lineHeight: 1.35,
+            marginTop: 7,
+          }}
+        >
           {row.detail}
         </div>
       ) : null}
@@ -4555,7 +4908,10 @@ function TowerBudgetSplitRechart({
 }) {
   const data = [{ label: "FY26 technology budget", run, change }];
   return (
-    <div style={{ width: "100%", height: 142 }} data-testid="tower-budget-recharts">
+    <div
+      style={{ width: "100%", height: 142 }}
+      data-testid="tower-budget-recharts"
+    >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
@@ -4637,7 +4993,10 @@ function TowerValueFunnelRechart({
             : T.TEAL,
   }));
   return (
-    <div style={{ width: "100%", height: 292 }} data-testid="tower-value-funnel-recharts">
+    <div
+      style={{ width: "100%", height: 292 }}
+      data-testid="tower-value-funnel-recharts"
+    >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
@@ -4662,7 +5021,12 @@ function TowerValueFunnelRechart({
             tickLine={false}
           />
           <Tooltip content={<TowerChartTooltip />} />
-          <Bar dataKey="value" name="Value" radius={[0, 9, 9, 0]} isAnimationActive={false}>
+          <Bar
+            dataKey="value"
+            name="Value"
+            radius={[0, 9, 9, 0]}
+            isAnimationActive={false}
+          >
             {data.map((entry) => (
               <Cell key={entry.name} fill={entry.fill} />
             ))}
@@ -4709,7 +5073,10 @@ function TowerAiPortfolioRechart({
     color: martLaneTone(row.decisionLane).fg,
   }));
   return (
-    <div style={{ width: "100%", height: 430 }} data-testid="tower-ai-portfolio-recharts">
+    <div
+      style={{ width: "100%", height: 430 }}
+      data-testid="tower-ai-portfolio-recharts"
+    >
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 24, right: 34, bottom: 34, left: 26 }}>
           <CartesianGrid stroke={T.BORDER} strokeDasharray="3 6" />
@@ -4746,9 +5113,30 @@ function TowerAiPortfolioRechart({
             }}
           />
           <ZAxis type="number" dataKey="size" range={[150, 520]} />
-          <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill={T.GREEN_BG} fillOpacity={0.54} />
-          <ReferenceArea x1={0} x2={50} y1={50} y2={100} fill={T.TEAL} fillOpacity={0.07} />
-          <ReferenceArea x1={50} x2={100} y1={0} y2={50} fill={T.AMBER_BG} fillOpacity={0.42} />
+          <ReferenceArea
+            x1={50}
+            x2={100}
+            y1={50}
+            y2={100}
+            fill={T.GREEN_BG}
+            fillOpacity={0.54}
+          />
+          <ReferenceArea
+            x1={0}
+            x2={50}
+            y1={50}
+            y2={100}
+            fill={T.TEAL}
+            fillOpacity={0.07}
+          />
+          <ReferenceArea
+            x1={50}
+            x2={100}
+            y1={0}
+            y2={50}
+            fill={T.AMBER_BG}
+            fillOpacity={0.42}
+          />
           <ReferenceLine x={50} stroke={T.RULE_STRONG} strokeWidth={2} />
           <ReferenceLine y={50} stroke={T.RULE_STRONG} strokeWidth={2} />
           <Tooltip
@@ -4783,7 +5171,14 @@ function TowerAiPortfolioRechart({
                     Value {Math.round(item.rawValue)} · readiness{" "}
                     {Math.round(item.rawReadiness)} · {item.displayAction}
                   </div>
-                  <div style={{ color: T.GRAY_DK, fontSize: 11.5, lineHeight: 1.35, marginTop: 7 }}>
+                  <div
+                    style={{
+                      color: T.GRAY_DK,
+                      fontSize: 11.5,
+                      lineHeight: 1.35,
+                      marginTop: 7,
+                    }}
+                  >
                     {item.displayReason}
                   </div>
                 </div>
@@ -4835,17 +5230,29 @@ const towerGhostButtonDisabledStyle: CSSProperties = {
 };
 
 function towerSectionDescription(section: TowerMartSection): string {
-  if (section === "value") return "Committed change spend to promised, validated, and claimable value.";
-  if (section === "lanes") return "Fund, fix, freeze, and stop posture for each loaded program.";
-  if (section === "ai") return "AI opportunities by value, readiness, spend posture, and controls.";
-  if (section === "actions") return "CXO actions with handoffs to the execution modules.";
-  if (section === "evidence") return "Lineage back to mart facts, source files, rows, and caveats.";
+  if (section === "value")
+    return "Committed change spend to promised, validated, and claimable value.";
+  if (section === "lanes")
+    return "Fund, fix, freeze, and stop posture for each loaded program.";
+  if (section === "ai")
+    return "AI opportunities by value, readiness, spend posture, and controls.";
+  if (section === "actions")
+    return "CXO actions with handoffs to the execution modules.";
+  if (section === "evidence")
+    return "Lineage back to mart facts, source files, rows, and caveats.";
   return "Executive command path.";
 }
 
-function towerSectionCount(section: TowerMartSection, model: TowerMartCommandViewModel): number | undefined {
+function towerSectionCount(
+  section: TowerMartSection,
+  model: TowerMartCommandViewModel,
+): number | undefined {
   if (section === "lanes") return model.programLanes.length;
-  if (section === "ai") return Math.min(model.aiPortfolio.length, model.command.candidateAiOpportunities);
+  if (section === "ai")
+    return Math.min(
+      model.aiPortfolio.length,
+      model.command.candidateAiOpportunities,
+    );
   if (section === "actions") return model.cxoActions.length;
   return undefined;
 }
@@ -4913,7 +5320,15 @@ function TowerMartNavButton({
     >
       <span style={{ minWidth: 0, overflowWrap: "break-word" }}>{label}</span>
       {disabled ? (
-        <span style={{ ...towerTinyLabelStyle, fontSize: 8, background: T.CREAM_DEEP, borderRadius: 999, padding: "3px 7px" }}>
+        <span
+          style={{
+            ...towerTinyLabelStyle,
+            fontSize: 8,
+            background: T.CREAM_DEEP,
+            borderRadius: 999,
+            padding: "3px 7px",
+          }}
+        >
           Soon
         </span>
       ) : count !== undefined ? (
@@ -4957,7 +5372,11 @@ function TowerMartCompactCard({
         {tone === "gated" ? <span style={{ color: T.AMBER }}>● </span> : null}
         {value}
       </div>
-      <div style={{ marginTop: 8, color: T.INK_2, lineHeight: 1.45, fontSize: 13 }}>{detail}</div>
+      <div
+        style={{ marginTop: 8, color: T.INK_2, lineHeight: 1.45, fontSize: 13 }}
+      >
+        {detail}
+      </div>
     </div>
   );
 }
@@ -4987,11 +5406,7 @@ function TowerMartLanePill({
   );
 }
 
-function TowerMartBackButton({
-  onClick,
-}: {
-  onClick: () => void;
-}) {
+function TowerMartBackButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
@@ -5011,18 +5426,30 @@ function TowerMartBackButton({
   );
 }
 
-function TowerMartValueFunnelDesign({ model }: { model: TowerMartCommandViewModel }) {
+function TowerMartValueFunnelDesign({
+  model,
+}: {
+  model: TowerMartCommandViewModel;
+}) {
   const promised = Math.max(model.command.promisedValueFy26, 1);
-  const measuredPct = safeRatio(model.command.partialFinanceValidatedValueYtd, promised);
+  const measuredPct = safeRatio(
+    model.command.partialFinanceValidatedValueYtd,
+    promised,
+  );
   const normalizeValueProofCopy = (value: string) =>
     value
       .replace(/realized savings/gi, "claimable savings")
       .replace(/realized value/gi, "claimable value")
-      .replace(/do not call claimable savings/gi, "do not call savings claimable")
+      .replace(
+        /do not call claimable savings/gi,
+        "do not call savings claimable",
+      )
       .replace(/booked to P&L/gi, "booked to P&L yet");
   return (
     <>
-      <TowerMartBackButton onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+      <TowerMartBackButton
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      />
       <div style={towerDetailHeaderStyle}>
         <div style={towerEyebrowStyle}>Funding vs. value realization</div>
         <h2 style={towerDetailTitleStyle}>Value Proof Funnel</h2>
@@ -5033,7 +5460,13 @@ function TowerMartValueFunnelDesign({ model }: { model: TowerMartCommandViewMode
         mistaken for claimable.
       </p>
       <section style={{ ...towerBoardCardStyle, minHeight: 0 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(360px, .95fr) minmax(0, 1.25fr)", gap: 26 }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(360px, .95fr) minmax(0, 1.25fr)",
+            gap: 26,
+          }}
+        >
           <div>
             <TowerValueFunnelRechart model={model} />
             <div
@@ -5045,24 +5478,33 @@ function TowerMartValueFunnelDesign({ model }: { model: TowerMartCommandViewMode
               }}
             >
               {model.valueFunnel
-                .map((stage) => `${stage.stageLabel}: ${normalizeValueProofCopy(stage.caveat)}`)
+                .map(
+                  (stage) =>
+                    `${stage.stageLabel}: ${normalizeValueProofCopy(stage.caveat)}`,
+                )
                 .join(" · ")}
             </div>
           </div>
           <div>
-            <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>Value proven vs. promised · by program</div>
+            <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>
+              Value proven vs. promised · by program
+            </div>
             <div style={{ display: "grid", gap: 9, marginTop: 12 }}>
               {[...model.programLanes]
                 .sort((a, b) => b.promisedValueUsd - a.promisedValueUsd)
                 .slice(0, 10)
                 .map((program) => {
-                  const pct = safeRatio(program.financeValidatedValueUsd, program.promisedValueUsd);
+                  const pct = safeRatio(
+                    program.financeValidatedValueUsd,
+                    program.promisedValueUsd,
+                  );
                   return (
                     <div
                       key={program.laneKey}
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "minmax(190px, .8fr) minmax(0, 1fr) 74px",
+                        gridTemplateColumns:
+                          "minmax(190px, .8fr) minmax(0, 1fr) 74px",
                         gap: 12,
                         alignItems: "center",
                         borderTop: `1px solid ${T.RULE}`,
@@ -5071,12 +5513,29 @@ function TowerMartValueFunnelDesign({ model }: { model: TowerMartCommandViewMode
                     >
                       <div>
                         <strong>{program.programName}</strong>
-                        <div style={{ color: T.GRAY_DK, fontSize: 11 }}>{program.programCode ?? "program code gap"}</div>
+                        <div style={{ color: T.GRAY_DK, fontSize: 11 }}>
+                          {program.programCode ?? "program code gap"}
+                        </div>
                       </div>
-                      <div style={{ height: 10, background: T.CREAM_DEEP, borderRadius: 999, overflow: "hidden" }}>
-                        <div style={{ width: `${Math.max(2, Math.round((pct ?? 0) * 100))}%`, height: "100%", background: T.GREEN }} />
+                      <div
+                        style={{
+                          height: 10,
+                          background: T.CREAM_DEEP,
+                          borderRadius: 999,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${Math.max(2, Math.round((pct ?? 0) * 100))}%`,
+                            height: "100%",
+                            background: T.GREEN,
+                          }}
+                        />
                       </div>
-                      <div style={{ textAlign: "right", fontWeight: 900 }}>{martRatioText(pct)}</div>
+                      <div style={{ textAlign: "right", fontWeight: 900 }}>
+                        {martRatioText(pct)}
+                      </div>
                     </div>
                   );
                 })}
@@ -5123,18 +5582,30 @@ const towerDetailIntroStyle: CSSProperties = {
   maxWidth: 1040,
 };
 
-function TowerMartDecisionLanesDesign({ rows }: { rows: ReadonlyArray<TowerMartProgramLane> }) {
+function TowerMartDecisionLanesDesign({
+  rows,
+}: {
+  rows: ReadonlyArray<TowerMartProgramLane>;
+}) {
   const lanes = [
     ["fund", "Fund", "Evidence-backed enough to protect or scale."],
-    ["fix", "Fix", "Promising but blocked by evidence, owner, or baseline gaps."],
+    [
+      "fix",
+      "Fix",
+      "Promising but blocked by evidence, owner, or baseline gaps.",
+    ],
     ["freeze", "Freeze", "Hold funding until proof boundaries are cleared."],
     ["stop", "Stop", "Stop or re-scope before more attention is consumed."],
   ] as const;
   return (
     <>
-      <TowerMartBackButton onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+      <TowerMartBackButton
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      />
       <div style={towerDetailHeaderStyle}>
-        <div style={towerEyebrowStyle}>Initiative health · Fund / Fix / Freeze / Stop</div>
+        <div style={towerEyebrowStyle}>
+          Initiative health · Fund / Fix / Freeze / Stop
+        </div>
         <h2 style={towerDetailTitleStyle}>Portfolio Decision Lanes</h2>
       </div>
       <p style={towerDetailIntroStyle}>
@@ -5142,7 +5613,13 @@ function TowerMartDecisionLanesDesign({ rows }: { rows: ReadonlyArray<TowerMartP
         value evidence, usage evidence, and claim status. Missing fields become
         blockers, not substitutions.
       </p>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 12 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+          gap: 12,
+        }}
+      >
         {lanes.map(([lane, label, definition]) => {
           const laneRows = rows.filter((row) => row.decisionLane === lane);
           const tone = martLaneTone(lane);
@@ -5157,29 +5634,97 @@ function TowerMartDecisionLanesDesign({ rows }: { rows: ReadonlyArray<TowerMartP
                 minHeight: 0,
               }}
             >
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  gap: 10,
+                }}
+              >
                 <div>
-                  <h3 style={{ margin: 0, fontFamily: T.SERIF, fontSize: 23 }}>{label}</h3>
-                  <p style={{ margin: "4px 0 0", color: T.INK_2, fontSize: 12.5, lineHeight: 1.35 }}>{definition}</p>
+                  <h3 style={{ margin: 0, fontFamily: T.SERIF, fontSize: 23 }}>
+                    {label}
+                  </h3>
+                  <p
+                    style={{
+                      margin: "4px 0 0",
+                      color: T.INK_2,
+                      fontSize: 12.5,
+                      lineHeight: 1.35,
+                    }}
+                  >
+                    {definition}
+                  </p>
                 </div>
-                <span style={{ color: tone.fg, fontWeight: 950, whiteSpace: "nowrap" }}>{laneRows.length}</span>
+                <span
+                  style={{
+                    color: tone.fg,
+                    fontWeight: 950,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {laneRows.length}
+                </span>
               </div>
               <div style={{ display: "grid", gap: 8, marginTop: 13 }}>
-                {laneRows.length > 0 ? laneRows.slice(0, 4).map((row) => (
-                  <div key={row.laneKey} style={{ border: `1px solid ${T.RULE}`, borderRadius: 12, background: "rgba(255,255,255,.86)", padding: 10 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" }}>
-                      <strong style={{ fontSize: 13.5, lineHeight: 1.2 }}>{row.programName}</strong>
-                      <span style={{ color: tone.fg, fontWeight: 900, fontSize: 13, whiteSpace: "nowrap" }}>{formatMoneyGap(row.approvedFundingUsd)}</span>
+                {laneRows.length > 0 ? (
+                  laneRows.slice(0, 4).map((row) => (
+                    <div
+                      key={row.laneKey}
+                      style={{
+                        border: `1px solid ${T.RULE}`,
+                        borderRadius: 12,
+                        background: "rgba(255,255,255,.86)",
+                        padding: 10,
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 10,
+                          alignItems: "baseline",
+                        }}
+                      >
+                        <strong style={{ fontSize: 13.5, lineHeight: 1.2 }}>
+                          {row.programName}
+                        </strong>
+                        <span
+                          style={{
+                            color: tone.fg,
+                            fontWeight: 900,
+                            fontSize: 13,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {formatMoneyGap(row.approvedFundingUsd)}
+                        </span>
+                      </div>
+                      <div
+                        style={{ color: T.GRAY_DK, fontSize: 11, marginTop: 5 }}
+                      >
+                        {row.ownerRole ?? "owner gap"} ·{" "}
+                        {formatMoneyGap(row.promisedValueUsd)} promised ·{" "}
+                        {formatMoneyGap(row.financeValidatedValueUsd)} validated
+                      </div>
                     </div>
-                    <div style={{ color: T.GRAY_DK, fontSize: 11, marginTop: 5 }}>
-                      {row.ownerRole ?? "owner gap"} · {formatMoneyGap(row.promisedValueUsd)} promised · {formatMoneyGap(row.financeValidatedValueUsd)} validated
-                    </div>
+                  ))
+                ) : (
+                  <div
+                    style={{
+                      color: T.GRAY_DK,
+                      fontSize: 13,
+                      padding: "12px 0",
+                    }}
+                  >
+                    No current mart rows in this lane.
                   </div>
-                )) : (
-                  <div style={{ color: T.GRAY_DK, fontSize: 13, padding: "12px 0" }}>No current mart rows in this lane.</div>
                 )}
                 {laneRows.length > 4 ? (
-                  <div style={{ color: tone.fg, fontSize: 12, fontWeight: 900 }}>
+                  <div
+                    style={{ color: tone.fg, fontSize: 12, fontWeight: 900 }}
+                  >
                     +{laneRows.length - 4} more in this lane
                   </div>
                 ) : null}
@@ -5218,15 +5763,27 @@ function cleanAiPortfolioName(row: TowerMartAiPortfolioItem): string {
     .replace(/^AI\s*\/\s*Automation:\s*/i, "")
     .replace(/\s+/g, " ")
     .trim();
-  if (/ai benefits realization ledger/i.test(raw)) return "AI benefits measurement ledger";
-  if (/automated close and reporting/i.test(raw)) return "Finance close automation";
-  if (/call center optimization/i.test(raw)) return "Contact center AI enablement";
-  return raw || humanizeTowerToken(row.aiSpendCategory ?? row.aiSpendType ?? row.itemKind);
+  if (/ai benefits realization ledger/i.test(raw))
+    return "AI benefits measurement ledger";
+  if (/automated close and reporting/i.test(raw))
+    return "Finance close automation";
+  if (/call center optimization/i.test(raw))
+    return "Contact center AI enablement";
+  return (
+    raw ||
+    humanizeTowerToken(row.aiSpendCategory ?? row.aiSpendType ?? row.itemKind)
+  );
 }
 
 function aiPortfolioRowWeight(row: TowerMartAiPortfolioItem): number {
   const laneWeight =
-    row.decisionLane === "fund" ? 50 : row.decisionLane === "fix" ? 40 : row.decisionLane === "freeze" ? 20 : 10;
+    row.decisionLane === "fund"
+      ? 50
+      : row.decisionLane === "fix"
+        ? 40
+        : row.decisionLane === "freeze"
+          ? 20
+          : 10;
   return (
     laneWeight +
     row.financeValidatedValueUsd / 1_000_000 +
@@ -5330,8 +5887,11 @@ function inferAiPortfolioProgramVendor(row: TowerMartProgramLane): {
 
 function isAiRelatedProgramLane(row: TowerMartProgramLane): boolean {
   if (row.aiTaggedSpendUsd > 0) return true;
-  const text = `${row.programName} ${row.programCode ?? ""} ${row.usageMetric ?? ""} ${row.caveat}`.toLowerCase();
-  return /ai|copilot|servicenow|workday|github|sdlc|automation|lakehouse|databricks|contact center|model risk|governance/.test(text);
+  const text =
+    `${row.programName} ${row.programCode ?? ""} ${row.usageMetric ?? ""} ${row.caveat}`.toLowerCase();
+  return /ai|copilot|servicenow|workday|github|sdlc|automation|lakehouse|databricks|contact center|model risk|governance/.test(
+    text,
+  );
 }
 
 function aiPortfolioProgramValueScore(row: TowerMartProgramLane): number {
@@ -5351,17 +5911,28 @@ function aiPortfolioProgramReadinessScore(row: TowerMartProgramLane): number {
   return 30;
 }
 
-function aiProgramLaneToPortfolioItem(row: TowerMartProgramLane): TowerMartAiPortfolioItem {
+function aiProgramLaneToPortfolioItem(
+  row: TowerMartProgramLane,
+): TowerMartAiPortfolioItem {
   const inferred = inferAiPortfolioProgramVendor(row);
   return {
     aiPortfolioKey: `program-proof:${row.laneKey}`,
     itemName: row.programName,
-    itemKind: row.aiTaggedSpendUsd > 0 ? "approved_or_embedded_ai_program" : "ai_related_program",
+    itemKind:
+      row.aiTaggedSpendUsd > 0
+        ? "approved_or_embedded_ai_program"
+        : "ai_related_program",
     vendorName: inferred.vendorName,
     systemName: inferred.systemName,
-    aiSpendType: row.aiTaggedSpendUsd > 0 ? "approved_ai_program" : "ai_enablement_foundation",
+    aiSpendType:
+      row.aiTaggedSpendUsd > 0
+        ? "approved_ai_program"
+        : "ai_enablement_foundation",
     aiSpendCategory: inferred.aiSpendCategory,
-    fundingStatus: row.approvedFundingUsd > 0 || row.aiTaggedSpendUsd > 0 ? "approved" : "not_approved",
+    fundingStatus:
+      row.approvedFundingUsd > 0 || row.aiTaggedSpendUsd > 0
+        ? "approved"
+        : "not_approved",
     decisionLane: row.decisionLane,
     approvedFundingUsd: row.approvedFundingUsd,
     aiTaggedSpendUsd: row.aiTaggedSpendUsd,
@@ -5372,7 +5943,14 @@ function aiProgramLaneToPortfolioItem(row: TowerMartProgramLane): TowerMartAiPor
     adoptionRatePct: row.adoptionRatePct,
     valueScore: aiPortfolioProgramValueScore(row),
     readinessScore: aiPortfolioProgramReadinessScore(row),
-    riskScore: row.decisionLane === "fix" ? 62 : row.decisionLane === "freeze" ? 76 : row.decisionLane === "stop" ? 82 : 48,
+    riskScore:
+      row.decisionLane === "fix"
+        ? 62
+        : row.decisionLane === "freeze"
+          ? 76
+          : row.decisionLane === "stop"
+            ? 82
+            : 48,
     duplicateRisk: "low",
     valueClaimStatus: row.valueClaimStatus,
     towerClaimAllowed: row.towerClaimAllowed,
@@ -5389,13 +5967,18 @@ function buildAiPortfolioDisplayRows(
   const byName = new Map<string, TowerMartAiPortfolioItem>();
   const portfolioRows = [
     ...rows,
-    ...programRows.filter(isAiRelatedProgramLane).map(aiProgramLaneToPortfolioItem),
+    ...programRows
+      .filter(isAiRelatedProgramLane)
+      .map(aiProgramLaneToPortfolioItem),
   ];
   portfolioRows.forEach((row) => {
     const displayName = cleanAiPortfolioName(row);
     const key = displayName.toLowerCase();
     const existing = byName.get(key);
-    if (!existing || aiPortfolioRowWeight(row) > aiPortfolioRowWeight(existing)) {
+    if (
+      !existing ||
+      aiPortfolioRowWeight(row) > aiPortfolioRowWeight(existing)
+    ) {
       byName.set(key, row);
     }
   });
@@ -5412,7 +5995,13 @@ function buildAiPortfolioDisplayRows(
     );
     const baseReadiness = normalizeAiScore(
       row.readinessScore,
-      row.financeValidatedValueUsd > 0 ? 62 : row.usageActual ? 54 : row.fundingStatus === "not_approved" ? 30 : 42,
+      row.financeValidatedValueUsd > 0
+        ? 62
+        : row.usageActual
+          ? 54
+          : row.fundingStatus === "not_approved"
+            ? 30
+            : 42,
     );
     const lane = row.decisionLane ?? "freeze";
     const laneIndex = laneOffsets[lane] ?? 0;
@@ -5427,8 +6016,14 @@ function buildAiPortfolioDisplayRows(
           : lane === "stop"
             ? { left: 60, top: 68 }
             : { left: 20, top: 68 };
-    const displayDotLeft = Math.max(9, Math.min(91, laneAnchor.left + laneColumn * 11 + laneRow * 2));
-    const displayDotTop = Math.max(11, Math.min(89, laneAnchor.top + laneRow * 11 + laneColumn * 2));
+    const displayDotLeft = Math.max(
+      9,
+      Math.min(91, laneAnchor.left + laneColumn * 11 + laneRow * 2),
+    );
+    const displayDotTop = Math.max(
+      11,
+      Math.min(89, laneAnchor.top + laneRow * 11 + laneColumn * 2),
+    );
     return {
       ...row,
       displayName: cleanAiPortfolioName(row),
@@ -5452,12 +6047,22 @@ function TowerMartAiPortfolioDesign({
   command: TowerMartCommandCenterRow;
 }) {
   const displayRows = buildAiPortfolioDisplayRows(rows, programRows);
-  const fundedRows = displayRows.filter((row) => row.aiTaggedSpendUsd > 0 || row.approvedFundingUsd > 0);
-  const candidateRows = displayRows.filter((row) => row.fundingStatus === "not_approved" || row.itemKind.includes("candidate"));
-  const partialProofRows = displayRows.filter((row) => row.financeValidatedValueUsd > 0 || row.usageActual !== null);
+  const fundedRows = displayRows.filter(
+    (row) => row.aiTaggedSpendUsd > 0 || row.approvedFundingUsd > 0,
+  );
+  const candidateRows = displayRows.filter(
+    (row) =>
+      row.fundingStatus === "not_approved" ||
+      row.itemKind.includes("candidate"),
+  );
+  const partialProofRows = displayRows.filter(
+    (row) => row.financeValidatedValueUsd > 0 || row.usageActual !== null,
+  );
   return (
     <>
-      <TowerMartBackButton onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+      <TowerMartBackButton
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      />
       <div style={towerDetailHeaderStyle}>
         <div style={towerEyebrowStyle}>AI portfolio readiness</div>
         <h2 style={towerDetailTitleStyle}>AI Opportunity Portfolio</h2>
@@ -5468,36 +6073,104 @@ function TowerMartAiPortfolioDesign({
         what can scale with proof, what needs evidence fixed, and what must stay
         held until gates clear?
       </p>
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 420px)", gap: 18, alignItems: "start" }}>
-        <section data-testid="tower-ai-portfolio-matrix" style={{ ...towerBoardCardStyle, minHeight: 0, position: "relative", paddingBottom: 18 }}>
-          <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>Value vs. readiness</div>
-          <p style={{ margin: "8px 0 0", color: T.INK_2, fontSize: 13, lineHeight: 1.45, maxWidth: 690 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 420px)",
+          gap: 18,
+          alignItems: "start",
+        }}
+      >
+        <section
+          data-testid="tower-ai-portfolio-matrix"
+          style={{
+            ...towerBoardCardStyle,
+            minHeight: 0,
+            position: "relative",
+            paddingBottom: 18,
+          }}
+        >
+          <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>
+            Value vs. readiness
+          </div>
+          <p
+            style={{
+              margin: "8px 0 0",
+              color: T.INK_2,
+              fontSize: 13,
+              lineHeight: 1.45,
+              maxWidth: 690,
+            }}
+          >
             Each numbered point maps to the watchlist. Placement is lane-aware:
             scale with proof, fix adoption, fund readiness, or stop/re-scope.
           </p>
           <TowerAiPortfolioRechart rows={displayRows} />
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8, marginTop: 10 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+              gap: 8,
+              marginTop: 10,
+            }}
+          >
             {[
               ["Scale with proof", "Protect or scale with proof", T.GREEN],
               ["Fix", "Resolve proof or adoption gaps", T.AMBER],
               ["Hold", "Keep gated until readiness improves", T.PURPLE],
               ["Stop", "Re-scope before more funding", T.RED],
             ].map(([label, copy, color]) => (
-              <div key={label} style={{ border: `1px solid ${T.RULE}`, borderRadius: 10, padding: "9px 10px", background: "rgba(255,255,255,.72)" }}>
+              <div
+                key={label}
+                style={{
+                  border: `1px solid ${T.RULE}`,
+                  borderRadius: 10,
+                  padding: "9px 10px",
+                  background: "rgba(255,255,255,.72)",
+                }}
+              >
                 <strong style={{ color }}>{label}</strong>
-                <div style={{ color: T.INK_2, fontSize: 11.5, lineHeight: 1.3, marginTop: 2 }}>{copy}</div>
+                <div
+                  style={{
+                    color: T.INK_2,
+                    fontSize: 11.5,
+                    lineHeight: 1.3,
+                    marginTop: 2,
+                  }}
+                >
+                  {copy}
+                </div>
               </div>
             ))}
           </div>
         </section>
-        <section data-testid="tower-ai-watchlist" style={{ ...towerBoardCardStyle, minHeight: 0, overflow: "hidden" }}>
+        <section
+          data-testid="tower-ai-watchlist"
+          style={{ ...towerBoardCardStyle, minHeight: 0, overflow: "hidden" }}
+        >
           <div style={towerTinyLabelStyle}>AI spend lens</div>
-          <div style={{ fontFamily: T.SERIF, fontSize: 31, fontWeight: 900, marginTop: 8 }}>{formatMoneyGap(command.aiTaggedSpendFy26NonAdditive)}</div>
+          <div
+            style={{
+              fontFamily: T.SERIF,
+              fontSize: 31,
+              fontWeight: 900,
+              marginTop: 8,
+            }}
+          >
+            {formatMoneyGap(command.aiTaggedSpendFy26NonAdditive)}
+          </div>
           <p style={{ margin: "8px 0 16px", color: T.INK_2, lineHeight: 1.45 }}>
             Non-additive; already inside approved platform, program, governance,
             and enablement spend. Candidate ideas are not approved funding.
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, marginBottom: 14 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              gap: 8,
+              marginBottom: 14,
+            }}
+          >
             <TowerMartCompactCard
               label="Funded lens"
               value={formatWholeNumber(fundedRows.length)}
@@ -5518,17 +6191,69 @@ function TowerMartAiPortfolioDesign({
             {displayRows.map((row, index) => {
               const tone = martLaneTone(row.decisionLane);
               return (
-                <div key={row.aiPortfolioKey} style={{ display: "grid", gridTemplateColumns: "30px minmax(0, 1fr)", gap: 9, alignItems: "start", borderTop: `1px solid ${T.RULE}`, paddingTop: 10 }}>
-                  <span style={{ width: 24, height: 24, borderRadius: 999, display: "grid", placeItems: "center", background: tone.fg, color: "#fff", fontSize: 12, fontWeight: 900 }}>{index + 1}</span>
+                <div
+                  key={row.aiPortfolioKey}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "30px minmax(0, 1fr)",
+                    gap: 9,
+                    alignItems: "start",
+                    borderTop: `1px solid ${T.RULE}`,
+                    paddingTop: 10,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 999,
+                      display: "grid",
+                      placeItems: "center",
+                      background: tone.fg,
+                      color: "#fff",
+                      fontSize: 12,
+                      fontWeight: 900,
+                    }}
+                  >
+                    {index + 1}
+                  </span>
                   <span>
-                    <span style={{ display: "flex", gap: 8, alignItems: "flex-start", justifyContent: "space-between" }}>
-                      <strong style={{ minWidth: 0, lineHeight: 1.2 }}>{row.displayName}</strong>
-                      <span style={{ borderRadius: 999, background: tone.bg, color: tone.fg, fontWeight: 900, fontSize: 11, padding: "4px 7px", whiteSpace: "nowrap" }}>
+                    <span
+                      style={{
+                        display: "flex",
+                        gap: 8,
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <strong style={{ minWidth: 0, lineHeight: 1.2 }}>
+                        {row.displayName}
+                      </strong>
+                      <span
+                        style={{
+                          borderRadius: 999,
+                          background: tone.bg,
+                          color: tone.fg,
+                          fontWeight: 900,
+                          fontSize: 11,
+                          padding: "4px 7px",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
                         {row.displayAction}
                       </span>
                     </span>
-                    <span style={{ display: "block", color: T.GRAY_DK, fontSize: 11, marginTop: 2 }}>
-                      {row.vendorName ?? row.systemName ?? humanizeTowerToken(row.aiSpendCategory)}
+                    <span
+                      style={{
+                        display: "block",
+                        color: T.GRAY_DK,
+                        fontSize: 11,
+                        marginTop: 2,
+                      }}
+                    >
+                      {row.vendorName ??
+                        row.systemName ??
+                        humanizeTowerToken(row.aiSpendCategory)}
                       {" · "}
                       {row.financeValidatedValueUsd > 0
                         ? `${formatMoneyGap(row.financeValidatedValueUsd)} validated`
@@ -5536,13 +6261,31 @@ function TowerMartAiPortfolioDesign({
                           ? `usage ${formatWholeNumber(row.usageActual)}`
                           : "proof gap"}
                     </span>
-                    <span style={{ display: "block", color: T.INK_2, fontSize: 12, lineHeight: 1.35, marginTop: 5 }}>{row.displayReason}</span>
+                    <span
+                      style={{
+                        display: "block",
+                        color: T.INK_2,
+                        fontSize: 12,
+                        lineHeight: 1.35,
+                        marginTop: 5,
+                      }}
+                    >
+                      {row.displayReason}
+                    </span>
                   </span>
                 </div>
               );
             })}
             {candidateRows.length > 0 ? (
-              <div style={{ borderTop: `1px solid ${T.RULE}`, paddingTop: 10, color: T.INK_2, fontSize: 12.5, lineHeight: 1.45 }}>
+              <div
+                style={{
+                  borderTop: `1px solid ${T.RULE}`,
+                  paddingTop: 10,
+                  color: T.INK_2,
+                  fontSize: 12.5,
+                  lineHeight: 1.45,
+                }}
+              >
                 Candidate AI is intentionally visible here, but it remains a
                 discovery backlog until budget ties, usage baselines, control
                 gates, and finance evidence are loaded.
@@ -5555,10 +6298,16 @@ function TowerMartAiPortfolioDesign({
   );
 }
 
-function TowerMartActionsDesign({ actions }: { actions: ReadonlyArray<TowerMartCxoAction> }) {
+function TowerMartActionsDesign({
+  actions,
+}: {
+  actions: ReadonlyArray<TowerMartCxoAction>;
+}) {
   return (
     <>
-      <TowerMartBackButton onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+      <TowerMartBackButton
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      />
       <div style={towerDetailHeaderStyle}>
         <div style={towerEyebrowStyle}>The north star</div>
         <h2 style={towerDetailTitleStyle}>Recommended CXO Actions</h2>
@@ -5569,16 +6318,59 @@ function TowerMartActionsDesign({ actions }: { actions: ReadonlyArray<TowerMartC
       <section style={{ ...towerBoardCardStyle, minHeight: 0 }}>
         <div style={{ display: "grid", gap: 0 }}>
           {actions.map((action) => {
-            const normalizedLane = action.actionLane === "accelerate" ? "fund" : action.actionLane === "hold" ? "freeze" : action.actionLane;
-            const tone = martLaneTone(["fund", "fix", "freeze", "stop"].includes(normalizedLane) ? normalizedLane : "fix");
+            const normalizedLane =
+              action.actionLane === "accelerate"
+                ? "fund"
+                : action.actionLane === "hold"
+                  ? "freeze"
+                  : action.actionLane;
+            const tone = martLaneTone(
+              ["fund", "fix", "freeze", "stop"].includes(normalizedLane)
+                ? normalizedLane
+                : "fix",
+            );
             return (
-              <div key={action.actionKey} style={{ display: "grid", gridTemplateColumns: "118px 1fr 180px", gap: 18, alignItems: "start", borderTop: `1px solid ${T.RULE}`, padding: "18px 0" }}>
-                <span style={{ borderRadius: 999, background: tone.bg, color: tone.fg, padding: "8px 11px", fontWeight: 900, textAlign: "center", textTransform: "capitalize" }}>{action.actionLane}</span>
+              <div
+                key={action.actionKey}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "118px 1fr 180px",
+                  gap: 18,
+                  alignItems: "start",
+                  borderTop: `1px solid ${T.RULE}`,
+                  padding: "18px 0",
+                }}
+              >
+                <span
+                  style={{
+                    borderRadius: 999,
+                    background: tone.bg,
+                    color: tone.fg,
+                    padding: "8px 11px",
+                    fontWeight: 900,
+                    textAlign: "center",
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {action.actionLane}
+                </span>
                 <div>
                   <strong style={{ fontSize: 16 }}>{action.title}</strong>
-                  <p style={{ margin: "6px 0 0", color: T.INK_2, lineHeight: 1.5 }}>{action.actionBody}</p>
+                  <p
+                    style={{
+                      margin: "6px 0 0",
+                      color: T.INK_2,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {action.actionBody}
+                  </p>
                 </div>
-                <div style={{ color: T.GRAY_DK, fontSize: 13, fontWeight: 800 }}>{action.moduleHandoff ?? "Tower"} →</div>
+                <div
+                  style={{ color: T.GRAY_DK, fontSize: 13, fontWeight: 800 }}
+                >
+                  {action.moduleHandoff ?? "Tower"} →
+                </div>
               </div>
             );
           })}
@@ -5597,31 +6389,81 @@ function TowerMartEvidenceDesign({
 }) {
   return (
     <>
-      <TowerMartBackButton onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
+      <TowerMartBackButton
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      />
       <div style={towerDetailHeaderStyle}>
         <div style={towerEyebrowStyle}>Trace</div>
         <h2 style={towerDetailTitleStyle}>Evidence</h2>
       </div>
-      <div style={{ border: `1px solid ${T.GREEN}`, background: T.GREEN_BG, borderRadius: 13, padding: 14, margin: "16px 0", color: T.INK, fontWeight: 750 }}>
-        Every number in Tower traces to a mart fact, a formula posture, and a source row. Tower displays and narrates; it does not invent values.
+      <div
+        style={{
+          border: `1px solid ${T.GREEN}`,
+          background: T.GREEN_BG,
+          borderRadius: 13,
+          padding: 14,
+          margin: "16px 0",
+          color: T.INK,
+          fontWeight: 750,
+        }}
+      >
+        Every number in Tower traces to a mart fact, a formula posture, and a
+        source row. Tower displays and narrates; it does not invent values.
       </div>
-      <section style={{ ...towerBoardCardStyle, minHeight: 0, padding: 0, overflow: "hidden" }}>
+      <section
+        style={{
+          ...towerBoardCardStyle,
+          minHeight: 0,
+          padding: 0,
+          overflow: "hidden",
+        }}
+      >
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <table
+            style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+          >
             <thead>
               <tr style={{ background: "#faf9f4" }}>
                 {["Fact", "Value", "Source", "Caveat"].map((head) => (
-                  <th key={head} style={{ ...towerTinyLabelStyle, textAlign: head === "Value" ? "right" : "left", padding: "14px 16px" }}>{head}</th>
+                  <th
+                    key={head}
+                    style={{
+                      ...towerTinyLabelStyle,
+                      textAlign: head === "Value" ? "right" : "left",
+                      padding: "14px 16px",
+                    }}
+                  >
+                    {head}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.lineageKey} style={{ borderTop: `1px solid ${T.RULE}` }}>
-                  <td style={{ padding: "14px 16px", fontWeight: 900 }}>{row.displayedFact}</td>
-                  <td style={{ padding: "14px 16px", textAlign: "right", fontWeight: 900 }}>{row.displayedValueText ?? formatMoneyGap(row.displayedValueNumeric)}</td>
-                  <td style={{ padding: "14px 16px", color: T.INK_2 }}>{row.sourceFile}{row.sourceRow ? ` · ${row.sourceRow}` : ""}</td>
-                  <td style={{ padding: "14px 16px", color: T.INK_2 }}>{row.caveat}</td>
+                <tr
+                  key={row.lineageKey}
+                  style={{ borderTop: `1px solid ${T.RULE}` }}
+                >
+                  <td style={{ padding: "14px 16px", fontWeight: 900 }}>
+                    {row.displayedFact}
+                  </td>
+                  <td
+                    style={{
+                      padding: "14px 16px",
+                      textAlign: "right",
+                      fontWeight: 900,
+                    }}
+                  >
+                    {row.displayedValueText ??
+                      formatMoneyGap(row.displayedValueNumeric)}
+                  </td>
+                  <td style={{ padding: "14px 16px", color: T.INK_2 }}>
+                    {row.sourceFile}
+                    {row.sourceRow ? ` · ${row.sourceRow}` : ""}
+                  </td>
+                  <td style={{ padding: "14px 16px", color: T.INK_2 }}>
+                    {row.caveat}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -5629,13 +6471,39 @@ function TowerMartEvidenceDesign({
         </div>
       </section>
       {gaps.length > 0 ? (
-        <section style={{ ...towerBoardCardStyle, minHeight: 0, marginTop: 16 }}>
+        <section
+          style={{ ...towerBoardCardStyle, minHeight: 0, marginTop: 16 }}
+        >
           <div style={towerTinyLabelStyle}>Required field gaps</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10, marginTop: 12 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+              gap: 10,
+              marginTop: 12,
+            }}
+          >
             {gaps.map((gap) => (
-              <div key={gap.gapKey} style={{ border: `1px solid ${gap.blocking ? "rgba(163,45,45,.28)" : T.RULE}`, borderRadius: 12, padding: 12, background: gap.blocking ? T.RED_BG : "#fff" }}>
+              <div
+                key={gap.gapKey}
+                style={{
+                  border: `1px solid ${gap.blocking ? "rgba(163,45,45,.28)" : T.RULE}`,
+                  borderRadius: 12,
+                  padding: 12,
+                  background: gap.blocking ? T.RED_BG : "#fff",
+                }}
+              >
                 <strong>{gap.requiredField}</strong>
-                <div style={{ color: T.INK_2, fontSize: 12.5, lineHeight: 1.45, marginTop: 5 }}>{gap.sourceTemplate} · {gap.remediationAction}</div>
+                <div
+                  style={{
+                    color: T.INK_2,
+                    fontSize: 12.5,
+                    lineHeight: 1.45,
+                    marginTop: 5,
+                  }}
+                >
+                  {gap.sourceTemplate} · {gap.remediationAction}
+                </div>
               </div>
             ))}
           </div>
@@ -5695,14 +6563,10 @@ function CxoGovernedCommandCenter({
   const total = findCxoCard(model.cards, "total_it_budget_fy26");
   const run = findCxoCard(model.cards, "run_budget_fy26");
   const change = findCxoCard(model.cards, "change_budget_fy26");
-  const approvedPrograms = findCxoCard(
-    model.cards,
-    "approved_program_budget_fy26",
-  ) ?? findCxoCard(model.cards, "initiative_budget_fy26");
-  const aiSpend = findCxoCard(
-    model.cards,
-    "ai_tagged_spend_fy26_non_additive",
-  );
+  const approvedPrograms =
+    findCxoCard(model.cards, "approved_program_budget_fy26") ??
+    findCxoCard(model.cards, "initiative_budget_fy26");
+  const aiSpend = findCxoCard(model.cards, "ai_tagged_spend_fy26_non_additive");
   const promised = findCxoCard(model.cards, "promised_value_fy26");
   const financeValidated =
     findCxoCard(model.cards, "partial_finance_validated_value_ytd") ??
@@ -5713,8 +6577,12 @@ function CxoGovernedCommandCenter({
   );
   const candidateAi = findCxoCard(model.cards, "candidate_ai_opportunities");
   const watchSignals = findCxoCard(model.cards, "watch_pressure_signals");
-  const runPct = Math.round((safeRatio(run?.valueNumeric, total?.valueNumeric) ?? 0) * 100);
-  const changePct = Math.round((safeRatio(change?.valueNumeric, total?.valueNumeric) ?? 0) * 100);
+  const runPct = Math.round(
+    (safeRatio(run?.valueNumeric, total?.valueNumeric) ?? 0) * 100,
+  );
+  const changePct = Math.round(
+    (safeRatio(change?.valueNumeric, total?.valueNumeric) ?? 0) * 100,
+  );
   const visibleEvidenceCount = new Set(
     model.cards.flatMap((card) => card.sourceFactKeys),
   ).size;
@@ -5859,9 +6727,21 @@ function CxoGovernedCommandCenter({
             }}
           >
             <TowerCommandKpi title="Total IT budget FY26" card={total} />
-            <TowerCommandKpi title="Run budget FY26" card={run} detail={`${runPct}% of total`} />
-            <TowerCommandKpi title="Change budget FY26" card={change} detail={`${changePct}% of total`} />
-            <TowerCommandKpi title="AI-tagged spend lens" card={aiSpend} detail="Non-additive; inside the total" />
+            <TowerCommandKpi
+              title="Run budget FY26"
+              card={run}
+              detail={`${runPct}% of total`}
+            />
+            <TowerCommandKpi
+              title="Change budget FY26"
+              card={change}
+              detail={`${changePct}% of total`}
+            />
+            <TowerCommandKpi
+              title="AI-tagged spend lens"
+              card={aiSpend}
+              detail="Non-additive; inside the total"
+            />
           </div>
 
           <section
@@ -5873,7 +6753,13 @@ function CxoGovernedCommandCenter({
               boxShadow: "0 18px 38px rgba(15, 23, 42, 0.045)",
             }}
           >
-            <div style={{ display: "grid", gridTemplateColumns: "1.1fr .9fr", gap: 24 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.1fr .9fr",
+                gap: 24,
+              }}
+            >
               <div>
                 <div
                   style={{
@@ -5927,18 +6813,38 @@ function CxoGovernedCommandCenter({
                     Change {change?.displayValue ?? "gap"}
                   </div>
                 </div>
-                <p style={{ color: T.INK_2, fontSize: 14, lineHeight: 1.55, margin: "14px 0 0" }}>
-                  This is a healthcare-appropriate run-heavy posture. The
-                  leadership question is whether enough of the run base can be
-                  optimized to fund the data/AI foundation and the priority
+                <p
+                  style={{
+                    color: T.INK_2,
+                    fontSize: 14,
+                    lineHeight: 1.55,
+                    margin: "14px 0 0",
+                  }}
+                >
+                  This is a run-heavy technology posture. The leadership
+                  question is whether enough of the run base can be optimized to
+                  fund the data, AI, control, and priority modernization
                   portfolio without calling promised value realized.
                 </p>
               </div>
               <div style={{ display: "grid", gap: 10 }}>
-                <TowerCommandMini title="Approved programs" card={approvedPrograms} />
-                <TowerCommandMini title="Candidate AI opportunities" card={candidateAi} />
-                <TowerCommandMini title="Watch pressure signals" card={watchSignals} />
-                <TowerCommandMini title="Claimable value allowed" card={realizedAllowed} gated />
+                <TowerCommandMini
+                  title="Approved programs"
+                  card={approvedPrograms}
+                />
+                <TowerCommandMini
+                  title="Candidate AI opportunities"
+                  card={candidateAi}
+                />
+                <TowerCommandMini
+                  title="Watch pressure signals"
+                  card={watchSignals}
+                />
+                <TowerCommandMini
+                  title="Claimable value allowed"
+                  card={realizedAllowed}
+                  gated
+                />
               </div>
             </div>
           </section>
@@ -5978,10 +6884,19 @@ function CxoGovernedCommandCenter({
               evidence gaps, which transformation investments should we{" "}
               <b>fund, fix, freeze, or stop</b>, and why?
             </div>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 18 }}>
-              {Object.entries(countDecisionLanes(laneRows)).map(([lane, count]) => (
-                <TowerLanePill key={lane} lane={lane} count={count} />
-              ))}
+            <div
+              style={{
+                display: "flex",
+                gap: 10,
+                flexWrap: "wrap",
+                marginTop: 18,
+              }}
+            >
+              {Object.entries(countDecisionLanes(laneRows)).map(
+                ([lane, count]) => (
+                  <TowerLanePill key={lane} lane={lane} count={count} />
+                ),
+              )}
             </div>
           </section>
         </section>
@@ -6027,10 +6942,7 @@ function CxoGovernedCommandCenter({
             marginBottom: 18,
           }}
         >
-          <CioPanel
-            eyebrow="Trace"
-            title="Evidence"
-          >
+          <CioPanel eyebrow="Trace" title="Evidence">
             <div
               style={{
                 border: `1px solid ${T.GREEN}`,
@@ -6053,7 +6965,14 @@ function CxoGovernedCommandCenter({
                 <h4 style={{ margin: "0 0 10px", color: T.INK }}>
                   Data gaps to address
                 </h4>
-                <ul style={{ margin: 0, paddingLeft: 18, display: "grid", gap: 6 }}>
+                <ul
+                  style={{
+                    margin: 0,
+                    paddingLeft: 18,
+                    display: "grid",
+                    gap: 6,
+                  }}
+                >
                   {model.gaps.map((gap) => (
                     <li key={gap} style={{ color: T.INK_2, lineHeight: 1.45 }}>
                       {gap}
@@ -6065,7 +6984,6 @@ function CxoGovernedCommandCenter({
           </CioPanel>
         </section>
       ) : null}
-
     </div>
   );
 }
@@ -6091,7 +7009,9 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
   const story = view.cxoStory;
   const activeStory = story.tabs[activeSection];
   const maxHypothesisValue = Math.max(
-    ...view.valueHypotheses.map((item) => v3DisplayValueNumber(item.value) ?? 0),
+    ...view.valueHypotheses.map(
+      (item) => v3DisplayValueNumber(item.value) ?? 0,
+    ),
     1,
   );
   const insightRoles = Array.from(
@@ -6113,7 +7033,8 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
       <section
         style={{
           border: `1px solid ${T.RULE}`,
-          background: "linear-gradient(135deg, #ffffff 0%, #f9f8f4 58%, #f3f7f3 100%)",
+          background:
+            "linear-gradient(135deg, #ffffff 0%, #f9f8f4 58%, #f3f7f3 100%)",
           borderRadius: 14,
           boxShadow: "0 22px 48px rgba(15, 23, 42, 0.06)",
           padding: 28,
@@ -6136,7 +7057,8 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
+            gridTemplateColumns:
+              "repeat(auto-fit, minmax(min(100%, 420px), 1fr))",
             gap: 18,
             alignItems: "start",
           }}
@@ -6174,44 +7096,51 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
               gap: 10,
             }}
           >
-          {story.cards.map((card) => (
-            <div
-              key={card.label}
-              style={{
-                border: `1px solid ${T.RULE}`,
-                borderRadius: 10,
-                padding: 13,
-                background: "rgba(255,255,255,0.82)",
-              }}
-            >
+            {story.cards.map((card) => (
               <div
+                key={card.label}
                 style={{
-                  fontFamily: T.MONO,
-                  fontSize: 9,
-                  letterSpacing: "1.3px",
-                  textTransform: "uppercase",
-                  color: T.GRAY_DK,
-                  fontWeight: 800,
+                  border: `1px solid ${T.RULE}`,
+                  borderRadius: 10,
+                  padding: 13,
+                  background: "rgba(255,255,255,0.82)",
                 }}
               >
-                {card.label}
+                <div
+                  style={{
+                    fontFamily: T.MONO,
+                    fontSize: 9,
+                    letterSpacing: "1.3px",
+                    textTransform: "uppercase",
+                    color: T.GRAY_DK,
+                    fontWeight: 800,
+                  }}
+                >
+                  {card.label}
+                </div>
+                <div
+                  style={{
+                    fontFamily: T.SERIF,
+                    fontSize: 25,
+                    fontWeight: 800,
+                    marginTop: 7,
+                    color: T.INK,
+                  }}
+                >
+                  {card.value}
+                </div>
+                <div
+                  style={{
+                    color: T.INK_2,
+                    fontSize: 12,
+                    lineHeight: 1.35,
+                    marginTop: 4,
+                  }}
+                >
+                  {card.caption}
+                </div>
               </div>
-              <div
-                style={{
-                  fontFamily: T.SERIF,
-                  fontSize: 25,
-                  fontWeight: 800,
-                  marginTop: 7,
-                  color: T.INK,
-                }}
-              >
-                {card.value}
-              </div>
-              <div style={{ color: T.INK_2, fontSize: 12, lineHeight: 1.35, marginTop: 4 }}>
-                {card.caption}
-              </div>
-            </div>
-          ))}
+            ))}
           </div>
         </div>
       </section>
@@ -6286,11 +7215,15 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
             marginBottom: 18,
           }}
         >
-          <CioPanel
-            eyebrow="Executive Brief"
-            title={activeStory.headline}
-          >
-            <p style={{ color: T.INK_2, fontSize: 14, lineHeight: 1.55, margin: "0 0 14px" }}>
+          <CioPanel eyebrow="Executive Brief" title={activeStory.headline}>
+            <p
+              style={{
+                color: T.INK_2,
+                fontSize: 14,
+                lineHeight: 1.55,
+                margin: "0 0 14px",
+              }}
+            >
               {activeStory.summary}
             </p>
             <div
@@ -6323,9 +7256,18 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
                     {metric.label}
                   </div>
                   <div style={{ marginTop: 10, display: "grid", gap: 5 }}>
-                    <SmallEvidenceLine label="Baseline" value={metric.baselineStatus} />
-                    <SmallEvidenceLine label="Target" value={metric.targetStatus} />
-                    <SmallEvidenceLine label="Evidence" value={metric.evidenceStatus} />
+                    <SmallEvidenceLine
+                      label="Baseline"
+                      value={metric.baselineStatus}
+                    />
+                    <SmallEvidenceLine
+                      label="Target"
+                      value={metric.targetStatus}
+                    />
+                    <SmallEvidenceLine
+                      label="Evidence"
+                      value={metric.evidenceStatus}
+                    />
                   </div>
                 </div>
               ))}
@@ -6335,7 +7277,14 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
             eyebrow="Decision Control"
             title="What the CIO and CFO should hold constant."
           >
-            <p style={{ color: T.INK_2, fontSize: 14, lineHeight: 1.55, margin: "0 0 14px" }}>
+            <p
+              style={{
+                color: T.INK_2,
+                fontSize: 14,
+                lineHeight: 1.55,
+                margin: "0 0 14px",
+              }}
+            >
               {activeStory.decisionImplication}
             </p>
             <TowerV3ClaimGateSummary view={view} />
@@ -6344,10 +7293,7 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
       ) : null}
 
       {activeSection === "value" ? (
-        <CioPanel
-          eyebrow="Value"
-          title={activeStory.headline}
-        >
+        <CioPanel eyebrow="Value" title={activeStory.headline}>
           <div
             style={{
               border: `1px solid ${T.AMBER}`,
@@ -6367,65 +7313,72 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
               const numeric = v3DisplayValueNumber(item.value) ?? 0;
               const width = `${Math.max(8, Math.round((numeric / maxHypothesisValue) * 100))}%`;
               return (
-              <div
-                key={`${item.label}-${item.value}`}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "minmax(0, 1fr) auto",
-                  gap: 10,
-                  alignItems: "center",
-                  border: `1px solid ${T.BORDER}`,
-                  borderRadius: 10,
-                  padding: 12,
-                  background: "#fff",
-                }}
-              >
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 750, color: T.INK, fontSize: 13.5 }}>
-                    {item.label} · {item.value}
-                  </div>
-                  <div style={{ color: T.INK_2, fontSize: 12.5, marginTop: 2 }}>
-                    {item.claimBasis.replace(/_/g, " ")}
-                  </div>
-                  <div
-                    aria-hidden="true"
-                    style={{
-                      height: 8,
-                      borderRadius: 999,
-                      background: T.CREAM_DEEP,
-                      marginTop: 9,
-                      overflow: "hidden",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width,
-                        height: "100%",
-                        borderRadius: 999,
-                        background: T.GREEN,
-                      }}
-                    />
-                  </div>
-                </div>
-                <span
+                <div
+                  key={`${item.label}-${item.value}`}
                   style={{
-                    fontFamily: T.MONO,
-                    fontSize: 10,
-                    letterSpacing: "1px",
-                    textTransform: "uppercase",
-                    borderRadius: 999,
-                    padding: "5px 8px",
-                    background: item.gateStatus === "allowed" ? T.GREEN_BG : T.AMBER_BG,
-                    color: item.gateStatus === "allowed" ? T.GREEN : T.AMBER,
-                    border: `1px solid ${
-                      item.gateStatus === "allowed" ? "rgba(29,158,117,.35)" : "rgba(186,117,23,.35)"
-                    }`,
-                    fontWeight: 800,
+                    display: "grid",
+                    gridTemplateColumns: "minmax(0, 1fr) auto",
+                    gap: 10,
+                    alignItems: "center",
+                    border: `1px solid ${T.BORDER}`,
+                    borderRadius: 10,
+                    padding: 12,
+                    background: "#fff",
                   }}
                 >
-                  {item.gateStatus}
-                </span>
-              </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div
+                      style={{ fontWeight: 750, color: T.INK, fontSize: 13.5 }}
+                    >
+                      {item.label} · {item.value}
+                    </div>
+                    <div
+                      style={{ color: T.INK_2, fontSize: 12.5, marginTop: 2 }}
+                    >
+                      {item.claimBasis.replace(/_/g, " ")}
+                    </div>
+                    <div
+                      aria-hidden="true"
+                      style={{
+                        height: 8,
+                        borderRadius: 999,
+                        background: T.CREAM_DEEP,
+                        marginTop: 9,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width,
+                          height: "100%",
+                          borderRadius: 999,
+                          background: T.GREEN,
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <span
+                    style={{
+                      fontFamily: T.MONO,
+                      fontSize: 10,
+                      letterSpacing: "1px",
+                      textTransform: "uppercase",
+                      borderRadius: 999,
+                      padding: "5px 8px",
+                      background:
+                        item.gateStatus === "allowed" ? T.GREEN_BG : T.AMBER_BG,
+                      color: item.gateStatus === "allowed" ? T.GREEN : T.AMBER,
+                      border: `1px solid ${
+                        item.gateStatus === "allowed"
+                          ? "rgba(29,158,117,.35)"
+                          : "rgba(186,117,23,.35)"
+                      }`,
+                      fontWeight: 800,
+                    }}
+                  >
+                    {item.gateStatus}
+                  </span>
+                </div>
               );
             })}
           </div>
@@ -6441,10 +7394,7 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
             marginBottom: 18,
           }}
         >
-          <CioPanel
-            eyebrow="Budget"
-            title={activeStory.headline}
-          >
+          <CioPanel eyebrow="Budget" title={activeStory.headline}>
             <div
               style={{
                 border: `1px solid ${T.AMBER}`,
@@ -6459,7 +7409,13 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
             >
               {activeStory.summary}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: 10,
+              }}
+            >
               {view.metricFamilies
                 .filter((metric) => metric.sourceDimension === "08_spend_value")
                 .slice(0, 10)
@@ -6473,11 +7429,23 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
                       background: T.CREAM,
                     }}
                   >
-                    <div style={{ fontFamily: T.SERIF, fontWeight: 750, fontSize: 16 }}>
+                    <div
+                      style={{
+                        fontFamily: T.SERIF,
+                        fontWeight: 750,
+                        fontSize: 16,
+                      }}
+                    >
                       {metric.label}
                     </div>
-                    <SmallEvidenceLine label="Signal" value={metric.targetStatus} />
-                    <SmallEvidenceLine label="Evidence" value={metric.evidenceStatus} />
+                    <SmallEvidenceLine
+                      label="Signal"
+                      value={metric.targetStatus}
+                    />
+                    <SmallEvidenceLine
+                      label="Evidence"
+                      value={metric.evidenceStatus}
+                    />
                   </div>
                 ))}
             </div>
@@ -6494,14 +7462,24 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
             marginBottom: 18,
           }}
         >
-          <CioPanel
-            eyebrow="Portfolio"
-            title={activeStory.headline}
-          >
-            <p style={{ color: T.INK_2, fontSize: 14, lineHeight: 1.55, margin: "0 0 14px" }}>
+          <CioPanel eyebrow="Portfolio" title={activeStory.headline}>
+            <p
+              style={{
+                color: T.INK_2,
+                fontSize: 14,
+                lineHeight: 1.55,
+                margin: "0 0 14px",
+              }}
+            >
               {activeStory.summary}
             </p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: 12,
+              }}
+            >
               {view.valueHypotheses.map((item) => (
                 <div
                   key={`${item.label}-${item.value}-${item.evidenceIds.join("-")}`}
@@ -6512,13 +7490,36 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
                     background: "#fff",
                   }}
                 >
-                  <div style={{ fontFamily: T.SERIF, fontSize: 18, fontWeight: 800 }}>
+                  <div
+                    style={{
+                      fontFamily: T.SERIF,
+                      fontSize: 18,
+                      fontWeight: 800,
+                    }}
+                  >
                     {item.label}
                   </div>
                   <SmallEvidenceLine label="Value" value={item.value} />
-                  <SmallEvidenceLine label="Basis" value={item.claimBasis.replace(/_/g, " ")} />
-                  <SmallEvidenceLine label="Posture" value={item.gateStatus === "allowed" ? "ready for claim review" : "needs proof before board use"} />
-                  <SmallEvidenceLine label="Evidence" value={item.evidenceIds.length > 0 ? "available in Evidence tab" : "needs source evidence"} />
+                  <SmallEvidenceLine
+                    label="Basis"
+                    value={item.claimBasis.replace(/_/g, " ")}
+                  />
+                  <SmallEvidenceLine
+                    label="Posture"
+                    value={
+                      item.gateStatus === "allowed"
+                        ? "ready for claim review"
+                        : "needs proof before board use"
+                    }
+                  />
+                  <SmallEvidenceLine
+                    label="Evidence"
+                    value={
+                      item.evidenceIds.length > 0
+                        ? "available in Evidence tab"
+                        : "needs source evidence"
+                    }
+                  />
                 </div>
               ))}
             </div>
@@ -6527,10 +7528,7 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
       ) : null}
 
       {activeSection === "benchmark" ? (
-        <CioPanel
-          eyebrow="Benchmark"
-          title={activeStory.headline}
-        >
+        <CioPanel eyebrow="Benchmark" title={activeStory.headline}>
           <div
             style={{
               border: `1px solid ${T.BORDER}`,
@@ -6557,81 +7555,86 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
             marginBottom: 18,
           }}
         >
-      <CioPanel
-        eyebrow="Evidence"
-        title={activeStory.headline}
-      >
-        <p style={{ color: T.INK_2, fontSize: 14, lineHeight: 1.55, margin: "0 0 14px" }}>
-          {activeStory.summary}
-        </p>
-        <div
-          data-testid="tower-cxo-story-source"
-          style={{
-            border: `1px solid ${T.BORDER}`,
-            borderRadius: 10,
-            padding: 12,
-            marginBottom: 14,
-            background: T.CREAM,
-            color: T.INK_2,
-            fontSize: 13,
-            lineHeight: 1.45,
-          }}
-        >
-          Executive story source:{" "}
-          <strong style={{ color: T.INK }}>
-            {view.cxoStorySource === "claude_validated"
-              ? "model-synthesized and validated from the Tower packet"
-              : view.cxoStorySource === "claude_fallback"
-                ? "deterministic fallback because model synthesis did not pass validation"
-                : "deterministic Tower story"}
-          </strong>
-          . Facts, values, and outcome-claim controls remain governed by Tower.
-        </div>
-        <TowerV3GapThemes view={view} />
-      </CioPanel>
+          <CioPanel eyebrow="Evidence" title={activeStory.headline}>
+            <p
+              style={{
+                color: T.INK_2,
+                fontSize: 14,
+                lineHeight: 1.55,
+                margin: "0 0 14px",
+              }}
+            >
+              {activeStory.summary}
+            </p>
+            <div
+              data-testid="tower-cxo-story-source"
+              style={{
+                border: `1px solid ${T.BORDER}`,
+                borderRadius: 10,
+                padding: 12,
+                marginBottom: 14,
+                background: T.CREAM,
+                color: T.INK_2,
+                fontSize: 13,
+                lineHeight: 1.45,
+              }}
+            >
+              Executive story source:{" "}
+              <strong style={{ color: T.INK }}>
+                {view.cxoStorySource === "claude_validated"
+                  ? "model-synthesized and validated from the Tower packet"
+                  : view.cxoStorySource === "claude_fallback"
+                    ? "deterministic fallback because model synthesis did not pass validation"
+                    : "deterministic Tower story"}
+              </strong>
+              . Facts, values, and outcome-claim controls remain governed by
+              Tower.
+            </div>
+            <TowerV3GapThemes view={view} />
+          </CioPanel>
 
-        <CioPanel
-          eyebrow="Next Measurement Actions"
-          title={activeStory.nextAction}
-        >
-          <ol style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 8 }}>
-            {view.nextMeasurementActions.map((action) => (
-              <li key={action} style={{ color: T.INK_2, lineHeight: 1.45 }}>
-                {action}
-              </li>
-            ))}
-          </ol>
-        </CioPanel>
-        <details
-          style={{
-            border: `1px solid ${T.BORDER}`,
-            borderRadius: 10,
-            padding: 12,
-            background: T.CREAM,
-            color: T.INK_2,
-            fontSize: 12.5,
-          }}
-        >
-          <summary
+          <CioPanel
+            eyebrow="Next Measurement Actions"
+            title={activeStory.nextAction}
+          >
+            <ol style={{ margin: 0, paddingLeft: 20, display: "grid", gap: 8 }}>
+              {view.nextMeasurementActions.map((action) => (
+                <li key={action} style={{ color: T.INK_2, lineHeight: 1.45 }}>
+                  {action}
+                </li>
+              ))}
+            </ol>
+          </CioPanel>
+          <details
             style={{
-              cursor: "pointer",
-              color: T.INK,
-              fontWeight: 800,
-              fontFamily: T.MONO,
-              fontSize: 10,
-              letterSpacing: "1.3px",
-              textTransform: "uppercase",
+              border: `1px solid ${T.BORDER}`,
+              borderRadius: 10,
+              padding: 12,
+              background: T.CREAM,
+              color: T.INK_2,
+              fontSize: 12.5,
             }}
           >
-            Bridge diagnostics
-          </summary>
-          <div style={{ marginTop: 10, lineHeight: 1.5 }}>
-             Existing Tower read model fallback is retained for diagnostics only. It is a
-             derived bridge view and has not been reconciled row by row to governed
-             context. {view.bridgeDiagnostics.message}
-          </div>
-        </details>
-      </section>
+            <summary
+              style={{
+                cursor: "pointer",
+                color: T.INK,
+                fontWeight: 800,
+                fontFamily: T.MONO,
+                fontSize: 10,
+                letterSpacing: "1.3px",
+                textTransform: "uppercase",
+              }}
+            >
+              Bridge diagnostics
+            </summary>
+            <div style={{ marginTop: 10, lineHeight: 1.5 }}>
+              Existing Tower read model fallback is retained for diagnostics
+              only. It is a derived bridge view and has not been reconciled row
+              by row to governed context. {view.bridgeDiagnostics.message}
+            </div>
+          </details>
+        </section>
       ) : null}
 
       {activeSection === "insights" ? (
@@ -6646,7 +7649,13 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
                 eyebrow={`${role} View`}
                 title={activeStory.headline}
               >
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                    gap: 12,
+                  }}
+                >
                   {roleInsights.map((insight) => (
                     <div
                       key={`${insight.role}-${insight.insightTitle}`}
@@ -6668,16 +7677,40 @@ function TowerContextRuntimePanel({ view }: { view: TowerV3RuntimeViewModel }) {
                       >
                         {insight.insightTitle}
                       </div>
-                      <p style={{ color: T.INK_2, fontSize: 13.5, lineHeight: 1.48 }}>
+                      <p
+                        style={{
+                          color: T.INK_2,
+                          fontSize: 13.5,
+                          lineHeight: 1.48,
+                        }}
+                      >
                         {insight.insightSummary}
                       </p>
-                      <SmallEvidenceLine label="Why" value={insight.whyItMatters} />
-                      <SmallEvidenceLine label="Decision" value={insight.decisionImplication} />
-                      <SmallEvidenceLine label="Next" value={insight.nextAction} />
-                      <SmallEvidenceLine label="Strength" value={insight.claimStrength.replace(/_/g, " ")} />
-                      <SmallEvidenceLine label="Gate" value={insight.valueClaimGateStatus} />
+                      <SmallEvidenceLine
+                        label="Why"
+                        value={insight.whyItMatters}
+                      />
+                      <SmallEvidenceLine
+                        label="Decision"
+                        value={insight.decisionImplication}
+                      />
+                      <SmallEvidenceLine
+                        label="Next"
+                        value={insight.nextAction}
+                      />
+                      <SmallEvidenceLine
+                        label="Strength"
+                        value={insight.claimStrength.replace(/_/g, " ")}
+                      />
+                      <SmallEvidenceLine
+                        label="Gate"
+                        value={insight.valueClaimGateStatus}
+                      />
                       {insight.watchOut ? (
-                        <SmallEvidenceLine label="Watch" value={insight.watchOut} />
+                        <SmallEvidenceLine
+                          label="Watch"
+                          value={insight.watchOut}
+                        />
                       ) : null}
                     </div>
                   ))}
@@ -6708,9 +7741,16 @@ function TowerV3ClaimGateSummary({ view }: { view: TowerV3RuntimeViewModel }) {
       >
         Tower can support a value-governance conversation today, but it should
         not be used as certified performance evidence until Finance confirms the
-        baselines, formulas, and owners. Current claim-ready items: {view.gateCounts.allowed}.
+        baselines, formulas, and owners. Current claim-ready items:{" "}
+        {view.gateCounts.allowed}.
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: 10,
+        }}
+      >
         {[
           ["Claim-ready", view.gateCounts.allowed],
           ["Needs proof", waitingOnProof],
@@ -6819,7 +7859,13 @@ function TowerV3GapThemes({ view }: { view: TowerV3RuntimeViewModel }) {
 
 function SmallEvidenceLine({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "74px minmax(0, 1fr)", gap: 8 }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "74px minmax(0, 1fr)",
+        gap: 8,
+      }}
+    >
       <span
         style={{
           fontFamily: T.MONO,
@@ -6832,7 +7878,9 @@ function SmallEvidenceLine({ label, value }: { label: string; value: string }) {
       >
         {label}
       </span>
-      <span style={{ color: T.INK_2, fontSize: 12.5, lineHeight: 1.35 }}>{value}</span>
+      <span style={{ color: T.INK_2, fontSize: 12.5, lineHeight: 1.35 }}>
+        {value}
+      </span>
     </div>
   );
 }
@@ -9967,10 +11015,10 @@ export function TowerIndexPage({
       ? towerMartView.headline
       : cxoView
         ? cxoView.headline
-      : hasTowerEvidenceForAva
-        ? cioDashboardModel.executiveNarrative
-        : (atlasObservationsView?.headline ??
-          "aVa is waiting for tenant-bound Tower substrate before it can answer portfolio questions."),
+        : hasTowerEvidenceForAva
+          ? cioDashboardModel.executiveNarrative
+          : (atlasObservationsView?.headline ??
+            "aVa is waiting for tenant-bound Tower substrate before it can answer portfolio questions."),
   };
   const [atlasMessages, setAtlasMessages] = useState<AtlasMessage[]>([
     initialOpener,
@@ -10112,14 +11160,15 @@ export function TowerIndexPage({
     towerV3RuntimeView?.tenantName ??
     cxoView?.tenantName ??
     tenantName;
-  const towerBudgetEnvelope = !towerMartView && !towerV3RuntimeView && cxoView
-    ? findCxoCard(cxoView.cards, "total_it_budget_fy26")
-    : null;
+  const towerBudgetEnvelope =
+    !towerMartView && !towerV3RuntimeView && cxoView
+      ? findCxoCard(cxoView.cards, "total_it_budget_fy26")
+      : null;
   const towerEntityCount = towerMartView
     ? towerMartView.programLanes.length + towerMartView.aiPortfolio.length
     : towerV3RuntimeView
-    ? towerV3RuntimeView.metricCount + towerV3RuntimeView.valueRecordCount
-    : (budgetRollups?.length ?? 0);
+      ? towerV3RuntimeView.metricCount + towerV3RuntimeView.valueRecordCount
+      : (budgetRollups?.length ?? 0);
   const showLegacyTowerMasthead = !(
     activeTab === "portfolio" &&
     towerMartView &&
@@ -10190,118 +11239,118 @@ export function TowerIndexPage({
       <div style={{ minWidth: 0, padding: 0 }}>
         {/* Masthead */}
         {showLegacyTowerMasthead ? (
-        <div
-          style={{
-            padding: "28px 40px 24px",
-            maxWidth: 1080,
-            margin: "0 auto",
-          }}
-        >
           <div
             style={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              gap: 24,
+              padding: "28px 40px 24px",
+              maxWidth: 1080,
+              margin: "0 auto",
             }}
           >
-            <div style={{ minWidth: 0 }}>
-              <div
-                style={{
-                  fontFamily: T.MONO,
-                  fontSize: 11,
-                  letterSpacing: "0.12em",
-                  fontWeight: 600,
-                  color: T.GOLD,
-                  textTransform: "uppercase",
-                  marginBottom: 11,
-                }}
-              >
-                Tower
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 24,
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontFamily: T.MONO,
+                    fontSize: 11,
+                    letterSpacing: "0.12em",
+                    fontWeight: 600,
+                    color: T.GOLD,
+                    textTransform: "uppercase",
+                    marginBottom: 11,
+                  }}
+                >
+                  Tower
+                </div>
+                <h1
+                  style={{
+                    fontFamily: T.SERIF,
+                    fontSize: 40,
+                    fontWeight: 500,
+                    letterSpacing: "-0.025em",
+                    lineHeight: 1.03,
+                    margin: 0,
+                    color: T.INK,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  CXO Executive Dashboard
+                </h1>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 11,
+                    marginTop: 10,
+                    flexWrap: "wrap",
+                    color: T.INK_2,
+                    fontSize: 14,
+                    fontWeight: 400,
+                    lineHeight: 1.35,
+                  }}
+                >
+                  <span style={{ fontFamily: T.SERIF, fontWeight: 500 }}>
+                    {towerMastheadName}
+                  </span>
+                  <span style={{ color: T.GRAY }}>·</span>
+                  <em>Every number citable.</em>
+                  {towerEntityCount > 0 ? (
+                    <>
+                      <span style={{ color: T.GRAY }}>·</span>
+                      <span>
+                        {towerEntityCount}
+                        {towerV3RuntimeView
+                          ? ` context record${towerEntityCount === 1 ? "" : "s"}`
+                          : towerMartView
+                            ? ` portfolio item${towerEntityCount === 1 ? "" : "s"}`
+                            : ` entit${towerEntityCount === 1 ? "y" : "ies"}`}
+                      </span>
+                    </>
+                  ) : null}
+                  {towerBudgetEnvelope ? (
+                    <>
+                      <span style={{ color: T.GRAY }}>·</span>
+                      <span>
+                        <b
+                          style={{
+                            color: T.INK,
+                            fontVariantNumeric: "tabular-nums",
+                          }}
+                        >
+                          {towerBudgetEnvelope.displayValue}
+                        </b>{" "}
+                        FY26 in view
+                      </span>
+                    </>
+                  ) : null}
+                </div>
+                <div
+                  style={{
+                    marginTop: 12,
+                    color: T.INK_2,
+                    fontSize: 13,
+                    fontWeight: 520,
+                    lineHeight: 1.35,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Budget, top programs, value proof, vendor exposure, and risks
+                  the CIO should inspect this week.
+                </div>
               </div>
-              <h1
-                style={{
-                  fontFamily: T.SERIF,
-                  fontSize: 40,
-                  fontWeight: 500,
-                  letterSpacing: "-0.025em",
-                  lineHeight: 1.03,
-                  margin: 0,
-                  color: T.INK,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                CXO Executive Dashboard
-              </h1>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 11,
-                  marginTop: 10,
-                  flexWrap: "wrap",
-                  color: T.INK_2,
-                  fontSize: 14,
-                  fontWeight: 400,
-                  lineHeight: 1.35,
-                }}
-              >
-                <span style={{ fontFamily: T.SERIF, fontWeight: 500 }}>
-                  {towerMastheadName}
-                </span>
-                <span style={{ color: T.GRAY }}>·</span>
-                <em>Every number citable.</em>
-                {towerEntityCount > 0 ? (
-                  <>
-                    <span style={{ color: T.GRAY }}>·</span>
-                    <span>
-                      {towerEntityCount}
-                      {towerV3RuntimeView
-                        ? ` context record${towerEntityCount === 1 ? "" : "s"}`
-                        : towerMartView
-                        ? ` portfolio item${towerEntityCount === 1 ? "" : "s"}`
-                        : ` entit${towerEntityCount === 1 ? "y" : "ies"}`}
-                    </span>
-                  </>
-                ) : null}
-                {towerBudgetEnvelope ? (
-                  <>
-                    <span style={{ color: T.GRAY }}>·</span>
-                    <span>
-                      <b
-                        style={{
-                          color: T.INK,
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {towerBudgetEnvelope.displayValue}
-                      </b>{" "}
-                      FY26 in view
-                    </span>
-                  </>
-                ) : null}
-              </div>
-              <div
-                style={{
-                  marginTop: 12,
-                  color: T.INK_2,
-                  fontSize: 13,
-                  fontWeight: 520,
-                  lineHeight: 1.35,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                Budget, top programs, value proof, vendor exposure, and risks
-                the CIO should inspect this week.
-              </div>
+              {reportDownloadSlot ? (
+                <div style={{ flex: "0 0 auto" }}>{reportDownloadSlot}</div>
+              ) : null}
             </div>
-            {reportDownloadSlot ? (
-              <div style={{ flex: "0 0 auto" }}>{reportDownloadSlot}</div>
-            ) : null}
           </div>
-        </div>
         ) : null}
 
         {activeTab === "portfolio" ? (

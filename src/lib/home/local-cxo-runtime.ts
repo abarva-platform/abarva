@@ -28,6 +28,13 @@ interface StandardDimensionConfig {
   columns: string[];
 }
 
+interface LocalInputRoot {
+  absolutePath: string;
+  datasetDir: string;
+  contractLabel: string;
+  runtimeSource: "local-v3-active" | "local-v3-standard";
+}
+
 interface ApprovedStoryPayload {
   tenant_key: string;
   validation?: { status?: string };
@@ -82,14 +89,21 @@ const LOCAL_CONTEXTS: Record<string, LocalContextConfig> = {
     displayName: "Airline Demo",
     legacyArtifactStoreDir:
       "datasets/context-artifacts/approved/skyharbor-air/home-knowledge",
-    requiresApprovedStoryBlocks: true,
+    requiresApprovedStoryBlocks: false,
   },
   "first-capital": {
-    tenantKey: "first-capital",
+    tenantKey: "first-capital-financial",
     displayName: "FS Demo",
     legacyArtifactStoreDir:
       "datasets/context-artifacts/approved/first-capital/home-knowledge",
-    requiresApprovedStoryBlocks: true,
+    requiresApprovedStoryBlocks: false,
+  },
+  "first-capital-financial": {
+    tenantKey: "first-capital-financial",
+    displayName: "FS Demo",
+    legacyArtifactStoreDir:
+      "datasets/context-artifacts/approved/first-capital/home-knowledge",
+    requiresApprovedStoryBlocks: false,
   },
   "meridian-health": {
     tenantKey: "meridian-health",
@@ -367,13 +381,8 @@ export function getLocalCxoRuntimeBrowser(
   const config = resolveLocalContextConfig(tenantKey);
   if (!config) return null;
 
-  const standardRoot = path.join(
-    process.cwd(),
-    "datasets/tenant-inputs",
-    config.tenantKey,
-    "standard-2026-07-v3",
-  );
-  if (!existsSync(standardRoot)) return null;
+  const inputRoot = resolveLocalInputRoot(config);
+  if (!inputRoot) return null;
 
   const approvedContent = readApprovedHomeContent(config);
   const storyBlocks = approvedContent.storyBlocks;
@@ -385,8 +394,12 @@ export function getLocalCxoRuntimeBrowser(
     [];
 
   for (const dimensionConfig of STANDARD_DIMENSIONS) {
-    const sourceFile = dimensionConfig.file;
-    const sourcePath = path.join(standardRoot, sourceFile);
+    const sourceFile = resolveDimensionSourceFile(
+      inputRoot.absolutePath,
+      dimensionConfig.file,
+    );
+    if (!sourceFile) continue;
+    const sourcePath = path.join(inputRoot.absolutePath, sourceFile);
     if (!existsSync(sourcePath)) continue;
     const rows = readCsv(readFileSync(sourcePath, "utf8")).filter(
       isDefaultRuntimeRow,
@@ -430,17 +443,66 @@ export function getLocalCxoRuntimeBrowser(
 
   return {
     tenantKey: config.tenantKey,
-    displayName: displayNameFromProfile(standardRoot) || config.displayName,
-    datasetDir: `datasets/tenant-inputs/${config.tenantKey}/standard-2026-07-v3`,
-    generatedAt: generatedAtForStandardInputs(standardRoot),
-    contractLabel: "Local standard v3",
-    runtimeSource: "local-v3-standard",
+    displayName:
+      displayNameFromProfile(inputRoot.absolutePath) || config.displayName,
+    datasetDir: inputRoot.datasetDir,
+    generatedAt: generatedAtForStandardInputs(inputRoot.absolutePath),
+    contractLabel: inputRoot.contractLabel,
+    runtimeSource: inputRoot.runtimeSource,
     cxoContentSource: approvedContent.source,
     cxoStoryBlocks: storyBlocks ?? undefined,
     cxoVisualSpecs: visualSpecs,
     bindingContext,
     dimensions,
   };
+}
+
+function resolveLocalInputRoot(
+  config: LocalContextConfig,
+): LocalInputRoot | null {
+  const candidates: LocalInputRoot[] = [
+    {
+      absolutePath: path.join(
+        process.cwd(),
+        "datasets/tenant-inputs/active",
+        config.tenantKey,
+        "current",
+      ),
+      datasetDir: `datasets/tenant-inputs/active/${config.tenantKey}/current`,
+      contractLabel: "Active standard v3 context",
+      runtimeSource: "local-v3-active",
+    },
+    {
+      absolutePath: path.join(
+        process.cwd(),
+        "datasets/tenant-inputs",
+        config.tenantKey,
+        "standard-2026-07-v3",
+      ),
+      datasetDir: `datasets/tenant-inputs/${config.tenantKey}/standard-2026-07-v3`,
+      contractLabel: "Local standard v3",
+      runtimeSource: "local-v3-standard",
+    },
+  ];
+  return (
+    candidates.find((candidate) => existsSync(candidate.absolutePath)) ?? null
+  );
+}
+
+const ACTIVE_DIMENSION_FILE_ALIASES: Record<string, string[]> = {
+  "08_it_budget_spend_value.csv": ["08_spend_value.csv"],
+  "17_managed_services_scope.csv": ["17_service_scope_managed_services.csv"],
+};
+
+function resolveDimensionSourceFile(
+  root: string,
+  canonicalFile: string,
+): string | null {
+  const candidates = [
+    canonicalFile,
+    ...(ACTIVE_DIMENSION_FILE_ALIASES[canonicalFile] ?? []),
+  ];
+  return candidates.find((file) => existsSync(path.join(root, file))) ?? null;
 }
 
 export function getStoredKnowledgeHomeInsightSummary(
@@ -697,11 +759,13 @@ function isDefaultRuntimeRow(row: Record<string, string>): boolean {
 function displayNameFromProfile(standardRoot: string): string | null {
   const profilePath = path.join(standardRoot, "00_enterprise_profile.csv");
   if (!existsSync(profilePath)) return null;
-  const profile = readCsv(readFileSync(profilePath, "utf8")).find(
+  for (const profile of readCsv(readFileSync(profilePath, "utf8")).filter(
     isDefaultRuntimeRow,
-  );
-  const name = display(profile?.business_name);
-  return name === "Needs evidence" ? null : name;
+  )) {
+    const name = firstDisplayValue(profile.business_name, profile.entity_name);
+    if (name) return name;
+  }
+  return null;
 }
 
 function generatedAtForStandardInputs(standardRoot: string): string {
@@ -737,6 +801,9 @@ function toSourceRow(
     row.system_name,
     row.data_asset_name,
     row.vendor_name,
+    row.program_name,
+    row.use_case_name,
+    row.risk_or_control_name,
     row.ai_use_case,
     row.priority_name,
     row.metric_name,

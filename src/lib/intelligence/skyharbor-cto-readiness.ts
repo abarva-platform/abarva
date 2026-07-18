@@ -58,56 +58,74 @@ export interface SkyHarborCtoReadinessPacket {
 
 export type V6Record = Record<string, string>;
 
-const REQUIRED_SOURCE_FILES = [
-  "V6_02_business_functions.csv",
-  "V6_03_org_ownership.csv",
-  "V6_04_workforce_personas.csv",
-  "V6_05_applications_systems.csv",
-  "V6_06_data_assets_integrations.csv",
-  "V6_08_spend_value.csv",
-  "V6_09_programs_initiatives.csv",
-  "V6_10_ai_initiatives.csv",
-  "V6_11_operations_risk_controls.csv",
-  "V6_12_relationships.csv",
-  "V6_13_evidence_sources.csv",
-  "V6_14_metric_definitions.csv",
-  "V6_15_industry_corpus_patterns.csv",
-  "V6_16_expert_lenses.csv",
-] as const;
+const ACTIVE_SOURCE_FILES = {
+  systems: "04_applications_systems.csv",
+  dataAssets: "05_data_assets_integrations.csv",
+  aiInitiatives: "10_ai_automation_use_cases.csv",
+  programs: "09_programs_initiatives.csv",
+  spend: "08_spend_value.csv",
+  risksControls: "11_risks_controls.csv",
+  relationships: "12_relationships.csv",
+  evidenceSources: "13_evidence_sources.csv",
+  metrics: "14_metrics_outcomes.csv",
+  industryPatterns: "15_industry_context_patterns.csv",
+  expertLenses: "16_expert_lenses.csv",
+} as const;
+
+const LEGACY_SOURCE_FILES = {
+  systems: "V6_05_applications_systems.csv",
+  dataAssets: "V6_06_data_assets_integrations.csv",
+  aiInitiatives: "V6_10_ai_initiatives.csv",
+  programs: "V6_09_programs_initiatives.csv",
+  spend: "V6_08_spend_value.csv",
+  risksControls: "V6_11_operations_risk_controls.csv",
+  relationships: "V6_12_relationships.csv",
+  evidenceSources: "V6_13_evidence_sources.csv",
+  metrics: "V6_14_metric_definitions.csv",
+  industryPatterns: "V6_15_industry_corpus_patterns.csv",
+  expertLenses: "V6_16_expert_lenses.csv",
+} as const;
+
+type SkyHarborPacketFileKey = keyof typeof ACTIVE_SOURCE_FILES;
+
+type SkyHarborLoadedContext = {
+  rows: Record<SkyHarborPacketFileKey, V6Record[]>;
+  sourceFiles: string[];
+};
 
 const BRANCH_MARKER = "[DECISION_BRANCH]";
 
 export function buildSkyHarborCtoReadinessPacket(
   repoRoot = process.cwd(),
 ): SkyHarborCtoReadinessPacket {
-  const datasetRoot = path.join(
-    repoRoot,
-    "datasets",
-    "skyharbor-air-synthetic-v6",
-    "templates",
+  const loaded = loadSkyHarborCtoContext(repoRoot);
+  if (!loaded) {
+    throw new Error(
+      "SkyHarbor active CTO readiness context is unavailable. Active tenant context must be generated before this source can be attached.",
+    );
+  }
+  const files = loaded.rows;
+  const systems = filterCto(files.systems);
+  const dataAssets = filterCto(files.dataAssets);
+  const aiInitiatives = filterCto(files.aiInitiatives);
+  const programs = filterCto(files.programs);
+  const spend = filterCto(files.spend);
+  const risksControls = filterCto(files.risksControls);
+  const relationships = filterCto(files.relationships);
+  const evidenceSources = filterCto(files.evidenceSources);
+  const expertLenses = files.expertLenses.filter((row) =>
+    clean(
+      firstValue(row, "expert_lens_name", "business_name", "industry_context"),
+    ),
   );
-  const files = Object.fromEntries(
-    REQUIRED_SOURCE_FILES.map((file) => [file, readV6File(datasetRoot, file)]),
-  );
-  const systems = filterCto(files["V6_05_applications_systems.csv"]);
-  const dataAssets = filterCto(files["V6_06_data_assets_integrations.csv"]);
-  const aiInitiatives = filterCto(files["V6_10_ai_initiatives.csv"]);
-  const programs = filterCto(files["V6_09_programs_initiatives.csv"]);
-  const spend = filterCto(files["V6_08_spend_value.csv"]);
-  const risksControls = filterCto(files["V6_11_operations_risk_controls.csv"]);
-  const relationships = filterCto(files["V6_12_relationships.csv"]);
-  const evidenceSources = filterCto(files["V6_13_evidence_sources.csv"]);
-  const expertLenses = files["V6_16_expert_lenses.csv"].filter((row) =>
-    clean(row.expert_lens_name),
-  );
-  const industryPatterns = files["V6_15_industry_corpus_patterns.csv"]
+  const industryPatterns = files.industryPatterns
     .filter((row) =>
       /irops|crew|recovery|autonomous|agentic/i.test(
         Object.values(row).join(" "),
       ),
     )
     .slice(0, 10);
-  const metrics = files["V6_14_metric_definitions.csv"]
+  const metrics = files.metrics
     .filter((row) =>
       /disruption recovery|completion factor|crew utilization|on-time|technical dispatch/i.test(
         Object.values(row).join(" "),
@@ -163,7 +181,7 @@ export function buildSkyHarborCtoReadinessPacket(
       industryPatterns,
     }),
     branch,
-    sourceFiles: [...REQUIRED_SOURCE_FILES],
+    sourceFiles: loaded.sourceFiles,
   };
 }
 
@@ -222,7 +240,7 @@ export function composeSkyHarborCtoAnswer(
       .map((row) => row.data_asset_name)
       .join(", ")}; and ${packet.aiInitiatives
       .slice(0, 3)
-      .map((row) => row.use_case)
+      .map((row) => firstValue(row, "use_case", "use_case_name"))
       .join(", ")}.`,
     `Assumption-led or missing: ${packet.missingEvidenceChecklist.slice(0, 4).join(" ")}`,
     `What would make it board-grade: Finance signoff is required for disruption cost and value; client owners must also sign off on data freshness, model-risk tier, HITL control, vendor-system links, and realized value evidence.`,
@@ -388,18 +406,61 @@ function buildClaimMaturity(inputs: {
 }
 
 function filterCto(rows: V6Record[]): V6Record[] {
-  return rows.filter((row) =>
+  const preferred = rows.filter((row) =>
     /SHA-(SYS|DATA|AI|PROG|SPEND|RISK|REL|EVID)-CTO-/i.test(
       row.record_id ?? "",
     ),
   );
+  if (preferred.length) return preferred;
+  return rows.filter((row) =>
+    Object.values(row).some((value) =>
+      /irops|irregular|crew|recovery|passenger|reaccommodation|mainframe|operations|flight|airport|maintenance|baggage|revenue management|mro/i.test(
+        String(value ?? ""),
+      ),
+    ),
+  );
 }
 
-function readV6File(root: string, file: string): V6Record[] {
-  const filePath = path.join(root, file);
-  if (!existsSync(filePath))
-    throw new Error(`Missing SkyHarbor context file: ${filePath}`);
-  return parseCsv(readFileSync(filePath, "utf8"));
+function loadSkyHarborCtoContext(
+  repoRoot: string,
+): SkyHarborLoadedContext | null {
+  const activeRoot = path.join(
+    repoRoot,
+    "datasets",
+    "tenant-inputs",
+    "active",
+    "skyharbor-air",
+    "current",
+  );
+  const active = readSourceFileSet(activeRoot, ACTIVE_SOURCE_FILES);
+  if (active) return active;
+
+  const legacyRoot = path.join(
+    repoRoot,
+    "datasets",
+    "skyharbor-air-synthetic-v6",
+    "templates",
+  );
+  return readSourceFileSet(legacyRoot, LEGACY_SOURCE_FILES);
+}
+
+function readSourceFileSet(
+  root: string,
+  files: Record<SkyHarborPacketFileKey, string>,
+): SkyHarborLoadedContext | null {
+  if (!existsSync(root)) return null;
+  const entries = Object.entries(files) as Array<
+    [SkyHarborPacketFileKey, string]
+  >;
+  const rows = {} as Record<SkyHarborPacketFileKey, V6Record[]>;
+  const sourceFiles: string[] = [];
+  for (const [key, file] of entries) {
+    const filePath = path.join(root, file);
+    if (!existsSync(filePath)) return null;
+    rows[key] = parseCsv(readFileSync(filePath, "utf8"));
+    sourceFiles.push(path.relative(process.cwd(), filePath));
+  }
+  return { rows, sourceFiles };
 }
 
 function parseCsv(text: string): V6Record[] {
@@ -444,4 +505,12 @@ function clean(value: unknown): string {
   const text = String(value ?? "").trim();
   if (!text || text.startsWith("data_thin:")) return "";
   return text;
+}
+
+function firstValue(row: V6Record, ...keys: string[]): string {
+  for (const key of keys) {
+    const value = clean(row[key]);
+    if (value) return value;
+  }
+  return "";
 }
