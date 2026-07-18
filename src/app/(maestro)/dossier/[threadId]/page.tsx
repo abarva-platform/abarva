@@ -101,6 +101,55 @@ export default async function DecisionDossierPage({ params }: PageProps) {
           })}
         </section>
 
+        <section style={optionsSectionStyle}>
+          <div style={sectionTopStyle}>
+            <div>
+              <div style={eyebrowStyle}>Key Design Decision</div>
+              <h2 style={sectionTitleStyle}>Selected and rejected options</h2>
+            </div>
+            <span style={badgeStyle}>
+              {dossier.options.length} option{dossier.options.length === 1 ? '' : 's'}
+            </span>
+          </div>
+          {dossier.options.length === 0 ? (
+            <p style={emptyStyle}>
+              No KDD options are recorded yet. Use a Move phase gate to record the selected path and rejected alternatives.
+            </p>
+          ) : (
+            <div style={optionGridStyle}>
+              {dossier.options.map((option) => (
+                <article
+                  key={option.id}
+                  style={option.is_selected ? selectedOptionStyle : optionStyle}
+                >
+                  <div style={optionHeaderStyle}>
+                    <strong>{option.label}</strong>
+                    <span style={option.is_selected ? selectedBadgeStyle : rejectedBadgeStyle}>
+                      {option.is_selected ? 'Selected' : 'Rejected'}
+                    </span>
+                  </div>
+                  {option.rationale_for ? (
+                    <p style={optionTextStyle}>
+                      <b>For:</b> {option.rationale_for}
+                    </p>
+                  ) : null}
+                  {option.rationale_against ? (
+                    <p style={optionTextStyle}>
+                      <b>Against:</b> {option.rationale_against}
+                    </p>
+                  ) : null}
+                  {option.decided_by ? (
+                    <div style={metaStyle}>
+                      Recorded by {option.decided_by}
+                      {option.decided_at ? ` on ${new Date(option.decided_at).toLocaleDateString()}` : ''}
+                    </div>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
         <section style={sectionGridStyle}>
           {SECTION_ORDER.map((section) => {
             const links = dossier.links.filter((link) => link.surface === section.key);
@@ -250,6 +299,14 @@ const timelineStyle = { display: 'grid', gridTemplateColumns: 'repeat(4, minmax(
 const stepStyle = { background: '#fff', border: '1px solid #d7d2c6', borderRadius: 8, padding: 14 } as const;
 const stepLabelStyle = { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#667085', fontWeight: 800 } as const;
 const stepCountStyle = { marginTop: 6, fontSize: 24, fontWeight: 900 } as const;
+const optionsSectionStyle = { background: '#fff', border: '1px solid #d7d2c6', borderRadius: 8, padding: 18, marginTop: 14 } as const;
+const optionGridStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10, marginTop: 14 } as const;
+const optionStyle = { display: 'grid', gap: 8, border: '1px solid #e4e0d7', borderRadius: 8, padding: 14, background: '#fffdf8' } as const;
+const selectedOptionStyle = { ...optionStyle, border: '1px solid #98d9bd', background: '#effaf5' } as const;
+const optionHeaderStyle = { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 } as const;
+const selectedBadgeStyle = { display: 'inline-flex', border: '1px solid #98d9bd', borderRadius: 999, padding: '3px 8px', background: '#dff4ea', color: '#067647', fontSize: 11, fontWeight: 850, whiteSpace: 'nowrap' } as const;
+const rejectedBadgeStyle = { display: 'inline-flex', border: '1px solid #d0d5dd', borderRadius: 999, padding: '3px 8px', background: '#f9fafb', color: '#475467', fontSize: 11, fontWeight: 850, whiteSpace: 'nowrap' } as const;
+const optionTextStyle = { margin: 0, color: '#344054', fontSize: 13, lineHeight: 1.45 } as const;
 const sectionGridStyle = { display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 14, marginTop: 14 } as const;
 const sectionStyle = { background: '#fff', border: '1px solid #d7d2c6', borderRadius: 8, padding: 18, minHeight: 260 } as const;
 const sectionTopStyle = { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 } as const;

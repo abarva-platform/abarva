@@ -29,9 +29,22 @@ export interface DecisionThreadLinkRow {
   link_reason: string | null;
 }
 
+export interface DecisionThreadOptionRow {
+  id: string;
+  thread_id: string;
+  label: string;
+  rationale_for: string | null;
+  rationale_against: string | null;
+  is_selected: boolean;
+  decided_by: string | null;
+  decided_at: string | null;
+  created_at: string;
+}
+
 export interface DecisionThreadDossier {
   thread: DecisionThreadRow;
   links: DecisionThreadLinkRow[];
+  options: DecisionThreadOptionRow[];
   proofPointCounts: Record<string, number>;
 }
 
@@ -87,6 +100,14 @@ interface LinkGeneratedArtifactInput {
   artifactType: GeneratedArtifactType;
   title: string;
   linkedBy?: string;
+}
+
+export interface RecordDecisionOptionInput {
+  label: string;
+  rationaleFor?: string | null;
+  rationaleAgainst?: string | null;
+  isSelected?: boolean;
+  decidedBy?: string | null;
 }
 
 function normalizeSlugPart(value: string): string {
@@ -292,6 +313,49 @@ export async function linkGeneratedArtifactToDecisionThread(input: LinkGenerated
   return thread;
 }
 
+export async function recordDecisionOptions(
+  threadId: string,
+  options: RecordDecisionOptionInput[],
+): Promise<DecisionThreadOptionRow[]> {
+  const normalizedOptions = options
+    .map((option) => ({
+      label: option.label.trim(),
+      rationale_for: option.rationaleFor?.trim() || null,
+      rationale_against: option.rationaleAgainst?.trim() || null,
+      is_selected: option.isSelected === true,
+      decided_by: option.decidedBy?.trim() || null,
+      decided_at: option.isSelected === true ? new Date().toISOString() : null,
+    }))
+    .filter((option) => option.label.length > 0);
+
+  if (normalizedOptions.length < 2) {
+    throw new Error("decision options require at least two labeled alternatives");
+  }
+  if (normalizedOptions.filter((option) => option.is_selected).length !== 1) {
+    throw new Error("decision options require exactly one selected alternative");
+  }
+
+  const supabase = getAzureWriteFluentClient();
+  const { error: deleteError } = await supabase
+    .from('decision_thread_options')
+    .delete()
+    .eq('thread_id', threadId);
+  if (deleteError) throw new Error(`decision options replace failed: ${deleteError.message}`);
+
+  const rows = normalizedOptions.map((option) => ({
+    thread_id: threadId,
+    ...option,
+  }));
+  const { data, error } = await supabase
+    .from('decision_thread_options')
+    .insert(rows)
+    .select('*');
+  if (error) throw new Error(`decision options insert failed: ${error.message}`);
+
+  await touchThread(threadId);
+  return (data ?? []) as DecisionThreadOptionRow[];
+}
+
 export async function getDecisionThreadDossier(threadId: string): Promise<DecisionThreadDossier | null> {
   const supabase = getAzureWriteFluentClient();
   const { data: thread, error: threadError } = await supabase
@@ -310,6 +374,13 @@ export async function getDecisionThreadDossier(threadId: string): Promise<Decisi
   if (linkError) throw new Error(`decision thread links load failed: ${linkError.message}`);
 
   const typedLinks = (links ?? []) as DecisionThreadLinkRow[];
+  const { data: options, error: optionError } = await supabase
+    .from('decision_thread_options')
+    .select('*')
+    .eq('thread_id', threadId)
+    .order('created_at', { ascending: true });
+  if (optionError) throw new Error(`decision thread options load failed: ${optionError.message}`);
+
   const proofEntries = await Promise.all(
     typedLinks.map(async (link) => {
       try {
@@ -324,6 +395,7 @@ export async function getDecisionThreadDossier(threadId: string): Promise<Decisi
   return {
     thread: thread as DecisionThreadRow,
     links: typedLinks,
+    options: (options ?? []) as DecisionThreadOptionRow[],
     proofPointCounts: Object.fromEntries(proofEntries),
   };
 }
