@@ -256,6 +256,50 @@ describe("MovesPhaseStandaloneClient", () => {
         return new Promise<Response>(() => {});
       }
 
+      if (url.includes("/phase-intelligence")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            ok: true,
+            moveId: "37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4",
+            phase: 3,
+            generatedAt: "2026-07-18T00:00:00Z",
+            items: [
+              {
+                id: "decision",
+                eyebrow: "Key design decision",
+                title: "Governed agent workspace",
+                body: "Selected because it balances productivity, control, and adoption.",
+                sourceLabel: "Decision thread",
+                tone: "success",
+                href: "/dossier/thread-1",
+                hrefLabel: "See full decision record",
+                facts: ["3 alternatives captured"],
+              },
+              {
+                id: "strategic_signal",
+                eyebrow: "Strategic signal",
+                title: "Agent-handled productivity improvement",
+                body: "8-22% is a labeled planning range, not a committed target.",
+                sourceLabel: "Member-service Agent Assist Function Pack",
+                tone: "default",
+                facts: ["Measured as: cost per resolved contact"],
+              },
+              {
+                id: "gate_evidence",
+                eyebrow: "Gate and evidence truth",
+                title: "1 hard gate open; 1 required evidence gap.",
+                body: "Upload the missing source file or record a waiver.",
+                sourceLabel: "Governance + evidence readiness",
+                tone: "danger",
+                facts: ["1/2 hard gates met"],
+              },
+            ],
+          }),
+        } as Response;
+      }
+
       return {
         ok: true,
         status: 200,
@@ -767,6 +811,36 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(global.fetch).not.toHaveBeenCalledWith(
       "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/playbook?phase=3",
       expect.anything(),
+    );
+  });
+
+  it("does not load Phase Intelligence until the user opens its workspace tab", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(global.fetch).not.toHaveBeenCalledWith(
+      "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/phase-intelligence?phase=3",
+      expect.anything(),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Phase Intelligence/i }));
+    expect(screen.getByRole("heading", { name: "Phase Intelligence" })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText("Governed agent workspace")).toBeInTheDocument();
+    });
+    expect(screen.getByText(/labeled planning range/)).toBeInTheDocument();
+    expect(screen.getByText("1 hard gate open; 1 required evidence gap.")).toBeInTheDocument();
+    expect(global.fetch).toHaveBeenCalledWith(
+      "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/phase-intelligence?phase=3",
+      expect.objectContaining({ credentials: "include" }),
     );
   });
 
