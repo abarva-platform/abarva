@@ -105,7 +105,7 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
     summary:
       "Nexus/aVa chat inside Moves phase workspaces is grounded by a deterministic MovesAvaChatPacket (checklist, gate criteria, evidence gaps, feed-forward, approved-inputs-pack presence, Source/Tower keyword awareness) instead of a blank prompt, and every answer is post-hoc scanned for banned language (Claude-deflection, internal-ID leaks, workflow-bypass claims). Phase-grounded and workflow-safe by design — Moves aVa never approves/advances a gate, never claims a promotion happened, and stays narrower than Intelligence (broad ad hoc strategy questions get a bounded redirect). Falls back to the existing phase-pack-only prompt on error. Tenant opt-in; default off. Env: ABARVA_FEATURE_MOVES_AVA_CHAT_HARDENING_TENANTS.",
     policy: "tenant",
-    includeTenants: ["lakeshore"],
+    includeTenants: ["lakeshore", "meridian"],
   },
   {
     key: "moves_pattern_assembly",
