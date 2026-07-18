@@ -154,6 +154,22 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     expect(answer).not.toContain("Move: Move");
   });
 
+  it("strips nested model labels even when the answer is already short", () => {
+    const answer = ensureAbarvaSolutionBrief(
+      [
+        "Answer: Healthcare Demo should proceed conditionally.",
+        "Proof: Proof. The loaded evidence supports the KPI logic but not production readiness.",
+        "Move: Move. Home should validate the evidence gaps before Moves opens execution planning. Intelligence, Home, Moves, Source, and Tower each have a role.",
+      ].join("\n\n"),
+    );
+
+    expect(answer).toContain("Answer: Healthcare Demo should proceed");
+    expect(answer).toContain("Proof: The loaded evidence supports");
+    expect(answer).toContain("Move: Home should validate");
+    expect(answer).not.toContain("Proof: Proof");
+    expect(answer).not.toContain("Move: Move");
+  });
+
   it("deterministically appends the Moves P0-P5 phase plan when Claude omits it", () => {
     const answer = applyCxoAnswerModeFallbacks(
       "**Lakeshore Holdings should run this as a Moves sprint.**",

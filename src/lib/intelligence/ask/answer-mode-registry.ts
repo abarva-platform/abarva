@@ -231,9 +231,16 @@ function ensureNoDuplicateSurfaceSentence(sentence: string): string {
     : `${withTerminalPunctuation(sentence)} ${ABARVA_SURFACE_PLAN_SENTENCE}`;
 }
 
+function stripNestedBriefLabels(text: string): string {
+  return text.replace(
+    /((?:\*\*)?(?:Answer|Proof|Move):?(?:\*\*)?:?\s+)(?:Answer|Proof|Move)\.?\s+/gi,
+    "$1",
+  );
+}
+
 export function ensureAbarvaSolutionBrief(text: string): string {
   const { body, tabs } = splitAnswerTabs(text);
-  const surfaceAligned = ensureAbarvaSurfacePlan(body);
+  const surfaceAligned = stripNestedBriefLabels(ensureAbarvaSurfacePlan(body));
   const paragraphCount = surfaceAligned
     .split(/\n{2,}/)
     .map((paragraph) => paragraph.trim())
@@ -301,7 +308,7 @@ export function ensureAbarvaSolutionBrief(text: string): string {
     `**Move:** ${compactSentence(ensureNoDuplicateSurfaceSentence(move), 72)}`,
   ].join("\n\n");
 
-  return [compactBody, tabs].filter(Boolean).join("\n\n");
+  return [stripNestedBriefLabels(compactBody), tabs].filter(Boolean).join("\n\n");
 }
 
 const COMMON_BANNED_PHRASES = [
