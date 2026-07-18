@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released` — merged, deployed, and live signed-in proof confirmed 2026-07-18.
 
 ## Plain-English Summary
 
@@ -41,21 +41,22 @@ The server already has the correct escape hatch for exactly this situation: a `s
 - Pass: `npx jest src/components/source/approval src/lib/source/gate-advance-contract src/app/api/v1/source/events` (broader sweep) — 14/14, no regressions.
 - No server-side code changed — `evaluateSourceGateAdvanceContract`/the `/approve` route's handling of `selfApproveIfAuthorized` and `GATE_APPROVAL_STRICT_MODE` were read and confirmed correct as-is; this release only fixes the client's failure to send a flag the server was already built to receive and validate.
 - Found and root-caused via a live signed-in walkthrough on the FS Demo (First Capital) tenant — reproduced the exact 409/red-error blocker end to end before diagnosing and fixing it.
-- Not run: automated live signed-in browser proof (no valid local Clerk session in this sandboxed environment) — the live reproduction above was done by the user directly in their own real browser session, not by me.
+- Blocked (local only): automated live signed-in browser proof — no valid local Clerk session in this sandboxed environment (private VNet Postgres unreachable from localhost, a standing environment limitation).
+- **Pass — production live signed-in proof, 2026-07-18**: after this PR deployed, Anand created a fresh Source event (`ARCT-AMS-2026-E9DFC651`) on FS Demo and self-approved the intake as the event creator — it succeeded, with no "Sourcing strategy memo signed by sponsor is pending" blocker, and the working canvas unlocked at Stage 2 (Scope). This is the exact scenario that failed with a 409 before this fix. Screenshot in this session's transcript.
 
 ## Rollout Plan
 
-Merge to `main`, deploy through the repo-owned ACA main deploy workflow. No data migration, no flag, no worker job.
+Merged to `main`, deployed through the repo-owned ACA main deploy workflow. No data migration, no flag, no worker job.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: required.
+- Repo-owned deploy workflow: used.
 - Shared runtime mutators: none.
-- Approved image digest: produced by the ACA main deploy workflow after merge.
-- ACA runtime invariant: required after deploy.
+- Approved image digest: `sha256:60354d42ffe880fb7156308813c4525661756009add8d361498d1f1ec8d47095`.
+- ACA runtime invariant: confirmed — `ca-abarva-web-lab-eastus--m782bbed4` (merge commit `782bbed4e2166d6c046cd28c81992fd6eeea9f14`) is the active revision at 100% traffic, running the approved digest above.
 - Worker image invariant: not applicable.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes — create a fresh Source event on any pilot tenant, self-approve the intake as the creator, confirm it succeeds and the working canvas unlocks (no more red "Sourcing strategy memo signed by sponsor is pending" blocker on this first approval).
+- Live signed-in proof required: yes — **done**, see QA/Validation above.
 
 ## Rollback Plan
 
@@ -66,8 +67,8 @@ Revert this PR and redeploy through the ACA main deploy workflow. No data or sch
 - This PR's diff.
 - `EventApprovalCard.test.tsx` full pass (5/5) plus broader sweep (14/14).
 - Live reproduction of the bug end-to-end on FS Demo, screenshots in this session's transcript.
-- ACA main deploy run after merge.
-- Post-deploy live signed-in proof (pending).
+- ACA main deploy run (`aca-main-deploy.yml`, headSha `782bbed4e2166d6c046cd28c81992fd6eeea9f14`) — completed, success.
+- Post-deploy live signed-in proof: self-approval succeeded on `ARCT-AMS-2026-E9DFC651`, working canvas unlocked, 2026-07-18.
 
 ## Known Gaps
 
