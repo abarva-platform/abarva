@@ -453,7 +453,7 @@ export function AdvisoryIntelligencePage({
     <AvaChatShell
       surface="intelligence"
       agent={AVA_INTELLIGENCE_AGENT}
-      placeholder={viewModel.askPlaceholder}
+      placeholder="Ask aVa"
       defaultLeftPercent={40}
       minLeftPx={380}
       thread={thread}

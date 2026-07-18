@@ -1275,6 +1275,13 @@ export function AgentDock(props: AgentDockProps) {
           </div>
         ) : null}
 
+        <div
+          style={COMPOSER_DISCLAIMER_STYLE}
+          data-testid="agent-dock-disclaimer"
+        >
+          aVa can make mistakes. Check important info.
+        </div>
+
         {/* Composer */}
         <form
           onSubmit={submit}
@@ -1290,8 +1297,9 @@ export function AgentDock(props: AgentDockProps) {
             disabled={submitting}
             style={ATTACH_BUTTON_STYLE}
           >
-            {/* Inline paperclip glyph */}
-            <PaperclipIcon />
+            <span aria-hidden="true" style={ATTACH_PLUS_STYLE}>
+              +
+            </span>
           </button>
           <input
             ref={fileInputRef}
@@ -1306,7 +1314,6 @@ export function AgentDock(props: AgentDockProps) {
               e.target.value = "";
             }}
           />
-          <AvaAskMark style={AVA_MARK_STYLE} />
           <textarea
             ref={inputRef}
             value={draft}
@@ -1784,23 +1791,6 @@ function formatBytes(n: number): string {
 
 // ── Inline icons ──────────────────────────────────────────────────────────
 
-function PaperclipIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 17.93 8.83l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-    </svg>
-  );
-}
 function SideRailIcon() {
   // PanelLeft-equivalent
   return (
@@ -2157,11 +2147,12 @@ const SUGGESTIONS_STYLE: CSSProperties = {
   gap: 6,
   padding: "12px 18px",
   borderTop: `1px solid ${CANVAS.HAIRLINE}`,
-  flex: "0 1 auto",
+  flex: "0 0 auto",
   maxHeight: "min(28vh, 220px)",
   overflowY: "auto",
   overscrollBehavior: "contain",
   background: CANVAS.CHAT_BG,
+  scrollPaddingBottom: 12,
 };
 
 const SUGGESTIONS_LABEL_STYLE: CSSProperties = {
@@ -2195,7 +2186,7 @@ const CHIPS_ROW_STYLE: CSSProperties = {
   gap: 6,
   padding: "8px 18px",
   borderTop: `1px solid ${CANVAS.HAIRLINE}`,
-  flex: "0 1 auto",
+  flex: "0 0 auto",
   maxHeight: "min(22vh, 180px)",
   overflowY: "auto",
   overscrollBehavior: "contain",
@@ -2331,23 +2322,35 @@ const CHIP_SPINNER_STYLE: CSSProperties = {
   animation: "agent-dock-spin 800ms linear infinite",
 };
 
-// Composer · `flex: 0 0 auto` keeps it pinned at the bottom of the panel's
-// flex column without needing `position: sticky`. The parent shell already
-// caps overall height, so the composer cannot fall below the fold.
-//
-// Background matches CHAT_BG so the composer doesn't visually stripe
-// against the thread or panel.
+const COMPOSER_DISCLAIMER_STYLE: CSSProperties = {
+  flex: "0 0 auto",
+  padding: "8px 18px 6px",
+  background: CANVAS.CHAT_BG,
+  color: CANVAS.GRAY_DK,
+  fontFamily: CANVAS.SANS,
+  fontSize: 11,
+  lineHeight: 1.3,
+  textAlign: "center",
+};
+
+// Composer · a GPT-like unified input bar. `position: sticky` is retained as
+// the last guardrail for cramped viewports: the thread and suggestion regions
+// scroll above this bar instead of pushing it below the fold.
 const INPUT_FORM_STYLE: CSSProperties = {
   display: "flex",
-  alignItems: "flex-end",
-  gap: 8,
-  padding: "12px 18px 8px",
-  borderTop: `1px solid ${CANVAS.HAIRLINE}`,
-  background: CANVAS.CHAT_BG,
+  alignItems: "center",
+  gap: 10,
+  minHeight: 54,
+  margin: "0 18px 14px",
+  padding: "7px 8px",
+  border: `1px solid ${CANVAS.RULE}`,
+  borderRadius: 999,
+  background: CANVAS.CARD,
+  boxShadow: "0 10px 30px rgba(12, 26, 58, 0.10)",
   flex: "0 0 auto",
   position: "sticky",
-  bottom: 0,
-  zIndex: 2,
+  bottom: 10,
+  zIndex: 3,
 };
 
 const RESPONSIBILITY_FOOTER_WRAP_STYLE: CSSProperties = {
@@ -2363,12 +2366,12 @@ const ACTION_APPROVAL_NOTICE_WRAP_STYLE: CSSProperties = {
 };
 
 const ATTACH_BUTTON_STYLE: CSSProperties = {
-  width: 32,
-  height: 32,
-  borderRadius: 6,
+  width: 36,
+  height: 36,
+  borderRadius: 999,
   background: "transparent",
-  color: CANVAS.GRAY_DK,
-  border: `1px solid ${CANVAS.RULE}`,
+  color: CANVAS.INK_SOFT,
+  border: "none",
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
@@ -2376,24 +2379,27 @@ const ATTACH_BUTTON_STYLE: CSSProperties = {
   flexShrink: 0,
 };
 
-const AVA_MARK_STYLE: CSSProperties = {
-  minWidth: 32,
-  fontSize: 19,
-  alignSelf: "center",
+const ATTACH_PLUS_STYLE: CSSProperties = {
+  display: "block",
+  fontFamily: CANVAS.SANS,
+  fontSize: 28,
+  fontWeight: 300,
+  lineHeight: 1,
+  transform: "translateY(-1px)",
 };
 
 const INPUT_STYLE: CSSProperties = {
   flex: 1,
   fontFamily: CANVAS.SANS,
-  fontSize: 14,
+  fontSize: 15,
   lineHeight: 1.5,
-  padding: "10px 12px",
-  borderRadius: CANVAS.RADIUS_TIGHT,
-  border: `1px solid ${CANVAS.RULE}`,
-  background: CANVAS.CARD,
+  padding: "8px 2px",
+  borderRadius: 0,
+  border: "none",
+  background: "transparent",
   color: CANVAS.INK,
   resize: "none",
-  minHeight: 40,
+  minHeight: 38,
   maxHeight: 160,
   overflowY: "hidden",
   outline: "none",
