@@ -12,7 +12,7 @@
 
 `MOVES-DELIVERABLE-4`, built to the "full lifecycle" scope Anand chose after reviewing the risk. Prior to this release, deliverable approval was three disconnected systems that each looked like they implemented "AI Draft → Client Approved → Source of Truth" but didn't: `move_artifacts` had real file storage but no approval status; `deliverables_v2` had a real sign-off mutation but the generation pipeline's two content-selection queries ignored status entirely (ordered purely by version/recency); and every AI regeneration silently reset a signed-off deliverable's status back to `draft` with no preserved record of what was approved. Nowhere did a human's approval actually change what the next phase read.
 
-This release: (1) adds a durable `signed_off_version` pointer to `deliverables_v2` that survives regeneration, (2) extends the real sign-off route to accept either "approve as-is" or "approve by uploading a replacement file" (linked via a new `approved_artifact_id` column into the existing `move_artifacts` vault), (3) makes the two real generation-pipeline content-selection queries prefer the signed-off version over any later unreviewed draft, and (4) adds a visible "Client Approved · vN" badge in the Documents panel, replacing the "AI Draft" badge once approved (and showing both badges when a newer unreviewed draft exists over a still-standing approval, making the previously-silent clobbering visible instead of hidden).
+This release: (1) adds a durable `signed_off_version` pointer to `deliverables_v2` that survives regeneration, (2) extends the real sign-off route to accept either "approve as-is" or "approve by uploading a replacement file" (linked via a new `approved_artifact_id` column into the existing `move_artifacts` vault), (3) extracts approved replacement-file text and writes it as a new signed-off deliverable version so downstream generation consumes the human-approved content, (4) makes the two real generation-pipeline content-selection queries prefer the signed-off version over any later unreviewed draft, and (5) adds a visible "Client Approved · vN" badge in the Documents panel, replacing the "AI Draft" badge once approved (and showing both badges when a newer unreviewed draft exists over a still-standing approval, making the previously-silent clobbering visible instead of hidden).
 
 ## Layer Impact
 
@@ -30,8 +30,8 @@ This release: (1) adds a durable `signed_off_version` pointer to `deliverables_v
 ## Changes Included
 
 - `supabase/migrations/20260718020000_deliverables_v2_approval_lineage.sql`: additive migration, two nullable columns + an index, no backfill.
-- `src/lib/programs/mutations.ts`: `signOffDeliverable` now sets `signed_off_version` (to the version being approved) and optional `approved_artifact_id`.
-- `src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off/route.ts`: extended to accept an optional multipart file upload, writing it via the existing `saveMoveArtifact` (reused as-is, no new upload logic) with `artifact_family: 'generated_deliverable'`.
+- `src/lib/programs/mutations.ts`: `signOffDeliverable` now sets `signed_off_version` (to the version being approved), optional `approved_artifact_id`, and, when a replacement file has been uploaded, inserts the parsed client-approved text as the next `deliverable_versions` row before signing that version off.
+- `src/app/api/v1/programs/[programId]/deliverables/[deliverableId]/sign-off/route.ts`: extended to accept an optional multipart file upload, parse its content through the existing Programs evidence extraction path, reject non-extractable approved replacements, and write the original file via the existing `saveMoveArtifact` path with `artifact_family: 'generated_deliverable'`.
 - `src/lib/deliverables/deliverable-content-signals.ts`: content-selection query now orders by `(version = signed_off_version) DESC, version DESC` instead of purely `version DESC`.
 - `src/lib/deliverables/moves-generate-deps.ts`: `loadPriorDigests` restructured with `DISTINCT ON (deliverable_type_key)` to return one row per deliverable type (preferring the signed-off version), instead of every version of every deliverable in the engagement with no dedup at all.
 - `src/components/strategic-moves/DeliverableApprovalAction.tsx` (new): client component, "Approve as-is" / "Upload approved version" actions.
@@ -46,6 +46,7 @@ This release: (1) adds a durable `signed_off_version` pointer to `deliverables_v
 - Pass: `deliverable-content-signals.test.ts` — updated the one test asserting the old SQL string to assert the new signed-off-preferring query shape.
 - Pass: `moves-generate-deps.test.ts` — added a new test proving `loadPriorDigests` sends the `DISTINCT ON` + signed-off-preferring query and correctly maps the single deduped row through `structuredDigest`. This function had zero prior test coverage.
 - Pass: `v2-generator.persist-version.test.ts` (new file) — the specific "prove the live-risk path" test called for in the plan: asserts `persistVersion`'s regeneration UPDATE payload is exactly `{current_version, status}` with **no `signed_off_version` key at all** — the concrete mechanism proving a prior approval structurally cannot be clobbered by a later regeneration.
+- Pass: `sign-off-deliverable-approved-upload.test.ts` (new file) — proves a parsed client-approved replacement creates version N+1, updates `current_version`, and signs off that exact version as `signed_off_version`.
 - Pass: `node scripts/release-check.mjs --base origin/main --head HEAD`.
 - Not run: live signed-in browser proof, and no live Postgres available locally to run an actual end-to-end sign-off → regenerate → verify-content-forward cycle against a real database (established constraint this whole session — no valid local Clerk/DB access). The three unit tests above prove the mechanism precisely instead.
 
@@ -76,7 +77,7 @@ Revert this PR and redeploy through the ACA main deploy workflow. The migration 
 
 ## Known Gaps
 
-- **No automatic text extraction from uploaded replacement files.** An uploaded PDF/DOCX becomes the client-facing source-of-truth record (downloadable via `approved_artifact_id`), but the AI generation pipeline still feeds forward the *text version* that was current at approval time, not the uploaded file's content. Extracting arbitrary uploaded file content into a generation prompt is separate, real scope, not attempted here.
+- Uploaded replacement files must contain extractable text to become the downstream source of truth. Non-text images/audio/video remain stored evidence candidates in other upload flows, but this approval route rejects them as client-approved deliverable replacements instead of pretending the next phase can read them.
 - `move_artifact_review_decisions` (P2 sponsor review) remains a separate, unintegrated concept by design — see the approved plan's rationale.
 - The dead P0 "Approve brief" UI (`ResolveDecisionButton.tsx`, orphaned since a July 10 route cleanup) was not resurrected or wired into this lifecycle.
 - Given the real risk to the live generation pipeline this touches, this PR is **not** being auto-merged — flagging for a deliberate merge decision even though merge/deploy is broadly pre-approved for this backlog.

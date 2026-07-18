@@ -24,6 +24,7 @@ import {
   isWithinSizeLimit,
   MAX_ATTACHMENT_SIZE_BYTES,
 } from '@/lib/programs/attachments/mime';
+import { extractProgramEvidenceFromUploadBuffer } from '@/lib/programs/evidence-ingestion';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -44,6 +45,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ program
 
     const contentType = req.headers.get('content-type') ?? '';
     let approvedArtifactId: string | undefined;
+    let approvedContent:
+      | {
+          content: string;
+          fileName: string;
+          mimeType: string;
+          parseMethod: string;
+          warnings: string[];
+        }
+      | undefined;
 
     if (contentType.includes('multipart/form-data')) {
       const form = await req.formData();
@@ -74,6 +84,25 @@ export async function POST(req: Request, { params }: { params: Promise<{ program
         const phase = DELIVERABLE_REGISTRY.find(
           (spec) => spec.deliverableTypeKey === deliverableTypeKey,
         )?.phase ?? 0;
+        const parsed = await extractProgramEvidenceFromUploadBuffer({
+          filename: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          buffer: body,
+          cacheScope: `program:${programId}:deliverable:${deliverableId}:approval`,
+        });
+        const parsedText = parsed.extractedText?.trim();
+        if (!parsedText) {
+          return Response.json(
+            {
+              error: 'approved_upload_not_extractable',
+              detail:
+                'Client-approved replacement files must contain extractable text before they can become the downstream source of truth.',
+              parseMethod: parsed.extractedStructured.parse_method,
+              warnings: parsed.extractedStructured.warnings,
+            },
+            { status: 422 },
+          );
+        }
 
         const saved = await saveMoveArtifact(ctx, {
           moveId: programId,
@@ -90,13 +119,27 @@ export async function POST(req: Request, { params }: { params: Promise<{ program
           confidence: 'high',
           citationReady: true,
           generatedBy: ctx.email ?? 'client-approval',
-          metadata: { uploadedBy: ctx.email ?? null, mime: file.type || null, deliverableId },
+          metadata: {
+            uploadedBy: ctx.email ?? null,
+            mime: file.type || null,
+            deliverableId,
+            clientApprovedReplacement: true,
+            parseMethod: parsed.extractedStructured.parse_method,
+            parseWarnings: parsed.extractedStructured.warnings,
+          },
         });
         approvedArtifactId = saved.artifactId;
+        approvedContent = {
+          content: parsedText,
+          fileName: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          parseMethod: parsed.extractedStructured.parse_method,
+          warnings: parsed.extractedStructured.warnings,
+        };
       }
     }
 
-    const signedOff = await signOffDeliverable(ctx, programId, deliverableId, { supabase, approvedArtifactId });
+    const signedOff = await signOffDeliverable(ctx, programId, deliverableId, { supabase, approvedArtifactId, approvedContent });
     if (!signedOff) return Response.json({ error: 'not_found' }, { status: 404 });
     return Response.json({
       ok: true,

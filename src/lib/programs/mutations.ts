@@ -627,6 +627,19 @@ export async function signOffDeliverable(
      * than approving the AI-generated text as-is.
      */
     approvedArtifactId?: string;
+    /**
+     * Parsed text from a client-uploaded replacement document. When supplied,
+     * sign-off creates a new deliverable_versions row and signs off that row so
+     * downstream generation consumes the human-approved text, not the prior AI
+     * draft.
+     */
+    approvedContent?: {
+      content: string;
+      fileName: string;
+      mimeType: string;
+      parseMethod: string;
+      warnings?: string[];
+    };
   } = {},
 ): Promise<boolean> {
   assertTenancy(ctx);
@@ -641,18 +654,47 @@ export async function signOffDeliverable(
     .maybeSingle();
   if (readError) throw readError;
   if (!existing) return false;
-  const approvedVersion = (existing as { current_version: number }).current_version;
+  const currentVersion = (existing as { current_version: number | null })
+    .current_version ?? 0;
+  let approvedVersion = currentVersion;
+  const approvedContent = opts.approvedContent?.content.trim();
+
+  if (approvedContent) {
+    approvedVersion = currentVersion + 1;
+    const { error: versionError } = await sb
+      .from("deliverable_versions")
+      .insert({
+        deliverable_id: deliverableId,
+        version: approvedVersion,
+        content: approvedContent,
+        structured_data: {
+          source: "client_approved_upload",
+          approved_artifact_id: opts.approvedArtifactId ?? null,
+          uploaded_file_name: opts.approvedContent?.fileName ?? null,
+          mime_type: opts.approvedContent?.mimeType ?? null,
+          parse_method: opts.approvedContent?.parseMethod ?? null,
+          parse_warnings: opts.approvedContent?.warnings ?? [],
+          approved_by: ctx.userId,
+          approved_by_email: ctx.email ?? null,
+          human_approved: true,
+          replaces_ai_draft: true,
+        },
+        quality_issues: null,
+        generated_from_context_hash: null,
+      });
+    if (versionError) throw versionError;
+  }
 
   const { data, error } = await sb
     .from("deliverables_v2")
     .update({
       status: "signed_off",
+      current_version: approvedVersion,
       signed_off_by: ctx.userId,
       signed_off_at: new Date().toISOString(),
-      // The durable record of what was approved. Independent of
-      // current_version, which keeps advancing on later regeneration —
-      // this survives those regenerations until a newer version is
-      // explicitly approved (see moves-generate-deps.ts / v2-generator.ts).
+      // The durable record of what was approved. Later regeneration may advance
+      // current_version, but content readers continue to prefer this explicit
+      // signed-off version until a newer version is approved.
       signed_off_version: approvedVersion,
       approved_artifact_id: opts.approvedArtifactId ?? null,
       updated_at: new Date().toISOString(),
