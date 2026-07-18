@@ -151,7 +151,10 @@ import { VendorBafoInstructionPackPanel } from "./responses/VendorBafoInstructio
 import { VendorEvaluationScorecardPanel } from "./responses/VendorEvaluationScorecardPanel";
 import { StageNextMoveCard } from "./StageNextMoveCard";
 import { approvalViewForCriterion } from "@/lib/source/approval-routing";
-import { criterionById } from "@/lib/source/canonical-specs";
+import {
+  criterionById,
+} from "@/lib/source/canonical-specs";
+import { computeStageRequirementCoverage } from "@/lib/source/requirement-coverage";
 import {
   assessStageGate,
   buildStageRecommendation,
@@ -594,11 +597,22 @@ export function UniversalCanvasShell({
       readiness: `${usable} / ${totalEvidence}`,
       artifacts: `${liveArtifacts} / ${totalArtifacts}`,
       evidence: `${stageEvidence.length} sources`,
+      requirementCoverage: computeStageRequirementCoverage({
+        stageKey: viewStage,
+        artifactStates: stageArtifacts,
+        evidenceStates: stageEvidence,
+      }).displayValue,
       vendors: undefined,
       metCriteria,
       totalCriteria: stageCriteria.length,
     };
-  }, [stageArtifacts, stageCriteria, stageEvidence, stageGateAssessment]);
+  }, [
+    stageArtifacts,
+    stageCriteria,
+    stageEvidence,
+    stageGateAssessment,
+    viewStage,
+  ]);
   const workspaceItemCount = useMemo(() => {
     const registryIds = new Set(
       registryArtifactsState.map((artifact) => artifact.id),
@@ -1391,6 +1405,7 @@ function CanvasContextStrip({
     readiness: string;
     artifacts: string;
     evidence: string;
+    requirementCoverage: string;
     vendors?: string;
     metCriteria: number;
     totalCriteria: number;
@@ -1409,6 +1424,7 @@ function CanvasContextStrip({
         <span>Readiness {contextBundle.readiness}</span>
         <span>Artifacts {contextBundle.artifacts}</span>
         <span>Evidence {contextBundle.evidence}</span>
+        <span>Requirement coverage {contextBundle.requirementCoverage}</span>
         <span>
           Gates {contextBundle.metCriteria} / {contextBundle.totalCriteria}
         </span>

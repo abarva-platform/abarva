@@ -996,7 +996,11 @@ describe("UniversalCanvasShell · SSR render", () => {
   it("context bundle reflects artifact + criterion + evidence counts", () => {
     const html = render({
       artifactStates: [
-        makeArtifactState({ artifactCode: "d04_app_inv" }),
+        makeArtifactState({
+          artifactCode: "d04_app_inv",
+          tier: "rich",
+          status: "approved",
+        }),
         makeArtifactState({ artifactCode: "d05_scope_memo" }),
       ],
       gateCriterionStates: [
@@ -1005,20 +1009,23 @@ describe("UniversalCanvasShell · SSR render", () => {
       ],
       evidenceStates: [
         makeEvidence({
-          requirementId: "EVID-1",
+          requirementId: "EVID-SRC-SCOPE-APP-INV",
           currentState: "Usable Evidence",
         }),
-        makeEvidence({ requirementId: "EVID-2", currentState: "Loaded" }),
+        makeEvidence({
+          requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
+          currentState: "Loaded",
+        }),
       ],
     });
     // The counts live in the workspace tab badges.
     expect(html).toContain("source-canvas-context-strip");
     expect(html).toContain("source-canvas-tab-document");
     expect(html).toContain(">2</span>");
-    expect(html).toContain("source-canvas-tab-gate");
-    expect(html).toContain(">1/2</span>");
+    expect(html).toContain("Gates 1 / 2");
     expect(html).toContain("source-canvas-tab-evidence");
     expect(html).toContain(">1 / 2</span>");
+    expect(html).toContain("Requirement coverage 2 / 8");
   });
 
   // ── B4: suggested chat prompts populate the composer ──────────────────────
