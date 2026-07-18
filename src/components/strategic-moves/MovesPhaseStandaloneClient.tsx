@@ -2445,7 +2445,7 @@ function EvidenceUploadControl({
               <span>{artifact.fileName ?? artifact.title}</span>
               <em>
                 v{artifact.version} · {artifactStatusLabel(artifact.status)}
-                {artifact.qualityScore != null ? ` · Quality ${artifact.qualityScore}/100` : ""}
+                {artifact.qualityScore != null ? ` · Automated quality signal ${artifact.qualityScore}/100` : ""}
               </em>
             </div>
           ))}
