@@ -130,6 +130,29 @@ function stableKey(...parts) {
   return sha(parts.filter(Boolean).join("|")).slice(0, 48);
 }
 
+function stableUuid(...parts) {
+  const hex = sha(parts.filter(Boolean).join("|"));
+  const variant = ((parseInt(hex.slice(16, 18), 16) & 0x3f) | 0x80).toString(16).padStart(2, "0");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-${variant}${hex.slice(18, 20)}-${hex.slice(20, 32)}`;
+}
+
+function rowIdentitySeed(table, row) {
+  return [
+    table,
+    row.tenant_key,
+    row.client_id,
+    row.source_key,
+    row.source_file_id,
+    row.canonical_record_id,
+    row.fact_key,
+    row.evidence_key,
+    row.relationship_key,
+    row.issue_key,
+    row.chunk_id,
+    row.source_record_id,
+  ].filter((part) => part !== undefined && part !== null && part !== "").join("|");
+}
+
 function pgClient() {
   const { Client } = requireFromApp("pg");
   return Client;
@@ -249,15 +272,20 @@ async function columnsFor(client, table) {
 async function insertRows(client, table, columns, rows, conflictClause = "") {
   if (!rows.length) return 0;
   const available = await columnsFor(client, table);
-  const usableColumns = columns.filter((column) => available.has(column));
+  let usableColumns = columns.filter((column) => available.has(column));
   const missing = columns.filter((column) => !available.has(column));
   if (usableColumns.length !== columns.length) {
     throw new Error(`${table} missing expected columns: ${missing.join(", ")}`);
   }
+  let insertRows = rows;
+  if (table.startsWith("public.enterprise_context_") && available.has("id") && !usableColumns.includes("id")) {
+    usableColumns = ["id", ...usableColumns];
+    insertRows = rows.map((row) => ({ id: stableUuid(rowIdentitySeed(table, row)), ...row }));
+  }
   const chunkSize = Math.max(1, Math.floor(55000 / usableColumns.length));
   let affected = 0;
-  for (let start = 0; start < rows.length; start += chunkSize) {
-    const chunk = rows.slice(start, start + chunkSize);
+  for (let start = 0; start < insertRows.length; start += chunkSize) {
+    const chunk = insertRows.slice(start, start + chunkSize);
     const params = [];
     const values = chunk
       .map((row, rowIndex) => {

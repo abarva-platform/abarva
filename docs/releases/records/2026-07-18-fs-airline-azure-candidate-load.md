@@ -69,6 +69,12 @@ Runtime: no default runtime route is changed. Candidate rows remain invisible un
 - V7 graph node and relationship-edge projections now resolve `source_record_key` through candidate evidence lineage to the loaded candidate business record.
 - The proof bundle now emits explicit graph-node uniqueness and graph-edge resolution CSVs, including node-ref policy, scoped uniqueness counts, cross-tenant collision counts, source-record-key presence, orphan node count, and orphan edge count.
 
+### 2026-07-18 enterprise-context id follow-up
+
+- ACA operator execution `job-abarva-private-operator-eus-coq1d1a` remained safely blocked before promotion because the deployed `public.enterprise_context_evidence` table requires non-null `id`.
+- Enterprise-context inserts now supply deterministic UUID ids when the live table has an `id` column and candidate rows do not already provide one.
+- This is still candidate-only loader hardening; active context pointers remain untouched.
+
 ## Rollout Plan
 
 Merge by PR into `main`, let the repo-owned ACA main deploy workflow build and deploy the image, then run the private ACA operator job with `TENANT_CANDIDATE_LOAD_APPROVED=true` and `load:fs-airline-azure-candidate`. Do not promote active context in this release.
