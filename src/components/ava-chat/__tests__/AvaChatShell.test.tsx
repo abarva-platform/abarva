@@ -25,6 +25,9 @@ describe("AvaChatShell shared components", () => {
     );
 
     expect(screen.getByTestId("agent-dock-panel")).toBeInTheDocument();
+    expect(screen.getByTestId("ava-chat-shell")).toHaveStyle({
+      "--agent-dock-sticky-top": "0px",
+    });
     expect(screen.getAllByTestId("ava-ask-wordmark").length).toBeGreaterThan(0);
     expect(screen.getAllByTestId("ava-ask-wordmark")[0]).toHaveAttribute(
       "src",
