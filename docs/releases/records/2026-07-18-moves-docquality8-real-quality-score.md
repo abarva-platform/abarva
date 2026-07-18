@@ -18,6 +18,8 @@ There is a real, deterministic check in this codebase already — `meetsGoldenBa
 2. **A real unsupported-claims signal.** `findUnsupportedQuantifiedClaims()` flags sentences with a dollar or percentage figure that carry none of the evidence-qualifying language the prompt itself already asks the model to use ("evidence supports", "remains an assumption until", "cannot be finalized until", etc.) — checking whether the model followed its own instructions, not inventing a new taxonomy.
 3. **A real `qualityScore`.** Both `persist-move-generated-artifact.ts` write sites (the HTML artifact and its editable Word-equivalent) now read `result.goldenBar.qualityScore` / `.unsupportedClaimSignals.length` — deterministic values built from the checks above — instead of the fixed 96/null.
 
+4. **Client-facing label accuracy.** File Cabinet and phase upload surfaces label the score as an **automated quality signal**, not a consulting-quality verdict. Unsupported quantified claims are shown as claim signals so reviewers understand this is a deterministic warning layer until the scorer covers evidence grounding, decision usefulness, artifact structure, repetition, and phase appropriateness more fully.
+
 Critically, **`pass` — the value that actually blocks a generation as `blocked_quality` — is unchanged.** The two new signals (over-ceiling, unsupported claims) only affect the informational `qualityScore`, never `pass`. This was a deliberate scope decision to avoid introducing a new failure mode on the live Meridian Move's in-flight generation pipeline.
 
 ## Layer Impact
@@ -41,6 +43,7 @@ Critically, **`pass` — the value that actually blocks a generation as `blocked
   - `computeQualityScore()` (new, internal) — deterministic 0-100 score: base 92 (pass) or 55 (fail), minus up to 24 points for unsupported claims, minus 6 for running over the concision ceiling.
 - `src/lib/deliverables/strategic-moves-artifact-standard.ts`: `maximumWordCountForArtifact()` (new, exported) parses the existing `targetWords` range's upper bound; `premiumGoldenBarOptionsForArtifact()` now includes `maximumWordCount` for every artifact type (previously only 3 types got any word-count option at all).
 - `src/lib/deliverables/persist-move-generated-artifact.ts`: both `saveMoveArtifact()` calls (HTML + editable docx) now pass `qualityScore: result.goldenBar.qualityScore` and `unsupportedClaimsCount: result.goldenBar.unsupportedClaimSignals.length` instead of the fixed `pass ? 96 : null` / `0`.
+- `src/components/strategic-moves/FileCabinetPanel.tsx`, `src/components/strategic-moves/MovesPhaseStandaloneClient.tsx`: UI copy labels the score as an automated quality signal rather than a full consulting-quality verdict.
 - Tests updated/added: `golden-bar.test.ts` (5 new cases covering the ceiling, the claim heuristic, and the score, plus a dedicated `findUnsupportedQuantifiedClaims` suite), `persist-move-generated-artifact.test.ts`, `programs-generate-route-azure-read.test.ts` (fixtures extended with the 3 new `GoldenBarResult` fields; one assertion updated from the old fixed `qualityScore: 96` to the real value now flowing through the mocked golden-bar result).
 
 ## QA / Validation

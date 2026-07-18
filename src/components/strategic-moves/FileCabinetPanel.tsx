@@ -825,11 +825,12 @@ function ArtifactRow({
           >
             {a.phase != null && <span>Phase {a.phase}</span>}
             {a.qualityScore != null && (
-              <span>Quality {a.qualityScore}/100</span>
+              <span>Automated quality signal {a.qualityScore}/100</span>
             )}
             {a.unsupportedClaims > 0 && (
               <span style={{ color: "#B26A00" }}>
-                {a.unsupportedClaims} unsupported
+                {a.unsupportedClaims} unsupported claim signal
+                {a.unsupportedClaims === 1 ? "" : "s"}
               </span>
             )}
             {!roleLabel && <span>{fmtBytes(a.fileSize)}</span>}
