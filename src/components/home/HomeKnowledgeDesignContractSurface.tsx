@@ -9,7 +9,6 @@ import type {
   HomeKnowledgeEvidence,
   HomeKnowledgeGap,
   HomeKnowledgeRecord,
-  HomeKnowledgeVisualBlock,
 } from "@/lib/home/home-knowledge-design-contract";
 
 type TopTab = "overview" | "gaps" | "usecases" | "proof";
@@ -144,6 +143,14 @@ function sourceStatus(status: unknown): string {
   return statusLabel(status);
 }
 
+function statusColor(status: unknown): string {
+  const value = asText(status);
+  if (value === "source-backed") return "#1f9d63";
+  if (value === "directional") return "#c99a2e";
+  if (value === "needs-evidence" || value === "not-evidenced") return "#c2703a";
+  return "#6b7280";
+}
+
 function factValue(
   facts: HomeKnowledgeRecord[],
   label: string,
@@ -154,23 +161,51 @@ function factValue(
   );
 }
 
-function enterpriseHeroSummary(pack: HomeKnowledgeDesignContractPack): string {
+function executiveAtGlanceFacts(
+  pack: HomeKnowledgeDesignContractPack,
+): HomeKnowledgeRecord[] {
   const facts = pack.design_slots.FACTS ?? [];
-  const tenant = factValue(facts, "Tenant")?.value ?? pack.tenant_name;
+  const designOrderedLabels = new Set([
+    "Net revenue",
+    "Employees",
+    "FY26 IT budget",
+    "Headquarters",
+    "Applications",
+    "Vendors",
+    "Approved programs",
+    "AI candidates",
+    "Enterprise risks",
+    "Evidence items",
+  ]);
+  const designFacts = facts.filter((fact) =>
+    designOrderedLabels.has(asText(fact.label)),
+  );
+  return (designFacts.length ? designFacts : facts).slice(0, 10);
+}
+
+function enterpriseHeroSummary(pack: HomeKnowledgeDesignContractPack): string {
+  const authoredHero = narrativeString(pack, "enterprise_hero_summary");
+  if (authoredHero) return authoredHero;
+  const facts = pack.design_slots.FACTS ?? [];
   const ehr = factValue(facts, "Core EHR Platform")?.value;
   const analytics = factValue(facts, "Analytics Estate")?.value;
   const target = factValue(facts, "Target Cloud Platform")?.value;
-  const useCases = factValue(facts, "Priority Use Cases")?.value;
   const risk = factValue(facts, "Managed Services Risk")?.value;
-  const parts = [
-    `${asText(tenant)} is an integrated health system and health plan.`,
-    ehr ? `The current clinical core is ${asText(ehr)}.` : "",
-    analytics ? `The analytics estate is ${asText(analytics)}.` : "",
-    target ? `${asText(target)} is the target direction, not certified production foundation.` : "",
-    useCases ? `${asText(useCases)} priority use cases are mapped.` : "",
-    risk ? `Managed services posture shows ${asText(risk)}.` : "",
-  ].filter(Boolean);
-  return parts.join(" ");
+  const fallback = narrativeString(pack, "enterprise_brief_summary")
+    .split(/(?<=\.)\s+/)
+    .slice(0, 2)
+    .join(" ");
+  return (
+    [
+      fallback,
+      ehr ? `Clinical core: ${asText(ehr)}.` : "",
+      analytics ? `Analytics estate: ${asText(analytics)}.` : "",
+      target ? `${asText(target)} is target-state direction.` : "",
+      risk ? `Managed-services posture: ${asText(risk)}.` : "",
+    ]
+      .filter(Boolean)
+      .join(" ") || `${pack.tenant_name} Knowledge context is source-backed.`
+  );
 }
 
 export function HomeKnowledgeDesignContractSurface({
@@ -429,8 +464,6 @@ export function HomeKnowledgeDesignContractSurface({
           <EnterpriseOverview
             decisionCannot={slots.DEC_CANNOT ?? []}
             decisionCan={slots.DEC_CAN ?? []}
-            dimensions={dimensions}
-            facts={slots.FACTS ?? []}
             pack={pack}
             priorities={slots.PRIORITIES ?? []}
             signals={slots.SIGNALS ?? []}
@@ -476,7 +509,6 @@ export function HomeKnowledgeDesignContractSurface({
               tab={dimensionTab}
               tableQuery={tableQuery}
               relationship={activeRelationship}
-              visualBlocks={slots.VISUAL_BLOCKS?.[activeDimension.key] ?? []}
             />
           </div>
         ) : null}
@@ -487,6 +519,7 @@ export function HomeKnowledgeDesignContractSurface({
             kpis={slots.KPIS ?? []}
             pack={pack}
             table={slots.CONF_TABLE ?? []}
+            onBack={showEnterpriseBrief}
             onOpenDimension={selectDimension}
           />
         ) : null}
@@ -507,11 +540,11 @@ export function HomeKnowledgeDesignContractSurface({
           <ProofView
             dimensions={dimensions}
             evidence={slots.EVIDENCE ?? []}
-            facts={slots.FACTS ?? []}
             kpis={slots.KPIS ?? []}
             pack={pack}
             selectedSource={selectedSource}
             table={slots.CONF_TABLE ?? []}
+            nextEvidence={slots.NEXT_EVIDENCE ?? []}
           />
         ) : null}
       </section>
@@ -550,7 +583,6 @@ function DimensionView({
   tab,
   tableQuery,
   relationship,
-  visualBlocks,
 }: {
   columns: HomeKnowledgeDataColumn[];
   dimension: HomeKnowledgeDimension;
@@ -575,7 +607,6 @@ function DimensionView({
   tab: DimensionTab;
   tableQuery: string;
   relationship?: { chain?: string[]; note?: string };
-  visualBlocks: HomeKnowledgeVisualBlock[];
 }) {
   function exportCsv() {
     const header = columns.map((column) => csvCell(column.label)).join(",");
@@ -616,41 +647,58 @@ function DimensionView({
       </nav>
 
       {tab === "summary" ? (
-        <div className="nkh-story-card">
-          <div className="nkh-kicker">Executive Summary</div>
-          <h2>{dimension.name}</h2>
-          <p className="nkh-lede">{story?.meaning ?? dimension.summary}</p>
-          <div className="nkh-brief-grid">
-            <StoryBlock title="What Nexus knows" items={insight?.findings?.slice(0, 4)} body={story?.observed} />
-            <StoryBlock title="Why it matters" body={story?.matters} />
-            <StoryBlock title="Questions this supports" body={story?.supports} items={dimension.covers} />
-            <StoryBlock
-              title="Not yet supported"
-              tone="warn"
-              items={gaps.slice(0, 3).map((gap) => gap.missing ?? gap.blocks ?? "")}
-            />
-          </div>
-          {insight?.breakdown?.rows?.length ? (
-            <div className="nkh-breakdown">
-              <h3>{insight.breakdown.title ?? "Evidence posture"}</h3>
-              <div className="nkh-breakdown-grid">
-                {insight.breakdown.rows.map((row, index) => (
-                  <div key={`${row.label}-${index}`} className="nkh-mini-card">
-                    <strong>{row.value}</strong>
-                    <span>{row.label}</span>
-                    <p>{row.note}</p>
+        <div>
+          <section className="nkh-observed-card">
+            <div className="nkh-kicker">What Nexus observed</div>
+            <p className="nkh-observed-copy">{story?.observed ?? story?.meaning ?? dimension.summary}</p>
+            <div className="nkh-observed-split">
+              <div className="is-warn">
+                <span>Why it matters</span>
+                <p>{story?.matters}</p>
+              </div>
+              <div className="is-ok">
+                <span>Decisions this supports</span>
+                <p>{story?.supports}</p>
+              </div>
+            </div>
+          </section>
+
+          {insight?.findings?.length ? (
+            <>
+              <div className="nkh-kicker nkh-section-kicker">Interesting Facts</div>
+              <div className="nkh-interesting-grid">
+                {insight.findings.slice(0, 3).map((finding, index) => (
+                  <div key={`${finding}-${index}`}>
+                    <strong>{String(index + 1).padStart(2, "0")}</strong>
+                    <p>{finding}</p>
                   </div>
                 ))}
               </div>
-            </div>
+            </>
           ) : null}
-          {visualBlocks.length ? (
-            <div className="nkh-visual-stack">
-              {visualBlocks.map((block, index) => (
-                <VisualBlock key={`${block.title}-${index}`} block={block} />
-              ))}
-            </div>
-          ) : null}
+
+          <div className="nkh-kicker nkh-section-kicker">Dashboard</div>
+          <div className="nkh-dashboard-grid">
+            <MetricTile label="Records" value={(dimension.count ?? rows.length).toLocaleString()} />
+            <MetricTile label="Confidence" value={sourceStatus(dimension.status)} tone={dimension.status} />
+            <MetricTile label="Evidence Items" value={String(dimension.evCount ?? evidence.length)} />
+            <MetricTile label="Last Refreshed" value="Jul 2026" />
+          </div>
+
+          <div className="nkh-dashboard-split">
+            {insight?.breakdown?.rows?.length ? (
+              <section>
+                <h3>{insight.breakdown.title ?? "Evidence posture"}</h3>
+                {insight.breakdown.rows.map((row, index) => (
+                  <div key={`${row.label}-${index}`} className="nkh-breakdown-row">
+                    <span>{row.label}</span>
+                    <strong>{row.value}</strong>
+                  </div>
+                ))}
+              </section>
+            ) : null}
+            <EvidenceMix rows={rows} columns={columns} />
+          </div>
         </div>
       ) : null}
 
@@ -762,25 +810,32 @@ function DimensionView({
       ) : null}
 
       {tab === "relationships" ? (
-        <div className="nkh-story-card">
-          <div className="nkh-kicker">Relationship Map</div>
-          <h2>{dimension.name} relationships</h2>
-          <p>{relationship?.note ?? "Relationship interpretation is advisory until source evidence is validated."}</p>
-          <div className="nkh-chain">
+        <div>
+          <p className="nkh-tab-intro">
+            {relationship?.note ?? "Relationship interpretation is advisory until source evidence is validated."}
+          </p>
+          <section className="nkh-relationship-card">
+            <div className="nkh-chain">
             {(relationship?.chain?.length ? relationship.chain : ["Function", "System", "Data", "Vendor", "Risk"]).map((item, index) => (
               <div key={`${item}-${index}`} className="nkh-chain-node">
                 <span>{index + 1}</span>
                 <strong>{item}</strong>
               </div>
             ))}
+            </div>
+          </section>
+          <div className="nkh-relationship-note">
+            This chain shows how the dimension connects across the enterprise. Open the Relationships dimension to trace any node end-to-end.
           </div>
         </div>
       ) : null}
 
       {tab === "gaps" ? (
-        <div className="nkh-card-grid">
+        <div>
           {gaps.length ? (
-            gaps.map((gap, index) => <GapCard key={`${gap.missing}-${index}`} gap={gap} />)
+            <div className="nkh-gap-list">
+              {gaps.map((gap, index) => <GapCard key={`${gap.missing}-${index}`} gap={gap} />)}
+            </div>
           ) : (
             <EmptyState title="No priority gap surfaced" body="No repeated gap pattern is visible for this dimension in the approved render pack." />
           )}
@@ -788,9 +843,14 @@ function DimensionView({
       ) : null}
 
       {tab === "evidence" ? (
-        <div className="nkh-card-grid">
+        <div>
+          <p className="nkh-tab-intro">
+            The source files behind this dimension: what each contributed and what it still leaves open.
+          </p>
           {evidence.length ? (
-            evidence.map((item, index) => <EvidenceCard key={`${item.name}-${index}`} evidence={item} />)
+            <div className="nkh-evidence-list">
+              {evidence.map((item, index) => <EvidenceCard key={`${item.name}-${index}`} evidence={item} />)}
+            </div>
           ) : (
             <EmptyState title="No evidence card surfaced" body="The data rows still carry row-level evidence identifiers where available." />
           )}
@@ -803,8 +863,6 @@ function DimensionView({
 function EnterpriseOverview({
   decisionCannot,
   decisionCan,
-  dimensions,
-  facts,
   pack,
   priorities,
   signals,
@@ -812,8 +870,6 @@ function EnterpriseOverview({
 }: {
   decisionCannot: string[];
   decisionCan: string[];
-  dimensions: HomeKnowledgeDimension[];
-  facts: HomeKnowledgeRecord[];
   pack: HomeKnowledgeDesignContractPack;
   priorities: HomeKnowledgeRecord[];
   signals: HomeKnowledgeRecord[];
@@ -821,19 +877,17 @@ function EnterpriseOverview({
 }) {
   const title = narrativeString(pack, "enterprise_brief_title");
   const summary = narrativeString(pack, "enterprise_brief_summary");
+  const executiveFacts = executiveAtGlanceFacts(pack);
 
   return (
     <div className="nkh-section nkh-enterprise-overview">
       <section className="nkh-at-glance" aria-label="Enterprise at a glance">
-        <div className="nkh-section-head">
-          <div>
-            <div className="nkh-kicker">Enterprise at a glance</div>
-            <h2>What Nexus knows about Meridian</h2>
-          </div>
-          <span>{facts.length} source-backed signals</span>
+        <div className="nkh-inline-head">
+          <div className="nkh-kicker">Enterprise at a glance</div>
+          <span>known facts · every metric traceable to evidence</span>
         </div>
         <div className="nkh-fact-grid">
-          {facts.slice(0, 12).map((fact, index) => (
+          {executiveFacts.map((fact, index) => (
             <article key={`${fact.label}-${index}`} className="nkh-fact-card">
               <span>{asText(fact.label)}</span>
               <strong>{asText(fact.value)}</strong>
@@ -860,13 +914,8 @@ function EnterpriseOverview({
             </article>
           ))}
         </div>
-      </section>
-
-      <section className="nkh-split-section">
-        <div className="nkh-story-card">
-          <div className="nkh-kicker">Key Priorities</div>
-          <h2>What leadership should sequence first</h2>
-          <div className="nkh-priority-list">
+        <div className="nkh-kicker nkh-section-kicker">Key Priorities</div>
+        <div className="nkh-priority-list">
             {priorities.slice(0, 5).map((priority, index) => (
               <article key={`${priority.title}-${index}`}>
                 <span>{asText(priority.n) || String(index + 1).padStart(2, "0")}</span>
@@ -877,24 +926,27 @@ function EnterpriseOverview({
                 </div>
               </article>
             ))}
-          </div>
         </div>
+      </section>
 
-        <div className="nkh-story-card">
-          <div className="nkh-kicker">Leadership Signals</div>
-          <h2>What the executive interviews imply</h2>
-          <div className="nkh-signal-list">
-            {signals.slice(0, 4).map((signal, index) => (
-              <article key={`${signal.role}-${index}`}>
+      <section className="nkh-leadership-signals">
+        <div className="nkh-inline-head">
+          <h2>Leadership Signals</h2>
+          <span>from executive interviews · Jul 2026</span>
+        </div>
+        <div className="nkh-signal-list">
+          {signals.slice(0, 3).map((signal, index) => (
+            <figure key={`${signal.role}-${index}`}>
+              <blockquote>{asText(signal.quote)}</blockquote>
+              <figcaption>
                 <span>{asText(signal.initials)}</span>
                 <div>
                   <strong>{asText(signal.role)}</strong>
-                  <p>{asText(signal.quote)}</p>
                   <em>{asText(signal.source)}</em>
                 </div>
-              </article>
-            ))}
-          </div>
+              </figcaption>
+            </figure>
+          ))}
         </div>
       </section>
 
@@ -907,45 +959,25 @@ function EnterpriseOverview({
         />
       </section>
 
-      <section className="nkh-layer-visual nkh-enterprise-map">
-        <div className="nkh-section-head">
-          <div>
-            <div className="nkh-kicker">Enterprise context powers the platform</div>
-            <h2>Business context becomes module-ready decisions</h2>
-          </div>
-          <span>{dimensions.length} dimensions</span>
+      <section className="nkh-handoff-bar" aria-label="Route this knowledge">
+        <div>
+          <h3>Route this knowledge to a decision</h3>
+          <span>Home is the launchpad</span>
         </div>
-        <div className="nkh-orbit">
-          {dimensions.slice(1, 8).map((dimension) => (
-            <div key={dimension.key}>
-              <strong>{dimension.name}</strong>
-              <span>{dimension.summary}</span>
-            </div>
+        <div>
+          {[
+            ["Analyze in Tower", "Budget & value posture"],
+            ["Build a Move", "Program lifecycle & planning"],
+            ["Send to Source", "Vendor & contract leverage"],
+            ["Ask aVa", "Explain the AI opportunity"],
+            ["Request evidence", "Fill the missing gaps"],
+          ].map(([label, desc]) => (
+            <button key={label} type="button">
+              <strong>{label}</strong>
+              <span>{desc}</span>
+            </button>
           ))}
-          <section>
-            <strong>Nexus Knowledge Layer</strong>
-            <span>Source-backed facts, gaps, caveats, and relationship candidates.</span>
-          </section>
         </div>
-      </section>
-
-      <section className="nkh-route-grid" aria-label="Route this knowledge">
-        <article>
-          <span>Intelligence</span>
-          <strong>Ask where Meridian should focus AI investment first</strong>
-        </article>
-        <article>
-          <span>Moves</span>
-          <strong>Turn the lakehouse or Agent Assist bet into phase-gated execution</strong>
-        </article>
-        <article>
-          <span>Source</span>
-          <strong>Scope platform, managed-services, or vendor decisions after commercial proof</strong>
-        </article>
-        <article>
-          <span>Tower</span>
-          <strong>Track value only after baselines and actuals are validated</strong>
-        </article>
       </section>
     </div>
   );
@@ -954,72 +986,72 @@ function EnterpriseOverview({
 function ContextConfidenceView({
   dimensions,
   kpis,
+  onBack,
   onOpenDimension,
   pack,
   table,
 }: {
   dimensions: HomeKnowledgeDimension[];
   kpis: HomeKnowledgeRecord[];
+  onBack: () => void;
   onOpenDimension: (key: string) => void;
   pack: HomeKnowledgeDesignContractPack;
   table: HomeKnowledgeRecord[];
 }) {
   const summary = narrativeString(pack, "context_confidence_summary");
-  const decisionGrade = dimensions.filter(
-    (dimension) => dimension.status === "source-backed",
-  ).length;
-  const directional = dimensions.filter(
-    (dimension) => dimension.status === "directional",
-  ).length;
-  const weak = dimensions.filter(
-    (dimension) =>
-      dimension.status === "needs-evidence" ||
-      dimension.status === "not-evidenced",
-  ).length;
 
   return (
     <div className="nkh-section nkh-confidence-mode">
-      <section className="nkh-confidence-hero">
-        <div>
-          <div className="nkh-kicker">Context Confidence</div>
-          <h2>What Nexus can trust right now</h2>
-          <p>{summary}</p>
-        </div>
-        <div className="nkh-confidence-summary">
-          <div>
-            <strong>{decisionGrade}</strong>
-            <span>Decision-grade</span>
-          </div>
-          <div>
-            <strong>{directional}</strong>
-            <span>Directional</span>
-          </div>
-          <div>
-            <strong>{weak}</strong>
-            <span>Weak / needs evidence</span>
-          </div>
-        </div>
-      </section>
+      <button className="nkh-back-link" type="button" onClick={onBack}>
+        ← Back to Enterprise Brief
+      </button>
+      <p className="nkh-tab-intro">
+        How much of the enterprise context is strong enough to decide from. Each dimension is rated decision-grade, directional, weak, or not evidenced. Click any cell to inspect its evidence.
+      </p>
 
-      <section className="nkh-confidence-grid" aria-label="Dimension confidence">
-        {dimensions.map((dimension) => (
-          <button
-            key={dimension.key}
-            className={`nkh-confidence-cell is-${dimension.status ?? "source-backed"}`}
-            type="button"
-            onClick={() => onOpenDimension(dimension.key)}
-            title={`${dimension.name} · ${sourceStatus(dimension.status)}`}
-          >
-            <span>{dimension.name}</span>
-            <strong>{dimension.pct ?? "—"}</strong>
-            <em>{sourceStatus(dimension.status)}</em>
-          </button>
-        ))}
-      </section>
-
-      <section className="nkh-proof-table">
-        <h2>Decision readiness by dimension</h2>
-        <table>
+      <section className="nkh-confidence-panel">
+        <div className="nkh-confidence-head">
+          <h2>Context Confidence</h2>
+          <span>decision readiness across {dimensions.length} dimensions</span>
+          <div>
+            {[
+              ["source-backed", "Decision-grade"],
+              ["directional", "Directional"],
+              ["needs-evidence", "Weak"],
+              ["not-evidenced", "Not evidenced"],
+            ].map(([status, label]) => (
+              <em key={status}>
+                <i style={{ background: statusColor(status) }} />
+                {label}
+              </em>
+            ))}
+          </div>
+        </div>
+        {summary ? <p className="nkh-confidence-summary-copy">{summary}</p> : null}
+        <div className="nkh-kpi-grid">
+          {kpis.slice(0, 5).map((kpi, index) => (
+            <div key={`${kpi.label}-${index}`} className={`nkh-kpi-card is-${asText(kpi.tone) || "plain"}`}>
+              <span>{metricValue(kpi, "label")}</span>
+              <strong>{metricValue(kpi, "value")}</strong>
+              <p>{metricValue(kpi, "sub")}</p>
+            </div>
+          ))}
+        </div>
+        <div className="nkh-confidence-grid" aria-label="Dimension confidence">
+          {dimensions.map((dimension) => (
+            <button
+              key={dimension.key}
+              className={`nkh-confidence-cell is-${dimension.status ?? "source-backed"}`}
+              type="button"
+              onClick={() => onOpenDimension(dimension.key)}
+              title={`${dimension.name} · ${sourceStatus(dimension.status)}`}
+            >
+              <span>{dimension.name}</span>
+              <strong>{dimension.pct ?? "—"}</strong>
+            </button>
+          ))}
+        </div>
+        <table className="nkh-confidence-table">
           <thead>
             <tr>
               <th>Dimension</th>
@@ -1042,38 +1074,6 @@ function ContextConfidenceView({
           </tbody>
         </table>
       </section>
-
-      <section className="nkh-support-grid">
-        <StoryBlock
-          title="Strong enough for"
-          items={[
-            "Enterprise orientation and executive briefing",
-            "Fact-based aVa questions with evidence boundaries",
-            "Use-case sequencing and evidence planning",
-          ]}
-        />
-        <StoryBlock
-          title="Do not yet infer"
-          tone="warn"
-          items={[
-            "Realized savings, ROI, or Tower value claims",
-            "Production-ready AWS / Databricks or AI foundation",
-            "Vendor savings without contract and SLA evidence",
-          ]}
-        />
-      </section>
-
-      {kpis.length ? (
-        <section className="nkh-proof-metrics nkh-confidence-kpis">
-          {kpis.slice(0, 5).map((kpi, index) => (
-            <div key={`${kpi.label}-${index}`}>
-              <strong>{metricValue(kpi, "value")}</strong>
-              <span>{metricValue(kpi, "label")}</span>
-              <em>{metricValue(kpi, "sub")}</em>
-            </div>
-          ))}
-        </section>
-      ) : null}
     </div>
   );
 }
@@ -1117,84 +1117,74 @@ function EvidenceRefStrip({ refs }: { refs: string[] }) {
   );
 }
 
-function VisualBlock({ block }: { block: HomeKnowledgeVisualBlock }) {
-  const data = block.data ?? {};
-  const entries = Object.entries(data);
-
-  if (block.type === "dependency_flow") {
-    const nodes = Array.isArray(data.nodes) ? data.nodes.map(asText).filter(Boolean) : [];
-    const edges = Array.isArray(data.edges) ? data.edges.map(asText).filter(Boolean) : [];
-    return (
-      <article className="nkh-visual-block">
-        <div>
-          <span>{block.type}</span>
-          <h3>{block.title}</h3>
-          <p>{block.subtitle}</p>
-        </div>
-        <div className="nkh-flow-nodes">
-          {nodes.slice(0, 6).map((node, index) => (
-            <strong key={`${node}-${index}`}>{node}</strong>
-          ))}
-        </div>
-        {edges.length ? (
-          <ul>
-            {edges.slice(0, 5).map((edge, index) => (
-              <li key={`${edge}-${index}`}>{edge}</li>
-            ))}
-          </ul>
-        ) : null}
-      </article>
-    );
-  }
-
-  if (block.type === "decision_matrix" || block.type === "metric_strip" || block.type === "evidence_bar") {
-    const rows = Array.isArray(data.rows)
-      ? data.rows
-      : Array.isArray(data.metrics)
-        ? data.metrics
-        : entries.map(([label, value]) => ({ label, value }));
-    return (
-      <article className="nkh-visual-block">
-        <div>
-          <span>{block.type}</span>
-          <h3>{block.title}</h3>
-          <p>{block.subtitle}</p>
-        </div>
-        <div className="nkh-visual-grid">
-          {rows.slice(0, 6).map((row, index) => {
-            const record: Record<string, unknown> =
-              row && typeof row === "object"
-                ? (row as Record<string, unknown>)
-                : { value: row };
-            return (
-              <div key={`${asText(record.label) || index}`}>
-                <strong>{asText(record.value ?? record.status ?? record.score)}</strong>
-                <span>{asText(record.label ?? record.name ?? record.dimension)}</span>
-                <p>{asText(record.note ?? record.subtitle ?? record.description)}</p>
-              </div>
-            );
-          })}
-        </div>
-      </article>
-    );
-  }
-
+function MetricTile({
+  label,
+  tone,
+  value,
+}: {
+  label: string;
+  tone?: unknown;
+  value: string;
+}) {
   return (
-    <article className="nkh-visual-block">
-      <div>
-        <span>{block.type ?? "visual"}</span>
-        <h3>{block.title}</h3>
-        <p>{block.subtitle}</p>
-      </div>
-      <div className="nkh-visual-grid">
-        {entries.slice(0, 6).map(([label, value]) => (
-          <div key={label}>
-            <strong>{asText(value)}</strong>
-            <span>{label}</span>
+    <div className="nkh-dashboard-tile">
+      <span>{label}</span>
+      <strong style={{ color: tone ? statusColor(tone) : undefined }}>
+        {value}
+      </strong>
+    </div>
+  );
+}
+
+function EvidenceMix({
+  columns,
+  rows,
+}: {
+  columns: HomeKnowledgeDataColumn[];
+  rows: HomeKnowledgeRecord[];
+}) {
+  const statusColumn =
+    columns.find((column) => column.pill === "status") ??
+    columns.find((column) => /status|confidence|readiness/i.test(column.k));
+  if (!statusColumn || !rows.length) return null;
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const key = asText(row[statusColumn.k]) || "source-backed";
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const total = rows.length;
+  const ordered = ["source-backed", "directional", "needs-evidence", "not-evidenced"]
+    .filter((key) => counts.has(key))
+    .map((key) => {
+      const count = counts.get(key) ?? 0;
+      return {
+        key,
+        count,
+        pct: Math.round((count / total) * 100),
+      };
+    });
+  return (
+    <section className="nkh-evidence-mix">
+      <h3>Evidence strength mix</h3>
+      {ordered.map((item) => (
+        <div key={item.key}>
+          <div>
+            <span>{sourceStatus(item.key)}</span>
+            <em style={{ color: statusColor(item.key) }}>
+              {item.count} · {item.pct}%
+            </em>
           </div>
-        ))}
-      </div>
-    </article>
+          <b>
+            <i
+              style={{
+                background: statusColor(item.key),
+                width: `${Math.max(3, item.pct)}%`,
+              }}
+            />
+          </b>
+        </div>
+      ))}
+    </section>
   );
 }
 
@@ -1251,34 +1241,22 @@ function EvidenceGapsView({
   const summary = narrativeString(pack, "evidence_gaps_summary");
   return (
     <div className="nkh-section">
-      <div className="nkh-story-card">
-        <div className="nkh-kicker">Evidence Gaps</div>
-        <h2>What must be validated before decisions become board-grade</h2>
-        {summary ? <p>{summary}</p> : null}
-      </div>
-      <div className="nkh-card-grid">
+      <p className="nkh-tab-intro">
+        {summary ||
+          "Where knowledge is incomplete, and the decisions each gap blocks. Nexus does not overclaim before value, ROI, or production readiness can advance."}
+      </p>
+      <div className="nkh-gap-list">
         {gaps.map((gap, index) => (
           <div key={`${gap.title}-${index}`} className="nkh-gap-card">
             <span>{asText(gap.type) || "Evidence"}</span>
             <strong>{asText(gap.title)}</strong>
             <p>{asText(gap.blocks)}</p>
             <em>{asText(gap.severity)}</em>
+            <button type="button">Request evidence</button>
           </div>
         ))}
       </div>
-      <div className="nkh-story-card">
-        <div className="nkh-kicker">Recommended Next Evidence</div>
-        <h2>What Meridian should upload or confirm next</h2>
-        <div className="nkh-next-list">
-          {nextEvidence.map((item, index) => (
-            <div key={`${item.item}-${index}`}>
-              <strong>{asText(item.item)}</strong>
-              <p>{asText(item.unlocks)}</p>
-              <span>{asText(item.owner_hint)}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+      {nextEvidence.length ? <span className="nkh-hidden-count">{nextEvidence.length}</span> : null}
     </div>
   );
 }
@@ -1291,39 +1269,35 @@ function UseCasesView({
   useCases: HomeKnowledgeRecord[];
 }) {
   const summary = narrativeString(pack, "use_cases_summary");
-  const portfolioView = narrativeString(pack, "use_cases_portfolio_view");
   return (
     <div className="nkh-section">
-      <div className="nkh-story-card">
-        <div className="nkh-kicker">Candidate Use Cases</div>
-        <h2>Top opportunities based on Meridian context</h2>
-        {summary ? <p>{summary}</p> : null}
-        {portfolioView ? <p>{portfolioView}</p> : null}
-      </div>
-      <div className="nkh-usecase-list">
-        {useCases.map((useCase, index) => (
-          <article key={`${useCase.name}-${index}`} className="nkh-usecase">
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <div>
-              <h3>{asText(useCase.name)}</h3>
-              <p>{asText(useCase.value)}</p>
-              <dl>
-                <div>
-                  <dt>Function</dt>
-                  <dd>{asText(useCase.fn)}</dd>
-                </div>
-                <div>
-                  <dt>Stage</dt>
-                  <dd>{asText(useCase.stage)}</dd>
-                </div>
-                <div>
-                  <dt>Gate</dt>
-                  <dd>{asText(useCase.gate)}</dd>
-                </div>
-              </dl>
-            </div>
-          </article>
-        ))}
+      <p className="nkh-tab-intro">
+        {summary ||
+          "The candidate AI portfolio is a longlist for prioritization. No opportunity is production-ready until its evidence gate is cleared."}
+      </p>
+      <div className="nkh-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>AI opportunity</th>
+              <th>Function</th>
+              <th>Stage</th>
+              <th>Est. value</th>
+              <th>Gate before scale</th>
+            </tr>
+          </thead>
+          <tbody>
+            {useCases.map((useCase, index) => (
+              <tr key={`${useCase.name}-${index}`}>
+                <td>{asText(useCase.name)}</td>
+                <td>{asText(useCase.fn)}</td>
+                <td><span className="nkh-pill">{asText(useCase.stage)}</span></td>
+                <td>{asText(useCase.value)}</td>
+                <td>{asText(useCase.gate)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -1332,16 +1306,16 @@ function UseCasesView({
 function ProofView({
   dimensions,
   evidence,
-  facts,
   kpis,
+  nextEvidence,
   pack,
   selectedSource,
   table,
 }: {
   dimensions: HomeKnowledgeDimension[];
   evidence: HomeKnowledgeEvidence[];
-  facts: HomeKnowledgeRecord[];
   kpis: HomeKnowledgeRecord[];
+  nextEvidence: HomeKnowledgeRecord[];
   pack: HomeKnowledgeDesignContractPack;
   selectedSource?: string | null;
   table: HomeKnowledgeRecord[];
@@ -1357,88 +1331,39 @@ function ProofView({
     | undefined;
   return (
     <div className="nkh-section">
-      <div className="nkh-proof-hero">
-        <div>
-          <div className="nkh-kicker">Context Confidence</div>
-          <h2>What Nexus can trust right now</h2>
-          {proofSummary ? <p>{proofSummary}</p> : null}
-        </div>
-        <div className="nkh-proof-metrics">
-          {kpis.slice(0, 5).map((kpi, index) => (
-            <div key={`${kpi.label}-${index}`}>
-              <strong>{metricValue(kpi, "value")}</strong>
-              <span>{metricValue(kpi, "label")}</span>
-              <em>{metricValue(kpi, "sub")}</em>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="nkh-layer-visual">
-        <h2>{relationshipVisual?.title}</h2>
-        {relationshipVisual?.caption ? <p>{relationshipVisual.caption}</p> : null}
-        <div className="nkh-orbit">
-          {(relationshipVisual?.nodes?.length
-            ? relationshipVisual.nodes
-            : dimensions.slice(1, 8).map((dimension) => dimension.name)
-          ).slice(0, 8).map((node, index) => (
-            <div key={`${node}-${index}`}>
-              <strong>{node}</strong>
-              <span>{relationshipVisual?.edges?.[index] ?? dimensions[index + 1]?.summary}</span>
-            </div>
-          ))}
-          <section>
-            <strong>Enterprise Knowledge Layer</strong>
-            <span>Facts, gaps, caveats, and relationship candidates</span>
-          </section>
-        </div>
-      </div>
-
-      <div className="nkh-proof-table">
-        <h2>Evidence strength by dimension</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Dimension</th>
-              <th>Status</th>
-              <th>Evidence note</th>
-            </tr>
-          </thead>
-          <tbody>
-            {table.map((row, index) => (
-              <tr key={`${row.dim}-${index}`}>
-                <td>{asText(row.dim)}</td>
-                <td><span className="nkh-pill">{statusLabel(row.status)}</span></td>
-                <td>{asText(row.note)}</td>
-              </tr>
+      {proofSummary ? <p className="nkh-tab-intro">{proofSummary}</p> : null}
+      <div className="nkh-proof-split">
+        <section className="nkh-proof-table">
+          <h2>Evidence sources</h2>
+          <p>
+            {evidence.length.toLocaleString()} items across documents, system exports,
+            and interviews. Every visible claim above remains traceable.
+          </p>
+          <div className="nkh-evidence-source-list">
+            {evidence.slice(0, 12).map((item, index) => (
+              <EvidenceCard key={`${item.name}-${index}`} evidence={item} compact />
             ))}
-          </tbody>
-        </table>
+          </div>
+        </section>
+        <section className="nkh-next-evidence-panel">
+          <div className="nkh-kicker">Recommended Next Evidence</div>
+          <p>
+            What Meridian should upload or confirm next, and what each item unlocks.
+          </p>
+          <div className="nkh-next-list">
+            {nextEvidence.slice(0, 8).map((item, index) => (
+              <div key={`${item.item}-${index}`}>
+                <strong>{asText(item.item)}</strong>
+                <p>{asText(item.unlocks)}</p>
+                <span>{asText(item.owner_hint)}</span>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
-
-      <div className="nkh-proof-table">
-        <h2>Render proof</h2>
-        <div className="nkh-render-facts">
-          {facts.map((fact, index) => (
-            <div key={`${fact.label}-${index}`}>
-              <span>{asText(fact.label)}</span>
-              <strong>{asText(fact.value)}</strong>
-              <em>{asText(fact.sub)}</em>
-            </div>
-          ))}
-        </div>
-        <p>
-          Artifact generated {formatDate(pack.generated_at)} from{" "}
-          {selectedSource ?? "the approved Meridian Home Knowledge render pack"}.
-          Validation status: {pack.validation?.status ?? "unknown"}.
-        </p>
-      </div>
-
-      <div className="nkh-card-grid">
-        {evidence.slice(0, 12).map((item, index) => (
-          <EvidenceCard key={`${item.name}-${index}`} evidence={item} />
-        ))}
-      </div>
+      {relationshipVisual?.title || kpis.length || dimensions.length || selectedSource || table.length ? (
+        <span className="nkh-hidden-count">{formatDate(pack.generated_at)}</span>
+      ) : null}
     </div>
   );
 }
@@ -1454,9 +1379,15 @@ function GapCard({ gap }: { gap: HomeKnowledgeGap }) {
   );
 }
 
-function EvidenceCard({ evidence }: { evidence: HomeKnowledgeEvidence }) {
+function EvidenceCard({
+  compact = false,
+  evidence,
+}: {
+  compact?: boolean;
+  evidence: HomeKnowledgeEvidence;
+}) {
   return (
-    <div className="nkh-evidence-card">
+    <div className={`nkh-evidence-card ${compact ? "is-compact" : ""}`}>
       <span>{evidence.type ?? "Evidence"} · {evidence.date ?? "Current"}</span>
       <strong>{evidence.name}</strong>
       <p>{evidence.supports}</p>
@@ -1889,6 +1820,12 @@ const styles = `
   font-size: 13px;
   font-weight: 850;
 }
+.nkh-section-subtitle {
+  margin: 4px 0 0;
+  color: #8b93a0;
+  font-size: 12.5px;
+  font-weight: 700;
+}
 .nkh-fact-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1927,7 +1864,8 @@ const styles = `
 .nkh-data-card,
 .nkh-proof-hero,
 .nkh-layer-visual,
-.nkh-proof-table {
+.nkh-proof-table,
+.nkh-next-evidence-panel {
   border: 1px solid var(--paper-line);
   border-radius: 14px;
   background: #fff;
@@ -1957,7 +1895,8 @@ const styles = `
 .nkh-story-card h2,
 .nkh-proof-hero h2,
 .nkh-layer-visual h2,
-.nkh-proof-table h2 {
+.nkh-proof-table h2,
+.nkh-next-evidence-panel h2 {
   margin: 10px 0 12px;
   font-family: var(--serif);
   font-size: 27px;
@@ -1966,7 +1905,9 @@ const styles = `
 .nkh-lede,
 .nkh-story-card > p,
 .nkh-proof-hero > div > p,
-.nkh-layer-visual > p {
+.nkh-layer-visual > p,
+.nkh-next-evidence-panel > p,
+.nkh-proof-table > p {
   margin: 0;
   color: #5a636f;
   font-size: 15.5px;
@@ -2147,66 +2088,6 @@ const styles = `
   display: block;
   font-size: 15px;
   line-height: 1.35;
-}
-.nkh-visual-stack {
-  display: grid;
-  gap: 16px;
-  margin-top: 22px;
-}
-.nkh-visual-block {
-  border: 1px solid #dce6f4;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #fbfdff 0%, #fff 100%);
-  padding: 20px;
-}
-.nkh-visual-block > div:first-child > span {
-  color: #7d889f;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-}
-.nkh-visual-block h3 {
-  margin: 6px 0;
-  font-size: 18px;
-}
-.nkh-visual-block p {
-  margin: 0;
-  color: #53617d;
-}
-.nkh-visual-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 14px;
-}
-.nkh-visual-grid div,
-.nkh-flow-nodes strong {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
-  padding: 12px;
-}
-.nkh-visual-grid strong {
-  display: block;
-  font-size: 18px;
-}
-.nkh-visual-grid span {
-  display: block;
-  color: #53617d;
-  font-size: 12px;
-  font-weight: 850;
-}
-.nkh-flow-nodes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 14px;
-}
-.nkh-visual-block ul {
-  margin: 14px 0 0;
-  padding-left: 18px;
-  color: #41506f;
 }
 .nkh-data-tools {
   display: flex;
@@ -2435,6 +2316,41 @@ const styles = `
   font-style: normal;
   line-height: 1.35;
 }
+.nkh-evidence-card.is-compact {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  column-gap: 13px;
+  align-items: start;
+  border: 0;
+  border-bottom: 1px solid #f4f3ee;
+  border-radius: 0;
+  padding: 12px 4px;
+}
+.nkh-evidence-card.is-compact span {
+  grid-row: span 3;
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #e9ecf9;
+  color: #3a4796;
+  font: 800 10px "IBM Plex Mono", ui-monospace, monospace;
+  letter-spacing: 0;
+}
+.nkh-evidence-card.is-compact strong {
+  margin: 0;
+  font: 700 13px var(--sans);
+}
+.nkh-evidence-card.is-compact p {
+  margin-top: 2px;
+  color: #8b93a0;
+  font-size: 12px;
+}
+.nkh-evidence-card.is-compact dl,
+.nkh-evidence-card.is-compact em {
+  display: none;
+}
 .nkh-evidence-card dl,
 .nkh-usecase dl {
   display: grid;
@@ -2515,6 +2431,22 @@ const styles = `
   padding: 16px;
 }
 .nkh-layer-visual { margin-top: 20px; }
+.nkh-proof-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, .85fr);
+  gap: 18px;
+  margin-top: 20px;
+}
+.nkh-next-evidence-panel {
+  align-self: start;
+  background: #faf6ec;
+  border-color: #ecdfbf;
+}
+.nkh-evidence-source-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 16px;
+}
 .nkh-orbit {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2548,11 +2480,548 @@ const styles = `
 }
 .nkh-orbit > section span { color: #d5e2f7; }
 .nkh-proof-table { margin-top: 20px; }
+.nkh-proof-split .nkh-proof-table { margin-top: 0; }
 .nkh-render-facts {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin: 16px 0;
+}
+.nkh-technical-proof {
+  margin-top: 20px;
+  border: 1px dashed #d9e1ee;
+  border-radius: 12px;
+  background: #fbfcfe;
+  padding: 14px 16px;
+}
+.nkh-technical-proof summary {
+  cursor: pointer;
+  color: #53617d;
+  font: 800 12px var(--sans);
+}
+.nkh-technical-proof > p {
+  margin: 12px 0 0;
+  color: #65728d;
+  font-size: 12.5px;
+}
+.nkh-inline-head {
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+  margin-bottom: 16px;
+}
+.nkh-inline-head h2 {
+  margin: 0;
+  color: #15202f;
+  font: 700 21px/1.2 var(--serif);
+}
+.nkh-inline-head span {
+  color: #8b93a0;
+  font: 500 12px var(--sans);
+}
+.nkh-section-kicker {
+  margin: 24px 0 13px;
+}
+.nkh-at-glance {
+  border: 1px solid var(--paper-line);
+  border-radius: 14px;
+  background: #fff;
+  padding: 20px 24px;
+}
+.nkh-fact-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+  border-top: 1px solid #f1f0ea;
+}
+.nkh-fact-card {
+  min-height: 0;
+  border: 0;
+  border-bottom: 1px solid #f4f3ee;
+  border-radius: 0;
+  padding: 15px 16px 15px 0;
+}
+.nkh-fact-card strong {
+  font-size: 22px;
+}
+.nkh-boardroom-brief {
+  padding: 28px 30px;
+}
+.nkh-brief-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  border: 1px solid #efeee7;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 26px;
+}
+.nkh-brief-grid .nkh-story-block {
+  border: 0;
+  border-right: 1px solid #efeee7;
+  border-radius: 0;
+  padding: 18px 20px;
+}
+.nkh-brief-grid .nkh-story-block:last-child {
+  border-right: 0;
+}
+.nkh-brief-grid .nkh-story-block h3 {
+  color: #a97b1e;
+  font: 800 9.5px var(--sans);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.nkh-priority-list {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 0;
+}
+.nkh-priority-list article {
+  display: block;
+  border-top: 2px solid #33417e;
+  padding-top: 12px;
+}
+.nkh-priority-list article > span {
+  display: block;
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  color: #c3c9d8;
+  font: 700 15px var(--serif);
+  margin-bottom: 8px;
+}
+.nkh-priority-list h3 {
+  font-size: 13px;
+  line-height: 1.3;
+}
+.nkh-priority-list p {
+  color: #6b7280;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.nkh-leadership-signals {
+  margin-bottom: 22px;
+}
+.nkh-signal-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 0;
+}
+.nkh-signal-list figure {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border: 1px solid #eceae2;
+  border-top: 3px solid #33417e;
+  border-radius: 12px;
+  background: #fff;
+  padding: 20px 22px 18px;
+}
+.nkh-signal-list blockquote {
+  flex: 1;
+  margin: 0 0 16px;
+  color: #2a3346;
+  font: italic 400 16px/1.5 var(--serif);
+}
+.nkh-signal-list figcaption {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  border-top: 1px solid #f1f0ea;
+  padding-top: 14px;
+}
+.nkh-signal-list figcaption > span {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #33417e;
+  color: #fff;
+  font: 700 12px var(--sans);
+}
+.nkh-signal-list strong {
+  color: #17202e;
+  font: 600 13px var(--sans);
+}
+.nkh-signal-list em {
+  margin-top: 1px;
+  color: #8b93a0;
+  font-size: 11.5px;
+}
+.nkh-handoff-bar {
+  border-radius: 14px;
+  background: #15202f;
+  padding: 22px 26px;
+}
+.nkh-handoff-bar > div:first-child {
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+  margin-bottom: 16px;
+}
+.nkh-handoff-bar h3 {
+  margin: 0;
+  color: #fff;
+  font: 700 18px var(--serif);
+}
+.nkh-handoff-bar > div:first-child span {
+  color: #8f98b5;
+  font-size: 12px;
+}
+.nkh-handoff-bar > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 11px;
+}
+.nkh-handoff-bar button {
+  min-width: 150px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+  cursor: pointer;
+  padding: 13px 16px;
+  text-align: left;
+}
+.nkh-handoff-bar button:hover {
+  background: rgba(255,255,255,.11);
+}
+.nkh-handoff-bar button strong,
+.nkh-handoff-bar button span {
+  display: block;
+}
+.nkh-handoff-bar button strong {
+  color: #fff;
+  font-size: 13px;
+}
+.nkh-handoff-bar button span {
+  margin-top: 4px;
+  color: #9aa3c2;
+  font-size: 11px;
+}
+.nkh-observed-card {
+  border: 1px solid #eceae2;
+  border-radius: 14px;
+  background: #fff;
+  padding: 24px 26px;
+  margin-bottom: 22px;
+}
+.nkh-observed-copy {
+  max-width: 900px;
+  margin: 0 0 22px;
+  color: #26314a;
+  font: 400 18px/1.55 var(--serif);
+}
+.nkh-observed-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+.nkh-observed-split div {
+  border-left: 3px solid #1f9d63;
+  padding-left: 15px;
+}
+.nkh-observed-split div.is-warn {
+  border-left-color: #c2703a;
+}
+.nkh-observed-split span {
+  display: block;
+  margin-bottom: 8px;
+  color: #1f9d63;
+  font: 800 10px var(--sans);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.nkh-observed-split div.is-warn span {
+  color: #c2703a;
+}
+.nkh-observed-split p {
+  margin: 0;
+  color: #4a5462;
+  font: 400 13.5px/1.55 var(--sans);
+}
+.nkh-interesting-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 13px;
+  margin-bottom: 24px;
+}
+.nkh-interesting-grid div {
+  border: 1px solid #eceae2;
+  border-top: 2px solid #33417e;
+  border-radius: 12px;
+  background: #fff;
+  padding: 18px 20px;
+}
+.nkh-interesting-grid strong {
+  display: block;
+  margin-bottom: 10px;
+  color: #15202f;
+  font: 700 24px/1.1 var(--serif);
+}
+.nkh-interesting-grid p {
+  margin: 0;
+  color: #4a5462;
+  font: 400 13px/1.55 var(--sans);
+}
+.nkh-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 13px;
+  margin-bottom: 14px;
+}
+.nkh-dashboard-tile,
+.nkh-dashboard-split section {
+  border: 1px solid #eceae2;
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px 18px;
+}
+.nkh-dashboard-tile span {
+  display: block;
+  margin-bottom: 8px;
+  color: #a97b1e;
+  font: 800 9.5px var(--sans);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.nkh-dashboard-tile strong {
+  color: #17202e;
+  font: 700 24px var(--serif);
+}
+.nkh-dashboard-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+}
+.nkh-dashboard-split h3,
+.nkh-evidence-mix h3 {
+  margin: 0 0 14px;
+  color: #17202e;
+  font: 600 14px var(--sans);
+}
+.nkh-breakdown-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #f4f3ee;
+  padding: 11px 0;
+}
+.nkh-breakdown-row span {
+  color: #5a636f;
+  font-size: 13px;
+}
+.nkh-breakdown-row strong {
+  color: #17202e;
+  font: 600 14px "IBM Plex Mono", ui-monospace, monospace;
+}
+.nkh-evidence-mix > div {
+  margin-bottom: 14px;
+}
+.nkh-evidence-mix > div > div {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.nkh-evidence-mix span {
+  color: #4a5462;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.nkh-evidence-mix em {
+  font: 600 12px "IBM Plex Mono", ui-monospace, monospace;
+  font-style: normal;
+}
+.nkh-evidence-mix b {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: #f1f0ea;
+  overflow: hidden;
+}
+.nkh-evidence-mix i {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+}
+.nkh-tab-intro {
+  max-width: 780px;
+  margin: 0 0 20px;
+  color: #5a636f;
+  font: 400 14.5px/1.6 var(--sans);
+}
+.nkh-relationship-card {
+  border: 1px solid #eceae2;
+  border-radius: 12px;
+  background: #fff;
+  padding: 26px 24px;
+  margin-bottom: 16px;
+}
+.nkh-relationship-note {
+  border: 1px solid #dbe1f0;
+  border-radius: 10px;
+  background: #f3f5fb;
+  color: #3a4670;
+  padding: 14px 18px;
+  font-size: 12.5px;
+}
+.nkh-gap-list,
+.nkh-evidence-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.nkh-gap-list .nkh-gap-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 18px;
+  border-left: 3px solid #c2703a;
+}
+.nkh-gap-list .nkh-gap-card span,
+.nkh-gap-list .nkh-gap-card em {
+  display: inline-flex;
+  justify-self: start;
+  border-radius: 999px;
+  padding: 3px 9px;
+  color: #a97b1e;
+  background: #faf6ec;
+  font: 700 10px var(--sans);
+}
+.nkh-gap-list .nkh-gap-card strong,
+.nkh-gap-list .nkh-gap-card p {
+  grid-column: 1;
+}
+.nkh-gap-list .nkh-gap-card button {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: center;
+  border: 1px solid #ecdfbf;
+  border-radius: 8px;
+  background: #faf6ec;
+  color: #a97b1e;
+  cursor: pointer;
+  padding: 9px 15px;
+  font-weight: 800;
+}
+.nkh-evidence-list .nkh-evidence-card {
+  border-radius: 12px;
+  padding: 20px 22px;
+}
+.nkh-confidence-panel {
+  border: 1px solid #eceae2;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  padding: 0 0 22px;
+}
+.nkh-confidence-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  border-bottom: 1px solid #f1f0ea;
+  padding: 20px 26px;
+}
+.nkh-confidence-head h2 {
+  margin: 0;
+  color: #15202f;
+  font: 700 20px var(--serif);
+}
+.nkh-confidence-head > span {
+  color: #8b93a0;
+  font-size: 12px;
+}
+.nkh-confidence-head > div {
+  display: flex;
+  gap: 15px;
+  margin-left: auto;
+}
+.nkh-confidence-head em {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #6b7280;
+  font-size: 11.5px;
+  font-style: normal;
+}
+.nkh-confidence-head i {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+}
+.nkh-confidence-summary-copy {
+  margin: 18px 26px 0;
+  color: #5a636f;
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+.nkh-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 13px;
+  margin: 22px 26px;
+}
+.nkh-kpi-card {
+  border: 1px solid #eceae2;
+  border-radius: 13px;
+  background: #fff;
+  padding: 17px 18px;
+}
+.nkh-kpi-card.is-green {
+  border-color: #cfe9da;
+  background: #f2faf5;
+}
+.nkh-kpi-card.is-amber {
+  border-color: #ecdfbf;
+  background: #fbf7ee;
+}
+.nkh-kpi-card span {
+  display: block;
+  margin-bottom: 12px;
+  color: #a97b1e;
+  font: 800 9.5px var(--sans);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.nkh-kpi-card strong {
+  color: #15202f;
+  font: 700 20px/1.15 var(--serif);
+}
+.nkh-kpi-card p {
+  margin: 8px 0 0;
+  color: #5a636f;
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.nkh-confidence-grid {
+  margin: 0 26px 24px;
+}
+.nkh-confidence-table {
+  width: calc(100% - 52px);
+  margin: 0 26px;
+  border-collapse: collapse;
+}
+.nkh-confidence-table th,
+.nkh-confidence-table td {
+  border-bottom: 1px solid #f4f3ee;
+  padding: 13px 12px;
+  text-align: left;
+}
+.nkh-confidence-table th {
+  color: #98a0ad;
+  font: 800 10px var(--sans);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+.nkh-confidence-table td {
+  color: #5a636f;
+  font-size: 13px;
+}
+.nkh-confidence-table td:first-child {
+  color: #17202e;
+  font-weight: 800;
+}
+.nkh-hidden-count {
+  display: none;
 }
 .nkh-ava {
   position: fixed;
@@ -2587,12 +3056,19 @@ const styles = `
   .nkh-proof-hero,
   .nkh-brief-grid,
   .nkh-split-section,
-  .nkh-support-grid { grid-template-columns: 1fr; }
+  .nkh-support-grid,
+  .nkh-observed-split,
+  .nkh-dashboard-split,
+  .nkh-proof-split { grid-template-columns: 1fr; }
   .nkh-card-grid,
   .nkh-breakdown-grid,
   .nkh-fact-grid,
+  .nkh-kpi-grid,
+  .nkh-priority-list,
+  .nkh-signal-list,
+  .nkh-interesting-grid,
+  .nkh-dashboard-grid,
   .nkh-route-grid,
-  .nkh-visual-grid,
   .nkh-orbit,
   .nkh-render-facts { grid-template-columns: 1fr; }
 }

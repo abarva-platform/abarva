@@ -1,9 +1,9 @@
 # Home Knowledge Design Contract UI Wiring Proof
 
-Generated: 2026-07-17T22:06:47.785Z
+Generated: 2026-07-18T00:36:47.085Z
 Tenant: Meridian Health System (meridian-health)
 Validation: pass
-Mode: evidence-tab
+Mode: ui
 
 ## Truth Split
 

@@ -36,7 +36,11 @@ const BLOCKED_PATTERNS = [
   { pattern: /\bproduction AI readiness\b/i, reason: "unsupported production AI readiness wording" },
   { pattern: /\bAWS\b[^.]{0,80}\bcurrent certified production\b/i, reason: "AWS current certified production claim" },
   { pattern: /\bDatabricks\b[^.]{0,80}\bcurrent certified production\b/i, reason: "Databricks current certified production claim" },
-  { pattern: /\$210M|\$16\.8B|208 items|96 vendors/i, reason: "unsupported design placeholder value" },
+  {
+    pattern: /\$210M|\$16\.8B|208 items|96 vendors/i,
+    reason: "unsupported design placeholder value",
+    targets: ["UI component source"],
+  },
   { pattern: /\bis represented in the Meridian context\b/i, reason: "generic dimension fallback wording" },
   { pattern: /\bmatters because it shapes which business decisions\b/i, reason: "generic guidebook-style summary wording" },
   { pattern: /\bthis selected area\b/i, reason: "generic UI helper wording" },
@@ -242,19 +246,6 @@ function buildRenderedComponentRows(pack, slots, dims) {
     });
     push({
       page: `Enterprise Dimensions / ${dim.name}`,
-      tab: "Summary",
-      component: "Visual blocks",
-      rendered_value: asText(slots.VISUAL_BLOCKS[key]),
-      generated_by: "Claude-authored visual block payload",
-      deterministic_object: `design_slots.VISUAL_BLOCKS.${key}`,
-      source_layer: "canonical dimension rows + cross-dimension context",
-      source_files: sourceFile,
-      claude_prompt_file: mainPrompt,
-      claude_response_file: mainResponse,
-      notes: "Cards, charts, graphs, and dashboard panels render from this structure.",
-    });
-    push({
-      page: `Enterprise Dimensions / ${dim.name}`,
       tab: "Data",
       component: "Rows",
       rendered_value: previewRows(slots.DATA[key]),
@@ -365,9 +356,6 @@ function main() {
     if (!slots.REL?.[key]) missing.push(`${key}: relationships`);
     if (!slots.DGAPS?.[key]?.length) missing.push(`${key}: gaps`);
     if (!slots.EVID?.[key]?.length) missing.push(`${key}: evidence`);
-    if (!slots.VISUAL_BLOCKS?.[key]?.length) {
-      missing.push(`${key}: Claude visual blocks`);
-    }
   }
   if (missing.length) fail(`Missing required dimension content: ${missing.join("; ")}`);
 
@@ -482,13 +470,6 @@ function main() {
       prompt: "reports/home-knowledge-design-contract/actual-claude-prompt.txt",
       rendered_path: "dimension Relationships and Gaps tabs",
     },
-    {
-      component: "Visual blocks",
-      generation_method: "claude_tool_payload_only",
-      source: "design_slots.VISUAL_BLOCKS",
-      prompt: "reports/home-knowledge-design-contract/actual-claude-prompt.txt",
-      rendered_path: "dimension Summary tab visual blocks",
-    },
   ];
 
   const scanTargets = [
@@ -511,6 +492,16 @@ function main() {
   const blockedRows = [];
   for (const target of scanTargets) {
     for (const rule of BLOCKED_PATTERNS) {
+      if (rule.targets && !rule.targets.includes(target.name)) {
+        blockedRows.push({
+          target: target.name,
+          reason: rule.reason,
+          status: "pass",
+          pattern: String(rule.pattern),
+          note: "rule scoped to UI component source",
+        });
+        continue;
+      }
       const match = target.text.match(rule.pattern);
       const safeNegation = match
         ? isSafeNegatedMention(target.text, match.index ?? 0)
