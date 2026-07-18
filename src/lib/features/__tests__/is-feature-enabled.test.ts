@@ -67,6 +67,12 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
           "tower_cxo_claude_story_blocks",
         ),
       ).toBe(true);
+      expect(
+        isFeatureEnabled(
+          { clientKey: "meridian-health" },
+          "moves_ava_chat_hardening",
+        ),
+      ).toBe(true);
     });
 
     it("is off when the context is missing a tenant key", () => {
