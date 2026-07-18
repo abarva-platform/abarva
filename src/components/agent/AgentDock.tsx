@@ -463,6 +463,12 @@ export interface AgentDockProps {
   /** Used as the localStorage namespace + telemetry key. */
   surface: string;
   /**
+   * `dock` preserves the existing multi-mode workspace/chat shell.
+   * `chat-only` renders the advisor as the primary page experience and ignores
+   * persisted split/canvas modes for this surface.
+   */
+  layout?: "dock" | "chat-only";
+  /**
    * `standard` keeps the full operational dock used by Source/Moves/Tower.
    * `focused` keeps the chat rail quiet for GPT-like advisor surfaces and
    * renders governed answer artifacts without repeating packet chrome.
@@ -690,6 +696,7 @@ export function AgentDock(props: AgentDockProps) {
   const {
     agent: rawAgent,
     surface,
+    layout = "dock",
     variant = "standard",
     quietReviewChrome = false,
     defaultMode = "side-rail",
@@ -740,6 +747,7 @@ export function AgentDock(props: AgentDockProps) {
     ? normalizeMovesChromeText(safeThread)
     : safeThread;
   const focused = variant === "focused";
+  const chatOnly = layout === "chat-only";
   const showReviewChrome = !focused && !quietReviewChrome;
 
   // Founder feedback 2026-05-10: 'while any agent is busy retrieving info,
@@ -1086,6 +1094,7 @@ export function AgentDock(props: AgentDockProps) {
         style={{
           ...PANEL_STYLE,
           ...(focused ? FOCUSED_PANEL_STYLE : null),
+          ...(chatOnly ? CHAT_ONLY_PANEL_STYLE : null),
           outline: draggingOver
             ? `2px dashed ${CANVAS.SPLITTER_ACTIVE}`
             : "none",
@@ -1104,24 +1113,28 @@ export function AgentDock(props: AgentDockProps) {
           }
         `}</style>
         {/* Header */}
-        <div style={HEADER_STYLE}>
-          <div style={AGENT_ROW_STYLE}>
-            <AvaAskMark variant="wordmark-dark" style={AGENT_WORDMARK_STYLE} />
-            <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
-              <span style={AGENT_ROLE_STYLE}>{agent.role}</span>
+        {chatOnly && thread.length === 0 ? null : (
+          <div style={chatOnly ? CHAT_ONLY_HEADER_STYLE : HEADER_STYLE}>
+            <div style={AGENT_ROW_STYLE}>
+              <AvaAskMark variant="wordmark-dark" style={AGENT_WORDMARK_STYLE} />
+              <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
+                <span style={AGENT_ROLE_STYLE}>{agent.role}</span>
+              </div>
+            </div>
+            <div style={HEADER_ACTIONS_STYLE}>
+              {canExportSession ? (
+                <SessionExportActions
+                  pending={sessionExportPending}
+                  status={sessionExportStatus}
+                  onExport={runSessionExport}
+                />
+              ) : null}
+              {chatOnly ? null : (
+                <ModePicker mode={mode} onChange={setMode} dockId={dockId} />
+              )}
             </div>
           </div>
-          <div style={HEADER_ACTIONS_STYLE}>
-            {canExportSession ? (
-              <SessionExportActions
-                pending={sessionExportPending}
-                status={sessionExportStatus}
-                onExport={runSessionExport}
-              />
-            ) : null}
-            <ModePicker mode={mode} onChange={setMode} dockId={dockId} />
-          </div>
-        </div>
+        )}
 
         {/* Optional quote */}
         {initialQuote ? (
@@ -1134,13 +1147,43 @@ export function AgentDock(props: AgentDockProps) {
         {/* Thread */}
         <div
           ref={threadScrollRef}
-          style={focused ? FOCUSED_THREAD_STYLE : THREAD_STYLE}
+          style={{
+            ...(focused ? FOCUSED_THREAD_STYLE : THREAD_STYLE),
+            ...(chatOnly ? CHAT_ONLY_THREAD_STYLE : null),
+            ...(chatOnly && thread.length === 0
+              ? CHAT_ONLY_EMPTY_THREAD_STYLE
+              : null),
+          }}
           data-testid="agent-dock-thread"
         >
           {thread.length === 0 ? (
-            <div style={EMPTY_STATE_STYLE}>
-              <p style={EMPTY_TITLE_STYLE}>Ask {displayAgentName} anything.</p>
-              <p style={EMPTY_SUBTITLE_STYLE}>{agent.role}</p>
+            <div
+              style={
+                chatOnly ? CHAT_ONLY_EMPTY_STATE_STYLE : EMPTY_STATE_STYLE
+              }
+            >
+              {chatOnly ? (
+                <AvaAskMark
+                  variant="wordmark-dark"
+                  style={CHAT_ONLY_EMPTY_MARK_STYLE}
+                />
+              ) : null}
+              <p
+                style={
+                  chatOnly ? CHAT_ONLY_EMPTY_TITLE_STYLE : EMPTY_TITLE_STYLE
+                }
+              >
+                Ask {displayAgentName} anything.
+              </p>
+              <p
+                style={
+                  chatOnly
+                    ? CHAT_ONLY_EMPTY_SUBTITLE_STYLE
+                    : EMPTY_SUBTITLE_STYLE
+                }
+              >
+                {agent.role}
+              </p>
             </div>
           ) : (
             thread.map((turn) => (
@@ -1354,6 +1397,7 @@ export function AgentDock(props: AgentDockProps) {
     );
   }, [
     agent,
+    chatOnly,
     dockId,
     draft,
     draggingOver,
@@ -1389,6 +1433,18 @@ export function AgentDock(props: AgentDockProps) {
   ]);
 
   // ── Render by mode ──────────────────────────────────────────────────────
+
+  if (chatOnly) {
+    return (
+      <main
+        ref={shellRef}
+        data-testid="agent-dock-chat-only-shell"
+        style={CHAT_ONLY_SHELL_STYLE}
+      >
+        {chatPanel}
+      </main>
+    );
+  }
 
   if (mode === "collapsed") {
     const restoreMode =
@@ -1926,6 +1982,21 @@ const SIDE_RAIL_SHELL_STYLE: CSSProperties = {
   overflow: "hidden",
 };
 
+const CHAT_ONLY_SHELL_STYLE: CSSProperties = {
+  position: "sticky",
+  top: "var(--agent-dock-sticky-top, var(--agent-dock-top-offset, 72px))",
+  display: "flex",
+  justifyContent: "center",
+  width: "100%",
+  height:
+    "calc(100vh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 72px)) - var(--agent-dock-bottom-padding, 0px))",
+  maxHeight:
+    "calc(100dvh - var(--agent-dock-self-top, var(--agent-dock-top-offset, 72px)) - var(--agent-dock-bottom-padding, 0px))",
+  minHeight: 0,
+  overflow: "hidden",
+  background: "#FFFFFF",
+};
+
 const PANEL_STYLE: CSSProperties = {
   display: "flex",
   flexDirection: "column",
@@ -1943,6 +2014,12 @@ const FOCUSED_PANEL_STYLE: CSSProperties = {
   borderRight: `1px solid ${CANVAS.HAIRLINE}`,
 };
 
+const CHAT_ONLY_PANEL_STYLE: CSSProperties = {
+  width: "min(100%, 1180px)",
+  borderRight: "none",
+  background: "#FFFFFF",
+};
+
 const HEADER_STYLE: CSSProperties = {
   display: "flex",
   alignItems: "center",
@@ -1951,6 +2028,12 @@ const HEADER_STYLE: CSSProperties = {
   padding: "14px 18px 12px",
   borderBottom: `1px solid ${CANVAS.HAIRLINE}`,
   flexShrink: 0,
+};
+
+const CHAT_ONLY_HEADER_STYLE: CSSProperties = {
+  ...HEADER_STYLE,
+  padding: "12px 22px 10px",
+  borderBottom: "none",
 };
 
 const HEADER_ACTIONS_STYLE: CSSProperties = {
@@ -2076,6 +2159,20 @@ const FOCUSED_THREAD_STYLE: CSSProperties = {
   background: "#FFFFFF",
 };
 
+const CHAT_ONLY_THREAD_STYLE: CSSProperties = {
+  ...FOCUSED_THREAD_STYLE,
+  padding: "22px 22px 18px",
+  maxWidth: 1180,
+  width: "100%",
+  margin: "0 auto",
+};
+
+const CHAT_ONLY_EMPTY_THREAD_STYLE: CSSProperties = {
+  justifyContent: "center",
+  alignContent: "center",
+  paddingBottom: 24,
+};
+
 const EMPTY_STATE_STYLE: CSSProperties = {
   paddingTop: 12,
   display: "grid",
@@ -2097,6 +2194,33 @@ const EMPTY_SUBTITLE_STYLE: CSSProperties = {
   color: CANVAS.INK_SOFT,
   margin: 0,
   maxWidth: 520,
+};
+
+const CHAT_ONLY_EMPTY_STATE_STYLE: CSSProperties = {
+  display: "grid",
+  justifyItems: "center",
+  gap: 12,
+  textAlign: "center",
+  padding: "0 20px",
+};
+
+const CHAT_ONLY_EMPTY_MARK_STYLE: CSSProperties = {
+  width: 84,
+  minWidth: 84,
+  height: "auto",
+};
+
+const CHAT_ONLY_EMPTY_TITLE_STYLE: CSSProperties = {
+  ...EMPTY_TITLE_STYLE,
+  fontSize: 34,
+  lineHeight: 1.1,
+};
+
+const CHAT_ONLY_EMPTY_SUBTITLE_STYLE: CSSProperties = {
+  ...EMPTY_SUBTITLE_STYLE,
+  maxWidth: 680,
+  fontSize: 14,
+  color: CANVAS.GRAY_DK,
 };
 
 const AGENT_TURN_STYLE: CSSProperties = {

@@ -41,6 +41,7 @@ export type AvaChatShellProps = {
   minLeftPx?: number;
   placeholder?: string;
   agent?: Partial<AgentProfile>;
+  layout?: "dock" | "chat-only";
 };
 
 const DEFAULT_AVA_AGENT: AgentProfile = {
@@ -101,6 +102,7 @@ export function AvaChatShell({
   minLeftPx = 320,
   placeholder = "Ask aVa about this enterprise context...",
   agent,
+  layout = "dock",
 }: AvaChatShellProps) {
   const profile: AgentProfile = {
     ...DEFAULT_AVA_AGENT,
@@ -117,6 +119,7 @@ export function AvaChatShell({
       <AgentDock
         agent={profile}
         surface={surface}
+        layout={layout}
         variant="focused"
         defaultMode="side-rail"
         defaultLeftPercent={defaultLeftPercent}
