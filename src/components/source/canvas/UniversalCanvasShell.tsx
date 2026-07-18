@@ -151,7 +151,11 @@ import { VendorBafoInstructionPackPanel } from "./responses/VendorBafoInstructio
 import { VendorEvaluationScorecardPanel } from "./responses/VendorEvaluationScorecardPanel";
 import { StageNextMoveCard } from "./StageNextMoveCard";
 import { approvalViewForCriterion } from "@/lib/source/approval-routing";
-import { criterionById } from "@/lib/source/canonical-specs";
+import {
+  criterionById,
+  requiredEvidenceForStage,
+  requiredSpecsForStage,
+} from "@/lib/source/canonical-specs";
 import {
   assessStageGate,
   buildStageRecommendation,
@@ -174,6 +178,24 @@ import type {
 } from "@/lib/source/proposal-intelligence/types";
 import type { VendorResponseProfileSet } from "@/lib/source/proposal-intelligence/mve-profile";
 import type { ContractOptimizationMveProfile } from "@/lib/source/contract-optimization/types";
+
+const EVIDENCE_READINESS_RANK: Record<
+  SourceEventEvidence["currentState"],
+  number
+> = {
+  "Not Requested": 0,
+  Loaded: 1,
+  Parsed: 2,
+  Available: 3,
+  "Usable Evidence": 4,
+  Stale: -1,
+  "Low Confidence": -1,
+};
+
+const SATISFIED_ARTIFACT_STATUSES = new Set<SourceEventArtifactStatus>([
+  "approved",
+  "locked",
+]);
 
 interface UniversalCanvasShellProps {
   event: Pick<
@@ -213,6 +235,58 @@ interface UniversalCanvasShellProps {
   workspaceExplorerEnabled?: boolean;
   strategyAutoDraftEnabled?: boolean;
   simpleFrontEnabled?: boolean;
+}
+
+function evidenceRequirementIsSatisfied(
+  state: SourceEventEvidence | undefined,
+  minimumState: SourceEventEvidence["currentState"],
+): boolean {
+  if (!state) return false;
+  const currentRank = EVIDENCE_READINESS_RANK[state.currentState];
+  const minimumRank = EVIDENCE_READINESS_RANK[minimumState];
+  return currentRank >= 0 && currentRank >= minimumRank;
+}
+
+function artifactRequirementIsSatisfied(
+  state: SourceEventArtifactState | undefined,
+): boolean {
+  if (!state) return false;
+  return SATISFIED_ARTIFACT_STATUSES.has(state.status);
+}
+
+function computeRequirementSatisfaction({
+  stageKey,
+  artifactStates,
+  evidenceStates,
+}: {
+  stageKey: SourceStageKey;
+  artifactStates: SourceEventArtifactState[];
+  evidenceStates: SourceEventEvidence[];
+}): string {
+  const requiredArtifacts = requiredSpecsForStage(stageKey);
+  const requiredEvidence = requiredEvidenceForStage(stageKey);
+  const totalRequired = requiredArtifacts.length + requiredEvidence.length;
+
+  if (totalRequired === 0) return "no requirements defined";
+
+  const artifactByCode = new Map(
+    artifactStates.map((artifact) => [artifact.artifactCode, artifact]),
+  );
+  const evidenceByRequirement = new Map(
+    evidenceStates.map((evidence) => [evidence.requirementId, evidence]),
+  );
+
+  const satisfiedArtifacts = requiredArtifacts.filter((artifact) =>
+    artifactRequirementIsSatisfied(artifactByCode.get(artifact.code)),
+  ).length;
+  const satisfiedEvidence = requiredEvidence.filter((requirement) =>
+    evidenceRequirementIsSatisfied(
+      evidenceByRequirement.get(requirement.requirementId),
+      requirement.minimumState,
+    ),
+  ).length;
+
+  return `${satisfiedArtifacts + satisfiedEvidence} / ${totalRequired}`;
 }
 
 function renderStageDocumentContent({
@@ -594,11 +668,22 @@ export function UniversalCanvasShell({
       readiness: `${usable} / ${totalEvidence}`,
       artifacts: `${liveArtifacts} / ${totalArtifacts}`,
       evidence: `${stageEvidence.length} sources`,
+      requirementSatisfaction: computeRequirementSatisfaction({
+        stageKey: viewStage,
+        artifactStates: stageArtifacts,
+        evidenceStates: stageEvidence,
+      }),
       vendors: undefined,
       metCriteria,
       totalCriteria: stageCriteria.length,
     };
-  }, [stageArtifacts, stageCriteria, stageEvidence, stageGateAssessment]);
+  }, [
+    stageArtifacts,
+    stageCriteria,
+    stageEvidence,
+    stageGateAssessment,
+    viewStage,
+  ]);
   const workspaceItemCount = useMemo(() => {
     const registryIds = new Set(
       registryArtifactsState.map((artifact) => artifact.id),
@@ -1391,6 +1476,7 @@ function CanvasContextStrip({
     readiness: string;
     artifacts: string;
     evidence: string;
+    requirementSatisfaction: string;
     vendors?: string;
     metCriteria: number;
     totalCriteria: number;
@@ -1409,6 +1495,7 @@ function CanvasContextStrip({
         <span>Readiness {contextBundle.readiness}</span>
         <span>Artifacts {contextBundle.artifacts}</span>
         <span>Evidence {contextBundle.evidence}</span>
+        <span>Requirement-satisfied {contextBundle.requirementSatisfaction}</span>
         <span>
           Gates {contextBundle.metCriteria} / {contextBundle.totalCriteria}
         </span>
