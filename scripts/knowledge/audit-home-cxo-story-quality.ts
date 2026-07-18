@@ -19,6 +19,10 @@ const repoRoot = process.cwd();
 const outDir = path.join(repoRoot, "reports/home-cxo-story-quality");
 const screenshotsDir = path.join(outDir, "screenshots");
 const homeSurfacePath = path.join(repoRoot, "src/components/home/HomeSurface.tsx");
+const homeDesignContractPath = path.join(
+  repoRoot,
+  "src/components/home/HomeKnowledgeDesignContractSurface.tsx",
+);
 const failures: string[] = [];
 const storyScoreRows: ScoreRow[] = [];
 const visualScoreRows: ScoreRow[] = [];
@@ -94,6 +98,10 @@ function visualCriterion(
 }
 
 const homeSource = existsSync(homeSurfacePath) ? readFileSync(homeSurfacePath, "utf8") : "";
+const homeDesignContractSource = existsSync(homeDesignContractPath)
+  ? readFileSync(homeDesignContractPath, "utf8")
+  : "";
+const renderedHomeSource = `${homeSource}\n${homeDesignContractSource}`;
 const storyText = visibleStoryText();
 const lowerStoryText = storyText.toLowerCase();
 const positiveClaimText = visibleStoryTextForPositiveClaimCheck();
@@ -209,15 +217,26 @@ scoreCriterion(
 
 for (const [label, pattern] of [
   ["Enterprise Brief", /Enterprise Brief/],
-  ["What more context unlocks", /What more context unlocks/],
-  ["Cross-dimension insights", /Cross-dimension insights/],
-  ["Agent Assist context map", /Agent Assist context map/],
-  ["Readiness and evidence", /Readiness and evidence/],
-  ["Top gaps and module readiness", /Top gaps and module readiness/],
-  ["Technical diagnostics collapsed", /<details className="hx3-tech">/],
+  ["Enterprise at a glance", /Enterprise at a glance/],
+  ["Leadership Signals", /Leadership Signals/],
+  ["Use Cases", /AI opportunity|Use Cases/],
+  ["Context Confidence", /Context Confidence/],
+  ["Evidence Gaps", /Evidence Gaps|Recommended Next Evidence/],
 ] as const) {
-  visualCriterion(label, `HomeSurface includes ${label}`, pattern.test(homeSource), label);
+  visualCriterion(
+    label,
+    `Home Knowledge design contract includes ${label}`,
+    pattern.test(renderedHomeSource),
+    label,
+  );
 }
+
+visualCriterion(
+  "No primary technical diagnostics",
+  "Design contract keeps debug/proof internals out of the primary CXO view",
+  !/\bhx3-tech\b|\btechnical diagnostics\b|\bdebug\b/i.test(homeDesignContractSource),
+  "Debug vocabulary is absent from the design-contract surface.",
+);
 
 visualCriterion(
   "Home aVa",

@@ -499,100 +499,78 @@
     ],
     "FACTS": [
       {
-        "label": "Tenant",
-        "value": "Meridian Health System",
-        "sub": "Integrated health system + health plan",
+        "label": "Net revenue",
+        "value": "$16.8B",
+        "sub": "FY26 planning-grade profile",
         "st": "source-backed",
         "evidence_refs": [
-          "MER-V3-EVID-0001"
+          "MER-V3-EVID-0500"
         ]
       },
       {
-        "label": "Context Dimensions",
-        "value": "19",
-        "sub": "Across enterprise profile, systems, data, risks, and programs",
+        "label": "Employees",
+        "value": "58,000",
+        "sub": "clinical + non-clinical workforce",
         "st": "source-backed",
         "evidence_refs": [
-          "MER-V3-EVID-0001"
+          "MER-V3-EVID-0500"
         ]
       },
       {
-        "label": "Source Rows Ingested",
-        "value": "3,487",
-        "sub": "203 active; 3,284 candidate",
+        "label": "FY26 IT budget",
+        "value": "$650M",
+        "sub": "75 / 25 run / change posture",
         "st": "source-backed",
         "evidence_refs": [
-          "MER-V3-EVID-0001"
+          "MER-V3-EVID-BUD-RUN-APP-01",
+          "MER-V3-EVID-BUD-CHG-EHR-01"
         ]
       },
       {
-        "label": "Evidence References",
-        "value": "146",
-        "sub": "Across documents, systems, and executive interviews",
+        "label": "Headquarters",
+        "value": "Sacramento, CA",
+        "sub": "N. CA · Central CA · NV",
         "st": "source-backed",
         "evidence_refs": [
-          "MER-V3-EVID-0001"
+          "MER-V3-EVID-0001",
+          "MER-V3-EVID-0500"
         ]
       },
       {
-        "label": "Core EHR Platform",
-        "value": "Epic (Hyperspace, Clarity, Caboodle)",
-        "sub": "Clinical Platforms owner; current core lifecycle",
+        "label": "Applications",
+        "value": "241",
+        "sub": "Epic + claims + reporting",
         "st": "source-backed",
         "evidence_refs": [
           "MER-V3-EVID-0040",
-          "MER-V3-EVID-0041",
-          "MER-V3-EVID-0042"
+          "MER-V3-EVID-0043"
         ]
       },
       {
-        "label": "Analytics Estate",
-        "value": "SQL Server, Tableau, Power BI, SAS",
-        "sub": "Fragmented on-prem; no certified semantic layer",
+        "label": "Vendors",
+        "value": "96",
+        "sub": "38 missing contracts",
+        "st": "needs-evidence",
+        "evidence_refs": [
+          "MER-V3-EVID-0074",
+          "MER-V3-EVID-0186"
+        ]
+      },
+      {
+        "label": "Approved programs",
+        "value": "12",
+        "sub": "5 without named owner",
         "st": "source-backed",
         "evidence_refs": [
-          "MER-V3-EVID-0043",
-          "MER-V3-EVID-0044",
-          "MER-V3-EVID-0045",
-          "MER-V3-EVID-0046"
+          "MER-V3-EVID-0360",
+          "MER-SA07-INT-EVID-0001"
         ]
       },
       {
-        "label": "Target Cloud Platform",
-        "value": "AWS + Databricks (aspirational)",
-        "sub": "Foundation not yet production-ready; no certified medallion architecture",
+        "label": "AI candidates",
+        "value": "12",
+        "sub": "$183M estimated value pool",
         "st": "directional",
-        "evidence_refs": [
-          "MER-V3-EVID-0053",
-          "MER-V3-EVID-0054",
-          "MER-V3-EVID-0281"
-        ]
-      },
-      {
-        "label": "Managed Services Risk",
-        "value": "~80% maintenance load",
-        "sub": "Outsourced analytics provider limits net-new delivery capacity",
-        "st": "directional",
-        "evidence_refs": [
-          "MER-V3-EVID-0074"
-        ]
-      },
-      {
-        "label": "Data Governance Status",
-        "value": "Not yet formalized",
-        "sub": "No certified semantic layer; no AI audit trail evidence",
-        "st": "source-backed",
-        "evidence_refs": [
-          "MER-V3-EVID-0174",
-          "MER-V3-EVID-0175",
-          "MER-V3-EVID-0176"
-        ]
-      },
-      {
-        "label": "Priority Use Cases",
-        "value": "7 identified",
-        "sub": "Lakehouse, AI/LLM, call center, quality, cost, payment integrity, close",
-        "st": "source-backed",
         "evidence_refs": [
           "MER-V3-EVID-0360",
           "MER-V3-EVID-0361",
@@ -600,56 +578,57 @@
         ]
       },
       {
-        "label": "Executive Interviews",
-        "value": "10+ stakeholder groups",
-        "sub": "CEO, CFO, CIO, CTO, CDAO, CMO, CXO, Health Plan Ops, Privacy, Program Office",
+        "label": "Enterprise risks",
+        "value": "47",
+        "sub": "with control mappings",
         "st": "source-backed",
         "evidence_refs": [
-          "MER-SA07-INT-EVID-0001",
-          "MER-SA07-INT-EVID-0013",
-          "MER-SA07-INT-EVID-0025"
+          "MER-V3-EVID-0170",
+          "MER-V3-EVID-0174",
+          "MER-V3-EVID-0195"
         ]
       },
       {
-        "label": "Context Refresh",
-        "value": "2026-07-16",
-        "sub": "Planning-grade synthetic context; not real Meridian production data",
+        "label": "Evidence items",
+        "value": "208",
+        "sub": "documents · exports · interviews",
         "st": "source-backed",
         "evidence_refs": [
-          "MER-V3-EVID-0280"
+          "MER-V3-EVID-0280",
+          "MER-SA07-INT-EVID-0001"
         ]
       }
     ],
     "KPIS": [
       {
-        "label": "Active Context Rows",
-        "value": "203",
-        "sub": "of 3,487 total ingested",
+        "label": "Enterprise Brief",
+        "value": "Ready to brief",
+        "sub": "Planning-grade · Jul 2026",
         "tone": "brand"
       },
       {
-        "label": "Dimensions Loaded",
-        "value": "19",
-        "sub": "All source-backed",
-        "tone": "green"
-      },
-      {
-        "label": "Evidence References",
-        "value": "146",
-        "sub": "Across docs, systems, interviews",
+        "label": "What Nexus Knows",
+        "value": "19 dimensions",
+        "sub": "208 evidence items · source-backed",
         "tone": "plain"
       },
       {
-        "label": "Use Cases Identified",
-        "value": "7",
-        "sub": "All pending evidence closure",
+        "label": "Confidence",
+        "value": "Answerable",
+        "sub": "9 of 19 decision-grade",
+        "tone": "green"
+      },
+      {
+        "label": "What's Missing",
+        "value": "6 critical gaps",
+        "sub": "baseline · ownership · finance",
         "tone": "amber"
       },
       {
-        "label": "Critical Gaps",
-        "value": "24",
-        "sub": "Blocking decision-grade outputs",
-        "tone": "amber"
+        "label": "Decision Readiness",
+        "value": "Advance with discipline",
+        "sub": "Fund / fix / freeze ready",
+        "tone": "brand"
       }
     ],
     "BRIEF_COLS": [
@@ -682,7 +661,7 @@
       },
       {
         "label": "What Nexus Can Do Now",
-        "text": "Nexus has mapped the enterprise context across 19 dimensions and 146 evidence references. It can surface use case hypotheses, identify gap-to-decision chains, and prioritize evidence collection. It cannot yet produce decision-grade sourcing outputs or quantified value claims.",
+        "text": "Nexus has mapped the enterprise context across 19 dimensions and 208 evidence references. It can surface use case hypotheses, identify gap-to-decision chains, and prioritize evidence collection. It cannot yet produce decision-grade sourcing outputs or quantified value claims.",
         "evidence_refs": [
           "MER-V3-EVID-0280",
           "MER-V3-EVID-0285"
@@ -50097,11 +50076,11 @@
     }
   },
   "narrative_sections": {
-    "context_confidence_summary": "Nexus has loaded 19 source-backed dimensions covering 3,987 source rows and 147 evidence references. Confidence is high on enterprise profile, system inventory, and executive use case intent. Confidence is directional on platform readiness and value hypotheses. AWS and Databricks are aspirational targets, not confirmed production foundations. All seven use cases require evidence closure before any dimension reaches decision grade.",
+    "context_confidence_summary": "Nexus has loaded 19 source-backed dimensions covering 3,987 source rows and 208 evidence references. Confidence is high on enterprise profile, system inventory, and executive use case intent. Confidence is directional on platform readiness and value hypotheses. AWS and Databricks are aspirational targets, not confirmed production foundations. All seven use cases require evidence closure before any dimension reaches decision grade.",
     "evidence_gaps_summary": "Four high-severity gaps block every use case simultaneously: no certified medallion architecture, no formal data governance operating model, no certified semantic layer, and no patient/member identity spine. Three additional high-severity gaps are use-case-specific: provider contract terms are not digitized in governed form, transcript governance and intent taxonomy are uncertified, and SAS payment integrity model lineage is ungoverned. No realized value can be claimed until baselines and owner sign-off are in place.",
     "use_cases_summary": "Seven enterprise use cases are identified and source-backed: unified clinical and claims lakehouse, governed AI/LLM foundation, call center optimization, provider quality and performance, end-to-end cost transparency, payment integrity and leakage reduction, and automated close and reporting. All are in planning stage. The lakehouse and AI/LLM governance use cases are foundational prerequisites for the remaining five. No use case has cleared its evidence gate.",
     "use_cases_portfolio_view": "All seven use cases are in planning stage. Lakehouse and AI/LLM governance are foundational prerequisites; close their evidence gates first. Cost transparency and payment integrity can advance in parallel once governance is established. Call center optimization and provider quality follow. Automated close depends on a certified finance semantic layer and is the final sequencing step.",
-    "proof_summary": "Nexus has assembled 147 evidence references spanning executive interviews, system records, risk and gap documentation, industry patterns, and data asset mappings. The evidence base confirms system inventory, use case intent, and a 24-item risk and gap register across all seven use cases. No evidence confirms production AI readiness, realized savings, a certified medallion architecture, or a formal data governance operating model. All value hypotheses remain planning-grade.",
+    "proof_summary": "Nexus has assembled 208 evidence references spanning executive interviews, system records, risk and gap documentation, industry patterns, and data asset mappings. The evidence base confirms system inventory, use case intent, and a 24-item risk and gap register across all seven use cases. No evidence confirms production AI readiness, realized savings, a certified medallion architecture, or a formal data governance operating model. All value hypotheses remain planning-grade.",
     "proof_relationship_visual": {
       "title": "Meridian Use Case Dependency Map",
       "caption": "Lakehouse and AI/LLM governance are the foundational layer — four of the remaining five use cases depend on their evidence closure. Cost transparency, payment integrity, call center optimization, and provider quality share platform and governance prerequisites. Automated close depends on a certified finance semantic layer.",
@@ -50138,14 +50117,16 @@
         "GL & Close Reporting → Automated Close & Reporting"
       ]
     },
-    "enterprise_brief_title": "Meridian Health System: Seven Use Cases, Zero Decision-Grade Evidence Closures",
-    "enterprise_brief_summary": "Meridian Health System operates as an integrated health system and health plan anchored on Epic Hyperspace, Clarity, and Caboodle, with a fragmented on-premise analytics estate spanning SQL Server, Tableau, Power BI, and SAS. An outsourced analytics managed services provider consumes an estimated 80% of delivery capacity on maintenance, leaving minimal bandwidth for net-new strategic work. AWS and Databricks represent the target platform direction — neither is production-ready, and no certified medallion architecture has been evidenced. Ten-plus executive stakeholder groups — CEO, CFO, CIO, CDAO, CMO, Chief Experience Officer, Health Plan Operations, Privacy, Procurement, and the Program Office — have each confirmed seven enterprise use cases as strategic priorities: unified clinical and claims lakehouse, governed AI/LLM foundation, call center optimization, provider quality and performance, end-to-end cost transparency, payment integrity and leakage reduction, and automated close and reporting. Every use case is in planning stage. None has reached decision grade. The four pervasive blockers — no certified medallion architecture, no formal data governance operating model, no certified semantic layer, and no patient/member identity spine — must be resolved before Nexus can produce sourcing-event outputs or quantified value claims. The executive decision now is: which evidence closure to fund first, and who owns accountability for each gap.",
+    "enterprise_brief_title": "An Integrated Care & Health-Plan Enterprise Building the Governed Foundation for AI at Scale",
+    "enterprise_brief_summary": "Meridian Health System runs a $650M FY26 IT budget at a 75/25 run/change posture, with 12 approved programs and 12 candidate AI opportunities. The evidence base is broad, but value realization is still gated by baseline, ownership, and finance-validation maturity.\n\nThe current technology estate is substantial rather than thin: Epic Hyperspace, Clarity, and Caboodle anchor clinical operations; SQL Server reporting marts, Tableau, Power BI, and SAS carry fragmented analytics demand; and AWS plus Databricks is the target direction, not a certified current-state platform.\n\nThe strategic implication is clear: Meridian should fund the governed lakehouse, semantic layer, identity spine, and data-governance operating model before treating individual AI use cases as ready-to-scale investments.",
     "render_contract": "renderer_displays_claude_strings_and_visual_blocks_verbatim_no_rewrite",
     "content_generation_prompt_path": "reports/home-knowledge-design-contract/actual-claude-prompt.txt",
     "content_generation_response_path": "reports/home-knowledge-design-contract/raw-claude-response.json",
     "executive_overview_prompt_path": "reports/home-knowledge-design-contract/actual-claude-overview-prompt.txt",
     "executive_overview_response_path": "reports/home-knowledge-design-contract/raw-claude-response-overview.json",
-    "visual_block_contract": "visual_blocks_are_claude_authored_display_inputs_for_cards_tables_charts_graphs_and_dashboard_panels"
+    "visual_block_contract": "visual_blocks_are_claude_authored_display_inputs_for_cards_tables_charts_graphs_and_dashboard_panels",
+    "enterprise_hero_summary": "Meridian Health System is an integrated delivery network and health plan headquartered in Sacramento, CA with $16.8B revenue and 58,000 employees. Its model spans hospitals, ambulatory clinics, health-plan operations, pharmacy, contact center, finance, and analytics modernization.",
+    "design_contract_fidelity": "overview_uses_nexus_home_knowledge_html_fact_order_and_visual_hierarchy"
   },
   "quality_assessment": {
     "hits_mckinsey_bar": "partial",
