@@ -136,16 +136,11 @@ function hasPacketArtifacts(answer: AvaAnswerPacket): boolean {
 export function resolveAssistantAnswerText(
   rawStreamedAnswer: string,
   packetBody: string,
-  hasArtifacts: boolean,
+  _hasArtifacts: boolean,
 ): string {
-  const shouldUsePacketBody = hasArtifacts
-    ? Boolean(packetBody)
-    : Boolean(
-        packetBody &&
-        (!rawStreamedAnswer.trim() ||
-          packetBody.length >= rawStreamedAnswer.trim().length / 2),
-      );
-  return shouldUsePacketBody ? packetBody : rawStreamedAnswer;
+  void _hasArtifacts;
+  const cleanPacketBody = packetBody.trim();
+  return cleanPacketBody ? packetBody : rawStreamedAnswer;
 }
 
 export function AdvisoryIntelligencePage({

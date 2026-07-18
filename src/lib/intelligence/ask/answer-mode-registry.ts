@@ -41,6 +41,9 @@ export interface CxoAnswerModeContract {
   deterministicFallback?: (text: string) => string;
 }
 
+const ABARVA_SURFACE_PLAN_SENTENCE =
+  "Have Intelligence frame the executive bet, Home verify current-state systems, data, owners, and gaps, Moves turn it into governed phase work, Source test vendor/commercial levers when relevant, and Tower track value, adoption, risk, and funding evidence.";
+
 export const MOVES_EXECUTION_PHASE_LABELS = [
   "P0 Originate",
   "P1 Charter",
@@ -153,6 +156,153 @@ export function ensureAbarvaSurfacePlan(text: string): string {
     .join("\n\n");
 }
 
+function splitAnswerTabs(text: string): { body: string; tabs: string } {
+  const firstTabIndex = text.search(/\n\s*<<<TAB:/);
+  if (firstTabIndex === -1) return { body: text.trim(), tabs: "" };
+  return {
+    body: text.slice(0, firstTabIndex).trim(),
+    tabs: text.slice(firstTabIndex).trimStart(),
+  };
+}
+
+function wordCount(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function stripMarkdownHeading(line: string): string {
+  return line
+    .replace(/^\s{0,3}#{1,6}\s+/, "")
+    .replace(/^\s{0,3}[-*]\s+/, "")
+    .trim();
+}
+
+function splitReadableSentences(text: string): string[] {
+  return text
+    .replace(/\r/g, "")
+    .split(/\n{2,}|(?<=[.!?])\s+(?=[A-Z0-9"“])/)
+    .map(stripMarkdownHeading)
+    .map((sentence) =>
+      sentence
+        .replace(/^\*\*(?:Answer|Proof|Move|Read|Evidence|Next move):?\*\*\s*/i, "")
+        .replace(/^(?:Answer|Proof|Move|Read|Evidence|Next move):\s*/i, "")
+        .trim(),
+    )
+    .filter((sentence) => {
+      if (sentence.length < 18) return false;
+      if (/^\|/.test(sentence)) return false;
+      if (/^<<<TAB:/i.test(sentence)) return false;
+      if (/^suggested questions?:/i.test(sentence)) return false;
+      return true;
+    });
+}
+
+function compactSentence(sentence: string, maxWords: number): string {
+  const words = sentence.trim().split(/\s+/).filter(Boolean);
+  if (words.length <= maxWords) return sentence.trim();
+  const capped = words.slice(0, maxWords).join(" ").replace(/[,:;]+$/, "");
+  return `${capped}.`;
+}
+
+function firstMatchingSentence(
+  sentences: string[],
+  pattern: RegExp,
+  exclude = new Set<string>(),
+): string | undefined {
+  return sentences.find(
+    (sentence) => !exclude.has(sentence) && pattern.test(sentence),
+  );
+}
+
+function withTerminalPunctuation(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return trimmed;
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
+function ensureNoDuplicateSurfaceSentence(sentence: string): string {
+  const hasSurfacePath =
+    /\bIntelligence\b/i.test(sentence) &&
+    /\bHome\b/i.test(sentence) &&
+    /\bMoves\b/i.test(sentence) &&
+    /\bTower\b/i.test(sentence);
+  return hasSurfacePath
+    ? withTerminalPunctuation(sentence)
+    : `${withTerminalPunctuation(sentence)} ${ABARVA_SURFACE_PLAN_SENTENCE}`;
+}
+
+export function ensureAbarvaSolutionBrief(text: string): string {
+  const { body, tabs } = splitAnswerTabs(text);
+  const surfaceAligned = ensureAbarvaSurfacePlan(body);
+  const paragraphCount = surfaceAligned
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean).length;
+  if (
+    wordCount(surfaceAligned) <= 190 &&
+    paragraphCount <= 3 &&
+    /\b(Move|How AbarVa|Intelligence)\b/i.test(surfaceAligned)
+  ) {
+    return [surfaceAligned.trim(), tabs].filter(Boolean).join("\n\n");
+  }
+
+  const sentences = splitReadableSentences(body);
+  if (sentences.length === 0) {
+    return [
+      `**Answer:** ${ABARVA_SURFACE_PLAN_SENTENCE}`,
+      tabs,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+  }
+
+  const used = new Set<string>();
+  const answer =
+    firstMatchingSentence(
+      sentences,
+      /\b(should|must|recommend|priority|first|best|focus|fund|scale|hold|defer|run|start)\b/i,
+      used,
+    ) ?? sentences[0]!;
+  used.add(answer);
+
+  const proofOne =
+    firstMatchingSentence(
+      sentences,
+      /\b(current-state|current state|system|application|stack|data|evidence|gap|owner|business|priority|loaded|source|context|vendor|budget|run cost|risk|constraint)\b/i,
+      used,
+    ) ?? sentences.find((sentence) => !used.has(sentence));
+  if (proofOne) used.add(proofOne);
+  const proofTwo = firstMatchingSentence(
+    sentences,
+    /\b(benchmark|industry|pattern|value|complexity|readiness|adoption|customer|member|agent|workflow|process|control)\b/i,
+    used,
+  );
+  if (proofTwo) used.add(proofTwo);
+
+  const move =
+    firstMatchingSentence(
+      sentences,
+      /\b(next|validate|prove|pilot|sprint|Moves|Source|Tower|Home|AbarVa|owner|decision|gate|execute)\b/i,
+      used,
+    ) ?? ABARVA_SURFACE_PLAN_SENTENCE;
+
+  const proofSentences = [proofOne, proofTwo]
+    .filter((sentence): sentence is string => Boolean(sentence))
+    .slice(0, 2)
+    .map((sentence) => compactSentence(sentence, 34));
+  const proof =
+    proofSentences.length > 0
+      ? proofSentences.join(" ")
+      : "The loaded context should decide the shape of the recommendation; unsupported claims stay caveated until the evidence is reviewable.";
+
+  const compactBody = [
+    `**Answer:** ${compactSentence(answer, 38)}`,
+    `**Proof:** ${proof}`,
+    `**Move:** ${compactSentence(ensureNoDuplicateSurfaceSentence(move), 72)}`,
+  ].join("\n\n");
+
+  return [compactBody, tabs].filter(Boolean).join("\n\n");
+}
+
 const COMMON_BANNED_PHRASES = [
   "ask Claude",
   "ask ChatGPT",
@@ -175,16 +325,7 @@ export const CXO_ANSWER_MODE_REGISTRY = {
   strategy_to_abarva_solution: {
     mode: "strategy_to_abarva_solution",
     active: true,
-    requiredSections: [
-      "Executive read",
-      "Strategic recommendation or top bets",
-      "Tenant-specific reasoning",
-      "How AbarVa would solve this",
-      "Surface-by-surface plan",
-      "Artifacts produced as proposed outputs",
-      "Gaps and assumptions",
-      "Next action",
-    ],
+    requiredSections: ["Answer", "Proof", "Move"],
     requiredArtifacts: ["surface_plan"],
     bannedPhrases: COMMON_BANNED_PHRASES,
     exportRequired: true,
@@ -192,8 +333,8 @@ export const CXO_ANSWER_MODE_REGISTRY = {
       "How would AbarVa solve this for supply-chain AI top bets? Include Intelligence, Home, Moves, Source, and Tower.",
     systemContract: STRATEGY_TO_ABARVA_SOLUTION_CONTRACT,
     promptDirective:
-      'ACTIVE ANSWER MODE: strategy_to_abarva_solution. Build the answer as AbarVa product guidance, not generic advice. Include "How AbarVa would solve this" when execution is relevant. Use Intelligence for framing, Home for current-state evidence, Moves for governed execution, Source for vendor/commercial levers, and Tower for value/adoption tracking.',
-    deterministicFallback: ensureAbarvaSurfacePlan,
+      "ACTIVE ANSWER MODE: strategy_to_abarva_solution. Build the answer as a compact AbarVa Pyramid Brief, not a mini deck. Use exactly 3 short paragraphs by default: Answer, Proof, Move. The Move paragraph must explain the AbarVa path naturally: Intelligence frames the bet, Home validates current-state evidence, Moves turns it into governed execution, Source checks vendor/commercial levers when relevant, and Tower tracks value/adoption/risk evidence. Do not create a long surface-by-surface section unless the user explicitly asks for a deep implementation plan.",
+    deterministicFallback: ensureAbarvaSolutionBrief,
   },
   strategy_to_moves_execution: {
     mode: "strategy_to_moves_execution",

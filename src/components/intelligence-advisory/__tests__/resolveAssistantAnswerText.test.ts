@@ -46,7 +46,7 @@ describe("resolveAssistantAnswerText", () => {
     );
   });
 
-  it("falls back to the raw stream when there are no structured artifacts and the packet body is too short", () => {
+  it("falls back to the raw stream when the packet body is empty", () => {
     const rawStreamed = "A full, detailed prose answer with real content.";
     const packetBody = "";
 
@@ -61,13 +61,14 @@ describe("resolveAssistantAnswerText", () => {
     );
   });
 
-  it("keeps the raw stream when artifacts are absent and the packet body is a much shorter, possibly lossy summary", () => {
+  it("uses the final packet body even when it is a shorter governed CXO brief", () => {
     const rawStreamed =
       "A very long and detailed executive answer spanning many sentences of real substance and nuance.";
-    const packetBody = "Short.";
+    const packetBody =
+      "**Answer:** Scale agent assist only after current-state evidence is validated.\n\n**Proof:** The context points to systems, data, and workflow gaps that should shape the rollout.\n\n**Move:** Run the bet through Intelligence, Home, Moves, Source, and Tower.";
 
     expect(resolveAssistantAnswerText(rawStreamed, packetBody, false)).toBe(
-      rawStreamed,
+      packetBody,
     );
   });
 });

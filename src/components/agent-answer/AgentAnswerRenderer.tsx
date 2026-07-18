@@ -1,6 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  LabelList,
+  Line,
+  LineChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Scatter,
+  ScatterChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import * as SvgCharts from "@/lib/programs/expert-kernel/exports/board-grade/svg-charts";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
@@ -43,6 +59,10 @@ const CSS = `
 .agentAnswer .aaArtifactBadge{display:inline-flex;align-items:center;white-space:nowrap;border:1px solid #bfd4ee;border-radius:999px;background:var(--aa-blue-bg);color:var(--aa-blue);padding:4px 9px;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
 .agentAnswer .aaSvg{padding:16px;background:radial-gradient(circle at 20% 0%,#ffffff 0,#ffffff 42%,#fbfcfd 100%);overflow-x:auto}
 .agentAnswer .aaSvg svg{display:block;width:100%;height:auto;min-width:520px}
+.agentAnswer .aaRechart{height:320px;min-width:520px;padding:16px;background:radial-gradient(circle at 20% 0%,#ffffff 0,#ffffff 42%,#fbfcfd 100%)}
+.agentAnswer .aaRechart .recharts-wrapper{font-family:var(--font-geist-sans),ui-sans-serif,system-ui,sans-serif}
+.agentAnswer .aaRechart .recharts-cartesian-axis-tick-value{fill:#5f6b7a;font-size:11px}
+.agentAnswer .aaRechart .recharts-label-list text,.agentAnswer .aaRechart .recharts-scatter-symbol{font-size:11px;font-weight:700}
 .agentAnswer .aaGraphSvg{display:block;width:100%;height:auto;background:radial-gradient(circle at 50% 0%,#ffffff 0,#ffffff 48%,#f8fafc 100%)}
 .agentAnswer .aaGraphNode{fill:#f6fbf8;stroke:#b9dac6;stroke-width:1.5;filter:drop-shadow(0 2px 4px rgba(17,24,39,.08))}
 .agentAnswer .aaGraphEdge{stroke:#738091;stroke-width:1.5;marker-end:url(#aaArrow)}
@@ -142,10 +162,176 @@ export function renderAnswerChartSvg(chart: AnswerChart): RenderedChartSvg {
   }
 }
 
+type RechartPrimitive = string | number;
+type RechartRow = Record<string, RechartPrimitive>;
+
+const RECHART_COLORS = [
+  "#14532d",
+  "#1d4ed8",
+  "#d97706",
+  "#7c3aed",
+  "#0f766e",
+  "#be123c",
+  "#475569",
+] as const;
+
+function isRechartPrimitive(value: unknown): value is RechartPrimitive {
+  return (
+    (typeof value === "string" && value.trim().length > 0) ||
+    (typeof value === "number" && Number.isFinite(value))
+  );
+}
+
+function toRechartRows(value: unknown): RechartRow[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .flatMap((entry): RechartRow[] => {
+      if (!isRecord(entry)) return [];
+      const row = Object.entries(entry).reduce<RechartRow>(
+        (accumulator, [key, cell]) => {
+          if (isRechartPrimitive(cell)) accumulator[key] = cell;
+          return accumulator;
+        },
+        {},
+      );
+      return Object.keys(row).length > 0 ? [row] : [];
+    })
+    .slice(0, 12);
+}
+
+function numericRowValue(row: RechartRow, key: string): number | null {
+  const value = row[key];
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return null;
+  const parsed = Number(value.replace(/[$,%\s,]/g, ""));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function inferLabelKey(rows: RechartRow[]): string | null {
+  const sample = rows[0];
+  if (!sample) return null;
+  return (
+    Object.keys(sample).find((key) =>
+      rows.some((row) => typeof row[key] === "string"),
+    ) ?? Object.keys(sample)[0] ?? null
+  );
+}
+
+function inferNumericKey(rows: RechartRow[], labelKey: string): string | null {
+  const sample = rows[0];
+  if (!sample) return null;
+  return (
+    Object.keys(sample).find(
+      (key) =>
+        key !== labelKey &&
+        rows.filter((row) => numericRowValue(row, key) !== null).length >= 2,
+    ) ?? null
+  );
+}
+
+function chartDataRecord(chart: AnswerChart): Record<string, unknown> | null {
+  return isRecord(chart.data) ? chart.data : null;
+}
+
+interface RechartSeries {
+  rows: RechartRow[];
+  xKey: string;
+  yKey: string;
+  yKey2?: string;
+  unit?: string;
+  horizontal: boolean;
+}
+
+function normalizeRechartSeries(chart: AnswerChart): RechartSeries | null {
+  const record = chartDataRecord(chart);
+  const rows = toRechartRows(record?.data ?? chart.data)
+    .map((row) => {
+      const copy = { ...row };
+      for (const key of Object.keys(copy)) {
+        const parsed = numericRowValue(copy, key);
+        if (parsed !== null && typeof copy[key] === "string") copy[key] = parsed;
+      }
+      return copy;
+    });
+  if (rows.length < 2) return null;
+
+  const xKey =
+    chart.xKey ??
+    (typeof record?.xKey === "string" ? record.xKey : undefined) ??
+    inferLabelKey(rows);
+  if (!xKey) return null;
+  const yKey =
+    chart.yKey ??
+    (typeof record?.yKey === "string" ? record.yKey : undefined) ??
+    inferNumericKey(rows, xKey);
+  if (!yKey) return null;
+
+  const numericRows = rows.filter((row) => numericRowValue(row, yKey) !== null);
+  if (numericRows.length < 2) return null;
+  const secondaryKey = typeof record?.yKey2 === "string" ? record.yKey2 : "";
+  const yKey2 =
+    secondaryKey &&
+    numericRows.some((row) => numericRowValue(row, secondaryKey) !== null)
+      ? secondaryKey
+      : undefined;
+
+  return {
+    rows: numericRows,
+    xKey,
+    yKey,
+    yKey2,
+    unit:
+      chart.unit ??
+      (typeof record?.unit === "string" ? record.unit : undefined),
+    horizontal:
+      chart.kind === "horizontal-bar" ||
+      chart.kind === "cost-stack" ||
+      chart.kind === "range-bar",
+  };
+}
+
+interface RechartQuadrantPoint extends RechartRow {
+  label: string;
+  x: number;
+  y: number;
+}
+
+function normalizeRechartQuadrant(chart: AnswerChart): RechartQuadrantPoint[] {
+  const record = chartDataRecord(chart);
+  const rawPoints = Array.isArray(record?.points) ? record.points : [];
+  return rawPoints
+    .flatMap((point): RechartQuadrantPoint[] => {
+      if (!isRecord(point)) return [];
+      const label = typeof point.label === "string" ? point.label.trim() : "";
+      const x = typeof point.x === "number" && Number.isFinite(point.x) ? point.x : null;
+      const y = typeof point.y === "number" && Number.isFinite(point.y) ? point.y : null;
+      if (!label || x === null || y === null) return [];
+      return [{ label, x, y }];
+    })
+    .slice(0, 12);
+}
+
+function canRenderRechartsChart(chart: AnswerChart): boolean {
+  if (chart.kind === "quadrant-matrix" || chart.kind === "2x2-matrix") {
+    return normalizeRechartQuadrant(chart).length >= 2;
+  }
+  if (
+    chart.kind === "bar" ||
+    chart.kind === "horizontal-bar" ||
+    chart.kind === "line" ||
+    chart.kind === "stacked-bar" ||
+    chart.kind === "cost-stack" ||
+    chart.kind === "range-bar"
+  ) {
+    return normalizeRechartSeries(chart) !== null;
+  }
+  return false;
+}
+
 function isRenderableAnswerChart(
   chart: AnswerChart,
 ): chart is AnswerChart & { artifact: "chart" } {
-  return renderAnswerChartSvg(chart).svg !== null;
+  return canRenderRechartsChart(chart) || renderAnswerChartSvg(chart).svg !== null;
 }
 
 function citationsFor(
@@ -328,6 +514,217 @@ function chartKindLabel(kind: AnswerChart["kind"]): string {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function formatRechartValue(value: unknown, unit?: string): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return String(value ?? "");
+  }
+  const normalizedUnit = unit?.toLowerCase() ?? "";
+  if (normalizedUnit === "%" || normalizedUnit.includes("percent")) {
+    return `${new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: 1,
+    }).format(value)}%`;
+  }
+  if (
+    normalizedUnit.includes("usd") ||
+    normalizedUnit.includes("dollar") ||
+    normalizedUnit === "$"
+  ) {
+    return formatCompactUsd(value);
+  }
+  if (Math.abs(value) >= 1_000) {
+    return new Intl.NumberFormat("en-US", {
+      notation: "compact",
+      maximumFractionDigits: 1,
+    }).format(value);
+  }
+  return new Intl.NumberFormat("en-US", {
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
+  if (chart.kind === "quadrant-matrix" || chart.kind === "2x2-matrix") {
+    const points = normalizeRechartQuadrant(chart);
+    if (points.length < 2) return null;
+    return (
+      <div
+        className="aaRechart"
+        data-chart-kind={chart.kind}
+        data-chart-renderer="recharts"
+      >
+        <ResponsiveContainer height="100%" width="100%">
+          <ScatterChart margin={{ top: 22, right: 20, bottom: 16, left: 8 }}>
+            <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+            <XAxis
+              dataKey="x"
+              domain={[0, 100]}
+              name="Complexity"
+              tickLine={false}
+              type="number"
+            />
+            <YAxis
+              dataKey="y"
+              domain={[0, 100]}
+              name="Value"
+              tickLine={false}
+              type="number"
+            />
+            <ReferenceLine stroke="#cbd5e1" strokeDasharray="4 4" x={50} />
+            <ReferenceLine stroke="#cbd5e1" strokeDasharray="4 4" y={50} />
+            <Tooltip
+              cursor={{ strokeDasharray: "3 3" }}
+              formatter={(value: unknown, name: unknown) => [
+                formatRechartValue(value),
+                String(name),
+              ]}
+              labelFormatter={(_label, payload) =>
+                payload?.[0]?.payload?.label ?? "Use case"
+              }
+            />
+            <Scatter data={points} fill="#166534" name="Score">
+              <LabelList
+                dataKey="label"
+                position="top"
+                style={{ fill: "#111827", fontSize: 11, fontWeight: 700 }}
+              />
+            </Scatter>
+          </ScatterChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  }
+
+  const series = normalizeRechartSeries(chart);
+  if (!series) return null;
+  if (chart.kind === "line") {
+    return (
+      <div
+        className="aaRechart"
+        data-chart-kind={chart.kind}
+        data-chart-renderer="recharts"
+      >
+        <ResponsiveContainer height="100%" width="100%">
+          <LineChart
+            data={series.rows}
+            margin={{ top: 12, right: 24, bottom: 12, left: 8 }}
+          >
+            <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+            <XAxis dataKey={series.xKey} tickLine={false} />
+            <YAxis
+              tickFormatter={(value) => formatRechartValue(value, series.unit)}
+              tickLine={false}
+            />
+            <Tooltip
+              formatter={(value: unknown) => [
+                formatRechartValue(value, series.unit),
+                series.yKey,
+              ]}
+            />
+            <Line
+              activeDot={{ r: 5 }}
+              dataKey={series.yKey}
+              dot={{ r: 3 }}
+              stroke="#166534"
+              strokeWidth={3}
+              type="monotone"
+            />
+            {series.yKey2 ? (
+              <Line
+                dataKey={series.yKey2}
+                dot={{ r: 3 }}
+                stroke="#1d4ed8"
+                strokeWidth={3}
+                type="monotone"
+              />
+            ) : null}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  }
+
+  const barColor = chart.kind === "cost-stack" ? "#14532d" : "#166534";
+  return (
+    <div
+      className="aaRechart"
+      data-chart-kind={chart.kind}
+      data-chart-renderer="recharts"
+    >
+      <ResponsiveContainer height="100%" width="100%">
+        <BarChart
+          barCategoryGap={series.horizontal ? 10 : 18}
+          data={series.rows}
+          layout={series.horizontal ? "vertical" : "horizontal"}
+          margin={{ top: 12, right: 42, bottom: 12, left: series.horizontal ? 16 : 8 }}
+        >
+          <CartesianGrid
+            horizontal={!series.horizontal}
+            stroke="#e5e7eb"
+            strokeDasharray="3 3"
+            vertical={series.horizontal}
+          />
+          {series.horizontal ? (
+            <>
+              <XAxis
+                tickFormatter={(value) => formatRechartValue(value, series.unit)}
+                tickLine={false}
+                type="number"
+              />
+              <YAxis
+                dataKey={series.xKey}
+                tickLine={false}
+                type="category"
+                width={132}
+              />
+            </>
+          ) : (
+            <>
+              <XAxis dataKey={series.xKey} tickLine={false} />
+              <YAxis
+                tickFormatter={(value) => formatRechartValue(value, series.unit)}
+                tickLine={false}
+              />
+            </>
+          )}
+          <Tooltip
+            formatter={(value: unknown) => [
+              formatRechartValue(value, series.unit),
+              series.yKey,
+            ]}
+          />
+          <Bar
+            dataKey={series.yKey}
+            fill={barColor}
+            radius={series.horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0]}
+          >
+            {series.rows.map((row, index) => (
+              <Cell
+                fill={
+                  typeof row.color === "string"
+                    ? row.color
+                    : RECHART_COLORS[index % RECHART_COLORS.length]
+                }
+                key={`${String(row[series.xKey])}-${index}`}
+              />
+            ))}
+            <LabelList
+              dataKey={series.yKey}
+              formatter={(value: unknown) =>
+                formatRechartValue(value, series.unit)
+              }
+              position={series.horizontal ? "right" : "top"}
+              style={{ fill: "#111827", fontSize: 11, fontWeight: 700 }}
+            />
+          </Bar>
+          {series.yKey2 ? (
+            <Bar dataKey={series.yKey2} fill="#1d4ed8" radius={[4, 4, 0, 0]} />
+          ) : null}
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 type ExportFormat = "html" | "pdf";
 
 function submitAnswerExport(answer: AvaAnswerPacket, format: ExportFormat) {
@@ -459,6 +856,7 @@ export function AnswerChartRenderer({
   chart: AnswerChart;
   citations?: AnswerCitation[];
 }) {
+  const rechart = <AnswerRechartRenderer chart={chart} />;
   const rendered = renderAnswerChartSvg(chart);
   const chartCitations = citationsFor(chart.citationIds, citations);
   return (
@@ -472,10 +870,13 @@ export function AnswerChartRenderer({
         </div>
         <span className="aaArtifactBadge">{chartKindLabel(chart.kind)}</span>
       </div>
-      {rendered.svg ? (
+      {canRenderRechartsChart(chart) ? (
+        rechart
+      ) : rendered.svg ? (
         <div
           className="aaSvg"
           data-chart-builder={rendered.builderName}
+          data-chart-renderer="svg"
           dangerouslySetInnerHTML={{ __html: rendered.svg }}
         />
       ) : (
