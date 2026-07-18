@@ -151,9 +151,7 @@ import { VendorBafoInstructionPackPanel } from "./responses/VendorBafoInstructio
 import { VendorEvaluationScorecardPanel } from "./responses/VendorEvaluationScorecardPanel";
 import { StageNextMoveCard } from "./StageNextMoveCard";
 import { approvalViewForCriterion } from "@/lib/source/approval-routing";
-import {
-  criterionById,
-} from "@/lib/source/canonical-specs";
+import { criterionById } from "@/lib/source/canonical-specs";
 import { computeStageRequirementCoverage } from "@/lib/source/requirement-coverage";
 import {
   assessStageGate,
@@ -510,9 +508,10 @@ export function UniversalCanvasShell({
       assessStageGate({
         fromStage: viewStage,
         criteria: stageCriteria,
+        artifacts: stageArtifacts,
         evidence: stageEvidence,
       }),
-    [stageCriteria, stageEvidence, viewStage],
+    [stageArtifacts, stageCriteria, stageEvidence, viewStage],
   );
   const stageRecommendation = useMemo(
     () => buildStageRecommendation(stageGateAssessment),

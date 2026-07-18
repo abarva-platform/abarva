@@ -79,10 +79,11 @@ export function evaluateCriterionMetReadiness(input: {
   artifacts: SourceEventArtifactState[];
   evidence: SourceEventEvidence[];
   reason: unknown;
+  skipApprovalReasonCheck?: boolean;
 }): SourceGovernanceVerdict {
-  const blockers: SourceGovernanceBlocker[] = [
-    ...validateApprovalReason(input.reason).blockers,
-  ];
+  const blockers: SourceGovernanceBlocker[] = input.skipApprovalReasonCheck
+    ? []
+    : [...validateApprovalReason(input.reason).blockers];
   const definition = criterionById(input.criterion.criterionId);
 
   if (!definition) {

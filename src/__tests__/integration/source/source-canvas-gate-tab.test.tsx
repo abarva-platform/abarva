@@ -7,7 +7,10 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { fireEvent, render, screen } from "@testing-library/react";
-import type { SourceEventGateCriterion } from "@/lib/source/canvas-substrate";
+import type {
+  SourceEventArtifactState,
+  SourceEventGateCriterion,
+} from "@/lib/source/canvas-substrate";
 import { GateTab } from "@/components/source/canvas/workspace-tabs/GateTab";
 import {
   assessStageGate,
@@ -15,6 +18,7 @@ import {
 } from "@/lib/source/gate-auto-assessment";
 
 type EvidenceState = Parameters<typeof assessStageGate>[0]["evidence"][number];
+type ArtifactState = Parameters<typeof assessStageGate>[0]["artifacts"][number];
 
 function makeCriterion(
   overrides: Partial<SourceEventGateCriterion> = {},
@@ -55,6 +59,33 @@ function makeEvidence(overrides: Partial<EvidenceState>): EvidenceState {
   };
 }
 
+function makeArtifact(
+  overrides: Partial<ArtifactState>,
+): SourceEventArtifactState {
+  return {
+    id: "artifact-state-1",
+    sourceEventId: "evt-canvas-1",
+    tenantKey: "skyharbor-air",
+    artifactCode: "d04_app_inv",
+    stage: "scope",
+    family: "scope_document",
+    tier: "rich",
+    status: "approved",
+    requirementLevel: "required",
+    gateDefining: true,
+    linkedArtifactId: null,
+    notes: null,
+    body: "Human-reviewed artifact body.",
+    bodyFormat: "markdown",
+    bodyAuthoredBy: "user-1",
+    bodyUpdatedAt: "2026-06-15T00:00:00Z",
+    bodyGenerationMetadata: null,
+    createdAt: "2026-06-15T00:00:00Z",
+    updatedAt: "2026-06-15T00:00:00Z",
+    ...overrides,
+  };
+}
+
 describe("GateTab · required input checklist", () => {
   it("renders the evidence-derived stage decision status and criterion provenance", () => {
     const states = [
@@ -64,6 +95,7 @@ describe("GateTab · required input checklist", () => {
     const assessment = assessStageGate({
       fromStage: "scope",
       criteria: states,
+      artifacts: [makeArtifact({ artifactCode: "d04_app_inv" })],
       evidence: [
         {
           id: "e1",
@@ -91,6 +123,18 @@ describe("GateTab · required input checklist", () => {
           createdAt: "2026-06-15T00:00:00Z",
           updatedAt: "2026-06-15T00:00:00Z",
         },
+        makeEvidence({
+          id: "e3",
+          requirementId: "EVID-SRC-SCOPE-ORG",
+          currentState: "Available",
+          sourceArtifactId: "artifact-3",
+        }),
+        makeEvidence({
+          id: "e4",
+          requirementId: "EVID-SRC-SCOPE-FY-CONTRACT",
+          currentState: "Available",
+          sourceArtifactId: "artifact-4",
+        }),
       ],
     });
     const html = renderToStaticMarkup(
@@ -104,7 +148,7 @@ describe("GateTab · required input checklist", () => {
 
     expect(html).toContain("source-stage-decision-status");
     expect(html).toContain("source-gate-required-inputs");
-    expect(html).toContain("Ready");
+    expect(html).toContain("0 of 2 cleared");
     expect(html).toContain("Missing");
     expect(html).toContain("Application inventory");
     expect(html).toContain("L2/L3 ticket history");
@@ -128,8 +172,7 @@ describe("GateTab · required input checklist", () => {
     expect(html).toContain("source-canvas-gate-criterion-GATE-SCOPE-02");
     expect(html).toContain("source-canvas-gate-criterion-GATE-SCOPE-03");
     expect(
-      (html.match(/source-canvas-gate-criterion-GATE-SCOPE-01/g) ?? [])
-        .length,
+      (html.match(/source-canvas-gate-criterion-GATE-SCOPE-01/g) ?? []).length,
     ).toBe(1);
     // Header is the only summary.
     expect(html).toContain("1 of 3 cleared");
@@ -155,7 +198,9 @@ describe("GateTab · required input checklist", () => {
       }),
     );
     expect(html).not.toContain("source-canvas-gate-blockers");
-    expect(html).toContain("All inputs are ready. Write the reason and approve");
+    expect(html).toContain(
+      "All inputs are ready. Write the reason and approve",
+    );
     // Promote button has no aria-describedby when nothing is blocking.
     expect(html).not.toContain(
       'aria-describedby="source-canvas-gate-promote-help"',
@@ -213,6 +258,7 @@ describe("GateTab · required input checklist", () => {
     const assessment = assessStageGate({
       fromStage: "scope",
       criteria: states,
+      artifacts: [],
       evidence: [
         makeEvidence({ requirementId: "EVID-SRC-SCOPE-APP-INV" }),
         makeEvidence({ requirementId: "EVID-SRC-SCOPE-ORG" }),
@@ -232,8 +278,7 @@ describe("GateTab · required input checklist", () => {
     expect(html).toContain("see what&#x27;s missing");
     expect(html).toContain("source-gate-required-input-GATE-SCOPE-04");
     expect(
-      (html.match(/source-canvas-gate-criterion-GATE-SCOPE-04/g) ?? [])
-        .length,
+      (html.match(/source-canvas-gate-criterion-GATE-SCOPE-04/g) ?? []).length,
     ).toBe(1);
   });
 

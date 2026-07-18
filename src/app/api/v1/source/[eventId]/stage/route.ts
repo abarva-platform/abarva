@@ -314,6 +314,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
             clientKey: effectiveClientKey,
             fromStage: stageKey,
             criteria: substrate.criteria,
+            artifacts: substrate.artifacts,
             evidence: substrate.evidence,
           }),
         )
