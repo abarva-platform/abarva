@@ -53,6 +53,11 @@ Runtime: no default runtime route is changed. Candidate rows remain invisible un
 - The npm lifecycle pre-step is intentionally local-artifact-only when no database URL is present. The load and audit actions still enforce the approved Azure lab Postgres target before any database access or mutation.
 - The local lineage gate now requires source/evidence linkage and allows missing confidence to use the loader's conservative default for the generated evidence-source rows.
 
+### 2026-07-18 delete-parameter follow-up
+
+- The candidate pre-cleanup delete planner now passes exact bind parameters per table predicate.
+- This preserves rollback/idempotency scope while avoiding Postgres bind-count failures before candidate inserts.
+
 ## Rollout Plan
 
 Merge by PR into `main`, let the repo-owned ACA main deploy workflow build and deploy the image, then run the private ACA operator job with `TENANT_CANDIDATE_LOAD_APPROVED=true` and `load:fs-airline-azure-candidate`. Do not promote active context in this release.
