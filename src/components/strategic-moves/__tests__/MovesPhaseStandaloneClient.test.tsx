@@ -157,11 +157,51 @@ function makeCurrentStateReadiness(): ReadinessReport {
 }
 
 describe("MovesPhaseStandaloneClient", () => {
+  let uploadedEvidenceArtifacts: Array<{
+    artifactId: string;
+    fileName: string;
+    title: string;
+    phase: number;
+    version: number;
+    status: string;
+    lifecycleState: string;
+    qualityScore: number | null;
+    createdAt: string;
+    downloadUrl: string;
+  }>;
+
   beforeEach(() => {
     window.scrollTo = jest.fn();
     window.open = jest.fn(() => ({} as Window));
-    global.fetch = jest.fn(async (input: RequestInfo | URL) => {
+    uploadedEvidenceArtifacts = [];
+    global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
+
+      if (url.includes("/artifacts/upload") && init?.method === "POST") {
+        const form = init.body as FormData;
+        const file = form.get("file") as File;
+        uploadedEvidenceArtifacts.push({
+          artifactId: `artifact-${uploadedEvidenceArtifacts.length + 1}`,
+          fileName: file.name,
+          title: String(form.get("title") ?? file.name),
+          phase: Number(form.get("phase") ?? 0),
+          version: 1,
+          status: "draft",
+          lifecycleState: "current",
+          qualityScore: null,
+          createdAt: new Date(0).toISOString(),
+          downloadUrl: "#",
+        });
+        return { ok: true, status: 200, json: async () => ({ ok: true }) } as Response;
+      }
+
+      if (url.includes("/artifacts?family=uploaded_evidence")) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ artifacts: uploadedEvidenceArtifacts }),
+        } as Response;
+      }
 
       if (url.includes("/api/chat/agent")) {
         const encoder = new TextEncoder();
@@ -457,6 +497,9 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(screen.getByText("scope-boundary.xlsx")).toBeInTheDocument();
       expect(screen.getByText("sponsor-review.docx")).toBeInTheDocument();
     });
+    // The list is real lifecycle data re-fetched from the artifact vault after
+    // upload, not an ephemeral client-side echo of what was just picked.
+    expect(screen.getAllByText(/v1 · draft/).length).toBe(2);
     expect(screen.getByRole("button", { name: "Open Files & Evidence" })).toBeInTheDocument();
   });
 
