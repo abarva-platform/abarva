@@ -126,6 +126,7 @@ import {
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { buildGateCriteria } from "@/lib/programs/transformers";
+import { getStrategicMoveById } from "@/lib/programs/queries";
 // Moves aVa chat hardening (flag-gated, default off) — deterministic
 // grounding packet + answer-mode classifier for /strategic-moves/* chat.
 // See src/lib/programs/ava-chat/.
@@ -754,6 +755,26 @@ export async function POST(request: Request) {
               programId,
               promptPhase,
             );
+            const liveMove = await getStrategicMoveById(
+              tenancy,
+              programId,
+            ).catch(() => null);
+            const liveGateCriteria =
+              liveMove?.currentPhase === promptPhase &&
+              liveMove.gateCriteria.length > 0
+                ? liveMove.gateCriteria
+                : canonicalGateCriteria;
+            const hardGateCriteria = liveGateCriteria.filter(
+              (criterion) => criterion.severity === "hard",
+            );
+            const blockingGateScope =
+              hardGateCriteria.length > 0 ? hardGateCriteria : liveGateCriteria;
+            const hardGateMet = blockingGateScope.filter(
+              (criterion) => criterion.completed,
+            ).length;
+            const hardGateTotal = blockingGateScope.length;
+            const hardGateOpen = hardGateTotal - hardGateMet;
+            const visibleEvidenceCount = liveMove?.linkedEvidence.length ?? evidence.length;
             const evidenceReadiness = await loadDiscoveryEvidenceReadiness(
               tenancy,
               programId,
@@ -771,9 +792,24 @@ export async function POST(request: Request) {
                 moveTitle: engagement.name,
                 currentPhase: promptPhase,
                 currentPhaseClientLabel: `P${promptPhase} ${promptPhaseLabel}`,
+                checklistStatus: {
+                  evidenceDone: visibleEvidenceCount > 0,
+                  evidenceLabel: `${visibleEvidenceCount} evidence item${visibleEvidenceCount === 1 ? "" : "s"} visible`,
+                  gateDone: hardGateTotal > 0 && hardGateOpen === 0,
+                  gateLabel:
+                    hardGateTotal > 0
+                      ? `${hardGateOpen} hard gate${hardGateOpen === 1 ? "" : "s"} open`
+                      : "No hard gate criteria loaded",
+                  canAdvance:
+                    visibleEvidenceCount > 0 &&
+                    hardGateTotal > 0 &&
+                    hardGateOpen === 0,
+                  nextPhaseLabel:
+                    promptPhase < 5 ? `P${promptPhase + 1}` : "Tower",
+                },
                 evidenceNeedPackets:
                   evidenceNeedPackets.map(formatMoveEvidenceNeedForAva),
-                gateCriteria: canonicalGateCriteria.map((criterion) => ({
+                gateCriteria: liveGateCriteria.map((criterion) => ({
                   label: criterion.label,
                   met: criterion.completed,
                   severity: criterion.severity,

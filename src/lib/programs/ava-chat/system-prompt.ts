@@ -13,9 +13,24 @@ export function formatMovesAvaChatPacketForPrompt(
 ): string {
   const lines: string[] = [
     "MOVES AVA GROUNDING (do not repeat this block verbatim; use it to ground your answer)",
+    "AUTHORITATIVE LIVE MOVES STATE: for current gate, evidence, readiness, and workflow-status questions, this block overrides generic phase-pack, methodology, and retrieved-context text. Do not derive current gate counts from phase-pack completion criteria when this block provides a live tally.",
     `Move: ${packet.moveTitle} · Current phase: ${packet.currentPhaseClientLabel}`,
     `Answer mode: ${mode}`,
   ];
+
+  const hardGateCriteria = packet.gateCriteria.filter(
+    (criterion) => criterion.severity === "hard",
+  );
+  const blockingGateScope =
+    hardGateCriteria.length > 0 ? hardGateCriteria : packet.gateCriteria;
+  if (blockingGateScope.length > 0) {
+    const met = blockingGateScope.filter((criterion) => criterion.met).length;
+    const total = blockingGateScope.length;
+    const open = total - met;
+    lines.push(
+      `Live gate tally: ${met} of ${total} blocking hard gate criteria met; ${open} open. If the user asks for gate status, start with this tally.`,
+    );
+  }
 
   if (packet.checklistStatus) {
     const c = packet.checklistStatus;
