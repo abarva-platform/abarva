@@ -1,6 +1,6 @@
 {
   "tenant_key": "first-capital-financial",
-  "env": "not-confirmed",
+  "env": "nonprod-not-confirmed",
   "dry_run": true,
   "azure_postgres_mutated": false,
   "active_pointer_updated": false,

@@ -1,0 +1,108 @@
+{
+  "tenant_key": "first-capital-financial",
+  "display_name": "FS Demo",
+  "physical_source_label": "First Capital Financial",
+  "industry": "diversified financial services",
+  "source_template_file": "07_vendors_contracts.csv",
+  "requested_template_file": "07_vendors_contracts.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "vendor_name",
+      "required": true,
+      "description": "vendor_name for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "contract_name",
+      "required": true,
+      "description": "contract_name for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "service_category",
+      "required": true,
+      "description": "service_category for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "business_owner",
+      "required": true,
+      "description": "business_owner for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "contract_owner",
+      "required": true,
+      "description": "contract_owner for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "annual_spend_usd",
+      "required": true,
+      "description": "annual_spend_usd for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "term_start",
+      "required": true,
+      "description": "term_start for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "term_end",
+      "required": true,
+      "description": "term_end for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "renewal_date",
+      "required": true,
+      "description": "renewal_date for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "commercial_model",
+      "required": true,
+      "description": "commercial_model for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "supported_systems",
+      "required": true,
+      "description": "supported_systems for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "supported_functions",
+      "required": true,
+      "description": "supported_functions for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "risk_rating",
+      "required": true,
+      "description": "risk_rating for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for FS Demo 07_vendors_contracts candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for FS Demo 07_vendors_contracts candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

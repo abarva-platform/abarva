@@ -180,13 +180,14 @@ function run() {
     evidence_references: result.counts.evidence_references,
     failure_count: result.failures.length,
   })));
-  writeMd(path.join(outDir, "richness-audit.md"), [
+  const auditMdLines = [
     "# Synthetic Tenant Richness Audit",
     "",
     ...results.map((result) => `- ${result.tenant_key}: ${result.status.toUpperCase()} (${result.failures.length} failures)`),
-    "",
-    ...results.flatMap((result) => result.failures.length ? [`## ${result.tenant_key}`, "", ...result.failures.map((failure) => `- ${failure}`), ""] : []),
-  ]);
+  ];
+  const failureSections = results.flatMap((result) => result.failures.length ? [`## ${result.tenant_key}`, "", ...result.failures.map((failure) => `- ${failure}`)] : []);
+  if (failureSections.length > 0) auditMdLines.push("", ...failureSections);
+  writeMd(path.join(outDir, "richness-audit.md"), auditMdLines);
   const failures = results.flatMap((result) => result.failures);
   if (failures.length > 0) {
     console.error(`Synthetic richness audit failed with ${failures.length} failure(s)`);

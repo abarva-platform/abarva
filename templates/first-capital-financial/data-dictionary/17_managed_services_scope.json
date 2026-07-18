@@ -1,0 +1,93 @@
+{
+  "tenant_key": "first-capital-financial",
+  "display_name": "FS Demo",
+  "physical_source_label": "First Capital Financial",
+  "industry": "diversified financial services",
+  "source_template_file": "17_service_scope_managed_services.csv",
+  "requested_template_file": "17_managed_services_scope.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for FS Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "service_tower",
+      "required": true,
+      "description": "service_tower for FS Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "service_name",
+      "required": true,
+      "description": "service_name for FS Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "scope_description",
+      "required": true,
+      "description": "scope_description for FS Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "in_scope_functions",
+      "required": true,
+      "description": "in_scope_functions for FS Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "in_scope_systems",
+      "required": true,
+      "description": "in_scope_systems for FS Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "current_provider",
+      "required": true,
+      "description": "current_provider for FS Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "service_volume",
+      "required": true,
+      "description": "service_volume for FS Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "sla_or_kpi",
+      "required": true,
+      "description": "sla_or_kpi for FS Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "run_cost_usd",
+      "required": true,
+      "description": "run_cost_usd for FS Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "target_state_option",
+      "required": true,
+      "description": "target_state_option for FS Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for FS Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for FS Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for FS Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for FS Demo 17_managed_services_scope candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

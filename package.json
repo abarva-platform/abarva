@@ -110,6 +110,7 @@
     "generate:tenant-v3-data": "node scripts/tenant-v3/generate-tenant-v3-inputs.mjs",
     "generate:tenant-v3-data:all": "node scripts/tenant-v3/generate-tenant-v3-inputs.mjs --all",
     "generate:synthetic-tenant": "node scripts/tenant-v3/generate-rich-synthetic-tenant.mjs",
+    "tenant:data-factory": "node scripts/tenant-v3/tenant-data-factory.mjs",
     "audit:synthetic-tenant-richness": "node scripts/audit/synthetic-tenant-richness.mjs",
     "load:tenant-candidate-context": "node scripts/knowledge/load-tenant-candidate-context.mjs",
     "reconcile:tenant-data-plane": "node scripts/knowledge/reconcile-tenant-data-plane.mjs",

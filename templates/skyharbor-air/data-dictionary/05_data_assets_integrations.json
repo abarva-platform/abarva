@@ -1,0 +1,108 @@
+{
+  "tenant_key": "skyharbor-air",
+  "display_name": "Airline Demo",
+  "physical_source_label": "SkyHarbor Air",
+  "industry": "global airline",
+  "source_template_file": "05_data_assets_integrations.csv",
+  "requested_template_file": "05_data_assets_integrations.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "data_asset_name",
+      "required": true,
+      "description": "data_asset_name for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "data_domain",
+      "required": true,
+      "description": "data_domain for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "source_system",
+      "required": true,
+      "description": "source_system for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "target_system",
+      "required": true,
+      "description": "target_system for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "integration_type",
+      "required": true,
+      "description": "integration_type for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "platform_or_database",
+      "required": true,
+      "description": "platform_or_database for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "current_state_or_target_state",
+      "required": true,
+      "description": "current_state_or_target_state for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "refresh_frequency",
+      "required": true,
+      "description": "refresh_frequency for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "data_owner",
+      "required": true,
+      "description": "data_owner for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "data_steward",
+      "required": true,
+      "description": "data_steward for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "quality_status",
+      "required": true,
+      "description": "quality_status for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "regulated_data_flag",
+      "required": true,
+      "description": "regulated_data_flag for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "analytics_usage",
+      "required": true,
+      "description": "analytics_usage for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for Airline Demo 05_data_assets_integrations candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for Airline Demo 05_data_assets_integrations candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

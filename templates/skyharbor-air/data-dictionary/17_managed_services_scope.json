@@ -1,0 +1,93 @@
+{
+  "tenant_key": "skyharbor-air",
+  "display_name": "Airline Demo",
+  "physical_source_label": "SkyHarbor Air",
+  "industry": "global airline",
+  "source_template_file": "17_service_scope_managed_services.csv",
+  "requested_template_file": "17_managed_services_scope.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for Airline Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "service_tower",
+      "required": true,
+      "description": "service_tower for Airline Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "service_name",
+      "required": true,
+      "description": "service_name for Airline Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "scope_description",
+      "required": true,
+      "description": "scope_description for Airline Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "in_scope_functions",
+      "required": true,
+      "description": "in_scope_functions for Airline Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "in_scope_systems",
+      "required": true,
+      "description": "in_scope_systems for Airline Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "current_provider",
+      "required": true,
+      "description": "current_provider for Airline Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "service_volume",
+      "required": true,
+      "description": "service_volume for Airline Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "sla_or_kpi",
+      "required": true,
+      "description": "sla_or_kpi for Airline Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "run_cost_usd",
+      "required": true,
+      "description": "run_cost_usd for Airline Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "target_state_option",
+      "required": true,
+      "description": "target_state_option for Airline Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for Airline Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for Airline Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for Airline Demo 17_managed_services_scope candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for Airline Demo 17_managed_services_scope candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "tenant_key": "first-capital-financial",
+  "display_name": "FS Demo",
+  "physical_source_label": "First Capital Financial",
+  "industry": "diversified financial services",
+  "source_template_file": "09_programs_initiatives.csv",
+  "requested_template_file": "09_programs_initiatives.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "program_name",
+      "required": true,
+      "description": "program_name for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "business_sponsor",
+      "required": true,
+      "description": "business_sponsor for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "technology_owner",
+      "required": true,
+      "description": "technology_owner for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "objective",
+      "required": true,
+      "description": "objective for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "scope",
+      "required": true,
+      "description": "scope for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "status",
+      "required": true,
+      "description": "status for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "phase",
+      "required": true,
+      "description": "phase for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "target_outcomes",
+      "required": true,
+      "description": "target_outcomes for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "dependencies",
+      "required": true,
+      "description": "dependencies for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "risks",
+      "required": true,
+      "description": "risks for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "budget_usd",
+      "required": true,
+      "description": "budget_usd for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "expected_value_usd",
+      "required": true,
+      "description": "expected_value_usd for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for FS Demo 09_programs_initiatives candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for FS Demo 09_programs_initiatives candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

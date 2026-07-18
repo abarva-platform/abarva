@@ -1,0 +1,83 @@
+{
+  "tenant_key": "skyharbor-air",
+  "display_name": "Airline Demo",
+  "physical_source_label": "SkyHarbor Air",
+  "industry": "global airline",
+  "source_template_file": "12_relationships.csv",
+  "requested_template_file": "12_relationships.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for Airline Demo 12_relationships candidate context."
+    },
+    {
+      "name": "from_object_type",
+      "required": true,
+      "description": "from_object_type for Airline Demo 12_relationships candidate context."
+    },
+    {
+      "name": "from_object_name",
+      "required": true,
+      "description": "from_object_name for Airline Demo 12_relationships candidate context."
+    },
+    {
+      "name": "relationship_type",
+      "required": true,
+      "description": "relationship_type for Airline Demo 12_relationships candidate context."
+    },
+    {
+      "name": "to_object_type",
+      "required": true,
+      "description": "to_object_type for Airline Demo 12_relationships candidate context."
+    },
+    {
+      "name": "to_object_name",
+      "required": true,
+      "description": "to_object_name for Airline Demo 12_relationships candidate context."
+    },
+    {
+      "name": "relationship_strength",
+      "required": true,
+      "description": "relationship_strength for Airline Demo 12_relationships candidate context."
+    },
+    {
+      "name": "evidence_basis",
+      "required": true,
+      "description": "evidence_basis for Airline Demo 12_relationships candidate context."
+    },
+    {
+      "name": "current_state_or_target_state",
+      "required": true,
+      "description": "current_state_or_target_state for Airline Demo 12_relationships candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for Airline Demo 12_relationships candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for Airline Demo 12_relationships candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for Airline Demo 12_relationships candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for Airline Demo 12_relationships candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

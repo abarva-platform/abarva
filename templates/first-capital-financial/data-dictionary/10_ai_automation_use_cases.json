@@ -1,0 +1,93 @@
+{
+  "tenant_key": "first-capital-financial",
+  "display_name": "FS Demo",
+  "physical_source_label": "First Capital Financial",
+  "industry": "diversified financial services",
+  "source_template_file": "10_ai_automation_use_cases.csv",
+  "requested_template_file": "10_ai_automation_use_cases.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for FS Demo 10_ai_automation_use_cases candidate context."
+    },
+    {
+      "name": "use_case_name",
+      "required": true,
+      "description": "use_case_name for FS Demo 10_ai_automation_use_cases candidate context."
+    },
+    {
+      "name": "business_function",
+      "required": true,
+      "description": "business_function for FS Demo 10_ai_automation_use_cases candidate context."
+    },
+    {
+      "name": "process_area",
+      "required": true,
+      "description": "process_area for FS Demo 10_ai_automation_use_cases candidate context."
+    },
+    {
+      "name": "ai_pattern",
+      "required": true,
+      "description": "ai_pattern for FS Demo 10_ai_automation_use_cases candidate context."
+    },
+    {
+      "name": "current_status",
+      "required": true,
+      "description": "current_status for FS Demo 10_ai_automation_use_cases candidate context."
+    },
+    {
+      "name": "value_hypothesis",
+      "required": true,
+      "description": "value_hypothesis for FS Demo 10_ai_automation_use_cases candidate context."
+    },
+    {
+      "name": "required_data",
+      "required": true,
+      "description": "required_data for FS Demo 10_ai_automation_use_cases candidate context."
+    },
+    {
+      "name": "required_systems",
+      "required": true,
+      "description": "required_systems for FS Demo 10_ai_automation_use_cases candidate context."
+    },
+    {
+      "name": "human_approval_points",
+      "required": true,
+      "description": "human_approval_points for FS Demo 10_ai_automation_use_cases candidate context."
+    },
+    {
+      "name": "risk_controls",
+      "required": true,
+      "description": "risk_controls for FS Demo 10_ai_automation_use_cases candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for FS Demo 10_ai_automation_use_cases candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for FS Demo 10_ai_automation_use_cases candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for FS Demo 10_ai_automation_use_cases candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for FS Demo 10_ai_automation_use_cases candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

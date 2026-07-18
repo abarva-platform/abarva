@@ -1,0 +1,93 @@
+{
+  "tenant_key": "first-capital-financial",
+  "display_name": "FS Demo",
+  "physical_source_label": "First Capital Financial",
+  "industry": "diversified financial services",
+  "source_template_file": "14_metrics_outcomes.csv",
+  "requested_template_file": "14_metrics_outcomes.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for FS Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "metric_name",
+      "required": true,
+      "description": "metric_name for FS Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "metric_domain",
+      "required": true,
+      "description": "metric_domain for FS Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "business_function",
+      "required": true,
+      "description": "business_function for FS Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "definition",
+      "required": true,
+      "description": "definition for FS Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "baseline_value",
+      "required": true,
+      "description": "baseline_value for FS Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "baseline_period",
+      "required": true,
+      "description": "baseline_period for FS Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "target_value",
+      "required": true,
+      "description": "target_value for FS Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "owner",
+      "required": true,
+      "description": "owner for FS Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "data_source",
+      "required": true,
+      "description": "data_source for FS Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "calculation_basis",
+      "required": true,
+      "description": "calculation_basis for FS Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for FS Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for FS Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for FS Demo 14_metrics_outcomes candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for FS Demo 14_metrics_outcomes candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

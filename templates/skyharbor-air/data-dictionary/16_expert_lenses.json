@@ -1,0 +1,73 @@
+{
+  "tenant_key": "skyharbor-air",
+  "display_name": "Airline Demo",
+  "physical_source_label": "SkyHarbor Air",
+  "industry": "global airline",
+  "source_template_file": "16_expert_lenses.csv",
+  "requested_template_file": "16_expert_lenses.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for Airline Demo 16_expert_lenses candidate context."
+    },
+    {
+      "name": "lens_name",
+      "required": true,
+      "description": "lens_name for Airline Demo 16_expert_lenses candidate context."
+    },
+    {
+      "name": "expert_role",
+      "required": true,
+      "description": "expert_role for Airline Demo 16_expert_lenses candidate context."
+    },
+    {
+      "name": "questions_to_answer",
+      "required": true,
+      "description": "questions_to_answer for Airline Demo 16_expert_lenses candidate context."
+    },
+    {
+      "name": "required_inputs",
+      "required": true,
+      "description": "required_inputs for Airline Demo 16_expert_lenses candidate context."
+    },
+    {
+      "name": "decision_use",
+      "required": true,
+      "description": "decision_use for Airline Demo 16_expert_lenses candidate context."
+    },
+    {
+      "name": "limitations",
+      "required": true,
+      "description": "limitations for Airline Demo 16_expert_lenses candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for Airline Demo 16_expert_lenses candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for Airline Demo 16_expert_lenses candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for Airline Demo 16_expert_lenses candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for Airline Demo 16_expert_lenses candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

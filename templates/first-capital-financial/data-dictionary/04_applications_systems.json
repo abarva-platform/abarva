@@ -1,0 +1,118 @@
+{
+  "tenant_key": "first-capital-financial",
+  "display_name": "FS Demo",
+  "physical_source_label": "First Capital Financial",
+  "industry": "diversified financial services",
+  "source_template_file": "04_applications_systems.csv",
+  "requested_template_file": "04_applications_systems.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "system_name",
+      "required": true,
+      "description": "system_name for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "system_type",
+      "required": true,
+      "description": "system_type for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "system_category",
+      "required": true,
+      "description": "system_category for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "business_function",
+      "required": true,
+      "description": "business_function for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "system_scope",
+      "required": true,
+      "description": "system_scope for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "deployment_model",
+      "required": true,
+      "description": "deployment_model for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "hosting_location",
+      "required": true,
+      "description": "hosting_location for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "lifecycle_state",
+      "required": true,
+      "description": "lifecycle_state for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "criticality",
+      "required": true,
+      "description": "criticality for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "business_owner",
+      "required": true,
+      "description": "business_owner for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "technology_owner",
+      "required": true,
+      "description": "technology_owner for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "vendor",
+      "required": true,
+      "description": "vendor for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "data_domains",
+      "required": true,
+      "description": "data_domains for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "interfaces_count",
+      "required": true,
+      "description": "interfaces_count for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "current_state_or_target_state",
+      "required": true,
+      "description": "current_state_or_target_state for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for FS Demo 04_applications_systems candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for FS Demo 04_applications_systems candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

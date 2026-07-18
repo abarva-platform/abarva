@@ -1,0 +1,93 @@
+{
+  "tenant_key": "skyharbor-air",
+  "display_name": "Airline Demo",
+  "physical_source_label": "SkyHarbor Air",
+  "industry": "global airline",
+  "source_template_file": "11_risks_controls.csv",
+  "requested_template_file": "11_risks_controls.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for Airline Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "risk_or_control_name",
+      "required": true,
+      "description": "risk_or_control_name for Airline Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "risk_domain",
+      "required": true,
+      "description": "risk_domain for Airline Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "business_function",
+      "required": true,
+      "description": "business_function for Airline Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "systems_impacted",
+      "required": true,
+      "description": "systems_impacted for Airline Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "severity",
+      "required": true,
+      "description": "severity for Airline Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "likelihood",
+      "required": true,
+      "description": "likelihood for Airline Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "control_owner",
+      "required": true,
+      "description": "control_owner for Airline Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "control_status",
+      "required": true,
+      "description": "control_status for Airline Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "evidence_required",
+      "required": true,
+      "description": "evidence_required for Airline Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "mitigation_plan",
+      "required": true,
+      "description": "mitigation_plan for Airline Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for Airline Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for Airline Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for Airline Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for Airline Demo 11_risks_controls candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

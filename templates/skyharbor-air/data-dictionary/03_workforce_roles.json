@@ -1,0 +1,88 @@
+{
+  "tenant_key": "skyharbor-air",
+  "display_name": "Airline Demo",
+  "physical_source_label": "SkyHarbor Air",
+  "industry": "global airline",
+  "source_template_file": "03_workforce_roles.csv",
+  "requested_template_file": "03_workforce_roles.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for Airline Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "persona_or_role",
+      "required": true,
+      "description": "persona_or_role for Airline Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "function_name",
+      "required": true,
+      "description": "function_name for Airline Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "role_count",
+      "required": true,
+      "description": "role_count for Airline Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "location_model",
+      "required": true,
+      "description": "location_model for Airline Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "employment_type",
+      "required": true,
+      "description": "employment_type for Airline Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "vendor_supported",
+      "required": true,
+      "description": "vendor_supported for Airline Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "skills",
+      "required": true,
+      "description": "skills for Airline Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "pain_points",
+      "required": true,
+      "description": "pain_points for Airline Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "automation_opportunity",
+      "required": true,
+      "description": "automation_opportunity for Airline Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for Airline Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for Airline Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for Airline Demo 03_workforce_roles candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for Airline Demo 03_workforce_roles candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}

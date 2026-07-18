@@ -1,0 +1,93 @@
+{
+  "tenant_key": "first-capital-financial",
+  "display_name": "FS Demo",
+  "physical_source_label": "First Capital Financial",
+  "industry": "diversified financial services",
+  "source_template_file": "11_risks_controls.csv",
+  "requested_template_file": "11_risks_controls.csv",
+  "candidate_only": true,
+  "default_runtime_visible": false,
+  "columns": [
+    {
+      "name": "tenant_key",
+      "required": true,
+      "description": "tenant_key for FS Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "risk_or_control_name",
+      "required": true,
+      "description": "risk_or_control_name for FS Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "risk_domain",
+      "required": true,
+      "description": "risk_domain for FS Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "business_function",
+      "required": true,
+      "description": "business_function for FS Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "systems_impacted",
+      "required": true,
+      "description": "systems_impacted for FS Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "severity",
+      "required": true,
+      "description": "severity for FS Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "likelihood",
+      "required": true,
+      "description": "likelihood for FS Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "control_owner",
+      "required": true,
+      "description": "control_owner for FS Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "control_status",
+      "required": true,
+      "description": "control_status for FS Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "evidence_required",
+      "required": true,
+      "description": "evidence_required for FS Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "mitigation_plan",
+      "required": true,
+      "description": "mitigation_plan for FS Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "source_file",
+      "required": true,
+      "description": "source_file for FS Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "source_date",
+      "required": true,
+      "description": "source_date for FS Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "confidence",
+      "required": true,
+      "description": "confidence for FS Demo 11_risks_controls candidate context."
+    },
+    {
+      "name": "known_gaps",
+      "required": true,
+      "description": "known_gaps for FS Demo 11_risks_controls candidate context."
+    }
+  ],
+  "forbidden_claims": [
+    "realized savings",
+    "realized ROI",
+    "production-ready",
+    "active tenant truth"
+  ]
+}
