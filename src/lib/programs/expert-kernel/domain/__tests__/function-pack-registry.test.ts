@@ -5,19 +5,19 @@
 // the coverage list reflects exactly the catalogued packs.
 //
 // The coverage assertions are INDUSTRY-AWARE and extensible: healthcare is a
-// completed taxonomy and is asserted as an exact set of twelve functions;
+// completed taxonomy plus a member-service Agent Assist specialization;
 // retail is a vertical still being built out, so its coverage is asserted as a
 // growing subset — the functions catalogued SO FAR must all be present, and
-// new retail batches add packs without this test's structure needing to
-// change.
+// new retail batches add packs without this test's structure needing to change.
 
 import {
   listFunctionPackCoverage,
   resolveFunctionPack,
 } from "../function-pack-registry";
 
-// The complete healthcare provider taxonomy — twelve functions (spec §3).
-// Healthcare is finished, so this is asserted as an exact set.
+// The healthcare provider taxonomy plus the member-service Agent Assist
+// specialization. Asserted as an exact set so new healthcare packs are
+// intentional.
 const HEALTHCARE_FUNCTIONS: readonly string[] = [
   "care_delivery_care_management",
   "clinical_operations_documentation",
@@ -26,6 +26,7 @@ const HEALTHCARE_FUNCTIONS: readonly string[] = [
   "health_information_interoperability",
   "patient_access_engagement_experience",
   "payer_claims_operations",
+  "member_service_agent_assist",
   "pharmacy",
   "population_health_value_based_care",
   "quality_safety_regulatory",
@@ -476,8 +477,8 @@ describe("listFunctionPackCoverage", () => {
       .map((c) => c.functionKey)
       .sort();
 
-  it("covers exactly the twelve healthcare provider functions", () => {
-    // Healthcare is finished — its coverage is an exact set.
+  it("covers exactly the catalogued healthcare provider functions", () => {
+    // Healthcare coverage is an exact set.
     expect(coverageFor("healthcare-provider")).toEqual(
       [...HEALTHCARE_FUNCTIONS].sort(),
     );

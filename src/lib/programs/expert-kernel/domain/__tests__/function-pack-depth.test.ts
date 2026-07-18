@@ -1,7 +1,6 @@
 // function-pack depth-bar tests.
 //
-// Asserts every reference pack — the twelve healthcare packs and the two
-// retail packs that open the retail vertical — meets the §6 depth bar: the
+// Asserts every reference pack meets the §6 depth bar: the
 // minimum layer counts, the four required deliverable outlines, and the
 // structural hard fails (no metric without a definition+benchmark, no
 // archetype without a value mechanism, no deliverable outline that is a label
@@ -25,6 +24,7 @@ import { revenueCyclePack } from '../healthcare/revenue-cycle';
 import { clinicalSupplyChainPack } from '../healthcare/clinical-supply-chain';
 import { clinicalWorkforceStaffingPack } from '../healthcare/clinical-workforce-staffing';
 import { payerClaimsOperationsPack } from '../healthcare/payer-claims-operations';
+import { memberServiceAgentAssistPack } from '../healthcare/member-service-agent-assist';
 import { pharmacyPack } from '../healthcare/pharmacy';
 import { merchandisingAssortmentPack } from '../retail/merchandising-assortment';
 import { pricingPromotionsPack } from '../retail/pricing-promotions';
@@ -70,6 +70,7 @@ const PACKS: ReadonlyArray<readonly [string, FunctionPack]> = [
   ['clinical_supply_chain', clinicalSupplyChainPack],
   ['clinical_workforce_staffing', clinicalWorkforceStaffingPack],
   ['payer_claims_operations', payerClaimsOperationsPack],
+  ['member_service_agent_assist', memberServiceAgentAssistPack],
   ['pharmacy', pharmacyPack],
   ['merchandising_assortment', merchandisingAssortmentPack],
   ['pricing_promotions', pricingPromotionsPack],

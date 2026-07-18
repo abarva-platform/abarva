@@ -1,6 +1,6 @@
 // Healthcare Function Packs — payer / claims operations and pharmacy.
 //
-// These two packs complete the twelve-function healthcare provider taxonomy
+// These two packs cover payer claims operations and pharmacy in the healthcare
 // (spec §3). This suite asserts each one meets the §6 depth bar
 // (FUNCTION_PACK_DEPTH_MINIMUMS), is reachable through resolveFunctionPack,
 // and carries the named operating metrics and AI use-case archetypes the

@@ -147,7 +147,7 @@ describe('bindFunctionPackForArtifact — honest fallback', () => {
   });
 
   it('falls back honestly for an unknown function in a known industry', () => {
-    // The twelve-function healthcare taxonomy is fully catalogued; a
+    // The healthcare taxonomy is fully catalogued; a
     // healthcare function outside that set (telehealth & virtual care) has
     // no pack yet — a genuinely uncatalogued function, never a faked bind.
     const binding = bindFunctionPackForArtifact(
