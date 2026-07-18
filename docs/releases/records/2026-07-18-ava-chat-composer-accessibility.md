@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -35,7 +35,10 @@ The aVa chat input must stay reachable without requiring the user to scroll afte
 - ESLint: `npx eslint src/components/agent/AgentDock.tsx src/components/agent/__tests__/AgentDock.test.tsx` passed.
 - TypeScript: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` passed.
 - Release gate: `npm run release:check -- --base origin/main --head HEAD` passed.
-- Live signed-in proof is required after ACA deploy before marking released.
+- PR checks for #5010 passed.
+- ACA deploy workflow `29646653109` passed.
+- Live health: `https://app.abarva.ai/api/health` returned HTTP 200 with `ok: true`.
+- Live signed-in proof on `https://app.abarva.ai/intelligence` at `1366x768` passed. The composer form stayed visible at `y=704..768`, the input stayed visible at `y=717..760`, and `window.scrollY` remained `0` before, during, and after a long answer prompt.
 
 ## Rollout Plan
 
@@ -45,11 +48,11 @@ Merge to `main`, deploy through the repo-owned Azure Container Apps main lane, a
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: None in this PR.
-- Approved image digest: Pending ACA deploy.
-- ACA runtime invariant: Pending ACA deploy.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:5abeac3b84e9298fd85049a5f9dffee52301430462ec57092b90bdd4969b1874`
+- ACA runtime invariant: Passed; template image and 100% traffic revision are on `ca-abarva-web-lab-eastus--m979bb13b`.
 - Worker image invariant: Not applicable.
 - Feature/env flag update path: Not applicable.
-- Live signed-in proof required: Yes, on `https://app.abarva.ai/intelligence`.
+- Live signed-in proof required: Complete, on `https://app.abarva.ai/intelligence`.
 
 ## Rollback Plan
 
@@ -57,10 +60,13 @@ Revert the PR and redeploy the previous healthy ACA image through the normal mai
 
 ## Audit Evidence
 
-- PR: Pending.
+- PR: #5010, merged as `979bb13b659881af68e9911b5bc25d73f0409dcd`.
+- ACA deploy: GitHub Actions run `29646653109`, successful.
+- Live revision: `ca-abarva-web-lab-eastus--m979bb13b`, 100% traffic.
+- Live image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:5abeac3b84e9298fd85049a5f9dffee52301430462ec57092b90bdd4969b1874`.
 - Focused Jest output: passed locally in the clean worktree.
-- Live proof bundle: Pending deploy.
+- Live proof bundle: `/Users/anand/Downloads/ava-chat-composer-accessibility-proof-2026-07-18`.
 
 ## Known Gaps
 
-Full AgentDock test suite currently has unrelated pre-existing failures/warnings in this checkout, including duplicate Jest manual-mock warnings and stale assertions unrelated to the composer accessibility contract. This release only changes the composer accessibility contract and its focused tests.
+Full AgentDock test suite printed duplicate Jest manual-mock warnings and has unrelated stale assertions in this checkout. This release only changes the composer accessibility contract and its focused tests; PR #5010 and the ACA deploy both passed their required checks.
