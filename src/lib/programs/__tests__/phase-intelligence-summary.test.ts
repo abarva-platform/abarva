@@ -180,4 +180,34 @@ describe("buildPhaseIntelligenceSummary", () => {
     expect(summary.items[1].title).toBe("No curated function pack is bound yet.");
     expect(summary.items[1].facts).toContain("Function key: not set");
   });
+
+  it("uses the deterministic classifier as a read-only fallback for legacy Agent Assist moves", async () => {
+    getStrategicMoveById.mockResolvedValue(
+      mockMove({
+        name: "Member Service Agent Assist",
+        archetype: "ai_product_enablement",
+        charter: {
+          businessProblem:
+            "Members experience long calls and inconsistent answers because agents navigate claims, eligibility, benefits, prior authorization, CRM history, and policy knowledge across multiple systems.",
+          evidencePlan:
+            "Member-service metrics, call transcripts, intent taxonomy, CRM history, claims/auth/benefits samples, knowledge base, systems inventory, and security/privacy controls.",
+        },
+        functionPackKey: null,
+      }),
+    );
+    const { buildPhaseIntelligenceSummary } = await import(
+      "@/lib/programs/phase-intelligence-summary"
+    );
+
+    const summary = await buildPhaseIntelligenceSummary(ctx, {
+      moveId: "move-1",
+      phase: 2,
+    });
+
+    expect(summary.items[1].sourceLabel).toBe("Member-service Agent Assist Function Pack");
+    expect(summary.items[1].facts).toContain("Function key: member_service_agent_assist");
+    expect(summary.items[1].facts.join(" ")).toContain(
+      "Binding source: deterministic classifier fallback",
+    );
+  });
 });

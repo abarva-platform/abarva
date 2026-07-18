@@ -2,12 +2,21 @@ import "server-only";
 
 import { getDecisionThreadDossier, getThreadForArtifact } from "@/lib/decisions/auto-linker";
 import { resolveFunctionPack } from "@/lib/programs/expert-kernel/domain/function-pack-registry";
-import { resolveMoveFunctionIdentity } from "@/lib/programs/function-identity";
+import {
+  classifyFunctionKey,
+  industryKeyForCode,
+  resolveMoveFunctionIdentity,
+} from "@/lib/programs/function-identity";
 import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
 import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getStrategicMoveById } from "@/lib/programs/queries";
 import { buildGateCriteria } from "@/lib/programs/transformers";
+import type { MoveFunctionIdentity } from "@/lib/programs/function-identity";
 import type { TenancyCtx } from "@/lib/programs/types.db";
+
+type StrategicMoveForPhaseIntelligence = NonNullable<
+  Awaited<ReturnType<typeof getStrategicMoveById>>
+>;
 
 export type PhaseIntelligenceItemTone = "default" | "success" | "warning" | "danger";
 
@@ -39,6 +48,60 @@ function compact(value: string | null | undefined, fallback: string): string {
 function formatRange(low: number, high: number, unit: string): string {
   if (unit === "%") return `${low}-${high}%`;
   return `${low}-${high} ${unit}`;
+}
+
+function safeCharterText(charter: unknown): string {
+  if (!charter || typeof charter !== "object") return "";
+  try {
+    return JSON.stringify(charter);
+  } catch {
+    return "";
+  }
+}
+
+function buildMoveFunctionBriefText(move: StrategicMoveForPhaseIntelligence): string {
+  return [
+    move.name,
+    move.archetype,
+    move.tenant.name,
+    move.tenant.industryCode,
+    safeCharterText(move.charter),
+  ]
+    .filter((part): part is string => typeof part === "string" && part.trim().length > 0)
+    .join(" ");
+}
+
+function resolvePhaseIntelligenceFunctionIdentity(
+  move: StrategicMoveForPhaseIntelligence,
+): {
+  identity: MoveFunctionIdentity;
+  source: string;
+  confidence: number | null;
+} | null {
+  const storedIdentity = resolveMoveFunctionIdentity({
+    industryCode: move.tenant.industryCode,
+    functionPackKey: move.functionPackKey,
+    charter: move.charter,
+  });
+  if (storedIdentity) {
+    return {
+      identity: storedIdentity,
+      source: "persisted functionPackKey",
+      confidence: null,
+    };
+  }
+
+  const industryKey = industryKeyForCode(move.tenant.industryCode);
+  if (!industryKey) return null;
+
+  const classified = classifyFunctionKey(industryKey, buildMoveFunctionBriefText(move));
+  if (!classified) return null;
+
+  return {
+    identity: { industryKey, functionKey: classified.functionKey },
+    source: "deterministic classifier fallback",
+    confidence: classified.confidence,
+  };
 }
 
 async function buildDecisionItem(
@@ -116,16 +179,12 @@ async function buildStrategicSignalItem(
   moveId: string,
 ): Promise<PhaseIntelligenceItem> {
   const move = await getStrategicMoveById(ctx, moveId);
-  const identity = move
-    ? resolveMoveFunctionIdentity({
-        industryCode: move.tenant.industryCode,
-        functionPackKey: move.functionPackKey,
-        charter: move.charter,
-      })
+  const binding = move ? resolvePhaseIntelligenceFunctionIdentity(move) : null;
+  const pack = binding
+    ? resolveFunctionPack(binding.identity.industryKey, binding.identity.functionKey)
     : null;
-  const pack = identity ? resolveFunctionPack(identity.industryKey, identity.functionKey) : null;
 
-  if (!move || !identity || !pack) {
+  if (!move || !binding || !pack) {
     return {
       id: "strategic_signal",
       eyebrow: "Strategic signal",
@@ -155,6 +214,10 @@ async function buildStrategicSignalItem(
       sourceLabel: `${pack.functionLabel} Function Pack`,
       tone: "default",
       facts: [
+        `Function key: ${binding.identity.functionKey}`,
+        binding.confidence == null
+          ? `Binding source: ${binding.source}`
+          : `Binding source: ${binding.source} (${binding.confidence})`,
         `Measured as: ${benchmark.measuredAs}`,
         `Time to value: ${pack.valueModel.timeToValueBand}`,
       ],
@@ -172,8 +235,19 @@ async function buildStrategicSignalItem(
     sourceLabel: `${pack.functionLabel} Function Pack`,
     tone: "default",
     facts: painTheme
-      ? [`Detection signal: ${painTheme.detectionSignal}`]
-      : [`Function key: ${String(pack.functionKey)}`],
+      ? [
+          `Function key: ${binding.identity.functionKey}`,
+          binding.confidence == null
+            ? `Binding source: ${binding.source}`
+            : `Binding source: ${binding.source} (${binding.confidence})`,
+          `Detection signal: ${painTheme.detectionSignal}`,
+        ]
+      : [
+          `Function key: ${String(pack.functionKey)}`,
+          binding.confidence == null
+            ? `Binding source: ${binding.source}`
+            : `Binding source: ${binding.source} (${binding.confidence})`,
+        ],
   };
 }
 
