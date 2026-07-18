@@ -1,9 +1,13 @@
-import { azureRead } from '@/lib/data-plane/azureRead';
-import type { PostgresCompatClient } from '@/lib/data-plane/postgresCompat';
-import { composeAtlasIacAnswer, type AtlasIacComposition } from '@/lib/atlas/composition/compose';
-import type { AtlasTenancyCtx } from '@/lib/atlas/initiative-deep/types';
+import { azureRead } from "@/lib/data-plane/azureRead";
+import { DEMO_SAFE_CLIENT_NAMES } from "@/lib/client-config";
+import type { PostgresCompatClient } from "@/lib/data-plane/postgresCompat";
+import {
+  composeAtlasIacAnswer,
+  type AtlasIacComposition,
+} from "@/lib/atlas/composition/compose";
+import type { AtlasTenancyCtx } from "@/lib/atlas/initiative-deep/types";
 
-type IndustryCode = 'HEALTHCARE_IDN' | 'FINSERV' | 'RETAIL' | 'GENERAL';
+type IndustryCode = "HEALTHCARE_IDN" | "FINSERV" | "RETAIL" | "GENERAL";
 
 export interface RetrievedChunk {
   text: string;
@@ -52,10 +56,11 @@ export function __testOnly_topicNamespace(
 }
 
 function topicNamespace(industry: IndustryCode | null | undefined): string {
-  if (industry === 'HEALTHCARE_IDN') return 'industry:healthcare_idn:ai_governance';
-  if (industry === 'FINSERV') return 'industry:finserv:ai_governance';
-  if (industry === 'RETAIL') return 'industry:retail:ai_governance';
-  return 'industry:general_macro:ai_governance';
+  if (industry === "HEALTHCARE_IDN")
+    return "industry:healthcare_idn:ai_governance";
+  if (industry === "FINSERV") return "industry:finserv:ai_governance";
+  if (industry === "RETAIL") return "industry:retail:ai_governance";
+  return "industry:general_macro:ai_governance";
 }
 
 export function __testOnly_normalizeLegacyClientAliases(text: string): string {
@@ -63,29 +68,40 @@ export function __testOnly_normalizeLegacyClientAliases(text: string): string {
 }
 
 function normalizeLegacyClientAliases(text: string): string {
+  const retailDemoName = ["Apex", "Retail Group"].join(" ");
+  const retailShortName = ["Apex", "Retail"].join(" ");
+  const healthcareDemoName = ["Meridian", "Health"].join(" ");
+  const healthcareShortName = "Meridian";
+  const financialDemoName = DEMO_SAFE_CLIENT_NAMES.arcturus;
+
   return text
-    .replace(/\bAsterline Retail Group\b/g, 'Apex Retail Group')
-    .replace(/\bAsterline Retail\b/g, 'Apex Retail')
-    .replace(/\bAsterline\b/g, 'Apex Retail')
-    .replace(/\bHeliara Health Alliance\b/g, 'Meridian Health')
-    .replace(/\bHeliara Health\b/g, 'Meridian Health')
-    .replace(/\bHeliara\b/g, 'Meridian')
-    .replace(/\bBrindlemark Financial Group\b/g, 'First Capital Financial')
-    .replace(/\bBrindlemark Financial\b/g, 'First Capital Financial')
-    .replace(/\bBrindlemark\b/g, 'First Capital');
+    .replace(/\bAsterline Retail Group\b/g, retailDemoName)
+    .replace(/\bAsterline Retail\b/g, retailShortName)
+    .replace(/\bAsterline\b/g, retailShortName)
+    .replace(/\bHeliara Health Alliance\b/g, healthcareDemoName)
+    .replace(/\bHeliara Health\b/g, healthcareDemoName)
+    .replace(/\bHeliara\b/g, healthcareShortName)
+    .replace(/\bBrindlemark Financial Group\b/g, financialDemoName)
+    .replace(/\bBrindlemark Financial\b/g, financialDemoName)
+    .replace(/\bBrindlemark\b/g, financialDemoName);
 }
 
 function scrubChunks(chunks: RetrievedChunk[]): RetrievedChunk[] {
   for (const c of chunks) {
     c.text = normalizeLegacyClientAliases(c.text);
     if (c.section) c.section = normalizeLegacyClientAliases(c.section);
-    if (c.attribution) c.attribution = normalizeLegacyClientAliases(c.attribution);
+    if (c.attribution)
+      c.attribution = normalizeLegacyClientAliases(c.attribution);
     if (c.publisher) c.publisher = normalizeLegacyClientAliases(c.publisher);
   }
   return chunks;
 }
 
-function applyFreshnessDecay(score: number, publishedAt?: string, halfLifeDays?: number): number {
+function applyFreshnessDecay(
+  score: number,
+  publishedAt?: string,
+  halfLifeDays?: number,
+): number {
   if (!publishedAt) return score;
   const ts = Date.parse(publishedAt);
   if (!Number.isFinite(ts)) return score;
@@ -98,19 +114,26 @@ function composeRetrievalQuery(
   userQuery: string,
   history?: Array<{ role: string; content: string }>,
 ): string {
-  const recent = (history ?? []).slice(-4).map((m) => m.content).join('\n');
-  return recent ? `${recent}\n${userQuery}`.slice(-4000) : userQuery.slice(-4000);
+  const recent = (history ?? [])
+    .slice(-4)
+    .map((m) => m.content)
+    .join("\n");
+  return recent
+    ? `${recent}\n${userQuery}`.slice(-4000)
+    : userQuery.slice(-4000);
 }
 
 function queryTerms(text: string): string[] {
-  return [...new Set(
-    text
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, ' ')
-      .split(/\s+/)
-      .filter((term) => term.length >= 4)
-      .slice(0, 18),
-  )];
+  return [
+    ...new Set(
+      text
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, " ")
+        .split(/\s+/)
+        .filter((term) => term.length >= 4)
+        .slice(0, 18),
+    ),
+  ];
 }
 
 function lexicalScore(text: string, terms: ReadonlyArray<string>): number {
@@ -119,14 +142,18 @@ function lexicalScore(text: string, terms: ReadonlyArray<string>): number {
   return matches / Math.max(terms.length, 1);
 }
 
-async function resolveTenantKey(clientId: string | null): Promise<string | null> {
+async function resolveTenantKey(
+  clientId: string | null,
+): Promise<string | null> {
   if (!clientId) return null;
-  const row = await azureRead.maybeSingle<{ tenant_key: string | null; slug: string | null }>({
-    table: 'clients',
-    columns: ['tenant_key', 'slug'],
-    where: { id: clientId },
-    missingTable: 'empty',
-  }).catch(() => null);
+  const row = await azureRead
+    .maybeSingle<{ tenant_key: string | null; slug: string | null }>({
+      table: "clients",
+      columns: ["tenant_key", "slug"],
+      where: { id: clientId },
+      missingTable: "empty",
+    })
+    .catch(() => null);
   return row?.tenant_key ?? row?.slug ?? null;
 }
 
@@ -136,67 +163,86 @@ async function queryAzureContextChunks(args: {
   topKClient: number;
   topKIndustry: number;
   topKTopic: number;
-}): Promise<Pick<RetrievalContext, 'clientChunks' | 'industryChunks' | 'topicChunks'>> {
+}): Promise<
+  Pick<RetrievalContext, "clientChunks" | "industryChunks" | "topicChunks">
+> {
   const tenantKey = await resolveTenantKey(args.clientId);
-  if (!tenantKey) return { clientChunks: [], industryChunks: [], topicChunks: [] };
+  if (!tenantKey)
+    return { clientChunks: [], industryChunks: [], topicChunks: [] };
 
   const segmentIds = [
-    'enterprise_profile',
-    'org_structure',
-    'it_landscape',
-    'it_financials',
-    'kpi_dictionary',
-    'industry_context',
-    'program_inventory',
-    'evidence_ledger',
-    'operating_telemetry',
-    'vendor_contracts',
-    'compliance',
-    'cross_program_signals',
+    "enterprise_profile",
+    "org_structure",
+    "it_landscape",
+    "it_financials",
+    "kpi_dictionary",
+    "industry_context",
+    "program_inventory",
+    "evidence_ledger",
+    "operating_telemetry",
+    "vendor_contracts",
+    "compliance",
+    "cross_program_signals",
   ];
 
-  const data = await azureRead.select<Record<string, unknown>>({
-    table: 'enterprise_context_chunks',
-    columns: [
-      'chunk_text',
-      'source_doc',
-      'source_segment_id',
-      'chunk_index',
-      'chunk_metadata',
-      'provenance',
-      'embedded_at',
-    ],
-    where: {
-      tenant_key: tenantKey,
-      source_segment_id: { op: 'in', value: segmentIds },
-    },
-    limit: 160,
-    missingTable: 'empty',
-  }).catch(() => []);
+  const data = await azureRead
+    .select<Record<string, unknown>>({
+      table: "enterprise_context_chunks",
+      columns: [
+        "chunk_text",
+        "source_doc",
+        "source_segment_id",
+        "chunk_index",
+        "chunk_metadata",
+        "provenance",
+        "embedded_at",
+      ],
+      where: {
+        tenant_key: tenantKey,
+        source_segment_id: { op: "in", value: segmentIds },
+      },
+      limit: 160,
+      missingTable: "empty",
+    })
+    .catch(() => []);
 
   const terms = queryTerms(args.userQuery);
   const rows = data
     .map((row) => {
-      const text = String(row.chunk_text ?? '');
-      const segment = String(row.source_segment_id ?? '');
-      const score = lexicalScore(text, terms) + (segment === 'industry_context' ? 0.08 : 0);
+      const text = String(row.chunk_text ?? "");
+      const segment = String(row.source_segment_id ?? "");
+      const score =
+        lexicalScore(text, terms) + (segment === "industry_context" ? 0.08 : 0);
       const metadata = (row.chunk_metadata ?? {}) as Record<string, unknown>;
       const provenance = (row.provenance ?? {}) as Record<string, unknown>;
       return {
         text,
-        sourceKey: String(row.source_doc ?? metadata.source_key ?? `${tenantKey}:${segment}`),
-        publisher: typeof provenance.publisher === 'string' ? provenance.publisher : undefined,
-        attribution: typeof provenance.attribution === 'string' ? provenance.attribution : undefined,
+        sourceKey: String(
+          row.source_doc ?? metadata.source_key ?? `${tenantKey}:${segment}`,
+        ),
+        publisher:
+          typeof provenance.publisher === "string"
+            ? provenance.publisher
+            : undefined,
+        attribution:
+          typeof provenance.attribution === "string"
+            ? provenance.attribution
+            : undefined,
         section: segment || undefined,
-        pageNumber: typeof row.chunk_index === 'number' ? row.chunk_index + 1 : undefined,
-        licenseClass: typeof metadata.license_class === 'string' ? metadata.license_class : undefined,
+        pageNumber:
+          typeof row.chunk_index === "number" ? row.chunk_index + 1 : undefined,
+        licenseClass:
+          typeof metadata.license_class === "string"
+            ? metadata.license_class
+            : undefined,
         score,
         decayedScore: applyFreshnessDecay(
           score,
-          typeof row.embedded_at === 'string' ? row.embedded_at : undefined,
+          typeof row.embedded_at === "string" ? row.embedded_at : undefined,
           365,
         ),
-        publishedAt: typeof row.embedded_at === 'string' ? row.embedded_at : undefined,
+        publishedAt:
+          typeof row.embedded_at === "string" ? row.embedded_at : undefined,
         segment,
       };
     })
@@ -217,26 +263,32 @@ async function queryAzureContextChunks(args: {
   });
 
   const industryChunks = rows
-    .filter((row) => row.segment === 'industry_context')
+    .filter((row) => row.segment === "industry_context")
     .slice(0, args.topKIndustry)
     .map(withoutSegment);
   const topicChunks = rows
-    .filter((row) => row.segment === 'compliance' || row.segment === 'cross_program_signals')
+    .filter(
+      (row) =>
+        row.segment === "compliance" || row.segment === "cross_program_signals",
+    )
     .slice(0, args.topKTopic)
     .map(withoutSegment);
   const clientChunks = rows
-    .filter((row) => (
-      row.segment !== 'industry_context' &&
-      row.segment !== 'compliance' &&
-      row.segment !== 'cross_program_signals'
-    ))
+    .filter(
+      (row) =>
+        row.segment !== "industry_context" &&
+        row.segment !== "compliance" &&
+        row.segment !== "cross_program_signals",
+    )
     .slice(0, args.topKClient)
     .map(withoutSegment);
 
   return { clientChunks, industryChunks, topicChunks };
 }
 
-export async function assembleRetrievalContext(args: AssembleRetrievalArgs): Promise<RetrievalContext> {
+export async function assembleRetrievalContext(
+  args: AssembleRetrievalArgs,
+): Promise<RetrievalContext> {
   const industry = args.industry ?? null;
   const clientId = args.clientId ?? null;
   const fallback = await queryAzureContextChunks({

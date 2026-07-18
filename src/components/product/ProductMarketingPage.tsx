@@ -9,15 +9,15 @@
 // rather than raster AI-generated — same visual register without
 // the bandwidth/auth cost of an external image service.
 
-import Image from 'next/image';
-import Link from 'next/link';
-import type { ReactNode } from 'react';
+import Image from "next/image";
+import Link from "next/link";
+import type { ReactNode } from "react";
 
 /** Inline AbarVa wordmark — replaces the word "AbarVa" in body copy
  *  so the brand mark is shown rather than the word. Sized to match
  *  surrounding text. `inverse` flips it for dark backgrounds. */
 function AbarvaWordmark({
-  height = '0.78em',
+  height = "0.78em",
   inverse = false,
 }: {
   height?: string | number;
@@ -25,16 +25,20 @@ function AbarvaWordmark({
 }) {
   return (
     <Image
-      src={inverse ? '/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg' : '/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg'}
+      src={
+        inverse
+          ? "/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-dark-compact.svg"
+          : "/brand/abarva-option2-hq-logo-assets/abarva-option2-hq-nav-light-compact.svg"
+      }
       alt="AbarVa"
       width={130}
       height={42}
       style={{
         height,
-        width: 'auto',
-        display: 'inline-block',
-        verticalAlign: '-0.13em',
-        margin: '0 0.05em',
+        width: "auto",
+        display: "inline-block",
+        verticalAlign: "-0.13em",
+        margin: "0 0.05em",
       }}
       unoptimized
     />
@@ -42,21 +46,22 @@ function AbarvaWordmark({
 }
 
 const F_SERIF = "'Fraunces', Georgia, serif";
-const F_SANS = "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
+const F_SANS =
+  "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif";
 const F_MONO = "'JetBrains Mono', 'SFMono-Regular', Menlo, monospace";
 
 const C = {
-  ink: '#15151A',
-  inkSoft: '#4A4A52',
-  inkMute: '#8A877E',
-  accent: '#1F3A8A',
-  accentWarm: '#B8651B',
-  accentWarmSoft: '#D89762',
-  cream: '#FAF7F0',
-  creamDeep: '#F2EDE0',
-  surface: '#FFFFFF',
-  border: '#E8E2D2',
-  hair: 'rgba(21,21,26,0.08)',
+  ink: "#15151A",
+  inkSoft: "#4A4A52",
+  inkMute: "#8A877E",
+  accent: "#1F3A8A",
+  accentWarm: "#B8651B",
+  accentWarmSoft: "#D89762",
+  cream: "#FAF7F0",
+  creamDeep: "#F2EDE0",
+  surface: "#FFFFFF",
+  border: "#E8E2D2",
+  hair: "rgba(21,21,26,0.08)",
 };
 
 interface ProductMarketingSpotlight {
@@ -65,8 +70,8 @@ interface ProductMarketingSpotlight {
 }
 
 const DEFAULT_SPOTLIGHT: ProductMarketingSpotlight = {
-  clientName: 'your active client',
-  clientShortName: 'your client',
+  clientName: "your active client",
+  clientShortName: "your client",
 };
 
 export function ProductMarketingPage({
@@ -83,7 +88,7 @@ export function ProductMarketingPage({
         fontFamily: F_SANS,
         fontSize: 16,
         lineHeight: 1.6,
-        minHeight: '100vh',
+        minHeight: "100vh",
       }}
     >
       <Hero spotlight={spotlight} />
@@ -111,78 +116,129 @@ type TenantCase = {
   industry: string;
   industryAccent: string;
   name: string;
-  scale: { revenue: string; footprint: string; headcount: string; itBudget: string };
+  scale: {
+    revenue: string;
+    footprint: string;
+    headcount: string;
+    itBudget: string;
+  };
   cxoLogins: { title: string; name: string; email: string }[];
   whatLoaded: string;
   agentSampleQ: string;
   agentSampleA: string;
-  agentName: 'Sentinel' | 'Nexus' | 'Source';
-  agentSurface: 'Intelligence' | 'Strategic Moves' | 'Source';
+  agentName: "Sentinel" | "Nexus" | "Source";
+  agentSurface: "Intelligence" | "Strategic Moves" | "Source";
 };
 
 const TENANT_CASES: TenantCase[] = [
   {
-    industry: 'Healthcare · Integrated Delivery Network',
-    industryAccent: '#0E8A65',
-    name: 'Meridian Health System',
+    industry: "Healthcare · Integrated Delivery Network",
+    industryAccent: "#0E8A65",
+    name: "Meridian Health System",
     scale: {
-      revenue: '$16.8B',
-      footprint: '30 hospitals · 280 clinics · Plan covers 1.6M members',
-      headcount: '~58k (~14,800 RNs · 7,400 employed MDs)',
-      itBudget: '$384M IT operating · $1.1B FY2026 capital plan',
+      revenue: "$16.8B",
+      footprint: "30 hospitals · 280 clinics · Plan covers 1.6M members",
+      headcount: "~58k (~14,800 RNs · 7,400 employed MDs)",
+      itBudget: "$384M IT operating · $1.1B FY2026 capital plan",
     },
     cxoLogins: [
-      { title: 'CDIO', name: 'Dr. Anita Krishnamurthy', email: 'cdio@meridian-health.example.com' },
-      { title: 'CFO', name: 'David Park', email: 'cfo@meridian-health.example.com' },
-      { title: 'COO', name: "Sarah O'Brien", email: 'coo@meridian-health.example.com' },
+      {
+        title: "CDIO",
+        name: "Dr. Anita Krishnamurthy",
+        email: "cdio@meridian-health.example.com",
+      },
+      {
+        title: "CFO",
+        name: "David Park",
+        email: "cfo@meridian-health.example.com",
+      },
+      {
+        title: "COO",
+        name: "Sarah O'Brien",
+        email: "coo@meridian-health.example.com",
+      },
     ],
-    whatLoaded: '106 named persons · 26 sized functions · 18 capital plan lines · 10 funding authority bands · 114 systems · 45 vendor scorecards. AI Governance Council with 23 use cases under review (chaired by CMIO Wexler). Active programs: RCM modernization, ambient documentation, prior authorization (Cohere), AI governance.',
-    agentName: 'Sentinel',
-    agentSurface: 'Intelligence',
-    agentSampleQ: 'How big is our data analytics function vs. industry standard?',
-    agentSampleA: '185 FTE — 152 onshore, 18 offshore, 15 contractor. FY2026 budget $38.5M ($5.5M capex + $33M opex). Owns 14 systems including Snowflake, Epic Cogito, Epic Cosmos, the Atlas custom plan-provider platform, dbt, Tableau, Arcadia, Databricks under evaluation. Reports to VP Jordan McKenzie (CDIO direct). Sized to industry standard for a $16-20B IDN with both provider and plan analytics needs; onshore-heavy mix is typical because clinical data sensitivity makes offshore analytics hard at scale.',
+    whatLoaded:
+      "106 named persons · 26 sized functions · 18 capital plan lines · 10 funding authority bands · 114 systems · 45 vendor scorecards. AI Governance Council with 23 use cases under review (chaired by CMIO Wexler). Active programs: RCM modernization, ambient documentation, prior authorization (Cohere), AI governance.",
+    agentName: "Sentinel",
+    agentSurface: "Intelligence",
+    agentSampleQ:
+      "How big is our data analytics function vs. industry standard?",
+    agentSampleA:
+      "185 FTE — 152 onshore, 18 offshore, 15 contractor. FY2026 budget $38.5M ($5.5M capex + $33M opex). Owns 14 systems including Snowflake, Epic Cogito, Epic Cosmos, the Atlas custom plan-provider platform, dbt, Tableau, Arcadia, Databricks under evaluation. Reports to VP Jordan McKenzie (CDIO direct). Sized to industry standard for a $16-20B IDN with both provider and plan analytics needs; onshore-heavy mix is typical because clinical data sensitivity makes offshore analytics hard at scale.",
   },
   {
-    industry: 'Retail · Mass + Specialty Omnichannel',
-    industryAccent: '#5B21B6',
-    name: 'Apex Retail Group',
+    industry: "Retail · Mass + Specialty Omnichannel",
+    industryAccent: "#5B21B6",
+    name: "Apex Retail Group",
     scale: {
-      revenue: '$108B',
-      footprint: '1,976 stores · 12 DCs · 4 merch categories',
-      headcount: '~250k (largest: store associates ~219k)',
-      itBudget: '$1.62B IT operating · ~$3.5B FY2026 capital plan',
+      revenue: "$108B",
+      footprint: "1,976 stores · 12 DCs · 4 merch categories",
+      headcount: "~250k (largest: store associates ~219k)",
+      itBudget: "$1.62B IT operating · ~$3.5B FY2026 capital plan",
     },
     cxoLogins: [
-      { title: 'CIO', name: 'Carlos Rivera', email: 'cio@apex-retail.example.com' },
-      { title: 'CFO', name: 'Margaret Chen', email: 'cfo@apex-retail.example.com' },
-      { title: 'CDO', name: 'Lynne Stratham', email: 'cdo@apex-retail.example.com' },
+      {
+        title: "CIO",
+        name: "Carlos Rivera",
+        email: "cio@apex-retail.example.com",
+      },
+      {
+        title: "CFO",
+        name: "Margaret Chen",
+        email: "cfo@apex-retail.example.com",
+      },
+      {
+        title: "CDO",
+        name: "Lynne Stratham",
+        email: "cdo@apex-retail.example.com",
+      },
     ],
-    whatLoaded: '79 named persons · 30 sized functions · 15 capital plan lines · 9 funding authority bands · 65 systems · 28 vendor scorecards. Active programs: workforce scheduling, demand sensing, loyalty NBO, CDP Activation 2026 (Stratham sponsor), self-checkout deployment + RFID rollout to 1,200 stores.',
-    agentName: 'Nexus',
-    agentSurface: 'Strategic Moves',
-    agentSampleQ: "I want to fund a $4M AI workforce-scheduling pilot. What's the approval path?",
-    agentSampleA: "At $4M you're below the joint CFO+CIO threshold ($25M+) and inside CIO Carlos Rivera's single-decision authority ($5-25M band). But two parallel gates apply regardless of dollar: AI Governance Council attestation (use case design + bias assessment + workforce-data handling) and Internal Audit liaison via Joaquin Mendoza-Levitt. CFO Margaret Chen will still want a 1-page business case and 24-month payback evidence — she's the gating signature on activist-investor narrative even when she isn't a formal approver.",
+    whatLoaded:
+      "79 named persons · 30 sized functions · 15 capital plan lines · 9 funding authority bands · 65 systems · 28 vendor scorecards. Active programs: workforce scheduling, demand sensing, loyalty NBO, CDP Activation 2026 (Stratham sponsor), self-checkout deployment + RFID rollout to 1,200 stores.",
+    agentName: "Nexus",
+    agentSurface: "Strategic Moves",
+    agentSampleQ:
+      "I want to fund a $4M AI workforce-scheduling pilot. What's the approval path?",
+    agentSampleA:
+      "At $4M you're below the joint CFO+CIO threshold ($25M+) and inside CIO Carlos Rivera's single-decision authority ($5-25M band). But two parallel gates apply regardless of dollar: AI Governance Council attestation (use case design + bias assessment + workforce-data handling) and Internal Audit liaison via Joaquin Mendoza-Levitt. CFO Margaret Chen will still want a 1-page business case and 24-month payback evidence — she's the gating signature on activist-investor narrative even when she isn't a formal approver.",
   },
   {
-    industry: 'Banking · Regional Super-Bank',
-    industryAccent: '#1F3A8A',
-    name: 'First Capital Financial',
+    industry: "Banking · Regional Super-Bank",
+    industryAccent: "#1F3A8A",
+    name: "FS Demo",
     scale: {
-      revenue: '$18.2B revenue · $362B assets · $420B wealth AUM',
-      footprint: '480 branches · 720 ATMs · 4 LOBs (Consumer/Commercial/Wealth/Treasury)',
-      headcount: '~46k (~1,180 in compliance/BSA-AML alone)',
-      itBudget: '$1.67B IT operating (9.2% of revenue · 34% compliance share, highest in peer)',
+      revenue: "$18.2B revenue · $362B assets · $420B wealth AUM",
+      footprint:
+        "480 branches · 720 ATMs · 4 LOBs (Consumer/Commercial/Wealth/Treasury)",
+      headcount: "~46k (~1,180 in compliance/BSA-AML alone)",
+      itBudget:
+        "$1.67B IT operating (9.2% of revenue · 34% compliance share, highest in peer)",
     },
     cxoLogins: [
-      { title: 'CIO', name: 'Patricia Huang', email: 'cio@firstcapital.example.com' },
-      { title: 'CRO', name: 'James Park', email: 'cro@firstcapital.example.com' },
-      { title: 'CFO', name: 'Michael Torres', email: 'cfo@firstcapital.example.com' },
+      {
+        title: "CIO",
+        name: "Patricia Huang",
+        email: "cio@firstcapital.example.com",
+      },
+      {
+        title: "CRO",
+        name: "James Park",
+        email: "cro@firstcapital.example.com",
+      },
+      {
+        title: "CFO",
+        name: "Michael Torres",
+        email: "cfo@firstcapital.example.com",
+      },
     ],
-    whatLoaded: "92 named persons · 25 sized functions · 18 capital plan lines · 11 funding authority bands · 84 systems · 51 vendor scorecards. Active programs: FedNow build (cutover 2026), FIS Profile core banking modernization decision, AI program portfolio under SR 11-7 MRM gating (Adekoya-Park reporting to CRO).",
-    agentName: 'Source',
-    agentSurface: 'Source',
-    agentSampleQ: 'Which vendors are on renegotiation flags right now?',
-    agentSampleA: "Three vendor scorecards in renegotiation status. (1) Adenza (Nasdaq) — AxiomSL ControllerView + Calypso treasury at $9.2M annual; renewal Jun 30, 2027; price increase post-Nasdaq acquisition is the flag. (2) NICE Actimize — Fraud + AML platform at $10M annual; renewal Apr 30, 2027; expanding under OCC findings, but VP Quintero is sitting on a Verafin pilot that could shift the leverage. (3) Black Knight — Mortgage Origination + Default at $9.2M annual; renewal Sep 30, 2026; volume in current rate environment makes this a price re-cut conversation. CPO Nadia Rahman owns the bundling logic.",
+    whatLoaded:
+      "92 named persons · 25 sized functions · 18 capital plan lines · 11 funding authority bands · 84 systems · 51 vendor scorecards. Active programs: FedNow build (cutover 2026), FIS Profile core banking modernization decision, AI program portfolio under SR 11-7 MRM gating (Adekoya-Park reporting to CRO).",
+    agentName: "Source",
+    agentSurface: "Source",
+    agentSampleQ: "Which vendors are on renegotiation flags right now?",
+    agentSampleA:
+      "Three vendor scorecards in renegotiation status. (1) Adenza (Nasdaq) — AxiomSL ControllerView + Calypso treasury at $9.2M annual; renewal Jun 30, 2027; price increase post-Nasdaq acquisition is the flag. (2) NICE Actimize — Fraud + AML platform at $10M annual; renewal Apr 30, 2027; expanding under OCC findings, but VP Quintero is sitting on a Verafin pilot that could shift the leverage. (3) Black Knight — Mortgage Origination + Default at $9.2M annual; renewal Sep 30, 2026; volume in current rate environment makes this a price re-cut conversation. CPO Nadia Rahman owns the bundling logic.",
   },
 ];
 
@@ -190,24 +246,53 @@ function CompositeTenantCaseStudies() {
   return (
     <section
       style={{
-        padding: '96px clamp(32px, 6vw, 96px)',
+        padding: "96px clamp(32px, 6vw, 96px)",
         background: C.creamDeep,
         borderTop: `1px solid ${C.border}`,
         borderBottom: `1px solid ${C.border}`,
       }}
     >
-      <div style={{ maxWidth: 1240, margin: '0 auto' }}>
-        <SectionEyebrow num="05.5">Three composite tenants · Sample case studies</SectionEyebrow>
-        <SectionTitle>The agents are intelligent because the substrate is real.</SectionTitle>
+      <div style={{ maxWidth: 1240, margin: "0 auto" }}>
+        <SectionEyebrow num="05.5">
+          Three composite tenants · Sample case studies
+        </SectionEyebrow>
+        <SectionTitle>
+          The agents are intelligent because the substrate is real.
+        </SectionTitle>
         <SectionLead>
-          Every recommendation lands in your enterprise truth. Three composite tenants are loaded end-to-end so any executive can pressure-test the agents the moment they sign in. The CXO logins below are pre-provisioned with shared password{' '}
-          <code style={{ fontFamily: F_MONO, fontSize: 14, padding: '2px 6px', background: C.surface, borderRadius: 3, border: `1px solid ${C.border}` }}>Demo2026!</code>
-          {' '}and OTP code{' '}
-          <code style={{ fontFamily: F_MONO, fontSize: 14, padding: '2px 6px', background: C.surface, borderRadius: 3, border: `1px solid ${C.border}` }}>424242</code>
+          Every recommendation lands in your enterprise truth. Three composite
+          tenants are loaded end-to-end so any executive can pressure-test the
+          agents the moment they sign in. The CXO logins below are
+          pre-provisioned with shared password{" "}
+          <code
+            style={{
+              fontFamily: F_MONO,
+              fontSize: 14,
+              padding: "2px 6px",
+              background: C.surface,
+              borderRadius: 3,
+              border: `1px solid ${C.border}`,
+            }}
+          >
+            Demo2026!
+          </code>{" "}
+          and OTP code{" "}
+          <code
+            style={{
+              fontFamily: F_MONO,
+              fontSize: 14,
+              padding: "2px 6px",
+              background: C.surface,
+              borderRadius: 3,
+              border: `1px solid ${C.border}`,
+            }}
+          >
+            424242
+          </code>
           .
         </SectionLead>
 
-        <div style={{ display: 'grid', gap: 28, marginTop: 48 }}>
+        <div style={{ display: "grid", gap: 28, marginTop: 48 }}>
           {TENANT_CASES.map((t) => (
             <article
               key={t.name}
@@ -216,9 +301,9 @@ function CompositeTenantCaseStudies() {
                 border: `1px solid ${C.border}`,
                 borderLeft: `5px solid ${t.industryAccent}`,
                 borderRadius: 12,
-                padding: 'clamp(24px, 3vw, 36px)',
-                display: 'grid',
-                gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1.4fr)',
+                padding: "clamp(24px, 3vw, 36px)",
+                display: "grid",
+                gridTemplateColumns: "minmax(300px, 1fr) minmax(300px, 1.4fr)",
                 gap: 36,
               }}
             >
@@ -229,8 +314,8 @@ function CompositeTenantCaseStudies() {
                     fontFamily: F_MONO,
                     fontSize: 11,
                     fontWeight: 700,
-                    letterSpacing: '0.18em',
-                    textTransform: 'uppercase',
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
                     color: t.industryAccent,
                     marginBottom: 10,
                   }}
@@ -243,23 +328,52 @@ function CompositeTenantCaseStudies() {
                     fontSize: 32,
                     fontWeight: 500,
                     color: C.ink,
-                    letterSpacing: '-0.018em',
-                    margin: '0 0 18px',
+                    letterSpacing: "-0.018em",
+                    margin: "0 0 18px",
                     lineHeight: 1.15,
                   }}
                 >
                   {t.name}
                 </h3>
-                <dl style={{ margin: '0 0 24px', display: 'grid', gap: 10 }}>
+                <dl style={{ margin: "0 0 24px", display: "grid", gap: 10 }}>
                   {[
-                    ['Revenue', t.scale.revenue],
-                    ['Footprint', t.scale.footprint],
-                    ['Headcount', t.scale.headcount],
-                    ['IT spend', t.scale.itBudget],
+                    ["Revenue", t.scale.revenue],
+                    ["Footprint", t.scale.footprint],
+                    ["Headcount", t.scale.headcount],
+                    ["IT spend", t.scale.itBudget],
                   ].map(([k, v]) => (
-                    <div key={k} style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: 12, alignItems: 'baseline' }}>
-                      <dt style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: C.inkMute }}>{k}</dt>
-                      <dd style={{ margin: 0, fontFamily: F_SANS, fontSize: 13, color: C.inkSoft, lineHeight: 1.55 }}>{v}</dd>
+                    <div
+                      key={k}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "110px 1fr",
+                        gap: 12,
+                        alignItems: "baseline",
+                      }}
+                    >
+                      <dt
+                        style={{
+                          fontFamily: F_MONO,
+                          fontSize: 10,
+                          fontWeight: 700,
+                          letterSpacing: "0.12em",
+                          textTransform: "uppercase",
+                          color: C.inkMute,
+                        }}
+                      >
+                        {k}
+                      </dt>
+                      <dd
+                        style={{
+                          margin: 0,
+                          fontFamily: F_SANS,
+                          fontSize: 13,
+                          color: C.inkSoft,
+                          lineHeight: 1.55,
+                        }}
+                      >
+                        {v}
+                      </dd>
                     </div>
                   ))}
                 </dl>
@@ -268,15 +382,23 @@ function CompositeTenantCaseStudies() {
                     fontFamily: F_MONO,
                     fontSize: 10,
                     fontWeight: 700,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
                     color: C.inkMute,
                     marginBottom: 10,
                   }}
                 >
                   3 CXO test logins
                 </div>
-                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 8 }}>
+                <ul
+                  style={{
+                    margin: 0,
+                    padding: 0,
+                    listStyle: "none",
+                    display: "grid",
+                    gap: 8,
+                  }}
+                >
                   {t.cxoLogins.map((cx) => (
                     <li
                       key={cx.email}
@@ -284,14 +406,50 @@ function CompositeTenantCaseStudies() {
                         background: C.cream,
                         border: `1px solid ${C.hair}`,
                         borderRadius: 6,
-                        padding: '10px 14px',
+                        padding: "10px 14px",
                       }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-                        <span style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: t.industryAccent }}>{cx.title}</span>
-                        <span style={{ fontFamily: F_SANS, fontSize: 14, fontWeight: 700, color: C.ink }}>{cx.name}</span>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "baseline",
+                          gap: 10,
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontFamily: F_MONO,
+                            fontSize: 10,
+                            fontWeight: 700,
+                            letterSpacing: "0.12em",
+                            textTransform: "uppercase",
+                            color: t.industryAccent,
+                          }}
+                        >
+                          {cx.title}
+                        </span>
+                        <span
+                          style={{
+                            fontFamily: F_SANS,
+                            fontSize: 14,
+                            fontWeight: 700,
+                            color: C.ink,
+                          }}
+                        >
+                          {cx.name}
+                        </span>
                       </div>
-                      <div style={{ fontFamily: F_MONO, fontSize: 11, color: C.inkMute, marginTop: 2 }}>{cx.email}</div>
+                      <div
+                        style={{
+                          fontFamily: F_MONO,
+                          fontSize: 11,
+                          color: C.inkMute,
+                          marginTop: 2,
+                        }}
+                      >
+                        {cx.email}
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -304,8 +462,8 @@ function CompositeTenantCaseStudies() {
                     fontFamily: F_MONO,
                     fontSize: 10,
                     fontWeight: 700,
-                    letterSpacing: '0.14em',
-                    textTransform: 'uppercase',
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
                     color: C.inkMute,
                     marginBottom: 10,
                   }}
@@ -318,7 +476,7 @@ function CompositeTenantCaseStudies() {
                     fontSize: 14,
                     color: C.inkSoft,
                     lineHeight: 1.65,
-                    margin: '0 0 28px',
+                    margin: "0 0 28px",
                   }}
                 >
                   {t.whatLoaded}
@@ -329,29 +487,54 @@ function CompositeTenantCaseStudies() {
                     background: C.cream,
                     border: `1px solid ${C.hair}`,
                     borderRadius: 10,
-                    overflow: 'hidden',
+                    overflow: "hidden",
                   }}
                 >
                   <div
                     style={{
-                      padding: '14px 18px',
+                      padding: "14px 18px",
                       borderBottom: `1px solid ${C.hair}`,
                       background: C.surface,
-                      display: 'flex',
-                      alignItems: 'baseline',
+                      display: "flex",
+                      alignItems: "baseline",
                       gap: 12,
-                      flexWrap: 'wrap',
+                      flexWrap: "wrap",
                     }}
                   >
-                    <span style={{ fontFamily: F_MONO, fontSize: 10, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: t.industryAccent }}>
+                    <span
+                      style={{
+                        fontFamily: F_MONO,
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: "0.14em",
+                        textTransform: "uppercase",
+                        color: t.industryAccent,
+                      }}
+                    >
                       {t.agentName} · {t.agentSurface}
                     </span>
                   </div>
-                  <div style={{ padding: '16px 18px' }}>
-                    <div style={{ fontFamily: F_SANS, fontSize: 13, fontWeight: 700, color: C.ink, marginBottom: 8, fontStyle: 'italic' }}>
+                  <div style={{ padding: "16px 18px" }}>
+                    <div
+                      style={{
+                        fontFamily: F_SANS,
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: C.ink,
+                        marginBottom: 8,
+                        fontStyle: "italic",
+                      }}
+                    >
                       {`"${t.agentSampleQ}"`}
                     </div>
-                    <div style={{ fontFamily: F_SANS, fontSize: 13, color: C.inkSoft, lineHeight: 1.7 }}>
+                    <div
+                      style={{
+                        fontFamily: F_SANS,
+                        fontSize: 13,
+                        color: C.inkSoft,
+                        lineHeight: 1.7,
+                      }}
+                    >
                       {t.agentSampleA}
                     </div>
                   </div>
@@ -367,17 +550,17 @@ function CompositeTenantCaseStudies() {
             fontFamily: F_SANS,
             fontSize: 14,
             color: C.inkMute,
-            textAlign: 'center',
+            textAlign: "center",
             maxWidth: 720,
-            marginLeft: 'auto',
-            marginRight: 'auto',
+            marginLeft: "auto",
+            marginRight: "auto",
             lineHeight: 1.6,
           }}
         >
           The numbers, leadership, and agent answers above all reconcile to the
-          composite tenant data loaded in the Azure/Postgres data plane. Sign in as any of the nine
-          CXOs and ask the same question yourself — the answer the agent
-          produces should match what you see here.
+          composite tenant data loaded in the Azure/Postgres data plane. Sign in
+          as any of the nine CXOs and ask the same question yourself — the
+          answer the agent produces should match what you see here.
         </p>
       </div>
     </section>
@@ -390,7 +573,7 @@ function Hero({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
   return (
     <section
       style={{
-        padding: '88px 64px 64px',
+        padding: "88px 64px 64px",
         background:
           `radial-gradient(circle at 80% 20%, ${C.accentWarmSoft}22 0%, transparent 50%), ` +
           `radial-gradient(circle at 10% 80%, ${C.accent}11 0%, transparent 50%), ` +
@@ -401,11 +584,11 @@ function Hero({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
       <div
         style={{
           maxWidth: 1280,
-          margin: '0 auto',
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 480px',
+          margin: "0 auto",
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) 480px",
           gap: 64,
-          alignItems: 'center',
+          alignItems: "center",
         }}
       >
         <div>
@@ -414,8 +597,8 @@ function Hero({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
               fontFamily: F_MONO,
               fontSize: 11,
               fontWeight: 700,
-              letterSpacing: '0.22em',
-              textTransform: 'uppercase',
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
               color: C.inkMute,
               marginBottom: 18,
             }}
@@ -425,17 +608,19 @@ function Hero({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
           <h1
             style={{
               fontFamily: F_SERIF,
-              fontSize: 'clamp(40px, 5vw, 64px)',
+              fontSize: "clamp(40px, 5vw, 64px)",
               fontWeight: 400,
               color: C.ink,
-              letterSpacing: '-0.02em',
+              letterSpacing: "-0.02em",
               lineHeight: 1.05,
-              margin: '0 0 22px',
-              maxWidth: '20ch',
+              margin: "0 0 22px",
+              maxWidth: "20ch",
             }}
           >
-            AI bets that{' '}
-            <span style={{ fontStyle: 'italic', color: C.accent }}>actually</span>{' '}
+            AI bets that{" "}
+            <span style={{ fontStyle: "italic", color: C.accent }}>
+              actually
+            </span>{" "}
             ship.
           </h1>
           <p
@@ -443,29 +628,29 @@ function Hero({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
               fontSize: 18,
               lineHeight: 1.55,
               color: C.inkSoft,
-              maxWidth: '52ch',
-              margin: '0 0 28px',
+              maxWidth: "52ch",
+              margin: "0 0 28px",
             }}
           >
-            <AbarvaWordmark /> is the operating platform for shaping enterprise AI bets.
-            Pattern-grounded, tenant-overlaid, agent-collaborative — the
-            three things every failed AI program lacked.
+            <AbarvaWordmark /> is the operating platform for shaping enterprise
+            AI bets. Pattern-grounded, tenant-overlaid, agent-collaborative —
+            the three things every failed AI program lacked.
           </p>
-          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
             <Link
               href="/home"
               style={{
                 background: C.ink,
                 color: C.surface,
-                padding: '14px 24px',
+                padding: "14px 24px",
                 borderRadius: 999,
                 fontFamily: F_SANS,
                 fontSize: 14,
                 fontWeight: 600,
-                letterSpacing: '-0.005em',
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
+                letterSpacing: "-0.005em",
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
                 gap: 8,
               }}
             >
@@ -475,12 +660,12 @@ function Hero({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
               href="/intelligence#brief"
               style={{
                 color: C.ink,
-                padding: '14px 24px',
+                padding: "14px 24px",
                 borderRadius: 999,
                 fontFamily: F_SANS,
                 fontSize: 14,
                 fontWeight: 600,
-                textDecoration: 'none',
+                textDecoration: "none",
                 border: `1px solid ${C.ink}`,
               }}
             >
@@ -495,11 +680,11 @@ function Hero({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
       <div
         style={{
           maxWidth: 1280,
-          margin: '64px auto 0',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          margin: "64px auto 0",
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
           gap: 28,
-          padding: '32px 0 0',
+          padding: "32px 0 0",
           borderTop: `1px solid ${C.border}`,
         }}
       >
@@ -540,7 +725,7 @@ function Stat({
   return (
     <div
       style={{
-        position: 'relative',
+        position: "relative",
         paddingLeft: 18,
         borderLeft: `3px solid ${C.accent}`,
       }}
@@ -550,8 +735,8 @@ function Stat({
           fontFamily: F_MONO,
           fontSize: 10,
           fontWeight: 700,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
           color: C.inkMute,
           marginBottom: 8,
         }}
@@ -564,17 +749,32 @@ function Stat({
           fontSize: 44,
           fontWeight: 400,
           color: C.ink,
-          letterSpacing: '-0.022em',
+          letterSpacing: "-0.022em",
           lineHeight: 1,
           marginBottom: 8,
         }}
       >
         {figure}
       </div>
-      <div style={{ fontSize: 14, color: C.inkSoft, lineHeight: 1.5, marginBottom: 6, maxWidth: '36ch' }}>
+      <div
+        style={{
+          fontSize: 14,
+          color: C.inkSoft,
+          lineHeight: 1.5,
+          marginBottom: 6,
+          maxWidth: "36ch",
+        }}
+      >
         {label}
       </div>
-      <div style={{ fontFamily: F_MONO, fontSize: 10, color: C.inkMute, letterSpacing: '0.06em' }}>
+      <div
+        style={{
+          fontFamily: F_MONO,
+          fontSize: 10,
+          color: C.inkMute,
+          letterSpacing: "0.06em",
+        }}
+      >
         {source}
       </div>
     </div>
@@ -589,7 +789,7 @@ function HeroIllustration() {
     <svg
       viewBox="0 0 480 480"
       width="100%"
-      style={{ display: 'block', maxWidth: 480 }}
+      style={{ display: "block", maxWidth: 480 }}
       role="img"
       aria-label="Topographic landscape showing AI bets above and below the line"
     >
@@ -620,8 +820,8 @@ function HeroIllustration() {
           fill="none"
           stroke={C.accent}
           strokeWidth={0.8}
-          strokeOpacity={0.20 + i * 0.05}
-          strokeDasharray={i % 2 === 0 ? '0' : '3 4'}
+          strokeOpacity={0.2 + i * 0.05}
+          strokeDasharray={i % 2 === 0 ? "0" : "3 4"}
         />
       ))}
       {[0.4, 0.55, 0.7, 0.85].map((scale, i) => (
@@ -635,12 +835,19 @@ function HeroIllustration() {
           stroke={C.accentWarm}
           strokeWidth={0.8}
           strokeOpacity={0.18 + i * 0.05}
-          strokeDasharray={i % 2 === 0 ? '0' : '3 4'}
+          strokeDasharray={i % 2 === 0 ? "0" : "3 4"}
         />
       ))}
 
       {/* Horizon line · "above the line" cut */}
-      <line x1="20" y1="240" x2="460" y2="240" stroke="url(#hero-horizon)" strokeWidth={1.5} />
+      <line
+        x1="20"
+        y1="240"
+        x2="460"
+        y2="240"
+        stroke="url(#hero-horizon)"
+        strokeWidth={1.5}
+      />
       <text
         x="20"
         y="232"
@@ -666,13 +873,21 @@ function HeroIllustration() {
 
       {/* Above-the-line bets (filled, named) */}
       {[
-        { x: 240, y: 175, r: 14, label: 'Pop Health' },
-        { x: 195, y: 205, r: 11, label: 'Ambient AI' },
-        { x: 295, y: 200, r: 9, label: 'Sepsis' },
+        { x: 240, y: 175, r: 14, label: "Pop Health" },
+        { x: 195, y: 205, r: 11, label: "Ambient AI" },
+        { x: 295, y: 200, r: 9, label: "Sepsis" },
       ].map((n) => (
         <g key={n.label}>
           <circle cx={n.x} cy={n.y} r={n.r} fill={C.accent} opacity={0.92} />
-          <circle cx={n.x} cy={n.y} r={n.r + 4} fill="none" stroke={C.accent} strokeWidth={0.6} opacity={0.4} />
+          <circle
+            cx={n.x}
+            cy={n.y}
+            r={n.r + 4}
+            fill="none"
+            stroke={C.accent}
+            strokeWidth={0.6}
+            opacity={0.4}
+          />
           <text
             x={n.x}
             y={n.y - n.r - 8}
@@ -749,58 +964,62 @@ interface SurfaceMeta {
 // whole portfolio (Tower).
 const SURFACES: ReadonlyArray<SurfaceMeta> = [
   {
-    num: '01',
-    name: 'Intelligence',
-    tagline: 'Pattern → Move funnel',
-    body: 'Corpus-grounded patterns scored against your tenant context. The Brief tells you what bets are above the line. The Map shows where you sit in the universe.',
+    num: "01",
+    name: "Intelligence",
+    tagline: "Pattern → Move funnel",
+    body: "Corpus-grounded patterns scored against your tenant context. The Brief tells you what bets are above the line. The Map shows where you sit in the universe.",
     illustration: <IntelligenceIllustration />,
-    href: '/intelligence',
-    ctaLabel: 'Open Intelligence →',
+    href: "/intelligence",
+    ctaLabel: "Open Intelligence →",
   },
   {
-    num: '02',
-    name: 'Strategic Moves',
-    tagline: 'Origination → ship → measure',
-    body: 'The lifecycle a Move travels through, end-to-end. Gated approvals, audit trail, value attribution. Failure modes detected before they cost you a quarter.',
+    num: "02",
+    name: "Strategic Moves",
+    tagline: "Origination → ship → measure",
+    body: "The lifecycle a Move travels through, end-to-end. Gated approvals, audit trail, value attribution. Failure modes detected before they cost you a quarter.",
     illustration: <MovesIllustration />,
-    href: '/strategic-moves',
-    ctaLabel: 'Open Moves →',
+    href: "/strategic-moves",
+    ctaLabel: "Open Moves →",
   },
   {
-    num: '03',
-    name: 'Source',
-    tagline: 'Vendor + contract intelligence',
-    body: 'Where the IT spend goes — by category, by vendor, by renewal pressure. Sentinel fronts this surface, surfacing leverage thinness before the negotiation, not during it.',
+    num: "03",
+    name: "Source",
+    tagline: "Vendor + contract intelligence",
+    body: "Where the IT spend goes — by category, by vendor, by renewal pressure. Sentinel fronts this surface, surfacing leverage thinness before the negotiation, not during it.",
     illustration: <SourceIllustration />,
-    href: '/source',
-    ctaLabel: 'Open Source →',
+    href: "/source",
+    ctaLabel: "Open Source →",
   },
   {
-    num: '04',
-    name: 'Tower',
-    tagline: 'AI portfolio command',
-    body: 'Every AI bet your enterprise has placed — measured against committed value. The view a CIO opens before a steering committee, not after.',
+    num: "04",
+    name: "Tower",
+    tagline: "AI portfolio command",
+    body: "Every AI bet your enterprise has placed — measured against committed value. The view a CIO opens before a steering committee, not after.",
     illustration: <TowerIllustration />,
-    href: '/tower',
-    ctaLabel: 'Open Tower →',
+    href: "/tower",
+    ctaLabel: "Open Tower →",
   },
 ];
 
 function FourSurfaces() {
   return (
-    <section style={{ padding: '96px 64px', borderBottom: `1px solid ${C.border}` }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+    <section
+      style={{ padding: "96px 64px", borderBottom: `1px solid ${C.border}` }}
+    >
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <SectionEyebrow num="02">The four surfaces</SectionEyebrow>
-        <SectionTitle>One platform. Four surfaces. Each one a CXO answer.</SectionTitle>
+        <SectionTitle>
+          One platform. Four surfaces. Each one a CXO answer.
+        </SectionTitle>
         <SectionLead>
-          <AbarvaWordmark /> isn&rsquo;t a dashboard. Each surface answers a different decision —
-          and they&rsquo;re all wired into the same substrate so the answers stay
-          consistent.
+          <AbarvaWordmark /> isn&rsquo;t a dashboard. Each surface answers a
+          different decision — and they&rsquo;re all wired into the same
+          substrate so the answers stay consistent.
         </SectionLead>
         <div
           style={{
-            display: 'flex',
-            flexDirection: 'column',
+            display: "flex",
+            flexDirection: "column",
             gap: 18,
             marginTop: 56,
           }}
@@ -814,7 +1033,13 @@ function FourSurfaces() {
   );
 }
 
-function SurfaceCard({ surface, flip }: { surface: SurfaceMeta; flip: boolean }) {
+function SurfaceCard({
+  surface,
+  flip,
+}: {
+  surface: SurfaceMeta;
+  flip: boolean;
+}) {
   return (
     <article
       style={{
@@ -822,10 +1047,12 @@ function SurfaceCard({ surface, flip }: { surface: SurfaceMeta; flip: boolean })
         border: `1px solid ${C.border}`,
         borderRadius: 14,
         padding: 36,
-        display: 'grid',
-        gridTemplateColumns: flip ? '320px minmax(0, 1fr)' : 'minmax(0, 1fr) 320px',
+        display: "grid",
+        gridTemplateColumns: flip
+          ? "320px minmax(0, 1fr)"
+          : "minmax(0, 1fr) 320px",
         gap: 48,
-        alignItems: 'center',
+        alignItems: "center",
       }}
     >
       <div style={{ order: flip ? 2 : 1 }}>
@@ -834,7 +1061,7 @@ function SurfaceCard({ surface, flip }: { surface: SurfaceMeta; flip: boolean })
             fontFamily: F_MONO,
             fontSize: 11,
             fontWeight: 700,
-            letterSpacing: '0.18em',
+            letterSpacing: "0.18em",
             color: C.accent,
             marginBottom: 6,
           }}
@@ -847,9 +1074,9 @@ function SurfaceCard({ surface, flip }: { surface: SurfaceMeta; flip: boolean })
             fontSize: 32,
             fontWeight: 400,
             color: C.ink,
-            letterSpacing: '-0.018em',
+            letterSpacing: "-0.018em",
             lineHeight: 1.1,
-            margin: '0 0 4px',
+            margin: "0 0 4px",
           }}
         >
           {surface.name}
@@ -857,15 +1084,23 @@ function SurfaceCard({ surface, flip }: { surface: SurfaceMeta; flip: boolean })
         <div
           style={{
             fontFamily: F_SERIF,
-            fontStyle: 'italic',
+            fontStyle: "italic",
             fontSize: 18,
             color: C.accentWarm,
-            margin: '0 0 16px',
+            margin: "0 0 16px",
           }}
         >
           {surface.tagline}
         </div>
-        <p style={{ fontSize: 15, color: C.inkSoft, lineHeight: 1.6, margin: '0 0 22px', maxWidth: '60ch' }}>
+        <p
+          style={{
+            fontSize: 15,
+            color: C.inkSoft,
+            lineHeight: 1.6,
+            margin: "0 0 22px",
+            maxWidth: "60ch",
+          }}
+        >
           {surface.body}
         </p>
         <Link
@@ -874,9 +1109,9 @@ function SurfaceCard({ surface, flip }: { surface: SurfaceMeta; flip: boolean })
             fontFamily: F_SANS,
             fontSize: 13,
             fontWeight: 700,
-            letterSpacing: '0.04em',
+            letterSpacing: "0.04em",
             color: C.ink,
-            textDecoration: 'none',
+            textDecoration: "none",
             borderBottom: `1px solid ${C.ink}`,
             paddingBottom: 2,
           }}
@@ -884,7 +1119,13 @@ function SurfaceCard({ surface, flip }: { surface: SurfaceMeta; flip: boolean })
           {surface.ctaLabel}
         </Link>
       </div>
-      <div style={{ order: flip ? 1 : 2, display: 'flex', justifyContent: 'center' }}>
+      <div
+        style={{
+          order: flip ? 1 : 2,
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
         {surface.illustration}
       </div>
     </article>
@@ -896,7 +1137,13 @@ function SurfaceCard({ surface, flip }: { surface: SurfaceMeta; flip: boolean })
 function TowerIllustration() {
   // Watchtower silhouette · horizontal signal ribbons across the canvas.
   return (
-    <svg viewBox="0 0 280 220" width="100%" style={{ maxWidth: 280 }} role="img" aria-label="Tower">
+    <svg
+      viewBox="0 0 280 220"
+      width="100%"
+      style={{ maxWidth: 280 }}
+      role="img"
+      aria-label="Tower"
+    >
       <defs>
         <linearGradient id="tower-sky" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor={C.accentWarmSoft} stopOpacity="0.18" />
@@ -963,7 +1210,13 @@ function TowerIllustration() {
 function SourceIllustration() {
   // Converging streams into a single port.
   return (
-    <svg viewBox="0 0 280 220" width="100%" style={{ maxWidth: 280 }} role="img" aria-label="Source">
+    <svg
+      viewBox="0 0 280 220"
+      width="100%"
+      style={{ maxWidth: 280 }}
+      role="img"
+      aria-label="Source"
+    >
       <defs>
         <linearGradient id="source-flow" x1="0%" y1="0%" x2="100%" y2="0%">
           <stop offset="0%" stopColor={C.accentWarm} stopOpacity="0.6" />
@@ -972,10 +1225,10 @@ function SourceIllustration() {
       </defs>
       {/* Streams */}
       {[
-        { y1: 30, label: 'Hardware' },
-        { y1: 80, label: 'Software' },
-        { y1: 130, label: 'Services' },
-        { y1: 180, label: 'Cloud' },
+        { y1: 30, label: "Hardware" },
+        { y1: 80, label: "Software" },
+        { y1: 130, label: "Services" },
+        { y1: 180, label: "Cloud" },
       ].map((s, i) => (
         <g key={i}>
           <path
@@ -986,7 +1239,14 @@ function SourceIllustration() {
             opacity={0.5 + i * 0.1}
           />
           <circle cx="10" cy={s.y1} r="4" fill={C.accentWarm} />
-          <text x="20" y={s.y1 + 3} fontFamily={F_MONO} fontSize="9" fill={C.inkSoft} letterSpacing="0.06em">
+          <text
+            x="20"
+            y={s.y1 + 3}
+            fontFamily={F_MONO}
+            fontSize="9"
+            fill={C.inkSoft}
+            letterSpacing="0.06em"
+          >
             {s.label}
           </text>
         </g>
@@ -1039,7 +1299,13 @@ function IntelligenceIllustration() {
     [7, 8],
   ];
   return (
-    <svg viewBox="0 0 280 220" width="100%" style={{ maxWidth: 280 }} role="img" aria-label="Intelligence">
+    <svg
+      viewBox="0 0 280 220"
+      width="100%"
+      style={{ maxWidth: 280 }}
+      role="img"
+      aria-label="Intelligence"
+    >
       <defs>
         <radialGradient id="int-pulse" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor={C.accentWarm} stopOpacity="0.6" />
@@ -1061,7 +1327,7 @@ function IntelligenceIllustration() {
             stroke={isPattern ? C.accent : C.inkMute}
             strokeWidth={isPattern ? 1.5 : 0.8}
             opacity={isPattern ? 0.7 : 0.3}
-            strokeDasharray={isPattern ? '0' : '2 3'}
+            strokeDasharray={isPattern ? "0" : "2 3"}
           />
         );
       })}
@@ -1100,9 +1366,15 @@ function IntelligenceIllustration() {
 
 function MovesIllustration() {
   // Phased arches · 6 nested arches representing lifecycle phases.
-  const phases = ['Originate', 'Shape', 'Approve', 'Build', 'Ship', 'Measure'];
+  const phases = ["Originate", "Shape", "Approve", "Build", "Ship", "Measure"];
   return (
-    <svg viewBox="0 0 280 220" width="100%" style={{ maxWidth: 280 }} role="img" aria-label="Moves">
+    <svg
+      viewBox="0 0 280 220"
+      width="100%"
+      style={{ maxWidth: 280 }}
+      role="img"
+      aria-label="Moves"
+    >
       {phases.map((p, i) => {
         const r = 18 + i * 16;
         return (
@@ -1117,7 +1389,15 @@ function MovesIllustration() {
         );
       })}
       {/* Pin at center */}
-      <line x1="140" y1="60" x2="140" y2="190" stroke={C.ink} strokeWidth={1.5} strokeDasharray="2 3" />
+      <line
+        x1="140"
+        y1="60"
+        x2="140"
+        y2="190"
+        stroke={C.ink}
+        strokeWidth={1.5}
+        strokeDasharray="2 3"
+      />
       <circle cx="140" cy="60" r="6" fill={C.accentWarm} />
       <circle cx="140" cy="190" r="4" fill={C.ink} />
       {/* Phase labels along the bottom */}
@@ -1147,43 +1427,67 @@ function MovesIllustration() {
 
 function MoveLifecycle() {
   const phases: ReadonlyArray<{ num: string; label: string; body: string }> = [
-    { num: '01', label: 'Originate', body: 'Pattern-grounded shaping. The ask becomes a Move.' },
-    { num: '02', label: 'Shape', body: 'Tenant overlay. Stakes, owners, dependencies named.' },
-    { num: '03', label: 'Approve', body: 'Gated decision. Steering quorum, audit trail.' },
-    { num: '04', label: 'Build', body: 'Vendor + SI selection · contract sourcing · POC.' },
-    { num: '05', label: 'Ship', body: 'Production landing. KPI commit window opens.' },
-    { num: '06', label: 'Measure', body: 'Measured vs committed. Failure modes flagged early.' },
+    {
+      num: "01",
+      label: "Originate",
+      body: "Pattern-grounded shaping. The ask becomes a Move.",
+    },
+    {
+      num: "02",
+      label: "Shape",
+      body: "Tenant overlay. Stakes, owners, dependencies named.",
+    },
+    {
+      num: "03",
+      label: "Approve",
+      body: "Gated decision. Steering quorum, audit trail.",
+    },
+    {
+      num: "04",
+      label: "Build",
+      body: "Vendor + SI selection · contract sourcing · POC.",
+    },
+    {
+      num: "05",
+      label: "Ship",
+      body: "Production landing. KPI commit window opens.",
+    },
+    {
+      num: "06",
+      label: "Measure",
+      body: "Measured vs committed. Failure modes flagged early.",
+    },
   ];
   return (
     <section
       style={{
-        padding: '96px 64px',
+        padding: "96px 64px",
         background: C.creamDeep,
         borderBottom: `1px solid ${C.border}`,
       }}
     >
-      <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <SectionEyebrow num="03">How it works</SectionEyebrow>
         <SectionTitle>The Move lifecycle · originate to measure.</SectionTitle>
         <SectionLead>
-          Every AI bet <AbarvaWordmark /> shapes travels six phases. Each phase has a
-          gate, an owner, and an audit trail — so failure modes are visible
-          before they cost a quarter.
+          Every AI bet <AbarvaWordmark /> shapes travels six phases. Each phase
+          has a gate, an owner, and an audit trail — so failure modes are
+          visible before they cost a quarter.
         </SectionLead>
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(6, 1fr)',
+            display: "grid",
+            gridTemplateColumns: "repeat(6, 1fr)",
             gap: 8,
             marginTop: 56,
-            position: 'relative',
+            position: "relative",
           }}
         >
           {/* Connecting line */}
           <div
             aria-hidden="true"
             style={{
-              position: 'absolute',
+              position: "absolute",
               top: 18,
               left: 24,
               right: 24,
@@ -1193,17 +1497,17 @@ function MoveLifecycle() {
             }}
           />
           {phases.map((p, i) => (
-            <div key={p.num} style={{ position: 'relative' }}>
+            <div key={p.num} style={{ position: "relative" }}>
               <div
                 style={{
                   width: 36,
                   height: 36,
-                  borderRadius: '50%',
+                  borderRadius: "50%",
                   background: i === phases.length - 1 ? C.accentWarm : C.accent,
                   color: C.surface,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   fontFamily: F_MONO,
                   fontSize: 12,
                   fontWeight: 700,
@@ -1219,13 +1523,20 @@ function MoveLifecycle() {
                   fontSize: 19,
                   fontWeight: 500,
                   color: C.ink,
-                  letterSpacing: '-0.012em',
+                  letterSpacing: "-0.012em",
                   marginBottom: 6,
                 }}
               >
                 {p.label}
               </div>
-              <p style={{ fontSize: 13, color: C.inkSoft, lineHeight: 1.5, margin: 0 }}>
+              <p
+                style={{
+                  fontSize: 13,
+                  color: C.inkSoft,
+                  lineHeight: 1.5,
+                  margin: 0,
+                }}
+              >
                 {p.body}
               </p>
             </div>
@@ -1240,15 +1551,17 @@ function MoveLifecycle() {
 
 function Substrate({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
   return (
-    <section style={{ padding: '96px 64px', borderBottom: `1px solid ${C.border}` }}>
+    <section
+      style={{ padding: "96px 64px", borderBottom: `1px solid ${C.border}` }}
+    >
       <div
         style={{
           maxWidth: 1280,
-          margin: '0 auto',
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 420px',
+          margin: "0 auto",
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) 420px",
           gap: 64,
-          alignItems: 'center',
+          alignItems: "center",
         }}
       >
         <div>
@@ -1256,13 +1569,28 @@ function Substrate({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
           <SectionTitle>
             What <AbarvaWordmark height="0.7em" /> knows · before it answers.
           </SectionTitle>
-          <p style={{ fontSize: 15.5, color: C.inkSoft, lineHeight: 1.65, marginBottom: 20, maxWidth: '54ch' }}>
+          <p
+            style={{
+              fontSize: 15.5,
+              color: C.inkSoft,
+              lineHeight: 1.65,
+              marginBottom: 20,
+              maxWidth: "54ch",
+            }}
+          >
             Every CXO answer is grounded in three layers of substrate. The
             tenant layer is what we know about you. The corpus is the cross-
-            tenant pattern library. The industry layer is what&rsquo;s possible at
-            the frontier.
+            tenant pattern library. The industry layer is what&rsquo;s possible
+            at the frontier.
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 28 }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 14,
+              marginTop: 28,
+            }}
+          >
             <SubstrateRow
               label="Tenant"
               detail="23 substrate segments · 1.2k records · live"
@@ -1307,7 +1635,7 @@ function SubstrateRow({
         border: `1px solid ${C.border}`,
         borderLeft: `4px solid ${accent}`,
         borderRadius: 10,
-        padding: '14px 20px',
+        padding: "14px 20px",
       }}
     >
       <div
@@ -1315,8 +1643,8 @@ function SubstrateRow({
           fontFamily: F_MONO,
           fontSize: 10,
           fontWeight: 700,
-          letterSpacing: '0.16em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.16em",
+          textTransform: "uppercase",
           color: accent,
           marginBottom: 4,
         }}
@@ -1325,13 +1653,21 @@ function SubstrateRow({
       </div>
       <div
         style={{
-          display: 'flex',
-          alignItems: 'baseline',
+          display: "flex",
+          alignItems: "baseline",
           gap: 12,
-          flexWrap: 'wrap',
+          flexWrap: "wrap",
         }}
       >
-        <span style={{ fontFamily: F_SERIF, fontSize: 22, fontWeight: 500, color: C.ink, letterSpacing: '-0.012em' }}>
+        <span
+          style={{
+            fontFamily: F_SERIF,
+            fontSize: 22,
+            fontWeight: 500,
+            color: C.ink,
+            letterSpacing: "-0.012em",
+          }}
+        >
           {label}
         </span>
         <span style={{ fontSize: 13.5, color: C.inkSoft }}>{detail}</span>
@@ -1347,7 +1683,13 @@ function SubstrateIllustration({
 }) {
   // Three concentric layered rings.
   return (
-    <svg viewBox="0 0 420 420" width="100%" style={{ maxWidth: 420 }} role="img" aria-label="Substrate">
+    <svg
+      viewBox="0 0 420 420"
+      width="100%"
+      style={{ maxWidth: 420 }}
+      role="img"
+      aria-label="Substrate"
+    >
       <defs>
         <radialGradient id="sub-bg" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor={C.accentWarmSoft} stopOpacity="0.18" />
@@ -1357,26 +1699,93 @@ function SubstrateIllustration({
       <circle cx="210" cy="210" r="200" fill="url(#sub-bg)" />
 
       {/* Outer ring · Industry */}
-      <circle cx="210" cy="210" r="180" fill="none" stroke={C.ink} strokeWidth={1} opacity={0.35} strokeDasharray="3 4" />
-      <text x="210" y="40" fontFamily={F_MONO} fontSize="10" fill={C.ink} letterSpacing="0.18em" textAnchor="middle" fontWeight={700}>
+      <circle
+        cx="210"
+        cy="210"
+        r="180"
+        fill="none"
+        stroke={C.ink}
+        strokeWidth={1}
+        opacity={0.35}
+        strokeDasharray="3 4"
+      />
+      <text
+        x="210"
+        y="40"
+        fontFamily={F_MONO}
+        fontSize="10"
+        fill={C.ink}
+        letterSpacing="0.18em"
+        textAnchor="middle"
+        fontWeight={700}
+      >
         INDUSTRY
       </text>
 
       {/* Middle ring · Corpus */}
-      <circle cx="210" cy="210" r="130" fill="none" stroke={C.accentWarm} strokeWidth={1.5} opacity={0.55} />
-      <text x="210" y="92" fontFamily={F_MONO} fontSize="10" fill={C.accentWarm} letterSpacing="0.18em" textAnchor="middle" fontWeight={700}>
+      <circle
+        cx="210"
+        cy="210"
+        r="130"
+        fill="none"
+        stroke={C.accentWarm}
+        strokeWidth={1.5}
+        opacity={0.55}
+      />
+      <text
+        x="210"
+        y="92"
+        fontFamily={F_MONO}
+        fontSize="10"
+        fill={C.accentWarm}
+        letterSpacing="0.18em"
+        textAnchor="middle"
+        fontWeight={700}
+      >
         CORPUS
       </text>
 
       {/* Inner ring · Tenant */}
-      <circle cx="210" cy="210" r="76" fill={C.surface} stroke={C.accent} strokeWidth={2} />
-      <text x="210" y="200" fontFamily={F_MONO} fontSize="10" fill={C.accent} letterSpacing="0.18em" textAnchor="middle" fontWeight={700}>
+      <circle
+        cx="210"
+        cy="210"
+        r="76"
+        fill={C.surface}
+        stroke={C.accent}
+        strokeWidth={2}
+      />
+      <text
+        x="210"
+        y="200"
+        fontFamily={F_MONO}
+        fontSize="10"
+        fill={C.accent}
+        letterSpacing="0.18em"
+        textAnchor="middle"
+        fontWeight={700}
+      >
         TENANT
       </text>
-      <text x="210" y="218" fontFamily={F_SERIF} fontSize="20" fill={C.ink} fontWeight={500} textAnchor="middle">
+      <text
+        x="210"
+        y="218"
+        fontFamily={F_SERIF}
+        fontSize="20"
+        fill={C.ink}
+        fontWeight={500}
+        textAnchor="middle"
+      >
         {spotlight.clientShortName}
       </text>
-      <text x="210" y="234" fontFamily={F_MONO} fontSize="9" fill={C.inkMute} letterSpacing="0.12em" textAnchor="middle">
+      <text
+        x="210"
+        y="234"
+        fontFamily={F_MONO}
+        fontSize="9"
+        fill={C.inkMute}
+        letterSpacing="0.12em"
+        textAnchor="middle"
+      >
         23 / 23 SEGMENTS
       </text>
 
@@ -1427,41 +1836,50 @@ function SubstrateIllustration({
 // ─── Differentiators ─────────────────────────────────────────────
 
 function Differentiators() {
-  const items: ReadonlyArray<{ num: string; title: string; body: ReactNode; mark: ReactNode }> = [
+  const items: ReadonlyArray<{
+    num: string;
+    title: string;
+    body: ReactNode;
+    mark: ReactNode;
+  }> = [
     {
-      num: '01',
-      title: 'Corpus-grounded',
-      body: 'Patterns aren\'t opinions. Every binding pattern carries a quantified with-vs-without delta and a primary source. Sentinel can\'t guess; it cites.',
+      num: "01",
+      title: "Corpus-grounded",
+      body: "Patterns aren't opinions. Every binding pattern carries a quantified with-vs-without delta and a primary source. Sentinel can't guess; it cites.",
       mark: <DiffMark variant="grounded" />,
     },
     {
-      num: '02',
-      title: 'Tenant-overlaid',
+      num: "02",
+      title: "Tenant-overlaid",
       body: (
         <>
           Generic AI advice fails because it ignores your size, segment,
-          regulatory exposure, vendor footprint, and current portfolio.{' '}
+          regulatory exposure, vendor footprint, and current portfolio.{" "}
           <AbarvaWordmark /> scores against all of it.
         </>
       ),
       mark: <DiffMark variant="overlay" />,
     },
     {
-      num: '03',
-      title: 'Agent-collaborative',
-      body: 'Sentinel pushes back on framing, surfaces the binding pattern, and stays in the room. The agent is a participant in the decision, not a search box.',
+      num: "03",
+      title: "Agent-collaborative",
+      body: "Sentinel pushes back on framing, surfaces the binding pattern, and stays in the room. The agent is a participant in the decision, not a search box.",
       mark: <DiffMark variant="agent" />,
     },
   ];
   return (
-    <section style={{ padding: '96px 64px', borderBottom: `1px solid ${C.border}` }}>
-      <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+    <section
+      style={{ padding: "96px 64px", borderBottom: `1px solid ${C.border}` }}
+    >
+      <div style={{ maxWidth: 1280, margin: "0 auto" }}>
         <SectionEyebrow num="05">Why it works</SectionEyebrow>
-        <SectionTitle>Three things every failed AI program lacked.</SectionTitle>
+        <SectionTitle>
+          Three things every failed AI program lacked.
+        </SectionTitle>
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
             gap: 24,
             marginTop: 56,
           }}
@@ -1482,9 +1900,9 @@ function Differentiators() {
                   fontFamily: F_MONO,
                   fontSize: 11,
                   fontWeight: 700,
-                  letterSpacing: '0.18em',
+                  letterSpacing: "0.18em",
                   color: C.accent,
-                  margin: '20px 0 6px',
+                  margin: "20px 0 6px",
                 }}
               >
                 {item.num} · DIFFERENTIATOR
@@ -1495,13 +1913,20 @@ function Differentiators() {
                   fontSize: 24,
                   fontWeight: 500,
                   color: C.ink,
-                  letterSpacing: '-0.012em',
-                  margin: '0 0 14px',
+                  letterSpacing: "-0.012em",
+                  margin: "0 0 14px",
                 }}
               >
                 {item.title}
               </h3>
-              <p style={{ fontSize: 14.5, color: C.inkSoft, lineHeight: 1.6, margin: 0 }}>
+              <p
+                style={{
+                  fontSize: 14.5,
+                  color: C.inkSoft,
+                  lineHeight: 1.6,
+                  margin: 0,
+                }}
+              >
                 {item.body}
               </p>
             </article>
@@ -1512,30 +1937,83 @@ function Differentiators() {
   );
 }
 
-function DiffMark({ variant }: { variant: 'grounded' | 'overlay' | 'agent' }) {
+function DiffMark({ variant }: { variant: "grounded" | "overlay" | "agent" }) {
   return (
-    <svg viewBox="0 0 80 80" width="80" height="80" role="img" aria-hidden="true">
-      {variant === 'grounded' && (
+    <svg
+      viewBox="0 0 80 80"
+      width="80"
+      height="80"
+      role="img"
+      aria-hidden="true"
+    >
+      {variant === "grounded" && (
         <>
-          <rect x="10" y="10" width="60" height="60" fill="none" stroke={C.accent} strokeWidth={1.2} />
+          <rect
+            x="10"
+            y="10"
+            width="60"
+            height="60"
+            fill="none"
+            stroke={C.accent}
+            strokeWidth={1.2}
+          />
           {[20, 30, 40, 50, 60].map((y) => (
-            <line key={y} x1="14" y1={y} x2="66" y2={y} stroke={C.accent} strokeWidth={0.6} opacity={0.4} />
+            <line
+              key={y}
+              x1="14"
+              y1={y}
+              x2="66"
+              y2={y}
+              stroke={C.accent}
+              strokeWidth={0.6}
+              opacity={0.4}
+            />
           ))}
           <circle cx="40" cy="40" r="10" fill={C.accent} />
           <circle cx="40" cy="40" r="4" fill={C.surface} />
         </>
       )}
-      {variant === 'overlay' && (
+      {variant === "overlay" && (
         <>
-          <circle cx="32" cy="32" r="22" fill="none" stroke={C.accent} strokeWidth={1.4} />
-          <circle cx="48" cy="48" r="22" fill="none" stroke={C.accentWarm} strokeWidth={1.4} />
+          <circle
+            cx="32"
+            cy="32"
+            r="22"
+            fill="none"
+            stroke={C.accent}
+            strokeWidth={1.4}
+          />
+          <circle
+            cx="48"
+            cy="48"
+            r="22"
+            fill="none"
+            stroke={C.accentWarm}
+            strokeWidth={1.4}
+          />
           <circle cx="40" cy="40" r="8" fill={C.ink} />
         </>
       )}
-      {variant === 'agent' && (
+      {variant === "agent" && (
         <>
-          <circle cx="40" cy="40" r="28" fill="none" stroke={C.accent} strokeWidth={0.6} opacity={0.3} />
-          <circle cx="40" cy="40" r="20" fill="none" stroke={C.accent} strokeWidth={0.8} opacity={0.5} />
+          <circle
+            cx="40"
+            cy="40"
+            r="28"
+            fill="none"
+            stroke={C.accent}
+            strokeWidth={0.6}
+            opacity={0.3}
+          />
+          <circle
+            cx="40"
+            cy="40"
+            r="20"
+            fill="none"
+            stroke={C.accent}
+            strokeWidth={0.8}
+            opacity={0.5}
+          />
           <circle cx="40" cy="40" r="12" fill={C.accentWarm} />
           <circle cx="40" cy="40" r="6" fill={C.ink} />
           <circle cx="40" cy="40" r="2.5" fill={C.surface} />
@@ -1551,21 +2029,21 @@ function Cta({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
   return (
     <section
       style={{
-        padding: '96px 64px',
+        padding: "96px 64px",
         background: C.ink,
         color: C.surface,
-        textAlign: 'center',
+        textAlign: "center",
       }}
     >
-      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+      <div style={{ maxWidth: 720, margin: "0 auto" }}>
         <div
           style={{
             fontFamily: F_MONO,
             fontSize: 11,
             fontWeight: 700,
-            letterSpacing: '0.22em',
+            letterSpacing: "0.22em",
             color: C.accentWarmSoft,
-            textTransform: 'uppercase',
+            textTransform: "uppercase",
             marginBottom: 18,
           }}
         >
@@ -1574,11 +2052,11 @@ function Cta({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
         <h2
           style={{
             fontFamily: F_SERIF,
-            fontSize: 'clamp(36px, 4.4vw, 52px)',
+            fontSize: "clamp(36px, 4.4vw, 52px)",
             fontWeight: 400,
-            letterSpacing: '-0.018em',
+            letterSpacing: "-0.018em",
             lineHeight: 1.1,
-            margin: '0 0 22px',
+            margin: "0 0 22px",
             color: C.surface,
           }}
         >
@@ -1588,27 +2066,33 @@ function Cta({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
           style={{
             fontSize: 17,
             lineHeight: 1.6,
-            color: 'rgba(255,255,255,0.78)',
-            margin: '0 0 36px',
+            color: "rgba(255,255,255,0.78)",
+            margin: "0 0 36px",
           }}
         >
-          {spotlight.clientName} is loaded as this signed-in workspace. Pop in and see how{' '}
-          <AbarvaWordmark inverse /> shapes their
-          quarterly read.
+          {spotlight.clientName} is loaded as this signed-in workspace. Pop in
+          and see how <AbarvaWordmark inverse /> shapes their quarterly read.
         </p>
-        <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 14,
+            justifyContent: "center",
+            flexWrap: "wrap",
+          }}
+        >
           <Link
             href="/intelligence"
             style={{
               background: C.accentWarm,
               color: C.surface,
-              padding: '16px 28px',
+              padding: "16px 28px",
               borderRadius: 999,
               fontFamily: F_SANS,
               fontSize: 14,
               fontWeight: 700,
-              letterSpacing: '-0.005em',
-              textDecoration: 'none',
+              letterSpacing: "-0.005em",
+              textDecoration: "none",
             }}
           >
             Open Intelligence on {spotlight.clientShortName} →
@@ -1617,13 +2101,13 @@ function Cta({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
             href="/home"
             style={{
               color: C.surface,
-              padding: '16px 28px',
+              padding: "16px 28px",
               borderRadius: 999,
               fontFamily: F_SANS,
               fontSize: 14,
               fontWeight: 700,
-              textDecoration: 'none',
-              border: '1px solid rgba(255,255,255,0.30)',
+              textDecoration: "none",
+              border: "1px solid rgba(255,255,255,0.30)",
             }}
           >
             Tenant home
@@ -1636,15 +2120,21 @@ function Cta({ spotlight }: { spotlight: ProductMarketingSpotlight }) {
 
 // ─── Section primitives ──────────────────────────────────────────
 
-function SectionEyebrow({ num, children }: { num: string; children: ReactNode }) {
+function SectionEyebrow({
+  num,
+  children,
+}: {
+  num: string;
+  children: ReactNode;
+}) {
   return (
     <div
       style={{
         fontFamily: F_MONO,
         fontSize: 11,
         fontWeight: 700,
-        letterSpacing: '0.22em',
-        textTransform: 'uppercase',
+        letterSpacing: "0.22em",
+        textTransform: "uppercase",
         color: C.inkMute,
         marginBottom: 14,
       }}
@@ -1659,13 +2149,13 @@ function SectionTitle({ children }: { children: ReactNode }) {
     <h2
       style={{
         fontFamily: F_SERIF,
-        fontSize: 'clamp(32px, 3.4vw, 44px)',
+        fontSize: "clamp(32px, 3.4vw, 44px)",
         fontWeight: 400,
         color: C.ink,
-        letterSpacing: '-0.018em',
+        letterSpacing: "-0.018em",
         lineHeight: 1.1,
-        margin: '0 0 14px',
-        maxWidth: '24ch',
+        margin: "0 0 14px",
+        maxWidth: "24ch",
       }}
     >
       {children}
@@ -1681,7 +2171,7 @@ function SectionLead({ children }: { children: ReactNode }) {
         color: C.inkSoft,
         lineHeight: 1.6,
         margin: 0,
-        maxWidth: '60ch',
+        maxWidth: "60ch",
       }}
     >
       {children}

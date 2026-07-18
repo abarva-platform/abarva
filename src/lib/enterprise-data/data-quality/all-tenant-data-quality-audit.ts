@@ -7,12 +7,7 @@ import type {
 } from "../all-tenant-candidate-batch/all-tenant-candidate-batch";
 import { buildAllTenantCandidateBatch } from "../all-tenant-candidate-batch/all-tenant-candidate-batch";
 
-type QualityStatus =
-  | "pass"
-  | "watch"
-  | "gap"
-  | "blocked"
-  | "not_available";
+type QualityStatus = "pass" | "watch" | "gap" | "blocked" | "not_available";
 
 type SourceDomain =
   | "enterprise_profile"
@@ -221,9 +216,18 @@ const DEFAULT_OUTPUT_DIR = "reports/data-quality/all-tenants/latest";
 const TENANT_PROFILES = [
   {
     tenantKey: "skyharbor-air",
-    displayName: "SkyHarbor Air",
+    displayName: "Airline Demo",
     aliases: ["skyharbor-air", "skyharbor_air", "skyharbor"],
-    expectedSignals: ["IBM Z", "CICS", "DB2", "MQ", "SAP", "Teradata", "SAS", "Tableau"],
+    expectedSignals: [
+      "IBM Z",
+      "CICS",
+      "DB2",
+      "MQ",
+      "SAP",
+      "Teradata",
+      "SAS",
+      "Tableau",
+    ],
   },
   {
     tenantKey: "lakeshore-holdings",
@@ -235,7 +239,15 @@ const TENANT_PROFILES = [
     tenantKey: "meridian-health",
     displayName: "Meridian Health",
     aliases: ["meridian-health", "meridian"],
-    expectedSignals: ["Epic", "Clarity", "Caboodle", "claims", "pharmacy", "Tableau", "SAS"],
+    expectedSignals: [
+      "Epic",
+      "Clarity",
+      "Caboodle",
+      "claims",
+      "pharmacy",
+      "Tableau",
+      "SAS",
+    ],
   },
   {
     tenantKey: "first-capital",
@@ -288,7 +300,9 @@ export async function buildAllTenantDataQualityAudit(
     ),
   };
   const sourceEstateCoverage = await Promise.all(
-    batch.tenants.map((tenant) => buildSourceEstateCoverage(options.repoRoot, tenant)),
+    batch.tenants.map((tenant) =>
+      buildSourceEstateCoverage(options.repoRoot, tenant),
+    ),
   );
   const candidateCoverage = batch.tenants.map((tenant) =>
     buildCandidateCoverage(tenant, sourceEstateCoverage),
@@ -300,7 +314,11 @@ export async function buildAllTenantDataQualityAudit(
   );
   const relationshipGraphQuality = await Promise.all(
     batch.tenants.map((tenant) =>
-      buildRelationshipGraphQuality(options.repoRoot, tenant, sourceEstateCoverage),
+      buildRelationshipGraphQuality(
+        options.repoRoot,
+        tenant,
+        sourceEstateCoverage,
+      ),
     ),
   );
   const evidenceQuality = await Promise.all(
@@ -310,7 +328,9 @@ export async function buildAllTenantDataQualityAudit(
   );
   const generatedDataRisk = sourceEstateCoverage.map(buildGeneratedDataRisk);
   const tenantIsolation = await Promise.all(
-    batch.tenants.map((tenant) => buildTenantIsolation(options.repoRoot, tenant)),
+    batch.tenants.map((tenant) =>
+      buildTenantIsolation(options.repoRoot, tenant),
+    ),
   );
   const moduleReadinessQuality = batch.tenants.map(buildModuleReadinessQuality);
   const promotionReadinessQuality = await Promise.all(
@@ -407,25 +427,37 @@ export async function readLatestTenantQualityMatrix(
   return artifact ?? buildEmbeddedTenantQualityMatrix();
 }
 
-export function assertCandidateCoverageAudit(report: AllTenantDataQualityAudit): void {
+export function assertCandidateCoverageAudit(
+  report: AllTenantDataQualityAudit,
+): void {
   const unsafeRows = report.tenantQualityMatrix.filter(
-    (row) => row.sourceRichCandidateThin && row.promotionReadinessStatus === "pass",
+    (row) =>
+      row.sourceRichCandidateThin && row.promotionReadinessStatus === "pass",
   );
   if (unsafeRows.length > 0) {
     throw new Error(
       `Candidate coverage audit failed: ${unsafeRows
         .map((row) => row.tenantKey)
-        .join(", ")} marked promotion pass despite source-rich/candidate-thin coverage.`,
+        .join(
+          ", ",
+        )} marked promotion pass despite source-rich/candidate-thin coverage.`,
     );
   }
 }
 
-export function assertTenantIsolationAudit(report: AllTenantDataQualityAudit): void {
-  const failures = report.tenantIsolation.filter((row) => row.status === "blocked");
+export function assertTenantIsolationAudit(
+  report: AllTenantDataQualityAudit,
+): void {
+  const failures = report.tenantIsolation.filter(
+    (row) => row.status === "blocked",
+  );
   if (failures.length > 0) {
     throw new Error(
       `Tenant isolation data-quality audit failed: ${failures
-        .map((row) => `${row.tenantKey} (${row.crossTenantTokenFindings.join("; ")})`)
+        .map(
+          (row) =>
+            `${row.tenantKey} (${row.crossTenantTokenFindings.join("; ")})`,
+        )
         .join(", ")}`,
     );
   }
@@ -457,16 +489,20 @@ async function buildSourceEstateCoverage(
   const evidenceSignals = [
     ...new Set(signals.flatMap((signal) => signal.evidenceSignals)),
   ].sort();
-  const structuredRowCount = sum(
-    signals.map((signal) => signal.rowCount ?? 0),
-  );
-  const domainCount = DOMAIN_KEYS.filter((domain) => domains[domain] > 0).length;
+  const structuredRowCount = sum(signals.map((signal) => signal.rowCount ?? 0));
+  const domainCount = DOMAIN_KEYS.filter(
+    (domain) => domains[domain] > 0,
+  ).length;
   const sourceRichnessScore = Math.min(
     100,
     domainCount * 6 + Math.min(40, Math.floor(structuredRowCount / 80)),
   );
   const sourceRichnessStatus =
-    sourceRichnessScore >= 70 ? "pass" : sourceRichnessScore >= 40 ? "watch" : "gap";
+    sourceRichnessScore >= 70
+      ? "pass"
+      : sourceRichnessScore >= 40
+        ? "watch"
+        : "gap";
 
   return {
     tenantKey: tenant.tenantKey,
@@ -490,7 +526,11 @@ function buildCandidateCoverage(
 ): TenantCandidateCoverage {
   const source = findByTenant(sourceEstateCoverage, tenant.tenantKey);
   const candidateRecords = tenant.counts.candidateRecordsGenerated;
-  const denominator = Math.max(source.structuredRowCount, source.fileCount * 10, 1);
+  const denominator = Math.max(
+    source.structuredRowCount,
+    source.fileCount * 10,
+    1,
+  );
   const candidateCoverageRatio = round(candidateRecords / denominator, 4);
   const candidateThin =
     candidateRecords === 0 ||
@@ -504,7 +544,8 @@ function buildCandidateCoverage(
       : "gap"
     : "pass";
 
-  source.sourceRichCandidateThin = source.sourceRichnessScore >= 70 && candidateThin;
+  source.sourceRichCandidateThin =
+    source.sourceRichnessScore >= 70 && candidateThin;
 
   return {
     tenantKey: tenant.tenantKey,
@@ -530,21 +571,29 @@ async function buildCanonicalFactQuality(
 ): Promise<TenantCanonicalFactQuality> {
   const source = findByTenant(sourceEstateCoverage, tenant.tenantKey);
   const candidate = await readCandidateRecord(repoRoot, tenant.tenantKey);
-  const factOperationCount = candidate?.sourceCandidatePlan?.factOperationCount ?? 0;
+  const factOperationCount =
+    candidate?.sourceCandidatePlan?.factOperationCount ?? 0;
   const canonicalRecordCount =
     candidate?.sourceCandidatePlan?.canonicalRecordCount ??
     tenant.counts.candidateRecordsGenerated;
   const findings: string[] = [];
   if (canonicalRecordCount === 0) {
-    findings.push("No canonical candidate records were generated for this tenant.");
+    findings.push(
+      "No canonical candidate records were generated for this tenant.",
+    );
   }
-  if (source.structuredRowCount > 0 && canonicalRecordCount < source.structuredRowCount * 0.2) {
+  if (
+    source.structuredRowCount > 0 &&
+    canonicalRecordCount < source.structuredRowCount * 0.2
+  ) {
     findings.push(
       "Canonical candidate records cover only a small fraction of discovered structured source rows.",
     );
   }
   if (factOperationCount < canonicalRecordCount) {
-    findings.push("Not every canonical candidate record has a planned fact operation.");
+    findings.push(
+      "Not every canonical candidate record has a planned fact operation.",
+    );
   }
   return {
     tenantKey: tenant.tenantKey,
@@ -552,7 +601,12 @@ async function buildCanonicalFactQuality(
     factOperationCount,
     canonicalRecordCount,
     sourceStructuredRows: source.structuredRowCount,
-    status: findings.length === 0 ? "pass" : canonicalRecordCount === 0 ? "blocked" : "gap",
+    status:
+      findings.length === 0
+        ? "pass"
+        : canonicalRecordCount === 0
+          ? "blocked"
+          : "gap",
     findings,
   };
 }
@@ -572,7 +626,10 @@ async function buildRelationshipGraphQuality(
     tenant.moduleReadiness.length > 0 &&
     tenant.moduleReadiness.every((module) => module.graphPlanAvailable);
   const findings: string[] = [];
-  if (relationshipOperationCount === 0 && (relationshipSourceFiles > 0 || integrationSourceFiles > 0)) {
+  if (
+    relationshipOperationCount === 0 &&
+    (relationshipSourceFiles > 0 || integrationSourceFiles > 0)
+  ) {
     findings.push(
       "Source evidence contains relationship or integration material, but the candidate plan has zero relationship operations.",
     );
@@ -587,7 +644,12 @@ async function buildRelationshipGraphQuality(
     relationshipSourceFiles,
     integrationSourceFiles,
     graphPlanAvailableForAllModules,
-    status: findings.length === 0 ? "pass" : relationshipOperationCount === 0 ? "gap" : "watch",
+    status:
+      findings.length === 0
+        ? "pass"
+        : relationshipOperationCount === 0
+          ? "gap"
+          : "watch",
     findings,
   };
 }
@@ -605,17 +667,23 @@ async function buildEvidenceQuality(
     candidate?.sourceCandidatePlan?.canonicalRecordCount ??
     tenant.counts.candidateRecordsGenerated;
   const evidenceRatio =
-    canonicalRecordCount > 0 ? round(evidenceOperationCount / canonicalRecordCount, 4) : 0;
+    canonicalRecordCount > 0
+      ? round(evidenceOperationCount / canonicalRecordCount, 4)
+      : 0;
   const sourceDocumentCount = source.domains.documents;
   const findings: string[] = [];
   if (canonicalRecordCount > 0 && evidenceRatio < 1) {
     findings.push("Candidate facts are not fully evidence-attached.");
   }
   if (sourceDocumentCount > 0 && evidenceOperationCount === 0) {
-    findings.push("Narrative/source documents exist but are not represented in evidence operations.");
+    findings.push(
+      "Narrative/source documents exist but are not represented in evidence operations.",
+    );
   }
   if (sourceDocumentCount > 0 && evidenceOperationCount < sourceDocumentCount) {
-    findings.push("Only a thin subset of discovered source documents is represented as evidence.");
+    findings.push(
+      "Only a thin subset of discovered source documents is represented as evidence.",
+    );
   }
   return {
     tenantKey: tenant.tenantKey,
@@ -623,7 +691,12 @@ async function buildEvidenceQuality(
     evidenceOperationCount,
     sourceDocumentCount,
     evidenceRatio,
-    status: findings.length === 0 ? "pass" : evidenceOperationCount === 0 ? "gap" : "watch",
+    status:
+      findings.length === 0
+        ? "pass"
+        : evidenceOperationCount === 0
+          ? "gap"
+          : "watch",
     findings,
   };
 }
@@ -690,10 +763,18 @@ function buildModuleReadinessQuality(
   tenant: TenantBatchRow,
 ): TenantModuleReadinessQuality {
   const modules = tenant.moduleReadiness;
-  const modulesWithEvidence = modules.filter((module) => module.evidenceAvailable).length;
-  const modulesWithFactPlan = modules.filter((module) => module.factPlanAvailable).length;
-  const modulesWithGraphPlan = modules.filter((module) => module.graphPlanAvailable).length;
-  const modulesWithDerivedPlan = modules.filter((module) => module.derivedPlanAvailable).length;
+  const modulesWithEvidence = modules.filter(
+    (module) => module.evidenceAvailable,
+  ).length;
+  const modulesWithFactPlan = modules.filter(
+    (module) => module.factPlanAvailable,
+  ).length;
+  const modulesWithGraphPlan = modules.filter(
+    (module) => module.graphPlanAvailable,
+  ).length;
+  const modulesWithDerivedPlan = modules.filter(
+    (module) => module.derivedPlanAvailable,
+  ).length;
   const runtimeReadyModules = modules.filter(
     (module) => module.readyForRuntimeConsumption,
   ).length;
@@ -705,7 +786,9 @@ function buildModuleReadinessQuality(
     findings.push("Graph-plan readiness is missing for one or more modules.");
   }
   if (runtimeReadyModules > 0) {
-    findings.push("A module is marked runtime-ready in a non-destructive candidate lane.");
+    findings.push(
+      "A module is marked runtime-ready in a non-destructive candidate lane.",
+    );
   }
   return {
     tenantKey: tenant.tenantKey,
@@ -751,9 +834,7 @@ async function buildPromotionReadinessQuality(
       `reports/active-tenant-access/${tenantOutputSlug(tenant.tenantKey)}/active-tenant-access-record.json`,
     ),
   );
-  const blockers = [
-    ...(gate?.decisionRecord?.blockers ?? tenant.blockers),
-  ];
+  const blockers = [...(gate?.decisionRecord?.blockers ?? tenant.blockers)];
   const requiredBeforeActiveTruth: string[] = [];
   if (candidate.candidateThin)
     requiredBeforeActiveTruth.push(
@@ -763,12 +844,17 @@ async function buildPromotionReadinessQuality(
     requiredBeforeActiveTruth.push(
       "Add relationship mappings and prove graph-plan coverage before active truth claims.",
     );
-  if (source.evidenceSignals.length > 0 && candidate.candidateRecordsGenerated === 0)
+  if (
+    source.evidenceSignals.length > 0 &&
+    candidate.candidateRecordsGenerated === 0
+  )
     requiredBeforeActiveTruth.push(
       "Map discovered evidence signals into candidate records with citations.",
     );
   if (blockers.length > 0)
-    requiredBeforeActiveTruth.push("Clear promotion-gate blockers and capture operator approval.");
+    requiredBeforeActiveTruth.push(
+      "Clear promotion-gate blockers and capture operator approval.",
+    );
 
   const promotionUnsafe =
     candidate.candidateThin ||
@@ -830,7 +916,10 @@ function buildTenantQualityMatrixRow(
   const evidence = findByTenant(evidenceQuality, tenant.tenantKey);
   const generated = findByTenant(generatedDataRisk, tenant.tenantKey);
   const isolation = findByTenant(tenantIsolation, tenant.tenantKey);
-  const moduleReadiness = findByTenant(moduleReadinessQuality, tenant.tenantKey);
+  const moduleReadiness = findByTenant(
+    moduleReadinessQuality,
+    tenant.tenantKey,
+  );
   const promotion = findByTenant(promotionReadinessQuality, tenant.tenantKey);
   const statuses = [
     source.sourceRichnessStatus,
@@ -881,7 +970,9 @@ async function discoverTenantSourceFiles(
     if (!(await exists(absoluteRoot))) continue;
     const discovered = await listFiles(absoluteRoot);
     for (const absoluteFile of discovered) {
-      const relative = path.relative(repoRoot, absoluteFile).replaceAll(path.sep, "/");
+      const relative = path
+        .relative(repoRoot, absoluteFile)
+        .replaceAll(path.sep, "/");
       const lower = relative.toLowerCase();
       if (aliases.some((alias) => lower.includes(alias.toLowerCase()))) {
         files.push(relative);
@@ -898,7 +989,9 @@ async function buildSourceFileSignal(
   const absolutePath = path.join(repoRoot, relativePath);
   const sample = await readSample(absolutePath);
   const domain = classifySourceDomain(relativePath, sample);
-  const rowCount = relativePath.endsWith(".csv") ? await countCsvRows(absolutePath) : null;
+  const rowCount = relativePath.endsWith(".csv")
+    ? await countCsvRows(absolutePath)
+    : null;
   return {
     fileLabel: sanitizeFileLabel(relativePath),
     domain,
@@ -907,34 +1000,75 @@ async function buildSourceFileSignal(
   };
 }
 
-function classifySourceDomain(relativePath: string, sample: string): SourceDomain {
+function classifySourceDomain(
+  relativePath: string,
+  sample: string,
+): SourceDomain {
   const pathOnly = relativePath.toLowerCase();
-  if (/(f05_applications-systems|applications-systems|application-portfolio)/i.test(pathOnly))
+  if (
+    /(f05_applications-systems|applications-systems|application-portfolio)/i.test(
+      pathOnly,
+    )
+  )
     return "systems_estate";
-  if (/(f09_data-analytics-estate|data-analytics-estate|data-assets|data_assets|data-product)/i.test(pathOnly))
+  if (
+    /(f09_data-analytics-estate|data-analytics-estate|data-assets|data_assets|data-product)/i.test(
+      pathOnly,
+    )
+  )
     return "data_and_analytics";
-  if (/(f10_integrations-interfaces|integrations-interfaces|integration-topology|interfaces)/i.test(pathOnly))
+  if (
+    /(f10_integrations-interfaces|integrations-interfaces|integration-topology|interfaces)/i.test(
+      pathOnly,
+    )
+  )
     return "integration_estate";
-  if (/(f12_relationships|relationships_graph|graph_edges|context-relationships)/i.test(pathOnly))
+  if (
+    /(f12_relationships|relationships_graph|graph_edges|context-relationships)/i.test(
+      pathOnly,
+    )
+  )
     return "relationships";
   const haystack = `${relativePath}\n${sample}`.toLowerCase();
   if (/(mainframe|ibm z|cics|cobol|db2|ims|mq|racf|sap)/i.test(haystack))
     return "mainframe_and_core";
-  if (/(integration|interface|lineage|hl7|fhir|api|event stream)/i.test(haystack))
+  if (
+    /(integration|interface|lineage|hl7|fhir|api|event stream)/i.test(haystack)
+  )
     return "integration_estate";
-  if (/(teradata|analytics|data product|data asset|tableau|power bi|sas|datastage|informatica|caboodle|clarity|lakehouse)/i.test(haystack))
+  if (
+    /(teradata|analytics|data product|data asset|tableau|power bi|sas|datastage|informatica|caboodle|clarity|lakehouse)/i.test(
+      haystack,
+    )
+  )
     return "data_and_analytics";
-  if (/(application|system|technology estate|cmdb|platform volumetric|infrastructure|cloud)/i.test(haystack))
+  if (
+    /(application|system|technology estate|cmdb|platform volumetric|infrastructure|cloud)/i.test(
+      haystack,
+    )
+  )
     return "systems_estate";
   if (/(relationship|edge|graph|dependency|ownership|map)/i.test(haystack))
     return "relationships";
-  if (/(vendor|contract|license|source|rfp|sourcing|pricing|rate card)/i.test(haystack))
+  if (
+    /(vendor|contract|license|source|rfp|sourcing|pricing|rate card)/i.test(
+      haystack,
+    )
+  )
     return "vendors_contracts";
-  if (/(budget|financial|spend|value|benefit|outcome|margin|tower)/i.test(haystack))
+  if (
+    /(budget|financial|spend|value|benefit|outcome|margin|tower)/i.test(
+      haystack,
+    )
+  )
     return "financial_value";
-  if (/(initiative|move|roadmap|program|milestone|phase|charter)/i.test(haystack))
+  if (
+    /(initiative|move|roadmap|program|milestone|phase|charter)/i.test(haystack)
+  )
     return "moves_execution";
-  if (/(risk|control|security|compliance|regulatory|governance)/i.test(haystack))
+  if (
+    /(risk|control|security|compliance|regulatory|governance)/i.test(haystack)
+  )
     return "risk_controls";
   if (/(benchmark|industry|market|corpus|pattern)/i.test(haystack))
     return "benchmarks";
@@ -947,13 +1081,19 @@ function classifySourceDomain(relativePath: string, sample: string): SourceDomai
   return "documents";
 }
 
-function extractEvidenceSignals(relativePath: string, sample: string): string[] {
+function extractEvidenceSignals(
+  relativePath: string,
+  sample: string,
+): string[] {
   const haystack = `${relativePath}\n${sample}`;
   const signals: string[] = [];
   const checks: Array<[RegExp, string]> = [
     [/IBM Z|CICS|COBOL|DB2|IMS|RACF|mainframe/i, "mainframe-core"],
     [/Teradata|Vantage/i, "teradata-estate"],
-    [/SAS|DataStage|Informatica|Tableau|BusinessObjects|Power BI/i, "analytics-toolchain"],
+    [
+      /SAS|DataStage|Informatica|Tableau|BusinessObjects|Power BI/i,
+      "analytics-toolchain",
+    ],
     [/SAP/i, "sap-estate"],
     [/Epic|Clarity|Caboodle/i, "healthcare-core-systems"],
     [/claims|pharmacy|prior auth|utilization/i, "healthcare-claims-operations"],
@@ -1022,10 +1162,13 @@ async function writeAuditReport(
     generatedAt: report.generatedAt,
     tenants: report.canonicalFactQuality,
   });
-  await writeJson(path.join(absoluteOutputDir, "relationship-graph-quality.json"), {
-    generatedAt: report.generatedAt,
-    tenants: report.relationshipGraphQuality,
-  });
+  await writeJson(
+    path.join(absoluteOutputDir, "relationship-graph-quality.json"),
+    {
+      generatedAt: report.generatedAt,
+      tenants: report.relationshipGraphQuality,
+    },
+  );
   await writeJson(path.join(absoluteOutputDir, "evidence-quality.json"), {
     generatedAt: report.generatedAt,
     tenants: report.evidenceQuality,
@@ -1038,19 +1181,29 @@ async function writeAuditReport(
     generatedAt: report.generatedAt,
     tenants: report.tenantIsolation,
   });
-  await writeJson(path.join(absoluteOutputDir, "module-readiness-quality.json"), {
-    generatedAt: report.generatedAt,
-    tenants: report.moduleReadinessQuality,
-  });
-  await writeJson(path.join(absoluteOutputDir, "promotion-readiness-quality.json"), {
-    generatedAt: report.generatedAt,
-    tenants: report.promotionReadinessQuality,
-  });
+  await writeJson(
+    path.join(absoluteOutputDir, "module-readiness-quality.json"),
+    {
+      generatedAt: report.generatedAt,
+      tenants: report.moduleReadinessQuality,
+    },
+  );
+  await writeJson(
+    path.join(absoluteOutputDir, "promotion-readiness-quality.json"),
+    {
+      generatedAt: report.generatedAt,
+      tenants: report.promotionReadinessQuality,
+    },
+  );
   await writeJson(path.join(absoluteOutputDir, "admin-home-caveats.json"), {
     generatedAt: report.generatedAt,
     tenants: report.adminHomeCaveats,
   });
-  await fs.writeFile(path.join(absoluteOutputDir, "summary.md"), summaryMarkdown(report), "utf8");
+  await fs.writeFile(
+    path.join(absoluteOutputDir, "summary.md"),
+    summaryMarkdown(report),
+    "utf8",
+  );
   await fs.writeFile(
     path.join(absoluteOutputDir, "recommended-remediation-plan.md"),
     remediationMarkdown(report),
@@ -1228,11 +1381,76 @@ function buildEmbeddedTenantQualityMatrix(): TenantQualityMatrixArtifact {
       tenantIsolationFailures: 0,
     },
     tenants: [
-      embeddedTenant("skyharbor-air", "SkyHarbor Air", 100, 31213, 0.0017, 53, 53, true, true, "watch", "pass", "watch"),
-      embeddedTenant("lakeshore-holdings", "Lakeshore Holdings", 82, 8721, 0, 0, 0, true, true, "watch", "not_available", "gap"),
-      embeddedTenant("meridian-health", "Meridian Health", 100, 11226, 0, 0, 0, true, true, "watch", "not_available", "gap"),
-      embeddedTenant("first-capital", "First Capital", 70, 14576, 0, 0, 0, true, false, "watch", "not_available", "gap"),
-      embeddedTenant("apex-retail", "Apex Retail", 100, 10388, 0, 0, 0, true, true, "watch", "not_available", "gap"),
+      embeddedTenant(
+        "skyharbor-air",
+        "Airline Demo",
+        100,
+        31213,
+        0.0017,
+        53,
+        53,
+        true,
+        true,
+        "watch",
+        "pass",
+        "watch",
+      ),
+      embeddedTenant(
+        "lakeshore-holdings",
+        "Lakeshore Holdings",
+        82,
+        8721,
+        0,
+        0,
+        0,
+        true,
+        true,
+        "watch",
+        "not_available",
+        "gap",
+      ),
+      embeddedTenant(
+        "meridian-health",
+        "Meridian Health",
+        100,
+        11226,
+        0,
+        0,
+        0,
+        true,
+        true,
+        "watch",
+        "not_available",
+        "gap",
+      ),
+      embeddedTenant(
+        "first-capital",
+        "First Capital",
+        70,
+        14576,
+        0,
+        0,
+        0,
+        true,
+        false,
+        "watch",
+        "not_available",
+        "gap",
+      ),
+      embeddedTenant(
+        "apex-retail",
+        "Apex Retail",
+        100,
+        10388,
+        0,
+        0,
+        0,
+        true,
+        true,
+        "watch",
+        "not_available",
+        "gap",
+      ),
     ],
   };
 }
@@ -1326,7 +1544,9 @@ async function readJsonIfExists<T>(
   relativePath: string,
 ): Promise<T | undefined> {
   try {
-    return JSON.parse(await fs.readFile(path.join(repoRoot, relativePath), "utf8")) as T;
+    return JSON.parse(
+      await fs.readFile(path.join(repoRoot, relativePath), "utf8"),
+    ) as T;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
     return undefined;
@@ -1343,10 +1563,16 @@ async function exists(absolutePath: string): Promise<boolean> {
 }
 
 async function writeJson(absolutePath: string, value: unknown): Promise<void> {
-  await fs.writeFile(absolutePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+  await fs.writeFile(
+    absolutePath,
+    `${JSON.stringify(value, null, 2)}\n`,
+    "utf8",
+  );
 }
 
-function chooseRepresentativeFiles(signals: SourceFileSignal[]): SourceFileSignal[] {
+function chooseRepresentativeFiles(
+  signals: SourceFileSignal[],
+): SourceFileSignal[] {
   const byDomain = new Map<SourceDomain, SourceFileSignal>();
   for (const signal of signals) {
     const current = byDomain.get(signal.domain);
@@ -1383,7 +1609,8 @@ function findByTenant<T extends { tenantKey: string }>(
   tenantKey: string,
 ): T {
   const row = rows.find((candidate) => candidate.tenantKey === tenantKey);
-  if (!row) throw new Error(`Missing data-quality row for tenant ${tenantKey}.`);
+  if (!row)
+    throw new Error(`Missing data-quality row for tenant ${tenantKey}.`);
   return row;
 }
 
@@ -1393,7 +1620,10 @@ function sanitizeFileLabel(relativePath: string): string {
     .filter((part) => part !== "datasets" && part !== "reports")
     .map((part) =>
       part
-        .replace(/\b[Vv](?:1|2|4|6|7)(?:_[A-Za-z0-9]+)*(?:-[A-Za-z0-9]+)*/g, "legacy-pack")
+        .replace(
+          /\b[Vv](?:1|2|4|6|7)(?:_[A-Za-z0-9]+)*(?:-[A-Za-z0-9]+)*/g,
+          "legacy-pack",
+        )
         .replace(/synthetic/gi, "planning")
         .replace(/\s+/g, " "),
     )

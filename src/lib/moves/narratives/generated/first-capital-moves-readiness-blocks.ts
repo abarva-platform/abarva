@@ -147,8 +147,7 @@ export const first_capital_moves_cxo_content = {
       artifact_type: "MovesReadinessBrief",
       type: "module_next_actions",
       title: "Module Next Actions",
-      purpose:
-        "Route First Capital Financial evidence needs to the right Nexus surfaces.",
+      purpose: "Route FS Demo evidence needs to the right Nexus surfaces.",
       data_requirements: [
         "Evidence Registry",
         "Canonical Facts",

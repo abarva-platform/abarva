@@ -1,13 +1,13 @@
 // Claim & citation validation orchestrator (PR-4).
 
-import { CANONICAL_TENANTS } from '@/config/tenants/CANONICAL_TENANTS';
+import { CANONICAL_TENANTS } from "@/config/tenants/CANONICAL_TENANTS";
 import {
   allowedCorpusIndustryScopes,
   hasAllowedCorpusIndustryScope,
-} from '@/lib/corpus/industry-scope';
-import { canonicalTenantKey } from '@/lib/tenant/aliases';
-import type { TraceRetrievedObject } from '@/lib/agent-trace/types';
-import { detectClaims, hasAssumptionMarker } from './detect';
+} from "@/lib/corpus/industry-scope";
+import { canonicalTenantKey } from "@/lib/tenant/aliases";
+import type { TraceRetrievedObject } from "@/lib/agent-trace/types";
+import { detectClaims, hasAssumptionMarker } from "./detect";
 import {
   CLAIM_FIX_LANE,
   CRITICAL_CLAIM_TYPES,
@@ -18,28 +18,59 @@ import {
   type TenantLeakageFinding,
   type UnsupportedClaim,
   type ValidateInput,
-} from './types';
+} from "./types";
 
 /** Trace object kinds that can back each claim type. */
-const REQUIRED_EVIDENCE_KINDS: Record<ClaimType, TraceRetrievedObject['kind'][]> = {
-  value_claim: ['kpi_baseline', 'structured_fact', 'tenant_context', 'artifact', 'evidence'],
-  kpi_outcome_claim: ['kpi_baseline', 'structured_fact', 'tenant_context', 'artifact', 'evidence'],
-  system_vendor_claim: ['tenant_context', 'structured_fact', 'context_record', 'artifact'],
-  technology_stack_claim: ['tenant_context', 'structured_fact', 'context_record', 'artifact'],
-  architecture_claim: ['tenant_context', 'context_record', 'artifact'],
-  company_scale_claim: ['tenant_context', 'structured_fact', 'context_record'],
-  leadership_org_claim: ['tenant_context', 'structured_fact', 'context_record'],
-  sourcing_recommendation: ['corpus_pattern', 'context_record', 'tenant_context'],
+const REQUIRED_EVIDENCE_KINDS: Record<
+  ClaimType,
+  TraceRetrievedObject["kind"][]
+> = {
+  value_claim: [
+    "kpi_baseline",
+    "structured_fact",
+    "tenant_context",
+    "artifact",
+    "evidence",
+  ],
+  kpi_outcome_claim: [
+    "kpi_baseline",
+    "structured_fact",
+    "tenant_context",
+    "artifact",
+    "evidence",
+  ],
+  system_vendor_claim: [
+    "tenant_context",
+    "structured_fact",
+    "context_record",
+    "artifact",
+  ],
+  technology_stack_claim: [
+    "tenant_context",
+    "structured_fact",
+    "context_record",
+    "artifact",
+  ],
+  architecture_claim: ["tenant_context", "context_record", "artifact"],
+  company_scale_claim: ["tenant_context", "structured_fact", "context_record"],
+  leadership_org_claim: ["tenant_context", "structured_fact", "context_record"],
+  sourcing_recommendation: [
+    "corpus_pattern",
+    "context_record",
+    "tenant_context",
+  ],
   risk_failure_mode_claim: [],
   next_action_recommendation: [],
 };
 
 const ADVISORY_TYPES: ReadonlySet<ClaimType> = new Set([
-  'risk_failure_mode_claim',
-  'next_action_recommendation',
+  "risk_failure_mode_claim",
+  "next_action_recommendation",
 ]);
 
-function allTraceObjects(trace: ValidateInput['trace']): TraceRetrievedObject[] {
+function allTraceObjects(
+  trace: ValidateInput["trace"],
+): TraceRetrievedObject[] {
   return [
     ...trace.retrieved_tenant_context,
     ...trace.retrieved_corpus_patterns,
@@ -56,7 +87,7 @@ function verdictForClaim(
       claim,
       supported: true,
       supportingObjectIds: [],
-      supportBasis: 'advisory_no_citation_required',
+      supportBasis: "advisory_no_citation_required",
     };
   }
   const requiredKinds = REQUIRED_EVIDENCE_KINDS[claim.type];
@@ -66,7 +97,7 @@ function verdictForClaim(
       claim,
       supported: true,
       supportingObjectIds: supporting.map((o) => o.id),
-      supportBasis: 'trace_evidence',
+      supportBasis: "trace_evidence",
     };
   }
   if (hasAssumptionMarker(claim.text)) {
@@ -74,10 +105,15 @@ function verdictForClaim(
       claim,
       supported: true,
       supportingObjectIds: [],
-      supportBasis: 'stated_assumption',
+      supportBasis: "stated_assumption",
     };
   }
-  return { claim, supported: false, supportingObjectIds: [], supportBasis: null };
+  return {
+    claim,
+    supported: false,
+    supportingObjectIds: [],
+    supportBasis: null,
+  };
 }
 
 /** Validate cited PATTERN ids against the tenant's grounding namespace. */
@@ -85,9 +121,11 @@ export function validatePatternNamespaces(input: {
   tenantKey: string | null;
   citedPatternIds: string[];
   tracePatterns: TraceRetrievedObject[];
-  patternCatalog?: ValidateInput['patternCatalog'];
+  patternCatalog?: ValidateInput["patternCatalog"];
 }): NamespaceFinding[] {
-  const allowed = allowedCorpusIndustryScopes({ tenantKey: input.tenantKey ?? undefined });
+  const allowed = allowedCorpusIndustryScopes({
+    tenantKey: input.tenantKey ?? undefined,
+  });
   const findings: NamespaceFinding[] = [];
   // Case-insensitive index of patterns present in the trace.
   const traceById = new Map(
@@ -103,7 +141,7 @@ export function validatePatternNamespaces(input: {
           patternId: rawId,
           citedNamespace: null,
           allowedNamespaces: allowed ?? [],
-          kind: 'phantom',
+          kind: "phantom",
         });
         continue;
       }
@@ -114,12 +152,16 @@ export function validatePatternNamespaces(input: {
       if (!traced) continue;
       namespaces = traced.namespace ? [traced.namespace] : [];
     }
-    if (allowed && namespaces.length > 0 && !hasAllowedCorpusIndustryScope(namespaces, allowed)) {
+    if (
+      allowed &&
+      namespaces.length > 0 &&
+      !hasAllowedCorpusIndustryScope(namespaces, allowed)
+    ) {
       findings.push({
         patternId: rawId,
         citedNamespace: namespaces[0] ?? null,
         allowedNamespaces: allowed,
-        kind: 'cross_namespace',
+        kind: "cross_namespace",
       });
     }
   }
@@ -130,22 +172,23 @@ export function validatePatternNamespaces(input: {
 // (e.g. "First" in "First Capital"). These are NOT matched as a lone leakage
 // token — the full name + canonical key still are.
 const COMMON_NAME_WORDS = new Set([
-  'first',
-  'apex', // "apex" is a common English word (peak/summit); rely on full name "Apex Retail" + key
-  'prime',
-  'core',
-  'united',
-  'general',
-  'capital',
-  'national',
-  'global',
-  'american',
-  'metro',
-  'central',
+  "first",
+  "apex", // "apex" is a common English word (peak/summit); rely on full name "Apex Retail" + key
+  "prime",
+  "core",
+  "united",
+  "general",
+  "capital",
+  "national",
+  "global",
+  "american",
+  "metro",
+  "central",
 ]);
 
 const TENANT_LEAKAGE_ALIASES: Record<string, string[]> = {
-  'skyharbor-air': ['SkyHarbor Air', 'SkyHarbor Airlines', 'SkyHarbor'],
+  "first-capital": ["First Capital Financial", "First Capital", "FS Demo"],
+  "skyharbor-air": ["SkyHarbor Air", "SkyHarbor Airlines", "SkyHarbor"],
 };
 
 /** Detect references to OTHER canonical tenants in the answer. */
@@ -154,7 +197,7 @@ export function detectTenantLeakage(
   ownTenantKey: string | null,
   roster?: Array<{ key: string; name: string }>,
 ): TenantLeakageFinding[] {
-  const own = canonicalTenantKey(ownTenantKey ?? '') || (ownTenantKey ?? '');
+  const own = canonicalTenantKey(ownTenantKey ?? "") || (ownTenantKey ?? "");
   const list =
     roster ?? CANONICAL_TENANTS.map((t) => ({ key: t.key, name: t.name }));
   const findings: TenantLeakageFinding[] = [];
@@ -164,7 +207,7 @@ export function detectTenantLeakage(
     // word is matched ONLY when it is a distinctive proper noun — common
     // English words ("First" in "First Capital") would otherwise false-positive
     // on phrases like "first quarter" in any tenant's own answer.
-    const firstWord = t.name.split(/\s+/)[0] ?? '';
+    const firstWord = t.name.split(/\s+/)[0] ?? "";
     const distinctiveFirst =
       firstWord.length >= 4 && !COMMON_NAME_WORDS.has(firstWord.toLowerCase())
         ? firstWord
@@ -176,14 +219,17 @@ export function detectTenantLeakage(
       ...(TENANT_LEAKAGE_ALIASES[t.key] ?? []),
     ].filter((x): x is string => Boolean(x));
     for (const token of tokens) {
-      const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const re = new RegExp(`\\b${escaped}\\b`, 'i');
+      const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(`\\b${escaped}\\b`, "i");
       const m = re.exec(answerText);
       if (m) {
         // Capture a short context window so a flagged leak is reviewable
         // (real cross-tenant reference vs. coincidental token).
         const start = Math.max(0, m.index - 35);
-        const snippet = answerText.slice(start, m.index + token.length + 35).replace(/\s+/g, ' ').trim();
+        const snippet = answerText
+          .slice(start, m.index + token.length + 35)
+          .replace(/\s+/g, " ")
+          .trim();
         findings.push({
           detail: `referenced "${token}" — …${snippet}…`,
           offendingTenantKey: t.key,
@@ -195,7 +241,9 @@ export function detectTenantLeakage(
   return findings;
 }
 
-export function validateClaimsAndCitations(input: ValidateInput): ClaimValidationResult {
+export function validateClaimsAndCitations(
+  input: ValidateInput,
+): ClaimValidationResult {
   const objects = allTraceObjects(input.trace);
   const detected = detectClaims(input.answerText);
   const claims = detected.map((c) => verdictForClaim(c, objects));
@@ -230,8 +278,8 @@ export function validateClaimsAndCitations(input: ValidateInput): ClaimValidatio
 
   const hasCriticalUnsupported = unsupportedClaims.some((c) => c.critical);
   const claimValidationStatus =
-    hasCriticalUnsupported || namespaceFindings.length > 0 ? 'fail' : 'pass';
-  const tenantIsolationStatus = tenantLeakage.length > 0 ? 'fail' : 'pass';
+    hasCriticalUnsupported || namespaceFindings.length > 0 ? "fail" : "pass";
+  const tenantIsolationStatus = tenantLeakage.length > 0 ? "fail" : "pass";
 
   return {
     claims,

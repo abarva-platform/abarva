@@ -22,9 +22,9 @@ export const skyharbor_air_home_cxo_content = {
       tenant_key: "skyharbor-air",
       module: "home",
       artifact_type: "KnowledgeCxoStoryBlock",
-      title: "SkyHarbor Air Enterprise Story",
+      title: "Airline Demo Enterprise Story",
       executive_summary:
-        "SkyHarbor Air is a complex global passenger airline with cargo, loyalty, maintenance, and digital operations.",
+        "Airline Demo is a complex global passenger airline with cargo, loyalty, maintenance, and digital operations.",
       why_it_matters:
         "Knowledge and Home summarize the enterprise posture and evidence gaps.",
       evidence_refs: [
@@ -148,8 +148,7 @@ export const skyharbor_air_home_cxo_content = {
       artifact_type: "KnowledgeCxoVisualSpec",
       type: "module_next_actions",
       title: "Module Next Actions",
-      purpose:
-        "Route SkyHarbor Air evidence needs to the right Nexus surfaces.",
+      purpose: "Route Airline Demo evidence needs to the right Nexus surfaces.",
       data_requirements: [
         "Evidence Registry",
         "Canonical Facts",

@@ -147,8 +147,7 @@ export const skyharbor_air_moves_cxo_content = {
       artifact_type: "MovesReadinessBrief",
       type: "module_next_actions",
       title: "Module Next Actions",
-      purpose:
-        "Route SkyHarbor Air evidence needs to the right Nexus surfaces.",
+      purpose: "Route Airline Demo evidence needs to the right Nexus surfaces.",
       data_requirements: [
         "Evidence Registry",
         "Canonical Facts",

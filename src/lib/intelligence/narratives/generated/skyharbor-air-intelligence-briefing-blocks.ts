@@ -22,7 +22,7 @@ export const skyharbor_air_intelligence_cxo_content = {
       tenant_key: "skyharbor-air",
       module: "intelligence",
       artifact_type: "IntelligenceBriefingBlock",
-      title: "SkyHarbor Air Executive Briefing",
+      title: "Airline Demo Executive Briefing",
       executive_summary:
         "Seven strategic use cases span sourcing, IROPS, crew, contact center, maintenance, and baggage domains.",
       why_it_matters:
@@ -149,8 +149,7 @@ export const skyharbor_air_intelligence_cxo_content = {
       artifact_type: "IntelligenceCanvasVisualSpec",
       type: "module_next_actions",
       title: "Module Next Actions",
-      purpose:
-        "Route SkyHarbor Air evidence needs to the right Nexus surfaces.",
+      purpose: "Route Airline Demo evidence needs to the right Nexus surfaces.",
       data_requirements: [
         "Evidence Registry",
         "Canonical Facts",

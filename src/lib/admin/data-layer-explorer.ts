@@ -444,7 +444,7 @@ export function writeAdminDataLayerExplorerProof(args: {
 function buildReferenceDataAudit(): DataLayerExplorerReferenceAudit {
   return {
     tenantKey: "skyharbor-air",
-    tenantDisplayName: "SkyHarbor Air",
+    tenantDisplayName: "Airline Demo",
     status: "review_required",
     sourceRichness: [
       {

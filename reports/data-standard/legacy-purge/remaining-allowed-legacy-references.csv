@@ -36,7 +36,9 @@ synthetic-v-folder-reference,docs/context/CLIENT_CONTEXT_COMPLETENESS_AUDIT_2026
 synthetic-v-folder-reference,docs/context/CLIENT_CONTEXT_HEALTHCHECK_2026-06.md,non-loader historical reference
 synthetic-v-folder-reference,docs/demo/DEMO_ENVIRONMENT_OPERATIONS.md,non-loader historical reference
 synthetic-v-folder-reference,docs/governance/CONTEXT_FRAMEWORK_CURRENT_STATE_DISCOVERY_2026-06-09.md,non-loader historical reference
+synthetic-v-folder-reference,docs/governance/dataset-manifests/first-capital-rich-synthetic-v3-candidate-20260717.json,non-loader historical reference
 v6-v7-current-state,docs/governance/dataset-manifests/meridian-health-v6-v7-current-state-v1.json,non-loader historical reference
+synthetic-v-folder-reference,docs/governance/dataset-manifests/skyharbor-air-rich-synthetic-v3-candidate-20260717.json,non-loader historical reference
 synthetic-v-folder-reference,docs/governance/dataset-manifests/skyharbor-air-synthetic-v2.json,non-loader historical reference
 synthetic-v-folder-reference,docs/intelligence-v6/SKYHARBOR_CTO_AIRLINE_DEMO_PACKAGE_2026-06-30.md,non-loader historical reference
 legacy-v-dimension-token,docs/intelligence-v6/SKYHARBOR_V6_CTO_DEMO_DESIGN_AUDIT_2026-06-30.md,non-loader historical reference
@@ -403,6 +405,7 @@ synthetic-v-folder-reference,scripts/skyharbor/verify-airline-pattern-overlay.mj
 synthetic-v-folder-reference,scripts/skyharbor/verify-skyharbor-substrate.mjs,non-loader historical reference
 v6-v7-current-state,scripts/tenant-v3/audit-home-v3-runtime-reachability.ts,non-loader historical reference
 v6-v7-current-state,scripts/tenant-v3/configs/meridian-health.mjs,non-loader historical reference
+synthetic-v-folder-reference,scripts/tenant-v3/generate-rich-synthetic-tenant.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/tower/tower-data-trust-gate.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/verify-retired-tenant-references.mjs,non-loader historical reference
 synthetic-v-folder-reference,scripts/verify/apex-data-pack-scaffold.mjs,non-loader historical reference

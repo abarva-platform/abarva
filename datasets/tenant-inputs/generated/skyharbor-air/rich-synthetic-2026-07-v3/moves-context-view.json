@@ -1,0 +1,98 @@
+[
+  {
+    "tenant_key": "skyharbor-air",
+    "move_key": "SHA-MOVE-CAND-001",
+    "opportunity": "IROPS recovery copilot",
+    "phase_readiness": "P0 evidence framing",
+    "evidence_requirements": "passenger service system lineage; safety criticality control; finance baseline",
+    "active_execution_commitment": false
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "move_key": "SHA-MOVE-CAND-002",
+    "opportunity": "Crew disruption assistant",
+    "phase_readiness": "P1 charter blocked",
+    "evidence_requirements": "departure control system lineage; operational resilience control; finance baseline",
+    "active_execution_commitment": false
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "move_key": "SHA-MOVE-CAND-003",
+    "opportunity": "Maintenance troubleshooting assistant",
+    "phase_readiness": "P2 design blocked",
+    "evidence_requirements": "crew scheduling platform lineage; crew and legal constraints control; finance baseline",
+    "active_execution_commitment": false
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "move_key": "SHA-MOVE-CAND-004",
+    "opportunity": "Contact center agent assist",
+    "phase_readiness": "P3 validation blocked",
+    "evidence_requirements": "flight planning platform lineage; DOT customer obligations control; finance baseline",
+    "active_execution_commitment": false
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "move_key": "SHA-MOVE-CAND-005",
+    "opportunity": "Passenger rebooking personalization",
+    "phase_readiness": "P0 evidence framing",
+    "evidence_requirements": "operations control and IROPS platform lineage; data privacy control; finance baseline",
+    "active_execution_commitment": false
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "move_key": "SHA-MOVE-CAND-006",
+    "opportunity": "Baggage recovery prediction",
+    "phase_readiness": "P1 charter blocked",
+    "evidence_requirements": "maintenance and MRO platform lineage; PCI control; finance baseline",
+    "active_execution_commitment": false
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "move_key": "SHA-MOVE-CAND-007",
+    "opportunity": "Airport turnaround risk predictor",
+    "phase_readiness": "P2 design blocked",
+    "evidence_requirements": "cargo management platform lineage; cyber risk control; finance baseline",
+    "active_execution_commitment": false
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "move_key": "SHA-MOVE-CAND-008",
+    "opportunity": "Revenue management scenario assistant",
+    "phase_readiness": "P3 validation blocked",
+    "evidence_requirements": "revenue management platform lineage; identity and access control; finance baseline",
+    "active_execution_commitment": false
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "move_key": "SHA-MOVE-CAND-009",
+    "opportunity": "Loyalty next-best-action assistant",
+    "phase_readiness": "P0 evidence framing",
+    "evidence_requirements": "loyalty platform lineage; vendor concentration control; finance baseline",
+    "active_execution_commitment": false
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "move_key": "SHA-MOVE-CAND-010",
+    "opportunity": "Flight operations knowledge assistant",
+    "phase_readiness": "P1 charter blocked",
+    "evidence_requirements": "ecommerce and mobile app lineage; model explainability control; finance baseline",
+    "active_execution_commitment": false
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "move_key": "SHA-MOVE-CAND-011",
+    "opportunity": "IT incident and change-risk copilot",
+    "phase_readiness": "P2 design blocked",
+    "evidence_requirements": "customer CRM lineage; human-in-the-loop operations control; finance baseline",
+    "active_execution_commitment": false
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "move_key": "SHA-MOVE-CAND-012",
+    "opportunity": "Procurement and vendor contract intelligence",
+    "phase_readiness": "P3 validation blocked",
+    "evidence_requirements": "contact center platform lineage; incident response control; finance baseline",
+    "active_execution_commitment": false
+  }
+]

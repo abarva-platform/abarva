@@ -46,7 +46,7 @@ export interface SkyHarborCandidatePreviewPackage {
 const SHARED_SAMPLE_FACTS = [
   {
     objectType: "enterprise_profile",
-    label: "SkyHarbor Air",
+    label: "Airline Demo",
     domain: "enterprise_structure",
   },
   {

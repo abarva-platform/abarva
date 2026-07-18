@@ -1,0 +1,1402 @@
+[
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00001",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "2",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "59b9dcbd77ea52d1d92155fe2d4c7d9ad1068af8325b1dfd6eaff13bfde77976",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00002",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "3",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "ab3087ca64e4b27f385ca74100f2e56c32ea41930ddef47f9ebce19171b6b5ee",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00003",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "4",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "360301b0a396bde90eadbeb4555110d207afe4060d201e7c62254a2bc3566079",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00004",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "5",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "f1883f0d6b3e6102a1c6f89bfe73c60047916f53763c6c078c9656f2371807fb",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00005",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "6",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "8ef511c927eb699c132289d0f1443abdd2caae3aaa8385cc0573e67f17ade23f",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00006",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "7",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "c74f140c40a4da1308b1dea5d0416ebc67652446e30238fc1f9afd7c607f616f",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00007",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "8",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "2f26bb575789aa6ab33b3f5adb091e785fb7a6fe816d3869e186255ce19cd77d",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00008",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "9",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "9ff236f849d4f58bb6a168a6557a4582ce9f99f6dc97c190f57f12a93eabacf2",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00009",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "10",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "e5e68ffa81229346f90883576a6bf69bd5417f293407657eaa2d0fd039e475e7",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00010",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "11",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "e043054b9fcc267932d07c51e69424ef1d930d9de483b1327ad37a2cd368888b",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00011",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "12",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "7f94c4007c383871f4a670a754cb31e0cea880f2cccf48ddfcbc0315076b8f47",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00012",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "13",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "9480cf67bf2c1d4ebb3cc1bb1696c5b58ca35f7b047a7fbd746428bbf3a84617",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00013",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "14",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "0da3aae061406995fb5320bf41a0b18c13bef9db11f50da9720a144dc809a68a",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00014",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "15",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "97d1790443363f617cae344aaa2c9cb32c7203053d5b28f87d1437a6ba2d601c",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00015",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "16",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "70a6b755fd33419454306cffa64d40d2e44a767d023590d36dc854e4c7460503",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00016",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "17",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "4ecd7dbed20ecd64cee0cd78cf41abe0b2d25eae7fe2d9bd28449f3af11b3285",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00017",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "18",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "90a5f38dea42a777e1f16b4699812a30d5d68b6349eb03aa0a8e2eaac3190daf",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00018",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "19",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "12f5344cbdd98c971bd38b5ecd7bd7f2d8ab73ffc820a754d0e7b478c97602bd",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00019",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "20",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "81876f23116fc0a29f6d8516785fe26637ac5eb62b9e3edd6812cfc8eb1a53de",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00020",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "21",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "c21e6b6bbe9b70e23a87d32e1043113b8d442aba386af64af99617ef9bc45460",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00021",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "22",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "1598a63a1783796609e79b6179a2b205fcc9c8ebc7edc25ee471138c8ba9d0b4",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00022",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "23",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "e3f9049e2b378f2a98c391aa666a0b050aca466a3c9bd91f25169af9c64774a1",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00023",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "24",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "46957ac4035bb4ef24611f2249b080e84163406aaa5d2c246d79dcdf9b96e499",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00024",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv",
+    "source_row": "25",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "57d3b29d96d2617c1c79257c38f79e740961794f98193bb77ed31b149e89549d",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00025",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "2",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "61a2253ec2fae4cf0012b83d00305e2326d01e801879fcafb50c65ae6969a46d",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00026",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "3",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "0820bcab4d90b933bd0341fe72a13489b15ff2ab03df2fe46da782deceb59c28",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00027",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "4",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "55fdc4732193c0b0a6ffce8b63a586f2ea6816bdd311fffed9573c8cb13d0239",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00028",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "5",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "de92b6a75b8eacd6c863219d9a18f3d3717009ffbef5c5765d164651e9b54f4a",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00029",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "6",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "69b03e1973010f4db550800cdc39c3ee5fd3b796bd8a3c95a484275756984a0e",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00030",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "7",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "8b5bcc2c17529ff71c198402a4ddf3a6d7c32f0392b063ce2030b31adf1dca10",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00031",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "8",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "af553bcd89bccde648f9f0b2003f1e5ab742e463d39c4c9e8f1dcc437b9509da",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00032",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "9",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "2daa7aad567f51bf98181f2d7d725691d1ac346217ce63f109f0c689ec04d948",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00033",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "10",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "ae1fbb528fd483a69e8d0d4c724df590c28692b12d682a7c14a7ba50ceeb1f98",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00034",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "11",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "43b0d5d3db8ebf327081d882600f83fccad3dcb1994ae896be398884745be986",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00035",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "12",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "03412e47368ddeb5e4e480db29c762a36c8cb21b42ea4e947c8a7f7f0f6bd659",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00036",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "13",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "6ba226424ece0b6125d80cc44395d57272a6a374d5014430592b2f4c8f819246",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00037",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "14",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "3da283d051e9100ac6a6c304bef25d1146f9348a2f5feb0ca9ac15cf1ad728f4",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00038",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "15",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "12c8d560e6de98b6939cf05a310c4371fe61286c8fd15985139012f2f006b498",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00039",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "16",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "1b2dc76f809357206fd96c58e3243a2511d9111582cdb1e6e2c20f27f8c23b8a",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00040",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "17",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "b818af707a74d9540c4cccb00fece15adb989f272ac530d4c37d3aad8b7e056f",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00041",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "18",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "2532deb592880930a438d9e6e3bc5d3dd09c7d93b15bd65226a4d9bb30c59e88",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00042",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "19",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "2893984f274b1e7d7e75f8517df9c0979e6ec75ee61939840653704e93246733",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00043",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "20",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "d1c012da04b272f6439c01869815a2dc615e2a51016e5ab4ebc4f1326b1ab798",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00044",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "21",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "8c1fe1c3f47700f95a1b5234c751de3e9a8e20fa94c509d46548da7212e8363f",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00045",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "22",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "e8330a378d097bb3a288086b90774c60eeb285c31ec780b37b33f8f482862f31",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00046",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "23",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "eebff91507b1c5ddb8fa0b93c5ee3a5d5b818fdf5cbe443011acea28efda3899",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00047",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "24",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "09d8f080fa9765766f974990671c8536f4c01831575c358182340b4e10f54384",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00048",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "25",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "c87569b5f37795ef4e01435651cc32fcf2d9a3373dfae8fe4da322d2701ab138",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00049",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "26",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "0707554aae56dc7bd45f2e6ff675cb82163265a58b8f845b0a364639ca5a428b",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00050",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "27",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "818e4196f4e041b83f32a5a849d6cfcbea6618c8374f41a44fca3a28b6232d4a",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00051",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "28",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "e2f8e07e1f240f1f52db57582cf95df93bfc60716b7e46245cdeaa96bd2b37f2",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00052",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "29",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "20eb93fe50f04cbbbce0d58f51144e1f699b308e57d2b30f1152ac7127ed47fe",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00053",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "30",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "4c41b5136a171e587aa3ec229011f5594b389c097ac5e6695d6f8cc7aa1eba6a",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00054",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "31",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "e18105fd42585e8990553571ac4eb9763278e9bcb6727104bb367b5eaf9424e4",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00055",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "32",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "5cb40ead86b1ba911cdcf22ef58188965b1f1112fc5614aa18e8fb1171cc0491",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00056",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "33",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "2da079436738c7de2ea8c348dfa7c0a16f77f9f388c2db41c4f61d0b9ea3a042",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00057",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "34",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "ba8e5b38c9a46dc4fd0df94d670196049a3d5df2c7211b61881a2a596ad97243",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00058",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "35",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "d19c55578273552ab1a68d03adf2dce786be0ce6472a21cbb92fe22fb5a81147",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00059",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "36",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "a70a9154adf87fa17abd53a70acab24532729f2a4f386a75b5dc03bc2866947b",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00060",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "37",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "023a9082be5b8d28638465f49e57b4880bade68bd366722fc335ff422426385b",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00061",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "38",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "e751ab0bb463e8c8efb39a0915beae2cce43311c8fdaa55da1bd988e3338fead",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00062",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "39",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "8eef178e439866d83c7b895402fc172e2b7edc37dfaa500e55022ac9b00a4203",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00063",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "40",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "eaed8356898bc762d9104dd41d233a7d7306ef5588d88c6bc53209b7c2a7a7a0",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00064",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "41",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "9973135af807ffa96e91ae8b470845191741a887bd17a8f9fcfd229dc91ee1ef",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00065",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "42",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "fec3dc362b35b3bba7adc9815774d523638617c1dd9014d31373403d212207df",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00066",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "43",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "223b783440b0bb2258825114edd557faf0897f90b830e114be9334eaef05523b",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00067",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "44",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "f194bdbe8da1b35317727b0f9be2a6f95e55594c52618c0e0345ba8b56f17a77",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00068",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "45",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "cf066be3c6c980f518cd106ceada23e84a0a7e50bab639248e8f6a7c2f7844f4",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00069",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "46",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "7c355cd85c666da6ef6a043ede3ef2a9b17c3166b1790742dd96b92958081c70",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00070",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "47",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "1690303911c568d41a51503798a479ddd699b1941daedff1da87efd32826efff",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00071",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "48",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "ca9d95b56b4925ccbae5744bea3788b7efd7d68b05d8deb6956fcbccdf15db52",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00072",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "49",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "279dab31797d7c3900d2eeda25c7aa3da9e0feea78a6317715a8725121d3f49b",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00073",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "50",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "cb9a14876a1b8b1946cffb369c04555571c389c75845e27ca6d8884441462dfc",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00074",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "51",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "bb3439357f7c08b546dfc8daa43ebb848cf1c025ae36682d3ad075b051b3957f",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00075",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "52",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "ef32062407609365fea568eb9389d69d963b1d2c59d2559c7bec24512f08432a",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00076",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "53",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "f4a63be046ab1fa496d86f2201d1847d8963909188722a7289a7c30cba8e1f2b",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00077",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "54",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "b23095ef6bc509f905b7bc2a3f7a756d8e1e17c32b2e439aabc27aeb219f6d66",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00078",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "55",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "a2d54a1908cf75ad51b9f1ce0d4b303608e72ece7a2c8ae964729a0efad1ae49",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00079",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "56",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "cf19c209850de24f969b87652807f9b4103da92e92669e0f6cadd03995b18372",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00080",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "57",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "ebde697fabafd3e9c5c7b7501495d4b6dfda44cbb17e3bc711402b49c2dd8f85",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00081",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "58",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "c6d834ebc073b1af7a700a7ef662dddbb88b9eb9568ace5c0935857ed2520dc4",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00082",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "59",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "3e79cfac4d978049d0548aa4b07087ef1fdafdf335a6fd0de3a0e5365f237717",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00083",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "60",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "e60e4eb82321632e2f4ae26fe1f2eda1e5e63a64ce1720d5598c9d6bb54320b3",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00084",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "61",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "1dca4ddf25b34182219342ba24abf9245f5f14806c84822df1d4a5fb2c079645",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00085",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "62",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "89022ec253fefc8af3bc2668f9b7ca8ee6c0db6719afdff396138ee55189ba0a",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00086",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "63",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "9bd4b710f00fc843a26d6c1707bae0c9b10326ff3f365c540653ff48841e83d7",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00087",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "64",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "3ad89c8d45221f05ceec52fa648d33006d5f504855fb5156c98347ac1895eada",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00088",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "65",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "7312419d117b898117927268215c2f8528c61b2a9b4bd83b562781678ae0b0df",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00089",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "66",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "20c257a6e238501c1ff75e5ad44a38688979fd46a13d3ea93eb9e27766be8f2e",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00090",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "67",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "c4a83b14e5a27492a91e5d8c26b3db2f8ca78f603d1171dceda0ac5c57c5174b",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00091",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "68",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "a4f2d39548596fe12607f90babeb4ecc1dc8841af5aa06b5d63b4d1ef9336621",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00092",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "69",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "1df931d42e87e909ebe9b4f7be48f3ed012fc3012e3371ab0edd688dafd49227",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00093",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "70",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "7ac939255f723a10f8250e67bc0ea2ddccc2677eee9c78915c052e95d9633f7c",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00094",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "71",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "f7aafa8c6531606bd401d07e2f6b821d1d8897b5c263c2c81180139e92c75047",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00095",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "72",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "20f6eb90ca08dc3eb5c5215b029f7bf97b025746ac16e655331ab4fabfaee9b0",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00096",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "73",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "147c9a35443754345b57a3f4ba01d37a028c5c857cb29e779841b84daefd80ae",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00097",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "74",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "c23cba970129f1bbb0cc3dde23177adb78a20a0a896118df58e40069ab727096",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00098",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "75",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "14a7aaa5df4e24b5fa3cb72ff0d17fe72bb8cd89a79240afbcae9270ab946ef3",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00099",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "76",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "90c4834f72a55eaa03d2b1cff2e74d3c346c2fc4924a6e4d8a296ef58e3a5832",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00100",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "77",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "537f506ed30870c4c947f8badc2cb25c14914b550f132802f09bbc8298db46db",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00101",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "78",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "a2dd7e92ec1a65a36373d8fbd34826f63870f67d31b1e43404160b9db242f21b",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00102",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "79",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "74074babaefd303d65da81d65f4aa9adc05b2d665d02a62094bb95bf44b11440",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00103",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "80",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "221be1722cf5eab2102e0ec2002fd689b2b7bfd4b6aeef0f8047ec51e0093265",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00104",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "81",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "0fd128a24ba38e6f76dc9b7e3913cbf991e230d97577cee938b5c75199e6b98b",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00105",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "82",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "ca94c2a3c59cd2e5ed5304e7bf4c532ecd24ce1560cdfc1989179dd7ed2e47d1",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00106",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "83",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "34bdaa9afa7668fbf5f245b139bc7ba6a913cc15e9c4a625275bccf0024a1da6",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00107",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "84",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "8173642596b9d511e8225ee907731b2c8594658d3fcbf4c21daa4be7932eb9ae",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00108",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "85",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "81a53dbb0e26c9ad4bf2751c65daad8db8d6812a1615c074c7d426ed8c5370f1",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00109",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "86",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "3661fa8b43c0a9edd738f410bd352a41645e317551d6f9ade4037fa85532a8da",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00110",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "87",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "48ed6bda5b14582ffc65ed9c0b2fffccf24c9c214c92502dd94892b83e4c13b1",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00111",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "88",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "4e070eb967ca6ee86f60afa735cc65d33c0899283f7e04410513305b2674d2cb",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00112",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "89",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "ce9665959210e23b51db4d98166f3cb6891bb0047b52a0f3e27f00eb53ac50c9",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00113",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "90",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "b6ea68adb1d147f7420ddf56c9fa42ede9a7d8c5f82299459d48b6332745dde6",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00114",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "91",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "248d749eb87434b41f03286f39525014a63e1d1cdf31421e7b90d4e27bbc046b",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00115",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "92",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "29e9056ebf935a3c48ebaabe75ba52acc50a150c94321c703ee5ea3c324f0a07",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00116",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "93",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "673a59f95482c182fc327103455233f0b63389c0d79d45ec9041de3b8d79fa63",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00117",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "94",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "495f4b540fd9193893aef267fef58fa2f355921da346e8303894c3968b89c357",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00118",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "95",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "16b134609fa7a0ce072791a51f74a0f16baccdc6757e6d071d1dd6a1a141f919",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00119",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "96",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "68a94a048a589ff04b00575131f575a527b8030f40c857d8f36abe70f3ffd7c9",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00120",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "97",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "4e7e8beb2bbdb8f4d8303a47801a3b176a273e6a66d30640d6e6c5ad447a6625",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00121",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "98",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "a3a22b8e97092b2b1230da5e04ad5bc483d78921bf2b2752de1c25682f795f57",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00122",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "99",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "6a20f76c699c007dd0284d35f82f95ada1d77016672323d2c8ce0fac440cef67",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00123",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "100",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "06568766dd4ee3e459acdee304ad18bde64de9944d9f56ad93db9275f08755d1",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00124",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "101",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "31032e589c883160f5fa95042d5f765faa91e811c101eb6f7617373eb89366dd",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00125",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "102",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "e9b6d2880f8793359ebc564b2a2c128952111a4dec9964c5fefdf8f599eea8f0",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00126",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "103",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "410f5962a57eb1376fa2e4876347c3b1f74eb2be2e43943b2ca568151c365a03",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00127",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "104",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "3e811bba931e57eea4d1f270f08070be1e9ad08bf7d6b6e3912b28eeaaa178da",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00128",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "105",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "9d16ffdf2976c1580941ceef9e36a0483c9c092dc3a66b596a45c42e66ebcd71",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00129",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "106",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "7befb2d5cfabcd0cd891ef382a130c3e384ed6060028f8e51a4e85fff9cee30a",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00130",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "107",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "f42974d71a909255c5a184c7d0ac2c9b1235421cd461ad9ae32b2c972b449228",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00131",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "108",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "08bb81c952d09b77573ee8b794d223c3c1befa204f2e80ba6f2c125bd611f834",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00132",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "109",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "6ae6a7c74ee13920961aad0d7c6a1c12a2f4edbd010dc8212baed635fb4254cb",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00133",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "110",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "e0977bc7bba5865007759987f9144c62ab16672a71ef992f38af1397abbaeac9",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00134",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "111",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "8ade377fd1d9579fc6759db1c46defbd79c3d35dd57310acc42c1bad44e2e2de",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00135",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "112",
+    "evidence_type": "synthetic finance baseline",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "35fb5a3949916e083be59c2d158b1856ce15884a1044436de364bab548d7b3db",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00136",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "113",
+    "evidence_type": "synthetic risk-control register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "0cea8c9695ee8558992e2933ef0ff700b24ef249ecbb55285e36c42785bf4f41",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00137",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "114",
+    "evidence_type": "synthetic vendor obligation register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "4782bfe814ab94b065d00f2a45decaef0462f6b8cba35dee0c6c5f52e627334b",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00138",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "115",
+    "evidence_type": "synthetic operational metric register",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "1b9b94bd75c7f50b032175946fe75656d8fb28098727646a64ce517eff4178da",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00139",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "116",
+    "evidence_type": "synthetic source template",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "f8324b347278ddb56dc41fc94562d5f413d0b6932a7de4695fd6ae2931ec2ca4",
+    "active_candidate_status": "candidate"
+  },
+  {
+    "tenant_key": "skyharbor-air",
+    "evidence_id": "SHA-EVID-00140",
+    "source_file": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv",
+    "source_row": "117",
+    "evidence_type": "synthetic interview excerpt",
+    "evidence_status": "candidate_resolves_locally",
+    "checksum": "0033e7a8a6c749d55d84f893aaa320476abeec873e52066c4d8791c76169736a",
+    "active_candidate_status": "candidate"
+  }
+]

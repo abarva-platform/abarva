@@ -1,0 +1,58 @@
+{
+  "tenant_key": "skyharbor-air",
+  "governance_client_key": "skyharbor-air",
+  "display_name": "Airline Demo",
+  "candidate_contract_version": "skyharbor-air-rich-standard-candidate-20260717",
+  "load_run_id": "SHA-CANDIDATE-LOAD-20260717",
+  "generated_at": "2026-07-17T00:00:00.000Z",
+  "truth_statement": "This is planning-grade synthetic enterprise context. It is not real client production data, not PHI/PII/payment-card data, and not a claim of realized financial value.",
+  "source_root": "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3",
+  "interview_file": "datasets/tenant-inputs/candidates/skyharbor-air/interviews/executive_interviews.csv",
+  "derived_root": "datasets/tenant-inputs/generated/skyharbor-air/rich-synthetic-2026-07-v3",
+  "counts": {
+    "source_template_files": 19,
+    "source_template_rows": 4840,
+    "interview_rows": 216,
+    "canonical_records": 4840,
+    "canonical_facts": 9680,
+    "entity_profiles": 1100,
+    "graph_nodes": 1600,
+    "graph_edges": 2600,
+    "context_gaps": 2100,
+    "evidence_references": 140,
+    "retrieval_chunks": 4600,
+    "approved_programs": 12,
+    "candidate_ai_opportunities": 12,
+    "budget_rows": 76
+  },
+  "checksums": {
+    "interviews": "79784f1abd0de83e66d463d9b7b74c45db41e92b72c954b06ffd7c28734af2ca",
+    "source_files": {
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/00_enterprise_profile.csv": "08abd63fe5f68a518405857eb8842bcd4b10c775459cfe84dc7dd9917f179766",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/01_business_functions.csv": "35462420549008282c7a6d94284c4cd60ee24263463059da3d7f3f0081dcc9c8",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/02_org_ownership.csv": "ee944dc1b3fdf5a83caff0d0d147e20127b04f73930d7622f72e36be3fd7efe2",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/03_workforce_roles.csv": "9c89aa40fdf370d920e44f9966da5ee1fb79614c12dda9b2999324149125ce48",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/04_applications_systems.csv": "02a805bf95eabe96fbf1ecd8f77d4acf0b3a2ef5025b53a0b78cf696047ed3d6",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/05_data_assets_integrations.csv": "3fb8b777492d585bf62dfa9d5022366b8c921611ca56fc705f4b77b2413bb4e2",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/06_infrastructure_platforms.csv": "0eb244992fd722ecf99085153f1da383d3d513eae5dba56cd219cd5581eee79e",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/07_vendors_contracts.csv": "58f5a11f89c78346a2a265f8db793b1abb45f9e70660a6185219f82b851e2297",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/08_spend_value.csv": "c25201998e0ddfe1217bd3961b54db3a7804008596d04ecd1bfa44995267ac5e",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/09_programs_initiatives.csv": "4243ae0a1517159ea496fead81fc1a4081adf65fd03c4d7befd0225a66b5dfd8",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/10_ai_automation_use_cases.csv": "221289417266344137972923c35802984e9f3ec7c3b622126f04010944808a7d",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/11_risks_controls.csv": "b18a2c737c771575119d19c4510bcf78a7dc6acf252e3bdd80579183481dc40b",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/12_relationships.csv": "d697013e854ecbc620335de87bfd7c687e9446a5decc09ee43b9c2eca12e6dab",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/13_evidence_sources.csv": "c5e663a6d5f8de44b1abf3c9411a504cf814fa43525940b93df259176bd3257a",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/14_metrics_outcomes.csv": "f30944d3c280b999d1dc20d4d15328efcba9cef0c51878d4100ae0c06870942d",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/15_industry_context_patterns.csv": "4d5b0c88e5217817739d0fb00b89a7072347527a1ab429d3b90add14ac7c4590",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/16_expert_lenses.csv": "9d8a18f377c191f3ab4b8828a925e1f8a74f5f8b69c6cf8242b2307a79a572f5",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/17_service_scope_managed_services.csv": "b3916225913d4440445c54e625b2e36cba2b595953cfa91d7bf7c63889d3fefc",
+      "datasets/tenant-inputs/candidates/skyharbor-air/rich-synthetic-2026-07-v3/18_operational_process_evidence.csv": "e737cc8238166b6ebaadd0f90cdd2c14f6c9421ae16613130e14460840fa5e08"
+    }
+  },
+  "boundaries": {
+    "azure_postgres_mutated": false,
+    "active_pointer_updated": false,
+    "default_runtime_visible": false,
+    "candidate_preview_only": true
+  }
+}

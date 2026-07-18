@@ -22,7 +22,7 @@ export const first_capital_tower_cxo_content = {
       tenant_key: "first-capital",
       module: "tower",
       artifact_type: "TowerCxoStoryBlock",
-      title: "First Capital Financial Measurement Story",
+      title: "FS Demo Measurement Story",
       executive_summary:
         "Tower should test Analytics maintenance share; Net-new analytics capacity share; Data foundation certification status; Governance operating model status before any financial outcome language hardens.",
       why_it_matters:
@@ -148,8 +148,7 @@ export const first_capital_tower_cxo_content = {
       artifact_type: "TowerCxoVisualSpec",
       type: "module_next_actions",
       title: "Module Next Actions",
-      purpose:
-        "Route First Capital Financial evidence needs to the right Nexus surfaces.",
+      purpose: "Route FS Demo evidence needs to the right Nexus surfaces.",
       data_requirements: [
         "Evidence Registry",
         "Canonical Facts",

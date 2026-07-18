@@ -22,7 +22,7 @@ export const first_capital_source_cxo_content = {
       tenant_key: "first-capital",
       module: "source",
       artifact_type: "SourceReadinessBrief",
-      title: "First Capital Financial Source Readiness",
+      title: "FS Demo Source Readiness",
       executive_summary:
         "Vendor and service context includes CoreBank Systems; DigitalBank Cloud; FraudShield Analytics; ComplyCase AML.",
       why_it_matters:

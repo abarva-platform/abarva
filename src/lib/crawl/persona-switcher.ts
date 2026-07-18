@@ -32,7 +32,7 @@ const CRAWL_VISIBLE_TENANT_NAMES: Partial<
   Record<CxoPersona["clientKey"], string>
 > = {
   apexretail: "Retail Demo",
-  arcturus: "Financial Services Demo",
+  arcturus: "FS Demo",
   meridian: "Healthcare Demo",
   skyharbor: "Airline Demo",
 };

@@ -45,7 +45,7 @@
     },
     {
       "tenantKey": "first-capital-financial",
-      "displayName": "First Capital Financial",
+      "displayName": "FS Demo",
       "companySizeBand": "large",
       "canonicalInputRoot": "datasets/tenant-inputs/active/first-capital-financial/current",
       "packets": [
@@ -105,7 +105,7 @@
     },
     {
       "tenantKey": "skyharbor-air",
-      "displayName": "SkyHarbor Air",
+      "displayName": "Airline Demo",
       "companySizeBand": "large",
       "canonicalInputRoot": "datasets/tenant-inputs/active/skyharbor-air/current",
       "packets": [

@@ -79,14 +79,14 @@ interface ApprovedHomeContent {
 const LOCAL_CONTEXTS: Record<string, LocalContextConfig> = {
   "skyharbor-air": {
     tenantKey: "skyharbor-air",
-    displayName: "SkyHarbor Air",
+    displayName: "Airline Demo",
     legacyArtifactStoreDir:
       "datasets/context-artifacts/approved/skyharbor-air/home-knowledge",
     requiresApprovedStoryBlocks: true,
   },
   "first-capital": {
     tenantKey: "first-capital",
-    displayName: "First Capital Financial",
+    displayName: "FS Demo",
     legacyArtifactStoreDir:
       "datasets/context-artifacts/approved/first-capital/home-knowledge",
     requiresApprovedStoryBlocks: true,
@@ -393,10 +393,9 @@ export function getLocalCxoRuntimeBrowser(
     );
     const label = dimensionConfig.label;
     const columns = previewColumns(dimensionConfig, rows);
-    const previewRows = rows
-      .filter((row) =>
-        columns.some((column) => hasPreviewValue(row[column.key])),
-      );
+    const previewRows = rows.filter((row) =>
+      columns.some((column) => hasPreviewValue(row[column.key])),
+    );
     const gapRows = countEvidenceGaps(rows);
     const knownGaps = topKnownGaps(previewRows, gapRows);
     const displayRows = previewRows.slice(0, 12);
@@ -481,7 +480,9 @@ function resolveLocalContextConfig(
   return LOCAL_CONTEXTS[canonical] ?? null;
 }
 
-function readApprovedHomeContent(config: LocalContextConfig): ApprovedHomeContent {
+function readApprovedHomeContent(
+  config: LocalContextConfig,
+): ApprovedHomeContent {
   const canonical = readCanonicalApprovedHomeContent(config);
   if (canonical.storyBlocks?.length || canonical.visualSpecs.length) {
     return canonical;
@@ -559,7 +560,10 @@ function readLegacyApprovedHomeContent(
   let visualSpecs: HomeCxoVisualSpec[] = [];
   if (existsSync(visualPath)) {
     const payload = readJson<ApprovedVisualPayload>(visualPath);
-    if (payload.tenant_key === config.tenantKey && payload.validation?.status === "pass") {
+    if (
+      payload.tenant_key === config.tenantKey &&
+      payload.validation?.status === "pass"
+    ) {
       visualSpecs = payload.visual_specs ?? [];
     }
   }
@@ -586,9 +590,11 @@ function toHomeCxoStoryBlock(block: V3ApprovedStoryBlock): HomeCxoStoryBlock {
     executive_summary: block.executive_summary,
     what_context_reveals: block.what_context_reveals ?? "",
     why_it_matters: block.why_it_matters ?? "",
-    decision_implication: block.business_meaning ?? block.evidence_boundary ?? "",
+    decision_implication:
+      block.business_meaning ?? block.evidence_boundary ?? "",
     evidence_still_needed: block.evidence_boundary ?? "",
-    module_usage: "Home context browser; downstream synthesis belongs in Intelligence, Moves, Source, or Tower.",
+    module_usage:
+      "Home context browser; downstream synthesis belongs in Intelligence, Moves, Source, or Tower.",
     next_validation_action: block.recommended_next_action ?? "",
     approved_for_render: true,
   };
@@ -597,7 +603,10 @@ function toHomeCxoStoryBlock(block: V3ApprovedStoryBlock): HomeCxoStoryBlock {
 function toHomeCxoVisualSpec(spec: V3ApprovedVisualSpec): HomeCxoVisualSpec {
   const requirements = Array.isArray(spec.data_requirements)
     ? spec.data_requirements
-    : [spec.data_requirements ?? "Source fact IDs and evidence IDs must resolve before rendering."];
+    : [
+        spec.data_requirements ??
+          "Source fact IDs and evidence IDs must resolve before rendering.",
+      ];
   return {
     visual_id: spec.visual_spec_id,
     type: spec.visual_type,
@@ -606,9 +615,12 @@ function toHomeCxoVisualSpec(spec: V3ApprovedVisualSpec): HomeCxoVisualSpec {
     purpose: spec.business_question,
     data_requirements: requirements,
     chart_allowed: true,
-    why_chart_allowed_or_not: spec.safety_notes ?? "Render only from source-grounded visual payloads.",
+    why_chart_allowed_or_not:
+      spec.safety_notes ?? "Render only from source-grounded visual payloads.",
     placement: "Home companion context",
-    evidence_boundary: spec.safety_notes ?? "Do not render as production truth without validation.",
+    evidence_boundary:
+      spec.safety_notes ??
+      "Do not render as production truth without validation.",
   };
 }
 
