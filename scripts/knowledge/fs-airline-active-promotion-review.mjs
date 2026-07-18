@@ -257,8 +257,41 @@ async function dbRows(client, tenantsList) {
 
 function sourceAuditRows() {
   const rows = [];
-  const homePage = readText("src/app/(maestro)/home/page.tsx");
-  const browser = readText("src/lib/home/v7-context-browser.ts");
+  const homePagePath = "src/app/(maestro)/home/page.tsx";
+  const browserPath = "src/lib/home/v7-context-browser.ts";
+  const defaultReadProofPath = "reports/candidate-invisibility-guard/default-read-tests.csv";
+  const previewProofPath = "reports/candidate-invisibility-guard/candidate-preview-tests.csv";
+  if (
+    !fs.existsSync(path.join(repoRoot, homePagePath)) ||
+    !fs.existsSync(path.join(repoRoot, browserPath))
+  ) {
+    const defaultReadProof = fs.existsSync(path.join(repoRoot, defaultReadProofPath)) ? readText(defaultReadProofPath) : "";
+    const previewProof = fs.existsSync(path.join(repoRoot, previewProofPath)) ? readText(previewProofPath) : "";
+    rows.push({
+      check: "Home default route requires active pointer",
+      status: defaultReadProof.includes("no-default-latest-loaded-runtime-read") && defaultReadProof.includes("PASS") ? "Pass" : "Fail",
+      evidence: `${defaultReadProofPath} packaged proof inspected; source files are not included in the deployed operator image`,
+    });
+    rows.push({
+      check: "Candidate preview labels visible",
+      status: previewProof.includes("candidate-preview-labels-visible") && previewProof.includes("PASS") ? "Pass" : "Fail",
+      evidence: `${previewProofPath} packaged proof inspected; source files are not included in the deployed operator image`,
+    });
+    rows.push({
+      check: "Module runtime default exclusion",
+      status:
+        defaultReadProof.includes("home-know-active-pointer") &&
+        defaultReadProof.includes("intelligence-dossier-active-pointer") &&
+        defaultReadProof.includes("tower-projection-active-pointer") &&
+        defaultReadProof.includes("PASS")
+          ? "Pass"
+          : "Fail",
+      evidence: `${defaultReadProofPath} packaged proof inspected; source files are not included in the deployed operator image`,
+    });
+    return rows;
+  }
+  const homePage = readText(homePagePath);
+  const browser = readText(browserPath);
   rows.push({
     check: "Home default route requires active pointer",
     status: /getActiveTenantContractVersion|active_contract/i.test(browser) && /candidatePreview/i.test(homePage) ? "Pass" : "Watch",

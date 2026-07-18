@@ -30,6 +30,7 @@ Adds a non-mutating active-promotion review for FS Demo and Airline Demo candida
 
 - Adds `scripts/knowledge/fs-airline-active-promotion-review.mjs`.
 - Adds `npm run audit:fs-airline-active-promotion-review`.
+- Packages the narrow `reports/candidate-invisibility-guard/` proof inputs in the ACA image so the private operator job can verify default runtime invisibility without shipping application page source.
 - Writes review reports under `reports/fs-airline-active-promotion-review/`.
 
 ## QA / Validation
@@ -38,7 +39,8 @@ Validation status before PR:
 
 - PASS: `node --check scripts/knowledge/fs-airline-active-promotion-review.mjs`
 - PASS: `npm run audit:fs-airline-active-promotion-review` in local artifact-only mode; expected status is `WATCH_BEFORE_ACTIVE_PROMOTION` without `DATABASE_URL`.
-- NOT RUN YET: ACA private operator execution with `DATABASE_URL` secret for live readback; required after deploy.
+- BLOCKED ON PRIOR IMAGE: ACA private operator execution with `DATABASE_URL` reached the review script but failed because candidate-invisibility proof inputs were not packaged in the runtime image.
+- REQUIRED AFTER THIS FOLLOW-UP DEPLOY: ACA private operator execution with `DATABASE_URL` secret for live readback.
 - PASS: `npm run audit:enterprise-naming`
 - PASS: `npm run audit:architecture-rules`
 - PENDING: `npm run release:check`
