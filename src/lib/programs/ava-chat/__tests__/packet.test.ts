@@ -112,6 +112,9 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
     expect(classifyMovesAvaQuestion("What is the current gate status?").mode).toBe(
       "gate_blocker",
     );
+    expect(
+      classifyMovesAvaQuestion("Quote the exact live gate tally and checklist status.").mode,
+    ).toBe("gate_blocker");
   });
 
   it("builds a deterministic live-status answer without substituting old phase-pack gate counts", () => {
