@@ -128,4 +128,52 @@ describe("EventApprovalCard", () => {
     fireEvent.click(screen.getByTestId("source-approval-gate-archetype"));
     expect(approve.disabled).toBe(false);
   });
+
+  it("sends selfApproveIfAuthorized on approve when the creator is self-approving in pilot mode", async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    });
+    render(<EventApprovalCard {...baseProps} />);
+
+    fireEvent.change(screen.getByTestId("source-approval-rationale"), {
+      target: {
+        value:
+          "Reviewed the trigger, owner, scope, value basis, and baseline owner for this event.",
+      },
+    });
+    fireEvent.click(screen.getByTestId("source-approval-confirmation"));
+    fireEvent.click(screen.getByTestId("source-approval-approve"));
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const [, requestInit] = (global.fetch as jest.Mock).mock.calls[0];
+    const body = JSON.parse(requestInit.body as string);
+    expect(body.selfApproveIfAuthorized).toBe(true);
+  });
+
+  it("does not send selfApproveIfAuthorized when the approver is not the event creator", async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true }),
+    });
+    render(<EventApprovalCard {...baseProps} currentUserId="user-2" />);
+
+    fireEvent.change(screen.getByTestId("source-approval-rationale"), {
+      target: {
+        value:
+          "Reviewed the trigger, owner, scope, value basis, and baseline owner for this event.",
+      },
+    });
+    fireEvent.click(screen.getByTestId("source-approval-confirmation"));
+    fireEvent.click(screen.getByTestId("source-approval-approve"));
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const [, requestInit] = (global.fetch as jest.Mock).mock.calls[0];
+    const body = JSON.parse(requestInit.body as string);
+    expect(body.selfApproveIfAuthorized).toBe(false);
+  });
 });
