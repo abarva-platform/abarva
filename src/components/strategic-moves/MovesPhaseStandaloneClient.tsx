@@ -1427,6 +1427,57 @@ function PhaseBody({
             file. The approved version is what carries forward.
           </p>
         )}
+        <div className="mxw-exec-readout">
+          <article>
+            <span className="mxw-exec-label">What Nexus learned this phase</span>
+            {readinessPack.carriesForwardContent.length > 0 ? (
+              <p>
+                {readinessPack.carriesForwardContent.length} item
+                {readinessPack.carriesForwardContent.length === 1 ? "" : "s"}{" "}
+                generated this phase. Full detail is in Next phase readiness
+                below.
+              </p>
+            ) : (
+              <p>No generated content is on file yet for this phase.</p>
+            )}
+          </article>
+          <article>
+            <span className="mxw-exec-label">What evidence supports it</span>
+            <p>
+              {evidenceCount} evidence item{evidenceCount === 1 ? "" : "s"} on
+              file · {hardGateCriteria.filter((c) => c.completed).length} of{" "}
+              {hardGateCriteria.length || move.gateCriteria.length} hard gate
+              criteria met.
+            </p>
+          </article>
+          <article>
+            <span className="mxw-exec-label">What remains uncertain</span>
+            {openHardCriteria.length > 0 || softGateCriteria.some((c) => !c.completed) ? (
+              <ul>
+                {openHardCriteria.map((criterion) => (
+                  <li key={criterion.id}>{criterion.label} — blocking</li>
+                ))}
+                {softGateCriteria
+                  .filter((criterion) => !criterion.completed)
+                  .map((criterion) => (
+                    <li key={criterion.id}>{criterion.label} — carries as a caveat</li>
+                  ))}
+              </ul>
+            ) : (
+              <p>No open gate criteria — nothing is blocking this approval.</p>
+            )}
+          </article>
+          <article>
+            <span className="mxw-exec-label">What happens next</span>
+            <p>
+              {readinessPack.isFullyReady
+                ? `${readinessPack.nextPhaseLabel} has no required evidence gaps open — it can start with what's already on file.`
+                : `${readinessPack.openNeeds.length} evidence item${
+                    readinessPack.openNeeds.length === 1 ? "" : "s"
+                  } to bring before ${readinessPack.nextPhaseLabel} starts.`}
+            </p>
+          </article>
+        </div>
         <table className="mxw-gate-table">
           <thead>
             <tr>
@@ -2868,6 +2919,12 @@ function MovesStandaloneStyles() {
 .mxw-gate span.soft-open{border-style:dashed;color:var(--muted)}
 .mxw-gate span.approval-generated{background:#fffdf7;border-color:rgba(176,115,15,.24)}
 .mxw-gate span em{display:block;margin-top:5px;font-style:normal;font-size:11px;color:var(--muted)}
+.mxw-exec-readout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}
+.mxw-exec-readout article{border:1px solid var(--line);border-radius:12px;background:var(--soft);padding:14px 16px}
+.mxw-exec-readout p{font-size:12.8px;line-height:1.45;color:var(--ink-2);margin:0}
+.mxw-exec-readout ul{margin:0;padding-left:16px;display:grid;gap:5px}
+.mxw-exec-readout li{font-size:12.8px;line-height:1.4;color:var(--ink-2)}
+.mxw-exec-label{display:block;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--faint);font-weight:800;margin-bottom:8px}
 .mxw-gate-table{width:100%;border-collapse:separate;border-spacing:0;margin:15px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
 .mxw-gate-table th{background:var(--soft);border-bottom:1px solid var(--line);color:var(--faint);font-size:10px;letter-spacing:.7px;text-transform:uppercase;text-align:left;padding:10px 12px}
 .mxw-gate-table td{border-bottom:1px solid var(--line);font-size:12.8px;line-height:1.42;color:var(--ink-2);padding:11px 12px;vertical-align:top}
@@ -2988,7 +3045,7 @@ function MovesStandaloneStyles() {
 .mxw-ava-composer textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;font-size:12.5px;color:var(--ink);background:#fff}
 .mxw-ava-composer button{flex:none;border:0;background:var(--ink);color:#fff;border-radius:9px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer}
 .mxw-ava-composer button:disabled{opacity:.5;cursor:default}
-@media (max-width:980px){.mxw-lanes,.mxw-value-grid{grid-template-columns:1fr}}
+@media (max-width:980px){.mxw-lanes,.mxw-value-grid,.mxw-exec-readout{grid-template-columns:1fr}}
 @media (max-width:900px){
   .mxw-surface{grid-template-columns:1fr}
   .mxw-side{display:none}
