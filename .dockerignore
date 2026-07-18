@@ -23,6 +23,8 @@ reports/
 reports/*
 !reports/active-tenant-access/
 !reports/active-tenant-access/**
+!reports/candidate-invisibility-guard/
+!reports/candidate-invisibility-guard/**
 
 # Local env / secrets — never ship these into an image
 .env
