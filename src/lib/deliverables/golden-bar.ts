@@ -24,14 +24,90 @@ export interface GoldenBarResult {
   missingTaxonomyTerms: string[];
   rawClientFacingIdHits: string[];
   reasons: string[];
+  /** Informational only — does not affect `pass`. See maximumWordCount below. */
+  overMaximumWordCount: boolean;
+  /** Quantified ($ or %) claims with no nearby evidence-qualifying language. Informational only. */
+  unsupportedClaimSignals: string[];
+  /** Deterministic 0-100 score derived from the checks above — replaces the old fixed 96/null. */
+  qualityScore: number;
 }
 
 export interface GoldenBarOptions {
   minimumWordCount?: number;
+  /**
+   * Soft concision ceiling. Unlike minimumWordCount this does NOT affect
+   * `pass` — it only sets `overMaximumWordCount` and nudges `qualityScore`
+   * down, so it can be rolled out to every artifact type without risking a
+   * new generation-blocking failure on a live Move.
+   */
+  maximumWordCount?: number;
   forbiddenLanguage?: readonly string[];
   requiredExactEvidenceTerms?: readonly string[];
   requiredTaxonomyTerms?: readonly string[];
   forbidClientFacingRawIds?: boolean;
+}
+
+/**
+ * Evidence-qualifying language the generation prompt itself asks for (see
+ * claimClassificationBlock / evidencePriorityRuleBlock in
+ * strategic-moves-artifact-standard.ts). A quantified claim near one of these
+ * phrases is treated as sourced or explicitly flagged as an assumption/gap,
+ * not hallucinated.
+ */
+const EVIDENCE_QUALIFYING_PHRASES = [
+  "evidence supports",
+  "evidence indicates",
+  "evidence shows",
+  "stakeholder notes suggest",
+  "remains an assumption",
+  "assumption for review",
+  "cannot be finalized",
+  "inferred from evidence",
+  "inferred observation",
+  "extracted metric",
+  "structured csv",
+  "structured xlsx",
+  "missing evidence",
+  "decision needed",
+  "pending evidence",
+  "not yet captured",
+  "not yet approved",
+  "illustrative",
+  "estimate based on",
+  "per uploaded",
+  "sourced from",
+  "based on uploaded",
+  "data gap",
+] as const;
+
+const QUANTIFIED_CLAIM_PATTERN =
+  /[^.!?]*(?:\$\s?[\d][\d,]*(?:\.\d+)?\s?(?:k|m|bn|million|billion)?\b|\b\d+(?:\.\d+)?\s?%)[^.!?]*[.!?]/gi;
+
+/** Quantified ($/%) sentences with no nearby evidence-qualifying language. */
+export function findUnsupportedQuantifiedClaims(plainText: string, limit = 20): string[] {
+  const sentences = plainText.match(QUANTIFIED_CLAIM_PATTERN) ?? [];
+  const flagged: string[] = [];
+  for (const sentence of sentences) {
+    const lower = sentence.toLowerCase();
+    const qualified = EVIDENCE_QUALIFYING_PHRASES.some((phrase) => lower.includes(phrase));
+    if (!qualified) {
+      flagged.push(sentence.trim().slice(0, 160));
+      if (flagged.length >= limit) break;
+    }
+  }
+  return flagged;
+}
+
+/** Deterministic 0-100 score from the same signals the golden bar already computes. */
+function computeQualityScore(input: {
+  pass: boolean;
+  overMaximumWordCount: boolean;
+  unsupportedClaimCount: number;
+}): number {
+  let score = input.pass ? 92 : 55;
+  score -= Math.min(input.unsupportedClaimCount, 8) * 3;
+  if (input.overMaximumWordCount) score -= 6;
+  return Math.max(0, Math.min(100, score));
 }
 
 /** Extract the visual/table "kinds" present in a rendered HTML artifact (heuristic). */
@@ -157,6 +233,15 @@ export function meetsGoldenBar(
       `needs depth: artifact has ${wordCount} words; minimum is ${options.minimumWordCount}`,
     );
   }
+  const overMaximumWordCount = Boolean(
+    options.maximumWordCount && wordCount > options.maximumWordCount,
+  );
+  if (overMaximumWordCount) {
+    reasons.push(
+      `runs long: artifact has ${wordCount} words; target ceiling is ${options.maximumWordCount} (informational — does not block)`,
+    );
+  }
+  const unsupportedClaimSignals = findUnsupportedQuantifiedClaims(text);
   const lowerText = text.toLowerCase();
   const forbiddenLanguageHits = (options.forbiddenLanguage ?? []).filter(
     (term) => lowerText.includes(term.toLowerCase()),
@@ -223,6 +308,12 @@ export function meetsGoldenBar(
     missingVisuals.length === 0 &&
     missingTables.length === 0;
 
+  const qualityScore = computeQualityScore({
+    pass,
+    overMaximumWordCount,
+    unsupportedClaimCount: unsupportedClaimSignals.length,
+  });
+
   return {
     pass,
     svgCount,
@@ -236,5 +327,8 @@ export function meetsGoldenBar(
     missingTaxonomyTerms,
     rawClientFacingIdHits,
     reasons,
+    overMaximumWordCount,
+    unsupportedClaimSignals,
+    qualityScore,
   };
 }

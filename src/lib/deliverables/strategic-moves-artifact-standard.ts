@@ -87,19 +87,39 @@ export function modelTokenBudgetForArtifact(artifact: DeliverableKey): number {
   return depthStandardForArtifact(artifact).maxTokens;
 }
 
+/** Parses the upper bound of a "700-1,200" style target-word range. */
+function maxWordsFromTargetRange(targetWords: string): number | undefined {
+  const numbers = targetWords.match(/[\d,]+/g);
+  if (!numbers?.length) return undefined;
+  const last = numbers[numbers.length - 1];
+  if (!last) return undefined;
+  const parsed = Number(last.replace(/,/g, ""));
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+export function maximumWordCountForArtifact(artifact: DeliverableKey): number | undefined {
+  return maxWordsFromTargetRange(depthStandardForArtifact(artifact).targetWords);
+}
+
 export function premiumGoldenBarOptionsForArtifact(
   artifact: DeliverableKey,
   context?: SolutionContext,
 ): {
   minimumWordCount?: number;
+  maximumWordCount?: number;
   forbiddenLanguage?: readonly string[];
   requiredExactEvidenceTerms?: readonly string[];
   requiredTaxonomyTerms?: readonly string[];
   forbidClientFacingRawIds?: boolean;
 } {
+  // A concision ceiling (informational — see GoldenBarOptions.maximumWordCount)
+  // applies to every artifact type; only the checks below vary by type.
+  const maximumWordCount = maximumWordCountForArtifact(artifact);
+
   if (artifact === "charter" || artifact === "discovery_report") {
     return {
       minimumWordCount: depthStandardForArtifact(artifact).minWords,
+      maximumWordCount,
       forbiddenLanguage: STRATEGIC_MOVES_FORBIDDEN_ARTIFACT_TERMS,
       ...(artifact === "discovery_report" && context
         ? {
@@ -113,6 +133,7 @@ export function premiumGoldenBarOptionsForArtifact(
   if (artifact === "target_state_architecture") {
     return {
       minimumWordCount: depthStandardForArtifact(artifact).minWords,
+      maximumWordCount,
       forbiddenLanguage: P3_FUTURE_STATE_FORBIDDEN_ARTIFACT_TERMS,
       ...(context
         ? {
@@ -123,7 +144,7 @@ export function premiumGoldenBarOptionsForArtifact(
         : {}),
     };
   }
-  return {};
+  return { maximumWordCount };
 }
 
 function list(values: readonly string[] | undefined, fallback: string): string {

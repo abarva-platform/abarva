@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import { meetsGoldenBar } from "../golden-bar";
+import { findUnsupportedQuantifiedClaims, meetsGoldenBar } from "../golden-bar";
 
 const GOLDEN_DIR = join(process.cwd(), "docs/build/golden-artifacts");
 
@@ -241,5 +241,70 @@ describe("golden-bar acceptance helper (Slice 0)", () => {
       },
     );
     expect(r.pass).toBe(true);
+  });
+
+  it("flags running over the concision ceiling as informational only — does not fail the bar", () => {
+    const longBody = Array.from({ length: 50 }, (_, i) => `word${i}`).join(" ");
+    const r = meetsGoldenBar(
+      `<html><body><svg></svg><table></table><p>${longBody}</p></body></html>`,
+      undefined,
+      { maximumWordCount: 20 },
+    );
+    expect(r.overMaximumWordCount).toBe(true);
+    expect(r.pass).toBe(true);
+    expect(r.qualityScore).toBeLessThan(92);
+  });
+
+  it("does not flag overMaximumWordCount when under the ceiling", () => {
+    const r = meetsGoldenBar(
+      "<html><body><svg></svg><table></table><p>short body.</p></body></html>",
+      undefined,
+      { maximumWordCount: 20 },
+    );
+    expect(r.overMaximumWordCount).toBe(false);
+  });
+
+  it("flags quantified claims with no evidence-qualifying language nearby", () => {
+    const r = meetsGoldenBar(
+      `<html><body><svg></svg><table></table>
+        <p>Automation reduces cost by 40% and saves $1.2M annually.</p>
+        <p>Current evidence supports a 12% reduction in exception volume.</p>
+      </body></html>`,
+    );
+    expect(r.unsupportedClaimSignals.length).toBe(1);
+    expect(r.unsupportedClaimSignals[0]).toMatch(/40%/);
+    // Unsupported claims are a quality-score signal, not a pass/fail gate.
+    expect(r.pass).toBe(true);
+    expect(r.qualityScore).toBeLessThan(92);
+  });
+
+  it("computes a real qualityScore instead of a fixed placeholder", () => {
+    const clean = meetsGoldenBar(
+      "<html><body><svg></svg><table></table><p>Current evidence supports steady state.</p></body></html>",
+    );
+    expect(clean.qualityScore).toBe(92);
+
+    const failing = meetsGoldenBar(
+      "<html><body><p>prose-only, no visuals or tables.</p></body></html>",
+    );
+    expect(failing.pass).toBe(false);
+    expect(failing.qualityScore).toBeLessThan(92);
+  });
+});
+
+describe("findUnsupportedQuantifiedClaims", () => {
+  it("ignores quantified claims paired with evidence-qualifying language", () => {
+    expect(
+      findUnsupportedQuantifiedClaims(
+        "Evidence supports a 25% reduction. This remains an assumption until validated: $500K.",
+      ),
+    ).toEqual([]);
+  });
+
+  it("flags quantified claims with no qualifying language", () => {
+    const hits = findUnsupportedQuantifiedClaims(
+      "Savings will reach $2.5M by year two. Headcount drops by 30%.",
+    );
+    expect(hits.length).toBe(2);
   });
 });

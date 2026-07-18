@@ -84,6 +84,9 @@ describe("persistMoveGeneratedArtifact", () => {
           missingTaxonomyTerms: [],
           rawClientFacingIdHits: [],
           reasons: [],
+          overMaximumWordCount: false,
+          unsupportedClaimSignals: ["Cycle time improves by 40% next quarter."],
+          qualityScore: 89,
         },
         generationMode: "draft",
         draftOnly: true,
@@ -111,6 +114,10 @@ describe("persistMoveGeneratedArtifact", () => {
       expect.objectContaining({
         artifactType: "discovery_report",
         fileFormat: "html",
+        // Real values carried through from the golden-bar result, not the old
+        // fixed 96/null placeholder.
+        qualityScore: 89,
+        unsupportedClaimsCount: 1,
         metadata: expect.objectContaining({
           outputRole: "html_visual_review_companion",
           editableWordEquivalentRequired: true,
