@@ -543,7 +543,6 @@ const TOWER_MART_VIEW: TowerMartCommandViewModel = {
   requiredFieldGaps: [],
 };
 
-
 const OVER_PROVEN_INITIATIVES: AIInitiative[] = INITIATIVES.map(
   (initiative, index) => ({
     ...initiative,
@@ -603,10 +602,14 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     );
 
     expect(screen.getByText("CXO Executive Dashboard")).toBeInTheDocument();
-    expect(screen.queryByText("Tower · CIO command center")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Tower · CIO command center"),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/12:00 AM/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Tuesday/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/aVa · Lakeshore Holdings/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/aVa · Lakeshore Holdings/i),
+    ).not.toBeInTheDocument();
     expect(screen.getAllByText("Visuals").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Portfolio").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Budget").length).toBeGreaterThan(0);
@@ -635,9 +638,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getByText("ServiceNow AI Service Desk")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Visuals" }));
     expect(push).toHaveBeenCalledWith("/tower?dashboard=visuals");
-    expect(
-      screen.getByText("Run versus change."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Run versus change.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Budget" }));
     expect(push).toHaveBeenCalledWith("/tower?dashboard=budget");
     expect(screen.getByText("Spending structure.")).toBeInTheDocument();
@@ -824,7 +825,9 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(
       screen.queryByText(/waiting for tenant-bound Tower substrate/i),
     ).not.toBeInTheDocument();
-    expect(screen.queryByText(/from 0 initiative rows/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/from 0 initiative rows/i),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByText(/Program budget entries are summarized/i),
     ).toBeInTheDocument();
@@ -889,21 +892,41 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     );
 
     expect(screen.getByText("Investment Control Tower")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Command Center" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Value Proof Funnel" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Decision Lanes" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "AI Portfolio" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Recommended Actions" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Evidence" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Command Center" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Value Proof Funnel" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Decision Lanes" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "AI Portfolio" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Recommended Actions" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Evidence" }),
+    ).toBeInTheDocument();
     expect(screen.getByTestId("agent-dock-collapsed-chip")).toBeInTheDocument();
-    expect(screen.queryByText("Tower · CIO command center")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Tower · CIO command center"),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/12:00 AM/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Tuesday/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Run\/change, funded work/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Start here: how much are we spending/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Run\/change, funded work/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Start here: how much are we spending/i),
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Decision Lanes" }));
     expect(screen.getByText("Portfolio Decision Lanes")).toBeInTheDocument();
-    expect(screen.getByText("Crew Recovery & Legality Modernization")).toBeInTheDocument();
+    expect(
+      screen.getByText("Crew Recovery & Legality Modernization"),
+    ).toBeInTheDocument();
     expect(screen.getByText(/VP Integration/)).toBeInTheDocument();
     expect(screen.getByText(/\$28\.3M/)).toBeInTheDocument();
     expect(screen.getAllByText(/\$270\.0M/).length).toBeGreaterThan(0);
@@ -940,7 +963,9 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     const commandMart = screen.getByTestId("tower-command-mart");
     expect(commandMart).toHaveStyle({ margin: "0px", overflow: "hidden" });
     expect(commandMart.getAttribute("style")).not.toContain("-32px");
-    expect(screen.getByLabelText("Investment control tower navigation")).toHaveStyle({
+    expect(
+      screen.getByLabelText("Investment control tower navigation"),
+    ).toHaveStyle({
       minWidth: "0",
     });
     expect(screen.getByTestId("tower-command-stepper")).toHaveStyle({
@@ -969,11 +994,19 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getByText("M365 Copilot Productivity")).toBeInTheDocument();
     expect(screen.getByText("Fix proof")).toBeInTheDocument();
     expect(screen.getByText(/\$2\.1M validated/)).toBeInTheDocument();
-    expect(screen.getAllByText("Hold until gates clear").length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Member Service AI Assist/).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText("Hold until gates clear").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/Member Service AI Assist/).length,
+    ).toBeGreaterThan(0);
     expect(screen.queryByText("not_approved")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Recommended Actions/ }));
-    expect(screen.getByText("Fix Copilot adoption before expansion")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Recommended Actions/ }),
+    );
+    expect(
+      screen.getByText("Fix Copilot adoption before expansion"),
+    ).toBeInTheDocument();
     expect(screen.queryByText("$2.6B")).not.toBeInTheDocument();
   });
 
@@ -990,6 +1023,12 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(towerCioStarterQuestionsForTenant("Healthcare Demo")).toEqual(
       TOWER_CIO_ENTERPRISE_STARTER_QUESTIONS,
     );
+    expect(towerCioStarterQuestionsForTenant("SkyHarbor Air")).toEqual(
+      TOWER_CIO_ENTERPRISE_STARTER_QUESTIONS,
+    );
+    expect(
+      towerCioStarterQuestionsForTenant("Financial Services Demo"),
+    ).toEqual(TOWER_CIO_ENTERPRISE_STARTER_QUESTIONS);
     expect(towerCioStarterQuestionsForTenant("Lakeshore Holdings")).toEqual(
       TOWER_CIO_STARTER_QUESTIONS,
     );
@@ -1021,37 +1060,46 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     ).toBeInTheDocument();
   });
 
-  it("uses enterprise starter questions for Healthcare/Meridian instead of portfolio-company wording", () => {
-    render(
-      <TowerIndexPage
-        tenantName="Healthcare Demo"
-        context="Tower"
-        towerToday="2026-07-01"
-        clientId="client-meridian"
-        initiatives={[]}
-        vendors={[]}
-        activeTab="portfolio"
-        cxoView={{ ...GOVERNED_CXO_VIEW, tenantName: "Healthcare Demo" }}
-      />,
-    );
+  it.each([
+    ["Healthcare Demo", "client-meridian"],
+    ["SkyHarbor Air", "client-skyharbor"],
+    ["Financial Services Demo", "client-first-capital"],
+  ])(
+    "uses enterprise starter questions for %s instead of portfolio-company wording",
+    (tenantName, clientId) => {
+      render(
+        <TowerIndexPage
+          tenantName={tenantName}
+          context="Tower"
+          towerToday="2026-07-01"
+          clientId={clientId}
+          initiatives={[]}
+          vendors={[]}
+          activeTab="portfolio"
+          cxoView={{ ...GOVERNED_CXO_VIEW, tenantName }}
+        />,
+      );
 
-    fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
+      fireEvent.click(screen.getByTestId("agent-dock-collapsed-chip"));
 
-    expect(
-      screen.getByText(
-        "Show the enterprise technology budget by run, change, and funded initiatives.",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Which executive owners should inspect spend, risk, and value proof first?",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText(
-        "Show the holding-company IT budget by portfolio company and shared services.",
-      ),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByText(/portfolio-company CIOs/i)).not.toBeInTheDocument();
-  });
+      expect(
+        screen.getByText(
+          "Show the enterprise technology budget by run, change, and funded initiatives.",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          "Which executive owners should inspect spend, risk, and value proof first?",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(
+          "Show the holding-company IT budget by portfolio company and shared services.",
+        ),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(/portfolio-company CIOs/i),
+      ).not.toBeInTheDocument();
+    },
+  );
 });

@@ -51,11 +51,12 @@ export function isSkyHarborCtoReadinessQuestion(query: string): boolean {
 
 function listValues(
   rows: Array<Record<string, string>>,
-  key: string,
+  key: string | string[],
   limit: number,
 ): string {
+  const keys = Array.isArray(key) ? key : [key];
   return rows
-    .map((row) => row[key])
+    .map((row) => keys.map((candidate) => row[candidate]).find(Boolean))
     .filter(Boolean)
     .slice(0, limit)
     .join("; ");
@@ -82,9 +83,9 @@ export function formatSkyHarborCtoReadinessSourceDetail(
     "Known SkyHarbor context:",
     `- IROPS-critical systems: ${listValues(packet.systems, "system_name", 8)}.`,
     `- Critical data assets and integrations: ${listValues(packet.dataAssets, "data_asset_name", 10)}.`,
-    `- AI initiatives: ${listValues(packet.aiInitiatives, "use_case", 8)}.`,
-    `- Modernization programs: ${listValues(packet.programs, "record_name", 8)}.`,
-    `- Open risks and controls: ${listValues(packet.risksControls, "risk_or_control", 8)}.`,
+    `- AI initiatives: ${listValues(packet.aiInitiatives, ["use_case", "use_case_name"], 8)}.`,
+    `- Modernization programs: ${listValues(packet.programs, ["record_name", "program_name"], 8)}.`,
+    `- Open risks and controls: ${listValues(packet.risksControls, ["risk_or_control", "risk_or_control_name"], 8)}.`,
     "",
     "Missing evidence to make claims board-grade:",
     packet.missingEvidenceChecklist.map((item) => `- ${item}`).join("\n"),
@@ -94,6 +95,9 @@ export function formatSkyHarborCtoReadinessSourceDetail(
     "",
     "Claim maturity:",
     formatClaimMaturity(packet.claimMaturity),
+    "",
+    "Source files used:",
+    packet.sourceFiles.map((file) => `- ${file}`).join("\n"),
   ].join("\n");
 }
 

@@ -78,10 +78,7 @@ function bindingTenantKey(value: string | null | undefined): string | null {
     return "meridian-health";
   }
   if (key === "retail-demo" || key === "retail demo") return "apex-retail";
-  if (
-    key === "financial-services-demo" ||
-    key === "financial services demo"
-  ) {
+  if (key === "financial-services-demo" || key === "financial services demo") {
     return "first-capital";
   }
   if (key.includes("skyharbor") || key.includes("airline")) {
@@ -125,7 +122,10 @@ async function withHomePageTimeout<T>(
       }),
     ]);
   } catch (error) {
-    console.warn(`[home] ${label} failed; rendering Knowledge fallback.`, error);
+    console.warn(
+      `[home] ${label} failed; rendering Knowledge fallback.`,
+      error,
+    );
     return fallback;
   } finally {
     if (timeout) clearTimeout(timeout);
@@ -172,7 +172,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const clientOption = displayClientKey
     ? getClientOption(displayClientKey)
     : null;
-  const designContract = readHomeKnowledgeDesignContractForTenant(homeTenantKey);
+  const designContract =
+    readHomeKnowledgeDesignContractForTenant(homeTenantKey);
   if (homeTenantKey === "meridian-health" && designContract.pack) {
     return (
       <AppShell
@@ -241,11 +242,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const localBrowser = getLocalCxoRuntimeBrowser(
     activeClient?.key ?? homeTenantKey,
   );
-  const canonicalLocalBrowser =
-    localBrowser?.cxoContentSource === "canonical-v3-approved-content"
+  const preferredLocalBrowser =
+    localBrowser?.cxoContentSource === "canonical-v3-approved-content" ||
+    localBrowser?.runtimeSource === "local-v3-active"
       ? localBrowser
       : null;
-  const v7Browser = canonicalLocalBrowser
+  const v7Browser = preferredLocalBrowser
     ? null
     : await withHomePageTimeout(
         "V7 context browser",
@@ -255,7 +257,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         null,
       );
   const browser =
-    canonicalLocalBrowser ??
+    preferredLocalBrowser ??
     v7Browser ??
     localBrowser ??
     getHomeV6ContextBrowser(activeClient?.key ?? homeTenantKey);
