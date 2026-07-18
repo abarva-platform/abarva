@@ -138,4 +138,23 @@ describe("sanitizeSuggestedQuestions", () => {
       "unsafe_suggested_question",
     );
   });
+
+  it("fills partial safe follow-ups to exactly three governed questions", () => {
+    const result = sanitizeSuggestedQuestions(
+      ["What evidence supports this recommendation?"],
+      {
+        tenantKey: "meridian",
+        tenantName: "Healthcare Demo",
+        surface: "intelligence",
+      },
+    );
+
+    expect(result.questions).toHaveLength(3);
+    expect(result.questions[0]).toBe(
+      "What evidence supports this recommendation?",
+    );
+    expect(result.questions).toContain(
+      "What can AbarVa confirm from loaded evidence?",
+    );
+  });
 });

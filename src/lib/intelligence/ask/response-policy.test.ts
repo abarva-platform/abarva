@@ -61,6 +61,10 @@ describe("Ask Intelligence response policy", () => {
       "Target 90-160 words",
     );
     expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
+      "broad prioritization question",
+    );
+    expect(CXO_ANSWER_QUALITY_CONTRACT).toContain("top-N");
+    expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
       "queue exactly 3 short follow-up questions",
     );
   });

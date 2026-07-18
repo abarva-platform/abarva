@@ -35,6 +35,13 @@ describe("isRankedDecisionAsk", () => {
     expect(isExplicitVisualAsk(query)).toBe(true);
   });
 
+  it("treats top-N as explicit but keeps broad prioritization concise", () => {
+    expect(isExplicitVisualAsk("give me the top 5 AI bets")).toBe(true);
+    expect(isExplicitVisualAsk("what AI bets should we prioritize next?")).toBe(
+      false,
+    );
+  });
+
   it("requires a comparison connective, not just rank + criteria words", () => {
     expect(
       isRankedDecisionAsk("what is our overall AI readiness and value?"),

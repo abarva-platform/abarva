@@ -136,12 +136,12 @@ LIVE ANSWER QUALITY CONTRACT
 Every answer must be decision-grade enough to survive an audit:
 
 - Use the AbarVa Pyramid Brief by default: Answer first, Proof second, Move third. Answer is one direct sentence. Proof is 2-3 compact evidence points or tradeoffs. Move is one concrete executive action, owner decision, or validation gate.
-- Keep normal answers to 90-160 words. For explicit table, chart, graph, matrix, ranking, or comparison asks, keep prose under 120 words before the exhibit and let the exhibit carry the detail. Only exceed this when the user explicitly asks for a deep dive, board memo, implementation plan, or roadmap.
+- Keep normal answers to 90-160 words. For explicit table, chart, graph, matrix, top-N ranking, or named-option comparison asks, keep prose under 120 words before the exhibit and let the exhibit carry the detail. Only exceed this when the user explicitly asks for a deep dive, board memo, implementation plan, or roadmap.
 - Keep paragraphs short. No paragraph should run past roughly 60 words. Use compact bullets when the answer compares multiple options, drivers, or next steps.
 - If you write a dollar value, percentage, multiplier, bps value, rank, or range, attach a natural basis cue in the same sentence: "from the retrieved budget row," "based on the cited benchmark," "planning range," "evidence ledger," "source," "as of," or "directional estimate." Never leave precise numbers bare.
 - Define acronyms unless they are common executive terms like AI, ROI, KPI, API, CFO, CIO, COO, CISO, CXO, SLA, SOW, or NPS.
 - End with a concrete decision, owner action, or useful follow-up only when it naturally belongs in the answer. Do not append generic routing language about Source, Tower, or Moves.
-- Use visuals only when they materially improve the decision. Good triggers: comparing options, ranking investments, showing spend/cost/budget, explaining a trend, mapping dependencies, sequencing a roadmap, or making a risk/value tradeoff clearer. If the user explicitly asks for a table, chart, graph, visual, comparison grid, ranking, breakdown, or "show me" structure — or if the answer naturally compares/ranks three or more items — the visual has earned its place: include one compact Markdown table after the short advisory answer unless the necessary values or relationship rows are genuinely absent. The UI will lift that table into the right-side canvas, not the left chat rail.
+- Use visuals only when they materially improve the decision and the user asks for an exhibit: table, chart, graph, visual, comparison grid, top-N ranking, breakdown, or "show me" structure. Broad prioritization questions should stay in the Pyramid Brief and queue a follow-up for the detailed ranking, matrix, or chart. If a visual has earned its place, include one compact Markdown table after the short advisory answer unless the necessary values or relationship rows are genuinely absent. The UI will lift that table into the right-side canvas, not the left chat rail.
 - When the user asks for a chart, graph, trend, or visualization, make the numeric series or relationship rows explicit and sourced in a compact Markdown table. Do not output raw SVG, Mermaid, chart JSON, canvas code, or renderer instructions. If the retrieved data is not enough for a real chart or graph, say what is missing in plain language without adding a generic route-to-module closer.
 - Do not include source-support, evidence-register, or "material used for the answer" tables in the visible answer. Evidence belongs in internal grounding unless the user specifically asks to inspect sources.
 - Never expose internal product or data-layer terms in the visible answer: substrate, packet, candidate_move, move_id, phase_id, artifact_id, evidence_id, tenant_id, client_id, source_record_id, V-number data-layer labels, raw table names, route names, or debug labels. Translate those into executive language such as enterprise context, data foundation, source material, phase, Move artifact, or client workspace.
@@ -275,7 +275,7 @@ OUTPUT CONVENTIONS — surface scaffolding, preserved separately from the role.
 
   The chat surface renders plain text only. Do NOT use Markdown headings, **bold** markers, or formal bullet lists in the response body. Inline em-dashes, "(1) … (2) …" markers, and brief lead-line lists like the EXAMPLE 1 / EXAMPLE 4 shape above are fine.
 
-  Length: single-issue answers 100–150 words; multi-item answers up to ~400 words when the question requires it (vendor comparisons, ranked lists, portfolio reviews). Never pad — depth over length, but never truncate a required analytical point to hit a word target.
+  Length: single-issue answers 100–150 words; multi-item answers still default to the Pyramid Brief unless the user explicitly asks for a deep dive, top-N ranking, board memo, implementation plan, roadmap, or named-option comparison. Never pad — depth over length, but never truncate a required analytical point to hit a word target.
 
   Do not output source citations inline as bracketed IDs — the UI renders sources separately. Cite evidence in prose ("three peer specialty retailers in the corpus") not as "[PAT-XXX-001]".
 
@@ -335,7 +335,7 @@ export function chooseSynthesisTokenBudget(query: string): number {
 }
 
 export function isExplicitVisualAsk(query: string): boolean {
-  return /\b(table|tables|chart|charts|graph|graphs|visual|visuals|visually|visuali[sz]e|plot|comparison grid|matrix|ranking|ranked|breakdown|show me)\b/i.test(
+  return /\b(table|tables|chart|charts|graph|graphs|visual|visuals|visually|visuali[sz]e|plot|comparison grid|matrix|ranking|ranked|breakdown|show me|top\s+\d+|top\s+(?:three|four|five|six|seven|eight|nine|ten))\b/i.test(
     query,
   );
 }
@@ -427,15 +427,16 @@ export function buildUniversalAnswerVisualContract(): string {
     "UNIVERSAL aVa ANSWER + VISUAL CONTRACT — ALWAYS ON:",
     "- Treat the user's literal question as the task. Do not rewrite it into a canned workflow and do not answer a different starter prompt.",
     "- Start with the executive answer in prose. Make the judgment clear before any exhibit.",
-    "- Default to the AbarVa Pyramid Brief: Answer, Proof, Move. Target 90-160 words before followups; for table/chart/graph/matrix/ranking asks, target no more than 120 words before the exhibit.",
+    "- Default to the AbarVa Pyramid Brief: Answer, Proof, Move. Target 90-160 words before followups; for explicit table/chart/graph/matrix/top-N/named-comparison asks, target no more than 120 words before the exhibit.",
     "- Claude owns the advisory judgment: which options matter, how to rank them, what is directional, what is not yet evidenced, and what the executive should do next.",
     "- The renderer owns display only. Do not write HTML, SVG, Mermaid, canvas code, raw renderer instructions, or arbitrary JSON outside the governed fences below. In answer-only mode, do not emit tab markers; in tabbed mode, use only the exact tab markers supplied elsewhere.",
-    "- Use visuals when they materially improve the decision: ranking, comparison, prioritization, value/complexity/readiness tradeoff, spend, trend, roadmap, risk, dependency, or a user-requested table/chart/graph/visual.",
+    "- Use visuals when the user explicitly asks for a table, chart, graph, matrix, top-N ranking, named-option comparison, value/complexity/readiness tradeoff, spend trend, roadmap, risk map, dependency map, or visual.",
+    "- For broad prioritization, strategy, trend, or 'what should we do next' questions without an explicit exhibit ask, do not emit tables/charts/decision fences. Answer in the Pyramid Brief and queue a follow-up to build the ranking, matrix, or chart.",
     "- If no useful visual is warranted, skip the visual. If a visual is warranted, it must be populated; never emit an empty table, empty chart, placeholder row, or source-support/evidence-register table.",
     "- Use business language. Never write 'not loaded', 'not ingested', or product/debug terms. Say 'not yet evidenced' or 'needs client validation' when a field is missing.",
     "- Keep table cells compact: item/name fields under 8 words where possible, value/readiness/complexity fields under 18 words, recommendation/nextAction under 35 words.",
     "- Put caveats in a short prose sentence or note, not repeated across every row.",
-    "When ranking, prioritizing, comparing, or trading off 2+ options, prefer this governed decision table fence after the opening answer:",
+    "When the user explicitly asks for top-N ranking, named-option comparison, or value/complexity/readiness tradeoff across 2+ options, prefer this governed decision table fence after the opening answer:",
     DECISION_TABLE_FORMAT_CONTRACT,
     "When a chart materially helps and you have 2+ numeric rows, include exactly one governed chart fence using this existing parser-supported format:",
     CHART_FENCE_FORMAT_CONTRACT,
@@ -633,11 +634,11 @@ export async function* synthesizeStream(args: {
 
 MANDATORY FORMATTING RULES — follow every one of these exactly:
 1. Default answer shape is the AbarVa Pyramid Brief: Answer, Proof, Move.
-2. Target 90-160 words total for normal answers; for table/chart/graph/matrix/ranking asks, keep prose under 120 words before the exhibit.
+2. Target 90-160 words total for normal answers; for explicit table/chart/graph/matrix/top-N/named-comparison asks, keep prose under 120 words before the exhibit.
 3. The first sentence must state the key finding directly. No hollow opener, no "great question", no process narration.
 4. Use bold sparingly for the single most decision-critical number or phrase. Do not turn the whole answer into bold headers.
 5. Use "- " bullets only when they improve scanning. Avoid long bullet decks in default answers.
-6. Use a GFM Markdown table only when the user asks for a table/chart/graph/matrix/ranking/comparison or the answer compares 3+ items across 2+ attributes. GFM table format: header row | col1 | col2, then separator row |---|---|, then one data row per line. 3–5 columns, 2–8 rows.
+6. Use a GFM Markdown table only when the user explicitly asks for a table/chart/graph/matrix/top-N ranking/named-option comparison, or when they ask for a value/complexity/readiness tradeoff. Broad prioritization questions should stay in the Pyramid Brief and queue a follow-up for the detailed exhibit. GFM table format: header row | col1 | col2, then separator row |---|---|, then one data row per line. 3–5 columns, 2–8 rows.
 7. If the user asks a broad strategy question and not a deep dive, queue exactly 3 follow-up questions through the governed followups block instead of dumping every detail.
 
 ${CHART_OUTPUT_CONTRACT}`
@@ -678,7 +679,7 @@ ACTIVE INTELLIGENCE CANVAS RULES
     : "";
   const universalAnswerVisualContract = buildUniversalAnswerVisualContract();
   const answerOnlyDirective = answerOnly
-    ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a crisp executive answer using full GitHub-Flavored Markdown. Default to the AbarVa Pyramid Brief: Answer, Proof, Move. GFM tables are REQUIRED only for explicit visual/ranking/comparison asks or true multi-attribute data — do not flatten those to prose. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — the canvas is handled separately. Length: prose-only answers 90-160 words; table/chart answers must keep prose under 120 words before the exhibit and let the exhibit carry the detail. End only through the governed followups block with exactly 3 queued questions. Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.
+    ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a crisp executive answer using full GitHub-Flavored Markdown. Default to the AbarVa Pyramid Brief: Answer, Proof, Move. GFM tables are REQUIRED only for explicit visual/top-N/named-comparison asks or requested value/complexity/readiness tradeoffs — do not flatten those to prose. For broad prioritization, strategy, trend, or "what should we do next" questions, do not emit tables, charts, decision fences, tab markers, or canvas blocks; queue the deeper exhibit as a follow-up. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — the canvas is handled separately. Length: prose-only answers 90-160 words; table/chart answers must keep prose under 120 words before the exhibit and let the exhibit carry the detail. End only through the governed followups block with exactly 3 queued questions. Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.
 Use the universal answer + visual contract for any table, chart, ranking, and follow-up structure.`
     : "";
   const shapeContract = answerOnly

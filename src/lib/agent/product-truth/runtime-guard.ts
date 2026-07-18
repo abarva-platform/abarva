@@ -163,7 +163,13 @@ export function sanitizeSuggestedQuestions(
   }
 
   if (safeQuestions.length > 0) {
-    return { questions: dedupe(safeQuestions).slice(0, 3), violations };
+    return {
+      questions: dedupe([
+        ...safeQuestions,
+        ...defaultSafeSuggestedQuestions(context),
+      ]).slice(0, 3),
+      violations,
+    };
   }
 
   return {
