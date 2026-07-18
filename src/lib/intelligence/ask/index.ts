@@ -286,7 +286,7 @@ export async function* askIntelligence(
       surfaceContext: opts.surfaceContext,
     });
     emitTiming(
-      trace.finish("retrieval.v7_dossier.done", v7DossierStartedAt, {
+      trace.finish("retrieval.context_dossier.done", v7DossierStartedAt, {
         sourceCount: v7Dossier.sources.length,
       }),
     );
