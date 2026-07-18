@@ -1025,7 +1025,7 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("Gates 1 / 2");
     expect(html).toContain("source-canvas-tab-evidence");
     expect(html).toContain(">1 / 2</span>");
-    expect(html).toContain("Requirement-satisfied 2 / 8");
+    expect(html).toContain("Requirement coverage 2 / 8");
   });
 
   // ── B4: suggested chat prompts populate the composer ──────────────────────
