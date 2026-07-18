@@ -4,6 +4,23 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  LabelList,
+  Legend,
+  ReferenceArea,
+  ReferenceLine,
+  ResponsiveContainer,
+  Scatter,
+  ScatterChart,
+  Tooltip,
+  XAxis,
+  YAxis,
+  ZAxis,
+} from "recharts";
 import { AppShell } from "@/components/shell/AppShell";
 import { MetricProvenance } from "@/components/tower/MetricProvenance";
 import { ExecutiveActionQueuePanel } from "@/components/tower/ExecutiveActionQueuePanel";
@@ -95,33 +112,31 @@ function labelizeCioMeasureKey(value: string): string {
     .replace(/\bytd\b/gi, "YTD");
 }
 
-// ─── Tower design tokens — aligned with the LOCKED AbarVa design system ───────
-// Background: #F8F7F4 cream (matches /tower/onboard, /tower/portfolio, marketing).
-// Headings: Fraunces serif. Body: Inter. Buttons: black / ghost. NO new colours.
+// ─── Tower design tokens — aligned with Intelligence executive canvas ─────────
 const T = {
-  PAGE_BG: "#F8F7F4",
-  CREAM: "#F8F7F4",
-  CREAM_2: "#ffffff",
-  CREAM_DEEP: "#eeece6",
-  RULE: "rgba(10,10,11,0.10)",
-  RULE_STRONG: "rgba(10,10,11,0.22)",
-  BORDER: "rgba(10,10,11,0.08)",
-  BORDER_STRONG: "rgba(10,10,11,0.18)",
-  INK: "#1A1A18",
-  INK_2: "#525866",
-  GRAY: "#9AA3B2",
-  GRAY_DK: "#525866",
-  GOLD: "#c9a227",
+  PAGE_BG: "#f7f4ee",
+  CREAM: "#f7f4ee",
+  CREAM_2: "#fffdf8",
+  CREAM_DEEP: "#eee7dc",
+  RULE: "#ded5c8",
+  RULE_STRONG: "#cfc6b8",
+  BORDER: "#ece4d8",
+  BORDER_STRONG: "#ded5c8",
+  INK: "#161411",
+  INK_2: "#34302a",
+  GRAY: "#8d8680",
+  GRAY_DK: "#6d675f",
+  GOLD: "#a96d16",
   PURPLE: "#1B2B5C",
-  PURPLE_BG: "rgba(27,43,92,0.07)",
-  GREEN: "#1d9e75",
-  GREEN_BG: "#e1f5ee",
-  TEAL: "#0F766E",
-  TEAL_TINT: "#5FD0C2",
-  AMBER: "#ba7517",
-  AMBER_BG: "#faeeda",
-  RED: "#a32d2d",
-  RED_BG: "#fceded",
+  PURPLE_BG: "#eef2ff",
+  GREEN: "#218553",
+  GREEN_BG: "#e7f4ec",
+  TEAL: "#157f74",
+  TEAL_TINT: "#28b7a7",
+  AMBER: "#a96d16",
+  AMBER_BG: "#fbefd9",
+  RED: "#aa3a32",
+  RED_BG: "#f7e4e1",
   // Pressure-specific colors (each pressure type has its own ink)
   P_COST: "#8b3a3a",
   P_ADOPT: "#2d5f8a",
@@ -3969,43 +3984,10 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
                   {formatMoneyGap(command.totalItBudgetFy26)}
                 </div>
               </div>
-              <div
-                aria-label="Run and change budget split"
-                style={{
-                  display: "flex",
-                  height: 48,
-                  marginTop: 24,
-                  borderRadius: 8,
-                  overflow: "hidden",
-                  background: `repeating-linear-gradient(45deg, ${T.CREAM_DEEP}, ${T.CREAM_DEEP} 8px, #e5e2d8 8px, #e5e2d8 16px)`,
-                }}
-              >
-                <div
-                  style={{
-                    width: `${Math.max(0, Math.min(100, runPct))}%`,
-                    display: "grid",
-                    placeItems: "center",
-                    color: T.INK,
-                    fontWeight: 900,
-                    fontSize: 14,
-                  }}
-                >
-                  Run {formatMoneyGap(command.runBudgetFy26)}
-                </div>
-                <div
-                  style={{
-                    flex: 1,
-                    display: "grid",
-                    placeItems: "center",
-                    background: T.TEAL,
-                    color: "#fff",
-                    fontWeight: 900,
-                    fontSize: 14,
-                  }}
-                >
-                  Change {formatMoneyGap(command.changeBudgetFy26)}
-                </div>
-              </div>
+              <TowerBudgetSplitRechart
+                run={command.runBudgetFy26}
+                change={command.changeBudgetFy26}
+              />
               <div
                 style={{
                   display: "flex",
@@ -4175,20 +4157,20 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
     <div
       data-testid="tower-command-mart"
       style={{
-        background: "#f6f3ec",
+        background: T.PAGE_BG,
         borderTop: `1px solid ${T.RULE}`,
         minHeight: "calc(100vh - 132px)",
         margin: 0,
         width: "100%",
         boxSizing: "border-box",
-        display: "grid",
-        gridTemplateColumns: "clamp(210px, 15vw, 258px) minmax(0, 1fr)",
+        display: "block",
         overflow: "hidden",
       }}
     >
       <aside
         aria-label="Investment control tower navigation"
         style={{
+          display: "none",
           borderRight: `1px solid ${T.RULE}`,
           background: "rgba(255,255,255,.62)",
           padding: "24px 14px",
@@ -4224,7 +4206,73 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
           />
         </TowerMartNavGroup>
       </aside>
-      <main style={{ padding: "34px clamp(24px, 2.8vw, 48px) 138px", minWidth: 0 }}>
+      <main
+        style={{
+          padding: "34px clamp(28px, 4vw, 72px) 138px",
+          minWidth: 0,
+          maxWidth: 1680,
+          margin: "0 auto",
+        }}
+      >
+        <section
+          aria-label="Tower command canvas views"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 24,
+            marginBottom: 22,
+            borderBottom: `1px solid ${T.RULE}`,
+          }}
+        >
+          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+            {TOWER_MART_SECTIONS.map((section) => {
+              const selected = activeSection === section.key;
+              const count = towerSectionCount(section.key, model);
+              return (
+                <button
+                  key={section.key}
+                  type="button"
+                  onClick={() => setActiveSection(section.key)}
+                  aria-pressed={selected}
+                  style={{
+                    position: "relative",
+                    top: 1,
+                    border: "none",
+                    borderBottom: selected
+                      ? `2px solid ${T.TEAL_TINT}`
+                      : "2px solid transparent",
+                    background: selected ? "rgba(255,253,248,.62)" : "transparent",
+                    color: selected ? T.INK : T.GRAY_DK,
+                    padding: "12px 8px",
+                    marginRight: 18,
+                    fontSize: 14,
+                    fontWeight: selected ? 850 : 650,
+                    fontFamily: T.SANS,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {section.label}
+                  {count !== undefined ? (
+                    <span style={{ color: selected ? T.TEAL : T.GRAY, marginLeft: 6, fontSize: 11 }}>
+                      {count}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+          <div
+            style={{
+              ...towerTinyLabelStyle,
+              color: T.TEAL,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Tower mart · source-backed
+          </div>
+        </section>
         {activeSection === "command" ? (
           <>
             <div
@@ -4272,14 +4320,14 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
               </span>
             </h2>
             <p style={{ margin: "10px 0 0", color: T.INK_2, fontSize: 16 }}>
-              Investment control tower — <em>where money, risk and value are misaligned, and what to do next.</em>
+              Investment control tower — <em>where money, risk, AI demand, and value evidence are misaligned, and what to do next.</em>
             </p>
             <div
               data-testid="tower-command-stepper"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(3, minmax(180px, 1fr))",
-                gap: 14,
+                gap: 16,
                 alignItems: "stretch",
                 marginTop: 24,
               }}
@@ -4293,10 +4341,12 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
                     type="button"
                     onClick={() => setCommandStep(stepNumber)}
                     style={{
-                      border: `1px solid ${selected ? "#1677ff" : T.RULE}`,
+                      border: `1px solid ${selected ? T.TEAL_TINT : T.RULE}`,
                       borderRadius: 14,
-                      background: selected ? "#eaf2ff" : "#fff",
-                      boxShadow: "0 10px 24px rgba(15,23,42,.08)",
+                      background: selected ? T.CREAM_2 : "#fff",
+                      boxShadow: selected
+                        ? "0 16px 34px rgba(21,127,116,.12)"
+                        : "0 10px 24px rgba(15,23,42,.05)",
                       minHeight: 62,
                       padding: "12px 16px",
                       display: "flex",
@@ -4314,7 +4364,7 @@ function TowerMartCommandCenter({ model }: { model: TowerMartCommandViewModel })
                         borderRadius: 999,
                         display: "grid",
                         placeItems: "center",
-                        background: selected ? T.PURPLE : "#fff",
+                        background: selected ? T.TEAL : "#fff",
                         color: selected ? "#fff" : T.INK_2,
                         border: selected ? "none" : `1px solid ${T.RULE_STRONG}`,
                         fontWeight: 900,
@@ -4433,6 +4483,326 @@ const changeSwatchStyle: CSSProperties = {
   marginRight: 6,
   verticalAlign: "-1px",
 };
+
+function rechartsMoneyTick(value: number): string {
+  return formatMoneyGap(value);
+}
+
+function TowerChartTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: Array<{
+    name?: string | number;
+    value?: string | number;
+    color?: string;
+    payload?: Record<string, unknown>;
+  }>;
+  label?: string | number;
+}) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0]?.payload ?? {};
+  const title =
+    typeof row.name === "string"
+      ? row.name
+      : typeof row.label === "string"
+        ? row.label
+        : String(label ?? "Signal");
+  return (
+    <div
+      style={{
+        border: `1px solid ${T.RULE}`,
+        borderRadius: 10,
+        background: T.CREAM_2,
+        boxShadow: "0 18px 36px rgba(15,23,42,.14)",
+        padding: "10px 12px",
+        color: T.INK,
+        maxWidth: 280,
+      }}
+    >
+      <div style={{ fontWeight: 900, marginBottom: 5 }}>{title}</div>
+      {payload.map((item) => (
+        <div
+          key={`${item.name ?? "value"}-${item.value ?? ""}`}
+          style={{ color: T.INK_2, fontSize: 12, lineHeight: 1.4 }}
+        >
+          <span style={{ color: item.color ?? T.TEAL }}>●</span>{" "}
+          {item.name}:{" "}
+          <b>
+            {typeof item.value === "number"
+              ? rechartsMoneyTick(item.value)
+              : item.value}
+          </b>
+        </div>
+      ))}
+      {typeof row.detail === "string" ? (
+        <div style={{ color: T.GRAY_DK, fontSize: 11.5, lineHeight: 1.35, marginTop: 7 }}>
+          {row.detail}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function TowerBudgetSplitRechart({
+  run,
+  change,
+}: {
+  run: number;
+  change: number;
+}) {
+  const data = [{ label: "FY26 technology budget", run, change }];
+  return (
+    <div style={{ width: "100%", height: 142 }} data-testid="tower-budget-recharts">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 12, right: 22, bottom: 8, left: 0 }}
+          barCategoryGap={16}
+        >
+          <XAxis type="number" hide domain={[0, run + change]} />
+          <YAxis type="category" dataKey="label" hide />
+          <Tooltip content={<TowerChartTooltip />} />
+          <Legend
+            verticalAlign="bottom"
+            height={28}
+            iconType="circle"
+            wrapperStyle={{ color: T.INK_2, fontSize: 12 }}
+          />
+          <Bar
+            dataKey="run"
+            name="Run budget"
+            stackId="budget"
+            fill={T.TEAL}
+            radius={[9, 0, 0, 9]}
+            isAnimationActive={false}
+          >
+            <LabelList
+              dataKey="run"
+              position="center"
+              formatter={(value: unknown) =>
+                typeof value === "number" ? `Run ${formatMoneyGap(value)}` : ""
+              }
+              fill="#fff"
+              fontSize={13}
+              fontWeight={900}
+            />
+          </Bar>
+          <Bar
+            dataKey="change"
+            name="Change budget"
+            stackId="budget"
+            fill={T.GREEN}
+            radius={[0, 9, 9, 0]}
+            isAnimationActive={false}
+          >
+            <LabelList
+              dataKey="change"
+              position="center"
+              formatter={(value: unknown) =>
+                typeof value === "number"
+                  ? `Change ${formatMoneyGap(value)}`
+                  : ""
+              }
+              fill="#fff"
+              fontSize={13}
+              fontWeight={900}
+            />
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function TowerValueFunnelRechart({
+  model,
+}: {
+  model: TowerMartCommandViewModel;
+}) {
+  const data = model.valueFunnel.map((stage) => ({
+    name: stage.stageLabel,
+    value: stage.valueNumeric,
+    detail: stage.claimStatus,
+    fill:
+      stage.stageKey === "realized_allowed"
+        ? T.RED
+        : stage.stageKey === "finance_validated_partial"
+          ? T.AMBER
+          : stage.stageKey === "promised_value"
+            ? T.GREEN
+            : T.TEAL,
+  }));
+  return (
+    <div style={{ width: "100%", height: 292 }} data-testid="tower-value-funnel-recharts">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 8, right: 28, bottom: 6, left: 132 }}
+          barCategoryGap={14}
+        >
+          <CartesianGrid horizontal={false} stroke={T.BORDER} />
+          <XAxis
+            type="number"
+            tickFormatter={rechartsMoneyTick}
+            tick={{ fill: T.GRAY_DK, fontSize: 11 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            type="category"
+            dataKey="name"
+            width={132}
+            tick={{ fill: T.INK_2, fontSize: 12, fontWeight: 700 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip content={<TowerChartTooltip />} />
+          <Bar dataKey="value" name="Value" radius={[0, 9, 9, 0]} isAnimationActive={false}>
+            {data.map((entry) => (
+              <Cell key={entry.name} fill={entry.fill} />
+            ))}
+            <LabelList
+              dataKey="value"
+              position="right"
+              formatter={(value: unknown) =>
+                typeof value === "number" ? formatMoneyGap(value) : ""
+              }
+              fill={T.INK}
+              fontSize={12}
+              fontWeight={900}
+            />
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function TowerAiPortfolioRechart({
+  rows,
+}: {
+  rows: ReadonlyArray<TowerAiPortfolioDisplayRow>;
+}) {
+  const data = rows.map((row, index) => ({
+    ...row,
+    index: index + 1,
+    name: row.displayName,
+    readiness: row.displayReadinessScore,
+    value: row.displayValueScore,
+    size: Math.max(
+      90,
+      Math.min(
+        360,
+        row.aiTaggedSpendUsd / 70_000 +
+          row.approvedFundingUsd / 120_000 +
+          row.promisedValueUsd / 220_000 +
+          110,
+      ),
+    ),
+    color: martLaneTone(row.decisionLane).fg,
+  }));
+  return (
+    <div style={{ width: "100%", height: 430 }} data-testid="tower-ai-portfolio-recharts">
+      <ResponsiveContainer width="100%" height="100%">
+        <ScatterChart margin={{ top: 24, right: 34, bottom: 34, left: 26 }}>
+          <CartesianGrid stroke={T.BORDER} strokeDasharray="3 6" />
+          <XAxis
+            type="number"
+            dataKey="readiness"
+            name="Readiness"
+            domain={[0, 100]}
+            tick={{ fill: T.GRAY_DK, fontSize: 11 }}
+            axisLine={{ stroke: T.RULE_STRONG }}
+            tickLine={false}
+            label={{
+              value: "Readiness →",
+              position: "insideBottomRight",
+              offset: -12,
+              fill: T.GRAY_DK,
+              fontSize: 11,
+            }}
+          />
+          <YAxis
+            type="number"
+            dataKey="value"
+            name="Value"
+            domain={[0, 100]}
+            tick={{ fill: T.GRAY_DK, fontSize: 11 }}
+            axisLine={{ stroke: T.RULE_STRONG }}
+            tickLine={false}
+            label={{
+              value: "Value",
+              angle: -90,
+              position: "insideLeft",
+              fill: T.GRAY_DK,
+              fontSize: 11,
+            }}
+          />
+          <ZAxis type="number" dataKey="size" range={[150, 520]} />
+          <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill={T.GREEN_BG} fillOpacity={0.54} />
+          <ReferenceArea x1={0} x2={50} y1={50} y2={100} fill={T.TEAL} fillOpacity={0.07} />
+          <ReferenceArea x1={50} x2={100} y1={0} y2={50} fill={T.AMBER_BG} fillOpacity={0.42} />
+          <ReferenceLine x={50} stroke={T.RULE_STRONG} strokeWidth={2} />
+          <ReferenceLine y={50} stroke={T.RULE_STRONG} strokeWidth={2} />
+          <Tooltip
+            cursor={{ strokeDasharray: "3 3" }}
+            content={({ active, payload }) => {
+              if (!active || !payload?.length) return null;
+              const item = payload[0]?.payload as
+                | (TowerAiPortfolioDisplayRow & {
+                    index: number;
+                    readiness: number;
+                    value: number;
+                  })
+                | undefined;
+              if (!item) return null;
+              return (
+                <div
+                  style={{
+                    border: `1px solid ${T.RULE}`,
+                    borderRadius: 10,
+                    background: T.CREAM_2,
+                    boxShadow: "0 18px 36px rgba(15,23,42,.14)",
+                    padding: 12,
+                    maxWidth: 320,
+                  }}
+                >
+                  <div style={{ fontWeight: 950, color: T.INK }}>
+                    {item.index}. {item.displayName}
+                  </div>
+                  <div style={{ color: T.INK_2, fontSize: 12, marginTop: 5 }}>
+                    Value {Math.round(item.value)} · readiness{" "}
+                    {Math.round(item.readiness)} · {item.displayAction}
+                  </div>
+                  <div style={{ color: T.GRAY_DK, fontSize: 11.5, lineHeight: 1.35, marginTop: 7 }}>
+                    {item.displayReason}
+                  </div>
+                </div>
+              );
+            }}
+          />
+          <Scatter data={data} isAnimationActive={false}>
+            {data.map((entry) => (
+              <Cell key={entry.aiPortfolioKey} fill={entry.color} />
+            ))}
+            <LabelList
+              dataKey="index"
+              position="center"
+              fill="#fff"
+              fontSize={12}
+              fontWeight={950}
+            />
+          </Scatter>
+        </ScatterChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
 const towerPrimaryButtonStyle: CSSProperties = {
   border: "none",
@@ -4659,38 +5029,21 @@ function TowerMartValueFunnelDesign({ model }: { model: TowerMartCommandViewMode
         mistaken for claimable.
       </p>
       <section style={{ ...towerBoardCardStyle, minHeight: 0 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, .9fr) minmax(0, 1.3fr)", gap: 26 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(360px, .95fr) minmax(0, 1.25fr)", gap: 26 }}>
           <div>
-            {model.valueFunnel.map((stage, index) => {
-              const denominator = index === 0 ? model.command.changeBudgetFy26 || promised : promised;
-              const width = stage.stageKey === "realized_allowed"
-                ? 12
-                : Math.max(12, Math.min(100, Math.round((stage.valueNumeric / Math.max(denominator, 1)) * 100)));
-              const tone =
-                stage.stageKey === "realized_allowed"
-                  ? T.RED
-                  : stage.stageKey === "finance_validated_partial"
-                    ? T.AMBER
-                    : stage.stageKey === "promised_value"
-                      ? T.GREEN
-                      : T.PURPLE;
-              return (
-                <div key={stage.funnelKey} style={{ marginBottom: 18 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: 14, marginBottom: 7 }}>
-                    <div>
-                      <strong>{stage.stageLabel}</strong>
-                      <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 2 }}>
-                        {normalizeValueProofCopy(stage.caveat)}
-                      </div>
-                    </div>
-                    <div style={{ fontFamily: T.SERIF, fontSize: 22, fontWeight: 900 }}>{formatMoneyGap(stage.valueNumeric)}</div>
-                  </div>
-                  <div style={{ height: 20, borderRadius: 999, background: T.CREAM_DEEP, overflow: "hidden" }}>
-                    <div style={{ width: `${width}%`, height: "100%", background: tone }} />
-                  </div>
-                </div>
-              );
-            })}
+            <TowerValueFunnelRechart model={model} />
+            <div
+              style={{
+                marginTop: 12,
+                color: T.GRAY_DK,
+                fontSize: 12.5,
+                lineHeight: 1.45,
+              }}
+            >
+              {model.valueFunnel
+                .map((stage) => `${stage.stageLabel}: ${normalizeValueProofCopy(stage.caveat)}`)
+                .join(" · ")}
+            </div>
           </div>
           <div>
             <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>Value proven vs. promised · by program</div>
@@ -5118,54 +5471,10 @@ function TowerMartAiPortfolioDesign({
             Each numbered point maps to the watchlist. Placement is lane-aware:
             scale with proof, fix adoption, fund readiness, or stop/re-scope.
           </p>
-          <div
-            style={{
-              position: "relative",
-              height: 420,
-              margin: "24px 18px 12px 48px",
-              borderLeft: `2px solid ${T.RULE_STRONG}`,
-              borderBottom: `2px solid ${T.RULE_STRONG}`,
-              background: "linear-gradient(90deg, transparent 49.6%, rgba(10,10,11,.12) 50%, transparent 50.4%), linear-gradient(0deg, transparent 49.6%, rgba(10,10,11,.12) 50%, transparent 50.4%), linear-gradient(90deg, rgba(32,178,148,.08) 50%, rgba(27,43,92,.05) 50%)",
-            }}
-          >
-            <div style={{ position: "absolute", right: 8, top: 8, color: T.TEAL, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Scale with proof</div>
-            <div style={{ position: "absolute", right: 8, bottom: 8, color: T.AMBER, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Fund readiness</div>
-            <div style={{ position: "absolute", left: 8, top: 8, color: T.INK_2, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Fix adoption</div>
-            <div style={{ position: "absolute", left: 8, bottom: 8, color: T.GRAY_DK, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Hold / discovery</div>
-            {displayRows.map((row, index) => {
-              const tone = martLaneTone(row.decisionLane);
-              return (
-                <div
-                  key={row.aiPortfolioKey}
-                  title={`${index + 1}. ${row.displayName}`}
-                  style={{
-                    position: "absolute",
-                    left: `${row.displayDotLeft}%`,
-                    top: `${row.displayDotTop}%`,
-                    transform: "translate(-50%, -50%)",
-                    width: 30,
-                    height: 30,
-                    borderRadius: 999,
-                    display: "grid",
-                    placeItems: "center",
-                    background: tone.fg,
-                    color: "#fff",
-                    fontWeight: 950,
-                    fontSize: 13,
-                    border: "2px solid rgba(255,255,255,.92)",
-                    boxShadow: "0 10px 20px rgba(15,23,42,.20)",
-                  }}
-                >
-                  {index + 1}
-                </div>
-              );
-            })}
-            <div style={{ position: "absolute", left: "-54px", top: "38%", transform: "rotate(-90deg)", color: T.GRAY_DK, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Value</div>
-            <div style={{ position: "absolute", right: 0, bottom: "-34px", color: T.GRAY_DK, fontFamily: T.MONO, letterSpacing: "1.5px", fontSize: 11 }}>Readiness →</div>
-          </div>
+          <TowerAiPortfolioRechart rows={displayRows} />
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8, marginTop: 10 }}>
             {[
-              ["Scale", "Protect or scale with proof", T.GREEN],
+              ["Scale with proof", "Protect or scale with proof", T.GREEN],
               ["Fix", "Resolve proof or adoption gaps", T.AMBER],
               ["Hold", "Keep gated until readiness improves", T.PURPLE],
               ["Stop", "Re-scope before more funding", T.RED],
