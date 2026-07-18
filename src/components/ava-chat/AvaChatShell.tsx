@@ -50,6 +50,12 @@ const DEFAULT_AVA_AGENT: AgentProfile = {
   role: "Enterprise advisor",
 };
 
+const AVA_CHAT_SHELL_STYLE: CSSProperties & {
+  "--agent-dock-sticky-top": string;
+} = {
+  "--agent-dock-sticky-top": "0px",
+};
+
 const TECHNICAL_STRING_FIELDS = new Set([
   "id",
   "key",
@@ -107,26 +113,28 @@ export function AvaChatShell({
   const safePlaceholder = demoSafeClientText(placeholder);
 
   return (
-    <AgentDock
-      agent={profile}
-      surface={surface}
-      variant="focused"
-      defaultMode="side-rail"
-      defaultLeftPercent={defaultLeftPercent}
-      minLeftPx={minLeftPx}
-      surfaceContext={safeSurfaceContext}
-      suggestedActions={safeSuggestedActions}
-      keepSuggestedActionsVisible={keepSuggestedActionsVisible}
-      thread={safeThread}
-      onMessage={onMessage}
-      workspace={canvas}
-      isAgentBusy={isBusy}
-      placeholder={safePlaceholder}
-      collapsedSummary={{
-        label: "aVa",
-        detail: "Open the advisor chat",
-      }}
-    />
+    <div data-testid="ava-chat-shell" style={AVA_CHAT_SHELL_STYLE}>
+      <AgentDock
+        agent={profile}
+        surface={surface}
+        variant="focused"
+        defaultMode="side-rail"
+        defaultLeftPercent={defaultLeftPercent}
+        minLeftPx={minLeftPx}
+        surfaceContext={safeSurfaceContext}
+        suggestedActions={safeSuggestedActions}
+        keepSuggestedActionsVisible={keepSuggestedActionsVisible}
+        thread={safeThread}
+        onMessage={onMessage}
+        workspace={canvas}
+        isAgentBusy={isBusy}
+        placeholder={safePlaceholder}
+        collapsedSummary={{
+          label: "aVa",
+          detail: "Open the advisor chat",
+        }}
+      />
+    </div>
   );
 }
 
