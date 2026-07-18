@@ -87,6 +87,115 @@ describe("Source governance enforcement", () => {
     expect(verdict.ok).toBe(true);
   });
 
+  it("blocks a hard gate when required evidence is only client-stated", () => {
+    const verdict = evaluateCriterionMetReadiness({
+      criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
+      artifacts: [
+        artifact({
+          artifactCode: "d01_strategy_memo",
+          status: "approved",
+          body: "Approved strategy memo body.",
+        }),
+      ],
+      evidence: strategyEvidenceReady({
+        incumbent: {
+          currentState: "Available",
+          sourceArtifactId: null,
+        },
+      }),
+      reason: REVIEW_REASON,
+    });
+
+    expect(verdict.ok).toBe(false);
+    expect(verdict.blockers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "required_evidence_unverified",
+          detail: expect.stringContaining("client-stated answer"),
+        }),
+      ]),
+    );
+  });
+
+  it("allows a hard gate when client-stated evidence has explicit usable-evidence review", () => {
+    const verdict = evaluateCriterionMetReadiness({
+      criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
+      artifacts: [
+        artifact({
+          artifactCode: "d01_strategy_memo",
+          status: "approved",
+          body: "Approved strategy memo body.",
+        }),
+      ],
+      evidence: strategyEvidenceReady({
+        incumbent: {
+          currentState: "Usable Evidence",
+          sourceArtifactId: null,
+        },
+      }),
+      reason: REVIEW_REASON,
+    });
+
+    expect(verdict.ok).toBe(true);
+  });
+
+  it("does not apply the client-stated provenance hold to soft criteria", () => {
+    const verdict = evaluateCriterionMetReadiness({
+      criterion: criterion({
+        criterionId: "GATE-EVAL-03",
+        fromStage: "evaluation",
+        toStage: "pricing",
+      }),
+      artifacts: [
+        artifact({
+          artifactCode: "d18_disqualification_log",
+          stage: "evaluation",
+          status: "approved",
+          body: "Reviewed disqualification rationale.",
+        }),
+      ],
+      evidence: [
+        evidence({
+          requirementId: "EVID-SRC-EVAL-RATER-SCORES",
+          stage: "evaluation",
+          currentState: "Available",
+          sourceArtifactId: null,
+        }),
+        evidence({
+          requirementId: "EVID-SRC-EVAL-WEIGHT-RATIONALE",
+          stage: "evaluation",
+          currentState: "Available",
+          sourceArtifactId: null,
+        }),
+      ],
+      reason: REVIEW_REASON,
+    });
+
+    expect(verdict.ok).toBe(true);
+  });
+
+  it("allows a hard gate when required evidence is backed by uploaded or processed artifacts", () => {
+    const verdict = evaluateCriterionMetReadiness({
+      criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
+      artifacts: [
+        artifact({
+          artifactCode: "d01_strategy_memo",
+          status: "approved",
+          body: "Approved strategy memo body.",
+        }),
+      ],
+      evidence: strategyEvidenceReady({
+        incumbent: {
+          currentState: "Available",
+          sourceArtifactId: "artifact-incumbent-contract",
+        },
+      }),
+      reason: REVIEW_REASON,
+    });
+
+    expect(verdict.ok).toBe(true);
+  });
+
   it("does not treat an AI-only generated body as human-reviewed artifact evidence", () => {
     expect(
       isArtifactHumanReviewed(
@@ -314,15 +423,22 @@ function evidence(
   };
 }
 
-function strategyEvidenceReady(): SourceEventEvidence[] {
+function strategyEvidenceReady(overrides?: {
+  incumbent?: Partial<SourceEventEvidence>;
+  sponsorCommit?: Partial<SourceEventEvidence>;
+}): SourceEventEvidence[] {
   return [
     evidence({
       requirementId: "EVID-SRC-STR-INCUMBENT",
       currentState: "Available",
+      sourceArtifactId: "artifact-incumbent-contract",
+      ...overrides?.incumbent,
     }),
     evidence({
       requirementId: "EVID-SRC-STR-SPONSOR-COMMIT",
       currentState: "Loaded",
+      sourceArtifactId: "artifact-sponsor-commitment",
+      ...overrides?.sponsorCommit,
     }),
   ];
 }
