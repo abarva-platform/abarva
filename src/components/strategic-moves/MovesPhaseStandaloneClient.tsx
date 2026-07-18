@@ -7,6 +7,7 @@ import { extractArtifacts } from "@/lib/agent/artifacts";
 import type { DeliverableContentSignal } from "@/lib/deliverables/deliverable-content-signals";
 import { CurrentStateReadinessPanel } from "@/components/strategic-moves/CurrentStateReadinessPanel";
 import { FileCabinetPanel } from "@/components/strategic-moves/FileCabinetPanel";
+import { NexusCurrentStateBriefingPanel } from "@/components/strategic-moves/NexusCurrentStateBriefingPanel";
 import { PhaseApproveAndBuild } from "@/components/strategic-moves/PhaseApproveAndBuild";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
@@ -2102,6 +2103,15 @@ function PhasePreparePanel({
         </div>
         <strong>{phase.code}</strong>
       </header>
+      <section className="mxw-zone">
+        <h2>What Nexus already knows</h2>
+        <p>
+          Before you upload anything for {phase.code}, review the enterprise
+          context Nexus already has for this Move — confirm it, correct it, or
+          flag what&apos;s missing.
+        </p>
+      </section>
+      <NexusCurrentStateBriefingPanel moveId={move.id} />
       <div className="mxw-command-table">
         <div>
           <span>1. Prepare</span>
