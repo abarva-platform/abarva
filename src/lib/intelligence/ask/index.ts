@@ -54,7 +54,10 @@ import {
 } from "@/lib/intelligence/advisory-packet/assemble-advisory-packet";
 import { buildIntelligenceDossier } from "@/lib/intelligence/dossiers";
 import { buildCompanionCanvasPayload } from "@/lib/intelligence/ask/companion-canvas-engine";
-import { canonicalClientDisplayName } from "@/lib/client-config";
+import {
+  canonicalClientDisplayName,
+  demoSafeClientText,
+} from "@/lib/client-config";
 import {
   buildClientSafeRetiredFactMessage,
   filterSourcesWithRetiredFacts,
@@ -513,11 +516,11 @@ export async function* askIntelligence(
       textBlocks: [
         {
           location: "intelligenceDossier",
-          text: JSON.stringify(intelligenceDossier),
+          text: demoSafeClientText(JSON.stringify(intelligenceDossier)),
         },
         {
           location: "advisoryPacket",
-          text: JSON.stringify(advisoryPacketForEvent),
+          text: demoSafeClientText(JSON.stringify(advisoryPacketForEvent)),
         },
       ],
     });
