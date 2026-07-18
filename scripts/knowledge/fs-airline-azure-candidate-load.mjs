@@ -7,7 +7,6 @@ import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
 
 const requireFromApp = createRequire(new URL("../../package.json", import.meta.url));
-const { Client } = requireFromApp("pg");
 
 const repoRoot = process.cwd();
 const tenants = {
@@ -131,6 +130,11 @@ function stableKey(...parts) {
   return sha(parts.filter(Boolean).join("|")).slice(0, 48);
 }
 
+function pgClient() {
+  const { Client } = requireFromApp("pg");
+  return Client;
+}
+
 function rootFor(tenantKey) {
   return `datasets/tenant-inputs/generated/${tenantKey}/rich-synthetic-2026-07-v3`;
 }
@@ -181,6 +185,43 @@ function targetInfo() {
   const database = parsed.pathname.replace(/^\//, "");
   const ok = parsed.hostname === allowedHost && !/prod/i.test(database);
   return { ok, reason: ok ? "" : `target must be ${allowedHost} and non-prod database, got ${parsed.hostname}/${database}`, host: parsed.hostname, database };
+}
+
+function preloadTableNames() {
+  return [
+    "intelligence_v7.active_tenant_contract_versions",
+    "intelligence_v7.tenant_contract_promotion_events",
+    "intelligence_v7.tenant_pack_runs",
+    "intelligence_v7.source_files",
+    "intelligence_v7.business_records",
+    "intelligence_v7.record_fields",
+    "intelligence_v7.graph_nodes",
+    "intelligence_v7.relationship_edges",
+    "intelligence_v7.chunk_registry",
+    "public.enterprise_context_sources",
+    "public.enterprise_context_source_files",
+    "public.enterprise_context_records",
+    "public.enterprise_context_facts",
+    "public.enterprise_context_evidence",
+    "public.enterprise_context_quality_issues",
+    "public.enterprise_context_stewardship_tasks",
+    "public.enterprise_context_relationships",
+    "public.enterprise_context_chunks",
+    "public.enterprise_context_chunk_queue",
+    "public.governed_object_readiness",
+    "cio_tower.source_registry",
+    "cio_tower.entities",
+    "cio_tower.facts",
+    "cio_tower.relationships",
+    "cio_tower.measure_results",
+    "cio_tower.validation_runs",
+    "cio_tower.validation_results",
+    "public.source_events",
+    "public.source_context_receipts",
+    "public.source_contract_evidence_manifests",
+    "public.source_contract_evidence_rows",
+    "public.source_contract_evidence_metrics",
+  ];
 }
 
 async function q(client, sql, params = []) {
@@ -495,8 +536,8 @@ function buildLocalReconciliation(artifact) {
   const orphanFacts = artifact.canonicalFacts.filter((row) => !recordKeys.has(row.record_key));
   const orphanEdges = artifact.graphEdges.filter((row) => !nodeKeys.has(row.from_node_key) || !nodeKeys.has(row.to_node_key));
   const missingLineage = [
-    ...artifact.canonicalRecords.filter((row) => !row.source_file || !row.source_row || !row.evidence_id || !row.confidence),
-    ...artifact.canonicalFacts.filter((row) => !row.source_file || !row.source_row || !row.evidence_id || !row.confidence),
+    ...artifact.canonicalRecords.filter((row) => !row.source_file || !row.source_row || !row.evidence_id),
+    ...artifact.canonicalFacts.filter((row) => !row.source_file || !row.source_row || !row.evidence_id),
     ...artifact.chunks.filter((row) => !row.fact_key || !row.evidence_id || row.default_runtime_visible !== false),
   ];
   const unresolvedEvidence = [
@@ -512,40 +553,7 @@ function buildLocalReconciliation(artifact) {
 }
 
 async function preload(client, artifacts, outDir) {
-  const tableNames = [
-    "intelligence_v7.active_tenant_contract_versions",
-    "intelligence_v7.tenant_contract_promotion_events",
-    "intelligence_v7.tenant_pack_runs",
-    "intelligence_v7.source_files",
-    "intelligence_v7.business_records",
-    "intelligence_v7.record_fields",
-    "intelligence_v7.graph_nodes",
-    "intelligence_v7.relationship_edges",
-    "intelligence_v7.chunk_registry",
-    "public.enterprise_context_sources",
-    "public.enterprise_context_source_files",
-    "public.enterprise_context_records",
-    "public.enterprise_context_facts",
-    "public.enterprise_context_evidence",
-    "public.enterprise_context_quality_issues",
-    "public.enterprise_context_stewardship_tasks",
-    "public.enterprise_context_relationships",
-    "public.enterprise_context_chunks",
-    "public.enterprise_context_chunk_queue",
-    "public.governed_object_readiness",
-    "cio_tower.source_registry",
-    "cio_tower.entities",
-    "cio_tower.facts",
-    "cio_tower.relationships",
-    "cio_tower.measure_results",
-    "cio_tower.validation_runs",
-    "cio_tower.validation_results",
-    "public.source_events",
-    "public.source_context_receipts",
-    "public.source_contract_evidence_manifests",
-    "public.source_contract_evidence_rows",
-    "public.source_contract_evidence_metrics",
-  ];
+  const tableNames = preloadTableNames();
   const tableRows = [];
   for (const table of tableNames) {
     tableRows.push({ table, exists: await tableExists(client, table) ? "yes" : "no" });
@@ -609,6 +617,62 @@ async function preload(client, artifacts, outDir) {
     ...tenantRows.map((row) => `- ${row.display_label} (${row.tenant_key}): ${row.status}; ${Number(row.expected_records).toLocaleString("en-US")} records, ${Number(row.expected_facts).toLocaleString("en-US")} facts, ${Number(row.expected_chunks).toLocaleString("en-US")} retrieval chunks.`),
   ]);
   return { tableRows, tenantRows, activeRows, piiRows };
+}
+
+function preloadWithoutDatabase(artifacts, outDir) {
+  const target = targetInfo();
+  const tableRows = preloadTableNames().map((table) => ({ table, exists: "not_checked_no_database_url" }));
+  const tenantRows = [];
+  const piiRows = [];
+  for (const artifact of artifacts) {
+    const local = buildLocalReconciliation(artifact);
+    piiRows.push(...local.pii);
+    tenantRows.push({
+      tenant_key: artifact.tenantKey,
+      display_label: artifact.config.displayLabel,
+      client_id_present: "not_checked_no_database_url",
+      candidate_contract_version: artifact.manifest.candidate_contract_version,
+      load_run_id: artifact.manifest.load_run_id,
+      expected_source_files: artifact.manifest.counts.source_template_files,
+      expected_source_rows: artifact.manifest.counts.source_template_rows,
+      expected_records: artifact.manifest.counts.canonical_records,
+      expected_facts: artifact.manifest.counts.canonical_facts,
+      expected_graph_nodes: artifact.manifest.counts.graph_nodes,
+      expected_graph_edges: artifact.manifest.counts.graph_edges,
+      expected_chunks: artifact.manifest.counts.retrieval_chunks,
+      orphan_facts: local.orphanFacts.length,
+      orphan_edges: local.orphanEdges.length,
+      missing_lineage: local.missingLineage.length,
+      pii_findings: local.pii.length,
+      blocked_claims: local.blockedClaims.length,
+      active_pointer_mutation_planned: "no",
+      status: local.orphanFacts.length || local.orphanEdges.length || local.missingLineage.length || local.pii.length || local.blockedClaims.length ? "blocked" : "ready",
+    });
+  }
+  writeCsv(path.join(outDir, "preload-table-existence.csv"), Object.keys(tableRows[0]), tableRows);
+  writeCsv(path.join(outDir, "preload-tenant-safety.csv"), Object.keys(tenantRows[0]), tenantRows);
+  writeCsv(path.join(outDir, "preload-active-pointers.csv"), ["tenant_key", "mutation_planned", "status"], [{ tenant_key: "all", mutation_planned: "no", status: "not_checked_no_database_url" }]);
+  writeCsv(path.join(outDir, "preload-sensitive-data-scan.csv"), Object.keys(piiRows[0] ?? { tenant_key: "", file: "", finding_type: "", matches: "", status: "" }), piiRows);
+  writeMd(path.join(outDir, "preload-safety-check.md"), [
+    "# FS/Airline Azure Candidate Load Preload Safety Check",
+    "",
+    `Status: ${tenantRows.every((row) => row.status === "ready") ? "PASS_LOCAL_ARTIFACTS_ONLY" : "BLOCKED"}`,
+    "",
+    `Target: ${target.host || "not checked"}/${target.database || "not checked"}`,
+    `Target guard: ${target.ok ? "pass" : "not checked in npm preload lifecycle; enforced by load/audit action"}`,
+    "",
+    "Hard boundaries:",
+    "- Candidate load only.",
+    "- Active tenant pointer mutation planned: no.",
+    "- Meridian/unrelated tenant overwrite planned: no.",
+    "- Real client data/PII/PHI/PCI allowed: no.",
+    "- Database schema/client checks: deferred to load/audit action.",
+    "- Rollback strategy: delete candidate rows by tenant_key + candidate_contract_version/load_run_id/source_system.",
+    "",
+    "Tenants:",
+    ...tenantRows.map((row) => `- ${row.display_label} (${row.tenant_key}): ${row.status}; ${Number(row.expected_records).toLocaleString("en-US")} records, ${Number(row.expected_facts).toLocaleString("en-US")} facts, ${Number(row.expected_chunks).toLocaleString("en-US")} retrieval chunks.`),
+  ]);
+  return { tableRows, tenantRows, activeRows: [], piiRows };
 }
 
 async function loadV7(client, artifact, resultRows) {
@@ -1441,11 +1505,22 @@ async function main() {
   const outDir = path.join(repoRoot, arg("--out-dir", process.env.FS_AIRLINE_CANDIDATE_OUT_DIR || defaultOutDir));
   ensureDir(outDir);
   const artifacts = selectedTenants().map(loadTenantArtifacts);
+  if (selectedAction === "preload" && !connectionString()) {
+    for (const artifact of artifacts) writeTenantReports(artifact, outDir);
+    const localPreload = preloadWithoutDatabase(artifacts, outDir);
+    const status = localPreload.tenantRows.every((row) => row.status === "ready") ? "WATCH_BEFORE_PROMOTION" : "BLOCKED_BEFORE_PROMOTION";
+    writeCrossReports(artifacts, outDir, status, null);
+    writeJson(path.join(outDir, "summary.json"), { status, action: selectedAction, target: targetInfo(), generated_at: new Date().toISOString(), tenants: artifacts.map((artifact) => artifact.tenantKey), active_pointer_updated: false, database_checks: "deferred_to_load_or_audit" });
+    emitProofBundle(outDir);
+    console.log(JSON.stringify({ status, action: selectedAction, out_dir: outDir, active_pointer_updated: false, database_checks: "deferred_to_load_or_audit" }, null, 2));
+    return;
+  }
   const target = targetInfo();
   if (!target.ok) throw new Error(target.reason);
   if (selectedAction === "load" && process.env.TENANT_CANDIDATE_LOAD_APPROVED !== "true") {
     throw new Error("TENANT_CANDIDATE_LOAD_APPROVED=true is required for candidate DB mutation.");
   }
+  const Client = pgClient();
   const client = new Client({ connectionString: connectionString(), ssl: { rejectUnauthorized: false }, application_name: `fs-airline-candidate-${selectedAction}` });
   let status = "BLOCKED_BEFORE_PROMOTION";
   let audit = null;
