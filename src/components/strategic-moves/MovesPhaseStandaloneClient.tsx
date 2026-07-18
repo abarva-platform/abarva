@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { extractArtifacts } from "@/lib/agent/artifacts";
 import type { DeliverableContentSignal } from "@/lib/deliverables/deliverable-content-signals";
 import { CurrentStateReadinessPanel } from "@/components/strategic-moves/CurrentStateReadinessPanel";
-import { FileCabinetPanel } from "@/components/strategic-moves/FileCabinetPanel";
+import { artifactStatusLabel, FileCabinetPanel } from "@/components/strategic-moves/FileCabinetPanel";
 import { NexusCurrentStateBriefingPanel } from "@/components/strategic-moves/NexusCurrentStateBriefingPanel";
 import { PhaseApproveAndBuild } from "@/components/strategic-moves/PhaseApproveAndBuild";
 import { SessionPlaybookPanel } from "@/components/strategic-moves/SessionPlaybookPanel";
@@ -79,11 +79,17 @@ interface MovesPhaseStandaloneClientProps {
 type WorkspaceView = "phase" | "files" | "playbook";
 
 type UploadWorkStatus = "idle" | "uploading" | "uploaded" | "error";
-interface UploadedFilePreview {
-  fileName: string;
+interface PhaseEvidenceArtifact {
+  artifactId: string;
+  fileName: string | null;
   title: string;
-  phase: number;
-  uploadedAt: string;
+  phase: number | null;
+  version: number;
+  status: string;
+  lifecycleState?: string | null;
+  qualityScore: number | null;
+  createdAt: string;
+  downloadUrl: string;
 }
 type PhaseCaptureValues = Record<string, string>;
 
@@ -2320,9 +2326,32 @@ function EvidenceUploadControl({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [status, setStatus] = useState<UploadWorkStatus>("idle");
   const [message, setMessage] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFilePreview[]>([]);
+  const [phaseArtifacts, setPhaseArtifacts] = useState<PhaseEvidenceArtifact[]>([]);
 
-  async function uploadOne(file: File, totalCount: number): Promise<UploadedFilePreview> {
+  const loadPhaseArtifacts = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/v1/programs/${moveId}/artifacts?family=uploaded_evidence`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const payload = (await res.json().catch(() => ({}))) as {
+        artifacts?: PhaseEvidenceArtifact[];
+      };
+      const rows = Array.isArray(payload.artifacts) ? payload.artifacts : [];
+      setPhaseArtifacts(
+        rows.filter((a) => a.phase === phase && a.lifecycleState !== "superseded"),
+      );
+    } catch {
+      // Leave the last-known list in place; the "Open Files & Evidence" link
+      // still reaches the full, authoritative vault.
+    }
+  }, [moveId, phase]);
+
+  useEffect(() => {
+    void loadPhaseArtifacts();
+  }, [loadPhaseArtifacts]);
+
+  async function uploadOne(file: File, totalCount: number): Promise<void> {
     const uploadTitle = totalCount > 1 ? `${title} - ${file.name}` : title || file.name;
     const form = new FormData();
     form.append("file", file);
@@ -2344,15 +2373,6 @@ function EvidenceUploadControl({
         payload.detail || payload.error || `Upload failed (HTTP ${res.status})`,
       );
     }
-    return {
-      fileName: file.name,
-      phase,
-      title: uploadTitle,
-      uploadedAt: new Date().toLocaleTimeString([], {
-        hour: "numeric",
-        minute: "2-digit",
-      }),
-    };
   }
 
   async function upload(files: FileList | null | undefined) {
@@ -2371,8 +2391,7 @@ function EvidenceUploadControl({
         if (selectedFiles.length > 1) {
           setMessage(`Uploading ${index + 1} of ${selectedFiles.length}: ${file.name}`);
         }
-        const uploaded = await uploadOne(file, selectedFiles.length);
-        setUploadedFiles((current) => [uploaded, ...current]);
+        await uploadOne(file, selectedFiles.length);
       }
       setStatus("uploaded");
       setMessage(
@@ -2380,6 +2399,7 @@ function EvidenceUploadControl({
           ? `Uploaded ${selectedFiles[0]?.name ?? "file"}`
           : `Uploaded ${selectedFiles.length} files`,
       );
+      await loadPhaseArtifacts();
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : "Upload failed.");
@@ -2410,20 +2430,23 @@ function EvidenceUploadControl({
           <span className={`mxw-upload-status ${status}`}>{message}</span>
         ) : null}
       </div>
-      {uploadedFiles.length > 0 ? (
-        <div className="mxw-uploaded-files" aria-label="Uploaded files in this step">
+      {phaseArtifacts.length > 0 ? (
+        <div className="mxw-uploaded-files" aria-label="Uploaded evidence for this phase">
           <header>
-            <strong>Uploaded in this step</strong>
+            <strong>Uploaded for this phase</strong>
             {onOpenFiles ? (
               <button onClick={onOpenFiles} type="button">
                 Open Files &amp; Evidence
               </button>
             ) : null}
           </header>
-          {uploadedFiles.map((file) => (
-            <div key={`${file.fileName}-${file.uploadedAt}`}>
-              <span>{file.fileName}</span>
-              <em>P{file.phase} · Uploaded {file.uploadedAt} · needs review</em>
+          {phaseArtifacts.map((artifact) => (
+            <div key={artifact.artifactId}>
+              <span>{artifact.fileName ?? artifact.title}</span>
+              <em>
+                v{artifact.version} · {artifactStatusLabel(artifact.status)}
+                {artifact.qualityScore != null ? ` · Quality ${artifact.qualityScore}/100` : ""}
+              </em>
             </div>
           ))}
         </div>
@@ -2926,7 +2949,7 @@ function MovesStandaloneStyles() {
 .mxw-uploaded-files div{display:grid;gap:1px;border-top:1px solid var(--line);padding-top:7px}
 .mxw-uploaded-files div:first-of-type{border-top:0;padding-top:0}
 .mxw-uploaded-files span{font-size:12.5px;color:var(--ink);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.mxw-uploaded-files em{font-style:normal;font-size:11.5px;color:var(--green);font-weight:700}
+.mxw-uploaded-files em{font-style:normal;font-size:11.5px;color:var(--muted);font-weight:700}
 .mxw-lanes{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .mxw-lane{border:1px solid var(--line);border-radius:13px;background:var(--card);overflow:hidden}
 .mxw-lane header{display:flex;align-items:center;gap:10px;background:var(--soft);border-bottom:1px solid var(--line);padding:12px 14px}
