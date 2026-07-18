@@ -1,4 +1,5 @@
 import { buildMovesAvaChatPacket } from "../packet";
+import { formatMovesAvaChatPacketForPrompt } from "../system-prompt";
 
 const BASE_INPUT = {
   tenant: "lakeshore",
@@ -59,5 +60,49 @@ describe("buildMovesAvaChatPacket — no blank-prompt chat", () => {
     const packet = buildMovesAvaChatPacket(BASE_INPUT, "What should I do next in this phase?");
     expect(packet.sourceImplication.relevant).toBe(false);
     expect(packet.towerMeasurement.relevant).toBe(false);
+  });
+
+  it("renders live Moves gate state as authoritative over generic phase-pack criteria", () => {
+    const packet = buildMovesAvaChatPacket(
+      {
+        ...BASE_INPUT,
+        checklistStatus: {
+          evidenceDone: false,
+          evidenceLabel: "0 evidence items visible",
+          gateDone: false,
+          gateLabel: "1 hard gate open",
+          canAdvance: false,
+          nextPhaseLabel: "P2",
+        },
+        gateCriteria: [
+          {
+            label: "Sponsor committed and decision rights named",
+            met: true,
+            severity: "hard",
+          },
+          {
+            label: "Charter signed off by sponsor",
+            met: false,
+            severity: "hard",
+          },
+          {
+            label: "Initial value range and success metrics ratified",
+            met: false,
+            severity: "soft",
+          },
+        ],
+      },
+      "What is the current gate status?",
+    );
+
+    const prompt = formatMovesAvaChatPacketForPrompt(packet, "gate_blocker");
+
+    expect(prompt).toContain("AUTHORITATIVE LIVE MOVES STATE");
+    expect(prompt).toContain(
+      "Live gate tally: 1 of 2 blocking hard gate criteria met; 1 open.",
+    );
+    expect(prompt).toContain(
+      "Checklist: evidence not done (0 evidence items visible); gate not met (1 hard gate open); can advance: no",
+    );
   });
 });
