@@ -1,6 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import type {
   HomeKnowledgeDataColumn,
@@ -36,6 +46,19 @@ const DIMENSION_TABS: Array<{ key: DimensionTab; label: string }> = [
   { key: "gaps", label: "Gaps" },
   { key: "evidence", label: "Evidence" },
 ];
+
+const HOME_CHART_COLORS = {
+  ink: "#161411",
+  ink2: "#34302a",
+  ink3: "#6d675f",
+  line: "#ded5c8",
+  surface: "#fffdf8",
+  surface2: "#fbf8f1",
+  teal: "#157f74",
+  green: "#218553",
+  amber: "#a96d16",
+  red: "#aa3a32",
+};
 
 function asText(value: unknown): string {
   if (value === null || value === undefined) return "";
@@ -145,10 +168,12 @@ function sourceStatus(status: unknown): string {
 
 function statusColor(status: unknown): string {
   const value = asText(status);
-  if (value === "source-backed") return "#1f9d63";
-  if (value === "directional") return "#c99a2e";
-  if (value === "needs-evidence" || value === "not-evidenced") return "#c2703a";
-  return "#6b7280";
+  if (value === "source-backed") return HOME_CHART_COLORS.teal;
+  if (value === "directional") return HOME_CHART_COLORS.amber;
+  if (value === "needs-evidence" || value === "not-evidenced") {
+    return HOME_CHART_COLORS.red;
+  }
+  return HOME_CHART_COLORS.ink3;
 }
 
 function factValue(
@@ -1322,6 +1347,7 @@ function UseCasesView({
         {summary ||
           "The candidate AI portfolio is a longlist for prioritization. No opportunity is production-ready until its evidence gate is cleared."}
       </p>
+      <UseCasePriorityRechart useCases={useCases} />
       <UseCasePriorityCards useCases={useCases} />
       <div className="nkh-table-wrap">
         <table>
@@ -1428,28 +1454,49 @@ function DimensionVolumeChart({
   dimensions: HomeKnowledgeDimension[];
 }) {
   const visibleDimensions = topDimensions(dimensions, 9);
-  const maxCount = Math.max(...visibleDimensions.map((item) => item.count ?? 0), 1);
+  const data = visibleDimensions.map((dimension) => ({
+    name: dimension.name,
+    count: dimension.count ?? 0,
+    share: dimensionShare(dimension, dimensions),
+    status: dimension.status ?? "source-backed",
+    fill: statusColor(dimension.status),
+  }));
   return (
-    <div className="nkh-volume-chart" aria-label="Loaded context by dimension">
-      {visibleDimensions.map((dimension) => {
-        const count = dimension.count ?? 0;
-        const width = Math.max(7, Math.round((count / maxCount) * 100));
-        return (
-          <div key={dimension.key} className="nkh-volume-row">
-            <span>{dimension.name}</span>
-            <b>
-              <i
-                style={{
-                  width: `${width}%`,
-                  background: statusColor(dimension.status),
-                }}
-              />
-            </b>
-            <strong>{count.toLocaleString()}</strong>
-            <em>{dimensionShare(dimension, dimensions)}%</em>
-          </div>
-        );
-      })}
+    <div
+      className="nkh-volume-chart"
+      aria-label="Loaded context by dimension"
+      data-testid="home-knowledge-dimension-volume-recharts"
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 8, right: 28, bottom: 4, left: 154 }}
+          barCategoryGap={10}
+        >
+          <CartesianGrid horizontal={false} stroke={HOME_CHART_COLORS.line} />
+          <XAxis
+            type="number"
+            tick={{ fill: HOME_CHART_COLORS.ink3, fontSize: 11 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            type="category"
+            dataKey="name"
+            width={154}
+            tick={{ fill: HOME_CHART_COLORS.ink2, fontSize: 12, fontWeight: 700 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip content={<HomeChartTooltip valueLabel="Records" />} />
+          <Bar dataKey="count" name="Records" radius={[0, 8, 8, 0]} isAnimationActive={false}>
+            {data.map((entry) => (
+              <Cell key={entry.name} fill={entry.fill} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -1470,22 +1517,52 @@ function ConfidenceBenchmarkStrip({
     return { ...bucket, count, pct };
   });
   return (
-    <section className="nkh-confidence-benchmark" aria-label="Decision confidence distribution">
+    <section
+      className="nkh-confidence-benchmark"
+      aria-label="Decision confidence distribution"
+      data-testid="home-knowledge-confidence-recharts"
+    >
       <div>
         <span>Decision confidence mix</span>
         <strong>{dimensions.length} dimensions assessed</strong>
       </div>
-      <div className="nkh-stacked-bar">
-        {buckets.map((bucket) => (
-          <i
-            key={bucket.key}
-            title={`${bucket.label}: ${bucket.count}`}
-            style={{
-              width: `${Math.max(bucket.count ? 6 : 0, bucket.pct)}%`,
-              background: statusColor(bucket.key),
-            }}
-          />
-        ))}
+      <div className="nkh-stacked-rechart">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={[
+              buckets.reduce<Record<string, number | string>>(
+                (row, bucket) => {
+                  row[bucket.key] = bucket.count;
+                  return row;
+                },
+                { name: "Confidence" },
+              ),
+            ]}
+            layout="vertical"
+            margin={{ top: 12, right: 12, bottom: 4, left: 0 }}
+          >
+            <XAxis type="number" hide domain={[0, dimensions.length]} />
+            <YAxis type="category" dataKey="name" hide />
+            <Tooltip content={<HomeChartTooltip valueLabel="Dimensions" />} />
+            {buckets.map((bucket, index) => (
+              <Bar
+                key={bucket.key}
+                dataKey={bucket.key}
+                name={bucket.label}
+                stackId="confidence"
+                fill={statusColor(bucket.key)}
+                radius={
+                  index === 0
+                    ? [8, 0, 0, 8]
+                    : index === buckets.length - 1
+                      ? [0, 8, 8, 0]
+                      : [0, 0, 0, 0]
+                }
+                isAnimationActive={false}
+              />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
       </div>
       <dl>
         {buckets.map((bucket) => (
@@ -1499,6 +1576,40 @@ function ConfidenceBenchmarkStrip({
         ))}
       </dl>
     </section>
+  );
+}
+
+function HomeChartTooltip({
+  active,
+  label,
+  payload,
+  valueLabel = "Value",
+}: {
+  active?: boolean;
+  label?: string | number;
+  payload?: Array<{
+    color?: string;
+    name?: string | number;
+    value?: string | number;
+    payload?: Record<string, unknown>;
+  }>;
+  valueLabel?: string;
+}) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0]?.payload ?? {};
+  const title =
+    typeof row.name === "string" ? row.name : String(label ?? "Signal");
+  return (
+    <div className="nkh-chart-tooltip">
+      <strong>{title}</strong>
+      {payload.map((item) => (
+        <span key={`${item.name ?? valueLabel}-${item.value ?? ""}`}>
+          <i style={{ background: item.color ?? HOME_CHART_COLORS.teal }} />
+          {item.name ?? valueLabel}: <b>{item.value}</b>
+        </span>
+      ))}
+      {typeof row.share === "number" ? <em>{row.share}% of loaded rows</em> : null}
+    </div>
   );
 }
 
@@ -1540,6 +1651,56 @@ function UseCasePriorityCards({
           </dl>
         </article>
       ))}
+    </div>
+  );
+}
+
+function UseCasePriorityRechart({
+  useCases,
+}: {
+  useCases: HomeKnowledgeRecord[];
+}) {
+  const data = useCases.slice(0, 5).map((useCase, index) => ({
+    name: asText(useCase.name) || `Use case ${index + 1}`,
+    score: Math.max(1, 5 - index),
+    function: asText(useCase.fn) || "Enterprise",
+    gate: asText(useCase.gate) || "Evidence gate required",
+    value: asText(useCase.value) || "not certified",
+  }));
+  if (!data.length) return null;
+  return (
+    <div
+      className="nkh-usecase-rechart"
+      aria-label="Top use case priority chart"
+      data-testid="home-knowledge-usecase-priority-recharts"
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 8, right: 26, bottom: 4, left: 176 }}
+          barCategoryGap={14}
+        >
+          <CartesianGrid horizontal={false} stroke={HOME_CHART_COLORS.line} />
+          <XAxis type="number" hide domain={[0, 5]} />
+          <YAxis
+            type="category"
+            dataKey="name"
+            width={176}
+            tick={{ fill: HOME_CHART_COLORS.ink2, fontSize: 12, fontWeight: 700 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip content={<HomeChartTooltip valueLabel="Priority score" />} />
+          <Bar
+            dataKey="score"
+            name="Priority score"
+            fill={HOME_CHART_COLORS.teal}
+            radius={[0, 8, 8, 0]}
+            isAnimationActive={false}
+          />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -1598,7 +1759,74 @@ function KnowledgeLayerProofVisual({
           </div>
         ))}
       </div>
+      <ProofStageRechart
+        dimensions={dimensions}
+        evidence={evidence}
+        nextEvidence={nextEvidence}
+      />
     </section>
+  );
+}
+
+function ProofStageRechart({
+  dimensions,
+  evidence,
+  nextEvidence,
+}: {
+  dimensions: HomeKnowledgeDimension[];
+  evidence: HomeKnowledgeEvidence[];
+  nextEvidence: HomeKnowledgeRecord[];
+}) {
+  const data = [
+    { name: "Evidence", value: evidence.length, detail: "source cards" },
+    { name: "Dimensions", value: dimensions.length, detail: "context domains" },
+    {
+      name: "Decision-grade",
+      value: dimensions.filter((dimension) => dimension.status === "source-backed").length,
+      detail: "ready domains",
+    },
+    { name: "Gaps", value: nextEvidence.length, detail: "evidence requests" },
+  ];
+  return (
+    <div
+      className="nkh-proof-rechart"
+      aria-label="Proof stage coverage chart"
+      data-testid="home-knowledge-proof-stage-recharts"
+    >
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={data} margin={{ top: 12, right: 18, bottom: 8, left: 8 }}>
+          <CartesianGrid vertical={false} stroke={HOME_CHART_COLORS.line} />
+          <XAxis
+            dataKey="name"
+            tick={{ fill: HOME_CHART_COLORS.ink2, fontSize: 11, fontWeight: 700 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            tick={{ fill: HOME_CHART_COLORS.ink3, fontSize: 11 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip content={<HomeChartTooltip valueLabel="Count" />} />
+          <Bar dataKey="value" name="Count" radius={[8, 8, 0, 0]} isAnimationActive={false}>
+            {data.map((entry, index) => (
+              <Cell
+                key={entry.name}
+                fill={
+                  index === 0
+                    ? HOME_CHART_COLORS.teal
+                    : index === 1
+                      ? HOME_CHART_COLORS.green
+                      : index === 2
+                        ? HOME_CHART_COLORS.ink
+                        : HOME_CHART_COLORS.amber
+                }
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
@@ -3741,8 +3969,8 @@ const styles = `
   --red: #aa3a32;
   --red-bg: #f7e4e1;
   --muted: #8d8680;
-  --serif: Newsreader, Georgia, serif;
-  --sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --serif: var(--font-fraunces), "Fraunces", Georgia, serif;
+  --sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   background: var(--bg);
   color: var(--ink);
@@ -3866,46 +4094,14 @@ const styles = `
   line-height: 1.58;
 }
 .nkh-volume-chart {
-  display: grid;
-  gap: 10px;
-  padding-top: 2px;
+  width: 100%;
+  min-height: 314px;
 }
-.nkh-volume-row {
-  display: grid;
-  grid-template-columns: minmax(130px, 220px) minmax(160px, 1fr) 72px 44px;
-  gap: 12px;
-  align-items: center;
-}
-.nkh-volume-row span {
-  color: var(--ink-2);
-  font-size: 12.5px;
-  font-weight: 720;
-  line-height: 1.25;
-}
-.nkh-volume-row b,
-.nkh-stacked-bar {
-  display: block;
-  height: 9px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--surface-3);
-}
-.nkh-volume-row i,
-.nkh-stacked-bar i {
-  display: block;
-  height: 100%;
-}
-.nkh-volume-row strong,
-.nkh-volume-row em {
-  color: var(--ink);
-  font-family: var(--mono);
-  font-size: 11px;
-  font-style: normal;
-  font-weight: 800;
-  text-align: right;
-}
-.nkh-volume-row em {
-  color: var(--ink-3);
+.nkh-volume-chart .recharts-wrapper,
+.nkh-usecase-rechart .recharts-wrapper,
+.nkh-proof-rechart .recharts-wrapper,
+.nkh-stacked-rechart .recharts-wrapper {
+  font-family: var(--sans);
 }
 .nkh-confidence-benchmark {
   display: grid;
@@ -3933,12 +4129,9 @@ const styles = `
   color: var(--ink);
   font-size: 16px;
 }
-.nkh-stacked-bar {
-  display: flex;
-  height: 16px;
-}
-.nkh-stacked-bar i + i {
-  border-left: 2px solid var(--surface-2);
+.nkh-stacked-rechart {
+  width: 100%;
+  height: 82px;
 }
 .nkh-confidence-benchmark dl {
   display: grid;
@@ -3975,6 +4168,15 @@ const styles = `
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   margin: 0 0 22px;
+}
+.nkh-usecase-rechart {
+  width: 100%;
+  height: 250px;
+  margin: 0 0 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  padding: 8px 10px;
 }
 .nkh-usecase-board.is-compact {
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -4055,6 +4257,50 @@ const styles = `
   border-radius: 10px;
   overflow: hidden;
   background: var(--surface-2);
+}
+.nkh-proof-rechart {
+  min-height: 220px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  padding: 8px 10px;
+}
+.nkh-chart-tooltip {
+  max-width: 280px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 18px 36px rgba(24, 20, 17, .12);
+  padding: 10px 12px;
+  color: var(--ink);
+}
+.nkh-chart-tooltip strong,
+.nkh-chart-tooltip span,
+.nkh-chart-tooltip em {
+  display: block;
+}
+.nkh-chart-tooltip strong {
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+.nkh-chart-tooltip span {
+  color: var(--ink-2);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.nkh-chart-tooltip span i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+}
+.nkh-chart-tooltip em {
+  margin-top: 6px;
+  color: var(--ink-3);
+  font-size: 11px;
+  font-style: normal;
 }
 .nkh-proof-flow div {
   min-height: 150px;

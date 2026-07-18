@@ -496,28 +496,32 @@ function main() {
   );
   const requiredVisualMarkers = [
     {
-      marker: "Newsreader, Georgia, serif",
-      reason: "Home Knowledge must use the same heading font token as Intelligence",
+      marker: 'from "recharts"',
+      reason: "Home Knowledge quantitative visuals must use Recharts, not CSS-only bars",
     },
     {
-      marker: "nkh-volume-chart",
-      reason: "Overview must include a visible context concentration chart",
+      marker: "ResponsiveContainer",
+      reason: "Home Knowledge charts must be responsive Recharts canvases",
     },
     {
-      marker: "nkh-confidence-benchmark",
-      reason: "Context Confidence must include a visible decision confidence distribution",
+      marker: 'data-testid="home-knowledge-dimension-volume-recharts"',
+      reason: "Overview must include a Recharts context concentration chart",
     },
     {
-      marker: "nkh-usecase-board",
-      reason: "Use Cases must include priority cards, not only a table",
+      marker: 'data-testid="home-knowledge-confidence-recharts"',
+      reason: "Context Confidence must include a Recharts decision confidence distribution",
     },
     {
-      marker: "nkh-proof-visual",
-      reason: "Proof must include the visible governed context flow diagram",
+      marker: 'data-testid="home-knowledge-usecase-priority-recharts"',
+      reason: "Use Cases must include a Recharts priority chart",
     },
     {
-      marker: "nkh-proof-flow",
-      reason: "Proof diagram must render as structured flow nodes",
+      marker: 'data-testid="home-knowledge-proof-stage-recharts"',
+      reason: "Proof must include a Recharts proof-stage coverage chart",
+    },
+    {
+      marker: 'var(--font-fraunces), "Fraunces", Georgia, serif',
+      reason: "Home Knowledge must use the same heading font family as Tower/Intelligence-style canvases",
     },
   ];
   const missingVisualMarkers = requiredVisualMarkers.filter(
