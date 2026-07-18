@@ -1944,6 +1944,7 @@ const PANEL_STYLE: CSSProperties = {
   background: CANVAS.CHAT_BG,
   borderRight: `1px solid ${CANVAS.HAIRLINE}`,
   minHeight: 0,
+  overflow: "hidden",
   position: "relative",
 };
 
@@ -2156,7 +2157,11 @@ const SUGGESTIONS_STYLE: CSSProperties = {
   gap: 6,
   padding: "12px 18px",
   borderTop: `1px solid ${CANVAS.HAIRLINE}`,
-  flexShrink: 0,
+  flex: "0 1 auto",
+  maxHeight: "min(28vh, 220px)",
+  overflowY: "auto",
+  overscrollBehavior: "contain",
+  background: CANVAS.CHAT_BG,
 };
 
 const SUGGESTIONS_LABEL_STYLE: CSSProperties = {
@@ -2190,7 +2195,11 @@ const CHIPS_ROW_STYLE: CSSProperties = {
   gap: 6,
   padding: "8px 18px",
   borderTop: `1px solid ${CANVAS.HAIRLINE}`,
-  flexShrink: 0,
+  flex: "0 1 auto",
+  maxHeight: "min(22vh, 180px)",
+  overflowY: "auto",
+  overscrollBehavior: "contain",
+  background: CANVAS.CHAT_BG,
 };
 
 const CHIP_STYLE: CSSProperties = {
@@ -2336,6 +2345,9 @@ const INPUT_FORM_STYLE: CSSProperties = {
   borderTop: `1px solid ${CANVAS.HAIRLINE}`,
   background: CANVAS.CHAT_BG,
   flex: "0 0 auto",
+  position: "sticky",
+  bottom: 0,
+  zIndex: 2,
 };
 
 const RESPONSIBILITY_FOOTER_WRAP_STYLE: CSSProperties = {
