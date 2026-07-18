@@ -39,6 +39,8 @@ const MODE_RULES: readonly ModeRule[] = [
       /what('s| is) blocking/i,
       /gate (criteria|blocker|status|readiness)/i,
       /current gate/i,
+      /gate tally/i,
+      /checklist status/i,
       /why can'?t (we|i) advance/i,
     ],
   },
