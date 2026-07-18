@@ -273,39 +273,40 @@ async function insertRows(client, table, columns, rows, conflictClause = "") {
 }
 
 async function deleteCandidateRows(client, tenantKey, contractVersion, loadRunId) {
+  const sourceRecordPrefix = `${loadRunId}%`;
   const deleteStatements = [
-    ["public.enterprise_context_chunk_queue", "tenant_key=$1 and source_system=$2 and source_record_id like $3"],
-    ["public.enterprise_context_chunks", "tenant_key=$1 and source_system=$2 and source_record_id like $3"],
-    ["public.governed_object_readiness", "client_key=$1 and provenance->>'load_run_id'=$4"],
-    ["public.enterprise_context_stewardship_tasks", "tenant_key=$1 and source_system=$2 and source_record_id like $3"],
-    ["public.enterprise_context_quality_issues", "tenant_key=$1 and source_system=$2 and source_record_id like $3"],
-    ["public.enterprise_context_evidence", "tenant_key=$1 and source_system=$2 and source_record_id like $3"],
-    ["public.enterprise_context_relationships", "tenant_key=$1 and source_system=$2 and source_record_id like $3"],
-    ["public.enterprise_context_facts", "tenant_key=$1 and source_system=$2 and source_record_id like $3"],
-    ["public.enterprise_context_records", "tenant_key=$1 and source_system=$2 and source_record_id like $3"],
-    ["public.enterprise_context_source_files", "tenant_key=$1 and source_system=$2 and source_file_id like $3"],
-    ["public.enterprise_context_sources", "tenant_key=$1 and source_system=$2 and source_key like $3"],
-    ["cio_tower.validation_results", "tenant_key=$1 and validation_run_key like $3"],
-    ["cio_tower.validation_runs", "tenant_key=$1 and validation_run_key like $3"],
-    ["cio_tower.measure_results", "tenant_key=$1 and measure_key like $3"],
-    ["cio_tower.relationships", "tenant_key=$1 and relationship_key like $3"],
-    ["cio_tower.facts", "tenant_key=$1 and fact_key like $3"],
-    ["cio_tower.entities", "tenant_key=$1 and entity_key like $3"],
-    ["cio_tower.source_registry", "tenant_key=$1 and upload_run_id=$4"],
-    ["public.source_contract_evidence_rows", "tenant_key=$1 and source_event_id like $3"],
-    ["public.source_contract_evidence_metrics", "tenant_key=$1 and source_event_id like $3"],
-    ["public.source_contract_evidence_manifests", "tenant_key=$1 and upload_batch_id=$4"],
-    ["public.source_context_receipts", "tenant_key=$1 and source_event_id like $3"],
-    ["public.source_events", "client_key=$1 and event_code like $3"],
-    ["intelligence_v7.tenant_pack_runs", "tenant_key=$1 and contract_version=$5"],
+    ["public.enterprise_context_chunk_queue", "tenant_key=$1 and source_system=$2 and source_record_id like $3", [tenantKey, sourceSystem, sourceRecordPrefix]],
+    ["public.enterprise_context_chunks", "tenant_key=$1 and source_system=$2 and source_record_id like $3", [tenantKey, sourceSystem, sourceRecordPrefix]],
+    ["public.governed_object_readiness", "client_key=$1 and provenance->>'load_run_id'=$2", [tenantKey, loadRunId]],
+    ["public.enterprise_context_stewardship_tasks", "tenant_key=$1 and source_system=$2 and source_record_id like $3", [tenantKey, sourceSystem, sourceRecordPrefix]],
+    ["public.enterprise_context_quality_issues", "tenant_key=$1 and source_system=$2 and source_record_id like $3", [tenantKey, sourceSystem, sourceRecordPrefix]],
+    ["public.enterprise_context_evidence", "tenant_key=$1 and source_system=$2 and source_record_id like $3", [tenantKey, sourceSystem, sourceRecordPrefix]],
+    ["public.enterprise_context_relationships", "tenant_key=$1 and source_system=$2 and source_record_id like $3", [tenantKey, sourceSystem, sourceRecordPrefix]],
+    ["public.enterprise_context_facts", "tenant_key=$1 and source_system=$2 and source_record_id like $3", [tenantKey, sourceSystem, sourceRecordPrefix]],
+    ["public.enterprise_context_records", "tenant_key=$1 and source_system=$2 and source_record_id like $3", [tenantKey, sourceSystem, sourceRecordPrefix]],
+    ["public.enterprise_context_source_files", "tenant_key=$1 and source_system=$2 and source_file_id like $3", [tenantKey, sourceSystem, sourceRecordPrefix]],
+    ["public.enterprise_context_sources", "tenant_key=$1 and source_system=$2 and source_key like $3", [tenantKey, sourceSystem, sourceRecordPrefix]],
+    ["cio_tower.validation_results", "tenant_key=$1 and validation_run_key like $2", [tenantKey, sourceRecordPrefix]],
+    ["cio_tower.validation_runs", "tenant_key=$1 and validation_run_key like $2", [tenantKey, sourceRecordPrefix]],
+    ["cio_tower.measure_results", "tenant_key=$1 and measure_key like $2", [tenantKey, sourceRecordPrefix]],
+    ["cio_tower.relationships", "tenant_key=$1 and relationship_key like $2", [tenantKey, sourceRecordPrefix]],
+    ["cio_tower.facts", "tenant_key=$1 and fact_key like $2", [tenantKey, sourceRecordPrefix]],
+    ["cio_tower.entities", "tenant_key=$1 and entity_key like $2", [tenantKey, sourceRecordPrefix]],
+    ["cio_tower.source_registry", "tenant_key=$1 and upload_run_id=$2", [tenantKey, loadRunId]],
+    ["public.source_contract_evidence_rows", "tenant_key=$1 and source_event_id like $2", [tenantKey, sourceRecordPrefix]],
+    ["public.source_contract_evidence_metrics", "tenant_key=$1 and source_event_id like $2", [tenantKey, sourceRecordPrefix]],
+    ["public.source_contract_evidence_manifests", "tenant_key=$1 and upload_batch_id=$2", [tenantKey, loadRunId]],
+    ["public.source_context_receipts", "tenant_key=$1 and source_event_id like $2", [tenantKey, sourceRecordPrefix]],
+    ["public.source_events", "client_key=$1 and event_code like $2", [tenantKey, sourceRecordPrefix]],
+    ["intelligence_v7.tenant_pack_runs", "tenant_key=$1 and contract_version=$2", [tenantKey, contractVersion]],
   ];
   const rows = [];
-  for (const [table, predicate] of deleteStatements) {
+  for (const [table, predicate, params] of deleteStatements) {
     if (!(await tableExists(client, table))) {
       rows.push({ tenant_key: tenantKey, target_table: table, deleted_rows: 0, status: "skipped_table_missing" });
       continue;
     }
-    const result = await q(client, `delete from ${table} where ${predicate}`, [tenantKey, sourceSystem, `${loadRunId}%`, loadRunId, contractVersion]);
+    const result = await q(client, `delete from ${table} where ${predicate}`, params);
     rows.push({ tenant_key: tenantKey, target_table: table, deleted_rows: result.rowCount ?? 0, status: "ready" });
   }
   return rows;
