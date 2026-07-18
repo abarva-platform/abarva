@@ -184,7 +184,7 @@ function legacyPersonFromLabel(
 // is returned `completed: false, verified: false` so the surface shows the
 // criteria explicitly as "not yet verified" rather than guessing a state.
 
-async function buildGateCriteria(
+export async function buildGateCriteria(
   ctx: TenancyCtx,
   moveId: string,
   currentPhase: number,

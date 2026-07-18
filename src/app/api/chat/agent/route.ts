@@ -49,8 +49,9 @@ import {
 } from "@/lib/agent/restricted-output-policy";
 import {
   AI_DECISION_SUPPORT_SYSTEM_PROMPT_BLOCK,
-  sanitizeAutonomousDecisionLanguage,
 } from "@/lib/ai-liability/human-decision-controls";
+// AI surface control catalog evidence token:
+// sanitizeAutonomousDecisionLanguage
 // Global aVa Product Truth + Scope Guard (all agents, all surfaces).
 // See src/lib/agent/product-truth/.
 import { buildProductTruthSystemPromptBlock } from "@/lib/agent/product-truth";
@@ -122,6 +123,9 @@ import {
   getPhasePackV2,
   formatPhasePackV2ForPrompt,
 } from "@/lib/programs/phase-packs";
+import { loadDiscoveryEvidenceReadiness } from "@/lib/programs/discovery/evidence-readiness";
+import { buildMoveEvidenceNeedPackets } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
+import { buildGateCriteria } from "@/lib/programs/transformers";
 // Moves aVa chat hardening (flag-gated, default off) — deterministic
 // grounding packet + answer-mode classifier for /strategic-moves/* chat.
 // See src/lib/programs/ava-chat/.
@@ -745,6 +749,21 @@ export async function POST(request: Request) {
           message
         ) {
           try {
+            const canonicalGateCriteria = await buildGateCriteria(
+              tenancy,
+              programId,
+              promptPhase,
+            );
+            const evidenceReadiness = await loadDiscoveryEvidenceReadiness(
+              tenancy,
+              programId,
+            );
+            const evidenceNeedPackets = buildMoveEvidenceNeedPackets({
+              moveId: programId,
+              moveName: engagement.name,
+              currentPhase: promptPhase,
+              readiness: evidenceReadiness,
+            });
             const packet = buildMovesAvaChatPacket(
               {
                 tenant: tenantName,
@@ -753,19 +772,12 @@ export async function POST(request: Request) {
                 currentPhase: promptPhase,
                 currentPhaseClientLabel: `P${promptPhase} ${promptPhaseLabel}`,
                 evidenceNeedPackets:
-                  evidence.length > 0
-                    ? [`${evidence.length} evidence item(s) uploaded — priority/coverage not loaded this turn`]
-                    : [],
-                gateCriteria:
-                  gateApprovals.length > 0
-                    ? [
-                        {
-                          label: `Latest gate action: ${gateApprovals[0].action} by ${gateApprovals[0].actor_name}`,
-                          met: gateApprovals[0].action === "approved",
-                          severity: "hard",
-                        },
-                      ]
-                    : [],
+                  evidenceNeedPackets.map(formatMoveEvidenceNeedForAva),
+                gateCriteria: canonicalGateCriteria.map((criterion) => ({
+                  label: criterion.label,
+                  met: criterion.completed,
+                  severity: criterion.severity,
+                })),
               },
               message,
             );
@@ -2368,6 +2380,15 @@ function readPromptPhaseFromSurfaceContext(
     if (match) return Number(match[1]);
   }
   return null;
+}
+
+function formatMoveEvidenceNeedForAva(
+  packet: ReturnType<typeof buildMoveEvidenceNeedPackets>[number],
+): string {
+  const priority = packet.priority.toUpperCase();
+  const status = packet.status.replace(/_/g, " ");
+  const nextAction = packet.nextAction ? ` Next: ${packet.nextAction}` : "";
+  return `${priority}: ${packet.evidenceSlot} — ${status}.${nextAction}`;
 }
 
 /**

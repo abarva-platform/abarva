@@ -1,4 +1,5 @@
 import {
+  buildGateCriteria,
   buildStrategicMove,
   buildStrategicMovePortfolio,
   deriveDisplayCode,
@@ -209,6 +210,37 @@ describe("strategic move transformer helpers", () => {
         severity: "hard",
         verified: false,
         completed: false,
+      },
+    ]);
+  });
+
+  it("exports canonical gate criteria evaluated from governance state", async () => {
+    evaluateGateMock.mockResolvedValue({
+      pass: true,
+      failedChecks: [],
+      requiresApproval: false,
+      approverRole: null,
+    });
+
+    const criteria = await buildGateCriteria(
+      { clientId: "client-1", userId: "user-1" },
+      "move-1",
+      1,
+    );
+
+    expect(evaluateGateMock).toHaveBeenCalledWith(
+      { clientId: "client-1", userId: "user-1" },
+      "move-1",
+      1,
+      2,
+    );
+    expect(criteria).toEqual([
+      {
+        id: "charter_signed_off",
+        label: "Charter signed off",
+        severity: "hard",
+        verified: true,
+        completed: true,
       },
     ]);
   });
