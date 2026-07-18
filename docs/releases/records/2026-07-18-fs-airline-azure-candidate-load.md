@@ -63,6 +63,12 @@ Runtime: no default runtime route is changed. Candidate rows remain invisible un
 - V7 graph node projection now uses the generated `node_key` as `node_ref`.
 - Display labels remain in `entity_name`; uniqueness no longer depends on repeated synthetic display names.
 
+### 2026-07-18 graph-edge source-record follow-up
+
+- ACA operator execution `job-abarva-private-operator-eus-lnmk4z6` remained safely blocked before promotion because the deployed `intelligence_v7.relationship_edges` table requires non-null `source_record_key`.
+- V7 graph node and relationship-edge projections now resolve `source_record_key` through candidate evidence lineage to the loaded candidate business record.
+- The proof bundle now emits explicit graph-node uniqueness and graph-edge resolution CSVs, including node-ref policy, scoped uniqueness counts, cross-tenant collision counts, source-record-key presence, orphan node count, and orphan edge count.
+
 ## Rollout Plan
 
 Merge by PR into `main`, let the repo-owned ACA main deploy workflow build and deploy the image, then run the private ACA operator job with `TENANT_CANDIDATE_LOAD_APPROVED=true` and `load:fs-airline-azure-candidate`. Do not promote active context in this release.
