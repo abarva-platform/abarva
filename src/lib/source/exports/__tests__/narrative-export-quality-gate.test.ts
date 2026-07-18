@@ -29,6 +29,18 @@ function makeState(
 }
 
 describe("narrative export quality gate", () => {
+  const issueReadyRfpBody = [
+    "# RFP",
+    "",
+    "Value at stake: $27.0M",
+    "",
+    "## Risk register",
+    "",
+    "| Risk | Owner | Mitigation |",
+    "| --- | --- | --- |",
+    "| Transition readiness | Sourcing lead | Confirm before issue |",
+  ].join("\n");
+
   it("blocks RFP export when only the scaffold would be rendered", () => {
     expect(() =>
       assertNarrativeArtifactExportable("d09_rfp_pack", makeState(null)),
@@ -39,18 +51,18 @@ describe("narrative export quality gate", () => {
     expect(() =>
       assertNarrativeArtifactExportable(
         "d09_rfp_pack",
-        makeState("# RFP", {
+        makeState(issueReadyRfpBody, {
           qualityGate: { passed: false },
         }),
       ),
-    ).toThrow("has not passed");
+    ).toThrow("did not pass");
   });
 
   it("allows RFP export after the partner-grade gate passes", () => {
     expect(() =>
       assertNarrativeArtifactExportable(
         "d09_rfp_pack",
-        makeState("# RFP", {
+        makeState(issueReadyRfpBody, {
           qualityGate: { passed: true },
         }),
       ),

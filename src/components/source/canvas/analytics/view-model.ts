@@ -183,6 +183,22 @@ export interface GateDeliverableView {
   isReadinessPack?: boolean;
 }
 
+export interface GateArtifactQualityView {
+  artifactCode: string;
+  label: string;
+  status:
+    | 'not_generated'
+    | 'drafting'
+    | 'ready'
+    | 'needs_review'
+    | 'blocked'
+    | 'approved';
+  vendorFacingSafe: boolean;
+  blockerCount: number;
+  warningCount: number;
+  summary: string;
+}
+
 /**
  * When present, the gate's Approve button is LIVE: clicking it POSTs to the
  * existing Source approval backend (the same route the standalone
@@ -219,6 +235,8 @@ export interface StageGateView {
   confirms: readonly GateConfirmView[];
   /** What auto-generates on approval (deliverables + next readiness pack). */
   generates: readonly GateDeliverableView[];
+  /** Actual persisted artifact/readiness state for generated deliverables. */
+  artifactQualityStates?: readonly GateArtifactQualityView[];
   /** The next stage name, or null if this closes the event. */
   nextStageName: string | null;
   /**

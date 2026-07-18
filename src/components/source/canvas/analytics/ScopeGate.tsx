@@ -24,6 +24,12 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
   const [approveError, setApproveError] = useState<string | null>(null);
   const allConfirmed = confirmed.size === gate.confirms.length;
   const last = gate.nextStageName === null;
+  const qualityByCode = new Map(
+    (gate.artifactQualityStates ?? []).map((state) => [
+      state.artifactCode,
+      state,
+    ]),
+  );
   // The gate is LIVE (folds the P0 approval) only when the view attaches an
   // `action`. Otherwise the Approve button is a presentational end-state, exactly
   // as the Scope exemplar has always rendered.
@@ -219,41 +225,49 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
             background: ANALYTICS.SOFT,
           }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {gate.generates.map((deliverable) => (
               <div
                 key={deliverable.label}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(0, 1fr) auto',
                   gap: 10,
                   fontSize: 13.5,
                   color: deliverable.isReadinessPack ? ANALYTICS.AMBER_TEXT : ANALYTICS.INK_2,
                   fontWeight: deliverable.isReadinessPack ? 600 : 400,
                 }}
               >
-                <span
-                  style={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    background: deliverable.isReadinessPack
-                      ? ANALYTICS.AMBER
-                      : ANALYTICS.BLUE,
-                    flexShrink: 0,
-                  }}
-                />
-                {deliverable.label}
-                {deliverable.code ? (
-                  <code
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span
                     style={{
-                      fontFamily: ANALYTICS.MONO,
-                      fontSize: 12,
-                      color: ANALYTICS.MUTED,
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: deliverable.isReadinessPack
+                        ? ANALYTICS.AMBER
+                        : ANALYTICS.BLUE,
+                      flexShrink: 0,
                     }}
-                  >
-                    {deliverable.code}
-                  </code>
+                  />
+                  <span>
+                    {deliverable.label}
+                    {deliverable.code ? (
+                      <code
+                        style={{
+                          fontFamily: ANALYTICS.MONO,
+                          fontSize: 12,
+                          color: ANALYTICS.MUTED,
+                          marginLeft: 7,
+                        }}
+                      >
+                        {deliverable.code}
+                      </code>
+                    ) : null}
+                  </span>
+                </div>
+                {deliverable.code && qualityByCode.has(deliverable.code) ? (
+                  <QualityStatePill state={qualityByCode.get(deliverable.code)!} />
                 ) : null}
               </div>
             ))}
@@ -268,8 +282,19 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
               lineHeight: 1.5,
             }}
           >
-            <b style={{ color: ANALYTICS.INK_2 }}>Nothing is generated yet.</b> These are
-            prepared automatically the moment you approve — there is no build step.
+            {gate.artifactQualityStates && gate.artifactQualityStates.length > 0 ? (
+              <>
+                <b style={{ color: ANALYTICS.INK_2 }}>Generated state is live.</b>{' '}
+                Drafts that need review cannot be treated as vendor-facing or
+                final until the quality blockers clear.
+              </>
+            ) : (
+              <>
+                <b style={{ color: ANALYTICS.INK_2 }}>Nothing is generated yet.</b>{' '}
+                These are prepared automatically the moment you approve — there
+                is no build step.
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -320,5 +345,63 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
         </div>
       ) : null}
     </section>
+  );
+}
+
+function QualityStatePill({
+  state,
+}: {
+  state: NonNullable<StageGateView['artifactQualityStates']>[number];
+}) {
+  const palette =
+    state.status === 'ready' || state.status === 'approved'
+      ? {
+          background: ANALYTICS.GREEN_TINT,
+          border: ANALYTICS.GREEN,
+          color: ANALYTICS.GREEN,
+        }
+      : state.status === 'needs_review' || state.status === 'blocked'
+        ? {
+            background: ANALYTICS.RUST_TINT,
+            border: ANALYTICS.RUST,
+            color: ANALYTICS.RUST,
+          }
+        : {
+            background: ANALYTICS.SOFT,
+            border: ANALYTICS.LINE_STRONG,
+            color: ANALYTICS.MUTED,
+          };
+  const label =
+    state.status === 'ready'
+      ? state.vendorFacingSafe
+        ? 'Ready'
+        : 'Draft ready'
+      : state.status === 'needs_review'
+        ? 'Needs review'
+        : state.status === 'blocked'
+          ? 'Blocked'
+          : state.status === 'approved'
+            ? 'Approved'
+            : 'Not generated';
+  return (
+    <span
+      title={state.summary}
+      style={{
+        justifySelf: 'end',
+        border: `1px solid ${palette.border}`,
+        background: palette.background,
+        color: palette.color,
+        borderRadius: 999,
+        padding: '3px 8px',
+        fontSize: 10.5,
+        fontWeight: 700,
+        letterSpacing: 0.35,
+        textTransform: 'uppercase',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {label}
+      {state.blockerCount > 0 ? ` · ${state.blockerCount}` : ''}
+    </span>
   );
 }

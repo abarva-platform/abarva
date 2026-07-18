@@ -12,6 +12,7 @@ import { sanitizeArtifactBodyForExport } from '@/lib/source/agent-generation/con
 import { loadArtifactTemplate } from '@/lib/source/canvas-substrate/templates';
 import type { NarrativeDocxPayload } from '../renderers/narrative-docx';
 import { buildDecisionBriefPayloadFromContext } from './decision-brief-payload';
+import { evaluateSourceArtifactReadiness } from '../../source-governance-enforcement';
 
 export function buildNarrativeDocxPayloadFromContext(
   ctx: SourceGenerationContext,
@@ -42,6 +43,15 @@ export function assertNarrativeArtifactExportable(
   artifactCode: string,
   state: SourceGenerationContext["artifactStates"][number] | undefined,
 ): void {
+  const readiness = evaluateSourceArtifactReadiness({ artifact: state });
+  if (state?.body?.trim() && readiness.readiness !== "ready") {
+    throw new Error(
+      `${artifactCode} export blocked: artifact is ${readiness.readiness}; ${readiness.blockers
+        .map((blocker) => blocker.detail)
+        .join(" ")}`,
+    );
+  }
+
   if (artifactCode !== "d09_rfp_pack") return;
   if (!state?.body?.trim()) {
     throw new Error(

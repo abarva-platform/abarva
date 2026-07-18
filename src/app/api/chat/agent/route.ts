@@ -168,6 +168,7 @@ import {
 import { buildModeGrounding } from "@/lib/source/ava/mode-grounding";
 import { runSourceAnswerQualityGate } from "@/lib/source/ava/answer-quality-gate";
 import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
+import { listArtifactStatesForEvent } from "@/lib/source/canvas-substrate";
 import {
   readEventFacts,
   readRfpClausePresentLeverKeys,
@@ -1422,6 +1423,7 @@ export async function POST(request: Request) {
         const [
           { inputs: modeFactInputs },
           modeArtifacts,
+          modeArtifactStates,
           rfpClauseSignal,
           committedSignal,
           bafoSignal,
@@ -1436,6 +1438,7 @@ export async function POST(request: Request) {
           listSourceArtifactsForSourceEventId(sourceEventIdFromContext).catch(
             () => [],
           ),
+          listArtifactStatesForEvent(sourceEventIdFromContext).catch(() => []),
           // general_advisory also needs this signal when the viewed stage is
           // RFP — buildGeneralAdvisoryGrounding composites the clause-coverage
           // facet in that case (a generically-phrased "is the RFP ready to
@@ -1546,6 +1549,7 @@ export async function POST(request: Request) {
           stageView: modeStageView,
           factInputs: modeFactInputs,
           artifacts: modeArtifacts,
+          artifactStates: modeArtifactStates,
           question: message,
           // Phase B/C inputs — eventType left unset so the archetype resolves
           // the same way the canvas/value-grounding does (the first archetype

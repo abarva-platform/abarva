@@ -69,6 +69,10 @@ import {
   type SourceEventArtifactStateRow,
 } from "@/lib/source/canvas-substrate/types";
 import {
+  buildArtifactReadinessMetadata,
+  evaluateSourceArtifactSetReadiness,
+} from "@/lib/source/source-governance-enforcement";
+import {
   buildSourceArtifactBlobPath,
   registerSourceArtifactUpload,
   type SourceArtifactRegistryRecord,
@@ -651,7 +655,7 @@ export async function generateSourceArtifactDraft(
     envelopeId: randomUUID(),
     now: nowIso,
   });
-  const generationMetadata = withSectionVerificationMetadata(
+  const generationMetadataBase = withSectionVerificationMetadata(
     {
       model,
       promptTemplateId: template.artifactCode,
@@ -671,6 +675,40 @@ export async function generateSourceArtifactDraft(
     sectionVerification,
   ) satisfies SourceArtifactBodyGenerationMetadata;
 
+  const draftStatus = qualityGateFailedDetail
+    ? "needs_review"
+    : artifactRow.status === "not_started"
+      ? "drafting"
+      : artifactRow.status;
+  const draftArtifactView = artifactStateRowToView({
+    ...artifactRow,
+    body,
+    body_format: "markdown",
+    body_authored_by: currentUser?.clerkUserId ?? null,
+    body_updated_at: nowIso,
+    body_generation_metadata: generationMetadataBase as unknown as Record<
+      string,
+      unknown
+    >,
+    status: draftStatus,
+    updated_at: nowIso,
+  });
+  const artifactSetReadiness = evaluateSourceArtifactSetReadiness([
+    ...ctx.artifactStates.filter((row) => row.artifactCode !== artifactCode),
+    draftArtifactView,
+  ]);
+  const artifactReadiness = artifactSetReadiness.artifacts.find(
+    (row) => row.artifactCode === artifactCode,
+  );
+  const deterministicGovernance = artifactReadiness
+    ? buildArtifactReadinessMetadata(artifactReadiness)
+    : null;
+  const generationMetadata = {
+    ...generationMetadataBase,
+    deterministicGovernance: deterministicGovernance ?? undefined,
+  } satisfies SourceArtifactBodyGenerationMetadata;
+  const preserveApprovedStatus = artifactRow.status === "approved";
+
   const update: Partial<SourceEventArtifactStateRow> = {
     body,
     body_format: "markdown",
@@ -680,11 +718,12 @@ export async function generateSourceArtifactDraft(
       string,
       unknown
     >,
-    status: qualityGateFailedDetail
-      ? "needs_review"
-      : artifactRow.status === "not_started"
-        ? "drafting"
-        : artifactRow.status,
+    status:
+      artifactReadiness &&
+      artifactReadiness.readiness !== "ready" &&
+      !preserveApprovedStatus
+        ? "needs_review"
+        : draftStatus,
     updated_at: nowIso,
   };
   if (artifactRow.tier === "stub") update.tier = "outline";

@@ -53,6 +53,14 @@ export function sanitizeClientFacingSourceDraft(
 function sanitizeInternalTermLine(line: string): string {
   let next = line;
   next = next.replace(/\bartifact\b(?=\s*:)/gi, "Document");
+  next = next.replace(
+    /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/gi,
+    "internal reference removed",
+  );
+  next = next.replace(
+    /\b[A-Za-z0-9][A-Za-z0-9_.-]{3,}\.(?:csv|xlsx?|xlsm)\b/gi,
+    "Exhibit reference",
+  );
   for (const term of RAW_INTERNAL_TERMS) {
     next = next.replace(new RegExp(escapeRegExp(term), "gi"), "source label");
   }

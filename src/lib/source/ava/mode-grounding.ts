@@ -78,7 +78,9 @@ import type {
   ValueType,
 } from "@/components/source/canvas/analytics/view-model";
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
+import type { SourceEventArtifactState } from "@/lib/source/canvas-substrate/types";
 import type { SourceEventArchetype, ValueLeverRule } from "@/lib/source/archetypes/types";
+import { evaluateSourceArtifactSetReadiness } from "@/lib/source/source-governance-enforcement";
 import type { SourceAnswerMode } from "./answer-mode";
 
 /** Minimal shape needed from the event row for status/gate grounding. */
@@ -101,6 +103,8 @@ export interface BuildModeGroundingInput {
   factInputs?: EvaluatorInputs;
   /** The event's registered artifacts (from `listSourceArtifactsForSourceEventId`). */
   artifacts?: readonly SourceArtifactRegistryRecord[];
+  /** Canonical artifact state rows, including body_generation_metadata quality/readiness receipts. */
+  artifactStates?: readonly SourceEventArtifactState[];
   /** The user's raw question text — used only by workflow_how_to's intent lookup. */
   question?: string;
   /**
@@ -466,6 +470,64 @@ function buildArtifactFinalityGrounding(input: BuildModeGroundingInput): ModeGro
   return {
     block: lines.join("\n"),
     quotableFacts: { artifactCount: String(artifacts.length) },
+  };
+}
+
+function buildArtifactQualityGrounding(input: BuildModeGroundingInput): ModeGroundingResult {
+  const artifactStates = input.artifactStates ?? [];
+  if (artifactStates.length === 0) {
+    return {
+      block:
+        "ARTIFACT QUALITY GROUNDING: no artifact state rows are available for this event yet — do not claim any draft is ready to issue.",
+      quotableFacts: { artifactQualityStateCount: "0", rfpReady: "false" },
+    };
+  }
+
+  const q = input.question?.toLowerCase() ?? "";
+  const targetCodes = q.includes("rfp")
+    ? ["d09_rfp_pack"]
+    : q.includes("scope")
+      ? ["d05_scope_memo"]
+      : q.includes("scorecard")
+        ? ["d16_scorecard"]
+        : q.includes("decision")
+          ? ["d24_decision_brief"]
+          : ["d09_rfp_pack", "d05_scope_memo", "d16_scorecard", "d24_decision_brief"];
+  const relevant = artifactStates.filter((artifact) =>
+    targetCodes.includes(artifact.artifactCode),
+  );
+  const verdict = evaluateSourceArtifactSetReadiness(
+    relevant.length > 0 ? relevant : artifactStates,
+  );
+  const lines = [
+    "ARTIFACT QUALITY GROUNDING (authoritative — quote this readiness state from source_event_artifact_states.body_generation_metadata; do not recompute it):",
+  ];
+  for (const artifact of verdict.artifacts) {
+    const blockerText =
+      artifact.blockers.length > 0
+        ? artifact.blockers.map((blocker) => blocker.detail).join(" ")
+        : "No deterministic blockers recorded.";
+    lines.push(
+      `${artifact.artifactLabel} (${artifact.artifactCode}): readiness=${artifact.readiness}; vendorFacingSafe=${artifact.vendorFacingSafe}; evidenceState=${artifact.evidenceState}; blockers=${artifact.blockers.length}. ${blockerText}`,
+    );
+  }
+  if (verdict.crossArtifactBlockers.length > 0) {
+    lines.push(
+      `Cross-artifact blockers: ${verdict.crossArtifactBlockers
+        .map((blocker) => blocker.detail)
+        .join(" ")}`,
+    );
+  }
+
+  const rfp = verdict.artifacts.find((artifact) => artifact.artifactCode === "d09_rfp_pack");
+  return {
+    block: lines.join("\n"),
+    quotableFacts: {
+      artifactQualityStateCount: String(verdict.artifacts.length),
+      rfpReady: String(Boolean(rfp?.readiness === "ready" && rfp.vendorFacingSafe)),
+      rfpReadiness: rfp?.readiness ?? "unknown",
+      rfpBlockerCount: String(rfp?.blockers.length ?? 0),
+    },
   };
 }
 
@@ -1329,6 +1391,8 @@ export function buildModeGrounding(input: BuildModeGroundingInput): ModeGroundin
       return buildWorkflowHowToGrounding(input);
     case "evidence_readiness":
       return buildEvidenceReadinessGrounding(input);
+    case "artifact_quality":
+      return buildArtifactQualityGrounding(input);
     case "artifact_lineage":
       return buildArtifactLineageGrounding(input);
     case "artifact_finality":

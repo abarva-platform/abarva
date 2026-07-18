@@ -32,6 +32,7 @@ export type {
   FactConfidence,
   FactSourceCitation,
   GateConfirmView,
+  GateArtifactQualityView,
   GateDeliverableView,
   IntelPointTone,
   IntelPointView,

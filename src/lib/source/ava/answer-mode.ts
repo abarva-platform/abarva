@@ -37,6 +37,7 @@ export type SourceAnswerMode =
   | "event_status"
   | "workflow_how_to"
   | "evidence_readiness"
+  | "artifact_quality"
   | "artifact_lineage"
   | "artifact_finality"
   | "stage_gate"
@@ -61,6 +62,7 @@ export const PHASE_A_IMPLEMENTED_MODES: readonly SourceAnswerMode[] = [
   "event_status",
   "workflow_how_to",
   "evidence_readiness",
+  "artifact_quality",
   "artifact_lineage",
   "artifact_finality",
   "stage_gate",
@@ -233,6 +235,15 @@ const RULES: ModeRule[] = [
   // ── Phase A: artifact_finality ───────────────────────────────────────────────
   // Tested BEFORE artifact_lineage — "final"/"authoritative"/"latest" questions
   // are more specific than a general "where did this come from" lineage ask.
+  {
+    mode: "artifact_quality",
+    id: "artifact_quality.ready_to_issue",
+    test: (q) =>
+      /\b(is|are|can|should|could)\b[^?]{0,80}\b(rfp|artifact|document|pack|draft|deliverable)\b[^?]{0,80}\b(ready|issue|send|vendor[- ]facing|release)\b/.test(q) ||
+      /\b(rfp|artifact|document|pack|draft|deliverable)\b[^?]{0,80}\b(ready to (issue|send|release)|vendor[- ]facing ready|safe to send)\b/.test(q) ||
+      /\bsend\b[^?]{0,80}\b(rfp|artifact|document|pack|draft|deliverable)\b[^?]{0,80}\bvendors?\b/.test(q),
+  },
+
   {
     mode: "artifact_finality",
     id: "artifact_finality.which_is_final",
