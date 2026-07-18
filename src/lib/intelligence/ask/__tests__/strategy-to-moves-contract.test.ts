@@ -136,6 +136,24 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     expect(answer).not.toContain("This fourth paragraph should not survive");
   });
 
+  it("strips nested model labels from compact strategy briefs", () => {
+    const answer = ensureAbarvaSolutionBrief(
+      [
+        "Answer: Proof. The loaded enterprise context shows the contact center function owns first-call resolution, average handle time, and intent detection.",
+        "Healthcare Demo — pursue member service agent assist as a conditional advance, not a full commitment.",
+        "Move: Move. Home should validate the four gap items as a structured evidence checklist against current systems.",
+      ].join("\n\n"),
+    );
+
+    expect(answer).toContain(
+      "**Answer:** Healthcare Demo — pursue member service agent assist",
+    );
+    expect(answer).toContain("**Proof:** The loaded enterprise context");
+    expect(answer).toContain("**Move:** Home should validate");
+    expect(answer).not.toContain("Answer: Proof");
+    expect(answer).not.toContain("Move: Move");
+  });
+
   it("deterministically appends the Moves P0-P5 phase plan when Claude omits it", () => {
     const answer = applyCxoAnswerModeFallbacks(
       "**Lakeshore Holdings should run this as a Moves sprint.**",
