@@ -9,6 +9,7 @@ import { CurrentStateReadinessPanel } from "@/components/strategic-moves/Current
 import { artifactStatusLabel, FileCabinetPanel } from "@/components/strategic-moves/FileCabinetPanel";
 import { NexusCurrentStateBriefingPanel } from "@/components/strategic-moves/NexusCurrentStateBriefingPanel";
 import { PhaseApproveAndBuild } from "@/components/strategic-moves/PhaseApproveAndBuild";
+import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
 import { SessionPlaybookPanel } from "@/components/strategic-moves/SessionPlaybookPanel";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
@@ -76,7 +77,7 @@ interface MovesPhaseStandaloneClientProps {
   initialSubstepKey?: SubstepKey;
 }
 
-type WorkspaceView = "phase" | "files" | "playbook";
+type WorkspaceView = "phase" | "files" | "playbook" | "intelligence";
 
 type UploadWorkStatus = "idle" | "uploading" | "uploaded" | "error";
 type DecisionOptionSaveStatus = "idle" | "saving" | "saved" | "error";
@@ -810,6 +811,17 @@ export function MovesPhaseStandaloneClient({
               <span>▤</span>
               Session Playbook
             </button>
+            <button
+              className={`mxw-lib-link ${workspaceView === "intelligence" ? "viewing" : ""}`}
+              onClick={() => {
+                setWorkspaceView("intelligence");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              type="button"
+            >
+              <span>◈</span>
+              Phase Intelligence
+            </button>
           </div>
           <p className="mxw-foot">
             <b>aVa</b> assembles each phase from your evidence · you review &
@@ -861,6 +873,28 @@ export function MovesPhaseStandaloneClient({
                 </p>
               </div>
               <SessionPlaybookPanel moveId={move.id} phase={phase.phase} />
+            </>
+          ) : workspaceView === "intelligence" ? (
+            <>
+              <div className="mxw-crumb">
+                <button onClick={() => setWorkspaceView("phase")} type="button">
+                  {move.name}
+                </button>
+                <span>/</span>
+                Phase Intelligence
+              </div>
+              <div className="mxw-stage-head">
+                <div className="mxw-agent-chip">
+                  <span />
+                  AVA · MOVES
+                </div>
+                <h1>Phase Intelligence</h1>
+                <p>
+                  The short readout for this phase: key decision, function-pack signal,
+                  and governed gate/evidence truth.
+                </p>
+              </div>
+              <PhaseIntelligencePanel moveId={move.id} phase={phase.phase} />
             </>
           ) : (
             <>
@@ -3264,6 +3298,24 @@ function MovesStandaloneStyles() {
 .mxw-file-row strong{display:block;font-size:12.8px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mxw-file-row small{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mxw-file-row em{font-style:normal;color:var(--muted);font-size:11px;font-weight:800;text-align:right}
+.mxw-intel-panel{border:1px solid var(--line);border-radius:15px;background:var(--card);box-shadow:var(--shadow);padding:20px}
+.mxw-intel-kicker{font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--blue);font-weight:900;margin-bottom:6px}
+.mxw-intel-panel h2{font-family:Georgia,serif;font-size:22px;line-height:1.15;letter-spacing:-.45px;margin:0;color:var(--ink)}
+.mxw-intel-panel>p{font-size:13px;color:var(--muted);line-height:1.5;max-width:74ch;margin:7px 0 18px}
+.mxw-intel-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.mxw-intel-item{display:flex;flex-direction:column;gap:10px;min-height:260px;border:1px solid var(--line);border-radius:13px;background:var(--soft);padding:15px}
+.mxw-intel-item.success{border-color:rgba(29,143,104,.28);background:linear-gradient(180deg,var(--green-tint),var(--card))}
+.mxw-intel-item.warning{border-color:rgba(176,115,15,.28);background:linear-gradient(180deg,var(--amber-tint),var(--card))}
+.mxw-intel-item.danger{border-color:rgba(180,35,24,.28);background:linear-gradient(180deg,#fff0ed,var(--card))}
+.mxw-intel-item-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.mxw-intel-item-top span{font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--teal);font-weight:900}
+.mxw-intel-item-top em{font-style:normal;font-size:10px;line-height:1.3;color:var(--faint);font-weight:800;text-align:right;max-width:130px}
+.mxw-intel-item h3{font-size:15px;line-height:1.25;color:var(--ink);margin:0}
+.mxw-intel-item p{font-size:13px;line-height:1.5;color:var(--ink-2);margin:0}
+.mxw-intel-item ul{display:grid;gap:5px;margin:2px 0 0;padding-left:17px;color:var(--muted);font-size:12px;line-height:1.35}
+.mxw-intel-link{margin-top:auto;align-self:flex-start;border:1px solid var(--line-2);border-radius:999px;background:var(--card);color:var(--blue);font-size:12px;font-weight:850;padding:6px 10px}
+.mxw-intel-empty{display:grid;gap:6px;border:1px solid var(--line);border-radius:12px;background:var(--soft);padding:16px;color:var(--muted);font-size:13px}
+.mxw-intel-empty strong{color:var(--ink)}
 .mxw-ava-fab{position:fixed;right:24px;bottom:24px;z-index:70;display:flex;align-items:center;gap:9px;background:var(--ink);color:#fff;border:0;border-radius:999px;padding:11px 16px 11px 12px;box-shadow:0 6px 20px rgba(20,20,19,.22);cursor:pointer}
 .mxw-ava-pop{position:fixed;right:24px;bottom:78px;z-index:71;width:348px;max-width:calc(100vw - 48px);background:var(--card);border:1px solid var(--line-2);border-radius:16px;box-shadow:0 16px 44px rgba(20,20,19,.2);overflow:hidden;display:none}
 .mxw-ava-pop.open{display:block}
@@ -3284,7 +3336,7 @@ function MovesStandaloneStyles() {
 .mxw-ava-composer textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;font-size:12.5px;color:var(--ink);background:#fff}
 .mxw-ava-composer button{flex:none;border:0;background:var(--ink);color:#fff;border-radius:9px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer}
 .mxw-ava-composer button:disabled{opacity:.5;cursor:default}
-@media (max-width:980px){.mxw-lanes,.mxw-value-grid,.mxw-exec-readout{grid-template-columns:1fr}}
+@media (max-width:980px){.mxw-lanes,.mxw-value-grid,.mxw-exec-readout,.mxw-intel-grid{grid-template-columns:1fr}}
 @media (max-width:900px){
   .mxw-surface{grid-template-columns:1fr}
   .mxw-side{display:none}
