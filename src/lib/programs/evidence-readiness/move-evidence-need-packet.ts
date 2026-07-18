@@ -96,6 +96,48 @@ const FAMILY_TO_ARTIFACTS: Record<string, string[]> = {
     "execution_roadmap",
     "handoff_package",
   ],
+  // Healthcare / member-service Contact Center Agent Assist family ids —
+  // see HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST in discovery-blueprint.ts.
+  current_state_workflow_map: [
+    "discovery_report",
+    "root_cause_worksheet",
+    "target_state_architecture",
+  ],
+  contact_center_kpis: [
+    "discovery_report",
+    "business_case",
+    "tower_metrics_plan",
+    "value_measurement_contract",
+  ],
+  crm_contact_center_system_map: [
+    "discovery_report",
+    "target_state_architecture",
+    "solution_design",
+  ],
+  claims_eligibility_benefits_data_access: [
+    "target_state_architecture",
+    "solution_design",
+  ],
+  knowledge_base_ownership_freshness: [
+    "solution_design",
+    "operating_model_design",
+  ],
+  call_recording_transcript_availability: [
+    "discovery_report",
+    "solution_design",
+  ],
+  phi_privacy_security_controls: [
+    "solution_design",
+    "operating_model_design",
+  ],
+  human_in_loop_model: ["operating_model_design", "solution_design"],
+  model_risk_responsible_ai_controls: [
+    "solution_design",
+    "operating_model_design",
+  ],
+  measurement_owner_cadence: ["tower_metrics_plan", "value_measurement_contract"],
+  finance_baseline_value_plan: ["business_case", "financial_model"],
+  change_adoption_owner: ["operating_model_design", "handoff_package"],
 };
 
 const GENERIC_EXAMPLES: Record<
@@ -269,6 +311,163 @@ const TREASURY_EXAMPLES: Partial<typeof GENERIC_EXAMPLES> = {
   },
 };
 
+// Healthcare / member-service Contact Center Agent Assist. Family ids here
+// match `HEALTHCARE_CONTACT_CENTER_AGENT_ASSIST.evidenceFamilies` in
+// discovery-blueprint.ts (the catalog that actually feeds `readiness` into
+// this file) — content is adapted from that catalog's real label/grounds/
+// likelySource/format fields, not invented fresh. Note: `archetypes/
+// registry.ts` defines a second, differently-keyed catalog for the same
+// archetype (e.g. `contact_center_transcripts_intents` there vs
+// `call_recording_transcript_availability` here) — the two are not merged;
+// this table only needs to match the ids this specific pipeline actually
+// receives.
+const CONTACT_CENTER_AGENT_ASSIST_EXAMPLES: Partial<typeof GENERIC_EXAMPLES> = {
+  current_state_workflow_map: {
+    exampleTemplate: "Member-service workflow map",
+    exampleContent: [
+      "As-is workflow: intake, verification, systems touched, escalation, and resolution path per top intent",
+      "Handle-time and transfer points broken out by intent category",
+      "Owner-attested notes from Member Operations / Contact Center Operations",
+    ],
+    whyItMatters:
+      "AbarVa needs the real member-service workflow — not a generic contact-center template — before it can diagnose where agent assist actually helps.",
+    nextAction:
+      "Upload workshop notes, a process map, or call-flow documentation from Member Operations.",
+  },
+  contact_center_kpis: {
+    exampleTemplate: "Contact center baseline KPIs",
+    exampleContent: [
+      "AHT, FCR, transfer rate, repeat-contact rate, and CSAT by top intent",
+      "Volume and staffing by queue, with recent-period trend",
+      "Metric definitions, source (CCaaS reporting), and owner attestation",
+    ],
+    whyItMatters:
+      "The value hypothesis, business case, and Tower metrics need measured contact-center baselines, not assumed ones.",
+    nextAction:
+      "Upload CCaaS/operations analytics reporting extracts or an owner-attested KPI worksheet.",
+  },
+  crm_contact_center_system_map: {
+    exampleTemplate: "CRM/contact-center system and integration map",
+    exampleContent: [
+      "CRM, CCaaS, claims, eligibility, and knowledge systems agents touch per call, with owners",
+      "Integration map between those systems: source, target, frequency, and failure handling",
+      "Known breakpoints — systems agents must swivel-chair between today",
+    ],
+    whyItMatters:
+      "Target architecture and solution design need the real system and integration boundaries agent assist has to work inside.",
+    nextAction:
+      "Upload a CMDB export, application inventory, or architecture diagram from Enterprise Architecture / Contact Center IT.",
+  },
+  claims_eligibility_benefits_data_access: {
+    exampleTemplate: "Claims, eligibility, benefits, and prior-auth data access",
+    exampleContent: [
+      "Which systems hold claims, eligibility, benefits, and prior-authorization data, and how agent assist would query them",
+      "Data freshness, access model, and interface catalog for each source",
+      "Known data-quality or access gaps that would limit retrieval scope",
+    ],
+    whyItMatters:
+      "Agent assist's answer quality is bounded by what it can actually retrieve — this defines the real retrieval scope, not an assumed one.",
+    nextAction:
+      "Upload a data inventory or interface catalog from Claims, Benefits, Prior Authorization, or the Data Platform team.",
+  },
+  knowledge_base_ownership_freshness: {
+    exampleTemplate: "Knowledge base ownership and freshness",
+    exampleContent: [
+      "Which knowledge base(s) agents use today, who owns content, and refresh cadence",
+      "Known stale or conflicting content areas",
+      "Policy-approval path for content agent assist would surface",
+    ],
+    whyItMatters:
+      "Agent assist is only as trustworthy as the knowledge it draws from — governance and freshness are gating, not optional.",
+    nextAction:
+      "Upload a knowledge-base export or ownership/refresh-cadence document from Knowledge Management / Policy Owners.",
+  },
+  call_recording_transcript_availability: {
+    exampleTemplate: "Call transcript/recording availability",
+    exampleContent: [
+      "Redacted call transcripts or intent taxonomy covering real question types and agent search patterns",
+      "Retention policy and a representative sample inventory (order of 50-100 calls)",
+      "Repeat-contact drivers, transfer reasons, and known knowledge gaps surfaced in real calls",
+    ],
+    whyItMatters:
+      "Intent taxonomy and training/evaluation data can only come from real calls — this is not something AbarVa can infer or template.",
+    nextAction:
+      "Upload redacted transcripts, a speech-analytics export, or an intent taxonomy from CCaaS / Speech Analytics / Compliance.",
+  },
+  phi_privacy_security_controls: {
+    exampleTemplate: "PHI, privacy, security, and audit controls",
+    exampleContent: [
+      "PHI access, retention, and audit-logging controls that apply to any agent-assist surface",
+      "Existing security architecture and control matrix for member-facing systems",
+      "Compliance sign-off requirements before any pilot beyond internal agent use",
+    ],
+    whyItMatters:
+      "This is a gate decision, not a nice-to-have — no clinical or member-facing AI capability should move beyond pilot without it.",
+    nextAction:
+      "Upload a controls matrix or security/privacy review from Security / Privacy / Compliance.",
+  },
+  human_in_loop_model: {
+    exampleTemplate: "Human-in-the-loop decision model",
+    exampleContent: [
+      "Which decisions agent assist may draft vs. which must stay human-owned regardless of confidence",
+      "Escalation and override rules, and who owns them",
+      "Clinical or operational policy constraints on AI-drafted content",
+    ],
+    whyItMatters:
+      "The operating model and responsible-AI controls need an explicit decision-rights model, not an assumed one.",
+    nextAction:
+      "Upload a decision-rights matrix from Operations Leadership / Compliance / Clinical Policy.",
+  },
+  model_risk_responsible_ai_controls: {
+    exampleTemplate: "Model risk and responsible AI controls",
+    exampleContent: [
+      "Existing model-risk review process and approval guardrails, if any",
+      "Monitoring, drift, and incident-response expectations for an agent-assist deployment",
+      "Any existing responsible-AI policy this Move must comply with",
+    ],
+    whyItMatters:
+      "AI governance and approval guardrails are a gate, not a checkbox — this needs the real control checklist, not a generic one.",
+    nextAction:
+      "Upload a control checklist or model-risk review artifact from Responsible AI / Model Risk / Compliance.",
+  },
+  measurement_owner_cadence: {
+    exampleTemplate: "Measurement owner and cadence",
+    exampleContent: [
+      "Named owner for each contact-center metric this Move intends to move",
+      "Reporting cadence and system of record for each metric",
+      "How this ties to the Tower handoff and value measurement contract",
+    ],
+    whyItMatters:
+      "Tower handoff and the value measurement contract need a named owner and cadence per metric, not an aspiration.",
+    nextAction:
+      "Upload a metric-owner table from Operations Analytics / Finance / PMO.",
+  },
+  finance_baseline_value_plan: {
+    exampleTemplate: "Finance baseline and value measurement plan",
+    exampleContent: [
+      "Current run cost by queue/function relevant to the value hypothesis",
+      "Value-driver definitions (handle time, containment, staffing) with finance-validated assumptions",
+      "Validation status: finance-attested vs. planning assumption",
+    ],
+    whyItMatters:
+      "The business case needs traceable, finance-validated cost and value assumptions before it's funding-grade.",
+    nextAction:
+      "Upload a finance baseline or value-measurement worksheet from Finance / FP&A.",
+  },
+  change_adoption_owner: {
+    exampleTemplate: "Operational change and adoption owner",
+    exampleContent: [
+      "Named owner for agent training, rollout sequencing, and adoption tracking",
+      "Planned adoption measurement approach (usage, override rate, satisfaction)",
+      "Known change-management risks specific to frontline agent adoption",
+    ],
+    whyItMatters:
+      "Adoption risk is a real failure mode for agent-assist tools — this needs a named owner before rollout, not after.",
+    nextAction:
+      "Upload a RACI or adoption plan from Training / Workforce / Change Lead.",
+  },
+};
+
 function lower(value: string): string {
   return value.toLowerCase();
 }
@@ -302,6 +501,26 @@ function isApInvoiceMove(moveName: string): boolean {
   ].some((token) => text.includes(token));
 }
 
+// Same keyword set as archetypes/registry.ts's resolveProgramArchetype
+// heuristic (kept in sync deliberately, not shared code) — a Move named
+// "Meridian Member Service Agent Assist" resolves here the same way it
+// resolves to the CONTACT_CENTER_AGENT_ASSIST archetype.
+function isContactCenterAgentAssistMove(moveName: string): boolean {
+  const text = lower(moveName);
+  return [
+    "contact center",
+    "call center",
+    "agent assist",
+    "member service",
+    "member experience",
+    "member ai assist",
+    "benefits",
+    "eligibility",
+    "prior auth",
+    "prior authorization",
+  ].some((token) => text.includes(token));
+}
+
 function splitFormats(format: string): string[] {
   return format
     .split(/[,+/]/)
@@ -327,10 +546,15 @@ function familyGuidance(
 > {
   const treasury = isTreasuryMove(moveName) ? TREASURY_EXAMPLES[familyId] : null;
   const finance = !treasury && isApInvoiceMove(moveName) ? FINANCE_AP_EXAMPLES[familyId] : null;
+  const contactCenter =
+    !treasury && !finance && isContactCenterAgentAssistMove(moveName)
+      ? CONTACT_CENTER_AGENT_ASSIST_EXAMPLES[familyId]
+      : null;
   const generic = GENERIC_EXAMPLES[familyId];
   return (
     treasury ??
     finance ??
+    contactCenter ??
     generic ?? {
       exampleTemplate: "Evidence packet",
       exampleContent: [
