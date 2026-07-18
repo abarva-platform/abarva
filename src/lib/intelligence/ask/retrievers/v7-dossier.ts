@@ -349,6 +349,16 @@ function selectDimensions(query: string): string[] {
     selected.add('v7_18_function_system_data_vendor_bridge');
   }
   if (
+    /\b(agent assist|copilot|virtual agent|contact.?center|call.?center|customer service|member service|patient access|service triage|case management|knowledge base|telephony|crm)\b/.test(
+      normalized,
+    )
+  ) {
+    selected.add('v7_05_applications_systems');
+    selected.add('v7_06_data_assets_integrations');
+    selected.add('v7_11_operations_risk_controls');
+    selected.add('v7_18_function_system_data_vendor_bridge');
+  }
+  if (
     /\b(system|application|erp|sap|data|integration|vendor|contract|cloud|infrastructure|cost|spend|rate|budget|analytics|reporting|bi|dashboard|lakehouse|clinical|claims|pharmacy|epic|clarity|caboodle|tableau|power bi|sas|sql)\b/.test(
       normalized,
     ) ||
