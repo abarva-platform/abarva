@@ -12,7 +12,7 @@
 
 This release makes default Intelligence aVa answers read like a concise CXO advisory brief instead of a mini deck. It also makes the final governed answer packet authoritative in chat display, so the UI and exports use the same cleaned answer, and it renders common typed chart artifacts with Recharts instead of the older inline SVG path.
 
-Post-deploy proof of the first candidate found one polish defect: nested model labels could survive as `Answer: Proof.` or `Move: Move.` in the compact brief. This record also covers the follow-up cleanup that strips those labels before selecting the final Answer / Proof / Move sentences.
+Post-deploy proof of the first candidate found one polish defect: nested model labels could survive as `Answer: Proof.`, `Proof: Proof.`, or `Move: Move.` in the compact brief. This record also covers the follow-up cleanup that strips those labels both before sentence selection and in the already-short answer path.
 
 ## Layer Impact
 
@@ -33,7 +33,7 @@ Post-deploy proof of the first candidate found one polish defect: nested model l
 - `src/lib/intelligence/ask/answer-mode-registry.ts`: adds deterministic CXO brief fallback while leaving the detailed Moves P0-P5 mode intact.
 - `src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx`: makes the final `AvaAnswerPacket` body authoritative over earlier raw streamed text.
 - `src/components/agent-answer/AgentAnswerRenderer.tsx`: renders supported bar, horizontal bar, line, cost-stack, range-bar, and quadrant/2x2 charts with Recharts, while retaining SVG as fallback.
-- `src/lib/intelligence/ask/answer-mode-registry.ts`: strips nested model labels such as `Proof.` and `Move.` before compact sentence selection, and avoids selecting `first-call resolution` as the executive recommendation.
+- `src/lib/intelligence/ask/answer-mode-registry.ts`: strips nested model labels such as `Proof.` and `Move.` before compact sentence selection and before returning already-short answers, and avoids selecting `first-call resolution` as the executive recommendation.
 - Focused tests for packet preference, CXO brief compaction, and Recharts chart rendering.
 
 ## QA / Validation
@@ -42,7 +42,8 @@ Post-deploy proof of the first candidate found one polish defect: nested model l
 - PASS: `npx eslint src/lib/intelligence/ask/answer-mode-registry.ts src/lib/intelligence/ask/response-policy.ts src/components/intelligence-advisory/AdvisoryIntelligencePage.tsx src/components/intelligence-advisory/__tests__/resolveAssistantAnswerText.test.ts src/components/agent-answer/AgentAnswerRenderer.tsx src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx`.
 - PASS: `NODE_OPTIONS=--max-old-space-size=8192 /Users/anand/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node ./node_modules/typescript/bin/tsc --noEmit`.
 - PASS: `npm run release:check -- --base origin/main --head HEAD`.
-- PASS: Post-deploy signed-in proof for PR #4998 reached live ACA revision `ca-abarva-web-lab-eastus--m87b20ce0` and confirmed the answer was compact, but found the nested-label polish defect. Follow-up cleanup added focused regression coverage.
+- PASS: Post-deploy signed-in proof for PR #4998 reached live ACA revision `ca-abarva-web-lab-eastus--m87b20ce0` and confirmed the answer was compact, but found the nested-label polish defect.
+- PASS: Post-deploy signed-in proof for PR #5001 reached live ACA revision `ca-abarva-web-lab-eastus--ma4fb6e22` and confirmed `Answer: Proof.` / `Move: Move.` were removed, but found `Proof: Proof.` in the already-short path. Final cleanup added focused regression coverage for that path.
 - PASS: Follow-up focused cleanup validation: `npx jest src/lib/intelligence/ask/__tests__/strategy-to-moves-contract.test.ts --runInBand`, focused ESLint, and `tsc --noEmit`.
 - NOT RUN: Final post-cleanup signed-in proof on `https://app.abarva.ai/intelligence` pending follow-up merge and ACA deployment.
 
