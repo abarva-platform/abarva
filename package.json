@@ -88,6 +88,8 @@
     "audit:meridian-approved-claude-content": "node scripts/tenant-v3/audit-meridian-v3-derived-layer.mjs --scope approved-content",
     "audit:meridian-runtime-module-access": "npx tsx scripts/tenant-v3/audit-meridian-runtime-module-access.ts",
     "audit:meridian-candidate-ai-portfolio-boundary": "node scripts/tenant-v3/audit-meridian-v3-derived-layer.mjs --scope candidate-ai",
+    "generate:ai-value-realization-day1": "node scripts/tenant-v3/generate-ai-value-realization-day1.mjs",
+    "audit:ai-value-realization-day1": "node scripts/tenant-v3/audit-ai-value-realization-day1.mjs",
     "project:meridian-v3-cio-tower": "node scripts/tower/project-meridian-v3-to-cio-tower.mjs --dry-run --out-dir=reports/meridian-v3-cio-tower-projection",
     "project:meridian-v3-cio-tower:write-job": "MERIDIAN_CIO_TOWER_WRITE_APPROVED=true node scripts/tower/project-meridian-v3-to-cio-tower.mjs --write --emit-proof-bundle --out-dir=/tmp/meridian-v3-cio-tower-projection",
     "audit:meridian-v3-cio-tower-projection": "node scripts/tower/audit-meridian-v3-cio-tower-projection.mjs --report-dir=reports/meridian-v3-cio-tower-projection",
