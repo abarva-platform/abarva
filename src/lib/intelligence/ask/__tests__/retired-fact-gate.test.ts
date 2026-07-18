@@ -3,6 +3,7 @@ import {
   filterSourcesWithRetiredFacts,
   scanRetiredFacts,
 } from "../retired-fact-gate";
+import { demoSafeClientText } from "@/lib/client-config";
 
 describe("retired fact gate", () => {
   it("hard-flags retired Lakeshore facts before they can reach synthesis", () => {
@@ -99,6 +100,26 @@ describe("retired fact gate", () => {
         }),
       ]),
     );
+  });
+
+  it("allows demo-safe internal advisory packet checks for FS Demo", () => {
+    const findings = scanRetiredFacts({
+      tenantKey: "first-capital",
+      textBlocks: [
+        {
+          location: "advisoryPacket",
+          text: demoSafeClientText(
+            JSON.stringify({
+              tenantName: "First Capital Financial",
+              displayName: "FS Demo",
+              industry: "financial services",
+            }),
+          ),
+        },
+      ],
+    });
+
+    expect(findings).toEqual([]);
   });
 
   it("filters stale source rows without suppressing clean context rows", () => {
