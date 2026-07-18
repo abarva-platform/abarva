@@ -33,6 +33,16 @@ describe('tenant technology context', () => {
         'Talk about our current data & analytics landscape — name the platforms and owners you can see in our loaded context.',
       ),
     ).toBe(true);
+    expect(
+      isTenantTechnologyQuestion(
+        'For member service agent assist, what should we do next?',
+      ),
+    ).toBe(true);
+    expect(
+      isTenantTechnologyQuestion(
+        'How should we think about contact center AI and agent assist?',
+      ),
+    ).toBe(true);
     expect(isTenantTechnologyQuestion('which phase gate is blocked?')).toBe(false);
   });
 
@@ -93,6 +103,43 @@ describe('tenant technology context', () => {
       ]),
     );
     expect(selected.map((record) => record.title)).not.toContain('SAP S/4HANA');
+  });
+
+  it('selects contact-center systems for agent-assist questions', () => {
+    const records = [
+      systemRecord('it_landscape:sys:apex:crm', 'Salesforce Service Cloud', {
+        system_id: 'sys:apex:crm',
+        vendor: 'Salesforce',
+        category: 'CRM',
+        domain: 'Contact center',
+        business_criticality: 'High',
+        notes: 'Agent workspace and customer-service case management',
+      }),
+      systemRecord('it_landscape:sys:apex:genesys', 'Genesys Cloud CX', {
+        system_id: 'sys:apex:genesys',
+        vendor: 'Genesys',
+        category: 'Telephony',
+        domain: 'Contact center',
+        business_criticality: 'Critical',
+        notes: 'Voice routing and call-center queue operations',
+      }),
+      systemRecord('it_landscape:sys:apex:okr', 'Strategy OKR Tracker', {
+        vendor: 'Internal',
+        category: 'Planning',
+        domain: 'Strategy',
+      }),
+    ];
+
+    const selected = selectTenantTechnologyRecords(
+      records,
+      'For contact center agent assist, what should we prioritize?',
+      2,
+    );
+
+    expect(selected.map((record) => record.title)).toEqual(
+      expect.arrayContaining(['Genesys Cloud CX', 'Salesforce Service Cloud']),
+    );
+    expect(selected.map((record) => record.title)).not.toContain('Strategy OKR Tracker');
   });
 
   it('formats system ids and commercial metadata for citation-ready prompt context', () => {
