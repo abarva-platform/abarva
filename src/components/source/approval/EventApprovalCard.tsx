@@ -126,6 +126,17 @@ export function EventApprovalCard({
               ? strategyGate.archetype
               : confirmed,
           },
+          // The event-creation approval unlocks the working canvas where the
+          // strategy memo is actually drafted — the GATE-STRATEGY-01 readiness
+          // check it would otherwise trigger belongs to a LATER, separate
+          // stage-advance action (leaving Strategy once the memo exists), not
+          // to this first approval. In pilot mode, a self-approving creator is
+          // authorized to bypass that computed-readiness check here; the
+          // server independently re-verifies this is safe (rejects the bypass
+          // outright when GATE_APPROVAL_STRICT_MODE is on, regardless of what
+          // the client sends).
+          selfApproveIfAuthorized:
+            action === "approve" && isSelfApproval && pilotMode,
         }),
       });
       const payload = (await response.json().catch(() => ({}))) as ActionResult;
