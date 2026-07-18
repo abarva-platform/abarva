@@ -1484,16 +1484,16 @@ const PERSON_PATTERNS: Array<{ name: string; role: string; tenant: string }> = [
   { name: "Angela Foster", role: "CMO Merch", tenant: "Apex" },
   { name: "David Okonjo", role: "COO", tenant: "Apex" },
   // First Capital
-  { name: "Patricia Huang", role: "CIO", tenant: "First Capital" },
-  { name: "James Park", role: "CRO", tenant: "First Capital" },
-  { name: "Michael Torres", role: "CFO", tenant: "First Capital" },
-  { name: "Tobias Aboagye", role: "CISO", tenant: "First Capital" },
-  { name: "Sandra Liu", role: "CDO", tenant: "First Capital" },
-  { name: "Nadia Rahman", role: "CPO", tenant: "First Capital" },
+  { name: "Patricia Huang", role: "CIO", tenant: "FS Demo" },
+  { name: "James Park", role: "CRO", tenant: "FS Demo" },
+  { name: "Michael Torres", role: "CFO", tenant: "FS Demo" },
+  { name: "Tobias Aboagye", role: "CISO", tenant: "FS Demo" },
+  { name: "Sandra Liu", role: "CDO", tenant: "FS Demo" },
+  { name: "Nadia Rahman", role: "CPO", tenant: "FS Demo" },
   {
     name: "Ferris Adekoya-Park",
     role: "VP Model Risk Mgmt",
-    tenant: "First Capital",
+    tenant: "FS Demo",
   },
 ];
 

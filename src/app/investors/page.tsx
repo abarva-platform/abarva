@@ -44,7 +44,7 @@ const investorSignals = [
   {
     label: 'Programs modeled',
     value: '3',
-    detail: 'Meridian, First Capital, and Apex seeded at enterprise depth',
+    detail: 'Meridian, FS Demo, and Apex seeded at enterprise depth',
   },
   {
     label: 'Promoted patterns',

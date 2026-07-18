@@ -42,7 +42,7 @@ export function ContractOptimizationProfilePanel({
           <p style={COPY}>
             Source turns the existing AMS evidence into an executive story:
             what is leaking, why it is happening, what to do now, and what
-            happens if SkyHarbor renews without a cure gate.
+            happens if Airline Demo renews without a cure gate.
           </p>
           <a
             style={EXPORT_LINK}

@@ -419,11 +419,11 @@ const TENANTS: Record<TenantKey, TenantConfig> = {
           "Cost-discipline coalition. Three-signature joint approver on $5-25M IT capital with CIO + CRO. CCAR readiness.",
       },
     ],
-    visionTitle: "What First Capital needs the platform to do",
+    visionTitle: "What FS Demo needs the platform to do",
     visionLead:
-      "Banks don't fail on AI strategy — they fail on AI governance. First Capital needs a platform that respects SR 11-7 model risk attestation, fair-lending review, OCC examination posture, and the three-signature approval reality without reducing every conversation to compliance theater. Patricia Huang needs the platform to make her FedNow build defensible to James Park's risk org without 14 PowerPoints.",
+      "Banks don't fail on AI strategy — they fail on AI governance. FS Demo needs a platform that respects SR 11-7 model risk attestation, fair-lending review, OCC examination posture, and the three-signature approval reality without reducing every conversation to compliance theater. Patricia Huang needs the platform to make her FedNow build defensible to James Park's risk org without 14 PowerPoints.",
     dataLoadedLead:
-      "The First Capital tenant is the most recently authored composite (full JSON authoring on 2026-05-10). When a CXO asks any sized/scoped/funded question, Ava reaches into these substrates first.",
+      "The FS Demo tenant is the most recently authored composite (full JSON authoring on 2026-05-10). When a CXO asks any sized/scoped/funded question, Ava reaches into these substrates first.",
     dataLoaded: [
       {
         kind: "Named persons",
@@ -462,7 +462,7 @@ const TENANTS: Record<TenantKey, TenantConfig> = {
           "FIS Tier 1 ($100M+), Microsoft Tier 1, Adenza renegotiation flag, NICE Actimize expansion",
       },
     ],
-    whatsAtStakeTitle: "What's at stake on the First Capital narrative",
+    whatsAtStakeTitle: "What's at stake on the FS Demo narrative",
     whatsAtStakeBullets: [
       "SR 11-7 model risk gates every AI/ML model regardless of dollar. The agent should treat MRM (VP Ferris Adekoya-Park reporting to CRO) as a parallel-gate authority equal to the dollar threshold.",
       "Three-signature joint approval (CFO + CIO + CRO) on $5-25M IT capital is bank-only. Retail and healthcare don't require this — the agent should not bleed advice across industries.",
@@ -507,7 +507,7 @@ const TENANTS: Record<TenantKey, TenantConfig> = {
       // in user-visible URLs. The proxy resolves the active client from
       // the session, so `?client=...` is unnecessary here.
       href: "/source",
-      label: "Ava · First Capital Vendor Operations",
+      label: "Ava · FS Demo Vendor Operations",
       reason:
         "Pose the renegotiation question above; Ava should ground in the renewal calendar with named owners.",
     },

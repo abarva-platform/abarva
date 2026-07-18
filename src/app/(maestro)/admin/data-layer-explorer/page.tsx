@@ -433,7 +433,7 @@ function CandidateVersionBuildPanel({
         {skyharbor ? (
           <CandidateTenantProofCard
             candidate={skyharbor}
-            focus="SkyHarbor richness correction"
+            focus="Airline Demo richness correction"
           />
         ) : null}
         {meridian ? (
@@ -823,7 +823,7 @@ function ReferenceDataAuditPanel({
               maxWidth: 980,
             }}
           >
-            The SkyHarbor source pack contains mainframe, Teradata, SAP, BI,
+            The Airline Demo source pack contains mainframe, Teradata, SAP, BI,
             integration, and platform volumetric evidence. The current candidate
             proof only covers a minimal slice, so this page marks it as
             review-required before any active promotion.
@@ -1120,7 +1120,7 @@ function ManifestProjectionPanel({
         }}
       >
         <AuditList
-          title="SkyHarbor required findings"
+          title="Airline Demo required findings"
           items={skyHarborFindings.map(
             (item) =>
               `${item.label}: accessible ${item.accessible}; manifest included ${item.includedInCandidateManifest}; rows ${item.rowCount ?? "n/a"}; ${item.path}`,
@@ -1165,7 +1165,7 @@ function SkyHarborApplicationsRemediationPanel({
       >
         <div>
           <p style={{ ...labelStyle, margin: 0, color: "#0F766E" }}>
-            DATA-PR32 · SkyHarbor applications/systems remediation
+            DATA-PR32 · Airline Demo applications/systems remediation
           </p>
           <h2 style={{ margin: "6px 0", color: SHELL.INK, fontSize: 22 }}>
             Rich application estate regenerated as inactive candidate preview.
@@ -1179,7 +1179,7 @@ function SkyHarborApplicationsRemediationPanel({
               maxWidth: 1080,
             }}
           >
-            This dry-run selects the authoritative SkyHarbor application/system
+            This dry-run selects the authoritative Airline Demo application/system
             estate, maps it into canonical candidate records, attaches row-level
             evidence, plans relationship candidates, and keeps default Home and
             runtime module reads unchanged.

@@ -719,7 +719,7 @@ export default function PlatformPage() {
               .
             </span>
             <span>
-              Composite organizations (Apex Retail, Meridian Health, First Capital, Morrison) are built from real-world data.
+              Composite organizations (Apex Retail, Meridian Health, FS Demo, Morrison) are built from real-world data.
             </span>
           </footer>
         </div>
