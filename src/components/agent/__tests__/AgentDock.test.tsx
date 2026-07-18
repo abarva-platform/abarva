@@ -209,6 +209,66 @@ describe("AgentDock · default mode", () => {
     );
   });
 
+  it("bounds long suggested questions so the composer remains reachable", () => {
+    render(
+      <AgentDock
+        agent={AGENT}
+        surface="intelligence"
+        variant="focused"
+        keepSuggestedActionsVisible
+        thread={[
+          {
+            id: "opening",
+            role: "agent",
+            body: "The AI portfolio needs a concise executive path.",
+          },
+        ]}
+        suggestedActions={[
+          {
+            id: "drift-threshold",
+            label:
+              "How do we operationalize the drift alert threshold in real time during the pilot, and what manual escalation SLA applies once the threshold is breached?",
+            body:
+              "How do we operationalize the drift alert threshold in real time during the pilot, and what manual escalation SLA applies once the threshold is breached?",
+          },
+          {
+            id: "sox-control",
+            label:
+              "The SOX payment approval evidence control is blocked and owned by the CFO. What dependency chain must be cleared before charter approval?",
+            body:
+              "The SOX payment approval evidence control is blocked and owned by the CFO. What dependency chain must be cleared before charter approval?",
+          },
+          {
+            id: "data-validation",
+            label:
+              "If the AP, AR, and S&OP input feeds are not stable yet, should we define a data validation checkpoint before model training?",
+            body:
+              "If the AP, AR, and S&OP input feeds are not stable yet, should we define a data validation checkpoint before model training?",
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const panel = screen.getByTestId("agent-dock-panel");
+    const suggestions = screen
+      .getByTestId("agent-dock-suggestion-drift-threshold")
+      .closest("div");
+    const form = screen.getByTestId("agent-dock-form");
+
+    expect(panel).toHaveStyle({ overflow: "hidden" });
+    expect(suggestions).toHaveStyle({
+      maxHeight: "min(28vh, 220px)",
+      overflowY: "auto",
+    });
+    expect(form).toHaveStyle({
+      position: "sticky",
+      bottom: "0px",
+    });
+    expect(screen.getByTestId("agent-dock-input")).toBeInTheDocument();
+  });
+
   it("submits default suggested questions instead of only pre-filling the composer", async () => {
     const onMessage = jest.fn();
     render(
@@ -1582,7 +1642,7 @@ describe("AgentDock · viewport-bound side-rail", () => {
     expect(form.style.background).toBe(expected);
   });
 
-  it("drops the legacy sticky-bottom on the composer (handled by flex-column now)", () => {
+  it("keeps the composer sticky as a guard against tall suggestion areas", () => {
     render(
       <AgentDock
         agent={AGENT}
@@ -1593,8 +1653,10 @@ describe("AgentDock · viewport-bound side-rail", () => {
       />,
     );
     const form = screen.getByTestId("agent-dock-form");
-    // Should NOT carry position:sticky any longer.
-    expect(form.style.position).not.toBe("sticky");
+    expect(form).toHaveStyle({
+      position: "sticky",
+      bottom: "0px",
+    });
   });
 });
 
