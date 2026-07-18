@@ -49,12 +49,16 @@ async function readLatestDeliverableContent(
   moveId: string,
   deliverableTypeKey: string,
 ): Promise<LatestDeliverableContentRow | null> {
+  // Prefer the client-approved version (d.signed_off_version) over a later,
+  // unreviewed regeneration — approval must actually change what carries
+  // forward, not just decorate the UI. Falls back to the newest version when
+  // nothing has been signed off yet.
   const rows = await azureRead.query<LatestDeliverableContentRow>(
     "SELECT dv.content, dv.version " +
       "FROM deliverable_versions dv " +
       "JOIN deliverables_v2 d ON d.id = dv.deliverable_id " +
       "WHERE d.engagement_id = $1 AND d.deliverable_type_key = $2 " +
-      "ORDER BY dv.version DESC " +
+      "ORDER BY (dv.version = d.signed_off_version) DESC, dv.version DESC " +
       "LIMIT 1",
     [moveId, deliverableTypeKey],
     { missingTable: "empty" },
