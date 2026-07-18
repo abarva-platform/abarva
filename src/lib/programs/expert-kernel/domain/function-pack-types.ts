@@ -61,6 +61,7 @@ export type HealthcareFunctionKey =
   | "health_information_interoperability"
   | "clinical_workforce_staffing"
   | "payer_claims_operations"
+  | "member_service_agent_assist"
   | "pharmacy";
 
 /**

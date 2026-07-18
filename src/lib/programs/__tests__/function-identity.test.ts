@@ -102,6 +102,16 @@ describe('classifyFunctionKey — representative briefs across all 3 verticals',
       expected: 'clinical_operations_documentation',
     },
     {
+      label: 'healthcare · member-service Agent Assist',
+      industryKey: 'healthcare-provider',
+      brief:
+        'Scale AI agent assist for member services so contact-center agents ' +
+        'can answer claims status, benefits, eligibility, prior authorization, ' +
+        'CRM history and knowledge-base questions with PHI controls, fewer ' +
+        'transfers, better first contact resolution and less after-call work.',
+      expected: 'member_service_agent_assist',
+    },
+    {
       label: 'financial-services · fraud & financial crime',
       industryKey: 'financial-services',
       brief:

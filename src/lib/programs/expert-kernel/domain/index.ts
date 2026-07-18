@@ -4,20 +4,16 @@
 // an agent binds into context BEFORE it reaches for general intelligence
 // (spec: docs/strategy/ABARVA-DOMAIN-FUNCTION-PACK-SPEC.md).
 //
-// v1 ships the eight-layer schema, the extensible registry, the complete
-// twelve-function healthcare reference library, the first two retail packs,
+// v1 ships the eight-layer schema, the extensible registry, the healthcare
+// reference library, the first retail packs,
 // and one concrete context-binding consumer.
 //
 //   • function-pack-types        — the typed eight-layer FunctionPack schema.
 //   • function-pack-registry     — resolveFunctionPack + the §6 depth check.
 //   • function-pack-context-binding — bindFunctionPackForArtifact (the §5 proof).
-//   • healthcare/*               — the twelve healthcare reference packs: the
-//     value-based-care spine, clinical operations & documentation, patient
-//     access / engagement / experience, research & clinical trials, the
-//     revenue cycle, quality / safety / regulatory, health information
-//     management / data & interoperability, the clinical supply chain,
-//     clinical workforce & staffing, payer / claims operations, and pharmacy
-//     — the complete provider-function taxonomy.
+//   • healthcare/*               — the healthcare reference packs: the
+//     provider-function taxonomy plus the member-service Agent Assist
+//     specialization used by payer/provider contact-center Moves.
 //   • retail/*                   — the retail vertical: merchandising &
 //     assortment, pricing & promotions, demand & inventory planning, and
 //     supply chain & fulfillment. The remaining eight retail functions are
@@ -37,6 +33,7 @@ export { revenueCyclePack } from './healthcare/revenue-cycle';
 export { clinicalSupplyChainPack } from './healthcare/clinical-supply-chain';
 export { clinicalWorkforceStaffingPack } from './healthcare/clinical-workforce-staffing';
 export { payerClaimsOperationsPack } from './healthcare/payer-claims-operations';
+export { memberServiceAgentAssistPack } from './healthcare/member-service-agent-assist';
 export { pharmacyPack } from './healthcare/pharmacy';
 export { merchandisingAssortmentPack } from './retail/merchandising-assortment';
 export { pricingPromotionsPack } from './retail/pricing-promotions';

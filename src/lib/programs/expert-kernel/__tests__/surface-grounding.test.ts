@@ -14,6 +14,7 @@ const INDUSTRY_CODE: Record<string, string> = {
   'healthcare-provider': 'healthcare_idn',
   retail: 'retail',
   'financial-services': 'finserv',
+  airline: 'global_network_airline',
 };
 
 describe('groundSurfaceContext (shared surface grounding seam)', () => {
