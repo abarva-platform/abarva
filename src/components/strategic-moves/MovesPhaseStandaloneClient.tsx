@@ -9,6 +9,7 @@ import { CurrentStateReadinessPanel } from "@/components/strategic-moves/Current
 import { FileCabinetPanel } from "@/components/strategic-moves/FileCabinetPanel";
 import { NexusCurrentStateBriefingPanel } from "@/components/strategic-moves/NexusCurrentStateBriefingPanel";
 import { PhaseApproveAndBuild } from "@/components/strategic-moves/PhaseApproveAndBuild";
+import { SessionPlaybookPanel } from "@/components/strategic-moves/SessionPlaybookPanel";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
@@ -75,7 +76,7 @@ interface MovesPhaseStandaloneClientProps {
   initialSubstepKey?: SubstepKey;
 }
 
-type WorkspaceView = "phase" | "files";
+type WorkspaceView = "phase" | "files" | "playbook";
 
 type UploadWorkStatus = "idle" | "uploading" | "uploaded" | "error";
 interface UploadedFilePreview {
@@ -558,7 +559,7 @@ export function MovesPhaseStandaloneClient({
   );
 
   function continueStep() {
-    if (workspaceView === "files") return;
+    if (workspaceView !== "phase") return;
     setSubstepIndex((idx) => Math.min(idx + 1, phase.substeps.length - 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -791,6 +792,17 @@ export function MovesPhaseStandaloneClient({
               <span>▣</span>
               Files & Evidence
             </button>
+            <button
+              className={`mxw-lib-link ${workspaceView === "playbook" ? "viewing" : ""}`}
+              onClick={() => {
+                setWorkspaceView("playbook");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              type="button"
+            >
+              <span>▤</span>
+              Session Playbook
+            </button>
           </div>
           <p className="mxw-foot">
             <b>aVa</b> assembles each phase from your evidence · you review &
@@ -820,6 +832,28 @@ export function MovesPhaseStandaloneClient({
                 </p>
               </div>
               <FileCabinetPanel moveId={move.id} phase={phase.phase} />
+            </>
+          ) : workspaceView === "playbook" ? (
+            <>
+              <div className="mxw-crumb">
+                <button onClick={() => setWorkspaceView("phase")} type="button">
+                  {move.name}
+                </button>
+                <span>/</span>
+                Session Playbook
+              </div>
+              <div className="mxw-stage-head">
+                <div className="mxw-agent-chip">
+                  <span />
+                  AVA · MOVES
+                </div>
+                <h1>Session Playbook</h1>
+                <p>
+                  Discussion guides, frameworks, and capture templates for the sessions in this
+                  phase — the same prep kit facilitators use to run each working session.
+                </p>
+              </div>
+              <SessionPlaybookPanel moveId={move.id} phase={phase.phase} />
             </>
           ) : (
             <>
@@ -964,7 +998,7 @@ export function MovesPhaseStandaloneClient({
             <>
               <p>{phase.avaContext}</p>
               <div className="mxw-suggested">
-                {workspaceView === "files" ? "Ask about this workspace" : "Ask about this phase"}
+                {workspaceView !== "phase" ? "Ask about this workspace" : "Ask about this phase"}
               </div>
               {phase.avaQuestions.map((question) => (
                 <button
