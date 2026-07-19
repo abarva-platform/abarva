@@ -62,6 +62,9 @@ export type SourceAnswerQualityCheckId =
   | "includes_value_type_breakdown"
   | "uses_specific_ask_when_available";
 
+export const SOURCE_CHAT_UNSAVED_FACT_NOTICE =
+  "I can use that here, but it is not saved to the Source record yet.";
+
 /** The Phase B modes whose answers state $ / value-type figures — the
  * traceability + value-type-breakdown checks apply only to these. */
 const PHASE_B_VALUE_MODES = new Set<SourceAnswerMode>([
@@ -187,9 +190,34 @@ const BANNED_PHRASES = [
   "i will lock it into the intake record",
   "i'll lock it into the source record",
   "i will lock it into the source record",
-  ];
+];
+
+const SOURCE_RECORD_WRITE_CLAIM_RE =
+  /\b(?:i(?:'ll|’ll| will| have|’ve|'ve| can)?|ava(?: will| has| can)?)\s+(?:save|saved|lock|locked|register|registered|capture|captured|update|updated|write|wrote|record|recorded)\b[^.!?\n]*(?:source|intake|event)\s+record\b/i;
+
+const SOURCE_RECORD_WRITE_CLAIM_SENTENCE_RE =
+  /(^|[.!?\n]\s*)[^.!?\n]*(?:\b(?:i(?:'ll|’ll| will| have|’ve|'ve| can)?|ava(?: will| has| can)?)\s+(?:save|saved|lock|locked|register|registered|capture|captured|update|updated|write|wrote|record|recorded)\b[^.!?\n]*(?:source|intake|event)\s+record\b)[^.!?\n]*[.!?]?/gi;
+
+export function containsSourceRecordWriteClaim(text: string): boolean {
+  return SOURCE_RECORD_WRITE_CLAIM_RE.test(text);
+}
+
+export function enforceSourceExistingEventWriteTruth(text: string): string {
+  if (!containsSourceRecordWriteClaim(text)) return text;
+  let repaired = text.replace(
+    SOURCE_RECORD_WRITE_CLAIM_SENTENCE_RE,
+    (match, prefix: string) => `${prefix}${SOURCE_CHAT_UNSAVED_FACT_NOTICE}`,
+  );
+  if (!repaired.includes(SOURCE_CHAT_UNSAVED_FACT_NOTICE)) {
+    repaired = `${repaired.trim()} ${SOURCE_CHAT_UNSAVED_FACT_NOTICE}`.trim();
+  }
+  return repaired.replace(/[ \t]{2,}/g, " ").trim();
+}
 
 function findBannedPhrase(text: string, hasGroundingContext: boolean): string | null {
+  if (containsSourceRecordWriteClaim(text)) {
+    return "source record write claim";
+  }
   const lower = text.toLowerCase();
   for (const phrase of BANNED_PHRASES) {
     if (!lower.includes(phrase)) continue;
@@ -203,7 +231,7 @@ function findBannedPhrase(text: string, hasGroundingContext: boolean): string | 
 }
 
 function stripBannedPhrases(text: string, hasGroundingContext: boolean): string {
-  let result = text;
+  let result = enforceSourceExistingEventWriteTruth(text);
   for (const phrase of BANNED_PHRASES) {
     if (phrase === "i cannot access the event" && !hasGroundingContext) continue;
     const re = new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
@@ -243,7 +271,7 @@ function extractCountClaims(
 }
 
 const NEXT_STEP_SIGNAL_RE =
-  /\b(next step|next,|you (should|can|need to)|upload|provide|confirm|approve|advance|review|ask|check)\b/i;
+  /(?:\bnext(?: step|[:,])|\byou (?:should|can|need to)\b|\b(?:upload|provide|confirm|approve|advance|review|ask|check)\b)/i;
 const CAVEAT_SIGNAL_RE =
   /\b(not (yet )?(computed|available|complete|persisted)|missing|outstanding|still (need|open)|has not been)\b/i;
 

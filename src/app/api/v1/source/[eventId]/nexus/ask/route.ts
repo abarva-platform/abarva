@@ -5,7 +5,6 @@ import {
   createSourceNexusApiStubResponse,
   normalizeSourceNexusApiRequestBody,
 } from "@/lib/source/nexus-api";
-import { maybeCreateSourceSentinelChatLlmResponse } from "@/lib/source/sentinel-chat-llm";
 import { getActiveClientRow } from "@/lib/active-client";
 import {
   APEX_RETAIL_BROKER_TENANT_KEY,
@@ -38,6 +37,7 @@ import {
   buildContractOptimizationMveProfile,
   buildSkyHarborAmsExistingContractInput,
 } from "@/lib/source/contract-optimization/mve-profile";
+import { enforceSourceExistingEventWriteTruth } from "@/lib/source/ava/answer-quality-gate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -198,8 +198,13 @@ export async function POST(
       tenantId: tenancy.clientId,
     }).catch(() => null);
 
-    const response = claudeSummary
-      ? { ...stubResponse, summary: claudeSummary, noModel: false }
+    const guardedClaudeSummary =
+      claudeSummary && eventId
+        ? enforceSourceExistingEventWriteTruth(claudeSummary)
+        : claudeSummary;
+
+    const response = guardedClaudeSummary
+      ? { ...stubResponse, summary: guardedClaudeSummary, noModel: false }
       : stubResponse;
 
     return Response.json(response, { status: response.httpStatus });
