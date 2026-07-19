@@ -896,10 +896,8 @@ export function StrategicMoveOriginateClient({
     <div id="orig-page" className={styles.page}>
       <div id="orig-identity" className={styles.originContextBar}>
         <div className={styles.originContextLeft}>
-          <span className={styles.originBranch} aria-hidden>
-            &#8627;
-          </span>
-          <span className={styles.originLabel}>Start a Move</span>
+          <span className={styles.originLabel}>MOVES</span>
+          <span className={styles.originBranch}>New Move</span>
           <span id="orig-identity-title" className={styles.originDraftBadge}>
             {brief.programName.trim()
               ? deriveStrategicMoveName(
@@ -911,6 +909,10 @@ export function StrategicMoveOriginateClient({
                 : "UNTITLED"}{" "}
             &middot; DRAFT
           </span>
+        </div>
+        <div className={styles.originContextRight}>
+          <span>P0 workflow</span>
+          <strong>Phase 1 of 6 · Originate</strong>
         </div>
         <button
           className={styles.originCancel}

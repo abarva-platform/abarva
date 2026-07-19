@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Moves phase workspaces now use a more Source-like shell: a dark move context bar, persistent move explorer, workspace surface tabs, clearer phase progress, and workflow step tabs that read as navigation controls. The change keeps the existing runtime actions intact while making the phase flow easier to understand.
+Moves phase workspaces and the `/strategic-moves/new` origination route now use a more Source-like shell: a dark move context bar, persistent move explorer, workspace surface tabs where available, clearer phase progress, and workflow tabs that read as navigation controls. The change keeps the existing runtime actions intact while making the phase flow easier to understand.
 
 ## Layer Impact
 
@@ -32,6 +32,10 @@ Moves phase workspaces now use a more Source-like shell: a dark move context bar
   - Adds main workspace surface tabs for Steps, Files, Guides, and Intelligence.
   - Adds header progress card and clearer phase rail gate-count display.
   - Keeps existing File Cabinet, Session Playbook, Phase Intelligence, P0 capture, upload, and Approve & Build components wired through the same runtime paths.
+- `src/components/strategic-moves/StrategicMoveOriginateClient.tsx`
+  - Updates the mounted `/strategic-moves/new` P0 context strip to the same Moves shell vocabulary.
+- `src/components/strategic-moves/StrategicMoves.module.css`
+  - Restyles the P0 origination route to use the wider Source-like canvas, progress card, dark context strip, and tab-like question groups.
 - `src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx`
   - Updates terminal phase rail assertion to match gate-count display.
 
@@ -42,7 +46,7 @@ Moves phase workspaces now use a more Source-like shell: a dark move context bar
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`
 - Pass: `git diff --check`
 - Pending: post-PR ACA deployment proof.
-- Pending: signed-in browser proof on `app.abarva.ai` showing the new shell.
+- Pending: signed-in browser proof on `app.abarva.ai` showing the new shell on `/strategic-moves/new` and a phase route.
 
 ## Rollout Plan
 
