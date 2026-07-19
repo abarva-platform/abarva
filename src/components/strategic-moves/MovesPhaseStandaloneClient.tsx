@@ -354,6 +354,20 @@ export function MovesPhaseStandaloneClient({
   const progressPct = Math.round(((substepIndex + 1) / phase.substeps.length) * 100);
   const isFinalSubstep = substepIndex === phase.substeps.length - 1;
   const nextSubstep = phase.substeps[substepIndex + 1] ?? null;
+  const phaseProgressDone = isHistoricalPhase || gateApproved
+    ? phase.substeps.length
+    : Math.min(substepIndex + 1, phase.substeps.length);
+  const phaseReadinessLabel = isHistoricalPhase || gateApproved
+    ? "Complete"
+    : `${progressPct}% ready`;
+  const workspaceSurfaceLabel =
+    workspaceView === "phase"
+      ? `${phase.code} workflow`
+      : workspaceView === "files"
+        ? "Files & Evidence"
+        : workspaceView === "playbook"
+          ? "Session Playbook"
+          : "Phase Intelligence";
   const primaryActionLabel = isHistoricalPhase
     ? terminalComplete
       ? "Open Tower →"
@@ -718,6 +732,19 @@ export function MovesPhaseStandaloneClient({
   return (
     <main className="mxw" data-testid="moves-phase-standalone">
       <MovesStandaloneStyles />
+      <div className="mxw-contextbar" aria-label="Move context">
+        <div>
+          <span>MOVES</span>
+          <strong>{move.displayCode || move.name}</strong>
+          <em>{supportLine}</em>
+        </div>
+        <div>
+          <span>{workspaceSurfaceLabel}</span>
+          <strong>
+            Phase {phase.phase + 1} of {PHASES.length} · {phase.title}
+          </strong>
+        </div>
+      </div>
       <div className="mxw-surface">
         <aside className="mxw-side" aria-label="Move phases">
           <div className="mxw-move">
@@ -747,7 +774,7 @@ export function MovesPhaseStandaloneClient({
                   </span>
                   <span className="mxw-phase-name">{item.navLabel}</span>
                   <span className="mxw-phase-state">
-                    {state === "done"
+                    {tally ? `${tally.met} of ${tally.total}` : state === "done"
                       ? "Complete"
                       : state === "current"
                         ? "In progress"
@@ -790,6 +817,17 @@ export function MovesPhaseStandaloneClient({
           <div className="mxw-side-label mxw-workspace-label">Workspace</div>
           <div className="mxw-rail-extra">
             <button
+              className={`mxw-lib-link ${workspaceView === "phase" ? "viewing" : ""}`}
+              onClick={() => {
+                setWorkspaceView("phase");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              type="button"
+            >
+              <span>▦</span>
+              Phase Workspace
+            </button>
+            <button
               className={`mxw-lib-link ${workspaceView === "files" ? "viewing" : ""}`}
               onClick={() => {
                 setWorkspaceView("files");
@@ -822,10 +860,23 @@ export function MovesPhaseStandaloneClient({
               <span>◈</span>
               Phase Intelligence
             </button>
+            <button
+              className={`mxw-lib-link ${
+                workspaceView === "phase" && substep.key === "approve" ? "viewing" : ""
+              }`}
+              onClick={() => {
+                setWorkspaceView("phase");
+                setSubstepIndex(phase.substeps.length - 1);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              type="button"
+            >
+              <span>✓</span>
+              Approvals
+            </button>
           </div>
           <p className="mxw-foot">
-            <b>aVa</b> assembles each phase from your evidence · you review &
-            attest · the approved final carries forward
+            <b>aVa</b> guides P0-P4 · Atlas takes over P5 Execute.
           </p>
         </aside>
 
@@ -850,6 +901,13 @@ export function MovesPhaseStandaloneClient({
                   deliverable — the real Artifact Vault for this Move, not a preview.
                 </p>
               </div>
+              <WorkspaceSurfaceTabs
+                activeView={workspaceView}
+                onSelect={(view) => {
+                  setWorkspaceView(view);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              />
               <FileCabinetPanel moveId={move.id} phase={phase.phase} />
             </>
           ) : workspaceView === "playbook" ? (
@@ -872,6 +930,13 @@ export function MovesPhaseStandaloneClient({
                   phase — the same prep kit facilitators use to run each working session.
                 </p>
               </div>
+              <WorkspaceSurfaceTabs
+                activeView={workspaceView}
+                onSelect={(view) => {
+                  setWorkspaceView(view);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              />
               <SessionPlaybookPanel moveId={move.id} phase={phase.phase} />
             </>
           ) : workspaceView === "intelligence" ? (
@@ -894,6 +959,13 @@ export function MovesPhaseStandaloneClient({
                   and governed gate/evidence truth.
                 </p>
               </div>
+              <WorkspaceSurfaceTabs
+                activeView={workspaceView}
+                onSelect={(view) => {
+                  setWorkspaceView(view);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              />
               <PhaseIntelligencePanel moveId={move.id} phase={phase.phase} />
             </>
           ) : (
@@ -914,7 +986,26 @@ export function MovesPhaseStandaloneClient({
                 <h1>{phase.title}</h1>
                 <div className="mxw-question">{phase.question}</div>
                 <p>{phase.lede}</p>
+                <div className="mxw-progress-card" aria-label="Phase progress">
+                  <strong>
+                    {phaseProgressDone} / {phase.substeps.length}
+                  </strong>
+                  <span className="mxw-track">
+                    <span style={{ width: `${progressPct}%` }} />
+                  </span>
+                  <em>
+                    {phaseReadinessLabel} · {substep.label}
+                  </em>
+                </div>
               </div>
+
+              <WorkspaceSurfaceTabs
+                activeView={workspaceView}
+                onSelect={(view) => {
+                  setWorkspaceView(view);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              />
 
               <div className="mxw-stage-bar">
                 <div className="mxw-progress">
@@ -1089,6 +1180,39 @@ export function MovesPhaseStandaloneClient({
         </form>
       </aside>
     </main>
+  );
+}
+
+function WorkspaceSurfaceTabs({
+  activeView,
+  onSelect,
+}: {
+  activeView: WorkspaceView;
+  onSelect: (view: WorkspaceView) => void;
+}) {
+  const tabs: Array<{ view: WorkspaceView; label: string; help: string }> = [
+    { view: "phase", label: "Steps", help: "Run the phase workflow" },
+    { view: "files", label: "Files", help: "Evidence and generated artifacts" },
+    { view: "playbook", label: "Guides", help: "Session playbook and templates" },
+    { view: "intelligence", label: "Intelligence", help: "Evidence-backed readout" },
+  ];
+
+  return (
+    <div className="mxw-surface-tabs" role="tablist" aria-label="Moves workspace surfaces">
+      {tabs.map((tab) => (
+        <button
+          aria-selected={activeView === tab.view}
+          className={activeView === tab.view ? "active" : ""}
+          key={tab.view}
+          onClick={() => onSelect(tab.view)}
+          role="tab"
+          title={tab.help}
+          type="button"
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -2913,8 +3037,13 @@ function MovesStandaloneStyles() {
 .mxw *{box-sizing:border-box}
 .mxw a{text-decoration:none}
 .mxw button{font:inherit}
-.mxw-surface{display:grid;grid-template-columns:270px minmax(0,1fr);min-height:100%}
-.mxw-side{border-right:1px solid var(--line);background:var(--soft);padding:20px 16px;position:sticky;top:0;height:calc(100vh - 64px);overflow-y:auto;display:flex;flex-direction:column}
+.mxw-contextbar{height:42px;border-bottom:1px solid rgba(255,255,255,.08);background:#0a0e12;color:#e9edf2;display:flex;align-items:center;justify-content:space-between;padding:0 28px;gap:24px;box-shadow:0 10px 30px rgba(0,0,0,.16);position:sticky;top:0;z-index:60}
+.mxw-contextbar>div{display:flex;align-items:center;gap:12px;min-width:0}
+.mxw-contextbar span{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#64d6c8;font-weight:900}
+.mxw-contextbar strong{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34vw}
+.mxw-contextbar em{font-style:normal;font-size:11px;color:#aeb6c1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}
+.mxw-surface{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:calc(100% - 42px)}
+.mxw-side{border-right:1px solid var(--line);background:#f2f0eb;padding:20px 14px;position:sticky;top:42px;height:calc(100vh - 106px);overflow-y:auto;display:flex;flex-direction:column}
 .mxw-move{padding:0 8px 15px;border-bottom:1px solid var(--line);margin-bottom:14px}
 .mxw-back{font-size:12px;color:var(--muted);display:inline-flex;margin-bottom:12px}
 .mxw-back:hover{color:var(--ink)}
@@ -2946,18 +3075,26 @@ function MovesStandaloneStyles() {
 .mxw-lib-link span{width:22px;height:22px;border-radius:6px;background:var(--card);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
 .mxw-foot{margin-top:auto;padding:14px 8px 0;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint);line-height:1.6}
 .mxw-foot b{color:var(--muted);font-weight:600}
-.mxw-shell{width:100%;max-width:none;margin:0;padding:34px 40px 96px}
+.mxw-shell{width:100%;max-width:1360px;margin:0 auto;padding:34px 28px 96px}
 .mxw-crumb{font-size:13px;color:var(--muted);margin-bottom:20px}
 .mxw-crumb a,.mxw-crumb button{color:var(--muted);background:none;border:0;font:inherit;cursor:pointer}
 .mxw-crumb a:hover,.mxw-crumb button:hover{color:var(--ink)}
 .mxw-crumb span{margin:0 7px;color:var(--faint)}
-.mxw-stage-head{margin-bottom:18px}
-.mxw-agent-chip{display:inline-flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.5px;text-transform:uppercase;font-weight:600;color:var(--muted);margin-bottom:12px}
+.mxw-stage-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(210px,260px);align-items:start;gap:24px;margin-bottom:14px}
+.mxw-agent-chip{grid-column:1;display:inline-flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.5px;text-transform:uppercase;font-weight:600;color:var(--muted);margin-bottom:12px}
 .mxw-agent-chip span{width:7px;height:7px;border-radius:50%;background:var(--teal)}
-.mxw-stage-head h1{font-family:Georgia,serif;font-size:32px;font-weight:700;letter-spacing:-.7px;line-height:1.08;margin:0 0 6px}
-.mxw-question{font-size:15.5px;font-weight:600;color:var(--ink);margin-bottom:2px}
-.mxw-stage-head p{font-size:15.5px;color:var(--muted);line-height:1.55;max-width:70ch;margin:0}
-.mxw-stage-bar{position:sticky;top:52px;z-index:40;display:flex;align-items:center;gap:20px;padding:12px 0 13px;margin-bottom:8px;background:var(--bg)}
+.mxw-stage-head h1{grid-column:1;font-family:Georgia,serif;font-size:36px;font-weight:700;letter-spacing:-.7px;line-height:1.04;margin:0 0 6px}
+.mxw-question{grid-column:1;font-size:15.5px;font-weight:600;color:var(--ink);margin-bottom:2px}
+.mxw-stage-head p{grid-column:1;font-size:15.5px;color:var(--muted);line-height:1.55;max-width:70ch;margin:0}
+.mxw-progress-card{grid-column:2;grid-row:1 / span 4;align-self:center;border:1px solid var(--line-2);border-radius:12px;background:#fff;padding:14px 16px;box-shadow:0 10px 26px rgba(20,20,19,.05)}
+.mxw-progress-card strong{display:block;font-size:24px;line-height:1.05;margin-bottom:9px;color:var(--ink)}
+.mxw-progress-card em{display:block;font-style:normal;font-size:12px;color:var(--muted);font-weight:800;margin-top:8px}
+.mxw-surface-tabs{display:flex;align-items:flex-end;gap:0;border-bottom:1px solid var(--line-2);margin:16px 0 0;overflow-x:auto}
+.mxw-surface-tabs button{position:relative;border:1px solid transparent;border-bottom:0;background:transparent;color:var(--muted);padding:12px 20px 13px;border-radius:12px 12px 0 0;font-size:13px;font-weight:900;cursor:pointer;white-space:nowrap}
+.mxw-surface-tabs button:hover{color:var(--ink);background:rgba(255,255,255,.62)}
+.mxw-surface-tabs button.active{color:var(--ink);background:#fff;border-color:var(--line-2);box-shadow:0 -1px 0 #fff inset}
+.mxw-surface-tabs button.active::before{content:"";position:absolute;left:14px;right:14px;top:0;height:3px;border-radius:999px;background:linear-gradient(90deg,#1d8f68,#0057b8)}
+.mxw-stage-bar{display:flex;align-items:center;gap:20px;padding:13px 0 10px;margin-bottom:0;background:var(--bg)}
 .mxw-progress{display:flex;align-items:center;gap:14px;flex:1}
 .mxw-track{flex:1;height:6px;border-radius:3px;background:rgba(20,20,19,.07);overflow:hidden;max-width:260px}
 .mxw-track span{display:block;height:100%;background:var(--green);border-radius:3px;transition:width .35s ease}
@@ -2966,7 +3103,7 @@ function MovesStandaloneStyles() {
 .mxw-btn{padding:10px 18px;border-radius:9px;font-size:14px;font-weight:600;border:1px solid transparent;cursor:pointer}
 .mxw-primary{background:var(--ink);color:#fff}
 .mxw-primary:hover{background:#000}
-.mxw-substeps{display:flex;align-items:flex-end;gap:4px;margin:20px 0 0;border-bottom:1px solid var(--line-2);overflow-x:auto}
+.mxw-substeps{display:flex;align-items:flex-end;gap:4px;margin:0;border-bottom:1px solid var(--line-2);overflow-x:auto}
 .mxw-substep{position:relative;display:flex;align-items:center;gap:9px;min-height:48px;padding:11px 18px 12px;background:transparent;border:1px solid transparent;border-bottom:0;border-radius:11px 11px 0 0;cursor:pointer;color:var(--muted);white-space:nowrap;transition:background .16s ease,border-color .16s ease,color .16s ease}
 .mxw-substep:hover{background:rgba(255,255,255,.72);color:var(--ink)}
 .mxw-substep.cur{z-index:1;background:#fff;border-color:var(--line-2);box-shadow:0 -1px 0 #fff inset;color:var(--ink)}

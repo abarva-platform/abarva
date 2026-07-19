@@ -411,7 +411,7 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     expect(
-      screen.getByRole("link", { name: /Prepare to Execute\s+Complete/i }),
+      screen.getByRole("link", { name: /Prepare to Execute\s+2 of 2/i }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open Tower →" })).toBeInTheDocument();
     expect(screen.getByText("Tower handoff complete")).toBeInTheDocument();
