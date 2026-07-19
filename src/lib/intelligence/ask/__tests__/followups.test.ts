@@ -1,4 +1,5 @@
 import { normalizeGeneratedFollowup } from "../followups";
+import { sanitizeSuggestedQuestions } from "@/lib/agent/product-truth";
 
 describe("normalizeGeneratedFollowup", () => {
   it("removes policy footer prose from generated suggested questions", () => {
@@ -17,5 +18,18 @@ describe("normalizeGeneratedFollowup", () => {
         "What source systems support the contact-center workflow? AbarVa can help inspect the loaded evidence next.",
       ),
     ).toBe("What source systems support the contact-center workflow?");
+  });
+
+  it("cleans policy footer prose added by the product-truth guard", () => {
+    const guarded = sanitizeSuggestedQuestions(
+      [
+        "The outsourced analytics vendor is at 80% maintenance load - does Meridian have plans to redistribute that work?",
+      ],
+      { surface: "intelligence", tenantName: "Healthcare Demo" },
+    );
+
+    expect(guarded.questions.map(normalizeGeneratedFollowup)[0]).toBe(
+      "The outsourced analytics vendor is at 80% maintenance load - does Meridian have plans to redistribute that work?",
+    );
   });
 });

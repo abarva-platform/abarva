@@ -7,7 +7,7 @@ import {
 } from "./synthesizer";
 import { applyCxoAnswerModeFallbacks } from "./answer-mode-registry";
 import { buildClientGroundingPacketSource } from "./client-grounding-packet";
-import { generateFollowups } from "./followups";
+import { generateFollowups, normalizeGeneratedFollowup } from "./followups";
 import { retrieveWorldview } from "./retrievers/worldview";
 import { retrieveSurfaceContextSources } from "./retrievers/surface-context";
 import { retrieveRetailOverlaySources } from "./retrievers/retail-overlay";
@@ -797,7 +797,12 @@ export async function* askIntelligence(
         coverageReportBlock,
       ]),
     });
-    yield { type: "followups", followups: guardedFollowups.questions };
+    yield {
+      type: "followups",
+      followups: guardedFollowups.questions
+        .map(normalizeGeneratedFollowup)
+        .filter(Boolean),
+    };
     yield { type: "done" };
   } catch (err) {
     yield {
