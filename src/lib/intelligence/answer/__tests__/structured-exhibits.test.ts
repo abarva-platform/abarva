@@ -556,7 +556,7 @@ describe("buildStructuredExhibits", () => {
     expect(JSON.stringify(exhibits)).not.toContain("| AI Use Case |");
   });
 
-  it("renders directional planning charts for ranked AI use-case matrix asks", () => {
+  it("turns Claude-emitted value/complexity GFM tables into typed matrix charts", () => {
     const exhibits = buildStructuredExhibits({
       routing: {
         ...routing,
@@ -565,30 +565,43 @@ describe("buildStructuredExhibits", () => {
         outputShape: "chart",
       },
       sources,
-      prose:
-        "FS Demo's highest-priority AI investments are commercial credit automation and capital markets research, both live and measurable; fraud detection and KYC automation rank next; marketing personalization is lowest-confidence and should defer until core use cases prove governance. The rank is driven by measured value already tracked, integration readiness, and organizational ownership clarity.",
+      prose: [
+        "This is a directional planning view, not finance-validated scoring.",
+        "",
+        "| Use case | Value | Complexity | Basis |",
+        "|---|---|---|---|",
+        "| Commercial credit automation | High | Medium | Cited company evidence with live owner |",
+        "| Capital markets research | High | Medium | Cited company evidence with measured value signal |",
+        "| Fraud detection expansion | Medium-high | High | Governance gaps still need owner and metric basis |",
+        "| KYC automation | Medium | High | Evidence remediation needed before funding |",
+        "| Servicing AI | Medium | Medium | Candidate use case, not yet validated |",
+        "",
+        "Next move: validate scoring with Finance before board use.",
+      ].join("\n"),
     });
 
     expect(exhibits.charts).toEqual([
       expect.objectContaining({
-        id: "answer-directional-use-case-quadrant",
+        id: "answer-markdown-table-1-quadrant-matrix",
         kind: "quadrant-matrix",
-        subtitle: expect.stringContaining("Planning-grade"),
-        sourceNote: expect.stringContaining("Directional planning scores"),
-      }),
-      expect.objectContaining({
-        id: "answer-directional-use-case-value-bar",
-        kind: "horizontal-bar",
-        xKey: "useCase",
-        yKey: "valueScore",
       }),
     ]);
-    expect(JSON.stringify(exhibits.charts)).toContain(
-      "commercial credit automation",
+    expect(exhibits.tables[0]).toEqual(
+      expect.objectContaining({
+        id: "answer-markdown-table-1",
+        rows: expect.arrayContaining([
+          expect.objectContaining({
+            use_case: "Commercial credit automation",
+            value: "High",
+            complexity: "Medium",
+          }),
+        ]),
+      }),
     );
     expect(JSON.stringify(exhibits.charts)).toContain(
-      "capital markets research",
+      "Capital markets research",
     );
+    expect(JSON.stringify(exhibits.charts)).toContain("Servicing AI");
     expect(exhibits.tables[0]?.title).not.toBe("Requested Visual Boundary");
   });
 
