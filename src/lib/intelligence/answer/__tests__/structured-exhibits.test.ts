@@ -556,6 +556,42 @@ describe("buildStructuredExhibits", () => {
     expect(JSON.stringify(exhibits)).not.toContain("| AI Use Case |");
   });
 
+  it("renders directional planning charts for ranked AI use-case matrix asks", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: {
+        ...routing,
+        query:
+          "For FS Demo, rank five AI investment use cases by business value and implementation complexity. Show an executive 2x2 value/complexity matrix and a horizontal bar chart.",
+        outputShape: "chart",
+      },
+      sources,
+      prose:
+        "FS Demo's highest-priority AI investments are commercial credit automation and capital markets research, both live and measurable; fraud detection and KYC automation rank next; marketing personalization is lowest-confidence and should defer until core use cases prove governance. The rank is driven by measured value already tracked, integration readiness, and organizational ownership clarity.",
+    });
+
+    expect(exhibits.charts).toEqual([
+      expect.objectContaining({
+        id: "answer-directional-use-case-quadrant",
+        kind: "quadrant-matrix",
+        subtitle: expect.stringContaining("Planning-grade"),
+        sourceNote: expect.stringContaining("Directional planning scores"),
+      }),
+      expect.objectContaining({
+        id: "answer-directional-use-case-value-bar",
+        kind: "horizontal-bar",
+        xKey: "useCase",
+        yKey: "valueScore",
+      }),
+    ]);
+    expect(JSON.stringify(exhibits.charts)).toContain(
+      "commercial credit automation",
+    );
+    expect(JSON.stringify(exhibits.charts)).toContain(
+      "capital markets research",
+    );
+    expect(exhibits.tables[0]?.title).not.toBe("Requested Visual Boundary");
+  });
+
   it("renders a chart only from exact numeric columns in an extracted table", () => {
     const exhibits = buildStructuredExhibits({
       routing,

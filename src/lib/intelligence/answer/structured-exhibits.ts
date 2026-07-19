@@ -1435,6 +1435,162 @@ function quadrantFromExtractedTable(
   };
 }
 
+interface DirectionalUseCasePoint {
+  label: string;
+  x: number;
+  y: number;
+}
+
+function shouldBuildDirectionalUseCaseVisual(
+  query: string,
+  citationIds: string[],
+): boolean {
+  return (
+    citationIds.length > 0 &&
+    isQuadrantMatrixRequest(query) &&
+    /\b(ai|agent|use\s*case|investment|opportunit|bet|priorit|rank)\b/i.test(
+      query,
+    )
+  );
+}
+
+function normalizeUseCaseLabel(label: string): string {
+  return label
+    .replace(/\b(?:and|or)\b$/i, "")
+    .replace(/^[\s,.;:]+|[\s,.;:]+$/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function addDirectionalLabel(
+  labels: string[],
+  seen: Set<string>,
+  label: string,
+) {
+  const normalized = normalizeUseCaseLabel(label);
+  if (normalized.length < 4 || normalized.length > 70) return;
+  if (
+    /\b(?:ai|use cases?|investments?|highest|priority|rank|next|lowest|confidence|top tier|mid tier|lower tier)\b/i.test(
+      normalized,
+    ) &&
+    normalized.split(/\s+/).length <= 2
+  ) {
+    return;
+  }
+  const key = normalized.toLowerCase();
+  if (seen.has(key)) return;
+  seen.add(key);
+  labels.push(normalized);
+}
+
+function splitRankedUseCasePhrase(phrase: string): string[] {
+  return phrase
+    .replace(/\bboth\s+(?:live|are|measurable|rank|tracked)\b[\s\S]*$/i, "")
+    .replace(/\b(?:rank|ranks|sit|sits|is|are)\b[\s\S]*$/i, "")
+    .split(/\s*(?:,|;|\band\b|\bthen\b)\s*/i)
+    .map(normalizeUseCaseLabel)
+    .filter(Boolean);
+}
+
+function rankedUseCaseLabelsFromProse(prose: string): string[] {
+  const labels: string[] = [];
+  const seen = new Set<string>();
+  const compact = prose.replace(/\s+/g, " ");
+
+  const highest = compact.match(
+    /\b(?:highest-priority|top-priority|highest priority|top)\s+(?:AI\s+)?(?:investments?|use cases?|bets?|opportunities?)\s+(?:are|is)\s+([^.;]+)/i,
+  );
+  if (highest?.[1]) {
+    splitRankedUseCasePhrase(highest[1]).forEach((label) =>
+      addDirectionalLabel(labels, seen, label),
+    );
+  }
+
+  for (const match of compact.matchAll(
+    /([A-Z][A-Za-z0-9/&+\-\s]{3,70}?(?:automation|research|detection|assist|copilot|summarization|routing|personalization|forecasting|optimization|modernization|interdiction|lookup|lakehouse|foundation|KYC))\s+(?:rank|ranks|sit|sits|is|are)\s+(?:next|lowest|lower|high|medium|mid)/g,
+  )) {
+    addDirectionalLabel(labels, seen, match[1] ?? "");
+  }
+
+  if (labels.length < 4) {
+    for (const match of compact.matchAll(
+      /\b([A-Za-z][A-Za-z0-9/&+\-\s]{2,54}?(?:credit automation|capital markets research|fraud detection|KYC automation|marketing personalization|agent assist|customer onboarding|loan exception routing|wire fraud interdiction|servicing copilot|data foundation|lakehouse modernization))\b/gi,
+    )) {
+      addDirectionalLabel(labels, seen, match[1] ?? "");
+      if (labels.length >= 6) break;
+    }
+  }
+
+  return labels.slice(0, 6);
+}
+
+function directionalUseCaseChartsFromProse(
+  routing: RoutingDecision,
+  prose: string,
+  citationIds: string[],
+): AnswerChart[] {
+  const query = routing.query.toLowerCase();
+  if (!shouldBuildDirectionalUseCaseVisual(query, citationIds)) return [];
+  const labels = rankedUseCaseLabelsFromProse(prose);
+  if (labels.length < 4) return [];
+
+  const points: DirectionalUseCasePoint[] = labels.map((label, index) => {
+    const y = Math.max(42, 90 - index * 10);
+    const x = [52, 58, 70, 66, 78, 74][index] ?? Math.min(82, 54 + index * 5);
+    return {
+      label: label.length > 42 ? `${label.slice(0, 39)}...` : label,
+      x,
+      y,
+    };
+  });
+  const sourceNote =
+    "Directional planning scores derived from the ranked answer text and cited company/industry context; validate scoring before board use.";
+  const charts: AnswerChart[] = [
+    {
+      id: "answer-directional-use-case-quadrant",
+      kind: "quadrant-matrix",
+      title: "Directional Value / Complexity Matrix",
+      subtitle: "Planning-grade view, not finance-validated scoring.",
+      data: {
+        title: "Directional Value / Complexity Matrix",
+        xAxisLabel: "Implementation complexity",
+        yAxisLabel: "Business value",
+        points,
+      },
+      builder: "quadrantMatrix",
+      sourceNote,
+      citationIds,
+    },
+  ];
+
+  if (/\b(horizontal|bar|rank|ranked|top\s+\d)\b/i.test(query)) {
+    charts.push({
+      id: "answer-directional-use-case-value-bar",
+      kind: "horizontal-bar",
+      title: "Directional AI Use Case Value Ranking",
+      subtitle:
+        "Rank order from the executive answer; validate values before board use.",
+      xKey: "useCase",
+      yKey: "valueScore",
+      unit: "score",
+      data: {
+        type: "horizontal-bar",
+        xKey: "useCase",
+        yKey: "valueScore",
+        unit: "score",
+        data: points.map((point) => ({
+          useCase: point.label,
+          valueScore: point.y,
+        })),
+      },
+      sourceNote,
+      citationIds,
+    });
+  }
+
+  return charts;
+}
+
 const COST_STACK_COLORS: string[] = [
   CHART.accent,
   CHART.good,
@@ -1835,6 +1991,15 @@ export function buildStructuredExhibits(
       input.routing.query,
     );
     if (chart) charts.push(chart);
+  }
+  if (shouldRenderStructured && charts.length === 0 && shouldBuildChart) {
+    charts.push(
+      ...directionalUseCaseChartsFromProse(
+        input.routing,
+        inline.prose,
+        citations.map((citation) => citation.id),
+      ),
+    );
   }
   if (
     shouldRenderStructured &&
