@@ -140,6 +140,13 @@ function addUnique(map, row, keyField = "entity_key") {
   map.set(row[keyField], { ...map.get(row[keyField]), ...row });
 }
 
+function addIfMissing(map, row, keyField = "entity_key") {
+  if (!row[keyField]) throw new Error(`Missing key ${keyField}`);
+  if (!map.has(row[keyField])) {
+    map.set(row[keyField], row);
+  }
+}
+
 function entityForProgram(programCode, programName, sourceFile, sourceRow) {
   return {
     entity_key: `${TENANT_KEY}::initiative::${safeKey(programCode || programName)}`,
@@ -501,6 +508,17 @@ function buildProjection() {
   const kpiFacts = [];
   for (const row of benefitRows) {
     const programEntityKey = row.ai_program_id ? `${TENANT_KEY}::initiative::${safeKey(row.ai_program_id)}` : `${TENANT_KEY}::enterprise`;
+    if (row.ai_program_id) {
+      addIfMissing(entityMap, entityForProgram(row.ai_program_id, row.program_name || row.ai_program_id, FILES.benefitsSa08, {
+        ...row,
+        program_code: row.ai_program_id,
+        initiative_id: row.ai_use_case_id,
+        funding_status: row.funding_status || "unknown",
+        ai_spend_flag: row.ai_spend_flag || "true",
+        ai_spend_type: row.ai_spend_type || "unknown",
+        ai_spend_category: row.ai_spend_category || "unknown",
+      }));
+    }
     if (row.vendor_name) addUnique(entityMap, entityForVendor(row.vendor_name, FILES.benefitsSa08, row));
     if (row.tool_name) addUnique(entityMap, entityForSystem(row.tool_name, FILES.benefitsSa08, row));
     if (number(row.promised_value_usd) > 0) {
@@ -623,10 +641,28 @@ function buildProjection() {
   const candidateUseCases = data.ai10.filter((row) => ["candidate", "discovery"].includes(row.use_case_status));
   const candidateFacts = [];
   for (const row of candidateUseCases) {
+    const candidateEntityKey = `${TENANT_KEY}::initiative::${safeKey(row.record_id || row.source_record_id || row.use_case || row.business_name)}`;
+    addIfMissing(entityMap, {
+      entity_key: candidateEntityKey,
+      tenant_key: TENANT_KEY,
+      entity_type: "initiative",
+      display_name: row.use_case || row.business_name || row.record_id,
+      parent_entity_key: ENTERPRISE_ENTITY_KEY,
+      source_key: sourceKey(FILES.ai10),
+      source_row: sourceRowId(row),
+      attributes: json({
+        use_case_status: row.use_case_status,
+        funding_status: row.funding_status,
+        readiness_status: row.readiness_status,
+        expected_decision_path: row.expected_decision_path,
+        ai_spend_type: "candidate_ai_opportunity",
+        ai_spend_category: row.ai_spend_category || "unknown",
+      }),
+    });
     const candidateFact = fact({
       keyParts: ["candidate-ai", row.record_id, row.use_case_status],
-      entityKey: ENTERPRISE_ENTITY_KEY,
-      entityType: ENTERPRISE_ENTITY_TYPE,
+      entityKey: candidateEntityKey,
+      entityType: "initiative",
       measure: "candidate_ai_opportunity_count",
       scope: "initiative",
       view: "risk",
@@ -864,7 +900,31 @@ function buildProjection() {
   projection.output_counts.mart_evidence_lineage = projection.mart.evidence_lineage.length;
   projection.output_counts.mart_required_field_gaps = projection.mart.required_field_gaps.length;
 
+  validateProjectionReferentialIntegrity(projection);
+
   return projection;
+}
+
+function validateProjectionReferentialIntegrity(projection) {
+  const entityKeys = new Set(projection.entities.map((row) => row.entity_key));
+  const missingFactEntities = projection.facts
+    .filter((row) => row.entity_key && !entityKeys.has(row.entity_key))
+    .map((row) => ({ fact_key: row.fact_key, entity_key: row.entity_key }));
+  if (missingFactEntities.length) {
+    throw new Error(`Projection has facts with missing entities: ${JSON.stringify(missingFactEntities.slice(0, 10))}`);
+  }
+
+  const missingRelationshipEntities = projection.relationships
+    .flatMap((row) => [
+      { relationship_key: row.relationship_key, side: "from", entity_key: row.from_entity_key },
+      { relationship_key: row.relationship_key, side: "to", entity_key: row.to_entity_key },
+    ])
+    .filter((row) => row.entity_key && !entityKeys.has(row.entity_key));
+  if (missingRelationshipEntities.length) {
+    throw new Error(
+      `Projection has relationships with missing entities: ${JSON.stringify(missingRelationshipEntities.slice(0, 10))}`,
+    );
+  }
 }
 
 function summarizePressureThemes(pressureFacts) {
