@@ -1,8 +1,7 @@
 // Source analytics canvas — public surface (the redesigned three-beat page).
 //
-// Ships dark behind the `source_analytics` flag: the route renders
-// `SourceAnalyticsCanvas` when the flag is on for the tenant, and the current
-// `UniversalCanvasShell` (untouched) when off.
+// Platform default behind the `source_analytics` flag: Source event routes render
+// `SourceAnalyticsCanvas` for every tenant.
 
 export { SourceAnalyticsCanvas } from './SourceAnalyticsCanvas';
 export { ScopeAnalyticsStage } from './ScopeAnalyticsStage';

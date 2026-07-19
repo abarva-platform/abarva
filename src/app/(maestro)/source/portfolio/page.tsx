@@ -34,9 +34,9 @@ export default async function SourcePortfolioRoute({
     canonicalClientDisplayName({ key: activeClient?.key, name: activeClient?.name }) ??
     'AbarVa Client';
 
-  // source_analytics · the redesigned "Your sourcing book" home. Ships DARK
-  // behind the master flag (OFF for all). When ON for the tenant, render the
-  // realigned book; when OFF, the current portfolio table below is untouched.
+  // source_analytics · the redesigned "Your sourcing book" home. Platform
+  // default ON: every Source tenant should render the realigned book. The table
+  // fallback remains only as emergency rollback plumbing.
   const sourceAnalyticsEnabled = isFeatureEnabled(
     { clientKey: activeClient?.key ?? null, clientId: activeClient?.id ?? null },
     'source_analytics',

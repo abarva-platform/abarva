@@ -1,9 +1,6 @@
 import { readFileSync } from "node:fs";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { renderToStaticMarkup } from "react-dom/server";
-import SourceEventDetailPage from "@/app/(maestro)/source/events/[eventId]/page";
-import { SOURCE_GOLDEN_EVENT_IDS } from "@/lib/source";
 
 jest.mock("next/navigation", () => ({
   usePathname: () => "/source/events/evt-source-data-ai-si-selection",
@@ -66,36 +63,31 @@ describe("Source authenticated route smoke", () => {
     }
   });
 
-  it("keeps /source redirected to the canonical queue and preserves the legacy portfolio component", () => {
+  it("keeps /source redirected to the analytics portfolio and preserves the legacy portfolio component", () => {
     const routeSource = readWorkspaceFile("src/app/(maestro)/source/page.tsx");
     const componentSource = readWorkspaceFile(
       "src/components/source/SourceIndexPage.tsx",
     );
 
-    expect(routeSource).toContain("redirect('/source/queue')");
+    expect(routeSource).toContain("redirect('/source/portfolio')");
     expect(componentSource).toContain("AMS Vendor Consolidation 2026");
     expect(componentSource).toContain("SOURCE_INDEX_VIEW");
     expect(componentSource).not.toMatch(/fetch\(|openai|claude|anthropic/i);
   });
 
-  it("renders the authenticated Source event route through the universal canvas", async () => {
-    const page = await SourceEventDetailPage({
-      params: Promise.resolve({
-        eventId: SOURCE_GOLDEN_EVENT_IDS.dataAiModernization,
-      }),
-    });
-    const html = renderToStaticMarkup(page);
+  it("keeps the authenticated Source event route on the analytics canvas path", () => {
+    const routeSource = readWorkspaceFile(
+      "src/app/(maestro)/source/events/[eventId]/page.tsx",
+    );
+    const stageSource = readWorkspaceFile(
+      "src/components/source/canvas/analytics/ScopeAnalyticsStage.tsx",
+    );
 
-    // Universal canvas surface markers — id strip, step rail, splitter, tabs.
-    expect(html).toContain("Data &amp; AI Modernization SI Selection");
-    expect(html).toContain("source-canvas-id-strip");
-    expect(html).toContain("source-canvas-step-rail");
-    expect(html).toContain("source-canvas-splitter");
-    expect(html).toContain("source-canvas-workspace");
-    expect(html).toContain("source-canvas-tab-document");
-    expect(html).toContain("source-canvas-tab-gate");
-    expect(html).toContain("source-canvas-tab-evidence");
-    expect(html).toContain("source-canvas-tab-log");
+    expect(routeSource).toContain("SourceAnalyticsCanvas");
+    expect(routeSource).toContain('"source_analytics"');
+    expect(routeSource).toContain('SourceAnalyticsCanvas');
+    expect(stageSource).toContain('✦');
+    expect(stageSource).toContain('Intelligence');
   });
 
   it("documents the current auth test boundary without weakening auth", () => {

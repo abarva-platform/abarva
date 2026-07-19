@@ -180,9 +180,8 @@ const GRID_STYLE: CSSProperties = {
 };
 
 /**
- * The redesigned Source stage canvas — the "three-beat" page. Ships DARK behind
- * `source_analytics`: when the flag is OFF the route renders the current
- * `UniversalCanvasShell` untouched; when ON, this canvas renders alongside it.
+ * The redesigned Source stage canvas — the "three-beat" page. `source_analytics`
+ * is platform-default ON so every tenant reaches this shell.
  *
  * It mounts inside `AppShell surface="source-detail"` (no second nav) and uses
  * the Source sub-nav, exactly like the current shell. Scope is the worked

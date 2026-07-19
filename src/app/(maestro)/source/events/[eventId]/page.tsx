@@ -98,10 +98,10 @@ export default async function SourceEventDetailPage({
       : "strategy");
 
   // ── source_analytics · the redesigned three-beat stage canvas ──────────────
-  // Ships DARK behind the master flag. When ON for the tenant, render the new
-  // analytics canvas; when OFF, fall through to the untouched UniversalCanvasShell
-  // below. Resolved early so the heavy substrate/vendor reads the current shell
-  // needs are skipped on the analytics path.
+  // Platform default ON: every Source tenant should render the redesigned
+  // analytics canvas. The old UniversalCanvasShell branch below remains only as
+  // emergency rollback plumbing if the platform flag is explicitly disabled in
+  // a future registry change.
   const sourceAnalyticsEnabled = isFeatureEnabled(
     {
       clientKey: activeClient?.key ?? null,
@@ -120,8 +120,7 @@ export default async function SourceEventDetailPage({
     // stage and its gate IS the P0 approval — build it from the event's captured
     // intake and, when the event is genuinely awaiting approval in the strategy
     // stage and the user can approve, fold the live approve action into its gate.
-    // Every OTHER stage uses the value-waterfall builder as before. Never break
-    // the flag-off path — this whole branch is gated by source_analytics.
+    // Every OTHER stage uses the value-waterfall builder as before.
     let liveStageView: StageAnalyticsView | undefined = undefined;
     // The per-step killer insight (value pool / value bridge / should-cost) for
     // the viewing stage. Built from the same facts the stage view reads, so it

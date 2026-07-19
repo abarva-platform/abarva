@@ -19,7 +19,7 @@ interface AnalyticsStageRailProps {
 /**
  * The left rail — event header + the 11-stage journey. aVa drives 1–9, Atlas
  * 10–11. A "Templates & deliverables" link sits below. Read-only in this slice
- * (the analytics canvas ships dark); each stage links by ?stage=.
+ * while each stage links by ?stage=.
  */
 export function AnalyticsStageRail({
   eventId,

@@ -34,16 +34,16 @@ describe('Source context-used and action-enforcement slices', () => {
     expect(source).not.toContain('SourceEventsAgentDockView');
   });
 
-  it('renders event detail with deterministic context chips and 3 contextual choices', async () => {
+  it('renders event detail with the analytics canvas and deterministic context', async () => {
     const routeSource = readFileSync(
       join(process.cwd(), 'src/app/(maestro)/source/events/[eventId]/page.tsx'),
       'utf8',
     );
 
-    expect(routeSource).toContain('UniversalCanvasShell');
     expect(routeSource).toContain('SourceAnalyticsCanvas');
-    expect(routeSource).toContain('listArtifactStatesForEvent');
-    expect(routeSource).toContain('listGateCriterionStatesForEvent');
+    expect(routeSource).toContain('"source_analytics"');
+    expect(routeSource).toContain('readEventFacts');
+    expect(routeSource).toContain('hydrateTaskEvidenceState');
   });
 
   it('archives scorecard and artifact detail pages into canvas/workspace routes', () => {
