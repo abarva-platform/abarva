@@ -357,12 +357,13 @@ describe("UniversalCanvasShell · SSR render", () => {
     }
   });
 
-  it("collapses Sentinel by default on the Executive Decision stage", () => {
+  it("keeps aVa in the bottom bar on the Executive Decision stage", () => {
     const html = render({ viewStage: "executive_decision" });
-    expect(html).toContain("agent-dock-collapsed-chip");
     expect(html).toContain("aVa");
-    expect(html).toContain("Click to expand · 3 stage-specific suggestions");
+    expect(html).toContain("Ask aVa…");
+    expect(html).toContain("Draft the decision brief");
     expect(html).toContain("source-canvas-next-move-card");
+    expect(html).not.toContain("agent-dock-collapsed-chip");
   });
 
   it("renders the Executive Decision fallback until the decision brief is authored", () => {
@@ -519,16 +520,15 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("No dissent recorded");
   });
 
-  it("renders the AgentDock side-rail with stage-appropriate agent and 3 suggestions", () => {
+  it("renders the bottom aVa bar with stage-appropriate suggestions", () => {
     const html = render();
-    // AgentDock panel replaces the legacy EventChatLane testid.
-    expect(html).toContain("agent-dock-panel");
-    // Scope stage (1-9) → Sentinel per canvasDockAgentForStage.
+    // Source now uses a bottom composer in this shell, not the old side rail.
     expect(html).toContain("aVa");
-    // Three-choice catalog now renders as AgentDock suggested actions.
-    expect(html).toContain("agent-dock-suggestion-c0");
-    expect(html).toContain("agent-dock-suggestion-c1");
-    expect(html).toContain("agent-dock-suggestion-c2");
+    expect(html).toContain("Ask aVa…");
+    expect(html).toContain("Hold scope until ticket history is parsed");
+    expect(html).toContain("Lock outline-tier scope now and flag the gap");
+    expect(html).toContain("Split scope by application criticality");
+    expect(html).not.toContain("agent-dock-panel");
   });
 
   it("renders the Scope stage with explicit CMDB pull, inventory, and dependency list", () => {
@@ -597,7 +597,7 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("source-responses-document-workspace");
   });
 
-  it("preserves SkyHarbor Air in the signed-in contract optimization chrome", () => {
+  it("uses the sanitized Airline Demo display in the signed-in contract optimization chrome", () => {
     mockUser = {
       firstName: "Ava",
       lastName: "Agent",
@@ -624,13 +624,15 @@ describe("UniversalCanvasShell · SSR render", () => {
       },
     });
 
-    expect(html).toContain("SkyHarbor Air");
-    expect(html).toContain("SkyHarbor Air AMS Contract Optimization");
+    expect(html).toContain("Airline Demo");
+    expect(html).toContain("Airline Demo AMS Contract Optimization");
     expect(html).toContain("SKYH-AMS-CONTRACT-OPT-2026");
+    expect(html).toContain("Commercial opportunity map");
+    expect(html).toContain("source-contract-optimization-profile");
+    expect(html).not.toContain("SkyHarbor Air");
     expect(html).not.toContain("SkyHarbor Air AMS Outsourcing RFP");
     expect(html).not.toContain("SKYH-AMS-RFP-2026");
     expect(html).not.toContain("Ava Agent");
-    expect(html).not.toContain("Airline Demo");
   });
 
   it("renders the Evaluation stage with scorecard, dissent, and human-named BATNA", () => {
@@ -737,22 +739,27 @@ describe("UniversalCanvasShell · SSR render", () => {
     );
   });
 
-  it("renders the sticky AgentDock composer", () => {
+  it("renders the sticky aVa bottom composer", () => {
     const html = render();
-    expect(html).toContain("agent-dock-input");
     expect(html).toContain("Ask aVa…");
-    // Paperclip upload button is rendered.
-    expect(html).toContain("agent-dock-attach");
+    expect(html).toContain('aria-label="Message aVa"');
+    expect(html).toContain('aria-label="Send message"');
+    expect(html).not.toContain("agent-dock-input");
+    expect(html).not.toContain("agent-dock-attach");
   });
 
-  it("uses Atlas as the lead agent on transition (stage 10) and value (stage 11)", () => {
+  it("uses the unified aVa bottom bar on transition and value stages", () => {
     const transitionHtml = render({ viewStage: "transition" });
     expect(transitionHtml).toContain("Ask aVa…");
-    expect(transitionHtml).toContain("agent-dock-panel");
+    expect(transitionHtml).toContain("Show milestone status against plan");
+    expect(transitionHtml).toContain("Confirm KT sign-offs are recorded");
+    expect(transitionHtml).not.toContain("agent-dock-panel");
 
     const valueHtml = render({ viewStage: "value" });
     expect(valueHtml).toContain("Ask aVa…");
-    expect(valueHtml).toContain("agent-dock-panel");
+    expect(valueHtml).toContain("Update the value ledger for this quarter");
+    expect(valueHtml).toContain("Plan the next governance review");
+    expect(valueHtml).not.toContain("agent-dock-panel");
   });
 
   it("renders Stage 10 Transition with KT milestones, go-live readiness, risks, and human cutover approval", () => {
@@ -775,13 +782,14 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).toContain("source-transition-document-workspace");
   });
 
-  it("renders workspace with all four tabs", () => {
+  it("renders the workspace tabs with the gate checklist in the sidebar", () => {
     const html = render();
     expect(html).toContain("source-canvas-workspace");
     expect(html).toContain("source-canvas-tab-document");
-    expect(html).toContain("source-canvas-tab-gate");
     expect(html).toContain("source-canvas-tab-evidence");
     expect(html).toContain("source-canvas-tab-log");
+    expect(html).toContain("source-canvas-gate-sidebar");
+    expect(html).not.toContain("source-canvas-tab-gate");
     expect(html).not.toContain("source-workspace-explorer-chips");
   });
 
@@ -1002,18 +1010,22 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).not.toContain("DB-backed");
     expect(html).not.toContain("source_artifacts");
     expect(html).toContain("RFP_RFI_Package_generated_packet.md");
-    expect(html).toContain("RFP · parse pending · approval draft");
+    expect(html).toContain("<span>RFP</span>");
+    expect(html).toContain("<span>MARKDOWN</span>");
+    expect(html).toContain("<span>7.3 KB</span>");
+    expect(html).toContain("Generated Draft");
+    expect(html).toContain("RFP · draft");
     expect(html).toContain("source-canvas-registry-doc-registry-doc-1");
     expect(html).toContain(
-      "/source/events/evt-canvas-1/artifacts/registry-doc-1",
+      "/source/events/evt-canvas-1/workspace?artifactId=registry-doc-1",
     );
   });
 
-  it("renders splitter handle as a separator with role + aria", () => {
+  it("renders the context strip without the retired splitter handle", () => {
     const html = render();
-    expect(html).toContain("source-canvas-splitter");
-    expect(html).toContain('role="separator"');
-    expect(html).toContain('aria-orientation="vertical"');
+    expect(html).toContain("source-canvas-context-strip");
+    expect(html).toContain("source-canvas-gate-sidebar");
+    expect(html).not.toContain("source-canvas-splitter");
   });
 
   it("context bundle reflects artifact + criterion + evidence counts", () => {
@@ -1052,17 +1064,14 @@ describe("UniversalCanvasShell · SSR render", () => {
   });
 
   // ── B4: suggested chat prompts populate the composer ──────────────────────
-  it("renders the AgentDock empty-thread hint and suggested questions label", () => {
+  it("renders the bottom aVa suggestions without the old empty-thread panel", () => {
     const html = render();
-    // Scope stage (1-9) renders the Source-branded Sentinel lane.
-    expect(html).toContain("Ask aVa anything.");
-    // The dock surfaces the agent role under the name as the empty-state
-    // subtitle (matches the AGENT_DOCK_ROLE_COPY entry for Sentinel).
-    expect(html).toContain(
-      "Drafts artifacts, surfaces evidence, flags gaps before they cost you.",
-    );
-    // Suggestions block label reflects the populate-not-submit semantics.
-    expect(html).toContain("Suggested questions");
+    expect(html).toContain("Ask aVa…");
+    expect(html).toContain("Hold scope until ticket history is parsed");
+    expect(html).toContain("Lock outline-tier scope now and flag the gap");
+    expect(html).toContain("Split scope by application criticality");
+    expect(html).not.toContain("Ask aVa anything.");
+    expect(html).not.toContain("Suggested questions");
     expect(html).not.toContain("Three choices for");
   });
 
@@ -1262,8 +1271,12 @@ describe("UniversalCanvasShell · SSR render", () => {
     );
     expect(html).toContain("source-canvas-document-tab");
     expect(html).toContain("Start with the next RFP document.");
-    expect(html).toContain("draft the required document with aVa");
-    expect(html).toContain("ask your AbarVa lead");
+    expect(html).toContain(
+      "This event does not yet have working artifacts for the selected stage.",
+    );
+    expect(html).toContain(
+      "ask an authorized Source owner to rebuild the stage workspace",
+    );
     expect(html).not.toContain("npm run db:backfill:source-canvas");
   });
 });
