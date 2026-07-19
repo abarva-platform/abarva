@@ -891,7 +891,13 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       />,
     );
 
-    expect(screen.getByText("Investment Control Tower")).toBeInTheDocument();
+    expect(
+      screen.getAllByText("AI Value Realization Control Tower").length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByText(/\$0 claimable today/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/AI activity is not value/i),
+    ).toBeInTheDocument();
     expect(
       screen.queryByText("CXO Executive Dashboard"),
     ).not.toBeInTheDocument();
@@ -913,6 +919,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(
       screen.getByRole("button", { name: "Evidence" }),
     ).toBeInTheDocument();
+    expect(screen.getByText(/Tower mart · source-backed/i)).toBeInTheDocument();
     expect(screen.getByTestId("agent-dock-collapsed-chip")).toBeInTheDocument();
     expect(
       screen.queryByText("Tower · CIO command center"),
@@ -978,7 +985,9 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       minHeight: "0",
     });
     expect(screen.getByTestId("agent-dock-collapsed-chip")).toBeInTheDocument();
-    expect(screen.getByText("Investment Control Tower")).toBeInTheDocument();
+    expect(
+      screen.getAllByText("AI Value Realization Control Tower").length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText("Active portfolio context")).toBeInTheDocument();
     expect(screen.getByText("$650.0M")).toBeInTheDocument();
     expect(screen.getByText("$53.7M")).toBeInTheDocument();
