@@ -20,7 +20,7 @@
 // matching the pattern already used by StrategyStage.test.tsx.
 
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
@@ -144,6 +144,26 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.queryByRole("navigation", { name: "Source sections" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps gate approval handoff inside the event shell workspace", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Lakeshore"
+      />,
+    );
+
+    expect(
+      screen.queryByRole("link", { name: /open approvals/i }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /open approval workspace/i }),
+    );
+
+    expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
   });
 
   it("passes surfaceContext.sourceEventId through to AppShell (verified via the rendered top-bar context, which AppShell derives independently — the real thread is exercised by SourceAnalyticsCanvas's own surfaceContext prop, asserted structurally here)", () => {

@@ -411,7 +411,7 @@ function SourceWorkspace({
           stageKey={view.stage.key}
         />
       </div>
-      <GateHandoffCard view={view} />
+      <GateHandoffCard view={view} onWorkspaceChange={onWorkspaceChange} />
     </section>
   );
 }
@@ -567,7 +567,13 @@ function WorkflowBlocks({ groups }: { groups: SourceShellStepGroup[] }) {
   );
 }
 
-function GateHandoffCard({ view }: { view: SourceEventShellView }) {
+function GateHandoffCard({
+  view,
+  onWorkspaceChange,
+}: {
+  view: SourceEventShellView;
+  onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
+}) {
   return (
     <section
       style={{
@@ -598,21 +604,21 @@ function GateHandoffCard({ view }: { view: SourceEventShellView }) {
             {view.stage.gateReadinessLine}
           </p>
         </div>
-        <Link
-          href="/source/approvals"
+        <button
+          type="button"
+          onClick={() => onWorkspaceChange('approvals')}
           style={{
             ...BUTTON_STYLE,
             display: 'inline-flex',
             alignItems: 'center',
             padding: '11px 14px',
-            textDecoration: 'none',
             background: ANALYTICS.INK,
             color: '#fff',
             flexShrink: 0,
           }}
         >
-          Open Approvals
-        </Link>
+          Open approval workspace
+        </button>
       </div>
     </section>
   );

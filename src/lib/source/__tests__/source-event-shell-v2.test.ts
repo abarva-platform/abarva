@@ -186,8 +186,6 @@ describe("buildSourceEventShellView", () => {
 
     expect(view.approvals.currentStageItem).toBe(APPROVAL);
     expect(view.approvals.readinessLine).toBe(APPROVAL.readiness);
-    expect(view.stage.gateReadinessLine).toContain(
-      "approval belongs in Source Approvals",
-    );
+    expect(view.stage.gateReadinessLine).toContain("approval workspace");
   });
 });

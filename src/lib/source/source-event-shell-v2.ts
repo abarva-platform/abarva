@@ -237,8 +237,8 @@ export function buildSourceEventShellView(
       activeStep,
       gateReadinessLine:
         ready === total
-          ? "All steps complete - approval belongs in Source Approvals."
-          : `${total - ready} step${total - ready === 1 ? "" : "s"} left - approval belongs in Source Approvals.`,
+          ? "All steps complete - review approval inside this event workspace."
+          : `${total - ready} step${total - ready === 1 ? "" : "s"} left - finish the inputs before opening this event's approval workspace.`,
     },
     files: {
       items: artifacts,
