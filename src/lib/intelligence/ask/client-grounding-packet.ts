@@ -6,6 +6,7 @@ type GroundingSectionKey =
   | "currentSystems"
   | "aiProgramUsage"
   | "processEvidence"
+  | "ownershipAndGovernance"
   | "industryBenchmarks"
   | "evidenceBoundary";
 
@@ -56,6 +57,13 @@ const SECTION_RULES: GroundingSection[] = [
     maxItems: 5,
   },
   {
+    key: "ownershipAndGovernance",
+    title: "Ownership, funding, governance, and decision rights",
+    matcher:
+      /\b(org ownership|decision rights|leader role|reports to|approval|budget authority|funding|sponsor|governance|model risk|risk tier|control owner|business owner|technology owner|data owner|commercial owner)\b/i,
+    maxItems: 4,
+  },
+  {
     key: "processEvidence",
     title: "Process evidence, risk, and bottlenecks",
     matcher:
@@ -102,11 +110,18 @@ export function buildClientGroundingPacketSource(
 
   if (sections.length === 0) return null;
 
-  const tenantName = input.tenantName?.trim() || input.tenantKey?.trim() || "this tenant";
+  const tenantName =
+    input.tenantName?.trim() || input.tenantKey?.trim() || "this tenant";
   const detail = [
     `CLIENT GROUNDING PACKET for ${tenantName}.`,
     "Purpose: answer AI strategy, use-case, industry-trend, and automation questions through this tenant's loaded context before using generic market advice.",
     `User question: ${input.query}`,
+    "",
+    "CXO specificity checklist for Claude:",
+    "- Start with the client-specific executive read, not a generic market overview.",
+    "- Use current systems, applications, data assets, integrations, AI tools/program usage, business priorities, interview signals, process bottlenecks, owners, and evidence gaps when present below.",
+    "- Treat industry patterns and case examples as benchmark context unless the tenant evidence below proves the same fact for this tenant.",
+    "- If a needed fact is not present below, name it as missing/client-to-confirm rather than assuming it.",
     ...sections.flatMap((section) => [
       "",
       `${section.title}:`,
@@ -121,7 +136,7 @@ export function buildClientGroundingPacketSource(
     name: `Client grounding packet (${tenantName})`,
     id: `${slugify(input.tenantKey || tenantName)}:client-grounding-packet`,
     confidence: 0.93,
-    detail: detail.slice(0, 5200),
+    detail: detail.slice(0, 7600),
   };
 }
 
@@ -152,9 +167,9 @@ function summarizeSourceForGrounding(source: AskSource): string {
     .replace(/\bV7_\d+_?/gi, "")
     .replace(/\bv7_\d+_?/gi, "")
     .trim();
+  const sentences = cleanDetail.match(/[^.!?]+[.!?]/g) ?? [];
   const sentence =
-    cleanDetail.match(/[^.!?]+[.!?]/)?.[0]?.trim() ||
-    cleanDetail.slice(0, 260).trim();
+    sentences.slice(0, 3).join(" ").trim() || cleanDetail.slice(0, 420).trim();
   const citation = [source.name, source.id ? `id: ${source.id}` : null]
     .filter(Boolean)
     .join(", ");
@@ -162,5 +177,8 @@ function summarizeSourceForGrounding(source: AskSource): string {
 }
 
 function slugify(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }

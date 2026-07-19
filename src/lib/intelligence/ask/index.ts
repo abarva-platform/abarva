@@ -410,14 +410,14 @@ export async function* askIntelligence(
         opts.tenantInventoryKey ??
         opts.tenant?.appClientKey ??
         opts.surfaceContext?.clientKey,
-      tenantName:
-        opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+      tenantName: opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
       sources: [
         ...v7Dossier.sources,
         ...tenantStructuredFacts,
         ...tenantEnterprise,
         ...tenantTechnology,
         ...routed.sources,
+        ...worldview.sources,
       ],
     });
     const legacyTenantSources = hasActiveV7Dossier
@@ -773,7 +773,9 @@ export async function* askIntelligence(
       entities: classification.entities,
       tenantId: opts.tenantId,
       userId: opts.userId,
-      groundingSources: clientGroundingPacket ? [clientGroundingPacket] : sources.slice(0, 4),
+      groundingSources: clientGroundingPacket
+        ? [clientGroundingPacket]
+        : sources.slice(0, 4),
     });
     const followupRetiredFacts = scanRetiredFacts({
       tenantKey: tenantKeyForRetiredFactGate,

@@ -1,4 +1,5 @@
 import {
+  INDUSTRY_TREND_TO_AI_BETS_CONTRACT,
   STRATEGY_TO_ABARVA_SOLUTION_CONTRACT,
   STRATEGY_TO_MOVES_EXECUTION_CONTRACT,
   type AbarvaAnswerMode,
@@ -91,11 +92,7 @@ export function ensureMovesExecutionPhaseTable(text: string): string {
       }
     });
 
-    return [
-      text.trim(),
-      "**Moves phase contract completion**",
-      ...missingRows,
-    ]
+    return [text.trim(), "**Moves phase contract completion**", ...missingRows]
       .filter(Boolean)
       .join("\n\n");
   }
@@ -183,7 +180,10 @@ function splitReadableSentences(text: string): string[] {
     .map(stripMarkdownHeading)
     .map((sentence) =>
       sentence
-        .replace(/^\*\*(?:Answer|Proof|Move|Read|Evidence|Next move):?\*\*\s*/i, "")
+        .replace(
+          /^\*\*(?:Answer|Proof|Move|Read|Evidence|Next move):?\*\*\s*/i,
+          "",
+        )
         .replace(/^(?:Answer|Proof|Move|Read|Evidence|Next move):\s*/i, "")
         .replace(/^(?:Answer|Proof|Move|Read|Evidence|Next move)\.?\s+/i, "")
         .trim(),
@@ -200,7 +200,10 @@ function splitReadableSentences(text: string): string[] {
 function compactSentence(sentence: string, maxWords: number): string {
   const words = sentence.trim().split(/\s+/).filter(Boolean);
   if (words.length <= maxWords) return sentence.trim();
-  const capped = words.slice(0, maxWords).join(" ").replace(/[,:;]+$/, "");
+  const capped = words
+    .slice(0, maxWords)
+    .join(" ")
+    .replace(/[,:;]+$/, "");
   return `${capped}.`;
 }
 
@@ -255,10 +258,7 @@ export function ensureAbarvaSolutionBrief(text: string): string {
 
   const sentences = splitReadableSentences(body);
   if (sentences.length === 0) {
-    return [
-      `**Answer:** ${ABARVA_SURFACE_PLAN_SENTENCE}`,
-      tabs,
-    ]
+    return [`**Answer:** ${ABARVA_SURFACE_PLAN_SENTENCE}`, tabs]
       .filter(Boolean)
       .join("\n\n");
   }
@@ -308,7 +308,9 @@ export function ensureAbarvaSolutionBrief(text: string): string {
     `**Move:** ${compactSentence(ensureNoDuplicateSurfaceSentence(move), 72)}`,
   ].join("\n\n");
 
-  return [stripNestedBriefLabels(compactBody), tabs].filter(Boolean).join("\n\n");
+  return [stripNestedBriefLabels(compactBody), tabs]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 const COMMON_BANNED_PHRASES = [
@@ -400,7 +402,7 @@ export const CXO_ANSWER_MODE_REGISTRY = {
   },
   industry_trend_to_ai_bets: {
     mode: "industry_trend_to_ai_bets",
-    active: false,
+    active: true,
     requiredSections: [
       "Executive read",
       "Industry pattern",
@@ -414,6 +416,9 @@ export const CXO_ANSWER_MODE_REGISTRY = {
     exportRequired: true,
     liveProofPrompt:
       "Give me the top 5 AI use cases for supply chain and rank them in a 2x2 matrix across value and complexity.",
+    systemContract: INDUSTRY_TREND_TO_AI_BETS_CONTRACT,
+    promptDirective:
+      "ACTIVE ANSWER MODE: industry_trend_to_ai_bets. Do not answer as a generic market scan. Use the Client Grounding Packet first: current systems, data readiness, executive interview signals, AI tool/program usage, process bottlenecks, owners, vendors, and evidence gaps. Then layer industry trends, peer examples, and benchmarks as clearly labeled industry context. For explicit top-N, chart, matrix, value/complexity, or ranking asks, include the required chart payload table so the renderer can produce a 2x2 matrix and bar/trend chart. Keep the CXO storyline concise: what matters, why it matters for this tenant, and what to validate or fund next.",
   },
   board_ai_governance_plan: {
     mode: "board_ai_governance_plan",
