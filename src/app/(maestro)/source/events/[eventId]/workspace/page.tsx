@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/shell/AppShell";
-import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { WorkspaceExplorer } from "@/components/workspace-explorer/WorkspaceExplorer";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
@@ -67,7 +66,6 @@ export default async function SourceEventWorkspacePage({
         showLocked: true,
         context: `Source · ${event.name} · Workspace`,
       }}
-      subNav={<SourceSubNav />}
     >
       <WorkspaceExplorer
         eyebrow={`${event.code} · Source workspace`}

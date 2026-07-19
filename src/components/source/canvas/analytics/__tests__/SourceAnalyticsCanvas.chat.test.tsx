@@ -132,6 +132,20 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(screen.getByTestId("stub-ask-anything-bar")).toBeInTheDocument();
   });
 
+  it("does not render the retired Source section subnav inside the event shell", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Lakeshore"
+      />,
+    );
+
+    expect(
+      screen.queryByRole("navigation", { name: "Source sections" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("passes surfaceContext.sourceEventId through to AppShell (verified via the rendered top-bar context, which AppShell derives independently — the real thread is exercised by SourceAnalyticsCanvas's own surfaceContext prop, asserted structurally here)", () => {
     // AppShell -> AtlasPageStateProvider both accept `surfaceContext` verbatim
     // and forward it into the /api/chat/agent POST body via `ask()`. We can't
