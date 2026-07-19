@@ -4,6 +4,10 @@
 // see src/lib/intelligence/answer/__tests__ for the pattern this follows.
 
 import { runSourceAnswerQualityGate } from "../answer-quality-gate";
+import {
+  enforceSourceExistingEventWriteTruth,
+  SOURCE_CHAT_UNSAVED_FACT_NOTICE,
+} from "../answer-quality-gate";
 
 describe("runSourceAnswerQualityGate — passing answers", () => {
   it("passes a well-formed, grounded, actionable answer with no repair", () => {
@@ -53,6 +57,28 @@ describe("runSourceAnswerQualityGate — banned-language rejection", () => {
       hasGroundingContext: true,
     });
     expect(result.finalText.toLowerCase()).not.toContain("i cannot access the event");
+  });
+
+  it("repairs Source record write claims into explicit chat-only wording", () => {
+    const result = runSourceAnswerQualityGate({
+      answerText:
+        "Got it — Jack Ma as decision owner. I'll register it in the intake record. Next question: what changed now?",
+      mode: "general_advisory",
+      hasGroundingContext: true,
+    });
+
+    expect(result.repaired).toBe(true);
+    expect(result.finalText).toContain(SOURCE_CHAT_UNSAVED_FACT_NOTICE);
+    expect(result.finalText.toLowerCase()).not.toContain("register it in the intake record");
+  });
+
+  it("guards legacy Source ask text even outside the streaming quality gate", () => {
+    const guarded = enforceSourceExistingEventWriteTruth(
+      "I have captured that owner in the Source record. Next: confirm the trigger.",
+    );
+
+    expect(guarded).toContain(SOURCE_CHAT_UNSAVED_FACT_NOTICE);
+    expect(guarded.toLowerCase()).not.toContain("captured that owner");
   });
 });
 
