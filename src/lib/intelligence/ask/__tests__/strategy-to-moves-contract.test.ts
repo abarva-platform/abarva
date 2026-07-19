@@ -36,15 +36,9 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
   );
 
   it("injects the strategy-to-AbarVa solution contract into the active synthesis path", () => {
-    expect(synthesizerCode).toContain(
-      "classifyAbarvaAnswerMode(args.query)",
-    );
-    expect(registryCode).toContain(
-      "STRATEGY_TO_ABARVA_SOLUTION_CONTRACT",
-    );
-    expect(registryCode).toContain(
-      "STRATEGY_TO_MOVES_EXECUTION_CONTRACT",
-    );
+    expect(synthesizerCode).toContain("classifyAbarvaAnswerMode(args.query)");
+    expect(registryCode).toContain("STRATEGY_TO_ABARVA_SOLUTION_CONTRACT");
+    expect(registryCode).toContain("STRATEGY_TO_MOVES_EXECUTION_CONTRACT");
     expect(registryCode).toContain("strategy_to_abarva_solution");
     expect(registryCode).toContain("ACTIVE ANSWER MODE:");
     expect(registryCode).toContain("strategy_to_moves_execution");
@@ -56,9 +50,15 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     expect(registryCode).toContain("P0 Originate");
     expect(registryCode).toContain("P5 Prepare to Execute");
     expect(registryCode).toContain("Tower Track Outcomes");
-    expect(synthesizerCode).toContain("buildCxoAnswerModeSystemAddendum(answerMode)");
-    expect(synthesizerCode).toContain("buildCxoAnswerModePromptDirective(answerMode)");
-    expect(synthesizerCode).toContain("applyCxoAnswerModeFallbacks(text, answerMode)");
+    expect(synthesizerCode).toContain(
+      "buildCxoAnswerModeSystemAddendum(answerMode)",
+    );
+    expect(synthesizerCode).toContain(
+      "buildCxoAnswerModePromptDirective(answerMode)",
+    );
+    expect(synthesizerCode).toContain(
+      "applyCxoAnswerModeFallbacks(text, answerMode)",
+    );
     expect(synthesizerCode).toContain(
       "const finalText = applyCxoAnswerModeFallbacks(cleanedText, answerMode)",
     );
@@ -69,7 +69,9 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
     expect(askIndexCode).toContain("applyCxoAnswerModeFallbacks(");
     expect(askIndexCode).toContain("classifyAbarvaAnswerMode(trimmed)");
     expect(routeCode).toContain("applyCxoAnswerModeFallbacks(");
-    expect(routeCode).toContain("classifyAbarvaAnswerMode(context?.query ?? \"\")");
+    expect(routeCode).toContain(
+      'classifyAbarvaAnswerMode(context?.query ?? "")',
+    );
   });
 
   it("keeps critical CXO answer modes in one registry", () => {
@@ -79,10 +81,13 @@ describe("strategy-to-AbarVa solution synthesis contract", () => {
       requiredArtifacts: ["phase_table", "tower_outcomes", "surface_plan"],
     });
     expect(CXO_ANSWER_MODE_REGISTRY.industry_trend_to_ai_bets).toMatchObject({
-      active: false,
+      active: true,
       exportRequired: true,
       requiredArtifacts: ["trend_table", "priority_matrix"],
     });
+    expect(
+      CXO_ANSWER_MODE_REGISTRY.industry_trend_to_ai_bets.promptDirective,
+    ).toContain("Client Grounding Packet first");
     expect(CXO_ANSWER_MODE_REGISTRY.board_ai_governance_plan).toMatchObject({
       active: false,
       exportRequired: true,

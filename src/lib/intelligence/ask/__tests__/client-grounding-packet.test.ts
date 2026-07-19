@@ -57,6 +57,10 @@ describe("client grounding packet", () => {
           "Member intake and resolution show process bottlenecks around claims-status lookup, prior authorization status, and handoff escalation.",
         ),
         source(
+          "Org ownership and decision rights",
+          "Business owner: VP Member Services. Technology owner: CIO delegate. Budget authority requires CFO and CIO approval for production expansion.",
+        ),
+        source(
           "External benchmark and market corpus",
           "Healthcare agent-assist benchmarks show ambient clinical AI has faster adoption than claims lakehouse AI; apply only as industry pattern, not tenant fact.",
         ),
@@ -71,9 +75,11 @@ describe("client grounding packet", () => {
       }),
     );
     expect(packet?.detail).toMatch(/CLIENT GROUNDING PACKET/i);
+    expect(packet?.detail).toMatch(/CXO specificity checklist/i);
     expect(packet?.detail).toMatch(/Executive interview/i);
     expect(packet?.detail).toMatch(/Contact center CRM/i);
     expect(packet?.detail).toMatch(/claims-status lookup/i);
+    expect(packet?.detail).toMatch(/CFO and CIO approval/i);
     expect(packet?.detail).toMatch(/industry pattern/i);
     expect(packet?.detail).toMatch(/separate tenant-loaded facts/i);
   });

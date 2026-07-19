@@ -109,11 +109,15 @@ const STRATEGY_TO_ABARVA_SOLUTION_RE =
 export type AbarvaAnswerMode =
   | "general"
   | "strategy_to_abarva_solution"
-  | "strategy_to_moves_execution";
+  | "strategy_to_moves_execution"
+  | "industry_trend_to_ai_bets";
 
 export function classifyAbarvaAnswerMode(query: string): AbarvaAnswerMode {
   if (isStrategyToMovesExecutionAsk(query)) {
     return "strategy_to_moves_execution";
+  }
+  if (isIndustryTrendToAiBetsAsk(query)) {
+    return "industry_trend_to_ai_bets";
   }
   if (isStrategyToAbarvaSolutionAsk(query)) {
     return "strategy_to_abarva_solution";
@@ -129,11 +133,57 @@ export function isStrategyToAbarvaSolutionAsk(query: string): boolean {
   return STRATEGY_TO_ABARVA_SOLUTION_RE.test(query);
 }
 
-export function needsAbarvaSolutionGuidance(query: string): boolean {
+export function isIndustryTrendToAiBetsAsk(query: string): boolean {
+  const asksForTopN =
+    /\b(?:top\s*)?(?:\d+|three|four|five|six|seven|eight|nine|ten)\s+(?:ai\s+)?(?:use\s+cases?|bets?|investments?|initiatives?|opportunities?)\b/i.test(
+      query,
+    );
+  const asksForValueMatrix =
+    /\b(?:value|business value)\b[\s\S]{0,80}\b(?:complexity|readiness|2x2|matrix|quadrant)\b/i.test(
+      query,
+    );
+  const hasAiTerm = /\b(ai|genai|agentic|automation)\b/i.test(query);
+  const hasIndustryTerm =
+    /\b(industry|trends?|benchmarks?|case stud(?:y|ies)|peer|market)\b/i.test(
+      query,
+    );
+  const asksRankedAiUseCases =
+    /\b(rank|prioriti[sz]e|compare)\b[\s\S]{0,80}\b(?:ai\s+)?(?:use\s+cases?|investments?|initiatives?|opportunities?)\b/i.test(
+      query,
+    );
   return (
-    isStrategyToMovesExecutionAsk(query) || isStrategyToAbarvaSolutionAsk(query)
+    asksForTopN ||
+    asksForValueMatrix ||
+    (hasAiTerm && hasIndustryTerm) ||
+    asksRankedAiUseCases
   );
 }
+
+export function needsAbarvaSolutionGuidance(query: string): boolean {
+  return (
+    isStrategyToMovesExecutionAsk(query) ||
+    isIndustryTrendToAiBetsAsk(query) ||
+    isStrategyToAbarvaSolutionAsk(query)
+  );
+}
+
+export const INDUSTRY_TREND_TO_AI_BETS_CONTRACT = `INDUSTRY_TREND_TO_AI_BETS ANSWER MODE
+
+This mode is mandatory when the user asks for AI trends, AI use cases, industry examples, top bets, value/complexity rankings, priority matrices, or investment sequencing. The answer must prove why aVa is better than asking a generic LLM: combine industry pattern knowledge with the tenant's actual current-state evidence.
+
+Product rule:
+- Start with the CXO read: which bets matter and why now.
+- Use the tenant context first when present: current systems, data assets, business priorities, executive interview signals, AI tool/program usage, process bottlenecks, vendors, ownership, and evidence gaps.
+- Use industry benchmarks and case patterns second, clearly labeled as industry context or directional benchmark context.
+- Never imply a tenant fact exists just because the industry pattern is true. If contact-center stack, telemetry, data readiness, usage, owner, or value evidence is missing, say that as the validation gate.
+- For explicit chart, matrix, or top-N asks, emit the chart payload table required by the structured visual contract so the UI can render a 2x2 matrix, bar chart, or trend chart.
+
+Required answer shape:
+1. Answer: one sharp executive recommendation.
+2. Proof: tenant-specific signals first, then industry pattern, then evidence boundary.
+3. Move: what the CXO should validate, fund, defer, or ask aVa to build next.
+
+Do not write a generic market overview. Do not expose internal table names, data-layer versions, raw packet labels, or source IDs.`;
 
 export const STRATEGY_TO_ABARVA_SOLUTION_CONTRACT = `STRATEGY_TO_ABARVA_SOLUTION ANSWER MODE
 

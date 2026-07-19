@@ -5,7 +5,9 @@ import {
   CHART_OUTPUT_CONTRACT,
   CXO_ANSWER_QUALITY_CONTRACT,
   enforceDecisionGradeAnswer,
+  INDUSTRY_TREND_TO_AI_BETS_CONTRACT,
   isBroadCurrentStateQuestion,
+  isIndustryTrendToAiBetsAsk,
   isStrategyToAbarvaSolutionAsk,
   isStrategyToMovesExecutionAsk,
   needsAbarvaSolutionGuidance,
@@ -131,12 +133,34 @@ describe("Ask Intelligence response policy", () => {
       classifyAbarvaAnswerMode(
         "Give me the top 5 AI use cases for supply chain and rank them in a 2x2 matrix across value and complexity.",
       ),
-    ).toBe("general");
+    ).toBe("industry_trend_to_ai_bets");
+  });
+
+  it("classifies AI trend and use-case investment asks as industry AI bets mode", () => {
+    const questions = [
+      "What are the AI trends in financial services and which bets should FS Demo prioritize?",
+      "For FS Demo, rank five AI investment use cases by business value and implementation complexity.",
+      "Give me the top 5 AI use cases for healthcare with a 2x2 value complexity matrix.",
+    ];
+
+    for (const question of questions) {
+      expect(isIndustryTrendToAiBetsAsk(question)).toBe(true);
+      expect(classifyAbarvaAnswerMode(question)).toBe(
+        "industry_trend_to_ai_bets",
+      );
+      expect(needsAbarvaSolutionGuidance(question)).toBe(true);
+    }
+
+    expect(INDUSTRY_TREND_TO_AI_BETS_CONTRACT).toContain(
+      "tenant's actual current-state evidence",
+    );
+    expect(INDUSTRY_TREND_TO_AI_BETS_CONTRACT).toContain(
+      "current systems, data assets",
+    );
   });
 
   it("classifies broad strategy-to-solution prompts as AbarVa solution mode", () => {
     const solutionQuestions = [
-      "Help me decide the right AI bets for supply chain. What is the industry doing?",
       "How would we solve this through AbarVa?",
       "Which vendor or sourcing implications should Source handle?",
       "What should Tower measure?",
