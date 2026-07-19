@@ -14,6 +14,8 @@ Fixes the Meridian Tower mart writer so candidate AI opportunities and benefits-
 
 Follow-up: the writer also reuses existing candidate entities when repeated 10 AI use-case rows share the same displayed initiative name as an SA08 benefits-ledger row. This prevents duplicate `cio_tower.entities` rows from violating the tenant/type/display-name uniqueness constraint.
 
+Second follow-up: the writer now canonicalizes projected entities by `(tenant, entity type, display name)` before any database write, remaps fact and relationship foreign keys to the canonical entity key, and fails local validation if duplicate display identities remain. This closes the case where SA04 and SA08 use different technical keys for the same business initiative.
+
 ## Layer Impact
 
 - `client-data-lane`: Data projection layer adds candidate initiative entity creation for SA08 benefits-ledger rows and 10 AI automation use-case candidate rows.
@@ -33,12 +35,15 @@ Follow-up: the writer also reuses existing candidate entities when repeated 10 A
 - `scripts/tower/project-meridian-v3-to-cio-tower.mjs`
   - Adds `addIfMissing` helper.
   - Adds display-name based entity reuse for repeated candidate opportunity rows.
+  - Canonicalizes duplicate projected entity displays and remaps fact/relationship references before write.
   - Creates missing candidate initiative entities from SA08 and 10 source rows.
   - Validates all projected facts and relationships have known entities before write.
+  - Validates projected entities do not violate the `cio_tower.entities` tenant/type/display uniqueness rule.
 
 ## QA / Validation
 
 - `npm run project:meridian-v3-cio-tower` — passed locally; projection keeps the intended Meridian values: $650.0M total FY26 IT budget, $487.5M run, $162.5M change, $53.7M AI-tagged non-additive spend, $3.8M partial finance-validated value, $0 realized value allowed.
+- Duplicate display check — passed locally; projection emits 270 entities and 0 duplicate `(tenant, entity type, display name)` identities.
 - `npm run audit:ai-value-realization-day1` — passed locally with p0=0, p1=0, findings=0.
 - `git diff --check` — passed locally.
 

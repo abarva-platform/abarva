@@ -522,9 +522,19 @@ function buildProjection() {
   const adoptionFacts = [];
   const kpiFacts = [];
   for (const row of benefitRows) {
-    const programEntityKey = row.ai_program_id ? `${TENANT_KEY}::initiative::${safeKey(row.ai_program_id)}` : `${TENANT_KEY}::enterprise`;
+    const programDisplayName = row.program_name || row.ai_program_id;
+    const existingProgramEntity = row.ai_program_id
+      ? findEntityByDisplay(entityMap, {
+          tenantKey: TENANT_KEY,
+          entityType: "initiative",
+          displayName: programDisplayName,
+        })
+      : null;
+    const programEntityKey = row.ai_program_id
+      ? existingProgramEntity?.entity_key ?? `${TENANT_KEY}::initiative::${safeKey(row.ai_program_id)}`
+      : `${TENANT_KEY}::enterprise`;
     if (row.ai_program_id) {
-      addIfMissing(entityMap, entityForProgram(row.ai_program_id, row.program_name || row.ai_program_id, FILES.benefitsSa08, {
+      addIfMissing(entityMap, entityForProgram(row.ai_program_id, programDisplayName, FILES.benefitsSa08, {
         ...row,
         program_code: row.ai_program_id,
         initiative_id: row.ai_use_case_id,
@@ -913,6 +923,7 @@ function buildProjection() {
     question_contracts: questionContracts,
     measure_results: measureResults,
   };
+  canonicalizeEntityDisplayConflicts(projection);
   projection.mart = buildTowerMart(projection);
   projection.output_counts.mart_command_center = projection.mart.command_center.length;
   projection.output_counts.mart_value_funnel = projection.mart.value_funnel.length;
@@ -925,6 +936,49 @@ function buildProjection() {
   validateProjectionReferentialIntegrity(projection);
 
   return projection;
+}
+
+function entityDisplayIdentity(row) {
+  return [
+    row.tenant_key,
+    row.entity_type,
+    String(row.display_name ?? "").trim().toLowerCase(),
+  ].join("|");
+}
+
+function canonicalizeEntityDisplayConflicts(projection) {
+  const canonicalByDisplay = new Map();
+  const entityKeyRemap = new Map();
+  const canonicalEntities = [];
+
+  for (const row of projection.entities) {
+    const displayIdentity = entityDisplayIdentity(row);
+    const canonical = canonicalByDisplay.get(displayIdentity);
+    if (!canonical) {
+      canonicalByDisplay.set(displayIdentity, row);
+      canonicalEntities.push(row);
+      continue;
+    }
+    entityKeyRemap.set(row.entity_key, canonical.entity_key);
+  }
+
+  if (!entityKeyRemap.size) return;
+
+  const remapEntityKey = (entityKey) => entityKeyRemap.get(entityKey) ?? entityKey;
+  projection.entities = canonicalEntities.map((row) => ({
+    ...row,
+    parent_entity_key: row.parent_entity_key ? remapEntityKey(row.parent_entity_key) : row.parent_entity_key,
+  }));
+  projection.facts = projection.facts.map((row) => ({
+    ...row,
+    entity_key: row.entity_key ? remapEntityKey(row.entity_key) : row.entity_key,
+  }));
+  projection.relationships = projection.relationships.map((row) => ({
+    ...row,
+    from_entity_key: remapEntityKey(row.from_entity_key),
+    to_entity_key: remapEntityKey(row.to_entity_key),
+  }));
+  projection.output_counts.entities = projection.entities.length;
 }
 
 function validateProjectionReferentialIntegrity(projection) {
@@ -946,6 +1000,19 @@ function validateProjectionReferentialIntegrity(projection) {
     throw new Error(
       `Projection has relationships with missing entities: ${JSON.stringify(missingRelationshipEntities.slice(0, 10))}`,
     );
+  }
+  const duplicateEntityDisplays = new Map();
+  for (const row of projection.entities) {
+    const displayIdentity = entityDisplayIdentity(row);
+    const rows = duplicateEntityDisplays.get(displayIdentity) ?? [];
+    rows.push(row.entity_key);
+    duplicateEntityDisplays.set(displayIdentity, rows);
+  }
+  const duplicates = [...duplicateEntityDisplays]
+    .filter(([, rows]) => rows.length > 1)
+    .map(([identity, rows]) => ({ identity, entity_keys: rows }));
+  if (duplicates.length) {
+    throw new Error(`Projection has duplicate entity display identities: ${JSON.stringify(duplicates.slice(0, 10))}`);
   }
 }
 
