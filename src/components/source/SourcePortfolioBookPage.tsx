@@ -3,9 +3,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // "Your sourcing book" — the redesigned Source Portfolio home.
 //
-// Shipped behind the `source_analytics` flag (OFF for all tenants). When ON,
-// `/source/portfolio` renders THIS; when OFF, the untouched `SourcePortfolioPage`
-// table renders instead. See the flag gate in the route.
+// Shipped behind the `source_analytics` platform flag. `/source/portfolio`
+// renders THIS for every tenant; the legacy table remains only as emergency
+// fallback plumbing in the route.
 //
 // Design bridges to the analytics-canvas tokens (ANALYTICS) so this reads as one
 // system with the redesigned stage canvas — serif headings, paper ground,

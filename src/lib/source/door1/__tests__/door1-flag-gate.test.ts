@@ -1,9 +1,9 @@
-// Door 1 — the flag-off gate.
+// Door 1 — source_analytics platform gate.
 //
 // The route gates the whole Door-1 diagnose flow behind `source_analytics` — a
-// tenant-policy flag with an empty include-list (ships dark). This asserts the
-// exact predicate the route branches on: for any real tenant, with no env
-// allowlist, the flag is OFF, so the route 404s and Door 1 is not observable.
+// platform-policy flag. This asserts the exact predicate the route branches on:
+// every tenant now gets the analytics shell and Door 1 surface; this must not
+// silently regress to the old tenant-only Lakeshore enrollment.
 
 import { isFeatureEnabled } from '@/lib/features/is-feature-enabled';
 
@@ -16,30 +16,32 @@ describe('Door 1 · source_analytics gate', () => {
     else process.env[ENROLL_ENV] = original;
   });
 
-  it('is OFF for a real tenant when not enrolled (route would 404)', () => {
+  it('is ON for every real tenant without an env allowlist', () => {
     delete process.env[ENROLL_ENV];
     expect(
       isFeatureEnabled({ clientKey: 'lakeshore' }, 'source_analytics'),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       isFeatureEnabled({ clientKey: 'skyharbor' }, 'source_analytics'),
-    ).toBe(false);
+    ).toBe(true);
+    expect(
+      isFeatureEnabled({ clientKey: 'arcturus' }, 'source_analytics'),
+    ).toBe(true);
   });
 
-  it('is OFF when the tenant context cannot be resolved', () => {
+  it('stays ON when the tenant context cannot be resolved', () => {
     delete process.env[ENROLL_ENV];
-    expect(isFeatureEnabled(null, 'source_analytics')).toBe(false);
-    expect(isFeatureEnabled({}, 'source_analytics')).toBe(false);
+    expect(isFeatureEnabled(null, 'source_analytics')).toBe(true);
+    expect(isFeatureEnabled({}, 'source_analytics')).toBe(true);
   });
 
-  it('flips ON only for a tenant explicitly enrolled via env allowlist', () => {
+  it('does not depend on the retired tenant env allowlist', () => {
     process.env[ENROLL_ENV] = 'lakeshore';
     expect(
       isFeatureEnabled({ clientKey: 'lakeshore' }, 'source_analytics'),
     ).toBe(true);
-    // A different, un-enrolled tenant stays off.
     expect(
       isFeatureEnabled({ clientKey: 'skyharbor' }, 'source_analytics'),
-    ).toBe(false);
+    ).toBe(true);
   });
 });

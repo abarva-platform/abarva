@@ -5,7 +5,7 @@ function read(filePath: string): string {
   return fs.readFileSync(path.join(process.cwd(), filePath), 'utf8');
 }
 
-describe('DESROUTE4 source route shell enforcement (Wave S1 — AppShell)', () => {
+describe('DESROUTE4 source route shell enforcement (analytics shell)', () => {
   const sourceDashboardRoute = 'src/app/(maestro)/source/page.tsx';
   const sourceEventsRoute = 'src/app/(maestro)/source/events/page.tsx';
   const sourceEventDetailRoute = 'src/app/(maestro)/source/events/[eventId]/page.tsx';
@@ -17,28 +17,28 @@ describe('DESROUTE4 source route shell enforcement (Wave S1 — AppShell)', () =
     expect(events).toContain('redirect("/source/portfolio")');
     expect(events).not.toContain('AppShell');
 
-    // Detail route now mounts the universal sourcing canvas (Wave 1 build).
-    // The old SourceEventAgentCanvas surface is replaced by UniversalCanvasShell
-    // which wraps AppShell internally.
+    // Detail route mounts the redesigned analytics canvas for every tenant.
     const detail = read(sourceEventDetailRoute);
-    expect(detail).toContain('UniversalCanvasShell');
+    expect(detail).toContain('SourceAnalyticsCanvas');
+    expect(detail).toContain('"source_analytics"');
 
-    // Landing redirects to the supported Decision Queue.
+    // Landing redirects to the analytics portfolio book.
     const dashboard = read(sourceDashboardRoute);
-    expect(dashboard).toContain("redirect('/source/queue')");
+    expect(dashboard).toContain("redirect('/source/portfolio')");
   });
 
-  it('event detail route reads canvas substrate (artifacts, gates, evidence)', () => {
+  it('event detail route reads analytics facts and registry evidence', () => {
     const source = read(sourceEventDetailRoute);
-    expect(source).toContain('listArtifactStatesForEvent');
-    expect(source).toContain('listGateCriterionStatesForEvent');
-    expect(source).toContain('listEffectiveEvidenceStatesForEvent');
+    expect(source).toContain('readEventFacts');
+    expect(source).toContain('buildLiveStageView');
+    expect(source).toContain('buildStepInsight');
+    expect(source).toContain('listSourceArtifactsForSourceEventId');
   });
 
-  it('Source event routes use the universal canvas, not the legacy rail wrapper', () => {
+  it('Source event routes use the analytics canvas, not the legacy rail wrapper', () => {
     const source = read(sourceEventDetailRoute);
     expect(source).not.toContain('SentinelAgentColumn');
-    expect(source).toContain('UniversalCanvasShell');
+    expect(source).toContain('SourceAnalyticsCanvas');
   });
 
   it('Source agent prompt uses consulting-partner pacing and tenant context for every Source agent', () => {

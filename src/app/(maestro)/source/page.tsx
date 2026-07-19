@@ -5,10 +5,10 @@ export const dynamic = 'force-dynamic';
 /**
  * Source landing.
  *
- * IA v2 (audit 2026-06-03, Tier 1): `/source` lands on the Decision Queue
- * ("Decisions") — the act-mode surface that passes the squint test — rather
- * than the retired Events page.
+ * The analytics shell is now the canonical Source entry. `/source` lands on the
+ * portfolio book so every tenant enters the same SourceAnalyticsCanvas family
+ * instead of the retired decision-queue home.
  */
 export default function SourcePage() {
-  redirect('/source/queue');
+  redirect('/source/portfolio');
 }

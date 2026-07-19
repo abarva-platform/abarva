@@ -9,7 +9,7 @@ function read(filePath: string): string {
   return fs.readFileSync(path.join(process.cwd(), filePath), 'utf8');
 }
 
-describe('SHELL5 source route shell control (Wave S1 — AppShell migration)', () => {
+describe('SHELL5 source route shell control (analytics shell)', () => {
   const sentinelAgentColumn = 'src/components/source/SentinelAgentColumn.tsx';
   const sourceWorkingPane = 'src/components/source/SourceWorkingPane.tsx';
   const sourceCommercialEventSection = 'src/components/source/SourceCommercialEventSection.tsx';
@@ -49,10 +49,10 @@ describe('SHELL5 source route shell control (Wave S1 — AppShell migration)', (
     expect(source).not.toContain('#060a12');
   });
 
-  it('SentinelAgentColumn.tsx contains SOURCE orientation (Sentinel identity)', () => {
+  it('SentinelAgentColumn.tsx contains Source advisor orientation', () => {
     const source = read(sentinelAgentColumn);
-    expect(source).toContain('Sentinel');
-    expect(source).toContain('Validator');
+    expect(source).toContain('Source advisor');
+    expect(source).toContain('aVa');
   });
 
   it('SourceCommercialEventSection.tsx exists and is non-empty (importable)', () => {
@@ -61,8 +61,9 @@ describe('SHELL5 source route shell control (Wave S1 — AppShell migration)', (
     expect(source.length).toBeGreaterThan(0);
   });
 
-  it('event detail route wires the universal sourcing canvas', () => {
+  it('event detail route wires the analytics sourcing canvas', () => {
     const source = read(sourceEventDetailRoute);
-    expect(source).toContain('UniversalCanvasShell');
+    expect(source).toContain('SourceAnalyticsCanvas');
+    expect(source).toContain('"source_analytics"');
   });
 });

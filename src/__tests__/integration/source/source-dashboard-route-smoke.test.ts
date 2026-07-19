@@ -75,7 +75,7 @@ describe('Source dashboard route smoke', () => {
     const componentSource = readFileSync(join(process.cwd(), 'src/components/source/SourcePortfolioPage.tsx'), 'utf8');
     const tableSource = readFileSync(join(process.cwd(), 'src/components/source/SourcingEventTable.tsx'), 'utf8');
 
-    expect(routeSource).toContain("redirect('/source/queue')");
+    expect(routeSource).toContain("redirect('/source/portfolio')");
     expect(eventsRouteSource).toContain('redirect("/source/portfolio")');
     expect(eventsRouteSource).not.toContain('SourceEventsPortfolio');
     // Compact-header portfolio surface — KPI strip + attention banners removed.
