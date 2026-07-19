@@ -12,67 +12,16 @@ interface ScopeGateProps {
 }
 
 /**
- * Beat 3 — the gate. A 3-box sponsor confirm (the pattern already built for
- * Strategy). Honest: a box goes green because the evidence reached its target
- * state — never because someone clicked "mark met." On approve, the stage's
- * deliverables + the NEXT phase's readiness pack auto-generate — no build step.
+ * Beat 3 — gate readiness. This page prepares a gate decision; the formal
+ * decision/rationale belongs in Source Approvals. Honest: a box goes green
+ * because the evidence reached its target state — never because someone clicked
+ * "mark met."
  */
 export function ScopeGate({ gate, stageName }: ScopeGateProps) {
   const router = useRouter();
   const [confirmed, setConfirmed] = useState<ReadonlySet<number>>(new Set());
-  const [approving, setApproving] = useState(false);
-  const [approveError, setApproveError] = useState<string | null>(null);
   const allConfirmed = confirmed.size === gate.confirms.length;
   const last = gate.nextStageName === null;
-  // The gate is LIVE (folds the P0 approval) only when the view attaches an
-  // `action`. Otherwise the Approve button is a presentational end-state, exactly
-  // as the Scope exemplar has always rendered.
-  const action = gate.action ?? null;
-
-  async function submitApprove() {
-    if (!action || !allConfirmed || approving) return;
-    setApproving(true);
-    setApproveError(null);
-    try {
-      const confirmations = Object.fromEntries(
-        action.confirmationKeys.map((key) => [key, true]),
-      );
-      const response = await fetch(
-        `/api/v1/source/events/${action.eventId}/approve`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'approve',
-            notes: action.rationale,
-            confirmations,
-          }),
-        },
-      );
-      const payload = (await response.json().catch(() => ({}))) as {
-        error?: string;
-        detail?: string;
-        stageAdvancedTo?: string | null;
-      };
-      if (!response.ok || payload.error) {
-        setApproveError(
-          payload.detail ?? payload.error ?? 'Approval failed. Try again.',
-        );
-        return;
-      }
-      const target =
-        payload.stageAdvancedTo ?? action.redirectStageKey ?? gate.nextStageName;
-      const stageQuery = target
-        ? `?stage=${encodeURIComponent(String(target).toLowerCase())}`
-        : '';
-      router.push(`/source/events/${action.eventId}${stageQuery}`);
-      router.refresh();
-    } catch {
-      setApproveError('Approval failed. Try again.');
-    } finally {
-      setApproving(false);
-    }
-  }
 
   const cardStyle: CSSProperties = {
     border: `1px solid ${ANALYTICS.LINE}`,
@@ -105,8 +54,27 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
         }}
       >
         {gate.approver} confirms three things before {stageName} advances
-        {last ? ' and the event closes' : `. Then Source generates the ${stageName} documents`}.
+        {last
+          ? ' and the event closes.'
+          : `. This page prepares the gate; the formal decision happens in Source Approvals.`}
       </p>
+
+      <div
+        style={{
+          border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          borderRadius: ANALYTICS.RADIUS,
+          background: ANALYTICS.SOFT,
+          padding: '12px 14px',
+          marginBottom: 14,
+          fontSize: 12.5,
+          color: ANALYTICS.INK_2,
+          lineHeight: 1.5,
+        }}
+      >
+        <b>What good looks like here:</b> inputs are complete, exceptions are
+        visible, and the approval packet is ready to review. Source Approvals
+        records the human rationale and advances the event.
+      </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {gate.confirms.map((confirm, i) => {
@@ -209,7 +177,7 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
             marginBottom: 10,
           }}
         >
-          Generated after you approve
+          Prepared for approval
         </div>
         <div
           style={{
@@ -269,7 +237,8 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
             }}
           >
             <b style={{ color: ANALYTICS.INK_2 }}>Nothing is generated yet.</b> These are
-            prepared automatically the moment you approve — there is no build step.
+            prepared automatically after the approval decision — there is no build step on
+            this stage page.
           </div>
         </div>
       </div>
@@ -277,8 +246,8 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
       <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', gap: 12 }}>
         <button
           type="button"
-          disabled={!allConfirmed || approving}
-          onClick={action ? () => void submitApprove() : undefined}
+          disabled={!allConfirmed}
+          onClick={() => router.push('/source/approvals')}
           style={{
             border: 'none',
             borderRadius: ANALYTICS.RADIUS_SM,
@@ -288,14 +257,10 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
             fontSize: 13.5,
             fontWeight: 600,
             padding: '11px 18px',
-            cursor: allConfirmed && !approving ? 'pointer' : 'not-allowed',
+            cursor: allConfirmed ? 'pointer' : 'not-allowed',
           }}
         >
-          {approving
-            ? 'Approving…'
-            : last
-              ? 'Approve & close event'
-              : `Approve & advance to ${gate.nextStageName} →`}
+          {last ? 'Open final approval →' : 'Open Source Approvals →'}
         </button>
         {!allConfirmed ? (
           <span style={{ fontSize: 11.5, color: ANALYTICS.FAINT }}>
@@ -303,22 +268,6 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
           </span>
         ) : null}
       </div>
-
-      {approveError ? (
-        <div
-          style={{
-            marginTop: 12,
-            padding: '10px 12px',
-            borderRadius: ANALYTICS.RADIUS_SM,
-            background: ANALYTICS.RUST_TINT,
-            color: ANALYTICS.RUST,
-            fontSize: 12.5,
-            lineHeight: 1.5,
-          }}
-        >
-          {approveError}
-        </div>
-      ) : null}
     </section>
   );
 }

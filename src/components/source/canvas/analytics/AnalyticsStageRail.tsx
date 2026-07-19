@@ -14,12 +14,13 @@ interface AnalyticsStageRailProps {
   viewStage: SourceStageKey;
   /** The event's live progress stage (drives done / current / upcoming). */
   currentStage: SourceStageKey;
+  activeWorkspace: 'workflow' | 'intelligence';
+  onWorkspaceChange: (workspace: 'workflow' | 'intelligence') => void;
 }
 
 /**
- * The left rail — event header + the 11-stage journey. aVa drives 1–9, Atlas
- * 10–11. A "Templates & deliverables" link sits below. Read-only in this slice
- * while each stage links by ?stage=.
+ * The left rail — event header + the 11-stage journey. Secondary workspaces sit
+ * below the stage list so the main canvas stays focused on the active workflow.
  */
 export function AnalyticsStageRail({
   eventId,
@@ -27,6 +28,8 @@ export function AnalyticsStageRail({
   eventMeta,
   viewStage,
   currentStage,
+  activeWorkspace,
+  onWorkspaceChange,
 }: AnalyticsStageRailProps) {
   const currentIndex = SOURCE_STAGE_ORDER.indexOf(currentStage);
 
@@ -184,6 +187,46 @@ export function AnalyticsStageRail({
             ▤
           </span>
           Templates &amp; deliverables
+        </button>
+        <button
+          type="button"
+          title="Show stage intelligence"
+          onClick={() => onWorkspaceChange('intelligence')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '9px 8px',
+            borderRadius: ANALYTICS.RADIUS_SM,
+            border: activeWorkspace === 'intelligence' ? `1px solid ${ANALYTICS.LINE}` : 'none',
+            background: activeWorkspace === 'intelligence' ? ANALYTICS.CARD : 'none',
+            width: '100%',
+            textAlign: 'left',
+            cursor: 'pointer',
+            fontFamily: ANALYTICS.SANS,
+            fontSize: 13.5,
+            fontWeight: 500,
+            color: activeWorkspace === 'intelligence' ? ANALYTICS.INK : ANALYTICS.INK_2,
+          }}
+        >
+          <span
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: 6,
+              background: 'rgba(63,184,168,0.16)',
+              border: `1px solid ${ANALYTICS.LINE}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 12,
+              color: ANALYTICS.TEAL_DEEP,
+              flexShrink: 0,
+            }}
+          >
+            ✦
+          </span>
+          Intelligence
         </button>
       </div>
 

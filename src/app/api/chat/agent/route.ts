@@ -2029,6 +2029,12 @@ export async function POST(request: Request) {
           "- Default Source reply shape: (1) one-sentence read of what you heard, (2) one sentence on why it matters, (3) exactly ONE next question or action.",
           "- Ask at most ONE question in the chat reply. If several fields are missing, pick the single highest-leverage blocker and let the right pane/artifact cards carry the rest.",
           "- Keep most Source replies under 75 words unless the user explicitly asks for a deep dive, draft, comparison, or executive brief.",
+          ...(typeof surfaceContext.sourceEventId === "string" && surfaceContext.sourceEventId.trim()
+            ? [
+                "- EXISTING SOURCE EVENT READ-ONLY: this chat is grounded on an existing Source event. You may use the user's answer in this conversation, but do NOT say you saved, locked, registered, updated, captured, or wrote it into the Source/intake/event record unless a tool result in this turn explicitly confirms a write. For proposed facts, say 'I can use that here, but it is not saved to the Source record yet.'",
+                "- Do not imply tenant context contains named people unless retrieved context explicitly names them. If the user gives a role instead of a name, accept the role as a proposed accountable owner unless the visible task specifically requires a named person.",
+              ]
+            : []),
           "- L7 LIVE-GATE DISCIPLINE: for canonical Source prompts, use the user's exact sourcing terms in the first sentence. CDP replacement questions must start with: \"For the CDP RFP, each vendor must prove...\" and must also include evidence and risk. Ambient questions must say ambient clinical documentation. AML questions must say AML alert triage automation and evidence. Core-modernization concentration questions must say second source. SI value questions must say SI partner, value, and savings. Intake-recap questions must say intake, filled, and missing. Fake-reference prompts must say exactly: I won't fabricate references.",
           "- If the user is starting an event, quietly map their words to the five-field intake floor: trigger, decision owner, scope boundary, baseline evidence, stop/approval condition. Do not recite all five unless asked.",
           "- Use known tenant context before asking. If the user names a role and Source tenant context resolves it, use the known person by name and ask only to confirm authority. Never ask 'who is the CIO?' when context names the CIO.",

@@ -49,6 +49,7 @@ import {
 import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-builder";
 import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
 import { hydrateTaskEvidenceState } from "@/lib/source/facts/view/task-evidence-hydration";
+import { loadApprovalsInbox } from "@/lib/source/approvals-inbox";
 import {
   buildStrategyStageView,
   deriveStrategyIntakeFacts,
@@ -130,6 +131,25 @@ export default async function SourceEventDetailPage({
     // checklist's done-state can be re-derived from persisted evidence on load
     // (a reload / tab switch must reflect uploaded facts, not reset to empty).
     let hydrationFactInputs: Record<string, number> = {};
+    const analyticsRegistryArtifacts =
+      await listSourceArtifactsForSourceEventId(event.id).catch((error) => {
+        console.error(
+          "[SourceEventDetailPage] source_artifacts registry read failed for analytics shell",
+          error instanceof Error ? error.message : String(error),
+        );
+        return [];
+      });
+    const analyticsApprovalItems = activeClient?.key
+      ? (
+          await loadApprovalsInbox(activeClient.key).catch((error) => {
+            console.error(
+              "[SourceEventDetailPage] approvals inbox read failed for analytics shell",
+              error instanceof Error ? error.message : String(error),
+            );
+            return { items: [], intakeCount: 0, gateReadyCount: 0 };
+          })
+        ).items
+      : [];
 
     if (activeClient?.key) {
       try {
@@ -333,15 +353,12 @@ export default async function SourceEventDetailPage({
     // reached a usable, persisted state — never a fabricated done. Never fatal.
     if (liveStageView) {
       try {
-        const registryArtifacts = await listSourceArtifactsForSourceEventId(
-          event.id,
-        ).catch(() => []);
         liveStageView = {
           ...liveStageView,
           tasks: hydrateTaskEvidenceState({
             tasks: liveStageView.tasks,
             factInputs: hydrationFactInputs,
-            artifacts: registryArtifacts,
+            artifacts: analyticsRegistryArtifacts,
             stageKey: liveStageView.stageKey,
           }),
         };
@@ -360,6 +377,8 @@ export default async function SourceEventDetailPage({
         tenantName={analyticsTenantName}
         stageView={liveStageView}
         stepInsight={stepInsight}
+        artifacts={analyticsRegistryArtifacts}
+        approvalItems={analyticsApprovalItems}
       />
     );
   }

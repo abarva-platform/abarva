@@ -183,7 +183,11 @@ const BANNED_PHRASES = [
   "another model could do better",
   "a smarter model could help",
   "i'm just a simple assistant",
-];
+  "i'll lock it into the intake record",
+  "i will lock it into the intake record",
+  "i'll lock it into the source record",
+  "i will lock it into the source record",
+  ];
 
 function findBannedPhrase(text: string, hasGroundingContext: boolean): string | null {
   const lower = text.toLowerCase();
@@ -540,7 +544,7 @@ function repairAnswer(
   if (failedIds.has("includes_next_step")) {
     const fallbackNextStep =
       input.groundingFacts?.howToAction ??
-      "Next: check the current stage's task checklist and gate panel for the exact outstanding item.";
+      "Use the current stage checklist and Source Approvals page for the authoritative outstanding item.";
     repaired = `${repaired.trim()} ${fallbackNextStep}`.trim();
   }
 

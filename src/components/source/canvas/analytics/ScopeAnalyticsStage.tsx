@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useMemo, useRef, type CSSProperties } from 'react';
 import { ANALYTICS } from './analytics-tokens';
 import { IntelPanel } from './IntelPanel';
 import { TaskChecklist } from './TaskChecklist';
@@ -18,29 +18,29 @@ interface ScopeAnalyticsStageProps {
    */
   eventId?: string;
   stageKey?: string;
+  activeWorkspace?: 'workflow' | 'intelligence';
+  onWorkspaceChange?: (workspace: 'workflow' | 'intelligence') => void;
 }
-
-type StageTab = 'inputs' | 'intel';
 
 /**
  * The redesigned Source stage page — aligned to the standalone design:
  *
  *   [ H1 + purpose ]
  *   [ progress bar · N of M complete · Continue to gate → ]
- *   [ tabs: Inputs to gate | ✦ Intelligence ]     ← directly under the header
+ *   [ three workflow blocks ]                     ← directly under progress
  *
- * The "Inputs to gate" tab carries the task checklist (beat 2) and the gate
- * (beat 3). The "Intelligence" tab foregrounds the engine's read for THIS stage
- * ("What Source brings to <stage>") — and the value-type waterfall ONLY when the
- * stage actually has one. Intake stages (Scope) have no waterfall: the value
- * pool is a downstream artifact, not something to fabricate at Scope.
+ * The workflow carries the task checklist (beat 2) and gate-readiness handoff
+ * (beat 3). The rail's Intelligence option foregrounds the engine's read for
+ * THIS stage — and the value-type waterfall ONLY when the stage actually has
+ * one. Intake stages (Scope) have no waterfall: the value pool is downstream.
  */
 export function ScopeAnalyticsStage({
   view,
   eventId,
   stageKey,
+  activeWorkspace = 'workflow',
+  onWorkspaceChange = () => {},
 }: ScopeAnalyticsStageProps) {
-  const [tab, setTab] = useState<StageTab>('inputs');
   const gateRef = useRef<HTMLDivElement>(null);
 
   const { done, total } = useMemo(() => {
@@ -56,9 +56,10 @@ export function ScopeAnalyticsStage({
   }, [view.tasks]);
   const allComplete = total > 0 && done === total;
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const openCount = Math.max(total - done, 0);
 
   const goToGate = () => {
-    setTab('inputs');
+    onWorkspaceChange('workflow');
     // Let the tab switch commit, then reveal the gate.
     requestAnimationFrame(() =>
       gateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
@@ -156,28 +157,39 @@ export function ScopeAnalyticsStage({
         </button>
       </div>
 
-      {/* Tabs — directly under the header/progress bar (per design). */}
       <div
+        aria-label={`${view.stageName} workflow`}
         style={{
-          display: 'inline-flex',
-          background: ANALYTICS.SOFT,
-          border: `1px solid ${ANALYTICS.LINE_SOFT}`,
-          borderRadius: 11,
-          padding: 3,
-          gap: 2,
-          margin: '0 0 20px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+          gap: 10,
+          margin: '0 0 18px',
         }}
       >
-        <TabButton active={tab === 'inputs'} onClick={() => setTab('inputs')}>
-          Inputs to gate
-        </TabButton>
-        <TabButton active={tab === 'intel'} onClick={() => setTab('intel')}>
-          <span style={{ color: ANALYTICS.TEAL_BRIGHT, marginRight: 6 }}>✦</span>
-          Intelligence
-        </TabButton>
+        <WorkflowBlockCard
+          active={activeWorkspace === 'workflow' && !allComplete}
+          title="1. Define the work"
+          subtitle="Scope, owner, exclusions, evidence"
+          count={`${done}/${total}`}
+          onClick={() => onWorkspaceChange('workflow')}
+        />
+        <WorkflowBlockCard
+          active={activeWorkspace === 'intelligence'}
+          title="2. Check intelligence"
+          subtitle="Risks, traps, value signals"
+          count={view.intel.points.length > 0 ? 'ready' : 'none'}
+          onClick={() => onWorkspaceChange('intelligence')}
+        />
+        <WorkflowBlockCard
+          active={activeWorkspace === 'workflow' && allComplete}
+          title="3. Prepare approval"
+          subtitle="Packet, rationale, next-stage handoff"
+          count={allComplete ? 'ready' : `${openCount} open`}
+          onClick={goToGate}
+        />
       </div>
 
-      {tab === 'inputs' ? (
+      {activeWorkspace === 'workflow' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {/* Beat 2 — the task checklist. */}
           <TaskChecklist
@@ -200,7 +212,7 @@ export function ScopeAnalyticsStage({
             <StepInsightPanel insight={view.stepInsight} />
           ) : null}
           {/* Beat 1 — "What Source brings to <stage>" lives INSIDE the
-              Intelligence tab (per design), not above the tabs. */}
+              Intelligence explorer, not above the workflow. */}
           <IntelPanel intel={view.intel} stageName={view.stageName} />
           {/* The value-type waterfall renders ONLY when the stage genuinely
               carries one (value/analytical stages) AND the step insight is not
@@ -215,35 +227,62 @@ export function ScopeAnalyticsStage({
   );
 }
 
-function TabButton({
+function WorkflowBlockCard({
   active,
+  title,
+  subtitle,
+  count,
   onClick,
-  children,
 }: {
   active: boolean;
+  title: string;
+  subtitle: string;
+  count: string;
   onClick: () => void;
-  children: React.ReactNode;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       style={{
-        border: 'none',
-        background: active ? ANALYTICS.CARD : 'none',
-        boxShadow: active ? ANALYTICS.SHADOW_SM : 'none',
-        padding: '8px 16px',
+        border: `1.5px solid ${active ? ANALYTICS.BLUE : ANALYTICS.LINE}`,
+        background: ANALYTICS.CARD,
         borderRadius: ANALYTICS.RADIUS_SM,
-        fontSize: 13.5,
-        fontWeight: 600,
-        color: active ? ANALYTICS.INK : ANALYTICS.MUTED,
+        padding: '11px 13px',
+        textAlign: 'left',
         cursor: 'pointer',
         fontFamily: ANALYTICS.SANS,
-        display: 'flex',
-        alignItems: 'center',
+        boxShadow: active ? '0 0 0 1px rgba(48,111,255,0.08)' : 'none',
+        minHeight: 58,
       }}
     >
-      {children}
+      <span
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: 10,
+          color: ANALYTICS.INK,
+          fontSize: 13.5,
+          fontWeight: 700,
+          lineHeight: 1.3,
+        }}
+      >
+        <span>{title}</span>
+        <span style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+          {count}
+        </span>
+      </span>
+      <span
+        style={{
+          display: 'block',
+          color: ANALYTICS.INK_2,
+          fontSize: 12,
+          lineHeight: 1.4,
+          marginTop: 6,
+        }}
+      >
+        {subtitle}
+      </span>
     </button>
   );
 }
