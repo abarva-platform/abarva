@@ -247,6 +247,17 @@ const FIELD_PRIORITY: Record<string, string[]> = {
     'confidence_basis',
     'do_not_apply_when',
   ],
+  v7_24_infrastructure_cloud_estate: [
+    'estate_area',
+    'hosting_model',
+    'cloud_provider',
+    'platform_name',
+    'business_services_supported',
+    'data_platform_role',
+    'operational_constraints',
+    'migration_posture',
+    'known_gaps',
+  ],
 };
 
 const defaultSession = createDefaultSession('intelligence-v7-dossier');
@@ -340,8 +351,12 @@ function selectDimensions(query: string): string[] {
 
   if (/\b(ai|automation|copilot|agent|model|scale|hold|stop|fund|prioriti[sz]e|investment|portfolio|readiness)\b/.test(normalized)) {
     selected.add('v7_09_programs_initiatives_business_priorities');
+    selected.add('v7_05_applications_systems');
+    selected.add('v7_06_data_assets_integrations');
+    selected.add('v7_07_vendors_contracts');
     selected.add('v7_22_operational_evidence_process_intelligence');
     selected.add('v7_23_external_benchmark_market_corpus');
+    selected.add('v7_24_infrastructure_cloud_estate');
   }
   if (/\b(hr|human resources|finance|fp&a|treasury|kyriba|legal|procurement|shared services?|back[-\s]?office|function|process)\b/.test(normalized)) {
     selected.add('v7_03_org_ownership');
@@ -357,6 +372,7 @@ function selectDimensions(query: string): string[] {
     selected.add('v7_06_data_assets_integrations');
     selected.add('v7_11_operations_risk_controls');
     selected.add('v7_18_function_system_data_vendor_bridge');
+    selected.add('v7_24_infrastructure_cloud_estate');
   }
   if (
     /\b(system|application|erp|sap|data|integration|vendor|contract|cloud|infrastructure|cost|spend|rate|budget|analytics|reporting|bi|dashboard|lakehouse|clinical|claims|pharmacy|epic|clarity|caboodle|tableau|power bi|sas|sql)\b/.test(
@@ -380,7 +396,7 @@ function selectDimensions(query: string): string[] {
     selected.add('v7_22_operational_evidence_process_intelligence');
   }
 
-  return Array.from(selected).slice(0, 10);
+  return Array.from(selected).slice(0, 14);
 }
 
 function buildOverviewSource(run: V7RunRow, dimensions: string[]): AskSource {

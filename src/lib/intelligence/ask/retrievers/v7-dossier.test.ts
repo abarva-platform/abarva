@@ -94,6 +94,38 @@ function fakeSession(seenRunQueries: string[] = []): SessionRunner {
               governance_status: 'fragmented',
             },
           },
+          {
+            record_name: 'Member service to data bridge',
+            dimension_key: 'v7_18_function_system_data_vendor_bridge',
+            source_file: 'V7_18_function_system_data_vendor_bridge.csv',
+            source_artifact_name: 'V7_18_function_system_data_vendor_bridge.csv',
+            source_validation_status: 'synthetic_demo',
+            values_json: {
+              function_ref: 'Member Services',
+              dependency_type: 'system-data-process',
+              object_ref: 'Contact center CRM; claims marts; knowledge base',
+              role_in_function: 'Supports agent-assist routing, claims-status lookup, and escalation.',
+              criticality_to_function: 'high',
+              process_supported: 'member service intake and resolution',
+              data_exchanged: 'member identity, claim status, prior authorization status, escalation reason',
+            },
+          },
+          {
+            record_name: 'Healthcare cloud analytics estate',
+            dimension_key: 'v7_24_infrastructure_cloud_estate',
+            source_file: 'V7_24_infrastructure_cloud_estate.csv',
+            source_artifact_name: 'V7_24_infrastructure_cloud_estate.csv',
+            source_validation_status: 'synthetic_demo',
+            values_json: {
+              estate_area: 'Cloud analytics and integration estate',
+              hosting_model: 'hybrid',
+              cloud_provider: 'Azure',
+              platform_name: 'lakehouse candidate zone',
+              business_services_supported: 'member services, claims analytics, care management reporting',
+              data_platform_role: 'target foundation for AI-ready curated data products',
+              operational_constraints: 'lineage and freshness evidence not fully loaded',
+            },
+          },
         ];
         return rows.filter((row) => !dimensions || dimensions.has(row.dimension_key)) as R[];
       }
@@ -165,9 +197,13 @@ describe('retrieveV7DossierSources', () => {
 
     expect(result.sources.map((source) => source.id)).toContain('context-dimension:applications-and-systems');
     expect(result.sources.map((source) => source.id)).toContain('context-dimension:data-assets-and-integrations');
+    expect(result.sources.map((source) => source.id)).toContain('context-dimension:function-system-data-vendor-bridge');
+    expect(result.sources.map((source) => source.id)).toContain('context-dimension:infrastructure-and-cloud-estate');
     const packet = result.sources.map((source) => `${source.name}\n${source.detail}`).join('\n');
     expect(packet).toMatch(/Epic Clarity/i);
     expect(packet).toMatch(/Reporting marts and BI layer/i);
+    expect(packet).toMatch(/Contact center CRM/i);
+    expect(packet).toMatch(/Cloud analytics and integration estate/i);
     expect(packet).not.toMatch(/\bV7\b|v7_|intelligence_v7|V7_|substrate/i);
   });
 
