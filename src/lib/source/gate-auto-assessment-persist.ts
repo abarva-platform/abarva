@@ -1,17 +1,18 @@
 import {
   selectSourceWriteAdapter,
   type SourceWriteAdapter,
-} from '@/lib/data-plane/write-adapters/sourceWriteAdapter';
+} from "@/lib/data-plane/write-adapters/sourceWriteAdapter";
 import type {
+  SourceEventArtifactState,
   SourceEventEvidence,
   SourceEventGateCriterion,
-} from './canvas-substrate';
+} from "./canvas-substrate";
 import {
   AUTO_EVIDENCE_REVIEWER_ID,
   assessStageGate,
   type GateAssessmentEvidenceMatch,
-} from './gate-auto-assessment';
-import type { SourceStageKey } from './types';
+} from "./gate-auto-assessment";
+import type { SourceStageKey } from "./types";
 
 export interface PersistAutoAssessmentResult {
   written: string[];
@@ -30,6 +31,7 @@ export async function persistAutoAssessment(
     clientKey: string;
     fromStage: SourceStageKey;
     criteria: SourceEventGateCriterion[];
+    artifacts: SourceEventArtifactState[];
     evidence: SourceEventEvidence[];
   },
   options: PersistAutoAssessmentOptions = {},
@@ -52,17 +54,18 @@ export async function persistAutoAssessment(
   const assessment = assessStageGate({
     fromStage: input.fromStage,
     criteria: input.criteria,
+    artifacts: input.artifacts,
     evidence: input.evidence,
   });
 
   for (const assessed of assessment.criteria) {
     const criterion = criteriaById.get(assessed.criterionId);
     if (!criterion) continue;
-    if (criterion.state !== 'pending') {
+    if (criterion.state !== "pending") {
       result.skipped.push(criterion.criterionId);
       continue;
     }
-    if (assessed.displayState !== 'met_auto_evidence') {
+    if (assessed.displayState !== "met_auto_evidence") {
       result.skipped.push(criterion.criterionId);
       continue;
     }
@@ -75,7 +78,7 @@ export async function persistAutoAssessment(
     const nowIso = now();
     const update = await adapter.updateGateCriterion({
       criterionRowId: criterion.id,
-      state: 'met',
+      state: "met",
       reviewerUserId: AUTO_EVIDENCE_REVIEWER_ID,
       reviewedAtIso: nowIso,
       notes: note,
@@ -92,9 +95,9 @@ export async function persistAutoAssessment(
       eventId: input.eventId,
       clientKey: input.clientKey,
       actorUserId: null,
-      actorDisplayName: 'AbarVa auto evidence assessment',
-      actorRole: 'system',
-      actionType: 'gate_criterion_auto_assessed',
+      actorDisplayName: "AbarVa auto evidence assessment",
+      actorRole: "system",
+      actionType: "gate_criterion_auto_assessed",
       actionLabel: `Auto-assessed gate criterion ${criterion.criterionId} from evidence`,
       stageKey: input.fromStage,
       criterionId: criterion.criterionId,
@@ -106,7 +109,10 @@ export async function persistAutoAssessment(
       occurredAtIso: nowIso,
     });
     if (!log.ok) {
-      console.error('[source auto-assessment activity] insert failed:', log.error);
+      console.error(
+        "[source auto-assessment activity] insert failed:",
+        log.error,
+      );
     }
   }
 
@@ -134,6 +140,6 @@ function autoEvidenceNote(matches: GateAssessmentEvidenceMatch[]): string {
       (match) =>
         `${match.requirementId} at '${match.currentState}' >= minimum '${match.minimumState}'`,
     )
-    .join('; ');
-  return `Auto-met from evidence: ${summary || 'required evidence satisfied'}`;
+    .join("; ");
+  return `Auto-met from evidence: ${summary || "required evidence satisfied"}`;
 }
