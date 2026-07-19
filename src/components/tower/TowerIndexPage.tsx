@@ -4441,7 +4441,7 @@ function TowerMartCommandCenter({
           minWidth: 0,
         }}
       >
-        <TowerMartNavGroup label="Investment Control Tower">
+        <TowerMartNavGroup label="AI Value Realization Control Tower">
           <TowerMartNavButton
             label="Command Center"
             selected={activeSection === "command"}
@@ -4584,13 +4584,13 @@ function TowerMartCommandCenter({
                 margin: 0,
                 fontFamily: T.SERIF,
                 color: T.INK,
-                fontSize: 43,
+                fontSize: 52,
                 lineHeight: 1.02,
                 letterSpacing: "-0.035em",
                 fontWeight: 780,
               }}
             >
-              {command.tenantName}{" "}
+              AI Value Realization Control Tower{" "}
               <span
                 style={{
                   display: "inline-flex",
@@ -4610,12 +4610,72 @@ function TowerMartCommandCenter({
               </span>
             </h2>
             <p style={{ margin: "10px 0 0", color: T.INK_2, fontSize: 16 }}>
-              Investment control tower —{" "}
-              <em>
-                where money, risk, AI demand, and value evidence are misaligned,
-                and what to do next.
-              </em>
+              AI activity is not value - $0 of{" "}
+              {formatMoneyGap(command.promisedValueFy26)} promised is claimable
+              today.
             </p>
+            <section
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "minmax(280px, 1.2fr) repeat(3, minmax(180px, 1fr))",
+                gap: 12,
+                marginTop: 22,
+              }}
+            >
+              <div
+                style={{
+                  border: `1px solid ${T.RULE_STRONG}`,
+                  borderRadius: 16,
+                  background: T.INK,
+                  color: "#fff",
+                  padding: 20,
+                  minHeight: 150,
+                }}
+              >
+                <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>
+                  AI value realization verdict
+                </div>
+                <div
+                  style={{
+                    fontFamily: T.SERIF,
+                    fontSize: 37,
+                    lineHeight: 1.05,
+                    marginTop: 12,
+                    fontWeight: 760,
+                  }}
+                >
+                  $0 claimable today
+                </div>
+                <p
+                  style={{
+                    margin: "12px 0 0",
+                    color: "rgba(255,255,255,.78)",
+                    lineHeight: 1.45,
+                  }}
+                >
+                  Primary blocker:{" "}
+                  {blockingGaps[0]?.remediationAction ??
+                    "Finance validation and evidence gates must clear before value is claimable."}
+                </p>
+              </div>
+              <TowerMartCompactCard
+                label="Promised AI value"
+                value={formatMoneyGap(command.promisedValueFy26)}
+                detail="FY26 governed initiative promise"
+              />
+              <TowerMartCompactCard
+                label="Finance-validated"
+                value={formatMoneyGap(command.partialFinanceValidatedValueYtd)}
+                detail="YTD value with finance validation"
+              />
+              <TowerMartCompactCard
+                label="Realized value allowed"
+                value="$0"
+                detail="Gated until proof and finance controls clear"
+                tone="gated"
+              />
+            </section>
             <div
               data-testid="tower-command-stepper"
               style={{
@@ -6601,6 +6661,11 @@ function CxoGovernedCommandCenter({
     candidateAi,
     watchSignals,
   ].filter((card): card is CioTowerCxoMeasureCard => Boolean(card));
+  const promisedDisplay = promised?.displayValue ?? "promised value not loaded";
+  const primaryBlocker =
+    model.gaps[0] ??
+    portfolioRows.find((row) => row.inspectionReason)?.inspectionReason ??
+    "Finance validation and evidence gates must clear before value is claimable.";
   return (
     <div
       style={{
@@ -6642,27 +6707,113 @@ function CxoGovernedCommandCenter({
           style={{
             margin: "14px 0 0",
             fontFamily: T.SERIF,
-            fontSize: 43,
+            fontSize: 52,
             lineHeight: 1.02,
             letterSpacing: "-0.03em",
             color: T.INK,
             fontWeight: 680,
           }}
         >
-          Investment Control Tower
+          AI Value Realization Control Tower
         </h2>
         <p
           style={{
             margin: "10px 0 0",
             color: T.INK_2,
-            fontSize: 15,
+            fontSize: 16,
             lineHeight: 1.5,
             maxWidth: 860,
           }}
         >
-          Where money, risk, AI demand, and value evidence are misaligned, and
-          what a CIO/CFO should fund, fix, freeze, or stop next.
+          AI activity is not value - $0 of {promisedDisplay} promised is
+          claimable today.
         </p>
+      </section>
+
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(280px, 1.2fr) repeat(3, minmax(180px, 1fr))",
+          gap: 12,
+          marginBottom: 22,
+        }}
+      >
+        <div
+          style={{
+            border: `1px solid ${T.RULE_STRONG}`,
+            borderRadius: 16,
+            background: T.INK,
+            color: "#fff",
+            padding: 20,
+            minHeight: 150,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: T.MONO,
+              fontSize: 10,
+              letterSpacing: "1.6px",
+              textTransform: "uppercase",
+              color: T.GOLD,
+              fontWeight: 900,
+            }}
+          >
+            AI value realization verdict
+          </div>
+          <div
+            style={{
+              fontFamily: T.SERIF,
+              fontSize: 37,
+              lineHeight: 1.05,
+              marginTop: 12,
+              fontWeight: 760,
+            }}
+          >
+            $0 claimable today
+          </div>
+          <p style={{ margin: "12px 0 0", color: "rgba(255,255,255,.78)", lineHeight: 1.45 }}>
+            Primary blocker: {primaryBlocker}
+          </p>
+        </div>
+        <TowerCommandKpi title="Promised AI value" card={promised} />
+        <TowerCommandKpi title="Finance-validated" card={financeValidated} />
+        <div
+          style={{
+            border: `1px solid ${T.RULE}`,
+            background: "#fff",
+            borderRadius: 14,
+            padding: 16,
+            boxShadow: "0 12px 28px rgba(15, 23, 42, 0.045)",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: T.MONO,
+              fontSize: 9,
+              letterSpacing: "1.4px",
+              color: T.GRAY_DK,
+              fontWeight: 900,
+              textTransform: "uppercase",
+            }}
+          >
+            Realized value allowed
+          </div>
+          <div
+            style={{
+              fontFamily: T.SERIF,
+              fontSize: 31,
+              lineHeight: 1,
+              marginTop: 10,
+              color: T.INK,
+              fontWeight: 820,
+            }}
+          >
+            $0
+          </div>
+          <p style={{ margin: "8px 0 0", color: T.INK_2, fontSize: 12.5, lineHeight: 1.35 }}>
+            Gated until finance validation and evidence proof are complete.
+          </p>
+        </div>
       </section>
 
       <section
@@ -6670,7 +6821,8 @@ function CxoGovernedCommandCenter({
         style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "flex-start",
+          justifyContent: "space-between",
+          gap: 18,
           marginBottom: 22,
           borderBottom: `1px solid ${T.RULE}`,
         }}
@@ -6714,6 +6866,19 @@ function CxoGovernedCommandCenter({
               </button>
             );
           })}
+        </div>
+        <div
+          style={{
+            fontFamily: T.MONO,
+            fontSize: 9,
+            letterSpacing: "1.4px",
+            textTransform: "uppercase",
+            color: T.GREEN,
+            fontWeight: 900,
+            whiteSpace: "nowrap",
+          }}
+        >
+          Tower mart · source-backed
         </div>
       </section>
 
@@ -11437,7 +11602,7 @@ export function TowerIndexPage({
         suggestions={atlasSuggestions}
         onSuggestion={handleAtlasSuggestion}
         workspace={towerWorkspace}
-        surface="tower-command"
+        surface="tower-value-realization"
         variant="focused"
         preserveVisibleText
         keepSuggestedActionsVisible
@@ -11446,10 +11611,33 @@ export function TowerIndexPage({
           tenantName,
           activeTowerLens: activeLens,
           context,
+          towerContextSource: cxoView?.generatedFrom ?? "tower_component_props",
+          towerMeasures:
+            cxoView?.cards.map((card) => ({
+              measureKey: card.measureKey,
+              label: card.label,
+              value: card.displayValue,
+              basis: card.basis,
+              period: card.period,
+              gap: card.gap,
+            })) ?? [],
+          towerPortfolioRows:
+            cxoView?.portfolioValueRows.slice(0, 12).map((row) => ({
+              program: row.program,
+              owner: row.owner,
+              budget: row.budget,
+              actualSpend: row.actualSpend,
+              promisedValue: row.promisedValue,
+              measuredValue: row.measuredValue,
+              valueGap: row.valueGap,
+              evidenceStatus: row.evidenceStatus,
+              inspectionReason: row.inspectionReason,
+            })) ?? [],
+          towerKnownGaps: cxoView?.gaps ?? [],
         }}
         defaultMode="collapsed"
-        defaultLeftPercent={30}
-        minLeftPx={300}
+        defaultLeftPercent={35}
+        minLeftPx={320}
       />
     </AppShell>
   );
