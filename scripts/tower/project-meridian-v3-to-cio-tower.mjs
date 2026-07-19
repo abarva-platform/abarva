@@ -147,6 +147,21 @@ function addIfMissing(map, row, keyField = "entity_key") {
   }
 }
 
+function findEntityByDisplay(map, { tenantKey, entityType, displayName }) {
+  const normalizedDisplayName = String(displayName ?? "").trim().toLowerCase();
+  if (!normalizedDisplayName) return null;
+  for (const row of map.values()) {
+    if (
+      row.tenant_key === tenantKey &&
+      row.entity_type === entityType &&
+      String(row.display_name ?? "").trim().toLowerCase() === normalizedDisplayName
+    ) {
+      return row;
+    }
+  }
+  return null;
+}
+
 function entityForProgram(programCode, programName, sourceFile, sourceRow) {
   return {
     entity_key: `${TENANT_KEY}::initiative::${safeKey(programCode || programName)}`,
@@ -641,12 +656,19 @@ function buildProjection() {
   const candidateUseCases = data.ai10.filter((row) => ["candidate", "discovery"].includes(row.use_case_status));
   const candidateFacts = [];
   for (const row of candidateUseCases) {
-    const candidateEntityKey = `${TENANT_KEY}::initiative::${safeKey(row.record_id || row.source_record_id || row.use_case || row.business_name)}`;
+    const candidateDisplayName = row.use_case || row.business_name || row.record_id;
+    const existingCandidateEntity = findEntityByDisplay(entityMap, {
+      tenantKey: TENANT_KEY,
+      entityType: "initiative",
+      displayName: candidateDisplayName,
+    });
+    const candidateEntityKey =
+      existingCandidateEntity?.entity_key ?? `${TENANT_KEY}::initiative::${safeKey(candidateDisplayName)}`;
     addIfMissing(entityMap, {
       entity_key: candidateEntityKey,
       tenant_key: TENANT_KEY,
       entity_type: "initiative",
-      display_name: row.use_case || row.business_name || row.record_id,
+      display_name: candidateDisplayName,
       parent_entity_key: ENTERPRISE_ENTITY_KEY,
       source_key: sourceKey(FILES.ai10),
       source_row: sourceRowId(row),
