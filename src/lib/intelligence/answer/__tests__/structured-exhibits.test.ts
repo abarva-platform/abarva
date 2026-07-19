@@ -685,6 +685,35 @@ describe("buildStructuredExhibits", () => {
     ]);
   });
 
+  it("converts bare multiline chart blocks into typed chart artifacts", () => {
+    const exhibits = buildStructuredExhibits({
+      routing: {
+        ...routing,
+        query: "Rank five AI use cases by value and complexity with a chart.",
+        outputShape: "chart",
+      },
+      sources,
+      prose:
+        'Start with wire fraud interdiction because measured value is strongest.\nchart\n{"type":"horizontal-bar","title":"FS Demo — AI Use Case Value Scores vs. Complexity Scores","xKey":"use_case","yKey":"valueScore","unit":"score","data":[{"use_case":"Wire fraud interdiction","valueScore":95},{"use_case":"Servicing copilot","valueScore":74},{"use_case":"Loan exception routing","valueScore":68}]}\n```\nEvidence boundary: validate the planning scores before board use.',
+    });
+
+    expect(exhibits.prose).toContain(
+      "Start with wire fraud interdiction because measured value is strongest.",
+    );
+    expect(exhibits.prose).toContain(
+      "Evidence boundary: validate the planning scores before board use.",
+    );
+    expect(exhibits.prose).not.toContain('"type":"horizontal-bar"');
+    expect(exhibits.charts).toEqual([
+      expect.objectContaining({
+        id: "answer-chart-fence-1",
+        kind: "horizontal-bar",
+        title: "FS Demo — AI Use Case Value Scores vs. Complexity Scores",
+        builder: "inlineChart",
+      }),
+    ]);
+  });
+
   it("strips invalid chart fences without creating fabricated exhibits", () => {
     const exhibits = buildStructuredExhibits({
       routing,

@@ -548,13 +548,23 @@ function chartFenceToArtifact(
   if (rows.length < 2) return null;
 
   const type = record.type;
+  const kind =
+    type === "line" || type === "area"
+      ? "line"
+      : type === "horizontal-bar"
+        ? "horizontal-bar"
+        : "bar";
   return {
     id: `answer-chart-fence-${index + 1}`,
-    kind: type === "line" || type === "area" ? "line" : "bar",
+    kind,
     title:
       typeof record.title === "string" && record.title.trim()
         ? record.title.trim()
         : "Answer Chart",
+    subtitle:
+      typeof record.subtitle === "string" && record.subtitle.trim()
+        ? record.subtitle.trim()
+        : undefined,
     data: {
       type,
       title: typeof record.title === "string" ? record.title : undefined,
@@ -568,6 +578,15 @@ function chartFenceToArtifact(
       note: typeof record.note === "string" ? record.note : undefined,
     },
     builder: "inlineChart",
+    xKey,
+    yKey,
+    unit: typeof record.unit === "string" ? record.unit : undefined,
+    sourceNote:
+      typeof record.sourceNote === "string"
+        ? record.sourceNote
+        : typeof record.note === "string"
+          ? record.note
+          : undefined,
     citationIds,
   };
 }
@@ -577,12 +596,24 @@ function chartFencesFromProse(
   citationIds: string[],
 ): { prose: string; charts: AnswerChart[] } {
   const charts: AnswerChart[] = [];
-  const cleaned = prose.replace(
+  const fencedCleaned = prose.replace(
     /```chart\s*([\s\S]*?)```/gi,
     (_match, raw: string) => {
       const chart = chartFenceToArtifact(raw, charts.length, citationIds);
       if (chart) charts.push(chart);
       return "\n";
+    },
+  );
+  const cleaned = fencedCleaned.replace(
+    /(^|[\n\r])\s*chart\s*[\n\r]+\s*([\s\S]{0,5000}?)(?:`{3}|(?=[\n\r]\s*(?:Evidence boundary:|Decision boundary:|Next move:|$)))/gi,
+    (_match, prefix: string, raw: string) => {
+      const chart = chartFenceToArtifact(
+        raw.trim(),
+        charts.length,
+        citationIds,
+      );
+      if (chart) charts.push(chart);
+      return prefix || "\n";
     },
   );
   return {
@@ -1039,48 +1070,65 @@ const CXO_ARTIFACT_TOPIC_PATTERNS: Array<{
 }> = [
   {
     label: "Payment integrity",
-    pattern: /\b(payment integrity|claim leakage|claims leakage|fraud|waste|abuse)\b/i,
-    decisionUse: "Prioritize where leakage, recoverability, and operational ownership are clear.",
+    pattern:
+      /\b(payment integrity|claim leakage|claims leakage|fraud|waste|abuse)\b/i,
+    decisionUse:
+      "Prioritize where leakage, recoverability, and operational ownership are clear.",
   },
   {
     label: "Prior authorization",
     pattern: /\b(prior auth|prior authorization|authorization)\b/i,
-    decisionUse: "Sequence where clinical policy, workflow controls, and appeal handling are governed.",
+    decisionUse:
+      "Sequence where clinical policy, workflow controls, and appeal handling are governed.",
   },
   {
     label: "Member or customer service",
-    pattern: /\b(member service|customer service|contact center|call center|agent assist)\b/i,
-    decisionUse: "Use for productivity and experience cases with measurable volume and quality baselines.",
+    pattern:
+      /\b(member service|customer service|contact center|call center|agent assist)\b/i,
+    decisionUse:
+      "Use for productivity and experience cases with measurable volume and quality baselines.",
   },
   {
     label: "Risk stratification",
-    pattern: /\b(risk stratification|risk adjustment|member risk|patient risk|care management)\b/i,
-    decisionUse: "Use where intervention owners can act on model outputs and close the feedback loop.",
+    pattern:
+      /\b(risk stratification|risk adjustment|member risk|patient risk|care management)\b/i,
+    decisionUse:
+      "Use where intervention owners can act on model outputs and close the feedback loop.",
   },
   {
     label: "Clinical and claims data foundation",
-    pattern: /\b(clinical|claims|lakehouse|data foundation|data platform|interoperability)\b/i,
-    decisionUse: "Treat as the enabling layer for repeatable AI, analytics, and evidence reuse.",
+    pattern:
+      /\b(clinical|claims|lakehouse|data foundation|data platform|interoperability)\b/i,
+    decisionUse:
+      "Treat as the enabling layer for repeatable AI, analytics, and evidence reuse.",
   },
   {
     label: "Governance and controls",
-    pattern: /\b(governance|control|risk|model risk|evidence|compliance|audit)\b/i,
-    decisionUse: "Use to decide which bets can move from advisory framing into governed execution.",
+    pattern:
+      /\b(governance|control|risk|model risk|evidence|compliance|audit)\b/i,
+    decisionUse:
+      "Use to decide which bets can move from advisory framing into governed execution.",
   },
   {
     label: "Supply chain",
-    pattern: /\b(supply chain|procurement|inventory|logistics|fulfillment|sourcing)\b/i,
-    decisionUse: "Prioritize where service, working capital, and supplier constraints can be measured.",
+    pattern:
+      /\b(supply chain|procurement|inventory|logistics|fulfillment|sourcing)\b/i,
+    decisionUse:
+      "Prioritize where service, working capital, and supplier constraints can be measured.",
   },
   {
     label: "Finance and FP&A",
-    pattern: /\b(fp&a|financial planning|finance (?:forecast|budget|close|planning|reporting|automation)|forecast|cash|working capital|financial close|monthly close|quarterly close|budget)\b/i,
-    decisionUse: "Use where forecast accuracy, cycle time, and control requirements are explicit.",
+    pattern:
+      /\b(fp&a|financial planning|finance (?:forecast|budget|close|planning|reporting|automation)|forecast|cash|working capital|financial close|monthly close|quarterly close|budget)\b/i,
+    decisionUse:
+      "Use where forecast accuracy, cycle time, and control requirements are explicit.",
   },
   {
     label: "Shared services",
-    pattern: /\b(shared services|back office|hr operations|legal operations)\b/i,
-    decisionUse: "Use to compare productivity, control, and operating-model tradeoffs across functions.",
+    pattern:
+      /\b(shared services|back office|hr operations|legal operations)\b/i,
+    decisionUse:
+      "Use to compare productivity, control, and operating-model tradeoffs across functions.",
   },
 ];
 
@@ -1090,7 +1138,10 @@ function proseSentences(prose: string): string[] {
     .split(/(?<=[.!?])\s+/)
     .map((sentence) => sentence.trim())
     .filter((sentence) => sentence.length >= 32)
-    .filter((sentence) => !/^(next move|evidence boundary|caveat)\s*:/i.test(sentence))
+    .filter(
+      (sentence) =>
+        !/^(next move|evidence boundary|caveat)\s*:/i.test(sentence),
+    )
     .slice(0, 12);
 }
 
@@ -1210,8 +1261,7 @@ function requestedSummaryTableFromProse(
       { key: "evidenceBoundary", label: "Evidence boundary" },
     ],
     rows: rows.slice(0, 6),
-    note:
-      "Generated from the answer text so the chat shows a structured executive artifact without inventing unsupported values.",
+    note: "Generated from the answer text so the chat shows a structured executive artifact without inventing unsupported values.",
     citationIds,
   };
 }
@@ -1805,7 +1855,7 @@ export function buildStructuredExhibits(
     (input.routing.outputShape === "table" ||
       input.routing.outputShape === "chart" ||
       input.routing.outputShape === "graph")
-) {
+  ) {
     const summary = requestedSummaryTableFromProse(
       input.routing,
       inline.prose,

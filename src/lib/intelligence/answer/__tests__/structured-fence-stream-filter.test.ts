@@ -77,4 +77,17 @@ describe("createStructuredFenceStreamFilter", () => {
     expect(visible).not.toContain('"type":"bar"');
     expect(visible).not.toContain("```");
   });
+
+  it("strips bare multiline chart payloads from final packet prose", () => {
+    const visible = stripGovernedArtifactPayloadsFromText(
+      'Wire fraud is the near-term bet.\nchart\n{"type":"horizontal-bar","title":"FS Demo — AI Use Case Value Scores vs. Complexity Scores","xKey":"use_case","yKey":"valueScore","unit":"score","data":[{"use_case":"Wire fraud interdiction","valueScore":95},{"use_case":"Servicing copilot","valueScore":74}]}\n```\nEvidence boundary: validate the scores.',
+    );
+
+    expect(visible).toBe(
+      "Wire fraud is the near-term bet.\nEvidence boundary: validate the scores.",
+    );
+    expect(visible).not.toContain("chart");
+    expect(visible).not.toContain('"type":"horizontal-bar"');
+    expect(visible).not.toContain("```");
+  });
 });

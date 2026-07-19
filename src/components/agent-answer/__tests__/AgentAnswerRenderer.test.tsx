@@ -70,7 +70,9 @@ describe("AgentAnswerRenderer", () => {
     expect(
       container.querySelector("[data-chart-renderer='recharts']"),
     ).not.toBeNull();
-    expect(container.querySelector("[data-chart-builder='costStack']")).toBeNull();
+    expect(
+      container.querySelector("[data-chart-builder='costStack']"),
+    ).toBeNull();
     expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
   });
 
@@ -110,6 +112,48 @@ describe("AgentAnswerRenderer", () => {
     expect(
       container.querySelector("[data-chart-builder='quadrantMatrix']"),
     ).toBeNull();
+  });
+
+  it("renders model-emitted horizontal bar charts through Recharts", () => {
+    const chart: AnswerChart = {
+      id: "chart-horizontal",
+      kind: "horizontal-bar",
+      title: "FS Demo use-case value ranking",
+      subtitle: "Directional score from governed answer packet",
+      xKey: "use_case",
+      yKey: "valueScore",
+      unit: "score",
+      builder: "inlineChart",
+      data: {
+        type: "horizontal-bar",
+        xKey: "use_case",
+        yKey: "valueScore",
+        unit: "score",
+        data: [
+          { use_case: "Wire fraud interdiction", valueScore: 95 },
+          { use_case: "Servicing copilot", valueScore: 74 },
+          { use_case: "Loan exception routing", valueScore: 68 },
+        ],
+      },
+      citationIds: ["c1"],
+    };
+
+    const { container } = render(
+      <AnswerChartRenderer chart={chart} citations={citations} />,
+    );
+
+    expect(
+      screen.getByText("FS Demo use-case value ranking"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Directional score from governed answer packet"),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector(
+        "[data-chart-renderer='recharts'][data-chart-kind='horizontal-bar']",
+      ),
+    ).not.toBeNull();
+    expect(container.querySelector("[data-chart-renderer='svg']")).toBeNull();
   });
 
   it("renders a typed AnswerTable with formatting and citations", () => {
@@ -272,8 +316,12 @@ describe("AgentAnswerRenderer", () => {
 
     expect(screen.getByText("Relationship View")).toBeInTheDocument();
     expect(screen.getByText("risk control · 92")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Export HTML" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Export PDF" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Export HTML" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Export PDF" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Dependency graph")).toBeInTheDocument();
     expect(screen.getByText("2 nodes · 1 links")).toBeInTheDocument();
     expect(screen.getByLabelText("Dependency graph")).toBeInTheDocument();
