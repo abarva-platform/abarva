@@ -2,6 +2,7 @@ import {
   applyPartialEvidencePolicy,
   buildCurrentStateAdvisory,
   classifyAbarvaAnswerMode,
+  CHART_OUTPUT_CONTRACT,
   CXO_ANSWER_QUALITY_CONTRACT,
   enforceDecisionGradeAnswer,
   isBroadCurrentStateQuestion,
@@ -51,21 +52,27 @@ describe("Ask Intelligence response policy", () => {
     expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
       "Include a compact table, chart, graph, scorecard, or 2x2",
     );
-    expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
-      "what evidence is needed",
-    );
-    expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
-      "AbarVa Pyramid Brief",
-    );
-    expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
-      "Target 90-160 words",
-    );
+    expect(CXO_ANSWER_QUALITY_CONTRACT).toContain("what evidence is needed");
+    expect(CXO_ANSWER_QUALITY_CONTRACT).toContain("AbarVa Pyramid Brief");
+    expect(CXO_ANSWER_QUALITY_CONTRACT).toContain("Target 90-160 words");
     expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
       "broad prioritization question",
     );
     expect(CXO_ANSWER_QUALITY_CONTRACT).toContain("top-N");
     expect(CXO_ANSWER_QUALITY_CONTRACT).toContain(
       "queue exactly 3 short follow-up questions",
+    );
+  });
+
+  it("requires explicit chart asks to emit a chart-payload table first", () => {
+    expect(CHART_OUTPUT_CONTRACT).toContain(
+      "the first table in the visible answer must be the chart payload table",
+    );
+    expect(CHART_OUTPUT_CONTRACT).toContain(
+      "Item or Use case, Value or Business value, Complexity or Readiness, and Basis",
+    );
+    expect(CHART_OUTPUT_CONTRACT).toContain(
+      "Do not substitute a Theme / Executive read / Decision use table",
     );
   });
 
@@ -116,9 +123,7 @@ describe("Ask Intelligence response policy", () => {
     }
 
     expect(isStrategyToMovesExecutionAsk("What is our IT budget?")).toBe(false);
-    expect(classifyAbarvaAnswerMode("What is our IT budget?")).toBe(
-      "general",
-    );
+    expect(classifyAbarvaAnswerMode("What is our IT budget?")).toBe("general");
     expect(
       classifyAbarvaAnswerMode("Write a funny poem about AI procurement."),
     ).toBe("general");
