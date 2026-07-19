@@ -72,7 +72,7 @@ export interface AtlasObservationsView {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DEFAULT_PROMPTS = [
-  'Show me the lagging programs by realized value',
+  'Show me the lagging programs by value proof gap',
   'What if I cut LLM tokens by 30%?',
   'Re-rank pressures by attribution confidence',
   'Brief me for the next governance meeting',
@@ -81,7 +81,7 @@ const DEFAULT_PROMPTS = [
 const PROMPTS_BY_PRESSURE_TYPE: Record<string, string> = {
   cost: 'What if I cut LLM tokens by 30%?',
   vend: 'Draft a negotiation thesis tied to current pressures',
-  value: 'Show me the lagging programs by realized value',
+  value: 'Show me the lagging programs by value proof gap',
   dupl: 'Run a clean attribution study on the duplicating tools',
   adopt: 'Map adoption gap to identity-source coverage',
 };

@@ -355,8 +355,8 @@ function buildMetrics(input: TowerL3Input, scope: ScopeDef, view: TowerCioView):
     const realized = sum(benefits, 'realized_value_usd');
     metrics.push(
       metric({ scope, view, key: 'committed_value', label: 'Committed value', value: committed, amountType: 'committed_value', lineage: lineage(benefits) }),
-      metric({ scope, view, key: 'realized_value', label: 'Realized value', value: realized, amountType: 'realized_value', lineage: lineage(benefits) }),
-      metric({ scope, view, key: 'value_gap', label: 'Unproven value gap', value: committed !== null && realized !== null ? Math.max(committed - realized, 0) : null, amountType: 'value_at_stake', lineage: lineage(benefits) }),
+      metric({ scope, view, key: 'realized_value', label: 'Claimable value', value: realized, amountType: 'realized_value', lineage: lineage(benefits) }),
+      metric({ scope, view, key: 'value_gap', label: 'Value proof gap', value: committed !== null && realized !== null ? Math.max(committed - realized, 0) : null, amountType: 'value_at_stake', lineage: lineage(benefits) }),
     );
   } else if (view === 'vendor_renewal') {
     metrics.push(
@@ -480,7 +480,7 @@ function branchOptionsFor(view: TowerCioView): string[] {
     case 'spend':
       return ['Inspect run versus change mix', 'Compare spend by operating company', 'Open vendor renewal exposure'];
     case 'value_realization':
-      return ['Separate committed value from realized value', 'Inspect under-proven programs', 'Open scale, hold, stop view'];
+      return ['Separate committed value from realized value', 'Inspect under-validated programs', 'Open scale, hold, stop view'];
     case 'scale_hold_stop':
       return ['Build scale, hold, stop decision matrix', 'Inspect required gates', 'Open program risk view'];
     case 'vendor_renewal':
