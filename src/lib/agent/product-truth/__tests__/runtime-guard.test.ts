@@ -16,7 +16,9 @@ describe("applyProductTruthRuntimeGuard", () => {
     );
 
     expect(result.text).toContain("I can't safely answer");
-    expect(result.text).not.toMatch(/retired_fact_violation|surfaceContext|old_alias/i);
+    expect(result.text).not.toMatch(
+      /retired_fact_violation|surfaceContext|old_alias/i,
+    );
     expect(result.blocked).toBe(true);
   });
 
@@ -110,9 +112,9 @@ describe("sanitizeSuggestedQuestions", () => {
     expect(
       classifySuggestedQuestion("Can Tower certify savings automatically?"),
     ).toBe("risky_unsupported_capability");
-    expect(
-      classifySuggestedQuestion("Does this replace Gartner for us?"),
-    ).toBe("risky_external_claim");
+    expect(classifySuggestedQuestion("Does this replace Gartner for us?")).toBe(
+      "risky_external_claim",
+    );
   });
 
   it("drops unsafe suggested questions and supplies safe replacements", () => {
@@ -154,6 +156,33 @@ describe("sanitizeSuggestedQuestions", () => {
       "What evidence supports this recommendation?",
     );
     expect(result.questions).toContain(
+      "Which Healthcare Demo facts are strongest, inferred, or still missing?",
+    );
+  });
+
+  it("uses client-specific Intelligence fallbacks instead of generic evidence fillers", () => {
+    const result = sanitizeSuggestedQuestions(
+      [
+        "Can Tower certify value automatically?",
+        "Does this replace Gartner for us?",
+      ],
+      {
+        tenantKey: "arcturus",
+        tenantName: "FS Demo",
+        surface: "intelligence",
+        query:
+          "Should FS Demo prioritize contact center agent assist and fraud dispute automation?",
+        groundingText:
+          "FS Demo evidence mentions contact-center systems, fraud dispute backlog, ACI platform, CFO value proof, data readiness, and evidence owner gaps.",
+      },
+    );
+
+    expect(result.questions).toEqual([
+      "Which FS Demo contact-center systems, data feeds, and escalation owners should we validate first?",
+      "What evidence would certify the fraud or dispute backlog value case for FS Demo?",
+      "Which data-readiness gaps block the next AI funding decision for FS Demo?",
+    ]);
+    expect(result.questions.join("\n")).not.toContain(
       "What can AbarVa confirm from loaded evidence?",
     );
   });
