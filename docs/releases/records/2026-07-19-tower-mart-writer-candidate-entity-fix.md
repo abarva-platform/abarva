@@ -12,6 +12,8 @@
 
 Fixes the Meridian Tower mart writer so candidate AI opportunities and benefits-ledger rows receive initiative entities before their facts are written to `cio_tower.facts`. The governed ACA data-build job correctly rejected the previous projection because a candidate value/usage fact referenced `meridian-health::initiative::cand-member-ai-assist` before that entity existed.
 
+Follow-up: the writer also reuses existing candidate entities when repeated 10 AI use-case rows share the same displayed initiative name as an SA08 benefits-ledger row. This prevents duplicate `cio_tower.entities` rows from violating the tenant/type/display-name uniqueness constraint.
+
 ## Layer Impact
 
 - `client-data-lane`: Data projection layer adds candidate initiative entity creation for SA08 benefits-ledger rows and 10 AI automation use-case candidate rows.
@@ -30,6 +32,7 @@ Fixes the Meridian Tower mart writer so candidate AI opportunities and benefits-
 
 - `scripts/tower/project-meridian-v3-to-cio-tower.mjs`
   - Adds `addIfMissing` helper.
+  - Adds display-name based entity reuse for repeated candidate opportunity rows.
   - Creates missing candidate initiative entities from SA08 and 10 source rows.
   - Validates all projected facts and relationships have known entities before write.
 
