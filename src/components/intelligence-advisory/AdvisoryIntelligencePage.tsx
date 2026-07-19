@@ -23,6 +23,7 @@ type AssistantMessage = {
   status: "thinking" | "streaming" | "done" | "error";
   sources: AskSource[];
   followups: string[];
+  streamStatus?: string;
   error?: string;
 };
 
@@ -143,6 +144,7 @@ export function AdvisoryIntelligencePage({
       question: trimmed,
       answer: "",
       status: "thinking",
+      streamStatus: "Gathering client context...",
       sources: [],
       followups: [],
     } as unknown as AssistantMessage;
@@ -171,7 +173,7 @@ export function AdvisoryIntelligencePage({
       setMessages((c) =>
         c.map((m) =>
           m.id === assistantId && m.role === "assistant"
-            ? { ...m, status: "streaming" }
+            ? { ...m, status: "streaming", streamStatus: "Reading evidence..." }
             : m,
         ),
       );
@@ -192,7 +194,11 @@ export function AdvisoryIntelligencePage({
       setMessages((c) =>
         c.map((m) =>
           m.id === assistantId && m.role === "assistant"
-            ? { ...m, status: m.status === "error" ? "error" : "done" }
+            ? {
+                ...m,
+                status: m.status === "error" ? "error" : "done",
+                streamStatus: undefined,
+              }
             : m,
         ),
       );
@@ -229,8 +235,29 @@ export function AdvisoryIntelligencePage({
         if (event.type === "delta") {
           const delta = eventText(event);
           return delta
-            ? { ...m, answer: stripNestedCxoBriefLabels(`${m.answer}${delta}`) }
-            : m;
+            ? {
+                ...m,
+                answer: stripNestedCxoBriefLabels(`${m.answer}${delta}`),
+                streamStatus: undefined,
+              }
+            : { ...m, streamStatus: "Writing the executive read..." };
+        }
+        if (event.type === "context-summary") {
+          return {
+            ...m,
+            streamStatus: "Selecting client facts, gaps, and evidence...",
+          };
+        }
+        if (event.type === "sources" && Array.isArray(event.sources)) {
+          const sources = event.sources as AskSource[];
+          return {
+            ...m,
+            sources,
+            streamStatus:
+              sources.length > 0
+                ? `Using ${sources.length} client/context sources...`
+                : "Checking available client context...",
+          };
         }
         if (event.type === "agent-answer" && isAvaAnswerPacket(event.answer)) {
           const packetBody = answerBodyFromPacket(event.answer);
@@ -265,10 +292,9 @@ export function AdvisoryIntelligencePage({
             // frequently empty for this route. Never let an empty packet
             // list clobber followups already set from that earlier event.
             followups: packetFollowups.length ? packetFollowups : m.followups,
+            streamStatus: undefined,
           };
         }
-        if (event.type === "sources" && Array.isArray(event.sources))
-          return { ...m, sources: event.sources as AskSource[] };
         if (event.type === "followups" && Array.isArray(event.followups)) {
           return {
             ...m,
@@ -303,7 +329,9 @@ export function AdvisoryIntelligencePage({
               body:
                 m.status === "error"
                   ? formatSafeAnswerBoundary(m.error)
-                  : m.answer.trim(),
+                  : m.answer.trim() ||
+                    m.streamStatus ||
+                    "Gathering client context...",
               citations: m.sources.length > 0 ? m.sources : undefined,
               agentAnswer: m.agentAnswer ?? undefined,
             },
@@ -357,7 +385,9 @@ export function AdvisoryIntelligencePage({
   );
 }
 
-function buildStarterPrompts(viewModel: EnterpriseLandscapeViewModel): string[] {
+function buildStarterPrompts(
+  viewModel: EnterpriseLandscapeViewModel,
+): string[] {
   return [
     `What are the top AI opportunities for ${viewModel.tenantName}, grounded only in the loaded context?`,
     `Which current-state technology, data, or operating-model gaps should a CXO care about first?`,

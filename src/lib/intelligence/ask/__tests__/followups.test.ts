@@ -32,4 +32,13 @@ describe("normalizeGeneratedFollowup", () => {
       "The outsourced analytics vendor is at 80% maintenance load - does Meridian have plans to redistribute that work?",
     );
   });
+
+  it("caps long generated followups so the rail stays scannable", () => {
+    const normalized = normalizeGeneratedFollowup(
+      "For FS Demo, should we prioritize wire fraud interdiction before servicing copilot given the loaded fraud loss signal, model monitoring gap, integration readiness questions, and the need to validate decision authority before any production deployment is approved by executives?",
+    );
+
+    expect(normalized.length).toBeLessThanOrEqual(220);
+    expect(normalized).toMatch(/\.\.\.$/);
+  });
 });

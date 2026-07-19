@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import {
   Bar,
   BarChart,
@@ -52,17 +52,17 @@ const CSS = `
 .agentAnswer .aaProse{font-size:14px;line-height:1.65}
 .agentAnswer .aaSection{display:grid;gap:12px}
 .agentAnswer .aaTitle{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--aa-muted);font-weight:800}
-.agentAnswer .aaChart,.agentAnswer .aaGraph,.agentAnswer .aaTableWrap{border:1px solid var(--aa-line);border-radius:10px;background:var(--aa-paper);box-shadow:0 1px 2px rgba(16,24,40,.05),0 10px 24px rgba(16,24,40,.06);overflow:hidden}
+.agentAnswer .aaChart,.agentAnswer .aaGraph,.agentAnswer .aaTableWrap{border:1px solid var(--aa-line);border-radius:12px;background:var(--aa-paper);box-shadow:0 1px 2px rgba(16,24,40,.05),0 14px 34px rgba(16,24,40,.07);overflow:hidden}
 .agentAnswer .aaChartHead,.agentAnswer .aaTableHead,.agentAnswer .aaGraphHead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:13px 15px;border-bottom:1px solid var(--aa-line);background:linear-gradient(180deg,var(--aa-soft-2),var(--aa-soft))}
 .agentAnswer .aaChartTitle,.agentAnswer .aaGraphTitle,.agentAnswer .aaTableTitle{font-size:14px;font-weight:800;line-height:1.35}
 .agentAnswer .aaChartSubtitle{margin-top:3px;font-size:12px;color:var(--aa-muted);line-height:1.45}
 .agentAnswer .aaArtifactBadge{display:inline-flex;align-items:center;white-space:nowrap;border:1px solid #bfd4ee;border-radius:999px;background:var(--aa-blue-bg);color:var(--aa-blue);padding:4px 9px;font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
 .agentAnswer .aaSvg{padding:16px;background:radial-gradient(circle at 20% 0%,#ffffff 0,#ffffff 42%,#fbfcfd 100%);overflow-x:auto}
 .agentAnswer .aaSvg svg{display:block;width:100%;height:auto;min-width:520px}
-.agentAnswer .aaRechart{height:320px;min-width:520px;padding:16px;background:radial-gradient(circle at 20% 0%,#ffffff 0,#ffffff 42%,#fbfcfd 100%)}
+.agentAnswer .aaRechart{height:var(--aa-chart-height,320px);min-width:0;padding:18px 18px 12px;background:radial-gradient(circle at 20% 0%,#ffffff 0,#ffffff 42%,#fbfcfd 100%)}
 .agentAnswer .aaRechart .recharts-wrapper{font-family:var(--font-geist-sans),ui-sans-serif,system-ui,sans-serif}
 .agentAnswer .aaRechart .recharts-cartesian-axis-tick-value{fill:#5f6b7a;font-size:11px}
-.agentAnswer .aaRechart .recharts-label-list text,.agentAnswer .aaRechart .recharts-scatter-symbol{font-size:11px;font-weight:700}
+.agentAnswer .aaRechart .recharts-label-list text,.agentAnswer .aaRechart .recharts-scatter-symbol{font-size:11px;font-weight:800}
 .agentAnswer .aaGraphSvg{display:block;width:100%;height:auto;background:radial-gradient(circle at 50% 0%,#ffffff 0,#ffffff 48%,#f8fafc 100%)}
 .agentAnswer .aaGraphNode{fill:#f6fbf8;stroke:#b9dac6;stroke-width:1.5;filter:drop-shadow(0 2px 4px rgba(17,24,39,.08))}
 .agentAnswer .aaGraphEdge{stroke:#738091;stroke-width:1.5;marker-end:url(#aaArrow)}
@@ -175,6 +175,14 @@ const RECHART_COLORS = [
   "#475569",
 ] as const;
 
+const RECHART_TOOLTIP_STYLE = {
+  border: "1px solid #d6dbe3",
+  borderRadius: 10,
+  boxShadow: "0 12px 30px rgba(15,23,42,.12)",
+  color: "#111827",
+  fontSize: 12,
+} as const;
+
 function isRechartPrimitive(value: unknown): value is RechartPrimitive {
   return (
     (typeof value === "string" && value.trim().length > 0) ||
@@ -213,7 +221,9 @@ function inferLabelKey(rows: RechartRow[]): string | null {
   return (
     Object.keys(sample).find((key) =>
       rows.some((row) => typeof row[key] === "string"),
-    ) ?? Object.keys(sample)[0] ?? null
+    ) ??
+    Object.keys(sample)[0] ??
+    null
   );
 }
 
@@ -242,17 +252,31 @@ interface RechartSeries {
   horizontal: boolean;
 }
 
+function shortAxisLabel(value: unknown, maxLength = 24): string {
+  const label = String(value ?? "");
+  return label.length > maxLength
+    ? `${label.slice(0, maxLength - 1).trimEnd()}...`
+    : label;
+}
+
+function horizontalAxisWidth(rows: RechartRow[], key: string): number {
+  const longest = rows.reduce(
+    (max, row) => Math.max(max, String(row[key] ?? "").length),
+    0,
+  );
+  return Math.min(220, Math.max(132, longest * 6.8));
+}
+
 function normalizeRechartSeries(chart: AnswerChart): RechartSeries | null {
   const record = chartDataRecord(chart);
-  const rows = toRechartRows(record?.data ?? chart.data)
-    .map((row) => {
-      const copy = { ...row };
-      for (const key of Object.keys(copy)) {
-        const parsed = numericRowValue(copy, key);
-        if (parsed !== null && typeof copy[key] === "string") copy[key] = parsed;
-      }
-      return copy;
-    });
+  const rows = toRechartRows(record?.data ?? chart.data).map((row) => {
+    const copy = { ...row };
+    for (const key of Object.keys(copy)) {
+      const parsed = numericRowValue(copy, key);
+      if (parsed !== null && typeof copy[key] === "string") copy[key] = parsed;
+    }
+    return copy;
+  });
   if (rows.length < 2) return null;
 
   const xKey =
@@ -303,8 +327,14 @@ function normalizeRechartQuadrant(chart: AnswerChart): RechartQuadrantPoint[] {
     .flatMap((point): RechartQuadrantPoint[] => {
       if (!isRecord(point)) return [];
       const label = typeof point.label === "string" ? point.label.trim() : "";
-      const x = typeof point.x === "number" && Number.isFinite(point.x) ? point.x : null;
-      const y = typeof point.y === "number" && Number.isFinite(point.y) ? point.y : null;
+      const x =
+        typeof point.x === "number" && Number.isFinite(point.x)
+          ? point.x
+          : null;
+      const y =
+        typeof point.y === "number" && Number.isFinite(point.y)
+          ? point.y
+          : null;
       if (!label || x === null || y === null) return [];
       return [{ label, x, y }];
     })
@@ -331,7 +361,9 @@ function canRenderRechartsChart(chart: AnswerChart): boolean {
 function isRenderableAnswerChart(
   chart: AnswerChart,
 ): chart is AnswerChart & { artifact: "chart" } {
-  return canRenderRechartsChart(chart) || renderAnswerChartSvg(chart).svg !== null;
+  return (
+    canRenderRechartsChart(chart) || renderAnswerChartSvg(chart).svg !== null
+  );
 }
 
 function citationsFor(
@@ -551,6 +583,7 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
         className="aaRechart"
         data-chart-kind={chart.kind}
         data-chart-renderer="recharts"
+        style={{ "--aa-chart-height": "360px" } as CSSProperties}
       >
         <ResponsiveContainer height="100%" width="100%">
           <ScatterChart margin={{ top: 22, right: 20, bottom: 16, left: 8 }}>
@@ -558,6 +591,13 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
             <XAxis
               dataKey="x"
               domain={[0, 100]}
+              label={{
+                value: "Complexity",
+                position: "insideBottom",
+                offset: -4,
+                fill: "#5f6b7a",
+                fontSize: 11,
+              }}
               name="Complexity"
               tickLine={false}
               type="number"
@@ -565,6 +605,13 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
             <YAxis
               dataKey="y"
               domain={[0, 100]}
+              label={{
+                value: "Value",
+                angle: -90,
+                position: "insideLeft",
+                fill: "#5f6b7a",
+                fontSize: 11,
+              }}
               name="Value"
               tickLine={false}
               type="number"
@@ -572,6 +619,7 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
             <ReferenceLine stroke="#cbd5e1" strokeDasharray="4 4" x={50} />
             <ReferenceLine stroke="#cbd5e1" strokeDasharray="4 4" y={50} />
             <Tooltip
+              contentStyle={RECHART_TOOLTIP_STYLE}
               cursor={{ strokeDasharray: "3 3" }}
               formatter={(value: unknown, name: unknown) => [
                 formatRechartValue(value),
@@ -596,12 +644,19 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
 
   const series = normalizeRechartSeries(chart);
   if (!series) return null;
+  const chartHeight = series.horizontal
+    ? Math.max(320, Math.min(520, series.rows.length * 48 + 100))
+    : 320;
+  const yAxisWidth = series.horizontal
+    ? horizontalAxisWidth(series.rows, series.xKey)
+    : 48;
   if (chart.kind === "line") {
     return (
       <div
         className="aaRechart"
         data-chart-kind={chart.kind}
         data-chart-renderer="recharts"
+        style={{ "--aa-chart-height": `${chartHeight}px` } as CSSProperties}
       >
         <ResponsiveContainer height="100%" width="100%">
           <LineChart
@@ -609,12 +664,17 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
             margin={{ top: 12, right: 24, bottom: 12, left: 8 }}
           >
             <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
-            <XAxis dataKey={series.xKey} tickLine={false} />
+            <XAxis
+              dataKey={series.xKey}
+              tickFormatter={(value) => shortAxisLabel(value, 18)}
+              tickLine={false}
+            />
             <YAxis
               tickFormatter={(value) => formatRechartValue(value, series.unit)}
               tickLine={false}
             />
             <Tooltip
+              contentStyle={RECHART_TOOLTIP_STYLE}
               formatter={(value: unknown) => [
                 formatRechartValue(value, series.unit),
                 series.yKey,
@@ -649,13 +709,19 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
       className="aaRechart"
       data-chart-kind={chart.kind}
       data-chart-renderer="recharts"
+      style={{ "--aa-chart-height": `${chartHeight}px` } as CSSProperties}
     >
       <ResponsiveContainer height="100%" width="100%">
         <BarChart
           barCategoryGap={series.horizontal ? 10 : 18}
           data={series.rows}
           layout={series.horizontal ? "vertical" : "horizontal"}
-          margin={{ top: 12, right: 42, bottom: 12, left: series.horizontal ? 16 : 8 }}
+          margin={{
+            top: 12,
+            right: 54,
+            bottom: 12,
+            left: series.horizontal ? 8 : 8,
+          }}
         >
           <CartesianGrid
             horizontal={!series.horizontal}
@@ -666,27 +732,37 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
           {series.horizontal ? (
             <>
               <XAxis
-                tickFormatter={(value) => formatRechartValue(value, series.unit)}
+                tickFormatter={(value) =>
+                  formatRechartValue(value, series.unit)
+                }
                 tickLine={false}
                 type="number"
               />
               <YAxis
                 dataKey={series.xKey}
+                tickFormatter={(value) => shortAxisLabel(value, 28)}
                 tickLine={false}
                 type="category"
-                width={132}
+                width={yAxisWidth}
               />
             </>
           ) : (
             <>
-              <XAxis dataKey={series.xKey} tickLine={false} />
+              <XAxis
+                dataKey={series.xKey}
+                tickFormatter={(value) => shortAxisLabel(value, 16)}
+                tickLine={false}
+              />
               <YAxis
-                tickFormatter={(value) => formatRechartValue(value, series.unit)}
+                tickFormatter={(value) =>
+                  formatRechartValue(value, series.unit)
+                }
                 tickLine={false}
               />
             </>
           )}
           <Tooltip
+            contentStyle={RECHART_TOOLTIP_STYLE}
             formatter={(value: unknown) => [
               formatRechartValue(value, series.unit),
               series.yKey,
@@ -884,7 +960,9 @@ export function AnswerChartRenderer({
           Chart unavailable: {rendered.error}
         </div>
       )}
-      {chart.sourceNote ? <div className="aaNote">{chart.sourceNote}</div> : null}
+      {chart.sourceNote ? (
+        <div className="aaNote">{chart.sourceNote}</div>
+      ) : null}
       <CitationChips citations={chartCitations} />
     </div>
   );
@@ -1039,10 +1117,12 @@ export function AgentAnswerRenderer({
     (artifact): artifact is AnswerTable & { artifact: "table" } =>
       artifact.artifact === "table",
   );
-  const charts = visibleArtifacts.filter(
-    (artifact): artifact is AnswerChart & { artifact: "chart" } =>
-      artifact.artifact === "chart",
-  ).filter(isRenderableAnswerChart);
+  const charts = visibleArtifacts
+    .filter(
+      (artifact): artifact is AnswerChart & { artifact: "chart" } =>
+        artifact.artifact === "chart",
+    )
+    .filter(isRenderableAnswerChart);
   const graphs = visibleArtifacts.filter(
     (artifact): artifact is AnswerGraph & { artifact: "graph" } =>
       artifact.artifact === "graph",

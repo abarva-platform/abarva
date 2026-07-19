@@ -216,6 +216,10 @@ export function stripGovernedArtifactPayloadsFromText(text: string): string {
   const filter = createStructuredFenceStreamFilter();
   return `${filter.push(text)}${filter.flush()}`
     .replace(
+      /(^|[\n\r])\s*(?:chart|decision-table|table|graph|followups)\s*[\n\r]+\s*(?:\{[\s\S]{0,4000}?\}|\[[\s\S]{0,4000}?\])\s*`*/gi,
+      "$1",
+    )
+    .replace(
       /\b(?:chart|decision-table|table|graph|followups)\s*\{\s*"[^"]+"\s*:\s*[\s\S]{0,2400}?\}\s*`*/gi,
       "",
     )
