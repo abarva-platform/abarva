@@ -1353,28 +1353,28 @@ function CioStoryBoard({ model }: { model: CioDashboardModel }) {
     : 0;
   const valueThesis =
     hasCommittedValue && hasMeasuredValue
-      ? `We've committed ${formatMoney(model.initiativeBudgetTotal)} in technology value and proven ${formatMoney(model.measuredTotal)} of it.`
+      ? `We've committed ${formatMoney(model.initiativeBudgetTotal)} in technology value and finance-validated ${formatMoney(model.measuredTotal)} against the claim gate.`
       : hasCommittedValue
         ? "The portfolio business case is visible, but value proof is not loaded yet."
         : "The portfolio budget is visible, but committed-value business cases are not loaded yet.";
   const proofHeadline = !hasMeasuredValue
     ? "value proof gap"
     : !hasCommittedValue
-      ? `${formatMoney(model.measuredTotal)} proven value`
+      ? `${formatMoney(model.measuredTotal)} finance-validated value`
       : valueGap > 0
-        ? `${formatMoney(valueGap)} unproven`
+        ? `${formatMoney(valueGap)} proof gap`
         : valueSurplus > 0
           ? `${formatMoney(valueSurplus)} above committed value`
-          : "value proof complete";
+          : "claim gate clear";
   const proofContext = !hasMeasuredValue
-    ? "finance-attested outcomes are required before ROI is claimed"
+    ? "finance-attested outcomes are required before value is claimed"
     : !hasCommittedValue
-      ? "committed-value business cases are required before realization can be scored"
+      ? "committed-value business cases are required before claim readiness can be scored"
       : valueGap > 0
-        ? `${realizedPct}% realized — the gap is the funding gate`
+        ? `${realizedPct}% finance-validated — the remaining gap is not claimable yet`
         : valueSurplus > 0
-          ? `${realizedPct}% realized — proven value exceeds the committed business case`
-          : "100% realized — committed value is fully proven";
+          ? `${realizedPct}% finance-validated — validated value exceeds the committed business case`
+          : "100% finance-validated — committed value has cleared the claim gate";
 
   return (
     <section
@@ -1468,10 +1468,10 @@ function CioStoryBoard({ model }: { model: CioDashboardModel }) {
             marginTop: 8,
           }}
         >
-          <span>proven {formatMoney(model.measuredTotal)}</span>
+          <span>validated {formatMoney(model.measuredTotal)}</span>
           <span>
             {hasCommittedValue
-              ? `unproven ${formatMoney(valueGap)}`
+              ? `proof gap ${formatMoney(valueGap)}`
               : "committed value gap"}
           </span>
         </div>
@@ -2764,7 +2764,7 @@ function TowerValueFunnel({
         </div>
       </CioPanel>
       <CioPanel
-        eyebrow="Value proven vs. promised"
+        eyebrow="Finance validation vs. promised"
         title="Program proof ladder"
       >
         <div style={{ display: "grid", gap: 10 }}>
@@ -5487,7 +5487,7 @@ function TowerMartValueFunnelDesign({
           </div>
           <div>
             <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>
-              Value proven vs. promised · by program
+              Finance validation vs. promised · by program
             </div>
             <div style={{ display: "grid", gap: 9, marginTop: 12 }}>
               {[...model.programLanes]

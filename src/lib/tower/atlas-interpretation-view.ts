@@ -477,7 +477,7 @@ function suggestedPromptsFor(
     ];
   }
   return [
-    "Show me the lagging programs by realized value",
+    "Show me the lagging programs by value proof gap",
     "Re-rank pressures by attribution confidence",
     "Which pressure has the strongest evidence?",
     "Brief me for the next governance meeting",

@@ -75,13 +75,13 @@ const benchmarkRow: CioTowerCxoBenchmarkRow = {
 describe("TowerCxoCharts smoke", () => {
   it("renders ValueBridgeChart without crashing", () => {
     const { container } = render(<ValueBridgeChart program={portfolioRow} />);
-    expect(container.textContent).toContain("proven");
+    expect(container.textContent).toContain("validated");
     expect(container.textContent).toContain("OneData Platform");
   });
 
   it("renders ValueProvenBarChart without crashing", () => {
     const { container } = render(<ValueProvenBarChart rows={[portfolioRow]} />);
-    expect(container.textContent).toContain("Value proven vs. promised");
+    expect(container.textContent).toContain("Finance validation vs. promised");
   });
 
   it("renders BudgetRunChangeChart without crashing", () => {

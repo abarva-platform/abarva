@@ -266,7 +266,7 @@ function buildInitiativeRows(args: {
     if (initiative.measuredValueUsd === null) {
       gaps.push({
         gap: 'measured_value',
-        impact: 'Value realization is not proven for this program.',
+        impact: 'Value realization has not cleared the proof gate for this program.',
       });
     }
     return {

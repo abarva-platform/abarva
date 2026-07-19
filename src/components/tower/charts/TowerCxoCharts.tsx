@@ -154,7 +154,7 @@ function BridgeToProveLabel(props: LabelProps) {
 //
 // The single highest-promised-value program, as a 3-bar bridge: what's
 // committed, what was promised, and how much of the promise has actually
-// been measured so far (measured stacked under the still-unproven balance).
+// been finance-validated so far (measured stacked under the remaining proof gap).
 
 export function ValueBridgeChart({
   program,
@@ -315,7 +315,7 @@ export function ValueBridgeChart({
             letterSpacing: "-0.02em",
           }}
         >
-          {pctProven}% proven
+          {pctProven}% validated
         </span>
         <span
           style={{
@@ -346,17 +346,17 @@ export function ValueBridgeChart({
   );
 }
 
-// ─── Value: proven vs. promised, per program ──────────────────────────────
+// ─── Value: validated vs. promised, per program ───────────────────────────
 //
-// One bar per program, split into "measured" (solid) and "unproven"
+// One bar per program, split into "validated" (solid) and "proof gap"
 // (promised minus measured, soft), each labeled with the exact fraction and
-// percent proven — mirrors CxoPortfolioValuePackTable's rows in chart form.
+// validation percentage — mirrors CxoPortfolioValuePackTable's rows in chart form.
 
 interface ValueProvenChartRow {
   program: string;
   fullProgram: string;
   measured: number;
-  unproven: number;
+  proofGap: number;
   promised: number;
   committed: number;
   pctProven: number;
@@ -404,7 +404,7 @@ export function ValueProvenBarChart({
     .map((row) => {
       const promised = row.promisedValueNumeric ?? 0;
       const measured = Math.min(row.measuredValueNumeric ?? 0, promised);
-      const unproven = Math.max(promised - measured, 0);
+      const proofGap = Math.max(promised - measured, 0);
       const pctProven =
         promised > 0 ? Math.round((measured / promised) * 100) : 0;
       return {
@@ -414,7 +414,7 @@ export function ValueProvenBarChart({
             : row.program,
         fullProgram: row.program,
         measured,
-        unproven,
+        proofGap,
         promised,
         committed: row.budgetNumeric ?? 0,
         pctProven,
@@ -426,7 +426,7 @@ export function ValueProvenBarChart({
 
   return (
     <div>
-      <ChartEyebrow>Value proven vs. promised — top programs</ChartEyebrow>
+      <ChartEyebrow>Finance validation vs. promised — top programs</ChartEyebrow>
       <ResponsiveContainer
         width="100%"
         height={Math.max(220, chartRows.length * 48)}
@@ -457,8 +457,8 @@ export function ValueProvenBarChart({
             formatter={(value, name) => [
               formatMoneyShort(Number(value)),
               name === "measured"
-                ? "Measured"
-                : "Unproven (promised − measured)",
+                ? "Finance validated"
+                : "Proof gap (promised minus validated)",
             ]}
             labelFormatter={(label, payload) =>
               (payload?.[0]?.payload as { fullProgram?: string } | undefined)
@@ -480,7 +480,7 @@ export function ValueProvenBarChart({
           />
           <Bar
             isAnimationActive={false}
-            dataKey="unproven"
+            dataKey="proofGap"
             stackId="value"
             fill={CT.GREEN_SOFT}
             radius={[0, 4, 4, 0]}
@@ -950,7 +950,7 @@ export function BenchmarkTenantCards({
                 pct: card.changePct,
               },
               {
-                label: "Value proven",
+                label: "Value validated",
                 value: `${card.valueProvenPct}%`,
                 pct: card.valueProvenPct,
               },
@@ -997,7 +997,7 @@ export function BenchmarkRadarChart({
   if (cards.length === 0) return null;
 
   const maxBudget = Math.max(...cards.map((c) => c.totalBudget), 1);
-  const radarData = ["Budget", "Run share", "Value proven", "Change share"].map(
+  const radarData = ["Budget", "Run share", "Value validated", "Change share"].map(
     (axis) => {
       const point: Record<string, number | string> = { axis };
       for (const card of cards) {
@@ -1006,7 +1006,7 @@ export function BenchmarkRadarChart({
             ? Math.round((card.totalBudget / maxBudget) * 100)
             : axis === "Run share"
               ? card.runPct
-              : axis === "Value proven"
+              : axis === "Value validated"
                 ? card.valueProvenPct
                 : card.changePct;
         point[card.label] = value;
@@ -1143,7 +1143,7 @@ export function BenchmarkPeer2x2Chart({
             }}
           >
             Each governed tenant is plotted by change-spend share and value
-            proven. Larger marks carry larger FY26 budget envelopes.
+            validation. Larger marks carry larger FY26 budget envelopes.
           </div>
           <div
             style={{
@@ -1156,10 +1156,10 @@ export function BenchmarkPeer2x2Chart({
             }}
           >
             {[
-              ["Value proof high · change low", 14, 10],
-              ["Value proof high · change high", 58, 10],
-              ["Value proof low · change low", 14, 82],
-              ["Value proof low · change high", 58, 82],
+              ["Value validation high · change low", 14, 10],
+              ["Value validation high · change high", 58, 10],
+              ["Value validation low · change low", 14, 82],
+              ["Value validation low · change high", 58, 82],
             ].map(([label, left, top]) => (
               <div
                 key={label}
@@ -1186,7 +1186,7 @@ export function BenchmarkPeer2x2Chart({
               return (
                 <div
                   key={card.label}
-                  title={`${label}: ${card.changePct}% change spend, ${card.valueProvenPct}% value proven, ${formatMoneyShort(card.totalBudget)} budget`}
+                  title={`${label}: ${card.changePct}% change spend, ${card.valueProvenPct}% value validated, ${formatMoneyShort(card.totalBudget)} budget`}
                   style={{
                     position: "absolute",
                     left: `${card.left}%`,
@@ -1246,7 +1246,7 @@ export function BenchmarkPeer2x2Chart({
                 whiteSpace: "nowrap",
               }}
             >
-              Value proven →
+              Value validation →
             </div>
           </div>
         </div>
@@ -1280,7 +1280,7 @@ export function BenchmarkPeer2x2Chart({
                 }}
               >
                 {formatMoneyShort(card.totalBudget)} budget · {card.changePct}%
-                change · {card.valueProvenPct}% value proven
+                change · {card.valueProvenPct}% value validated
               </div>
             </div>
           ))}
@@ -1330,7 +1330,7 @@ export function BenchmarkComparisonChart({
                 ? "Run share"
                 : name === "changePct"
                   ? "Change share"
-                  : "Value proven",
+                  : "Value validated",
             ]}
             contentStyle={{
               fontFamily: CT.SANS,
@@ -1345,7 +1345,7 @@ export function BenchmarkComparisonChart({
                 ? "Run share"
                 : value === "changePct"
                   ? "Change share"
-                  : "Value proven"
+                  : "Value validated"
             }
             wrapperStyle={{
               fontFamily: CT.SANS,

@@ -628,7 +628,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getByText("Renewals · 90d")).toBeInTheDocument();
     expect(screen.getByText("CIO daily read")).toBeInTheDocument();
     expect(screen.getByText(/We've committed/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/unproven/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/proof gap/i).length).toBeGreaterThan(0);
     expect(screen.getByText("Inspect pressure spend")).toBeInTheDocument();
     expect(screen.getByText("Demand value proof")).toBeInTheDocument();
     expect(
@@ -833,7 +833,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     ).toBeInTheDocument();
   });
 
-  it("does not call proven value above the committed business case unproven", () => {
+  it("does not call claim-gated value above the committed business case a proof gap", () => {
     render(
       <TowerIndexPage
         tenantName="Lakeshore Holdings"
@@ -852,8 +852,8 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(
       screen.getByText(/\$15\.0M above committed value/i),
     ).toBeInTheDocument();
-    expect(screen.queryByText(/\$15\.0M unproven/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/\$178\.9M unproven/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\$15\.0M proof gap/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\$178\.9M proof gap/i)).not.toBeInTheDocument();
   });
 
   it("normalizes raw dimension slugs before showing Tower labels", () => {
