@@ -840,7 +840,10 @@ describe("UniversalCanvasShell · SSR render", () => {
     // action names the deliverable it will write, then shows the next step.
     expect(html).toContain("Approve &amp; write Scope Memo with Boundaries");
     expect(html).toContain("Then: Issue the RFP");
+    expect(html).not.toContain("source-canvas-workspace");
     expect(html).not.toContain("source-canvas-tab-document");
+    expect(html).not.toContain("source-canvas-tab-evidence");
+    expect(html).not.toContain("source-canvas-tab-log");
   });
 
   it("renders the simple Start here front for empty substrate without trusting registry metadata", () => {
