@@ -25,6 +25,7 @@ import {
   buildSkyHarborAmsExistingContractInput,
   type ContractOptimizationMveProfile,
 } from "@/lib/source/contract-optimization";
+import { SOURCE_STAGE_LABELS, SOURCE_STAGE_ORDER } from "@/lib/source/constants";
 
 // Shell uses next/navigation + Clerk hooks; mock so SSR doesn't blow up.
 let mockUser: unknown = null;
@@ -844,6 +845,25 @@ describe("UniversalCanvasShell · SSR render", () => {
     expect(html).not.toContain("source-canvas-tab-document");
     expect(html).not.toContain("source-canvas-tab-evidence");
     expect(html).not.toContain("source-canvas-tab-log");
+  });
+
+  it("uses the simple shell instead of legacy tabs for every canonical step", () => {
+    for (const stage of SOURCE_STAGE_ORDER) {
+      const html = render({
+        viewStage: stage,
+        simpleFrontEnabled: true,
+        workspaceExplorerEnabled: true,
+      });
+
+      expect(html).toContain("source-event-canvas");
+      expect(html).toContain("source-simple-front");
+      expect(html).toContain(`You&#x27;re on ${SOURCE_STAGE_LABELS[stage]}`);
+      expect(html).not.toContain("source-canvas-workspace");
+      expect(html).not.toContain("source-canvas-tab-document");
+      expect(html).not.toContain("source-canvas-tab-gate");
+      expect(html).not.toContain("source-canvas-tab-evidence");
+      expect(html).not.toContain("source-canvas-tab-log");
+    }
   });
 
   it("renders the simple Start here front for empty substrate without trusting registry metadata", () => {
