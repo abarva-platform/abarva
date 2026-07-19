@@ -1,6 +1,6 @@
 # Source legacy-surface retirement plan
 
-Status: **planned** · Owner: Source · Created 2026-06-15
+Status: **in progress** · Owner: Source · Created 2026-06-15 · Updated 2026-07-18
 
 This tees up the full "delete old pages/workflows" cleanup. It is **not** done in one shot, because most
 "old" Source surfaces are **fallbacks behind feature flags** — deleting them before the new flow is the
@@ -34,16 +34,20 @@ Flip each to `platform` policy (default-on) **only after** the live verification
 |---|---|---|
 | `/source/deliverables` (page) | **orphaned (0 links)** | ✅ deleted in this PR |
 | `ProgressionPanel` (WorkspaceExplorer) | dead code (not rendered) | ✅ removed in this PR |
-| `/source/events/[eventId]/gate` (page) | flag-fallback | delete after `workspace_explorer_source` default |
-| `/source/events/[eventId]/file-cabinet` (page) | flag-fallback (superseded by explorer) | delete after default |
-| `/source/events/[eventId]/report` (page) | needs link audit | audit → delete if orphaned |
+| `/source/events` (standalone page) | archived | redirects to `/source/portfolio` |
+| `/source/events/[eventId]/gate` (page) | archived | redirects to the event canvas |
+| `/source/events/[eventId]/file-cabinet` (page) | archived | redirects to the event workspace |
+| `/source/events/[eventId]/report` (page) | archived | redirects to the event canvas |
+| `/source/events/[eventId]/scorecard` (page) | archived | redirects to the event canvas evaluation stage |
+| `/source/events/[eventId]/artifacts/[artifactId]` (page) | archived | redirects to the event workspace with `artifactId` query |
+| `/source/events/[eventId]/vendors/[vendorId]` (page) | archived | redirects to the event canvas responses stage |
 | `EventWorkspace` tabbed canvas | flag-fallback (non-decluttered path) | delete after `workspace_explorer_source` default |
 | `buildSourceWorkspaceProgression` + `source-progression.ts` | now unused by the explorer | delete after confirming no other caller |
 | standalone Strategy stage rendering | flag-fallback | delete after `source_strategy_at_p0` default |
 
 ## Surfaces to KEEP (verified live, not legacy)
 
-`/source/compare`, `/source/value`, `/source/events` (portfolio), `/source/queue`, `/source/approvals`,
+`/source/compare`, `/source/value`, `/source/portfolio`, `/source/queue`, `/source/approvals`,
 `/source/new`, `/source/learn`, `/source/patterns`, `/source/renewal/*`, `/source/setup`.
 
 ## Environment risk

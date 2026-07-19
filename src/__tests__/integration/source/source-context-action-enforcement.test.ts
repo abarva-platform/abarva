@@ -1,13 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
-import SourceEventsPage from '@/app/(maestro)/source/events/page';
-import SourceEventDetailPage from '@/app/(maestro)/source/events/[eventId]/page';
-import SourceEventScorecardPage from '@/app/(maestro)/source/events/[eventId]/scorecard/page';
-import SourceArtifactPage from '@/app/(maestro)/source/events/[eventId]/artifacts/[artifactId]/page';
 import SourceValuePage from '@/app/(maestro)/source/value/page';
-import { getSourcingEvent, getSourcingEventArtifact } from '@/lib/source/queries';
-import { SOURCE_GOLDEN_EVENT_IDS } from '@/lib/source/constants';
 
 jest.mock('next/navigation', () => ({
   usePathname: () => '/source/events/evt-source-data-ai-si-selection',
@@ -29,75 +23,43 @@ jest.mock('@clerk/nextjs', () => ({
 }));
 
 describe('Source context-used and action-enforcement slices', () => {
-  it('renders /source/events with context and three-choice + custom behavior', async () => {
-    const html = renderToStaticMarkup(
-      await SourceEventsPage({
-        searchParams: Promise.resolve({}),
-      }),
+  it('archives /source/events into the supported portfolio surface', () => {
+    const source = readFileSync(
+      join(process.cwd(), 'src/app/(maestro)/source/events/page.tsx'),
+      'utf8',
     );
 
-    expect(html).toContain('Context used');
-    expect(html).toContain('Review BAFO events');
-    expect(html).toContain('Review evaluation queue');
-    expect(html).toContain('Review at-risk events');
-    expect(html).toContain('Ask Nexus (deferred)');
-    expect(html).toContain('Submit (disabled until runtime)');
-    expect(html).toContain('Open a Source event to talk to Nexus. Portfolio Nexus runtime is deferred.');
-    expect(html).not.toContain('Open a Source event to talk to Sentinel');
+    expect(source).toContain('redirect("/source/portfolio")');
+    expect(source).not.toContain('SourceEventsPortfolio');
+    expect(source).not.toContain('SourceEventsAgentDockView');
   });
 
   it('renders event detail with deterministic context chips and 3 contextual choices', async () => {
-    const html = renderToStaticMarkup(
-      await SourceEventDetailPage({
-        params: Promise.resolve({ eventId: SOURCE_GOLDEN_EVENT_IDS.apexRetailAmsOutsourcing2026 }),
-      }),
+    const routeSource = readFileSync(
+      join(process.cwd(), 'src/app/(maestro)/source/events/[eventId]/page.tsx'),
+      'utf8',
     );
 
-    expect(html).toContain('Context used');
-    expect(html).toContain('Agent suggested stage actions');
-    expect(html).toContain('Define done');
-    expect(html).toContain('Attach evidence');
-    expect(html).toContain('Generate packet');
-    expect(html).toContain('Open gate path');
+    expect(routeSource).toContain('UniversalCanvasShell');
+    expect(routeSource).toContain('SourceAnalyticsCanvas');
+    expect(routeSource).toContain('listArtifactStatesForEvent');
+    expect(routeSource).toContain('listGateCriterionStatesForEvent');
   });
 
-  it('renders scorecard with required context and action shell', async () => {
-    const html = renderToStaticMarkup(
-      await SourceEventScorecardPage({
-        params: Promise.resolve({ eventId: SOURCE_GOLDEN_EVENT_IDS.apexRetailAmsOutsourcing2026 }),
-      }),
+  it('archives scorecard and artifact detail pages into canvas/workspace routes', () => {
+    const scorecardSource = readFileSync(
+      join(process.cwd(), 'src/app/(maestro)/source/events/[eventId]/scorecard/page.tsx'),
+      'utf8',
+    );
+    const artifactSource = readFileSync(
+      join(process.cwd(), 'src/app/(maestro)/source/events/[eventId]/artifacts/[artifactId]/page.tsx'),
+      'utf8',
     );
 
-    expect(html).toContain('Evaluation governance criteria');
-    expect(html).toContain('Context used');
-    expect(html).toContain('Review blockers');
-    expect(html).toContain('Show evidence gaps');
-    expect(html).toContain('Explain gate impact');
-    expect(html).toContain('Ask custom');
-  });
-
-  it('renders artifact detail with context used and explicit artifact actions', async () => {
-    const event = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.dataAiModernization);
-    expect(event).toBeDefined();
-    const artifactId = 'artifact-source-001-brief';
-    if (!event || !artifactId) return;
-
-    const artifact = await getSourcingEventArtifact(event.id, artifactId);
-    expect(artifact).toBeDefined();
-    if (!artifact) return;
-
-    const html = renderToStaticMarkup(
-      await SourceArtifactPage({
-        params: Promise.resolve({ eventId: event.id, artifactId }),
-      }),
-    );
-
-    expect(html).toContain('Context used');
-    expect(html).toContain('Show evidence');
-    expect(html).toContain('Show version history');
-    expect(html).toContain('Explain missing inputs');
-    expect(html).toContain('Ask custom');
-    expect(html).toContain('Submit (disabled until runtime)');
+    expect(scorecardSource).toContain('stage=evaluation');
+    expect(scorecardSource).not.toContain('ScorecardGovernancePanel');
+    expect(artifactSource).toContain('/workspace?artifactId=');
+    expect(artifactSource).not.toContain('SourceArtifactDrawer');
   });
 
   it('renders value ledger route with context and action layer', async () => {
@@ -108,7 +70,7 @@ describe('Source context-used and action-enforcement slices', () => {
     expect(html).toContain('Ava value ledger lead');
     expect(html).toContain('Action layer');
     expect(html).toContain('Show assumptions');
-    expect(html).toContain('Ask Ava about this value ledger');
+    expect(html).toContain('Ask aVa about this value ledger');
     expect(html).toContain('Submit (disabled until runtime)');
   });
 

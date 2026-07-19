@@ -75,12 +75,9 @@ describe('Source dashboard route smoke', () => {
     const componentSource = readFileSync(join(process.cwd(), 'src/components/source/SourcePortfolioPage.tsx'), 'utf8');
     const tableSource = readFileSync(join(process.cwd(), 'src/components/source/SourcingEventTable.tsx'), 'utf8');
 
-    // Route still mounts the SourcePortfolioPage — surface contract is unchanged
-    // even though the page body was redesigned.
-    expect(routeSource).toContain('SourcePortfolioPage');
-    expect(eventsRouteSource).toContain('IT sourcing operating queue');
-    expect(eventsRouteSource).toContain('Start IT sourcing event');
-    expect(eventsRouteSource).toContain('The table is supporting evidence');
+    expect(routeSource).toContain("redirect('/source/queue')");
+    expect(eventsRouteSource).toContain('redirect("/source/portfolio")');
+    expect(eventsRouteSource).not.toContain('SourceEventsPortfolio');
     // Compact-header portfolio surface — KPI strip + attention banners removed.
     // Portfolio totals and mix now live in a thin Scorecard above the table;
     // table rows carry their own per-event signals.
@@ -89,8 +86,8 @@ describe('Source dashboard route smoke', () => {
     expect(componentSource).toContain('PortfolioFilterSidebar');
     expect(componentSource).toContain('PortfolioEventsTable');
     expect(componentSource).toContain('PortfolioEmptyState');
-    expect(componentSource).toContain('filterOutTestArtifacts');
-    expect(componentSource).toContain('dedupeByEventCode');
+    expect(componentSource).toContain('selectVisibleSourceEvents');
+    expect(componentSource).toContain('computePortfolioKpis');
     // Removed surfaces — no separate KPI strip, no attention-banner stack.
     expect(componentSource).not.toContain('KpiStrip');
     expect(componentSource).not.toContain('AttentionStack');
@@ -128,7 +125,6 @@ describe('Source dashboard route smoke', () => {
   it('keeps the dashboard route smoke deterministic and inside Source scope', () => {
     const sources = [
       'src/app/(maestro)/source/page.tsx',
-      'src/app/(maestro)/source/events/page.tsx',
       'src/components/source/AbarVaSourceDashboard.tsx',
       'src/components/source/SourcePortfolioPage.tsx',
       'src/components/source/SourcingEventTable.tsx',

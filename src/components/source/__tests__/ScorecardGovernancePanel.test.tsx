@@ -104,10 +104,10 @@ describe('ScorecardGovernancePanel · hygiene', () => {
     expect(src).not.toMatch(/from ['"][^'"]*(upload|parser|approval-engine|workflow-engine)['"]/);
   });
 
-  it('scorecard route has updated Sentinel voice format', () => {
+  it('scorecard route is archived into the event canvas', () => {
     const src = readFileSync(join(process.cwd(), 'src/app/(maestro)/source/events/[eventId]/scorecard/page.tsx'), 'utf8');
-    expect(src).toContain('Scorecard at');
-    expect(src).toContain('pending review');
-    expect(src).toContain("Locks when all criteria reach");
+    expect(src).toContain('stage=evaluation');
+    expect(src).not.toContain('Scorecard at');
+    expect(src).not.toContain("Locks when all criteria reach");
   });
 });

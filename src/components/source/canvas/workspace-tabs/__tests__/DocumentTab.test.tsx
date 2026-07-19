@@ -104,11 +104,11 @@ describe("DocumentTab event documents", () => {
     expect(screen.getByText("1 document available")).toBeInTheDocument();
     expect(screen.getByText("01_Application_Portfolio.csv")).toHaveAttribute(
       "href",
-      "/source/events/event-1/artifacts/doc-1",
+      "/source/events/event-1/workspace?artifactId=doc-1",
     );
     expect(screen.getByText("Open detail")).toHaveAttribute(
       "href",
-      "/source/events/event-1/artifacts/doc-1",
+      "/source/events/event-1/workspace?artifactId=doc-1",
     );
     expect(screen.getByText("Download file")).toHaveAttribute(
       "href",

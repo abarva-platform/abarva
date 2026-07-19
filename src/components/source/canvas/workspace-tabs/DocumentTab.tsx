@@ -419,7 +419,7 @@ function RegistryDocumentsShelf({
           {documents.map((doc) => {
             const exportReadyKind = exportReadyArtifactKind(doc);
             const detailHref = eventId
-              ? `/source/events/${encodeURIComponent(eventId)}/artifacts/${encodeURIComponent(doc.id)}`
+              ? `/source/events/${encodeURIComponent(eventId)}/workspace?artifactId=${encodeURIComponent(doc.id)}`
               : undefined;
             const downloadHref = `/api/v1/source/artifacts/${encodeURIComponent(doc.id)}/download`;
             return (

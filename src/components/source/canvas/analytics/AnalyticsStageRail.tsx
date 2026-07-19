@@ -40,7 +40,7 @@ export function AnalyticsStageRail({
     <aside data-testid="analytics-stage-rail">
       <div style={{ marginBottom: 14 }}>
         <Link
-          href="/source/events"
+          href="/source/portfolio"
           style={{
             fontSize: 12,
             color: ANALYTICS.MUTED,

@@ -78,7 +78,7 @@ export function MoveToSourceHandoffCta({ handoff, existingEvent }: Props) {
         setPending(false);
         return;
       }
-      router.push(json.eventUrl ?? '/source/events');
+      router.push(json.eventUrl ?? '/source/portfolio');
     } catch {
       setError('Could not reach the Source intake. Try again.');
       setPending(false);

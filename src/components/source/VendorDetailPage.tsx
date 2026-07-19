@@ -370,7 +370,7 @@ function ScorecardPanel({ vendor, eventId }: { vendor: VendorDetail; eventId: st
       <div style={PANEL_HEAD}>
         <div style={PANEL_EYEBROW}>Scorecard rows · Step 5</div>
         <Link
-          href={`/source/events/${eventId}/scorecard`}
+          href={`/source/events/${eventId}?stage=evaluation`}
           style={{
             fontFamily: SHELL.MONO,
             fontSize: 9,

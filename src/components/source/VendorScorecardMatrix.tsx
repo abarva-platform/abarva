@@ -330,7 +330,7 @@ export function VendorScorecardMatrix({
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
             <ViewToggle active={viewMode} onChange={setViewMode} />
             <Link
-              href={`/source/events/${eventId}/scorecard`}
+              href={`/source/events/${eventId}?stage=evaluation`}
               style={{
                 fontFamily: SHELL.MONO,
                 fontSize: 9,
@@ -375,7 +375,7 @@ export function VendorScorecardMatrix({
                   <tr key={vendor.id}>
                     <td style={rowStyle}>
                       <Link
-                        href={`/source/events/${eventId}/vendors/${vendor.id}`}
+                        href={`/source/events/${eventId}?stage=responses&vendorId=${vendor.id}`}
                         style={{
                           fontFamily: SHELL.SANS,
                           fontSize: 12.5,

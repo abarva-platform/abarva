@@ -431,7 +431,7 @@ export function SourceEventsPortfolio({
               </Link>
               {activeStage || activeStatus ? (
                 <Link
-                  href="/source/events"
+                  href="/source/portfolio"
                   style={SOURCE_ACTION_LINK_SECONDARY}
                 >
                   Reset filters
@@ -513,7 +513,7 @@ export function SourceEventsPortfolio({
             rather than this portfolio surface.
           </div>
           <div>
-            <Link href="/source/events" style={SOURCE_ACTION_LINK_PRIMARY}>
+            <Link href="/source/portfolio" style={SOURCE_ACTION_LINK_PRIMARY}>
               Reset filters
             </Link>
           </div>
@@ -628,7 +628,7 @@ function buildChoiceHref({
   if (stage) params.set("stage", stage);
   if (status) params.set("status", status);
   const query = params.toString();
-  return query ? `/source/events?${query}` : "/source/events";
+  return query ? `/source/portfolio?${query}` : "/source/portfolio";
 }
 
 function ContextTile({
