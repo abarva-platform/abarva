@@ -61,6 +61,13 @@ function artifactHonestyDiscipline(
         `HONEST ROADMAP MODE: Workstreams, gates, dependencies, owners, and sequencing may be recommended. Calendar dates, durations, and capacity commitments must be cited [n] or labeled [ASSUMPTION TO VALIDATE: indicative timeline pending capacity confirmation].`,
         `Use one Open Inputs Required table for capacity, date, or dependency inputs that must be confirmed.`,
       ].join(" ");
+    case "target_architecture":
+    case "target_state_architecture":
+    case "solution_design":
+      return [
+        `HONEST ARCHITECTURE MODE: Do not assert a specific vendor product, cloud service, integration pattern, or control-maturity level as fact unless cited [n] — these read as authoritative technical claims and are as easy to fabricate convincingly as a financial figure.`,
+        `A compliance certification, security control status, or "current" state of a system may only be stated if it is governed evidence; otherwise mark it [EVIDENCE MISSING] or [ASSUMPTION TO VALIDATE]. Route unconfirmed technology or vendor choices to one Open Inputs Required table rather than presenting them as decided.`,
+      ].join(" ");
     case "value_measurement_contract":
       return [
         `HONEST VALUE-MEASUREMENT MODE: This artifact defines HOW value will be measured: metric, owner, source, method, cadence, baseline status, and acceptance rule.`,
