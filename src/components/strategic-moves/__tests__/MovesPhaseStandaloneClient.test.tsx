@@ -741,9 +741,11 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByText("Files & Evidence")).toBeInTheDocument();
     expect(screen.getByText("Step 1 of 5")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Use the tabs to finish this phase" })).toBeInTheDocument();
-    expect(screen.getByText("1. Prepare")).toBeInTheDocument();
-    expect(screen.getByText("Next tab")).toBeInTheDocument();
-    expect(screen.getByText("Final tab")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Prepare/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Compare Options/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Approve & Build/i })).toBeInTheDocument();
+    expect(screen.getByText("Recommended sessions")).toBeInTheDocument();
+    expect(screen.getByText("Current blockers")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Upload files" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Review gate" })).not.toBeInTheDocument();
     expect(screen.getByText("Solution Options Canvas")).toBeInTheDocument();
@@ -771,7 +773,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: /Review Insights/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Review Findings/i }));
 
     expect(screen.getByText("Current-state readiness")).toBeInTheDocument();
     expect(screen.getByText(/0% collected/i)).toBeInTheDocument();
@@ -785,8 +787,8 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByRole("button", { name: "Open Files & Evidence" }),
     ).toBeInTheDocument();
-    // The duplicate local "Continue to Approve & Build" button was removed —
-    // the step-navigation bar's single primary CTA covers this now.
+    // The duplicate header CTA was removed — only the active workflow card owns
+    // the contextual next action.
     expect(
       screen.queryByRole("button", { name: "Continue to Approve & Build" }),
     ).not.toBeInTheDocument();
@@ -880,7 +882,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: /Upload decision/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /Record Decision/i }));
 
     expect(screen.getByRole("heading", { name: "Decide the approach" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Upload evidence for approach decision" })).toBeInTheDocument();

@@ -133,7 +133,7 @@ const PHASES: PhaseContract[] = [
     lede:
       "Turn the idea into a bounded charter: scope, owner, success measures, assumptions, and the gate that protects the next phase.",
     substeps: [
-      { key: "prepare", label: "Review Inputs" },
+      { key: "prepare", label: "Charter Inputs" },
       { key: "decide", label: "Upload Evidence" },
       { key: "approve", label: "Approve & Build" },
     ],
@@ -161,9 +161,9 @@ const PHASES: PhaseContract[] = [
     lede:
       "Use operational evidence, metrics, systems, workforce signals, and constraints to diagnose the current state before choosing a path.",
     substeps: [
-      { key: "prepare", label: "Review Inputs" },
-      { key: "current", label: "Upload Evidence" },
-      { key: "findings", label: "Review Insights" },
+      { key: "prepare", label: "Prepare" },
+      { key: "current", label: "Upload & Review" },
+      { key: "findings", label: "Review Findings" },
       { key: "approve", label: "Approve & Build" },
     ],
     sessions: ["Current-state walkthrough", "KPI and baseline review", "Systems and handoff review", "Root-cause review"],
@@ -191,10 +191,10 @@ const PHASES: PhaseContract[] = [
     lede:
       "Strategy-phase solutioning: we design each lane just enough to estimate effort, sequence the roadmap, and map the risks - not to build it here. aVa recommends; you decide with your SMEs and approve.",
     substeps: [
-      { key: "prepare", label: "Review Inputs" },
-      { key: "options", label: "Compare options" },
-      { key: "decide", label: "Upload decision" },
-      { key: "canvas", label: "Design canvas" },
+      { key: "prepare", label: "Prepare" },
+      { key: "options", label: "Compare Options" },
+      { key: "decide", label: "Record Decision" },
+      { key: "canvas", label: "Design Canvas" },
       { key: "approve", label: "Approve & Build" },
     ],
     sessions: [
@@ -229,9 +229,9 @@ const PHASES: PhaseContract[] = [
     lede:
       "Convert the chosen approach into workstreams, delivery scenarios, economics, dependencies, and the executive commit package.",
     substeps: [
-      { key: "prepare", label: "Review Inputs" },
-      { key: "value", label: "Value case" },
-      { key: "workstreams", label: "Plan workstreams" },
+      { key: "prepare", label: "Prepare" },
+      { key: "value", label: "Value Case" },
+      { key: "workstreams", label: "Plan Workstreams" },
       { key: "approve", label: "Approve & Build" },
     ],
     sessions: ["Value case workshop", "Delivery scenario review", "Roadmap sequencing", "Executive commit review"],
@@ -259,8 +259,8 @@ const PHASES: PhaseContract[] = [
     lede:
       "Prepare ownership, controls, adoption, value tracking, and Tower handoff so approved value can be measured after launch.",
     substeps: [
-      { key: "prepare", label: "Review Inputs" },
-      { key: "workstreams", label: "Execution readiness" },
+      { key: "prepare", label: "Prepare" },
+      { key: "workstreams", label: "Execution Readiness" },
       { key: "approve", label: "Approve & Build" },
     ],
     sessions: ["Mobilization readiness", "Controls and adoption review", "Tower metric handoff"],
@@ -928,21 +928,6 @@ export function MovesPhaseStandaloneClient({
                     · {substep.label}
                   </span>
                 </div>
-                <button
-                  className="mxw-btn mxw-primary"
-                  onClick={
-                    isHistoricalPhase
-                      ? continueToCurrentPhase
-                      : isFinalSubstep
-                      ? phase.phase === 0
-                        ? () => void approveP0Gate()
-                        : focusGateAction
-                      : continueStep
-                  }
-                  type="button"
-                >
-                  {primaryActionLabel}
-                </button>
               </div>
 
               <div className="mxw-substeps" role="tablist" aria-label="Phase steps">
@@ -968,9 +953,19 @@ export function MovesPhaseStandaloneClient({
               </div>
 
               <PhaseWorkflowGuide
+                actionLabel={primaryActionLabel}
                 evidenceCount={evidenceCount}
                 gateOpenCount={openHardGateCount}
                 nextLabel={nextSubstep?.label ?? null}
+                onAction={
+                  isHistoricalPhase
+                    ? continueToCurrentPhase
+                    : isFinalSubstep
+                      ? phase.phase === 0
+                        ? () => void approveP0Gate()
+                        : focusGateAction
+                      : continueStep
+                }
                 phase={phase}
                 substep={substep.key}
               />
@@ -2123,15 +2118,19 @@ function workflowCopyFor(
 }
 
 function PhaseWorkflowGuide({
+  actionLabel,
   evidenceCount,
   gateOpenCount,
   nextLabel,
+  onAction,
   phase,
   substep,
 }: {
+  actionLabel: string;
   evidenceCount: number;
   gateOpenCount: number;
   nextLabel: string | null;
+  onAction: () => void;
   phase: PhaseContract;
   substep: SubstepKey;
 }) {
@@ -2140,9 +2139,14 @@ function PhaseWorkflowGuide({
   return (
     <section className="mxw-workflow-guide" aria-label="Current phase workflow guidance">
       <div className="mxw-guide-head">
-        <span>{phase.code} step {stepIndex}</span>
-        <strong>{phase.substeps[stepIndex - 1]?.label ?? "Current step"}</strong>
-        <em>{nextLabel ? `Next: ${nextLabel}` : "Final step"}</em>
+        <div>
+          <span>{phase.code} step {stepIndex}</span>
+          <strong>{phase.substeps[stepIndex - 1]?.label ?? "Current step"}</strong>
+          <em>{nextLabel ? `Next: ${nextLabel}` : "Final step"}</em>
+        </div>
+        <button className="mxw-btn mxw-primary" onClick={onAction} type="button">
+          {actionLabel}
+        </button>
       </div>
       <div className="mxw-guide-table">
         <div>
@@ -2220,28 +2224,6 @@ function PhasePreparePanel({
         </p>
       </section>
       <NexusCurrentStateBriefingPanel moveId={move.id} />
-      <div className="mxw-command-table">
-        <div>
-          <span>1. Prepare</span>
-          <p>Confirm sessions, templates, and required evidence.</p>
-          <b>Current tab</b>
-        </div>
-        <div>
-          <span>2. Upload & review</span>
-          <p>Add completed workshop files and review them in Files &amp; Evidence.</p>
-          <b>Next tab</b>
-        </div>
-        <div>
-          <span>3. Review findings</span>
-          <p>Inspect what AbarVa can safely claim and what remains a gap.</p>
-          <b>{missingEvidenceCount} evidence gaps</b>
-        </div>
-        <div>
-          <span>4. Approve & Build</span>
-          <p>Run the governed close: context extract, deliverables, gate, and handoff.</p>
-          <b>Final tab</b>
-        </div>
-      </div>
       <div className="mxw-command-grid">
         <article>
           <span>Recommended sessions</span>
@@ -2964,7 +2946,7 @@ function MovesStandaloneStyles() {
 .mxw-lib-link span{width:22px;height:22px;border-radius:6px;background:var(--card);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
 .mxw-foot{margin-top:auto;padding:14px 8px 0;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint);line-height:1.6}
 .mxw-foot b{color:var(--muted);font-weight:600}
-.mxw-shell{width:min(1320px,calc(100vw - 306px));max-width:calc(100vw - 306px);margin:0 auto;padding:34px 32px 96px}
+.mxw-shell{width:100%;max-width:none;margin:0;padding:34px 40px 96px}
 .mxw-crumb{font-size:13px;color:var(--muted);margin-bottom:20px}
 .mxw-crumb a,.mxw-crumb button{color:var(--muted);background:none;border:0;font:inherit;cursor:pointer}
 .mxw-crumb a:hover,.mxw-crumb button:hover{color:var(--ink)}
@@ -2975,7 +2957,7 @@ function MovesStandaloneStyles() {
 .mxw-stage-head h1{font-family:Georgia,serif;font-size:32px;font-weight:700;letter-spacing:-.7px;line-height:1.08;margin:0 0 6px}
 .mxw-question{font-size:15.5px;font-weight:600;color:var(--ink);margin-bottom:2px}
 .mxw-stage-head p{font-size:15.5px;color:var(--muted);line-height:1.55;max-width:70ch;margin:0}
-.mxw-stage-bar{position:sticky;top:52px;z-index:40;display:flex;align-items:center;gap:20px;padding:14px 0 15px;margin-bottom:8px;background:var(--bg);border-bottom:1px solid var(--line)}
+.mxw-stage-bar{position:sticky;top:52px;z-index:40;display:flex;align-items:center;gap:20px;padding:12px 0 13px;margin-bottom:8px;background:var(--bg)}
 .mxw-progress{display:flex;align-items:center;gap:14px;flex:1}
 .mxw-track{flex:1;height:6px;border-radius:3px;background:rgba(20,20,19,.07);overflow:hidden;max-width:260px}
 .mxw-track span{display:block;height:100%;background:var(--green);border-radius:3px;transition:width .35s ease}
@@ -2984,24 +2966,23 @@ function MovesStandaloneStyles() {
 .mxw-btn{padding:10px 18px;border-radius:9px;font-size:14px;font-weight:600;border:1px solid transparent;cursor:pointer}
 .mxw-primary{background:var(--ink);color:#fff}
 .mxw-primary:hover{background:#000}
-.mxw-substeps{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(170px,1fr);gap:0;margin:20px 0 10px;padding:4px;border:1px solid var(--line);border-radius:14px;background:#eceae5;box-shadow:inset 0 1px 0 rgba(255,255,255,.8);overflow-x:auto}
-.mxw-substep{position:relative;display:flex;align-items:center;justify-content:center;gap:9px;min-height:46px;padding:10px 14px;background:transparent;border:1px solid transparent;border-radius:10px;cursor:pointer;color:var(--muted);white-space:nowrap;transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,color .16s ease}
-.mxw-substep:not(:last-child)::after{content:"";position:absolute;right:-1px;top:9px;bottom:9px;width:1px;background:rgba(20,20,19,.08)}
+.mxw-substeps{display:flex;align-items:flex-end;gap:4px;margin:20px 0 0;border-bottom:1px solid var(--line-2);overflow-x:auto}
+.mxw-substep{position:relative;display:flex;align-items:center;gap:9px;min-height:48px;padding:11px 18px 12px;background:transparent;border:1px solid transparent;border-bottom:0;border-radius:11px 11px 0 0;cursor:pointer;color:var(--muted);white-space:nowrap;transition:background .16s ease,border-color .16s ease,color .16s ease}
 .mxw-substep:hover{background:rgba(255,255,255,.72);color:var(--ink)}
-.mxw-substep.cur{z-index:1;background:#fff;border-color:rgba(0,87,184,.28);box-shadow:0 1px 2px rgba(20,20,19,.08)}
-.mxw-substep.cur::before{content:"";position:absolute;left:12px;right:12px;bottom:4px;height:3px;border-radius:999px;background:var(--blue)}
+.mxw-substep.cur{z-index:1;background:#fff;border-color:var(--line-2);box-shadow:0 -1px 0 #fff inset;color:var(--ink)}
+.mxw-substep.cur::before{content:"";position:absolute;left:14px;right:14px;top:0;height:3px;border-radius:999px;background:var(--blue)}
 .mxw-substep.done{color:var(--ink)}
-.mxw-substep.done::before{content:"";position:absolute;left:12px;right:12px;bottom:4px;height:3px;border-radius:999px;background:var(--green)}
+.mxw-substep.done::before{content:"";position:absolute;left:14px;right:14px;top:0;height:3px;border-radius:999px;background:var(--green)}
 .mxw-substep span{width:23px;height:23px;border-radius:50%;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;background:var(--card);border:1.5px solid var(--line-2);color:var(--faint);flex:0 0 auto}
 .mxw-substep.done span{background:var(--green);border-color:var(--green);color:#fff}
 .mxw-substep.cur span{background:var(--blue);border-color:var(--blue);color:#fff}
-.mxw-substep b{font-size:13px;font-weight:700;line-height:1.1}
-.mxw-substep.cur b{color:var(--ink)}
-.mxw-workflow-guide{border:1px solid var(--line);border-radius:13px;background:var(--card);box-shadow:var(--shadow);padding:14px 16px;margin:8px 0 18px}
-.mxw-guide-head{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.mxw-substep b{font-size:13px;font-weight:800;line-height:1.1}
+.mxw-workflow-guide{border:1px solid var(--line-2);border-top:0;border-radius:0 0 13px 13px;background:var(--card);box-shadow:var(--shadow);padding:16px;margin:0 0 18px}
+.mxw-guide-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
+.mxw-guide-head>div{display:flex;align-items:baseline;gap:10px;min-width:0;flex-wrap:wrap}
 .mxw-guide-head span{font-size:10.5px;letter-spacing:.95px;text-transform:uppercase;color:var(--blue);font-weight:900}
 .mxw-guide-head strong{font-size:15px;color:var(--ink)}
-.mxw-guide-head em{margin-left:auto;font-style:normal;font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap}
+.mxw-guide-head em{font-style:normal;font-size:12px;color:var(--muted);font-weight:700;white-space:nowrap}
 .mxw-guide-table{display:grid;grid-template-columns:1.05fr 1.45fr 1.25fr .9fr;border:1px solid var(--line);border-radius:11px;overflow:hidden}
 .mxw-guide-table div{padding:11px 12px;border-right:1px solid var(--line);background:var(--soft);min-width:0}
 .mxw-guide-table div:nth-child(2){background:#fff}
