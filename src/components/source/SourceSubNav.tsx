@@ -11,9 +11,8 @@ import { isSourceIaV2 } from "@/lib/source/source-ia-v2";
  * one click apart.
  *
  * Why this exists: the Source redesign made `/source` redirect straight to
- * `/source/queue` (the Decision Queue). That orphaned the sourcing-events
- * portfolio at `/source/events` — it still works, but nothing in the Source
- * UI linked to it. This strip restores that path.
+ * `/source/queue` (the Decision Queue). The retired sourcing-events index now
+ * redirects to Portfolio, so this strip exposes the supported Source surfaces.
  *
  * Three tabs, deliberately lean (the redesign's whole point was a *less* busy
  * Source). Renewals are intentionally absent — they have no standalone index
@@ -27,13 +26,11 @@ interface SourceSubNavTab {
 }
 
 /**
- * Legacy three-tab set (IA v1). Retained for `NEXT_PUBLIC_SOURCE_IA_V2=0`
- * rollback. Queue + Events + Portfolio are three peer views of the same event
- * set — the overlap the audit flagged.
+ * Legacy rollback tab set. The standalone Events page has been archived, so
+ * rollback navigation keeps users on the supported Portfolio surface.
  */
 export const SOURCE_SUBNAV_TABS: readonly SourceSubNavTab[] = [
   { key: "queue", label: "Queue", href: "/source/queue" },
-  { key: "events", label: "Events", href: "/source/events" },
   { key: "capabilities", label: "Capabilities", href: "/source/capabilities" },
   { key: "portfolio", label: "Portfolio", href: "/source/portfolio" },
 ] as const;

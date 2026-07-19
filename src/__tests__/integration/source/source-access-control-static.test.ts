@@ -65,9 +65,9 @@ describe('Source access-control wiring', () => {
     const route = read('src/app/api/v1/source/events/[eventId]/approve/route.ts');
 
     expect(route).toContain('autoDraftOnStageEntry');
-    expect(route).toContain('advancedToStage === "scope"');
-    expect(route).toContain('enteredStage: "strategy"');
-    expect(route).toContain('enteredStage: "scope"');
+    expect(route).toContain('stageAdvancedTo = decision.advanceStageTo');
+    expect(route).toContain('enteredStage: decision.advanceStageTo');
+    expect(route).toContain('evaluateSourceGateAdvanceContract');
   });
 
   it('keeps Source stage advancement server-authorized instead of client-blocking admin self-approval', () => {
@@ -128,7 +128,7 @@ describe('Source access-control wiring', () => {
     expect(route.indexOf('sanitizeClientFacingSourceDraft(rewrittenBody', completionIndex)).toBeGreaterThan(completionIndex);
   });
 
-  it('opens persisted Source artifacts through the registry-backed detail route', () => {
+  it('keeps persisted Source artifacts registry-backed and archives old detail route', () => {
     const queries = read('src/lib/source/queries.ts');
     const page = read('src/app/(maestro)/source/events/[eventId]/artifacts/[artifactId]/page.tsx');
     const drawer = read('src/components/source/SourceArtifactDrawer.tsx');
@@ -141,11 +141,10 @@ describe('Source access-control wiring', () => {
     expect(queries).toContain('allowedEventIds.has(registryRecord.sourceEventId)');
     expect(queries).toContain('parser/vector/graph completion is not implied');
 
-    expect(page).toContain('source_artifacts registry');
-    expect(page).toContain('createdFrom: provenanceSource');
-    expect(page).toContain('storeKey: `source-artifact:${eventId}:${artifactId}`');
-    expect(page).toContain('journeyStages');
-    expect(page).toContain('activeJourneyStage');
+    expect(page).toContain('/workspace?artifactId=');
+    expect(page).toContain('redirect(');
+    expect(page).not.toContain('source_artifacts registry');
+    expect(page).not.toContain('storeKey: `source-artifact:${eventId}:${artifactId}`');
     expect(drawer).toContain('Registered Source artifact');
     expect(drawer).toContain('Source: live persisted registry');
     expect(drawer).toContain('no completion is implied');

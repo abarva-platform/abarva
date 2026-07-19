@@ -210,10 +210,10 @@ export default async function SourceCompareEventsPage({
           }}
         >
           <Link
-            href="/source/events"
+            href="/source/portfolio"
             style={{ color: SHELL.INK_MUTED, textDecoration: 'none' }}
           >
-            Source events
+            Source portfolio
           </Link>
           <span style={{ opacity: 0.4 }}>›</span>
           <span>Compare</span>

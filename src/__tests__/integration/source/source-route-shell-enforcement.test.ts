@@ -12,9 +12,10 @@ describe('DESROUTE4 source route shell enforcement (Wave S1 — AppShell)', () =
   const sentinelAgentColumn = 'src/components/source/SentinelAgentColumn.tsx';
   const chatAgentRoute = 'src/app/api/chat/agent/route.ts';
 
-  it('target source routes use AppShell (Wave S1 migration complete)', () => {
+  it('target source routes use the supported shell or archive redirect', () => {
     const events = read(sourceEventsRoute);
-    expect(events).toContain('AppShell');
+    expect(events).toContain('redirect("/source/portfolio")');
+    expect(events).not.toContain('AppShell');
 
     // Detail route now mounts the universal sourcing canvas (Wave 1 build).
     // The old SourceEventAgentCanvas surface is replaced by UniversalCanvasShell
@@ -22,9 +23,9 @@ describe('DESROUTE4 source route shell enforcement (Wave S1 — AppShell)', () =
     const detail = read(sourceEventDetailRoute);
     expect(detail).toContain('UniversalCanvasShell');
 
-    // Dashboard uses SourcePortfolioPage which itself wraps AppShell.
+    // Landing redirects to the supported Decision Queue.
     const dashboard = read(sourceDashboardRoute);
-    expect(dashboard).toContain('SourcePortfolioPage');
+    expect(dashboard).toContain("redirect('/source/queue')");
   });
 
   it('event detail route reads canvas substrate (artifacts, gates, evidence)', () => {

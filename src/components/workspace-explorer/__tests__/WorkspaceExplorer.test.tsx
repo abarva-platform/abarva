@@ -48,7 +48,7 @@ const uploadedEvidence: WorkspaceItem = {
   artifactCode: "application_inventory",
   sourceLabel: "source_artifacts registry",
   description: "Authoritative application inventory.",
-  href: "/source/events/event-1/artifacts/artifact-application-inventory",
+  href: "/source/events/event-1/workspace?artifactId=artifact-application-inventory",
   downloadHref: "/api/v1/source/artifacts/artifact-application-inventory/download",
   classification: "Confidential",
   lineage: { cites: [], usedBy: ["d05_scope_memo"], status: "recorded" },

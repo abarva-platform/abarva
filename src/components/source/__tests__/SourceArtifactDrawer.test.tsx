@@ -245,7 +245,7 @@ describe("SourceArtifactDrawer · hygiene", () => {
     );
   });
 
-  it("artifact route has business-safe aVa side-rail language", () => {
+  it("artifact route is archived into the event workspace", () => {
     const src = readFileSync(
       join(
         process.cwd(),
@@ -253,13 +253,16 @@ describe("SourceArtifactDrawer · hygiene", () => {
       ),
       "utf8",
     );
-    expect(src).toContain("Artifact state:");
-    expect(src).toContain("Source:");
-    expect(src).toContain("Evidence chain:");
+    expect(src).toContain("/workspace?artifactId=");
+    expect(src).toContain("redirect(");
+    expect(src).not.toContain("SourceArtifactDrawer");
+    expect(src).not.toContain("Artifact state:");
+    expect(src).not.toContain("Source:");
+    expect(src).not.toContain("Evidence chain:");
     expect(src).not.toContain("Artifact tier:");
     expect(src).not.toContain("Provenance:");
     expect(src).not.toContain("Sentinel ·");
-    expect(src).toContain("Artifact review ·");
+    expect(src).not.toContain("Artifact review ·");
   });
 
   it("Source shell rail uses aVa naming rather than stale internal agent labels", () => {
