@@ -1201,9 +1201,9 @@ function CioOverviewKpiStrip({ model }: { model: CioDashboardModel }) {
           : ("amber" as const),
     },
     {
-      label: "Proven value",
+      label: "Claimable value",
       value: model.measuredTotal > 0 ? formatMoney(model.measuredTotal) : "gap",
-      note: `${model.measuredCoverageCount} attested program${model.measuredCoverageCount === 1 ? "" : "s"}`,
+      note: `${model.measuredCoverageCount} claim-gated program${model.measuredCoverageCount === 1 ? "" : "s"}`,
       tone: model.measuredTotal > 0 ? ("green" as const) : ("amber" as const),
     },
     {
@@ -1216,7 +1216,7 @@ function CioOverviewKpiStrip({ model }: { model: CioDashboardModel }) {
           : "gap",
       note:
         model.initiativeBudgetTotal > 0
-          ? "committed value minus proven value"
+          ? "committed value minus claimable value"
           : "needs initiative business-case rows",
       tone:
         model.initiativeBudgetTotal <= 0 || valueGap > 0

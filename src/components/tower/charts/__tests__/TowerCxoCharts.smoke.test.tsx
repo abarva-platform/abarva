@@ -60,7 +60,7 @@ const budgetRollup: TowerBudgetRollup = {
 };
 
 const benchmarkRow: CioTowerCxoBenchmarkRow = {
-  tenantKey: "lakeshore-industries",
+  tenantKey: "lakeshore-holdings",
   label: "This tenant",
   isCurrent: true,
   totalBudget: 193_600_000,

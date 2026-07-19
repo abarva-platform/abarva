@@ -199,16 +199,23 @@ const CIO_TOWER_TENANT_KEY_BY_ALIAS: Record<string, string> = {
   "first-capital-financial": "first-capital-financial",
   skyharbor: "skyharbor-air",
   "skyharbor-air": "skyharbor-air",
-  lakeshore: "lakeshore-industries",
-  "lakeshore-holdings": "lakeshore-industries",
-  "lakeshore-industries": "lakeshore-industries",
-  morganstreet: "lakeshore-industries",
-  "morgan-street": "lakeshore-industries",
+  lakeshore: "lakeshore-holdings",
+  lakeshoreholdings: "lakeshore-holdings",
+  lakeshoreindustries: "lakeshore-holdings",
+  "lakeshore-holdings": "lakeshore-holdings",
+  "lakeshore-industries": "lakeshore-holdings",
 };
 
 export function canonicalCioTowerTenantKey(value: string): string {
   const normalized = value.trim().toLowerCase();
-  return CIO_TOWER_TENANT_KEY_BY_ALIAS[normalized] ?? normalized;
+  const slug = normalized.replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const compact = normalized.replace(/[^a-z0-9]+/g, "");
+  return (
+    CIO_TOWER_TENANT_KEY_BY_ALIAS[normalized] ??
+    CIO_TOWER_TENANT_KEY_BY_ALIAS[slug] ??
+    CIO_TOWER_TENANT_KEY_BY_ALIAS[compact] ??
+    slug
+  );
 }
 
 function stableKey(prefix: string, parts: readonly string[]): string {

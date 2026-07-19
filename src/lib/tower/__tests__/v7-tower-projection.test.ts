@@ -81,6 +81,34 @@ describe('V7 Tower projection', () => {
           finance_validation_status: 'pending',
         },
       },
+      {
+        dimension_key: 'SA08_AI_Benefits_Realization_Usage_Ledger',
+        record_key: 'LAK-SA08-004',
+        record_name: 'M365 Copilot benefits posture',
+        source_file: 'SA08_AI_Benefits_Realization_Usage_Ledger.csv',
+        source_row_number: 5,
+        as_of_date: '2026-07-03',
+        period_end: '2026-07-03',
+        source_artifact_name: 'AI benefits realization usage ledger',
+        source_validation_status: 'validated',
+        values_json: {
+          ai_program_id: 'LAK-AI-004',
+          program_name: 'M365 Copilot adoption',
+          tool_name: 'Microsoft 365 Copilot',
+          business_function: 'Shared Services',
+          funded_spend_usd: 3_000_000,
+          promised_value_usd: 12_000_000,
+          usage_actual: 420,
+          kpi_actual: 'Partial movement observed',
+          finance_validated_value_usd: 2_400_000,
+          finance_validation_status: 'finance_validated_partial',
+          value_claim_status: 'usage_measured',
+          tower_claim_allowed: 'partial',
+          realized_value_allowed: 'false',
+          decision_action: 'scale',
+          caveat: 'Partial validation only; not realized value.',
+        },
+      },
     ]);
 
     const projection = await loadV7TowerProjection({
@@ -89,7 +117,7 @@ describe('V7 Tower projection', () => {
 
     expect(queryMock).toHaveBeenCalledWith(
       expect.stringContaining('lower(r.dimension_key) = any($2::text[])'),
-      expect.arrayContaining(['lakeshore-industries']),
+      expect.arrayContaining(['lakeshore-holdings']),
       { missingTable: 'empty' },
     );
     expect(queryMock.mock.calls[0][0]).toContain('join intelligence_v7.tenant_pack_runs run');
@@ -102,15 +130,23 @@ describe('V7 Tower projection', () => {
     expect(queryMock.mock.calls[0][0]).not.toContain('r.as_of_date');
     expect(queryMock.mock.calls[0][0]).not.toContain('r.period_end');
     expect(projection.source).toBe('intelligence_v7');
-    expect(projection.initiatives).toHaveLength(2);
+    expect(projection.initiatives).toHaveLength(3);
     expect(projection.initiatives[0]).toMatchObject({
       name: 'Kyriba global cash and payments rollout',
       committedAnnualUsd: 42_000_000,
       committedTotalUsd: 86_000_000,
-      measuredValueUsd: 18_900_000,
+      measuredValueUsd: null,
       ownerFunction: 'Treasury',
     });
-    expect(projection.initiatives[1]).toMatchObject({
+    expect(projection.initiatives.find((row) => row.initiativeId === 'LAK-AI-004')).toMatchObject({
+      name: 'M365 Copilot adoption',
+      committedAnnualUsd: 3_000_000,
+      committedTotalUsd: 12_000_000,
+      measuredValueUsd: null,
+      loadedViaTemplate: 'sa08_ai_benefits_realization_usage_ledger',
+      statusSummary: expect.stringContaining('claim gate partial'),
+    });
+    expect(projection.initiatives.find((row) => row.initiativeId === 'LAK-SPEND-003')).toMatchObject({
       name: 'modernization portfolio · Corporate Treasury · Kyriba',
       committedAnnualUsd: 7_500_000,
       ownerFunction: 'Corporate Treasury',
@@ -122,7 +158,8 @@ describe('V7 Tower projection', () => {
       renewalDate: '2026-08-07',
     });
     expect(projection.vendors.some((row) => row.vendorName === 'Kyriba' && row.contractValueUsd === 7_500_000)).toBe(true);
-    expect(projection.metricPackets.find((packet) => packet.measureKey === 'initiative_budget_fy26')?.displayValue).toBe('$49.5M');
-    expect(projection.metricPackets.find((packet) => packet.measureKey === 'measured_value_ytd')?.displayValue).toBe('$18.9M');
+    expect(projection.metricPackets.find((packet) => packet.measureKey === 'initiative_budget_fy26')?.displayValue).toBe('$52.5M');
+    expect(projection.metricPackets.find((packet) => packet.measureKey === 'measured_value_ytd')?.displayValue).toBe('not loaded');
+    expect(projection.metricPackets.find((packet) => packet.measureKey === 'partial_finance_validated_value_ytd')?.displayValue).toBe('$2.4M');
   });
 });
