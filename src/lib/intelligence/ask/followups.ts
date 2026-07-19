@@ -18,6 +18,20 @@ export function buildDeterministicConciseFollowups(args: {
   ];
 }
 
+export function normalizeGeneratedFollowup(value: string): string {
+  const singleLine = value.replace(/\s+/g, " ").trim();
+  const withoutPolicyFooters = singleLine
+    .replace(/\bEvidence boundary:.*$/i, "")
+    .replace(/\bDecision boundary:.*$/i, "")
+    .trim();
+  const firstQuestionEnd = withoutPolicyFooters.indexOf("?");
+  const question =
+    firstQuestionEnd >= 0
+      ? withoutPolicyFooters.slice(0, firstQuestionEnd + 1)
+      : withoutPolicyFooters;
+  return question.length > 320 ? `${question.slice(0, 317).trimEnd()}...` : question;
+}
+
 export async function generateFollowups(args: {
   query: string;
   answer: string;
@@ -70,7 +84,7 @@ ${grounding || 'No additional client grounding context was selected.'}`;
     return parsed.followups
       .filter((f): f is string => typeof f === 'string')
       .slice(0, 3)
-      .map((s) => s.trim())
+      .map(normalizeGeneratedFollowup)
       .filter(Boolean);
   } catch {
     return [];
