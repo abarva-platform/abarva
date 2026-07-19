@@ -1,6 +1,5 @@
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/shell/AppShell";
-import { SourceSubNav } from "@/components/source/SourceSubNav";
 import { SourceWorkingPane } from "@/components/source/SourceWorkingPane";
 import { EventApprovalCard } from "@/components/source/approval/EventApprovalCard";
 import type { IntakeFact } from "@/components/source/approval/IntakeFactsReview";
@@ -68,7 +67,6 @@ export default async function SourceEventApprovalPage({
         showLocked: true,
         context: "Source · Event approval",
       }}
-      subNav={<SourceSubNav />}
     >
       <SourceWorkingPane>
         <EventApprovalCard

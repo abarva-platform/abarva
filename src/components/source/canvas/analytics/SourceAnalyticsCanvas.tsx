@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { AskAnythingBar } from '@/components/agent/AskAnythingBar';
 import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
-import { SourceSubNav } from '@/components/source/SourceSubNav';
 import { AppShell } from '@/components/shell/AppShell';
 import type { AgentAction } from '@/components/shell/AgentColumn';
 import {
@@ -183,7 +182,6 @@ export function SourceAnalyticsCanvas({
         showLocked: true,
         context: `${event.code} · ${event.name}`,
       }}
-      subNav={<SourceSubNav />}
     >
       <main data-testid="source-analytics-canvas" style={MAIN_STYLE}>
         {showSideAva ? (
