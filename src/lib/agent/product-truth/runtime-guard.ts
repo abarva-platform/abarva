@@ -29,21 +29,59 @@ const INTERNAL_ERROR_PATTERNS: readonly RegExp[] = [
 ];
 
 const THIRD_PARTY_REPAIR_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
-  [/\breplaces?\s+(Gartner|Forrester|ISG|UpperEdge|McKinsey|Bain|BCG|Big Four|Deloitte|Accenture|PwC|EY|KPMG|legal counsel|procurement advisors?|credit desks?|analyst reports?|auditors?|FP&A|clinicians?)\b/gi, "supports work that can be reviewed alongside $1"],
-  [/\bno (?:longer )?needs?\s+(Gartner|Forrester|ISG|UpperEdge|McKinsey|Bain|BCG|Big Four|Deloitte|Accenture|PwC|EY|KPMG|legal counsel|procurement advisors?|credit desks?|analyst reports?|auditors?|FP&A|clinicians?)\b/gi, "can be used alongside $1 where that input is appropriate"],
-  [/\binstead of hiring consultants\b/gi, "alongside external advisory input where useful"],
-  [/\bconsultant-grade without consultant cost\b/gi, "structured, evidence-led decision support"],
-  [/\bexternal advisory input unnecessary\b/gi, "external advisory input easier to target and review"],
+  [
+    /\breplaces?\s+(Gartner|Forrester|ISG|UpperEdge|McKinsey|Bain|BCG|Big Four|Deloitte|Accenture|PwC|EY|KPMG|legal counsel|procurement advisors?|credit desks?|analyst reports?|auditors?|FP&A|clinicians?)\b/gi,
+    "supports work that can be reviewed alongside $1",
+  ],
+  [
+    /\bno (?:longer )?needs?\s+(Gartner|Forrester|ISG|UpperEdge|McKinsey|Bain|BCG|Big Four|Deloitte|Accenture|PwC|EY|KPMG|legal counsel|procurement advisors?|credit desks?|analyst reports?|auditors?|FP&A|clinicians?)\b/gi,
+    "can be used alongside $1 where that input is appropriate",
+  ],
+  [
+    /\binstead of hiring consultants\b/gi,
+    "alongside external advisory input where useful",
+  ],
+  [
+    /\bconsultant-grade without consultant cost\b/gi,
+    "structured, evidence-led decision support",
+  ],
+  [
+    /\bexternal advisory input unnecessary\b/gi,
+    "external advisory input easier to target and review",
+  ],
 ];
 
-const UNSAFE_CAPABILITY_REPAIR_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
-  [/\bSource automatically (?:reads|ingests|compares|classifies|negotiates|routes?)\b/gi, "Source can support this workflow when the required contract evidence is loaded and reviewed"],
-  [/\bSource reads all MSAs and compares them against a clause library\b/gi, "A client-safe Source workflow would compare loaded executed agreements against approved clause positions for Legal and Procurement review"],
-  [/\bSource distinguishes legacy from active MSAs\b/gi, "Source can help identify agreement status when effective dates, amendments, and ownership fields are loaded"],
-  [/\bTower (?:automatically )?certifies?\b/gi, "Tower tracks evidence for Finance and outcome-owner certification; it does not certify by itself"],
-  [/\b(?:stand up|use|run|deploy|configure)\s+Tower\s+to\s+certif(?:y|ies)\b/gi, "use Tower to track evidence for Finance and outcome-owner certification"],
-  [/\bMoves (?:automatically )?approves?\b/gi, "Moves structures readiness for sponsor approval; it does not approve by itself"],
-  [/\bAbarVa (?:automatically )?approves?\b/gi, "AbarVa structures the decision path for accountable owners; it does not approve by itself"],
+const UNSAFE_CAPABILITY_REPAIR_PATTERNS: ReadonlyArray<
+  readonly [RegExp, string]
+> = [
+  [
+    /\bSource automatically (?:reads|ingests|compares|classifies|negotiates|routes?)\b/gi,
+    "Source can support this workflow when the required contract evidence is loaded and reviewed",
+  ],
+  [
+    /\bSource reads all MSAs and compares them against a clause library\b/gi,
+    "A client-safe Source workflow would compare loaded executed agreements against approved clause positions for Legal and Procurement review",
+  ],
+  [
+    /\bSource distinguishes legacy from active MSAs\b/gi,
+    "Source can help identify agreement status when effective dates, amendments, and ownership fields are loaded",
+  ],
+  [
+    /\bTower (?:automatically )?certifies?\b/gi,
+    "Tower tracks evidence for Finance and outcome-owner certification; it does not certify by itself",
+  ],
+  [
+    /\b(?:stand up|use|run|deploy|configure)\s+Tower\s+to\s+certif(?:y|ies)\b/gi,
+    "use Tower to track evidence for Finance and outcome-owner certification",
+  ],
+  [
+    /\bMoves (?:automatically )?approves?\b/gi,
+    "Moves structures readiness for sponsor approval; it does not approve by itself",
+  ],
+  [
+    /\bAbarVa (?:automatically )?approves?\b/gi,
+    "AbarVa structures the decision path for accountable owners; it does not approve by itself",
+  ],
   [/\bHome knows every\b/gi, "Home can show loaded and missing"],
 ];
 
@@ -81,7 +119,9 @@ export function applyProductTruthRuntimeGuard(
   violations.push(...detectInternalErrors(originalText));
   violations.push(...detectOutOfScope(originalText, context));
   violations.push(...checkThirdPartyReplacementClaims(originalText));
-  violations.push(...checkCapabilityClaims(originalText, context.tenantKey ?? null));
+  violations.push(
+    ...checkCapabilityClaims(originalText, context.tenantKey ?? null),
+  );
   if (context.groundingText !== undefined) {
     violations.push(
       ...checkTenantEvidenceClaims(originalText, context.groundingText),
@@ -89,7 +129,9 @@ export function applyProductTruthRuntimeGuard(
   }
   violations.push(...detectMovesModelViolations(originalText));
   violations.push(...detectEvidenceBoundaryViolations(originalText, context));
-  violations.push(...detectProfessionalBoundaryViolations(originalText, context));
+  violations.push(
+    ...detectProfessionalBoundaryViolations(originalText, context),
+  );
 
   const shouldBlock =
     violations.some((violation) =>
@@ -147,16 +189,13 @@ export function sanitizeSuggestedQuestions(
         question,
       );
     if (unsafe) {
-      violations.push(
-        ...result.violations,
-        {
-          category: "unsafe_suggested_question",
-          id: `suggested-question-${safetyClass}`,
-          matchedText: question,
-          detail:
-            "Suggested questions must not imply unsupported capabilities, replacement of advisors, workflow approval, or stale/cross-tenant facts.",
-        },
-      );
+      violations.push(...result.violations, {
+        category: "unsafe_suggested_question",
+        id: `suggested-question-${safetyClass}`,
+        matchedText: question,
+        detail:
+          "Suggested questions must not imply unsupported capabilities, replacement of advisors, workflow approval, or stale/cross-tenant facts.",
+      });
       continue;
     }
     safeQuestions.push(result.text);
@@ -229,7 +268,10 @@ export function buildClientSafeFallback(
 ): string {
   const tenant = context.tenantName ?? "this tenant";
   const surface = normalizedSurface(context.surface);
-  if (context.query && OUT_OF_SCOPE_PATTERNS.some((pattern) => pattern.test(context.query ?? ""))) {
+  if (
+    context.query &&
+    OUT_OF_SCOPE_PATTERNS.some((pattern) => pattern.test(context.query ?? ""))
+  ) {
     return `${surfaceBoundaryLead(surface, tenant)} I can help with confirmed facts, evidence gaps, and the right AbarVa workflow for ${tenant}.`;
   }
   return "I can't safely answer that from the currently loaded evidence. I can show confirmed facts, likely gaps, and what would need to be loaded before making a client-ready claim.";
@@ -298,7 +340,11 @@ function detectEvidenceBoundaryViolations(
   context: ProductTruthRuntimeContext,
 ): ProductTruthViolation[] {
   if (!EVIDENCE_CLAIM_PATTERN.test(text)) return [];
-  if (/\b(loaded|evidence|source|cited|confirmed|missing|needs confirmation|not confirmed|inferred|assumption)\b/i.test(text)) {
+  if (
+    /\b(loaded|evidence|source|cited|confirmed|missing|needs confirmation|not confirmed|inferred|assumption)\b/i.test(
+      text,
+    )
+  ) {
     return [];
   }
   return [
@@ -375,7 +421,11 @@ function appendEvidenceBoundaryIfNeeded(
     ),
   );
   if (!needsBoundary) return text;
-  if (/I (?:do not|don't) have loaded evidence|needs confirmation|not confirmed|client-ready claim/i.test(text)) {
+  if (
+    /I (?:do not|don't) have loaded evidence|needs confirmation|not confirmed|client-ready claim/i.test(
+      text,
+    )
+  ) {
     return text;
   }
   return `${text.trim()}\n\nEvidence boundary: treat any tenant-specific numbers, dates, owners, contract terms, control status, or product workflow claims as not client-ready unless they are loaded, cited, and reviewed by the accountable owner.`;
@@ -385,10 +435,18 @@ function appendProfessionalBoundaryIfNeeded(
   text: string,
   violations: readonly ProductTruthViolation[],
 ): string {
-  if (!violations.some((violation) => violation.category === "professional_boundary_missing")) {
+  if (
+    !violations.some(
+      (violation) => violation.category === "professional_boundary_missing",
+    )
+  ) {
     return text;
   }
-  if (/Legal|Procurement|Finance|Risk|Compliance|Clinical|auditor|decision owner|approval authority/i.test(text)) {
+  if (
+    /Legal|Procurement|Finance|Risk|Compliance|Clinical|auditor|decision owner|approval authority/i.test(
+      text,
+    )
+  ) {
     return text;
   }
   return `${text.trim()}\n\nDecision boundary: AbarVa can structure evidence and prepare decision artifacts, but accountable Legal, Procurement, Finance, Risk, Compliance, clinical, or executive owners remain the review and approval authority.`;
@@ -426,11 +484,113 @@ function defaultSafeSuggestedQuestions(
       "Which source rows should be reviewed before using this answer?",
     ];
   }
+  if (surface === "intelligence") {
+    return intelligenceSafeSuggestedQuestions(context);
+  }
   return [
     "What can AbarVa confirm from loaded evidence?",
     "What evidence is missing before this becomes client-ready?",
     "Which surface should own the next workflow step?",
   ];
+}
+
+function intelligenceSafeSuggestedQuestions(
+  context: ProductTruthRuntimeContext,
+): string[] {
+  const combined = `${context.query ?? ""}\n${context.groundingText ?? ""}`;
+  const tenant = displayTenantName(context);
+  const candidates: string[] = [];
+
+  if (
+    /\b(agent assist|contact.?center|call.?center|member service|customer service|service desk|case management)\b/i.test(
+      combined,
+    )
+  ) {
+    candidates.push(
+      `Which ${tenant} contact-center systems, data feeds, and escalation owners should we validate first?`,
+    );
+  }
+  if (/\b(fraud|dispute|aci|backlog|request|case)\b/i.test(combined)) {
+    candidates.push(
+      `What evidence would certify the fraud or dispute backlog value case for ${tenant}?`,
+    );
+  }
+  if (
+    /\b(credit spreading|commercial credit|fair lending|sr 11-7|model validation|bedrock|claude)\b/i.test(
+      combined,
+    )
+  ) {
+    candidates.push(
+      `What model-risk and data-readiness gates must clear before scaling credit automation?`,
+    );
+  }
+  if (
+    /\b(capital markets|research automation|databricks|measured value|\\$929|retired)\b/i.test(
+      combined,
+    )
+  ) {
+    candidates.push(
+      `Should ${tenant} recommit the proven capital-markets asset or retire it permanently?`,
+    );
+  }
+  if (
+    /\b(data readiness|data foundation|feature store|lakehouse|semantic layer|lineage|metric basis)\b/i.test(
+      combined,
+    )
+  ) {
+    candidates.push(
+      `Which data-readiness gaps block the next AI funding decision for ${tenant}?`,
+    );
+  }
+  if (
+    /\b(vendor|contract|renewal|source|platform expansion|sla|commercial)\b/i.test(
+      combined,
+    )
+  ) {
+    candidates.push(
+      `What vendor or contract evidence should Source test before ${tenant} commits spend?`,
+    );
+  }
+  if (
+    /\b(board|cfo|fund|funding|value|benefit|roi|measured value|baseline)\b/i.test(
+      combined,
+    )
+  ) {
+    candidates.push(
+      `What board-safe value proof should the CFO require before funding the next wave?`,
+    );
+  }
+  if (
+    /\b(moves|phase|p0|p1|p2|p3|p4|p5|tower|execute|execution)\b/i.test(
+      combined,
+    )
+  ) {
+    candidates.push(
+      `How should Moves and Tower turn this into owners, gates, and value tracking?`,
+    );
+  }
+  if (
+    /\b(risk|compliance|governance|control|audit|explainability|bsa|aml|sar|transaction monitoring)\b/i.test(
+      combined,
+    )
+  ) {
+    candidates.push(
+      `Which risk and compliance controls must be evidenced before production approval?`,
+    );
+  }
+
+  return dedupe([
+    ...candidates,
+    `Which ${tenant} facts are strongest, inferred, or still missing?`,
+    `What should ${tenant} validate this week to make the recommendation executable?`,
+    "Which owner should review the evidence boundary before this becomes board-ready?",
+  ]).slice(0, 3);
+}
+
+function displayTenantName(context: ProductTruthRuntimeContext): string {
+  const value = context.tenantName?.trim() || context.tenantKey?.trim();
+  if (!value) return "this client";
+  return value.length > 28 ? "this client" : value;
 }
 
 function surfaceBoundaryLead(surface: string, tenant: string): string {
@@ -450,7 +610,9 @@ function surfaceBoundaryLead(surface: string, tenant: string): string {
 }
 
 function isAlreadyClientSafeBoundary(text: string): boolean {
-  return /outside what I'm here for|outside Home|outside Source|outside this Move|outside Tower|focused on|can't safely answer|cannot safely answer/i.test(text);
+  return /outside what I'm here for|outside Home|outside Source|outside this Move|outside Tower|focused on|can't safely answer|cannot safely answer/i.test(
+    text,
+  );
 }
 
 function normalizedSurface(surface: string | null | undefined): string {
