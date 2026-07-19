@@ -2,6 +2,7 @@ import {
   buildUniversalAnswerVisualContract,
   isExplicitVisualAsk,
   isRankedDecisionAsk,
+  rankedDecisionPromptDirectiveForQuery,
 } from "@/lib/intelligence/ask/synthesizer";
 
 describe("isRankedDecisionAsk", () => {
@@ -37,6 +38,28 @@ describe("isRankedDecisionAsk", () => {
         "rank five AI use cases by value, complexity, and readiness",
       ),
     ).toBe(true);
+  });
+
+  it("injects a first-pass decision-table directive for top-N visual rankings", () => {
+    const directive = rankedDecisionPromptDirectiveForQuery(
+      "For FS Demo, rank five AI investment use cases by business value and implementation complexity.",
+    );
+
+    expect(directive).toContain("MANDATORY FOR THIS USER QUESTION");
+    expect(directive).toContain("```decision-table");
+    expect(directive).toContain("valueScore");
+    expect(directive).toContain("complexityScore");
+    expect(directive).toContain(
+      "The fenced decision-table is the chart payload",
+    );
+  });
+
+  it("does not inject the first-pass directive for broad criteria questions", () => {
+    expect(
+      rankedDecisionPromptDirectiveForQuery(
+        "what is our overall AI readiness and value?",
+      ),
+    ).toBe("");
   });
 
   it("does not match a generic visual ask with no named items to compare", () => {
