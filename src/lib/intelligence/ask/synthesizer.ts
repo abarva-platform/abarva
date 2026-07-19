@@ -352,9 +352,17 @@ export function isRankedDecisionAsk(query: string): boolean {
   const asksToRank =
     /\b(rank|ranked|ranking|prioriti[sz]e|prioritization)\b/.test(q);
   const comparesMultipleItems = /\bvs\.?\b|\bversus\b/.test(q);
+  const asksForTopNItems =
+    /\b(?:top\s*)?(?:\d+|three|four|five|six|seven|eight|nine|ten)\s+(?:ai\s+)?(?:use\s+cases?|bets?|investments?|initiatives?|opportunities?|options?|items?)\b/.test(
+      q,
+    );
   const hasDecisionCriteria =
     /\b(value|complexity|readiness|impact|effort|risk|feasibility)\b/.test(q);
-  return asksToRank && comparesMultipleItems && hasDecisionCriteria;
+  return (
+    asksToRank &&
+    (comparesMultipleItems || asksForTopNItems) &&
+    hasDecisionCriteria
+  );
 }
 
 function requiresNativeExecutiveCanvas(query: string): boolean {
@@ -440,7 +448,7 @@ export function buildUniversalAnswerVisualContract(): string {
     DECISION_TABLE_FORMAT_CONTRACT,
     "When a chart materially helps and you have 2+ numeric rows, include exactly one governed chart fence using this existing parser-supported format:",
     CHART_FENCE_FORMAT_CONTRACT,
-    'Every answer must end with a fenced ```followups block containing a JSON array of exactly 3 short follow-up questions grounded in the answer just given. Each follow-up should be under 18 words and should invite the next useful cut: board memo, evidence proof, value case, execution plan, source/vendor cut, or Tower metrics.',
+    "Every answer must end with a fenced ```followups block containing a JSON array of exactly 3 short follow-up questions grounded in the answer just given. Each follow-up should be under 18 words and should invite the next useful cut: board memo, evidence proof, value case, execution plan, source/vendor cut, or Tower metrics.",
   ].join("\n");
 }
 
