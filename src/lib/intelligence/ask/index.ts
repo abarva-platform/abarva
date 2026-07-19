@@ -6,6 +6,7 @@ import {
   synthesizeStream,
 } from "./synthesizer";
 import { applyCxoAnswerModeFallbacks } from "./answer-mode-registry";
+import { buildClientGroundingPacketSource } from "./client-grounding-packet";
 import { generateFollowups } from "./followups";
 import { retrieveWorldview } from "./retrievers/worldview";
 import { retrieveSurfaceContextSources } from "./retrievers/surface-context";
@@ -400,8 +401,25 @@ export async function* askIntelligence(
       ],
     );
     const conciseAsk = isExplicitConciseAsk(trimmed);
-    const sourceLimit = conciseAsk ? 8 : 16;
+    const sourceLimit = conciseAsk ? 9 : 18;
     const hasActiveV7Dossier = v7Dossier.sources.length > 0;
+    const clientGroundingPacket = buildClientGroundingPacketSource({
+      query: trimmed,
+      tenantKey:
+        opts.tenantClientKey ??
+        opts.tenantInventoryKey ??
+        opts.tenant?.appClientKey ??
+        opts.surfaceContext?.clientKey,
+      tenantName:
+        opts.tenant?.displayName ?? opts.surfaceContext?.activeClient,
+      sources: [
+        ...v7Dossier.sources,
+        ...tenantStructuredFacts,
+        ...tenantEnterprise,
+        ...tenantTechnology,
+        ...routed.sources,
+      ],
+    });
     const legacyTenantSources = hasActiveV7Dossier
       ? []
       : [
@@ -414,6 +432,7 @@ export async function* askIntelligence(
     const rawSources: AskSource[] = [
       ...(skyHarborCtoSource ? [skyHarborCtoSource] : []),
       ...surfaceContext,
+      ...(clientGroundingPacket ? [clientGroundingPacket] : []),
       ...v7Dossier.sources,
       ...retailOverlay,
       ...legacyTenantSources,
@@ -433,6 +452,7 @@ export async function* askIntelligence(
         sourceCount: sources.length,
         retiredSourceSuppressedCount: sourceSafety.findings.length,
         sourceLimit,
+        clientGroundingPacket: Boolean(clientGroundingPacket),
         v7DossierDominant: hasActiveV7Dossier,
         suppressedLegacySourceCount: hasActiveV7Dossier
           ? tenantStructuredFacts.length +
@@ -753,6 +773,7 @@ export async function* askIntelligence(
       entities: classification.entities,
       tenantId: opts.tenantId,
       userId: opts.userId,
+      groundingSources: clientGroundingPacket ? [clientGroundingPacket] : sources.slice(0, 4),
     });
     const followupRetiredFacts = scanRetiredFacts({
       tenantKey: tenantKeyForRetiredFactGate,
