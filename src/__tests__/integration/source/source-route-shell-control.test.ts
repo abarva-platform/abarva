@@ -64,6 +64,8 @@ describe('SHELL5 source route shell control (analytics shell)', () => {
   it('event detail route wires the analytics sourcing canvas', () => {
     const source = read(sourceEventDetailRoute);
     expect(source).toContain('SourceAnalyticsCanvas');
-    expect(source).toContain('"source_analytics"');
+    expect(source).not.toContain('UniversalCanvasShell');
+    expect(source).not.toContain('workspaceExplorerEnabled');
+    expect(source).not.toContain('simpleFrontEnabled');
   });
 });

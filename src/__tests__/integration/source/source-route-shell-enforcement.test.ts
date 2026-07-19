@@ -20,7 +20,9 @@ describe('DESROUTE4 source route shell enforcement (analytics shell)', () => {
     // Detail route mounts the redesigned analytics canvas for every tenant.
     const detail = read(sourceEventDetailRoute);
     expect(detail).toContain('SourceAnalyticsCanvas');
-    expect(detail).toContain('"source_analytics"');
+    expect(detail).not.toContain('UniversalCanvasShell');
+    expect(detail).not.toContain('workspaceExplorerEnabled');
+    expect(detail).not.toContain('simpleFrontEnabled');
 
     // Landing redirects to the analytics portfolio book.
     const dashboard = read(sourceDashboardRoute);
@@ -38,6 +40,7 @@ describe('DESROUTE4 source route shell enforcement (analytics shell)', () => {
   it('Source event routes use the analytics canvas, not the legacy rail wrapper', () => {
     const source = read(sourceEventDetailRoute);
     expect(source).not.toContain('SentinelAgentColumn');
+    expect(source).not.toContain('UniversalCanvasShell');
     expect(source).toContain('SourceAnalyticsCanvas');
   });
 

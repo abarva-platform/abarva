@@ -41,7 +41,8 @@ describe('Source context-used and action-enforcement slices', () => {
     );
 
     expect(routeSource).toContain('SourceAnalyticsCanvas');
-    expect(routeSource).toContain('"source_analytics"');
+    expect(routeSource).not.toContain('UniversalCanvasShell');
+    expect(routeSource).not.toContain('simpleFrontEnabled');
     expect(routeSource).toContain('readEventFacts');
     expect(routeSource).toContain('hydrateTaskEvidenceState');
   });

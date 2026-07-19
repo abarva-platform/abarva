@@ -84,10 +84,11 @@ describe("Source authenticated route smoke", () => {
     );
 
     expect(routeSource).toContain("SourceAnalyticsCanvas");
-    expect(routeSource).toContain('"source_analytics"');
-    expect(routeSource).toContain('SourceAnalyticsCanvas');
-    expect(stageSource).toContain('✦');
-    expect(stageSource).toContain('Intelligence');
+    expect(routeSource).not.toContain("UniversalCanvasShell");
+    expect(routeSource).not.toContain("workspaceExplorerEnabled");
+    expect(routeSource).not.toContain("simpleFrontEnabled");
+    expect(stageSource).toContain('Check intelligence');
+    expect(stageSource).toContain('Intelligence explorer');
   });
 
   it("documents the current auth test boundary without weakening auth", () => {
