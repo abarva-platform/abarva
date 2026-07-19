@@ -430,6 +430,17 @@ const DECISION_TABLE_REPAIR_INSTRUCTION = [
   "Return only the final answer.",
 ].join("\n");
 
+export function rankedDecisionPromptDirectiveForQuery(query: string): string {
+  if (!isRankedDecisionAsk(query)) return "";
+  return [
+    "",
+    "MANDATORY FOR THIS USER QUESTION: This is a ranked decision visual ask.",
+    "Keep the senior-advisor answer concise, then include exactly one fenced decision-table block using this exact format. Do not substitute an executive-summary table, evidence-register table, right-canvas table, or prose-only ranking.",
+    "The fenced decision-table is the chart payload; include valueScore, complexityScore, and readinessScore integers 0-100 for every row so the renderer can produce the 2x2 matrix and bar charts.",
+    DECISION_TABLE_FORMAT_CONTRACT,
+  ].join("\n");
+}
+
 export function buildUniversalAnswerVisualContract(): string {
   return [
     "UNIVERSAL aVa ANSWER + VISUAL CONTRACT — ALWAYS ON:",
@@ -686,6 +697,9 @@ ACTIVE INTELLIGENCE CANVAS RULES
     ? buildCxoAnswerModePromptDirective(answerMode)
     : "";
   const universalAnswerVisualContract = buildUniversalAnswerVisualContract();
+  const rankedDecisionPromptDirective = rankedDecisionPromptDirectiveForQuery(
+    args.query,
+  );
   const answerOnlyDirective = answerOnly
     ? `\n\nANSWER-ONLY STREAMING MODE: Respond with a crisp executive answer using full GitHub-Flavored Markdown. Default to the AbarVa Pyramid Brief: Answer, Proof, Move. GFM tables are REQUIRED only for explicit visual/top-N/named-comparison asks or requested value/complexity/readiness tradeoffs — do not flatten those to prose. For broad prioritization, strategy, trend, or "what should we do next" questions, do not emit tables, charts, decision fences, tab markers, or canvas blocks; queue the deeper exhibit as a follow-up. Do NOT emit \`<<<TAB: ...>>>\` markers, an \`abarva-canvas\` block, or a five-tab right-canvas structure — the canvas is handled separately. Length: prose-only answers 90-160 words; table/chart answers must keep prose under 120 words before the exhibit and let the exhibit carry the detail. End only through the governed followups block with exactly 3 queued questions. Every tenant-isolation, no-fabrication, and no-hollow-opener rule still applies unchanged.
 Use the universal answer + visual contract for any table, chart, ranking, and follow-up structure.`
@@ -698,8 +712,8 @@ Use the universal answer + visual contract for any table, chart, ranking, and fo
       ? `${contextBlocks.join("\n\n")}\n\n${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`
       : `${rolePrompt}\n\n${shapeContract}\n\n${universalAnswerVisualContract}${strategyToAbarvaSolutionAddendum}${confidenceHint}${richTextAddendum}${decisionCanvasAddendum}${advisorComposerAddendum}${answerOnlyDirective}`;
   const rawPrompt = answerOnly
-    ? `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}\n\n${universalAnswerVisualContract}`
-    : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
+    ? `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\n${universalAnswerVisualContract}`
+    : `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}${strategyToAbarvaSolutionPromptDirective}${rankedDecisionPromptDirective}\n\nRespond with your synthesis. For rich-text Intelligence, the right canvas is mandatory: include Decision, Industry Insights, Chart, Table, and Evidence tabs.`;
   const continuityInstruction = args.conversationContextBlock?.trim()
     ? '\n\nSESSION CONTINUITY RULE: If the user asks you to repeat, recap, continue, or refer to something you just named, answer from INTELLIGENCE ASK SESSION MEMORY first. Do not switch to unrelated retrieved sources. Do not say you lack prior context when memory is present. Never mention the memory mechanism, prior conversation state, or phrases such as "this session", "as discussed", "previous conversation", "same answer", or "answer hasn\'t changed" in user-visible text.'
     : "";
