@@ -10,13 +10,13 @@
 
 ## Plain-English Summary
 
-This follow-up fixes a live Intelligence chart-quality gap found after PR #5058 deployed. The renderer was deployed and tables were clean, but a chart-heavy FS Demo question still produced a conservative “Requested Visual Boundary” table instead of a visual chart. The change lets explicit AI-use-case value/complexity asks render qualified, planning-grade Recharts exhibits when aVa has a cited answer and a ranked use-case read, while preserving the hard guard against turning exact unsupported dollar claims into charts.
+This follow-up fixes a live Intelligence chart-quality gap found after PR #5058 deployed. The renderer was deployed and tables were clean, but a chart-heavy FS Demo question still produced a conservative “Requested Visual Boundary” table instead of a visual chart. The preferred behavior is prompt-first: Claude must emit a compact chart-ready GFM table for value/complexity, readiness/value, 2x2, quadrant, or priority-matrix asks; AbarVa then validates and renders that table as a typed Recharts artifact.
 
 ## Layer Impact
 
-- `global-control-lane` — Intelligence answer assembly: adds a narrow directional visual fallback for explicit AI-use-case value/complexity chart requests.
 - `global-control-lane` — Intelligence prompt contract: strengthens the chart/table instruction so Claude emits chart-ready GFM rows for value/complexity, readiness/value, 2x2, quadrant, or priority matrix asks.
-- `global-control-lane` — Agent answer rendering: no renderer contract change; this release feeds the existing Recharts path with typed `quadrant-matrix` and `horizontal-bar` artifacts.
+- `global-control-lane` — Intelligence answer assembly: preserves the existing GFM-table-to-typed-chart path and validates it for qualitative high/medium/low value/complexity tables.
+- `global-control-lane` — Agent answer rendering: no renderer contract change; this release feeds the existing Recharts path from Claude-emitted tables rather than guessing chart labels from prose.
 
 ## Client Applicability
 
