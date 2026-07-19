@@ -173,9 +173,11 @@ export function sanitizeSuggestedQuestions(
   for (const question of questions) {
     const safetyClass = classifySuggestedQuestion(question);
     const result = applyProductTruthRuntimeGuard(question, context);
+    const polishedQuestion = normalizeSuggestedQuestionText(result.text);
     const unsafe =
       safetyClass.startsWith("risky_") ||
       result.blocked ||
+      !isPolishedSuggestedQuestion(polishedQuestion) ||
       result.violations.some((violation) =>
         [
           "third_party_replacement_claim",
@@ -198,7 +200,7 @@ export function sanitizeSuggestedQuestions(
       });
       continue;
     }
-    safeQuestions.push(result.text);
+    safeQuestions.push(polishedQuestion);
   }
 
   if (safeQuestions.length > 0) {
@@ -497,36 +499,76 @@ function defaultSafeSuggestedQuestions(
 function intelligenceSafeSuggestedQuestions(
   context: ProductTruthRuntimeContext,
 ): string[] {
-  const combined = `${context.query ?? ""}\n${context.groundingText ?? ""}`;
+  const queryText = context.query ?? "";
+  const groundingText = context.groundingText ?? "";
   const tenant = displayTenantName(context);
+  const queryCandidates = buildIntelligenceFollowupCandidates(
+    queryText,
+    tenant,
+  );
+  const groundingCandidates = buildIntelligenceFollowupCandidates(
+    groundingText,
+    tenant,
+  );
+
+  const candidates =
+    queryCandidates.length > 0
+      ? queryCandidates
+      : groundingCandidates.slice(0, 2);
+
+  return dedupe([
+    ...candidates,
+    `Which ${tenant} evidence is strongest, inferred, or still missing?`,
+    `What should ${tenant} validate this week to make the recommendation executable?`,
+    "Which owner should review the evidence boundary before this becomes board-ready?",
+  ])
+    .map(normalizeSuggestedQuestionText)
+    .filter(isPolishedSuggestedQuestion)
+    .slice(0, 3);
+}
+
+function buildIntelligenceFollowupCandidates(
+  text: string,
+  tenant: string,
+): string[] {
   const candidates: string[] = [];
 
   if (
-    /\b(agent assist|contact.?center|call.?center|member service|customer service|service desk|case management)\b/i.test(
-      combined,
+    /\b(top ai|ai investment|ai investments|ai themes|ai trend|ai trends|use cases?|portfolio|rank|2x2|matrix|fund|funding|ready to fund|hold for evidence)\b/i.test(
+      text,
+    )
+  ) {
+    candidates.push(
+      `Which ${tenant} AI bets have loaded value, readiness, and owner evidence today?`,
+      `Which top AI bet should ${tenant} fund, hold, or retire after evidence review?`,
+    );
+  }
+  if (
+    /\b(agent assist|contact.?center|call.?center|member service|customer service|service desk|case management|first.?contact)\b/i.test(
+      text,
     )
   ) {
     candidates.push(
       `Which ${tenant} contact-center systems, data feeds, and escalation owners should we validate first?`,
     );
   }
-  if (/\b(fraud|dispute|aci|backlog|request|case)\b/i.test(combined)) {
+  if (/\b(fraud|dispute|aci|backlog|request|case)\b/i.test(text)) {
     candidates.push(
-      `What evidence would certify the fraud or dispute backlog value case for ${tenant}?`,
+      `What evidence would make the fraud or dispute backlog value case board-safe for ${tenant}?`,
     );
   }
   if (
     /\b(credit spreading|commercial credit|fair lending|sr 11-7|model validation|bedrock|claude)\b/i.test(
-      combined,
+      text,
     )
   ) {
     candidates.push(
-      `What model-risk and data-readiness gates must clear before scaling credit automation?`,
+      `What model-risk and data-readiness gates must clear before ${tenant} scales credit automation?`,
     );
   }
   if (
     /\b(capital markets|research automation|databricks|measured value|\\$929|retired)\b/i.test(
-      combined,
+      text,
     )
   ) {
     candidates.push(
@@ -535,56 +577,123 @@ function intelligenceSafeSuggestedQuestions(
   }
   if (
     /\b(data readiness|data foundation|feature store|lakehouse|semantic layer|lineage|metric basis)\b/i.test(
-      combined,
+      text,
     )
   ) {
     candidates.push(
       `Which data-readiness gaps block the next AI funding decision for ${tenant}?`,
+      `What lineage, metric-basis, or ownership evidence should ${tenant} validate next?`,
     );
   }
   if (
-    /\b(vendor|contract|renewal|source|platform expansion|sla|commercial)\b/i.test(
-      combined,
+    /\b(technology stack|tech stack|systems?|platform|mainframe|core|cloud|integration|infrastructure|application|data assets?)\b/i.test(
+      text,
+    )
+  ) {
+    candidates.push(
+      `Which ${tenant} systems, data feeds, and integration owners constrain this AI bet most?`,
+      `What current-state technology evidence should Home validate before funding?`,
+    );
+  }
+  if (
+    /\b(vendor|contract|renewal|source|platform expansion|sla|commercial|buy|spend)\b/i.test(
+      text,
     )
   ) {
     candidates.push(
       `What vendor or contract evidence should Source test before ${tenant} commits spend?`,
+      `Which SLA, pricing, or integration terms should ${tenant} confirm before vendor expansion?`,
     );
   }
   if (
     /\b(board|cfo|fund|funding|value|benefit|roi|measured value|baseline)\b/i.test(
-      combined,
+      text,
     )
   ) {
     candidates.push(
-      `What board-safe value proof should the CFO require before funding the next wave?`,
+      `What board-safe value proof should ${tenant}'s CFO require before funding the next wave?`,
     );
   }
   if (
-    /\b(moves|phase|p0|p1|p2|p3|p4|p5|tower|execute|execution)\b/i.test(
-      combined,
-    )
+    /\b(moves|phase|p0|p1|p2|p3|p4|p5|tower|execute|execution)\b/i.test(text)
   ) {
     candidates.push(
-      `How should Moves and Tower turn this into owners, gates, and value tracking?`,
+      `How should Moves and Tower turn this ${tenant} decision into owners, gates, and value tracking?`,
     );
   }
   if (
     /\b(risk|compliance|governance|control|audit|explainability|bsa|aml|sar|transaction monitoring)\b/i.test(
-      combined,
+      text,
     )
   ) {
     candidates.push(
-      `Which risk and compliance controls must be evidenced before production approval?`,
+      `Which ${tenant} risk and compliance controls need evidence before production approval?`,
+    );
+  }
+  if (
+    /\b(industry|case stud|benchmark|real-world|real world|market pattern|peer)\b/i.test(
+      text,
+    )
+  ) {
+    candidates.push(
+      `Which industry pattern should ${tenant} copy, adapt, or avoid based on its evidence?`,
+      `What tenant evidence separates market benchmark from ${tenant} readiness?`,
+    );
+  }
+  if (
+    /\b(interview|priority|priorities|executive signal|business signal)\b/i.test(
+      text,
+    )
+  ) {
+    candidates.push(
+      `Which ${tenant} interview signals should shape the AI priority order?`,
+      `Which executive owner should confirm the priority before it enters Moves?`,
+    );
+  }
+  if (
+    /\b(not claim|cannot claim|what should.*not|evidence missing|missing evidence|unsupported)\b/i.test(
+      text,
+    )
+  ) {
+    candidates.push(
+      `Which ${tenant} AI claims are safe, inferred, or not supportable yet?`,
+      `What evidence would convert the biggest caveat into a client-ready claim?`,
+    );
+  }
+  if (
+    /\b(change your recommendation|what would change|wrong|assumption|sensitivity)\b/i.test(
+      text,
+    )
+  ) {
+    candidates.push(
+      `Which assumption would most change ${tenant}'s AI priority ranking?`,
+      `What new evidence should trigger a funding or sequencing change?`,
     );
   }
 
-  return dedupe([
-    ...candidates,
-    `Which ${tenant} facts are strongest, inferred, or still missing?`,
-    `What should ${tenant} validate this week to make the recommendation executable?`,
-    "Which owner should review the evidence boundary before this becomes board-ready?",
-  ]).slice(0, 3);
+  return dedupe(candidates);
+}
+
+function normalizeSuggestedQuestionText(question: string): string {
+  const withoutPolicyFooter = question.split(
+    /\n\n(?:Evidence boundary|Decision boundary):/i,
+  )[0];
+  const firstQuestionMark = withoutPolicyFooter.indexOf("?");
+  const firstQuestion =
+    firstQuestionMark >= 0
+      ? withoutPolicyFooter.slice(0, firstQuestionMark + 1)
+      : withoutPolicyFooter;
+  return firstQuestion
+    .replace(/\s+/g, " ")
+    .replace(/\s+([?.!,;:])/g, "$1")
+    .trim();
+}
+
+function isPolishedSuggestedQuestion(question: string): boolean {
+  if (!question.endsWith("?")) return false;
+  if (question.length > 140) return false;
+  if (question.length < 18) return false;
+  return true;
 }
 
 function displayTenantName(context: ProductTruthRuntimeContext): string {
