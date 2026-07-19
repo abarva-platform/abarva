@@ -26,6 +26,13 @@ function longestStructuredFencePrefixSuffix(value: string): number {
   return 0;
 }
 
+function trailingStructuredMarkerSuffix(value: string): number {
+  const match = value.match(
+    /(?:^|[\s.;:!?)]|`)(`{0,3}\s*(?:decision-table|chart|followups)\s*)$/i,
+  );
+  return match?.[1]?.length ?? 0;
+}
+
 /**
  * Removes governed structured exhibit fences from live deltas before they
  * reach the visible chat rail. The full raw model output is still accumulated
@@ -190,7 +197,10 @@ export function createStructuredFenceStreamFilter(): {
           continue;
         }
 
-        const holdBack = longestStructuredFencePrefixSuffix(buffer);
+        const holdBack = Math.max(
+          longestStructuredFencePrefixSuffix(buffer),
+          trailingStructuredMarkerSuffix(buffer),
+        );
         const safeEnd = buffer.length - holdBack;
         if (safeEnd <= 0) return output;
         output += buffer.slice(0, safeEnd);

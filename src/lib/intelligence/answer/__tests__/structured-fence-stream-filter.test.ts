@@ -32,6 +32,25 @@ describe("createStructuredFenceStreamFilter", () => {
     expect(visible).not.toContain("followups");
   });
 
+  it("holds a bare chart marker when the JSON payload arrives in the next chunk", () => {
+    const filter = createStructuredFenceStreamFilter();
+    const chunks = [
+      "Move: fund the evidence-backed anchors. chart ",
+      '{"type":"horizontal-bar","title":"Value","xKey":"initiative",',
+      '"yKey":"valueScore","data":[{"initiative":"Cash-flow insights","valueScore":91}]}',
+      " Evidence boundary: validate before board use.",
+    ];
+
+    const visible =
+      chunks.map((chunk) => filter.push(chunk)).join("") + filter.flush();
+
+    expect(visible).toBe(
+      "Move: fund the evidence-backed anchors.  Evidence boundary: validate before board use.",
+    );
+    expect(visible).not.toContain("chart");
+    expect(visible).not.toContain('"type":"horizontal-bar"');
+  });
+
   it("removes malformed near-fence artifact JSON from streaming text", () => {
     const filter = createStructuredFenceStreamFilter();
     const chunks = [
