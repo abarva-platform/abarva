@@ -26,6 +26,19 @@ describe("isRankedDecisionAsk", () => {
     expect(isExplicitVisualAsk(query)).toBe(false);
   });
 
+  it("matches top-N use-case ranking by value and complexity without vs phrasing", () => {
+    expect(
+      isRankedDecisionAsk(
+        "For FS Demo, rank five AI investment use cases by business value and implementation complexity.",
+      ),
+    ).toBe(true);
+    expect(
+      isRankedDecisionAsk(
+        "rank five AI use cases by value, complexity, and readiness",
+      ),
+    ).toBe(true);
+  });
+
   it("does not match a generic visual ask with no named items to compare", () => {
     const query = "i need the ai trends in industry- tables and charts";
     expect(isRankedDecisionAsk(query)).toBe(false);
@@ -42,10 +55,11 @@ describe("isRankedDecisionAsk", () => {
     );
   });
 
-  it("requires a comparison connective, not just rank + criteria words", () => {
+  it("requires named or counted items, not just broad criteria words", () => {
     expect(
       isRankedDecisionAsk("what is our overall AI readiness and value?"),
     ).toBe(false);
+    expect(isRankedDecisionAsk("rank by value and complexity")).toBe(false);
   });
 
   it("matches prioritize-style phrasing with vs comparisons", () => {
