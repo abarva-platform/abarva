@@ -44,6 +44,8 @@ Source gate auto-assessment now reuses the same hard-gate evidence provenance ch
 - `npx jest src/lib/source --runInBand --json --outputFile=/tmp/source-slice2b-candidate-jest.json`: 30 failures, 2,114 passing tests; exact failed-test set matched clean `origin/main`, with four additional candidate passing tests.
 - Clean `origin/main` comparison: `npx jest src/lib/source --runInBand --json --outputFile=/tmp/source-slice2b-baseline-jest.json` produced the same 30 failed tests and 2,110 passing tests; JSON comparison showed `sameFailedTests: true`, `onlyBaseline: []`, `onlyCandidate: []`.
 - Local signed-in browser crawl attempt: candidate served at `http://localhost:3011`; navigating Chrome to `/source` redirected to `/responsible-ai/acknowledgment`, where the page reported the acknowledgment ledger unavailable and kept `Accept and continue` disabled. Candidate browser acceptance remains blocked by this local environment gate.
+- Production signed-in browser crawl on `https://app.abarva.ai/source`: signed in as `Anand Sundaram · FS Demo`; opened non-Lakeshore Source event `dcd31955-e1ac-416b-8c3b-52b83e8650de`, verified the legacy `UniversalCanvasShell` renders with gate checklist, context strip, Evidence tab, export menu, and aVa chat chips. The live Responses preview initially showed `Responses Readiness 0 / 2`, `Artifacts 0 / 3`, `Requirement coverage 0 / 5`, and `Gates 0 / 3`.
+- Production live bypass proof: using the signed-in production tab, recorded two client-stated evidence answers through the same `/api/v1/source/:eventId/evidence/:requirementId/answer` endpoint used by the simple-front answer path (`EVID-SRC-RESP-PROPOSALS` and `EVID-SRC-RESP-CLARIFICATIONS`). After reload, production showed `Responses Readiness 2 / 2`, `Artifacts 0 / 3`, `Requirement coverage 2 / 5`, and `Gates 3 / 3`. Because the typed-answer route writes `Available` with `source_artifact_id: null`, this confirms the live Engine B bypass that this candidate fixes; it is production bug proof, not candidate acceptance proof.
 
 ## Rollout Plan
 
@@ -68,10 +70,10 @@ Revert the merged PR and redeploy through the repo-owned ACA main deploy workflo
 - Candidate branch: `codex/source-slice2b-second-engine-provenance`.
 - PR URL: pending.
 - Local validation output: lint, typecheck, focused Jest, release check, and directory-wide Source Jest comparison recorded in the PR.
-- Signed-in browser proof: attempted locally but blocked by the Responsible AI acknowledgment ledger unavailable state before reaching Source.
+- Signed-in browser proof: production crawl on `app.abarva.ai` confirmed the current live bypass; candidate acceptance proof still requires repeat after merge/deploy.
 
 ## Known Gaps
 
 - The duplicate rank tables in Engine A and Engine B remain intentionally deferred.
 - Slice 2c, bridging `source_event_facts` into gate readiness, remains out of scope.
-- Candidate browser proof remains blocked locally by the Responsible AI acknowledgment ledger unavailable state; live signed-in proof is still required before deploy/live approval.
+- Candidate browser proof remains blocked locally by the Responsible AI acknowledgment ledger unavailable state; production was used to prove the live bypass instead. Repeat the same production crawl after merge/deploy to confirm `Artifacts 0 / 3` no longer coincides with `Gates 3 / 3` for client-stated-only Responses evidence.
