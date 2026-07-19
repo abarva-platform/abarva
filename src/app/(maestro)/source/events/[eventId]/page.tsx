@@ -6,7 +6,7 @@ import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import {
   listArtifactStatesForEvent,
-  listEvidenceStatesForEvent,
+  listEffectiveEvidenceStatesForEvent,
   listGateCriterionStatesForEvent,
   loadArtifactTemplate,
   buildVirtualEventScaffold,
@@ -373,7 +373,7 @@ export default async function SourceEventDetailPage({
     [
       listArtifactStatesForEvent(event.id),
       listGateCriterionStatesForEvent(event.id),
-      listEvidenceStatesForEvent(event.id),
+      listEffectiveEvidenceStatesForEvent(event.id),
     ],
   );
   const scaffoldInput = {

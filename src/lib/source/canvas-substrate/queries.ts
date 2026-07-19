@@ -15,8 +15,13 @@ import {
   gateCriterionStateRowToView,
   type SourceEventArtifactState,
   type SourceEventEvidence,
+  type SourceEventFactRow,
   type SourceEventGateCriterion,
 } from './types';
+import {
+  deriveFactBackedEvidenceStates,
+  mergeFactBackedEvidenceStates,
+} from './fact-derived-evidence';
 
 // ── Read helpers ────────────────────────────────────────────────────────────
 
@@ -83,6 +88,36 @@ export async function listEvidenceStatesForEvent(
   }
 }
 
+export async function listEventFactsForEvent(
+  sourceEventId: string,
+): Promise<SourceEventFactRow[]> {
+  try {
+    const rows = await selectSourceCanvasSubstrateReadAdapter().listEventFactRows(
+      sourceEventId,
+    );
+    return rows;
+  } catch (error) {
+    console.error(
+      '[listEventFactsForEvent]',
+      error instanceof Error ? error.message : error,
+    );
+    return [];
+  }
+}
+
+export async function listEffectiveEvidenceStatesForEvent(
+  sourceEventId: string,
+): Promise<SourceEventEvidence[]> {
+  const [persistedEvidence, facts] = await Promise.all([
+    listEvidenceStatesForEvent(sourceEventId),
+    listEventFactsForEvent(sourceEventId),
+  ]);
+  return mergeFactBackedEvidenceStates(
+    persistedEvidence,
+    deriveFactBackedEvidenceStates(facts),
+  );
+}
+
 // ── Composite read · everything for a stage ─────────────────────────────────
 
 export interface StageSubstrateBundle {
@@ -107,7 +142,7 @@ export async function getStageSubstrate(
       // Gate criteria belong to the FROM stage — they govern advancement out.
       rows.filter((row) => row.fromStage === stageKey),
     ),
-    listEvidenceStatesForEvent(sourceEventId).then((rows) =>
+    listEffectiveEvidenceStatesForEvent(sourceEventId).then((rows) =>
       rows.filter((row) => row.stage === stageKey),
     ),
   ]);

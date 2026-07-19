@@ -6,6 +6,7 @@
 //   - `listArtifactStatesForEvent`        -> source_event_artifact_states
 //   - `listGateCriterionStatesForEvent`   -> source_event_gate_criterion_states
 //   - `listEvidenceStatesForEvent`        -> source_event_evidence_states
+//   - `listEventFactRows`                 -> source_event_facts
 //
 // These feed the universal Source event canvas (gate panel, artifact shelf,
 // evidence drawer) rendered by the `/source/events/[eventId]` server
@@ -30,6 +31,7 @@ import {
 import type {
   SourceEventArtifactStateRow,
   SourceEventEvidenceStateRow,
+  SourceEventFactRow,
   SourceEventGateCriterionStateRow,
 } from '@/lib/source/canvas-substrate/types';
 import { createDefaultSession, type SessionRunner } from './azureSession';
@@ -57,6 +59,11 @@ export interface SourceCanvasSubstrateReadAdapter {
    * ordered by `requirement_id`. Throws on a read failure.
    */
   listEvidenceStateRows(sourceEventId: string): Promise<SourceEventEvidenceStateRow[]>;
+  /**
+   * Read every non-stale `source_event_facts` row for `sourceEventId`,
+   * newest first. Throws on a read failure.
+   */
+  listEventFactRows(sourceEventId: string): Promise<SourceEventFactRow[]>;
 }
 
 // --- Supabase adapter (DEFAULT) --------------------------------------------
@@ -105,6 +112,17 @@ export function createSupabaseSourceCanvasSubstrateReadAdapter(
       if (error) throw new Error(`listEvidenceStatesForEvent: ${error.message}`);
       return (data as SourceEventEvidenceStateRow[] | null) ?? [];
     },
+    async listEventFactRows(sourceEventId) {
+      const sb = getClient();
+      const { data, error } = await sb
+        .from('source_event_facts')
+        .select('*')
+        .eq('source_event_id', sourceEventId)
+        .eq('is_stale', false)
+        .order('captured_at', { ascending: false });
+      if (error) throw new Error(`listEventFactsForEvent: ${error.message}`);
+      return (data as SourceEventFactRow[] | null) ?? [];
+    },
   };
 }
 
@@ -144,6 +162,16 @@ export function createAzureSourceCanvasSubstrateReadAdapter(
         run<SourceEventEvidenceStateRow>(
           `SELECT * FROM source_event_evidence_states
             WHERE source_event_id = $1 ORDER BY requirement_id ASC`,
+          [sourceEventId],
+        ),
+      );
+    },
+    async listEventFactRows(sourceEventId) {
+      return session((run) =>
+        run<SourceEventFactRow>(
+          `SELECT * FROM source_event_facts
+            WHERE source_event_id = $1 AND is_stale = false
+            ORDER BY captured_at DESC`,
           [sourceEventId],
         ),
       );

@@ -5,6 +5,7 @@ import type {
   SourceEventEvidence,
   SourceEventGateCriterion,
 } from "./canvas-substrate";
+import { isFactBackedEvidence } from "./canvas-substrate/fact-derived-evidence";
 import type { SourceStageKey } from "./types";
 
 export const SOURCE_APPROVAL_REASON_MIN_LENGTH = 12;
@@ -118,6 +119,7 @@ export function evaluateCriterionMetReadiness(input: {
     const isClientStatedPlaceholder =
       !!state &&
       state.sourceArtifactId === null &&
+      !isFactBackedEvidence(state) &&
       state.currentState !== "Usable Evidence";
     if (!rankOk || (isHardCriterion && isClientStatedPlaceholder)) {
       blockers.push({

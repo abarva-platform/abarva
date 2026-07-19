@@ -117,6 +117,29 @@ describe("Source governance enforcement", () => {
     );
   });
 
+  it("allows a hard gate when sufficient evidence is backed by cited event facts", () => {
+    const verdict = evaluateCriterionMetReadiness({
+      criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
+      artifacts: [
+        artifact({
+          artifactCode: "d01_strategy_memo",
+          status: "approved",
+          body: "Approved strategy memo body.",
+        }),
+      ],
+      evidence: strategyEvidenceReady({
+        incumbent: {
+          currentState: "Available",
+          sourceArtifactId: null,
+          sourceEventFactIds: ["fact-incumbent-contract"],
+        },
+      }),
+      reason: REVIEW_REASON,
+    });
+
+    expect(verdict.ok).toBe(true);
+  });
+
   it("allows a hard gate when client-stated evidence has explicit usable-evidence review", () => {
     const verdict = evaluateCriterionMetReadiness({
       criterion: criterion({ criterionId: "GATE-STRATEGY-01" }),
