@@ -44,9 +44,11 @@ const V7_TENANT_BY_ALIAS: Record<string, string> = {
   firstcapital: 'first-capital-financial',
   'first-capital': 'first-capital-financial',
   'first-capital-financial': 'first-capital-financial',
-  lakeshore: 'lakeshore-industries',
-  'lakeshore-holdings': 'lakeshore-industries',
-  'lakeshore-industries': 'lakeshore-industries',
+  lakeshore: 'lakeshore-holdings',
+  lakeshoreholdings: 'lakeshore-holdings',
+  lakeshoreindustries: 'lakeshore-holdings',
+  'lakeshore-holdings': 'lakeshore-holdings',
+  'lakeshore-industries': 'lakeshore-holdings',
   meridian: 'meridian-health',
   'meridian-health': 'meridian-health',
   skyharbor: 'skyharbor-air',
@@ -59,6 +61,10 @@ const V7_TOWER_DIMENSIONS = [
   'v7_09_programs_initiatives_business_priorities',
   'v7_10_ai_initiatives',
   'v7_11_operations_risk_controls',
+  'sa08_ai_benefits_realization_usage_ledger',
+  'sa09_ai_tool_usage_feed',
+  'sa10_ai_value_interview_evidence',
+  'sa11_ai_kpi_operational_outcome_feed',
 ] as const;
 
 function normalizeAlias(value: string): string {
@@ -106,6 +112,39 @@ function isoDate(value: unknown): string | null {
   if (!raw) return null;
   const parsed = Date.parse(raw);
   return Number.isNaN(parsed) ? raw : new Date(parsed).toISOString().slice(0, 10);
+}
+
+function boolish(value: unknown): boolean {
+  if (typeof value === 'boolean') return value;
+  const raw = text(value).toLowerCase();
+  return raw === 'true' || raw === 'yes' || raw === '1';
+}
+
+function isRealizedValueAllowed(payload: JsonRecord): boolean {
+  const status = [
+    payload.realized_value_allowed,
+    payload.tower_claim_allowed,
+    payload.value_claim_status,
+  ].map((value) => text(value).toLowerCase());
+  return (
+    boolish(payload.realized_value_allowed) ||
+    status.includes('realized_value_allowed') ||
+    status.includes('realized allowed')
+  );
+}
+
+function claimGatedValue(payload: JsonRecord, keys: readonly string[]): number | null {
+  const value = firstNumber(payload, keys);
+  if (value === null || value <= 0) return null;
+  return isRealizedValueAllowed(payload) ? value : null;
+}
+
+function partialFinanceValue(payload: JsonRecord): number {
+  const value = firstNumber(payload, ['finance_validated_value_usd', 'finance_attested_value_usd']);
+  if (value === null || value <= 0) return 0;
+  const claim = text(payload.tower_claim_allowed).toLowerCase();
+  const validation = text(payload.finance_validation_status).toLowerCase();
+  return claim === 'partial' || validation.includes('partial') ? value : 0;
 }
 
 function normalizeStage(value: unknown): Stage {
@@ -193,7 +232,7 @@ function initiativeFromProgram(row: V7TowerRecordRow): AIInitiative {
   const id = firstText(payload, ['program_id', 'initiative_id', 'priority_id', 'record_id'], row.record_key);
   const name = firstText(payload, ['program_name', 'initiative_name', 'priority_name', 'name'], text(row.record_name, id));
   const budget = firstNumber(payload, ['budget_usd', 'approved_budget_usd', 'committed_budget_usd', 'committed_value_usd']);
-  const measured = firstNumber(payload, ['realized_value_usd', 'measured_value_usd', 'finance_attested_value_usd']);
+  const measured = claimGatedValue(payload, ['realized_value_usd', 'measured_value_usd', 'finance_attested_value_usd']);
   const expected = firstNumber(payload, ['expected_value_usd', 'target_value_usd', 'business_case_value_usd']);
   return {
     initiativeId: id,
@@ -218,7 +257,7 @@ function initiativeFromProgram(row: V7TowerRecordRow): AIInitiative {
     statusSummary: firstText(payload, ['decision_needed', 'status', 'current_status'], 'Loaded from V7 programs and priorities.'),
     confidenceLevel: normalizeConfidence(firstText(payload, ['confidence', 'source_validation_status'], row.source_validation_status ?? 'MED')),
     alignedCallout: Boolean(measured && measured > 0),
-    alignedRationale: measured && measured > 0 ? 'V7 contains measured value for this program.' : null,
+    alignedRationale: measured && measured > 0 ? 'V7 explicitly allows realized value for this program.' : null,
     loadedViaTemplate: 'intelligence_v7_programs_business_priorities',
     portfolioCompany: firstText(payload, ['portfolio_company', 'entity_name', 'business_unit']) || null,
     operatingCompany: firstText(payload, ['operating_company', 'entity_name']) || null,
@@ -233,7 +272,7 @@ function initiativeFromAi(row: V7TowerRecordRow): AIInitiative {
   const id = firstText(payload, ['ai_initiative_id', 'initiative_id', 'use_case_id', 'record_id'], row.record_key);
   const name = firstText(payload, ['ai_use_case', 'use_case', 'initiative_name', 'agent_or_copilot_name'], text(row.record_name, id));
   const promised = firstNumber(payload, ['value_hypothesis_usd', 'expected_value_usd']);
-  const measured = firstNumber(payload, ['measured_value_usd', 'realized_value_usd']);
+  const measured = claimGatedValue(payload, ['measured_value_usd', 'realized_value_usd']);
   const spend = firstNumber(payload, ['annual_spend_usd', 'budget_usd', 'monthly_spend_usd']);
   const committedAnnual = payload.monthly_spend_usd ? (spend ?? 0) * 12 : spend;
   return {
@@ -259,13 +298,60 @@ function initiativeFromAi(row: V7TowerRecordRow): AIInitiative {
     statusSummary: firstText(payload, ['scale_hold_stop_recommendation', 'scale_hold_stop', 'decision_needed', 'data_readiness'], 'Loaded from V7 AI initiative record.'),
     confidenceLevel: normalizeConfidence(firstText(payload, ['confidence'], row.source_validation_status ?? 'MED')),
     alignedCallout: Boolean(measured && measured > 0),
-    alignedRationale: measured && measured > 0 ? 'V7 contains measured value for this AI initiative.' : null,
+    alignedRationale: measured && measured > 0 ? 'V7 explicitly allows realized value for this AI initiative.' : null,
     loadedViaTemplate: 'intelligence_v7_ai_initiatives',
     portfolioCompany: firstText(payload, ['portfolio_company', 'entity_name', 'business_unit']) || null,
     operatingCompany: firstText(payload, ['operating_company', 'entity_name']) || null,
     legalEntity: firstText(payload, ['legal_entity']) || null,
     businessUnit: firstText(payload, ['business_unit', 'entity_name']) || null,
     businessFunction: firstText(payload, ['business_function_ref', 'business_process', 'user_group']) || null,
+  };
+}
+
+function initiativeFromAiBenefit(row: V7TowerRecordRow): AIInitiative {
+  const payload = readPayload(row);
+  const id = firstText(payload, ['ai_program_id', 'ai_use_case_id', 'source_record_id'], row.record_key);
+  const name = firstText(payload, ['program_name', 'tool_name', 'process_area'], text(row.record_name, id));
+  const fundedSpend = firstNumber(payload, ['funded_spend_usd', 'actual_spend_ytd_usd']);
+  const promised = firstNumber(payload, ['promised_value_usd']);
+  const claimable = claimGatedValue(payload, ['realized_value_usd', 'finance_validated_value_usd']);
+  const decision = firstText(payload, ['decision_action', 'value_claim_status', 'tower_claim_allowed'], 'needs_evidence');
+  const usageActual = firstNumber(payload, ['usage_actual', 'active_users', 'usage_rate_pct']);
+  const kpiActual = firstText(payload, ['kpi_actual', 'actual_metric_value', 'operational_kpi']);
+  return {
+    initiativeId: id,
+    displayId: id,
+    name,
+    description: firstText(
+      payload,
+      ['caveat', 'source_extract', 'process_area'],
+      'Loaded from SA08 AI benefits realization usage ledger.',
+    ),
+    primaryCategoryId: normalizeAlias(firstText(payload, ['business_function', 'process_area'], 'ai_value')),
+    primaryCategoryName: firstText(payload, ['business_function', 'process_area'], 'AI value'),
+    secondaryCategoryId: normalizeAlias(firstText(payload, ['promised_benefit_type', 'tool_name'], 'benefits')),
+    secondaryCategoryName: firstText(payload, ['promised_benefit_type', 'tool_name'], 'Benefits realization'),
+    primaryGoalId: normalizeAlias(firstText(payload, ['value_claim_status', 'decision_action'], 'claim_gate')),
+    primaryGoalName: firstText(payload, ['value_claim_status', 'decision_action'], 'Claim gate'),
+    stage: normalizeStage(decision),
+    stageDetail: firstText(payload, ['value_claim_status', 'finance_validation_status', 'tower_claim_allowed']) || null,
+    ownerName: firstText(payload, ['evidence_owner', 'business_owner', 'named_owner'], 'Loaded owner role'),
+    ownerTitle: firstText(payload, ['evidence_owner', 'business_owner', 'named_owner'], 'Loaded owner role'),
+    ownerFunction: firstText(payload, ['business_function', 'process_area']) || null,
+    committedAnnualUsd: fundedSpend,
+    committedTotalUsd: promised,
+    measuredValueUsd: claimable,
+    statusFlag: normalizeStatus(decision),
+    statusSummary: `Usage ${usageActual ?? 'not loaded'}; KPI ${kpiActual || 'not loaded'}; claim gate ${firstText(payload, ['tower_claim_allowed', 'value_claim_status'], 'not loaded')}.`,
+    confidenceLevel: normalizeConfidence(firstText(payload, ['confidence', 'owner_attestation_status'], row.source_validation_status ?? 'MED')),
+    alignedCallout: Boolean(claimable && claimable > 0),
+    alignedRationale: claimable && claimable > 0 ? 'SA08 explicitly allows realized value for this benefit row.' : null,
+    loadedViaTemplate: 'sa08_ai_benefits_realization_usage_ledger',
+    portfolioCompany: firstText(payload, ['portfolio_company', 'entity_name', 'business_unit']) || null,
+    operatingCompany: firstText(payload, ['operating_company', 'entity_name']) || null,
+    legalEntity: firstText(payload, ['legal_entity']) || null,
+    businessUnit: firstText(payload, ['business_unit', 'entity_name']) || null,
+    businessFunction: firstText(payload, ['business_function', 'process_area']) || null,
   };
 }
 
@@ -341,10 +427,17 @@ function vendorFromContract(row: V7TowerRecordRow, fallback?: AIInitiative): AII
   };
 }
 
-function buildMetricPackets(initiatives: readonly AIInitiative[], vendors: readonly AIInitiativeVendorRow[]): CioTowerMetricPacket[] {
+function buildMetricPackets(
+  initiatives: readonly AIInitiative[],
+  vendors: readonly AIInitiativeVendorRow[],
+  records: readonly V7TowerRecordRow[] = [],
+): CioTowerMetricPacket[] {
   const initiativeBudget = initiatives.reduce((sum, row) => sum + (row.committedAnnualUsd ?? 0), 0);
   const promisedValue = initiatives.reduce((sum, row) => sum + (row.committedTotalUsd ?? 0), 0);
   const measuredValue = initiatives.reduce((sum, row) => sum + (row.measuredValueUsd ?? 0), 0);
+  const partialFinanceValidated = records
+    .filter((row) => row.dimension_key === 'sa08_ai_benefits_realization_usage_ledger')
+    .reduce((sum, row) => sum + partialFinanceValue(readPayload(row)), 0);
   const vendorExposure = vendors.reduce((sum, row) => sum + (row.contractValueUsd ?? 0), 0);
   const rows = [
     {
@@ -373,15 +466,32 @@ function buildMetricPackets(initiatives: readonly AIInitiative[], vendors: reado
     },
     {
       measure_key: 'measured_value_ytd',
-      label: 'Proven value',
-      description: 'V7-derived measured or finance-attested value.',
+      label: 'Claimable realized value',
+      description: 'Only value rows whose source explicitly allows realized value. Partial finance validation is reported separately.',
       period: 'YTD',
       basis: 'v7_runtime_projection',
       scope: 'tenant',
       value_numeric: measuredValue || null,
       value_json: { row_count: initiatives.filter((row) => (row.measuredValueUsd ?? 0) > 0).length, source: 'intelligence_v7' },
       source_fact_keys: [],
-      formula_version: 'intelligence_v7_runtime_projection_v1',
+      formula_version: 'intelligence_v7_runtime_projection_claim_gate_v2',
+    },
+    {
+      measure_key: 'partial_finance_validated_value_ytd',
+      label: 'Partial finance-validated value',
+      description: 'Finance-validated partial value from SA08. This is not realized value and cannot be booked as claimable outcome value.',
+      period: 'YTD',
+      basis: 'v7_runtime_projection',
+      scope: 'tenant',
+      value_numeric: partialFinanceValidated || null,
+      value_json: {
+        row_count: records
+          .filter((row) => row.dimension_key === 'sa08_ai_benefits_realization_usage_ledger')
+          .filter((row) => partialFinanceValue(readPayload(row)) > 0).length,
+        source: 'sa08_ai_benefits_realization_usage_ledger',
+      },
+      source_fact_keys: [],
+      formula_version: 'intelligence_v7_runtime_projection_claim_gate_v2',
     },
     {
       measure_key: 'vendor_contract_exposure',
@@ -415,12 +525,15 @@ export async function loadV7TowerProjection(args: {
   const aiInitiatives = records
     .filter((row) => row.dimension_key === 'v7_10_ai_initiatives')
     .map(initiativeFromAi);
+  const aiBenefitInitiatives = records
+    .filter((row) => row.dimension_key === 'sa08_ai_benefits_realization_usage_ledger')
+    .map(initiativeFromAiBenefit);
   const spendInitiatives = records
     .filter((row) => row.dimension_key === 'v7_08_spend_value')
     .map(initiativeFromSpend)
     .filter((row): row is AIInitiative => Boolean(row));
   const initiativeById = new Map<string, AIInitiative>();
-  for (const row of [...initiatives, ...aiInitiatives, ...spendInitiatives]) {
+  for (const row of [...initiatives, ...aiInitiatives, ...aiBenefitInitiatives, ...spendInitiatives]) {
     if (!initiativeById.has(row.initiativeId)) initiativeById.set(row.initiativeId, row);
   }
   const mergedInitiatives = Array.from(initiativeById.values());
@@ -429,7 +542,7 @@ export async function loadV7TowerProjection(args: {
     .filter((row) => row.dimension_key === 'v7_07_vendors_contracts' || row.dimension_key === 'v7_08_spend_value')
     .map((row) => vendorFromContract(row, fallback))
     .filter((row): row is AIInitiativeVendorRow => Boolean(row));
-  const metricPackets = buildMetricPackets(mergedInitiatives, vendors);
+  const metricPackets = buildMetricPackets(mergedInitiatives, vendors, records);
   return {
     tenantKey,
     source: mergedInitiatives.length > 0 || vendors.length > 0 ? 'intelligence_v7' : 'empty',

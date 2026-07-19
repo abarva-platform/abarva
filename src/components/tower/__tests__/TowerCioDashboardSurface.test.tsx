@@ -623,7 +623,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getByLabelText("CIO and CFO story")).toBeInTheDocument();
     expect(screen.getByText("IT spend")).toBeInTheDocument();
     expect(screen.getByText("Committed value")).toBeInTheDocument();
-    expect(screen.getByText("Proven value")).toBeInTheDocument();
+    expect(screen.getByText("Claimable value")).toBeInTheDocument();
     expect(screen.getByText("Value gap")).toBeInTheDocument();
     expect(screen.getByText("Renewals · 90d")).toBeInTheDocument();
     expect(screen.getByText("CIO daily read")).toBeInTheDocument();
@@ -815,7 +815,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getAllByText("$877.9M").length).toBeGreaterThan(0);
     expect(screen.getByText("$76.4M")).toBeInTheDocument();
     expect(screen.getByText("$91.7M")).toBeInTheDocument();
-    expect(screen.getByText("2 attested programs")).toBeInTheDocument();
+    expect(screen.getByText("2 claim-gated programs")).toBeInTheDocument();
     expect(
       screen.queryByText(/No measured value rows are loaded/i),
     ).not.toBeInTheDocument();
