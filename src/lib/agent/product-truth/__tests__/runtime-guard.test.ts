@@ -156,7 +156,7 @@ describe("sanitizeSuggestedQuestions", () => {
       "What evidence supports this recommendation?",
     );
     expect(result.questions).toContain(
-      "Which Healthcare Demo facts are strongest, inferred, or still missing?",
+      "Which Healthcare Demo evidence is strongest, inferred, or still missing?",
     );
   });
 
@@ -179,11 +179,53 @@ describe("sanitizeSuggestedQuestions", () => {
 
     expect(result.questions).toEqual([
       "Which FS Demo contact-center systems, data feeds, and escalation owners should we validate first?",
-      "What evidence would certify the fraud or dispute backlog value case for FS Demo?",
-      "Which data-readiness gaps block the next AI funding decision for FS Demo?",
+      "What evidence would make the fraud or dispute backlog value case board-safe for FS Demo?",
+      "Which FS Demo evidence is strongest, inferred, or still missing?",
     ]);
     expect(result.questions.join("\n")).not.toContain(
       "What can AbarVa confirm from loaded evidence?",
+    );
+  });
+
+  it("locks Intelligence fallbacks to the query topic before broad grounding", () => {
+    const result = sanitizeSuggestedQuestions([], {
+      tenantKey: "arcturus",
+      tenantName: "FS Demo",
+      surface: "intelligence",
+      query:
+        "What does FS Demo know about current data foundation readiness for AI?",
+      groundingText:
+        "FS Demo evidence mentions contact-center systems, fraud dispute backlog, ACI platform, credit spreading, and capital markets automation.",
+    });
+
+    expect(result.questions).toEqual([
+      "Which data-readiness gaps block the next AI funding decision for FS Demo?",
+      "What lineage, metric-basis, or ownership evidence should FS Demo validate next?",
+      "Which FS Demo evidence is strongest, inferred, or still missing?",
+    ]);
+    expect(result.questions.join("\n")).not.toMatch(/contact-center|fraud/i);
+  });
+
+  it("drops long generated follow-ups and replaces them with concise topic-aware questions", () => {
+    const result = sanitizeSuggestedQuestions(
+      [
+        "Of the 72% versus 83% first-contact resolution gap, how much is mapped to next-best-action gaps versus agent capability, training, or process issues, and do we have agent-level adoption and usage data on the existing assist as a measured baseline?",
+      ],
+      {
+        tenantKey: "arcturus",
+        tenantName: "FS Demo",
+        surface: "intelligence",
+        query:
+          "Should FS Demo prioritize contact center agent assist, and what current-state evidence should decide that?",
+      },
+    );
+
+    expect(result.questions).toHaveLength(3);
+    expect(result.questions[0]).toBe(
+      "Which FS Demo contact-center systems, data feeds, and escalation owners should we validate first?",
+    );
+    expect(result.questions.every((question) => question.length <= 140)).toBe(
+      true,
     );
   });
 });
