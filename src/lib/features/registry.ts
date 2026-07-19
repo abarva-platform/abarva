@@ -165,16 +165,16 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
     key: "source_simple_front",
     summary:
-      "Enables the Source Start Here simple front: one calm per-stage screen with up to three evidence asks, one write-document action, and one next-step line. Tenant opt-in; default off so the advanced canvas remains the default until proven live.",
+      "Enables the Source Start Here simple front: one calm per-stage screen with up to three evidence asks, one write-document action, and one next-step line. Tenant opt-in; First Capital/FS Demo is enrolled after live shell parity review.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["arcturus"],
   },
   {
     key: "workspace_explorer_source",
     summary:
-      "Enables the Source Workspace Explorer surfacing layer: a read-only file/deliverable explorer over existing Source artifact and canvas substrate rows. Tenant opt-in; default off so the current Source canvas remains unchanged.",
+      "Enables the Source Workspace Explorer surfacing layer: a read-only file/deliverable explorer over existing Source artifact and canvas substrate rows. Tenant opt-in; First Capital/FS Demo is enrolled with the Source simple front.",
     policy: "tenant",
-    includeTenants: [],
+    includeTenants: ["arcturus"],
   },
   {
     key: "workspace_explorer_moves",

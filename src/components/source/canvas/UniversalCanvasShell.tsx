@@ -1354,7 +1354,7 @@ export function UniversalCanvasShell({
               stageKey={viewStage}
               contextBundle={contextBundle}
             >
-              <EventWorkspace tabs={tabs} defaultTab={initialTab} />
+              {simpleFrontWorkspace ?? advancedWorkspace}
             </CanvasContextStrip>
             <AvaBottomBar
               agentName={displayAgentName()}

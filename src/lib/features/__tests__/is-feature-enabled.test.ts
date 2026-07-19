@@ -254,6 +254,12 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
       ).toBe(false);
       expect(
         isFeatureEnabled(
+          { clientKey: "arcturus" },
+          "workspace_explorer_source",
+        ),
+      ).toBe(true);
+      expect(
+        isFeatureEnabled(
           { clientKey: "apexretail" },
           "workspace_explorer_moves",
         ),
