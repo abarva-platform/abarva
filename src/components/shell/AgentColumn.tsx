@@ -14,7 +14,7 @@
 //
 // Shell Layout Spec v2 §4.1 · April 2026
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useRef, useEffect } from "react";
 import { SHELL } from "@/lib/shell/shell-tokens";
 import { useAgentStream } from "@/hooks/useAgentStream";
@@ -63,6 +63,9 @@ export interface AgentColumnProps {
    * grounding for the streamed Sentinel synthesis (REASON-27).
    */
   provenanceSlot?: ReactNode;
+  /** Optional layout overrides for surfaces that dock the same agent thread
+   * outside the default fixed left rail. Defaults preserve the current rail. */
+  columnStyle?: CSSProperties;
 }
 
 // ── AgentColumn ───────────────────────────────────────────────────────────────
@@ -79,6 +82,7 @@ export function AgentColumn({
   programId,
   synthesisNode,
   provenanceSlot,
+  columnStyle,
 }: AgentColumnProps) {
   const placeholder = inputPlaceholder ?? `Ask ${agent.name}…`;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -139,6 +143,7 @@ export function AgentColumn({
         height: "100%",
         overflow: "hidden",
         boxSizing: "border-box",
+        ...columnStyle,
       }}
     >
       {/* ── Agent identity row ── */}

@@ -2,17 +2,17 @@
  * @jest-environment jsdom
  */
 
-// The Source event analytics canvas (`SourceAnalyticsCanvas`) had NO reachable
-// way to type a question to aVa — `AvaLauncher` is presentational (hardcoded
-// sample suggestion chips that do nothing on click, no `<input>`/`<textarea>`
-// anywhere on the page). This locks the fix:
+// The Source event analytics canvas (`SourceAnalyticsCanvas`) must have one
+// reachable way to type a question to aVa. The old floating `AvaLauncher` was
+// presentational; the Source Shell V2 keeps a dockable aVa rail plus the real
+// `AskAnythingBar` composer.
 //
 //   1. `AskAnythingBar` — the real, working chat composer used elsewhere
 //      (Programs) — is now mounted on the canvas with `surface="source-detail"`
 //      so it is recognized by the same surface-gating logic AskAnythingBar
 //      already has, and a `scopeLabel` built from the event + stage.
-//   2. `AvaLauncher`'s context line no longer shows a hardcoded, potentially
-//      stale claim when a LIVE stage view is on screen — it is derived from
+//   2. The docked aVa rail no longer shows a hardcoded, potentially stale claim
+//      when a LIVE stage view is on screen — it is derived from
 //      the SAME task-completion evidence the page's own "N of M complete"
 //      progress bar uses, so it can never contradict the real event state.
 //
@@ -20,7 +20,7 @@
 // matching the pattern already used by StrategyStage.test.tsx.
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
@@ -59,7 +59,7 @@ jest.mock("@/components/agent/AskAnythingBar", () => ({
 }));
 
 import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
-import { SAMPLE_SCOPE_STAGE, SAMPLE_SCOPE_AVA } from "../sample-view-model";
+import { SAMPLE_SCOPE_STAGE } from "../sample-view-model";
 import type { StageAnalyticsView } from "../view-model";
 import type { SourcingEventSummary } from "@/lib/source/types";
 
@@ -115,7 +115,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(bar).toHaveAttribute("data-agent", "sentinel");
   });
 
-  it("still renders the presentational AvaLauncher alongside the real input (additive, not a replacement)", () => {
+  it("renders a dockable aVa rail and does not reintroduce the duplicate floating launcher", () => {
     render(
       <SourceAnalyticsCanvas
         event={makeEvent()}
@@ -123,7 +123,12 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
         tenantName="Lakeshore"
       />,
     );
-    expect(screen.getByTestId("ava-launcher-fab")).toBeInTheDocument();
+    expect(screen.queryByTestId("ava-launcher-fab")).not.toBeInTheDocument();
+    expect(screen.getByTestId("ava-dock-left")).toBeInTheDocument();
+    expect(screen.getByTestId("ava-dock-right")).toBeInTheDocument();
+    expect(screen.getByTestId("ava-dock-top")).toBeInTheDocument();
+    expect(screen.getByTestId("ava-dock-bottom")).toBeInTheDocument();
+    expect(screen.getByTestId("ava-dock-hidden")).toBeInTheDocument();
     expect(screen.getByTestId("stub-ask-anything-bar")).toBeInTheDocument();
   });
 
@@ -144,7 +149,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
   });
 });
 
-describe("SourceAnalyticsCanvas — AvaLauncher honesty against live stage state", () => {
+describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state", () => {
   beforeEach(() => {
     mockAskAnythingBar.mockClear();
   });
@@ -164,16 +169,13 @@ describe("SourceAnalyticsCanvas — AvaLauncher honesty against live stage state
       />,
     );
 
-    // Open the launcher popover to read its context line.
-    fireEvent.click(screen.getByTestId("ava-launcher-fab"));
-    const pop = screen.getByTestId("ava-launcher-pop");
+    const canvas = screen.getByTestId("source-analytics-canvas");
 
     // The stale sample claim ("Two steps left on Scope — volumetrics and the
     // sponsor letter") must NOT appear when the live view says complete.
-    expect(pop.textContent).not.toContain("Two steps left");
-    expect(pop.textContent).not.toContain(SAMPLE_SCOPE_AVA.context);
+    expect(canvas.textContent).not.toContain("Two steps left");
     // And it must say something honest instead.
-    expect(pop.textContent).toMatch(/complete/i);
+    expect(canvas.textContent).toMatch(/complete/i);
   });
 
   it("derives an honest 'N of M left' claim from the SAME live task-completion evidence when incomplete", () => {
@@ -196,13 +198,12 @@ describe("SourceAnalyticsCanvas — AvaLauncher honesty against live stage state
       />,
     );
 
-    fireEvent.click(screen.getByTestId("ava-launcher-fab"));
-    const pop = screen.getByTestId("ava-launcher-pop");
-    expect(pop.textContent).toContain(`${remaining} of ${total}`);
-    expect(pop.textContent).not.toContain(SAMPLE_SCOPE_AVA.context);
+    const canvas = screen.getByTestId("source-analytics-canvas");
+    expect(canvas.textContent).toContain(`${remaining} of ${total}`);
+    expect(canvas.textContent).not.toContain("Two steps left");
   });
 
-  it("trusts an explicitly-supplied avaLauncher verbatim (route opts in deliberately)", () => {
+  it("ignores the legacy avaLauncher prop so the duplicate launcher cannot return", () => {
     const explicitLauncher = {
       role: "Analyst · Scope",
       context: "Explicit launcher context from the route.",
@@ -223,17 +224,20 @@ describe("SourceAnalyticsCanvas — AvaLauncher honesty against live stage state
       />,
     );
 
-    fireEvent.click(screen.getByTestId("ava-launcher-fab"));
-    const pop = screen.getByTestId("ava-launcher-pop");
-    expect(pop.textContent).toContain("Explicit launcher context from the route.");
+    expect(screen.queryByTestId("ava-launcher-fab")).not.toBeInTheDocument();
+    expect(screen.getByTestId("source-analytics-canvas").textContent).not.toContain(
+      "Explicit launcher context from the route.",
+    );
   });
 
-  it("falls back to the ordinary SAMPLE launcher context when there is no live stageView at all (pure sample mode, unchanged behavior)", () => {
+  it("uses the same completion counter in sample mode instead of a hardcoded launcher claim", () => {
     render(
       <SourceAnalyticsCanvas event={makeEvent()} viewStage="scope" tenantName="Lakeshore" />,
     );
-    fireEvent.click(screen.getByTestId("ava-launcher-fab"));
-    const pop = screen.getByTestId("ava-launcher-pop");
-    expect(pop.textContent).toContain(SAMPLE_SCOPE_AVA.context);
+    const total = SAMPLE_SCOPE_STAGE.tasks.length;
+    const done = SAMPLE_SCOPE_STAGE.tasks.filter((task) => task.state === "done").length;
+    expect(screen.getByTestId("source-analytics-canvas").textContent).toContain(
+      `${total - done} of ${total}`,
+    );
   });
 });

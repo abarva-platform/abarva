@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { AgentColumn } from '@/components/shell/AgentColumn';
 import type { AgentAction } from '@/components/shell/AgentColumn';
 
@@ -32,6 +32,7 @@ interface SentinelAgentColumnProps {
   actions?: AgentAction[];
   surface?: string;
   onActionClick?: (letter: 'A' | 'B' | 'C') => void;
+  columnStyle?: CSSProperties;
 }
 
 export function SentinelAgentColumn({
@@ -42,6 +43,7 @@ export function SentinelAgentColumn({
   actions = DEFAULT_ACTIONS,
   surface = 'source',
   onActionClick,
+  columnStyle,
 }: SentinelAgentColumnProps) {
   return (
     <AgentColumn
@@ -53,6 +55,7 @@ export function SentinelAgentColumn({
       actions={actions}
       surface={surface}
       onActionClick={onActionClick}
+      columnStyle={columnStyle}
     />
   );
 }
