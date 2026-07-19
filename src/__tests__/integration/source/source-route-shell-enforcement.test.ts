@@ -32,7 +32,7 @@ describe('DESROUTE4 source route shell enforcement (Wave S1 — AppShell)', () =
     const source = read(sourceEventDetailRoute);
     expect(source).toContain('listArtifactStatesForEvent');
     expect(source).toContain('listGateCriterionStatesForEvent');
-    expect(source).toContain('listEvidenceStatesForEvent');
+    expect(source).toContain('listEffectiveEvidenceStatesForEvent');
   });
 
   it('Source event routes use the universal canvas, not the legacy rail wrapper', () => {

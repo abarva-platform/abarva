@@ -9,6 +9,7 @@
 import type { SourceStageKey } from '../types';
 import type { SourceArtifactFamily } from '../artifact-registry/types';
 import type { ArtifactRequirementLevel, ArtifactDefaultTier } from '../canonical-specs';
+import type { SourceEventFactRow } from '../facts/fact-types';
 
 // ── Per-event artifact state ────────────────────────────────────────────────
 
@@ -143,11 +144,14 @@ export interface SourceEventEvidence {
   stage: SourceStageKey;
   currentState: SourceEventEvidenceCurrentState;
   sourceArtifactId: string | null;
+  sourceEventFactIds?: string[];
   notes: string | null;
   lastSyncedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
+
+export type { SourceEventFactRow };
 
 // ── Row → view-model transformers ───────────────────────────────────────────
 

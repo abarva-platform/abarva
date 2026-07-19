@@ -269,6 +269,66 @@ describe("Source gate auto assessment", () => {
     expect(assessment.criteria[0]?.reason).toContain("client-stated answer");
   });
 
+  it("auto-meets hard mapped criteria when sufficient evidence is fact-backed", () => {
+    const assessment = assessStageGate({
+      fromStage: "scope",
+      criteria: [criterion({ criterionId: "EVID-SCOPE-01" })],
+      artifacts: [
+        artifact({
+          artifactCode: "d07_ticket_synth",
+          status: "approved",
+          body: "Human-reviewed ticket synthesis.",
+        }),
+      ],
+      evidence: scopeEvidenceAtMinimum("source-artifact-1").map((row) =>
+        row.requirementId === "EVID-SRC-SCOPE-TICKET-HISTORY"
+          ? evidence({
+              ...row,
+              requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
+              currentState: "Available",
+              sourceArtifactId: null,
+              sourceEventFactIds: ["fact-ticket-history"],
+            })
+          : row,
+      ),
+    });
+
+    expect(assessment.criteria[0]).toMatchObject({
+      criterionId: "EVID-SCOPE-01",
+      displayState: "met_auto_evidence",
+      provenance: "auto-evidence",
+      reason: "Auto-assessed from evidence",
+    });
+    expect(assessment.criteria[0]?.evidence[0]).toMatchObject({
+      requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
+      sourceArtifactId: null,
+      sourceEventFactIds: ["fact-ticket-history"],
+    });
+  });
+
+  it("does not inflate fact-backed Available evidence into Usable Evidence", () => {
+    const assessment = assessStageGate({
+      fromStage: "scope",
+      criteria: [criterion({ criterionId: "GATE-SCOPE-01" })],
+      artifacts: [artifact()],
+      evidence: [
+        evidence({
+          requirementId: "EVID-SRC-SCOPE-APP-INV",
+          currentState: "Available",
+          sourceArtifactId: null,
+          sourceEventFactIds: ["fact-app-inventory"],
+        }),
+      ],
+    });
+
+    expect(assessment.criteria[0]).toMatchObject({
+      criterionId: "GATE-SCOPE-01",
+      displayState: "blocked_evidence",
+      provenance: "auto-evidence",
+    });
+    expect(assessment.criteria[0]?.reason).toContain("must be at least");
+  });
+
   it("auto-meets hard mapped criteria when client-stated evidence is explicitly usable", () => {
     const assessment = assessStageGate({
       fromStage: "scope",

@@ -92,6 +92,23 @@ describe('supabaseSourceCanvasSubstrateReadAdapter', () => {
     expect(await ev.listEvidenceStateRows('evt-1')).toEqual([]);
   });
 
+  it('reads non-stale event facts newest first', async () => {
+    const { client, calls } = fakeSupabase({ data: [{ id: 'fact-1' }], error: null });
+    const adapter = createSupabaseSourceCanvasSubstrateReadAdapter(() => client);
+    const rows = await adapter.listEventFactRows('evt-1');
+
+    expect(rows).toEqual([{ id: 'fact-1' }]);
+    expect(
+      calls.some((c) => c.method === 'eq' && c.args[0] === 'source_event_id'
+        && c.args[1] === 'evt-1'),
+    ).toBe(true);
+    expect(
+      calls.some((c) => c.method === 'eq' && c.args[0] === 'is_stale'
+        && c.args[1] === false),
+    ).toBe(true);
+    expect(calls.some((c) => c.method === 'order' && c.args[0] === 'captured_at')).toBe(true);
+  });
+
   it('throws with the pre-seam helper prefix on a query error', async () => {
     const adapter = createSupabaseSourceCanvasSubstrateReadAdapter(
       () => fakeSupabase({ data: null, error: { message: 'boom' } }).client,
@@ -104,6 +121,9 @@ describe('supabaseSourceCanvasSubstrateReadAdapter', () => {
     );
     await expect(adapter.listEvidenceStateRows('evt-1')).rejects.toThrow(
       'listEvidenceStatesForEvent: boom',
+    );
+    await expect(adapter.listEventFactRows('evt-1')).rejects.toThrow(
+      'listEventFactsForEvent: boom',
     );
   });
 });
@@ -121,6 +141,7 @@ describe('azureSourceCanvasSubstrateReadAdapter', () => {
     await adapter.listArtifactStateRows('evt-1');
     await adapter.listGateCriterionStateRows('evt-1');
     await adapter.listEvidenceStateRows('evt-1');
+    await adapter.listEventFactRows('evt-1');
 
     expect(seen[0].sql).toContain('FROM source_event_artifact_states');
     expect(seen[0].sql).toContain('ORDER BY artifact_code ASC');
@@ -128,6 +149,9 @@ describe('azureSourceCanvasSubstrateReadAdapter', () => {
     expect(seen[1].sql).toContain('ORDER BY criterion_id ASC');
     expect(seen[2].sql).toContain('FROM source_event_evidence_states');
     expect(seen[2].sql).toContain('ORDER BY requirement_id ASC');
+    expect(seen[3].sql).toContain('FROM source_event_facts');
+    expect(seen[3].sql).toContain('is_stale = false');
+    expect(seen[3].sql).toContain('ORDER BY captured_at DESC');
     expect(seen.every((s) => s.params[0] === 'evt-1')).toBe(true);
   });
 

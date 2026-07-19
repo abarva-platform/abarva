@@ -202,6 +202,40 @@ describe("persistAutoAssessment", () => {
     expect(logs).toHaveLength(0);
   });
 
+  it("persists fact ids for auto-met fact-backed criteria", async () => {
+    const { adapter, updates } = fakeAdapter();
+    const result = await persistAutoAssessment(
+      {
+        eventId: "event-1",
+        clientKey: "skyharbor-air",
+        fromStage: "scope",
+        criteria: [criterion({ criterionId: "EVID-SCOPE-01" })],
+        artifacts: [
+          artifact({
+            artifactCode: "d07_ticket_synth",
+            body: "Human-reviewed ticket synthesis.",
+          }),
+        ],
+        evidence: scopeEvidenceAtMinimum("source-artifact-1").map((row) =>
+          row.requirementId === "EVID-SRC-SCOPE-TICKET-HISTORY"
+            ? evidence({
+                ...row,
+                id: "fact-derived:event-1:EVID-SRC-SCOPE-TICKET-HISTORY",
+                requirementId: "EVID-SRC-SCOPE-TICKET-HISTORY",
+                currentState: "Available",
+                sourceArtifactId: null,
+                sourceEventFactIds: ["fact-ticket-history"],
+              })
+            : row,
+        ),
+      },
+      { writeAdapter: adapter },
+    );
+
+    expect(result.written).toEqual(["EVID-SCOPE-01"]);
+    expect(updates[0]?.evidenceArtifactIds).toEqual(["fact-ticket-history"]);
+  });
+
   it("does not override a persisted human not-met decision", async () => {
     const { adapter, updates } = fakeAdapter();
     const result = await persistAutoAssessment(

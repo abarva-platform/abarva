@@ -125,9 +125,11 @@ function evidenceIdsForMatches(
 ): string[] {
   const ids = matches
     .filter((match) => match.satisfied)
-    .map((match) => {
+    .flatMap((match) => {
       const evidence = evidenceByRequirement.get(match.requirementId);
-      return match.sourceArtifactId ?? evidence?.id ?? null;
+      if (match.sourceArtifactId) return [match.sourceArtifactId];
+      if (match.sourceEventFactIds?.length) return match.sourceEventFactIds;
+      return [evidence?.id];
     })
     .filter((id): id is string => Boolean(id));
   return Array.from(new Set(ids));

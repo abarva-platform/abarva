@@ -34,6 +34,7 @@ export interface GateAssessmentEvidenceMatch {
   level: "required" | "recommended";
   satisfied: boolean;
   sourceArtifactId: string | null;
+  sourceEventFactIds?: string[];
 }
 
 export interface GateCriterionAssessment {
@@ -337,5 +338,6 @@ function buildEvidenceMatch(
     level: requirement?.level ?? "required",
     satisfied,
     sourceArtifactId: state?.sourceArtifactId ?? null,
+    sourceEventFactIds: state?.sourceEventFactIds ?? [],
   };
 }
