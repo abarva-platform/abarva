@@ -13,8 +13,14 @@ name: Database migration — lab
 # environment — this runs against the real live database.
 #
 # Sequence: preflight (always) -> [confirmed apply] -> schema readback ->
-# affected-feature health check -> auditable run summary. Every run,
-# status or apply, produces an uploaded evidence artifact.
+# migration ledger -> repository readback -> affected-feature health check
+# -> audit chain -> auditable run summary. "Schema exists" and "application
+# can use it" are different claims; repository readback checks the second
+# one by calling the real repository function, not raw SQL. Every run,
+# status or apply, produces an uploaded evidence artifact. This workflow is
+# deliberately kept separate from application deployment
+# (.github/workflows/aca-main-deploy.yml) — a deploy must never auto-run a
+# migration, and this lane must never build or deploy application code.
 
 on:
   workflow_dispatch:
@@ -147,8 +153,11 @@ jobs:
             echo "Could not resolve a digest-pinned template image from the live container app." >&2
             exit 1
           fi
+          revision_name="$(echo "$app_json" | jq -r '.properties.latestReadyRevisionName // empty')"
           echo "image=$template_image" >> "$GITHUB_OUTPUT"
+          echo "revision=$revision_name" >> "$GITHUB_OUTPUT"
           echo "resolved_image=$template_image" >> audit-artifacts/db-migration-lab/image.txt
+          echo "revision=$revision_name" >> audit-artifacts/db-migration-lab/image.txt
 
       # The job's persistent template has exactly two containers,
       # "private-operator-idle" and "db-migrate" (the wrapper's own
@@ -206,6 +215,44 @@ jobs:
             --out-dir audit-artifacts/db-migration-lab/readback \
             | tee audit-artifacts/db-migration-lab/readback.log
 
+      # Database-version half of the audit chain: the schema_migrations
+      # ledger itself (name, sha256, applied_at for every applied
+      # migration). print-migration-ledger.ts also prints a single-line
+      # JSON block bounded by __DB_MIGRATION_LEDGER_BEGIN__/_END__ markers
+      # specifically so "Assemble audit chain" below can extract it
+      # reliably from the ACA job's (Azure-log-prefixed) output.
+      - name: Migration ledger
+        id: ledger
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script db:migrate:ledger \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/ledger \
+            | tee audit-artifacts/db-migration-lab/ledger.log
+
+      # "Schema exists" and "application can use it" are different claims.
+      # This calls the real repository function (getSourceStageGuidebook),
+      # the same seam production code uses — not a raw SQL assertion —
+      # against the just-migrated database.
+      - name: Repository readback
+        id: repository_readback
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script db:verify:source-stage-guidebooks \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/repository-readback \
+            | tee audit-artifacts/db-migration-lab/repository-readback.log
+
       # Affected-feature verification: confirm the deployed application is
       # still healthy after the schema change. This is a coarse signal
       # (the health endpoint, not a per-migration feature probe) — a
@@ -224,6 +271,51 @@ jobs:
             exit 1
           fi
 
+      # The permanent audit chain: workflow run -> migration sha -> database
+      # version -> application revision -> ACA revision -> image digest, all
+      # recorded together. The migration ledger's JSON travels inside the
+      # ACA job's Azure-prefixed log stream, so it's extracted via the same
+      # marker convention print-migration-ledger.ts emits for exactly this
+      # purpose, stripping Azure's per-line "<timestamp> stdout F " prefix.
+      - name: Assemble audit chain
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e '
+            const fs = require("fs");
+            const raw = fs.readFileSync("audit-artifacts/db-migration-lab/ledger/04-logs.txt", "utf8");
+            const lines = raw.split(/\r?\n/).map((line) => {
+              const match = line.match(/(?:stdout|stderr)\s+F\s+(.*)$/);
+              return match ? match[1] : line;
+            });
+            const beginIdx = lines.indexOf("__DB_MIGRATION_LEDGER_BEGIN__");
+            const endIdx = lines.indexOf("__DB_MIGRATION_LEDGER_END__");
+            if (beginIdx === -1 || endIdx === -1 || endIdx <= beginIdx) {
+              console.error("Could not find ledger markers in ACA job log output.");
+              process.exit(1);
+            }
+            const ledger = JSON.parse(lines.slice(beginIdx + 1, endIdx).join(""));
+            const chain = {
+              workflowRunId: process.env.GITHUB_RUN_ID,
+              workflowRunUrl: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
+              commitSha: process.env.GITHUB_SHA,
+              operator: process.env.GITHUB_ACTOR,
+              migrationName: ledger.latest?.name ?? null,
+              migrationSha256: ledger.latest?.sha256 ?? null,
+              totalMigrationsApplied: ledger.totalApplied,
+              databaseTarget: `${process.env.CONTAINER_APP_NAME} (${process.env.RESOURCE_GROUP})`,
+              applicationRevision: process.env.ACA_REVISION || null,
+              imageDigest: process.env.ACA_IMAGE,
+              assembledAt: new Date().toISOString(),
+            };
+            fs.writeFileSync("audit-artifacts/db-migration-lab/audit-chain.json", JSON.stringify(chain, null, 2) + "\n");
+            console.log(JSON.stringify(chain, null, 2));
+          '
+        env:
+          ACA_REVISION: ${{ steps.image.outputs.revision }}
+          ACA_IMAGE: ${{ steps.image.outputs.image }}
+
       - name: Write run summary
         if: always()
         shell: bash
@@ -236,11 +328,21 @@ jobs:
             echo "| Mode | \`${{ inputs.mode }}\` |"
             echo "| Commit | \`${GITHUB_SHA}\` |"
             echo "| Image | \`${{ steps.image.outputs.image }}\` |"
+            echo "| ACA revision | \`${{ steps.image.outputs.revision }}\` |"
             echo "| Operator | \`${GITHUB_ACTOR}\` |"
             echo "| Target database | \`${CONTAINER_APP_NAME}\` (\`${RESOURCE_GROUP}\`) |"
             echo
             if [[ "${{ inputs.mode }}" == "apply" ]]; then
-              echo "Applied via the ACA operator job (advisory-locked, sha256 drift-checked). See uploaded evidence for the full apply + readback logs."
+              echo "Applied via the ACA operator job (advisory-locked, sha256 drift-checked)."
+              echo "Sequence completed: schema readback -> migration ledger -> repository readback -> affected-feature health -> audit chain."
+              echo
+              if [[ -f audit-artifacts/db-migration-lab/audit-chain.json ]]; then
+                echo "### Audit chain"
+                echo
+                echo '```json'
+                cat audit-artifacts/db-migration-lab/audit-chain.json
+                echo '```'
+              fi
             else
               echo "Status/preflight only — no schema change was made. See uploaded evidence for the pending-migration list."
             fi

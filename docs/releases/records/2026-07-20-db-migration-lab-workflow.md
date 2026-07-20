@@ -6,9 +6,14 @@
 
 ## Status
 
-`candidate` — code reviewed and merge-ready. **The real ACA-job pathway to the live
-Azure lab database has not yet been exercised end-to-end via this workflow.** No
-migration has been applied through this lane. See QA / Validation and Known Gaps.
+`candidate` — code reviewed and merge-ready. This second pass adds Anand's review
+feedback: a complete "golden idle state" check, repository readback, a permanent audit
+chain, and a CI self-test workflow proving the full sequence via a real
+`workflow_dispatch` against disposable Postgres (locally re-verified end-to-end — see
+QA / Validation). **The real ACA-job pathway to the live Azure lab database has still
+not been exercised end-to-end via this workflow** — deliberately left for a real
+dispatch after merge. No migration has been applied through this lane. See QA /
+Validation and Known Gaps.
 
 ## Plain-English Summary
 
@@ -103,6 +108,24 @@ touched.
   digest-pin / script-name guards still fire in plan-only mode.
 - `src/scripts/__tests__/run-migrations.test.ts` — extended with drift-detection and
   sha256 unit tests (9 new tests).
+- `scripts/ops/submit-aca-operator-job.mjs` (second pass) — `verifyIdle()` extended to a
+  golden-idle-state check: parallelism/replicaCompletionCount, no non-terminal execution
+  left running/queued, env-var-name/secretRef-name/identity drift vs. a pre-run baseline.
+- `src/scripts/print-migration-ledger.ts` (new) — dumps `schema_migrations` as JSON
+  (`db:migrate:ledger`), with a single-line JSON block bounded by
+  `__DB_MIGRATION_LEDGER_BEGIN__`/`_END__` markers for reliable extraction from
+  Azure-log-prefixed output.
+- `src/lib/source/stage-guidebooks/verify-repository-readback.ts` (new) — calls the real
+  `getSourceStageGuidebook()` function (`db:verify:source-stage-guidebooks`), proving
+  "application can use it," not just "schema exists."
+- `.github/workflows/db-migration-lab.yml` (second pass) — added Migration ledger,
+  Repository readback, and Assemble audit chain steps; records the ACA revision name;
+  final sequence: preflight → apply → schema readback → ledger → repository readback →
+  affected-feature health → audit chain → run summary.
+- `.github/workflows/db-migration-ci-selftest.yml` (new) — full status/plan/apply/schema
+  readback/ledger/repository-readback sequence against disposable Postgres, same
+  mode/confirm gate and npm scripts as the lab workflow, plus a `--plan-only` invocation
+  of the real wrapper. Discloses what it does not prove (ACA transport, restore-idle).
 - This release record.
 
 ## QA / Validation
@@ -131,7 +154,22 @@ touched.
   this pathway now is a real `workflow_dispatch` of the reviewed, merged workflow itself,
   gated by the `production` GitHub Environment approval. That run is the next step after
   this PR merges, and is itself the live proof this gap requires.
-- `pending` — `npm run release:check`, to run before PR.
+- `pass` — `npm run release:check` — all gates pass.
+- `pass` — Full CI-self-test sequence run manually, end-to-end, against a fresh local
+  `postgres:16` container, using the exact commands the CI self-test workflow runs:
+  bootstrap → `db:migrate:dry --allow-destructive` → `db:migrate:ci --allow-destructive`
+  (all 271 migrations applied, including both `source_stage_guidebooks` migrations) →
+  `db:azure:verify` (271 migrations, 376 tables) → `db:migrate:ledger` (marker-bounded
+  JSON correctly identifies the latest migration by name+sha256) →
+  `db:verify:source-stage-guidebooks` (repository readback returns the real Strategy
+  guidebook: published, 5 sections, version 1 — via the real repository function, not
+  raw SQL).
+- This run surfaced and fixed a real bug: a from-zero replay trips the
+  destructive-pattern scanner on routine `ALTER TABLE ... DROP CONSTRAINT IF EXISTS`
+  statements in old migrations, so the CI self-test needs `--allow-destructive` (same
+  reasoning `azure-l5-reset-replay.yml` already uses). The lab workflow correctly does
+  NOT have this flag — it only ever applies one new, non-destructive migration against
+  an already-migrated database.
 
 ## Rollout Plan
 
@@ -197,8 +235,12 @@ existing call sites' behavior when `--plan-only` isn't passed.
 ## Known Gaps
 
 - **The real ACA-job → Azure Postgres pathway has not been proven end-to-end.** See the
-  `NOT YET PROVEN` line in QA / Validation. This must be closed with a real
-  `mode=status` dispatch of this workflow before any `mode=apply` run is attempted.
+  `NOT YET PROVEN` line in QA / Validation. The CI self-test proves the workflow's own
+  sequencing/gating logic and every npm script in isolation; it does not and cannot
+  prove the ACA operator job / private VNet transport, since this environment has no
+  real Azure. This must be closed with a real `mode=status` dispatch of
+  `db-migration-lab.yml` before any `mode=apply` run is attempted — Anand's own
+  precondition for approving a lab run.
 - **The `source_stage_guidebooks` migration from PR #5135 has still not been applied to
   any real environment.** This release only builds the lane; it does not use it yet. The
   guidebook feature and any UI reading `source_stage_guidebooks` remain correctly

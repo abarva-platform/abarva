@@ -276,15 +276,16 @@ function restoreIdle(options, outDir) {
   return { restored: true, idleImage: options.idleImage };
 }
 
-// Reads the job template back (not the execution — the persistent resource
-// that future job starts inherit) and asserts every idle field matches what
-// restoreIdle() just wrote. This exists because of a real incident: an
-// execution-scoped --container-name override that didn't match any real
-// template container name failed silently as far as the job resource was
-// concerned, and a --no-restore-idle test run left replicaTimeout drifted
-// from the documented idle value with nothing to catch it. This check is
-// the catch.
-function verifyIdle(options, outDir) {
+// Fixed expectations for the manual-trigger shape of this job. Unlike
+// image/command/args/cpu/memory/replicaTimeout (which restoreIdle()
+// actively writes), nothing in this wrapper sets these — they're asserted
+// as a golden constant because a change here would mean the job's
+// fundamental invocation shape (single ad-hoc execution, not a
+// parallel/batch job) was altered by something outside this wrapper.
+const IDLE_PARALLELISM = "1";
+const IDLE_REPLICA_COMPLETION_COUNT = "1";
+
+function fetchJobShow(options, outDir, label) {
   const show = runAz([
     "containerapp",
     "job",
@@ -296,8 +297,50 @@ function verifyIdle(options, outDir) {
     "--output",
     "json",
   ]);
-  fs.writeFileSync(path.join(outDir, "99b-verify-idle.json"), show.stdout);
-  const parsed = JSON.parse(show.stdout);
+  fs.writeFileSync(path.join(outDir, label), show.stdout);
+  return JSON.parse(show.stdout);
+}
+
+// A snapshot of everything this wrapper never intentionally changes
+// (env vars, secret references, managed identity) taken before any
+// mutation. verifyIdle() diffs the post-run state against this rather than
+// a hardcoded expectation — those fields are legitimate for operators to
+// evolve over time (e.g. adding a new secret to the job), so the safe check
+// is "didn't change during this run," not "matches a value baked into this
+// script."
+function captureBaseline(options, outDir) {
+  const parsed = fetchJobShow(options, outDir, "00b-baseline-job-show.json");
+  return snapshotDriftFields(parsed, options);
+}
+
+function snapshotDriftFields(parsed, options) {
+  const containers = parsed.properties?.template?.containers ?? [];
+  const target = containers.find((c) => c.name === options.container);
+  const envNames = (target?.env ?? [])
+    .map((e) => `${e.name}${e.secretRef ? `:secretref:${e.secretRef}` : ""}`)
+    .sort();
+  const identity = parsed.identity ?? { type: "None" };
+  return {
+    envNames,
+    identityType: identity.type ?? "None",
+    userAssignedIdentityIds: Object.keys(identity.userAssignedIdentities ?? {}).sort(),
+  };
+}
+
+// Reads the job template back (not the execution — the persistent resource
+// that future job starts inherit) and asserts every idle field matches what
+// restoreIdle() just wrote, plus the full "golden idle state": trigger
+// shape (parallelism / replica completion count), no non-terminal execution
+// left running or queued, and no drift in env vars / secret references /
+// managed identity relative to the pre-run baseline. This exists because of
+// a real incident: an execution-scoped --container-name override that
+// didn't match any real template container name failed silently as far as
+// the job resource was concerned, and a --no-restore-idle test run left
+// replicaTimeout drifted from the documented idle value with nothing to
+// catch it. This check — the full version, not just the fields restoreIdle()
+// itself writes — is the catch. "Never trust cleanup; always verify it."
+function verifyIdle(options, outDir, baseline, ownExecutionName) {
+  const parsed = fetchJobShow(options, outDir, "99b-verify-idle.json");
   const cfg = parsed.properties?.configuration ?? {};
   const containers = parsed.properties?.template?.containers ?? [];
   const target = containers.find((c) => c.name === options.container);
@@ -329,6 +372,57 @@ function verifyIdle(options, outDir) {
   const replicaTimeout = String(cfg.replicaTimeout ?? "");
   if (replicaTimeout !== IDLE_REPLICA_TIMEOUT) {
     problems.push(`replicaTimeout is "${replicaTimeout}", expected "${IDLE_REPLICA_TIMEOUT}"`);
+  }
+  const parallelism = String(cfg.manualTriggerConfig?.parallelism ?? "");
+  if (parallelism !== IDLE_PARALLELISM) {
+    problems.push(`parallelism is "${parallelism}", expected "${IDLE_PARALLELISM}"`);
+  }
+  const replicaCompletionCount = String(cfg.manualTriggerConfig?.replicaCompletionCount ?? "");
+  if (replicaCompletionCount !== IDLE_REPLICA_COMPLETION_COUNT) {
+    problems.push(
+      `replicaCompletionCount is "${replicaCompletionCount}", expected "${IDLE_REPLICA_COMPLETION_COUNT}"`,
+    );
+  }
+
+  if (baseline) {
+    const current = snapshotDriftFields(parsed, options);
+    if (JSON.stringify(current.envNames) !== JSON.stringify(baseline.envNames)) {
+      problems.push(
+        `env/secret references changed during this run: before=${JSON.stringify(baseline.envNames)} after=${JSON.stringify(current.envNames)}`,
+      );
+    }
+    if (current.identityType !== baseline.identityType) {
+      problems.push(`identity type changed: before="${baseline.identityType}" after="${current.identityType}"`);
+    }
+    if (JSON.stringify(current.userAssignedIdentityIds) !== JSON.stringify(baseline.userAssignedIdentityIds)) {
+      problems.push(
+        `user-assigned identities changed: before=${JSON.stringify(baseline.userAssignedIdentityIds)} after=${JSON.stringify(current.userAssignedIdentityIds)}`,
+      );
+    }
+  }
+
+  const executionList = runAz([
+    "containerapp",
+    "job",
+    "execution",
+    "list",
+    "--name",
+    options.job,
+    "--resource-group",
+    options.resourceGroup,
+    "--output",
+    "json",
+  ]);
+  fs.writeFileSync(path.join(outDir, "99d-execution-list.json"), executionList.stdout);
+  const executions = JSON.parse(executionList.stdout);
+  const nonTerminal = executions.filter((execution) => {
+    if (execution.name === ownExecutionName) return false; // this run's own execution — checked via `status` separately.
+    return !terminalStatus(execution.properties?.status);
+  });
+  if (nonTerminal.length > 0) {
+    problems.push(
+      `non-terminal execution(s) left running or queued: ${nonTerminal.map((e) => `${e.name} (${e.properties?.status})`).join(", ")}`,
+    );
   }
 
   const result = { idleVerified: problems.length === 0, problems };
@@ -484,6 +578,10 @@ async function main() {
   }
 
   fs.mkdirSync(options.outDir, { recursive: true });
+  // Captured before any mutation so verifyIdle() can assert env/secret/
+  // identity fields are unchanged by this run, without hardcoding what they
+  // should be (see captureBaseline()'s doc comment).
+  const baseline = options.restoreIdle ? captureBaseline(options, options.outDir) : null;
   const effectiveEnv = envArgs(options);
   const request = {
     job: options.job,
@@ -575,7 +673,7 @@ async function main() {
     if (options.restoreIdle) {
       try {
         restored = restoreIdle(options, options.outDir);
-        restored.idleVerification = verifyIdle(options, options.outDir);
+        restored.idleVerification = verifyIdle(options, options.outDir, baseline, executionName);
       } catch (error) {
         restored = { restored: restored.restored, error: error.message };
         if (!failed) failed = error;
