@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -107,12 +107,14 @@ explicit follow-up action, not part of this deploy's rollout.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
+  (run [29716237570](https://github.com/abarva-platform/abarva/actions/runs/29716237570)).
 - Shared runtime mutators: none beyond the standard main-deploy workflow.
-- Approved image digest: recorded post-merge once the deploy run completes.
-- ACA runtime invariant: to be verified post-deploy (template image = 100%-traffic
-  revision image = worker images, matching approved digest).
-- Worker image invariant: covered by the same main-deploy workflow step.
+- Approved image digest: `sha256:ccb059020c028819fe0b1d761e930a12c30eb409bf1caab57903c724620b22a0`.
+- ACA runtime invariant: verified 2026-07-20T04:18:43Z — template image, active image, and
+  the 100%-traffic revision (`ca-abarva-web-lab-eastus--m18de4836`) all match the approved
+  digest above; health check `ok: true`.
+- Worker image invariant: covered by the same main-deploy workflow step (passed).
 - Feature/env flag update path: `SOURCE_QUALITY_GATE_EXPANDED` is not set by this
   release — enabling it is a deliberate, separate follow-up requiring its own
   live-proof pass per newly-gated artifact code.
