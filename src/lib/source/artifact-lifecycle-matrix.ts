@@ -75,6 +75,14 @@ export interface SourceArtifactLifecycleSummary {
   evidenceOnlyCount: number;
 }
 
+export interface SourceArtifactStandardsContextItem {
+  code: string;
+  title: string;
+  stageKey: SourceStageKey;
+  excerpt: string;
+  score: number;
+}
+
 const DEFAULT_PROMPT_TOKENS = "24k max";
 
 const PROMPT_CONTRACTS: Record<
@@ -132,6 +140,34 @@ export function buildSourceArtifactLifecycleSummary(
   };
 }
 
+export function buildSourceArtifactStandardsContext(args: {
+  artifacts?: readonly SourceArtifactLifecycleArtifact[];
+  stageKey?: SourceStageKey | string | null;
+  prompt?: string | null;
+  limit?: number;
+} = {}): SourceArtifactStandardsContextItem[] {
+  const summary = buildSourceArtifactLifecycleSummary(args.artifacts ?? []);
+  const limit = Math.max(1, args.limit ?? 10);
+  const promptCodes = inferArtifactCodesFromPrompt(args.prompt ?? "");
+  const stageKey = args.stageKey ?? null;
+  const rows = uniqueLifecycleRows([
+    ...promptCodes
+      .map((code) => summary.rows.find((row) => row.code === code))
+      .filter((row): row is SourceArtifactLifecycleRow => Boolean(row)),
+    ...summary.rows.filter((row) => stageKey && row.stageKey === stageKey),
+    ...summary.rows.filter((row) => row.lifecycleState !== "not_registered"),
+    ...summary.rows.filter((row) => row.prompt.supported),
+  ]).slice(0, limit);
+
+  return rows.map((row, index) => ({
+    code: row.code,
+    title: row.name,
+    stageKey: row.stageKey,
+    excerpt: formatArtifactStandardsExcerpt(row),
+    score: 46 - index,
+  }));
+}
+
 function buildLifecycleRow(
   spec: SourceArtifactSpec,
   artifacts: readonly SourceArtifactLifecycleArtifact[],
@@ -162,6 +198,63 @@ function buildLifecycleRow(
     approvalLabel: approvalLabelFor(lifecycleState),
     governanceMessage: governanceMessageFor(lifecycleState),
   };
+}
+
+function inferArtifactCodesFromPrompt(prompt: string): string[] {
+  const text = prompt.toLowerCase();
+  const matches: string[] = [];
+  const add = (code: string, pattern: RegExp) => {
+    if (pattern.test(text)) matches.push(code);
+  };
+
+  add("d01_strategy_memo", /\b(strategy memo|sourcing strategy|why now)\b/);
+  add("d02_value_target", /\b(value target|value brief|savings target)\b/);
+  add("d03_archetype_decision", /\b(archetype|buying motion)\b/);
+  add("d04_app_inv", /\b(application inventory|app inventory|cmdb)\b/);
+  add("d05_scope_memo", /\b(scope memo|scope document|scope pack|scope artifact)\b/);
+  add("d07_ticket_synth", /\b(ticket|servicenow|volume|volumetric|baseline)\b/);
+  add("d08_premortem", /\b(premortem|pre-mortem|workshop|session)\b/);
+  add("d09_rfp_pack", /\b(rfp|request for proposal|vendor pack|vendor package)\b/);
+  add("d11_response_checklist", /\b(response checklist|vendor response|compliance checklist)\b/);
+  add("d16_scorecard", /\b(scorecard|evaluation rubric|rubric)\b/);
+  add("d19_pricing_workbook", /\b(pricing workbook|pricing template|commercial workbook)\b/);
+  add("d20_trap_log", /\b(trap log|commercial trap|risk trap)\b/);
+  add("d22_bafo_question_pack", /\b(bafo|question pack|clarification)\b/);
+  add("d24_decision_brief", /\b(decision brief|executive decision|recommendation)\b/);
+  add("d29_transition_plan", /\b(transition plan|handoff plan|implementation plan)\b/);
+  add("d31_kt_evidence", /\b(kt|knowledge transfer|session guidance|workshop guidance)\b/);
+  add("d32_value_ledger", /\b(value ledger|realized value|value realization)\b/);
+
+  return Array.from(new Set(matches));
+}
+
+function uniqueLifecycleRows(
+  rows: SourceArtifactLifecycleRow[],
+): SourceArtifactLifecycleRow[] {
+  const seen = new Set<string>();
+  return rows.filter((row) => {
+    if (seen.has(row.code)) return false;
+    seen.add(row.code);
+    return true;
+  });
+}
+
+function formatArtifactStandardsExcerpt(
+  row: SourceArtifactLifecycleRow,
+): string {
+  const generation = row.prompt.supported
+    ? `Generation contract: ${row.prompt.modelLabel}, ${row.prompt.maxTokensLabel}. Export: ${row.exportFormatsLabel}.`
+    : `Generation contract: no dedicated prompt. Export: ${row.exportFormatsLabel}.`;
+  return [
+    `Artifact standard: ${row.name} (${row.code}) is ${row.requirementLabel.toLowerCase()} and ${row.gateLabel.toLowerCase()} for ${row.stageLabel}.`,
+    `Purpose and guideline: ${row.guidelineLabel}`,
+    `Audience: ${row.audienceLabel}.`,
+    `Structure: ${row.structureLabel}.`,
+    `Page guidance: ${row.pageGuidanceLabel}.`,
+    `Controls: ${row.controlsLabel}.`,
+    generation,
+    `Lifecycle state for this event: ${row.lifecycleLabel}. Approval rule: ${row.approvalLabel}. ${row.governanceMessage}`,
+  ].join(" ");
 }
 
 function profileFor(code: string): SourceArtifactProfile | null {

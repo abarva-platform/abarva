@@ -1,4 +1,7 @@
-import { buildSourceArtifactLifecycleSummary } from "../artifact-lifecycle-matrix";
+import {
+  buildSourceArtifactLifecycleSummary,
+  buildSourceArtifactStandardsContext,
+} from "../artifact-lifecycle-matrix";
 
 describe("Source artifact lifecycle matrix", () => {
   it("summarizes canonical Source artifacts and governance coverage", () => {
@@ -87,5 +90,34 @@ describe("Source artifact lifecycle matrix", () => {
     expect(summary.aiDraftCount).toBe(1);
     expect(scopeMemo?.lifecycleState).toBe("ai_draft");
     expect(scopeMemo?.approvalLabel).toBe("Human review required");
+  });
+
+  it("builds artifact standards context with audience, sections, pages, controls, and tokens", () => {
+    const standards = buildSourceArtifactStandardsContext({
+      artifacts: [
+        {
+          artifactKind: "d09_rfp_pack",
+          artifactGroup: "generated",
+          sourceOrigin: "generated",
+          status: "approved",
+        },
+      ],
+      prompt: "What should the RFP pack look like and how many pages or tokens?",
+      stageKey: "rfp",
+      limit: 3,
+    });
+
+    expect(standards[0]).toMatchObject({
+      code: "d09_rfp_pack",
+      title: "RFP Package",
+      stageKey: "rfp",
+    });
+    expect(standards[0]?.excerpt).toContain("Required exhibits: 11");
+    expect(standards[0]?.excerpt).toContain("No fixed page cap");
+    expect(standards[0]?.excerpt).toContain("Source register");
+    expect(standards[0]?.excerpt).toContain("128k max");
+    expect(standards[0]?.excerpt).toContain(
+      "Human review is required before external use",
+    );
   });
 });
