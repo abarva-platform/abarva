@@ -56,8 +56,10 @@ import {
   buildSourceQualitySourceContext,
   parseSourceConsultingGradeReview,
   requiresSourceConsultingGradeGate,
+  shortSourceArtifactCode,
   type SourceArtifactQualityGateMetadata,
 } from "@/lib/source/agent-generation/quality-review";
+import { scanForBannedTerms } from "@/lib/source/documentation-standards/source-documentation-standards";
 import {
   CONSULTING_GRADE_DIMENSIONS,
   CONSULTING_GRADE_MIN_SCORE,
@@ -652,6 +654,14 @@ export async function generateSourceArtifactDraft(
     envelopeId: randomUUID(),
     now: nowIso,
   });
+  // Deterministic backstop: catches literal banned-term leakage
+  // (d-codes, "AI generated", "substrate", etc.) that survived the LLM
+  // quality gate's judgment-based review. Non-blocking by design — this
+  // is a visibility signal for human review, not a generation failure.
+  const bannedTermMatches = scanForBannedTerms(
+    body,
+    shortSourceArtifactCode(artifactCode),
+  );
   const generationMetadata = withSectionVerificationMetadata(
     {
       model,
@@ -668,6 +678,7 @@ export async function generateSourceArtifactDraft(
         | undefined,
       reasoningStatus: reasoningCapture.status,
       reasoningEnvelope: reasoningCapture.envelope ?? undefined,
+      bannedTermMatches,
     },
     sectionVerification,
   ) satisfies SourceArtifactBodyGenerationMetadata;

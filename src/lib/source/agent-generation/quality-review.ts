@@ -23,7 +23,7 @@ import { getSourceArtifactProfile } from "@/lib/source/documentation-standards/s
 // short code without a second lookup table. Do not assume the two vocabularies
 // are otherwise interchangeable — see artifact-governance.ts's header comment
 // for the third (approval-state) vocabulary this doesn't touch.
-function shortSourceArtifactCode(artifactCode: string): string {
+export function shortSourceArtifactCode(artifactCode: string): string {
   return artifactCode.split("_")[0] ?? artifactCode;
 }
 
