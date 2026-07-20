@@ -22,6 +22,7 @@ export type SourceArtifactLifecycleState =
 
 export interface SourceArtifactLifecycleArtifact {
   artifactCode?: string | null;
+  artifactKind?: string | null;
   artifactType?: string | null;
   artifactGroup?: string | null;
   sourceOrigin?: string | null;
@@ -154,7 +155,9 @@ function artifactMatchesSpec(
   artifact: SourceArtifactLifecycleArtifact,
   spec: SourceArtifactSpec,
 ): boolean {
-  return (artifact.artifactCode ?? artifact.artifactType) === spec.code;
+  return (
+    artifact.artifactCode ?? artifact.artifactKind ?? artifact.artifactType
+  ) === spec.code;
 }
 
 function lifecycleStateFor(

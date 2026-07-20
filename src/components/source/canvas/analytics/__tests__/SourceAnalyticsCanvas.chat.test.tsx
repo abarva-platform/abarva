@@ -187,7 +187,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
           {
             id: "generated-draft",
             stageKey: "scope",
-            artifactCode: "d05_scope_memo",
+            artifactKind: "d05_scope_memo",
             artifactFamily: "sourcing_strategy",
             sourceOrigin: "generated",
             title: "Scope Memo",
@@ -197,7 +197,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
           {
             id: "uploaded-evidence",
             stageKey: "scope",
-            artifactCode: "d07_ticket_synth",
+            artifactKind: "d07_ticket_synth",
             artifactGroup: "upload",
             title: "Ticket History",
             fileFormat: "csv",
@@ -206,7 +206,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
           {
             id: "client-final",
             stageKey: "scope",
-            artifactCode: "d05_scope_memo",
+            artifactKind: "d05_scope_memo",
             artifactGroup: "upload",
             title: "Approved Scope Memo",
             fileFormat: "pdf",
@@ -218,7 +218,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
           {
             id: "generated-rfp",
             stageKey: "rfp",
-            artifactCode: "d09_rfp_pack",
+            artifactKind: "d09_rfp_pack",
             artifactGroup: "generated",
             sourceOrigin: "generated",
             title: "RFP Package",
