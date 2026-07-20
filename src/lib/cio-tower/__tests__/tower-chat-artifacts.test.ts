@@ -107,4 +107,51 @@ describe("buildTowerChatAvaAnswerPacket", () => {
         .points,
     ).toContainEqual({ label: "Claims automation", x: 85, y: 45 });
   });
+
+  it("converts business-language quadrant tables into Recharts points", () => {
+    const packet = buildTowerChatAvaAnswerPacket({
+      ...baseArgs,
+      question:
+        "Create a 2x2 matrix of the highest-value AI programs by value and execution complexity.",
+      modelOutput: {
+        answer:
+          "The 2x2 places top AI programs by forecast value and execution complexity.",
+        tables: [
+          {
+            id: "ai_2x2_matrix",
+            title: "AI Programs: Forecast Value vs. Execution Complexity",
+            columns: [
+              "Quadrant",
+              "Program",
+              "Forecast Value (FY26)",
+              "Complexity Driver",
+            ],
+            rows: [
+              [
+                "High Value / High Complexity",
+                "Mainframe API and Event Bridge",
+                "$310M",
+                "Internal legacy platform",
+              ],
+              [
+                "High Value / Lower Complexity",
+                "IROPS Agentic Recovery Cockpit",
+                "$270M",
+                "Operationally contained use case",
+              ],
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(packet.charts?.[0]?.kind).toBe("quadrant-matrix");
+    expect(
+      (packet.charts?.[0]?.data as { points: Array<Record<string, unknown>> })
+        .points,
+    ).toEqual([
+      { label: "Mainframe API and Event Bridge", x: 78, y: 82 },
+      { label: "IROPS Agentic Recovery Cockpit", x: 38, y: 82 },
+    ]);
+  });
 });

@@ -31,6 +31,7 @@ Tower aVa chat now sends governed Tower answer tables and metric cards through t
 
 - PR: pending.
 - `src/lib/cio-tower/tower-chat-artifacts.ts` converts Tower visible-answer tables, tab tables, and metric cards into `AvaAnswerPacket` artifacts.
+- `src/lib/cio-tower/tower-chat-artifacts.ts` also converts business-language quadrant rows such as `High Value / Lower Complexity` into deterministic Recharts quadrant points when a 2x2 chart is requested.
 - `src/components/tower/TowerIndexPage.tsx` attaches the Tower artifact packet to chat responses.
 - `src/components/atlas/AtlasChatPanel.tsx` forwards governed aVa packets into `AgentDock`.
 - `src/lib/cio-tower/__tests__/tower-chat-artifacts.test.ts` covers horizontal bar, line/trend, and 2x2 matrix artifact generation.
@@ -40,7 +41,7 @@ Tower aVa chat now sends governed Tower answer tables and metric cards through t
 
 - `npx jest src/lib/cio-tower/__tests__/tower-chat-artifacts.test.ts --runInBand` — passed.
 - Focused combined Jest, ESLint, TypeScript, release check — pending final run.
-- ACA deploy and live signed-in 25-question Tower proof — pending after merge.
+- ACA deploy and live signed-in 25-question Tower proof — first deployment passed runtime invariant; 25Q API proof passed 25/25 with 9.88/10 average and 7/7 visual-intent prompts returning structured artifacts. Browser proof found tables rendered but quadrant-label matrices needed deterministic chart-point conversion; follow-up patch pending validation/deploy.
 
 ## Rollout Plan
 
@@ -65,8 +66,8 @@ Revert the PR and redeploy the previous healthy `main` image through the ACA mai
 - PR URL: pending.
 - CI run: pending.
 - ACA deployment evidence: pending.
-- Live signed-in 25-question Tower report: pending.
+- Live signed-in 25-question Tower report: `/Users/anand/Downloads/tower-ava-25q-live-2026-07-20T03-15-57-385Z/summary.md`
 
 ## Known Gaps
 
-Live production proof is pending until the PR is merged and deployed.
+Follow-up browser proof must confirm Recharts render for quadrant-label and trend prompts after the deterministic chart-point conversion patch deploys.
