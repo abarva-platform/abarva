@@ -3,7 +3,7 @@ import { SourceAnalyticsCanvas } from "@/components/source/canvas/analytics";
 import { getSourcingEvent } from "@/lib/source/queries";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
-import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
+import { listSourceArtifactsForSourceEventIdWithContent } from "@/lib/source/artifact-registry";
 import {
   SOURCE_STAGE_ORDER,
   SOURCE_STAGE_LABELS,
@@ -99,7 +99,7 @@ export default async function SourceEventDetailPage({
     // (a reload / tab switch must reflect uploaded facts, not reset to empty).
     let hydrationFactInputs: Record<string, number> = {};
     const analyticsRegistryArtifacts =
-      await listSourceArtifactsForSourceEventId(event.id).catch((error) => {
+      await listSourceArtifactsForSourceEventIdWithContent(event.id).catch((error) => {
         console.error(
           "[SourceEventDetailPage] source_artifacts registry read failed for analytics shell",
           error instanceof Error ? error.message : String(error),

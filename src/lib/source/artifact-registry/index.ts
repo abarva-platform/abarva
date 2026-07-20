@@ -7,6 +7,7 @@
 import "server-only";
 
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import { selectSourceArtifactsWriteAdapter } from "@/lib/data-plane/write-adapters/sourceArtifactsWriteAdapter";
 import { recordContextRefreshEvent } from "@/lib/intelligence/refresh-events";
 import {
@@ -146,6 +147,11 @@ export interface UpdateSourceArtifactProcessingStateInput {
   disclosureFlag?: ArtifactDisclosureFlag | null;
 }
 
+export interface SourceArtifactRegistryRecordWithContent
+  extends SourceArtifactRegistryRecord {
+  bodyMarkdown?: string | null;
+}
+
 interface SourceArtifactRow {
   id: string;
   tenant_key: string;
@@ -236,6 +242,9 @@ const SELECT_COLUMNS = [
   "deleted_at",
 ].join(", ");
 
+const INLINE_ARTIFACT_STATE_URI_PREFIX = "inline://source-event-artifact-state/";
+const ARTIFACT_TEXT_PREVIEW_LIMIT = 30_000;
+
 function rowToRecord(row: SourceArtifactRow): SourceArtifactRegistryRecord {
   const changeSummary = (() => {
     const raw = row.client_final_change_summary;
@@ -314,6 +323,15 @@ function assertSourceStageKey(stageKey: SourceStageKey): void {
       `[source-artifacts] stageKey "${stageKey}" is not supported`,
     );
   }
+}
+
+function isReadableArtifactText(mimeType: string): boolean {
+  return /text\/|markdown|json/i.test(mimeType);
+}
+
+function truncateArtifactText(content: string | null): string | null {
+  const trimmed = content?.trim();
+  return trimmed ? trimmed.slice(0, ARTIFACT_TEXT_PREVIEW_LIMIT) : null;
 }
 
 function validateRegisterInput(input: RegisterSourceArtifactInput): void {
@@ -517,6 +535,49 @@ export async function listSourceArtifactsForSourceEventId(
   return ((data as unknown as SourceArtifactRow[] | null) ?? []).map(
     rowToRecord,
   );
+}
+
+export async function listSourceArtifactsForSourceEventIdWithContent(
+  sourceEventId: string,
+): Promise<SourceArtifactRegistryRecordWithContent[]> {
+  const records = await listSourceArtifactsForSourceEventId(sourceEventId);
+  return Promise.all(
+    records.map(async (record) => {
+      const bodyMarkdown = await readSourceArtifactRegistryTextContent(record);
+      return bodyMarkdown ? { ...record, bodyMarkdown } : record;
+    }),
+  );
+}
+
+export async function readSourceArtifactRegistryTextContent(
+  record: SourceArtifactRegistryRecord,
+): Promise<string | null> {
+  if (record.blobUri.startsWith(INLINE_ARTIFACT_STATE_URI_PREFIX)) {
+    try {
+      const { data, error } = await getAzureWriteFluentClient()
+        .from("source_event_artifact_states")
+        .select("body")
+        .eq("source_event_id", record.sourceEventId)
+        .eq("artifact_code", record.artifactKind)
+        .maybeSingle<{ body: string | null }>();
+      if (error) return null;
+      return truncateArtifactText(data?.body ?? null);
+    } catch {
+      return null;
+    }
+  }
+
+  if (!isReadableArtifactText(record.mimeType)) return null;
+
+  try {
+    const bytes = await getObjectStorageAdapter().download(
+      "source-artifacts",
+      record.blobUri,
+    );
+    return truncateArtifactText(bytes.toString("utf8"));
+  } catch {
+    return null;
+  }
 }
 
 export async function listSourceArtifactsForStage(

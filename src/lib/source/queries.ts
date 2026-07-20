@@ -26,7 +26,6 @@ import {
   SOURCE_STAGE_ORDER,
 } from "./constants";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
-import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import { getActiveClientRow } from "@/lib/active-client";
 import { classifySourcingEvent } from "./classifier/category-classifier";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -44,6 +43,7 @@ import {
 } from "@/lib/client-config";
 import {
   getSourceArtifactRegistryRecord,
+  readSourceArtifactRegistryTextContent,
   type SourceArtifactApprovalState,
   type SourceArtifactRegistryRecord,
 } from "./artifact-registry";
@@ -1345,32 +1345,7 @@ function splitSourceArtifactMarkdownSections(
 async function readSourceArtifactBlobText(
   record: SourceArtifactRegistryRecord,
 ): Promise<string | null> {
-  if (!/text\/|markdown|json/i.test(record.mimeType)) return null;
-
-  if (record.blobUri.startsWith("inline://source-event-artifact-state/")) {
-    try {
-      const { data, error } = await getAzureWriteFluentClient()
-        .from("source_event_artifact_states")
-        .select("body")
-        .eq("source_event_id", record.sourceEventId)
-        .eq("artifact_code", record.artifactKind)
-        .maybeSingle<{ body: string | null }>();
-      if (error) return null;
-      return data?.body?.slice(0, 30_000) ?? null;
-    } catch {
-      return null;
-    }
-  }
-
-  try {
-    const bytes = await getObjectStorageAdapter().download(
-      "source-artifacts",
-      record.blobUri,
-    );
-    return bytes.toString("utf8").slice(0, 30_000);
-  } catch {
-    return null;
-  }
+  return readSourceArtifactRegistryTextContent(record);
 }
 
 async function sourceArtifactRegistryRecordToDetail(
