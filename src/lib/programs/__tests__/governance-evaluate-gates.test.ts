@@ -272,6 +272,108 @@ describe('evaluateGate', () => {
     );
   });
 
+  it('regression: requirements_design_outcome_trace no longer passes on free text alone with zero real P3 deliverables and no completed module (the live incident)', async () => {
+    // Live incident 2026-07-20: a real Move (MEMBER AI ASSIST) advanced
+    // P3->P4 with 0 P3 deliverables ever generated, because this hard check's
+    // free-text fallback matched generic words ("outcome", "validation") in
+    // an in-progress (not completed) phase_3_* module's captured text alone.
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 3,
+      archetype: null,
+    });
+    deliverablesFixture = [];
+    modulesFixture = [
+      {
+        module_key: 'phase_3_design_notes',
+        status: 'in_progress',
+        state_jsonb: { value: 'Recommended outcome: proceed with validation of the design choice next.' },
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      3,
+      4,
+    );
+
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: 'requirements_design_outcome_trace', severity: 'hard' }),
+      ]),
+    );
+  });
+
+  it('requirements_design_outcome_trace passes on free text once the phase_3 module is actually completed (real user action, not just draft text)', async () => {
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 3,
+      archetype: null,
+    });
+    deliverablesFixture = [];
+    modulesFixture = [
+      {
+        module_key: 'phase_3_design_notes',
+        status: 'completed',
+        state_jsonb: { value: 'Recommended outcome: proceed with validation of the design choice next.' },
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      3,
+      4,
+    );
+
+    expect(result.failedChecks).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ check: 'requirements_design_outcome_trace' }),
+      ]),
+    );
+  });
+
+  it('regression: launch_readiness_attested and tower_cadence_defined (P5->P6) no longer pass on free text alone with no completed phase_5 module', async () => {
+    // These two hard checks had NO real-signal alternative at all — purely
+    // regex-matched free text. Confirm they now require a completed module.
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 5,
+      archetype: 'agent_assist',
+    });
+    deliverablesFixture = [
+      { id: 'handoff', deliverable_type_key: 'handoff_package', status: 'signed_off' },
+      { id: 'value-contract', deliverable_type_key: 'value_measurement_contract', status: 'signed_off' },
+    ];
+    modulesFixture = [
+      {
+        module_key: 'phase_5_launch_readiness',
+        status: 'in_progress',
+        state_jsonb: { value: 'Draft notes: launch readiness go/no-go criteria still being worked.' },
+      },
+      {
+        module_key: 'phase_5_governance_cadence',
+        status: 'in_progress',
+        state_jsonb: { value: 'Draft notes: tower cadence and governance review still being worked.' },
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      5,
+      6,
+    );
+
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: 'launch_readiness_attested', severity: 'hard' }),
+        expect.objectContaining({ check: 'tower_cadence_defined', severity: 'hard' }),
+      ]),
+    );
+  });
+
   it('blocks P2 to P3 when the signed Discovery report declares unresolved hard gaps', async () => {
     getProgramByIdMock.mockResolvedValue({
       id: 'program-1',
