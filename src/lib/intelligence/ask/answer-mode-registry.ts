@@ -519,7 +519,7 @@ export function buildCxoAnswerModeSystemAddendum(
 FORMAT OVERRIDE FOR THIS MODE
 - The earlier generic handoff guidance is superseded for this answer. Do not merely say "hand off to Moves." Explain how AbarVa would actually run the work through Moves.
 - If rich-text canvas tabs are active, put required executive artifacts in the Decision or Table tabs, put vendor/commercial implications in the Evidence or Table tabs when relevant, and put Tower value metrics in the Chart or Table tabs.
-- If answer-only streaming is active, use compact bold section headers and required tables.`;
+- If answer-only streaming is active, use compact bold section headers (naming the actual topic, e.g. "Call Center Optimization") and required tables — never literal narrative-stage labels such as "Answer", "Proof", "Move", "Tension", "Evidence", or "Implication".`;
 }
 
 export function buildCxoAnswerModePromptDirective(

@@ -97,6 +97,27 @@ describe("Ask Intelligence guardrails", () => {
     expect(CONCISE_SYSTEM_PROMPT).not.toContain("You are Sentinel, AbarVa's Intelligence agent.");
   });
 
+  it('does not instruct aVa to print mechanical Answer/Proof/Move section labels anywhere in the prompt chain', () => {
+    // Regression guard for the 2026-07-19/20 finding: SYSTEM_PROMPT told aVa to
+    // write a narrative, not a labeled template, but three OTHER always-on
+    // prompt fragments in this file (buildUniversalAnswerVisualContract,
+    // richTextAddendum, answerOnlyDirective) still said "Default to the AbarVa
+    // Pyramid Brief: Answer, Proof, Move" and cancelled the no-visible-labels
+    // rule — so live answers on richText/answerOnly surfaces printed literal
+    // "Answer." "Proof." "Move." headers. Scan the raw source, not just the
+    // exported constants, since the offending text lived in helper functions
+    // (buildUniversalAnswerVisualContract, answerOnlyDirective) that aren't
+    // otherwise exported for direct assertion.
+    const synthesizerSource = readFileSync(
+      join(__dirname, '..', 'synthesizer.ts'),
+      'utf8',
+    );
+    expect(synthesizerSource).not.toContain('Pyramid Brief');
+    expect(synthesizerSource).not.toMatch(
+      /Default to the AbarVa .*Answer,\s*Proof,\s*Move/i,
+    );
+  });
+
   it('uses deterministic followups only for explicit concise Ask requests', () => {
     expect(buildDeterministicConciseFollowups({
       query: 'Name one modernization risk SkyHarbor should watch. Keep it concise.',
