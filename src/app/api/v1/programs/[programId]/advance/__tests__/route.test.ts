@@ -283,6 +283,115 @@ describe("POST /api/v1/programs/[programId]/advance", () => {
     expect(mockRequestFounderApproval).not.toHaveBeenCalled();
     expect(mockAdvancePhase).not.toHaveBeenCalled();
   });
+
+  it("rejects an unauthorized bypassGate attempt from a caller without gate-approval rights", async () => {
+    // Phase Advancement Control audit, scenario "unauthorized override":
+    // bypassGate must require canApproveGates (or founder) regardless of
+    // gate state.
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: null,
+      canApproveGates: false,
+    });
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [],
+      requiresApproval: false,
+      approverRole: null,
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({
+        toPhase: 1,
+        bypassGate: true,
+        humanRationale: "Attempting to bypass without gate-approval rights.",
+      }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(403);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "forbidden",
+      detail: "phase-gate approval permission is required to bypass a gate",
+    });
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("authorized bypassGate still never lets a hard gate failure through (no hard-override capability exists)", async () => {
+    // Phase Advancement Control audit, scenario "authorized override": even
+    // a caller WITH canApproveGates and an explicit bypassGate=true is
+    // blocked by any hard-severity check — the hard-fail 409 runs
+    // unconditionally, before bypassGate is ever consulted.
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: null,
+      canApproveGates: true,
+    });
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [
+        {
+          check: "design_approved",
+          reason: "No approved P3 architecture deliverable exists",
+          severity: "hard",
+        },
+      ],
+      requiresApproval: false,
+      approverRole: null,
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({
+        toPhase: 4,
+        bypassGate: true,
+        humanRationale: "Explicitly authorized bypass attempt.",
+      }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(409);
+    await expect(res.json()).resolves.toMatchObject({ error: "gate_blocked" });
+    expect(mockAdvancePhase).not.toHaveBeenCalled();
+  });
+
+  it("labels a soft-carry-only advance as softGapsCarried, never as an override", async () => {
+    // Phase Advancement Control audit, scenario "misleading override
+    // labeling": a normal, hard-gate-clean pass with an unmet soft
+    // criterion must report softGapsCarried:true and hardGateOverride:null
+    // in gateDecision — never a bare "override" flag.
+    mockLoadUserProgramAccessPolicy.mockResolvedValue({
+      programIdsAllowed: null,
+      canApproveGates: true,
+    });
+    mockEvaluateGate.mockResolvedValue({
+      failedChecks: [
+        {
+          check: "optional_stakeholder_review",
+          reason: "Not logged",
+          severity: "soft",
+        },
+      ],
+      requiresApproval: false,
+      approverRole: null,
+    });
+
+    const { POST } = await import("../route");
+    const res = await POST(
+      req({
+        toPhase: 1,
+        humanRationale: "Reviewed and approved with a soft gap noted.",
+      }) as never,
+      { params },
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      ok: true,
+      gateDecision: expect.objectContaining({
+        softGapsCarried: true,
+        hardGateOverride: null,
+        carriedGaps: ["optional_stakeholder_review"],
+      }),
+    });
+  });
 });
 
 export {};
