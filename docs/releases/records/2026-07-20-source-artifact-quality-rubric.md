@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -48,25 +48,33 @@ visuals, exhibits, and citation quality still require renderer-output scoring.
 
 - PASS: `npx jest src/lib/source/__tests__/artifact-lifecycle-matrix.test.ts src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.chat.test.tsx --runInBand`.
 - PASS: `npx eslint src/lib/source/artifact-lifecycle-matrix.ts src/lib/source/__tests__/artifact-lifecycle-matrix.test.ts src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.chat.test.tsx`.
-- Pending: TypeScript, `release:check`, PR checks, ACA deploy, and signed-in
-  Source Files proof after merge.
+- PASS: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`.
+- PASS: `npm run release:check`.
+- PASS: PR checks for `https://github.com/abarva-platform/abarva/pull/5119`.
+- PASS: ACA main deploy run `29724687575` completed successfully for merge SHA
+  `2e4199fbf5bbb5db4a326940c8dca2e76199d6c1`.
+- PASS: Signed-in Source Files proof confirmed `Quality score`, `Hard fails`,
+  `Missing required`, `Review-required`, the honest rubric scope note,
+  AI-draft review holds, required/gate-defining missing-artifact findings, and
+  the standards CSV export command.
 
 ## Rollout Plan
 
-Merge through a PR to `main`, deploy through the repo-owned Azure Container Apps
-main deploy workflow, verify the ACA runtime invariant, then run signed-in
-Source Files proof that the rubric is visible and does not overstate
-artifact-readiness.
+Merged to `main` through PR `#5119`, deployed through the repo-owned Azure
+Container Apps main deploy workflow, verified the ACA runtime invariant, and
+ran signed-in Source Files proof that the rubric is visible and does not
+overstate artifact-readiness.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: None in this release.
-- Approved image digest: Pending ACA deploy.
-- ACA runtime invariant: Pending ACA deploy.
-- Worker image invariant: Pending ACA deploy.
+- Approved image digest: Produced by ACA run `29724687575`; see deployment
+  evidence bundle uploaded by the workflow.
+- ACA runtime invariant: Passed in ACA run `29724687575`.
+- Worker image invariant: Passed in ACA run `29724687575`.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Yes, Source Files workspace.
+- Live signed-in proof required: Complete, Source Files workspace.
 
 ## Rollback Plan
 
@@ -75,11 +83,15 @@ deploy workflow. No data rollback is required.
 
 ## Audit Evidence
 
-- PR URL: Pending.
-- Local validation: Focused Jest and ESLint passed before PR.
-- PR checks: Pending.
-- ACA deployment run: Pending.
-- Signed-in screenshot: Pending.
+- PR URL: `https://github.com/abarva-platform/abarva/pull/5119`.
+- Local validation: Focused Jest, ESLint, TypeScript, and `release:check`
+  passed before PR.
+- PR checks: `https://github.com/abarva-platform/abarva/pull/5119`.
+- Merge SHA: `2e4199fbf5bbb5db4a326940c8dca2e76199d6c1`.
+- ACA deployment run:
+  `https://github.com/abarva-platform/abarva/actions/runs/29724687575`.
+- Signed-in screenshot:
+  `/Users/anand/Downloads/source-5119-live-artifact-quality-rubric.png`.
 
 ## Known Gaps
 
