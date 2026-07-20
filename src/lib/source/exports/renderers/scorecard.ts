@@ -32,6 +32,7 @@ import {
   buildCoverSheet,
   safeCell,
 } from '@/lib/exports-shared/xlsx-base';
+import { sourceArtifactGovernanceBanner } from '@/lib/source/artifact-governance';
 
 /** One criterion. Weight is the integer percentage (0-100). */
 export interface ScorecardCriterion {
@@ -77,6 +78,9 @@ export function buildScorecardWorkbook(
   workbook.created = new Date(payload.generatedAt);
   workbook.title = `Evaluation Scorecard · ${payload.eventCode}`;
 
+  const governanceNotice = sourceArtifactGovernanceBanner('ai_draft', {
+    artifactCode: 'd16',
+  });
   buildCoverSheet(workbook, {
     title: `Evaluation Scorecard · ${payload.eventName}`,
     eventCode: payload.eventCode,
@@ -84,6 +88,10 @@ export function buildScorecardWorkbook(
     tenantName: payload.tenantName,
     issuedBy: payload.issuedBy,
     generatedAt: payload.generatedAt,
+    governanceNotice: {
+      message: governanceNotice.message,
+      detail: governanceNotice.detail,
+    },
     instructions: [
       'Sheet 2 (Criteria & Weights) is locked. Weights must sum to 100; the bottom row of Sheet 2 verifies this.',
       'Sheet 3 (Vendor Scoring) — score each criterion on a 1-5 scale per vendor. Weighted columns are formula-driven.',

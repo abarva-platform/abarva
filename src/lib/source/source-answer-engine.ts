@@ -1187,12 +1187,26 @@ function buildArtifactGovernanceAnswer(args: {
     : records;
   const answerRecords = scopedRecords.length > 0 ? scopedRecords : records;
 
+  // Precedence mirrors resolveAuthoritativeArtifact() in
+  // client-final-artifacts.ts (client-final+current-authoritative →
+  // client-final → current-authoritative → approved/locked status) — kept
+  // as a local implementation rather than a literal call because these
+  // records are regex-parsed from prose evidence excerpts (`status`,
+  // `version` are free-text tokens here, not the typed DB columns the
+  // shared resolver expects), but the DECISION ORDER must stay identical
+  // so this surface never disagrees with the render route's pick. Update
+  // both together.
   const clientFinal =
     answerRecords.find(
       (record) => record.isClientFinal && record.isCurrentAuthoritative,
     ) ??
     answerRecords.find((record) => record.isClientFinal) ??
-    answerRecords.find((record) => record.isCurrentAuthoritative);
+    answerRecords.find((record) => record.isCurrentAuthoritative) ??
+    answerRecords.find(
+      (record) =>
+        record.status.toLowerCase() === "approved" ||
+        record.status.toLowerCase() === "locked",
+    );
   const generatedDraft =
     answerRecords.find(
       (record) => record.isGeneratedDraft && record.supersededByLaterVersion,

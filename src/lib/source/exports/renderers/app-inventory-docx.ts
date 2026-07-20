@@ -25,12 +25,14 @@ import {
   coverSubtitleParagraph,
   coverTitleParagraph,
   eyebrowParagraph,
+  governanceNoticeParagraph,
   heading2,
 } from '@/lib/exports-shared/docx-base';
 import {
   buildKeyValueTable,
   buildMultiColumnTable,
 } from '@/lib/exports-shared/structured-docx-base';
+import { sourceArtifactGovernanceBanner } from '@/lib/source/artifact-governance';
 import type { AppInventoryPayload } from './app-inventory';
 
 export function buildAppInventoryDocx(payload: AppInventoryPayload): Document {
@@ -42,6 +44,10 @@ export function buildAppInventoryDocx(payload: AppInventoryPayload): Document {
   const totalWorkload = payload.rows
     .filter((r) => r.inScope)
     .reduce((acc, r) => acc + r.annualWorkloadCount, 0);
+  const appInventoryGovernanceNotice = sourceArtifactGovernanceBanner(
+    'ai_draft',
+    { artifactCode: 'd04' },
+  );
 
   return new Document({
     creator: 'AbarVa · Sentinel',
@@ -81,6 +87,10 @@ export function buildAppInventoryDocx(payload: AppInventoryPayload): Document {
             ? [coverSubtitleParagraph(`Issued by: ${payload.issuedBy}`)]
             : []),
           coverSubtitleParagraph(`Generated: ${payload.generatedAt}`),
+          governanceNoticeParagraph(
+            appInventoryGovernanceNotice.message,
+            appInventoryGovernanceNotice.detail,
+          ),
           // Section 1 — Tier definitions
           heading2('Tier definitions'),
           bodyParagraph([

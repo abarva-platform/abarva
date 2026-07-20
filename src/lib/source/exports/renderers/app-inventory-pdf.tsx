@@ -24,6 +24,7 @@ import {
   StructuredPdfTable,
   buildStructuredPdfDocument,
 } from '@/lib/exports-shared/structured-pdf-base';
+import { sourceArtifactGovernanceBanner } from '@/lib/source/artifact-governance';
 import type { AppInventoryPayload } from './app-inventory';
 
 export function buildAppInventoryPdf(
@@ -48,6 +49,9 @@ export function buildAppInventoryPdf(
       ...(payload.issuedBy ? [{ label: 'Issued by', value: payload.issuedBy }] : []),
       { label: 'Generated', value: payload.generatedAt },
     ],
+    governanceNotice: sourceArtifactGovernanceBanner('ai_draft', {
+      artifactCode: 'd04',
+    }),
     introNote:
       'Print-ready rendering of the d04 application inventory. The xlsx ' +
       'companion is the in-place editing surface; this PDF is for board ' +

@@ -23,17 +23,23 @@ import {
   coverSubtitleParagraph,
   coverTitleParagraph,
   eyebrowParagraph,
+  governanceNoticeParagraph,
   heading2,
 } from '@/lib/exports-shared/docx-base';
 import {
   buildKeyValueTable,
   buildMultiColumnTable,
 } from '@/lib/exports-shared/structured-docx-base';
+import { sourceArtifactGovernanceBanner } from '@/lib/source/artifact-governance';
 import type { ResponseChecklistPayload } from './response-checklist';
 
 export function buildResponseChecklistDocx(
   payload: ResponseChecklistPayload,
 ): Document {
+  const responseChecklistGovernanceNotice = sourceArtifactGovernanceBanner(
+    'ai_draft',
+    { artifactCode: 'd11' },
+  );
   return new Document({
     creator: 'AbarVa · Sentinel',
     title: `Response Checklist · ${payload.eventCode}`,
@@ -72,6 +78,10 @@ export function buildResponseChecklistDocx(
             ? [coverSubtitleParagraph(`Issued by: ${payload.issuedBy}`)]
             : []),
           coverSubtitleParagraph(`Generated: ${payload.generatedAt}`),
+          governanceNoticeParagraph(
+            responseChecklistGovernanceNotice.message,
+            responseChecklistGovernanceNotice.detail,
+          ),
           ...(payload.submissionDeadline
             ? [coverSubtitleParagraph(`Submission deadline: ${payload.submissionDeadline}`)]
             : []),

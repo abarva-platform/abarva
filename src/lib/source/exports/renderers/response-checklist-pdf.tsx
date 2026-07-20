@@ -24,6 +24,7 @@ import {
   StructuredPdfTable,
   buildStructuredPdfDocument,
 } from '@/lib/exports-shared/structured-pdf-base';
+import { sourceArtifactGovernanceBanner } from '@/lib/source/artifact-governance';
 import type { ResponseChecklistPayload } from './response-checklist';
 
 export function buildResponseChecklistPdf(
@@ -42,6 +43,9 @@ export function buildResponseChecklistPdf(
         ? [{ label: 'Submission deadline', value: payload.submissionDeadline }]
         : []),
     ],
+    governanceNotice: sourceArtifactGovernanceBanner('ai_draft', {
+      artifactCode: 'd11',
+    }),
     introNote:
       'Vendor-facing response checklist. Use the xlsx companion for ' +
       'in-place completion; this PDF is for review and circulation.',

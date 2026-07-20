@@ -34,6 +34,7 @@ import {
   buildCoverSheet,
   safeCell,
 } from '@/lib/exports-shared/xlsx-base';
+import { sourceArtifactGovernanceBanner } from '@/lib/source/artifact-governance';
 
 /** One row in the Pricing Detail sheet. Vendors fill `unitPrice`. */
 export interface PricingLineItem {
@@ -84,6 +85,9 @@ export function buildPricingTemplateWorkbook(
   workbook.created = new Date(payload.generatedAt);
   workbook.title = `Pricing Template · ${payload.eventCode}`;
 
+  const governanceNotice = sourceArtifactGovernanceBanner('ai_draft', {
+    artifactCode: 'd19',
+  });
   buildCoverSheet(workbook, {
     title: `Pricing Template · ${payload.eventName}`,
     eventCode: payload.eventCode,
@@ -91,6 +95,10 @@ export function buildPricingTemplateWorkbook(
     tenantName: payload.tenantName,
     issuedBy: payload.issuedBy,
     generatedAt: payload.generatedAt,
+    governanceNotice: {
+      message: governanceNotice.message,
+      detail: governanceNotice.detail,
+    },
     instructions: [
       'Vendor of record: fill the cell next to "Vendor name" on this sheet before completing pricing.',
       'Sheet 2 (Assumption Set) is locked — these are the assumptions all vendor submissions are normalized against.',

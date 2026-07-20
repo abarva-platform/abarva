@@ -6,7 +6,13 @@ export const CLIENT_FINAL_GOVERNANCE_MESSAGE =
 
 export interface AuthoritativeArtifactCandidate {
   id: string;
-  version: number;
+  /**
+   * Optional so record shapes that don't track a version number (e.g. the
+   * upload-registry's `SourceArtifactRegistryRecord`) can still resolve
+   * through this shared function — `latest()` treats a missing version as
+   * 0, matching its pre-existing `?? 0` fallback.
+   */
+  version?: number;
   lifecycleState?: string | null;
   status?: string | null;
   artifactGroup?: string | null;

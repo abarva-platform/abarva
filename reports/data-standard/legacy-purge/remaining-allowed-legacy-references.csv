@@ -170,6 +170,9 @@ synthetic-v-folder-reference,reports/abarva-enterprise-data-architecture-latest.
 legacy-v-dimension-token,reports/abarva-enterprise-data-architecture-latest.json,generated/historical report
 legacy-v-file-name,reports/abarva-enterprise-data-architecture-latest.json,generated/historical report
 v6-v7-current-state,reports/abarva-enterprise-data-architecture-latest.json,generated/historical report
+synthetic-v-folder-reference,reports/active-tenant-module-routing-fix/summary.md,generated/historical report
+legacy-v-dimension-token,reports/active-tenant-module-routing-fix/summary.md,generated/historical report
+legacy-v-file-name,reports/active-tenant-module-routing-fix/summary.md,generated/historical report
 synthetic-v-folder-reference,reports/admin-data-layer-explorer/latest/tenant-manifest-projection-audit.json,generated/historical report
 legacy-v-dimension-token,reports/admin-data-layer-explorer/latest/tenant-manifest-projection-audit.json,generated/historical report
 legacy-v-file-name,reports/admin-data-layer-explorer/latest/tenant-manifest-projection-audit.json,generated/historical report
@@ -466,6 +469,7 @@ legacy-v-dimension-token,src/lib/intelligence/__tests__/industrial-cio-backoffic
 legacy-v-file-name,src/lib/intelligence/__tests__/industrial-cio-backoffice-readiness.test.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/intelligence/__tests__/skyharbor-cto-readiness.test.ts,non-loader historical reference
 legacy-v-file-name,src/lib/intelligence/__tests__/skyharbor-cto-readiness.test.ts,non-loader historical reference
+synthetic-v-folder-reference,src/lib/intelligence/ask/__tests__/skyharbor-cto-readiness-source.test.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/intelligence/ask/retrievers/v7-dossier.test.ts,non-loader historical reference
 legacy-v-file-name,src/lib/intelligence/ask/retrievers/v7-dossier.test.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/intelligence/ask/retrievers/v7-dossier.ts,non-loader historical reference

@@ -78,6 +78,13 @@ export function buildCoverSheet(
     issuedBy?: string;
     instructions: string[];
     generatedAt: string;
+    /**
+     * Optional governance/status notice (e.g. "AI-prepared draft...").
+     * Generic text in — callers own the copy; this only owns the visual
+     * treatment (amber-highlighted row) so every structured workbook shows
+     * its draft/final status the same way.
+     */
+    governanceNotice?: { message: string; detail?: string | null } | null;
   },
 ): ExcelJS.Worksheet {
   const sheet = workbook.addWorksheet('Cover', {
@@ -98,6 +105,23 @@ export function buildCoverSheet(
   ];
   for (const [label, value] of labelRows) {
     const r = sheet.addRow([label, safeCell(value)]);
+    r.getCell(1).font = { bold: true, color: { argb: SOURCE_XLSX.HEADER_FILL } };
+    r.getCell(2).alignment = { wrapText: true, vertical: 'middle' };
+  }
+
+  if (cover.governanceNotice) {
+    sheet.addRow([]);
+    const noticeText = cover.governanceNotice.detail
+      ? `${cover.governanceNotice.message} ${cover.governanceNotice.detail}`
+      : cover.governanceNotice.message;
+    const r = sheet.addRow(['Status', safeCell(noticeText)]);
+    r.eachCell({ includeEmpty: false }, (cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: SOURCE_XLSX.WARNING_FILL },
+      };
+    });
     r.getCell(1).font = { bold: true, color: { argb: SOURCE_XLSX.HEADER_FILL } };
     r.getCell(2).alignment = { wrapText: true, vertical: 'middle' };
   }

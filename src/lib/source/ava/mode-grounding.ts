@@ -78,6 +78,7 @@ import type {
   ValueType,
 } from "@/components/source/canvas/analytics/view-model";
 import type { SourceArtifactRegistryRecord } from "@/lib/source/artifact-registry/types";
+import { resolveAuthoritativeArtifact } from "@/lib/source/client-final-artifacts";
 import type { SourceEventArchetype, ValueLeverRule } from "@/lib/source/archetypes/types";
 import type { SourceAnswerMode } from "./answer-mode";
 
@@ -386,20 +387,23 @@ function groupArtifactsBySlot(
   const summaries: ArtifactSlotSummary[] = [];
   for (const [key, records] of bySlot) {
     const stageKey = key.split("::")[0];
-    const sorted = [...records].sort((a, b) => {
-      // Explicit authority flags win over recency.
-      const aFlag = a.isCurrentAuthoritative || a.isClientFinal ? 1 : 0;
-      const bFlag = b.isCurrentAuthoritative || b.isClientFinal ? 1 : 0;
-      if (aFlag !== bFlag) return bFlag - aFlag;
-      return (
-        new Date(b.updatedAt ?? b.createdAt).getTime() -
-        new Date(a.updatedAt ?? a.createdAt).getTime()
+    // Authority decision now goes through the SAME shared resolver every
+    // other Source surface uses (client-final-artifacts.ts) — this used to
+    // be a bespoke flags-then-recency sort here, which risked silently
+    // diverging from e.g. the artifact render route's own pick. Falls back
+    // to recency exactly as before when no record in the slot carries an
+    // explicit authority flag (the "honesty rule": no finality concept
+    // beyond what's actually persisted).
+    const authoritative = resolveAuthoritativeArtifact(records);
+    if (!authoritative) continue;
+    const superseded = [...records]
+      .filter((record) => record.id !== authoritative.id)
+      .sort(
+        (a, b) =>
+          new Date(b.updatedAt ?? b.createdAt).getTime() -
+          new Date(a.updatedAt ?? a.createdAt).getTime(),
       );
-    });
-    const [authoritative, ...superseded] = sorted;
-    if (authoritative) {
-      summaries.push({ stageKey, authoritative, superseded });
-    }
+    summaries.push({ stageKey, authoritative, superseded });
   }
   return summaries;
 }
