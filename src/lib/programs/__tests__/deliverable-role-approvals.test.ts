@@ -18,6 +18,7 @@ import {
   REQUIRED_APPROVAL_ROLES,
   APPROVAL_ROLE_LABELS,
 } from "../deliverable-role-approvals";
+import { DELIVERABLE_REGISTRY } from "../deliverable-registry";
 
 const CTX = { clientId: "client-1", userId: "person-1", email: "approver@example.com" };
 
@@ -55,6 +56,26 @@ describe("REQUIRED_APPROVAL_ROLES registry", () => {
       expect(APPROVAL_ROLE_LABELS[role]).toBeTruthy();
     }
     expect(APPROVAL_ROLE_LABELS.risk_security).toBe("Risk/security approver");
+  });
+
+  it("every key matches a real deliverableTypeKey in deliverable-registry.ts — the same key space actually written to deliverables_v2.deliverable_type_key", () => {
+    // Regression guard: an earlier version of this registry keyed the
+    // operating-model entry as "operating_model" (the orchestrator's
+    // internal mapped name from orchestrated-deliverable-map.ts) instead of
+    // the registry's real "operating_model_design" key that deliverables_v2
+    // rows are actually written with — silently making that type never
+    // require any role approval. Every key here must exist verbatim in
+    // DELIVERABLE_REGISTRY.
+    const realKeys = new Set(DELIVERABLE_REGISTRY.map((spec) => spec.deliverableTypeKey));
+    for (const key of Object.keys(REQUIRED_APPROVAL_ROLES)) {
+      expect(realKeys.has(key)).toBe(true);
+    }
+  });
+
+  it("requires business+technology for the real operating-model-design registry key", () => {
+    expect(requiredApprovalRolesFor("operating_model_design")).toEqual(["business", "technology"]);
+    // The orchestrator-mapped name is NOT the key deliverables_v2 stores.
+    expect(requiredApprovalRolesFor("operating_model")).toEqual([]);
   });
 });
 
