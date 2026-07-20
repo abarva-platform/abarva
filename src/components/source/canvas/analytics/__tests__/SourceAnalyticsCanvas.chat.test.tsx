@@ -166,6 +166,23 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
   });
 
+  it("does not tell users that event approval belongs in the old Source Approvals page", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Lakeshore"
+      />,
+    );
+
+    expect(screen.getByTestId("source-analytics-canvas").textContent).not.toContain(
+      "approval belongs in Source Approvals",
+    );
+    expect(screen.getByTestId("source-analytics-canvas").textContent).toContain(
+      "open Approvals in this event workspace",
+    );
+  });
+
   it("passes surfaceContext.sourceEventId through to AppShell (verified via the rendered top-bar context, which AppShell derives independently — the real thread is exercised by SourceAnalyticsCanvas's own surfaceContext prop, asserted structurally here)", () => {
     // AppShell -> AtlasPageStateProvider both accept `surfaceContext` verbatim
     // and forward it into the /api/chat/agent POST body via `ask()`. We can't

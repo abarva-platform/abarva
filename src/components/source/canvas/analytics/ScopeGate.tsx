@@ -9,19 +9,22 @@ interface ScopeGateProps {
   gate: StageGateView;
   /** Stage display name, for the H1 and the copy. */
   stageName: string;
+  eventId?: string;
+  stageKey?: string;
 }
 
 /**
  * Beat 3 — gate readiness. This page prepares a gate decision; the formal
- * decision/rationale belongs in Source Approvals. Honest: a box goes green
+ * decision/rationale belongs in the event approval workspace. Honest: a box goes green
  * because the evidence reached its target state — never because someone clicked
  * "mark met."
  */
-export function ScopeGate({ gate, stageName }: ScopeGateProps) {
+export function ScopeGate({ gate, stageName, eventId, stageKey }: ScopeGateProps) {
   const router = useRouter();
   const [confirmed, setConfirmed] = useState<ReadonlySet<number>>(new Set());
   const allConfirmed = confirmed.size === gate.confirms.length;
   const last = gate.nextStageName === null;
+  const canOpenApprovalWorkspace = allConfirmed && Boolean(eventId);
 
   const cardStyle: CSSProperties = {
     border: `1px solid ${ANALYTICS.LINE}`,
@@ -56,7 +59,7 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
         {gate.approver} confirms three things before {stageName} advances
         {last
           ? ' and the event closes.'
-          : `. This page prepares the gate; the formal decision happens in Source Approvals.`}
+          : `. This page prepares the gate; the formal decision happens in the event approval workspace.`}
       </p>
 
       <div
@@ -72,8 +75,8 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
         }}
       >
         <b>What good looks like here:</b> inputs are complete, exceptions are
-        visible, and the approval packet is ready to review. Source Approvals
-        records the human rationale and advances the event.
+        visible, and the approval packet is ready to review. The event approval
+        workspace records the human rationale and advances the event.
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -246,25 +249,29 @@ export function ScopeGate({ gate, stageName }: ScopeGateProps) {
       <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', gap: 12 }}>
         <button
           type="button"
-          disabled={!allConfirmed}
-          onClick={() => router.push('/source/approvals')}
+          disabled={!canOpenApprovalWorkspace}
+          onClick={() => {
+            if (!eventId) return;
+            const stageQuery = stageKey ? `?stage=${stageKey}&workspace=approvals` : '?workspace=approvals';
+            router.push(`/source/events/${eventId}${stageQuery}`);
+          }}
           style={{
             border: 'none',
             borderRadius: ANALYTICS.RADIUS_SM,
-            background: allConfirmed ? ANALYTICS.INK : 'rgba(10,10,11,0.12)',
-            color: allConfirmed ? '#fff' : ANALYTICS.FAINT,
+            background: canOpenApprovalWorkspace ? ANALYTICS.INK : 'rgba(10,10,11,0.12)',
+            color: canOpenApprovalWorkspace ? '#fff' : ANALYTICS.FAINT,
             fontFamily: ANALYTICS.SANS,
             fontSize: 13.5,
             fontWeight: 600,
             padding: '11px 18px',
-            cursor: allConfirmed ? 'pointer' : 'not-allowed',
+            cursor: canOpenApprovalWorkspace ? 'pointer' : 'not-allowed',
           }}
         >
-          {last ? 'Open final approval →' : 'Open Source Approvals →'}
+          {last ? 'Open final approval →' : 'Open event approval workspace →'}
         </button>
-        {!allConfirmed ? (
+        {!canOpenApprovalWorkspace ? (
           <span style={{ fontSize: 11.5, color: ANALYTICS.FAINT }}>
-            Confirm all three above
+            {allConfirmed ? 'Event workspace context required' : 'Confirm all three above'}
           </span>
         ) : null}
       </div>

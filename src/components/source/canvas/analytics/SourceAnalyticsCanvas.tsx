@@ -1180,6 +1180,11 @@ function AvaDockControls({
 function agentActions(view: SourceEventShellView): AgentAction[] {
   const actions: AgentAction[] = [];
   const firstOpen = view.stage.activeStep;
+  const remaining = Math.max(view.stage.total - view.stage.ready, 0);
+  const approvalDetail =
+    remaining === 0
+      ? 'All steps complete - review approval inside this event workspace.'
+      : `${remaining} step${remaining === 1 ? '' : 's'} left - finish the inputs, then open Approvals in this event workspace.`;
   if (firstOpen) {
     actions.push({
       letter: 'A',
@@ -1198,7 +1203,7 @@ function agentActions(view: SourceEventShellView): AgentAction[] {
   actions.push({
     letter: actions.length === 1 ? 'B' : 'C',
     text: `What is left before ${view.stage.label} approval?`,
-    detail: view.stage.gateReadinessLine,
+    detail: approvalDetail,
   });
   return actions.slice(0, 3);
 }

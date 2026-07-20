@@ -199,7 +199,12 @@ export function ScopeAnalyticsStage({
           />
           {/* Beat 3 — the gate. */}
           <div ref={gateRef}>
-            <ScopeGate gate={view.gate} stageName={view.stageName} />
+            <ScopeGate
+              gate={view.gate}
+              stageName={view.stageName}
+              eventId={eventId}
+              stageKey={stageKey}
+            />
           </div>
         </div>
       ) : (
