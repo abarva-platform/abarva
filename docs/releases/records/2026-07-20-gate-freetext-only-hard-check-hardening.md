@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -108,17 +108,34 @@ Move after the new revision receives traffic.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` — to be
-  confirmed after merge.
-- Shared runtime mutators: none used directly.
-- Approved image digest: to be recorded once the deploy workflow runs.
-- ACA runtime invariant: to be proven after deploy.
-- Worker image invariant: N/A — no worker job evaluates phase gates.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`, run
+  [29762336738](https://github.com/abarva-platform/abarva/actions/runs/29762336738)
+  (headSha `bfede3fb65562e2d4ae4e7e21356c98d02c72b53`, the #5154 merge
+  commit), conclusion `success`.
+- Shared runtime mutators: none used directly; deploy proceeded entirely
+  through the standard workflow.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:1be850e11a371253714fc300ddbacb23c7b052798e2d54e3356e4fa09f5a1fb1`.
+- ACA runtime invariant: **proven.** `az containerapp revision list`/`job
+  list` confirm the 100%-traffic revision
+  (`ca-abarva-web-lab-eastus--mbfede3fb`) and both
+  `job-abarva-deliv-worker`/`job-abarva-deliv-worker-event` all resolve to
+  the digest above.
+- Worker image invariant: **proven** (see above).
 - Feature/env flag update path: N/A — no flag.
-- Live signed-in proof required: yes — after deploy, confirm a Move
-  currently relying on free-text-only satisfaction of one of these 8 checks
-  (with no completed module) newly shows that check as blocked; confirm
-  marking the relevant module `completed` unblocks it.
+- Live signed-in proof: **partially performed.** Navigated to `app.abarva
+  .ai/strategic-moves` post-deploy and confirmed the app loads and functions
+  normally — no regression; confirmed MEMBER AI ASSIST (the Move affected by
+  the incident this release fixes) is unchanged, still at P4, as expected
+  since this release does not revert it. The specific claim not yet
+  exercised live: confirming a Move relying on free-text-only satisfaction
+  of one of the 8 checks now shows it blocked, and that marking the module
+  `completed` unblocks it. Not attempted in this pass — the live click-
+  through that surfaced this exact bug already caused one unintended
+  production state change this session, and repeating that risk against
+  another real Move was deliberately avoided. Unit-test coverage (25/25
+  passing, including a direct reproduction of the live incident) is the
+  primary correctness evidence for this release.
 
 ## Rollback Plan
 
@@ -129,9 +146,21 @@ incident).
 
 ## Audit Evidence
 
-- PR URL: to be added when opened.
-- CI run: to be added when the PR's checks complete.
-- Deployment URL / ACA revision: to be added after deploy.
+- PR: [abarva-platform/abarva#5154](https://github.com/abarva-platform/abarva/pull/5154),
+  all required checks passed (one Lighthouse CI Total Blocking Time flake —
+  1029ms vs 1000ms budget on the homepage, unrelated to this backend-only
+  change — cleared on re-run), squash-merged as
+  `bfede3fb65562e2d4ae4e7e21356c98d02c72b53`.
+- CI/deploy run: [aca-main-deploy #29762336738](https://github.com/abarva-platform/abarva/actions/runs/29762336738),
+  conclusion `success`.
+- Deployment: ACA revision `ca-abarva-web-lab-eastus--mbfede3fb`, 100%
+  ingress traffic, image digest
+  `sha256:1be850e11a371253714fc300ddbacb23c7b052798e2d54e3356e4fa09f5a1fb1`.
+- Live proof: app-loads/no-regression confirmed on `app.abarva.ai/
+  strategic-moves` post-deploy. The specific block-then-unblock behavior for
+  one of the 8 hardened checks was not exercised against a live Move in this
+  pass, deliberately, given the production risk this exact investigation
+  already demonstrated.
 
 ## Known Gaps
 
