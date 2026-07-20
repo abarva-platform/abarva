@@ -4,6 +4,7 @@ import { getSourcingEvent } from "@/lib/source/queries";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { listSourceArtifactsForSourceEventIdWithContent } from "@/lib/source/artifact-registry";
+import { listArtifactStatesForEvent } from "@/lib/source/canvas-substrate";
 import {
   SOURCE_STAGE_ORDER,
   SOURCE_STAGE_LABELS,
@@ -29,6 +30,7 @@ import {
   buildStrategyStageView,
   deriveStrategyIntakeFacts,
 } from "@/lib/source/facts/view/strategy-stage-builder";
+import { mergeSourceShellArtifactsWithArtifactStateBodies } from "@/lib/source/source-event-shell-v2";
 import { requireTenancy } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
@@ -106,6 +108,22 @@ export default async function SourceEventDetailPage({
         );
         return [];
       });
+    const analyticsArtifactStates = await listArtifactStatesForEvent(event.id).catch(
+      (error) => {
+        console.error(
+          "[SourceEventDetailPage] source artifact states read failed for analytics shell",
+          error instanceof Error ? error.message : String(error),
+        );
+        return [];
+      },
+    );
+    const analyticsArtifacts = mergeSourceShellArtifactsWithArtifactStateBodies(
+      analyticsRegistryArtifacts,
+      analyticsArtifactStates,
+    );
+    const analyticsHydrationArtifacts = analyticsArtifacts.flatMap((artifact) =>
+      artifact.stageKey ? [{ stageKey: artifact.stageKey }] : [],
+    );
     const analyticsApprovalItems = activeClient?.key
       ? (
           await loadApprovalsInbox(activeClient.key).catch((error) => {
@@ -325,7 +343,7 @@ export default async function SourceEventDetailPage({
           tasks: hydrateTaskEvidenceState({
             tasks: liveStageView.tasks,
             factInputs: hydrationFactInputs,
-            artifacts: analyticsRegistryArtifacts,
+            artifacts: analyticsHydrationArtifacts,
             stageKey: liveStageView.stageKey,
           }),
         };
@@ -344,7 +362,7 @@ export default async function SourceEventDetailPage({
         tenantName={analyticsTenantName}
         stageView={liveStageView}
         stepInsight={stepInsight}
-        artifacts={analyticsRegistryArtifacts}
+        artifacts={analyticsArtifacts}
         approvalItems={analyticsApprovalItems}
       />
     );

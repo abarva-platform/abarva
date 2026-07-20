@@ -1,7 +1,13 @@
 import { SAMPLE_SCOPE_STAGE } from "@/components/source/canvas/analytics/sample-view-model";
 import type { StageAnalyticsView } from "@/components/source/canvas/analytics/view-model";
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
-import { buildSourceEventShellView } from "@/lib/source/source-event-shell-v2";
+import {
+  buildSourceEventShellView,
+  mergeSourceShellArtifactsWithArtifactStateBodies,
+  type SourceShellArtifactLike,
+} from "@/lib/source/source-event-shell-v2";
+import { buildSourceArtifactLifecycleSummary } from "@/lib/source/artifact-lifecycle-matrix";
+import type { SourceEventArtifactState } from "@/lib/source/canvas-substrate/types";
 import type { SourcingEventSummary } from "@/lib/source/types";
 
 const EVENT: SourcingEventSummary = {
@@ -189,3 +195,118 @@ describe("buildSourceEventShellView", () => {
     expect(view.stage.gateReadinessLine).toContain("approval workspace");
   });
 });
+
+describe("mergeSourceShellArtifactsWithArtifactStateBodies", () => {
+  it("threads authored artifact-state body text into existing registry rows", () => {
+    const merged = mergeSourceShellArtifactsWithArtifactStateBodies(
+      [
+        {
+          id: "registry-d01",
+          artifactKind: "d01_strategy_memo",
+          artifactGroup: "generated",
+          sourceOrigin: "generated",
+          status: "approved",
+        },
+      ],
+      [
+        artifactState({
+          artifactCode: "d01_strategy_memo",
+          body: passingStrategyMemoBody,
+        }),
+      ],
+    );
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0]?.body).toContain("Decision requested");
+    expect(merged[0]?.bodyMarkdown).toContain("Decision requested");
+
+    const summary = buildSourceArtifactLifecycleSummary(merged);
+    const strategyMemo = summary.rows.find(
+      (row) => row.code === "d01_strategy_memo",
+    );
+
+    expect(summary.quality.contentScoredCount).toBe(1);
+    expect(strategyMemo?.contentQuality.state).toBe("passed");
+  });
+
+  it("does not overwrite registry body text that is already available", () => {
+    const artifacts: SourceShellArtifactLike[] = [
+      {
+        id: "registry-d01",
+        artifactKind: "d01_strategy_memo",
+        bodyMarkdown: "Registry body wins.",
+      },
+    ];
+
+    const merged = mergeSourceShellArtifactsWithArtifactStateBodies(artifacts, [
+      artifactState({
+        artifactCode: "d01_strategy_memo",
+        body: passingStrategyMemoBody,
+      }),
+    ]);
+
+    expect(merged[0]?.bodyMarkdown).toBe("Registry body wins.");
+    expect(merged[0]?.body).toBeUndefined();
+  });
+
+  it("adds authored state-only artifacts and ignores blank state bodies", () => {
+    const merged = mergeSourceShellArtifactsWithArtifactStateBodies([], [
+      artifactState({
+        artifactCode: "d01_strategy_memo",
+        body: passingStrategyMemoBody,
+      }),
+      artifactState({
+        id: "state-blank",
+        artifactCode: "d05_scope_memo",
+        body: "   ",
+      }),
+    ]);
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0]).toMatchObject({
+      id: "artifact-state:state-d01_strategy_memo",
+      artifactKind: "d01_strategy_memo",
+      sourceOrigin: "generated",
+      artifactGroup: "generated",
+      fileFormat: "md",
+    });
+  });
+});
+
+function artifactState(
+  overrides: Partial<SourceEventArtifactState> &
+    Pick<SourceEventArtifactState, "artifactCode">,
+): SourceEventArtifactState {
+  const { artifactCode, ...rest } = overrides;
+  return {
+    id: `state-${artifactCode}`,
+    sourceEventId: "event-1",
+    tenantKey: "fs-demo",
+    artifactCode,
+    stage: "strategy",
+    family: "sourcing_strategy",
+    tier: "rich",
+    status: "approved",
+    requirementLevel: "required",
+    gateDefining: true,
+    linkedArtifactId: null,
+    notes: null,
+    body: null,
+    bodyFormat: "markdown",
+    bodyAuthoredBy: "source-agent",
+    bodyUpdatedAt: "2026-07-20T00:00:00.000Z",
+    bodyGenerationMetadata: null,
+    createdAt: "2026-07-20T00:00:00.000Z",
+    updatedAt: "2026-07-20T00:00:00.000Z",
+    ...rest,
+  };
+}
+
+const passingStrategyMemoBody = `Recommendation: approve the sourcing event and authorize scope preparation.
+Decision requested: confirm the sourcing approach and authorize RFP preparation.
+Why now: incumbent contract expires Q4; cost pressure from board.
+Recommended approach: competitive RFP targeting the managed applications estate.
+What we know: estate has 180 apps; current run cost is about $12M per year.
+What remains open: application tiers and ticket volume require upload.
+Value hypothesis: $4-7M annually. Confidence band: medium.
+Next gate: lock scope boundary before RFP issue.`;
