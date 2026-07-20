@@ -15,6 +15,7 @@ import type {
 } from './types';
 import { buildAppInventoryPromptBlock } from './app-inventory';
 import { formatRequiredSectionsForPrompt } from './section-conformance';
+import { buildLanguagePolicyBlock } from '@/lib/source/documentation-standards/source-documentation-standards';
 
 // Environment-tiered model selection. Each environment (dev / preprod / prod,
 // and per-client preprod / prod) sets these via env so the highest-quality
@@ -39,7 +40,7 @@ Write like an expert, not a machine:
 - Have a point of view. Make the call. Recommend a direction and own the reasoning behind it. Lead each section with the insight that matters, then support it — do not bury the decision under background.
 - Bring judgment from experience. Name the real leverage in an event like this, the levers that actually move the number, the failure modes that usually derail it, and where the value truly sits — the things a seasoned advisor flags that a checklist would miss.
 - Write in flowing, confident executive prose. Plain, precise English. Use a table or a bullet list only where it genuinely sharpens a comparison or an enumeration — never as a substitute for an argument, and never to pad.
-- Earn every specific. Tie each claim to this event's facts and the uploaded evidence; cite source files by name and upstream artifacts by code (e.g. "per the d05 scope memo"). Every number carries its basis.
+- Earn every specific. Tie each claim to this event's facts and the uploaded evidence; cite source files by name and refer to supporting documents by their business titles. Every number carries its basis.
 - Story-led. Explain the business situation, the sourcing implication, the tradeoffs, and the next operating move.
 - Visual when it helps the decision. Use tables for comparisons, gating, owner/action maps, pricing assumptions, and risk registers. Use chart-ready summaries when ranking options or showing TCO layers.
 
@@ -271,12 +272,12 @@ const REGISTRY: Record<string, SourceArtifactPromptTemplate> = {
     upstreamOptional: [],
     systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
 
-You are drafting the Sourcing Strategy Memo (artifact d01_strategy_memo). This is the foundational document for a sourcing event — it answers Why Now, What we're sourcing, the Value Target, the Archetype, and the Rigor level.
+You are drafting the Sourcing Strategy Memo. This is the foundational document for a sourcing event — it states the decision requested, why now, the recommended approach, what is known, what remains open, the value hypothesis, and the next approval point.
 
 Required structural sections:
 ${formatRequiredSectionsForPrompt("d01_strategy_memo")}
 
-This memo is your recommendation to the CIO on whether and how to take this to market. Open with an executive summary a CIO can absorb quickly — the business context, why this matters now, the value at stake, and the specific decision needed — as a few crisp bullets or a compact table. Then make the case: cite the trigger from the intake, name the decision owner, and give the value target as a range with a confidence band when the intake supports one (and say plainly when it does not, rather than manufacturing precision). Choose the archetype and rigor and defend the choice in an advisor's voice — standard for run-rate continuity, enhanced for a material savings claim, strategic for a transformation — and explain what that choice means for how the event should actually run. Include at least one compact table that maps current facts to sourcing implications. Depth is allowed when it changes decision quality; every section should earn its place. Never expose internal product terms (tenant, tenant key, substrate, table names, artifact ids, chunk ids).`,
+This memo is your recommendation to the CIO on whether and how to take this to market. Open with the decision needed and the recommendation a CIO can absorb quickly — the business context, why this matters now, the value at stake, and the specific approval requested — as a few crisp bullets or a compact table. Then make the case: cite the trigger from the intake, name the decision owner, and give the value hypothesis as a range with a confidence band when the intake supports one (and say plainly when it does not, rather than manufacturing precision). Choose the archetype and rigor and defend the choice in an advisor's voice — standard for run-rate continuity, enhanced for a material savings claim, strategic for a transformation — and explain what that choice means for how the event should actually run. Include at least one compact table that maps current facts to sourcing implications. Depth is allowed when it changes decision quality; every section should earn its place. Never expose internal product terms (tenant, tenant key, substrate, table names, artifact ids, chunk ids).`,
     buildUserMessage: (ctx) => {
       return [
         `Company: ${ctx.tenantName}`,
@@ -1151,7 +1152,20 @@ If the scorecard (d16) or pricing workbook (d19) has not been authored, DO NOT f
 export function getPromptTemplate(
   artifactCode: string,
 ): SourceArtifactPromptTemplate | null {
-  return REGISTRY[artifactCode] ?? null;
+  const template = REGISTRY[artifactCode];
+  if (!template) return null;
+  const languagePolicyBlock = buildLanguagePolicyBlock(
+    shortPromptProfileCode(artifactCode),
+  );
+  if (!languagePolicyBlock) return template;
+  return {
+    ...template,
+    systemPrompt: `${languagePolicyBlock}\n\n${template.systemPrompt}`,
+  };
+}
+
+function shortPromptProfileCode(artifactCode: string): string {
+  return artifactCode.split("_")[0] ?? artifactCode;
 }
 
 function formatEvidenceStates(ctx: SourceGenerationContext): string {
