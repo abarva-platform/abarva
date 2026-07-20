@@ -23,6 +23,7 @@ import {
   StructuredPdfTable,
   buildStructuredPdfDocument,
 } from '@/lib/exports-shared/structured-pdf-base';
+import { sourceArtifactGovernanceBanner } from '@/lib/source/artifact-governance';
 import type { PricingTemplatePayload } from './pricing-template';
 
 const PRICING_NOTE_SEED_TOPICS: ReadonlyArray<string> = [
@@ -49,6 +50,9 @@ export function buildPricingTemplatePdf(
       { label: 'Generated', value: payload.generatedAt },
       { label: 'TCO horizon', value: `${payload.tcoYears} years` },
     ],
+    governanceNotice: sourceArtifactGovernanceBanner('ai_draft', {
+      artifactCode: 'd19',
+    }),
     introNote:
       'Readable rendering of the d19 pricing workbook. Vendors price in ' +
       'the xlsx companion — its formulas compute Extended Price and the ' +

@@ -26,18 +26,24 @@ import {
   coverSubtitleParagraph,
   coverTitleParagraph,
   eyebrowParagraph,
+  governanceNoticeParagraph,
   heading2,
 } from '@/lib/exports-shared/docx-base';
 import {
   buildKeyValueTable,
   buildMultiColumnTable,
 } from '@/lib/exports-shared/structured-docx-base';
+import { sourceArtifactGovernanceBanner } from '@/lib/source/artifact-governance';
 import type { ScorecardPayload } from './scorecard';
 
 export function buildScorecardDocx(payload: ScorecardPayload): Document {
   const totalWeight = payload.criteria.reduce(
     (acc, c) => acc + c.weightPercent,
     0,
+  );
+  const scorecardGovernanceNotice = sourceArtifactGovernanceBanner(
+    'ai_draft',
+    { artifactCode: 'd16' },
   );
   return new Document({
     creator: 'AbarVa · Sentinel',
@@ -77,6 +83,10 @@ export function buildScorecardDocx(payload: ScorecardPayload): Document {
             ? [coverSubtitleParagraph(`Issued by: ${payload.issuedBy}`)]
             : []),
           coverSubtitleParagraph(`Generated: ${payload.generatedAt}`),
+          governanceNoticeParagraph(
+            scorecardGovernanceNotice.message,
+            scorecardGovernanceNotice.detail,
+          ),
           ...(payload.roundLabel
             ? [coverSubtitleParagraph(`Evaluation round: ${payload.roundLabel}`)]
             : []),

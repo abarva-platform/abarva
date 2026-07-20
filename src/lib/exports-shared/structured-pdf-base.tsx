@@ -152,6 +152,13 @@ export function buildStructuredPdfDocument(props: {
   meta: ReadonlyArray<StructuredPdfCoverMeta>;
   /** Optional intro paragraph under the cover divider. */
   introNote?: string;
+  /**
+   * Optional governance/status notice (e.g. "AI-prepared draft...").
+   * Generic text in — callers own the copy; this only owns the visual
+   * treatment (same amber-bordered box as the narrative scaffold warning)
+   * so every structured PDF shows its draft/final status the same way.
+   */
+  governanceNotice?: { message: string; detail?: string | null } | null;
   /** Confidentiality note printed at the foot of the cover. */
   confidentialityNote: string;
   /** Running header line on body pages. */
@@ -176,6 +183,15 @@ export function buildStructuredPdfDocument(props: {
             {m.label}: {m.value}
           </Text>
         ))}
+        {props.governanceNotice ? (
+          <View style={PDF_STYLES.scaffoldWarning}>
+            <Text>
+              {props.governanceNotice.detail
+                ? `${props.governanceNotice.message} ${props.governanceNotice.detail}`
+                : props.governanceNotice.message}
+            </Text>
+          </View>
+        ) : null}
         {props.introNote ? (
           <>
             <View style={PDF_STYLES.divider} />

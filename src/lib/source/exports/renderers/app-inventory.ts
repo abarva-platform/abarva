@@ -29,6 +29,7 @@ import {
   buildCoverSheet,
   safeCell,
 } from '@/lib/exports-shared/xlsx-base';
+import { sourceArtifactGovernanceBanner } from '@/lib/source/artifact-governance';
 
 /** One row in the Application Inventory sheet. Buyer fills tier + owner. */
 export interface AppInventoryRow {
@@ -83,6 +84,9 @@ export function buildAppInventoryWorkbook(
   workbook.created = new Date(payload.generatedAt);
   workbook.title = `Application Inventory · ${payload.eventCode}`;
 
+  const governanceNotice = sourceArtifactGovernanceBanner('ai_draft', {
+    artifactCode: 'd04',
+  });
   buildCoverSheet(workbook, {
     title: `Application Inventory · ${payload.eventName}`,
     eventCode: payload.eventCode,
@@ -90,6 +94,10 @@ export function buildAppInventoryWorkbook(
     tenantName: payload.tenantName,
     issuedBy: payload.issuedBy,
     generatedAt: payload.generatedAt,
+    governanceNotice: {
+      message: governanceNotice.message,
+      detail: governanceNotice.detail,
+    },
     instructions: [
       'Sheet 2 (Tier Definitions) is the locked rubric. Every Tier value in Sheet 3 must map to one of these rows.',
       'Sheet 3 (Application Inventory) is the editable inventory. One row per application. Tier 0 means "not yet classified" — review before publishing.',

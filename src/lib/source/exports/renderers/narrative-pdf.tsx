@@ -46,6 +46,10 @@ import {
 } from "./narrative-docx";
 import { markdownToPdfNodes } from "@/lib/exports-shared/markdown-to-pdf";
 import { PDF_COLORS, PDF_STYLES } from "@/lib/exports-shared/pdf-base";
+import {
+  SOURCE_AI_DRAFT_GOVERNANCE_DETAIL,
+  SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
+} from "@/lib/source/artifact-governance";
 
 export type NarrativePdfConfig = NarrativeDocxConfig;
 export type NarrativePdfPayload = NarrativeDocxPayload;
@@ -103,6 +107,14 @@ export function buildNarrativePdf(
           <Text style={PDF_STYLES.meta}>Issued by: {payload.issuedBy}</Text>
         ) : null}
         <Text style={PDF_STYLES.meta}>Generated: {payload.generatedAt}</Text>
+        {payload.bodyIsAuthored ? (
+          <View style={PDF_STYLES.scaffoldWarning}>
+            <Text>
+              {SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE}{" "}
+              {SOURCE_AI_DRAFT_GOVERNANCE_DETAIL}
+            </Text>
+          </View>
+        ) : null}
         {!payload.bodyIsAuthored ? (
           <View style={PDF_STYLES.scaffoldWarning}>
             <Text>

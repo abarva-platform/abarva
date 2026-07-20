@@ -190,6 +190,28 @@ export function heading3(text: string): Paragraph {
   });
 }
 
+/**
+ * Governance/status notice block — bold warning-colored message, optional
+ * muted detail line. Generic text in, consistent visual treatment out;
+ * callers own the copy (Source vs. Moves vs. anything else), this only
+ * owns the paragraph styling so every docx export shows draft/final status
+ * the same way.
+ */
+export function governanceNoticeParagraph(
+  message: string,
+  detail?: string | null,
+): Paragraph {
+  const runs: ParagraphChild[] = [
+    boldRun(detail ? `${message} ` : message, {
+      color: SOURCE_DOCX.WARNING_COLOR,
+    }),
+  ];
+  if (detail) {
+    runs.push(bodyRun(detail, { color: SOURCE_DOCX.MUTED_COLOR }));
+  }
+  return bodyParagraph(runs);
+}
+
 /** Page break. */
 export function pageBreak(): Paragraph {
   return new Paragraph({

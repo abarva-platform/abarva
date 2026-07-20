@@ -171,15 +171,73 @@ function unitFor(column: AnswerTableColumn): string | undefined {
   return undefined;
 }
 
+function findColumnByLabel(
+  table: AnswerTable,
+  pattern: RegExp,
+): AnswerTableColumn | null {
+  return (
+    table.columns.find((column) => pattern.test(column.label.toLowerCase())) ??
+    null
+  );
+}
+
+function scoreFromQuadrantLabel(value: string): { x: number; y: number } | null {
+  const normalized = value.toLowerCase();
+  const hasHighValue = /\bhigh(?:est)?\s+value\b/.test(normalized);
+  const hasModerateValue = /\bmoderate\s+value\b/.test(normalized);
+  const hasLowValue = /\blower?\s+value\b|\blow\s+value\b/.test(normalized);
+  const hasHighComplexity = /\bhigh(?:er)?\s+complexity\b/.test(normalized);
+  const hasLowerComplexity =
+    /\blower?\s+complexity\b|\blow\s+complexity\b|\bcontained\b/.test(
+      normalized,
+    );
+  const y = hasHighValue ? 82 : hasModerateValue ? 58 : hasLowValue ? 35 : null;
+  const x = hasHighComplexity ? 78 : hasLowerComplexity ? 38 : null;
+  if (x === null || y === null) return null;
+  return { x, y };
+}
+
+function quadrantChartFromLabels(table: AnswerTable): AnswerChart | null {
+  const quadrant = findColumnByLabel(table, /\bquadrant\b/);
+  if (!quadrant) return null;
+  const label = findColumnByLabel(table, /\b(program|initiative|move|lever)\b/);
+  if (!label) return null;
+  const points = table.rows
+    .map((row) => {
+      const score = scoreFromQuadrantLabel(String(row[quadrant.key] ?? ""));
+      const pointLabel = String(row[label.key] ?? "").trim();
+      return score && pointLabel ? { label: pointLabel, ...score } : null;
+    })
+    .filter((point): point is { label: string; x: number; y: number } =>
+      Boolean(point),
+    );
+  if (points.length < 2) return null;
+  return {
+    id: `${table.id}_chart`,
+    kind: "quadrant-matrix",
+    title: table.title ?? "Tower decision matrix",
+    subtitle: "Quadrant labels converted into value and complexity coordinates.",
+    data: { points },
+    sourceNote:
+      "Visualized from the governed Tower answer contract; quadrant labels set the plotted position.",
+  };
+}
+
 function chartFromTable(
   table: AnswerTable,
   question: string,
 ): AnswerChart | null {
   const label = labelColumn(table);
   const numbers = numericColumns(table);
-  if (!label || numbers.length === 0) return null;
 
   const kind = visualKindFor(question);
+  if (kind === "quadrant-matrix") {
+    const quadrant = quadrantChartFromLabels(table);
+    if (quadrant) return quadrant;
+  }
+
+  if (!label || numbers.length === 0) return null;
+
   if (kind === "quadrant-matrix" && numbers.length >= 2) {
     return {
       id: `${table.id}_chart`,

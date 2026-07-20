@@ -3,6 +3,11 @@ import type {
   SourceStageKey,
   SourcingEventSummary,
 } from "@/lib/source/types";
+import {
+  SOURCE_AI_DRAFT_GOVERNANCE_LABEL,
+  SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
+  SOURCE_CLIENT_FINAL_GOVERNANCE_MESSAGE,
+} from "@/lib/source/artifact-governance";
 import type {
   IntelProvenance,
   StageAnalyticsView,
@@ -62,6 +67,8 @@ export interface SourceShellFileItem {
   state: string;
   group: string;
   sourceBasis: SourceShellEvidenceBasis;
+  governanceLabel: string;
+  governanceMessage: string | null;
 }
 
 export interface SourceShellIntelligenceFinding {
@@ -145,6 +152,9 @@ export interface SourceShellArtifactLike {
   status?: string | null;
   approvalState?: string | null;
   evidenceState?: string | null;
+  isClientFinal?: boolean | null;
+  isCurrentAuthoritative?: boolean | null;
+  sourceGeneratedArtifactId?: string | null;
 }
 
 export interface BuildSourceEventShellViewInput {
@@ -340,15 +350,50 @@ function taskSourceBasis(task: StageTaskView): SourceShellEvidenceBasis {
 
 function toFileItem(artifact: SourceShellArtifactLike): SourceShellFileItem {
   const stageKey = String(artifact.stageKey ?? artifact.sourcingStage ?? "other");
+  const group = String(artifact.artifactGroup ?? artifact.artifactFamily ?? "artifact");
+  const state = String(
+    artifact.status ?? artifact.approvalState ?? artifact.evidenceState ?? "registered",
+  );
+  const isClientFinal = artifact.isClientFinal === true || state === "client_final";
+  const governance = fileGovernanceFor({ group, isClientFinal });
   return {
     id: artifact.id,
     stageKey,
     stageLabel: SOURCE_STAGE_LABELS[stageKey as SourceStageKey] ?? humanize(stageKey),
     format: String(artifact.fileFormat ?? artifact.sourceFormat ?? "unknown").toUpperCase(),
     name: String(artifact.title ?? artifact.fileName ?? artifact.originalName ?? artifact.artifactType ?? "Source artifact"),
-    state: String(artifact.status ?? artifact.approvalState ?? artifact.evidenceState ?? "registered"),
-    group: String(artifact.artifactGroup ?? artifact.artifactFamily ?? "artifact"),
+    state,
+    group,
     sourceBasis: "live_artifact",
+    governanceLabel: governance.label,
+    governanceMessage: governance.message,
+  };
+}
+
+function fileGovernanceFor({
+  group,
+  isClientFinal,
+}: {
+  group: string;
+  isClientFinal: boolean;
+}): { label: string; message: string | null } {
+  if (isClientFinal) {
+    return {
+      label: "Client-approved final",
+      message: SOURCE_CLIENT_FINAL_GOVERNANCE_MESSAGE,
+    };
+  }
+
+  if (group === "generated") {
+    return {
+      label: SOURCE_AI_DRAFT_GOVERNANCE_LABEL,
+      message: SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
+    };
+  }
+
+  return {
+    label: "File evidence",
+    message: null,
   };
 }
 

@@ -33,6 +33,7 @@ import {
   buildCoverSheet,
   safeCell,
 } from '@/lib/exports-shared/xlsx-base';
+import { sourceArtifactGovernanceBanner } from '@/lib/source/artifact-governance';
 
 /** One row in either the Mandatory or Optional Items sheet. */
 export interface ResponseChecklistItem {
@@ -78,6 +79,9 @@ export function buildResponseChecklistWorkbook(
   workbook.created = new Date(payload.generatedAt);
   workbook.title = `Response Checklist · ${payload.eventCode}`;
 
+  const governanceNotice = sourceArtifactGovernanceBanner('ai_draft', {
+    artifactCode: 'd11',
+  });
   buildCoverSheet(workbook, {
     title: `Response Checklist · ${payload.eventName}`,
     eventCode: payload.eventCode,
@@ -85,6 +89,10 @@ export function buildResponseChecklistWorkbook(
     tenantName: payload.tenantName,
     issuedBy: payload.issuedBy,
     generatedAt: payload.generatedAt,
+    governanceNotice: {
+      message: governanceNotice.message,
+      detail: governanceNotice.detail,
+    },
     instructions: [
       'Vendor of record: fill the Vendor name slot below before completing the checklist.',
       'Sheet 2 (Mandatory Items) — every row is required. Confirmed = Y, with an Evidence pointer (filename + page) for each.',
