@@ -71,8 +71,6 @@ interface EnqueueResponse {
   }>;
 }
 
-type ApproveAndBuildResult = EnqueueResponse;
-
 interface RunStatusResponse {
   status: RunStatus;
   artifactId: string | null;
@@ -112,10 +110,28 @@ interface Props {
   blockOnEvidenceGaps?: boolean;
   /** Parent-owned prerequisite work, such as phase capture finalization. */
   onBeforeBuild?: () => Promise<void>;
-  /** Parent-owned phase-gate approval after durable deliverable runs are queued. */
-  onBuildQueued?: (result: ApproveAndBuildResult) => Promise<void>;
+  /**
+   * Parent-owned phase-gate approval trigger. Fires ONCE every queued run in
+   * this batch has reached a terminal status (succeeded/blocked/failed/error)
+   * — never while a job is still queued or running. This is deliberate:
+   * phase advancement must never be attempted while generation is still in
+   * flight, and a failed/blocked deliverable must visibly block advancement
+   * rather than being silently skipped. Completion is read from the same
+   * persisted run-status rows the poll loop below reads, not from any
+   * optimistic UI state.
+   */
+  onBuildSettled?: (result: BuildSettledResult) => Promise<void>;
   /** User-facing blocker owned by the parent, such as incomplete visible capture inputs. */
   disabledReason?: string | null;
+}
+
+export interface BuildSettledResult {
+  /** deliverableTypeKeys that reached status "succeeded". */
+  succeededKeys: string[];
+  /** deliverableTypeKeys that reached "blocked", "failed", or "error". */
+  failedKeys: string[];
+  /** Total deliverables in this batch (succeeded + failed + anything else terminal). */
+  total: number;
 }
 
 const POLL_MS = 4000;
@@ -152,7 +168,7 @@ export function PhaseApproveAndBuild({
   evidenceNeedPackets = [],
   blockOnEvidenceGaps = false,
   onBeforeBuild,
-  onBuildQueued,
+  onBuildSettled,
   disabledReason = null,
 }: Props) {
   const specs = (PHASE_CANONICAL_KEYS[phaseNum] ?? [])
@@ -179,6 +195,10 @@ export function PhaseApproveAndBuild({
   const [error, setError] = useState<string | null>(null);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const startedAt = useRef<number>(0);
+  // Set true only while a real batch is in flight, so the settle-detection
+  // effect below never fires from the component's initial idle render or
+  // from unrelated row updates.
+  const runInFlight = useRef(false);
 
   useEffect(() => {
     const t = timers.current;
@@ -244,9 +264,41 @@ export function PhaseApproveAndBuild({
     [patchRow],
   );
 
+  // Fires onBuildSettled exactly once per batch, only after every queued run
+  // has reached a terminal status. Never fires while anything is still
+  // "queued" or "running" — this is the fix for the sequencing bug where the
+  // parent used to submit gate approval the instant jobs were queued, before
+  // generation had actually finished (or failed).
+  useEffect(() => {
+    if (!runInFlight.current) return;
+    const relevant = rows.filter((r) => r.runId !== null || r.status === "error");
+    if (relevant.length === 0) return;
+    const stillPending = relevant.some(
+      (r) => r.status === "queued" || r.status === "running",
+    );
+    if (stillPending) return;
+
+    runInFlight.current = false;
+    setBuilding(false);
+    const succeededKeys = relevant
+      .filter((r) => r.status === "succeeded")
+      .map((r) => r.deliverableTypeKey);
+    const failedKeys = relevant
+      .filter((r) => r.status === "blocked" || r.status === "failed" || r.status === "error")
+      .map((r) => r.deliverableTypeKey);
+    void onBuildSettled?.({
+      succeededKeys,
+      failedKeys,
+      total: relevant.length,
+    }).catch((err) => {
+      setError(err instanceof Error ? err.message : "Gate approval failed");
+    });
+  }, [rows, onBuildSettled]);
+
   const approveAndBuild = useCallback(async () => {
     setError(null);
     setBuilding(true);
+    runInFlight.current = true;
     startedAt.current = Date.now();
     // reset rows to queued-pending
     setRows((prev) =>
@@ -262,8 +314,6 @@ export function PhaseApproveAndBuild({
         error: undefined,
       })),
     );
-
-    let queuedResult: ApproveAndBuildResult | null = null;
 
     try {
       await onBeforeBuild?.();
@@ -286,7 +336,6 @@ export function PhaseApproveAndBuild({
       if (!res.ok || !Array.isArray(data.deliverables)) {
         throw new Error(data.detail ?? data.error ?? `HTTP ${res.status}`);
       }
-      queuedResult = data;
       for (const d of data.deliverables) {
         patchRow(d.deliverableTypeKey, {
           runId: d.runId,
@@ -302,19 +351,14 @@ export function PhaseApproveAndBuild({
     } catch (err) {
       setError(err instanceof Error ? err.message : "Approve & Build failed");
       setRows((prev) => prev.map((r) => ({ ...r, status: "idle" })));
+      runInFlight.current = false;
       setBuilding(false);
       return;
     }
-
-    try {
-      if (queuedResult) {
-        await onBuildQueued?.(queuedResult);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Gate approval failed");
-    } finally {
-      setBuilding(false);
-    }
+    // Do NOT call onBuildSettled here — jobs were only just queued, not
+    // completed. The settle-detection effect above fires it once every row
+    // in this batch reaches a terminal status, reading from the same
+    // persisted run-status polling this component already does.
   }, [
     moveId,
     phaseNum,
@@ -322,7 +366,6 @@ export function PhaseApproveAndBuild({
     moveName,
     clientDisplayName,
     onBeforeBuild,
-    onBuildQueued,
     patchRow,
     poll,
   ]);
