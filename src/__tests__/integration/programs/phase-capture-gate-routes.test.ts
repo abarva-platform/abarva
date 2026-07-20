@@ -177,6 +177,42 @@ describe("Moves signed-in phase capture/gate routes", () => {
     );
   });
 
+  it("PHASE CAPTURE EVIDENCE INTEGRITY: never creates a deliverables_v2 row when P3 capture completes", async () => {
+    // This is the exact class of bug the MEMBER AI ASSIST incident audit
+    // found in this route: completing capture used to auto-create a real,
+    // gate-satisfying deliverable (design_spec / requirements_traceability)
+    // from nothing but the user's typed capture text, leaving it one
+    // generic sign-off call away from satisfying a hard gate with zero
+    // real generation or review. Capture completion must never touch
+    // deliverables_v2 at all.
+    getProgramById.mockResolvedValue({ ...program, currentPhase: 3 });
+    const { POST } = await import(
+      "@/app/api/v1/programs/[programId]/phase-capture/route"
+    );
+    const sections = {
+      solution_approach: "Deflection + agent-assist target state, weighed against a full outsource option.",
+      operating_model: "AI handles tier-1 deflection; humans own exceptions and escalations.",
+      process_design: "Intent routing, IVR replacement, agent-assist summarization and next-best-action.",
+      controls_governance: "PII redaction, human-in-loop for high-risk intents, model change review board.",
+      architecture_integration: "CCaaS + CRM integration via existing event bus; no new PII stores.",
+      evidence_confidence: "Deflection benchmark evidence-backed; AHT reduction assumed pending pilot.",
+      recommendation: "Proceed with phased deflection rollout starting with billing intents.",
+    };
+    const res = await POST(
+      makeRequest({ phase: 3, sections, complete: true }) as never,
+      { params: Promise.resolve({ programId: "move_1" }) },
+    );
+    expect(res.status).toBe(200);
+    const responseBody = await res.json();
+    expect(responseBody).toMatchObject({ ok: true, phase: 3, persisted: true, allSaved: true });
+    expect(responseBody).not.toHaveProperty("deliverableId");
+    expect(responseBody).not.toHaveProperty("deliverableIds");
+    expect(responseBody).not.toHaveProperty("recordCreated");
+    expect(ensurePhaseGateDeliverable).not.toHaveBeenCalled();
+    expect(signOffDeliverable).not.toHaveBeenCalled();
+    expect(getAzureWriteFluentClient().from).not.toHaveBeenCalledWith("deliverables_v2");
+  });
+
   it("blocks capture completion when required sections are missing", async () => {
     const { POST } = await import(
       "@/app/api/v1/programs/[programId]/phase-capture/route"

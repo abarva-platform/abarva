@@ -11,6 +11,27 @@
 // approved so later regeneration (v2-generator.ts) can never silently clobber
 // the approval record, and moves-generate-deps.ts / deliverable-content-signals.ts
 // prefer this version when feeding content forward to the next phase.
+//
+// PHASE CAPTURE EVIDENCE INTEGRITY (added here): this route used to accept
+// ANY in_review/draft deliverable from ANY authorized approver, with no
+// check on the deliverable's type key or on how its content was produced.
+// That let a stale, free-text-fabricated `deliverables_v2` row (created by
+// `phase-capture/route.ts`'s now-removed auto-creation — see that file's
+// own incident comment) be signed off as if it were reviewed, generated
+// evidence, satisfying a hard gate check on nothing but raw capture text.
+// Two independent checks now run before any sign-off:
+//   1. RECOGNIZED_DELIVERABLE_TYPE_KEYS — the deliverable's type key must be
+//      one of the deliberately registered types the codebase actually
+//      produces (orchestrator DELIVERABLE_REGISTRY, or the agent-authored
+//      completeDeliverable/draftArtifact allowlists). An unrecognized or
+//      stale key is rejected outright — it can never satisfy a gate, so it
+//      should never be signable as gate evidence either.
+//   2. Provenance — a deliverable whose current version was tagged
+//      `structured_data.source: "phase_capture"` (raw capture-field text,
+//      never deliberately authored or generated) cannot be signed off
+//      as-is. The client-approved-upload path (below) remains the correct
+//      way to promote it: upload a real document, which creates a new,
+//      properly-sourced version and signs off that instead.
 
 import { signOffDeliverable } from '@/lib/programs/mutations';
 import { hasAuthority } from '@/lib/programs/governance';
@@ -19,12 +40,27 @@ import { getProgramById } from '@/lib/programs/queries';
 import { getProgramsRouteSupabase } from '@/lib/programs/programs-auth-mode-server';
 import { saveMoveArtifact } from '@/lib/programs/deliverables/move-artifacts';
 import { DELIVERABLE_REGISTRY } from '@/lib/programs/deliverable-registry';
+import { ALLOWED_PROGRAM_DELIVERABLE_TYPES } from '@/lib/agent/tools/program/completeDeliverable';
 import {
   isAllowedMimeType,
   isWithinSizeLimit,
   MAX_ATTACHMENT_SIZE_BYTES,
 } from '@/lib/programs/attachments/mime';
 import { extractProgramEvidenceFromUploadBuffer } from '@/lib/programs/evidence-ingestion';
+
+// Union of every deliberately registered/agent-authorable deliverable type
+// key this codebase actually produces. A small handful of legacy alias keys
+// that governance.ts's gate checks still recognize for historical Moves
+// (program_seed_brief, program_seed, discovery_synthesis,
+// discovery_findings, approval_business_case, mobilization_handoff_package,
+// mobilization_package, benefits_realization_plan, value_contract) are not
+// included here deliberately — if a real historical row under one of those
+// keys ever needs signing off, that is a one-line addition with a clear,
+// auditable reason, not a silent allowance.
+const RECOGNIZED_DELIVERABLE_TYPE_KEYS = new Set<string>([
+  ...DELIVERABLE_REGISTRY.map((spec) => spec.deliverableTypeKey),
+  ...ALLOWED_PROGRAM_DELIVERABLE_TYPES,
+]);
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,7 +79,57 @@ export async function POST(req: Request, { params }: { params: Promise<{ program
       return Response.json({ error: 'forbidden', detail: 'approver authority or higher required' }, { status: 403 });
     }
 
+    const { data: deliverableRow, error: deliverableError } = await supabase
+      .from('deliverables_v2')
+      .select('deliverable_type_key, title, current_version')
+      .eq('id', deliverableId)
+      .eq('engagement_id', programId)
+      .maybeSingle();
+    if (deliverableError) throw deliverableError;
+    if (!deliverableRow) return Response.json({ error: 'not_found' }, { status: 404 });
+    const {
+      deliverable_type_key: deliverableTypeKey,
+      title: deliverableTitle,
+      current_version: currentVersion,
+    } = deliverableRow as { deliverable_type_key: string; title: string; current_version: number | null };
+
+    if (!RECOGNIZED_DELIVERABLE_TYPE_KEYS.has(deliverableTypeKey)) {
+      return Response.json(
+        {
+          error: 'unsupported_artifact_type',
+          detail: `"${deliverableTypeKey}" is not a registered gate-deliverable type and cannot be signed off.`,
+        },
+        { status: 422 },
+      );
+    }
+
     const contentType = req.headers.get('content-type') ?? '';
+    const isFileUploadApproval = contentType.includes('multipart/form-data');
+
+    if (!isFileUploadApproval && currentVersion) {
+      const { data: versionRow, error: versionError } = await supabase
+        .from('deliverable_versions')
+        .select('structured_data')
+        .eq('deliverable_id', deliverableId)
+        .eq('version', currentVersion)
+        .maybeSingle();
+      if (versionError) throw versionError;
+      const source = (versionRow as { structured_data?: Record<string, unknown> | null } | null)
+        ?.structured_data?.source;
+      if (source === 'phase_capture') {
+        return Response.json(
+          {
+            error: 'capture_text_not_signable',
+            detail:
+              'This deliverable\'s current content is raw phase-capture text, not a reviewed or generated ' +
+              'artifact. Generate the real deliverable, or upload an approved replacement document, before ' +
+              'signing off.',
+          },
+          { status: 422 },
+        );
+      }
+    }
+
     let approvedArtifactId: string | undefined;
     let approvedContent:
       | {
@@ -55,7 +141,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ program
         }
       | undefined;
 
-    if (contentType.includes('multipart/form-data')) {
+    if (isFileUploadApproval) {
       const form = await req.formData();
       const file = form.get('file');
       if (file instanceof File && file.size > 0) {
@@ -66,19 +152,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ program
           return Response.json({ error: 'unsupported_type', detail: file.type }, { status: 415 });
         }
 
-        const { data: deliverableRow, error: deliverableError } = await supabase
-          .from('deliverables_v2')
-          .select('deliverable_type_key, title')
-          .eq('id', deliverableId)
-          .eq('engagement_id', programId)
-          .maybeSingle();
-        if (deliverableError) throw deliverableError;
-        if (!deliverableRow) return Response.json({ error: 'not_found' }, { status: 404 });
-        const { deliverable_type_key: deliverableTypeKey, title } = deliverableRow as {
-          deliverable_type_key: string;
-          title: string;
-        };
-
+        const title = deliverableTitle;
         const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
         const body = Buffer.from(await file.arrayBuffer());
         const phase = DELIVERABLE_REGISTRY.find(
