@@ -80,6 +80,47 @@ describe("buildTowerChatAvaAnswerPacket", () => {
     ).toBe(96_000_000);
   });
 
+  it("lets the Tower visual contract choose the chart even when the question is generic", () => {
+    const packet = buildTowerChatAvaAnswerPacket({
+      ...baseArgs,
+      question: "What should the CIO inspect next?",
+      modelOutput: {
+        answer: "Inspect the metric path by fiscal period before expanding funding.",
+        visualContract: {
+          questionIntent: "trend",
+          recommendedVisual: "line",
+          requiredData: ["period", "measure"],
+          axes: { x: "Fiscal period", y: "Tower measure" },
+          annotations: ["Do not project missing periods."],
+          executiveTakeaway:
+            "Show whether the measure is improving before leadership commits more funding.",
+          sourceBoundary:
+            "Render only loaded Tower periods; missing periods remain evidence gaps.",
+        },
+        tables: [
+          {
+            id: "metric_history",
+            title: "Metric history",
+            columns: ["Period", "Measurement confidence"],
+            rows: [
+              ["FY26", "61"],
+              ["FY27", "73"],
+              ["FY28", "80"],
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(packet.charts?.[0]).toMatchObject({
+      kind: "line",
+      subtitle:
+        "Show whether the measure is improving before leadership commits more funding.",
+      sourceNote:
+        "Render only loaded Tower periods; missing periods remain evidence gaps. Do not project missing periods.",
+    });
+  });
+
   it("uses a quadrant chart when the question asks for a 2x2 matrix", () => {
     const packet = buildTowerChatAvaAnswerPacket({
       ...baseArgs,

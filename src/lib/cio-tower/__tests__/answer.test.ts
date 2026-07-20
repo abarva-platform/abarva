@@ -7,10 +7,11 @@ import {
   validateVisibleAnswer,
   type CioTowerPromptContext,
 } from '../answer';
+import { selectTowerVisualContract } from '../visual-contract';
 import type { TowerV3RuntimeViewModel } from '@/lib/tower/tower-v3-runtime-view';
 
 function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPromptContext {
-  return {
+  const base: CioTowerPromptContext = {
     tenantKey: 'skyharbor-air',
     tenantName: 'Airline Demo',
     question: 'give me the list of top 10 IT programs',
@@ -22,6 +23,11 @@ function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPrompt
       artifact_type: 'table',
       examples: [],
     },
+    visualContract: selectTowerVisualContract({
+      question: 'give me the list of top 10 IT programs',
+      contractKey: 'tower_top_it_programs_by_budget',
+      artifactType: 'table',
+    }),
     measures: [
       {
         measure_key: 'total_it_budget_fy26',
@@ -81,7 +87,17 @@ function context(overrides: Partial<CioTowerPromptContext> = {}): CioTowerPrompt
         requiredEvidence: ['v3 canonical fact reconciliation'],
       },
     },
-    ...overrides,
+  };
+  const merged = { ...base, ...overrides };
+  return {
+    ...merged,
+    visualContract:
+      overrides.visualContract ??
+      selectTowerVisualContract({
+        question: merged.question,
+        contractKey: merged.contract.contract_key,
+        artifactType: merged.contract.artifact_type,
+      }),
   };
 }
 
@@ -382,6 +398,9 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('Measure key: initiative_budget_fy26');
     expect(prompt).toContain('Table required: yes');
     expect(prompt).toContain('chart-ready supported rows');
+    expect(prompt).toContain('Tower visual contract to use:');
+    expect(prompt).toContain('Recommended visual: horizontal_bar');
+    expect(prompt).toContain('The renderer owns the chart');
     expect(prompt).toContain('[governed_measure] FY26 IT budget');
     expect(prompt).toContain('[governed_fact] Crew Recovery & Legality Modernization');
     expect(prompt).toContain('Crew Recovery & Legality Modernization');
@@ -516,6 +535,7 @@ describe('cio tower answer contract', () => {
           tables: [],
         },
       ],
+      visualContract: null,
       followUpQuestion: 'Do you want the value-proof view next?',
     });
   });
@@ -535,6 +555,46 @@ describe('cio tower answer contract', () => {
     expect(parseVisibleAnswerContract(raw).answer).toBe(
       'The CIO should close the measurement gate before expanding Agent Assist.',
     );
+  });
+
+  it('preserves the Tower visual contract when Claude returns one', () => {
+    const raw = JSON.stringify({
+      version: 'cio_tower_visible_answer_v1',
+      answer:
+        'Use a 2x2 to separate near-term AI funding candidates from strategic-but-gated bets.',
+      tables: [
+        {
+          id: 'ai_program_matrix',
+          title: 'AI program funding view',
+          columns: ['Program', 'Value score', 'Readiness score'],
+          rows: [
+            ['Contact center agent assist', '82', '71'],
+            ['Data foundation', '90', '42'],
+          ],
+        },
+      ],
+      tabs: [],
+      visualContract: {
+        questionIntent: 'quadrant',
+        recommendedVisual: '2x2',
+        requiredData: ['program', 'value score', 'readiness score'],
+        axes: { x: 'Execution readiness', y: 'Business value' },
+        annotations: ['Use the upper-right quadrant for first-wave funding.'],
+        executiveTakeaway:
+          'Fund high-value work only where readiness is credible.',
+        sourceBoundary: 'Use loaded Tower program and readiness fields only.',
+      },
+      followUpQuestion:
+        'Which upper-right candidate should Tower convert into a funding gate first?',
+    });
+
+    const parsed = parseVisibleAnswerContract(raw);
+
+    expect(parsed.visualContract).toMatchObject({
+      questionIntent: 'quadrant',
+      recommendedVisual: '2x2',
+      axes: { x: 'Execution readiness', y: 'Business value' },
+    });
   });
 
   it('rejects malformed raw output and incomplete Tower tables instead of rendering partial content', () => {
@@ -674,6 +734,10 @@ describe('cio tower answer contract', () => {
       ['Run budget', '$713.0M'],
       ['Change budget', '$356.5M'],
     ]);
+    expect(fallback.visualContract).toMatchObject({
+      questionIntent: 'distribution',
+      recommendedVisual: 'stacked_bar',
+    });
   });
 
   it('does not repeat the budget-mix fallback when the generated follow-up asks for run drivers', () => {

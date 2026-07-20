@@ -8,6 +8,10 @@ import type {
   AvaArtifact,
   AvaMetricRef,
 } from "@/lib/ava-answer/contract";
+import {
+  chartKindForTowerVisualContract,
+  type TowerVisualContract,
+} from "@/lib/cio-tower/visual-contract";
 
 export interface TowerChatVisibleTable {
   id: string;
@@ -28,6 +32,7 @@ export interface TowerChatVisibleAnswer {
   answer: string;
   tables?: TowerChatVisibleTable[];
   tabs?: TowerChatVisibleTab[];
+  visualContract?: TowerVisualContract | null;
   followUpQuestion?: string | null;
 }
 
@@ -156,7 +161,12 @@ function labelColumn(table: AnswerTable): AnswerTableColumn | null {
   );
 }
 
-function visualKindFor(question: string): AnswerChartKind {
+function visualKindFor(
+  question: string,
+  visualContract?: TowerVisualContract | null,
+): AnswerChartKind {
+  const contractedKind = chartKindForTowerVisualContract(visualContract);
+  if (contractedKind) return contractedKind;
   const normalized = question.toLowerCase();
   if (/\b(2x2|2\s*x\s*2|quadrant|matrix)\b/.test(normalized))
     return "quadrant-matrix";
@@ -226,14 +236,15 @@ function quadrantChartFromLabels(table: AnswerTable): AnswerChart | null {
 function chartFromTable(
   table: AnswerTable,
   question: string,
+  visualContract?: TowerVisualContract | null,
 ): AnswerChart | null {
   const label = labelColumn(table);
   const numbers = numericColumns(table);
 
-  const kind = visualKindFor(question);
+  const kind = visualKindFor(question, visualContract);
   if (kind === "quadrant-matrix") {
     const quadrant = quadrantChartFromLabels(table);
-    if (quadrant) return quadrant;
+    if (quadrant) return enrichChartWithVisualContract(quadrant, visualContract);
   }
 
   if (!label || numbers.length === 0) return null;
@@ -258,7 +269,7 @@ function chartFromTable(
               Number.isFinite(point.y),
           ),
       },
-      sourceNote: "Visualized from the governed Tower answer contract.",
+      sourceNote: sourceNoteForVisualContract(visualContract),
     };
   }
 
@@ -269,7 +280,9 @@ function chartFromTable(
     id: `${table.id}_chart`,
     kind,
     title: table.title ?? "Tower answer visual",
-    subtitle: "Governed Tower answer data rendered as a visual decision aid.",
+    subtitle:
+      visualContract?.executiveTakeaway ??
+      "Governed Tower answer data rendered as a visual decision aid.",
     data: {
       data: table.rows.map((row) => ({
         [label.key]: String(row[label.key] ?? ""),
@@ -286,7 +299,29 @@ function chartFromTable(
     xKey: label.key,
     yKey: y.key,
     unit: unitFor(y),
-    sourceNote: "Visualized from the governed Tower answer contract.",
+    sourceNote: sourceNoteForVisualContract(visualContract),
+  };
+}
+
+function sourceNoteForVisualContract(
+  visualContract?: TowerVisualContract | null,
+): string {
+  if (!visualContract) return "Visualized from the governed Tower answer contract.";
+  const annotations = visualContract.annotations.length
+    ? ` ${visualContract.annotations.slice(0, 2).join(" ")}`
+    : "";
+  return `${visualContract.sourceBoundary}${annotations}`;
+}
+
+function enrichChartWithVisualContract(
+  chart: AnswerChart,
+  visualContract?: TowerVisualContract | null,
+): AnswerChart {
+  if (!visualContract) return chart;
+  return {
+    ...chart,
+    subtitle: visualContract.executiveTakeaway,
+    sourceNote: sourceNoteForVisualContract(visualContract),
   };
 }
 
@@ -330,7 +365,7 @@ export function buildTowerChatAvaAnswerPacket({
   const metricTable = metricCardsToTable(metricCards);
   const tables = [...answerTables, ...(metricTable ? [metricTable] : [])];
   const charts = answerTables
-    .map((table) => chartFromTable(table, question))
+    .map((table) => chartFromTable(table, question, modelOutput.visualContract))
     .filter((chart): chart is AnswerChart => chart !== null)
     .slice(0, 2);
   const artifacts: AvaArtifact[] = [

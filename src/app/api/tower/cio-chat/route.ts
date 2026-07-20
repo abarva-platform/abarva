@@ -1,6 +1,7 @@
 import { getActiveClientRow } from '@/lib/active-client';
 import { requireTenancy, tenancyErrorResponse } from '@/lib/auth/tenancy';
 import { answerCioTowerQuestion, canonicalCioTowerTenantKey } from '@/lib/cio-tower/answer';
+import { towerProgressEventsForQuestion } from '@/lib/cio-tower/visual-contract';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -52,7 +53,7 @@ function towerChatFailurePayload(message: string) {
   };
 }
 
-function ndjsonEvent(type: string, payload: Record<string, unknown> = {}) {
+function ndjsonEvent(type: string, payload: object = {}) {
   return JSON.stringify({ type, ...payload }) + '\n';
 }
 
@@ -84,18 +85,13 @@ export async function POST(request: Request) {
     const encoder = new TextEncoder();
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
-        const emit = (type: string, payload: Record<string, unknown> = {}) => {
+        const emit = (type: string, payload: object = {}) => {
           controller.enqueue(encoder.encode(ndjsonEvent(type, payload)));
         };
         try {
-          emit('status', {
-            phase: 'tenant-context',
-            label: 'Grounding Tower context',
-          });
-          emit('status', {
-            phase: 'evidence',
-            label: 'Checking governed Tower evidence',
-          });
+          for (const event of towerProgressEventsForQuestion(question)) {
+            emit('status', event);
+          }
           const result = await answerCioTowerQuestion({
             tenantId: tenancy.clientId,
             userId: tenancy.userId,
@@ -105,7 +101,7 @@ export async function POST(request: Request) {
           });
           emit('status', {
             phase: 'validation',
-            label: 'Validating answer and visual artifacts',
+            label: 'Validating supporting evidence...',
           });
           emit('tower-answer', buildTowerChatPayload(result));
           emit('done', {

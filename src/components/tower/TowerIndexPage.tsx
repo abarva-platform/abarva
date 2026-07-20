@@ -11316,7 +11316,7 @@ export function TowerIndexPage({
       }
 
       setAtlasPending(true);
-      setAtlasPendingMessage("Grounding Tower context");
+      setAtlasPendingMessage("Loading Tower measures...");
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 90_000);
       try {
