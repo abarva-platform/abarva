@@ -106,12 +106,28 @@ export interface FormattingProfile {
 export interface QualityBar {
   minSections: number;
   minBodyWords: number; // guards against artificially short documents
+  /**
+   * The upper end of this artifact type's depth band (see quality-bar-registry.ts
+   * for the per-type bands). A ceiling exists for every type — even a substantial
+   * architecture or solution-design document has a real outer bound — but whether
+   * crossing it BLOCKS export or only WARNS is controlled by `enforceMaxAsBlocker`.
+   * Concise, commitment-style artifacts (Charter, decision briefs, approval
+   * records) should block; substantial, analytical artifacts should warn, so a
+   * genuinely complex architecture is never blocked for being thorough.
+   */
+  targetBodyWordsMax?: number;
+  /** true = crossing targetBodyWordsMax blocks export; false/undefined = warning only. */
+  enforceMaxAsBlocker?: boolean;
   requiresCitations: boolean;
   requiresDecisionSection: boolean;
   requiresRecommendation: boolean;
   requiresRiskTable: boolean;
   requiresSourceRegister: boolean;
   requiresClientCompleteChecklistWhenGaps: boolean;
+  /** Narrative-spine requirements — the document must argue a case, not just fill sections. */
+  requiresCentralTension?: boolean; // what tension/problem the document is resolving
+  requiresOptionsConsidered?: boolean; // real alternatives weighed, not one path presented as inevitable
+  requiresEvidenceGapsNoted?: boolean; // what remains unproven must be stated, not implied away
   tone: 'board_grade_consulting';
 }
 
@@ -155,9 +171,32 @@ export interface BriefSection {
 export interface ExpectedExhibit {
   key: string;
   title: string;
-  kind: 'diagram' | 'matrix' | 'timeline' | 'heatmap' | 'flow' | 'chart';
+  kind:
+    | 'diagram'
+    | 'matrix'
+    | 'timeline'
+    | 'heatmap'
+    | 'flow'
+    | 'chart'
+    // Architecture views are distinct diagram KINDS, not one generic "diagram" box —
+    // each answers a different question and needs different required elements.
+    | 'conceptual_architecture' // business/capability model: personas, capabilities, channels, trust boundaries, outcomes
+    | 'logical_architecture' // solution components: experience/orchestration/agents/models/context/integration/data/identity/observability/governance/human-in-the-loop
+    | 'physical_architecture' // deployable services: cloud boundaries, regions, networks, runtimes, endpoints, data platforms, queues, secrets, CI/CD
+    | 'agent_orchestration'; // the explicit trigger→router→planner→context→tool→model→gate→approval→action→trace flow
   purpose: string;
   preferredFormat: OutputFormat; // e.g. wide matrices → 'xlsx'
+  /**
+   * The specific elements this exhibit MUST show — e.g. for a physical
+   * architecture: ["cloud subscription boundary","region","runtime service",
+   * "model endpoint","vector/search service","queue/event bus","secrets store",
+   * "identity provider","CI/CD path"]. Presence-checked the same way
+   * requiredVisuals/requiredTables already are; a bare "include a diagram"
+   * instruction is not enough to guarantee the model draws the right one.
+   */
+  requiredElements?: string[];
+  /** Whether the exhibit must carry a legend (e.g. illustrative vs. selected vs. client-confirmed service). */
+  legendRequired?: boolean;
 }
 
 export interface ExpectedTable {
@@ -173,6 +212,14 @@ export interface DeliverableArtifactBrief {
   useCaseArchetype: string;
   deliverableType: string;
   purpose: string;
+  /**
+   * What this document must NOT attempt yet — the phase-discipline boundary
+   * stated positively (the sibling of `forbiddenSectionTopics`, which lists
+   * topics; this states the boundary as a sentence Claude can reason from,
+   * e.g. "This is a funding gate, not a build authorization — do not design
+   * the solution here.").
+   */
+  prohibitedContent?: string[];
   audience: AudienceRole[];
   decisionToSupport: string;
   recommendedStructure: BriefSection[]; // ordered; Claude MAY add more
@@ -298,6 +345,9 @@ export interface QualityValidationResult {
     clientCompleteCount: number;
     unsupportedClaimCount: number;
     leakedInternalTags: string[];
+    hasCentralTension: boolean;
+    hasOptionsConsidered: boolean;
+    hasEvidenceGapsNoted: boolean;
   };
 }
 

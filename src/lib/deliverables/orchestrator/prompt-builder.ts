@@ -167,13 +167,54 @@ function buildContextBlock(
           ``,
         ]
       : []),
-    `EXPECTED EXHIBITS: ${brief.expectedExhibits.map((e) => e.title).join("; ") || "(use judgment)"}`,
+    ...(brief.prohibitedContent && brief.prohibitedContent.length > 0
+      ? [`PURPOSE BOUNDARY: ${brief.prohibitedContent.join(" ")}`, ``]
+      : []),
+    `EXPECTED EXHIBITS:`,
+    brief.expectedExhibits.length > 0
+      ? brief.expectedExhibits
+          .map((e) =>
+            e.requiredElements && e.requiredElements.length > 0
+              ? `  - ${e.title} [${e.kind}]: MUST show ${e.requiredElements.join(", ")}.${e.legendRequired ? " Include a legend marking each element illustrative, selected, or client-confirmed." : ""}`
+              : `  - ${e.title} [${e.kind}]: ${e.purpose}`,
+          )
+          .join("\n")
+      : "  (use judgment)",
     `EXPECTED TABLES: ${brief.expectedTables.map((t) => t.title).join("; ") || "(use judgment)"}`,
     ``,
     `QUALITY BAR: ${brief.qualityCriteria.join(" ")} Output must read like a board-grade consulting artifact, not an LLM draft. Strengthen synthesis, implications, and the decision ask.`,
+    narrativeSpineInstruction(req),
+    sizeDisciplineInstruction(req),
     ``,
     `FORMATTING: ${brief.formattingInstructions} Body ≈ ${req.formattingProfile.bodyPointSize}pt. ${req.formattingProfile.wideDataToExcelCompanion ? "Move wide datasets into an Excel companion exhibit rather than tiny in-document tables." : ""} Output formats: ${req.outputFormats.join(", ")}.`,
   ].join("\n");
+}
+
+/** The narrative-spine requirement: this document must argue a case, not fill sections. */
+function narrativeSpineInstruction(req: DeliverableIntelligenceRequest): string {
+  const qb = req.qualityBar;
+  const asks: string[] = [];
+  if (qb.requiresCentralTension)
+    asks.push(
+      "state the central tension/why-now plainly (what problem, what economic leakage, what happens if nothing changes)",
+    );
+  if (qb.requiresOptionsConsidered)
+    asks.push(
+      "show real options considered and why the recommended path won — not the recommended path presented as the only one",
+    );
+  if (qb.requiresEvidenceGapsNoted)
+    asks.push(
+      "state plainly what remains unproven or unconfirmed — do not imply completeness the evidence does not support",
+    );
+  if (asks.length === 0) return "";
+  return `\nNARRATIVE SPINE: This document must read as one coherent argument, not a collection of disconnected sections. Specifically: ${asks.join("; ")}.`;
+}
+
+/** The size-range discipline instruction — a range is a boundary, not a target to hit by padding. */
+function sizeDisciplineInstruction(req: DeliverableIntelligenceRequest): string {
+  const qb = req.qualityBar;
+  if (!qb.targetBodyWordsMax) return "";
+  return `\nSIZE DISCIPLINE: Target ${qb.minBodyWords.toLocaleString()}–${qb.targetBodyWordsMax.toLocaleString()} body words for this artifact type. Do not optimize for minimum length OR maximum length — optimize for decision usefulness, professional completeness, visual clarity, evidence traceability, and human usability. Use this range as a discipline boundary, not permission to omit necessary analysis below it or pad with filler, generic methodology prose, or unsupported detail above it. Every section must advance the decision, evidence, design, or approval this artifact exists to drive.`;
 }
 
 const PLAN_SCHEMA_HINT = `Return ONLY JSON matching DeliverableGenerationPlan:

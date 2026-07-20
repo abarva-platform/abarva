@@ -558,7 +558,16 @@ function composeBrief(
       .map((s) => s.key)
       .filter((k) => !structure.requiredSectionKeys.includes(k)),
     forbiddenSectionTopics: structure.forbiddenSectionTopics,
-    expectedExhibits: pack?.exhibits ?? [],
+    prohibitedContent: structure.prohibitedContent,
+    // Deliverable-type exhibits (e.g. the architecture views a Target State
+    // Architecture always needs) come FIRST and are additive to whatever the
+    // archetype pack contributes (use-case-specific exhibits like a dependency
+    // map) — a business case and an architecture doc under the same archetype
+    // must not get the same exhibit list.
+    expectedExhibits: [
+      ...(structure.expectedExhibits ?? []),
+      ...(pack?.exhibits ?? []),
+    ],
     expectedTables: pack?.tables ?? [
       {
         key: "risk_register",
