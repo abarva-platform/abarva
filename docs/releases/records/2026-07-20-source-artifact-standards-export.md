@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -48,25 +48,31 @@ before a client-final artifact is accepted back as the final record.
 - PASS: `npx eslint src/lib/source/artifact-lifecycle-matrix.ts src/lib/source/__tests__/artifact-lifecycle-matrix.test.ts src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.chat.test.tsx`.
 - PASS: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit`.
 - PASS: `npm run release:check`.
-- PENDING: PR checks for `https://github.com/abarva-platform/abarva/pull/5117`.
-- PENDING: ACA deploy and signed-in Source Files proof after merge.
+- PASS: PR checks for `https://github.com/abarva-platform/abarva/pull/5117`.
+- PASS: ACA main deploy run `29722507934` completed successfully for merge SHA
+  `4f5629d33c64728d9d7a1f587e6ed18a068c6b0e`.
+- PASS: Signed-in Source Files proof confirmed the export link, 34 CSV rows
+  (header + 33 artifacts), `d08_premortem`, `d31_kt_evidence`, `Token budget`,
+  `AI draft rule`, `Human final rule`, `Claude Opus` / `128k max`, and the
+  human-review/client-final acceptance governance language.
 
 ## Rollout Plan
 
-Open a PR, merge to `main`, deploy through the repo-owned Azure Container Apps
-main deploy workflow, verify the ACA runtime invariant, then run signed-in
-Source Files proof that the export command is visible and contains the expected
-governance columns.
+Merged to `main` through PR `#5117`, deployed through the repo-owned Azure
+Container Apps main deploy workflow, verified the ACA runtime invariant, and
+ran signed-in Source Files proof that the export command is visible and contains
+the expected governance columns.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: None in this release.
-- Approved image digest: To be produced by the ACA main deploy workflow.
-- ACA runtime invariant: Required after deployment.
-- Worker image invariant: Required after deployment per shared runbook.
+- Approved image digest: Produced by ACA run `29722507934`; see deployment
+  evidence bundle uploaded by the workflow.
+- ACA runtime invariant: Passed in ACA run `29722507934`.
+- Worker image invariant: Passed in ACA run `29722507934`.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Yes, Source Files workspace.
+- Live signed-in proof required: Complete, Source Files workspace.
 
 ## Rollback Plan
 
@@ -76,9 +82,14 @@ deploy workflow. No data rollback is required.
 ## Audit Evidence
 
 - PR URL: `https://github.com/abarva-platform/abarva/pull/5117`.
-- Local validation: To be added before PR.
-- ACA deployment run: To be added after merge.
-- Signed-in screenshot: To be added after deployment.
+- Local validation: Focused Jest, ESLint, TypeScript, and `release:check`
+  passed before PR.
+- PR checks: `https://github.com/abarva-platform/abarva/pull/5117`.
+- Merge SHA: `4f5629d33c64728d9d7a1f587e6ed18a068c6b0e`.
+- ACA deployment run:
+  `https://github.com/abarva-platform/abarva/actions/runs/29722507934`.
+- Signed-in screenshot:
+  `/Users/anand/Downloads/source-5117-live-artifact-standards-export.png`.
 
 ## Known Gaps
 
