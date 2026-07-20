@@ -382,6 +382,7 @@ function shouldPreserveSourceAnswerText(
     "Evaluation scorecard answer",
     "BAFO instruction answer",
     "Artifact authority answer",
+    "Artifact standards answer",
     "Contract optimization answer",
     "Structured Source evidence answer",
   ].includes(sourceAnswer.title);

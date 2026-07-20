@@ -3,6 +3,7 @@ import {
   detectSourceAnswerMode,
   type SourceAnswerMode,
 } from "../source-answer-engine";
+import { buildSourceArtifactStandardsContext } from "../artifact-lifecycle-matrix";
 import { SOURCE_GOLDEN_EVENT_IDS } from "../constants";
 import type {
   SourceAgentContextBundle,
@@ -265,6 +266,81 @@ describe("Source answer engine", () => {
     expect(answer?.responseParts.some((part) => part.type === 'table')).toBe(true);
     expect(answer?.responseParts.some((part) => part.type === 'barChart')).toBe(true);
     expect(answer?.responseParts.some((part) => part.type === 'citations')).toBe(true);
+  });
+
+  it("answers artifact standard questions from the canonical artifact profile context", () => {
+    const standards = buildSourceArtifactStandardsContext({
+      artifacts: [
+        {
+          artifactKind: "d09_rfp_pack",
+          artifactGroup: "generated",
+          sourceOrigin: "generated",
+          status: "approved",
+        },
+      ],
+      prompt:
+        "What should the RFP pack look like, how many pages, and what token budget applies?",
+      stageKey: "rfp",
+      limit: 2,
+    });
+    const contextWithArtifactStandards: SourceAgentContextBundle = {
+      ...contextBundle,
+      sourcingEvent: {
+        ...contextBundle.sourcingEvent!,
+        currentStageKey: "rfp",
+      },
+      liveTenantContext: {
+        ...liveTenantContext,
+        segments: [
+          ...liveTenantContext.segments,
+          {
+            segmentId: "artifact_standards",
+            inventoryRecords: 0,
+            contextChunks: standards.length,
+            embeddedChunks: 0,
+          },
+        ],
+        currentStateAreas: [
+          ...liveTenantContext.currentStateAreas,
+          "Artifact Standards",
+        ],
+        retrievedEvidence: [
+          ...standards.map((item) => ({
+            id: `source-artifact-standard:${item.code}`,
+            segmentId: "artifact_standards",
+            recordId: item.code,
+            title: item.title,
+            sourceType: "contextChunk" as const,
+            sourceDoc: "Source artifact standards registry",
+            excerpt: item.excerpt,
+            confidence: "high" as const,
+            score: item.score,
+          })),
+          ...liveTenantContext.retrievedEvidence,
+        ],
+      },
+    };
+
+    const answer = buildSourceAnswerEngine({
+      prompt:
+        "What should the RFP pack look like, how many pages, and what token budget applies?",
+      contextBundle: contextWithArtifactStandards,
+      userRole: "cio",
+    });
+
+    expect(answer?.title).toBe("Artifact standards answer");
+    expect(answer?.answerText).toContain("not a fixed page count");
+    expect(answer?.answerText).toContain("Required exhibits: 11");
+    expect(answer?.answerText).toContain("No fixed page cap");
+    expect(answer?.answerText).toContain("128k max");
+    expect(answer?.answerText).toContain("Human review is required");
+    expect(answer?.answerText).toContain("accepted back as the final record");
+    expect(
+      answer?.evidenceCitations.some(
+        (citation) =>
+          citation.sourceDoc === "Source artifact standards registry",
+      ),
+    ).toBe(true);
   });
 
   it("renders Source answer branding as Ava even when retrieved evidence still says Sentinel", () => {

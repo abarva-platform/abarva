@@ -38,6 +38,7 @@ import {
   buildSkyHarborAmsExistingContractInput,
 } from "@/lib/source/contract-optimization/mve-profile";
 import { enforceSourceExistingEventWriteTruth } from "@/lib/source/ava/answer-quality-gate";
+import { buildSourceArtifactStandardsContext } from "@/lib/source/artifact-lifecycle-matrix";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -140,6 +141,7 @@ export async function POST(
             activeClientKey,
             activeClientName: displayTenantName,
             event: fallbackLiveEventDetail,
+            prompt: normalizedBody.prompt,
           })
         : undefined);
 
@@ -378,6 +380,7 @@ async function buildEventIntakeTenantContextSnapshot(args: {
   activeClientKey?: string;
   activeClientName?: string;
   event: SourcingEventDetail;
+  prompt?: string;
 }): Promise<SourceLiveTenantContextSnapshot> {
   const clientKey = args.activeClientKey ?? "unknown";
   const brokerTenantKey =
@@ -385,6 +388,21 @@ async function buildEventIntakeTenantContextSnapshot(args: {
       ? APEX_RETAIL_BROKER_TENANT_KEY
       : clientKey;
   const artifactContext = await loadSourceEventArtifactContext(args.event.id);
+  const artifactStandards = buildSourceArtifactStandardsContext({
+    artifacts: artifactContext.artifacts.map((artifact) => ({
+      artifactKind: artifact.artifact_kind,
+      artifactType: artifact.artifact_kind,
+      artifactGroup: artifact.artifact_family,
+      sourceOrigin: artifact.source_origin,
+      status: artifact.status,
+      approvalState: artifact.approval_state,
+      evidenceState: artifact.evidence_state,
+      isClientFinal: artifact.is_client_final,
+    })),
+    stageKey: args.event.currentStageKey,
+    prompt: args.prompt,
+    limit: 10,
+  });
   const structuredEvidenceContext = await loadContractEvidenceRuntimeSummary({
     db: getAzureReadFluentClient(),
     tenantKey: clientKey,
@@ -605,6 +623,17 @@ async function buildEventIntakeTenantContextSnapshot(args: {
       sourceDoc: sourceEventEvidenceDoc(item),
       confidence: "high" as const,
     })),
+    ...artifactStandards.map((item) => ({
+      id: `source-artifact-standard:${item.code}`,
+      segmentId: "artifact_standards",
+      recordId: item.code,
+      title: item.title,
+      sourceType: "contextChunk" as const,
+      sourceDoc: "Source artifact standards registry",
+      excerpt: item.excerpt,
+      confidence: "high" as const,
+      score: item.score,
+    })),
     ...artifactContext.artifactEvidence,
   ];
   const uploadedCount = artifactContext.artifacts.filter(
@@ -651,6 +680,9 @@ async function buildEventIntakeTenantContextSnapshot(args: {
             `${uploadedCount} uploaded Source evidence artifact(s), ${generatedCount} generated artifact(s), ${artifactContext.chunks.length} parsed excerpt(s), and ${artifactContext.facts.length} structured fact(s) are bound from the Source artifact registry for this event.`,
           ]
         : []),
+      artifactStandards.length
+        ? `Canonical standards for ${artifactStandards.length} Source artifact(s) are bound from the Source artifact standards registry, including audience, exhibits, page guidance, token budget, evidence controls, and human-review rules.`
+        : "Canonical Source artifact standards were not bound for this event context.",
       ...(structuredEvidenceContext.manifests.length
         ? [structuredEvidenceContext.userFacingSummary]
         : []),

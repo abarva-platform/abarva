@@ -191,6 +191,10 @@ export function buildSourceAnswerEngine(
     prompt: input.prompt,
     evidence: rankedEvidence,
   });
+  const artifactStandardsAnswer = buildArtifactStandardsAnswer({
+    prompt: input.prompt,
+    evidence: rankedEvidence,
+  });
   const artifactGovernanceAnswer = buildArtifactGovernanceAnswer({
     prompt: input.prompt,
     evidence: rankedEvidence,
@@ -211,6 +215,7 @@ export function buildSourceAnswerEngine(
     bafoInstructionAnswer?.currentStateFindings ??
     eventOverviewAnswer?.currentStateFindings ??
     stageReadinessAnswer?.currentStateFindings ??
+    artifactStandardsAnswer?.currentStateFindings ??
     artifactGovernanceAnswer?.currentStateFindings ??
     structuredEvidenceAnswer?.currentStateFindings ??
     contractOptimizationAnswer?.currentStateFindings ??
@@ -220,6 +225,7 @@ export function buildSourceAnswerEngine(
     bafoInstructionAnswer?.sourcingImplications ??
     eventOverviewAnswer?.sourcingImplications ??
     stageReadinessAnswer?.sourcingImplications ??
+    artifactStandardsAnswer?.sourcingImplications ??
     artifactGovernanceAnswer?.sourcingImplications ??
     structuredEvidenceAnswer?.sourcingImplications ??
     contractOptimizationAnswer?.sourcingImplications ??
@@ -231,6 +237,7 @@ export function buildSourceAnswerEngine(
     bafoInstructionAnswer?.cxoGuidance ??
     eventOverviewAnswer?.cxoGuidance ??
     stageReadinessAnswer?.cxoGuidance ??
+    artifactStandardsAnswer?.cxoGuidance ??
     artifactGovernanceAnswer?.cxoGuidance ??
     structuredEvidenceAnswer?.cxoGuidance ??
     selectByMode(mode, playbook.cxoGuidance, [
@@ -272,6 +279,7 @@ export function buildSourceAnswerEngine(
     bafoInstructionAnswer?.answerText ??
     eventOverviewAnswer?.answerText ??
     stageReadinessAnswer?.answerText ??
+    artifactStandardsAnswer?.answerText ??
     artifactGovernanceAnswer?.answerText ??
     structuredEvidenceAnswer?.answerText ??
     contractOptimizationAnswer?.answerText ??
@@ -292,6 +300,7 @@ export function buildSourceAnswerEngine(
     bafoInstructionAnswer?.cxoGuidance ??
     eventOverviewAnswer?.cxoGuidance ??
     stageReadinessAnswer?.cxoGuidance ??
+    artifactStandardsAnswer?.cxoGuidance ??
     artifactGovernanceAnswer?.cxoGuidance ??
     structuredEvidenceAnswer?.cxoGuidance ??
     contractOptimizationAnswer?.cxoGuidance ??
@@ -308,6 +317,7 @@ export function buildSourceAnswerEngine(
     bafoInstructionAnswer?.recommendedNextAction ??
     eventOverviewAnswer?.recommendedNextAction ??
     stageReadinessAnswer?.recommendedNextAction ??
+    artifactStandardsAnswer?.recommendedNextAction ??
     artifactGovernanceAnswer?.recommendedNextAction ??
     structuredEvidenceAnswer?.recommendedNextAction ??
     contractOptimizationAnswer?.recommendedNextAction ??
@@ -336,6 +346,7 @@ export function buildSourceAnswerEngine(
       bafoInstructionAnswer?.title ??
       eventOverviewAnswer?.title ??
       stageReadinessAnswer?.title ??
+      artifactStandardsAnswer?.title ??
       artifactGovernanceAnswer?.title ??
       structuredEvidenceAnswer?.title ??
       contractOptimizationAnswer?.title ??
@@ -667,6 +678,7 @@ function rankAnswerEvidence(
       "compliance",
       "uploaded_source_evidence",
       "evidence_ledger",
+      "artifact_standards",
       "sourcing_artifacts",
       "generated_sourcing_artifacts",
     ],
@@ -678,6 +690,7 @@ function rankAnswerEvidence(
       "it_financials",
       "decision_traces",
       "stakeholder_notes",
+      "artifact_standards",
     ],
     risk_traps: [
       "compliance",
@@ -686,12 +699,14 @@ function rankAnswerEvidence(
       "evidence_ledger",
       "decision_traces",
       "program_inventory",
+      "artifact_standards",
     ],
     missing_data: [
       "sourcing_artifacts",
       "uploaded_source_evidence",
       "generated_sourcing_artifacts",
       "evidence_ledger",
+      "artifact_standards",
       "kpi_dictionary",
       "operating_telemetry",
       "financial_model",
@@ -706,6 +721,7 @@ function rankAnswerEvidence(
       "financial_model",
       "uploaded_source_evidence",
       "evidence_ledger",
+      "artifact_standards",
       "sourcing_artifacts",
       "generated_sourcing_artifacts",
       "peer_benchmarks",
@@ -1023,6 +1039,23 @@ type ArtifactGovernanceRecord = {
   evidence: SourceLiveTenantEvidenceItem;
 };
 
+type ArtifactStandardsRecord = {
+  code: string;
+  title: string;
+  stageLabel: string;
+  requirementLabel: string;
+  gateLabel: string;
+  purpose: string;
+  audience: string;
+  structure: string;
+  pageGuidance: string;
+  controls: string;
+  generationContract: string;
+  exportFormats: string;
+  lifecycleState: string;
+  approvalRule: string;
+};
+
 function buildSourceEventOverviewAnswer(args: {
   prompt: string;
   contextBundle: SourceAgentContextBundle;
@@ -1140,6 +1173,69 @@ function buildSourceStageReadinessAnswer(args: {
     ],
     recommendedNextAction:
       "Review the visible stage gate, confirm artifact finality, and resolve any named evidence or approval blockers before advancing.",
+  };
+}
+
+function buildArtifactStandardsAnswer(args: {
+  prompt: string;
+  evidence: SourceLiveTenantEvidenceItem[];
+}): {
+  title: string;
+  answerText: string;
+  currentStateFindings: string[];
+  sourcingImplications: string[];
+  cxoGuidance: string[];
+  recommendedNextAction: string;
+} | null {
+  const text = args.prompt.toLowerCase();
+  if (!isArtifactStandardsQuestion(text)) return null;
+
+  const records = args.evidence
+    .map(parseArtifactStandardsRecord)
+    .filter((record): record is ArtifactStandardsRecord => Boolean(record));
+  if (records.length === 0) return null;
+
+  const requestedCode = inferRequestedArtifactAuthorityType(text);
+  const scopedRecords = requestedCode
+    ? records.filter((record) => record.code === requestedCode)
+    : records;
+  const answerRecords = (scopedRecords.length > 0 ? scopedRecords : records).slice(
+    0,
+    3,
+  );
+  const primary = answerRecords[0];
+  if (!primary) return null;
+
+  const lead =
+    answerRecords.length === 1
+      ? `${primary.title} should be judged against the Source artifact standard, not a fixed page count.`
+      : `These ${answerRecords.length} Source artifacts should be judged against their artifact standards, not generic document templates or fixed page counts.`;
+  const details = answerRecords.map((record) =>
+    [
+      `${record.title}: ${record.purpose}`,
+      `${record.audience}. ${record.structure}.`,
+      `${record.pageGuidance}. ${record.controls}.`,
+      `${record.generationContract}. Export: ${record.exportFormats}.`,
+      `Governance: ${record.lifecycleState}. ${record.approvalRule}. Human review is required before external use; the client-approved artifact must be accepted back as the final record.`,
+    ].join(" "),
+  );
+
+  return {
+    title: "Artifact standards answer",
+    answerText: [lead, ...details].join("\n"),
+    currentStateFindings: answerRecords.map(
+      (record) =>
+        `${record.title} has a bound standard: ${record.structure}; ${record.pageGuidance}.`,
+    ),
+    sourcingImplications: [
+      "aVa should use the artifact standard as the quality bar before describing a deliverable as ready.",
+      "AI-prepared drafts remain drafts until a human-approved client-final version is accepted back into Source.",
+    ],
+    cxoGuidance: [
+      "Review the required exhibits and evidence controls before approving the artifact for use.",
+      "Do not treat token budget, model label, or generated status as approval; those are production controls, not buyer signoff.",
+    ],
+    recommendedNextAction: `Open the Files workspace for ${primary.title}, review the required exhibits and controls, then accept a client-final version only after human approval.`,
   };
 }
 
@@ -1318,6 +1414,64 @@ function inferRequestedArtifactAuthorityType(text: string): string | null {
     return "d05_scope_memo";
   }
   return null;
+}
+
+function isArtifactStandardsQuestion(text: string): boolean {
+  return (
+    /\b(what good looks like|should .*look like|standard|guideline|required exhibits|sections?|pages?|page cap|token|prompt|document quality|artifact quality|workshop|session guidance|generated by ai|human approve|human approval|client final)\b/.test(
+      text,
+    ) &&
+    /\b(artifact|document|deliverable|rfp|scope|memo|brief|pack|workbook|scorecard|guide|workshop|session|page|prompt|token)\b/.test(
+      text,
+    )
+  );
+}
+
+function parseArtifactStandardsRecord(
+  item: SourceLiveTenantEvidenceItem,
+): ArtifactStandardsRecord | null {
+  if (item.sourceDoc !== "Source artifact standards registry") return null;
+  const excerpt = item.excerpt;
+  const header = excerpt.match(
+    /Artifact standard: ([^(]+) \(([^)]+)\) is ([^ ]+) and ([^ ]+(?:-[^ ]+)?) for ([^.]+)\./i,
+  );
+  if (!header) return null;
+
+  const generationExport = excerpt.match(
+    /Generation contract: ([^.]+)\. Export: ([^.]+)\./i,
+  );
+  return {
+    title: header[1]?.trim() ?? item.title,
+    code: header[2]?.trim() ?? item.recordId,
+    requirementLabel: header[3]?.trim() ?? "unknown",
+    gateLabel: header[4]?.trim() ?? "unknown",
+    stageLabel: header[5]?.trim() ?? "unknown",
+    purpose:
+      excerpt.match(/Purpose and guideline: ([^.]+)\./i)?.[1]?.trim() ??
+      "Use the artifact standard for this deliverable.",
+    audience:
+      excerpt.match(/Audience: ([^.]+)\./i)?.[1]?.trim() ??
+      "Audience: profiled in Source.",
+    structure:
+      excerpt.match(/Structure: ([^.]+)\./i)?.[1]?.trim() ??
+      "Structure: required exhibits are profiled in Source.",
+    pageGuidance:
+      excerpt.match(/Page guidance: ([^.]+)\./i)?.[1]?.trim() ??
+      "Page guidance: no fixed page cap; use the required exhibits.",
+    controls:
+      excerpt.match(/Controls: ([^.]+)\./i)?.[1]?.trim() ??
+      "Controls: evidence and source register policy are profiled in Source.",
+    generationContract:
+      generationExport?.[1]?.trim() ??
+      "Generation contract: profiled in Source",
+    exportFormats: generationExport?.[2]?.trim() ?? "profiled in Source",
+    lifecycleState:
+      excerpt.match(/Lifecycle state for this event: ([^.]+)\./i)?.[1]?.trim() ??
+      "Lifecycle state not registered",
+    approvalRule:
+      excerpt.match(/Approval rule: ([^.]+)\./i)?.[1]?.trim() ??
+      "Human review required",
+  };
 }
 
 function getArtifactAuthorityLabel(artifactType?: string | null): string {
