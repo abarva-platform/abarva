@@ -11,12 +11,13 @@ export interface SourceSectionVerification {
 
 export const SOURCE_ARTIFACT_REQUIRED_SECTIONS = {
   d01_strategy_memo: [
-    "Executive summary",
+    "Decision requested",
     "Why now",
-    "What we are sourcing",
-    "Value target",
-    "Archetype + rigor",
-    "Decision-gate posture",
+    "Recommended approach",
+    "What we know",
+    "What remains open",
+    "Value hypothesis",
+    "Next gate",
   ],
   d05_scope_memo: [
     "Executive summary",

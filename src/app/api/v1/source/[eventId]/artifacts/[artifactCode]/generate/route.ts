@@ -581,6 +581,7 @@ export async function generateSourceArtifactDraft(
   }
   body = completeD09RfpGovernanceSections({ artifactCode, body, ctx });
   body = sanitizeClientFacingSourceDraft(body, {
+    artifactCode,
     companyName: ctx.tenantName,
   });
 
@@ -1169,6 +1170,7 @@ async function runConsultingGradeQualityGate(args: {
     ctx: args.ctx,
   });
   rewrittenBody = sanitizeClientFacingSourceDraft(rewrittenBody, {
+    artifactCode: args.artifactCode,
     companyName: args.ctx.tenantName,
   });
 

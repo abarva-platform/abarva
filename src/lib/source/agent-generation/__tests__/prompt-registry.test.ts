@@ -116,7 +116,8 @@ describe("Source artifact prompt registry provider config", () => {
       d01_strategy_memo: "# Strategy\n\nApproved strategy memo.",
     });
 
-    expect(d01?.systemPrompt).toContain("## Executive summary");
+    expect(d01?.systemPrompt).toContain("## Decision requested");
+    expect(d01?.systemPrompt).toContain("## §2 · Recommended approach");
     expect(d05?.systemPrompt).toContain("## Executive summary");
     expect(d05?.systemPrompt).toContain("bulleted or tabular list");
     expect(d01?.systemPrompt).toContain("never say \"tenant\"");

@@ -1,4 +1,5 @@
 import { sanitizeClientFacingSourceDraft } from "../client-facing-hygiene";
+import { runDocumentQA } from "@/lib/source/documentation-standards/source-documentation-standards";
 
 describe("Source client-facing draft hygiene", () => {
   it("maps raw artifact codes to business document names", () => {
@@ -101,5 +102,59 @@ describe("Source client-facing draft hygiene", () => {
     expect(result.match(/Company/g)).toHaveLength(1);
     expect(result).toContain("**Company:** SkyHarbor Air");
     expect(result).toContain("Classification: Strategic");
+  });
+
+  it("removes profile-banned terms from client-facing generated drafts", () => {
+    const result = sanitizeClientFacingSourceDraft(
+      [
+        "## Decision requested",
+        "Recommendation: approve scope preparation.",
+        "## Why now",
+        "This d01 was AI generated via Anthropic Opus and a map-reduce path.",
+        "## Recommended approach",
+        "Use the source register and stage gate quality score to proceed.",
+        "## What we know",
+        "Evidence rows from the substrate support the current view.",
+        "## What remains open",
+        "Ticket volume remains open.",
+        "## Value hypothesis",
+        "$4-7M directional savings, pending finance review.",
+        "## Next gate",
+        "Approve scope boundary before RFP release.",
+      ].join("\n\n"),
+      { artifactCode: "d01_strategy_memo", companyName: "SkyHarbor Air" },
+    );
+
+    expect(result).not.toMatch(
+      /d01|AI generated|Anthropic|Opus|map-reduce|source register|stage gate|quality score|evidence rows|substrate/i,
+    );
+    expect(result).toContain("Sourcing Strategy Memo");
+    expect(result).toContain("readiness assessment");
+  });
+
+  it("produces d01 text that passes the client-facing document QA scan", () => {
+    const result = sanitizeClientFacingSourceDraft(
+      [
+        "## Decision requested",
+        "Recommendation: approve the sourcing event and authorize scope preparation.",
+        "## Why now",
+        "The incumbent agreement is nearing renewal and the business needs a cleaner accountability model.",
+        "## Recommended approach",
+        "Run a competitive RFP for the managed-services estate with scope confirmed first.",
+        "## What we know",
+        "The event covers managed services towers and operational support.",
+        "## What remains open",
+        "Ticket volume and application tiers still need confirmation.",
+        "## Value hypothesis",
+        "$4-7M annual run-rate opportunity, pending finance baseline validation.",
+        "## Next gate",
+        "Lock the scope boundary before preparing the RFP.",
+      ].join("\n\n"),
+      { artifactCode: "d01_strategy_memo", companyName: "SkyHarbor Air" },
+    );
+
+    const report = runDocumentQA({ artifactCode: "d01", content: result });
+
+    expect(report.blockers).toEqual([]);
   });
 });

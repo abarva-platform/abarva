@@ -13,13 +13,15 @@ describe("Source artifact section conformance", () => {
         "# Sourcing Strategy Memo",
         "## §1 · Why now",
         "Contracts expire soon and the operating model needs attention.",
-        "## §2 · What we are sourcing",
-        "Managed services scope across applications and infrastructure.",
-        "## §3 · Value target",
-        "The value target is directional pending finance validation.",
-        "## §4 · Archetype + rigor",
-        "Managed services with strategic rigor.",
-        "## §5 · Decision-gate posture",
+        "## §2 · Recommended approach",
+        "Run a competitive RFP for the managed-services estate.",
+        "## §3 · What we know",
+        "The current estate spans critical applications and infrastructure.",
+        "## §4 · What remains open",
+        "Ticket volume and application tiers still need confirmation.",
+        "## §5 · Value hypothesis",
+        "The value hypothesis is directional pending finance validation.",
+        "## §6 · Next gate",
         "Proceed only after the sponsor confirms the scope.",
       ].join("\n\n"),
       "2026-06-16T00:00:00.000Z",
@@ -27,7 +29,7 @@ describe("Source artifact section conformance", () => {
 
     expect(result).toMatchObject({
       status: "incomplete",
-      missingSections: ["Executive summary"],
+      missingSections: ["Decision requested"],
       checkedAt: "2026-06-16T00:00:00.000Z",
     });
   });
@@ -57,11 +59,11 @@ describe("Source artifact section conformance", () => {
   it("matches plain and numbered section heading styles", () => {
     const sectionStyleA = verifyArtifactSections(
       "d01_strategy_memo",
-      completeD01Body("## §1 · Executive summary"),
+      completeD01Body("## §1 · Decision requested"),
     );
     const sectionStyleB = verifyArtifactSections(
       "d01_strategy_memo",
-      completeD01Body("## Executive summary"),
+      completeD01Body("## Decision requested"),
     );
 
     expect(sectionStyleA?.status).toBe("verified");
@@ -71,19 +73,21 @@ describe("Source artifact section conformance", () => {
   it("normalizes exact required section labels emitted as plain text", () => {
     const body = [
       "# Sourcing Strategy Memo",
-      "Executive Summary",
+      "Decision requested",
       "| Dimension | Signal |",
       "| --- | --- |",
       "| Business context | Consolidated managed-services event. |",
       "## §1 · Why now",
       "Contracts expire soon and accountability must be consolidated.",
-      "## §2 · What we are sourcing",
+      "## §2 · Recommended approach",
+      "Run a competitive RFP for the managed-services estate.",
+      "## §3 · What we know",
       "The event covers managed services towers and operational support.",
-      "## §3 · Value target",
+      "## §4 · What remains open",
+      "Ticket volume and application tiers still need confirmation.",
+      "## §5 · Value hypothesis",
       "The value range is directional and pending finance validation.",
-      "## §4 · Archetype + rigor",
-      "Managed services with strategic rigor is appropriate.",
-      "## §5 · Decision-gate posture",
+      "## §6 · Next gate",
       "Proceed after sponsor confirmation and evidence closure.",
     ].join("\n\n");
 
@@ -92,20 +96,20 @@ describe("Source artifact section conformance", () => {
       body,
     );
 
-    expect(normalized).toContain("## Executive summary");
+    expect(normalized).toContain("## Decision requested");
     expect(
       verifyArtifactSections("d01_strategy_memo", normalized)?.status,
     ).toBe("verified");
   });
 
   it("does not duplicate existing required markdown headings", () => {
-    const body = completeD01Body("## Executive summary");
+    const body = completeD01Body("## Decision requested");
     const normalized = normalizeRequiredSectionHeadings(
       "d01_strategy_memo",
       body,
     );
 
-    expect(normalized.match(/^## Executive summary$/gm)).toHaveLength(1);
+    expect(normalized.match(/^## Decision requested$/gm)).toHaveLength(1);
   });
 
   it("treats heading-only sections as missing", () => {
@@ -133,7 +137,7 @@ describe("Source artifact section conformance", () => {
 
   it("renders required sections for prompts from the same source as verification", () => {
     expect(getRequiredSectionsForArtifact("d01_strategy_memo")).toContain(
-      "Executive summary",
+      "Decision requested",
     );
     expect(formatRequiredSectionsForPrompt("d05_scope_memo")).toContain(
       "## §1 · In scope",
@@ -141,20 +145,22 @@ describe("Source artifact section conformance", () => {
   });
 });
 
-function completeD01Body(executiveSummaryHeading: string): string {
+function completeD01Body(decisionRequestedHeading: string): string {
   return [
     "# Strategy Memo",
-    executiveSummaryHeading,
-    "This memo summarizes the business context, value target, why-now trigger, and sponsor decision.",
+    decisionRequestedHeading,
+    "Recommendation: approve the sourcing event and authorize scope preparation.",
     "## §1 · Why now",
     "Contracts expire soon and accountability must be consolidated.",
-    "## §2 · What we are sourcing",
+    "## §2 · Recommended approach",
+    "Run a competitive RFP for the managed-services estate.",
+    "## §3 · What we know",
     "The event covers managed services towers and operational support.",
-    "## §3 · Value target",
+    "## §4 · What remains open",
+    "Ticket volume and application tiers still need confirmation.",
+    "## §5 · Value hypothesis",
     "The value range is directional and pending finance validation.",
-    "## §4 · Archetype + rigor",
-    "Managed services with strategic rigor is appropriate.",
-    "## §5 · Decision-gate posture",
+    "## §6 · Next gate",
     "Proceed after sponsor confirmation and evidence closure.",
   ].join("\n\n");
 }
