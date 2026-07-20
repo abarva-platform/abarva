@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -100,20 +100,37 @@ generated after the deploy completes; deploy proceeds through the repo-owned
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` — to be
-  confirmed after merge.
-- Shared runtime mutators: none used directly; deploy proceeds through the
-  standard workflow only.
-- Approved image digest: to be recorded once the deploy workflow runs.
-- ACA runtime invariant: to be proven after deploy.
-- Worker image invariant: to be proven after deploy — DOCX generation runs
-  through the same web/worker image as every other orchestrator path.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`, run
+  [29738530776](https://github.com/abarva-platform/abarva/actions/runs/29738530776)
+  (headSha `5269d090f463ee32cc4c8d4de616f876158e41c6`, the #5128 squash-merge
+  commit), conclusion `success`.
+- Shared runtime mutators: none used directly; deploy proceeded entirely
+  through the standard workflow.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:b02ca40ae128693278ac9c23da64e43b2abd7157f3a12dbc50a98b9d3989ac69`.
+- ACA runtime invariant: **proven.** `az containerapp show` and `az
+  containerapp revision list` confirm the template image and the 100%-traffic
+  revision (`ca-abarva-web-lab-eastus--m5269d090`) both resolve to the digest
+  above.
+- Worker image invariant: **proven.** `job-abarva-deliv-worker` and
+  `job-abarva-deliv-worker-event` both resolve to the same digest.
 - Feature/env flag update path: N/A — no flag.
-- Live signed-in proof required: yes — after deploy, generate (or re-download)
-  a real orchestrator deliverable of a type that declares exhibits (e.g. a
-  Target State Architecture) as DOCX and confirm the "Visual Exhibits"
-  section renders real diagram images, not just the pre-existing HTML
-  preview.
+- Live signed-in proof: **partially performed.** Signed-in navigation to
+  `app.abarva.ai/strategic-moves` confirmed the app loads and functions
+  normally post-deploy (no regression), including a real Move's P3 workspace.
+  The specific claim not yet exercised live in this pass: downloading a real
+  orchestrator-generated DOCX (e.g. a Target State Architecture) and visually
+  confirming the new "Visual Exhibits" section renders an actual diagram
+  image. Every accessible Move in this tenant at the time of this check was
+  still short the evidence required to generate that deliverable type. This
+  is not force-created here — it is the explicit subject of backlog items 95
+  and 96 (dedicated live E2E generation-and-approval-cycle proofs), which run
+  a real Move through evidence upload, generation, and review specifically to
+  capture this. This release's correctness instead rests on: (1) direct
+  ZIP/XML inspection of a real `.docx` produced by the unmodified renderer
+  showing a valid PNG (verified via magic-number bytes) with a correct image
+  relationship; (2) a minimal standalone reproduction of the exact `resvg`
+  failure mode before writing the fix, rather than a hypothesis.
 
 ## Rollback Plan
 
@@ -123,9 +140,18 @@ No migration to roll back.
 
 ## Audit Evidence
 
-- PR URL: to be added when opened.
-- CI run: to be added when the PR's checks complete.
-- Deployment URL / ACA revision: to be added after deploy.
+- PR: [abarva-platform/abarva#5128](https://github.com/abarva-platform/abarva/pull/5128),
+  all required checks passed, squash-merged as `5269d090f463ee32cc4c8d4de616f876158e41c6`.
+- CI/deploy run: [aca-main-deploy #29738530776](https://github.com/abarva-platform/abarva/actions/runs/29738530776),
+  conclusion `success`.
+- Deployment: ACA revision `ca-abarva-web-lab-eastus--m5269d090` in
+  `rg-abarva-controlplane-lab-eastus`, 100% ingress traffic, image digest
+  `sha256:b02ca40ae128693278ac9c23da64e43b2abd7157f3a12dbc50a98b9d3989ac69`.
+- Live proof: app-loads/no-regression confirmed on `app.abarva.ai` post-deploy,
+  including a real Move's P3 workspace. Full live generation-cycle proof
+  (download a real generated DOCX and visually confirm the embedded exhibit
+  image) deferred to backlog items 95/96 — see Deployment Authority above for
+  why, and Known Gaps below.
 
 ## Known Gaps
 
