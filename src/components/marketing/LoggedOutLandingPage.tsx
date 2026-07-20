@@ -1,120 +1,132 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 type LoggedOutLandingPageProps = {
-  signedOut?: boolean
-}
+  signedOut?: boolean;
+};
 
 type RequestForm = {
-  name: string
-  email: string
-  company: string
-  role: string
-  companySize: string
-  industry: string
-  orgType: string
-  initiative: string
-}
+  name: string;
+  email: string;
+  company: string;
+  role: string;
+  companySize: string;
+  industry: string;
+  orgType: string;
+  initiative: string;
+};
 
 const EMPTY_FORM: RequestForm = {
-  name: '',
-  email: '',
-  company: '',
-  role: '',
-  companySize: '',
-  industry: '',
-  orgType: 'enterprise',
-  initiative: '',
-}
+  name: "",
+  email: "",
+  company: "",
+  role: "",
+  companySize: "",
+  industry: "",
+  orgType: "enterprise",
+  initiative: "",
+};
 
-export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPageProps) {
-  const [modalOpen, setModalOpen] = useState(false)
-  const [form, setForm] = useState<RequestForm>(EMPTY_FORM)
-  const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export function LoggedOutLandingPage({
+  signedOut = false,
+}: LoggedOutLandingPageProps) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [form, setForm] = useState<RequestForm>(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const openReq = () => {
-    setError(null)
-    setModalOpen(true)
-  }
+    setError(null);
+    setModalOpen(true);
+  };
 
   const closeReq = () => {
-    setModalOpen(false)
-  }
+    setModalOpen(false);
+  };
 
-  const updateField = <K extends keyof RequestForm>(key: K, value: RequestForm[K]) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
-  }
+  const updateField = <K extends keyof RequestForm>(
+    key: K,
+    value: RequestForm[K],
+  ) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
 
   // Lock body scroll while the modal is open.
   useEffect(() => {
-    if (typeof document === 'undefined') return
+    if (typeof document === "undefined") return;
     if (modalOpen) {
-      const previous = document.body.style.overflow
-      document.body.style.overflow = 'hidden'
+      const previous = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
       return () => {
-        document.body.style.overflow = previous
-      }
+        document.body.style.overflow = previous;
+      };
     }
-    return undefined
-  }, [modalOpen])
+    return undefined;
+  }, [modalOpen]);
 
   // Close on Escape.
   useEffect(() => {
-    if (typeof document === 'undefined') return
+    if (typeof document === "undefined") return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') closeReq()
-    }
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [])
+      if (event.key === "Escape") closeReq();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   // Scroll-reveal (.rv) + surfaces light-up — client only.
   useEffect(() => {
-    if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return
+    if (
+      typeof window === "undefined" ||
+      typeof IntersectionObserver === "undefined"
+    )
+      return;
 
-    const observers: IntersectionObserver[] = []
+    const observers: IntersectionObserver[] = [];
 
     const io = new IntersectionObserver(
       (entries) =>
         entries.forEach((entry) => {
-          if (entry.isIntersecting) entry.target.classList.add('in')
+          if (entry.isIntersecting) entry.target.classList.add("in");
         }),
       { threshold: 0.16 },
-    )
-    document.querySelectorAll('.rv').forEach((el) => io.observe(el))
-    observers.push(io)
+    );
+    document.querySelectorAll(".rv").forEach((el) => io.observe(el));
+    observers.push(io);
 
-    const row = document.getElementById('surfaces-row')
+    const row = document.getElementById("surfaces-row");
     if (row) {
       const sIo = new IntersectionObserver(
         (entries) =>
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
               document
-                .querySelectorAll('#surfaces-row .surf')
-                .forEach((s, i) => window.setTimeout(() => s.classList.add('lit'), i * 140))
+                .querySelectorAll("#surfaces-row .surf")
+                .forEach((s, i) =>
+                  window.setTimeout(() => s.classList.add("lit"), i * 140),
+                );
             }
           }),
         { threshold: 0.35 },
-      )
-      sIo.observe(row)
-      observers.push(sIo)
+      );
+      sIo.observe(row);
+      observers.push(sIo);
     }
 
-    return () => observers.forEach((observer) => observer.disconnect())
-  }, [])
+    return () => observers.forEach((observer) => observer.disconnect());
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setSubmitting(true)
-    setError(null)
+    event.preventDefault();
+    setSubmitting(true);
+    setError(null);
     try {
-      const response = await fetch('/api/request-access', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/request-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: form.name,
           email: form.email,
@@ -125,26 +137,30 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           orgType: form.orgType,
           initiative: form.initiative,
         }),
-      })
+      });
       if (!response.ok) {
-        let message = 'Something went wrong. Please try again.'
+        let message = "Something went wrong. Please try again.";
         try {
-          const data = (await response.json()) as { error?: unknown }
-          if (typeof data.error === 'string' && data.error.trim()) {
-            message = data.error.trim()
+          const data = (await response.json()) as { error?: unknown };
+          if (typeof data.error === "string" && data.error.trim()) {
+            message = data.error.trim();
           }
         } catch {
           // Keep the generic fallback when the server does not return JSON.
         }
-        throw new Error(message)
+        throw new Error(message);
       }
-      setSubmitted(true)
+      setSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="abarva-landing">
@@ -165,10 +181,12 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           --blue: #5b8cff;
           --blue2: #3b6fe0;
           --gold: #c9a35b;
-          --shadow: 0 50px 100px -34px rgba(11, 20, 34, 0.55), 0 8px 24px -12px rgba(11, 20, 34, 0.3);
+          --shadow:
+            0 50px 100px -34px rgba(11, 20, 34, 0.55),
+            0 8px 24px -12px rgba(11, 20, 34, 0.3);
           background: var(--bg);
           color: var(--ink);
-          font-family: 'DM Sans', Inter, system-ui, Arial, sans-serif;
+          font-family: "DM Sans", Inter, system-ui, Arial, sans-serif;
           line-height: 1.55;
           overflow-x: hidden;
           -webkit-font-smoothing: antialiased;
@@ -180,7 +198,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         .abarva-landing h1,
         .abarva-landing h2,
         .abarva-landing h3 {
-          font-family: Georgia, 'Times New Roman', serif;
+          font-family: Georgia, "Times New Roman", serif;
           font-weight: normal;
           letter-spacing: -0.55px;
           color: var(--ink);
@@ -243,21 +261,34 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         /* ===== HERO ===== */
         .abarva-landing .shero {
           position: relative;
-          background: radial-gradient(900px 500px at 90% -10%, rgba(91, 140, 255, 0.1), transparent 60%),
-            radial-gradient(760px 520px at 0% 105%, rgba(55, 224, 192, 0.08), transparent 62%),
+          background:
+            radial-gradient(
+              900px 500px at 90% -10%,
+              rgba(91, 140, 255, 0.1),
+              transparent 60%
+            ),
+            radial-gradient(
+              760px 520px at 0% 105%,
+              rgba(55, 224, 192, 0.08),
+              transparent 62%
+            ),
             linear-gradient(180deg, #fbfaf7 0%, #f8f7f4 100%);
           border-bottom: 1px solid var(--line);
           overflow: hidden;
         }
         .abarva-landing .shero:before {
-          content: '';
+          content: "";
           position: absolute;
           right: -180px;
           top: 100px;
           width: 520px;
           height: 520px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(91, 140, 255, 0.12), transparent 66%);
+          background: radial-gradient(
+            circle,
+            rgba(91, 140, 255, 0.12),
+            transparent 66%
+          );
           pointer-events: none;
         }
         .abarva-landing .navlinks {
@@ -333,7 +364,8 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         .abarva-landing .rv {
           opacity: 0;
           transform: translateY(34px);
-          transition: opacity 0.8s cubic-bezier(0.16, 0.8, 0.3, 1),
+          transition:
+            opacity 0.8s cubic-bezier(0.16, 0.8, 0.3, 1),
             transform 0.8s cubic-bezier(0.16, 0.8, 0.3, 1);
         }
         .abarva-landing .rv.in {
@@ -398,7 +430,12 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           margin-top: 34px;
         }
         .abarva-landing .quote-box {
-          background: radial-gradient(700px 300px at 100% 0%, rgba(91, 140, 255, 0.16), transparent 70%),
+          background:
+            radial-gradient(
+              700px 300px at 100% 0%,
+              rgba(91, 140, 255, 0.16),
+              transparent 70%
+            ),
             linear-gradient(135deg, #0b1422, #101c30);
           border-radius: 20px;
           padding: 42px;
@@ -521,7 +558,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           transition: 0.25s;
         }
         .abarva-landing .loop-step:before {
-          content: '';
+          content: "";
           position: absolute;
           left: 18px;
           right: 18px;
@@ -564,7 +601,13 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
 
         /* ===== PICTURE THIS ===== */
         .abarva-landing .picture {
-          background: radial-gradient(900px 520px at 50% -12%, rgba(91, 140, 255, 0.13), transparent 60%), #07101e;
+          background:
+            radial-gradient(
+              900px 520px at 50% -12%,
+              rgba(91, 140, 255, 0.13),
+              transparent 60%
+            ),
+            #07101e;
           color: #fff;
           border-top: 1px solid rgba(255, 255, 255, 0.06);
           border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -588,7 +631,11 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         }
         .abarva-landing .moment {
           position: relative;
-          background: linear-gradient(160deg, rgba(16, 28, 48, 0.7), rgba(8, 16, 28, 0.62));
+          background: linear-gradient(
+            160deg,
+            rgba(16, 28, 48, 0.7),
+            rgba(8, 16, 28, 0.62)
+          );
           border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 18px;
           padding: 22px 24px 26px;
@@ -601,7 +648,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           box-shadow: 0 32px 72px -42px rgba(0, 0, 0, 0.75);
         }
         .abarva-landing .moment:not(:last-child)::after {
-          content: '';
+          content: "";
           position: absolute;
           right: -19px;
           top: 84px;
@@ -675,7 +722,9 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           border: 1px solid var(--line);
           border-radius: 14px;
           padding: 22px 17px;
-          transition: 0.5s, transform 0.25s;
+          transition:
+            0.5s,
+            transform 0.25s;
           opacity: 0.2;
           transform: translateY(14px);
         }
@@ -1171,18 +1220,32 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          background: radial-gradient(900px 540px at 80% 8%, rgba(91, 140, 255, 0.2), transparent 56%),
-            radial-gradient(720px 520px at 8% 105%, rgba(55, 224, 192, 0.13), transparent 60%),
+          background:
+            radial-gradient(
+              900px 540px at 80% 8%,
+              rgba(91, 140, 255, 0.2),
+              transparent 56%
+            ),
+            radial-gradient(
+              720px 520px at 8% 105%,
+              rgba(55, 224, 192, 0.13),
+              transparent 60%
+            ),
             linear-gradient(160deg, #0a1424, #070f1c 55%, #0b1626);
         }
         .abarva-landing .fbhero::after {
-          content: '';
+          content: "";
           position: absolute;
           inset: 0;
           z-index: 0;
           pointer-events: none;
-          background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+          background-image:
+            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(
+              90deg,
+              rgba(255, 255, 255, 0.03) 1px,
+              transparent 1px
+            );
           background-size: 46px 46px;
           mask-image: radial-gradient(circle at 72% 26%, #000, transparent 66%);
         }
@@ -1321,17 +1384,25 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           box-shadow: 0 0 18px rgba(55, 224, 192, 0.28);
         }
         .abarva-landing .fb-dim:not(:last-child)::before {
-          content: '';
+          content: "";
           position: absolute;
           left: 19px;
           top: 40px;
           height: calc(100% + 14px);
           width: 2px;
-          background: linear-gradient(180deg, rgba(91, 140, 255, 0.65), rgba(55, 224, 192, 0.45));
+          background: linear-gradient(
+            180deg,
+            rgba(91, 140, 255, 0.65),
+            rgba(55, 224, 192, 0.45)
+          );
           z-index: 1;
         }
         .abarva-landing .fb-dim-card {
-          background: linear-gradient(150deg, rgba(18, 30, 52, 0.9), rgba(8, 16, 28, 0.93));
+          background: linear-gradient(
+            150deg,
+            rgba(18, 30, 52, 0.9),
+            rgba(8, 16, 28, 0.93)
+          );
           border: 1px solid rgba(255, 255, 255, 0.13);
           border-radius: 15px;
           padding: 16px 19px;
@@ -1448,9 +1519,12 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
             <img
               src="/brand/abarva-logo-inverse.svg"
               alt="AbarVa"
-              style={{ height: 24, width: 'auto', display: 'block' }}
+              style={{ height: 24, width: "auto", display: "block" }}
             />
             <div className="navlinks">
+              <Link className="btn btn-dark" href="/sign-in">
+                Sign in
+              </Link>
               <button className="btn btn-prime" type="button" onClick={openReq}>
                 Request access
               </button>
@@ -1464,13 +1538,19 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               Private preview · founder-led
             </span>
             <h1 className="fb-head">
-              Turn AI ambition into <span className="grad">governed execution</span> and measurable value.
+              Turn AI ambition into{" "}
+              <span className="grad">governed execution</span> and measurable
+              value.
             </h1>
             <p className="fb-sub">
-              AbarVa helps enterprise leaders decide which AI bets deserve funding, turn them into
-              governed programs, source with leverage, and prove whether value actually landed.
+              AbarVa helps enterprise leaders decide which AI bets deserve
+              funding, turn them into governed programs, source with leverage,
+              and prove whether value actually landed.
             </p>
             <div className="fb-cta">
+              <Link className="btn btn-dark" href="/sign-in">
+                Sign in
+              </Link>
               <button className="btn btn-prime" type="button" onClick={openReq}>
                 Request access
               </button>
@@ -1491,8 +1571,9 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
             </div>
             {signedOut && (
               <div className="signed-out-note">
-                You are signed out. The active workspace context has been cleared; use the private
-                credentials from your invite to re-enter.
+                You are signed out. The active workspace context has been
+                cleared; use the private credentials from your invite to
+                re-enter.
               </div>
             )}
           </div>
@@ -1502,7 +1583,8 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               <div className="fb-dim-card">
                 <div className="fb-dim-k">Decide · before funding</div>
                 <div className="fb-dim-h">
-                  See the bet that won&rsquo;t land — and move the money to two that will.
+                  See the bet that won&rsquo;t land — and move the money to two
+                  that will.
                 </div>
                 <div className="fb-dim-sig">
                   <span>Readiness</span>
@@ -1514,7 +1596,9 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               <span className="fb-dim-n">02</span>
               <div className="fb-dim-card">
                 <div className="fb-dim-k">Source · at the table</div>
-                <div className="fb-dim-h">Walk into the negotiation already holding the evidence.</div>
+                <div className="fb-dim-h">
+                  Walk into the negotiation already holding the evidence.
+                </div>
                 <div className="fb-dim-sig">
                   <span>Leverage</span>
                   <b>comparison ready</b>
@@ -1525,7 +1609,9 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               <span className="fb-dim-n">03</span>
               <div className="fb-dim-card">
                 <div className="fb-dim-k">Prove · after launch</div>
-                <div className="fb-dim-h">Show exactly where the value showed up — and defend it.</div>
+                <div className="fb-dim-h">
+                  Show exactly where the value showed up — and defend it.
+                </div>
                 <div className="fb-dim-sig">
                   <span>Value</span>
                   <b>projected → validated</b>
@@ -1562,27 +1648,31 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
       <section className="why">
         <div className="wrap rv">
           <div className="eyebrow">Why now</div>
-          <h2 className="lead">AI spend is moving faster than enterprise control.</h2>
+          <h2 className="lead">
+            AI spend is moving faster than enterprise control.
+          </h2>
           <p className="body body-wide">
-            Boards are asking for AI growth. Business units are launching pilots. Vendors are pushing
-            platforms. Transformation teams are trying to scale use cases. But most companies still
-            lack one governed system to connect funding decisions, program execution, sourcing
-            choices, adoption, risk, and value proof.
+            Boards are asking for AI growth. Business units are launching
+            pilots. Vendors are pushing platforms. Transformation teams are
+            trying to scale use cases. But most companies still lack one
+            governed system to connect funding decisions, program execution,
+            sourcing choices, adoption, risk, and value proof.
           </p>
           <div className="question-grid">
             <div className="quote-box">
               <div>
-                <div className="eyebrow" style={{ color: '#8fb6ff' }}>
+                <div className="eyebrow" style={{ color: "#8fb6ff" }}>
                   The real failure point
                 </div>
                 <h3>
-                  Enterprise AI is not failing only at the model layer. It is failing at the
-                  decision, funding, sourcing, execution, and value-realization layer.
+                  Enterprise AI is not failing only at the model layer. It is
+                  failing at the decision, funding, sourcing, execution, and
+                  value-realization layer.
                 </h3>
               </div>
               <p>
-                The bottleneck is not ambition. It is the missing operating system from board intent
-                to measurable outcome.
+                The bottleneck is not ambition. It is the missing operating
+                system from board intent to measurable outcome.
               </p>
             </div>
             <div className="q-list">
@@ -1615,38 +1705,43 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
       <section>
         <div className="wrap rv">
           <div className="eyebrow">Where value leaks</div>
-          <h2 className="lead">Four places enterprise AI quietly loses its value.</h2>
+          <h2 className="lead">
+            Four places enterprise AI quietly loses its value.
+          </h2>
           <div className="quad">
             <div className="qcard">
               <div className="qn">01</div>
               <b>Wrong bets get funded</b>
               <p>
-                AI investments often move forward because they are visible, sponsored, or exciting —
-                not because the evidence says they will land.
+                AI investments often move forward because they are visible,
+                sponsored, or exciting — not because the evidence says they will
+                land.
               </p>
             </div>
             <div className="qcard">
               <div className="qn">02</div>
               <b>Pilots never become programs</b>
               <p>
-                Promising prototypes stall because ownership, workflow impact, data readiness,
-                compliance, and adoption were never governed upfront.
+                Promising prototypes stall because ownership, workflow impact,
+                data readiness, compliance, and adoption were never governed
+                upfront.
               </p>
             </div>
             <div className="qcard">
               <div className="qn">03</div>
               <b>Vendors shape the agenda</b>
               <p>
-                Enterprises enter platform, SI, and product decisions without a clear comparison
-                model, value case, or negotiation leverage.
+                Enterprises enter platform, SI, and product decisions without a
+                clear comparison model, value case, or negotiation leverage.
               </p>
             </div>
             <div className="qcard">
               <div className="qn">04</div>
               <b>Value becomes a story</b>
               <p>
-                Benefits are claimed in business cases, but rarely tracked through adoption,
-                operational change, financial impact, and accountability.
+                Benefits are claimed in business cases, but rarely tracked
+                through adoption, operational change, financial impact, and
+                accountability.
               </p>
             </div>
           </div>
@@ -1660,13 +1755,14 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
             <div>
               <div className="eyebrow">What AbarVa does</div>
               <h2 className="lead">
-                One governed AI value loop — from &ldquo;which bet?&rdquo; to &ldquo;did it
-                land?&rdquo;
+                One governed AI value loop — from &ldquo;which bet?&rdquo; to
+                &ldquo;did it land?&rdquo;
               </h2>
             </div>
             <p className="body">
-              AbarVa keeps leaders in command while agents do the rigorous work: evidence assembly,
-              program shaping, sourcing intelligence, governance signals, and value proof.
+              AbarVa keeps leaders in command while agents do the rigorous work:
+              evidence assembly, program shaping, sourcing intelligence,
+              governance signals, and value proof.
             </p>
           </div>
 
@@ -1675,17 +1771,20 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               <div className="num">01</div>
               <h3>Prioritize</h3>
               <p>
-                Score AI opportunities against value potential, readiness, risk, sponsorship, data
-                dependency, and execution complexity.
+                Score AI opportunities against value potential, readiness, risk,
+                sponsorship, data dependency, and execution complexity.
               </p>
-              <div className="outcome">Output: ranked bets and kill/reshape signals.</div>
+              <div className="outcome">
+                Output: ranked bets and kill/reshape signals.
+              </div>
             </div>
             <div className="loop-step">
               <div className="num">02</div>
               <h3>Shape</h3>
               <p>
-                Convert the selected bet into an execution-ready program with scope, sponsor,
-                milestones, value logic, dependencies, and approval gates.
+                Convert the selected bet into an execution-ready program with
+                scope, sponsor, milestones, value logic, dependencies, and
+                approval gates.
               </p>
               <div className="outcome">Output: governed program charter.</div>
             </div>
@@ -1693,28 +1792,34 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               <div className="num">03</div>
               <h3>Source</h3>
               <p>
-                Compare vendors, SIs, platforms, and internal build paths using structured evidence
-                — not only sales narratives.
+                Compare vendors, SIs, platforms, and internal build paths using
+                structured evidence — not only sales narratives.
               </p>
-              <div className="outcome">Output: sourcing leverage and deal risk.</div>
+              <div className="outcome">
+                Output: sourcing leverage and deal risk.
+              </div>
             </div>
             <div className="loop-step">
               <div className="num">04</div>
               <h3>Govern</h3>
               <p>
-                Track execution across blockers, decisions, owners, risks, milestones, compliance
-                gates, and human approvals.
+                Track execution across blockers, decisions, owners, risks,
+                milestones, compliance gates, and human approvals.
               </p>
-              <div className="outcome">Output: accountable execution rhythm.</div>
+              <div className="outcome">
+                Output: accountable execution rhythm.
+              </div>
             </div>
             <div className="loop-step">
               <div className="num">05</div>
               <h3>Prove</h3>
               <p>
-                Connect projected value to observed outcomes, adoption, operational change, and
-                defensible executive reporting.
+                Connect projected value to observed outcomes, adoption,
+                operational change, and defensible executive reporting.
               </p>
-              <div className="outcome">Output: value proof the board can trust.</div>
+              <div className="outcome">
+                Output: value proof the board can trust.
+              </div>
             </div>
           </div>
         </div>
@@ -1726,7 +1831,8 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           <div className="eyebrow">Picture this</div>
           <h2 className="lead">Three moments where the outcome changes.</h2>
           <p className="body">
-            The same governed loop, seen at the three points where AI value is usually won or lost.
+            The same governed loop, seen at the three points where AI value is
+            usually won or lost.
           </p>
           <div className="moments">
             <div className="moment">
@@ -1741,8 +1847,17 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
                     strokeDasharray="5 5"
                   />
                   <g transform="translate(196,28)">
-                    <circle r="11" fill="rgba(255,122,122,.12)" stroke="#ff7a7a" strokeWidth="2" />
-                    <path d="M-4 -4 L4 4 M4 -4 L-4 4" stroke="#ff7a7a" strokeWidth="2.2" />
+                    <circle
+                      r="11"
+                      fill="rgba(255,122,122,.12)"
+                      stroke="#ff7a7a"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M-4 -4 L4 4 M4 -4 L-4 4"
+                      stroke="#ff7a7a"
+                      strokeWidth="2.2"
+                    />
                   </g>
                   <path
                     d="M32 66 C95 66 128 71 188 65"
@@ -1762,37 +1877,75 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               </div>
               <div className="moment-k">01 · Before funding</div>
               <h3>
-                Before a major AI program is funded, your leaders can see that the business case is
-                strong — but{' '}
+                Before a major AI program is funded, your leaders can see that
+                the business case is strong — but{" "}
                 <span className="hl">
-                  the data readiness, adoption path, and operating model are not.
+                  the data readiness, adoption path, and operating model are
+                  not.
                 </span>
               </h3>
               <p className="punch">
-                You do not kill the ambition. <b>You reshape the bet before the money moves.</b>
+                You do not kill the ambition.{" "}
+                <b>You reshape the bet before the money moves.</b>
               </p>
             </div>
             <div className="moment">
               <div className="moment-gfx">
                 <svg viewBox="0 0 240 130">
-                  <line x1="36" y1="113" x2="204" y2="113" stroke="rgba(255,255,255,.13)" strokeWidth="1.5" />
-                  <rect x="56" y="74" width="30" height="38" rx="4" fill="rgba(91,140,255,.4)" />
-                  <rect x="106" y="48" width="30" height="64" rx="4" fill="#5b8cff" />
-                  <rect x="156" y="84" width="30" height="28" rx="4" fill="rgba(91,140,255,.4)" />
+                  <line
+                    x1="36"
+                    y1="113"
+                    x2="204"
+                    y2="113"
+                    stroke="rgba(255,255,255,.13)"
+                    strokeWidth="1.5"
+                  />
+                  <rect
+                    x="56"
+                    y="74"
+                    width="30"
+                    height="38"
+                    rx="4"
+                    fill="rgba(91,140,255,.4)"
+                  />
+                  <rect
+                    x="106"
+                    y="48"
+                    width="30"
+                    height="64"
+                    rx="4"
+                    fill="#5b8cff"
+                  />
+                  <rect
+                    x="156"
+                    y="84"
+                    width="30"
+                    height="28"
+                    rx="4"
+                    fill="rgba(91,140,255,.4)"
+                  />
                   <g transform="translate(121,34)">
                     <circle r="13" fill="#37e0c0" />
-                    <path d="M-5 0 L-1 4 L6 -5" fill="none" stroke="#06101e" strokeWidth="2.6" />
+                    <path
+                      d="M-5 0 L-1 4 L6 -5"
+                      fill="none"
+                      stroke="#06101e"
+                      strokeWidth="2.6"
+                    />
                   </g>
                 </svg>
               </div>
               <div className="moment-k">02 · At the negotiation</div>
               <h3>
-                Before a vendor negotiation, you know which capabilities matter, where pricing has
-                leverage, and{' '}
-                <span className="hl">which implementation risks should be contracted upfront.</span>
+                Before a vendor negotiation, you know which capabilities matter,
+                where pricing has leverage, and{" "}
+                <span className="hl">
+                  which implementation risks should be contracted upfront.
+                </span>
               </h3>
               <p className="punch">
-                You do not buy the best pitch. <b>You buy the best path to value.</b>
+                You do not buy the best pitch.{" "}
+                <b>You buy the best path to value.</b>
               </p>
             </div>
             <div className="moment">
@@ -1825,20 +1978,27 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
                   <circle cx="134" cy="70" r="6" fill="#49b6ff" />
                   <g transform="translate(198,40)">
                     <circle r="12" fill="#37e0c0" />
-                    <path d="M-5 0 L-1 4 L6 -5" fill="none" stroke="#06101e" strokeWidth="2.4" />
+                    <path
+                      d="M-5 0 L-1 4 L6 -5"
+                      fill="none"
+                      stroke="#06101e"
+                      strokeWidth="2.4"
+                    />
                   </g>
                 </svg>
               </div>
               <div className="moment-k">03 · After launch</div>
               <h3>
-                Six months after launch, the board does not hear &ldquo;the pilot was
-                successful.&rdquo; They see{' '}
+                Six months after launch, the board does not hear &ldquo;the
+                pilot was successful.&rdquo; They see{" "}
                 <span className="hl">
-                  what was funded, what changed, who adopted it, and what value showed up.
+                  what was funded, what changed, who adopted it, and what value
+                  showed up.
                 </span>
               </h3>
               <p className="punch">
-                Projected, observed, and validated outcomes — <b>in one governed loop.</b>
+                Projected, observed, and validated outcomes —{" "}
+                <b>in one governed loop.</b>
               </p>
             </div>
           </div>
@@ -1851,44 +2011,75 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
           <div className="eyebrow">One platform · five connected surfaces</div>
           <h2 className="lead">Five surfaces. One continuous loop.</h2>
           <p className="body">
-            Each surface hands the next one evidence — so the decision you make in month one is the
-            value you can defend in month twelve.
+            Each surface hands the next one evidence — so the decision you make
+            in month one is the value you can defend in month twelve.
           </p>
           <div className="surfaces" id="surfaces-row">
             <div className="surf">
               <div
                 className="smg"
-                style={{ backgroundImage: 'url(/marketing/surf-intelligence.png)' }}
+                style={{
+                  backgroundImage: "url(/marketing/surf-intelligence.png)",
+                }}
               />
               <b>Intelligence</b>
-              <p>Decide which AI bets are worth it — and which to kill or reshape early.</p>
+              <p>
+                Decide which AI bets are worth it — and which to kill or reshape
+                early.
+              </p>
             </div>
             <div className="surf">
-              <div className="smg" style={{ backgroundImage: 'url(/marketing/surf-moves.png)' }} />
+              <div
+                className="smg"
+                style={{ backgroundImage: "url(/marketing/surf-moves.png)" }}
+              />
               <b>Strategic Moves</b>
-              <p>Turn a bet into an execution-ready program — sponsor, scope, value logic, gates.</p>
+              <p>
+                Turn a bet into an execution-ready program — sponsor, scope,
+                value logic, gates.
+              </p>
             </div>
             <div className="surf">
-              <div className="smg" style={{ backgroundImage: 'url(/marketing/surf-source.png)' }} />
+              <div
+                className="smg"
+                style={{ backgroundImage: "url(/marketing/surf-source.png)" }}
+              />
               <b>Source</b>
-              <p>Negotiate from evidence on every vendor, SI, and platform decision.</p>
+              <p>
+                Negotiate from evidence on every vendor, SI, and platform
+                decision.
+              </p>
             </div>
             <div className="surf">
-              <div className="smg" style={{ backgroundImage: 'url(/marketing/surf-tower.png)' }} />
+              <div
+                className="smg"
+                style={{ backgroundImage: "url(/marketing/surf-tower.png)" }}
+              />
               <b>Tower</b>
-              <p>Govern execution — adoption, decisions, blockers, risk, milestones, outcomes.</p>
+              <p>
+                Govern execution — adoption, decisions, blockers, risk,
+                milestones, outcomes.
+              </p>
             </div>
             <div className="surf">
-              <div className="smg" style={{ backgroundImage: 'url(/marketing/surf-context.png)' }} />
+              <div
+                className="smg"
+                style={{ backgroundImage: "url(/marketing/surf-context.png)" }}
+              />
               <b>Context</b>
-              <p>Grounded in your enterprise evidence — not generic AI recommendations.</p>
+              <p>
+                Grounded in your enterprise evidence — not generic AI
+                recommendations.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* ===== INSIDE THE PRODUCT ===== */}
-      <section style={{ background: 'linear-gradient(180deg,#F8F7F4,#F3F1EC)' }}>
+      <section
+        style={{ background: "linear-gradient(180deg,#F8F7F4,#F3F1EC)" }}
+      >
         <div className="wrap rv">
           <div className="section-head">
             <div>
@@ -1896,8 +2087,9 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               <h2 className="lead">The actual Strategic Moves surface.</h2>
             </div>
             <p className="body">
-              A real view of the governed portfolio — moves in flight, value at stake, decision
-              gates, and what needs attention. Illustrative data shown.
+              A real view of the governed portfolio — moves in flight, value at
+              stake, decision gates, and what needs attention. Illustrative data
+              shown.
             </p>
           </div>
           <div className="product-frame">
@@ -1914,46 +2106,50 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
       <section className="roles">
         <div className="wrap rv">
           <div className="eyebrow">Built for executive accountability</div>
-          <h2 className="lead">Different leaders. One shared version of AI value.</h2>
+          <h2 className="lead">
+            Different leaders. One shared version of AI value.
+          </h2>
           <div className="role-grid">
             <div className="role">
               <span className="tag">CIO</span>
               <h3>Technology investment clarity</h3>
               <p>
-                Know which AI programs deserve platform investment, where execution risk is building,
-                and which architecture choices create leverage.
+                Know which AI programs deserve platform investment, where
+                execution risk is building, and which architecture choices
+                create leverage.
               </p>
             </div>
             <div className="role">
               <span className="tag">CDAO</span>
               <h3>From models to adoption</h3>
               <p>
-                Move beyond pilots and dashboards into governed data readiness, workflow adoption,
-                and measurable business outcomes.
+                Move beyond pilots and dashboards into governed data readiness,
+                workflow adoption, and measurable business outcomes.
               </p>
             </div>
             <div className="role">
               <span className="tag">CFO</span>
               <h3>Spend tied to proof</h3>
               <p>
-                See which AI investments have defensible value logic, accountable ownership, and
-                evidence of realized financial impact.
+                See which AI investments have defensible value logic,
+                accountable ownership, and evidence of realized financial
+                impact.
               </p>
             </div>
             <div className="role">
               <span className="tag">CPO</span>
               <h3>Sourcing leverage</h3>
               <p>
-                Enter vendor and SI negotiations with structured comparisons, deal risks, and value
-                evidence before the terms are shaped.
+                Enter vendor and SI negotiations with structured comparisons,
+                deal risks, and value evidence before the terms are shaped.
               </p>
             </div>
             <div className="role">
               <span className="tag">Transformation</span>
               <h3>Programs that land</h3>
               <p>
-                Turn scattered AI use cases into governed programs with decisions, gates, owners,
-                risks, and value tracking.
+                Turn scattered AI use cases into governed programs with
+                decisions, gates, owners, risks, and value tracking.
               </p>
             </div>
           </div>
@@ -1968,9 +2164,9 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               <div className="eyebrow">The board-ready value model</div>
               <h2>Move from AI theater to AI accountability.</h2>
               <p>
-                AbarVa creates the evidence trail leaders need to defend AI spend: why the bet was
-                funded, what assumptions mattered, how execution was governed, and whether value
-                showed up.
+                AbarVa creates the evidence trail leaders need to defend AI
+                spend: why the bet was funded, what assumptions mattered, how
+                execution was governed, and whether value showed up.
               </p>
               <div className="mini">
                 <div>
@@ -1980,7 +2176,8 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
                   <b>Observed</b>Adoption, workflow change, operating signals.
                 </div>
                 <div>
-                  <b>Validated</b>Outcome evidence, owner approval, executive proof.
+                  <b>Validated</b>Outcome evidence, owner approval, executive
+                  proof.
                 </div>
               </div>
             </div>
@@ -1988,29 +2185,29 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
               <div className="stack-row">
                 <b>Evidence before funding</b>
                 <p>
-                  Pressure-test value, readiness, risk, sponsorship, and data dependency before
-                  resources are committed.
+                  Pressure-test value, readiness, risk, sponsorship, and data
+                  dependency before resources are committed.
                 </p>
               </div>
               <div className="stack-row">
                 <b>Governance during execution</b>
                 <p>
-                  Keep humans in command with approval gates, decision logs, risk signals, and clear
-                  ownership.
+                  Keep humans in command with approval gates, decision logs,
+                  risk signals, and clear ownership.
                 </p>
               </div>
               <div className="stack-row">
                 <b>Leverage during sourcing</b>
                 <p>
-                  Compare vendors, SIs, platforms, and internal build paths against the same value
-                  logic.
+                  Compare vendors, SIs, platforms, and internal build paths
+                  against the same value logic.
                 </p>
               </div>
               <div className="stack-row">
                 <b>Proof after launch</b>
                 <p>
-                  Connect adoption and operational change back to the value case — not just the
-                  launch milestone.
+                  Connect adoption and operational change back to the value case
+                  — not just the launch milestone.
                 </p>
               </div>
             </div>
@@ -2019,30 +2216,50 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
       </section>
 
       {/* ===== WHAT CHANGES ===== */}
-      <section style={{ background: '#fff', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
+      <section
+        style={{
+          background: "#fff",
+          borderTop: "1px solid var(--line)",
+          borderBottom: "1px solid var(--line)",
+        }}
+      >
         <div className="wrap rv">
           <div className="eyebrow">What changes with AbarVa</div>
-          <h2 className="lead">A governed path from AI ambition to business value.</h2>
+          <h2 className="lead">
+            A governed path from AI ambition to business value.
+          </h2>
           <div className="quad">
             <div className="qcard win">
               <div className="qn">→</div>
               <b>From AI theater to accountability</b>
-              <p>Every funded bet has evidence, ownership, gates, and value logic.</p>
+              <p>
+                Every funded bet has evidence, ownership, gates, and value
+                logic.
+              </p>
             </div>
             <div className="qcard win">
               <div className="qn">→</div>
               <b>From pilots to programs</b>
-              <p>Use cases move through a repeatable path from idea to execution to measurable outcome.</p>
+              <p>
+                Use cases move through a repeatable path from idea to execution
+                to measurable outcome.
+              </p>
             </div>
             <div className="qcard win">
               <div className="qn">→</div>
               <b>From vendor dependency to leverage</b>
-              <p>Platform, SI, and product decisions are shaped by your evidence — not only vendor narratives.</p>
+              <p>
+                Platform, SI, and product decisions are shaped by your evidence
+                — not only vendor narratives.
+              </p>
             </div>
             <div className="qcard win">
               <div className="qn">→</div>
               <b>From optimism to proof</b>
-              <p>Projected, observed, and validated outcomes are tracked in one continuous loop.</p>
+              <p>
+                Projected, observed, and validated outcomes are tracked in one
+                continuous loop.
+              </p>
             </div>
           </div>
         </div>
@@ -2062,9 +2279,9 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
             <span className="chip">Clear accountability</span>
           </div>
           <p className="body" style={{ marginTop: 24 }}>
-            Built for CIOs, CDAOs, CFOs, CPOs, and transformation leaders accountable for outcomes.
-            Client-specific detail, methodology, and sample value loops are shown only in private
-            preview.
+            Built for CIOs, CDAOs, CFOs, CPOs, and transformation leaders
+            accountable for outcomes. Client-specific detail, methodology, and
+            sample value loops are shown only in private preview.
           </p>
         </div>
       </section>
@@ -2076,21 +2293,26 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
             <span
               className="pill"
               style={{
-                background: 'rgba(255,255,255,.08)',
-                borderColor: 'rgba(255,255,255,.16)',
-                color: '#cdd8ea',
+                background: "rgba(255,255,255,.08)",
+                borderColor: "rgba(255,255,255,.16)",
+                color: "#cdd8ea",
               }}
             >
               <span className="dot" />
               Limited launch cohort
             </span>
-            <h2>Bring one real AI initiative. We will pressure-test the bet together.</h2>
+            <h2>
+              Bring one real AI initiative. We will pressure-test the bet
+              together.
+            </h2>
             <p>
-              AbarVa is opening a small number of founder-led private previews for enterprise leaders
-              preparing to fund, scale, source, or govern major AI programs.
+              AbarVa is opening a small number of founder-led private previews
+              for enterprise leaders preparing to fund, scale, source, or govern
+              major AI programs.
             </p>
             <div className="bring">
-              Pressure-test value · expose execution risk · clarify the path to proof
+              Pressure-test value · expose execution risk · clarify the path to
+              proof
             </div>
             <br />
             <button className="btn btn-prime" type="button" onClick={openReq}>
@@ -2105,20 +2327,21 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
         <div
           className="wrap"
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
             gap: 18,
-            alignItems: 'center',
+            alignItems: "center",
           }}
         >
           <img
             src="/brand/abarva-logo.svg"
             alt="AbarVa"
-            style={{ height: 26, width: 'auto', display: 'block' }}
+            style={{ height: 26, width: "auto", display: "block" }}
           />
           <div>
-            The AI value operating system for governed execution and measurable outcomes.
+            The AI value operating system for governed execution and measurable
+            outcomes.
             <br />
             <span style={{ fontSize: 11 }}>© 2026 AbarVa, Inc.</span>
           </div>
@@ -2127,20 +2350,25 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
 
       {/* ===== REQUEST-ACCESS MODAL ===== */}
       <div
-        className={`req-overlay${modalOpen ? ' open' : ''}`}
+        className={`req-overlay${modalOpen ? " open" : ""}`}
         onClick={(event) => {
-          if (event.target === event.currentTarget) closeReq()
+          if (event.target === event.currentTarget) closeReq();
         }}
       >
         <div className="req-modal">
           <div className="req-head">
-            <button className="req-close" type="button" onClick={closeReq} aria-label="Close">
+            <button
+              className="req-close"
+              type="button"
+              onClick={closeReq}
+              aria-label="Close"
+            >
               ×
             </button>
             <h3>Request a private preview</h3>
             <p>
-              Founder-led previews for enterprise leaders. Tell us a little about you and we&rsquo;ll
-              be in touch.
+              Founder-led previews for enterprise leaders. Tell us a little
+              about you and we&rsquo;ll be in touch.
             </p>
           </div>
           {submitted ? (
@@ -2158,7 +2386,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
                     id="req-name"
                     required
                     value={form.name}
-                    onChange={(e) => updateField('name', e.target.value)}
+                    onChange={(e) => updateField("name", e.target.value)}
                     placeholder="Jane Rivera"
                   />
                 </div>
@@ -2169,7 +2397,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
                     required
                     type="email"
                     value={form.email}
-                    onChange={(e) => updateField('email', e.target.value)}
+                    onChange={(e) => updateField("email", e.target.value)}
                     placeholder="jane@company.com"
                   />
                 </div>
@@ -2179,7 +2407,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
                     id="req-company"
                     required
                     value={form.company}
-                    onChange={(e) => updateField('company', e.target.value)}
+                    onChange={(e) => updateField("company", e.target.value)}
                     placeholder="Company name"
                   />
                 </div>
@@ -2189,7 +2417,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
                     id="req-role"
                     required
                     value={form.role}
-                    onChange={(e) => updateField('role', e.target.value)}
+                    onChange={(e) => updateField("role", e.target.value)}
                   >
                     <option value="" disabled>
                       Select…
@@ -2208,7 +2436,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
                     id="req-size"
                     required
                     value={form.companySize}
-                    onChange={(e) => updateField('companySize', e.target.value)}
+                    onChange={(e) => updateField("companySize", e.target.value)}
                   >
                     <option value="" disabled>
                       Select…
@@ -2225,7 +2453,7 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
                     id="req-industry"
                     required
                     value={form.industry}
-                    onChange={(e) => updateField('industry', e.target.value)}
+                    onChange={(e) => updateField("industry", e.target.value)}
                   >
                     <option value="" disabled>
                       Select…
@@ -2248,9 +2476,9 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
                         type="radio"
                         name="orgtype"
                         value="enterprise"
-                        checked={form.orgType === 'enterprise'}
-                        onChange={(e) => updateField('orgType', e.target.value)}
-                      />{' '}
+                        checked={form.orgType === "enterprise"}
+                        onChange={(e) => updateField("orgType", e.target.value)}
+                      />{" "}
                       Enterprise / industry buyer
                     </label>
                     <label>
@@ -2258,35 +2486,43 @@ export function LoggedOutLandingPage({ signedOut = false }: LoggedOutLandingPage
                         type="radio"
                         name="orgtype"
                         value="si"
-                        checked={form.orgType === 'si'}
-                        onChange={(e) => updateField('orgType', e.target.value)}
-                      />{' '}
+                        checked={form.orgType === "si"}
+                        onChange={(e) => updateField("orgType", e.target.value)}
+                      />{" "}
                       System Integrator / advisory
                     </label>
                   </div>
                 </div>
                 <div className="req-field full">
                   <label htmlFor="req-initiative">
-                    Your top AI initiative to pressure-test{' '}
-                    <span style={{ fontWeight: 400, color: '#9aa0ab' }}>(optional)</span>
+                    Your top AI initiative to pressure-test{" "}
+                    <span style={{ fontWeight: 400, color: "#9aa0ab" }}>
+                      (optional)
+                    </span>
                   </label>
                   <textarea
                     id="req-initiative"
                     value={form.initiative}
-                    onChange={(e) => updateField('initiative', e.target.value)}
+                    onChange={(e) => updateField("initiative", e.target.value)}
                     placeholder="e.g. a flagship AI program we're about to fund…"
                   />
                 </div>
               </div>
-              <button className="btn btn-prime req-submit" type="submit" disabled={submitting}>
-                {submitting ? 'Sending…' : 'Request access'}
+              <button
+                className="btn btn-prime req-submit"
+                type="submit"
+                disabled={submitting}
+              >
+                {submitting ? "Sending…" : "Request access"}
               </button>
               {error && <div className="req-error">{error}</div>}
-              <div className="req-fine">We review every request before granting access. No spam, ever.</div>
+              <div className="req-fine">
+                We review every request before granting access. No spam, ever.
+              </div>
             </form>
           )}
         </div>
       </div>
     </div>
-  )
+  );
 }
