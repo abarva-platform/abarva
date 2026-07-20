@@ -66,15 +66,19 @@ describe("Ask Intelligence response policy", () => {
     );
   });
 
-  it("requires explicit chart asks to emit a chart-payload table first", () => {
+  it("requires explicit chart asks to be authored by Claude, not invented by the renderer", () => {
     expect(CHART_OUTPUT_CONTRACT).toContain(
-      "the first table in the visible answer must be the chart payload table",
+      "Claude owns the advisory judgment and exhibit content",
     );
     expect(CHART_OUTPUT_CONTRACT).toContain(
-      "Item or Use case, Value or Business value, Complexity or Readiness, and Basis",
+      "Do not rely on the renderer to invent summaries, tables, charts, matrices, titles, caveats, or business language",
     );
     expect(CHART_OUTPUT_CONTRACT).toContain(
-      "Do not substitute a Theme / Executive read / Decision use table",
+      "```decision-table JSON fence",
+    );
+    expect(CHART_OUTPUT_CONTRACT).toContain("```chart JSON fence");
+    expect(CHART_OUTPUT_CONTRACT).toContain(
+      "The first table must be the actual requested exhibit, not a Theme / Executive read / Decision use summary",
     );
   });
 

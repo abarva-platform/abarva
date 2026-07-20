@@ -1457,16 +1457,18 @@ describe("AgentDock · thread render", () => {
               artifacts: [
                 {
                   artifact: "table",
-                  id: "visual-boundary",
-                  title: "Requested Visual Boundary",
+                  id: "value-complexity-tradeoff",
+                  title: "Value / Complexity Tradeoff",
                   columns: [
-                    { key: "request", label: "Requested output" },
-                    { key: "status", label: "Render status" },
+                    { key: "useCase", label: "Use case" },
+                    { key: "value", label: "Value" },
+                    { key: "complexity", label: "Complexity" },
                   ],
                   rows: [
                     {
-                      request: "table / chart",
-                      status: "Needs validated records",
+                      useCase: "Structured lookup",
+                      value: "4",
+                      complexity: "2",
                     },
                   ],
                 },
@@ -1501,8 +1503,9 @@ describe("AgentDock · thread render", () => {
     const turn = screen.getByTestId("agent-dock-turn-agent");
     expect(turn).toHaveTextContent("Sequence the roadmap before funding scale.");
     expect(turn).toHaveTextContent("Gate the LLM tier on transcript governance.");
-    expect(turn).toHaveTextContent("Requested Visual Boundary");
-    expect(turn).toHaveTextContent("Needs validated records");
+    expect(turn).toHaveTextContent("Value / Complexity Tradeoff");
+    expect(turn).toHaveTextContent("Structured lookup");
+    expect(turn).not.toHaveTextContent("Requested Visual Boundary");
     expect(turn).not.toHaveTextContent("| AI Use Case |");
   });
 
