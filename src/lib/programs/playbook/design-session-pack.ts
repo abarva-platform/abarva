@@ -16,6 +16,61 @@ import {
   type WorkshopTemplateKind,
 } from "./move-phase-playbook";
 import type { TenancyCtx } from "@/lib/programs/types.db";
+import {
+  APPROVAL_ROLE_LABELS,
+  getRoleApprovalSummary,
+  requiredApprovalRolesFor,
+  type RoleApprovalSummary,
+} from "@/lib/programs/deliverable-role-approvals";
+import {
+  getAzureWriteFluentClient,
+  type PostgresCompatClient as SupabaseClient,
+} from "@/lib/data-plane/postgresCompat";
+
+/** Real per-role approval status, keyed by deliverableTypeKey — only present
+ *  for the types that both (a) require role approvals and (b) already have a
+ *  real `deliverables_v2` row for this program. Absent/empty for everything
+ *  else, in which case the appendix falls back to its original blank
+ *  fill-in-the-blank template — this is purely additive. */
+export type ApprovalPageRenderData = Record<string, RoleApprovalSummary>;
+
+/**
+ * Resolve real tracked role-approval status for whichever of the playbook's
+ * `feedsDeliverables` type keys require role approval AND already have a
+ * real deliverable row for this program. A type with no required roles, or
+ * with no deliverable generated yet, is simply absent from the result — the
+ * appendix renders its blank template for those, exactly as before.
+ */
+export async function fetchApprovalPageData(
+  ctx: TenancyCtx,
+  programId: string,
+  deliverableTypeKeys: string[],
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<ApprovalPageRenderData> {
+  const covered = deliverableTypeKeys.filter((k) => requiredApprovalRolesFor(k).length > 0);
+  if (covered.length === 0) return {};
+
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
+  const { data, error } = await sb
+    .from("deliverables_v2")
+    .select("id, deliverable_type_key")
+    .eq("engagement_id", programId)
+    .in("deliverable_type_key", covered);
+  if (error) throw error;
+
+  const rows = (data ?? []) as Array<{ id: string; deliverable_type_key: string }>;
+  const result: ApprovalPageRenderData = {};
+  for (const row of rows) {
+    result[row.deliverable_type_key] = await getRoleApprovalSummary(
+      ctx,
+      programId,
+      row.id,
+      row.deliverable_type_key,
+      { supabase: sb },
+    );
+  }
+  return result;
+}
 
 function esc(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -61,16 +116,55 @@ function renderSessionWorkshopTemplateRefs(session: MovePhaseSession): string {
   return `<div class="muted">Workshop templates used: ${esc(labels)} — see appendix.</div>`;
 }
 
+function formatDecidedAt(iso: string | null): string {
+  if (!iso) return "—";
+  return new Date(iso).toISOString().slice(0, 10);
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Pending",
+  reviewed: "Reviewed",
+  approved: "Approved",
+  rejected: "Rejected",
+};
+
+/** Real per-role rows for the approval_page kind, one row per required role
+ *  across every deliverable type this data covers — real approver name,
+ *  status, and decided date instead of the blank template row. */
+function realApprovalPageRows(approvalData: ApprovalPageRenderData): string {
+  const rows = Object.entries(approvalData).flatMap(([deliverableTypeKey, summary]) =>
+    summary.records
+      .filter((r) => summary.requiredRoles.includes(r.role))
+      .map(
+        (r) =>
+          `<tr><td>${esc(APPROVAL_ROLE_LABELS[r.role])} <span class="muted">(${esc(deliverableTypeKey.replace(/_/g, " "))})</span></td><td>${esc(r.approverName ?? "—")}</td><td>${esc(STATUS_LABEL[r.status] ?? r.status)}</td><td>${esc(formatDecidedAt(r.decidedAt))}</td></tr>`,
+      ),
+  );
+  return rows.join("");
+}
+
 /** Standalone, reusable workshop-template appendix — one instance per kind used
- *  across the whole pack, not repeated per session. */
-function renderWorkshopTemplateAppendix(kinds: WorkshopTemplateKind[]): string {
+ *  across the whole pack, not repeated per session. `approvalData`, when
+ *  non-empty, replaces the approval_page kind's blank row with the real
+ *  tracked per-role status for whichever deliverables already have one —
+ *  every other kind, and approval_page itself when there's no real data yet,
+ *  keeps rendering its original blank fill-in-the-blank row unchanged. */
+function renderWorkshopTemplateAppendix(
+  kinds: WorkshopTemplateKind[],
+  approvalData: ApprovalPageRenderData = {},
+): string {
   if (kinds.length === 0) return "";
+  const hasRealApprovalData = Object.keys(approvalData).length > 0;
   const sections = kinds
     .map((k) => {
       const spec = WORKSHOP_TEMPLATES[k];
+      const body =
+        k === "approval_page" && hasRealApprovalData
+          ? realApprovalPageRows(approvalData)
+          : `<tr>${spec.columns.map(() => "<td>&nbsp;</td>").join("")}</tr>`;
       return `<div class="wt"><h3>${esc(spec.label)}</h3>
         <table><tr>${spec.columns.map((c) => `<th>${esc(c)}</th>`).join("")}</tr>
-        <tr>${spec.columns.map(() => "<td>&nbsp;</td>").join("")}</tr></table></div>`;
+        ${body}</table></div>`;
     })
     .join("");
   return `<h2>Workshop Template Appendix</h2>
@@ -81,6 +175,7 @@ function renderWorkshopTemplateAppendix(kinds: WorkshopTemplateKind[]): string {
 export function renderDesignSessionPackHtml(
   playbook: MovePhasePlaybook,
   moveName: string,
+  approvalData: ApprovalPageRenderData = {},
 ): string {
   const sessions = playbook.sessions
     .map((s, i) => {
@@ -153,7 +248,7 @@ captured outputs become the attested inputs for the deliverables named under
 each session — nothing in the final documents is invented.</p>
 ${sessions}
 <hr/>
-${renderWorkshopTemplateAppendix(allTemplateKinds)}
+${renderWorkshopTemplateAppendix(allTemplateKinds, approvalData)}
 <hr/>
 <p class="muted">Governed session pack — generated by AbarVa Nexus and stored in
 the Move Artifact Vault. Complete the capture templates and upload them to feed
@@ -166,7 +261,15 @@ export async function generateDesignSessionPack(
   ctx: TenancyCtx,
   input: { moveId: string; moveName: string; playbook: MovePhasePlaybook },
 ): Promise<{ artifactId: string; blobStored: boolean }> {
-  const html = renderDesignSessionPackHtml(input.playbook, input.moveName);
+  const feedsDeliverableTypeKeys = Array.from(
+    new Set(input.playbook.sessions.flatMap((s) => s.feedsDeliverables)),
+  );
+  const approvalData = await fetchApprovalPageData(
+    ctx,
+    input.moveId,
+    feedsDeliverableTypeKeys,
+  );
+  const html = renderDesignSessionPackHtml(input.playbook, input.moveName, approvalData);
   const fileName = `${input.moveName.replace(/[^A-Za-z0-9]+/g, "_").slice(0, 60)}_P${input.playbook.phase}_Design_Session_Pack.html`;
   const saved = await saveMoveArtifact(ctx, {
     moveId: input.moveId,
