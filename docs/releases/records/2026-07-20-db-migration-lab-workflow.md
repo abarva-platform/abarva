@@ -126,6 +126,10 @@ touched.
   readback/ledger/repository-readback sequence against disposable Postgres, same
   mode/confirm gate and npm scripts as the lab workflow, plus a `--plan-only` invocation
   of the real wrapper. Discloses what it does not prove (ACA transport, restore-idle).
+- `.github/workflows/db-migration-lab.yml` (third pass) — "Migration ledger" now runs
+  in `status` mode too, not just `apply`. It is a pure read; seeing the full applied-
+  migration ledger during preflight (not just the pending list) is real evidence for
+  investigating *why* a migration is pending before ever approving an apply.
 - This release record.
 
 ## QA / Validation
