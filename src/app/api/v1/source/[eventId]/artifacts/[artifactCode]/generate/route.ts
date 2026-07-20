@@ -829,10 +829,16 @@ export async function generateSourceArtifactDraft(
                   renderedArtifact.role === "preview"
                     ? `${spec?.name ?? artifactCode} — Preview`
                     : (spec?.name ?? artifactCode),
-                description:
+                description: [
                   renderedArtifact.role === "preview"
                     ? `HTML preview of the generated Source deliverable. ${SOURCE_AI_DRAFT_GOVERNANCE_DETAIL}`
                     : `${spec?.description ?? "Generated Source deliverable."} ${SOURCE_AI_DRAFT_GOVERNANCE_DETAIL}`,
+                  bannedTermMatches.length > 0
+                    ? `Backstop scan flagged internal term(s) for review before external use: ${bannedTermMatches.join(", ")}.`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" "),
                 fileName: renderedArtifact.filename,
                 fileFormat: renderedArtifact.format,
                 blobContainer: REGISTRY_STORAGE_BUCKET,
