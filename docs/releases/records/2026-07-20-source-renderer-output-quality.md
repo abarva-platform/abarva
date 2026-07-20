@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -39,7 +39,9 @@ Source Files now separates artifact lifecycle quality from rendered document qua
 - Pass: ESLint on touched Source files (`npx eslint src/lib/source/artifact-lifecycle-matrix.ts src/lib/source/source-event-shell-v2.ts src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx src/lib/source/__tests__/artifact-lifecycle-matrix.test.ts src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.chat.test.tsx`).
 - Pass: TypeScript check (`npx tsc --noEmit`).
 - Pass: `npm run release:check`.
-- Not-run yet: signed-in proof after merge/deploy.
+- Pass: GitHub PR checks on #5121.
+- Pass: ACA main deploy run `29727074278` completed successfully for merge SHA `40ad3fbe47416709f27f8d1f5fab2bed396aad06`; the workflow passed revision health, 100% traffic shift, ACA runtime invariant, and production health endpoint.
+- Pass: signed-in production proof on `https://app.abarva.ai/source/events/dcd31955-e1ac-416b-8c3b-52b83e8650de?stage=scope` using FS Demo auth state. Files workspace rendered the artifact lifecycle matrix with `CONTENT SCORED`, `CONTENT BLOCKERS`, `CONTENT WARNINGS`, `Content not scored`, and the honest registry wording that rendered body text is not available yet.
 
 ## Rollout Plan
 
@@ -61,9 +63,10 @@ Revert the PR and redeploy through the repo-owned ACA main deploy workflow. No d
 
 ## Audit Evidence
 
-- PR: pending.
-- ACA deploy run: pending.
-- Signed-in screenshot: pending.
+- PR: #5121, `https://github.com/abarva-platform/abarva/pull/5121`
+- Merge SHA: `40ad3fbe47416709f27f8d1f5fab2bed396aad06`
+- ACA deploy run: `https://github.com/abarva-platform/abarva/actions/runs/29727074278`
+- Signed-in screenshot: `/Users/anand/Downloads/source-5121-live-renderer-output-quality.png`
 
 ## Known Gaps
 
