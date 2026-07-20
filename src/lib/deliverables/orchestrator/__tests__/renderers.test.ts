@@ -102,6 +102,49 @@ describe('HTML preview', () => {
   });
 });
 
+describe('DOCX renderer — visual exhibits', () => {
+  it('embeds a rasterised image for each declared exhibit, with its title and description as text', async () => {
+    const buf = await Packer.toBuffer(renderDeliverableDocx(goodDocument()));
+    const zip = await JSZip.loadAsync(buf);
+
+    const documentXml = await zip.file('word/document.xml')!.async('string');
+    expect(documentXml).toMatch(/Visual Exhibits/);
+    expect(documentXml).toMatch(/Service Tower Scope Map/);
+    expect(documentXml).toMatch(/Towers × services\./);
+
+    // A real PNG was embedded as a media part, not just referenced in prose.
+    const mediaFiles = Object.keys(zip.files).filter((f) => /^word\/media\/.*\.png$/.test(f));
+    expect(mediaFiles.length).toBeGreaterThan(0);
+    const pngBytes = await zip.file(mediaFiles[0])!.async('nodebuffer');
+    // PNG magic number.
+    expect(pngBytes.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+
+    const relsXml = await zip.file('word/_rels/document.xml.rels')!.async('string');
+    expect(relsXml).toMatch(/Type="[^"]*\/relationships\/image"[^/]*Target="media\/[^"]+\.png"/);
+  });
+
+  it('falls back to a text notice (not a thrown error) when rasterisation fails', async () => {
+    jest.resetModules();
+    jest.doMock('@/lib/programs/expert-kernel/exports/board-grade/svg-raster', () => ({
+      rasteriseSvg: () => {
+        throw new Error('simulated rasteriser failure');
+      },
+    }));
+    const { renderDeliverableDocx: renderWithBrokenRasteriser } = await import('../renderers');
+    const { goodDocument: freshGoodDocument } = await import('../__fixtures__/ams-rfp');
+
+    const buf = await Packer.toBuffer(renderWithBrokenRasteriser(freshGoodDocument()));
+    const zip = await JSZip.loadAsync(buf);
+    const documentXml = await zip.file('word/document.xml')!.async('string');
+    expect(documentXml).toMatch(/exhibit could not be rendered as an image/);
+    const mediaFiles = Object.keys(zip.files).filter((f) => /^word\/media\//.test(f));
+    expect(mediaFiles).toHaveLength(0);
+
+    jest.dontMock('@/lib/programs/expert-kernel/exports/board-grade/svg-raster');
+    jest.resetModules();
+  });
+});
+
 describe('DOCX renderer — document status disclaimer', () => {
   it('the cover carries the not-approved status paragraph and the footer repeats it', async () => {
     const buf = await Packer.toBuffer(renderDeliverableDocx(goodDocument()));

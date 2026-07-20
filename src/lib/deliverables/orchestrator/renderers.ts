@@ -15,6 +15,7 @@ import {
   BorderStyle,
   Document,
   Footer,
+  ImageRun,
   Paragraph,
   Table,
   TableCell,
@@ -23,6 +24,7 @@ import {
   WidthType,
 } from 'docx';
 import ExcelJS from 'exceljs';
+import { rasteriseSvg } from '@/lib/programs/expert-kernel/exports/board-grade/svg-raster';
 
 import {
   ORDERED_NUMBERING_CONFIG,
@@ -192,6 +194,17 @@ export function renderDeliverableDocx(doc: RenderableDeliverable): Document {
       children.push(heading2(t.title));
       children.push(tableToDocx(t));
     }
+  }
+
+  // Visual exhibits — rasterised from the same SVG the HTML renderer inlines,
+  // so a DOCX reader sees the diagrams that were previously only reachable
+  // via the HTML preview.
+  if (doc.exhibits.length) {
+    children.push(pageBreak());
+    children.push(heading1('Visual Exhibits'));
+    doc.exhibits.forEach((exhibit, index) => {
+      children.push(...exhibitToDocxBlocks(exhibit, index));
+    });
   }
 
   // Recommendation + next actions
@@ -540,27 +553,104 @@ function svgTimelineExhibit(exhibit: RenderableExhibit): string {
   return `<svg class="exhibit-svg" viewBox="0 0 ${width} 165" role="img" aria-label="${esc(exhibit.title)}">${nodes}</svg>`;
 }
 
+/** The raw `<svg>` markup for one exhibit, dispatched by kind. Shared by the
+ *  HTML renderer (inlined directly, where the page's `:root` CSS variables
+ *  resolve `var(--fresh)` etc.) and the DOCX renderer (which must substitute
+ *  concrete hex values before rasterising — see `resolveSvgTokens`). */
+function exhibitSvg(exhibit: RenderableExhibit, index: number): string {
+  const domId = `exhibit-${index + 1}`;
+  return exhibit.kind === 'matrix' || exhibit.kind === 'heatmap'
+    ? svgMatrixExhibit(exhibit)
+    : exhibit.kind === 'timeline'
+      ? svgTimelineExhibit(exhibit)
+      : exhibit.kind === 'conceptual_architecture'
+        ? svgLayeredArchitectureExhibit(exhibit, CONCEPTUAL_LANES)
+        : exhibit.kind === 'logical_architecture'
+          ? svgLayeredArchitectureExhibit(exhibit, LOGICAL_LANES)
+          : exhibit.kind === 'physical_architecture'
+            ? svgLayeredArchitectureExhibit(exhibit, PHYSICAL_LANES, { legend: true })
+            : exhibit.kind === 'agent_orchestration'
+              ? svgAgentOrchestrationExhibit(exhibit)
+              : svgFlowExhibit(exhibit, domId);
+}
+
 function exhibitHtml(exhibit: RenderableExhibit, index: number): string {
   const domId = `exhibit-${index + 1}`;
-  const visual =
-    exhibit.kind === 'matrix' || exhibit.kind === 'heatmap'
-      ? svgMatrixExhibit(exhibit)
-      : exhibit.kind === 'timeline'
-        ? svgTimelineExhibit(exhibit)
-        : exhibit.kind === 'conceptual_architecture'
-          ? svgLayeredArchitectureExhibit(exhibit, CONCEPTUAL_LANES)
-          : exhibit.kind === 'logical_architecture'
-            ? svgLayeredArchitectureExhibit(exhibit, LOGICAL_LANES)
-            : exhibit.kind === 'physical_architecture'
-              ? svgLayeredArchitectureExhibit(exhibit, PHYSICAL_LANES, { legend: true })
-              : exhibit.kind === 'agent_orchestration'
-                ? svgAgentOrchestrationExhibit(exhibit)
-                : svgFlowExhibit(exhibit, domId);
+  const visual = exhibitSvg(exhibit, index);
   return `<figure class="visual-exhibit" data-exhibit="${domId}" data-kind="${esc(exhibit.kind)}">
     <figcaption><span>${esc(exhibit.kind)}</span><strong>${esc(exhibit.title)}</strong></figcaption>
     ${visual}
     <p>${esc(exhibit.description)}</p>
   </figure>`;
+}
+
+// ── DOCX exhibit embedding ──
+//
+// The exhibit SVGs reference the page's `:root` CSS custom properties
+// (`var(--fresh)`, `var(--muted)`, `var(--line)`, `var(--line2)`, `var(--ink)`
+// — declared once in `renderDeliverableHtml`'s stylesheet, see the `:root{...}`
+// literal below). Rasterising standalone (no surrounding page/stylesheet)
+// cannot resolve those variables, so they must be substituted with the same
+// concrete hex values before handing the SVG to `@resvg/resvg-js`.
+const SVG_TOKEN_HEX: Record<string, string> = {
+  '--bg': '#F8F7F4',
+  '--panel': '#FFFFFF',
+  '--ink': '#1B1A17',
+  '--muted': '#6F6A61',
+  '--line': '#E6E2DA',
+  '--line2': '#EFECE5',
+  '--chip': '#F1EEE7',
+  '--fresh': '#3F7A5B',
+};
+
+function resolveSvgTokens(svg: string): string {
+  return svg.replace(/var\((--[a-z0-9-]+)\)/gi, (match, token: string) => SVG_TOKEN_HEX[token] ?? match);
+}
+
+/** `resvg` refuses to parse an `<svg>` root with no `xmlns` — the exhibit
+ *  markup omits it because it's designed to be inlined directly into an
+ *  HTML document, where no xmlns is needed. Add it only for rasterisation. */
+function withXmlns(svg: string): string {
+  return /<svg\b[^>]*\bxmlns=/.test(svg)
+    ? svg
+    : svg.replace(/<svg\b/, '<svg xmlns="http://www.w3.org/2000/svg"');
+}
+
+/** Rasterise one exhibit to a DOCX image paragraph + its caption/description. */
+function exhibitToDocxBlocks(exhibit: RenderableExhibit, index: number): Paragraph[] {
+  const svg = withXmlns(resolveSvgTokens(exhibitSvg(exhibit, index)));
+  let imageParagraph: Paragraph;
+  try {
+    const { png, aspect } = rasteriseSvg(svg, 3);
+    const width = 6.5 * 96; // 6.5in at 96dpi, in pixels (docx ImageRun expects px)
+    const height = Math.round(width / aspect);
+    imageParagraph = new Paragraph({
+      spacing: { before: 120, after: 60 },
+      children: [
+        new ImageRun({
+          type: 'png',
+          data: png,
+          transformation: { width, height },
+        }),
+      ],
+    });
+  } catch (err) {
+    // Rasterisation is best-effort — a malformed exhibit must not fail the
+    // whole document. Fall back to a text notice; the same content is
+    // still available in the HTML preview.
+    imageParagraph = bodyParagraph([
+      bodyRun(`(exhibit could not be rendered as an image — see HTML preview)`, {
+        italics: true,
+        color: SOURCE_DOCX.MUTED_COLOR,
+      }),
+    ]);
+    console.error('[renderDeliverableDocx] exhibit rasterisation failed', exhibit.key, err);
+  }
+  return [
+    heading2(exhibit.title),
+    imageParagraph,
+    bodyParagraph([bodyRun(exhibit.description, { italics: true, color: SOURCE_DOCX.MUTED_COLOR })]),
+  ];
 }
 
 export function renderDeliverableHtml(doc: RenderableDeliverable): string {
