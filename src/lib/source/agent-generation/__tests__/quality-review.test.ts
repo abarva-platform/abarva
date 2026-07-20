@@ -100,9 +100,36 @@ function makeContext(): SourceGenerationContext {
 }
 
 describe("Source consulting-grade quality gate helpers", () => {
-  it("requires Gate B for the RFP package only", () => {
+  const originalExpandedFlag = process.env.SOURCE_QUALITY_GATE_EXPANDED;
+
+  afterEach(() => {
+    if (originalExpandedFlag === undefined) {
+      delete process.env.SOURCE_QUALITY_GATE_EXPANDED;
+    } else {
+      process.env.SOURCE_QUALITY_GATE_EXPANDED = originalExpandedFlag;
+    }
+  });
+
+  it("always requires Gate B for the RFP package", () => {
+    delete process.env.SOURCE_QUALITY_GATE_EXPANDED;
     expect(requiresSourceConsultingGradeGate("d09_rfp_pack")).toBe(true);
     expect(requiresSourceConsultingGradeGate("d01_strategy_memo")).toBe(false);
+  });
+
+  it("gates the expanded high-stakes narrative codes only when the flag is on", () => {
+    delete process.env.SOURCE_QUALITY_GATE_EXPANDED;
+    expect(requiresSourceConsultingGradeGate("d01_strategy_memo")).toBe(false);
+    expect(requiresSourceConsultingGradeGate("d05_scope_memo")).toBe(false);
+    expect(requiresSourceConsultingGradeGate("d24_decision_brief")).toBe(false);
+    expect(requiresSourceConsultingGradeGate("d27_selection_memo")).toBe(false);
+
+    process.env.SOURCE_QUALITY_GATE_EXPANDED = "1";
+    expect(requiresSourceConsultingGradeGate("d01_strategy_memo")).toBe(true);
+    expect(requiresSourceConsultingGradeGate("d05_scope_memo")).toBe(true);
+    expect(requiresSourceConsultingGradeGate("d24_decision_brief")).toBe(true);
+    expect(requiresSourceConsultingGradeGate("d27_selection_memo")).toBe(true);
+    // Untouched artifact types stay ungated even with the flag on.
+    expect(requiresSourceConsultingGradeGate("d04_app_inv")).toBe(false);
   });
 
   it("summarizes evidence, upstream bodies, and gate states for the reviewer", () => {
@@ -111,6 +138,7 @@ describe("Source consulting-grade quality gate helpers", () => {
       upstreamBound: {
         d01_strategy_memo: "Strategy memo with $300M baseline.",
       },
+      artifactCode: "d09_rfp_pack",
     });
 
     expect(context).toContain("SkyHarbor Air");
@@ -128,6 +156,33 @@ describe("Source consulting-grade quality gate helpers", () => {
       "Blocking gaps are only items still missing after this coverage map",
     );
     expect(context).toContain("rfp-package-complete");
+    expect(context).toContain("Artifact-specific requirements (from source-artifact-profiles.ts)");
+    expect(context).toContain("Decision purpose:");
+  });
+
+  it("does not leak D09 RFP evidence-coverage language into other artifact codes", () => {
+    const context = buildSourceQualitySourceContext({
+      ctx: makeContext(),
+      upstreamBound: {},
+      artifactCode: "d01_strategy_memo",
+    });
+
+    expect(context).not.toContain("D09 RFP evidence coverage semantics");
+    expect(context).not.toContain("normalized from uploaded D09 coverage map");
+    // Stale scaffold rows are reported as-is when the D09 override doesn't apply.
+    expect(context).toContain("EVID-SRC-EVAL-WEIGHT-RATIONALE; state=Not Requested");
+    // Profile-derived context still shows up for a recognized short code.
+    expect(context).toContain("Approve the sourcing event and authorize scope and RFP preparation work.");
+  });
+
+  it("falls back gracefully for an unregistered artifact code", () => {
+    const context = buildSourceQualitySourceContext({
+      ctx: makeContext(),
+      upstreamBound: {},
+      artifactCode: "dz99_unregistered",
+    });
+
+    expect(context).toContain("No registered profile for this artifact code.");
   });
 
   it("marks the quality gate failed when any review dimension is below threshold", () => {
@@ -164,6 +219,7 @@ describe("Source consulting-grade quality gate helpers", () => {
       upstreamBound: {
         d01_strategy_memo: "Strategy memo with $300M baseline.",
       },
+      artifactCode: "d09_rfp_pack",
     });
     const prompt = buildSourceConsultingGradeCompactRetryPrompt({
       artifactCode: "d09_rfp_pack",

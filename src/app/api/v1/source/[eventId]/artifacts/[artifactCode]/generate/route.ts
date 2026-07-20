@@ -1035,6 +1035,7 @@ async function runConsultingGradeQualityGate(args: {
   const sourceContext = buildSourceQualitySourceContext({
     ctx: args.ctx,
     upstreamBound: args.upstreamBound,
+    artifactCode: args.artifactCode,
   });
   const reviews = [];
   const firstReview = await runConsultingGradeReview({
