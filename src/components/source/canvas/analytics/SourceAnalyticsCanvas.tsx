@@ -1222,8 +1222,21 @@ function FileCard({ item }: { item: SourceShellFileItem }) {
         {item.group} · {item.state}
       </div>
       <div style={{ marginTop: 9 }}>
-        <EvidenceBadge basis={item.sourceBasis} label="File evidence" />
+        <EvidenceBadge basis={item.sourceBasis} label={item.governanceLabel} />
       </div>
+      {item.governanceMessage ? (
+        <div
+          data-testid={`source-shell-file-governance-${item.id}`}
+          style={{
+            marginTop: 8,
+            color: ANALYTICS.INK_2,
+            fontSize: 11.5,
+            lineHeight: 1.4,
+          }}
+        >
+          {item.governanceMessage}
+        </div>
+      ) : null}
     </div>
   );
 }
