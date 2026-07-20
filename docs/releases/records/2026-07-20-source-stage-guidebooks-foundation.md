@@ -6,7 +6,9 @@
 
 ## Status
 
-`candidate`
+`candidate` — code is deployed and live. **The database migration is not confirmed
+applied to the live database** — see QA / Validation and Known Gaps below for the full
+investigation. Do not advance this to `released` until that is resolved.
 
 ## Plain-English Summary
 
@@ -80,31 +82,46 @@ in production earlier, not generic filler content.
   — clean, no errors.
 - `pending` — `npm run release:check` — to run before PR.
 - `not applicable` — Live signed-in browser proof. This release has no UI surface yet
-  (see Known Gaps) — there is nothing in the product for a human to click through. The
-  migration itself will be exercised by the standard ACA deploy's migration-apply step;
-  runtime-invariant verification confirms the deploy succeeded, not that a user can see
-  the guidebook (they can't yet).
-- `not run locally` — The migration was not dry-run against a live database from this
-  environment (established this session: localhost cannot reach the private-VNet
-  Postgres instance). Reviewed carefully against the established
-  `source_event_facts` migration's conventions (RLS policy shape, index style, comment
-  format) as the closest recent precedent; will be exercised for real by the ACA
-  deploy's migration-apply step, and its result — the "Verify ACA runtime invariant" and
-  general deploy health — is real evidence the migration applied cleanly.
+  (see Known Gaps) — there is nothing in the product for a human to click through.
+- `pass` — CI's "Fresh Postgres migration replay" check confirms the migration replays
+  cleanly from zero against a disposable synthetic Postgres instance. That workflow's own
+  header comment is explicit that this is **not** evidence against the live database:
+  "This intentionally uses disposable synthetic CI Postgres, not the Azure lab database
+  ... Azure PITR restore and seed/data-copy replay remain separate live-environment
+  drills." Recording the pass honestly as what it actually proves (replay-from-zero
+  correctness), not as live-database evidence.
+- `NOT CONFIRMED` — **Live-database application.** Investigated after the code deploy
+  completed: the ACA main-deploy workflow
+  (`.github/workflows/aca-main-deploy.yml`) has **no migration-apply step** — it builds
+  and ships the container image only. Applying a migration to the real Azure lab
+  database is a distinct, manual operator action per
+  `docs/runbooks/db-migration.md` (`npm run db:migrate`, run by someone with a live
+  `AZURE_DATABASE_URL`/`DATABASE_URL`). This environment has neither the credential nor
+  network path to run it (confirmed: `npm run db:migrate:dry` fails immediately with "no
+  DATABASE_URL"; this session's private-VNet-reachability limitation was already known
+  from earlier work). **The `source_stage_guidebooks` table's live existence has not been
+  verified.** Practical impact today is zero — no shipped code path calls
+  `getSourceStageGuidebook()` yet — but this must be resolved (migration applied and
+  confirmed) before any UI surface that reads this table can be built or claimed working.
 
 ## Rollout Plan
 
-Merge to main via the repo-owned ACA main-deploy workflow, which applies pending
-migrations as part of deploy. Purely additive — no existing table, route, or UI is
-touched.
+Merge to main via the repo-owned ACA main-deploy workflow, which ships the code only.
+**Applying the migration to the live database is a separate, manual step** — see QA /
+Validation and Known Gaps. Both migration files are purely additive
+(`CREATE TABLE IF NOT EXISTS`, `INSERT ... ON CONFLICT DO NOTHING`) — no existing table,
+route, or UI is touched by either the code or the pending schema change.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
-- Shared runtime mutators: the migration-apply step within the standard deploy workflow
-  (not an ad-hoc `az` command).
-- Approved image digest: recorded post-merge once the deploy run completes.
-- ACA runtime invariant: to be verified post-deploy.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` — ships code only;
+  confirmed it has no migration-apply step.
+- Shared runtime mutators: none for this release — the migration itself has not been
+  applied by any automated mutator; it requires the manual `db:migrate` path in
+  `docs/runbooks/db-migration.md`.
+- Approved image digest: recorded below once the deploy run completed.
+- ACA runtime invariant: verified for the **code** deploy (see Audit Evidence) — this
+  does not cover the pending database migration.
 - Worker image invariant: covered by the same main-deploy workflow step.
 - Feature/env flag update path: none.
 - Live signed-in proof required: not applicable this pass — no read surface exists yet.
@@ -119,12 +136,28 @@ data-loss risk from either the deploy or a rollback.
 
 ## Audit Evidence
 
-- PR URL: recorded post-open.
+- PR: [#5135](https://github.com/abarva-platform/abarva/pull/5135), merged as
+  `02c08d3e28f16d6fe708fb9caaca3c56d3e1547b`.
 - Focused Jest log: 5/5 passed.
 - Typecheck log: clean.
+- Code deploy: run [29744269332](https://github.com/abarva-platform/abarva/actions/runs/29744269332).
+  ACA runtime invariant verified 2026-07-20T13:05:14Z — template image, active image, and
+  the 100%-traffic revision (`ca-abarva-web-lab-eastus--m02c08d3e`) all match digest
+  `sha256:eddd35962f173162229b68b5684aaa3792912a8ca70da685de5d11721c9658c3`; health check
+  `ok: true`. **This confirms the code is live; it does not confirm the database
+  migration is applied — see QA / Validation above.**
 
 ## Known Gaps
 
+- **The database migration has not been confirmed applied to the live database.** This
+  is the most important open item in this record — see the `NOT CONFIRMED` line in QA /
+  Validation above for the full investigation. Resolving it requires an operator with
+  live `AZURE_DATABASE_URL`/`DATABASE_URL` access to run `npm run db:migrate` per
+  `docs/runbooks/db-migration.md` against the target environment, then verify via
+  `npm run db:verify:canonical-tenants` or a direct row-count check that
+  `source_stage_guidebooks` exists with its one seeded Strategy row. Until that happens,
+  any code path that calls `getSourceStageGuidebook()` (none exist yet) would fail at
+  runtime with a missing-table error, not a graceful `null`.
 - **No read surface exists yet.** This release ships the schema, types, repository, and
   one real authored guidebook, but nothing in the product UI or API calls
   `getSourceStageGuidebook()` yet. A user cannot see this content today. The next slice
