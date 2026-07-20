@@ -14,6 +14,8 @@ The new Source event shell file ledger now shows artifact-governance language fr
 
 This closes a gap found during live signed-in proof after PR #5093: the old document workspace carried the new governance wording, but the active SourceAnalyticsCanvas file ledger still hardcoded every artifact as file evidence.
 
+Follow-up live proof after PR #5095 found the active event route passes `SourceEventArtifactState` objects where generation is represented as `sourceOrigin: "generated"` and `artifactGroup` may be absent. This record also covers the follow-up fix to derive the governance label from `sourceOrigin`.
+
 ## Layer Impact
 
 - `global-control-lane`: Source event shell rendering and its view-model change for all tenants using the SourceAnalyticsCanvas route.
@@ -63,7 +65,7 @@ Revert the PR or redeploy the prior successful ACA revision. No schema rollback 
 ## Audit Evidence
 
 - Candidate PR URL: pending.
-- Local focused test output: focused Jest 12/12, ESLint clean, TypeScript clean.
+- Local focused test output: focused Jest 12/12 including the production-shaped `sourceOrigin: "generated"` fixture, ESLint clean, TypeScript clean.
 - ACA deploy run: pending after merge.
 - Signed-in proof screenshot: pending after deploy.
 
