@@ -201,8 +201,13 @@ function executionStatus(executionJson) {
   );
 }
 
-function terminalStatus(status) {
-  return ["Succeeded", "Failed", "Canceled", "Cancelled"].includes(status);
+export function terminalStatus(status) {
+  // "Stopped" was missing here and caused a real false-positive in
+  // verifyIdle()'s first live run: a two-day-old, genuinely-inactive
+  // execution (confirmed via `az containerapp job execution show` — same
+  // status, same startTime, no resource consumption) was misclassified as
+  // "non-terminal" and blocked an otherwise-clean preflight run.
+  return ["Succeeded", "Failed", "Canceled", "Cancelled", "Stopped"].includes(status);
 }
 
 function sleep(ms) {
@@ -698,7 +703,21 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error.stack || error.message);
-  process.exit(1);
-});
+// Only auto-run when invoked as a script — importing pure helpers (like
+// terminalStatus) from a test file must not trigger main()'s network/Azure
+// calls or its unconditional process.exit(1) on failure.
+const invokedAsScript = (() => {
+  if (!process.argv[1]) return false;
+  try {
+    return path.resolve(process.argv[1]).includes("submit-aca-operator-job");
+  } catch {
+    return false;
+  }
+})();
+
+if (invokedAsScript) {
+  main().catch((error) => {
+    console.error(error.stack || error.message);
+    process.exit(1);
+  });
+}
