@@ -41,6 +41,10 @@ import type {
 import { getProgramById } from './queries';
 import { writeProgramAuditLogBestEffort } from './audit-log';
 import {
+  getRoleApprovalSummary,
+  requiredApprovalRolesFor,
+} from './deliverable-role-approvals';
+import {
   isGateApprovalStrictMode,
   isStrictModeApprovalRole,
 } from '@/lib/auth/gate-approval-strict-mode';
@@ -271,6 +275,27 @@ export async function evaluateGate(
   const findDeliverable = (...keys: string[]) => deliverableRows
     .find((d) => keys.includes(d.deliverable_type_key));
   const isSignedOff = (row: { status: string } | undefined) => row?.status === 'signed_off';
+  // A deliverable TYPE that requires named role approvals (see
+  // deliverable-role-approvals.ts's REQUIRED_APPROVAL_ROLES) must have every
+  // required role recorded as `approved`, IN ADDITION TO the existing
+  // single-actor sign-off, before its gate check passes. A type with no
+  // required roles is unaffected — this only tightens the 3 covered types
+  // (business_case, target_state_architecture, operating_model_design).
+  const meetsApprovalBar = async (
+    row: { id: string; deliverable_type_key: string; status: string } | undefined,
+  ): Promise<boolean> => {
+    if (!isSignedOff(row)) return false;
+    const required = requiredApprovalRolesFor(row!.deliverable_type_key);
+    if (required.length === 0) return true;
+    const summary = await getRoleApprovalSummary(
+      ctx,
+      programId,
+      row!.id,
+      row!.deliverable_type_key,
+      { supabase: sb },
+    );
+    return summary.allRequiredApproved;
+  };
   const isPresent = (row: { status: string } | undefined) => Boolean(row);
   const moduleCompleted = (...keys: string[]) => moduleRows
     .some((m) => keys.includes(m.module_key) && m.status === 'completed');
@@ -279,7 +304,7 @@ export async function evaluateGate(
     .find((d) => d.deliverable_type_key === 'charter');
   const originationBriefRow = findDeliverable('origination_brief', 'program_seed_brief', 'program_seed');
   const hasSignedOriginationBrief = isSignedOff(originationBriefRow);
-  const designRow = findDeliverable('design_spec', 'design', 'design_brief', 'solution_design', 'operating_model_design');
+  const designRow = findDeliverable('design_spec', 'design', 'design_brief', 'solution_design', 'operating_model_design', 'target_state_architecture');
   const executionRoadmapRow = findDeliverable('execution_roadmap', 'execution_plan', 'roadmap', 'mobilization_roadmap');
   const requirementsTraceRow = findDeliverable('requirements_traceability', 'requirements_design_outcome_trace', 'traceability_matrix');
   const businessCaseRow = findDeliverable('business_case', 'funding_business_case', 'approval_business_case');
@@ -524,7 +549,7 @@ export async function evaluateGate(
         break;
       }
       case 'cxo_interview_complete': pass = cxoInterviewModule?.status === 'completed'; break;
-      case 'design_approved': pass = isSignedOff(designRow); break;
+      case 'design_approved': pass = await meetsApprovalBar(designRow); break;
       case 'requirements_design_outcome_trace':
         pass = isPresent(requirementsTraceRow) ||
           (
@@ -565,7 +590,7 @@ export async function evaluateGate(
           briefString.includes('tower') || briefString.includes('monitoring') ||
           (fromPhase === 4 && /\b(tower|monitoring|metric|cadence|outcome ledger)\b/.test(phaseCaptureText));
         break;
-      case 'business_case_approved': pass = isSignedOff(businessCaseRow); break;
+      case 'business_case_approved': pass = await meetsApprovalBar(businessCaseRow); break;
       case 'funding_approval_recorded':
         pass = isSignedOff(findDeliverable('funding_approval', 'capacity_approval', 'approval_memo'));
         break;
