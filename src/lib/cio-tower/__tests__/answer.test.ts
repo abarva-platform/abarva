@@ -350,6 +350,15 @@ describe('cio tower answer contract', () => {
     const prompt = buildCioTowerClaudePrompt(context());
 
     expect(prompt).toContain('Return valid JSON only');
+    expect(prompt).toContain("AbarVa's governed CIO/CFO performance and value-control advisor");
+    expect(prompt).toContain('Authority order:');
+    expect(prompt).toContain('Governed measure results');
+    expect(prompt).toContain('Question contract is authoritative');
+    expect(prompt).toContain('Separate three layers before writing');
+    expect(prompt).toContain('Observed: what governed measures and facts establish');
+    expect(prompt).toContain('Interpretation: what those facts mean');
+    expect(prompt).toContain('Action: what leadership should scale, fix, freeze, stop, or validate next');
+    expect(prompt).toContain('Decision posture vocabulary');
     expect(prompt).toContain('"version": "cio_tower_visible_answer_v1"');
     expect(prompt).toContain('You own every user-visible word');
     expect(prompt).toContain('AbarVa will render the strings exactly as returned');
@@ -367,11 +376,19 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('Answer the current question literally');
     expect(prompt).toContain('do not repeat the generic budget-mix answer');
     expect(prompt).toContain('Realized-value language allowed: no');
-    expect(prompt).toContain('Projection role: derived_read_model');
+    expect(prompt).toContain('Projection fallback role: derived_read_model');
+    expect(prompt).toContain('Projection fallback authority: planning-grade only');
+    expect(prompt).toContain('Tower Question Contract:');
+    expect(prompt).toContain('Measure key: initiative_budget_fy26');
+    expect(prompt).toContain('Table required: yes');
+    expect(prompt).toContain('chart-ready supported rows');
+    expect(prompt).toContain('[governed_measure] FY26 IT budget');
+    expect(prompt).toContain('[governed_fact] Crew Recovery & Legality Modernization');
     expect(prompt).toContain('Crew Recovery & Legality Modernization');
     expect(prompt).toContain('$28.3M');
     expect(prompt).not.toContain('GFM markdown table');
     expect(prompt).not.toContain('```chart');
+    expect(prompt).not.toContain('fenced chart blocks in the answer field');
     expect(prompt).not.toContain('CHART');
   });
 
@@ -448,6 +465,12 @@ describe('cio tower answer contract', () => {
     ).not.toContain('visible_scaffold_label');
     expect(validateVisibleAnswer('Evidence: show the row-level proof.')).toContain(
       'visible_scaffold_label',
+    );
+    expect(
+      validateVisibleAnswer('```chart\n{"type":"bar","data":[{"label":"Run","value":10}]}\n```'),
+    ).toContain('code_fence_or_hidden_visual_payload');
+    expect(validateVisibleAnswer('| Phase | Gate |\n| --- | --- |')).toContain(
+      'markdown_table_in_answer_field',
     );
   });
 

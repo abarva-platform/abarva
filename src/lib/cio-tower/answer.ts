@@ -20,7 +20,7 @@ import { isTowerV3ContextRuntimeEnabled } from "@/lib/tower/tower-v3-runtime-fla
 import type { TowerValueClaim } from "@/lib/enterprise-knowledge/contracts";
 
 const MODEL_NAME = "claude-sonnet-4-6";
-const PROMPT_VERSION = "cio_tower_advisor_prompt_v2";
+const PROMPT_VERSION = "cio_tower_advisor_prompt_v3";
 const TEMPERATURE = 0;
 const MAX_TOKENS = 1800;
 
@@ -148,7 +148,7 @@ const CONTRACT_MATCHERS: Array<{ key: string; patterns: RegExp[] }> = [
       /largest\s+(it\s+)?(program|initiative)/i,
       /rank.*(program|initiative).*budget/i,
       /decision\s+lanes?/i,
-      /(fund|fix|freeze).*(program|initiative|portfolio)/i,
+      /\b(fund|fix|freeze)\b.*(program|initiative|portfolio)/i,
     ],
   },
   {
@@ -326,12 +326,44 @@ export function validateVisibleAnswer(text: string): string[] {
       "internal_data_plane_language",
       /\b(loaded evidence|tenant evidence|evidence ledger|semantic packet|retrieved context|source signals|rows)\b/i,
     ],
+    ["code_fence_or_hidden_visual_payload", /```|abarva-canvas|chart\s*json|"\s*(?:type|data|series|x|y)\s*"\s*:/i],
+    ["markdown_table_in_answer_field", /^\s*\|.+\|\s*$/m],
     ["atlas_branding", /\bAtlas\b/i],
   ];
   for (const [id, pattern] of checks) {
     if (pattern.test(text)) violations.push(id);
   }
   return violations;
+}
+
+function contractArtifactRequirements(contract: CioTowerContract): string[] {
+  const artifact = `${contract.intent} ${contract.artifact_type} ${contract.question_family}`.toLowerCase();
+  const requiresTable =
+    /table|chart|graph|trend|rank|comparison|portfolio|split|waterfall/.test(artifact);
+  const requiresRanking = /rank|top|largest|portfolio|priority/.test(artifact);
+  const requiresTrend = /trend|fy25|fy26|year|period|waterfall/.test(artifact);
+  return [
+    `- Table required: ${requiresTable ? "yes" : "no"}.`,
+    `- Ranking required: ${requiresRanking ? "yes" : "no"}.`,
+    `- Trend requested: ${requiresTrend ? "yes" : "no"}.`,
+    requiresTable
+      ? "- If this asks for a chart, graph, ranking, trend, portfolio, or comparison, populate tables[] with chart-ready supported rows. The UI may visualize those rows later."
+      : "- Do not include a table unless it materially improves the executive decision.",
+  ];
+}
+
+function permittedDecisionPostures(contract: CioTowerContract): string[] {
+  if (contract.contract_key === "tower_outside_scope") return ["Validate"];
+  if (contract.contract_key === "tower_value_realization")
+    return ["Scale", "Fix", "Freeze", "Validate"];
+  if (
+    contract.contract_key === "tower_total_it_spend" ||
+    contract.contract_key === "tower_run_change_split" ||
+    contract.contract_key === "tower_trend_it_budget"
+  ) {
+    return ["Fix", "Freeze", "Validate"];
+  }
+  return ["Scale", "Fix", "Freeze", "Stop", "Validate"];
 }
 
 function collectVisibleTextFromContract(
@@ -420,22 +452,25 @@ export function buildCioTowerClaudePrompt(
       measure.value_numeric === null
         ? "not loaded"
         : money(measure.value_numeric);
-    return `- ${label}: ${value} (${humanizeFieldName(measure.period)}, ${safeBasisLabel(measure.basis)})`;
+    return `- [governed_measure] ${label}: ${value} (${humanizeFieldName(measure.period)}, ${safeBasisLabel(measure.basis)})`;
   });
 
   const factLines = context.relevantFacts.slice(0, 18).map((fact, index) => {
     const name =
       fact.entity_display_name ?? fact.entity_key ?? `Fact ${index + 1}`;
-    return `- ${name}: ${safeMeasureLabel(fact.measure)} = ${factValue(fact)} (${humanizeFieldName(fact.period)}, ${safeBasisLabel(fact.basis)}, ${fact.confidence} confidence)`;
+    return `- [governed_fact] ${name}: ${safeMeasureLabel(fact.measure)} = ${factValue(fact)} (${humanizeFieldName(fact.period)}, ${safeBasisLabel(fact.basis)}, ${fact.confidence} confidence)`;
   });
 
   const relationshipLines = context.relationships.slice(0, 12).map((rel) => {
-    return `- ${rel.from_name ?? "unknown"} ${humanizeFieldName(rel.relationship_type)} ${rel.to_name ?? "unknown"} (${rel.confidence} confidence)`;
+    return `- [governed_relationship] ${rel.from_name ?? "unknown"} ${humanizeFieldName(rel.relationship_type)} ${rel.to_name ?? "unknown"} (${rel.confidence} confidence)`;
   });
 
   const gapLines = context.gaps.map((gap) => `- ${gap}`);
+  const artifactRequirementLines = contractArtifactRequirements(context.contract);
+  const permittedPostures = permittedDecisionPostures(context.contract);
   const valueClaimPolicyLines = [
-    `- Projection role: ${context.valueClaimPolicy.projectionRole}.`,
+    `- Projection fallback role: ${context.valueClaimPolicy.projectionRole}.`,
+    "- Projection fallback authority: planning-grade only; never call it governed Tower truth, finance-approved value, production evidence, or a realized outcome.",
     `- Source-of-truth status: ${context.valueClaimPolicy.sourceOfTruthStatus}; v3 reconciliation: ${context.valueClaimPolicy.v3ReconciliationStatus}.`,
     `- Realized-value language allowed: ${context.valueClaimPolicy.realizedValueLanguageAllowed ? "yes" : "no"}.`,
     `- Claim gate: ${context.valueClaimPolicy.claim.gateStatus}; outcome-proof language stays blocked until finance-attested baseline and actuals evidence is reconciled.`,
@@ -472,9 +507,37 @@ export function buildCioTowerClaudePrompt(
     : [];
 
   return [
-    `You are a senior CIO/CFO advisor for AbarVa speaking to ${context.tenantName}.`,
+    `You are Tower aVa, AbarVa's governed CIO/CFO performance and value-control advisor speaking to ${context.tenantName}.`,
     "",
-    "Your job is to answer the executive question using only the Tower context below.",
+    "Answer only from the supplied Tower Question Contract and Tower Context Package.",
+    "Your job is to explain governed measures, identify the management implication, and recommend the next leadership action without changing, reconciling, or embellishing the underlying facts.",
+    "",
+    "Authority order:",
+    "1. Governed measure results.",
+    "2. Governed Tower facts and relationships.",
+    "3. Explicitly labeled projection fallbacks.",
+    "4. Derived gaps supplied in the context package.",
+    "- Do not use general knowledge to create tenant metrics, trends, rankings, explanations, value claims, or product capabilities.",
+    "- Industry knowledge may explain the management implication only when the question contract allows it; it must never override Tower data.",
+    "",
+    "Question contract is authoritative:",
+    "- Follow the business question, measure key, artifact shape, scope, ranking logic, time basis, aggregation rule, and value/evidence status implied by the supplied contract.",
+    "- Do not reinterpret a measure or combine values unless the contract explicitly permits it.",
+    "- If the user asks outside contract scope, state that Tower does not have governed evidence to answer and name the business data required.",
+    "",
+    "Separate three layers before writing:",
+    "- Observed: what governed measures and facts establish.",
+    "- Interpretation: what those facts mean for performance, value, risk, funding, or execution.",
+    "- Action: what leadership should scale, fix, freeze, stop, or validate next.",
+    "- Never present interpretation as observed fact. Never present action as a validated outcome.",
+    "",
+    "Decision posture vocabulary:",
+    `- Choose one primary posture from: ${permittedPostures.join(", ")}.`,
+    "- Scale means usage, KPI movement, value evidence, and controls support expansion.",
+    "- Fix means the opportunity is strategically sound, but adoption, process, data, ownership, or proof is blocking value.",
+    "- Freeze means no expansion, spend, or claims until a named evidence/control gap is resolved.",
+    "- Stop means poor fit, duplication, unacceptable risk, or no credible value path.",
+    "- Validate means evidence is insufficient for a funding or performance decision.",
     "",
     "Non-negotiable visible-answer contract:",
     "- Lead with the actual answer, judgment, or recommendation.",
@@ -494,7 +557,7 @@ export function buildCioTowerClaudePrompt(
     "- Make the answer specific to the loaded Tower posture: name the relevant blocker, owner, decision, or measurement gate in plain English.",
     "- If you include a table, keep it board-readable: at most 5 rows, at most 4 columns, complete cells, no abbreviations that require internal knowledge.",
     "- A table with 6 or more rows is invalid. If there are more than 5 candidates, choose the top 5 by executive relevance or use the fifth row to summarize the remaining group.",
-    "- Never use markdown code fences, fenced chart blocks, inline JSON, or markdown tables inside the answer string.",
+    "- Never use markdown code fences, fenced chart blocks, inline JSON, chart JSON, hidden visual payloads, or markdown tables inside the answer string.",
     "- If the answer would be long, compress it. Valid JSON is more important than a longer answer.",
     ...(towerV3Runtime
       ? [
@@ -510,7 +573,7 @@ export function buildCioTowerClaudePrompt(
     "- You own every user-visible word in the JSON fields.",
     "- AbarVa will render the strings exactly as returned. It will not rewrite, summarize, scrub, relabel, infer, or improve them.",
     "- Put the main prose in answer.",
-    "- If a table helps, include tables[]. The renderer will display your title, column labels, and cell text exactly.",
+    "- If a table, chart, graph, ranking, trend, portfolio, or comparison helps, include tables[]. The renderer will display your title, column labels, and cell text exactly and may visualize the table later.",
     "- If multiple panes help, include tabs[]. The renderer will place your tab labels and prose exactly.",
     "- If no table is needed, return tables as an empty array.",
     "- Do not duplicate table content inside answer. Use tables[] only.",
@@ -530,9 +593,15 @@ export function buildCioTowerClaudePrompt(
     "- If there is no natural next branch from the answer, return null.",
     "",
     `Question: ${context.question}`,
+    "",
+    "Tower Question Contract:",
+    `Contract key: ${context.contract.contract_key}`,
     `Intent: ${context.contract.intent}`,
     `Question family: ${context.contract.question_family}`,
+    `Measure key: ${context.contract.measure_key ?? "none"}`,
     `Preferred artifact shape: ${context.contract.artifact_type}`,
+    `Permitted decision postures: ${permittedPostures.join(", ")}`,
+    artifactRequirementLines.join("\n"),
     "",
     ...(towerV3Runtime
       ? [
@@ -1342,8 +1411,8 @@ export async function answerCioTowerQuestion(args: {
     parsedOutput.tables && parsedOutput.tables.length > 0
       ? cioTowerTablesToGfm(parsedOutput.tables)
       : "";
-  // Append serialized tables to prose only when the answer doesn't already
-  // contain a GFM table (visual-ask path asks Claude to embed it directly).
+  // Append serialized tables to the response string for legacy chat surfaces.
+  // Claude is still required to put table data in tables[], not inline Markdown.
   const hasInlineTable = /^\|.+\|/m.test(parsedOutput.answer);
   const responseText =
     gfmTables && !hasInlineTable
