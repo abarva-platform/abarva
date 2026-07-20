@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -101,17 +101,24 @@ authenticated page once the new revision receives traffic.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` — to be
-  confirmed after merge.
-- Shared runtime mutators: none used directly.
-- Approved image digest: to be recorded once the deploy workflow runs.
-- ACA runtime invariant: to be proven after deploy.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`, run
+  [29743856162](https://github.com/abarva-platform/abarva/actions/runs/29743856162)
+  (headSha `95a4c84f52a4bb02c82b82ec2aba3e8ff5d47ff3`, the #5134 merge
+  commit), conclusion `success`.
+- Shared runtime mutators: none used directly; deploy proceeded entirely
+  through the standard workflow.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:ecd93ec74bb81034246fad3f00b99052b0ad8821e08b288a5e37b1553a09bdbb`.
+- ACA runtime invariant: **proven.** `az containerapp show` and `az
+  containerapp revision list` confirm the template image and the
+  100%-traffic revision (`ca-abarva-web-lab-eastus--m95a4c84f`) both resolve
+  to the digest above.
 - Worker image invariant: N/A — no worker job serves this static asset path.
 - Feature/env flag update path: N/A — no flag.
-- Live signed-in proof required: yes — after deploy, load `app.abarva.ai`
-  signed in and visually confirm the nav wordmark renders bolder/smaller
-  with no clipping, on the actual production Container App (not just the
-  local rasteriser proof).
+- Live signed-in proof: **performed.** Navigated to `app.abarva.ai` post-
+  deploy (already signed in) and visually confirmed the nav wordmark renders
+  bolder and ~30% smaller with no clipping, on the actual production
+  Container App — matching the rasteriser proof exactly.
 
 ## Rollback Plan
 
@@ -121,9 +128,18 @@ dependency.
 
 ## Audit Evidence
 
-- PR URL: to be added when opened.
-- CI run: to be added when the PR's checks complete.
-- Deployment URL / ACA revision: to be added after deploy.
+- PR: [abarva-platform/abarva#5134](https://github.com/abarva-platform/abarva/pull/5134),
+  all required checks passed, squash-merged as
+  `95a4c84f52a4bb02c82b82ec2aba3e8ff5d47ff3`.
+- CI/deploy run: [aca-main-deploy #29743856162](https://github.com/abarva-platform/abarva/actions/runs/29743856162),
+  conclusion `success`.
+- Deployment: ACA revision `ca-abarva-web-lab-eastus--m95a4c84f` in
+  `rg-abarva-controlplane-lab-eastus`, 100% ingress traffic, image digest
+  `sha256:ecd93ec74bb81034246fad3f00b99052b0ad8821e08b288a5e37b1553a09bdbb`.
+- Live proof: signed-in navigation to `app.abarva.ai` post-deploy, visually
+  confirmed the bolder/smaller wordmark renders correctly with no clipping
+  on `/strategic-moves` (full-strength nav render, matching every other page
+  behind Clerk auth).
 
 ## Known Gaps
 
