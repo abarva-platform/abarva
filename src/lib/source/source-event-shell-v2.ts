@@ -145,6 +145,7 @@ export interface SourceEventShellView {
 export interface SourceShellArtifactLike {
   id: string;
   artifactCode?: string | null;
+  artifactKind?: string | null;
   stageKey?: string | null;
   sourcingStage?: string | null;
   sourceEventId?: string | null;
@@ -360,7 +361,9 @@ function taskSourceBasis(task: StageTaskView): SourceShellEvidenceBasis {
 
 function toFileItem(artifact: SourceShellArtifactLike): SourceShellFileItem {
   const stageKey = String(artifact.stageKey ?? artifact.sourcingStage ?? "other");
-  const artifactCode = String(artifact.artifactCode ?? artifact.artifactType ?? "");
+  const artifactCode = String(
+    artifact.artifactCode ?? artifact.artifactKind ?? artifact.artifactType ?? "",
+  );
   const group = String(artifact.artifactGroup ?? artifact.artifactFamily ?? "artifact");
   const sourceOrigin = String(artifact.sourceOrigin ?? "");
   const state = String(

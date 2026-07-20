@@ -51,7 +51,7 @@ describe("Source artifact lifecycle matrix", () => {
   it("keeps AI-generated drafts in review-required state until client final is accepted", () => {
     const summary = buildSourceArtifactLifecycleSummary([
       {
-        artifactCode: "d09_rfp_pack",
+        artifactKind: "d09_rfp_pack",
         artifactGroup: "generated",
         sourceOrigin: "generated",
         status: "approved",
@@ -67,5 +67,21 @@ describe("Source artifact lifecycle matrix", () => {
     expect(rfpPack?.governanceMessage).toContain(
       "Human review is required before external use",
     );
+  });
+
+  it("matches production registry records by artifactKind", () => {
+    const summary = buildSourceArtifactLifecycleSummary([
+      {
+        artifactKind: "d05_scope_memo",
+        sourceOrigin: "generated",
+        status: "approved",
+      },
+    ]);
+
+    const scopeMemo = summary.rows.find((row) => row.code === "d05_scope_memo");
+
+    expect(summary.aiDraftCount).toBe(1);
+    expect(scopeMemo?.lifecycleState).toBe("ai_draft");
+    expect(scopeMemo?.approvalLabel).toBe("Human review required");
   });
 });
