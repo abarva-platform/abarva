@@ -1,5 +1,11 @@
-import { DEFAULT_CLIENT_KEY, inferClientKeyFromEmail, isClientKey, isKnownAgentClientLoginEmail, type ClientKey } from '@/lib/client-config';
-import { getStaticLaunchAccessProfile } from '@/lib/auth/launch-access';
+import {
+  DEFAULT_CLIENT_KEY,
+  inferClientKeyFromEmail,
+  isClientKey,
+  isKnownAgentClientLoginEmail,
+  type ClientKey,
+} from "@/lib/client-config";
+import { getStaticLaunchAccessProfile } from "@/lib/auth/launch-access";
 
 export type AppSessionRole =
   | "admin"
@@ -43,31 +49,34 @@ const PILOT_ACCESS_EMAILS: ReadonlySet<string> = new Set([
   "anandshp@gmail.com",
   "admin@abarva.ai",
   "anand@abarva.ai",
+  "mreddy@republicebank.com",
 ]);
 
 function isPilotAccessEmail(normalizedEmail: string): boolean {
   return PILOT_ACCESS_EMAILS.has(normalizedEmail);
 }
 
-export function hasExplicitTenantAlias(email: string | null | undefined): boolean {
+export function hasExplicitTenantAlias(
+  email: string | null | undefined,
+): boolean {
   const normalized = normalizeEmail(email);
   if (!normalized) return false;
   const launchProfile = getStaticLaunchAccessProfile(normalized);
   if (launchProfile?.clientKey) return true;
   return (
-    normalized.endsWith('@meridian-health.example.com') ||
-    normalized.endsWith('@apex-retail.example.com') ||
-    normalized.endsWith('@firstcapital.example.com') ||
-    normalized.endsWith('@northstar-clinical.example.com') ||
-    normalized.endsWith('@skyharbor-air.example.com') ||
-    normalized.endsWith('@lakeshore-industries.example.com') ||
-    normalized.endsWith('@lakeshore-holdings.example.com') ||
-    normalized.includes('+apex@abarva.com') ||
-    normalized.includes('+meridian@abarva.com') ||
-    normalized.includes('+firstcapital@abarva.com') ||
-    normalized.includes('+northstar@abarva.com') ||
-    normalized.includes('+skyharbor@abarva.com') ||
-    normalized.includes('+lakeshore@abarva.com') ||
+    normalized.endsWith("@meridian-health.example.com") ||
+    normalized.endsWith("@apex-retail.example.com") ||
+    normalized.endsWith("@firstcapital.example.com") ||
+    normalized.endsWith("@northstar-clinical.example.com") ||
+    normalized.endsWith("@skyharbor-air.example.com") ||
+    normalized.endsWith("@lakeshore-industries.example.com") ||
+    normalized.endsWith("@lakeshore-holdings.example.com") ||
+    normalized.includes("+apex@abarva.com") ||
+    normalized.includes("+meridian@abarva.com") ||
+    normalized.includes("+firstcapital@abarva.com") ||
+    normalized.includes("+northstar@abarva.com") ||
+    normalized.includes("+skyharbor@abarva.com") ||
+    normalized.includes("+lakeshore@abarva.com") ||
     isKnownAgentClientLoginEmail(normalized) ||
     isPilotAccessEmail(normalized)
   );
@@ -87,19 +96,20 @@ export function inferSessionRoleFromEmail(
   if (!normalized) return null;
   const launchProfile = getStaticLaunchAccessProfile(normalized);
   if (launchProfile) return launchProfile.role;
+  if (isPilotAccessEmail(normalized)) return "client";
 
   if (
-    normalized.endsWith('@meridian-health.example.com') ||
-    normalized.endsWith('@apex-retail.example.com') ||
-    normalized.endsWith('@firstcapital.example.com') ||
-    normalized.endsWith('@northstar-clinical.example.com') ||
-    normalized.endsWith('@skyharbor-air.example.com') ||
-    normalized.endsWith('@lakeshore-industries.example.com') ||
-    normalized.includes('+apex@abarva.com') ||
-    normalized.includes('+meridian@abarva.com') ||
-    normalized.includes('+firstcapital@abarva.com') ||
-    normalized.includes('+northstar@abarva.com') ||
-    normalized.includes('+skyharbor@abarva.com')
+    normalized.endsWith("@meridian-health.example.com") ||
+    normalized.endsWith("@apex-retail.example.com") ||
+    normalized.endsWith("@firstcapital.example.com") ||
+    normalized.endsWith("@northstar-clinical.example.com") ||
+    normalized.endsWith("@skyharbor-air.example.com") ||
+    normalized.endsWith("@lakeshore-industries.example.com") ||
+    normalized.includes("+apex@abarva.com") ||
+    normalized.includes("+meridian@abarva.com") ||
+    normalized.includes("+firstcapital@abarva.com") ||
+    normalized.includes("+northstar@abarva.com") ||
+    normalized.includes("+skyharbor@abarva.com")
   ) {
     return "client";
   }
@@ -213,7 +223,7 @@ export function resolvePostSignInPath(
   const resolvedClientId = resolveSessionClientKey(input);
 
   if (isNewClientSetupEmail(input.email)) {
-    return '/tower';
+    return "/tower";
   }
 
   if (isExternalOnlyRole(resolvedRole)) {

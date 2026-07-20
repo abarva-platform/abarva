@@ -455,6 +455,7 @@ const PILOT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> = {
   "anandshp@gmail.com": "lakeshore",
   "admin@abarva.ai": "arcturus", // First Capital Financial
   "anand@abarva.ai": "skyharbor",
+  "mreddy@republicebank.com": "arcturus", // Madhu Reddy · Republic E Bank / Financial Services pilot
 };
 
 const AGENT_EXACT_EMAIL_TO_CLIENT_KEY: Readonly<Record<string, ClientKey>> =
