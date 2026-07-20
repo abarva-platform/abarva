@@ -247,15 +247,13 @@ Required answer structure:
 
 Use AbarVa product language naturally. The answer should make the operating model obvious: Intelligence identifies and frames the top bets; Home grounds current-state evidence; Moves turns each bet into a governed transformation initiative; Source handles vendor, sourcing, and contract levers; Tower tracks value, adoption, risk, and realized outcomes.`;
 
-export const CHART_OUTPUT_CONTRACT = `STRUCTURED VISUAL CONTRACT: The rendering surface converts source-backed Markdown tables into typed tables, charts, matrices, and graphs. Apply this rule proactively:
-- MANDATORY for any trend, time-series, quarter-over-quarter, year-over-year, or period-based data — emit a compact chart-ready GFM table with period and numeric value columns.
-- MANDATORY when the user explicitly asks for a ranked list of 4 or more items with numeric values — emit a compact GFM table with label, value, and basis columns.
-- MANDATORY when the user asks for a value/complexity, readiness/value, 2x2, quadrant, or priority matrix — emit a compact chart-ready GFM table with item, value, complexity/readiness, and basis columns. Use high/medium/low when exact numeric values are not available and state that the view is directional.
-- For explicit chart/matrix asks, the first table in the visible answer must be the chart payload table. Required headers: Item or Use case, Value or Business value, Complexity or Readiness, and Basis. Do not substitute a Theme / Executive read / Decision use table for the chart payload.
-- Do not merely describe the chart in prose; the table is the chart payload.
-- RECOMMENDED for spend breakdowns, allocation shares, maturity comparisons, value/complexity tradeoffs, dependency maps, or roadmap sequencing.
-- NEVER fabricate data points to fill a chart; only emit rows when you have source-backed values or clearly label qualitative scores as high/medium/low.
-- NEVER output raw SVG, Mermaid, fenced chart JSON, canvas code, renderer code, or implementation snippets in the visible answer.`;
+export const CHART_OUTPUT_CONTRACT = `EXECUTIVE COMMUNICATION ARTIFACT CONTRACT: Claude owns the advisory judgment and exhibit content. The renderer is display-only.
+- First decide what communication artifact best serves the executive question: executive narrative, comparison matrix, decision matrix, roadmap, capability map, value tree, architecture view, timeline, heatmap, quadrant, prioritization matrix, scorecard, or table.
+- For any explicit table, chart, graph, matrix, scorecard, top-N ranking, named-option comparison, value/complexity, readiness/value, trend, or financial-view ask, emit the exhibit data yourself. Do not rely on the renderer to invent summaries, tables, charts, matrices, titles, caveats, or business language after the fact.
+- Use the existing governed artifact fences when the answer needs a typed exhibit. For rankings, scorecards, and value/complexity decisions, emit a \`\`\`decision-table JSON fence with rows containing initiative, value, valueScore, complexity, complexityScore, readiness, readinessScore, evidenceBasis, recommendation, nextAction, and directional. For trend, bar, and period-series views, emit a \`\`\`chart JSON fence with type, title, data, xKey, yKey, unit, and sourceNote.
+- A compact GFM Markdown table is acceptable when it is the clearest source-backed exhibit and uses human-readable columns. The first table must be the actual requested exhibit, not a Theme / Executive read / Decision use summary.
+- If the evidence is insufficient for the requested exhibit, do not fabricate rows and do not ask the renderer to create a boundary artifact. Give the executive read, state the evidence gap in business language, and name the narrowest validation move.
+- NEVER output raw SVG, Mermaid, canvas code, renderer code, implementation snippets, source-support ledgers, debug labels, or internal IDs in the visible answer.`;
 
 export function isBroadCurrentStateQuestion(query: string): boolean {
   return BROAD_CURRENT_STATE_RE.test(query);

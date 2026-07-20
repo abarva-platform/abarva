@@ -46,10 +46,12 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
-    expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
-    expect(exhibits.tables[1]?.title).toBe("Supporting Material");
+    expect(exhibits.tables).toHaveLength(0);
     expect(exhibits.charts).toHaveLength(0);
     expect(exhibits.prose).toContain("Epic integration work is $350K");
+    expect(JSON.stringify(exhibits)).not.toContain(
+      "Requested Visual Boundary",
+    );
   });
 
   it("renders charts from structured retrieved source rows instead of prose", () => {
@@ -202,7 +204,7 @@ describe("buildStructuredExhibits", () => {
     ]);
   });
 
-  it("renders an evidence table for table-shaped questions with cited sources even without extractable figures", () => {
+  it("keeps cited prose without renderer-invented tables when no table artifact exists", () => {
     const exhibits = buildStructuredExhibits({
       routing: tableRouting("Show me a denial-category table"),
       sources,
@@ -210,15 +212,11 @@ describe("buildStructuredExhibits", () => {
         "The right breakdown is denial reason category, AR days, and overturn rate. Next move: ask Revenue Cycle Operations to validate the category extract from the evidence ledger.",
     });
 
-    expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
-    expect(exhibits.tables[1]?.title).toBe("Supporting Material");
-    expect(exhibits.tables[1]?.rows).toEqual([
-      expect.objectContaining({
-        source: "F12 IT budget",
-        type: "tenant material",
-      }),
-    ]);
+    expect(exhibits.tables).toHaveLength(0);
     expect(exhibits.charts).toHaveLength(0);
+    expect(exhibits.citations[0]).toEqual(
+      expect.objectContaining({ label: "F12 IT budget" }),
+    );
   });
 
   it("renders cited evidence for chart requests without inventing chart rows", () => {
@@ -240,15 +238,14 @@ describe("buildStructuredExhibits", () => {
 
     expect(exhibits.citations).toHaveLength(1);
     expect(exhibits.citations[0]?.sourceClass).toBe("tenant-fact");
-    expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
-    expect(exhibits.tables[1]?.title).toBe("Supporting Material");
+    expect(exhibits.tables).toHaveLength(0);
     expect(exhibits.charts).toHaveLength(0);
     expect(exhibits.prose).toContain(
       "Medical Necessity is the highest-priority",
     );
   });
 
-  it("renders a visible CXO summary table for executive trend asks without markdown tables", () => {
+  it("does not generate a CXO summary table from prose for executive trend asks", () => {
     const exhibits = buildStructuredExhibits({
       routing: tableRouting(
         "For Healthcare Demo, summarize the top AI trends for payer operations. Include one concise table and one chart if useful.",
@@ -258,25 +255,9 @@ describe("buildStructuredExhibits", () => {
         "Payment integrity is the cleanest first value pool because leakage recovery has measurable ownership. Prior authorization is the second bet, but clinical policy and appeal handling need governed workflow controls. Member service agent assist can improve productivity once call-center quality and deflection baselines are validated. A clinical and claims data foundation is the enabling move because repeatable AI depends on governed definitions.",
     });
 
-    expect(exhibits.tables[0]).toEqual(
-      expect.objectContaining({
-        id: "answer-requested-summary-table",
-        title: "CXO Visual Summary",
-        rows: expect.arrayContaining([
-          expect.objectContaining({ theme: "Payment integrity" }),
-          expect.objectContaining({ theme: "Prior authorization" }),
-          expect.objectContaining({ theme: "Member or customer service" }),
-        ]),
-      }),
-    );
-    expect(exhibits.tables[1]).toEqual(
-      expect.objectContaining({
-        id: "answer-requested-visual-fallback",
-        title: "Requested Visual Boundary",
-      }),
-    );
-    expect(exhibits.tables[2]?.title).toBe("Supporting Material");
+    expect(exhibits.tables).toHaveLength(0);
     expect(exhibits.charts).toHaveLength(0);
+    expect(exhibits.prose).toContain("Payment integrity");
   });
 
   it("converts complete markdown tables from Ava prose into typed tables", () => {
@@ -527,8 +508,7 @@ describe("buildStructuredExhibits", () => {
         "Read: First Capital Financial has several live technology investments where the risk profile and ownership are clear enough to drive action now — the table below organizes them by urgency.\n2M run cost | Critical; restricted non-public data, vendor-hosted | Data residency and exit rights review — restricted classification + vendor-hosted is a red flag combination |\n| Marqeta Dispute Manager | Head of Cards & Payments | $4.\nNext move: assign the accountable owner to validate the cited evidence and decide whether this should move into Source or Moves.",
     });
 
-    expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
-    expect(exhibits.tables[1]?.title).toBe("Supporting Material");
+    expect(exhibits.tables).toHaveLength(0);
     expect(exhibits.prose).toContain("First Capital Financial");
     expect(exhibits.prose).toContain("Next, assign");
     expect(exhibits.prose).not.toContain("|");
@@ -549,11 +529,11 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.prose).toBe("");
-    expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
-    expect(exhibits.tables[0]?.note).toContain(
-      "did not expose unvalidated model text",
-    );
+    expect(exhibits.tables).toHaveLength(0);
     expect(JSON.stringify(exhibits)).not.toContain("| AI Use Case |");
+    expect(JSON.stringify(exhibits)).not.toContain(
+      "Requested Visual Boundary",
+    );
   });
 
   it("turns Claude-emitted value/complexity GFM tables into typed matrix charts", () => {
@@ -834,15 +814,14 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.citations).toHaveLength(1);
-    expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
-    expect(exhibits.tables[1]?.title).toBe("Supporting Material");
+    expect(exhibits.tables).toHaveLength(0);
     expect(exhibits.charts).toHaveLength(0);
     expect(exhibits.prose).toContain(
       "Medical necessity is the highest-priority",
     );
   });
 
-  it("renders a truthful evidence-required table when a table is requested without enough cited rows", () => {
+  it("does not invent an evidence-required table when a table is requested without cited rows", () => {
     const exhibits = buildStructuredExhibits({
       routing: tableRouting("Show me a denial-category table"),
       sources: [],
@@ -850,16 +829,12 @@ describe("buildStructuredExhibits", () => {
         "The requested denial-category table is not in the connected tenant evidence. Next move: validate the source extract before approving numbers.",
     });
 
-    expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
-    expect(exhibits.tables[1]?.title).toBe("Supporting Material");
-    expect(exhibits.tables[1]?.rows[0]).toEqual(
-      expect.objectContaining({
-        source: "No cited source returned",
-      }),
-    );
+    expect(exhibits.tables).toHaveLength(0);
+    expect(exhibits.citations).toHaveLength(0);
+    expect(exhibits.prose).toContain("validate the source extract");
   });
 
-  it("renders a cited chart gap table instead of bare prose when chart rows are not extractable", () => {
+  it("keeps prose-only chart caveats when chart rows are not extractable", () => {
     const exhibits = buildStructuredExhibits({
       routing: { ...routing, outputShape: "chart" },
       sources,
@@ -868,30 +843,11 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.charts).toHaveLength(0);
-    expect(exhibits.tables[0]).toEqual(
-      expect.objectContaining({
-        title: "Requested Visual Boundary",
-        rows: [
-          expect.objectContaining({
-            request: "chart",
-          }),
-        ],
-      }),
-    );
-    expect(exhibits.tables[1]).toEqual(
-      expect.objectContaining({
-        title: "Supporting Material",
-        rows: [
-          expect.objectContaining({
-            source: "F12 IT budget",
-            type: "tenant material",
-          }),
-        ],
-      }),
-    );
+    expect(exhibits.tables).toHaveLength(0);
+    expect(exhibits.prose).toContain("monthly ticket baseline");
   });
 
-  it("renders a cited graph gap table instead of bare prose when edge rows are not extractable", () => {
+  it("keeps prose-only graph caveats when edge rows are not extractable", () => {
     const exhibits = buildStructuredExhibits({
       routing: graphRouting("Show me an integration dependency graph"),
       sources,
@@ -900,27 +856,8 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.graphs).toHaveLength(0);
-    expect(exhibits.tables[0]).toEqual(
-      expect.objectContaining({
-        title: "Requested Visual Boundary",
-        rows: [
-          expect.objectContaining({
-            request: "graph",
-          }),
-        ],
-      }),
-    );
-    expect(exhibits.tables[1]).toEqual(
-      expect.objectContaining({
-        title: "Supporting Material",
-        rows: [
-          expect.objectContaining({
-            source: "F12 IT budget",
-            type: "tenant material",
-          }),
-        ],
-      }),
-    );
+    expect(exhibits.tables).toHaveLength(0);
+    expect(exhibits.prose).toContain("integration dependency picture");
   });
 
   it("scrubs orphan pipe headers from visual answers with no validated rows", () => {
@@ -937,11 +874,9 @@ describe("buildStructuredExhibits", () => {
     });
 
     expect(exhibits.prose).not.toContain("| AI Use Case |");
-    expect(exhibits.tables[0]).toEqual(
-      expect.objectContaining({
-        id: "answer-requested-visual-fallback",
-        title: "Requested Visual Boundary",
-      }),
+    expect(exhibits.tables).toHaveLength(0);
+    expect(JSON.stringify(exhibits)).not.toContain(
+      "Requested Visual Boundary",
     );
   });
 
@@ -1136,7 +1071,7 @@ Use the first wave to validate data access, compliance controls, and supervisor 
       ).toBe("Agent Assist");
     });
 
-    it("still renders the guardrail table when the decision-table fence is malformed and no other rows exist", () => {
+    it("does not render a fallback table when the decision-table fence is malformed and no other rows exist", () => {
       const exhibits = buildStructuredExhibits({
         routing: tableRouting(
           "rank agent assist vs payment integrity by value, complexity, readiness",
@@ -1151,7 +1086,8 @@ Use the first wave to validate data access, compliance controls, and supervisor 
         ].join("\n"),
       });
 
-      expect(exhibits.tables[0]?.title).toBe("Requested Visual Boundary");
+      expect(exhibits.tables).toHaveLength(0);
+      expect(exhibits.prose).toContain("validate the source extract");
     });
 
     it("renders the table even when too few rows carry numeric scores to derive charts", () => {
