@@ -117,6 +117,29 @@ describe("GET /api/v1/artifacts/[artifactId]", () => {
     expect(buf.subarray(0, 2).toString("latin1")).toBe("PK"); // xlsx is also a zip
   });
 
+  it("renders a pdf artifact as a real PDF buffer (MOVES-QUALITY-001)", async () => {
+    mockGetArtifact.mockResolvedValue(
+      recordWith("pdf", { renderedHtml: "<html>x</html>", renderableDoc: goodDocument() }),
+    );
+
+    const res = await GET(reqUrl(), { params });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("application/pdf");
+    expect(res.headers.get("content-disposition")).toMatch(/attachment; filename=".+\.pdf"/);
+    const buf = Buffer.from(await res.arrayBuffer());
+    expect(buf.subarray(0, 5).toString("latin1")).toBe("%PDF-");
+  });
+
+  it("honors ?format=pdf on a docx-prescribed artifact", async () => {
+    mockGetArtifact.mockResolvedValue(
+      recordWith("docx", { renderedHtml: "<html>x</html>", renderableDoc: goodDocument() }),
+    );
+
+    const res = await GET(reqUrl("?format=pdf"), { params });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("application/pdf");
+  });
+
   it("honors ?format=docx on an xlsx-prescribed artifact", async () => {
     mockGetArtifact.mockResolvedValue(
       recordWith("xlsx", { renderedHtml: "<html>x</html>", renderableDoc: goodDocument() }),
