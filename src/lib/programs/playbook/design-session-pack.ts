@@ -9,7 +9,12 @@ import "server-only";
 // templates + sessions, capture alignment, THEN compose the deliverable" spine.
 
 import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
-import type { MovePhasePlaybook } from "./move-phase-playbook";
+import {
+  WORKSHOP_TEMPLATES,
+  type MovePhasePlaybook,
+  type MovePhaseSession,
+  type WorkshopTemplateKind,
+} from "./move-phase-playbook";
 import type { TenancyCtx } from "@/lib/programs/types.db";
 
 function esc(s: string): string {
@@ -21,6 +26,56 @@ function ol(items: string[]): string {
 }
 function ul(items: string[]): string {
   return `<ul>${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
+}
+
+function renderAlignmentPoints(session: MovePhaseSession): string {
+  if (!session.alignmentPoints?.length) return "";
+  const rows = session.alignmentPoints
+    .map(
+      (a) =>
+        `<tr><td><strong>${esc(a.betweenRoles[0])}</strong> ↔ <strong>${esc(a.betweenRoles[1])}</strong></td><td>${esc(a.question)}</td></tr>`,
+    )
+    .join("");
+  return `<h4>Alignment needed</h4>
+    <table><tr><th>Between</th><th>Must agree on</th></tr>${rows}</table>`;
+}
+
+function renderFacilitationNotes(session: MovePhaseSession): string {
+  const f = session.facilitation;
+  if (!f) return "";
+  return `<h4>Facilitator notes</h4>
+    <div class="facilitation">
+      <div><strong>Open with:</strong> ${esc(f.opening)}</div>
+      <div><strong>Close by confirming:</strong> ${esc(f.closing)}</div>
+      ${f.probeIfWeak.length ? `<div><strong>If the room gives a weak answer, probe:</strong>${ul(f.probeIfWeak)}</div>` : ""}
+      ${f.disagreementSignals.length ? `<div><strong>Watch for real disagreement:</strong>${ul(f.disagreementSignals)}</div>` : ""}
+      <div><strong>Parking lot rule:</strong> ${esc(f.parkingLotRule)}</div>
+    </div>`;
+}
+
+function renderSessionWorkshopTemplateRefs(session: MovePhaseSession): string {
+  if (!session.workshopTemplates?.length) return "";
+  const labels = session.workshopTemplates
+    .map((k) => WORKSHOP_TEMPLATES[k]?.label ?? k)
+    .join(", ");
+  return `<div class="muted">Workshop templates used: ${esc(labels)} — see appendix.</div>`;
+}
+
+/** Standalone, reusable workshop-template appendix — one instance per kind used
+ *  across the whole pack, not repeated per session. */
+function renderWorkshopTemplateAppendix(kinds: WorkshopTemplateKind[]): string {
+  if (kinds.length === 0) return "";
+  const sections = kinds
+    .map((k) => {
+      const spec = WORKSHOP_TEMPLATES[k];
+      return `<div class="wt"><h3>${esc(spec.label)}</h3>
+        <table><tr>${spec.columns.map((c) => `<th>${esc(c)}</th>`).join("")}</tr>
+        <tr>${spec.columns.map(() => "<td>&nbsp;</td>").join("")}</tr></table></div>`;
+    })
+    .join("");
+  return `<h2>Workshop Template Appendix</h2>
+    <p class="muted">Blank, reusable templates referenced by the sessions above — print or copy one per session as needed.</p>
+    ${sections}`;
 }
 
 export function renderDesignSessionPackHtml(
@@ -44,16 +99,22 @@ export function renderDesignSessionPackHtml(
         <p class="obj">${esc(s.objective)}</p>
         <div class="kv"><strong>In the room:</strong> ${s.participants.map(esc).join(" · ")}</div>
         <h4>Pre-session homework</h4>${ul(s.homework)}
+        ${renderFacilitationNotes(s)}
         <h4>Discussion guide</h4>${ol(s.discussionGuide)}
         <h4>Frameworks to apply</h4>${frameworks}
         <h4>Capture template</h4>${ul(s.captureTemplate)}
+        ${renderAlignmentPoints(s)}
         <div class="gate ${gateTone}"><strong>Alignment gate (${esc(s.gate.severity)}):</strong>
           ${esc(s.gate.criterion)} <span class="muted">— signed by ${esc(s.gate.alignedBy)}</span></div>
         <div class="muted feeds">Feeds: ${s.feedsDeliverables.map((d) => esc(d.replace(/_/g, " "))).join(", ")}</div>
+        ${renderSessionWorkshopTemplateRefs(s)}
         ${i < playbook.sessions.length - 1 ? '<hr class="soft"/>' : ""}
       </section>`;
     })
     .join("");
+  const allTemplateKinds = Array.from(
+    new Set(playbook.sessions.flatMap((s) => s.workshopTemplates ?? [])),
+  );
   return `<!doctype html><html><head><meta charset="utf-8"/>
 <title>${esc(moveName)} — ${esc(playbook.label)} Design Session Pack</title>
 <style>
@@ -77,6 +138,10 @@ export function renderDesignSessionPackHtml(
   .feeds{margin-top:6px}
   hr.soft{border:none;border-top:1px dashed #d5dae2;margin:22px 0}
   .session{margin-bottom:6px}
+  .facilitation{background:#eef2f7;border-radius:6px;padding:10px 14px;margin:6px 0 12px;font-size:13px}
+  .facilitation>div{margin:5px 0}
+  .facilitation ul{margin:2px 0 4px 20px}
+  .wt{margin:14px 0 20px}
 </style></head><body>
 <h1>${esc(moveName)}</h1>
 <div class="sub">${esc(playbook.label)} — Design Session Pack</div>
@@ -87,6 +152,8 @@ a capture template to complete, and an alignment gate that closes it. The
 captured outputs become the attested inputs for the deliverables named under
 each session — nothing in the final documents is invented.</p>
 ${sessions}
+<hr/>
+${renderWorkshopTemplateAppendix(allTemplateKinds)}
 <hr/>
 <p class="muted">Governed session pack — generated by AbarVa Nexus and stored in
 the Move Artifact Vault. Complete the capture templates and upload them to feed
