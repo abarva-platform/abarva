@@ -54,6 +54,8 @@ export interface AtlasChatPanelProps {
   messages: AtlasMessage[];
   /** When true a transient "aVa is thinking…" turn appears at thread tail. */
   pending: boolean;
+  /** Optional live progress label for streamed responses. */
+  pendingMessage?: string;
   /**
    * Caller's send handler. AgentDock owns composer state and forwards both
    * the trimmed text and any successfully uploaded attachment refs. Tower can
@@ -103,6 +105,7 @@ function visibleAvaCopy(value: string): string {
 export function AtlasChatPanel({
   messages,
   pending,
+  pendingMessage,
   onSubmit,
   suggestions,
   onSuggestion,
@@ -132,11 +135,11 @@ export function AtlasChatPanel({
       base.push({
         id: ATLAS_THINKING_ID,
         role: "agent",
-        body: "aVa is thinking…",
+        body: pendingMessage?.trim() || "aVa is thinking…",
       });
     }
     return base;
-  }, [messages, pending]);
+  }, [messages, pending, pendingMessage]);
 
   // Suggestions → AgentDock SuggestedAction[]. We do NOT pre-fill the
   // composer; the caller's onSuggestion routes signal/link/message kinds
