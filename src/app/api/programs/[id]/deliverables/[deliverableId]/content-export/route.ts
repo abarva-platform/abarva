@@ -45,6 +45,7 @@ type ExportDeliverableRow = {
   engagement_id: string;
   deliverable_type_key: string;
   title: string | null;
+  signed_off_version: number | null;
 };
 
 type ExportDeliverableVersionRow = {
@@ -701,7 +702,13 @@ export async function GET(
   try {
     deliverable = await azureRead.maybeSingle<ExportDeliverableRow>({
       table: "deliverables_v2",
-      columns: ["id", "engagement_id", "deliverable_type_key", "title"],
+      columns: [
+        "id",
+        "engagement_id",
+        "deliverable_type_key",
+        "title",
+        "signed_off_version",
+      ],
       where: { id: deliverableId, engagement_id: programId },
     });
   } catch (err) {
@@ -710,15 +717,24 @@ export async function GET(
   }
   if (!deliverable) return jsonError(404, "deliverable_not_found");
 
-  // Fetch latest version content
+  // Fetch the authoritative version: the client-approved version
+  // (signed_off_version) when one has been recorded, over a later,
+  // unreviewed AI regeneration — the same rule already applied when this
+  // deliverable's content feeds the next phase (deliverable-content-signals.ts,
+  // moves-generate-deps.ts). Without this, downloading "Word"/"HTML"/"Excel"
+  // from the Documents panel could silently hand back an unreviewed draft
+  // even after a human explicitly approved an earlier version.
   let version: ExportDeliverableVersionRow | null;
   try {
-    version = await azureRead.maybeSingle<ExportDeliverableVersionRow>({
-      table: "deliverable_versions",
-      columns: ["content", "version", "generated_at"],
-      where: { deliverable_id: deliverableId },
-      orderBy: { column: "version", direction: "desc" },
-    });
+    const rows = await azureRead.query<ExportDeliverableVersionRow>(
+      "SELECT content, version, generated_at FROM deliverable_versions " +
+        "WHERE deliverable_id = $1 " +
+        "ORDER BY (version = $2) DESC, version DESC " +
+        "LIMIT 1",
+      [deliverableId, deliverable.signed_off_version],
+      { missingTable: "empty" },
+    );
+    version = rows[0] ?? null;
   } catch (err) {
     console.error("[content-export] version fetch error", err);
     return jsonError(500, "db_error");
