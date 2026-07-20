@@ -83,6 +83,10 @@ import type {
   TowerMartRequiredFieldGap,
 } from "@/lib/cio-tower/tower-mart-view-model";
 import type { TowerV3RuntimeViewModel } from "@/lib/tower/tower-v3-runtime-view";
+import {
+  buildTowerChatAvaAnswerPacket,
+  type TowerChatVisibleAnswer,
+} from "@/lib/cio-tower/tower-chat-artifacts";
 
 export interface TowerSubstrateCounts {
   initiatives: number;
@@ -93,15 +97,13 @@ export interface TowerSubstrateCounts {
   scenarios: number;
 }
 
-interface CioTowerVisibleAnswer {
-  answer: string;
-  followUpQuestion?: string | null;
-}
-
 interface CioTowerChatResponse {
   response?: string;
-  modelOutput?: CioTowerVisibleAnswer;
+  modelOutput?: TowerChatVisibleAnswer;
   traceKey?: string;
+  validationStatus?: "passed" | "failed";
+  metricCards?: Array<{ label: string; value: string }>;
+  gaps?: string[];
 }
 
 function labelizeCioMeasureKey(value: string): string {
@@ -11166,6 +11168,11 @@ export function TowerIndexPage({
     cioDashboardModel.initiativeEvidenceCount > 0 ||
     cioDashboardModel.budgetRollupCount > 0 ||
     cioDashboardModel.committedTotal > 0;
+  const activeTenantName =
+    towerMartView?.command.tenantName ??
+    towerV3RuntimeView?.tenantName ??
+    cxoView?.tenantName ??
+    tenantName;
 
   // ─── aVa chat state · wired to /api/tower/cio-chat via the shared
   // <AgentDock> mounted around the workspace below. The dock owns the
@@ -11268,6 +11275,17 @@ export function TowerIndexPage({
           ]);
           return;
         }
+        const agentAnswer = buildTowerChatAvaAnswerPacket({
+          tenantKey: clientId,
+          tenantName: activeTenantName,
+          question: trimmed,
+          modelOutput,
+          response: json.response ?? null,
+          metricCards: json.metricCards,
+          gaps: json.gaps,
+          validationStatus: json.validationStatus,
+          traceKey: json.traceKey ?? null,
+        });
         setAtlasThreadId(json.traceKey ?? atlasThreadId);
         setAtlasMessages((prev) => [
           ...prev,
@@ -11275,6 +11293,7 @@ export function TowerIndexPage({
             id: `atlas-${Date.now()}`,
             role: "atlas",
             content: modelOutput.answer,
+            agentAnswer,
           },
         ]);
         if (modelOutput.followUpQuestion) {
@@ -11303,7 +11322,7 @@ export function TowerIndexPage({
         setAtlasPending(false);
       }
     },
-    [clientId, atlasThreadId],
+    [activeTenantName, clientId, atlasThreadId],
   );
 
   const handleMetricAsk = useCallback<MetricAskHandler>(
@@ -11320,11 +11339,7 @@ export function TowerIndexPage({
     [sendToAtlas],
   );
 
-  const towerMastheadName =
-    towerMartView?.command.tenantName ??
-    towerV3RuntimeView?.tenantName ??
-    cxoView?.tenantName ??
-    tenantName;
+  const towerMastheadName = activeTenantName;
   const towerBudgetEnvelope =
     !towerMartView && !towerV3RuntimeView && cxoView
       ? findCxoCard(cxoView.cards, "total_it_budget_fy26")

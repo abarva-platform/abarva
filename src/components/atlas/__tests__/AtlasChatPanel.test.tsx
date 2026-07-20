@@ -22,6 +22,7 @@ import {
 } from "../AtlasChatPanel";
 import { modeStorageKey } from "@/components/agent/AgentDock";
 import type { AtlasSuggestion } from "@/lib/atlas/types";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 
 const SURFACE = "tower";
 
@@ -42,6 +43,71 @@ const SUGGESTIONS: AtlasSuggestion[] = [
     kind: "message",
   },
 ];
+
+const AGENT_ANSWER: AvaAnswerPacket = {
+  surface: "tower",
+  mode: "CONTROL",
+  tenantKey: "skyharbor",
+  question: "Rank the value levers.",
+  intent: "tower_governed_answer",
+  status: "answered",
+  directAnswer: "Prioritize the governed value levers.",
+  prose: "Prioritize the governed value levers.",
+  factsUsed: [],
+  metricsUsed: [],
+  relationshipsUsed: [],
+  artifacts: [
+    {
+      artifact: "table",
+      id: "tower_value_levers",
+      title: "Tower value levers",
+      columns: [
+        { key: "lever", label: "Lever", format: "text", align: "left" },
+        {
+          key: "annual_value",
+          label: "Annual value",
+          format: "currency",
+          align: "right",
+        },
+      ],
+      rows: [{ lever: "Contact center deflection", annual_value: "$18M" }],
+    },
+  ],
+  tables: [
+    {
+      id: "tower_value_levers",
+      title: "Tower value levers",
+      columns: [
+        { key: "lever", label: "Lever", format: "text", align: "left" },
+        {
+          key: "annual_value",
+          label: "Annual value",
+          format: "currency",
+          align: "right",
+        },
+      ],
+      rows: [{ lever: "Contact center deflection", annual_value: "$18M" }],
+    },
+  ],
+  charts: [],
+  graphs: [],
+  citations: [],
+  gaps: [],
+  caveats: [],
+  nextSteps: [],
+  quality: {
+    confidence: "medium",
+    evidenceStrength: "partial",
+    tenantGrounding: "complete",
+    answerCompleteness: "complete",
+  },
+  safety: {
+    tenantFencePassed: true,
+    rawIdsSuppressed: true,
+    forbiddenLanguagePassed: true,
+    unsupportedClaimsBlocked: true,
+  },
+};
 
 beforeEach(() => {
   window.localStorage.clear();
@@ -92,6 +158,34 @@ describe("AtlasChatPanel · adapter", () => {
     );
   });
 
+  it("passes governed aVa answer artifacts through to AgentDock", () => {
+    render(
+      <AtlasChatPanel
+        messages={[
+          {
+            id: "a-packet",
+            role: "atlas",
+            content: "Prioritize the governed value levers.",
+            agentAnswer: AGENT_ANSWER,
+          },
+        ]}
+        pending={false}
+        onSubmit={jest.fn()}
+        suggestions={[]}
+        onSuggestion={jest.fn()}
+        workspace={<div>w</div>}
+        surface={SURFACE}
+      />,
+    );
+
+    expect(screen.getByLabelText("aVa answer")).toHaveTextContent(
+      "Tower value levers",
+    );
+    expect(screen.getByLabelText("aVa answer")).toHaveTextContent(
+      "Contact center deflection",
+    );
+  });
+
   it("renders the aVa product profile and keeps the default rail uncluttered", () => {
     render(
       <AtlasChatPanel
@@ -105,7 +199,7 @@ describe("AtlasChatPanel · adapter", () => {
       />,
     );
 
-    expect(screen.getByText("aVa")).toBeInTheDocument();
+    expect(screen.getByTestId("ava-ask-mark")).toBeInTheDocument();
     expect(screen.getAllByText("Tower advisor.").length).toBeGreaterThan(0);
     expect(screen.queryByLabelText("Quoted context")).not.toBeInTheDocument();
     expect(screen.queryByText("Atlas")).not.toBeInTheDocument();
