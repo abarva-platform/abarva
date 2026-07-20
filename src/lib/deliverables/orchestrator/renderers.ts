@@ -378,6 +378,148 @@ function svgMatrixExhibit(exhibit: RenderableExhibit): string {
   </svg>`;
 }
 
+// ── Architecture-view swimlane renderers ──
+//
+// conceptual/logical/physical_architecture and agent_orchestration are
+// distinct diagram KINDS (not one generic "diagram" box) — each answers a
+// different question and needs its own layout. The lane labels below mirror
+// the `requiredElements` grouping defined for these exhibit kinds in
+// briefs/deliverable-structures.ts (kept as a local constant here rather than
+// imported, since these are static reference labels, the same pattern
+// `golden-bar.ts` already uses for its own keyword lists — importing across
+// that module boundary would be a real dependency, not just shared data).
+// The model's free-text exhibit description is split into clauses (the same
+// `exhibitClauses` extraction used elsewhere) and each clause is assigned to
+// the lane whose keywords it best matches, so the rendered diagram always
+// shows the FULL required lane structure even when the model's own wording
+// only touches some of it.
+
+interface ArchitectureLane {
+  label: string;
+  keywords: RegExp;
+}
+
+const CONCEPTUAL_LANES: ArchitectureLane[] = [
+  { label: 'Personas & Channels', keywords: /persona|user|channel|audience/i },
+  { label: 'Business Capabilities & Domains', keywords: /capabilit|domain|function/i },
+  { label: 'Trust, Governance & Outcomes', keywords: /trust|govern|boundary|outcome|compliance/i },
+];
+
+const LOGICAL_LANES: ArchitectureLane[] = [
+  { label: 'Experience & Orchestration', keywords: /experience|workflow|orchestrat/i },
+  { label: 'Agents & Models', keywords: /agent|model/i },
+  { label: 'Context, Data & Integration', keywords: /context|knowledge|data|integrat/i },
+  { label: 'Identity, Security, Observability & Governance', keywords: /identity|security|observab|governance|human-in-the-loop|hitl/i },
+];
+
+const PHYSICAL_LANES: ArchitectureLane[] = [
+  { label: 'Cloud Boundaries & Network', keywords: /subscription|account|region|network|private endpoint/i },
+  { label: 'Runtime & Model Endpoints', keywords: /runtime|endpoint|compute|container/i },
+  { label: 'Data, Search & Events', keywords: /data platform|vector|search|queue|event|database/i },
+  { label: 'Secrets, Monitoring, CI/CD & Resilience', keywords: /secret|monitor|ci\/cd|cicd|resilien|recovery/i },
+];
+
+const AGENT_ORCHESTRATION_STEPS: string[] = [
+  'Trigger',
+  'Intent Router',
+  'Planner',
+  'Context Assembler',
+  'Tool/Retrieval Selection',
+  'Model Execution',
+  'Evidence Challenge',
+  'Policy/Control Gate',
+  'Human Approval',
+  'Action Execution',
+  'Trace/Monitoring',
+];
+
+function assignToLanes(clauses: string[], lanes: ArchitectureLane[]): string[][] {
+  const buckets: string[][] = lanes.map(() => []);
+  clauses.forEach((clause, i) => {
+    const matchIdx = lanes.findIndex((l) => l.keywords.test(clause));
+    buckets[matchIdx >= 0 ? matchIdx : i % lanes.length].push(clause);
+  });
+  return buckets;
+}
+
+function svgLegendRow(y: number, width: number): string {
+  const items: [string, string][] = [
+    ['illustrative', 'var(--muted)'],
+    ['selected', 'var(--fresh)'],
+    ['client-confirmed', '#B5852A'],
+  ];
+  const chips = items
+    .map(([label, color], i) => {
+      const x = width / 2 - 260 + i * 180;
+      return `<circle cx="${x}" cy="${y}" r="5" fill="${color}"/><text x="${x + 12}" y="${y + 4}" font-size="10" fill="var(--muted)">${esc(label)}</text>`;
+    })
+    .join('');
+  return `<g data-legend="true">${chips}</g>`;
+}
+
+function svgLayeredArchitectureExhibit(
+  exhibit: RenderableExhibit,
+  lanes: ArchitectureLane[],
+  opts: { legend?: boolean } = {},
+): string {
+  const clauses = exhibitClauses(exhibit);
+  const buckets = assignToLanes(clauses, lanes);
+  const laneHeight = 62;
+  const width = 760;
+  const top = 24;
+  const rows = lanes
+    .map((lane, i) => {
+      const y = top + i * (laneHeight + 10);
+      const content = buckets[i].length
+        ? buckets[i].map((c) => c.slice(0, 60)).join(' · ')
+        : '(use judgment — no clause matched this layer)';
+      return `<g>
+        <rect x="24" y="${y}" width="${width - 48}" height="${laneHeight}" rx="8" fill="#fff" stroke="var(--line)"/>
+        <rect x="24" y="${y}" width="6" height="${laneHeight}" rx="3" fill="var(--fresh)"/>
+        <text x="42" y="${y + 22}" font-size="11" font-weight="700">${esc(lane.label)}</text>
+        <text x="42" y="${y + 42}" font-size="10" fill="var(--muted)">${esc(content)}</text>
+      </g>`;
+    })
+    .join('');
+  const legendY = top + lanes.length * (laneHeight + 10) + 16;
+  const totalHeight = legendY + (opts.legend ? 20 : 4);
+  return `<svg class="exhibit-svg" viewBox="0 0 ${width} ${totalHeight}" role="img" aria-label="${esc(exhibit.title)}">
+    ${rows}
+    ${opts.legend ? svgLegendRow(legendY, width) : ''}
+  </svg>`;
+}
+
+function svgAgentOrchestrationExhibit(exhibit: RenderableExhibit): string {
+  const clauses = exhibitClauses(exhibit);
+  const steps = AGENT_ORCHESTRATION_STEPS;
+  const nodeWidth = 108;
+  const gap = 14;
+  const width = steps.length * (nodeWidth + gap) + gap;
+  const y = 34;
+  const nodes = steps
+    .map((step, i) => {
+      const x = gap + i * (nodeWidth + gap);
+      const isGate = step === 'Policy/Control Gate' || step === 'Human Approval';
+      const arrow =
+        i < steps.length - 1
+          ? `<path d="M${x + nodeWidth} ${y + 30} L${x + nodeWidth + gap} ${y + 30}" stroke="var(--fresh)" stroke-width="2" marker-end="url(#arrow-ao-${esc(exhibit.key)})"/>`
+          : '';
+      const annotation = clauses[i] ? clauses[i].slice(0, 30) : '';
+      return `${arrow}<g>
+        <rect x="${x}" y="${y}" width="${nodeWidth}" height="60" rx="8" fill="${isGate ? '#FDF6E3' : '#fff'}" stroke="${isGate ? '#E8CF8A' : 'var(--line)'}"/>
+        <text x="${x + nodeWidth / 2}" y="${y + 24}" text-anchor="middle" font-size="10" font-weight="700">${esc(step)}</text>
+        ${annotation ? `<text x="${x + nodeWidth / 2}" y="${y + 42}" text-anchor="middle" font-size="8" fill="var(--muted)">${esc(annotation)}</text>` : ''}
+      </g>`;
+    })
+    .join('');
+  const legendY = y + 90;
+  return `<svg class="exhibit-svg" viewBox="0 0 ${width} ${legendY + 20}" role="img" aria-label="${esc(exhibit.title)}">
+    <defs><marker id="arrow-ao-${esc(exhibit.key)}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--fresh)"/></marker></defs>
+    ${nodes}
+    <circle cx="${width / 2 - 90}" cy="${legendY}" r="5" fill="#FDF6E3" stroke="#E8CF8A"/><text x="${width / 2 - 78}" y="${legendY + 4}" font-size="10" fill="var(--muted)">policy/control or human-approval gate</text>
+  </svg>`;
+}
+
 function svgTimelineExhibit(exhibit: RenderableExhibit): string {
   const clauses = exhibitClauses(exhibit);
   const width = Math.max(720, clauses.length * 170);
@@ -405,7 +547,15 @@ function exhibitHtml(exhibit: RenderableExhibit, index: number): string {
       ? svgMatrixExhibit(exhibit)
       : exhibit.kind === 'timeline'
         ? svgTimelineExhibit(exhibit)
-        : svgFlowExhibit(exhibit, domId);
+        : exhibit.kind === 'conceptual_architecture'
+          ? svgLayeredArchitectureExhibit(exhibit, CONCEPTUAL_LANES)
+          : exhibit.kind === 'logical_architecture'
+            ? svgLayeredArchitectureExhibit(exhibit, LOGICAL_LANES)
+            : exhibit.kind === 'physical_architecture'
+              ? svgLayeredArchitectureExhibit(exhibit, PHYSICAL_LANES, { legend: true })
+              : exhibit.kind === 'agent_orchestration'
+                ? svgAgentOrchestrationExhibit(exhibit)
+                : svgFlowExhibit(exhibit, domId);
   return `<figure class="visual-exhibit" data-exhibit="${domId}" data-kind="${esc(exhibit.kind)}">
     <figcaption><span>${esc(exhibit.kind)}</span><strong>${esc(exhibit.title)}</strong></figcaption>
     ${visual}
