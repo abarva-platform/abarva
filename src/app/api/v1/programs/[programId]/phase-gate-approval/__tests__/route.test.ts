@@ -184,11 +184,11 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     );
     expect(mockSaveGateDecisionArtifact).toHaveBeenCalledWith(
       ctx,
-      expect.objectContaining({ override: false, carriedGaps: [] }),
+      expect.objectContaining({ softGapsCarried: false, hardGateOverride: null, carriedGaps: [] }),
     );
   });
 
-  it("labels a soft-carry pass as override=true but never invents a hard pass", async () => {
+  it("labels a soft-carry pass as softGapsCarried=true, never as an override", async () => {
     mockEvaluateGate.mockResolvedValue({
       failedChecks: [
         { check: "optional_stakeholder_review", reason: "Not logged", severity: "soft" },
@@ -207,7 +207,8 @@ describe("POST /api/v1/programs/[programId]/phase-gate-approval", () => {
     expect(mockSaveGateDecisionArtifact).toHaveBeenCalledWith(
       ctx,
       expect.objectContaining({
-        override: true,
+        softGapsCarried: true,
+        hardGateOverride: null,
         carriedGaps: [
           expect.objectContaining({ check: "optional_stakeholder_review", severity: "soft" }),
         ],

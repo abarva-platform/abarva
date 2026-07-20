@@ -280,8 +280,16 @@ export async function POST(
     // to the Artifact Vault. Soft-fail checks that were not satisfied are the
     // carried-forward gaps — they stay visible in the File Cabinet (and on the
     // record) instead of vanishing once the gate is crossed. Best-effort.
+    //
+    // NOTE: `bypassGate` never lets a HARD check through — the unconditional
+    // gate_blocked 409 above already ran before this point regardless of the
+    // flag. So this is never a hard-gate override; at most it's an explicit
+    // human acknowledgment of unmet SOFT criteria (a normal, hard-gate-clean
+    // pass). `hardGateOverride` stays null — this route implements no hard
+    // bypass capability today (see gate-override-artifact.ts's module
+    // comment for why that distinction matters).
     const carriedGaps = gate.failedChecks.filter((c) => c.severity === "soft");
-    const overrode = carriedGaps.length > 0 || !!body.bypassGate;
+    const softGapsCarried = carriedGaps.length > 0 || !!body.bypassGate;
     const gateArtifact = await saveGateDecisionArtifact(ctx, {
       moveId: programId,
       moveName: program.name ?? undefined,
@@ -290,7 +298,8 @@ export async function POST(
       approverName: ctx.email ?? actor.personId,
       approverRole: ctx.role ?? "gate approver",
       rationale: humanRationale,
-      override: overrode,
+      softGapsCarried,
+      hardGateOverride: null,
       carriedGaps: carriedGaps.map((c) => ({
         check: c.check,
         reason: c.reason ?? null,
@@ -311,7 +320,8 @@ export async function POST(
         recorded: !!gateArtifact,
         artifactId: gateArtifact?.artifactId ?? null,
         blobStored: gateArtifact?.blobStored ?? false,
-        override: overrode,
+        softGapsCarried,
+        hardGateOverride: null,
         carriedGaps: carriedGaps.map((c) => c.check),
       },
     });
