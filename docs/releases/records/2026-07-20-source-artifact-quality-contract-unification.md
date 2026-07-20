@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -105,13 +105,27 @@ artifact's existing hand-tuned content:
   repeatedly earlier this session (unrelated to this change).
 - `pass` — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`
   — clean, no errors.
-- `pending` — `npm run release:check` — to run before PR.
-- `pending` — Live signed-in generation proof for at least one high-stakes artifact,
-  confirming (a) the effective system prompt actually reaches Claude with the appended
-  policy block, (b) generation still succeeds end-to-end, (c) the resulting artifact's
-  `body_generation_metadata.sectionVerification` shows real (not `null`) coverage for a
-  code that previously had none. To be completed and recorded before claiming
-  "live-proven."
+- `pass` — `npm run release:check` — passed.
+- `partial` — Live signed-in verification, honestly incomplete. Attempted against a real
+  Healthcare Demo tenant event
+  (`c03ffe14-49fb-403e-8d47-ed23c9fea9e2`, "network operations and monitoring"
+  and "claims processing and adjudication" events): confirmed no console errors on the
+  deployed pages; confirmed the live artifact-lifecycle operator matrix
+  (`/source/events/.../scope`, Files tab) renders each artifact's "Required exhibits"
+  text with values that exactly match this release's expectations (e.g. d16 Evaluation
+  Scorecard shows "Vendor X Criteria Matrix, Weighted Totals, Evidence Citations, Panel
+  Scores..." — the exact derived list asserted in `section-conformance.test.ts`) —
+  real, corroborating evidence that the underlying profile data this release derives from
+  is correct and live. **Could not trigger a genuinely fresh generation call** through the
+  available demo-tenant UI within reasonable effort: no direct "Generate" button exists
+  on the Steps/Files workspaces for the events checked, an aVa-chat request to
+  "regenerate the Sourcing Strategy Memo" returned a conversational response without
+  invoking `POST .../generate` (confirmed via network-request inspection — zero requests
+  to any `generate` URL were observed), and triggering generation through the P0
+  approval-gate flow on an unapproved event was judged out of scope for a verification
+  step (it would leave a permanent, audit-logged approval action attributed to the
+  operator account). Recording this honestly rather than claiming a full generation-path
+  proof that was not actually achieved.
 
 ## Rollout Plan
 
@@ -120,14 +134,16 @@ every Source generation call — no flag, no migration.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
+  (run [29739958706](https://github.com/abarva-platform/abarva/actions/runs/29739958706)).
 - Shared runtime mutators: none beyond the standard main-deploy workflow.
-- Approved image digest: recorded post-merge once the deploy run completes.
-- ACA runtime invariant: to be verified post-deploy (template image = 100%-traffic
-  revision image = worker images, matching approved digest).
-- Worker image invariant: covered by the same main-deploy workflow step.
+- Approved image digest: `sha256:a6c033e9861abedbc62ee230d30ca70bd7613eb2f71d727a752a89ac11351093`.
+- ACA runtime invariant: verified 2026-07-20T11:56:07Z — template image, active image, and
+  the 100%-traffic revision (`ca-abarva-web-lab-eastus--mfbb4f48d`) all match the approved
+  digest above; health check `ok: true`.
+- Worker image invariant: covered by the same main-deploy workflow step (passed).
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes — a real generation run, see QA above.
+- Live signed-in proof required: yes — attempted, honestly partial; see QA above.
 
 ## Rollback Plan
 
@@ -168,4 +184,16 @@ change already-generated bodies.
   supplementary layer). A prompt whose own hand-written instructions actively conflict
   with the appended policy block (none identified during this pass, but not exhaustively
   audited across all 40) would need its own review.
-- Live signed-in generation proof is pending as of this record's initial write.
+- **No genuinely fresh live generation call was observed against the deployed change.**
+  The available Healthcare Demo tenant events either already had their high-stakes
+  artifacts generated (before this deploy, so their content doesn't reflect the appended
+  policy block) or required an unapproved P0 gate to unlock generation, which was judged
+  out of scope for a verification step (a real, audit-logged approval action, not a
+  read-only check). aVa chat does not appear to be wired to invoke the generate endpoint
+  directly — a natural-language "regenerate this artifact" request produced a
+  conversational reply with no corresponding network call to `.../generate`. What *was*
+  confirmed live: the pages render without error, and the live artifact-lifecycle
+  operator matrix shows required-exhibit text consistent with this release's expectations
+  for a previously-uncovered code (d16). A follow-up with either (a) a demo event already
+  past its P0 gate with an ungenerated high-stakes artifact, or (b) a deliberate,
+  disclosed gate approval, would close this gap properly.
