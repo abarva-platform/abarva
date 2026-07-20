@@ -122,4 +122,79 @@ describe("signOffDeliverable", () => {
       }),
     );
   });
+
+  it("supersedes a prior approved upload — a second approved replacement moves signed_off_version and approved_artifact_id forward, not just accumulates", async () => {
+    // The artifact-level supersession chain (move_artifacts.lifecycle_state/
+    // superseded_by_artifact_id) is exercised by saveMoveArtifact and already
+    // covered directly in move-artifacts.test.ts. This proves the OTHER half:
+    // deliverables_v2's pointer (approved_artifact_id/signed_off_version)
+    // tracks the CURRENT approved upload across repeated sign-offs, not the
+    // first one.
+    const versionPayloads: unknown[] = [];
+    const updatePayloads: unknown[] = [];
+
+    fromMock.mockImplementation((table: string) => {
+      if (table === "deliverables_v2") {
+        const deliverableCalls = fromMock.mock.calls.filter(([t]) => t === "deliverables_v2").length;
+        // Odd calls (1st, 3rd) are the read-current_version select; even calls
+        // (2nd, 4th) are the update.
+        if (deliverableCalls % 2 === 1) {
+          const priorApprovals = Math.floor(deliverableCalls / 2);
+          return selectDeliverable({
+            data: { current_version: 2 + priorApprovals },
+            error: null,
+          });
+        }
+        return updateDeliverable(updatePayloads);
+      }
+      if (table === "deliverable_versions") return insertVersion(versionPayloads);
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    const ctx = { clientId: "client-1", userId: "person-1", email: "approver@example.com" };
+
+    await signOffDeliverable(ctx, "move-1", "deliverable-1", {
+      approvedArtifactId: "artifact-approved-1",
+      approvedContent: {
+        content: "First client-approved replacement.",
+        fileName: "v1.docx",
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        parseMethod: "docx-mammoth",
+        warnings: [],
+      },
+    });
+
+    await signOffDeliverable(ctx, "move-1", "deliverable-1", {
+      approvedArtifactId: "artifact-approved-2",
+      approvedContent: {
+        content: "Second, superseding client-approved replacement.",
+        fileName: "v2.docx",
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        parseMethod: "docx-mammoth",
+        warnings: [],
+      },
+    });
+
+    // Both approved versions are preserved as real deliverable_versions rows
+    // (version history, not overwritten)...
+    expect(versionPayloads).toHaveLength(2);
+    expect(versionPayloads[0]).toEqual(
+      expect.objectContaining({ version: 3, content: "First client-approved replacement." }),
+    );
+    expect(versionPayloads[1]).toEqual(
+      expect.objectContaining({ version: 4, content: "Second, superseding client-approved replacement." }),
+    );
+
+    // ...but deliverables_v2's authoritative pointer moves forward to the
+    // LATEST approval, not the first one.
+    expect(updatePayloads).toHaveLength(2);
+    expect(updatePayloads[1]).toEqual(
+      expect.objectContaining({
+        status: "signed_off",
+        current_version: 4,
+        signed_off_version: 4,
+        approved_artifact_id: "artifact-approved-2",
+      }),
+    );
+  });
 });
