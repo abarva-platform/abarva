@@ -1,4 +1,5 @@
 const STRUCTURED_ARTIFACT_LABELS = [
+  "abarva-canvas",
   "decision-table",
   "chart",
   "followups",
@@ -28,7 +29,7 @@ function longestStructuredFencePrefixSuffix(value: string): number {
 
 function trailingStructuredMarkerSuffix(value: string): number {
   const match = value.match(
-    /(?:^|[\s.;:!?)]|`)(`{0,3}\s*(?:decision-table|chart|followups)\s*)$/i,
+    /(?:^|[\s.;:!?)]|`)(`{0,3}\s*(?:abarva-canvas|decision-table|chart|followups)\s*)$/i,
   );
   return match?.[1]?.length ?? 0;
 }
@@ -155,8 +156,8 @@ export function createStructuredFenceStreamFilter(): {
           (!previous || /\s|[.;:!?)]/.test(previous)) &&
           followedByPayload &&
           (label === "chart" || label === "followups");
-        const isDecisionTable = label === "decision-table" && hasFenceTick;
-        if (!hasFenceTick && !isBareArtifact && !isDecisionTable) continue;
+        const isFencedStructuredArtifact = hasFenceTick;
+        if (!isFencedStructuredArtifact && !isBareArtifact) continue;
         const candidate = {
           index: match.index,
           startLength: raw.length,
@@ -226,15 +227,15 @@ export function stripGovernedArtifactPayloadsFromText(text: string): string {
   const filter = createStructuredFenceStreamFilter();
   return `${filter.push(text)}${filter.flush()}`
     .replace(
-      /(^|[\n\r])\s*(?:chart|decision-table|table|graph|followups)\s*[\n\r]+\s*(?:\{[\s\S]{0,4000}?\}|\[[\s\S]{0,4000}?\])\s*`*/gi,
+      /(^|[\n\r])\s*(?:abarva-canvas|chart|decision-table|table|graph|followups)\s*[\n\r]+\s*(?:\{[\s\S]{0,4000}?\}|\[[\s\S]{0,4000}?\])\s*`*/gi,
       "$1",
     )
     .replace(
-      /\b(?:chart|decision-table|table|graph|followups)\s*\{\s*"[^"]+"\s*:\s*[\s\S]{0,2400}?\}\s*`*/gi,
+      /\b(?:abarva-canvas|chart|decision-table|table|graph|followups)\s*\{\s*"[^"]+"\s*:\s*[\s\S]{0,2400}?\}\s*`*/gi,
       "",
     )
     .replace(
-      /\b(?:chart|decision-table|table|graph|followups)\s*\[\s*\{[\s\S]{0,2400}?\}\s*\]\s*`*/gi,
+      /\b(?:abarva-canvas|chart|decision-table|table|graph|followups)\s*\[\s*\{[\s\S]{0,2400}?\}\s*\]\s*`*/gi,
       "",
     )
     .replace(/\n{3,}/g, "\n\n")

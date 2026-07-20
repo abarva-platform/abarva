@@ -71,9 +71,11 @@ function hasRenderableAvaArtifacts(
 }
 
 // Governed fence types the server may emit mid-stream (decision-table,
-// chart, followups — see structured-exhibits.ts) that must never render as
-// raw text: treat them the same as a raw pipe-table leak.
-const RAW_STRUCTURED_FENCE_RE = /```(?:decision-table|chart|followups)\b/i;
+// chart, followups, abarva-canvas — see structured-exhibits.ts and the
+// Intelligence canvas contract) that must never render as raw text: treat
+// them the same as a raw pipe-table leak.
+const RAW_STRUCTURED_FENCE_RE =
+  /```(?:decision-table|chart|followups|abarva-canvas)\b|canvasType/i;
 
 function hasRawMarkdownTableFragment(value: string): boolean {
   if (RAW_STRUCTURED_FENCE_RE.test(value)) return true;
@@ -84,7 +86,7 @@ function hasRawMarkdownTableFragment(value: string): boolean {
 
 function stripMarkdownTableFragments(value: string): string {
   const withoutFences = value.replace(
-    /```(?:decision-table|chart|followups)\b[\s\S]*?```/gi,
+    /```(?:decision-table|chart|followups|abarva-canvas)\b[\s\S]*?```/gi,
     "\n",
   );
   return withoutFences
