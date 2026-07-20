@@ -63,6 +63,10 @@ const CSS = `
 .agentAnswer .aaRechart .recharts-wrapper{font-family:var(--font-geist-sans),ui-sans-serif,system-ui,sans-serif}
 .agentAnswer .aaRechart .recharts-cartesian-axis-tick-value{fill:#5f6b7a;font-size:11px}
 .agentAnswer .aaRechart .recharts-label-list text,.agentAnswer .aaRechart .recharts-scatter-symbol{font-size:11px;font-weight:800}
+.agentAnswer .aaChartKey{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px 14px;padding:0 18px 14px;color:var(--aa-muted);font-size:12px;line-height:1.35}
+.agentAnswer .aaChartKeyItem{display:flex;gap:7px;min-width:0}
+.agentAnswer .aaChartKeyIndex{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;flex:0 0 auto;border-radius:999px;background:#e8f3ed;color:#166534;font-size:10px;font-weight:900}
+.agentAnswer .aaChartKeyLabel{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .agentAnswer .aaGraphSvg{display:block;width:100%;height:auto;background:radial-gradient(circle at 50% 0%,#ffffff 0,#ffffff 48%,#f8fafc 100%)}
 .agentAnswer .aaGraphNode{fill:#f6fbf8;stroke:#b9dac6;stroke-width:1.5;filter:drop-shadow(0 2px 4px rgba(17,24,39,.08))}
 .agentAnswer .aaGraphEdge{stroke:#738091;stroke-width:1.5;marker-end:url(#aaArrow)}
@@ -316,6 +320,7 @@ function normalizeRechartSeries(chart: AnswerChart): RechartSeries | null {
 
 interface RechartQuadrantPoint extends RechartRow {
   label: string;
+  displayLabel: string;
   x: number;
   y: number;
 }
@@ -336,9 +341,27 @@ function normalizeRechartQuadrant(chart: AnswerChart): RechartQuadrantPoint[] {
           ? point.y
           : null;
       if (!label || x === null || y === null) return [];
-      return [{ label, x, y }];
+      return [{ displayLabel: label, label, x, y }];
     })
     .slice(0, 12);
+}
+
+function quadrantDisplayPoints(
+  points: RechartQuadrantPoint[],
+): RechartQuadrantPoint[] {
+  const shouldUseIndexLabels =
+    points.length > 4 ||
+    new Set(points.map((point) => `${Math.round(point.x / 10)}:${Math.round(point.y / 10)}`))
+      .size < points.length;
+
+  return points.map((point, index) => ({
+    ...point,
+    displayLabel: shouldUseIndexLabels
+      ? String(index + 1)
+      : point.label.length > 18
+        ? `${point.label.slice(0, 16).trimEnd()}...`
+        : point.label,
+  }));
 }
 
 function canRenderRechartsChart(chart: AnswerChart): boolean {
@@ -578,67 +601,80 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
   if (chart.kind === "quadrant-matrix" || chart.kind === "2x2-matrix") {
     const points = normalizeRechartQuadrant(chart);
     if (points.length < 2) return null;
+    const displayPoints = quadrantDisplayPoints(points);
     return (
-      <div
-        className="aaRechart"
-        data-chart-kind={chart.kind}
-        data-chart-renderer="recharts"
-        style={{ "--aa-chart-height": "360px" } as CSSProperties}
-      >
-        <ResponsiveContainer height="100%" width="100%">
-          <ScatterChart margin={{ top: 22, right: 20, bottom: 16, left: 8 }}>
-            <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
-            <XAxis
-              dataKey="x"
-              domain={[0, 100]}
-              label={{
-                value: "Complexity",
-                position: "insideBottom",
-                offset: -4,
-                fill: "#5f6b7a",
-                fontSize: 11,
-              }}
-              name="Complexity"
-              tickLine={false}
-              type="number"
-            />
-            <YAxis
-              dataKey="y"
-              domain={[0, 100]}
-              label={{
-                value: "Value",
-                angle: -90,
-                position: "insideLeft",
-                fill: "#5f6b7a",
-                fontSize: 11,
-              }}
-              name="Value"
-              tickLine={false}
-              type="number"
-            />
-            <ReferenceLine stroke="#cbd5e1" strokeDasharray="4 4" x={50} />
-            <ReferenceLine stroke="#cbd5e1" strokeDasharray="4 4" y={50} />
-            <Tooltip
-              contentStyle={RECHART_TOOLTIP_STYLE}
-              cursor={{ strokeDasharray: "3 3" }}
-              formatter={(value: unknown, name: unknown) => [
-                formatRechartValue(value),
-                String(name),
-              ]}
-              labelFormatter={(_label, payload) =>
-                payload?.[0]?.payload?.label ?? "Use case"
-              }
-            />
-            <Scatter data={points} fill="#166534" name="Score">
-              <LabelList
-                dataKey="label"
-                position="top"
-                style={{ fill: "#111827", fontSize: 11, fontWeight: 700 }}
+      <>
+        <div
+          className="aaRechart"
+          data-chart-kind={chart.kind}
+          data-chart-renderer="recharts"
+          style={{ "--aa-chart-height": "360px" } as CSSProperties}
+        >
+          <ResponsiveContainer height="100%" width="100%">
+            <ScatterChart margin={{ top: 22, right: 20, bottom: 16, left: 8 }}>
+              <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
+              <XAxis
+                dataKey="x"
+                domain={[0, 100]}
+                label={{
+                  value: "Complexity",
+                  position: "insideBottom",
+                  offset: -4,
+                  fill: "#5f6b7a",
+                  fontSize: 11,
+                }}
+                name="Complexity"
+                tickLine={false}
+                type="number"
               />
-            </Scatter>
-          </ScatterChart>
-        </ResponsiveContainer>
-      </div>
+              <YAxis
+                dataKey="y"
+                domain={[0, 100]}
+                label={{
+                  value: "Value",
+                  angle: -90,
+                  position: "insideLeft",
+                  fill: "#5f6b7a",
+                  fontSize: 11,
+                }}
+                name="Value"
+                tickLine={false}
+                type="number"
+              />
+              <ReferenceLine stroke="#cbd5e1" strokeDasharray="4 4" x={50} />
+              <ReferenceLine stroke="#cbd5e1" strokeDasharray="4 4" y={50} />
+              <Tooltip
+                contentStyle={RECHART_TOOLTIP_STYLE}
+                cursor={{ strokeDasharray: "3 3" }}
+                formatter={(value: unknown, name: unknown) => [
+                  formatRechartValue(value),
+                  String(name),
+                ]}
+                labelFormatter={(_label, payload) =>
+                  payload?.[0]?.payload?.label ?? "Use case"
+                }
+              />
+              <Scatter data={displayPoints} fill="#166534" name="Score">
+                <LabelList
+                  dataKey="displayLabel"
+                  position="top"
+                  style={{ fill: "#111827", fontSize: 11, fontWeight: 700 }}
+                />
+              </Scatter>
+            </ScatterChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="aaChartKey" aria-label="Chart key">
+          {displayPoints.map((point) => (
+            <div className="aaChartKeyItem" key={`${point.label}-${point.x}-${point.y}`}>
+              <span className="aaChartKeyIndex">{point.displayLabel}</span>
+              <span className="aaChartKeyLabel" title={point.label}>
+                {point.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </>
     );
   }
 

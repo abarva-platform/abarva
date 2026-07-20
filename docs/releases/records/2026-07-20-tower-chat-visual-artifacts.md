@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-with-follow-up-candidate`
 
 ## Plain-English Summary
 
@@ -29,19 +29,26 @@ Tower aVa chat now sends governed Tower answer tables and metric cards through t
 
 ## Changes Included
 
-- PR: pending.
+- PR #5091: Tower aVa visual artifact packet and chat wiring.
+- PR #5097: Tower quadrant chart generation from business-language quadrant rows.
+- PR #5104: shared quadrant chart label polish for crowded 2x2 visuals.
 - `src/lib/cio-tower/tower-chat-artifacts.ts` converts Tower visible-answer tables, tab tables, and metric cards into `AvaAnswerPacket` artifacts.
 - `src/lib/cio-tower/tower-chat-artifacts.ts` also converts business-language quadrant rows such as `High Value / Lower Complexity` into deterministic Recharts quadrant points when a 2x2 chart is requested.
 - `src/components/tower/TowerIndexPage.tsx` attaches the Tower artifact packet to chat responses.
 - `src/components/atlas/AtlasChatPanel.tsx` forwards governed aVa packets into `AgentDock`.
+- `src/components/agent-answer/AgentAnswerRenderer.tsx` renders crowded quadrant matrices with compact numbered markers plus a readable chart key, preserving full labels in tooltip/title text.
 - `src/lib/cio-tower/__tests__/tower-chat-artifacts.test.ts` covers horizontal bar, line/trend, and 2x2 matrix artifact generation.
 - `src/components/atlas/__tests__/AtlasChatPanel.test.tsx` covers artifact pass-through into the shared dock renderer.
 
 ## QA / Validation
 
 - `npx jest src/lib/cio-tower/__tests__/tower-chat-artifacts.test.ts --runInBand` — passed.
-- Focused combined Jest, ESLint, TypeScript, release check — pending final run.
-- ACA deploy and live signed-in 25-question Tower proof — first deployment passed runtime invariant; 25Q API proof passed 25/25 with 9.88/10 average and 7/7 visual-intent prompts returning structured artifacts. Browser proof found tables rendered but quadrant-label matrices needed deterministic chart-point conversion; follow-up patch pending validation/deploy.
+- `npx jest src/components/agent-answer/__tests__/AgentAnswerRenderer.test.tsx src/lib/cio-tower/__tests__/tower-chat-artifacts.test.ts --runInBand` — passed.
+- `npx eslint src/components/agent-answer/AgentAnswerRenderer.tsx src/lib/cio-tower/tower-chat-artifacts.ts src/lib/cio-tower/__tests__/tower-chat-artifacts.test.ts` — passed.
+- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` — passed.
+- `npm run release:check` — passed locally.
+- ACA deploy and live signed-in 25-question Tower proof after PR #5097 — deployed revision `ca-abarva-web-lab-eastus--me9d32443`; runtime invariant passed; 25Q API proof passed 25/25 with 9.72/10 average and 7/7 visual-intent prompts returning structured artifacts. Browser proof passed for matrix, trend, and readout prompts with Recharts plus tables and no raw chart JSON.
+- PR #5104 shared renderer label-key polish is pending CI, merge, ACA deploy, and final browser screenshot proof.
 
 ## Rollout Plan
 
@@ -52,7 +59,8 @@ Merge the PR to `main`; the repo-owned Azure Container Apps main deploy workflow
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: none outside the repo-owned deploy workflow.
 - Approved image digest: pending ACA deploy.
-- ACA runtime invariant: pending ACA deploy.
+- Latest deployed digest after PR #5097: `sha256:eb101a9d2faca95f86282d58e7e3cab250166aecf88ed7b571e77ea413fbb729`.
+- ACA runtime invariant after PR #5097: passed.
 - Worker image invariant: no worker change.
 - Feature/env flag update path: none.
 - Live signed-in proof required: yes.
@@ -63,11 +71,12 @@ Revert the PR and redeploy the previous healthy `main` image through the ACA mai
 
 ## Audit Evidence
 
-- PR URL: pending.
+- PR URLs: https://github.com/abarva-platform/abarva/pull/5091, https://github.com/abarva-platform/abarva/pull/5097, https://github.com/abarva-platform/abarva/pull/5104
 - CI run: pending.
-- ACA deployment evidence: pending.
-- Live signed-in 25-question Tower report: `/Users/anand/Downloads/tower-ava-25q-live-2026-07-20T03-15-57-385Z/summary.md`
+- ACA deployment evidence after PR #5097: `/tmp/aca-main-deploy-29715096821-evidence-1784519432/runtime-invariant/runtime-invariant-proof.json`
+- Live signed-in 25-question Tower report after PR #5097: `/Users/anand/Downloads/tower-ava-25q-live-2026-07-20T03-53-04-701Z/summary.md`
+- Live signed-in browser visual proof after PR #5097: `/Users/anand/Downloads/tower-ava-25q-live-2026-07-20T03-15-57-385Z/ui-proof/matrix.png`
 
 ## Known Gaps
 
-Follow-up browser proof must confirm Recharts render for quadrant-label and trend prompts after the deterministic chart-point conversion patch deploys.
+PR #5104 must deploy and be browser-proven to confirm crowded quadrant labels render as compact chart markers plus a readable key.
