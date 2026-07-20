@@ -15,7 +15,10 @@ import {
   type SourceShellStepGroup,
   type SourceShellWorkspace,
 } from '@/lib/source/source-event-shell-v2';
-import type { SourceArtifactLifecycleRow } from '@/lib/source/artifact-lifecycle-matrix';
+import {
+  buildSourceArtifactStandardsCsv,
+  type SourceArtifactLifecycleRow,
+} from '@/lib/source/artifact-lifecycle-matrix';
 import type { ApprovalsInboxItem } from '@/lib/source/approvals-inbox';
 import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
 import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
@@ -1009,6 +1012,10 @@ function ArtifactLifecyclePanel({
 }) {
   const lifecycle = view.files.lifecycle;
   const rowsByStage = groupLifecycleRows(lifecycle.rows);
+  const standardsCsvHref = `data:text/csv;charset=utf-8,${encodeURIComponent(
+    buildSourceArtifactStandardsCsv(lifecycle.rows),
+  )}`;
+  const standardsCsvFilename = `${view.event.code || 'source-event'}-artifact-standards.csv`;
   const summaryItems = [
     ['Expected artifacts', String(lifecycle.expectedCount)],
     ['Required', String(lifecycle.requiredCount)],
@@ -1068,6 +1075,22 @@ function ArtifactLifecyclePanel({
             client-final version is accepted back into Source as the
             authoritative artifact of record.
           </p>
+          <a
+            href={standardsCsvHref}
+            download={standardsCsvFilename}
+            data-testid="source-artifact-standards-export"
+            style={{
+              ...BUTTON_STYLE,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 7,
+              marginTop: 12,
+              padding: '9px 12px',
+              textDecoration: 'none',
+            }}
+          >
+            Export standards CSV
+          </a>
         </div>
         <div
           style={{

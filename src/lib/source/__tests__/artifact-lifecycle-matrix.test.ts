@@ -1,4 +1,5 @@
 import {
+  buildSourceArtifactStandardsCsv,
   buildSourceArtifactLifecycleSummary,
   buildSourceArtifactStandardsContext,
 } from "../artifact-lifecycle-matrix";
@@ -119,5 +120,42 @@ describe("Source artifact lifecycle matrix", () => {
     expect(standards[0]?.excerpt).toContain(
       "Human review is required before external use",
     );
+  });
+
+  it("exports all phase artifact standards as a governance CSV", () => {
+    const summary = buildSourceArtifactLifecycleSummary([
+      {
+        artifactKind: "d09_rfp_pack",
+        artifactGroup: "generated",
+        sourceOrigin: "generated",
+        status: "approved",
+      },
+      {
+        artifactKind: "d31_kt_evidence",
+        artifactGroup: "upload",
+        sourceOrigin: "uploaded",
+        status: "parsed",
+      },
+    ]);
+
+    const csv = buildSourceArtifactStandardsCsv(summary.rows);
+
+    expect(csv.split("\n")).toHaveLength(summary.expectedCount + 1);
+    expect(csv).toContain('"Stage","Artifact code","Artifact name"');
+    expect(csv).toContain('"Required exhibits / sections"');
+    expect(csv).toContain('"Token budget"');
+    expect(csv).toContain('"AI draft rule"');
+    expect(csv).toContain('"Human final rule"');
+    expect(csv).toContain('"Scope","d08_premortem","Pre-mortem on Scope Risk"');
+    expect(csv).toContain(
+      '"Transition","d31_kt_evidence","Knowledge-Transfer Evidence"',
+    );
+    expect(csv).toContain(
+      '"AI-prepared drafts are not final and require human review before external use."',
+    );
+    expect(csv).toContain(
+      '"A reviewed client-final version must be accepted back into Source as the authoritative artifact of record."',
+    );
+    expect(csv).toContain('"Claude Opus","128k max"');
   });
 });
