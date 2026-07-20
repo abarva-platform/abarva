@@ -3,9 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { AskAnythingBar } from '@/components/agent/AskAnythingBar';
-import { SentinelAgentColumn } from '@/components/source/SentinelAgentColumn';
 import { AppShell } from '@/components/shell/AppShell';
-import type { AgentAction } from '@/components/shell/AgentColumn';
 import {
   buildSourceEventShellView,
   type SourceEventShellView,
@@ -20,7 +18,6 @@ import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
 import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
 import { ANALYTICS } from './analytics-tokens';
 import { IntelPanel } from './IntelPanel';
-import { TaskChecklist } from './TaskChecklist';
 import { ValueWaterfall } from './ValueWaterfall';
 import { StepInsightPanel } from './insights';
 import {
@@ -37,8 +34,6 @@ import type {
   StepInsightView,
 } from './view-model';
 
-type AvaDock = 'left' | 'right' | 'top' | 'bottom' | 'hidden';
-
 interface SourceAnalyticsCanvasProps {
   event: SourcingEventSummary;
   viewStage: SourceStageKey;
@@ -54,7 +49,6 @@ interface SourceAnalyticsCanvasProps {
 const MAIN_STYLE: CSSProperties = {
   flex: 1,
   minHeight: 0,
-  display: 'flex',
   overflow: 'hidden',
   fontFamily: ANALYTICS.SANS,
   color: ANALYTICS.INK,
@@ -69,12 +63,10 @@ const WORK_PANE_STYLE: CSSProperties = {
 
 const CANVAS_STYLE: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '260px minmax(0, 1fr)',
-  gap: 28,
-  maxWidth: 1510,
-  margin: '0 auto',
-  padding: '28px 30px 150px',
-  alignItems: 'start',
+  gridTemplateColumns: '264px minmax(0, 1fr)',
+  gap: 0,
+  minHeight: '100%',
+  alignItems: 'stretch',
 };
 
 const CARD_STYLE: CSSProperties = {
@@ -114,7 +106,7 @@ export function SourceAnalyticsCanvas({
   approvalItems = [],
 }: SourceAnalyticsCanvasProps) {
   const [workspace, setWorkspace] = useState<SourceShellWorkspace>('steps');
-  const [avaDock, setAvaDock] = useState<AvaDock>('left');
+  const [avaOpen, setAvaOpen] = useState(false);
 
   const baseStageView = useMemo(
     () => stageView ?? sampleStageViewFor(viewStage),
@@ -152,20 +144,6 @@ export function SourceAnalyticsCanvas({
 
   const stageLabel =
     SOURCE_STAGE_LABELS[viewStage] ?? resolvedStageView.stageName;
-  const showSideAva = avaDock === 'left' || avaDock === 'right';
-  const showInlineAva = avaDock === 'top' || avaDock === 'bottom';
-
-  const agentColumnStyle: CSSProperties =
-    avaDock === 'right'
-      ? { order: 2, borderLeft: '1px solid rgba(250,247,241,0.12)' }
-      : {};
-
-  const agentQuote =
-    shellView.stage.total === 0
-      ? `Ask me about ${shellView.stage.label}.`
-      : shellView.stage.ready >= shellView.stage.total
-        ? `All ${shellView.stage.total} step${shellView.stage.total === 1 ? '' : 's'} on ${shellView.stage.label} are complete.`
-        : `${shellView.stage.total - shellView.stage.ready} of ${shellView.stage.total} step${shellView.stage.total === 1 ? '' : 's'} left on ${shellView.stage.label}.`;
 
   return (
     <AppShell
@@ -184,15 +162,6 @@ export function SourceAnalyticsCanvas({
       }}
     >
       <main data-testid="source-analytics-canvas" style={MAIN_STYLE}>
-        {showSideAva ? (
-          <SentinelAgentColumn
-            quote={agentQuote}
-            agentContext={`${event.code} · ${stageLabel}`}
-            actions={agentActions(shellView)}
-            surface="source-detail"
-            columnStyle={agentColumnStyle}
-          />
-        ) : null}
         <div style={WORK_PANE_STYLE}>
           <div style={CANVAS_STYLE}>
             <SourceShellRail
@@ -200,26 +169,19 @@ export function SourceAnalyticsCanvas({
               workspace={workspace}
               onWorkspaceChange={setWorkspace}
             />
-            <div style={{ minWidth: 0 }}>
-              {showInlineAva && avaDock === 'top' ? (
-                <AvaInlinePanel view={shellView} quote={agentQuote} />
-              ) : null}
+            <div style={{ minWidth: 0, padding: '28px 92px 150px' }}>
               <SourceWorkspace
                 view={shellView}
                 stageView={resolvedStageView}
-                eventId={event.id}
                 workspace={workspace}
                 onWorkspaceChange={setWorkspace}
               />
-              {showInlineAva && avaDock === 'bottom' ? (
-                <AvaInlinePanel view={shellView} quote={agentQuote} />
-              ) : null}
             </div>
           </div>
         </div>
       </main>
-      <AvaDockControls dock={avaDock} onDockChange={setAvaDock} />
-      {avaDock !== 'hidden' ? (
+      <AskAvaLauncher open={avaOpen} onClick={() => setAvaOpen((value) => !value)} />
+      {avaOpen ? (
         <AskAnythingBar
           agent="sentinel"
           scopeLabel={`${event.code} · ${stageLabel}`}
@@ -241,7 +203,15 @@ function SourceShellRail({
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
   return (
-    <aside data-testid="source-shell-v2-rail" style={{ minWidth: 0 }}>
+    <aside
+      data-testid="source-shell-v2-rail"
+      style={{
+        minWidth: 0,
+        padding: '24px 16px 18px',
+        borderRight: `1px solid ${ANALYTICS.LINE}`,
+        background: ANALYTICS.PAGE_BG,
+      }}
+    >
       <Link
         href="/source/portfolio"
         style={{
@@ -357,17 +327,13 @@ function SourceShellRail({
       >
         <RailLabel>Workspace</RailLabel>
         <WorkspaceButton
-          label="Steps"
-          active={workspace === 'steps'}
-          onClick={() => onWorkspaceChange('steps')}
-        />
-        <WorkspaceButton
           label="Files & deliverables"
           active={workspace === 'files'}
           onClick={() => onWorkspaceChange('files')}
         />
         <WorkspaceButton
           label="Intelligence Explorer"
+          badge={workspace === 'intelligence' ? 'open' : 'hidden'}
           active={workspace === 'intelligence'}
           onClick={() => onWorkspaceChange('intelligence')}
         />
@@ -377,6 +343,27 @@ function SourceShellRail({
           onClick={() => onWorkspaceChange('approvals')}
         />
       </div>
+      <div
+        style={{
+          marginTop: 26,
+          paddingTop: 18,
+          borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          color: ANALYTICS.MUTED,
+          fontSize: 12,
+          lineHeight: 1.45,
+        }}
+      >
+        <Link
+          href="/source"
+          style={{ color: ANALYTICS.MUTED, textDecoration: 'none' }}
+        >
+          Design contract →
+        </Link>
+        <div style={{ marginTop: 14 }}>
+          <b style={{ color: ANALYTICS.INK_2 }}>aVa</b> guides steps 1–9 ·
+          Atlas takes over for Transition &amp; Value.
+        </div>
+      </div>
     </aside>
   );
 }
@@ -384,13 +371,11 @@ function SourceShellRail({
 function SourceWorkspace({
   view,
   stageView,
-  eventId,
   workspace,
   onWorkspaceChange,
 }: {
   view: SourceEventShellView;
   stageView: StageAnalyticsView;
-  eventId: string;
   workspace: SourceShellWorkspace;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
@@ -402,32 +387,37 @@ function SourceWorkspace({
 
   return (
     <section data-testid="source-shell-v2-steps">
-      <StageHeader view={view} onWorkspaceChange={onWorkspaceChange} />
+      <StageHeader view={view} />
+      <StageModeTabs workspace={workspace} onWorkspaceChange={onWorkspaceChange} />
       <WorkflowBlocks groups={view.stage.groups} />
-      <div style={{ marginTop: 18 }}>
-        <TaskChecklist
-          tasks={stageView.tasks}
-          eventId={eventId}
-          stageKey={view.stage.key}
-        />
-      </div>
-      <GateHandoffCard view={view} onWorkspaceChange={onWorkspaceChange} />
+      <FocusedWorkPanel view={view} />
     </section>
   );
 }
 
 function StageHeader({
   view,
-  onWorkspaceChange,
 }: {
   view: SourceEventShellView;
-  onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
+  const stageIndex =
+    view.journey.find((stage) => stage.key === view.stage.key)?.index ?? 1;
+
   return (
-    <header style={{ marginBottom: 18 }}>
+    <header style={{ marginBottom: 22, maxWidth: 1040 }}>
       <div
         style={{
-          display: 'flex',
+          color: ANALYTICS.FAINT,
+          fontSize: 12,
+          marginBottom: 12,
+        }}
+      >
+        Source › {view.event.code} › {view.stage.label}
+      </div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1fr) 230px',
           alignItems: 'flex-start',
           justifyContent: 'space-between',
           gap: 22,
@@ -445,12 +435,12 @@ function StageHeader({
               marginBottom: 8,
             }}
           >
-            {view.event.code} · {view.event.viewedStageLabel}
+            Stage {String(stageIndex).padStart(2, '0')} · aVa
           </div>
           <h1
             style={{
               fontFamily: ANALYTICS.SERIF,
-              fontSize: 36,
+              fontSize: 35,
               lineHeight: 1,
               margin: 0,
               letterSpacing: '-0.5px',
@@ -470,7 +460,14 @@ function StageHeader({
             {view.stage.purpose}
           </p>
         </div>
-        <div style={{ minWidth: 280 }}>
+        <div
+          style={{
+            ...CARD_STYLE,
+            minWidth: 0,
+            padding: '18px 18px 17px',
+            boxShadow: 'none',
+          }}
+        >
           <div
             style={{
               display: 'flex',
@@ -482,19 +479,19 @@ function StageHeader({
             }}
           >
             <span>
-              {view.stage.ready} of {view.stage.total} complete
+              <b
+                style={{
+                  color: ANALYTICS.INK,
+                  fontFamily: ANALYTICS.SERIF,
+                  fontSize: 22,
+                }}
+              >
+                {view.stage.ready} / {view.stage.total}
+              </b>
             </span>
-            <button
-              type="button"
-              onClick={() => onWorkspaceChange('approvals')}
-              style={{
-                ...BUTTON_STYLE,
-                padding: '10px 14px',
-                color: ANALYTICS.MUTED,
-              }}
-            >
-              Continue to approval →
-            </button>
+            <span style={{ color: ANALYTICS.FAINT, fontSize: 12 }}>
+              steps ready
+            </span>
           </div>
           <div
             aria-hidden
@@ -514,9 +511,65 @@ function StageHeader({
               }}
             />
           </div>
+          <div style={{ color: ANALYTICS.FAINT, fontSize: 12, marginTop: 8 }}>
+            {view.stage.readyPct}% ready · {view.stage.pattern.replace('-', ' ')}
+          </div>
         </div>
       </div>
     </header>
+  );
+}
+
+function StageModeTabs({
+  workspace,
+  onWorkspaceChange,
+}: {
+  workspace: SourceShellWorkspace;
+  onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
+}) {
+  const tabs: { key: SourceShellWorkspace; label: ReactNode }[] = [
+    { key: 'steps', label: 'Steps' },
+    { key: 'files', label: 'Files' },
+    { key: 'intelligence', label: <>✦ Intelligence</> },
+  ];
+
+  return (
+    <div
+      style={{
+        display: 'inline-flex',
+        gap: 2,
+        margin: '0 0 22px',
+        padding: 3,
+        borderRadius: 10,
+        background: ANALYTICS.SOFT,
+        border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+      }}
+    >
+      {tabs.map((tab) => {
+        const active = workspace === tab.key;
+        return (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => onWorkspaceChange(tab.key)}
+            style={{
+              border: active ? `1px solid ${ANALYTICS.LINE}` : '1px solid transparent',
+              borderRadius: 8,
+              background: active ? ANALYTICS.CARD : 'transparent',
+              color: active ? ANALYTICS.INK : ANALYTICS.MUTED,
+              boxShadow: active ? ANALYTICS.SHADOW_SM : 'none',
+              cursor: 'pointer',
+              fontFamily: ANALYTICS.SANS,
+              fontSize: 13,
+              fontWeight: 700,
+              padding: '8px 17px',
+            }}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -567,60 +620,319 @@ function WorkflowBlocks({ groups }: { groups: SourceShellStepGroup[] }) {
   );
 }
 
-function GateHandoffCard({
-  view,
-  onWorkspaceChange,
-}: {
-  view: SourceEventShellView;
-  onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
-}) {
+function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
+  const flatSteps = view.stage.groups.flatMap((group) => group.steps);
+  const activeStep =
+    flatSteps.find((step) => step.status === 'active') ??
+    flatSteps.find((step) => step.status !== 'captured') ??
+    flatSteps[0] ??
+    null;
+  const activeIndex = activeStep
+    ? flatSteps.findIndex((step) => step.id === activeStep.id)
+    : -1;
+
+  if (!activeStep) {
+    return <EmptyCard text="No required steps are defined for this stage yet." />;
+  }
+
   return (
     <section
       style={{
         ...CARD_STYLE,
-        marginTop: 18,
-        padding: 18,
+        display: 'grid',
+        gridTemplateColumns: '272px minmax(0, 1fr)',
+        maxWidth: 1040,
+        overflow: 'hidden',
+        boxShadow: 'none',
       }}
     >
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 16,
+          borderRight: `1px solid ${ANALYTICS.LINE}`,
+          padding: '24px 14px 18px',
+          background: ANALYTICS.PAGE_BG,
         }}
       >
-        <div>
-          <div
-            style={{
-              fontFamily: ANALYTICS.SERIF,
-              fontSize: 19,
-              fontWeight: 800,
-            }}
-          >
-            {view.stage.label} approval handoff
+        {view.stage.groups.map((group) => (
+          <div key={group.id} style={{ marginBottom: 18 }}>
+            <RailLabel>{group.label}</RailLabel>
+            <div style={{ display: 'grid', gap: 4 }}>
+              {group.steps.map((step) => {
+                const active = step.id === activeStep.id;
+                const done = step.status === 'captured';
+                return (
+                  <div
+                    key={step.id}
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '20px minmax(0, 1fr) auto',
+                      gap: 8,
+                      alignItems: 'center',
+                      border: active
+                        ? `1px solid ${ANALYTICS.LINE}`
+                        : '1px solid transparent',
+                      borderLeft: active
+                        ? `2px solid ${ANALYTICS.BLUE}`
+                        : '2px solid transparent',
+                      borderRadius: 8,
+                      background: active ? ANALYTICS.CARD : 'transparent',
+                      padding: '8px 7px',
+                      boxShadow: active ? ANALYTICS.SHADOW_SM : 'none',
+                    }}
+                  >
+                    <StepDot done={done} active={active} />
+                    <span
+                      style={{
+                        color: done
+                          ? ANALYTICS.FAINT
+                          : active
+                            ? ANALYTICS.INK
+                            : ANALYTICS.INK_2,
+                        fontSize: 13,
+                        fontWeight: active ? 800 : 650,
+                        lineHeight: 1.25,
+                      }}
+                    >
+                      {step.title}
+                    </span>
+                    {active ? (
+                      <span
+                        style={{
+                          color: ANALYTICS.BLUE,
+                          fontFamily: ANALYTICS.MONO,
+                          fontSize: 8,
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        now
+                      </span>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <p style={{ color: ANALYTICS.INK_2, margin: '7px 0 0', fontSize: 14 }}>
-            {view.stage.gateReadinessLine}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => onWorkspaceChange('approvals')}
+        ))}
+        <div
           style={{
-            ...BUTTON_STYLE,
-            display: 'inline-flex',
-            alignItems: 'center',
-            padding: '11px 14px',
-            background: ANALYTICS.INK,
-            color: '#fff',
-            flexShrink: 0,
+            color: ANALYTICS.FAINT,
+            fontSize: 12,
+            lineHeight: 1.45,
+            marginTop: 12,
+            paddingTop: 14,
+            borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
           }}
         >
-          Open approval workspace
-        </button>
+          {view.stage.gateReadinessLine}
+        </div>
+      </div>
+
+      <div style={{ padding: '28px 30px 34px' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 16,
+            marginBottom: 14,
+          }}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr', gap: 14 }}>
+            <StepDot active />
+            <div>
+              <div
+                style={{
+                  color: ANALYTICS.MUTED,
+                  fontFamily: ANALYTICS.MONO,
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: '0.05em',
+                  marginBottom: 4,
+                }}
+              >
+                Step {activeIndex + 1} of {flatSteps.length}
+              </div>
+              <h2
+                style={{
+                  display: 'inline',
+                  fontSize: 17,
+                  lineHeight: 1.3,
+                  margin: 0,
+                }}
+              >
+                {activeStep.title}
+              </h2>
+              <EvidenceBadge basis={activeStep.sourceBasis} label={activeStep.type} />
+            </div>
+          </div>
+          <span
+            style={{
+              borderRadius: 999,
+              background: activeStep.status === 'captured' ? ANALYTICS.GREEN_TINT : ANALYTICS.AMBER_TINT,
+              color: activeStep.status === 'captured' ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
+              fontSize: 10,
+              fontWeight: 800,
+              padding: '5px 9px',
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {activeStep.status === 'captured' ? 'Done' : 'Do this now'}
+          </span>
+        </div>
+
+        <p
+          style={{
+            color: ANALYTICS.INK_2,
+            fontSize: 14,
+            lineHeight: 1.55,
+            margin: '0 0 16px 42px',
+            maxWidth: 720,
+          }}
+        >
+          {activeStep.help}
+        </p>
+
+        <StepDetail step={activeStep} />
       </div>
     </section>
+  );
+}
+
+function StepDetail({ step }: { step: SourceEventShellView['stage']['activeStep'] }) {
+  if (!step) return null;
+
+  if (step.rows.length > 0) {
+    return (
+      <div
+        style={{
+          marginLeft: 42,
+          border: `1px solid ${ANALYTICS.LINE}`,
+          borderRadius: 8,
+          overflow: 'hidden',
+          maxWidth: 680,
+        }}
+      >
+        {step.rows.map((row, index) => (
+          <div
+            key={`${row.key}-${index}`}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr auto',
+              gap: 16,
+              padding: '10px 12px',
+              borderTop: index === 0 ? 'none' : `1px solid ${ANALYTICS.LINE_SOFT}`,
+              color: ANALYTICS.INK_2,
+              fontSize: 13,
+            }}
+          >
+            <span>{row.key}</span>
+            <b style={{ color: row.flag ? ANALYTICS.AMBER_TEXT : ANALYTICS.INK }}>
+              {row.value}
+            </b>
+          </div>
+        ))}
+        <div style={{ padding: '12px' }}>
+          <ActionButton>{step.cta}</ActionButton>
+        </div>
+      </div>
+    );
+  }
+
+  if (step.type === 'provide') {
+    return (
+      <div style={{ marginLeft: 42, maxWidth: 680 }}>
+        <div
+          style={{
+            border: `1px dashed ${ANALYTICS.LINE_STRONG}`,
+            borderRadius: 10,
+            background: ANALYTICS.CARD,
+            padding: '18px',
+            display: 'grid',
+            gridTemplateColumns: '36px 1fr',
+            gap: 12,
+            alignItems: 'center',
+          }}
+        >
+          <div
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 8,
+              border: `1px solid ${ANALYTICS.LINE}`,
+              display: 'grid',
+              placeItems: 'center',
+              color: ANALYTICS.BLUE,
+              fontSize: 22,
+            }}
+          >
+            ↑
+          </div>
+          <div>
+            <div style={{ fontWeight: 800 }}>Drop a file here, or browse</div>
+            <div style={{ color: ANALYTICS.MUTED, fontSize: 13, marginTop: 3 }}>
+              {step.file?.format ?? step.template?.format ?? 'CSV or XLSX'} · up to 100 MB
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginLeft: 42 }}>
+      <ActionButton>{step.cta}</ActionButton>
+    </div>
+  );
+}
+
+function StepDot({
+  done = false,
+  active = false,
+}: {
+  done?: boolean;
+  active?: boolean;
+}) {
+  return (
+    <span
+      style={{
+        width: active ? 26 : 18,
+        height: active ? 26 : 18,
+        borderRadius: 999,
+        display: 'grid',
+        placeItems: 'center',
+        background: done ? ANALYTICS.GREEN : active ? ANALYTICS.BLUE : ANALYTICS.CARD,
+        color: done || active ? '#fff' : 'transparent',
+        border: done || active ? 'none' : `1.5px solid ${ANALYTICS.LINE_STRONG}`,
+        fontSize: 11,
+        fontWeight: 900,
+        flexShrink: 0,
+      }}
+    >
+      {done ? '✓' : active ? '' : ''}
+    </span>
+  );
+}
+
+function ActionButton({ children }: { children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      style={{
+        border: 'none',
+        borderRadius: 8,
+        background: ANALYTICS.INK,
+        color: '#fff',
+        cursor: 'pointer',
+        fontFamily: ANALYTICS.SANS,
+        fontSize: 13,
+        fontWeight: 800,
+        padding: '11px 16px',
+      }}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -844,46 +1156,56 @@ function IntelligenceExplorerCard({ view }: { view: SourceEventShellView }) {
   );
 }
 
-function AvaInlinePanel({
-  view,
-  quote,
+function AskAvaLauncher({
+  open,
+  onClick,
 }: {
-  view: SourceEventShellView;
-  quote: string;
+  open: boolean;
+  onClick: () => void;
 }) {
   return (
-    <section
+    <button
+      type="button"
+      data-testid="source-ask-ava-launcher"
+      aria-expanded={open}
+      onClick={onClick}
       style={{
-        ...CARD_STYLE,
-        padding: 14,
-        marginBottom: 14,
-        display: 'grid',
-        gridTemplateColumns: '36px 1fr',
-        gap: 12,
+        position: 'fixed',
+        right: 24,
+        bottom: 24,
+        zIndex: 90,
+        border: 'none',
+        borderRadius: 999,
+        background: ANALYTICS.TEAL_DEEP,
+        color: '#fff',
+        cursor: 'pointer',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '11px 16px 11px 12px',
+        boxShadow: '0 16px 36px rgba(10,10,11,0.22)',
+        fontFamily: ANALYTICS.SANS,
+        fontSize: 13,
+        fontWeight: 800,
       }}
     >
-      <div
+      <span
         style={{
-          width: 34,
-          height: 34,
+          width: 30,
+          height: 30,
           borderRadius: 999,
-          background: ANALYTICS.TEAL_DEEP,
-          color: ANALYTICS.TEAL_BRIGHT,
+          background: ANALYTICS.TEAL_BRIGHT,
+          color: ANALYTICS.TEAL_DEEP,
           display: 'grid',
           placeItems: 'center',
           fontFamily: ANALYTICS.SERIF,
           fontWeight: 900,
         }}
       >
-        aV
-      </div>
-      <div>
-        <div style={{ fontWeight: 800 }}>aVa · {view.stage.label}</div>
-        <div style={{ color: ANALYTICS.INK_2, fontSize: 13, marginTop: 3 }}>
-          {quote}
-        </div>
-      </div>
-    </section>
+        a
+      </span>
+      <span>{open ? 'Close aVa' : 'Ask aVa'}</span>
+    </button>
   );
 }
 
@@ -1019,10 +1341,12 @@ function WorkspaceTitle({
 
 function WorkspaceButton({
   label,
+  badge,
   active,
   onClick,
 }: {
   label: string;
+  badge?: string;
   active: boolean;
   onClick: () => void;
 }) {
@@ -1048,7 +1372,9 @@ function WorkspaceButton({
       }}
     >
       <span>{label}</span>
-      <span style={{ color: ANALYTICS.FAINT }}>›</span>
+      <span style={{ color: badge ? ANALYTICS.FAINT : ANALYTICS.AMBER_TEXT }}>
+        {badge ?? '•'}
+      </span>
     </button>
   );
 }
@@ -1118,92 +1444,4 @@ function EvidenceBadge({
       {label ?? basis.replaceAll('_', ' ')}
     </span>
   );
-}
-
-function AvaDockControls({
-  dock,
-  onDockChange,
-}: {
-  dock: AvaDock;
-  onDockChange: (dock: AvaDock) => void;
-}) {
-  const controls: { key: AvaDock; label: string; title: string }[] = [
-    { key: 'left', label: 'L', title: 'Lock aVa left' },
-    { key: 'right', label: 'R', title: 'Lock aVa right' },
-    { key: 'top', label: 'T', title: 'Dock aVa top' },
-    { key: 'bottom', label: 'B', title: 'Dock aVa bottom' },
-    { key: 'hidden', label: dock === 'hidden' ? 'aV' : '×', title: 'Hide aVa' },
-  ];
-  return (
-    <div
-      aria-label="aVa dock controls"
-      style={{
-        position: 'fixed',
-        left: 14,
-        bottom: 96,
-        zIndex: 80,
-        display: 'flex',
-        gap: 6,
-        padding: 6,
-        borderRadius: 999,
-        background: 'rgba(250,247,241,0.96)',
-        border: `1px solid ${ANALYTICS.LINE}`,
-        boxShadow: ANALYTICS.SHADOW_SM,
-      }}
-    >
-      {controls.map((control) => (
-        <button
-          key={control.key}
-          type="button"
-          aria-label={control.title}
-          title={control.title}
-          data-testid={`ava-dock-${control.key}`}
-          onClick={() => onDockChange(control.key === 'hidden' && dock === 'hidden' ? 'left' : control.key)}
-          style={{
-            ...BUTTON_STYLE,
-            width: 30,
-            height: 28,
-            borderRadius: 999,
-            padding: 0,
-            background: dock === control.key ? ANALYTICS.INK : ANALYTICS.CARD,
-            color: dock === control.key ? '#fff' : ANALYTICS.INK_2,
-            fontSize: 11,
-          }}
-        >
-          {control.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function agentActions(view: SourceEventShellView): AgentAction[] {
-  const actions: AgentAction[] = [];
-  const firstOpen = view.stage.activeStep;
-  const remaining = Math.max(view.stage.total - view.stage.ready, 0);
-  const approvalDetail =
-    remaining === 0
-      ? 'All steps complete - review approval inside this event workspace.'
-      : `${remaining} step${remaining === 1 ? '' : 's'} left - finish the inputs, then open Approvals in this event workspace.`;
-  if (firstOpen) {
-    actions.push({
-      letter: 'A',
-      text: `What is needed for "${firstOpen.title}"?`,
-      detail: firstOpen.help,
-    });
-  }
-  actions.push({
-    letter: actions.length === 0 ? 'A' : 'B',
-    text: `What changed in ${view.stage.label} intelligence?`,
-    detail:
-      view.intelligence.sourceBasis === 'sample'
-        ? 'Sample/model context is marked before use.'
-        : 'Reads current governed context.',
-  });
-  actions.push({
-    letter: actions.length === 1 ? 'B' : 'C',
-    text: `What is left before ${view.stage.label} approval?`,
-    detail: approvalDetail,
-  });
-  return actions.slice(0, 3);
 }

@@ -3,18 +3,16 @@
  */
 
 // The Source event analytics canvas (`SourceAnalyticsCanvas`) must have one
-// reachable way to type a question to aVa. The old floating `AvaLauncher` was
-// presentational; the Source Shell V2 keeps a dockable aVa rail plus the real
-// `AskAnythingBar` composer.
+// reachable way to type a question to aVa. The design-contract shell keeps aVa
+// collapsed as an `Ask aVa` launcher on first paint, then mounts the real
+// `AskAnythingBar` composer when the user asks for it.
 //
 //   1. `AskAnythingBar` — the real, working chat composer used elsewhere
-//      (Programs) — is now mounted on the canvas with `surface="source-detail"`
-//      so it is recognized by the same surface-gating logic AskAnythingBar
-//      already has, and a `scopeLabel` built from the event + stage.
-//   2. The docked aVa rail no longer shows a hardcoded, potentially stale claim
-//      when a LIVE stage view is on screen — it is derived from
-//      the SAME task-completion evidence the page's own "N of M complete"
-//      progress bar uses, so it can never contradict the real event state.
+//      (Programs) — receives `surface="source-detail"` and a `scopeLabel`
+//      built from the event + stage after the launcher opens.
+//   2. The shell no longer shows a hardcoded, potentially stale aVa side rail;
+//      stage progress and the approval readiness line are derived from the same
+//      task-completion evidence as the page itself.
 //
 // `AppShell` pulls in `next/navigation` (useRouter/usePathname) — stub both,
 // matching the pattern already used by StrategyStage.test.tsx.
@@ -98,7 +96,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     mockAskAnythingBar.mockClear();
   });
 
-  it("mounts AskAnythingBar with surface='source-detail' and an event+stage scopeLabel", () => {
+  it("mounts AskAnythingBar with surface='source-detail' and an event+stage scopeLabel after Ask aVa opens", () => {
     render(
       <SourceAnalyticsCanvas
         event={makeEvent()}
@@ -106,6 +104,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
         tenantName="Lakeshore"
       />,
     );
+
+    expect(screen.queryByTestId("stub-ask-anything-bar")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /ask ava/i }));
 
     const bar = screen.getByTestId("stub-ask-anything-bar");
     expect(bar).toHaveAttribute("data-surface", "source-detail");
@@ -115,7 +116,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(bar).toHaveAttribute("data-agent", "sentinel");
   });
 
-  it("renders a dockable aVa rail and does not reintroduce the duplicate floating launcher", () => {
+  it("renders the contract aVa launcher and does not reintroduce the old dock controls or duplicate launcher", () => {
     render(
       <SourceAnalyticsCanvas
         event={makeEvent()}
@@ -124,12 +125,13 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
       />,
     );
     expect(screen.queryByTestId("ava-launcher-fab")).not.toBeInTheDocument();
-    expect(screen.getByTestId("ava-dock-left")).toBeInTheDocument();
-    expect(screen.getByTestId("ava-dock-right")).toBeInTheDocument();
-    expect(screen.getByTestId("ava-dock-top")).toBeInTheDocument();
-    expect(screen.getByTestId("ava-dock-bottom")).toBeInTheDocument();
-    expect(screen.getByTestId("ava-dock-hidden")).toBeInTheDocument();
-    expect(screen.getByTestId("stub-ask-anything-bar")).toBeInTheDocument();
+    expect(screen.queryByTestId("ava-dock-left")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("ava-dock-right")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("ava-dock-top")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("ava-dock-bottom")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("ava-dock-hidden")).not.toBeInTheDocument();
+    expect(screen.getByTestId("source-ask-ava-launcher")).toBeInTheDocument();
+    expect(screen.queryByTestId("stub-ask-anything-bar")).not.toBeInTheDocument();
   });
 
   it("does not render the retired Source section subnav inside the event shell", () => {
@@ -159,9 +161,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
       screen.queryByRole("link", { name: /open approvals/i }),
     ).not.toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /open approval workspace/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /approvals/i }));
 
     expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
   });
@@ -179,7 +179,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
       "approval belongs in Source Approvals",
     );
     expect(screen.getByTestId("source-analytics-canvas").textContent).toContain(
-      "open Approvals in this event workspace",
+      "event's approval workspace",
     );
   });
 
@@ -250,7 +250,8 @@ describe("SourceAnalyticsCanvas — docked aVa honesty against live stage state"
     );
 
     const canvas = screen.getByTestId("source-analytics-canvas");
-    expect(canvas.textContent).toContain(`${remaining} of ${total}`);
+    expect(canvas.textContent).toContain(`${remaining} steps left`);
+    expect(canvas.textContent).toContain(`1 / ${total}`);
     expect(canvas.textContent).not.toContain("Two steps left");
   });
 
