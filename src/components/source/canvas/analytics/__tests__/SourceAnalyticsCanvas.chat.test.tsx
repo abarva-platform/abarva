@@ -231,6 +231,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
             title: "RFP Package",
             fileFormat: "docx",
             status: "draft",
+            body: "Recommendation: release the RFP package after approval. Decision requested: approve vendor release. Our internal sensitivity is $3.5M walk-away. This d09 was AI generated.",
           },
         ]}
       />,
@@ -259,8 +260,23 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
       "Hard fails",
     );
+    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+      "Content scored",
+    );
+    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+      "Content blockers",
+    );
     expect(screen.getByTestId("source-artifact-quality-scope")).toHaveTextContent(
-      "Scores lifecycle and approval hard gates only",
+      "plus rendered body text",
+    );
+    expect(
+      screen.getByTestId("source-artifact-content-quality-d09_rfp_pack"),
+    ).toHaveTextContent("Content QA");
+    expect(screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack")).toHaveTextContent(
+      "Content blockers",
+    );
+    expect(screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack")).toHaveTextContent(
+      "Vendor-facing document contains internal commercial or scoring details",
     );
     const standardsExport = screen.getByTestId("source-artifact-standards-export");
     expect(standardsExport).toHaveAttribute(
@@ -277,6 +293,10 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(decodedCsv).toContain('"Token budget"');
     expect(decodedCsv).toContain('"Quality status"');
     expect(decodedCsv).toContain('"Quality findings"');
+    expect(decodedCsv).toContain('"Content QA status"');
+    expect(decodedCsv).toContain('"Content QA findings"');
+    expect(decodedCsv).toContain('"Content blockers"');
+    expect(decodedCsv).toContain("Mechanical/banned terms");
     expect(decodedCsv).toContain(
       "AI-prepared drafts are not final and require human review before external use.",
     );
