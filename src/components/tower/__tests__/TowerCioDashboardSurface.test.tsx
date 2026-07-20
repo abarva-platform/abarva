@@ -992,7 +992,9 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getByText("$650.0M")).toBeInTheDocument();
     expect(screen.getByText("$53.7M")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Decision Lanes/ }));
-    expect(screen.getByText("M365 Copilot Productivity")).toBeInTheDocument();
+    expect(
+      screen.getAllByText("M365 Copilot Productivity").length,
+    ).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /AI Portfolio/ }));
     expect(screen.getByTestId("tower-ai-portfolio-story")).toHaveTextContent(
       "This is not an AI shopping list",
@@ -1003,9 +1005,29 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getByTestId("tower-ai-watchlist")).toHaveTextContent(
       "Candidate ideas are not approved funding",
     );
-    expect(screen.getByText("M365 Copilot Productivity")).toBeInTheDocument();
+    expect(
+      screen.getAllByText("M365 Copilot Productivity").length,
+    ).toBeGreaterThan(0);
     expect(screen.getByText("Fix proof")).toBeInTheDocument();
     expect(screen.getByText(/\$2\.1M validated/)).toBeInTheDocument();
+    expect(screen.getByTestId("tower-active-ai-tools")).toHaveTextContent(
+      "Tool spend, usage, value proof, and claim gates",
+    );
+    expect(screen.getByTestId("tower-active-ai-tools-table")).toHaveTextContent(
+      "Microsoft 365 Copilot",
+    );
+    expect(screen.getByTestId("tower-active-ai-tools-table")).toHaveTextContent(
+      "GitHub Copilot & Codex",
+    );
+    fireEvent.doubleClick(
+      screen.getByTestId("tower-ai-tool-row-reference:m365-copilot"),
+    );
+    expect(screen.getByTestId("tower-ai-tool-trace-drawer")).toHaveTextContent(
+      "Microsoft 365 Copilot",
+    );
+    expect(screen.getByTestId("tower-ai-tool-trace-drawer")).toHaveTextContent(
+      "Finance: $2.1M partial validation of $14.0M promised",
+    );
     expect(
       screen.getAllByText("Hold until gates clear").length,
     ).toBeGreaterThan(0);
@@ -1020,6 +1042,56 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       screen.getByText("Fix Copilot adoption before expansion"),
     ).toBeInTheDocument();
     expect(screen.queryByText("$2.6B")).not.toBeInTheDocument();
+  });
+
+  it("restores the reference tool-spend drill-in for FS Demo and Airline mart tenants", () => {
+    const tenants = [
+      {
+        tenantName: "FS Demo",
+        tenantKey: "first-capital",
+        clientId: "client-first-capital",
+        expectedTool: "IT Incident Root-Cause Copilot",
+      },
+      {
+        tenantName: "Airline Demo",
+        tenantKey: "skyharbor-air",
+        clientId: "client-skyharbor",
+        expectedTool: "Customer Recovery Agent Assist",
+      },
+    ];
+
+    tenants.forEach((tenant) => {
+      const towerMartView: TowerMartCommandViewModel = {
+        ...TOWER_MART_VIEW,
+        headline: `${tenant.tenantName} Tower mart restored.`,
+        command: {
+          ...TOWER_MART_VIEW.command,
+          tenantName: tenant.tenantName,
+          tenantKey: tenant.tenantKey,
+        },
+      };
+      const { unmount } = render(
+        <TowerIndexPage
+          tenantName={tenant.tenantName}
+          context="Tower"
+          towerToday="2026-07-20"
+          clientId={tenant.clientId}
+          initiatives={[]}
+          vendors={[]}
+          activeTab="portfolio"
+          towerMartView={towerMartView}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /AI Portfolio/ }));
+      expect(screen.getByTestId("tower-active-ai-tools-table")).toHaveTextContent(
+        tenant.expectedTool,
+      );
+      expect(screen.getByTestId("tower-active-ai-tools-table")).toHaveTextContent(
+        "Microsoft 365 Copilot",
+      );
+      unmount();
+    });
   });
 
   it("uses executive-grade aVa starter questions for the CIO dock", () => {
