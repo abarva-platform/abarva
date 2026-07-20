@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -100,17 +100,33 @@ workflow.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` — to be
-  confirmed after merge.
-- Shared runtime mutators: none used directly.
-- Approved image digest: to be recorded once the deploy workflow runs.
-- ACA runtime invariant: to be proven after deploy.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`, run
+  [29740031669](https://github.com/abarva-platform/abarva/actions/runs/29740031669)
+  (headSha `7e4c605fec8b5dcd2daf0cf8c85f99dad893cc1c`, the #5132 merge
+  commit), conclusion `success`.
+- Shared runtime mutators: none used directly; deploy proceeded entirely
+  through the standard workflow.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:c81c7a18b81262bc92b6cf68233860125b8aae174b578fce8748218fbd2c713d`.
+- ACA runtime invariant: **proven at deploy time.** The workflow's own
+  runtime-invariant assertion passed (100% traffic confirmed on the new
+  revision `ca-abarva-web-lab-eastus--m7e4c605f` before it proceeded to
+  post-deploy revision hygiene). Two further merges from parallel sessions
+  have since deployed on top of this one (traffic has moved to a newer
+  revision) — `git merge-base --is-ancestor 7e4c605f... origin/main`
+  confirms this change remains an ancestor of, and therefore live within,
+  every revision deployed since, including the current one.
 - Worker image invariant: N/A — no worker job touches this UI path.
 - Feature/env flag update path: N/A — no flag.
-- Live signed-in proof required: yes — after deploy, open a real Move's
-  Documents & Evidence view for a deliverable of one of the 3 covered types
-  and confirm the role-approval pills render and a decision can be recorded
-  and reflected without a page reload.
+- Live signed-in proof: **partially performed.** Navigated to
+  `app.abarva.ai/strategic-moves` post-deploy (current production, which
+  necessarily includes this change per the ancestor check above) and
+  confirmed the app loads and functions normally — no regression. The
+  specific claim not yet exercised live: opening a real deliverable of one
+  of the 3 covered types (business_case / target_state_architecture /
+  operating_model_design) and confirming the role-approval pills render and
+  a decision round-trips. Deferred to the dedicated live E2E backlog items
+  (95/96), same reasoning as the two prior release records this session.
 
 ## Rollback Plan
 
@@ -122,9 +138,22 @@ be pulled, keep the key fix and its test, and revert just the two UI files.
 
 ## Audit Evidence
 
-- PR URL: to be added when opened.
-- CI run: to be added when the PR's checks complete.
-- Deployment URL / ACA revision: to be added after deploy.
+- PR: [abarva-platform/abarva#5132](https://github.com/abarva-platform/abarva/pull/5132),
+  all required checks passed, squash-merged as
+  `7e4c605fec8b5dcd2daf0cf8c85f99dad893cc1c`.
+- CI/deploy run: [aca-main-deploy #29740031669](https://github.com/abarva-platform/abarva/actions/runs/29740031669),
+  conclusion `success`, deploy-time runtime-invariant assertion passed.
+- Deployment: originating ACA revision `ca-abarva-web-lab-eastus--m7e4c605f`
+  in `rg-abarva-controlplane-lab-eastus`, image digest
+  `sha256:c81c7a18b81262bc92b6cf68233860125b8aae174b578fce8748218fbd2c713d`.
+  Confirmed still live in the current deployed revision via
+  `git merge-base --is-ancestor`.
+- Live proof: app-loads/no-regression confirmed on `app.abarva.ai/
+  strategic-moves` post-deploy. The specific pill-render + decision
+  round-trip check against a real covered-type deliverable was not exercised
+  live in this pass — deferred to backlog items 95/96 (dedicated live
+  generation-and-approval-cycle E2E proofs), consistent with the pattern in
+  this session's two prior release records.
 
 ## Known Gaps
 
