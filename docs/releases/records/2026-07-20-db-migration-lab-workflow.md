@@ -231,6 +231,12 @@ existing call sites' behavior when `--plan-only` isn't passed.
   confirms the only field changed was `replicaTimeout` (`7200` → `1800`), no new
   execution was started by the restore, and no `DATABASE_URL` value (only a pre-existing
   Key Vault `secretRef`, unmodified) exists on the job template.
+- **Real GitHub Actions run**, not just local verification:
+  [db-migration-ci-selftest.yml run 29773166993](https://github.com/abarva-platform/abarva/actions/runs/29773166993)
+  — triggered automatically by this PR's own `pull_request` path filter, `conclusion:
+  success`, all 17 steps green in 1m21s, including Apply, Schema readback, Migration
+  ledger, and Repository readback against a real disposable GitHub Actions Postgres
+  service container.
 
 ## Known Gaps
 
