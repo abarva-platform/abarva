@@ -432,7 +432,8 @@ export async function POST(
       approverName: ctx.email ?? ctx.userId,
       approverRole: ctx.role ?? "gate approver",
       rationale,
-      override: carried.length > 0,
+      softGapsCarried: carried.length > 0,
+      hardGateOverride: null,
       carriedGaps: carried.map((check) => ({
         check: check.check,
         reason: check.reason ?? null,

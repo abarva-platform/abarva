@@ -243,7 +243,8 @@ export async function closeP0OnApproval(input: {
       rationale:
         input.rationale?.trim() ||
         "Origination brief approved; one-approval P0 close.",
-      override: carried.length > 0,
+      softGapsCarried: carried.length > 0,
+      hardGateOverride: null,
       carriedGaps: carried.map((c) => ({
         check: c.check,
         reason: c.reason ?? null,

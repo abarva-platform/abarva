@@ -354,16 +354,17 @@ describe("Moves signed-in phase capture/gate routes", () => {
       newPhase: 6,
       terminalHandoff: true,
     });
-    expect(ensurePhaseGateDeliverable).toHaveBeenCalledWith(
+    // INCIDENT 2026-07-20 fix: phase-gate-approval/route.ts no longer
+    // fabricates or signs off any deliverable — evaluateGate (mocked above
+    // to pass) is the single, authoritative check. Terminal P5 handoff must
+    // never call the deliverable-mutation helpers.
+    expect(ensurePhaseGateDeliverable).not.toHaveBeenCalled();
+    expect(signOffDeliverable).not.toHaveBeenCalled();
+    expect(evaluateGate).toHaveBeenCalledWith(
       expect.anything(),
       "move_1",
-      expect.objectContaining({ deliverableTypeKey: "handoff_package" }),
-      expect.anything(),
-    );
-    expect(ensurePhaseGateDeliverable).toHaveBeenCalledWith(
-      expect.anything(),
-      "move_1",
-      expect.objectContaining({ deliverableTypeKey: "value_measurement_contract" }),
+      5,
+      6,
       expect.anything(),
     );
     expect(advancePhase).not.toHaveBeenCalled();
