@@ -1,4 +1,5 @@
 import { Packer } from "docx";
+import { renderToBuffer } from "@react-pdf/renderer";
 import { getActiveClientRow } from "@/lib/active-client";
 import {
   getGeneratedArtifactById,
@@ -9,6 +10,7 @@ import {
 import {
   renderDeliverableDocx,
   renderDeliverableExcelCompanion,
+  renderDeliverablePdf,
 } from "@/lib/deliverables/orchestrator/renderers";
 import type { RenderableDeliverable } from "@/lib/deliverables/orchestrator/types";
 import { getCurrentUser } from "@/lib/auth/current-user";
@@ -20,8 +22,9 @@ const DOCX_CONTENT_TYPE =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 const XLSX_CONTENT_TYPE =
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const PDF_CONTENT_TYPE = "application/pdf";
 
-type DownloadFormat = "docx" | "xlsx" | "html";
+type DownloadFormat = "docx" | "xlsx" | "pdf" | "html";
 
 /** A non-html artifact whose structured doc is missing can only serve its HTML. */
 function resolveRequestedFormat(
@@ -29,14 +32,15 @@ function resolveRequestedFormat(
   record: GeneratedArtifactRecord,
 ): DownloadFormat {
   const raw = new URL(req.url).searchParams.get("format")?.toLowerCase();
-  if (raw === "docx" || raw === "xlsx" || raw === "html") return raw;
-  // Default = the artifact's persisted prescribed format. 'pptx'/'pdf' have no
-  // renderer here yet, so they fall back to docx (their structured doc still
+  if (raw === "docx" || raw === "xlsx" || raw === "pdf" || raw === "html") return raw;
+  // Default = the artifact's persisted prescribed format. 'pptx' has no
+  // renderer here yet, so it falls back to docx (its structured doc still
   // renders as a Word document); anything else → html preview.
   const out = record.outputFormat;
   if (out === "docx") return "docx";
   if (out === "xlsx") return "xlsx";
-  if (out === "pptx" || out === "pdf") return "docx";
+  if (out === "pdf") return "pdf";
+  if (out === "pptx") return "docx";
   return "html";
 }
 
@@ -148,9 +152,10 @@ export async function GET(
     });
   }
 
-  // Binary formats (docx/xlsx) require the structured document. Older artifacts
-  // that predate structured persistence fall back to the stored HTML — never 500.
-  if ((requested === "docx" || requested === "xlsx") && structuredDoc) {
+  // Binary formats (docx/xlsx/pdf) require the structured document. Older
+  // artifacts that predate structured persistence fall back to the stored
+  // HTML — never 500.
+  if ((requested === "docx" || requested === "xlsx" || requested === "pdf") && structuredDoc) {
     try {
       if (requested === "xlsx") {
         const wb = renderDeliverableExcelCompanion(structuredDoc);
@@ -168,6 +173,19 @@ export async function GET(
         }
         // No xlsx-flagged tables → there is no workbook to build. Gracefully
         // fall through to the DOCX rendering of the same document.
+      }
+
+      if (requested === "pdf") {
+        const buf = await renderToBuffer(renderDeliverablePdf(structuredDoc));
+        return new Response(new Uint8Array(buf), {
+          status: 200,
+          headers: attachmentHeaders(
+            record,
+            PDF_CONTENT_TYPE,
+            safeFilename(structuredDoc.title, "pdf"),
+            buf.length,
+          ),
+        });
       }
 
       const buf = await Packer.toBuffer(renderDeliverableDocx(structuredDoc));

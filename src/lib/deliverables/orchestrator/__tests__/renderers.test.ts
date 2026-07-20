@@ -1,12 +1,15 @@
 // PR-4 proof: the RenderableDeliverable renders to board-grade DOCX (packs to a real
-// .docx buffer), an Excel companion for wide tables, and a clean AbarVa-styled HTML
-// preview with the source register and no leaked internal ids.
+// .docx buffer), an Excel companion for wide tables, a clean AbarVa-styled HTML
+// preview with the source register and no leaked internal ids, and (MOVES-QUALITY-001)
+// a board-grade PDF via @react-pdf/renderer.
 import { Packer } from 'docx';
 import JSZip from 'jszip';
+import { renderToBuffer } from '@react-pdf/renderer';
 import {
   renderDeliverableDocx,
   renderDeliverableExcelCompanion,
   renderDeliverableHtml,
+  renderDeliverablePdf,
 } from '../renderers';
 import { scanForInternalLeaks } from '../source-register';
 import { goodDocument } from '../__fixtures__/ams-rfp';
@@ -157,5 +160,58 @@ describe('DOCX renderer — document status disclaimer', () => {
     expect(documentXml).toMatch(/AI-generated working draft — not approved/);
     expect(footerXml).toMatch(/AI-generated working draft/);
     expect(footerXml).toMatch(/approved re-upload are required/);
+  });
+});
+
+describe('PDF renderer (MOVES-QUALITY-001)', () => {
+  it('produces a valid PDF buffer with title, recommendation, sections, tables, and source register', async () => {
+    const buf = await renderToBuffer(renderDeliverablePdf(goodDocument()));
+    const text = buf.toString('latin1');
+
+    expect(text.startsWith('%PDF-')).toBe(true);
+    expect(text).toContain('Airline Demo');
+    expect(text).toContain('Recommendation');
+    expect(text).toContain('Executive Overview');
+    // "Application Inventory" is the xlsx-flagged table — correctly excluded
+    // from the PDF/DOCX body (Excel companion only); the docx-targeted table
+    // is the one that belongs in-document.
+    expect(text).toContain('Risks, Issues');
+    expect(text).toContain('Source Register');
+  });
+
+  it('renders each declared exhibit\'s title and description alongside its image', async () => {
+    const buf = await renderToBuffer(renderDeliverablePdf(goodDocument()));
+    const text = buf.toString('latin1');
+    expect(text).toContain('Visual Exhibits');
+    expect(text).toContain('Service Tower Scope Map');
+    expect(text).toContain('Towers × services.');
+  });
+
+  it('falls back to a text notice (not a thrown error) when rasterisation fails', async () => {
+    jest.resetModules();
+    jest.doMock('@/lib/programs/expert-kernel/exports/board-grade/svg-raster', () => ({
+      rasteriseSvg: () => {
+        throw new Error('simulated rasteriser failure');
+      },
+    }));
+    const { renderDeliverablePdf: renderWithBrokenRasteriser } = await import('../renderers');
+    const { goodDocument: freshGoodDocument } = await import('../__fixtures__/ams-rfp');
+    const { renderToBuffer: freshRenderToBuffer } = await import('@react-pdf/renderer');
+
+    const buf = await freshRenderToBuffer(renderWithBrokenRasteriser(freshGoodDocument()));
+    const text = buf.toString('latin1');
+    expect(text.startsWith('%PDF-')).toBe(true);
+    expect(text).toContain('exhibit could not be rendered as an image');
+
+    jest.dontMock('@/lib/programs/expert-kernel/exports/board-grade/svg-raster');
+    jest.resetModules();
+  });
+
+  it('carries the required document-status disclaimer, identical wording to DOCX/HTML', async () => {
+    const buf = await renderToBuffer(renderDeliverablePdf(goodDocument()));
+    const text = buf.toString('latin1');
+    expect(text).toContain('AI-generated working draft');
+    expect(text).toContain('Obtain named human approval');
+    expect(text).toContain('must not be treated as an approved client deliverable');
   });
 });
