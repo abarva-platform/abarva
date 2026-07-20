@@ -31,6 +31,7 @@ import {
 } from "@/lib/programs/deliverable-canvas-polish-view";
 import { MoveEvidenceNeedsPanel } from "./MoveEvidenceNeedsPanel";
 import { DeliverableApprovalAction } from "./DeliverableApprovalAction";
+import { RoleApprovalsPanel } from "./RoleApprovalsPanel";
 
 interface Props {
   moveId: string;
@@ -530,6 +531,16 @@ function DocumentRow({
           </span>
         )}
       </div>
+
+      {/* Multi-role approval status — renders nothing for the deliverable
+          types that don't require any (the default; see REQUIRED_APPROVAL_ROLES
+          in deliverable-role-approvals.ts). flexBasis 100% pushes it onto its
+          own line under the title/actions row above. */}
+      {hasContent && dbRow ? (
+        <div style={{ flexBasis: "100%" }}>
+          <RoleApprovalsPanel moveId={moveId} deliverableId={dbRow.id} />
+        </div>
+      ) : null}
     </div>
   );
 }
