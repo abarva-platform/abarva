@@ -187,6 +187,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
           {
             id: "generated-draft",
             stageKey: "scope",
+            artifactType: "d05_scope_memo",
             artifactFamily: "sourcing_strategy",
             sourceOrigin: "generated",
             title: "Scope Memo",
@@ -196,6 +197,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
           {
             id: "uploaded-evidence",
             stageKey: "scope",
+            artifactType: "d07_ticket_synth",
             artifactGroup: "upload",
             title: "Ticket History",
             fileFormat: "csv",
@@ -204,6 +206,7 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
           {
             id: "client-final",
             stageKey: "scope",
+            artifactType: "d05_scope_memo",
             artifactGroup: "upload",
             title: "Approved Scope Memo",
             fileFormat: "pdf",
@@ -211,6 +214,16 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
             isClientFinal: true,
             isCurrentAuthoritative: true,
             sourceGeneratedArtifactId: "generated-draft",
+          },
+          {
+            id: "generated-rfp",
+            stageKey: "rfp",
+            artifactType: "d09_rfp_pack",
+            artifactGroup: "generated",
+            sourceOrigin: "generated",
+            title: "RFP Package",
+            fileFormat: "docx",
+            status: "draft",
           },
         ]}
       />,
@@ -230,6 +243,24 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.queryByTestId("source-shell-file-governance-uploaded-evidence"),
     ).not.toBeInTheDocument();
+    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+      "Expected artifacts",
+    );
+    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+      "Human review required",
+    );
+    expect(
+      screen.getByTestId("source-artifact-lifecycle-row-d05_scope_memo"),
+    ).toHaveTextContent("Client-approved final");
+    expect(
+      screen.getByTestId("source-artifact-lifecycle-row-d07_ticket_synth"),
+    ).toHaveTextContent("Evidence registered");
+    expect(
+      screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack"),
+    ).toHaveTextContent("128k max");
+    expect(
+      screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack"),
+    ).toHaveTextContent("AI draft awaiting review");
   });
 
   it("does not tell users that event approval belongs in the old Source Approvals page", () => {
