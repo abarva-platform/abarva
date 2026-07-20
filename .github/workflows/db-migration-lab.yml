@@ -12,15 +12,16 @@ name: Database migration — lab
 # workflow's name matches the Azure resource naming, not a lesser-scrutiny
 # environment — this runs against the real live database.
 #
-# Sequence: preflight (always) -> [confirmed apply] -> schema readback ->
-# migration ledger -> repository readback -> affected-feature health check
-# -> audit chain -> auditable run summary. "Schema exists" and "application
-# can use it" are different claims; repository readback checks the second
-# one by calling the real repository function, not raw SQL. Every run,
-# status or apply, produces an uploaded evidence artifact. This workflow is
-# deliberately kept separate from application deployment
-# (.github/workflows/aca-main-deploy.yml) — a deploy must never auto-run a
-# migration, and this lane must never build or deploy application code.
+# Sequence: preflight + migration ledger (always, both read-only) ->
+# [confirmed apply] -> schema readback -> repository readback ->
+# affected-feature health check -> audit chain -> auditable run summary.
+# "Schema exists" and "application can use it" are different claims;
+# repository readback checks the second one by calling the real repository
+# function, not raw SQL. Every run, status or apply, produces an uploaded
+# evidence artifact. This workflow is deliberately kept separate from
+# application deployment (.github/workflows/aca-main-deploy.yml) — a deploy
+# must never auto-run a migration, and this lane must never build or deploy
+# application code.
 
 on:
   workflow_dispatch:
@@ -221,9 +222,15 @@ jobs:
       # JSON block bounded by __DB_MIGRATION_LEDGER_BEGIN__/_END__ markers
       # specifically so "Assemble audit chain" below can extract it
       # reliably from the ACA job's (Azure-log-prefixed) output.
+      #
+      # Runs in BOTH modes deliberately: it is a pure read (no mutation
+      # risk), and seeing the full applied-migration ledger during a status
+      # dispatch — not just the pending list — is real evidence for
+      # investigating *why* a migration is pending (was it never applied,
+      # or did the ledger drift from what the schema itself shows?) before
+      # ever approving an apply run.
       - name: Migration ledger
         id: ledger
-        if: inputs.mode == 'apply'
         shell: bash
         run: |
           set -euo pipefail
@@ -344,7 +351,7 @@ jobs:
                 echo '```'
               fi
             else
-              echo "Status/preflight only — no schema change was made. See uploaded evidence for the pending-migration list."
+              echo "Status/preflight only — no schema change was made. See uploaded evidence for the pending-migration list and the current migration ledger."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
