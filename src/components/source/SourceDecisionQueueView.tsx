@@ -802,7 +802,7 @@ function QueueToolbar({
 }) {
   return (
     <form
-      action="/source/queue"
+      action="/source/portfolio"
       style={{
         display: "flex",
         gap: 8,

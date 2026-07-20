@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 /**
  * The Renewal Cockpit — the per-renewal decision surface (Practitioner-Fit
  * §2). The headline is the recommended posture; the sections below are the
- * evidence. Reached mid-stream from a Decision Queue card, pre-loaded.
+ * evidence. Reached mid-stream from Source portfolio actions, pre-loaded.
  */
 export default async function RenewalCockpitPage({
   params,
@@ -64,10 +64,10 @@ export default async function RenewalCockpitPage({
               fabricates a renewal.
             </p>
             <Link
-              href="/source/queue"
+              href="/source/portfolio"
               style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_MID }}
             >
-              ← Back to the Decision Queue
+              ← Back to the sourcing book
             </Link>
           </div>
         )}

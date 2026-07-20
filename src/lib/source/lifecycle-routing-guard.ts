@@ -110,7 +110,7 @@ export function resolveSourceLifecycleRoute(
   }
 
   if (state === "archived") {
-    return { type: "redirect", destination: "/source/queue", status: 302 };
+    return { type: "redirect", destination: "/source/portfolio", status: 302 };
   }
 
   return { type: "allow" };

@@ -32,6 +32,7 @@ jest.mock("@clerk/nextjs", () => ({
 
 const sourceRouteFiles = [
   "src/app/(maestro)/source/page.tsx",
+  "src/app/(maestro)/source/queue/page.tsx",
   "src/app/(maestro)/source/events/[eventId]/page.tsx",
 ];
 
@@ -65,11 +66,16 @@ describe("Source authenticated route smoke", () => {
 
   it("keeps /source redirected to the analytics portfolio and preserves the legacy portfolio component", () => {
     const routeSource = readWorkspaceFile("src/app/(maestro)/source/page.tsx");
+    const queueRouteSource = readWorkspaceFile(
+      "src/app/(maestro)/source/queue/page.tsx",
+    );
     const componentSource = readWorkspaceFile(
       "src/components/source/SourceIndexPage.tsx",
     );
 
     expect(routeSource).toContain("redirect('/source/portfolio')");
+    expect(queueRouteSource).toContain('redirect("/source/portfolio")');
+    expect(queueRouteSource).not.toContain("SourceDecisionQueueView");
     expect(componentSource).toContain("AMS Vendor Consolidation 2026");
     expect(componentSource).toContain("SOURCE_INDEX_VIEW");
     expect(componentSource).not.toMatch(/fetch\(|openai|claude|anthropic/i);

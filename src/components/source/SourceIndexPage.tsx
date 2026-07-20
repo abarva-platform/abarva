@@ -718,11 +718,9 @@ export function SourceIndexPage() {
           </span>
         </div>
 
-        {/* Decision Queue front door (Practitioner-Fit FIX 1) — landing on
-            Source surfaces "what needs a sourcing decision today" as a real,
-            discoverable entry, not a placeholder. */}
+        {/* Source book front door — the canonical portfolio entry for Source. */}
         <Link
-          href="/source/queue"
+          href="/source/portfolio"
           style={{
             display: 'block',
             background: SHELL.CARD_WHITE,
@@ -741,7 +739,7 @@ export function SourceIndexPage() {
               color: SHELL.INK_MUTED,
             }}
           >
-            Source · Decision Queue
+            Source · Portfolio book
           </span>
           <div
             style={{
@@ -752,7 +750,7 @@ export function SourceIndexPage() {
               margin: '4px 0 2px',
             }}
           >
-            What needs a sourcing decision today →
+            Open the sourcing book →
           </div>
           <span
             style={{

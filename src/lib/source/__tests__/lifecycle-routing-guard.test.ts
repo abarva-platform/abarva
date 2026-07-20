@@ -98,7 +98,7 @@ describe("source lifecycle routing guard", () => {
     ).toEqual({ type: "allow" });
   });
 
-  it("redirects archived events to the Source queue", () => {
+  it("redirects archived events to the Source portfolio book", () => {
     expect(
       resolveSourceLifecycleRoute({
         eventId: "SRC-100",
@@ -107,7 +107,7 @@ describe("source lifecycle routing guard", () => {
       }),
     ).toEqual({
       type: "redirect",
-      destination: "/source/queue",
+      destination: "/source/portfolio",
       status: 302,
     });
   });
