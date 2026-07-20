@@ -3,11 +3,14 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
-// The wrapper is a plain .mjs CLI script (not an importable module — it runs
-// main() at the top level), so these tests drive it the same way the
-// db-migration-lab workflow does: as a subprocess. --plan-only guarantees no
-// `az` process is ever spawned, so these tests never authenticate or touch
-// Azure — they only validate the command shape the wrapper would issue.
+// The wrapper is a plain .mjs CLI script that guards its own main() behind
+// an invokedAsScript check, so most of these tests drive it as a subprocess
+// (matching how the db-migration-lab workflow actually calls it).
+// --plan-only guarantees no `az` process is ever spawned, so those tests
+// never authenticate or touch Azure — they only validate the command shape
+// the wrapper would issue. Pure exported helpers (terminalStatus) are
+// imported directly via Node's CJS->ESM dynamic import() interop instead,
+// since spawning a subprocess for a one-line pure function is unnecessary.
 const WRAPPER = path.join(__dirname, '..', 'submit-aca-operator-job.mjs')
 const REAL_IDLE_IMAGE =
   'acrabarvalab001.azurecr.io/abarva/web@sha256:918b6cbf298ebd5bd20782b15f7d1817111d94e438436d64f2ea64db543db8a9'
@@ -133,5 +136,28 @@ describe('submit-aca-operator-job.mjs --plan-only', () => {
     )
     expect(result.status).not.toBe(0)
     expect(result.stderr).toMatch(/suspicious npm script/)
+  })
+})
+
+describe('terminalStatus', () => {
+  // Real incident: an ACA job execution sitting in "Stopped" status (two
+  // days old, genuinely inactive) was misclassified as non-terminal by
+  // verifyIdle() on the first live dispatch of the migration workflow,
+  // failing an otherwise-clean preflight run. This locks the fixed status
+  // list in place.
+  test('recognizes every known terminal ACA job execution status, including Stopped', async () => {
+    const mod = await import(WRAPPER)
+    expect(mod.terminalStatus('Succeeded')).toBe(true)
+    expect(mod.terminalStatus('Failed')).toBe(true)
+    expect(mod.terminalStatus('Canceled')).toBe(true)
+    expect(mod.terminalStatus('Cancelled')).toBe(true)
+    expect(mod.terminalStatus('Stopped')).toBe(true)
+  })
+
+  test('does not treat an active/in-progress status as terminal', async () => {
+    const mod = await import(WRAPPER)
+    expect(mod.terminalStatus('Running')).toBe(false)
+    expect(mod.terminalStatus('Processing')).toBe(false)
+    expect(mod.terminalStatus('Unknown')).toBe(false)
   })
 })

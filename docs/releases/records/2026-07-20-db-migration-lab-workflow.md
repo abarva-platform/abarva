@@ -240,13 +240,16 @@ existing call sites' behavior when `--plan-only` isn't passed.
 
 ## Known Gaps
 
-- **The real ACA-job → Azure Postgres pathway has not been proven end-to-end.** See the
-  `NOT YET PROVEN` line in QA / Validation. The CI self-test proves the workflow's own
-  sequencing/gating logic and every npm script in isolation; it does not and cannot
-  prove the ACA operator job / private VNet transport, since this environment has no
-  real Azure. This must be closed with a real `mode=status` dispatch of
-  `db-migration-lab.yml` before any `mode=apply` run is attempted — Anand's own
-  precondition for approving a lab run.
+- **RESOLVED as of the first real dispatch (2026-07-20, run 29780099664):** the
+  ACA-job → Azure Postgres transport is now proven — `db:migrate:dry` ran inside the
+  real `job-abarva-private-operator-eus` execution and correctly listed 3 pending
+  migrations from the live lab database. The run's overall job status still failed,
+  but from a real bug this exposed, not the transport: `verifyIdle()`'s
+  `terminalStatus()` list was missing `"Stopped"`, so a genuinely-inactive, two-day-old
+  historical execution (`job-abarva-private-operator-eus-zyb14zz`, confirmed unrelated
+  via a read-only `az containerapp job execution show`) was misclassified as
+  non-terminal. Fixed and covered by two new direct-import unit tests (see the
+  follow-up commit). This is exactly why status mode was run before apply.
 - **The `source_stage_guidebooks` migration from PR #5135 has still not been applied to
   any real environment.** This release only builds the lane; it does not use it yet. The
   guidebook feature and any UI reading `source_stage_guidebooks` remain correctly
