@@ -35,6 +35,8 @@ describe("Source artifact lifecycle matrix", () => {
     expect(summary.quality.hardFailCount).toBeGreaterThan(0);
     expect(summary.quality.missingRequiredCount).toBeGreaterThan(0);
     expect(summary.quality.reviewRequiredCount).toBe(0);
+    expect(summary.quality.contentScoredCount).toBe(0);
+    expect(summary.quality.contentBlockerCount).toBe(0);
     expect(summary.quality.label).toBe("Hard fails present");
 
     const scopeMemo = summary.rows.find((row) => row.code === "d05_scope_memo");
@@ -50,6 +52,10 @@ describe("Source artifact lifecycle matrix", () => {
     );
     expect(scopeMemo?.quality.state).toBe("decision_ready");
     expect(scopeMemo?.quality.score).toBeGreaterThanOrEqual(88);
+    expect(scopeMemo?.contentQuality.state).toBe("not_scored");
+    expect(scopeMemo?.contentQuality.nextAction).toContain(
+      "Thread rendered artifact body text",
+    );
     expect(ticketSynthesis?.lifecycleState).toBe("evidence_only");
     expect(ticketSynthesis?.governanceMessage).toContain(
       "not a client-approved deliverable",
@@ -66,6 +72,47 @@ describe("Source artifact lifecycle matrix", () => {
     expect(rfpPack?.exportFormatsLabel).toBe("DOCX / HTML / PDF");
     expect(rfpPack?.quality.state).toBe("missing");
     expect(rfpPack?.quality.hardFails[0]).toContain("Required/gate-defining");
+  });
+
+  it("scores rendered artifact body text when content is available", () => {
+    const summary = buildSourceArtifactLifecycleSummary([
+      {
+        artifactKind: "d01_strategy_memo",
+        sourceOrigin: "reuploaded",
+        status: "client_final",
+        isClientFinal: true,
+        body: `Recommendation: approve the sourcing event and authorize scope preparation.
+        Decision requested: confirm the sourcing approach and authorize RFP preparation.
+        Why now: incumbent contract expires Q4; cost pressure from board.
+        Recommended approach: competitive RFP targeting the managed applications estate.
+        What we know: estate has 180 apps; current run cost ~$12M/year.
+        What remains open: application tiers and ticket volume require upload.
+        Value hypothesis: $4-7M annually. Confidence band: medium.
+        Next gate: lock scope boundary before RFP issue.`,
+      },
+      {
+        artifactKind: "d09_rfp_pack",
+        artifactGroup: "generated",
+        sourceOrigin: "generated",
+        status: "approved",
+        body: "Our internal sensitivity is $3.5M walk-away. This d09 was AI generated.",
+      },
+    ]);
+
+    const strategyMemo = summary.rows.find(
+      (row) => row.code === "d01_strategy_memo",
+    );
+    const rfpPack = summary.rows.find((row) => row.code === "d09_rfp_pack");
+
+    expect(summary.quality.contentScoredCount).toBe(2);
+    expect(summary.quality.contentBlockerCount).toBeGreaterThan(0);
+    expect(summary.quality.scopeLabel).toContain("rendered body text");
+    expect(strategyMemo?.contentQuality.state).toBe("passed");
+    expect(strategyMemo?.contentQuality.score).toBe(100);
+    expect(rfpPack?.contentQuality.state).toBe("blocked");
+    expect(rfpPack?.contentQuality.blockers.join(" ")).toContain(
+      "Mechanical/banned terms",
+    );
   });
 
   it("keeps AI-generated drafts in review-required state until client final is accepted", () => {
@@ -170,6 +217,9 @@ describe("Source artifact lifecycle matrix", () => {
     expect(csv).toContain('"Quality status"');
     expect(csv).toContain('"Quality score"');
     expect(csv).toContain('"Quality findings"');
+    expect(csv).toContain('"Content QA status"');
+    expect(csv).toContain('"Content QA score"');
+    expect(csv).toContain('"Content QA findings"');
     expect(csv).toContain('"Scope","d08_premortem","Pre-mortem on Scope Risk"');
     expect(csv).toContain(
       '"Transition","d31_kt_evidence","Knowledge-Transfer Evidence"',
@@ -183,5 +233,6 @@ describe("Source artifact lifecycle matrix", () => {
     expect(csv).toContain('"Claude Opus","128k max"');
     expect(csv).toContain('"Human review required","68"');
     expect(csv).toContain('"Evidence only","42"');
+    expect(csv).toContain('"Content not scored","Not scored"');
   });
 });

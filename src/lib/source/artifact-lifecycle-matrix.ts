@@ -16,6 +16,7 @@ import {
   getSourceArtifactProfile,
   type SourceArtifactProfile,
 } from "@/lib/source/documentation-standards/source-artifact-profiles";
+import { runDocumentQA } from "@/lib/source/documentation-standards/source-documentation-standards";
 import type { SourceStageKey } from "@/lib/source/types";
 
 export type SourceArtifactLifecycleState =
@@ -34,6 +35,10 @@ export interface SourceArtifactLifecycleArtifact {
   approvalState?: string | null;
   evidenceState?: string | null;
   isClientFinal?: boolean | null;
+  body?: string | null;
+  bodyMarkdown?: string | null;
+  renderedText?: string | null;
+  plainTextSummary?: string | null;
 }
 
 export interface SourceArtifactLifecyclePromptContract {
@@ -57,6 +62,22 @@ export interface SourceArtifactQualityAssessment {
   nextAction: string;
 }
 
+export type SourceArtifactContentQualityState =
+  | "not_scored"
+  | "passed"
+  | "warnings"
+  | "blocked";
+
+export interface SourceArtifactContentQualityAssessment {
+  state: SourceArtifactContentQualityState;
+  label: string;
+  score: number | null;
+  blockers: string[];
+  warnings: string[];
+  gateCount: number;
+  nextAction: string;
+}
+
 export interface SourceArtifactLifecycleRow {
   code: string;
   name: string;
@@ -77,6 +98,7 @@ export interface SourceArtifactLifecycleRow {
   approvalLabel: string;
   governanceMessage: string;
   quality: SourceArtifactQualityAssessment;
+  contentQuality: SourceArtifactContentQualityAssessment;
 }
 
 export interface SourceArtifactQualitySummary {
@@ -87,6 +109,9 @@ export interface SourceArtifactQualitySummary {
   reviewRequiredCount: number;
   evidenceOnlyCount: number;
   decisionReadyCount: number;
+  contentScoredCount: number;
+  contentBlockerCount: number;
+  contentWarningCount: number;
   label: string;
   scopeLabel: string;
 }
@@ -135,6 +160,9 @@ const ARTIFACT_STANDARDS_CSV_COLUMNS = [
   "Quality status",
   "Quality score",
   "Quality findings",
+  "Content QA status",
+  "Content QA score",
+  "Content QA findings",
   "Governance note",
 ] as const;
 
@@ -252,6 +280,10 @@ export function buildSourceArtifactStandardsCsv(
       row.quality.label,
       String(row.quality.score),
       [...row.quality.hardFails, ...row.quality.warnings].join("; ") || row.quality.nextAction,
+      row.contentQuality.label,
+      row.contentQuality.score === null ? "Not scored" : String(row.contentQuality.score),
+      [...row.contentQuality.blockers, ...row.contentQuality.warnings].join("; ") ||
+        row.contentQuality.nextAction,
       row.governanceMessage,
     ].map(csvCell).join(","),
   );
@@ -276,6 +308,10 @@ function buildLifecycleRow(
     prompt,
     profile,
   });
+  const contentQuality = contentQualityAssessmentFor({
+    content: artifactContentFor(matchingArtifacts),
+    spec,
+  });
   return {
     code: spec.code,
     name: spec.name,
@@ -298,6 +334,7 @@ function buildLifecycleRow(
     approvalLabel: approvalLabelFor(lifecycleState),
     governanceMessage: governanceMessageFor(lifecycleState),
     quality,
+    contentQuality,
   };
 }
 
@@ -331,6 +368,17 @@ function buildQualitySummary(
   const decisionReadyCount = rows.filter(
     (row) => row.quality.state === "decision_ready",
   ).length;
+  const contentScoredCount = rows.filter(
+    (row) => row.contentQuality.state !== "not_scored",
+  ).length;
+  const contentBlockerCount = rows.reduce(
+    (total, row) => total + row.contentQuality.blockers.length,
+    0,
+  );
+  const contentWarningCount = rows.reduce(
+    (total, row) => total + row.contentQuality.warnings.length,
+    0,
+  );
 
   return {
     score,
@@ -340,6 +388,9 @@ function buildQualitySummary(
     reviewRequiredCount,
     evidenceOnlyCount,
     decisionReadyCount,
+    contentScoredCount,
+    contentBlockerCount,
+    contentWarningCount,
     label:
       hardFailCount > 0
         ? "Hard fails present"
@@ -347,8 +398,80 @@ function buildQualitySummary(
           ? "Review warnings"
           : "Lifecycle ready",
     scopeLabel:
-      "Scores lifecycle and approval hard gates only; prose, visuals, and exhibit quality require renderer-output scoring.",
+      contentScoredCount > 0
+        ? "Scores lifecycle and approval hard gates, plus rendered body text where Source has artifact content available."
+        : "Scores lifecycle and approval hard gates only; rendered body text is not available in this registry view yet, so prose, visuals, citations, and exhibit quality are not claimed.",
   };
+}
+
+function contentQualityAssessmentFor(args: {
+  content: string | null;
+  spec: SourceArtifactSpec;
+}): SourceArtifactContentQualityAssessment {
+  const content = args.content?.trim();
+  if (!content) {
+    return {
+      state: "not_scored",
+      label: "Content not scored",
+      score: null,
+      blockers: [],
+      warnings: [],
+      gateCount: 0,
+      nextAction:
+        "Thread rendered artifact body text into the lifecycle matrix before claiming section, visual, citation, or narrative quality.",
+    };
+  }
+
+  const report = runDocumentQA({
+    artifactCode: shortProfileCode(args.spec.code),
+    content,
+  });
+  const score = Math.max(
+    0,
+    100 - report.blockers.length * 25 - report.warnings.length * 8,
+  );
+  const state: SourceArtifactContentQualityState =
+    report.blockers.length > 0
+      ? "blocked"
+      : report.warnings.length > 0
+        ? "warnings"
+        : "passed";
+
+  return {
+    state,
+    label:
+      state === "blocked"
+        ? "Content blockers"
+        : state === "warnings"
+          ? "Content warnings"
+          : "Content QA passed",
+    score,
+    blockers: report.blockers,
+    warnings: report.warnings,
+    gateCount: report.results.length,
+    nextAction:
+      state === "passed"
+        ? "Rendered content passes deterministic Source document QA."
+        : "Repair the rendered artifact body, then re-run deterministic Source document QA before final use.",
+  };
+}
+
+function artifactContentFor(
+  artifacts: readonly SourceArtifactLifecycleArtifact[],
+): string | null {
+  for (const artifact of artifacts) {
+    const content =
+      artifact.body ??
+      artifact.bodyMarkdown ??
+      artifact.renderedText ??
+      artifact.plainTextSummary;
+    if (content?.trim()) return content;
+  }
+  return null;
+}
+
+function shortProfileCode(code: string): string {
+  return code.split("_")[0] ?? code;
 }
 
 function qualityAssessmentFor(args: {

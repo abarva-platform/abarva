@@ -164,6 +164,10 @@ export interface SourceShellArtifactLike {
   isClientFinal?: boolean | null;
   isCurrentAuthoritative?: boolean | null;
   sourceGeneratedArtifactId?: string | null;
+  body?: string | null;
+  bodyMarkdown?: string | null;
+  renderedText?: string | null;
+  plainTextSummary?: string | null;
 }
 
 export interface BuildSourceEventShellViewInput {

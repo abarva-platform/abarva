@@ -1021,6 +1021,9 @@ function ArtifactLifecyclePanel({
     ['Hard fails', String(lifecycle.quality.hardFailCount)],
     ['Missing required', String(lifecycle.quality.missingRequiredCount)],
     ['Review-required', String(lifecycle.quality.reviewRequiredCount)],
+    ['Content scored', String(lifecycle.quality.contentScoredCount)],
+    ['Content blockers', String(lifecycle.quality.contentBlockerCount)],
+    ['Content warnings', String(lifecycle.quality.contentWarningCount)],
     ['Expected artifacts', String(lifecycle.expectedCount)],
     ['Required', String(lifecycle.requiredCount)],
     ['Gate-defining', String(lifecycle.gateDefiningCount)],
@@ -1261,6 +1264,21 @@ function LifecycleStageRows({
             <div style={{ marginTop: 3, color: ANALYTICS.MUTED, fontSize: 11 }}>
               {row.quality.label}
             </div>
+            <div
+              data-testid={`source-artifact-content-quality-${row.code}`}
+              style={{
+                marginTop: 8,
+                color: row.contentQuality.state === 'blocked' ? '#8A3A12' : ANALYTICS.INK_2,
+                fontSize: 11.5,
+                fontWeight: 800,
+              }}
+            >
+              Content QA{' '}
+              {row.contentQuality.score === null ? 'not scored' : `${row.contentQuality.score}/100`}
+            </div>
+            <div style={{ marginTop: 3, color: ANALYTICS.MUTED, fontSize: 11 }}>
+              {row.contentQuality.label}
+            </div>
             <div style={{ marginTop: 6, color: ANALYTICS.MUTED, fontSize: 11 }}>
               {row.familyLabel}
             </div>
@@ -1285,6 +1303,20 @@ function LifecycleStageRows({
                 }}
               >
                 {row.quality.hardFails[0] ?? row.quality.warnings[0]}
+              </div>
+            ) : null}
+            {row.contentQuality.state !== 'passed' ? (
+              <div
+                style={{
+                  marginTop: 8,
+                  color:
+                    row.contentQuality.state === 'blocked' ? '#8A3A12' : ANALYTICS.MUTED,
+                  fontSize: 11.5,
+                }}
+              >
+                {row.contentQuality.blockers[0] ??
+                  row.contentQuality.warnings[0] ??
+                  row.contentQuality.nextAction}
               </div>
             ) : null}
             {row.lifecycleState === 'ai_draft' ? (
