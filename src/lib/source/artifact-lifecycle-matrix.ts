@@ -83,6 +83,29 @@ export interface SourceArtifactStandardsContextItem {
   score: number;
 }
 
+const ARTIFACT_STANDARDS_CSV_COLUMNS = [
+  "Stage",
+  "Artifact code",
+  "Artifact name",
+  "Requirement",
+  "Gate role",
+  "Artifact family",
+  "Guideline",
+  "Audience and reader mode",
+  "Required exhibits / sections",
+  "Page guidance",
+  "Evidence and source controls",
+  "Prompt-backed",
+  "Model",
+  "Token budget",
+  "Export formats",
+  "Current lifecycle state",
+  "Approval rule",
+  "AI draft rule",
+  "Human final rule",
+  "Governance note",
+] as const;
+
 const DEFAULT_PROMPT_TOKENS = "24k max";
 
 const PROMPT_CONTRACTS: Record<
@@ -168,6 +191,40 @@ export function buildSourceArtifactStandardsContext(args: {
   }));
 }
 
+export function buildSourceArtifactStandardsCsv(
+  rows: readonly SourceArtifactLifecycleRow[],
+): string {
+  const body = rows.map((row) =>
+    [
+      row.stageLabel,
+      row.code,
+      row.name,
+      row.requirementLabel,
+      row.gateLabel,
+      row.familyLabel,
+      row.guidelineLabel,
+      row.audienceLabel,
+      row.structureLabel,
+      row.pageGuidanceLabel,
+      row.controlsLabel,
+      row.prompt.supported ? "Yes" : "No",
+      row.prompt.modelLabel,
+      row.prompt.maxTokensLabel,
+      row.exportFormatsLabel,
+      row.lifecycleLabel,
+      row.approvalLabel,
+      "AI-prepared drafts are not final and require human review before external use.",
+      "A reviewed client-final version must be accepted back into Source as the authoritative artifact of record.",
+      row.governanceMessage,
+    ].map(csvCell).join(","),
+  );
+
+  return [
+    ARTIFACT_STANDARDS_CSV_COLUMNS.map(csvCell).join(","),
+    ...body,
+  ].join("\n");
+}
+
 function buildLifecycleRow(
   spec: SourceArtifactSpec,
   artifacts: readonly SourceArtifactLifecycleArtifact[],
@@ -198,6 +255,10 @@ function buildLifecycleRow(
     approvalLabel: approvalLabelFor(lifecycleState),
     governanceMessage: governanceMessageFor(lifecycleState),
   };
+}
+
+function csvCell(value: string): string {
+  return `"${value.replace(/"/g, '""')}"`;
 }
 
 function inferArtifactCodesFromPrompt(prompt: string): string[] {

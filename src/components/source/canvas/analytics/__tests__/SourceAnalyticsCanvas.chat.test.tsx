@@ -253,6 +253,25 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
       "Expected artifacts",
     );
+    const standardsExport = screen.getByTestId("source-artifact-standards-export");
+    expect(standardsExport).toHaveAttribute(
+      "download",
+      "LSH-AMS-2026-artifact-standards.csv",
+    );
+    const decodedCsv = decodeURIComponent(
+      standardsExport.getAttribute("href")?.replace(/^data:text\/csv;charset=utf-8,/, "") ??
+        "",
+    );
+    expect(decodedCsv).toContain('"Artifact code"');
+    expect(decodedCsv).toContain('"d08_premortem"');
+    expect(decodedCsv).toContain('"d31_kt_evidence"');
+    expect(decodedCsv).toContain('"Token budget"');
+    expect(decodedCsv).toContain(
+      "AI-prepared drafts are not final and require human review before external use.",
+    );
+    expect(decodedCsv).toContain(
+      "A reviewed client-final version must be accepted back into Source as the authoritative artifact of record.",
+    );
     expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
       "Evidence-only",
     );
