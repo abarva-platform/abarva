@@ -34,6 +34,43 @@ describe("Tower visual contract", () => {
     expect(chartKindForTowerVisualContract(contract)).toBe("horizontal-bar");
   });
 
+  it("lets explicit trend questions beat broad AI portfolio hints", () => {
+    const contract = selectTowerVisualContract({
+      question:
+        "Show the FY26 to FY28 value trend for the AI portfolio and explain whether confidence is improving.",
+      contractKey: "tower_value_realization",
+      artifactType: "portfolio",
+    });
+
+    expect(contract).toMatchObject({
+      questionIntent: "trend",
+      recommendedVisual: "line",
+    });
+    expect(
+      towerProgressEventsForQuestion(
+        "Show the FY26 to FY28 value trend for the AI portfolio.",
+      ).map((event) => event.label),
+    ).toEqual([
+      "Loading metric history...",
+      "Checking period confidence...",
+      "Preparing trend view...",
+    ]);
+  });
+
+  it("lets explicit risk and evidence-gap questions beat value-realization contract hints", () => {
+    const contract = selectTowerVisualContract({
+      question:
+        "Which towers are unhealthy, and what evidence gaps block executive confidence?",
+      contractKey: "tower_value_realization",
+      artifactType: "waterfall",
+    });
+
+    expect(contract).toMatchObject({
+      questionIntent: "heatmap",
+      recommendedVisual: "heatmap",
+    });
+  });
+
   it("streams business-readable progress labels without implementation language", () => {
     const labels = towerProgressEventsForQuestion(
       "Create a 2x2 matrix of AI programs by value and execution confidence.",

@@ -29,6 +29,8 @@ Tower aVa now treats visuals as part of the governed answer contract. For execut
 
 ## Changes Included
 
+- PR #5139: initial Tower visual contract, adaptive stream labels, prompt/trace wiring, and renderer chart-kind mapping.
+- Follow-up corrective PR: prioritizes explicit trend/risk questions over broad portfolio/value hints and keeps deterministic fallbacks inside the visible-answer validator.
 - `src/lib/cio-tower/visual-contract.ts` defines the Tower visual contract, question-intent classifier, renderer chart-kind mapping, and adaptive stream progress labels.
 - `src/lib/cio-tower/answer.ts` adds the visual contract to the Tower prompt context, required JSON shape, deterministic fallback answers, trace packet, and parsed model output.
 - `src/lib/cio-tower/tower-chat-artifacts.ts` uses the visual contract to choose chart kind, subtitle, and source note before falling back to question-keyword inference.
@@ -39,10 +41,14 @@ Tower aVa now treats visuals as part of the governed answer contract. For execut
 ## QA / Validation
 
 - `npx jest src/lib/cio-tower/__tests__/visual-contract.test.ts src/lib/cio-tower/__tests__/answer.test.ts src/lib/cio-tower/__tests__/tower-chat-artifacts.test.ts src/components/atlas/__tests__/AtlasChatPanel.test.tsx --runInBand` — passed. Jest reports existing duplicate manual mock warnings.
+- Follow-up corrective PR: `npx jest src/lib/cio-tower/__tests__/visual-contract.test.ts src/lib/cio-tower/__tests__/answer.test.ts src/lib/cio-tower/__tests__/tower-chat-artifacts.test.ts --runInBand` — passed. Covers the live-found trend/risk classifier cases and fallback validator compliance.
 - `npx eslint src/lib/cio-tower/visual-contract.ts src/lib/cio-tower/answer.ts src/lib/cio-tower/tower-chat-artifacts.ts src/app/api/tower/cio-chat/route.ts src/components/tower/TowerIndexPage.tsx src/components/atlas/__tests__/AtlasChatPanel.test.tsx src/lib/cio-tower/__tests__/answer.test.ts src/lib/cio-tower/__tests__/tower-chat-artifacts.test.ts src/lib/cio-tower/__tests__/visual-contract.test.ts` — passed with existing `TowerIndexPage.tsx` unused-symbol warnings only.
+- Follow-up corrective PR: `npx eslint src/lib/cio-tower/visual-contract.ts src/lib/cio-tower/answer.ts src/lib/cio-tower/__tests__/visual-contract.test.ts src/lib/cio-tower/__tests__/answer.test.ts` — passed.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit` — passed.
-- `npm run release:check` — pending.
-- ACA deploy and live signed-in Tower visual proof — pending merge/deploy.
+- `npm run release:check` — passed for PR #5139; pending for the follow-up corrective PR after this record update.
+- PR #5139 ACA deploy — passed for SHA `226109da661810c8b9e5c37e4f4e1d76b8e8eb90`, revision `ca-abarva-web-lab-eastus--m226109da`, image digest `sha256:5e5c95df2e8c69c7d35454fc770562869e017ddf0506efe5f41c61aa27612107`, 100% traffic, health ok, runtime invariant passed.
+- PR #5139 live signed-in five-question Tower visual proof — stream labels and visual contracts were live, but follow-up correction required because two prompts misclassified visual intent and deterministic fallback output violated visible-answer validation.
+- Follow-up corrective PR ACA deploy and live signed-in Tower visual proof — pending merge/deploy.
 
 ## Rollout Plan
 
@@ -64,10 +70,12 @@ Revert the PR and redeploy the previous healthy `main` image through the ACA mai
 
 ## Audit Evidence
 
-- PR URL: pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/5139
 - CI run: pending.
-- ACA deployment evidence: pending.
-- Live signed-in proof: pending.
+- ACA deployment evidence for PR #5139: `/tmp/nexus-tower-visual-intelligence/out/gh-run-29745781614-aca/runtime-invariant/runtime-invariant-proof.json`
+- Live signed-in proof for PR #5139: `/tmp/nexus-tower-visual-intelligence/out/tower-visual-live-2026-07-20/live-api-visual-contract-proof.json`
+- Follow-up corrective PR URL: pending.
+- Follow-up live signed-in proof: pending.
 
 ## Known Gaps
 

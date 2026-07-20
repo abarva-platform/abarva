@@ -58,6 +58,55 @@ export function selectTowerVisualContract({
   artifactType,
 }: SelectTowerVisualContractInput): TowerVisualContract {
   const text = `${question} ${contractKey ?? ""} ${artifactType ?? ""}`.toLowerCase();
+  const questionText = question.toLowerCase();
+
+  if (hasAny(questionText, [/\b(trend|trajectory|over time|fy\d{2}|year over year|evolved?)\b/])) {
+    return {
+      questionIntent: "trend",
+      recommendedVisual: "line",
+      requiredData: [
+        "period label",
+        "metric value by period",
+        "basis or confidence note",
+      ],
+      axes: {
+        x: "Period",
+        y: "Tower measure",
+      },
+      annotations: [
+        "Call out breaks in confidence or measurement basis.",
+        "Do not smooth or project missing periods.",
+      ],
+      executiveTakeaway:
+        "Show whether the Tower measure is improving, deteriorating, or still too thin for a trend claim.",
+      sourceBoundary:
+        "Render only periods loaded in Tower; missing periods remain evidence gaps.",
+    };
+  }
+
+  if (hasAny(questionText, [/\b(heatmap|risk|unhealthy|control|gap|evidence|readiness)\b/])) {
+    return {
+      questionIntent: "heatmap",
+      recommendedVisual: "heatmap",
+      requiredData: [
+        "program, metric, or evidence domain",
+        "risk or readiness score",
+        "owner or required evidence",
+      ],
+      axes: {
+        x: "Domain",
+        y: "Risk or readiness",
+      },
+      annotations: [
+        "Separate red gaps from watch items.",
+        "Name the owner or evidence needed to clear each gap.",
+      ],
+      executiveTakeaway:
+        "Show which gaps block executive confidence and which can be handled as follow-up work.",
+      sourceBoundary:
+        "Do not invent risk ratings; use loaded gates, confidence, and gap fields.",
+    };
+  }
 
   if (
     hasAny(text, [
@@ -87,30 +136,6 @@ export function selectTowerVisualContract({
         "Show which programs deserve executive attention first, and which need proof or readiness work before funding confidence improves.",
       sourceBoundary:
         "Use only loaded Tower program, value, readiness, and evidence-gate fields; do not infer scores from market opinion.",
-    };
-  }
-
-  if (hasAny(text, [/\b(trend|trajectory|over time|fy\d{2}|year over year|evolved?)\b/])) {
-    return {
-      questionIntent: "trend",
-      recommendedVisual: "line",
-      requiredData: [
-        "period label",
-        "metric value by period",
-        "basis or confidence note",
-      ],
-      axes: {
-        x: "Period",
-        y: "Tower measure",
-      },
-      annotations: [
-        "Call out breaks in confidence or measurement basis.",
-        "Do not smooth or project missing periods.",
-      ],
-      executiveTakeaway:
-        "Show whether the Tower measure is improving, deteriorating, or still too thin for a trend claim.",
-      sourceBoundary:
-        "Render only periods loaded in Tower; missing periods remain evidence gaps.",
     };
   }
 
@@ -164,30 +189,6 @@ export function selectTowerVisualContract({
         "Show which cost pools or suppliers deserve commercial inspection first.",
       sourceBoundary:
         "Rank only loaded spend or contract exposure fields; missing vendor economics must be stated as gaps.",
-    };
-  }
-
-  if (hasAny(text, [/\b(heatmap|risk|unhealthy|control|gap|evidence|readiness)\b/])) {
-    return {
-      questionIntent: "heatmap",
-      recommendedVisual: "heatmap",
-      requiredData: [
-        "program, metric, or evidence domain",
-        "risk or readiness score",
-        "owner or required evidence",
-      ],
-      axes: {
-        x: "Domain",
-        y: "Risk or readiness",
-      },
-      annotations: [
-        "Separate red gaps from watch items.",
-        "Name the owner or evidence needed to clear each gap.",
-      ],
-      executiveTakeaway:
-        "Show which gaps block executive confidence and which can be handled as follow-up work.",
-      sourceBoundary:
-        "Do not invent risk ratings; use loaded gates, confidence, and gap fields.",
     };
   }
 
