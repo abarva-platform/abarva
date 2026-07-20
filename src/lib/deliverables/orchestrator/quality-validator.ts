@@ -15,6 +15,8 @@ import { scanForInternalLeaks } from "./source-register";
 
 const DECISION_RE =
   /\b(decision|recommend|we recommend|the ask|approval sought|go\/no-go)\b/i;
+const TENSION_RE =
+  /\b(tension|trade-?off|why now|the problem|leakage|at stake|the case for change|core challenge)\b/i;
 const GENERIC_PHRASES = [
   "in today's fast-paced",
   "leverage synergies",
@@ -109,6 +111,14 @@ export function validateDeliverableQuality(
     /risk|issue|dependenc/i.test(t.title),
   );
   const clientCompleteCount = doc.clientCompleteChecklist.length;
+  const hasCentralTension = TENSION_RE.test(body);
+  const hasOptionsConsidered =
+    /\boptions?\s+(considered|evaluated)\b/i.test(body) ||
+    doc.tables.some((t) => /option/i.test(t.title));
+  const hasEvidenceGapsNoted =
+    /\[EVIDENCE MISSING|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE/.test(
+      body,
+    ) || clientCompleteCount > 0;
 
   // ── BLOCKERS ──
   if (leakedInternalTags.length > 0)
@@ -125,6 +135,11 @@ export function validateDeliverableQuality(
     blockers.push(
       `document too short: ${bodyWordCount} words; minimum ${qb.minBodyWords}`,
     );
+  if (qb.targetBodyWordsMax && bodyWordCount > qb.targetBodyWordsMax) {
+    const message = `document too long for this artifact: ${bodyWordCount} words; target ceiling ${qb.targetBodyWordsMax} — use the target range as a discipline boundary, not permission to omit necessary analysis; do not add filler or generic prose to reach it, but a document this far past its ceiling usually means sections drifted off the decision this artifact exists to support`;
+    if (qb.enforceMaxAsBlocker) blockers.push(message);
+    else warnings.push(message);
+  }
   if (qb.requiresSourceRegister && !hasSourceRegister)
     blockers.push("no source register");
   if (qb.requiresDecisionSection && !hasDecisionSection)
@@ -204,6 +219,19 @@ export function validateDeliverableQuality(
     warnings.push(
       "recommendation is brief — may be too generic for a board artifact",
     );
+  // Narrative-spine — this artifact must argue a case, not just fill sections.
+  if (qb.requiresCentralTension && !hasCentralTension)
+    warnings.push(
+      "no clear central tension/why-now framing detected — the document should read as an argument, not a list of sections",
+    );
+  if (qb.requiresOptionsConsidered && !hasOptionsConsidered)
+    warnings.push(
+      "no options-considered framing detected — a real alternative should be weighed, not just the recommended path presented as inevitable",
+    );
+  if (qb.requiresEvidenceGapsNoted && !hasEvidenceGapsNoted)
+    warnings.push(
+      "no evidence gaps/assumptions/client-to-complete markers detected — what remains unproven should be stated, not implied away",
+    );
 
   return {
     pass: blockers.length === 0,
@@ -220,6 +248,9 @@ export function validateDeliverableQuality(
       clientCompleteCount,
       unsupportedClaimCount,
       leakedInternalTags,
+      hasCentralTension,
+      hasOptionsConsidered,
+      hasEvidenceGapsNoted,
     },
   };
 }

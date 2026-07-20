@@ -2,6 +2,7 @@
 // .docx buffer), an Excel companion for wide tables, and a clean AbarVa-styled HTML
 // preview with the source register and no leaked internal ids.
 import { Packer } from 'docx';
+import JSZip from 'jszip';
 import {
   renderDeliverableDocx,
   renderDeliverableExcelCompanion,
@@ -91,5 +92,27 @@ describe('HTML preview', () => {
     expect(html).toMatch(/class="visual-exhibit"/);
     expect(html).toMatch(/Service Tower Scope Map/);
     expect(html).toMatch(/<svg class="exhibit-svg"/);
+  });
+
+  it('carries the required document-status disclaimer — not approved until human sign-off', () => {
+    expect(html).toMatch(/Document Status/);
+    expect(html).toMatch(/AI-generated working draft — not approved/);
+    expect(html).toMatch(/Obtain named human approval/);
+    expect(html).toMatch(/must not be treated as an approved client deliverable/i);
+  });
+});
+
+describe('DOCX renderer — document status disclaimer', () => {
+  it('the cover carries the not-approved status paragraph and the footer repeats it', async () => {
+    const buf = await Packer.toBuffer(renderDeliverableDocx(goodDocument()));
+    const zip = await JSZip.loadAsync(buf);
+    const documentXml = await zip.file('word/document.xml')!.async('string');
+    const footerFiles = Object.keys(zip.files).filter((f) => /word\/footer\d*\.xml/.test(f));
+    const footerXml = (
+      await Promise.all(footerFiles.map((f) => zip.file(f)!.async('string')))
+    ).join('\n');
+    expect(documentXml).toMatch(/AI-generated working draft — not approved/);
+    expect(footerXml).toMatch(/AI-generated working draft/);
+    expect(footerXml).toMatch(/approved re-upload are required/);
   });
 });

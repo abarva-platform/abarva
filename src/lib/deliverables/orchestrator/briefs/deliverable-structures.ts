@@ -7,6 +7,7 @@
 import type {
   BriefSection,
   DeliverableModule,
+  ExpectedExhibit,
   SectionGroundingMode,
 } from "../types";
 
@@ -25,6 +26,16 @@ export interface DeliverableStructure {
    * architect is told to omit them and the plan sanitizer drops any that slip in.
    */
   forbiddenSectionTopics?: string[];
+  /** Same idea as forbiddenSectionTopics, stated as prose Claude can reason from. */
+  prohibitedContent?: string[];
+  /**
+   * Exhibits required BY THIS DELIVERABLE TYPE, regardless of archetype — e.g. a
+   * Target State Architecture always needs the three architecture views no
+   * matter which use case it's for. Merged with (and additive to) the archetype
+   * pack's exhibits in composeBrief; archetype packs stay the source of
+   * use-case-specific exhibits (a dependency map, a rollout-wave timeline, etc.).
+   */
+  expectedExhibits?: ExpectedExhibit[];
 }
 
 const s = (
@@ -167,11 +178,14 @@ const MOVES_BUSINESS_CASE: DeliverableStructure = {
     "Justify investment in a strategic move with a costed, evidence-grounded business case.",
   decisionToSupport:
     "Approve funding for the move at the proposed investment level.",
+  prohibitedContent: [
+    "This document argues WHY to fund and HOW value is created — it does not re-litigate the target architecture or write the execution plan; reference them, do not repeat their content.",
+  ],
   sections: [
     s(
       "exec_summary",
       "Executive Summary",
-      "The investment thesis in brief.",
+      "The investment thesis in brief — this must tell one coherent argument (why change now, what economic leakage the problem creates, what the solution changes, where value comes from, what investment is required, what must hold, what the downside looks like, what leadership is being asked to approve), not a list of disconnected subsection summaries.",
       "mixed",
     ),
     s("decision_required", "Decision Required", "The funding ask.", "mixed"),
@@ -337,11 +351,108 @@ const MOVES_DISCOVERY: DeliverableStructure = {
 
 const MOVES_TARGET_ARCHITECTURE: DeliverableStructure = {
   module: "moves",
-  deliverableType: "target_architecture",
+  // MUST match the real gate-artifact key used throughout governance.ts /
+  // deliverable-registry.ts ("target_state_architecture"), not a shortened
+  // variant — getDeliverableStructure() is an exact-string lookup, so any
+  // mismatch here silently falls through to the generic, exhibit-less
+  // defaultBrief() for the one artifact type that most needs real diagrams.
+  deliverableType: "target_state_architecture",
   purpose:
     "Describe the target architecture and the major technology decisions required to execute the move.",
   decisionToSupport:
     "Approve the target-state architecture, integration posture, controls, and implementation implications.",
+  prohibitedContent: [
+    "This is an architecture approval, not a build plan — do not commit to vendor pricing, contract terms, or a detailed project schedule here; those belong to Sourcing Strategy and the Execution Roadmap.",
+  ],
+  expectedExhibits: [
+    {
+      key: "conceptual_architecture",
+      title: "Conceptual Architecture",
+      kind: "conceptual_architecture",
+      purpose:
+        "Shows the business and capability model: what the solution is conceptually and how it supports the business.",
+      preferredFormat: "docx",
+      requiredElements: [
+        "users and personas",
+        "business capabilities",
+        "channels",
+        "major solution domains",
+        "trust and governance boundaries",
+        "business outcomes",
+      ],
+      legendRequired: false,
+    },
+    {
+      key: "logical_architecture",
+      title: "Logical Architecture",
+      kind: "logical_architecture",
+      purpose:
+        "Shows solution components and interactions: how the solution is logically composed.",
+      preferredFormat: "docx",
+      requiredElements: [
+        "experience layer",
+        "workflow/orchestration",
+        "agents",
+        "models",
+        "knowledge/context",
+        "integration",
+        "data products",
+        "identity and security",
+        "observability",
+        "governance",
+        "human-in-the-loop controls",
+      ],
+      legendRequired: false,
+    },
+    {
+      key: "physical_architecture",
+      title: "Physical Architecture",
+      kind: "physical_architecture",
+      purpose:
+        "Shows the actual deployable services: what exactly will be deployed, where, and how it will operate.",
+      preferredFormat: "docx",
+      requiredElements: [
+        "cloud subscription/account boundaries",
+        "regions",
+        "networks",
+        "runtime services",
+        "model endpoints",
+        "data platforms",
+        "vector/search services",
+        "queues/events",
+        "databases",
+        "secrets",
+        "monitoring",
+        "CI/CD",
+        "private endpoints",
+        "client data plane",
+        "resilience and recovery",
+      ],
+      legendRequired: true,
+    },
+    {
+      key: "agent_orchestration",
+      title: "Agentic Orchestration Flow",
+      kind: "agent_orchestration",
+      purpose:
+        "Shows agent orchestration as an explicit flow, not a single floating 'AI agent' box, mapped to physical services.",
+      preferredFormat: "docx",
+      requiredElements: [
+        "user/system trigger",
+        "intent router",
+        "planner",
+        "context assembler",
+        "tool/retrieval selection",
+        "model execution",
+        "evidence challenge",
+        "policy/control gate",
+        "human approval where required",
+        "action execution",
+        "trace/monitoring/feedback",
+      ],
+      legendRequired: true,
+    },
+  ],
   sections: [
     s(
       "exec_summary",
@@ -364,7 +475,31 @@ const MOVES_TARGET_ARCHITECTURE: DeliverableStructure = {
     s(
       "target_state",
       "Target-State Architecture",
-      "Core architecture components and responsibilities.",
+      "Frame the architecture thesis: the core components, responsibilities, and how the three views below (conceptual, logical, physical) answer the questions 'what is it conceptually', 'how is it logically composed', and 'what exactly gets deployed, where'.",
+      "mixed",
+    ),
+    s(
+      "conceptual_architecture",
+      "Conceptual Architecture",
+      "The business/capability view: users and personas, business capabilities, channels, major solution domains, trust and governance boundaries, and the business outcomes this supports. This is the CONCEPTUAL_ARCHITECTURE exhibit rendered with its narrative.",
+      "mixed",
+    ),
+    s(
+      "logical_architecture",
+      "Logical Architecture",
+      "The solution-composition view: experience layer, workflow/orchestration, agents, models, knowledge/context, integration, data products, identity and security, observability, governance, and human-in-the-loop controls. This is the LOGICAL_ARCHITECTURE exhibit rendered with its narrative.",
+      "mixed",
+    ),
+    s(
+      "physical_architecture",
+      "Physical Architecture",
+      "The deployable-services view: cloud subscription/account boundaries, regions, networks, runtime services, model endpoints, data platforms, vector/search services, queues/events, databases, secrets, monitoring, CI/CD, private endpoints, client data plane, resilience and recovery. This is the PHYSICAL_ARCHITECTURE exhibit rendered with its narrative — mark each service illustrative, selected, or client-confirmed.",
+      "mixed",
+    ),
+    s(
+      "agent_orchestration",
+      "Agentic Orchestration",
+      "Do not show 'AI agent' as a single floating box. Show the explicit flow: trigger → intent router → planner → context assembler → tool/retrieval selection → model execution → evidence challenge → policy/control gate → human approval where required → action execution → trace/monitoring/feedback — and map each logical step to a physical service from the Physical Architecture.",
       "mixed",
     ),
     s(
@@ -403,6 +538,10 @@ const MOVES_TARGET_ARCHITECTURE: DeliverableStructure = {
     "decision_required",
     "current_state",
     "target_state",
+    "conceptual_architecture",
+    "logical_architecture",
+    "physical_architecture",
+    "agent_orchestration",
     "recommendation",
   ],
 };

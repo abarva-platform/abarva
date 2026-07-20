@@ -93,3 +93,49 @@ describe('composition — same deliverable type differs by archetype', () => {
     expect(brief.requiredSections.length).toBeGreaterThan(0);
   });
 });
+
+describe('target_state_architecture key resolution (regression)', () => {
+  it('resolves via the exact gate-artifact key used by governance.ts/deliverable-registry.ts', () => {
+    // getDeliverableStructure is an exact-string lookup — this deliverable type
+    // was previously registered as "target_architecture" (missing "_state"),
+    // so every real Target State Architecture generation silently fell through
+    // to defaultBrief() with zero expected exhibits. Guard the exact key.
+    expect(getDeliverableStructure('moves', 'target_state_architecture')).toBeTruthy();
+    expect(getDeliverableStructure('moves', 'target_architecture')).toBeUndefined();
+  });
+
+  it('composes with real architecture-view exhibits, not the empty-exhibit default fallback', () => {
+    const brief = getArtifactBrief(
+      req({ module: 'moves', deliverableType: 'target_state_architecture', useCaseArchetype: 'AI_PDLC' }),
+    );
+    const kinds = brief.expectedExhibits.map((e) => e.kind);
+    expect(kinds).toEqual(
+      expect.arrayContaining([
+        'conceptual_architecture',
+        'logical_architecture',
+        'physical_architecture',
+        'agent_orchestration',
+      ]),
+    );
+    // deliverable-type exhibits are additive to the archetype pack's own exhibits
+    expect(brief.expectedExhibits.length).toBeGreaterThan(4);
+    const physical = brief.expectedExhibits.find((e) => e.kind === 'physical_architecture')!;
+    expect(physical.requiredElements).toEqual(expect.arrayContaining(['regions', 'secrets', 'CI/CD']));
+    expect(physical.legendRequired).toBe(true);
+  });
+
+  it('a Business Case under the SAME archetype does NOT get the architecture exhibits', () => {
+    const brief = getArtifactBrief(
+      req({ module: 'moves', deliverableType: 'business_case', useCaseArchetype: 'AI_PDLC' }),
+    );
+    expect(brief.expectedExhibits.some((e) => e.kind === 'physical_architecture')).toBe(false);
+    expect(brief.expectedExhibits.some((e) => e.kind === 'agent_orchestration')).toBe(false);
+  });
+
+  it('carries the purpose-boundary prohibitedContent through to the brief', () => {
+    const brief = getArtifactBrief(
+      req({ module: 'moves', deliverableType: 'target_state_architecture', useCaseArchetype: 'AI_PDLC' }),
+    );
+    expect(brief.prohibitedContent?.join(' ')).toMatch(/not a build plan/i);
+  });
+});

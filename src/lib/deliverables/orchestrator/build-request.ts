@@ -13,6 +13,7 @@ import type {
   OutputFormat,
   SourceRegisterEntry,
 } from './types';
+import { resolveQualityBar } from './quality-bar-registry';
 
 export interface BuildRequestParams {
   module: DeliverableModule;
@@ -61,12 +62,7 @@ export function buildDeliverableRequest(
       includeSourceRegisterSection: true,
     },
     qualityBar: {
-      minSections: 6,
-      minBodyWords: 600,
-      requiresCitations: true,
-      requiresDecisionSection: true,
-      requiresRecommendation: true,
-      requiresRiskTable: true,
+      ...resolveQualityBar(params.module, params.deliverableType),
       // A source register is a register OF governed evidence. Require it only
       // when there is governed evidence to register — with an empty bundle there
       // is nothing to cite, so blocking on a missing register is a false gate
@@ -76,8 +72,6 @@ export function buildDeliverableRequest(
       // mandatory, so grounded deliverables (a discovery report with real
       // evidence) are unchanged and must still cite what they were built on.
       requiresSourceRegister: evidence.length > 0,
-      requiresClientCompleteChecklistWhenGaps: true,
-      tone: 'board_grade_consulting',
     },
     clientDisplayName: params.clientDisplayName,
     initiativeDisplayName: params.initiativeDisplayName,
