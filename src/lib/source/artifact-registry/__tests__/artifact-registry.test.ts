@@ -49,6 +49,7 @@ interface FakeBuilder {
   update: jest.Mock;
   select: jest.Mock;
   eq: jest.Mock;
+  or: jest.Mock;
   is: jest.Mock;
   order: jest.Mock;
   single: jest.Mock<Promise<{ data: Row | null; error: unknown }>, []>;
@@ -112,6 +113,10 @@ function makeBuilder(table: string): FakeBuilder {
       filters.push({ kind: 'eq', col, value });
       return builder;
     }),
+    or: jest.fn((value: string) => {
+      filters.push({ kind: 'eq', col: 'or', value });
+      return builder;
+    }),
     is: jest.fn((col: string, value: unknown) => {
       filters.push({ kind: 'is', col, value });
       return builder;
@@ -129,16 +134,24 @@ function makeBuilder(table: string): FakeBuilder {
 const fakeClient = {
   from: jest.fn((table: string) => makeBuilder(table)),
 };
+const fakeObjectStorage = {
+  download: jest.fn<Promise<Buffer>, [string, string]>(),
+};
 
 jest.mock('@/lib/data-plane/postgresCompat', () => ({
   getAzureWriteFluentClient: () => fakeClient,
+}));
+jest.mock('@/lib/data-plane/objectStorage', () => ({
+  getObjectStorageAdapter: () => fakeObjectStorage,
 }));
 
 import {
   buildSourceArtifactBlobPath,
   getSourceArtifactRegistryRecord,
   listSourceArtifactsForEvent,
+  listSourceArtifactsForSourceEventIdWithContent,
   listSourceArtifactsForStage,
+  readSourceArtifactRegistryTextContent,
   registerSourceArtifactUpload,
   softDeleteSourceArtifact,
   updateSourceArtifactProcessingState,
@@ -201,6 +214,7 @@ beforeEach(() => {
   updateCaptures.length = 0;
   selectCaptures.length = 0;
   fakeClient.from.mockClear();
+  fakeObjectStorage.download.mockReset();
   nextSingle = async () => ({ data: null, error: null });
   nextMaybeSingle = async () => ({ data: null, error: null });
   nextList = async () => ({ data: [], error: null });
@@ -462,6 +476,123 @@ describe('source artifact queries', () => {
     await expect(getSourceArtifactRegistryRecord(baseRow.id)).resolves.toMatchObject({
       id: baseRow.id,
     });
+  });
+
+  it('hydrates text-like registry artifacts with bounded body text', async () => {
+    const textRow: Row = {
+      ...baseRow,
+      id: 'text-artifact',
+      artifact_kind: 'd01_strategy_memo',
+      source_format: 'markdown',
+      mime_type: 'text/markdown',
+      blob_uri: 'tenant/event/text-artifact/d01_strategy_memo.md',
+    };
+    fakeObjectStorage.download.mockResolvedValueOnce(
+      Buffer.from('  # Sourcing Strategy Memo\\n\\nReal authored content.  '),
+    );
+    nextList = async () => ({ data: [textRow], error: null });
+
+    const items = await listSourceArtifactsForSourceEventIdWithContent(
+      baseInput.sourceEventId,
+    );
+
+    expect(items).toHaveLength(1);
+    expect(items[0].bodyMarkdown).toContain('Real authored content');
+    expect(fakeObjectStorage.download).toHaveBeenCalledWith(
+      'source-artifacts',
+      textRow.blob_uri,
+    );
+  });
+
+  it('hydrates inline artifact-state bodies without reading blob storage', async () => {
+    const inlineRow: Row = {
+      ...baseRow,
+      id: 'inline-artifact',
+      artifact_kind: 'd05_scope_memo',
+      source_format: 'markdown',
+      mime_type: 'text/markdown',
+      blob_uri: 'inline://source-event-artifact-state/state-1',
+    };
+    nextMaybeSingle = async () => ({
+      data: {
+        ...baseRow,
+        body: '# Scope Memo\\n\\nHuman-reviewed inline body.',
+      } as Row & { body: string },
+      error: null,
+    });
+
+    const body = await readSourceArtifactRegistryTextContent(
+      await Promise.resolve({
+        ...inlineRow,
+        tenantKey: inlineRow.tenant_key,
+        sourceEventId: inlineRow.source_event_id,
+        sourceEventRowId: inlineRow.source_event_row_id,
+        stageKey: inlineRow.stage_key,
+        artifactFamily: inlineRow.artifact_family,
+        artifactKind: inlineRow.artifact_kind,
+        sourceOrigin: inlineRow.source_origin,
+        sourceFormat: inlineRow.source_format,
+        originalName: inlineRow.original_name,
+        blobUri: inlineRow.blob_uri,
+        uploaderUserId: inlineRow.uploader_user_id,
+        mimeType: inlineRow.mime_type,
+        sizeBytes: Number(inlineRow.size_bytes),
+        sha256: inlineRow.sha256,
+        parseStatus: inlineRow.parse_status,
+        embeddingStatus: inlineRow.embedding_status,
+        graphStatus: inlineRow.graph_status,
+        classificationStatus: inlineRow.classification_status,
+        dataClassification: inlineRow.data_classification,
+        evidenceState: inlineRow.evidence_state,
+        approvalState: inlineRow.approval_state,
+        version: Number(inlineRow.version),
+        supersedesArtifactVersionId: inlineRow.supersedes_artifact_version_id,
+        createdBy: inlineRow.created_by,
+        validatedBy: inlineRow.validated_by,
+        createdAt: inlineRow.created_at,
+        updatedAt: inlineRow.updated_at,
+        deletedAt: inlineRow.deleted_at,
+      }),
+    );
+
+    expect(body).toContain('Human-reviewed inline body');
+    expect(fakeObjectStorage.download).not.toHaveBeenCalled();
+    expect(selectCaptures.at(-1)?.table).toBe('source_event_artifact_states');
+  });
+
+  it('does not hydrate binary registry artifacts as scored body text', async () => {
+    await expect(readSourceArtifactRegistryTextContent({
+      ...baseRow,
+      tenantKey: baseRow.tenant_key,
+      sourceEventId: baseRow.source_event_id,
+      sourceEventRowId: baseRow.source_event_row_id,
+      stageKey: baseRow.stage_key,
+      artifactFamily: baseRow.artifact_family,
+      artifactKind: baseRow.artifact_kind,
+      sourceOrigin: baseRow.source_origin,
+      sourceFormat: baseRow.source_format,
+      originalName: baseRow.original_name,
+      blobUri: baseRow.blob_uri,
+      uploaderUserId: baseRow.uploader_user_id,
+      mimeType: 'application/pdf',
+      sizeBytes: Number(baseRow.size_bytes),
+      sha256: baseRow.sha256,
+      parseStatus: baseRow.parse_status,
+      embeddingStatus: baseRow.embedding_status,
+      graphStatus: baseRow.graph_status,
+      classificationStatus: baseRow.classification_status,
+      dataClassification: baseRow.data_classification,
+      evidenceState: baseRow.evidence_state,
+      approvalState: baseRow.approval_state,
+      version: Number(baseRow.version),
+      supersedesArtifactVersionId: baseRow.supersedes_artifact_version_id,
+      createdBy: baseRow.created_by,
+      validatedBy: baseRow.validated_by,
+      createdAt: baseRow.created_at,
+      updatedAt: baseRow.updated_at,
+      deletedAt: baseRow.deleted_at,
+    })).resolves.toBeNull();
+    expect(fakeObjectStorage.download).not.toHaveBeenCalled();
   });
 });
 
