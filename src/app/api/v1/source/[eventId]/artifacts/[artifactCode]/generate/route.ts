@@ -59,7 +59,10 @@ import {
   shortSourceArtifactCode,
   type SourceArtifactQualityGateMetadata,
 } from "@/lib/source/agent-generation/quality-review";
-import { scanForBannedTerms } from "@/lib/source/documentation-standards/source-documentation-standards";
+import {
+  scanForBannedTerms,
+  appendLanguagePolicyBlock,
+} from "@/lib/source/documentation-standards/source-documentation-standards";
 import {
   CONSULTING_GRADE_DIMENSIONS,
   CONSULTING_GRADE_MIN_SCORE,
@@ -320,6 +323,18 @@ export async function generateSourceArtifactDraft(
       { status: 404 },
     );
   }
+  // Canonical artifact-quality contract, appended additively. Each prompt
+  // template's own systemPrompt keeps its full hand-tuned structural
+  // instructions unchanged; appendLanguagePolicyBlock appends the audience/
+  // depth/evidence-mode/banned-terms guidance from source-artifact-profiles.ts
+  // (the same registry section-conformance.ts derives its required-section
+  // headings from) so every artifact carries this policy even where no
+  // template author wrote an equivalent by hand. No-ops for an unregistered
+  // artifact code — the template's own systemPrompt is used unchanged.
+  const effectiveSystemPrompt = appendLanguagePolicyBlock(
+    template.systemPrompt,
+    shortSourceArtifactCode(artifactCode),
+  );
 
   // Generation is a write surface. If we cannot bind the request to an
   // active tenant, fail here instead of falling through to a misleading 404.
@@ -494,7 +509,7 @@ export async function generateSourceArtifactDraft(
         artifactId: artifactRow.id,
         artifactType: artifactCode,
         model: template.model,
-        prompt: [template.systemPrompt, userMessage].join("\n\n"),
+        prompt: [effectiveSystemPrompt, userMessage].join("\n\n"),
         dataClass: "confidential",
         metadata: {
           eventId: ctx.event.id,
@@ -538,7 +553,7 @@ export async function generateSourceArtifactDraft(
         const sdkStream = preflight.client.messages.stream({
           model: template.model,
           max_tokens: template.maxTokens,
-          system: template.systemPrompt,
+          system: effectiveSystemPrompt,
           messages: [{ role: "user", content: userMessage }],
         });
         const parts: string[] = [];
