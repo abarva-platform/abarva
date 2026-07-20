@@ -31,12 +31,14 @@ import {
   coverSubtitleParagraph,
   coverTitleParagraph,
   eyebrowParagraph,
+  governanceNoticeParagraph,
   heading2,
 } from '@/lib/exports-shared/docx-base';
 import {
   buildKeyValueTable,
   buildMultiColumnTable,
 } from '@/lib/exports-shared/structured-docx-base';
+import { sourceArtifactGovernanceBanner } from '@/lib/source/artifact-governance';
 import type { PricingTemplatePayload } from './pricing-template';
 
 const PRICING_NOTE_SEED_TOPICS: ReadonlyArray<string> = [
@@ -52,6 +54,10 @@ export function buildPricingTemplateDocx(
   payload: PricingTemplatePayload,
 ): Document {
   const escalatorPct = `${(payload.escalator * 100).toFixed(2)}%`;
+  const pricingTemplateGovernanceNotice = sourceArtifactGovernanceBanner(
+    'ai_draft',
+    { artifactCode: 'd19' },
+  );
   return new Document({
     creator: 'AbarVa · Sentinel',
     title: `Pricing Workbook · ${payload.eventCode}`,
@@ -87,6 +93,10 @@ export function buildPricingTemplateDocx(
             ? [coverSubtitleParagraph(`Issued by: ${payload.issuedBy}`)]
             : []),
           coverSubtitleParagraph(`Generated: ${payload.generatedAt}`),
+          governanceNoticeParagraph(
+            pricingTemplateGovernanceNotice.message,
+            pricingTemplateGovernanceNotice.detail,
+          ),
           bodyParagraph([
             bodyRun(
               'This document is a readable rendering of the d19 pricing ' +

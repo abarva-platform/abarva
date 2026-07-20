@@ -25,6 +25,7 @@ import {
   StructuredPdfTable,
   buildStructuredPdfDocument,
 } from '@/lib/exports-shared/structured-pdf-base';
+import { sourceArtifactGovernanceBanner } from '@/lib/source/artifact-governance';
 import type { ScorecardPayload } from './scorecard';
 
 export function buildScorecardPdf(
@@ -45,6 +46,9 @@ export function buildScorecardPdf(
       { label: 'Generated', value: payload.generatedAt },
       ...(payload.roundLabel ? [{ label: 'Evaluation round', value: payload.roundLabel }] : []),
     ],
+    governanceNotice: sourceArtifactGovernanceBanner('ai_draft', {
+      artifactCode: 'd16',
+    }),
     introNote:
       'This PDF is the reference rubric for the evaluation panel. ' +
       'Actual per-vendor scoring happens in the d16 xlsx companion ' +
