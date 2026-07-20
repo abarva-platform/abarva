@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -101,17 +101,29 @@ after the new revision receives traffic.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` — to be
-  confirmed after merge.
-- Shared runtime mutators: none used directly.
-- Approved image digest: to be recorded once the deploy workflow runs.
-- ACA runtime invariant: to be proven after deploy.
-- Worker image invariant: N/A — no worker job serves this export route.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`, run
+  [29752207051](https://github.com/abarva-platform/abarva/actions/runs/29752207051)
+  (headSha `f1fa18a989fa5405c35b515a25c075e519424d88`, the #5150 merge
+  commit), conclusion `success`.
+- Shared runtime mutators: none used directly; deploy proceeded entirely
+  through the standard workflow.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:843e1ebc2f6a0b71ec1c181cc00c2673d1247c1751a22a0a2f5b04e255bd56f3`.
+- ACA runtime invariant: **proven.** `az containerapp revision list`/`job
+  list` confirm the 100%-traffic revision
+  (`ca-abarva-web-lab-eastus--mf1fa18a9`) and both
+  `job-abarva-deliv-worker`/`job-abarva-deliv-worker-event` all resolve to
+  the digest above.
+- Worker image invariant: **proven** (see above).
 - Feature/env flag update path: N/A — no flag.
-- Live signed-in proof required: yes — after deploy, for a real deliverable
-  with a recorded `signed_off_version` that differs from a later draft
-  version, download HTML/Word/Excel from the Documents panel and confirm the
-  approved content is what's returned, not the newer draft.
+- Live signed-in proof: **partially performed.** Navigated to `app.abarva
+  .ai/strategic-moves` post-deploy and confirmed the app loads and functions
+  normally — no regression. The specific claim not yet exercised live:
+  downloading a real deliverable with a `signed_off_version` that differs
+  from a later draft and confirming the approved content, not the draft, is
+  what's returned. No such deliverable was in that exact state in this
+  tenant at the time of this check — deferred to backlog items 95/96, same
+  reasoning as the prior release records this session.
 
 ## Rollback Plan
 
@@ -121,9 +133,18 @@ this release closes.
 
 ## Audit Evidence
 
-- PR URL: to be added when opened.
-- CI run: to be added when the PR's checks complete.
-- Deployment URL / ACA revision: to be added after deploy.
+- PR: [abarva-platform/abarva#5150](https://github.com/abarva-platform/abarva/pull/5150),
+  all required checks passed, squash-merged as
+  `f1fa18a989fa5405c35b515a25c075e519424d88`.
+- CI/deploy run: [aca-main-deploy #29752207051](https://github.com/abarva-platform/abarva/actions/runs/29752207051),
+  conclusion `success`.
+- Deployment: ACA revision `ca-abarva-web-lab-eastus--mf1fa18a9`, 100%
+  ingress traffic, image digest
+  `sha256:843e1ebc2f6a0b71ec1c181cc00c2673d1247c1751a22a0a2f5b04e255bd56f3`.
+- Live proof: app-loads/no-regression confirmed on `app.abarva.ai/
+  strategic-moves` post-deploy. The specific download-honors-approval
+  behavior was not exercised against a live deliverable in this pass —
+  deferred to backlog items 95/96.
 
 ## Known Gaps
 
