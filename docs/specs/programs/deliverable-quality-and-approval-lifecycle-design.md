@@ -1,14 +1,19 @@
 # Deliverable Quality & Approval Lifecycle — Design Doc (Workstreams A + C)
 
-Status: **draft v2 — awaiting sign-off before any migration or code**
-Author: Claude Code, 2026-07-20 (revised same day per reviewer decisions on the 4 open questions from v1)
+Status: **draft v3 — decision-complete; awaiting owner sign-off before any migration or code**
+Author: Claude Code, 2026-07-20 (v2 incorporated reviewer decisions on the 4 open questions from v1;
+v3 resolves all 3 remaining design decisions — MOVES-DESIGN-001/002/003 — with specific,
+adoptable recommendations, per the standing Moves Continuous Execution Directive's instruction that
+an owner-decision block is not a reason to leave decisions as open questionnaires)
 Scope: Workstream A (artifact-quality contracts) and Workstream C (approval workflow lifecycle),
 from the broader 7-workstream governance program (A–G). This revision incorporates explicit
 reviewer decisions on all 4 open questions from v1, plus 10 additional structural directions:
 event-sourced lifecycle (not a single mutable status column), a controlled reviewer-role model, an
 explicit "upload as already-approved-final" exception path, per-artifact gate policy, intrinsic
 AI-disclosure at the version level, and a full state-transition/backfill/rollback specification.
-Nothing has been implemented — this is design only, per direction.
+Nothing has been implemented — this is design only, per direction. **No migration or code will be
+written until the owner explicitly approves §3.8 (MOVES-DESIGN-001), §3.7 (MOVES-DESIGN-002), and
+§11 (MOVES-DESIGN-003) — or amends them.**
 
 **Revised workstream order** (per reviewer): **A → C → B → D → E → F → G** — swapped from v1's
 A→C→D→F→B→E→G. Rationale: (1) disclosure (B) should be correct from the moment versions are first
@@ -185,7 +190,7 @@ that `getAuthoritativeVersion()` (§3.6) reads.
 ```sql
 reviewer_role_code TEXT NOT NULL CHECK (reviewer_role_code IN (
   'artifact_owner','workstream_lead','business_owner','technology_owner',
-  'architecture','data','security','risk','legal','procurement',
+  'architecture','data','security','risk','legal','compliance','procurement',
   'finance','executive_sponsor','client_authority','abarva_quality','other'
 )),
 reviewer_role_label TEXT,   -- REQUIRED when reviewer_role_code = 'other'; optional descriptive context otherwise
@@ -284,47 +289,153 @@ This directly closes the exact defect class this session's Phase Advancement Con
 Capture Evidence Integrity programs fixed: a gate must see a REAL, currently-valid human decision
 behind the evidence it reads, not a status column that could have gone stale.
 
-### 3.7 Gate policy is per-artifact, not global (reviewer-directed)
+### 3.7 Gate policy is per-artifact, not global — MOVES-DESIGN-002, FINAL
 
-`ArtifactQualityContract.gateRelationship` (§2) carries this, per type:
+**Status: resolved, recommended for adoption.** This closes MOVES-DESIGN-002. All 16 governed Moves
+artifact types are covered — the 15 `DELIVERABLE_REGISTRY` entries plus `origination_brief` (the P0
+gate artifact, created by the origination flow rather than the registry, but real, governed gate
+evidence per `governance.ts`'s `hasSignedOriginationBrief` check). No row is left open.
 
-| Artifact | `minimumLifecycleState` | `requiredReviewerRoles` | `requiresClientAuthority` |
-|---|---|---|---|
-| Diagnostic findings (`discovery_report`) | `human_approved` | — | false |
-| Workshop guide | `human_approved` | — | false |
-| Target-state recommendation (`target_state_architecture`) | `human_approved` | `architecture` | false |
-| Business case | `human_approved` | `finance` | false |
-| Program charter (`charter`) | `client_final` | — | true |
-| Mobilization authorization | `client_final` | `executive_sponsor` | true |
+**Governing distinction (per reviewer direction):** working/analytical artifacts (assessments,
+findings, workshop/working outputs, technical analysis, option evaluation, readiness analysis)
+normally require only `human_approved`. Client decision artifacts (charter, target-state decision,
+approved operating model, finance-approved business case, roadmap commitment, mobilization
+authorization) normally require `client_final`. Applied below per type, not assumed uniformly — a
+few artifacts are genuinely working documents even though they sit in a phase whose headline
+decision is client-facing (e.g. `root_cause_worksheet` is explicitly "not for executive
+distribution" per its own `documentPurpose`).
+
+`ArtifactQualityContract.gateRelationship` (§2) carries one row of this table per type:
+
+| `deliverableTypeKey` | Phase | Purpose (from registry) | Required outline (condensed) | Required evidence | Required exhibits / visual forms | Min. depth | Min. lifecycle state | Required reviewer roles | Client authority required? | Authoritative version required? | Min. quality threshold | Gate criterion satisfied (governance.ts) | Legacy inferred approval accepted? | `requires_revalidation` blocks advancement? |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `origination_brief` | 0 | Sponsor-attested seed brief — the origination commitment instrument | Problem statement, sponsor candidate, value hypothesis, evidence family, recommendation to advance | Sponsor's own attestation (this is the one type where the sponsor's approval genuinely *is* the content's authorship+approval act — see `closeP0OnApproval`, judged legitimate this session, not a fabrication) | None required | Light | `human_approved` | — | false | Yes | Standard | `hasSignedOriginationBrief` | Yes, as `human_approved` (never `client_final` — P0 has no client-final concept) | Yes |
+| `charter` | 1 | Commitment instrument — scope, value hypothesis, governance, kill criterion | Exec summary, sponsor commitment, stakeholder map, success metrics, scope boundary, governance model, kill criterion | Named sponsor with documented commitment; preliminary value range with labeled assumptions | Priority/decision matrix (recommendation exhibit); stakeholder map view | Standard | **`client_final`** *(recommended — see note)* | — | **true** | Yes | Deep (`requiresCentralTension`, `requiresOptionsConsidered`) | `charterRow` signed off | Yes, `human_approved` only (never silently upgraded to `client_final`) | Yes |
+| `discovery_report` | 2 | Evidence base — current state, root causes, gate recommendation | Current-state baseline, root cause analysis, data/AI readiness, stakeholder findings, continuation verdict | Quantified metrics with source citations; 3-5 ranked root causes with confidence | Heatmap/maturity view; issue-theme table; evidence/source register | Standard | `human_approved` | — | false | Yes | Standard | `discoveryReportRow` signed off | Yes | Yes |
+| `root_cause_worksheet` | 2 | Working document — causal decomposition for team alignment, explicitly not for executive distribution | Problem statement, causal chain decomposition, evidence map, root cause ranking, design implications | Each root cause linked to a specific evidence reference | Causal chain/Ishikawa diagram; impact×confidence×addressability matrix | Light (working doc) | `human_approved` | — | false | No — supports `discovery_report`'s gate, is not itself a gate blocker (`gateArtifact: false`) | Light | Not independently gate-checked — feeds `discovery_report` | Yes | No (non-gate working doc) |
+| `target_state_architecture` | 3 | Architecture decision record — conceptual to physical stack, technical leadership sign-off | Conceptual/logical/physical architecture, patterns applied, ADRs, integration contracts | ADRs must show rejected alternatives; every integration explicitly specified | **Conceptual, logical, and physical architecture diagrams** (all three required, per `ExpectedExhibit` kinds) + integration contract table | Deep (`requiresCentralTension`, `requiresOptionsConsidered`, `requiresEvidenceGapsNoted`) | `human_approved` | **`architecture`** (specifically, not just any `technology_owner` — see §3.8) | false | Yes | Deep | `designRow` (alias group incl. `design_spec`/`design`/`design_brief`/`solution_design`/`operating_model_design`/`target_state_architecture`) signed off | Yes | Yes |
+| `solution_design` | 3 | Delivery-facing spec — configuration/build requirements, traceable to root causes | Solution scope, functional/non-functional requirements, configuration specs, AI/agent design, acceptance criteria | Every requirement numbered and traced to a P2 root cause | Requirements traceability matrix | Standard | `human_approved` | `technology_owner` | false | Yes, as an alternate satisfier of the `design_approved` gate (§3.8) | Standard | Alias of `designRow` group | Yes | Yes |
+| `operating_model_design` | 3 | How the org runs with the new capability — roles, governance, Today vs. Tomorrow | Today vs. Tomorrow comparison, new role definitions, handoff map, governance design, change impact, capability gap | Named roles, not generic; per-stakeholder change impact | RACI / decision-rights matrix; process-flow diagram; governance-forum structure | Standard | `human_approved` | `business_owner` **and** `technology_owner` (per existing `REQUIRED_APPROVAL_ROLES`) | false | Yes, as an alternate satisfier of `design_approved` (§3.8) | Standard | Alias of `designRow` group; separately gated by `meetsApprovalBar`'s role-approval check | Yes | Yes |
+| `sourcing_strategy` | 3 | Build/buy/configure/partner decisions with vendor shortlist | Sourcing decision summary, vendor evaluation, make-vs-buy, partnership model, commercial risk register, procurement pathway | Vendor score matrix with rationale; commercial risk register | Vendor evaluation matrix; commercial risk register table | Standard | `human_approved` | `procurement` (satisfies `business`) **and** `legal` (satisfies `risk_security` for IP/partnership terms) | **true** for the commercial/partnership terms specifically | Yes | Standard | Not yet an independently-named `governance.ts` check — recommended addition: a `sourcingStrategyRow` alias group, currently unchecked (see Known Gaps) | Yes | Yes |
+| `p3_design` *(deprecated)* | 3 | Legacy combined P3 doc | — | — | — | — | N/A — `gateArtifact: false`; excluded from gate evaluation entirely | — | false | No | N/A | Not a gate check today (correctly) | Recommend: existing historical rows stay readable/exportable; no new generation | N/A |
+| `execution_roadmap` | 4 | Execution plan — workstreams, milestones, critical path, resource model | Workstream breakdown, phased timeline, resource model, critical path analysis, change mgmt timeline, governance cadence | Named leads per workstream | Timeline/Gantt-style workstream diagram with dependencies; decision-gate markers | Standard | **`client_final`** *(recommended — this is a delivery commitment, not just an analysis)* | — | **true** | Yes | Standard | `executionRoadmapRow` signed off | Yes, `human_approved` only | Yes |
+| `business_case` | 4 | Investment decision document — value thesis, cost structure, financial returns | Exec summary, value architecture, investment summary, financial returns, scenario analysis, investment risks, funding ask | Every benefit lever traced to a P2 root cause | Waterfall (value bridge); scenario comparison table; sensitivity view (in companion `financial_model`) | Deep (`requiresCentralTension`) | **`client_final`** | `business_owner` **and** `finance` (existing `REQUIRED_APPROVAL_ROLES`) | **true** | Yes | Deep | `businessCaseRow` + `meetsApprovalBar` role check | Yes, `human_approved` only — a `business_case` inferred only from `signed_off_version` must not be treated as `client_final` even if legacy `status` reads `signed_off` | **Yes — blocks `client_final` specifically; a `requires_revalidation` business_case cannot fund a phase advance** |
+| `financial_model` | 4 | Interactive financial model — client-editable assumptions, recalculated NPV/IRR | Assumptions, benefit levers, implementation costs, value model, scenarios (Excel sheets) | Every lever traced to root cause; realistic, grounded numbers | Sensitivity/scenario table (native to the Excel workbook, not a rendered exhibit) | Standard | `human_approved` | `finance` | false | Yes, as `business_case`'s supporting workbook — not independently gate-checked | Standard | Not independently gate-checked — supports `business_case` | Yes | No (non-gate companion; `gateArtifact: false`) |
+| `tower_metrics_plan` | 4 | What Tower measures post-handoff — KPIs, methodology, owners, cadence | Measurement philosophy, KPI definitions, ownership matrix, reporting design, baseline plan, measurement risk | Named accountable + reporting + data owner per KPI | Ownership matrix; reporting-cadence/dashboard structure diagram | Standard | `human_approved` | — | false | Yes | Standard | Not yet an independently-named `governance.ts` check — recommended addition (see Known Gaps) | Yes | Yes |
+| `roadmap` *(deprecated)* | 4 | Legacy combined P4 doc | — | — | — | — | N/A — `gateArtifact: false`; excluded from gate evaluation entirely | — | false | No | N/A | Not a gate check today (correctly) | Recommend: existing historical rows stay readable/exportable; no new generation | N/A |
+| `handoff_package` | 5 | Mobilization package — everything delivery needs without returning to the program team | Delivery RACI, open decisions register, risk handoff register, artifact inventory, operating procedure summary | Named accountable owner per workstream; complete P1-P4 artifact inventory with status | RACI table; risk-handoff register; artifact-inventory status table | Standard | **`client_final`** | `executive_sponsor` | **true** | Yes | Standard | `handoffPackageRow` signed off | Yes, `human_approved` only | Yes |
+| `value_measurement_contract` | 5 | Formal accountability document — committed outcomes, measurement, accountability | Committed outcomes, measurement methodology, accountability table, review cadence, revision conditions | Single named accountable individual per outcome — never "team" accountability | Accountability table; committed-outcomes summary with baseline/target/timeline | Standard | **`client_final`** | `executive_sponsor` | **true** | Yes | Standard | `valueMeasurementContractRow` signed off | Yes, `human_approved` only | Yes |
+
+**Where product intent is genuinely ambiguous — recommended policy, alternative, risk, preferred choice:**
+
+1. **`charter`'s minimum lifecycle state.** *Recommended*: `client_final` (a charter is fundamentally
+   a sponsor commitment instrument the client organization is agreeing to, not an internal analysis).
+   *Alternative*: `human_approved` only, treating P0→P1 as internally-driven and deferring true
+   client commitment to later artifacts. *Risk of the alternative*: a program could advance past P1
+   without any client-side confirmation that the charter's scope/kill-criterion is actually agreed,
+   which is the same "advanced without real evidence" failure class this whole program exists to
+   prevent, just moved one phase later. *Preferred*: `client_final`.
+2. **`execution_roadmap`'s minimum lifecycle state.** *Recommended*: `client_final` (the roadmap
+   commits delivery timeline and resourcing the client organization must staff against).
+   *Alternative*: `human_approved`, treating the roadmap as an internal delivery-planning artifact
+   the program team owns. *Risk of the alternative*: a delivery timeline could become the
+   operative plan without the client's resourcing commitment ever being confirmed. *Preferred*:
+   `client_final`.
+3. **`sourcing_strategy`'s and `tower_metrics_plan`'s governance.ts checks.** Both types currently
+   have **no independently-named hard-gate check** in `governance.ts` — they satisfy `gateArtifact:
+   true` in the registry but nothing in the current gate-evaluation code specifically requires them
+   the way `charterRow`/`discoveryReportRow`/`designRow`/etc. do. *Recommended*: add
+   `sourcingStrategyRow`/`towerMetricsPlanRow` hard checks to `governance.ts` as part of Workstream F
+   (gate integration), not deferred indefinitely — flagged as a **Known Gap**, not silently accepted.
+   *Alternative*: leave them soft/advisory only. *Risk*: a P3→P4 or P4→P5 advance could proceed
+   without a real sourcing decision or a real measurement plan ever being reviewed, which is exactly
+   the evidence-integrity gap this program exists to close. *Preferred*: add the hard checks.
+4. **`requires_revalidation`'s enforcement strength.** Per reviewer direction, this is a **hard
+   block** for gate-critical (client_final-requiring) artifacts, not a warning — a
+   `requires_revalidation = true` version can never satisfy a `client_final`-requiring gate until a
+   named reviewer re-confirms it, full stop. For `human_approved`-only artifacts, the same hard-block
+   rule applies identically — the reviewer's direction ("do not use a warning-only rule for
+   gate-critical artifacts") is read here as applying to every gate-checked type in this table, not
+   only the `client_final` subset, since a `human_approved`-only artifact can still be the deciding
+   evidence for a phase advance.
 
 `evaluateGate()` (Workstream F, not built in this pass) checks, per gate-artifact deliverable: (a)
 `getAuthoritativeVersion()` resolves to a non-null version whose `lifecycleCurrentState` meets or
-exceeds `minimumLifecycleState`; (b) if `requiresClientAuthority`, the resolved version's
-`authoritative_flag_source` traces to a `client_authority`-role event, not merely `normal_flow` with
-an internal reviewer; (c) the version-scoped `deliverable_role_approvals` (§3.2) independently
-confirms `allRequiredApproved` for the REQUIRED_APPROVAL_ROLES 4-axis, unaffected by this table.
+exceeds `minimumLifecycleState`, AND that version's `requires_revalidation` is not `true`; (b) if
+`requiresClientAuthority`, the resolved version's `authoritative_flag_source` traces to a
+`client_authority`-role event, not merely `normal_flow` with an internal reviewer; (c) the
+version-scoped `deliverable_role_approvals` (§3.2) independently confirms `allRequiredApproved` for
+the REQUIRED_APPROVAL_ROLES 4-axis, unaffected by this table.
 
-### 3.8 Reviewer-role-code → REQUIRED_APPROVAL_ROLES mapping
+### 3.8 Reviewer-role-code → REQUIRED_APPROVAL_ROLES mapping — MOVES-DESIGN-001, FINAL
 
-```ts
-const REVIEWER_ROLE_TO_GATE_ROLE: Partial<Record<ReviewerRoleCode, ApprovalRole>> = {
-  business_owner: 'business',
-  technology_owner: 'technology',
-  architecture: 'technology',
-  finance: 'finance',
-  risk: 'risk_security',
-  security: 'risk_security',
-};
-// executive_sponsor, client_authority, artifact_owner, workstream_lead, data, legal, procurement,
-// abarva_quality, other, workstream_lead have NO gate-role mapping — they are descriptive-only and
-// never satisfy a REQUIRED_APPROVAL_ROLES check by themselves.
-```
+**Status: resolved, recommended for adoption.** This closes MOVES-DESIGN-001. The table below is the
+complete, non-partial mapping — every one of the 16 `reviewer_role_code` values is accounted for,
+with no open cells.
 
-An `approval_granted` event with `reviewer_role_code = 'architecture'` therefore *also* upserts
-(or confirms) the corresponding `deliverable_role_approvals` row for role `technology` at that
-version — one recorded decision, two consumers (the descriptive audit trail and the gate-required-role
-mechanism), kept consistent by this single mapping table rather than by two independently-maintained
-write paths.
+**Governing principles (apply to every row):**
+1. **One person, one approval scope per event.** A person may hold multiple organizational
+   capacities over time (e.g., someone who is both a `technology_owner` and, on a different
+   artifact, an `architecture` reviewer), but a single `approval_granted` event names exactly one
+   `reviewer_role_code`. An approval event is never recorded as satisfying two roles at once.
+2. **Separation of duties is enforced at the write path, not left to policy alone.** When an
+   artifact's `ArtifactQualityContract.requiredReviewerRoles` names two or more of the 4 gate roles
+   (e.g. `business_case` needs both `business` and `finance`), the same `reviewer_name`/identity
+   cannot record both required roles' approvals for the same version. `recordRoleApprovalDecision()`
+   must reject a second required role's approval from an identity that already holds another
+   required role's approval on that version, returning a clear `separation_of_duties_violation`
+   error rather than silently allowing it.
+3. **Self-approval by the author is never permitted for any gate-required role**, regardless of
+   which role. If the reviewer identity recorded as the version's author (via
+   `deliverable_lifecycle_events.version_created`'s actor) is the same identity attempting
+   `approval_granted` on that version, the write is rejected. This is distinct from — and does not
+   change — the existing, separate `governance.ts` concept of "self-approve the gate" (a founder/
+   admin approving a phase-advance request without a separate approval-request round-trip): that
+   mechanism governs *phase* self-approval capability, not *content-authorship* self-approval, and
+   both restrictions apply independently and simultaneously.
+
+| `reviewer_role_code` | Gate-role mapping | Direct / contextual | May one reviewer satisfy multiple gate roles? | Self-approval permitted? | Internal / client / either | Artifact types using this role | Separation-of-duties conflicts |
+|---|---|---|---|---|---|---|---|
+| `business_owner` | `business` | Direct | No — a `business_owner` approval satisfies only `business`; a second required role on the same artifact (e.g. `finance`) needs a distinct identity | Permitted if approving stakeholder work they did not author; never permitted for their own drafted content | Either | `business_case`, `operating_model_design`, `sourcing_strategy` (business dimension), `charter` (business/sponsor readiness) | Cannot also record the `finance` approval on `business_case`, or the `technology`/`architecture` approval on `operating_model_design` |
+| `technology_owner` | `technology` | Direct | No | Same rule as above | Either (client-side technology leadership counts) | `target_state_architecture` (if no more specific `architecture` reviewer recorded), `solution_design`, `operating_model_design` (technology dimension) | Cannot also record `business` on the same `operating_model_design` version |
+| `architecture` | `technology` | **Contextual** — maps to the generic `technology` gate role by default, but `ArtifactQualityContract.gateRelationship.requiredReviewerRoles` may require `architecture` *specifically* (not merely any `technology`-mapped code) for architecture-sensitive types. `target_state_architecture` is the one type in this registry that requires it specifically (see §MOVES-DESIGN-002) | No | Same rule as above | Either, but for `requiresClientAuthority` types the client-side architecture lead must be the one recorded | `target_state_architecture` (specifically required), `solution_design`, `operating_model_design` (as an alternate technology-role satisfier) | Cannot also record `finance` on a co-required artifact; if both `architecture`-specific and generic-`technology_owner` approvals exist for the same version, the more specific `architecture` approval is authoritative for gate policies that name it specifically |
+| `data` | `technology`, **unless an artifact policy explicitly requires it separately** | Contextual | No | Same rule as above | Either | Any artifact whose evidence/exhibit relies materially on data-domain review (none in this registry require it as a distinct required role today; available for future artifact types, e.g. a dedicated data-governance sign-off) | Same as `technology_owner` |
+| `finance` | `finance` | Direct | No | Permitted if approving work they did not author; never for their own drafted content | Either | `business_case`, `financial_model` | Cannot also record `business` on `business_case` — this is the canonical separation-of-duties pair `REQUIRED_APPROVAL_ROLES` already encodes for that type |
+| `risk` | `risk_security` | Direct | No | Same rule as above | Either | `target_state_architecture` (risk_security dimension), any artifact carrying a materialized risk register | Cannot also record `business`/`technology`/`finance` on the same version if that would leave only one distinct approving identity across all required roles |
+| `security` | `risk_security` | Direct | No | Same rule as above | Either | `target_state_architecture`, `sourcing_strategy` (commercial/data-sovereignty risk) | Same as `risk` |
+| `legal` | `risk_security` | Direct | No | Same rule as above | Either, but for `client_final` artifacts with legal exposure (e.g. `sourcing_strategy`'s partnership/IP terms) client-side legal counts as authoritative | `sourcing_strategy` | Same as `risk` |
+| `compliance` | `risk_security` | Direct | No | Same rule as above | Either | Any artifact with a regulated-industry compliance dimension (available for future artifact types; none in this registry name it as a distinct required role today) | Same as `risk` |
+| `procurement` | `business` **for sourcing artifacts**; otherwise requires an **additional artifact-specific approval** (does not default to any of the 4 gate roles outside sourcing context) | Contextual | No | Same rule as above | Either | `sourcing_strategy` (satisfies `business`); elsewhere, procurement sign-off is recorded as a descriptive event only and does not satisfy any of the 4 gate roles | Cannot double as the `technology`/`risk_security` approver on `sourcing_strategy` |
+| `executive_sponsor` | `business` **authority**, but explicitly **not a substitute for `finance` or `risk_security`** approval where those are separately required | Contextual | An executive-sponsor approval can satisfy `business` but never simultaneously stands in for a co-required `finance`/`risk_security` role | Permitted (an executive sponsor approving is expected, not a conflict, since they are not typically the artifact's author); never permitted if they personally authored the content | Either | `charter` (sponsor commitment), `handoff_package`/mobilization-tier artifacts requiring executive authorization | Cannot also be recorded as the `finance` approver on `business_case` even if also holding financial authority — a distinct finance-role identity is required |
+| `client_authority` | **No direct gate-role mapping** — this is an authority-level designation, not one of the 4 `REQUIRED_APPROVAL_ROLES` axes. It feeds `authoritative_flag_source`/`requiresClientAuthority` (§3.5, §3.7) directly | Contextual (governs `client_final` eligibility, not the 4-role axis) | N/A — orthogonal to the 4-role axis; a `client_authority` event can co-occur with any of the above without conflict | Not applicable in the self-authorship sense (a client authority is by definition not the platform's content author); still cannot be the same identity as the uploader when using the §3.4 exception path without also being the confirmed approving authority named in that exception | Client only, by definition | Any artifact whose `gateRelationship.requiresClientAuthority = true` (`charter`, `sourcing_strategy` commercial terms, `handoff_package`/mobilization authorization — see §MOVES-DESIGN-002) | None on the 4-role axis (orthogonal); still cannot be the uploader's own unverified self-designation — the exception path (§3.4) requires this to be a *named, distinct* approving authority, not the uploader asserting their own authority |
+| `abarva_quality` | **No gate-role mapping — quality review only; never satisfies client gate approval or any of the 4 required roles** | Direct (as a non-mapping) | N/A | Permitted for internal QA review of content the reviewer did not author; irrelevant to self-authorship rule since this role can never satisfy a gate by itself | Internal only | Any artifact, as a pre-review quality pass (feeds Workstream G's document-quality validation, §3.7/§9) — never itself gate-satisfying evidence | Cannot be used to "launder" a missing `business`/`technology`/`finance`/`risk_security` approval — an `abarva_quality` event alone never advances `lifecycle_current_state` past `in_review` |
+| `artifact_owner` | **No gate-role mapping — workflow role** | Direct (as a non-mapping) | N/A | **This is exactly the role the self-approval prohibition targets** — the artifact owner accountable for producing the content must not also be its sole approver | Internal only | Every artifact type (every deliverable has an accountable owner) | The artifact owner acting as the *only* recorded approval for a required role is itself a separation-of-duties violation, even if the role mapping would otherwise permit it — this is enforced via the authorship check in the governing principles above, not a separate rule |
+| `workstream_lead` | **No gate-role mapping — workflow role** | Direct (as a non-mapping) | N/A | Same as `artifact_owner` | Internal only | Every artifact type, as the workstream-level coordination role | Same as `artifact_owner` |
+| `other` | **No automatic gate-role mapping without an explicit, documented policy exception** | Contextual (requires a named policy addition, not a silent default) | N/A until a policy exception is written | Same rule as above | Either, per the policy exception | None by default | Any use of `other` to satisfy a required role must cite the specific policy exception that authorized it, in `approval_scope` |
+
+**Recommended decision**: adopt this table as written, including adding `compliance` as a 16th
+`reviewer_role_code` enum value (not present in the v2 draft's 15-value list) to give regulated-
+industry compliance reviewers a distinct, correctly-`risk_security`-mapped identity rather than
+overloading `legal` or `risk` for it.
+
+**Consequences of adopting this table:**
+- The two workflow roles (`artifact_owner`, `workstream_lead`) can never, by themselves, satisfy a
+  gate — this is a deliberate, load-bearing consequence: it closes the exact "the same person who
+  drafted the deliverable also signs off on it" pattern that this whole design program exists to
+  prevent, structurally, rather than by policy reminder alone.
+- `client_authority` and `executive_sponsor` are explicitly **not** interchangeable with the 4-role
+  axis — a `client_final` artifact still independently needs its `REQUIRED_APPROVAL_ROLES` satisfied
+  (e.g. `business_case` still needs both `business` and `finance` approvals even once `client_final`
+  is reached); reaching `client_final` state and satisfying the 4-role axis are two separate,
+  simultaneously-required conditions, not one substituting for the other.
+- `procurement` and `data`/`compliance` are intentionally under-mapped today (no artifact in the
+  current registry names them as a distinct required role) — this is correct and forward-compatible,
+  not an oversight: it means adding a new artifact type that DOES require, say, a distinct
+  `compliance` sign-off is a one-line addition to that type's `gateRelationship.requiredReviewerRoles`,
+  not a schema change.
+- `recordRoleApprovalDecision()` and the version_created-authorship check both need new validation
+  logic (separation-of-duties rejection, self-authorship rejection) — this is new code, scoped into
+  Phase 1 alongside the schema migration, not deferred.
 
 ### 3.9 Revocation behavior
 
@@ -639,12 +750,127 @@ literal enumerated requirement:
     this should already be structurally impossible per the state-transition table in §3.10, but is
     listed here as an explicit, defense-in-depth check Workstream F must still perform).
 
-## 10. Open items still requiring reviewer sign-off before Phase 1 begins
+## 11. ACA lifecycle backfill job contract — MOVES-DESIGN-003, FINAL
 
-1. `REVIEWER_ROLE_TO_GATE_ROLE` mapping (§3.8) — see `MOVES-DESIGN-001` in
-   `docs/backlog/moves-product-backlog.md` for the proposed mapping and decision table.
-2. The gate-policy table in §3.7 is illustrative, using the reviewer's own 6 examples — see
-   `MOVES-DESIGN-002` in the canonical backlog for the full 16-type decision table.
-3. The ACA data-build Job contract for the backfill — see `MOVES-DESIGN-003` in the canonical
-   backlog for the full decision table (proof bundle fields, tenant scope, idempotency key,
-   batching, rollback, audit output, failure handling).
+**Status: resolved, recommended for adoption.** This closes MOVES-DESIGN-003. All 9 originally-open
+questions are answered below with a specific recommendation, not repeated as open questions.
+
+### 11.1 Scope
+
+- **Tenant-batched, not all-tenant-at-once.** The job takes an explicit list of tenant keys per
+  invocation (or a single tenant for the first run). There is no "run against every tenant" mode in
+  v1 — an operator must explicitly name the tenant(s) for each invocation.
+- **Dry-run is mandatory before any apply.** The job always runs in `status` mode first (produces
+  the candidate-record report below, mutates nothing); an `apply` run is a separate, explicit
+  invocation that requires the immediately-prior `status` run's report id as an input parameter (so
+  apply can never run without a corresponding, reviewed dry-run having just happened for that exact
+  tenant set).
+- **First real invocation is a single named tenant**, not a full-tenant-list run — this is an
+  operational rollout decision (start narrow, expand once one tenant's backfill is reviewed and
+  judged correct), not a technical constraint the job enforces itself.
+
+### 11.2 Eligibility
+
+- Only `deliverables_v2` rows where `status = 'signed_off'` are candidates (matches the schema
+  scope already specified in §3.12).
+- Only rows whose lineage can be identified: `version = signed_off_version ?? current_version` must
+  resolve to an actual, existing `deliverable_versions` row — a `deliverables_v2` row with
+  `signed_off_version` pointing at a version that no longer exists (or was never inserted) is
+  **skipped and reported**, not silently defaulted to `current_version` without recording that the
+  substitution happened.
+- **No inferred `client_final`, ever** — this is unconditional, per reviewer direction; there is no
+  eligibility path in this job that produces `client_final`.
+- `approved_artifact_id` presence is the sole signal for "may become authoritative without
+  revalidation" — specifically, `approved_artifact_id` must reference a real, resolvable
+  `move_artifacts` row (not just be non-null) before a record is backfilled without
+  `requires_revalidation`. A dangling `approved_artifact_id` (references a deleted/missing artifact)
+  demotes the record to the `signed_off_version`-only path below.
+- `signed_off_version`-only records (no resolvable `approved_artifact_id`) always become
+  `lifecycle_current_state = human_approved`, `authoritative_flag_source = legacy_backfill`,
+  `requires_revalidation = true` — never anything stronger.
+
+### 11.3 Execution
+
+- **Runs as a sanctioned ACA operator Job**, per `docs/ops/aca-data-build-job-rule.md` — never a
+  long-running `az containerapp exec` session, never a local script against production Postgres.
+- **Advisory lock**: the job acquires a Postgres advisory lock keyed on `(tenant_key,
+  'moves_lifecycle_backfill')` for the duration of an apply run — a second concurrent apply for the
+  same tenant fails fast with a clear "backfill already running for this tenant" error rather than
+  racing.
+- **Idempotent**, keyed on `(deliverable_id, version, workflow_run_id)` — re-running the same
+  workflow-run's apply step against the same tenant is a no-op for rows it already processed
+  (checked via the audit output's own record, not by re-deriving eligibility from scratch each time).
+- **Restartable**: if an apply run is interrupted partway, re-invoking the same `workflow_run_id`
+  resumes from the last successfully-processed record (per the idempotency key above), not from the
+  start of the tenant's full candidate set.
+- **Bounded batches**: processes candidate records in batches (recommended default: 200 deliverables
+  per batch) with a short pause between batches — protects the shared Postgres instance from a
+  single large tenant's backfill saturating write throughput for other live traffic.
+- **Immutable audit output, pre/post counts, row-level failure report, no silent skips** — every
+  candidate record's disposition (backfilled / skipped-and-why / failed-and-why) is written to the
+  audit output (§11.5); a record that is skipped for any reason (unresolvable lineage, dangling
+  `approved_artifact_id`, already-processed idempotency match) appears in the report explicitly, not
+  by omission.
+
+### 11.4 Safety
+
+- **Status/dry-run mode is the default** — `apply` requires an explicit flag plus the prior
+  `status` run's report id, per §11.1.
+- **Approval-gated apply**: the operator invoking `apply` must be a role authorized for data-build
+  jobs per the existing ACA data-build job rule (not a new authorization concept — reuses what
+  already governs every other operator data build in this codebase).
+- **Schema version check**: the job asserts the target tenant's schema is at or past the migration
+  that introduces `deliverable_lifecycle_events`/the new `deliverables_v2`/`deliverable_role_approvals`
+  columns before running — refuses to run against a pre-migration schema rather than failing midway
+  with a confusing error.
+- **Migration hash check**: the job records the exact migration file hash it ran against in its audit
+  output, so a later "was this backfill run against the schema we think it was" question is
+  answerable without guessing from timestamps.
+- **Tenant isolation assertion**: every write is scoped by `engagement_id`/tenant key matching the
+  explicitly-named tenant for this invocation — the job never reads or writes across tenant
+  boundaries, consistent with every other operator job in this codebase.
+- **Rollback limited to backfill events created by the exact workflow run** — reverting a backfill
+  means deleting the specific `deliverable_lifecycle_events` rows (and reverting the
+  `deliverables_v2` pointer columns) tagged with that exact `workflow_run_id`, never a broader
+  "delete all backfilled rows" operation that could touch a different run's output.
+- **No deletion of legacy source records** — `deliverables_v2`/`deliverable_versions`'s existing
+  rows are never deleted or overwritten by this job; it only adds new `deliverable_lifecycle_events`
+  rows and sets the new, additive `deliverables_v2` columns (§4).
+
+### 11.5 Output — per-candidate report row
+
+```text
+tenant
+move (engagement_id / display name)
+phase
+artifact (deliverableTypeKey)
+version
+legacy evidence (signed_off_version | approved_artifact_id, whichever applies)
+proposed lifecycle_current_state
+authoritative designation (true/false, and authoritative_flag_source)
+requires_revalidation (true/false)
+reason (one line — e.g. "approved_artifact_id resolves to a real move_artifacts row with checksum"
+  or "signed_off_version only, no upload lineage — legacy inferred")
+confidence (high | inferred)
+action_or_skip (backfilled | skipped:<reason> | failed:<reason>)
+```
+
+This report is produced by both `status` (dry-run) and `apply` runs — `apply`'s report additionally
+confirms each row's *actual* resulting state after the write, so a dry-run's *prediction* and an
+apply's *result* are directly comparable per record.
+
+### 11.6 Recommendation
+
+Adopt this contract as written. The one deliberate scope-narrowing decision — a single named tenant
+for the first real `apply` run, not an immediate all-tenant rollout — is a rollout-safety choice, not
+a technical limitation; expanding to additional tenants is simply re-invoking the job with a
+different (or additional) tenant list once the first tenant's output is reviewed and judged correct.
+
+## 12. Open items — status
+
+All three previously-open design decisions (MOVES-DESIGN-001, MOVES-DESIGN-002, MOVES-DESIGN-003)
+are now **resolved with a specific, adoptable recommendation** in §3.8, §3.7, and §11 respectively.
+Nothing in this document is left as an unresolved questionnaire. What remains is explicit owner
+sign-off on the recommendations themselves — approving (or amending) §3.8/§3.7/§11 is what unblocks
+Phase 1 schema implementation. No migration or code has been written; this document remains design
+only until that sign-off is given.
