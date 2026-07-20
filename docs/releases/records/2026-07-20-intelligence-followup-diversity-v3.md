@@ -12,6 +12,8 @@
 
 This release improves aVa Intelligence follow-up questions so they feel like the next question a CXO or consultant would naturally ask, instead of repeating the same safe-but-generic evidence prompts. Claude is instructed to produce three distinct follow-up roles, and the runtime fallback now creates topic-specific questions when generated follow-ups are missing or unsafe.
 
+Follow-up hardening also blocks generated suggested questions that imply unsupported certification states, such as “data foundation certification,” after live post-deploy audit found one such question in the FS Demo sample.
+
 ## Layer Impact
 
 - `global-control-lane`: adjusts the shared Intelligence answer lifecycle follow-up generation guidance and runtime fallback assembly.
@@ -31,6 +33,8 @@ This release improves aVa Intelligence follow-up questions so they feel like the
 - `src/lib/intelligence/ask/followups.ts`
 - `src/lib/agent/product-truth/runtime-guard.ts`
 - `src/lib/agent/product-truth/__tests__/runtime-guard.test.ts`
+- PR #5079: follow-up diversity v3, merged and deployed to `ca-abarva-web-lab-eastus--ma3d3bdad`.
+- Follow-up PR: certification-language guard for suggested questions.
 
 ## QA / Validation
 
@@ -40,6 +44,7 @@ This release improves aVa Intelligence follow-up questions so they feel like the
 - `npm run release:check` passed.
 - `git diff --check` passed.
 - Offline strict sample across 16 FS Demo strategy prompts improved fallback diversity to 42 unique questions out of 48, with max repeat count 2.
+- Live post-#5079 FS Demo 20Q audit against `https://app.abarva.ai`: 20/20 API pass, follow-up diversity 52 unique of 60, max repeat 3. One generated certification phrasing issue was found and is covered by the follow-up guard.
 
 ## Rollout Plan
 

@@ -65,7 +65,7 @@ Rules:
 - Each question must be one sentence, under 18 words, and end with a question mark.
 - Prefer named client context from grounding: systems, data readiness, interview priorities, AI-tool usage, process bottlenecks, value proof, owners, or module handoffs.
 - Ask three different kinds of questions: one evidence probe, one decision/owner probe, and one execution or risk probe.
-- Do not ask AbarVa to approve, certify, negotiate, replace advisors, or claim unsupported live product capabilities.
+- Do not ask AbarVa to approve, certify, certify readiness, negotiate, replace advisors, or claim unsupported live product capabilities.
 Return JSON only: { "followups": ["...", "...", "..."] }
 
 Question: ${args.query}

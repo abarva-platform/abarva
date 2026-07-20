@@ -229,6 +229,26 @@ describe("sanitizeSuggestedQuestions", () => {
     );
   });
 
+  it("rejects certification phrasing in generated Intelligence follow-ups", () => {
+    const result = sanitizeSuggestedQuestions(
+      [
+        "What's blocking FS Demo's data foundation certification today: schema, quality, governance, or integration across core systems?",
+      ],
+      {
+        tenantKey: "arcturus",
+        tenantName: "FS Demo",
+        surface: "intelligence",
+        query:
+          "What industry case studies matter most for FS Demo's AI roadmap?",
+      },
+    );
+
+    expect(result.violations.map((violation) => violation.category)).toContain(
+      "unsafe_suggested_question",
+    );
+    expect(result.questions.join("\n")).not.toMatch(/certification/i);
+  });
+
   it("keeps Intelligence fallbacks varied across a strategy question pack", () => {
     const prompts = [
       "For FS Demo, what are the top AI investment themes in financial services right now, and where should we focus first?",
