@@ -13,6 +13,7 @@ import {
   type SourceShellStepGroup,
   type SourceShellWorkspace,
 } from '@/lib/source/source-event-shell-v2';
+import type { SourceArtifactLifecycleRow } from '@/lib/source/artifact-lifecycle-matrix';
 import type { ApprovalsInboxItem } from '@/lib/source/approvals-inbox';
 import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
 import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
@@ -930,6 +931,7 @@ function FilesWorkspace({ view }: { view: SourceEventShellView }) {
         title="Evidence ledger"
         subtitle="Every file stays tied to its event, stage, state, and source basis."
       />
+      <ArtifactLifecyclePanel view={view} />
       {view.files.byStage.length === 0 ? (
         <EmptyCard text="No Source artifacts are registered for this event yet." />
       ) : (
@@ -974,6 +976,224 @@ function FilesWorkspace({ view }: { view: SourceEventShellView }) {
       )}
     </section>
   );
+}
+
+function ArtifactLifecyclePanel({ view }: { view: SourceEventShellView }) {
+  const lifecycle = view.files.lifecycle;
+  const rowsByStage = groupLifecycleRows(lifecycle.rows);
+  const summaryItems = [
+    ['Expected artifacts', String(lifecycle.expectedCount)],
+    ['Required', String(lifecycle.requiredCount)],
+    ['Gate-defining', String(lifecycle.gateDefiningCount)],
+    ['Prompt-backed', String(lifecycle.promptBackedCount)],
+    ['Export-routed', String(lifecycle.renderableCount)],
+    ['AI drafts', String(lifecycle.aiDraftCount)],
+    ['Client finals', String(lifecycle.clientFinalCount)],
+  ];
+
+  return (
+    <section
+      data-testid="source-artifact-lifecycle-matrix"
+      style={{ ...CARD_STYLE, padding: 18, marginBottom: 16 }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: 18,
+          alignItems: 'flex-start',
+        }}
+      >
+        <div>
+          <div
+            style={{
+              color: ANALYTICS.BLUE,
+              fontFamily: ANALYTICS.MONO,
+              fontSize: 11,
+              fontWeight: 900,
+              letterSpacing: 1.2,
+              textTransform: 'uppercase',
+            }}
+          >
+            Artifact lifecycle
+          </div>
+          <h2
+            style={{
+              margin: '6px 0 0',
+              fontFamily: ANALYTICS.SERIF,
+              fontSize: 22,
+            }}
+          >
+            Draft, evidence, and final record
+          </h2>
+          <p
+            style={{
+              margin: '6px 0 0',
+              color: ANALYTICS.MUTED,
+              fontSize: 13,
+              lineHeight: 1.5,
+              maxWidth: 760,
+            }}
+          >
+            Generated documents stay as AI-prepared drafts until a reviewed
+            client-final version is accepted back into Source as the
+            authoritative artifact of record.
+          </p>
+        </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, minmax(82px, 1fr))',
+            gap: 8,
+            minWidth: 430,
+          }}
+        >
+          {summaryItems.map(([label, value]) => (
+            <div
+              key={label}
+              style={{
+                border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+                borderRadius: 8,
+                padding: '9px 10px',
+                background: ANALYTICS.SOFT,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: ANALYTICS.MONO,
+                  color: ANALYTICS.MUTED,
+                  fontSize: 9.5,
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                }}
+              >
+                {label}
+              </div>
+              <div
+                style={{
+                  marginTop: 4,
+                  color: ANALYTICS.INK,
+                  fontSize: 18,
+                  fontWeight: 900,
+                }}
+              >
+                {value}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div
+        style={{
+          marginTop: 16,
+          border: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          borderRadius: 8,
+          overflow: 'hidden',
+        }}
+      >
+        {rowsByStage.map((group) => (
+          <LifecycleStageRows key={group.stageLabel} group={group} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function LifecycleStageRows({
+  group,
+}: {
+  group: { stageLabel: string; rows: SourceArtifactLifecycleRow[] };
+}) {
+  return (
+    <div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '180px minmax(220px, 1fr) 180px 190px 180px',
+          gap: 12,
+          padding: '10px 12px',
+          background: ANALYTICS.SOFT,
+          borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+          color: ANALYTICS.MUTED,
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 10,
+          fontWeight: 900,
+          textTransform: 'uppercase',
+        }}
+      >
+        <div>{group.stageLabel}</div>
+        <div>Guideline</div>
+        <div>State</div>
+        <div>Prompt / export</div>
+        <div>Approval</div>
+      </div>
+      {group.rows.map((row) => (
+        <div
+          key={row.code}
+          data-testid={`source-artifact-lifecycle-row-${row.code}`}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '180px minmax(220px, 1fr) 180px 190px 180px',
+            gap: 12,
+            padding: '12px',
+            borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
+            alignItems: 'start',
+          }}
+        >
+          <div>
+            <div style={{ fontWeight: 850, fontSize: 13 }}>{row.name}</div>
+            <div
+              style={{
+                marginTop: 4,
+                color: ANALYTICS.MUTED,
+                fontFamily: ANALYTICS.MONO,
+                fontSize: 10,
+              }}
+            >
+              {row.code} · {row.requirementLabel} · {row.gateLabel}
+            </div>
+          </div>
+          <div style={{ color: ANALYTICS.INK_2, fontSize: 12, lineHeight: 1.45 }}>
+            {row.guidelineLabel}
+          </div>
+          <div>
+            <EvidenceBadge
+              basis={row.lifecycleState === 'not_registered' ? 'missing' : 'live_artifact'}
+              label={row.lifecycleLabel}
+            />
+            <div style={{ marginTop: 6, color: ANALYTICS.MUTED, fontSize: 11 }}>
+              {row.familyLabel}
+            </div>
+          </div>
+          <div style={{ color: ANALYTICS.MUTED, fontSize: 11.5, lineHeight: 1.45 }}>
+            <strong style={{ color: ANALYTICS.INK_2 }}>{row.prompt.modelLabel}</strong>
+            <br />
+            {row.prompt.maxTokensLabel}
+            <br />
+            {row.exportFormatsLabel}
+          </div>
+          <div style={{ color: ANALYTICS.INK_2, fontSize: 12, lineHeight: 1.45 }}>
+            <strong>{row.approvalLabel}</strong>
+            <br />
+            {row.governanceMessage}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function groupLifecycleRows(rows: SourceArtifactLifecycleRow[]) {
+  const groups = new Map<string, SourceArtifactLifecycleRow[]>();
+  for (const row of rows) {
+    const list = groups.get(row.stageLabel) ?? [];
+    list.push(row);
+    groups.set(row.stageLabel, list);
+  }
+  return Array.from(groups.entries()).map(([stageLabel, groupRows]) => ({
+    stageLabel,
+    rows: groupRows,
+  }));
 }
 
 function IntelligenceWorkspace({

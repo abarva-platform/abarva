@@ -8,6 +8,10 @@ import {
   SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
   SOURCE_CLIENT_FINAL_GOVERNANCE_MESSAGE,
 } from "@/lib/source/artifact-governance";
+import {
+  buildSourceArtifactLifecycleSummary,
+  type SourceArtifactLifecycleSummary,
+} from "@/lib/source/artifact-lifecycle-matrix";
 import type {
   IntelProvenance,
   StageAnalyticsView,
@@ -60,6 +64,7 @@ export interface SourceShellStep {
 
 export interface SourceShellFileItem {
   id: string;
+  artifactCode: string;
   stageKey: string;
   stageLabel: string;
   format: string;
@@ -131,6 +136,7 @@ export interface SourceEventShellView {
   files: {
     items: SourceShellFileItem[];
     byStage: { stageKey: string; stageLabel: string; items: SourceShellFileItem[] }[];
+    lifecycle: SourceArtifactLifecycleSummary;
   };
   intelligence: SourceShellIntelligenceExplorer;
   approvals: SourceShellApprovalsWorkspace;
@@ -209,6 +215,7 @@ export function buildSourceEventShellView(
       .map((task) => stepsById.get(task.id))
       .find((step) => step && step.status !== "captured") ?? null;
   const artifacts = (input.artifacts ?? []).map(toFileItem);
+  const lifecycle = buildSourceArtifactLifecycleSummary(input.artifacts ?? []);
   const approvals = Array.from(input.approvalItems ?? []);
   const currentStageItem =
     approvals.find(
@@ -255,6 +262,7 @@ export function buildSourceEventShellView(
     files: {
       items: artifacts,
       byStage: groupFilesByStage(artifacts),
+      lifecycle,
     },
     intelligence: {
       state: input.intelligenceOpen ? "open" : "hidden",
@@ -351,6 +359,7 @@ function taskSourceBasis(task: StageTaskView): SourceShellEvidenceBasis {
 
 function toFileItem(artifact: SourceShellArtifactLike): SourceShellFileItem {
   const stageKey = String(artifact.stageKey ?? artifact.sourcingStage ?? "other");
+  const artifactCode = String(artifact.artifactType ?? "");
   const group = String(artifact.artifactGroup ?? artifact.artifactFamily ?? "artifact");
   const sourceOrigin = String(artifact.sourceOrigin ?? "");
   const state = String(
@@ -360,6 +369,7 @@ function toFileItem(artifact: SourceShellArtifactLike): SourceShellFileItem {
   const governance = fileGovernanceFor({ group, sourceOrigin, isClientFinal });
   return {
     id: artifact.id,
+    artifactCode,
     stageKey,
     stageLabel: SOURCE_STAGE_LABELS[stageKey as SourceStageKey] ?? humanize(stageKey),
     format: String(artifact.fileFormat ?? artifact.sourceFormat ?? "unknown").toUpperCase(),
