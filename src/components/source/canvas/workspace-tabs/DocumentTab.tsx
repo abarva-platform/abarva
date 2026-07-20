@@ -16,6 +16,11 @@ import {
   artifactDisplayName,
   artifactStatusDisplayName,
 } from "@/lib/source/artifact-display-names";
+import {
+  SOURCE_AI_DRAFT_GOVERNANCE_DETAIL,
+  SOURCE_AI_DRAFT_GOVERNANCE_LABEL,
+  sourceDraftGovernanceMessage,
+} from "@/lib/source/artifact-governance";
 import { CANVAS } from "../canvas-tokens";
 import { VendorPricingSubmissionsPanel } from "./VendorPricingSubmissionsPanel";
 import { VendorResponsePackPanel } from "./VendorResponsePackPanel";
@@ -442,9 +447,7 @@ function RegistryDocumentsShelf({
                   ) : null}
                   {doc.sourceOrigin === "generated" ? (
                     <span style={REGISTRY_SHELF_BADGE_STYLE}>
-                      {exportReadyKind
-                        ? "Export Ready"
-                        : "Generated Draft"}
+                      {SOURCE_AI_DRAFT_GOVERNANCE_LABEL}
                     </span>
                   ) : null}
                 </span>
@@ -542,8 +545,11 @@ function formatRegistryDocumentMeta(doc: SourceArtifactRegistryRecord): string {
   if (doc.isClientFinal && doc.isCurrentAuthoritative) {
     return `${family} · client-approved final · used as version of record`;
   }
+  if (doc.sourceOrigin === "generated") {
+    return `${family} · AI-prepared draft · human approval required before external use`;
+  }
   if (exportReadyKind) {
-    return `${family} · reviewable deliverable · export surfaces available`;
+    return `${family} · AI-prepared draft · human approval required before external use`;
   }
   if (doc.sourceOrigin === "uploaded" || doc.sourceOrigin === "reuploaded") {
     return `${family} · uploaded evidence · ${doc.approvalState.replace(/_/g, " ")}`;
@@ -728,6 +734,10 @@ function ArtifactBodyEditor({
   const isGenerated =
     artifact.bodyGenerationMetadata !== null && bodyIsAuthored;
   const clientFinal = readClientFinalMetadata(artifact.bodyGenerationMetadata);
+  const draftGovernanceMessage =
+    bodyIsAuthored && !clientFinal
+      ? sourceDraftGovernanceMessage({ isAiGenerated: isGenerated })
+      : null;
 
   return (
     <div style={READER_WRAP_STYLE}>
@@ -836,6 +846,15 @@ function ArtifactBodyEditor({
           ) : null}
         </div>
       </div>
+      {draftGovernanceMessage ? (
+        <div
+          style={DRAFT_GOVERNANCE_BANNER_STYLE}
+          data-testid={`source-canvas-draft-governance-banner-${artifact.artifactCode}`}
+        >
+          <strong>{draftGovernanceMessage}</strong>
+          <span>{SOURCE_AI_DRAFT_GOVERNANCE_DETAIL}</span>
+        </div>
+      ) : null}
       {clientFinal ? (
         <div
           style={CLIENT_FINAL_BANNER_STYLE}
@@ -1615,6 +1634,19 @@ const CLIENT_FINAL_BANNER_STYLE: CSSProperties = {
   fontFamily: CANVAS.SANS,
   fontSize: 12.5,
   color: "#0f766e",
+  lineHeight: 1.45,
+};
+
+const DRAFT_GOVERNANCE_BANNER_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 4,
+  borderRadius: CANVAS.RADIUS_TIGHT,
+  border: "1px solid rgba(186,117,23,0.30)",
+  background: "rgba(186,117,23,0.06)",
+  padding: "10px 12px",
+  fontFamily: CANVAS.SANS,
+  fontSize: 12.5,
+  color: "#8B5500",
   lineHeight: 1.45,
 };
 
