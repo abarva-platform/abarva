@@ -551,13 +551,100 @@ ever needed.
 **Phase 2+ (separate design/PRs, not part of this sign-off):** Workstreams B, D, E, F, G, per the
 revised order in the header of this document.
 
-## 7. Open items still requiring reviewer sign-off before Phase 1 begins
+## 7. AI-generated disclosure — every surface, no exceptions
 
-1. `REVIEWER_ROLE_TO_GATE_ROLE` mapping (§3.8) — confirm the 6 mapped codes and the 9 descriptive-only
-   codes are correct, or adjust.
-2. The gate-policy table in §3.7 is illustrative, using the reviewer's own 6 examples — the full
-   16-type `DELIVERABLE_REGISTRY` mapping needs the reviewer's pass before Workstream F consumes it
-   (not required before Phase 1 schema work begins, since `gateRelationship` is per-type data, not
-   schema).
-3. Confirm the ACA data-build Job contract for the backfill (proof bundle fields, tenant scope,
-   idempotency key) before Phase 1 step 2 is scheduled.
+Per the standing Moves Continuous Execution Directive, disclosure text
+("*AI-generated draft. Requires human review and approval before it may be treated as authoritative
+or used for a phase decision.*") must appear, and must never disappear during download or format
+conversion, in **all** of:
+
+- artifact metadata (the `origin`/lifecycle fields from §3.13, machine-readable)
+- the Moves workspace (live view of an in-progress deliverable)
+- the preview surface (before export)
+- DOCX export
+- **PDF export** (Workstream G / MOVES-QUALITY-001 — the PDF renderer must inherit this requirement
+  from day one, not have it retrofitted after the renderer ships)
+- Files Explorer (Workstream E)
+- **the approval screen itself** — the reviewer approving a version must see the disclosure at the
+  moment of decision, not only the eventual reader of the exported document
+
+This is a rendering requirement each of B/D/E/G implements against the single `origin` field (§3.13)
+and the live-projected `lifecycle_current_state` (§3.6) — this design section exists so the
+requirement is recorded once, centrally, rather than each workstream's own doc re-deriving it
+(and potentially missing a surface, which is exactly the failure mode the directive is guarding
+against).
+
+## 8. Files Explorer — required states and lineage (read contract for Workstream E)
+
+Not built in this design pass — Workstream E is a UI project. This section specifies the exact
+read contract Workstream E must consume, so its own design doesn't have to re-derive it.
+
+**Origin** (one per version, from `deliverable_versions.origin`, §3.13):
+`AI Generated` · `Client Uploaded` · `AbarVa Uploaded` · `System Extract` · `Authoritative Approved Version`
+(the last is a derived label — the specific version currently pointed to by
+`deliverables_v2.signed_off_version`, not a distinct `origin` enum value).
+
+**Lifecycle** (one per version, projected per §3.1/§3.6):
+`Draft` (`ai_draft`) · `In Review` (`in_review`) · `Changes Requested` (`changes_requested`) ·
+`Human Approved` (`human_approved`) · `Client Final` (`client_final`) · `Superseded` (`superseded`) ·
+**`Requires Revalidation`** — this last label is not itself a `lifecycle_current_state` value; it is
+a derived, visually-distinct overlay badge shown whenever `deliverables_v2.requires_revalidation =
+true` (§3.12/§4), layered on top of whichever of the 6 real lifecycle states the row is otherwise in
+(almost always `human_approved`, from legacy backfill). Workstream E must render this as its own
+visible flag, not silently fold it into the `Human Approved` label.
+
+**Lineage tree** (per deliverable, across all its versions):
+
+```
+Target-State Architecture
+├── v1 · AI Generated Draft
+├── v2 · AI Generated Revision
+├── v3 · Client Uploaded
+└── v4 · Client Final · Authoritative
+```
+
+**Required linkage** for every file/version shown: tenant, Move, phase, artifact definition
+(`deliverableTypeKey`), version number, predecessor version (if any — derivable from
+`deliverable_lifecycle_events.related_version` on its `authority_replaced`/`superseded` event),
+approval history (all `deliverable_lifecycle_events` rows for that version), authoritative
+designation (whether this version is the current `deliverables_v2` pointer target), gate usage
+(which phase-gate check(s) this deliverable type satisfies, from `ArtifactQualityContract.gateRelationship`),
+and checksum/source metadata (`source_file_checksum` on the relevant lifecycle event, for
+uploaded/extracted origins).
+
+## 9. The gate invariant (governs Workstream F; restated here as an explicit 10-point checklist)
+
+**No phase closes on the strength of an AI-generated draft alone.** A gate check must verify all 10
+of the following before treating a deliverable as satisfied evidence — this is the authoritative
+checklist Workstream F implements against; §3.6/§3.7 describe the mechanics, this section is the
+literal enumerated requirement:
+
+1. The required logical artifact (`deliverableTypeKey`) exists at all (`deliverables_v2` row present).
+2. The current immutable version is identified (`getAuthoritativeVersion()`, §3.6, resolves non-null).
+3. That version meets its `ArtifactQualityContract` (§2) — quality bar, required exhibits, outline.
+4. Required human approvals apply to **that exact version** — not a historical approval from an
+   earlier version (§3.2's version-scoping fix / MOVES-BUG-001).
+5. Authority level meets the artifact's gate policy — `requiresClientAuthority` satisfied by a real
+   `client_authority`-role event when required (§3.7).
+6. No newer, unapproved version has replaced it — the resolved version is genuinely current, not
+   shadowed by a later `ai_draft`/`in_review`/`changes_requested` version sitting on top of it.
+7. The authoritative content is retrievable — the version's content/file is not missing, corrupted,
+   or inaccessible.
+8. Provenance and checksum are intact (`source_file_checksum` present and matching for
+   uploaded/extracted origins).
+9. Required decisions and evidence are present (`ArtifactQualityContract.qualityBar`'s
+   `requiresDecision`/`requiresEvidenceGapsNoted`/etc. — §2).
+10. No unresolved `changes_requested` event remains on the resolved version (if the latest event for
+    this version is `changes_requested`, it cannot be the resolved authoritative version at all —
+    this should already be structurally impossible per the state-transition table in §3.10, but is
+    listed here as an explicit, defense-in-depth check Workstream F must still perform).
+
+## 10. Open items still requiring reviewer sign-off before Phase 1 begins
+
+1. `REVIEWER_ROLE_TO_GATE_ROLE` mapping (§3.8) — see `MOVES-DESIGN-001` in
+   `docs/backlog/moves-product-backlog.md` for the proposed mapping and decision table.
+2. The gate-policy table in §3.7 is illustrative, using the reviewer's own 6 examples — see
+   `MOVES-DESIGN-002` in the canonical backlog for the full 16-type decision table.
+3. The ACA data-build Job contract for the backfill — see `MOVES-DESIGN-003` in the canonical
+   backlog for the full decision table (proof bundle fields, tenant scope, idempotency key,
+   batching, rollback, audit output, failure handling).
