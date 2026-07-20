@@ -156,7 +156,7 @@ describe("sanitizeSuggestedQuestions", () => {
       "What evidence supports this recommendation?",
     );
     expect(result.questions).toContain(
-      "Which Healthcare Demo evidence is strongest, inferred, or still missing?",
+      "What would change this recommendation after the next evidence review?",
     );
   });
 
@@ -180,7 +180,7 @@ describe("sanitizeSuggestedQuestions", () => {
     expect(result.questions).toEqual([
       "Which FS Demo contact-center systems, data feeds, and escalation owners should we validate first?",
       "What evidence would make the fraud or dispute backlog value case board-safe for FS Demo?",
-      "Which FS Demo evidence is strongest, inferred, or still missing?",
+      "What current-state evidence would most change the agent assist recommendation?",
     ]);
     expect(result.questions.join("\n")).not.toContain(
       "What can AbarVa confirm from loaded evidence?",
@@ -201,7 +201,7 @@ describe("sanitizeSuggestedQuestions", () => {
     expect(result.questions).toEqual([
       "Which data-readiness gaps block the next AI funding decision for FS Demo?",
       "What lineage, metric-basis, or ownership evidence should FS Demo validate next?",
-      "Which FS Demo evidence is strongest, inferred, or still missing?",
+      "What current-state evidence would most change the data foundation recommendation?",
     ]);
     expect(result.questions.join("\n")).not.toMatch(/contact-center|fraud/i);
   });
@@ -226,6 +226,41 @@ describe("sanitizeSuggestedQuestions", () => {
     );
     expect(result.questions.every((question) => question.length <= 140)).toBe(
       true,
+    );
+  });
+
+  it("keeps Intelligence fallbacks varied across a strategy question pack", () => {
+    const prompts = [
+      "For FS Demo, what are the top AI investment themes in financial services right now, and where should we focus first?",
+      "Rank five AI use cases for FS Demo by business value and implementation complexity.",
+      "Should FS Demo prioritize contact center agent assist, and what current-state evidence should decide that?",
+      "What does FS Demo know about current data foundation readiness for AI?",
+      "What does FS Demo know about its current technology stack that affects AI execution?",
+      "Which AI use cases are ready to fund now versus hold for evidence?",
+      "Build a CFO read on where AI can create measurable value for FS Demo in the next 12 months.",
+      "What governance or risk controls should FS Demo put around AI before scaling?",
+      "Compare credit automation, fraud operations, and capital markets research automation.",
+      "What industry case studies matter most for FS Demo's AI roadmap?",
+    ];
+
+    const followups = prompts.flatMap(
+      (query) =>
+        sanitizeSuggestedQuestions([], {
+          tenantKey: "arcturus",
+          tenantName: "FS Demo",
+          surface: "intelligence",
+          query,
+        }).questions,
+    );
+    const counts = new Map<string, number>();
+    for (const question of followups) {
+      counts.set(question, (counts.get(question) ?? 0) + 1);
+    }
+
+    expect(new Set(followups).size).toBeGreaterThanOrEqual(24);
+    expect(Math.max(...counts.values())).toBeLessThanOrEqual(3);
+    expect(followups.join("\n")).not.toContain(
+      "Which FS Demo evidence is strongest, inferred, or still missing?",
     );
   });
 });
