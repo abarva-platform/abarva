@@ -635,19 +635,29 @@ export function MovesPhaseStandaloneClient({
   }
 
   async function approvePhaseGateAfterBuild(result: {
-    deliverables: Array<{ status: "queued" | "error"; error?: string }>;
+    succeededKeys: string[];
+    failedKeys: string[];
+    total: number;
   }) {
-    const queued = result.deliverables.filter((item) => item.status === "queued").length;
-    if (queued === 0) {
+    // This only ever runs once every queued deliverable in the batch has
+    // reached a terminal status (see PhaseApproveAndBuild's onBuildSettled) —
+    // never while generation is still queued or running, and never when a
+    // required deliverable failed or was held below gate.
+    if (result.failedKeys.length > 0) {
       setGateApprovalStatus("blocked");
       throw new Error(
-        result.deliverables.find((item) => item.error)?.error ||
-          "No required deliverables could be queued for this phase.",
+        `${result.failedKeys.length} required output${result.failedKeys.length === 1 ? "" : "s"} ` +
+          `failed to generate or were held below gate (${result.failedKeys.join(", ")}). ` +
+          "Fix the underlying issue and re-run Approve & Build before requesting gate approval.",
       );
+    }
+    if (result.succeededKeys.length === 0) {
+      setGateApprovalStatus("blocked");
+      throw new Error("No required deliverables completed generation for this phase.");
     }
     setGateApprovalStatus("approving");
     setGateApprovalMessage(
-      `${queued} required output${queued === 1 ? "" : "s"} queued. Submitting gate approval...`,
+      `${result.succeededKeys.length} required output${result.succeededKeys.length === 1 ? "" : "s"} built. Submitting gate approval...`,
     );
 
     const approvalRes = await fetch(`/api/v1/programs/${move.id}/phase-gate-approval`, {
@@ -716,7 +726,9 @@ export function MovesPhaseStandaloneClient({
       setGateApprovalStatus("approving");
       setGateApprovalMessage("Submitting P0 gate approval...");
       await approvePhaseGateAfterBuild({
-        deliverables: [{ status: "queued" }],
+        succeededKeys: ["origination_brief"],
+        failedKeys: [],
+        total: 1,
       });
     } catch (err) {
       setGateApproved(false);
@@ -1202,7 +1214,9 @@ function PhaseBody({
   isHistoricalPhase: boolean;
   move: StrategicMove;
   onApproveAfterBuild: (result: {
-    deliverables: Array<{ status: "queued" | "error"; error?: string }>;
+    succeededKeys: string[];
+    failedKeys: string[];
+    total: number;
   }) => Promise<void>;
   onContinueCurrentPhase: () => void;
   onApproveP0Gate: () => void | Promise<void>;
@@ -1669,7 +1683,7 @@ function PhaseBody({
               moveId={move.id}
               moveName={move.name}
               onBeforeBuild={onFinalizePhaseCapture}
-              onBuildQueued={onApproveAfterBuild}
+              onBuildSettled={onApproveAfterBuild}
               phaseLabel={`${phase.code} ${phase.title}`}
               phaseNum={phase.phase}
             />
