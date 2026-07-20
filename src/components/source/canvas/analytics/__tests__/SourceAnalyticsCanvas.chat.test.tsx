@@ -20,8 +20,14 @@
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
+const mockRouterRefresh = jest.fn();
+
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: jest.fn(),
+    refresh: mockRouterRefresh,
+  }),
   usePathname: () => "/source/events/evt-1",
   useSearchParams: () => new URLSearchParams(),
   useParams: () => ({ eventId: "evt-1" }),
@@ -101,6 +107,7 @@ function makeEvent(
 describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
   beforeEach(() => {
     mockAskAnythingBar.mockClear();
+    mockRouterRefresh.mockClear();
   });
 
   afterEach(() => {
@@ -261,6 +268,72 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack"),
     ).toHaveTextContent("AI draft awaiting review");
+    expect(
+      screen.queryByTestId("source-accept-client-final-toggle-d05_scope_memo"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("source-accept-client-final-toggle-d09_rfp_pack"),
+    ).toBeInTheDocument();
+  });
+
+  it("posts reviewed client-final files from the Files lifecycle matrix", async () => {
+    const fetchMock = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        artifact: { fileName: "Client Final RFP.docx" },
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Lakeshore"
+        artifacts={[
+          {
+            id: "generated-rfp",
+            stageKey: "rfp",
+            artifactKind: "d09_rfp_pack",
+            artifactGroup: "generated",
+            sourceOrigin: "generated",
+            title: "RFP Package",
+            fileFormat: "docx",
+            status: "draft",
+          },
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /^files$/i }));
+    fireEvent.click(
+      screen.getByTestId("source-accept-client-final-toggle-d09_rfp_pack"),
+    );
+    fireEvent.change(screen.getByLabelText(/client-approved file/i), {
+      target: {
+        files: [
+          new File(["final"], "Client Final RFP.docx", {
+            type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          }),
+        ],
+      },
+    });
+    fireEvent.change(screen.getByLabelText(/optional note/i), {
+      target: { value: "Reviewed by sourcing steering committee." },
+    });
+    fireEvent.submit(
+      screen.getByTestId("source-accept-client-final-panel-d09_rfp_pack"),
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(String(fetchMock.mock.calls[0][0])).toBe(
+      "/api/v1/source/evt-1/artifacts/d09_rfp_pack/client-final",
+    );
+    expect(mockRouterRefresh).toHaveBeenCalledTimes(1);
+    expect(
+      await screen.findByText(/Client Final accepted/i),
+    ).toBeInTheDocument();
   });
 
   it("does not tell users that event approval belongs in the old Source Approvals page", () => {

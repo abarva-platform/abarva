@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { AskAnythingBar } from '@/components/agent/AskAnythingBar';
 import { AppShell } from '@/components/shell/AppShell';
+import { AcceptClientFinalButton } from '@/components/source/canvas/workspace-tabs/AcceptClientFinalButton';
 import {
   buildSourceEventShellView,
   type SourceEventShellView,
@@ -107,6 +109,7 @@ export function SourceAnalyticsCanvas({
   artifacts = [],
   approvalItems = [],
 }: SourceAnalyticsCanvasProps) {
+  const router = useRouter();
   const [workspace, setWorkspace] = useState<SourceShellWorkspace>('steps');
   const [avaOpen, setAvaOpen] = useState(false);
 
@@ -177,6 +180,7 @@ export function SourceAnalyticsCanvas({
                 stageView={resolvedStageView}
                 workspace={workspace}
                 onWorkspaceChange={setWorkspace}
+                onClientFinalAccepted={() => router.refresh()}
               />
             </div>
           </div>
@@ -375,13 +379,22 @@ function SourceWorkspace({
   stageView,
   workspace,
   onWorkspaceChange,
+  onClientFinalAccepted,
 }: {
   view: SourceEventShellView;
   stageView: StageAnalyticsView;
   workspace: SourceShellWorkspace;
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
+  onClientFinalAccepted: () => void;
 }) {
-  if (workspace === 'files') return <FilesWorkspace view={view} />;
+  if (workspace === 'files') {
+    return (
+      <FilesWorkspace
+        view={view}
+        onClientFinalAccepted={onClientFinalAccepted}
+      />
+    );
+  }
   if (workspace === 'intelligence') {
     return <IntelligenceWorkspace view={view} stageView={stageView} />;
   }
@@ -923,7 +936,13 @@ function ActionButton({ children }: { children: ReactNode }) {
   );
 }
 
-function FilesWorkspace({ view }: { view: SourceEventShellView }) {
+function FilesWorkspace({
+  view,
+  onClientFinalAccepted,
+}: {
+  view: SourceEventShellView;
+  onClientFinalAccepted: () => void;
+}) {
   return (
     <section data-testid="source-shell-v2-files">
       <WorkspaceTitle
@@ -931,7 +950,10 @@ function FilesWorkspace({ view }: { view: SourceEventShellView }) {
         title="Evidence ledger"
         subtitle="Every file stays tied to its event, stage, state, and source basis."
       />
-      <ArtifactLifecyclePanel view={view} />
+      <ArtifactLifecyclePanel
+        view={view}
+        onClientFinalAccepted={onClientFinalAccepted}
+      />
       {view.files.byStage.length === 0 ? (
         <EmptyCard text="No Source artifacts are registered for this event yet." />
       ) : (
@@ -978,7 +1000,13 @@ function FilesWorkspace({ view }: { view: SourceEventShellView }) {
   );
 }
 
-function ArtifactLifecyclePanel({ view }: { view: SourceEventShellView }) {
+function ArtifactLifecyclePanel({
+  view,
+  onClientFinalAccepted,
+}: {
+  view: SourceEventShellView;
+  onClientFinalAccepted: () => void;
+}) {
   const lifecycle = view.files.lifecycle;
   const rowsByStage = groupLifecycleRows(lifecycle.rows);
   const summaryItems = [
@@ -1088,11 +1116,16 @@ function ArtifactLifecyclePanel({ view }: { view: SourceEventShellView }) {
           marginTop: 16,
           border: `1px solid ${ANALYTICS.LINE_SOFT}`,
           borderRadius: 8,
-          overflow: 'hidden',
+          overflow: 'visible',
         }}
       >
         {rowsByStage.map((group) => (
-          <LifecycleStageRows key={group.stageLabel} group={group} />
+          <LifecycleStageRows
+            key={group.stageLabel}
+            eventId={view.event.id}
+            group={group}
+            onClientFinalAccepted={onClientFinalAccepted}
+          />
         ))}
       </div>
     </section>
@@ -1100,9 +1133,13 @@ function ArtifactLifecyclePanel({ view }: { view: SourceEventShellView }) {
 }
 
 function LifecycleStageRows({
+  eventId,
   group,
+  onClientFinalAccepted,
 }: {
+  eventId: string;
   group: { stageLabel: string; rows: SourceArtifactLifecycleRow[] };
+  onClientFinalAccepted: () => void;
 }) {
   return (
     <div>
@@ -1176,6 +1213,17 @@ function LifecycleStageRows({
             <strong>{row.approvalLabel}</strong>
             <br />
             {row.governanceMessage}
+            {row.lifecycleState === 'ai_draft' ? (
+              <div style={{ marginTop: 10 }}>
+                <AcceptClientFinalButton
+                  eventId={eventId}
+                  artifactCode={row.code}
+                  artifactName={row.name}
+                  hasGeneratedDraft
+                  onAccepted={onClientFinalAccepted}
+                />
+              </div>
+            ) : null}
           </div>
         </div>
       ))}
