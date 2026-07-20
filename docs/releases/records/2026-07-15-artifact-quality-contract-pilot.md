@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -166,18 +166,38 @@ requirements. Deploy proceeds through the repo-owned `aca-main-deploy` workflow.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
-- Shared runtime mutators: none used directly; deploy proceeds through the standard
-  workflow only.
-- Approved image digest: to be recorded once the deploy workflow runs.
-- ACA runtime invariant: to be proven after deploy.
-- Worker image invariant: N/A — no worker involved in this change.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`. PR #5092's own
+  merge-triggered run ([29713862621](https://github.com/abarva-platform/abarva/actions/runs/29713862621))
+  was cancelled by the workflow's concurrency control when PR #5093 merged immediately
+  after it — GitHub Actions' `cancel-in-progress` behavior supersedes a queued run for an
+  older commit once a newer one on the same branch is triggered. The next run
+  ([29713948186](https://github.com/abarva-platform/abarva/actions/runs/29713948186),
+  headSha `06516c51eb0822a1cfe4447bb99664d92fe10e84`) completed successfully and deploys
+  a commit one ahead of PR #5092's merge commit
+  (`bc49f63af34d0659ccf569ffa10a94fe4883278a`) — confirmed via
+  `git merge-base --is-ancestor bc49f63af... origin/main` that the merge commit is a real
+  ancestor of the deployed commit, so this deploy carries PR #5092's changes.
+- Shared runtime mutators: none used directly; deploy proceeded entirely through the
+  standard workflow.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:95a3682e86455c02cd7fe3614091f6a5c5ab094b47527355556285f3feaca87f`.
+- ACA runtime invariant: **proven.** `az containerapp show -g rg-abarva-controlplane-lab-eastus
+  -n ca-abarva-web-lab-eastus` confirms `properties.template.containers[0].image` and the
+  100%-traffic revision (`ca-abarva-web-lab-eastus--m06516c51`, `weight: 100`) both resolve
+  to the digest above.
+- Worker image invariant: **proven.** `job-abarva-deliv-worker` and
+  `job-abarva-deliv-worker-event` both resolve to the same digest.
 - Feature/env flag update path: N/A — no flag.
-- Live signed-in proof required: yes — generate a real Target State Architecture and a
-  real Business Case via "Approve & Build" on a live Move after deploy, and confirm: the
-  four architecture exhibits render with their required elements, the depth lands in the
-  target band, the narrative-spine warnings behave as advisory (not blocking), and the
-  document-status disclaimer appears on the rendered artifact.
+- Live signed-in proof: **partially performed.** Signed in and navigated `app.abarva.ai`
+  post-deploy — the app loads and functions normally (no regression from this change),
+  and drilled into a real Move at P3 "Choose the Approach" (Member AI Assist,
+  `healthcare_provider-member-2026`). That Move had not yet generated any P3
+  deliverables (0 of 2, 0% ready) — reaching a live "Approve & Build" run would require
+  progressing it through Compare Options / Record Decision / Design Canvas first, which
+  was not done in this pass. **The specific claim not yet proven live**: a real generated
+  Target State Architecture or Business Case rendering the new document-status
+  disclaimer and architecture exhibits on `app.abarva.ai`. This remains an open item —
+  see Known Gaps.
 
 ## Rollback Plan
 
@@ -189,12 +209,28 @@ no cleanup required.
 
 ## Audit Evidence
 
-- PR URL: to be added when opened.
-- CI run: to be added when the PR's checks complete.
-- Deployment URL / ACA revision: to be added after deploy.
+- PR: [abarva-platform/abarva#5092](https://github.com/abarva-platform/abarva/pull/5092),
+  20/20 required checks passed, squash-merged as `bc49f63af34d0659ccf569ffa10a94fe4883278a`.
+- CI/deploy run: [aca-main-deploy #29713948186](https://github.com/abarva-platform/abarva/actions/runs/29713948186)
+  (deploying commit `06516c51e`, one ahead of and including the #5092 merge commit),
+  conclusion `success`.
+- Deployment: ACA revision `ca-abarva-web-lab-eastus--m06516c51` in
+  `rg-abarva-controlplane-lab-eastus`, 100% ingress traffic, image digest
+  `sha256:95a3682e86455c02cd7fe3614091f6a5c5ab094b47527355556285f3feaca87f`.
+- Live proof: app-loads/no-regression confirmed on `app.abarva.ai` post-deploy. A live
+  generation-cycle proof (real Target State Architecture or Business Case showing the
+  new exhibits/disclaimer) was not completed in this pass — tracked as a Known Gap below,
+  to be picked up the next time a Move reaches "Approve & Build" at P3/P4 with real
+  evidence.
 
 ## Known Gaps
 
+- **Live generation-cycle proof not yet performed.** Deploy is confirmed live and the app
+  loads/functions normally, but a real Target State Architecture or Business Case has not
+  yet been generated on `app.abarva.ai` post-deploy to visually confirm the new
+  architecture exhibits and document-status disclaimer render correctly end-to-end. The
+  Move checked in this pass (Member AI Assist, P3) had not yet reached "Approve & Build."
+  Follow up the next time a real Move progresses through P3/P4 with evidence.
 - **Named, multi-role, staged approval lifecycle does not exist** (Draft → Reviewed →
   Approved → Rejected, with separate Business/Technology/Finance/Risk-Security approver
   roles, and a link from an AI-generated draft to a separately-uploaded approved
