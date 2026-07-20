@@ -64,6 +64,16 @@ describe("buildNarrativeHtml", () => {
     expect(out).not.toContain("Template scaffold");
   });
 
+  it("labels authored exports as AI-prepared drafts requiring human review", () => {
+    const out = buildNarrativeHtml(makePayload(), RFP_PACK_HTML_CONFIG);
+    expect(out).toContain('name="x-source-governance"');
+    expect(out).toContain(
+      "AI-prepared draft. Human review is required before external use.",
+    );
+    expect(out).toContain("source-doc__draft-governance");
+    expect(out).toContain("authoritative deliverable of record");
+  });
+
   it("emits the per-artifact confidentiality note in the footer", () => {
     const cases: Array<[NarrativeHtmlConfig, string]> = [
       [SCOPE_MEMO_HTML_CONFIG, "distribute only to procurement panel"],

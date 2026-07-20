@@ -169,6 +169,56 @@ describe("DocumentTab event documents", () => {
     expect(screen.getAllByText(/authoritative/).length).toBeGreaterThanOrEqual(
       2,
     );
+    expect(screen.queryByText(/AI-prepared draft/)).not.toBeInTheDocument();
+  });
+
+  it("shows AI-draft governance before a generated artifact is client-final", () => {
+    render(
+      <DocumentTab
+        eventId="event-1"
+        stage="strategy"
+        artifacts={[
+          {
+            ...baseArtifact,
+            body: "# Strategy memo",
+            bodyGenerationMetadata: {
+              model: "claude-sonnet-4-6",
+              promptTemplateId: "d01_strategy_memo",
+              promptTemplateVersion: 1,
+              upstreamBoundCodes: [],
+              generatedAt: "2026-06-16T00:00:00.000Z",
+              generatedByUserId: "user-1",
+              tokensIn: 100,
+              tokensOut: 200,
+              stopReason: "end_turn",
+            },
+          },
+        ]}
+        registryArtifacts={[
+          {
+            ...registryDoc,
+            artifactKind: "d01_strategy_memo",
+            sourceOrigin: "generated",
+            originalName: "Sourcing Strategy Memo.docx",
+          },
+        ]}
+        templateByCode={{ d01_strategy_memo: "# Strategy memo" }}
+      />,
+    );
+
+    expect(
+      screen.getByTestId(
+        "source-canvas-draft-governance-banner-d01_strategy_memo",
+      ),
+    ).toHaveTextContent(
+      "AI-prepared draft. Human review is required before external use.",
+    );
+    expect(screen.getByText("AI-prepared draft")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /AI-prepared draft · human approval required before external use/,
+      ),
+    ).toBeInTheDocument();
   });
 
   it("shows a compact unverified marker when required sections are missing", () => {

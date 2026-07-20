@@ -15,6 +15,10 @@ import "server-only";
 
 import { markdownToHtml } from "@/lib/exports-shared/markdown-to-html";
 import {
+  SOURCE_AI_DRAFT_GOVERNANCE_DETAIL,
+  SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
+} from "@/lib/source/artifact-governance";
+import {
   DECISION_BRIEF_DOCX_CONFIG,
   PRICING_WORKBOOK_SUMMARY_DOCX_CONFIG,
   RFP_PACK_DOCX_CONFIG,
@@ -93,6 +97,16 @@ const STYLE_BLOCK = `
     color: #5B3F00;
   }
   .source-doc__scaffold-warning strong { color: #5B3F00; }
+  .source-doc__draft-governance {
+    margin: 24px 0;
+    padding: 12px 16px;
+    background: rgba(244, 180, 0, 0.12);
+    border: 1px solid rgba(244, 180, 0, 0.4);
+    border-radius: 6px;
+    font-size: 13px;
+    color: #5B3F00;
+  }
+  .source-doc__draft-governance strong { color: #5B3F00; }
   .source-doc__divider {
     border: 0;
     border-top: 1px solid var(--rule);
@@ -174,6 +188,11 @@ export function buildNarrativeHtml(
   const scaffoldWarning = payload.bodyIsAuthored
     ? ""
     : `<div class="source-doc__scaffold-warning"><strong>Template scaffold</strong> — body has not been authored yet. The content below is the canonical ${headerLabel} scaffold; replace with the actual authored content before circulating.</div>`;
+  const draftGovernance = payload.bodyIsAuthored
+    ? `<div class="source-doc__draft-governance"><strong>${escapeHtml(
+        SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
+      )}</strong> ${escapeHtml(SOURCE_AI_DRAFT_GOVERNANCE_DETAIL)}</div>`
+    : "";
 
   const issuedByLine = issuedBy
     ? `<p class="source-doc__meta">Issued by: ${issuedBy}</p>`
@@ -187,6 +206,7 @@ export function buildNarrativeHtml(
   <title>${docTitle}</title>
   <meta name="generator" content="AbarVa Source" />
   <meta name="x-source-document" content="${escapeHtml(config.documentTitle)}" />
+  <meta name="x-source-governance" content="${escapeHtml(SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE)}" />
   <style>${STYLE_BLOCK}</style>
 </head>
 <body>
@@ -198,6 +218,7 @@ export function buildNarrativeHtml(
       <p class="source-doc__meta">Event code: ${eventCode}</p>
       ${issuedByLine}
       <p class="source-doc__meta">Generated: ${generatedAt}</p>
+      ${draftGovernance}
       ${scaffoldWarning}
     </header>
     <hr class="source-doc__divider" />

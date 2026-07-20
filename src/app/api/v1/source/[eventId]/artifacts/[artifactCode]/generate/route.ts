@@ -87,6 +87,7 @@ import {
   type GeneratedArtifactFormat,
   type RenderedGeneratedArtifact,
 } from "@/lib/source/generated-artifact-rendering";
+import { SOURCE_AI_DRAFT_GOVERNANCE_DETAIL } from "@/lib/source/artifact-governance";
 
 const REGISTRY_STORAGE_BUCKET = "source-artifacts";
 const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
@@ -819,8 +820,8 @@ export async function generateSourceArtifactDraft(
                     : (spec?.name ?? artifactCode),
                 description:
                   renderedArtifact.role === "preview"
-                    ? "HTML preview of the generated Source deliverable."
-                    : (spec?.description ?? null),
+                    ? `HTML preview of the generated Source deliverable. ${SOURCE_AI_DRAFT_GOVERNANCE_DETAIL}`
+                    : `${spec?.description ?? "Generated Source deliverable."} ${SOURCE_AI_DRAFT_GOVERNANCE_DETAIL}`,
                 fileName: renderedArtifact.filename,
                 fileFormat: renderedArtifact.format,
                 blobContainer: REGISTRY_STORAGE_BUCKET,

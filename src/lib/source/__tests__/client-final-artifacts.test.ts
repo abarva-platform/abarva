@@ -4,8 +4,18 @@ import {
   isClientFinalArtifact,
   resolveAuthoritativeArtifact,
 } from "../client-final-artifacts";
+import { SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE } from "../artifact-governance";
 
 describe("client-final artifact governance", () => {
+  it("keeps draft and final governance language distinct", () => {
+    expect(SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE).toBe(
+      "AI-prepared draft. Human review is required before external use.",
+    );
+    expect(CLIENT_FINAL_GOVERNANCE_MESSAGE).toContain(
+      "client-final artifact is now the authoritative deliverable of record",
+    );
+  });
+
   it("recognizes client-final artifacts by status or flag", () => {
     expect(isClientFinalArtifact({ status: "client_final" })).toBe(true);
     expect(isClientFinalArtifact({ isClientFinal: true })).toBe(true);

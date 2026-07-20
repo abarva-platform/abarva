@@ -1,7 +1,8 @@
 import type { SourceArtifactRecord } from "./file-cabinet/types";
+import { SOURCE_CLIENT_FINAL_GOVERNANCE_MESSAGE } from "./artifact-governance";
 
 export const CLIENT_FINAL_GOVERNANCE_MESSAGE =
-  "AbarVa generated the working draft. The client reviewed, edited, and uploaded the approved final. The uploaded client-final artifact is now the authoritative deliverable of record.";
+  SOURCE_CLIENT_FINAL_GOVERNANCE_MESSAGE;
 
 export interface AuthoritativeArtifactCandidate {
   id: string;

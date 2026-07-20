@@ -31,6 +31,10 @@ import {
   eyebrowParagraph,
 } from "@/lib/exports-shared/docx-base";
 import { markdownToDocxBlocks } from "@/lib/exports-shared/markdown-to-docx";
+import {
+  SOURCE_AI_DRAFT_GOVERNANCE_DETAIL,
+  SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
+} from "@/lib/source/artifact-governance";
 
 /** Payload all narrative renderers consume. */
 export interface NarrativeDocxPayload {
@@ -144,6 +148,18 @@ function buildCoverBlock(
     blocks.push(coverSubtitleParagraph(`Issued by: ${payload.issuedBy}`));
   }
   blocks.push(coverSubtitleParagraph(`Generated: ${payload.generatedAt}`));
+  if (payload.bodyIsAuthored) {
+    blocks.push(
+      bodyParagraph([
+        boldRun(`${SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE} `, {
+          color: SOURCE_DOCX.WARNING_COLOR,
+        }),
+        bodyRun(SOURCE_AI_DRAFT_GOVERNANCE_DETAIL, {
+          color: SOURCE_DOCX.MUTED_COLOR,
+        }),
+      ]),
+    );
+  }
   if (!payload.bodyIsAuthored) {
     blocks.push(
       bodyParagraph([
