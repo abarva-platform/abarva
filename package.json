@@ -184,6 +184,7 @@
     "db:migrate": "npx tsx src/scripts/run-migrations.ts",
     "test:rls-regression": "npx tsx scripts/run-rls-regression.ts",
     "db:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry",
+    "db:migrate:ci": "npx tsx src/scripts/run-migrations.ts --ci",
     "db:migrate:mark-applied": "npx tsx src/scripts/run-migrations.ts --mark-all-applied",
     "db:verify:tenant-keys": "npx tsx scripts/verify-tenant-key-canonical.ts",
     "db:cleanup:tenant-keys": "npx tsx scripts/tenant-canonical-cleanup.ts",

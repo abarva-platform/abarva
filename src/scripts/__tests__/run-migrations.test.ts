@@ -7,21 +7,28 @@
  *   - `scanForDestructivePatterns` — the safety guard that blocks
  *      DROP TABLE / DROP COLUMN / TRUNCATE / etc unless explicitly opted in.
  *   - `listMigrationFiles` — directory listing with sort + filter.
+ *   - `computeFileSha256` / `findMigrationDrift` — the governed migration
+ *      lane's tamper-detection guard.
  *
- * No DB, no network. The runner's main() function is intentionally not
- * tested here — it requires a live Postgres connection. The pure helpers
- * cover the safety-critical pre-flight checks that gate auto-apply on
- * Vercel prod deploys.
+ * No DB, no network. The runner's main() function (including the advisory
+ * lock and the apply loop) is intentionally not tested here — it requires a
+ * live Postgres connection. That behavior is covered by the isolated-Postgres
+ * integration test instead (src/scripts/__tests__/run-migrations.integration.test.ts).
+ * The pure helpers here cover the safety-critical pre-flight checks that gate
+ * auto-apply on production deploys.
  */
 
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
+  computeFileSha256,
+  findMigrationDrift,
   listMigrationFiles,
   parseArgs,
   scanForDestructivePatterns,
   stripSqlComments,
+  type AppliedMigrationRecord,
 } from '../run-migrations';
 
 describe('run-migrations · parseArgs', () => {
@@ -303,5 +310,102 @@ describe('run-migrations · listMigrationFiles', () => {
 
   it('returns empty array for an empty directory', () => {
     expect(listMigrationFiles(tmpDir)).toEqual([]);
+  });
+});
+
+describe('run-migrations · computeFileSha256', () => {
+  it('produces a stable, deterministic hash for the same content', () => {
+    const sql = 'CREATE TABLE foo (id UUID PRIMARY KEY);';
+    expect(computeFileSha256(sql)).toBe(computeFileSha256(sql));
+  });
+
+  it('produces different hashes for different content', () => {
+    const a = computeFileSha256('CREATE TABLE foo (id UUID);');
+    const b = computeFileSha256('CREATE TABLE foo (id UUID, name TEXT);');
+    expect(a).not.toBe(b);
+  });
+
+  it('is sensitive to whitespace-only changes (byte-exact, not semantic)', () => {
+    const a = computeFileSha256('SELECT 1;');
+    const b = computeFileSha256('SELECT 1;\n');
+    expect(a).not.toBe(b);
+  });
+
+  it('returns a 64-character hex string', () => {
+    expect(computeFileSha256('anything')).toMatch(/^[0-9a-f]{64}$/);
+  });
+});
+
+describe('run-migrations · findMigrationDrift', () => {
+  function record(
+    name: string,
+    sha256: string | null,
+  ): AppliedMigrationRecord {
+    return { name, sha256 };
+  }
+
+  it('finds no drift when recorded and current hashes match', () => {
+    const hash = computeFileSha256('CREATE TABLE foo (id UUID);');
+    const findings = findMigrationDrift(
+      [record('001_foo.sql', hash)],
+      () => hash,
+    );
+    expect(findings).toEqual([]);
+  });
+
+  it('flags a migration whose current content no longer matches its recorded hash', () => {
+    const recordedHash = computeFileSha256('CREATE TABLE foo (id UUID);');
+    const currentHash = computeFileSha256(
+      'CREATE TABLE foo (id UUID); DROP TABLE bar;',
+    );
+    const findings = findMigrationDrift(
+      [record('001_foo.sql', recordedHash)],
+      () => currentHash,
+    );
+    expect(findings).toEqual([
+      {
+        filename: '001_foo.sql',
+        recordedSha256: recordedHash,
+        currentSha256: currentHash,
+      },
+    ]);
+  });
+
+  it('does not flag a record with no recorded hash (applied before the column existed, or via --mark-all-applied)', () => {
+    const findings = findMigrationDrift(
+      [record('001_foo.sql', null)],
+      () => computeFileSha256('anything'),
+    );
+    expect(findings).toEqual([]);
+  });
+
+  it('does not flag a migration file that no longer exists on disk', () => {
+    const recordedHash = computeFileSha256('CREATE TABLE foo (id UUID);');
+    const findings = findMigrationDrift(
+      [record('001_foo.sql', recordedHash)],
+      () => null, // simulates readFileSync throwing ENOENT
+    );
+    expect(findings).toEqual([]);
+  });
+
+  it('checks every applied record independently, only flagging the ones that actually drifted', () => {
+    const stableHash = computeFileSha256('CREATE TABLE stable (id UUID);');
+    const driftedRecordedHash = computeFileSha256('CREATE TABLE drifted (id UUID);');
+    const driftedCurrentHash = computeFileSha256(
+      'CREATE TABLE drifted (id UUID); ALTER TABLE drifted DROP COLUMN id;',
+    );
+    const currentHashes: Record<string, string> = {
+      '001_stable.sql': stableHash,
+      '002_drifted.sql': driftedCurrentHash,
+    };
+    const findings = findMigrationDrift(
+      [
+        record('001_stable.sql', stableHash),
+        record('002_drifted.sql', driftedRecordedHash),
+      ],
+      (filename) => currentHashes[filename] ?? null,
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0].filename).toBe('002_drifted.sql');
   });
 });

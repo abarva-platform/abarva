@@ -1,0 +1,255 @@
+name: Database migration — lab
+
+# Governed database-migration delivery lane. This does NOT run automatically
+# on push/merge — a merged migration file sits pending until this workflow
+# is deliberately dispatched. That is the point: shipping application code
+# that depends on new schema and applying that schema are two separate,
+# separately-authorized actions.
+#
+# Scope: the lab/shared Azure Postgres instance behind
+# ca-abarva-web-lab-eastus (the same database the deployed product reads
+# from at app.abarva.ai). There is currently one environment; "lab" in this
+# workflow's name matches the Azure resource naming, not a lesser-scrutiny
+# environment — this runs against the real live database.
+#
+# Sequence: preflight (always) -> [confirmed apply] -> schema readback ->
+# affected-feature health check -> auditable run summary. Every run,
+# status or apply, produces an uploaded evidence artifact.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "status = preflight only (safe, read-only). apply = run pending migrations against the live database."
+        required: true
+        type: choice
+        options:
+          - status
+          - apply
+        default: status
+      confirm:
+        description: "Required for mode=apply only: type APPLY exactly to proceed. Ignored for mode=status."
+        required: false
+        type: string
+        default: ""
+
+concurrency:
+  group: db-migration-lab
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  ACR_NAME: ${{ vars.AZURE_ACR_NAME || 'acrabarvalab001' }}
+  IMAGE_REPOSITORY: ${{ vars.AZURE_WEB_IMAGE_REPOSITORY || 'abarva/web' }}
+  CONTAINER_APP_NAME: ${{ vars.AZURE_WEB_CONTAINER_APP_NAME || 'ca-abarva-web-lab-eastus' }}
+  RESOURCE_GROUP: ${{ vars.AZURE_WEB_RESOURCE_GROUP || 'rg-abarva-controlplane-lab-eastus' }}
+  PRODUCTION_BASE_URL: ${{ vars.PRODUCTION_URL || 'https://app.abarva.ai' }}
+  AZURE_DEPLOY_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_LAB_CLIENT_ID }}
+  AZURE_DEPLOY_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_LAB_TENANT_ID }}
+  AZURE_DEPLOY_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_LAB_SUBSCRIPTION_ID || '701a8554-a166-46e9-bf13-743bc50e3b20' }}
+
+jobs:
+  migrate:
+    name: Apply approved migrations to the lab database
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Reuses the same GitHub Environment (and its required-reviewer approval
+    # gate, if configured) as the main product deploy — this workflow can
+    # mutate the same shared database that deploy's application code reads
+    # from, so it is held to the same approval bar.
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # Only main HEAD is ever eligible — a workflow_dispatch defaults to
+      # whatever ref/branch the operator picks in the UI, so this asserts it
+      # explicitly rather than trusting that choice. Mirrors "Assert main
+      # deploy authority" in aca-main-deploy.yml.
+      - name: Assert this run is against origin/main HEAD
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "The governed migration lane only runs migrations committed to main." >&2
+            echo "GITHUB_REF=${GITHUB_REF}" >&2
+            echo "Re-dispatch this workflow selecting the main branch." >&2
+            exit 1
+          fi
+
+      - name: Reject mode=apply without exact confirmation
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ inputs.confirm }}" != "APPLY" ]]; then
+            echo "mode=apply requires the confirm input to be exactly \"APPLY\"." >&2
+            echo "This is a deliberate second confirmation beyond the environment approval gate." >&2
+            exit 1
+          fi
+
+      - name: Prepare audit artifacts directory
+        shell: bash
+        run: mkdir -p audit-artifacts/db-migration-lab
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Verify Azure OIDC configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          if [[ -z "${AZURE_DEPLOY_CLIENT_ID}" ]]; then missing+=("AZURE_CLIENT_ID or AZURE_LAB_CLIENT_ID"); fi
+          if [[ -z "${AZURE_DEPLOY_TENANT_ID}" ]]; then missing+=("AZURE_TENANT_ID or AZURE_LAB_TENANT_ID"); fi
+          if [[ -z "${AZURE_DEPLOY_SUBSCRIPTION_ID}" ]]; then missing+=("AZURE_SUBSCRIPTION_ID or AZURE_LAB_SUBSCRIPTION_ID"); fi
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing Azure deploy configuration:\n' >&2
+            printf -- '- %s\n' "${missing[@]}" >&2
+            exit 1
+          fi
+
+      - name: Azure login
+        uses: azure/login@v3
+        with:
+          client-id: ${{ env.AZURE_DEPLOY_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_DEPLOY_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_DEPLOY_SUBSCRIPTION_ID }}
+
+      # Resolve the image currently serving 100% of production traffic — not
+      # a fresh build. The migration lane never builds or deploys a new
+      # image; it only ever runs the migrations directory as it exists
+      # inside the exact image the product is already running, which was
+      # itself built from main by aca-main-deploy.yml. This is what "only
+      # migrations already merged into main" means in practice: the running
+      # image is the proof of what's on main.
+      - name: Resolve currently-deployed image digest
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          app_json="$(az containerapp show \
+            --name "$CONTAINER_APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --output json)"
+          echo "$app_json" > audit-artifacts/db-migration-lab/containerapp.json
+
+          template_image="$(echo "$app_json" | jq -r '.properties.template.containers[0].image // empty')"
+          if [[ -z "$template_image" || "$template_image" != *"@sha256:"* ]]; then
+            echo "Could not resolve a digest-pinned template image from the live container app." >&2
+            exit 1
+          fi
+          echo "image=$template_image" >> "$GITHUB_OUTPUT"
+          echo "resolved_image=$template_image" >> audit-artifacts/db-migration-lab/image.txt
+
+      # The job's persistent template has exactly two containers,
+      # "private-operator-idle" and "db-migrate" (the wrapper's own
+      # DEFAULT_CONTAINER). All three steps below target the real
+      # "db-migrate" name. An earlier draft of this workflow invented
+      # distinct per-step names (db-migrate-status/apply/verify); a live
+      # test confirmed those don't exist on the job template — the
+      # ad-hoc execution failed before it ever reached Postgres. Do not
+      # reintroduce per-step container names.
+      #
+      # DATABASE_URL is passed via --secret-env so the ad-hoc execution
+      # resolves it from the job's existing Key Vault secretRef
+      # (azure-postgres-control-database-url) — never as a literal value
+      # here or in a workflow secret. Every invocation below restores the
+      # job to its documented idle state and self-verifies that restore
+      # (see verifyIdle() in the wrapper) whether it succeeds or fails.
+      - name: Preflight — migration status (read-only)
+        id: preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script db:migrate:dry \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/preflight \
+            | tee audit-artifacts/db-migration-lab/preflight.log
+
+      - name: Apply pending migrations (advisory-locked, drift-checked)
+        id: apply
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script db:migrate:ci \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/apply \
+            | tee audit-artifacts/db-migration-lab/apply.log
+
+      - name: Schema readback
+        id: readback
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script db:azure:verify \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/readback \
+            | tee audit-artifacts/db-migration-lab/readback.log
+
+      # Affected-feature verification: confirm the deployed application is
+      # still healthy after the schema change. This is a coarse signal
+      # (the health endpoint, not a per-migration feature probe) — a
+      # per-feature affected-surface check is a natural follow-up once a
+      # given migration has a corresponding product route to exercise.
+      - name: Affected-feature health check
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          health="$(curl -fsS "${PRODUCTION_BASE_URL}/api/health")"
+          echo "$health" | tee audit-artifacts/db-migration-lab/health.json
+          ok="$(echo "$health" | jq -r '.ok // false')"
+          if [[ "$ok" != "true" ]]; then
+            echo "Production health endpoint is not ok=true after migration apply." >&2
+            exit 1
+          fi
+
+      - name: Write run summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Database migration — lab"
+            echo
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Mode | \`${{ inputs.mode }}\` |"
+            echo "| Commit | \`${GITHUB_SHA}\` |"
+            echo "| Image | \`${{ steps.image.outputs.image }}\` |"
+            echo "| Operator | \`${GITHUB_ACTOR}\` |"
+            echo "| Target database | \`${CONTAINER_APP_NAME}\` (\`${RESOURCE_GROUP}\`) |"
+            echo
+            if [[ "${{ inputs.mode }}" == "apply" ]]; then
+              echo "Applied via the ACA operator job (advisory-locked, sha256 drift-checked). See uploaded evidence for the full apply + readback logs."
+            else
+              echo "Status/preflight only — no schema change was made. See uploaded evidence for the pending-migration list."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload migration run evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: db-migration-lab
+          path: audit-artifacts/db-migration-lab
+          if-no-files-found: warn
