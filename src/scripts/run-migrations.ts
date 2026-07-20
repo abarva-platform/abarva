@@ -1,5 +1,6 @@
 import { Client } from 'pg';
 import { readdirSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { config as loadEnv } from 'dotenv';
 import { postgresClientOptions } from './postgres-client-options';
@@ -153,6 +154,67 @@ export function resolveMigrationDatabaseUrl(
   return env.ABARVA_AZURE_DATABASE_URL ?? env.AZURE_DATABASE_URL ?? env.DATABASE_URL ?? null;
 }
 
+/** SHA-256 of a migration file's exact on-disk content, hex-encoded. */
+export function computeFileSha256(sql: string): string {
+  return createHash('sha256').update(sql, 'utf8').digest('hex');
+}
+
+export interface AppliedMigrationRecord {
+  name: string;
+  sha256: string | null;
+}
+
+export interface MigrationDriftFinding {
+  filename: string;
+  /** The hash recorded when this migration was applied. */
+  recordedSha256: string;
+  /** The hash of the file's current on-disk content. */
+  currentSha256: string;
+}
+
+/**
+ * Compare every already-applied migration's recorded hash against its
+ * current on-disk content. A mismatch means the file was edited after it
+ * was applied to this database — a governed migration history must never
+ * silently tolerate that, since it breaks the "what's in schema_migrations
+ * is what actually ran" guarantee every later reader (including this same
+ * script's own idempotency check) depends on.
+ *
+ * A row with `sha256: null` (applied before this column was populated, or
+ * via `--mark-all-applied`) is not flagged — there is nothing to compare
+ * against. A migration file that no longer exists on disk is not flagged
+ * either; that is a separate, already-tolerated situation (e.g. a very old
+ * migration pruned from the repo), not drift.
+ */
+export function findMigrationDrift(
+  appliedRecords: readonly AppliedMigrationRecord[],
+  readCurrentSha256: (filename: string) => string | null,
+): MigrationDriftFinding[] {
+  const findings: MigrationDriftFinding[] = [];
+  for (const record of appliedRecords) {
+    if (!record.sha256) continue;
+    const currentSha256 = readCurrentSha256(record.name);
+    if (currentSha256 === null) continue;
+    if (currentSha256 !== record.sha256) {
+      findings.push({
+        filename: record.name,
+        recordedSha256: record.sha256,
+        currentSha256,
+      });
+    }
+  }
+  return findings;
+}
+
+// Fixed, arbitrary key for pg_advisory_lock (passed as a numeric string —
+// Postgres coerces it to bigint from query-parameter context). Scopes the
+// lock to "a migration apply is in progress against this database" — any
+// second concurrent `run-migrations.ts --ci` (or a human running it locally
+// at the same time as CI) fails fast with a clear message instead of racing.
+// Value has no meaning beyond being a stable constant unique to this script,
+// and fits within int64 (max ~9.22e18).
+const MIGRATION_ADVISORY_LOCK_KEY = '881200441733199010';
+
 async function ensureTrackingTable(client: Client) {
   await client.query(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -163,9 +225,11 @@ async function ensureTrackingTable(client: Client) {
   `);
 }
 
-async function getAppliedMigrations(client: Client): Promise<Set<string>> {
-  const { rows } = await client.query<{ name: string }>('SELECT name FROM schema_migrations');
-  return new Set(rows.map((r) => r.name));
+async function getAppliedMigrationRecords(client: Client): Promise<AppliedMigrationRecord[]> {
+  const { rows } = await client.query<AppliedMigrationRecord>(
+    'SELECT name, sha256 FROM schema_migrations',
+  );
+  return rows;
 }
 
 async function main() {
@@ -184,8 +248,36 @@ async function main() {
 
   try {
     await ensureTrackingTable(client);
-    const applied = await getAppliedMigrations(client);
+    const appliedRecords = await getAppliedMigrationRecords(client);
+    const applied = new Set(appliedRecords.map((r) => r.name));
     const all = listMigrationFiles();
+
+    // Drift guard. Runs in every mode, including --dry, so CI status/preflight
+    // catches a tampered already-applied migration before anyone gets to
+    // --ci apply. A hash mismatch means the file changed after this exact
+    // database ran it — the schema_migrations ledger is no longer a
+    // trustworthy record of what SQL actually executed.
+    const driftFindings = findMigrationDrift(appliedRecords, (filename) => {
+      const filepath = path.join(MIGRATIONS_DIR, filename);
+      try {
+        return computeFileSha256(readFileSync(filepath, 'utf-8'));
+      } catch {
+        return null; // file no longer exists on disk — not drift, see findMigrationDrift's doc comment.
+      }
+    });
+    if (driftFindings.length > 0) {
+      console.error('\n✗  Migration drift detected — an already-applied migration file was modified.\n');
+      for (const f of driftFindings) {
+        console.error(`   ${f.filename}`);
+        console.error(`     recorded: ${f.recordedSha256}`);
+        console.error(`     current:  ${f.currentSha256}`);
+      }
+      console.error('\n   This database ran a different version of this file than what is on disk now.');
+      console.error('   Do not edit an already-applied migration — add a new migration instead.');
+      console.error('   If this drift is intentional and understood, re-record the hash with:');
+      console.error('     npx tsx src/scripts/run-migrations.ts --force <name>\n');
+      process.exit(1);
+    }
 
     // --mark-all-applied · sync tracking table without running any SQL.
     // For repos that have historically applied migrations via paste; tags
@@ -255,49 +347,72 @@ async function main() {
       return;
     }
 
-    console.log(''); // blank line
-    const appliedNames: string[] = [];
-    for (const filename of pending) {
-      const filepath = path.join(MIGRATIONS_DIR, filename);
-      const sql = readFileSync(filepath, 'utf-8');
-      process.stdout.write(`→ ${filename} ... `);
-
-      try {
-        // Each migration is its own transaction. If the file has its own
-        // BEGIN/COMMIT, we wrap anyway — Postgres collapses nested
-        // transactions via savepoints.
-        await client.query('BEGIN');
-        await client.query(sql);
-
-        if (forceName) {
-          await client.query(
-            'INSERT INTO schema_migrations(name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET applied_at = now()',
-            [filename],
-          );
-        } else {
-          await client.query(
-            'INSERT INTO schema_migrations(name) VALUES ($1) ON CONFLICT (name) DO NOTHING',
-            [filename],
-          );
-        }
-        await client.query('COMMIT');
-        console.log('✓');
-        appliedNames.push(filename);
-      } catch (err) {
-        await client.query('ROLLBACK').catch(() => {});
-        console.log('✗');
-        console.error(`\n  ${err instanceof Error ? err.message : String(err)}\n`);
-        console.error(`  Fix the error above, then re-run. Applied migrations are tracked; only the failed one + later ones will retry.`);
-        process.exit(1);
-      }
+    // Advisory lock — only around the actual mutating apply. A second
+    // concurrent apply attempt (another CI run, a human running this
+    // locally at the same moment) fails fast with a clear message instead
+    // of racing on the same migrations. Non-blocking (pg_try_advisory_lock):
+    // we want an immediate, actionable failure, not a hung process.
+    const lockResult = await client.query<{ locked: boolean }>(
+      'SELECT pg_try_advisory_lock($1) AS locked',
+      [MIGRATION_ADVISORY_LOCK_KEY],
+    );
+    if (!lockResult.rows[0]?.locked) {
+      console.error('\n✗  Another migration run holds the advisory lock on this database.');
+      console.error('   Wait for it to finish, or investigate a stuck/crashed prior run.\n');
+      process.exit(1);
     }
 
-    console.log(`\n✓  ${pending.length} migration${pending.length === 1 ? '' : 's'} applied.`);
+    try {
+      console.log(''); // blank line
+      const appliedNames: string[] = [];
+      for (const filename of pending) {
+        const filepath = path.join(MIGRATIONS_DIR, filename);
+        const sql = readFileSync(filepath, 'utf-8');
+        const sha256 = computeFileSha256(sql);
+        process.stdout.write(`→ ${filename} ... `);
 
-    // CI mode emits a final structured summary line so build logs / CI
-    // aggregators can grep for it.
-    if (isCi) {
-      console.log(`\n✓ Applied ${appliedNames.length} pending migration${appliedNames.length === 1 ? '' : 's'}: ${appliedNames.join(', ')}`);
+        try {
+          // Each migration is its own transaction. If the file has its own
+          // BEGIN/COMMIT, we wrap anyway — Postgres collapses nested
+          // transactions via savepoints.
+          await client.query('BEGIN');
+          await client.query(sql);
+
+          if (forceName) {
+            await client.query(
+              'INSERT INTO schema_migrations(name, sha256) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET applied_at = now(), sha256 = $2',
+              [filename, sha256],
+            );
+          } else {
+            await client.query(
+              'INSERT INTO schema_migrations(name, sha256) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING',
+              [filename, sha256],
+            );
+          }
+          await client.query('COMMIT');
+          console.log('✓');
+          appliedNames.push(filename);
+        } catch (err) {
+          await client.query('ROLLBACK').catch(() => {});
+          console.log('✗');
+          console.error(`\n  ${err instanceof Error ? err.message : String(err)}\n`);
+          console.error(`  Fix the error above, then re-run. Applied migrations are tracked; only the failed one + later ones will retry.`);
+          process.exit(1);
+        }
+      }
+
+      console.log(`\n✓  ${pending.length} migration${pending.length === 1 ? '' : 's'} applied.`);
+
+      // CI mode emits a final structured summary line so build logs / CI
+      // aggregators can grep for it. (Moved inside the lock block only for
+      // proximity to appliedNames — the lock is released either way below.)
+      if (isCi) {
+        console.log(`\n✓ Applied ${appliedNames.length} pending migration${appliedNames.length === 1 ? '' : 's'}: ${appliedNames.join(', ')}`);
+      }
+    } finally {
+      await client
+        .query('SELECT pg_advisory_unlock($1)', [MIGRATION_ADVISORY_LOCK_KEY])
+        .catch(() => {});
     }
   } finally {
     await client.end();

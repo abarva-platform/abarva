@@ -10,6 +10,14 @@ const DEFAULT_JOB = "job-abarva-private-operator-eus";
 const DEFAULT_CONTAINER = "db-migrate";
 const DEFAULT_IDLE_IMAGE =
   "acrabarvalab001.azurecr.io/abarva/web@sha256:918b6cbf298ebd5bd20782b15f7d1817111d94e438436d64f2ea64db543db8a9";
+// The documented idle contract for the shared operator job. restoreIdle()
+// writes these; verifyIdle() reads them back and fails loudly on any drift
+// (e.g. a caller passing a --container name that doesn't exist on the job
+// template, which silently orphans the template in a non-idle state).
+const IDLE_COMMAND = "/bin/true";
+const IDLE_CPU = "0.5";
+const IDLE_MEMORY = "1Gi";
+const IDLE_REPLICA_TIMEOUT = "1800";
 
 function stamp() {
   return new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
@@ -37,6 +45,10 @@ Options:
   --no-wait                Start and return without polling.
   --no-restore-idle        Do not restore the job command/image after submission.
   --idle-image <image>     Idle image used when restoring. Env: ACA_OPERATOR_IDLE_IMAGE.
+  --plan-only              Build and write the intended az command args to plan.json without
+                            calling az at all. Never authenticates, never touches Azure. Use
+                            this to validate argument construction (e.g. in CI) for inputs
+                            that would otherwise require real credentials.
   --self-test              Run parser/proof-extraction self-test without Azure.
   --help                   Show this help.
 
@@ -61,6 +73,7 @@ function parseArgs(argv) {
     wait: true,
     restoreIdle: process.env.ACA_OPERATOR_RESTORE_IDLE !== "false",
     idleImage: process.env.ACA_OPERATOR_IDLE_IMAGE || DEFAULT_IDLE_IMAGE,
+    planOnly: false,
     selfTest: false,
     help: false,
   };
@@ -75,6 +88,7 @@ function parseArgs(argv) {
 
     if (arg === "--help" || arg === "-h") parsed.help = true;
     else if (arg === "--self-test") parsed.selfTest = true;
+    else if (arg === "--plan-only") parsed.planOnly = true;
     else if (arg === "--no-wait") parsed.wait = false;
     else if (arg === "--no-restore-idle") parsed.restoreIdle = false;
     else if (arg === "--image") parsed.image = next();
@@ -245,21 +259,275 @@ function restoreIdle(options, outDir) {
     "--image",
     options.idleImage,
     "--command",
-    "/bin/true",
+    IDLE_COMMAND,
     "--args",
     "",
     "--cpu",
-    "0.5",
+    IDLE_CPU,
     "--memory",
-    "1Gi",
+    IDLE_MEMORY,
     "--replica-timeout",
-    "1800",
+    IDLE_REPLICA_TIMEOUT,
     "--output",
     "json",
   ];
   const result = runAz(args);
   fs.writeFileSync(path.join(outDir, "99-restore-idle.json"), result.stdout);
   return { restored: true, idleImage: options.idleImage };
+}
+
+// Fixed expectations for the manual-trigger shape of this job. Unlike
+// image/command/args/cpu/memory/replicaTimeout (which restoreIdle()
+// actively writes), nothing in this wrapper sets these — they're asserted
+// as a golden constant because a change here would mean the job's
+// fundamental invocation shape (single ad-hoc execution, not a
+// parallel/batch job) was altered by something outside this wrapper.
+const IDLE_PARALLELISM = "1";
+const IDLE_REPLICA_COMPLETION_COUNT = "1";
+
+function fetchJobShow(options, outDir, label) {
+  const show = runAz([
+    "containerapp",
+    "job",
+    "show",
+    "--name",
+    options.job,
+    "--resource-group",
+    options.resourceGroup,
+    "--output",
+    "json",
+  ]);
+  fs.writeFileSync(path.join(outDir, label), show.stdout);
+  return JSON.parse(show.stdout);
+}
+
+// A snapshot of everything this wrapper never intentionally changes
+// (env vars, secret references, managed identity) taken before any
+// mutation. verifyIdle() diffs the post-run state against this rather than
+// a hardcoded expectation — those fields are legitimate for operators to
+// evolve over time (e.g. adding a new secret to the job), so the safe check
+// is "didn't change during this run," not "matches a value baked into this
+// script."
+function captureBaseline(options, outDir) {
+  const parsed = fetchJobShow(options, outDir, "00b-baseline-job-show.json");
+  return snapshotDriftFields(parsed, options);
+}
+
+function snapshotDriftFields(parsed, options) {
+  const containers = parsed.properties?.template?.containers ?? [];
+  const target = containers.find((c) => c.name === options.container);
+  const envNames = (target?.env ?? [])
+    .map((e) => `${e.name}${e.secretRef ? `:secretref:${e.secretRef}` : ""}`)
+    .sort();
+  const identity = parsed.identity ?? { type: "None" };
+  return {
+    envNames,
+    identityType: identity.type ?? "None",
+    userAssignedIdentityIds: Object.keys(identity.userAssignedIdentities ?? {}).sort(),
+  };
+}
+
+// Reads the job template back (not the execution — the persistent resource
+// that future job starts inherit) and asserts every idle field matches what
+// restoreIdle() just wrote, plus the full "golden idle state": trigger
+// shape (parallelism / replica completion count), no non-terminal execution
+// left running or queued, and no drift in env vars / secret references /
+// managed identity relative to the pre-run baseline. This exists because of
+// a real incident: an execution-scoped --container-name override that
+// didn't match any real template container name failed silently as far as
+// the job resource was concerned, and a --no-restore-idle test run left
+// replicaTimeout drifted from the documented idle value with nothing to
+// catch it. This check — the full version, not just the fields restoreIdle()
+// itself writes — is the catch. "Never trust cleanup; always verify it."
+function verifyIdle(options, outDir, baseline, ownExecutionName) {
+  const parsed = fetchJobShow(options, outDir, "99b-verify-idle.json");
+  const cfg = parsed.properties?.configuration ?? {};
+  const containers = parsed.properties?.template?.containers ?? [];
+  const target = containers.find((c) => c.name === options.container);
+
+  const problems = [];
+  if (!target) {
+    problems.push(`container "${options.container}" not found on the job template`);
+  } else {
+    if (target.image !== options.idleImage) {
+      problems.push(`image is "${target.image}", expected "${options.idleImage}"`);
+    }
+    const command = (target.command || []).join(" ");
+    if (command !== IDLE_COMMAND) {
+      problems.push(`command is "${command}", expected "${IDLE_COMMAND}"`);
+    }
+    const args = (target.args || []).filter((value) => value !== "");
+    if (args.length > 0) {
+      problems.push(`args are ${JSON.stringify(target.args)}, expected empty`);
+    }
+    const cpu = String(target.resources?.cpu ?? "");
+    if (cpu !== IDLE_CPU) {
+      problems.push(`cpu is "${cpu}", expected "${IDLE_CPU}"`);
+    }
+    const memory = target.resources?.memory ?? "";
+    if (memory !== IDLE_MEMORY) {
+      problems.push(`memory is "${memory}", expected "${IDLE_MEMORY}"`);
+    }
+  }
+  const replicaTimeout = String(cfg.replicaTimeout ?? "");
+  if (replicaTimeout !== IDLE_REPLICA_TIMEOUT) {
+    problems.push(`replicaTimeout is "${replicaTimeout}", expected "${IDLE_REPLICA_TIMEOUT}"`);
+  }
+  const parallelism = String(cfg.manualTriggerConfig?.parallelism ?? "");
+  if (parallelism !== IDLE_PARALLELISM) {
+    problems.push(`parallelism is "${parallelism}", expected "${IDLE_PARALLELISM}"`);
+  }
+  const replicaCompletionCount = String(cfg.manualTriggerConfig?.replicaCompletionCount ?? "");
+  if (replicaCompletionCount !== IDLE_REPLICA_COMPLETION_COUNT) {
+    problems.push(
+      `replicaCompletionCount is "${replicaCompletionCount}", expected "${IDLE_REPLICA_COMPLETION_COUNT}"`,
+    );
+  }
+
+  if (baseline) {
+    const current = snapshotDriftFields(parsed, options);
+    if (JSON.stringify(current.envNames) !== JSON.stringify(baseline.envNames)) {
+      problems.push(
+        `env/secret references changed during this run: before=${JSON.stringify(baseline.envNames)} after=${JSON.stringify(current.envNames)}`,
+      );
+    }
+    if (current.identityType !== baseline.identityType) {
+      problems.push(`identity type changed: before="${baseline.identityType}" after="${current.identityType}"`);
+    }
+    if (JSON.stringify(current.userAssignedIdentityIds) !== JSON.stringify(baseline.userAssignedIdentityIds)) {
+      problems.push(
+        `user-assigned identities changed: before=${JSON.stringify(baseline.userAssignedIdentityIds)} after=${JSON.stringify(current.userAssignedIdentityIds)}`,
+      );
+    }
+  }
+
+  const executionList = runAz([
+    "containerapp",
+    "job",
+    "execution",
+    "list",
+    "--name",
+    options.job,
+    "--resource-group",
+    options.resourceGroup,
+    "--output",
+    "json",
+  ]);
+  fs.writeFileSync(path.join(outDir, "99d-execution-list.json"), executionList.stdout);
+  const executions = JSON.parse(executionList.stdout);
+  const nonTerminal = executions.filter((execution) => {
+    if (execution.name === ownExecutionName) return false; // this run's own execution — checked via `status` separately.
+    return !terminalStatus(execution.properties?.status);
+  });
+  if (nonTerminal.length > 0) {
+    problems.push(
+      `non-terminal execution(s) left running or queued: ${nonTerminal.map((e) => `${e.name} (${e.properties?.status})`).join(", ")}`,
+    );
+  }
+
+  const result = { idleVerified: problems.length === 0, problems };
+  writeJson(path.join(outDir, "99c-idle-verification.json"), result);
+  if (problems.length > 0) {
+    throw new Error(`Job did not return to the documented idle state after restore:\n${problems.join("\n")}`);
+  }
+  return result;
+}
+
+function buildTimeoutUpdateArgs(options) {
+  return [
+    "containerapp",
+    "job",
+    "update",
+    "--name",
+    options.job,
+    "--resource-group",
+    options.resourceGroup,
+    "--replica-timeout",
+    options.timeout,
+    "--output",
+    "json",
+  ];
+}
+
+function buildStartArgs(options, effectiveEnv) {
+  return [
+    "containerapp",
+    "job",
+    "start",
+    "--name",
+    options.job,
+    "--resource-group",
+    options.resourceGroup,
+    "--image",
+    options.image,
+    "--container-name",
+    options.container,
+    "--command",
+    "npm",
+    "--args",
+    "run",
+    options.script,
+    "--cpu",
+    options.cpu,
+    "--memory",
+    options.memory,
+    "--env-vars",
+    ...effectiveEnv,
+    "--output",
+    "json",
+  ];
+}
+
+// Builds the exact command sequence a real run would issue and writes it to
+// plan.json, without calling az at all. No authentication, no network call,
+// no Azure state read or mutated — safe to run in CI on every PR to catch
+// argument-construction bugs (like a --container-name that doesn't match
+// any real container on the job template) before they ever reach Azure.
+function planOnly(options) {
+  fs.mkdirSync(options.outDir, { recursive: true });
+  const effectiveEnv = envArgs(options);
+  const plan = {
+    job: options.job,
+    resourceGroup: options.resourceGroup,
+    container: options.container,
+    image: options.image,
+    script: options.script,
+    env: sanitizedEnv(effectiveEnv),
+    commands: {
+      timeoutUpdate: redactArgs(buildTimeoutUpdateArgs(options)),
+      start: redactArgs(buildStartArgs(options, effectiveEnv)),
+      restoreIdle: options.restoreIdle
+        ? redactArgs([
+            "containerapp",
+            "job",
+            "update",
+            "--name",
+            options.job,
+            "--resource-group",
+            options.resourceGroup,
+            "--container-name",
+            options.container,
+            "--image",
+            options.idleImage,
+            "--command",
+            IDLE_COMMAND,
+            "--args",
+            "",
+            "--cpu",
+            IDLE_CPU,
+            "--memory",
+            IDLE_MEMORY,
+            "--replica-timeout",
+            IDLE_REPLICA_TIMEOUT,
+            "--output",
+            "json",
+          ])
+        : null,
+    },
+  };
+  writeJson(path.join(options.outDir, "plan.json"), plan);
+  console.log(`plan-only: wrote ${path.join(options.outDir, "plan.json")}`);
+  return plan;
 }
 
 function selfTest() {
@@ -304,7 +572,16 @@ async function main() {
     throw new Error("--poll-seconds must be a positive number");
   }
 
+  if (options.planOnly) {
+    planOnly(options);
+    return;
+  }
+
   fs.mkdirSync(options.outDir, { recursive: true });
+  // Captured before any mutation so verifyIdle() can assert env/secret/
+  // identity fields are unchanged by this run, without hardcoding what they
+  // should be (see captureBaseline()'s doc comment).
+  const baseline = options.restoreIdle ? captureBaseline(options, options.outDir) : null;
   const effectiveEnv = envArgs(options);
   const request = {
     job: options.job,
@@ -331,49 +608,10 @@ async function main() {
   let failed = null;
 
   try {
-    const updateArgs = [
-      "containerapp",
-      "job",
-      "update",
-      "--name",
-      options.job,
-      "--resource-group",
-      options.resourceGroup,
-      "--replica-timeout",
-      options.timeout,
-      "--output",
-      "json",
-    ];
-    const update = runAz(updateArgs);
+    const update = runAz(buildTimeoutUpdateArgs(options));
     fs.writeFileSync(path.join(options.outDir, "01-timeout-update.json"), update.stdout);
 
-    const startArgs = [
-      "containerapp",
-      "job",
-      "start",
-      "--name",
-      options.job,
-      "--resource-group",
-      options.resourceGroup,
-      "--image",
-      options.image,
-      "--container-name",
-      options.container,
-      "--command",
-      "npm",
-      "--args",
-      "run",
-      options.script,
-      "--cpu",
-      options.cpu,
-      "--memory",
-      options.memory,
-      "--env-vars",
-      ...effectiveEnv,
-      "--output",
-      "json",
-    ];
-    const start = runAz(startArgs);
+    const start = runAz(buildStartArgs(options, effectiveEnv));
     fs.writeFileSync(path.join(options.outDir, "02-start.json"), start.stdout);
     executionName = parseExecutionName(start.stdout);
     if (!executionName) throw new Error("Could not parse execution name from az containerapp job start output");
@@ -435,8 +673,9 @@ async function main() {
     if (options.restoreIdle) {
       try {
         restored = restoreIdle(options, options.outDir);
+        restored.idleVerification = verifyIdle(options, options.outDir, baseline, executionName);
       } catch (error) {
-        restored = { restored: false, error: error.message };
+        restored = { restored: restored.restored, error: error.message };
         if (!failed) failed = error;
       }
     }

@@ -1,0 +1,189 @@
+name: Database migration — CI self-test
+
+# Proves the governed migration lane's own sequencing and gating logic end
+# to end via a real workflow_dispatch, against a disposable Postgres 16
+# service container — never the real lab/production database. This is the
+# precondition Anand set before approving a real dispatch of
+# db-migration-lab.yml: "one complete workflow execution (through GitHub
+# Actions, not ad hoc az) against an isolated database, followed by a
+# controlled lab run after review."
+#
+# What this proves:
+#   - the mode/confirm input gate (same logic as the lab workflow)
+#   - status (preflight) -> apply -> schema readback -> migration ledger ->
+#     repository readback, using the exact same npm scripts the lab
+#     workflow uses
+#   - the operator-job wrapper's own --plan-only command construction
+#     (scripts/ops/submit-aca-operator-job.mjs), with a fake digest-pinned
+#     image — proving the wrapper builds correct az command args without
+#     ever touching Azure
+#
+# What this does NOT prove (disclosed, not silently skipped): the real ACA
+# operator job -> private VNet -> Azure Postgres transport, or the
+# restore-idle / verifyIdle golden-idle-state check — none of that exists
+# in this disposable CI environment. That remains the lab workflow's own
+# job to prove, against real Azure, after this self-test passes.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "status = preflight only (safe, read-only). apply = run pending migrations against the disposable CI database."
+        required: true
+        type: choice
+        options:
+          - status
+          - apply
+        default: status
+      confirm:
+        description: "Required for mode=apply only: type APPLY exactly to proceed. Ignored for mode=status."
+        required: false
+        type: string
+        default: ""
+  pull_request:
+    paths:
+      - ".github/workflows/db-migration-ci-selftest.yml"
+      - ".github/workflows/db-migration-lab.yml"
+      - "scripts/ops/submit-aca-operator-job.mjs"
+      - "src/scripts/run-migrations.ts"
+      - "src/scripts/print-migration-ledger.ts"
+      - "src/scripts/verify-azure-postgres-schema.ts"
+      - "src/lib/source/stage-guidebooks/**"
+      - "package.json"
+
+jobs:
+  self-test:
+    name: Full sequence against isolated Postgres
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: abarva_migration_selftest
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d abarva_migration_selftest"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/abarva_migration_selftest?sslmode=disable
+      # A workflow_dispatch on pull_request events has no `inputs` context —
+      # default to a full status->apply run so the pull_request trigger
+      # actually exercises the apply path, not just preflight.
+      SELFTEST_MODE: ${{ inputs.mode || 'apply' }}
+      SELFTEST_CONFIRM: ${{ inputs.confirm || 'APPLY' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Reject mode=apply without exact confirmation
+        if: env.SELFTEST_MODE == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${SELFTEST_CONFIRM}" != "APPLY" ]]; then
+            echo "mode=apply requires confirm to be exactly \"APPLY\" — same gate as db-migration-lab.yml." >&2
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Prepare evidence directory
+        run: mkdir -p audit-artifacts/db-migration-ci-selftest
+
+      - name: Bootstrap Supabase compatibility shims
+        run: npm run db:azure:bootstrap
+
+      # --allow-destructive: this is a from-zero replay against a disposable
+      # database (every migration is "pending"), so the destructive-pattern
+      # scanner correctly flags routine idempotency statements from old
+      # migrations (e.g. ALTER TABLE ... DROP CONSTRAINT IF EXISTS) that are
+      # safe on first-ever apply but would be a real red flag on an
+      # already-migrated database. Same reasoning azure-l5-reset-replay.yml
+      # already uses for the same from-zero-replay scenario. The real lab
+      # workflow must NOT pass this flag — it only ever has one new,
+      # non-destructive migration pending against an already-migrated
+      # database, and allowing destructive patterns there would be unsafe.
+      - name: Status — migration preflight (read-only)
+        run: npm run db:migrate:dry -- --allow-destructive | tee audit-artifacts/db-migration-ci-selftest/status.log
+
+      # Proves the operator-job wrapper builds correct az command args for
+      # this exact scenario — without calling az, without credentials. The
+      # real lab workflow invokes this same wrapper against real Azure; this
+      # confirms its command-construction logic independent of that.
+      - name: Plan — operator-job wrapper argument construction
+        run: |
+          set -euo pipefail
+          node scripts/ops/submit-aca-operator-job.mjs \
+            --image "example.azurecr.io/abarva/web@sha256:$(printf '0%.0s' {1..64})" \
+            --script db:migrate:ci \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-ci-selftest/plan \
+            --plan-only
+          cat audit-artifacts/db-migration-ci-selftest/plan/plan.json
+
+      - name: Apply — advisory-locked, drift-checked migration run
+        if: env.SELFTEST_MODE == 'apply'
+        run: npm run db:migrate:ci -- --allow-destructive | tee audit-artifacts/db-migration-ci-selftest/apply.log
+
+      - name: Schema readback
+        if: env.SELFTEST_MODE == 'apply'
+        run: npm run db:azure:verify | tee audit-artifacts/db-migration-ci-selftest/readback.log
+
+      - name: Migration ledger
+        if: env.SELFTEST_MODE == 'apply'
+        run: npm run db:migrate:ledger | tee audit-artifacts/db-migration-ci-selftest/ledger.log
+
+      - name: Repository readback
+        if: env.SELFTEST_MODE == 'apply'
+        env:
+          NODE_OPTIONS: --conditions=react-server
+        run: npm run db:verify:source-stage-guidebooks | tee audit-artifacts/db-migration-ci-selftest/repository-readback.log
+
+      - name: Write run summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Database migration — CI self-test"
+            echo
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Mode | \`${SELFTEST_MODE}\` |"
+            echo "| Commit | \`${GITHUB_SHA}\` |"
+            echo "| Target | disposable postgres:16 service container (never lab/production) |"
+            echo
+            echo "Proves: mode/confirm gate, preflight, operator-job wrapper plan-only argument"
+            echo "construction, apply (advisory lock + sha256 drift check), schema readback,"
+            echo "migration ledger, repository readback — all via the same npm scripts the"
+            echo "lab workflow uses."
+            echo
+            echo "**Not proven here** (by design — this environment has no real Azure): the"
+            echo "ACA operator job / private VNet transport, and the wrapper's restore-idle +"
+            echo "verifyIdle golden-idle-state check. Those require a real dispatch of"
+            echo "db-migration-lab.yml against the lab environment."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload self-test evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: db-migration-ci-selftest
+          path: audit-artifacts/db-migration-ci-selftest
+          if-no-files-found: warn
