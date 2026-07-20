@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -62,7 +62,8 @@ disclosed below, not implied fixed.
   failures from this change.
 - `pass` — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`
   — clean, no errors.
-- `pending` — `npm run release:check` — to run before PR.
+- `pass` — `npm run release:check` — passed (re-verified post-rebase alongside a clean
+  typecheck and identical pre-existing test-failure baseline).
 - `not run` — Live signed-in proof that the note actually appears in a real registry
   record's `description` column after a generation that trips the scan. No demo tenant's
   in-flight events reached a stage with a registered banned-term hit during this
@@ -75,12 +76,14 @@ generation immediately after deploy.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
+  (run [29718046488](https://github.com/abarva-platform/abarva/actions/runs/29718046488)).
 - Shared runtime mutators: none beyond the standard main-deploy workflow.
-- Approved image digest: recorded post-merge once the deploy run completes.
-- ACA runtime invariant: to be verified post-deploy (template image = 100%-traffic
-  revision image = worker images, matching approved digest).
-- Worker image invariant: covered by the same main-deploy workflow step.
+- Approved image digest: `sha256:b67974379db9707df146ce0776c22f6ee5b195711184c987a1f99b8396002de3`.
+- ACA runtime invariant: verified 2026-07-20T05:06:30Z — template image, active image, and
+  the 100%-traffic revision (`ca-abarva-web-lab-eastus--mfd4a3778`) all match the approved
+  digest above; health check `ok: true`.
+- Worker image invariant: covered by the same main-deploy workflow step (passed).
 - Feature/env flag update path: none.
 - Live signed-in proof required: not reachable this pass; see Known Gaps.
 
