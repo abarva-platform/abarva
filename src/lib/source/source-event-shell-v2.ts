@@ -19,6 +19,7 @@ import type {
   StepInsightView,
 } from "@/components/source/canvas/analytics/view-model";
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
+import type { SourceEventArtifactState } from "@/lib/source/canvas-substrate/types";
 
 export type SourceShellWorkspace = "steps" | "files" | "intelligence" | "approvals";
 
@@ -180,6 +181,64 @@ export interface BuildSourceEventShellViewInput {
   approvalItems?: readonly ApprovalsInboxItem[];
   activeWorkspace?: SourceShellWorkspace;
   intelligenceOpen?: boolean;
+}
+
+export function mergeSourceShellArtifactsWithArtifactStateBodies(
+  registryArtifacts: readonly SourceShellArtifactLike[],
+  artifactStates: readonly SourceEventArtifactState[],
+): SourceShellArtifactLike[] {
+  const authoredStates = artifactStates.filter((state) => state.body?.trim());
+  if (authoredStates.length === 0) return [...registryArtifacts];
+
+  const statesByCode = new Map(
+    authoredStates.map((state) => [state.artifactCode, state]),
+  );
+  const merged = registryArtifacts.map((artifact) => {
+    const code = artifactCodeFor(artifact);
+    const state = code ? statesByCode.get(code) : undefined;
+    if (!state || artifactBodyFor(artifact)?.trim()) return artifact;
+    return {
+      ...artifact,
+      body: state.body,
+      bodyMarkdown: state.bodyFormat === "markdown" ? state.body : artifact.bodyMarkdown,
+      renderedText: state.bodyFormat !== "markdown" ? state.body : artifact.renderedText,
+    };
+  });
+  const existingCodes = new Set(
+    merged
+      .map(artifactCodeFor)
+      .filter((code): code is string => Boolean(code)),
+  );
+
+  for (const state of authoredStates) {
+    if (existingCodes.has(state.artifactCode)) continue;
+    merged.push({
+      id: `artifact-state:${state.id}`,
+      sourceEventId: state.sourceEventId,
+      artifactCode: state.artifactCode,
+      artifactKind: state.artifactCode,
+      stageKey: state.stage,
+      sourcingStage: state.stage,
+      artifactGroup: "generated",
+      artifactFamily: state.family,
+      sourceOrigin: "generated",
+      title: humanize(state.artifactCode),
+      fileName: `${state.artifactCode}.${state.bodyFormat === "html" ? "html" : "md"}`,
+      fileFormat: state.bodyFormat === "html" ? "html" : "md",
+      sourceFormat: state.bodyFormat === "html" ? "html" : "markdown",
+      status: state.status,
+      approvalState:
+        state.status === "approved" || state.status === "locked"
+          ? "approved"
+          : "draft",
+      body: state.body,
+      bodyMarkdown: state.bodyFormat === "markdown" ? state.body : null,
+      renderedText: state.bodyFormat !== "markdown" ? state.body : null,
+    });
+    existingCodes.add(state.artifactCode);
+  }
+
+  return merged;
 }
 
 export function buildSourceEventShellView(
@@ -388,6 +447,25 @@ function toFileItem(artifact: SourceShellArtifactLike): SourceShellFileItem {
     governanceLabel: governance.label,
     governanceMessage: governance.message,
   };
+}
+
+function artifactCodeFor(artifact: SourceShellArtifactLike): string | null {
+  return (
+    artifact.artifactCode ??
+    artifact.artifactKind ??
+    artifact.artifactType ??
+    null
+  );
+}
+
+function artifactBodyFor(artifact: SourceShellArtifactLike): string | null {
+  return (
+    artifact.body ??
+    artifact.bodyMarkdown ??
+    artifact.renderedText ??
+    artifact.plainTextSummary ??
+    null
+  );
 }
 
 function fileGovernanceFor({
