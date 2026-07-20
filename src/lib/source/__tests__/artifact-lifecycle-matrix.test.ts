@@ -44,6 +44,10 @@ describe("Source artifact lifecycle matrix", () => {
     expect(ticketSynthesis?.governanceMessage).toContain(
       "not a client-approved deliverable",
     );
+    expect(rfpPack?.audienceLabel).toContain("Client-facing");
+    expect(rfpPack?.structureLabel).toContain("Required exhibits");
+    expect(rfpPack?.pageGuidanceLabel).toContain("No fixed page cap");
+    expect(rfpPack?.controlsLabel).toContain("Missing inputs");
     expect(rfpPack?.prompt.maxTokensLabel).toBe("128k max");
     expect(rfpPack?.exportFormatsLabel).toBe("DOCX / HTML / PDF");
   });

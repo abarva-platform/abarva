@@ -12,6 +12,10 @@ import {
   SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
   SOURCE_CLIENT_FINAL_GOVERNANCE_MESSAGE,
 } from "@/lib/source/artifact-governance";
+import {
+  getSourceArtifactProfile,
+  type SourceArtifactProfile,
+} from "@/lib/source/documentation-standards/source-artifact-profiles";
 import type { SourceStageKey } from "@/lib/source/types";
 
 export type SourceArtifactLifecycleState =
@@ -47,6 +51,10 @@ export interface SourceArtifactLifecycleRow {
   gateLabel: string;
   familyLabel: string;
   guidelineLabel: string;
+  audienceLabel: string;
+  structureLabel: string;
+  pageGuidanceLabel: string;
+  controlsLabel: string;
   prompt: SourceArtifactLifecyclePromptContract;
   exportFormatsLabel: string;
   lifecycleState: SourceArtifactLifecycleState;
@@ -131,6 +139,7 @@ function buildLifecycleRow(
   const matchingArtifacts = artifacts.filter((artifact) => artifactMatchesSpec(artifact, spec));
   const lifecycleState = lifecycleStateFor(matchingArtifacts);
   const prompt = promptContractFor(spec.code);
+  const profile = profileFor(spec.code);
   return {
     code: spec.code,
     name: spec.name,
@@ -142,6 +151,10 @@ function buildLifecycleRow(
     guidelineLabel:
       GUIDELINES_BY_CODE[spec.code] ??
       "Executive answer, evidence basis, analysis, expert challenge, next actions.",
+    audienceLabel: audienceLabelFor(profile),
+    structureLabel: structureLabelFor(profile),
+    pageGuidanceLabel: pageGuidanceLabelFor(profile),
+    controlsLabel: controlsLabelFor(profile),
     prompt,
     exportFormatsLabel: exportFormatsFor(spec.code),
     lifecycleState,
@@ -149,6 +162,37 @@ function buildLifecycleRow(
     approvalLabel: approvalLabelFor(lifecycleState),
     governanceMessage: governanceMessageFor(lifecycleState),
   };
+}
+
+function profileFor(code: string): SourceArtifactProfile | null {
+  const prefix = code.match(/^d\d+/)?.[0] ?? code;
+  return getSourceArtifactProfile(prefix);
+}
+
+function audienceLabelFor(profile: SourceArtifactProfile | null): string {
+  if (!profile) return "Audience: not profiled yet";
+  const audience = Array.isArray(profile.audience)
+    ? profile.audience.join(" + ")
+    : profile.audience;
+  return `${profile.clientFacing ? "Client-facing" : "Internal"} · ${humanize(audience)} · ${humanize(profile.readerMode)}`;
+}
+
+function structureLabelFor(profile: SourceArtifactProfile | null): string {
+  if (!profile) return "Required exhibits: profile not available";
+  const exhibits = profile.requiredExhibits.map(humanize);
+  const preview = exhibits.slice(0, 4).join(", ");
+  const suffix = exhibits.length > 4 ? ", ..." : "";
+  return `Required exhibits: ${exhibits.length} · ${preview}${suffix}`;
+}
+
+function pageGuidanceLabelFor(profile: SourceArtifactProfile | null): string {
+  if (!profile) return "Page guidance: follow artifact profile when available.";
+  return `No fixed page cap; sections must satisfy the required exhibits. Depth: ${humanize(profile.riskDepth)}.`;
+}
+
+function controlsLabelFor(profile: SourceArtifactProfile | null): string {
+  if (!profile) return "Controls: prompt/export metadata only.";
+  return `Missing inputs: ${humanize(profile.missingInputPolicy)}. Evidence: ${humanize(profile.evidenceMode)}. Source register: ${humanize(profile.sourceRegisterPolicy)}.`;
 }
 
 function artifactMatchesSpec(

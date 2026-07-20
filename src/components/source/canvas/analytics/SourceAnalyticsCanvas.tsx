@@ -1017,6 +1017,7 @@ function ArtifactLifecyclePanel({
     ['Export-routed', String(lifecycle.renderableCount)],
     ['AI drafts', String(lifecycle.aiDraftCount)],
     ['Client finals', String(lifecycle.clientFinalCount)],
+    ['Evidence-only', String(lifecycle.evidenceOnlyCount)],
   ];
 
   return (
@@ -1159,7 +1160,7 @@ function LifecycleStageRows({
         }}
       >
         <div>{group.stageLabel}</div>
-        <div>Guideline</div>
+        <div>Guideline / standard</div>
         <div>State</div>
         <div>Prompt / export</div>
         <div>Approval</div>
@@ -1191,7 +1192,17 @@ function LifecycleStageRows({
             </div>
           </div>
           <div style={{ color: ANALYTICS.INK_2, fontSize: 12, lineHeight: 1.45 }}>
-            {row.guidelineLabel}
+            <strong>{row.guidelineLabel}</strong>
+            <div style={{ marginTop: 6, color: ANALYTICS.MUTED }}>
+              {row.audienceLabel}
+            </div>
+            <div style={{ marginTop: 6 }}>{row.structureLabel}</div>
+            <div style={{ marginTop: 6, color: ANALYTICS.MUTED }}>
+              {row.pageGuidanceLabel}
+            </div>
+            <div style={{ marginTop: 6, color: ANALYTICS.MUTED }}>
+              {row.controlsLabel}
+            </div>
           </div>
           <div>
             <EvidenceBadge

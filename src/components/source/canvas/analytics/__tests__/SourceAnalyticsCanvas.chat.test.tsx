@@ -254,6 +254,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
       "Expected artifacts",
     );
     expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+      "Evidence-only",
+    );
+    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
       "Human review required",
     );
     expect(
@@ -265,6 +268,15 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack"),
     ).toHaveTextContent("128k max");
+    expect(
+      screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack"),
+    ).toHaveTextContent("Required exhibits");
+    expect(
+      screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack"),
+    ).toHaveTextContent("No fixed page cap");
+    expect(
+      screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack"),
+    ).toHaveTextContent("Source register");
     expect(
       screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack"),
     ).toHaveTextContent("AI draft awaiting review");
