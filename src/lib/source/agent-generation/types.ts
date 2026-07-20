@@ -79,6 +79,15 @@ export interface SourceArtifactBodyGenerationMetadata {
    */
   reasoningStatus?: "disabled" | "ok" | "refusal" | "gate_failed" | "error";
   reasoningEnvelope?: unknown;
+  /**
+   * Deterministic backstop scan (source-documentation-standards.ts's
+   * scanForBannedTerms) run against the final body after the quality gate
+   * and client-facing sanitizer. Non-blocking — a hit is a visibility signal
+   * for human review, not a generation failure. Empty array covers both "scan
+   * ran, found nothing" and "no profile registered for this artifact code, so
+   * there was no banned-term list to check against."
+   */
+  bannedTermMatches?: string[];
 }
 
 /**
