@@ -57,16 +57,22 @@ export async function generateFollowups(args: {
     .join("\n\n")
     .slice(0, 3000);
 
-  const prompt = `Given the question, answer, and client grounding context, propose 3 follow-up questions the user is
+  const prompt = `Given the question, answer, and client grounding context, propose follow-up questions the user is
 likely to ask next. Each should feel like a senior consultant continuing the exact conversation.
+
+If the question and answer are advisory, strategic, comparative, or decision-oriented, propose exactly 3 follow-ups, each testing a genuinely different executive decision path for THIS tenant and THIS answer (not generic):
+1. Value or funding — what's the size of the prize, or what would it cost to pursue.
+2. Risk, readiness, or evidence — what could go wrong, or what's still unvalidated.
+3. Execution, ownership, or sequencing — who owns it next, or what order things happen in.
+
+If the question was simple, factual, or navigational (a lookup, a definition, a yes/no) and follow-ups wouldn't materially advance the user's decision, return fewer than 3 — including zero if none earn their place. Never propose a generic or filler question just to reach 3.
 
 Rules:
 - Make each question specific to the user's question and the answer; do not use generic evidence boilerplate.
 - Each question must be one sentence, under 18 words, and end with a question mark.
 - Prefer named client context from grounding: systems, data readiness, interview priorities, AI-tool usage, process bottlenecks, value proof, owners, or module handoffs.
-- Ask three different kinds of questions: one evidence probe, one decision/owner probe, and one execution or risk probe.
 - Do not ask AbarVa to approve, certify, certify readiness, negotiate, replace advisors, or claim unsupported live product capabilities.
-Return JSON only: { "followups": ["...", "...", "..."] }
+Return JSON only: { "followups": ["...", ...] }
 
 Question: ${args.query}
 Answer: ${args.answer.slice(0, 2000)}
