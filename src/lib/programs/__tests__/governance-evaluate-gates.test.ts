@@ -15,6 +15,14 @@ let deliverableVersionsFixture: Array<{
   structured_data: Record<string, unknown> | null;
   generated_at: string;
 }>;
+let roleApprovalsFixture: Array<{
+  role: string;
+  status: string;
+  approver_user_id: string | null;
+  approver_name: string | null;
+  outstanding_conditions: string | null;
+  decided_at: string | null;
+}>;
 
 jest.mock('@/lib/programs/queries', () => ({
   __esModule: true,
@@ -87,6 +95,14 @@ function tableResult(table: string) {
     };
   }
 
+  if (table === 'deliverable_role_approvals') {
+    return {
+      select: jest.fn(() => ({
+        eq: jest.fn(() => Promise.resolve({ data: roleApprovalsFixture, error: null })),
+      })),
+    };
+  }
+
   if (table === 'program_evidence_items') {
     return {
       select: jest.fn(() => ({
@@ -124,6 +140,7 @@ describe('evaluateGate', () => {
     milestonesFixture = [{ id: 'm-1', name: 'Mobilize', status: 'upcoming' }];
     evidenceFixture = [];
     deliverableVersionsFixture = [];
+    roleApprovalsFixture = [];
     fromMock.mockImplementation(tableResult);
   });
 
@@ -146,6 +163,111 @@ describe('evaluateGate', () => {
         expect.objectContaining({ check: 'execution_roadmap_drafted', severity: 'hard' }),
         expect.objectContaining({ check: 'business_case_approved', severity: 'hard' }),
         expect.objectContaining({ check: 'readiness_and_change_plan_signed_off', severity: 'hard' }),
+      ]),
+    );
+  });
+
+  it('blocks business_case_approved when the deliverable is signed off but its required roles are not all approved', async () => {
+    // business_case requires business+finance approval (REQUIRED_APPROVAL_ROLES
+    // in deliverable-role-approvals.ts). Single-actor sign-off alone must no
+    // longer be sufficient for a covered type.
+    deliverablesFixture = [
+      { id: 'business-case', deliverable_type_key: 'business_case', status: 'signed_off' },
+      { id: 'readiness', deliverable_type_key: 'readiness_and_change_plan', status: 'signed_off' },
+      { id: 'roadmap', deliverable_type_key: 'execution_roadmap', status: 'signed_off' },
+    ];
+    roleApprovalsFixture = [
+      {
+        role: 'business',
+        status: 'approved',
+        approver_user_id: 'person-1',
+        approver_name: 'Jane Doe, CEO',
+        outstanding_conditions: null,
+        decided_at: '2026-07-20T00:00:00Z',
+      },
+      // finance still pending — not all required roles approved.
+    ];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      4,
+      5,
+    );
+
+    expect(result.pass).toBe(false);
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: 'business_case_approved', severity: 'hard' }),
+      ]),
+    );
+  });
+
+  it('passes business_case_approved once the deliverable is signed off AND every required role is approved', async () => {
+    deliverablesFixture = [
+      { id: 'business-case', deliverable_type_key: 'business_case', status: 'signed_off' },
+      { id: 'readiness', deliverable_type_key: 'readiness_and_change_plan', status: 'signed_off' },
+      { id: 'roadmap', deliverable_type_key: 'execution_roadmap', status: 'signed_off' },
+    ];
+    roleApprovalsFixture = [
+      {
+        role: 'business',
+        status: 'approved',
+        approver_user_id: 'person-1',
+        approver_name: 'Jane Doe, CEO',
+        outstanding_conditions: null,
+        decided_at: '2026-07-20T00:00:00Z',
+      },
+      {
+        role: 'finance',
+        status: 'approved',
+        approver_user_id: 'person-2',
+        approver_name: 'John Smith, CFO',
+        outstanding_conditions: null,
+        decided_at: '2026-07-20T00:05:00Z',
+      },
+    ];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      4,
+      5,
+    );
+
+    expect(result.failedChecks).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ check: 'business_case_approved' }),
+      ]),
+    );
+  });
+
+  it('does not require any role approval for a deliverable type absent from REQUIRED_APPROVAL_ROLES (existing single-actor sign-off is unaffected)', async () => {
+    // 'design_brief' is a design_approved alias but NOT itself a key in
+    // REQUIRED_APPROVAL_ROLES (only target_state_architecture and
+    // operating_model_design are) — signed_off alone must remain sufficient,
+    // with no deliverable_role_approvals row needed at all.
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 3,
+      archetype: null,
+    });
+    deliverablesFixture = [
+      { id: 'design', deliverable_type_key: 'design_brief', status: 'signed_off' },
+      { id: 'trace', deliverable_type_key: 'requirements_traceability', status: 'signed_off' },
+    ];
+    roleApprovalsFixture = [];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      3,
+      4,
+    );
+
+    expect(result.failedChecks).toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ check: 'design_approved' }),
       ]),
     );
   });
