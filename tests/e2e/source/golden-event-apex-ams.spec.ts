@@ -78,14 +78,9 @@ async function openGoldenEventStage(
   page: import('@playwright/test').Page,
   stage: string,
 ): Promise<void> {
-  await page.waitForURL(/\/source\/queue/, { timeout: 15000 }).catch(() => null);
+  await page.goto('/source/portfolio', { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle').catch(() => null);
-  await page
-    .locator('nav[aria-label="Source sections"]')
-    .getByRole('link', { name: /^Portfolio$/ })
-    .click();
   await expect(page).toHaveURL(/\/source\/portfolio/);
-  await page.waitForLoadState('networkidle').catch(() => null);
   await page.getByRole('link', { name: /AMS Outsourcing 2026/i }).first().click();
   await expect(page).toHaveURL(/\/source\/events\//);
   await expect(page.locator(SEL.stageRail)).toBeVisible();

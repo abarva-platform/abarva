@@ -6,8 +6,8 @@
 // Portfolio as three peer views of the same event set.
 //
 // IA v2 consolidates to two surfaces:
-//   - Decisions (the Decision Queue, at /source/queue) — the landing surface.
-//   - Portfolio (the event table, at /source/portfolio).
+//   - Portfolio book (at /source/portfolio) — the landing surface.
+//   - Event shell workspaces for stage, files, intelligence, and approvals.
 // `/source` lands on Decisions, `/source/events` folds into Portfolio, and the
 // sub-nav drops to two tabs.
 //

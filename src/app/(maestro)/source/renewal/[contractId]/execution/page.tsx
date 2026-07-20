@@ -75,10 +75,10 @@ export default async function SourceExecutionRoomRoute({
               fabricates a sourcing decision.
             </p>
             <Link
-              href="/source/queue"
+              href="/source/portfolio"
               style={{ fontFamily: SHELL.SANS, fontSize: 13, color: SHELL.INK_MID }}
             >
-              Back to the Decision Queue
+              Back to the sourcing book
             </Link>
           </div>
         )}

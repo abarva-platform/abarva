@@ -11,10 +11,8 @@ export const metadata = { title: 'Source Portfolio · AbarVa' };
 export const dynamic = 'force-dynamic';
 
 /**
- * The table-forward Source command-center. This was the `/source` landing
- * until the iteration-2 punch-list moved the Decision Queue into that slot
- * (see `../page.tsx`). The portfolio view stays reachable here for users who
- * want the full event table rather than the triggered-decision inbox.
+ * The Source portfolio book. This is the canonical `/source` landing surface;
+ * old queue links redirect here so users do not enter a second Source home.
  */
 export default async function SourcePortfolioRoute({
   searchParams,

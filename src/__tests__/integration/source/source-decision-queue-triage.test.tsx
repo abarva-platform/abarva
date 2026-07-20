@@ -72,7 +72,9 @@ describe("SourceDecisionQueueView triage bands", () => {
     );
 
     expect(html).toContain('data-testid="source-triage-bands"');
-    expect(html).toContain('href="/source/queue?band=overdue&amp;sort=deadline"');
+    expect(html).toContain(
+      'href="/source/portfolio?decisionBand=overdue&amp;sort=deadline"',
+    );
     expect(html).toContain("Overdue — act now");
     expect(html).toContain("Due this quarter");
     expect(html).toContain("Pipeline");

@@ -44,7 +44,7 @@ export default async function SourceEventApprovalPage({
     redirect(`/source/events/${event.id}?stage=${event.currentStageKey}`);
   }
   if (!APPROVAL_STATES.has(row.lifecycle_state)) {
-    redirect("/source/queue");
+    redirect("/source/portfolio");
   }
 
   const sourceAccessPolicy = await loadUserSourceAccessPolicy(tenancy, {
