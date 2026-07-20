@@ -32,6 +32,43 @@ describe("createStructuredFenceStreamFilter", () => {
     expect(visible).not.toContain("followups");
   });
 
+  it("removes governed abarva-canvas fences even when split across chunks", () => {
+    const filter = createStructuredFenceStreamFilter();
+    const chunks = [
+      "Use the production assets as anchors. ``",
+      "`abarva",
+      '-canvas\n{"canvasType":"value-readiness-matrix","signals":[{"label":"Cash-flow insights","value":"$10.3M"}]}',
+      "``` Then clear the MRM gate before scaling Tier-1 assets.",
+    ];
+
+    const visible =
+      chunks.map((chunk) => filter.push(chunk)).join("") + filter.flush();
+
+    expect(visible).toBe(
+      "Use the production assets as anchors.  Then clear the MRM gate before scaling Tier-1 assets.",
+    );
+    expect(visible).not.toContain("abarva-canvas");
+    expect(visible).not.toContain("canvasType");
+    expect(visible).not.toContain("```");
+  });
+
+  it("holds a complete abarva-canvas marker until the payload chunk arrives", () => {
+    const filter = createStructuredFenceStreamFilter();
+    const visible =
+      filter.push("Anchor the portfolio. ```abarva-canvas\n") +
+      filter.push(
+        '{"canvasType":"value-readiness-matrix","signals":[{"label":"Incident copilot"}]}',
+      ) +
+      filter.push("``` Then certify the value case.") +
+      filter.flush();
+
+    expect(visible).toBe(
+      "Anchor the portfolio.  Then certify the value case.",
+    );
+    expect(visible).not.toContain("abarva-canvas");
+    expect(visible).not.toContain("canvasType");
+  });
+
   it("holds a bare chart marker when the JSON payload arrives in the next chunk", () => {
     const filter = createStructuredFenceStreamFilter();
     const chunks = [
@@ -82,6 +119,18 @@ describe("createStructuredFenceStreamFilter", () => {
     expect(visible).toBe(
       "Recommendation first. Follow the EHR workflow first.",
     );
+  });
+
+  it("strips abarva-canvas payloads from final packet prose", () => {
+    const visible = stripGovernedArtifactPayloadsFromText(
+      'Anchor on measured value.\n```abarva-canvas\n{"canvasType":"value-readiness-matrix","signals":[{"label":"Incident copilot","value":"$24.7M"}]}\n```\nThen certify Finance value before board use.',
+    );
+
+    expect(visible).toBe(
+      "Anchor on measured value.\nThen certify Finance value before board use.",
+    );
+    expect(visible).not.toContain("abarva-canvas");
+    expect(visible).not.toContain("canvasType");
   });
 
   it("strips markdown-rendered chart language labels plus orphan JSON", () => {

@@ -1509,6 +1509,79 @@ describe("AgentDock · thread render", () => {
     expect(turn).not.toHaveTextContent("| AI Use Case |");
   });
 
+  it("suppresses raw abarva-canvas fences when focused mode has governed artifacts", () => {
+    render(
+      <AgentDock
+        agent={{ ...AGENT, name: "aVa" }}
+        surface="intelligence"
+        variant="focused"
+        thread={[
+          {
+            id: "a",
+            role: "agent",
+            body:
+              'Anchor on measured production assets.\n```abarva-canvas\n{"canvasType":"value-readiness-matrix","signals":[{"label":"Incident copilot","value":"$24.7M"}]}\n```\nThen clear the MRM gate before scaling Tier-1 assets.',
+            agentAnswer: {
+              surface: "intelligence",
+              mode: "ANALYZE",
+              tenantKey: "first-capital",
+              question: "Rank AI use cases by value and readiness.",
+              intent: "chart",
+              status: "answered",
+              directAnswer:
+                "Anchor on measured production assets, then clear the MRM gate before scaling Tier-1 assets.",
+              artifacts: [
+                {
+                  artifact: "table",
+                  id: "fs-value-readiness",
+                  title: "Value / Readiness Matrix",
+                  columns: [
+                    { key: "initiative", label: "Initiative" },
+                    { key: "posture", label: "Posture" },
+                  ],
+                  rows: [
+                    {
+                      initiative: "Incident copilot",
+                      posture: "Scale after Finance certification",
+                    },
+                  ],
+                },
+              ],
+              citations: [],
+              factsUsed: [],
+              metricsUsed: [],
+              relationshipsUsed: [],
+              quality: {
+                confidence: "high",
+                evidenceStrength: "partial",
+                tenantGrounding: "partial",
+                answerCompleteness: "complete",
+              },
+              safety: {
+                tenantFencePassed: true,
+                rawIdsSuppressed: true,
+                forbiddenLanguagePassed: true,
+                unsupportedClaimsBlocked: true,
+              },
+              nextSteps: [],
+              gaps: [],
+              caveats: [],
+            } as never,
+          },
+        ]}
+        onMessage={jest.fn()}
+        workspace={<div data-testid="workspace">workspace</div>}
+      />,
+    );
+
+    const turn = screen.getByTestId("agent-dock-turn-agent");
+    expect(turn).toHaveTextContent("Anchor on measured production assets");
+    expect(turn).toHaveTextContent("Value / Readiness Matrix");
+    expect(turn).not.toHaveTextContent("abarva-canvas");
+    expect(turn).not.toHaveTextContent("canvasType");
+    expect(turn).not.toHaveTextContent("```");
+  });
+
   it("keeps auto-scroll inside the thread pane when new turns arrive", async () => {
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
     const scrollIntoView = jest.fn();
