@@ -42,6 +42,21 @@ export interface SourceArtifactLifecyclePromptContract {
   maxTokensLabel: string;
 }
 
+export type SourceArtifactQualityState =
+  | "decision_ready"
+  | "review_required"
+  | "evidence_only"
+  | "missing";
+
+export interface SourceArtifactQualityAssessment {
+  state: SourceArtifactQualityState;
+  label: string;
+  score: number;
+  hardFails: string[];
+  warnings: string[];
+  nextAction: string;
+}
+
 export interface SourceArtifactLifecycleRow {
   code: string;
   name: string;
@@ -61,6 +76,19 @@ export interface SourceArtifactLifecycleRow {
   lifecycleLabel: string;
   approvalLabel: string;
   governanceMessage: string;
+  quality: SourceArtifactQualityAssessment;
+}
+
+export interface SourceArtifactQualitySummary {
+  score: number;
+  hardFailCount: number;
+  warningCount: number;
+  missingRequiredCount: number;
+  reviewRequiredCount: number;
+  evidenceOnlyCount: number;
+  decisionReadyCount: number;
+  label: string;
+  scopeLabel: string;
 }
 
 export interface SourceArtifactLifecycleSummary {
@@ -73,6 +101,7 @@ export interface SourceArtifactLifecycleSummary {
   aiDraftCount: number;
   clientFinalCount: number;
   evidenceOnlyCount: number;
+  quality: SourceArtifactQualitySummary;
 }
 
 export interface SourceArtifactStandardsContextItem {
@@ -103,6 +132,9 @@ const ARTIFACT_STANDARDS_CSV_COLUMNS = [
   "Approval rule",
   "AI draft rule",
   "Human final rule",
+  "Quality status",
+  "Quality score",
+  "Quality findings",
   "Governance note",
 ] as const;
 
@@ -149,6 +181,7 @@ export function buildSourceArtifactLifecycleSummary(
   const rows = SOURCE_ARTIFACT_SPECS.map((spec) =>
     buildLifecycleRow(spec, artifacts),
   );
+  const quality = buildQualitySummary(rows);
 
   return {
     rows,
@@ -160,6 +193,7 @@ export function buildSourceArtifactLifecycleSummary(
     aiDraftCount: rows.filter((row) => row.lifecycleState === "ai_draft").length,
     clientFinalCount: rows.filter((row) => row.lifecycleState === "client_final").length,
     evidenceOnlyCount: rows.filter((row) => row.lifecycleState === "evidence_only").length,
+    quality,
   };
 }
 
@@ -215,6 +249,9 @@ export function buildSourceArtifactStandardsCsv(
       row.approvalLabel,
       "AI-prepared drafts are not final and require human review before external use.",
       "A reviewed client-final version must be accepted back into Source as the authoritative artifact of record.",
+      row.quality.label,
+      String(row.quality.score),
+      [...row.quality.hardFails, ...row.quality.warnings].join("; ") || row.quality.nextAction,
       row.governanceMessage,
     ].map(csvCell).join(","),
   );
@@ -233,6 +270,12 @@ function buildLifecycleRow(
   const lifecycleState = lifecycleStateFor(matchingArtifacts);
   const prompt = promptContractFor(spec.code);
   const profile = profileFor(spec.code);
+  const quality = qualityAssessmentFor({
+    lifecycleState,
+    spec,
+    prompt,
+    profile,
+  });
   return {
     code: spec.code,
     name: spec.name,
@@ -254,6 +297,149 @@ function buildLifecycleRow(
     lifecycleLabel: lifecycleLabelFor(lifecycleState),
     approvalLabel: approvalLabelFor(lifecycleState),
     governanceMessage: governanceMessageFor(lifecycleState),
+    quality,
+  };
+}
+
+function buildQualitySummary(
+  rows: readonly SourceArtifactLifecycleRow[],
+): SourceArtifactQualitySummary {
+  const relevantRows = rows.filter(
+    (row) => row.requirementLabel === "Required" || row.gateLabel === "Gate-defining",
+  );
+  const denominator = Math.max(relevantRows.length, 1);
+  const score = Math.round(
+    relevantRows.reduce((total, row) => total + row.quality.score, 0) / denominator,
+  );
+  const hardFailCount = rows.reduce(
+    (total, row) => total + row.quality.hardFails.length,
+    0,
+  );
+  const warningCount = rows.reduce(
+    (total, row) => total + row.quality.warnings.length,
+    0,
+  );
+  const missingRequiredCount = rows.filter(
+    (row) => row.requirementLabel === "Required" && row.quality.state === "missing",
+  ).length;
+  const reviewRequiredCount = rows.filter(
+    (row) => row.quality.state === "review_required",
+  ).length;
+  const evidenceOnlyCount = rows.filter(
+    (row) => row.quality.state === "evidence_only",
+  ).length;
+  const decisionReadyCount = rows.filter(
+    (row) => row.quality.state === "decision_ready",
+  ).length;
+
+  return {
+    score,
+    hardFailCount,
+    warningCount,
+    missingRequiredCount,
+    reviewRequiredCount,
+    evidenceOnlyCount,
+    decisionReadyCount,
+    label:
+      hardFailCount > 0
+        ? "Hard fails present"
+        : warningCount > 0
+          ? "Review warnings"
+          : "Lifecycle ready",
+    scopeLabel:
+      "Scores lifecycle and approval hard gates only; prose, visuals, and exhibit quality require renderer-output scoring.",
+  };
+}
+
+function qualityAssessmentFor(args: {
+  lifecycleState: SourceArtifactLifecycleState;
+  spec: SourceArtifactSpec;
+  prompt: SourceArtifactLifecyclePromptContract;
+  profile: SourceArtifactProfile | null;
+}): SourceArtifactQualityAssessment {
+  const { lifecycleState, spec, prompt, profile } = args;
+  const hardFails: string[] = [];
+  const warnings: string[] = [];
+  const requiredOrGate = spec.requirementLevel === "required" || spec.gateDefining;
+  const exhibitCount = profile?.requiredExhibits.length ?? 0;
+
+  if (lifecycleState === "not_registered") {
+    if (requiredOrGate) {
+      hardFails.push(
+        "Required/gate-defining artifact is missing; sections, visuals, and evidence cannot be scored yet.",
+      );
+    } else {
+      warnings.push(
+        "Supporting artifact is not registered; score excludes content inspection.",
+      );
+    }
+    return {
+      state: "missing",
+      label: "Missing artifact",
+      score: requiredOrGate ? 0 : 35,
+      hardFails,
+      warnings,
+      nextAction: "Create or attach the artifact before treating this phase as complete.",
+    };
+  }
+
+  if (lifecycleState === "ai_draft") {
+    hardFails.push(
+      "AI-prepared draft has not been accepted back as a human-reviewed client final.",
+    );
+    if (exhibitCount > 0) {
+      warnings.push(
+        `Human reviewer must verify ${exhibitCount} required exhibits, visuals, and source-register evidence before final use.`,
+      );
+    }
+    return {
+      state: "review_required",
+      label: "Human review required",
+      score: requiredOrGate ? 68 : 74,
+      hardFails,
+      warnings,
+      nextAction: "Review the draft, approve it outside Source, then accept the reviewed final back into Source.",
+    };
+  }
+
+  if (lifecycleState === "evidence_only") {
+    if (requiredOrGate) {
+      hardFails.push(
+        "Uploaded evidence is present, but no governed deliverable or accepted final exists for this required artifact.",
+      );
+    } else {
+      warnings.push(
+        "Evidence is registered; confirm whether a formal deliverable is needed.",
+      );
+    }
+    return {
+      state: "evidence_only",
+      label: "Evidence only",
+      score: requiredOrGate ? 42 : 64,
+      hardFails,
+      warnings,
+      nextAction: "Use the evidence to generate or complete the governed artifact, then route it through review.",
+    };
+  }
+
+  if (!prompt.supported && spec.requirementLevel === "required") {
+    warnings.push(
+      "No dedicated generation prompt is registered; content quality depends on manual/template production.",
+    );
+  }
+  if (!profile) {
+    warnings.push(
+      "No documentation profile is registered; required sections and visuals cannot be scored deeply yet.",
+    );
+  }
+
+  return {
+    state: "decision_ready",
+    label: warnings.length > 0 ? "Client final with warnings" : "Client final ready",
+    score: warnings.length > 0 ? 88 : 96,
+    hardFails,
+    warnings,
+    nextAction: "Use this accepted client-final artifact as the authoritative record.",
   };
 }
 

@@ -253,6 +253,15 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
       "Expected artifacts",
     );
+    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+      "Quality score",
+    );
+    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+      "Hard fails",
+    );
+    expect(screen.getByTestId("source-artifact-quality-scope")).toHaveTextContent(
+      "Scores lifecycle and approval hard gates only",
+    );
     const standardsExport = screen.getByTestId("source-artifact-standards-export");
     expect(standardsExport).toHaveAttribute(
       "download",
@@ -266,6 +275,8 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(decodedCsv).toContain('"d08_premortem"');
     expect(decodedCsv).toContain('"d31_kt_evidence"');
     expect(decodedCsv).toContain('"Token budget"');
+    expect(decodedCsv).toContain('"Quality status"');
+    expect(decodedCsv).toContain('"Quality findings"');
     expect(decodedCsv).toContain(
       "AI-prepared drafts are not final and require human review before external use.",
     );
@@ -282,8 +293,14 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
       screen.getByTestId("source-artifact-lifecycle-row-d05_scope_memo"),
     ).toHaveTextContent("Client-approved final");
     expect(
+      screen.getByTestId("source-artifact-lifecycle-row-d05_scope_memo"),
+    ).toHaveTextContent("Client final ready");
+    expect(
       screen.getByTestId("source-artifact-lifecycle-row-d07_ticket_synth"),
     ).toHaveTextContent("Evidence registered");
+    expect(
+      screen.getByTestId("source-artifact-lifecycle-row-d07_ticket_synth"),
+    ).toHaveTextContent("Uploaded evidence is present");
     expect(
       screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack"),
     ).toHaveTextContent("128k max");
@@ -299,6 +316,9 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(
       screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack"),
     ).toHaveTextContent("AI draft awaiting review");
+    expect(
+      screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack"),
+    ).toHaveTextContent("Human review required");
     expect(
       screen.queryByTestId("source-accept-client-final-toggle-d05_scope_memo"),
     ).not.toBeInTheDocument();
