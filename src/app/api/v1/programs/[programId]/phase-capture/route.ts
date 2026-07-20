@@ -4,6 +4,35 @@
 // durable capture state that artifact generation already checks through
 // assertPhaseReadyForGeneration: completed program_modules rows by phase.
 // It does not approve a gate and does not generate artifacts.
+//
+// PHASE CAPTURE EVIDENCE INTEGRITY (fixed here): this route used to call
+// `ensurePhaseGateDeliverable` once every required capture section was
+// filled in, auto-creating a real, gate-satisfying `deliverables_v2` row
+// (e.g. `design_spec`, `requirements_traceability` — both genuinely
+// registered deliverable types, see completeDeliverable.ts's
+// ALLOWED_PROGRAM_DELIVERABLE_TYPES and governance.ts's alias lists) whose
+// entire content was just the user's raw capture-field text, concatenated
+// into markdown sections. That row was left `in_review`, one call away from
+// being flipped to `signed_off` by the generic sign-off route
+// (deliverables/:deliverableId/sign-off/route.ts), which — before this fix
+// — accepted ANY in_review/draft row for ANY authorized approver with no
+// check on how the content was produced. That is a second, independent path
+// to the same class of incident already fixed in
+// `phase-gate-approval/route.ts` (PR #5158): a hard gate check finding real,
+// signed-off deliverable evidence that was never actually reviewed,
+// generated, or authored as a deliberate artifact.
+//
+// Fix: this route no longer creates any `deliverables_v2` row at all.
+// Capture text persists only as `program_modules` state (notes/draft
+// evidence for the workspace and for `phaseCaptureText` free-text checks in
+// governance.ts) — it can inform generation and free-text fallbacks, but it
+// can never itself become a signable gate artifact. Real gate deliverables
+// are created only by real generation (the orchestrator) or by deliberate
+// human/agent authorship (`completeDeliverable`/`draftArtifact`, which
+// require an explicit acceptance moment and tag real provenance). The
+// generic sign-off route now also independently rejects unrecognized
+// deliverable types and capture-derived provenance as defense-in-depth (see
+// its own PHASE CAPTURE EVIDENCE INTEGRITY comment).
 
 import { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/app/api/v1/programs/_auth";
@@ -15,34 +44,9 @@ import {
   getPhaseCaptureSections,
   phaseCaptureModuleKey,
 } from "@/lib/programs/phase-capture-contract";
-import { ensurePhaseGateDeliverable } from "@/lib/programs/mutations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-// The gate deliverable each phase's Save → Approve → Generate sequence signs
-// off. Mirrors the standalone Moves phase capture flow and the *_signed_off
-// gate checks in governance.ts (e.g. P1 `charter_signed_off` reads a
-// `deliverables_v2` row of type `charter`). P0's gate deliverable is the
-// origination brief, created by the originate flow — not this path.
-const PHASE_GATE_DELIVERABLES: Record<number, Array<{ typeKey: string; title: string }>> = {
-  1: [{ typeKey: "charter", title: "Program Charter" }],
-  2: [{ typeKey: "discovery_report", title: "Discovery & Diagnosis Report" }],
-  3: [
-    { typeKey: "design_spec", title: "Solution Design Specification" },
-    { typeKey: "requirements_traceability", title: "Requirements Traceability Matrix" },
-  ],
-  4: [
-    { typeKey: "execution_roadmap", title: "Execution Roadmap" },
-    { typeKey: "business_case", title: "Business Case" },
-    { typeKey: "readiness_and_change_plan", title: "Readiness & Change Plan" },
-    { typeKey: "tower_metric_plan", title: "Tower Metrics Plan" },
-  ],
-  5: [
-    { typeKey: "handoff_package", title: "Mobilization & Tower Handoff Package" },
-    { typeKey: "value_measurement_contract", title: "Value Measurement Contract" },
-  ],
-};
 
 function parsePhase(value: string | null | undefined): number | null {
   if (value === null || value === undefined || value === "") return 0;
@@ -263,36 +267,11 @@ export async function POST(
       evidenceRefs: moduleKeys,
     });
 
-    // Once every required section is captured, ensure the phase gate deliverable
-    // exists so the workspace Approve step (sign-off) can act on it. Without this
-    // the client's Save → Approve → Generate sequence dead-ends: Approve is gated
-    // on a `deliverableId` the Save response never returned, so no Move could
-    // advance past its gate through the primary UI. Best-effort: a failure here
-    // must not fail the capture write (the fields are already persisted).
-    const gates = PHASE_GATE_DELIVERABLES[phase] ?? [];
-    let recordCreated = false;
-    const deliverableIds: string[] = [];
-    let recordError: string | undefined;
-    if (gates.length > 0 && evaluation.complete) {
-      for (const gate of gates) {
-        try {
-          const content = evaluation.sections
-            .map((section) => `## ${section.label}\n${section.value}`)
-            .join("\n\n");
-          const result = await ensurePhaseGateDeliverable(
-            ctx,
-            programId,
-            { deliverableTypeKey: gate.typeKey, title: gate.title, content },
-            { supabase: sb },
-          );
-          deliverableIds.push(result.deliverableId);
-          recordCreated = recordCreated || result.created;
-        } catch (err) {
-          recordError = err instanceof Error ? err.message : "record creation failed";
-        }
-      }
-    }
-
+    // No deliverables_v2 row is created here — see the file-level "PHASE
+    // CAPTURE EVIDENCE INTEGRITY" comment above. Real gate deliverables come
+    // only from generation or deliberate authorship; capture text is
+    // durable evidence for the workspace and for generation context, never
+    // itself a signable gate artifact.
     return Response.json({
       ok: true,
       programId,
@@ -302,15 +281,12 @@ export async function POST(
         .filter((section) => section.complete)
         .map((section) => section.key),
       allSaved: evaluation.complete,
-      recordCreated,
-      ...(deliverableIds.length > 0 ? { deliverableIds, deliverableId: deliverableIds[0] } : {}),
-      ...(recordError ? { recordError } : {}),
       capture: evaluation,
       generationEligibility: {
         captureComplete: evaluation.complete,
         gateApprovalRequired: true,
         nextAction: evaluation.complete
-          ? "Approve the phase gate."
+          ? "Generate the phase's required deliverables, then approve the phase gate."
           : "Complete all required capture sections.",
       },
     });
