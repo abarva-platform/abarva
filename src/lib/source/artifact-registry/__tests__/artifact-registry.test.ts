@@ -35,6 +35,7 @@ type Row = {
   client_final_change_summary?: Record<string, unknown> | string | null;
   evidence_state: 'unparsed' | 'parsed_uncited';
   approval_state: 'draft' | 'approved';
+  description?: string | null;
   version: number | string;
   supersedes_artifact_version_id: string | null;
   created_by: string;
@@ -331,6 +332,7 @@ describe('registerSourceArtifactUpload', () => {
       artifact_group: 'generated',
       artifact_type: 'd05_scope_memo',
       title: 'Scope Memo with Boundaries',
+      description: 'In-scope, out-of-scope, target support tier, transition assumptions.',
       file_name: 'd05_scope_memo.md',
       file_format: 'md',
       blob_container: 'source-artifacts',
@@ -341,6 +343,31 @@ describe('registerSourceArtifactUpload', () => {
       supersedes_artifact_id: 'prior-artifact',
       blob_sha256: 'c'.repeat(64),
     });
+  });
+
+  it('round-trips description back out of the registry read path (previously write-only)', async () => {
+    nextMaybeSingle = async () => ({
+      data: {
+        ...baseRow,
+        description:
+          'Generated Source deliverable. [compliance-review-flagged]',
+      },
+      error: null,
+    });
+
+    const record = await getSourceArtifactRegistryRecord(baseRow.id);
+
+    expect(record?.description).toBe(
+      'Generated Source deliverable. [compliance-review-flagged]',
+    );
+  });
+
+  it('returns null description for rows that never had one set', async () => {
+    nextMaybeSingle = async () => ({ data: baseRow, error: null });
+
+    const record = await getSourceArtifactRegistryRecord(baseRow.id);
+
+    expect(record?.description ?? null).toBeNull();
   });
 
   it('serializes client-final File Cabinet JSONB metadata for registry inserts', async () => {

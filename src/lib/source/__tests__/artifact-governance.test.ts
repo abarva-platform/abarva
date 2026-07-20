@@ -1,6 +1,8 @@
 import {
   deriveSourceArtifactGovernanceStage,
   sourceArtifactGovernanceBanner,
+  hasComplianceReviewFlag,
+  withComplianceReviewFlag,
   SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
   SOURCE_APPROVED_EXTERNAL_GOVERNANCE_MESSAGE,
   SOURCE_CLIENT_FINAL_GOVERNANCE_MESSAGE,
@@ -122,5 +124,40 @@ describe("sourceArtifactGovernanceBanner", () => {
       artifactCode: "not-a-real-code",
     });
     expect(banner.message).toBe(SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE);
+  });
+});
+
+describe("compliance-review flag helpers", () => {
+  it("appends the marker to a plain description", () => {
+    const flagged = withComplianceReviewFlag("Generated Source deliverable.");
+    expect(flagged.startsWith("Generated Source deliverable.")).toBe(true);
+    expect(hasComplianceReviewFlag(flagged)).toBe(true);
+  });
+
+  it("does not double-append when the marker is already present", () => {
+    const once = withComplianceReviewFlag("Base text.");
+    const twice = withComplianceReviewFlag(once);
+    expect(twice).toBe(once);
+  });
+
+  it("reports false for descriptions without the marker", () => {
+    expect(hasComplianceReviewFlag("Generated Source deliverable.")).toBe(
+      false,
+    );
+    expect(hasComplianceReviewFlag(null)).toBe(false);
+    expect(hasComplianceReviewFlag(undefined)).toBe(false);
+    expect(hasComplianceReviewFlag("")).toBe(false);
+  });
+
+  it("never requires the raw matched banned term to appear in the flagged text", () => {
+    // The flag must be detectable without the caller ever concatenating a
+    // banned term into the description — that's the whole point of the flag.
+    const flagged = withComplianceReviewFlag(
+      "AI-prepared draft. Human review is required before external use.",
+    );
+    expect(flagged).not.toMatch(/\bd0\d\b|\bdx\d/i);
+    expect(flagged).not.toContain("substrate");
+    expect(flagged).not.toContain("Anthropic");
+    expect(hasComplianceReviewFlag(flagged)).toBe(true);
   });
 });

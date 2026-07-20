@@ -115,6 +115,16 @@ export interface SourceArtifactRegistryRecord {
   dataClassification: SourceDataClassification;
   evidenceState: SourceArtifactEvidenceState;
   approvalState: SourceArtifactApprovalState;
+  /**
+   * Free-text registry note. Populated at generation time with the
+   * client-safe governance banner (see artifact-governance.ts) and, when the
+   * deterministic banned-term backstop scan (source-documentation-standards.ts)
+   * finds a hit, a client-safe compliance-review marker
+   * (SOURCE_COMPLIANCE_REVIEW_FLAG_MARKER) — never the raw matched terms
+   * themselves, since some of those terms are exactly what must stay hidden
+   * from anyone who can read this field.
+   */
+  description?: string | null;
   isClientFinal?: boolean;
   isCurrentAuthoritative?: boolean;
   sourceGeneratedArtifactId?: string | null;

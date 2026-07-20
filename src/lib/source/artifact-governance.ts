@@ -52,6 +52,35 @@ export const SOURCE_SUPERSEDED_GOVERNANCE_LABEL = "Superseded";
 export const SOURCE_SUPERSEDED_GOVERNANCE_MESSAGE =
   "Superseded. A newer authoritative version of this artifact exists — this version is kept for audit only.";
 
+// Compliance-review flag: set on a file-cabinet registry record's
+// `description` when the deterministic banned-term backstop scan
+// (source-documentation-standards.ts's scanForBannedTerms) finds a hit
+// during generation. The marker and label are deliberately generic — never
+// name the matched term(s) here. Some banned terms exist specifically to stay
+// hidden from anyone who can read this field (client, vendor, or an
+// AbarVa user without internal-label visibility); listing them out would
+// defeat the purpose of flagging them in the first place.
+const SOURCE_COMPLIANCE_REVIEW_FLAG_MARKER = "[compliance-review-flagged]";
+
+export const SOURCE_COMPLIANCE_REVIEW_FLAG_LABEL = "Compliance review required";
+
+export const SOURCE_COMPLIANCE_REVIEW_FLAG_MESSAGE =
+  "This draft was flagged for compliance review before external use.";
+
+/** Appends the compliance-review marker to a description if not already present. */
+export function withComplianceReviewFlag(description: string): string {
+  return description.includes(SOURCE_COMPLIANCE_REVIEW_FLAG_MARKER)
+    ? description
+    : `${description} ${SOURCE_COMPLIANCE_REVIEW_FLAG_MARKER}`;
+}
+
+/** True when a file-cabinet registry description carries the compliance-review marker. */
+export function hasComplianceReviewFlag(
+  description: string | null | undefined,
+): boolean {
+  return Boolean(description?.includes(SOURCE_COMPLIANCE_REVIEW_FLAG_MARKER));
+}
+
 export function sourceDraftGovernanceMessage(args: {
   isAiGenerated: boolean;
 }): string {

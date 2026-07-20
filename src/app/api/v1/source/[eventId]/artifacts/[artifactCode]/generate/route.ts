@@ -89,7 +89,10 @@ import {
   type GeneratedArtifactFormat,
   type RenderedGeneratedArtifact,
 } from "@/lib/source/generated-artifact-rendering";
-import { SOURCE_AI_DRAFT_GOVERNANCE_DETAIL } from "@/lib/source/artifact-governance";
+import {
+  SOURCE_AI_DRAFT_GOVERNANCE_DETAIL,
+  withComplianceReviewFlag,
+} from "@/lib/source/artifact-governance";
 
 const REGISTRY_STORAGE_BUCKET = "source-artifacts";
 const SOURCE_QUALITY_REVIEW_TOOL_NAME = "record_source_quality_review";
@@ -830,16 +833,21 @@ export async function generateSourceArtifactDraft(
                   renderedArtifact.role === "preview"
                     ? `${spec?.name ?? artifactCode} — Preview`
                     : (spec?.name ?? artifactCode),
-                description: [
-                  renderedArtifact.role === "preview"
-                    ? `HTML preview of the generated Source deliverable. ${SOURCE_AI_DRAFT_GOVERNANCE_DETAIL}`
-                    : `${spec?.description ?? "Generated Source deliverable."} ${SOURCE_AI_DRAFT_GOVERNANCE_DETAIL}`,
-                  bannedTermMatches.length > 0
-                    ? `Backstop scan flagged internal term(s) for review before external use: ${bannedTermMatches.join(", ")}.`
-                    : null,
-                ]
-                  .filter(Boolean)
-                  .join(" "),
+                description: (() => {
+                  const base =
+                    renderedArtifact.role === "preview"
+                      ? `HTML preview of the generated Source deliverable. ${SOURCE_AI_DRAFT_GOVERNANCE_DETAIL}`
+                      : `${spec?.description ?? "Generated Source deliverable."} ${SOURCE_AI_DRAFT_GOVERNANCE_DETAIL}`;
+                  // Never enumerate the matched term(s) here — this field can
+                  // be read by clients/vendors, and some banned terms exist
+                  // specifically to stay hidden from that audience. The raw
+                  // match list stays internal-only, in
+                  // body_generation_metadata.bannedTermMatches on the
+                  // canonical substrate row.
+                  return bannedTermMatches.length > 0
+                    ? withComplianceReviewFlag(base)
+                    : base;
+                })(),
                 fileName: renderedArtifact.filename,
                 fileFormat: renderedArtifact.format,
                 blobContainer: REGISTRY_STORAGE_BUCKET,

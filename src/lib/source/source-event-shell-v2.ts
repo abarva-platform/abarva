@@ -7,6 +7,9 @@ import {
   SOURCE_AI_DRAFT_GOVERNANCE_LABEL,
   SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
   SOURCE_CLIENT_FINAL_GOVERNANCE_MESSAGE,
+  SOURCE_COMPLIANCE_REVIEW_FLAG_LABEL,
+  SOURCE_COMPLIANCE_REVIEW_FLAG_MESSAGE,
+  hasComplianceReviewFlag,
 } from "@/lib/source/artifact-governance";
 import {
   buildSourceArtifactLifecycleSummary,
@@ -75,6 +78,10 @@ export interface SourceShellFileItem {
   sourceBasis: SourceShellEvidenceBasis;
   governanceLabel: string;
   governanceMessage: string | null;
+  /** True when the backstop compliance scan flagged this artifact for review. */
+  needsComplianceReview: boolean;
+  complianceReviewLabel: string | null;
+  complianceReviewMessage: string | null;
 }
 
 export interface SourceShellIntelligenceFinding {
@@ -169,6 +176,13 @@ export interface SourceShellArtifactLike {
   bodyMarkdown?: string | null;
   renderedText?: string | null;
   plainTextSummary?: string | null;
+  /**
+   * Registry note (source_artifacts.description). Only ever read here to
+   * derive the client-safe `needsComplianceReview` flag on the resulting
+   * file item — the raw string itself must never be forwarded into a UI
+   * surface, since it can carry internal governance banner text.
+   */
+  description?: string | null;
 }
 
 export interface BuildSourceEventShellViewInput {
@@ -434,6 +448,7 @@ function toFileItem(artifact: SourceShellArtifactLike): SourceShellFileItem {
   );
   const isClientFinal = artifact.isClientFinal === true || state === "client_final";
   const governance = fileGovernanceFor({ group, sourceOrigin, isClientFinal });
+  const needsComplianceReview = hasComplianceReviewFlag(artifact.description);
   return {
     id: artifact.id,
     artifactCode,
@@ -446,6 +461,13 @@ function toFileItem(artifact: SourceShellArtifactLike): SourceShellFileItem {
     sourceBasis: "live_artifact",
     governanceLabel: governance.label,
     governanceMessage: governance.message,
+    needsComplianceReview,
+    complianceReviewLabel: needsComplianceReview
+      ? SOURCE_COMPLIANCE_REVIEW_FLAG_LABEL
+      : null,
+    complianceReviewMessage: needsComplianceReview
+      ? SOURCE_COMPLIANCE_REVIEW_FLAG_MESSAGE
+      : null,
   };
 }
 

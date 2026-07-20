@@ -232,6 +232,8 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
             fileFormat: "docx",
             status: "draft",
             body: "Recommendation: release the RFP package after approval. Decision requested: approve vendor release. Our internal sensitivity is $3.5M walk-away. This d09 was AI generated.",
+            description:
+              "Generated Source deliverable. [compliance-review-flagged]",
           },
         ]}
       />,
@@ -250,6 +252,24 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     ).toHaveTextContent("Human review is required");
     expect(
       screen.queryByTestId("source-shell-file-governance-uploaded-evidence"),
+    ).not.toBeInTheDocument();
+
+    // The flagged artifact shows a client-safe compliance chip — never the
+    // raw matched term ("d09" is present in its own body text above,
+    // proving this isn't just an absence-of-input coincidence).
+    expect(
+      screen.getByTestId("source-shell-file-compliance-flag-generated-rfp"),
+    ).toHaveTextContent("Compliance review required");
+    expect(
+      screen.getByTestId(
+        "source-shell-file-compliance-message-generated-rfp",
+      ),
+    ).toHaveTextContent(
+      "This draft was flagged for compliance review before external use.",
+    );
+    expect(files).not.toHaveTextContent("compliance-review-flagged");
+    expect(
+      screen.queryByTestId("source-shell-file-compliance-flag-generated-draft"),
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
       "Expected artifacts",

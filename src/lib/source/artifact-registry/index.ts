@@ -176,6 +176,7 @@ interface SourceArtifactRow {
   disclosure_classification: unknown;
   evidence_state: SourceArtifactEvidenceState;
   approval_state: SourceArtifactApprovalState;
+  description?: string | null;
   is_client_final?: boolean | null;
   is_current_authoritative?: boolean | null;
   source_generated_artifact_id?: string | null;
@@ -221,6 +222,7 @@ const SELECT_COLUMNS = [
   "disclosure_classification",
   "evidence_state",
   "approval_state",
+  "description",
   "is_client_final",
   "is_current_authoritative",
   "source_generated_artifact_id",
@@ -292,6 +294,7 @@ function rowToRecord(row: SourceArtifactRow): SourceArtifactRegistryRecord {
       : {}),
     evidenceState: row.evidence_state,
     approvalState: row.approval_state,
+    description: row.description ?? null,
     isClientFinal: row.is_client_final === true,
     isCurrentAuthoritative: row.is_current_authoritative === true,
     sourceGeneratedArtifactId: row.source_generated_artifact_id ?? null,
