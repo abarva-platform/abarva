@@ -32,6 +32,10 @@ describe("Source artifact lifecycle matrix", () => {
     expect(summary.renderableCount).toBeGreaterThan(10);
     expect(summary.clientFinalCount).toBe(1);
     expect(summary.evidenceOnlyCount).toBe(1);
+    expect(summary.quality.hardFailCount).toBeGreaterThan(0);
+    expect(summary.quality.missingRequiredCount).toBeGreaterThan(0);
+    expect(summary.quality.reviewRequiredCount).toBe(0);
+    expect(summary.quality.label).toBe("Hard fails present");
 
     const scopeMemo = summary.rows.find((row) => row.code === "d05_scope_memo");
     const ticketSynthesis = summary.rows.find(
@@ -44,9 +48,15 @@ describe("Source artifact lifecycle matrix", () => {
     expect(scopeMemo?.governanceMessage).toContain(
       "client-final artifact is now the authoritative deliverable of record",
     );
+    expect(scopeMemo?.quality.state).toBe("decision_ready");
+    expect(scopeMemo?.quality.score).toBeGreaterThanOrEqual(88);
     expect(ticketSynthesis?.lifecycleState).toBe("evidence_only");
     expect(ticketSynthesis?.governanceMessage).toContain(
       "not a client-approved deliverable",
+    );
+    expect(ticketSynthesis?.quality.state).toBe("evidence_only");
+    expect(ticketSynthesis?.quality.hardFails[0]).toContain(
+      "Uploaded evidence is present",
     );
     expect(rfpPack?.audienceLabel).toContain("Client-facing");
     expect(rfpPack?.structureLabel).toContain("Required exhibits");
@@ -54,6 +64,8 @@ describe("Source artifact lifecycle matrix", () => {
     expect(rfpPack?.controlsLabel).toContain("Missing inputs");
     expect(rfpPack?.prompt.maxTokensLabel).toBe("128k max");
     expect(rfpPack?.exportFormatsLabel).toBe("DOCX / HTML / PDF");
+    expect(rfpPack?.quality.state).toBe("missing");
+    expect(rfpPack?.quality.hardFails[0]).toContain("Required/gate-defining");
   });
 
   it("keeps AI-generated drafts in review-required state until client final is accepted", () => {
@@ -75,6 +87,9 @@ describe("Source artifact lifecycle matrix", () => {
     expect(rfpPack?.governanceMessage).toContain(
       "Human review is required before external use",
     );
+    expect(rfpPack?.quality.state).toBe("review_required");
+    expect(rfpPack?.quality.hardFails[0]).toContain("AI-prepared draft");
+    expect(rfpPack?.quality.warnings[0]).toContain("required exhibits");
   });
 
   it("matches production registry records by artifactKind", () => {
@@ -136,6 +151,12 @@ describe("Source artifact lifecycle matrix", () => {
         sourceOrigin: "uploaded",
         status: "parsed",
       },
+      {
+        artifactKind: "d07_ticket_synth",
+        artifactGroup: "upload",
+        sourceOrigin: "uploaded",
+        status: "parsed",
+      },
     ]);
 
     const csv = buildSourceArtifactStandardsCsv(summary.rows);
@@ -146,6 +167,9 @@ describe("Source artifact lifecycle matrix", () => {
     expect(csv).toContain('"Token budget"');
     expect(csv).toContain('"AI draft rule"');
     expect(csv).toContain('"Human final rule"');
+    expect(csv).toContain('"Quality status"');
+    expect(csv).toContain('"Quality score"');
+    expect(csv).toContain('"Quality findings"');
     expect(csv).toContain('"Scope","d08_premortem","Pre-mortem on Scope Risk"');
     expect(csv).toContain(
       '"Transition","d31_kt_evidence","Knowledge-Transfer Evidence"',
@@ -157,5 +181,7 @@ describe("Source artifact lifecycle matrix", () => {
       '"A reviewed client-final version must be accepted back into Source as the authoritative artifact of record."',
     );
     expect(csv).toContain('"Claude Opus","128k max"');
+    expect(csv).toContain('"Human review required","68"');
+    expect(csv).toContain('"Evidence only","42"');
   });
 });

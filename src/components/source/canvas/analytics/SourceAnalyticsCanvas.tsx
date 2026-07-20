@@ -1017,6 +1017,10 @@ function ArtifactLifecyclePanel({
   )}`;
   const standardsCsvFilename = `${view.event.code || 'source-event'}-artifact-standards.csv`;
   const summaryItems = [
+    ['Quality score', `${lifecycle.quality.score}/100`],
+    ['Hard fails', String(lifecycle.quality.hardFailCount)],
+    ['Missing required', String(lifecycle.quality.missingRequiredCount)],
+    ['Review-required', String(lifecycle.quality.reviewRequiredCount)],
     ['Expected artifacts', String(lifecycle.expectedCount)],
     ['Required', String(lifecycle.requiredCount)],
     ['Gate-defining', String(lifecycle.gateDefiningCount)],
@@ -1074,6 +1078,18 @@ function ArtifactLifecyclePanel({
             Generated documents stay as AI-prepared drafts until a reviewed
             client-final version is accepted back into Source as the
             authoritative artifact of record.
+          </p>
+          <p
+            data-testid="source-artifact-quality-scope"
+            style={{
+              margin: '8px 0 0',
+              color: ANALYTICS.MUTED,
+              fontSize: 12,
+              lineHeight: 1.45,
+              maxWidth: 760,
+            }}
+          >
+            Quality rubric: {lifecycle.quality.label}. {lifecycle.quality.scopeLabel}
           </p>
           <a
             href={standardsCsvHref}
@@ -1232,6 +1248,19 @@ function LifecycleStageRows({
               basis={row.lifecycleState === 'not_registered' ? 'missing' : 'live_artifact'}
               label={row.lifecycleLabel}
             />
+            <div
+              style={{
+                marginTop: 8,
+                color: ANALYTICS.INK_2,
+                fontSize: 11.5,
+                fontWeight: 800,
+              }}
+            >
+              Quality {row.quality.score}/100
+            </div>
+            <div style={{ marginTop: 3, color: ANALYTICS.MUTED, fontSize: 11 }}>
+              {row.quality.label}
+            </div>
             <div style={{ marginTop: 6, color: ANALYTICS.MUTED, fontSize: 11 }}>
               {row.familyLabel}
             </div>
@@ -1247,6 +1276,17 @@ function LifecycleStageRows({
             <strong>{row.approvalLabel}</strong>
             <br />
             {row.governanceMessage}
+            {row.quality.hardFails.length > 0 || row.quality.warnings.length > 0 ? (
+              <div
+                style={{
+                  marginTop: 8,
+                  color: row.quality.hardFails.length > 0 ? '#8A3A12' : ANALYTICS.MUTED,
+                  fontSize: 11.5,
+                }}
+              >
+                {row.quality.hardFails[0] ?? row.quality.warnings[0]}
+              </div>
+            ) : null}
             {row.lifecycleState === 'ai_draft' ? (
               <div style={{ marginTop: 10 }}>
                 <AcceptClientFinalButton
