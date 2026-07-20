@@ -942,6 +942,19 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getAllByText(/\$270\.0M/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/\$91\.8M/).length).toBeGreaterThan(0);
     expect(screen.getByText(/Value evidence is active/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "AI Portfolio" }));
+    expect(screen.getByTestId("tower-active-ai-tools")).toHaveTextContent(
+      "Tool spend, usage, value proof, and claim gates",
+    );
+    expect(screen.getByTestId("tower-active-ai-tools-table")).toHaveTextContent(
+      "Customer Recovery Agent Assist",
+    );
+    fireEvent.doubleClick(
+      screen.getByTestId("tower-ai-tool-row-airline:customer-recovery-agent-assist"),
+    );
+    expect(screen.getByTestId("tower-ai-tool-trace-drawer")).toHaveTextContent(
+      "Customer Recovery Agent Assist",
+    );
     expect(screen.queryByText("cio_tower")).not.toBeInTheDocument();
   });
 

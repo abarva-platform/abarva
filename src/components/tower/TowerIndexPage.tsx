@@ -2999,11 +2999,19 @@ function TowerAiPortfolio({
   aiSpend,
   candidateAi,
   rows,
+  tenantKey,
+  tenantName,
 }: {
   aiSpend: CioTowerCxoMeasureCard | null;
   candidateAi: CioTowerCxoMeasureCard | null;
   rows: ReadonlyArray<TowerDecisionLaneRow>;
+  tenantKey: string;
+  tenantName: string;
 }) {
+  const [selectedTool, setSelectedTool] = useState<TowerAiToolTraceRow | null>(
+    null,
+  );
+  const toolRows = tenantReferenceToolTraceRows({ tenantKey, tenantName });
   return (
     <section style={{ display: "grid", gap: 18 }}>
       <div
@@ -3111,6 +3119,185 @@ function TowerAiPortfolio({
           ))}
         </div>
       </CioPanel>
+      <TowerActiveAiToolsPanel rows={toolRows} onSelect={setSelectedTool} />
+      {selectedTool ? (
+        <TowerAiToolTraceDrawer
+          row={selectedTool}
+          tenantName={tenantName}
+          onClose={() => setSelectedTool(null)}
+        />
+      ) : null}
+    </section>
+  );
+}
+
+function TowerActiveAiToolsPanel({
+  rows,
+  onSelect,
+}: {
+  rows: ReadonlyArray<TowerAiToolTraceRow>;
+  onSelect: (row: TowerAiToolTraceRow) => void;
+}) {
+  if (rows.length === 0) return null;
+  return (
+    <section
+      data-testid="tower-active-ai-tools"
+      style={{
+        ...towerBoardCardStyle,
+        minHeight: 0,
+        padding: 0,
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 14,
+          padding: "20px 22px 14px",
+          borderBottom: `1px solid ${T.RULE}`,
+        }}
+      >
+        <div>
+          <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>
+            Active AI Tools
+          </div>
+          <h3
+            style={{
+              margin: "6px 0 0",
+              fontFamily: T.SERIF,
+              fontSize: 28,
+              lineHeight: 1.05,
+              color: T.INK,
+            }}
+          >
+            Tool spend, usage, value proof, and claim gates
+          </h3>
+        </div>
+        <div style={{ color: T.GRAY_DK, fontSize: 12, textAlign: "right" }}>
+          Double-click a row for the investment trace.
+          <br />
+          Reference rows fill the demo tool-spend lens when mart rows are sparse.
+        </div>
+      </div>
+      <div style={{ overflowX: "auto" }}>
+        <table
+          data-testid="tower-active-ai-tools-table"
+          style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+        >
+          <thead>
+            <tr>
+              {[
+                "Tool · Function",
+                "Active",
+                "Adoption",
+                "Promised",
+                "Validated",
+                "Claim State",
+                "Inspect",
+              ].map((head) => (
+                <th
+                  key={head}
+                  style={{
+                    textAlign:
+                      head === "Tool · Function" || head === "Claim State"
+                        ? "left"
+                        : "right",
+                    padding: "14px 16px 12px",
+                    fontFamily: T.MONO,
+                    fontSize: 9,
+                    letterSpacing: "1.3px",
+                    color: T.GRAY_DK,
+                    textTransform: "uppercase",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {head}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr
+                key={row.key}
+                data-testid={`tower-ai-tool-row-${row.key}`}
+                onDoubleClick={() => onSelect(row)}
+                style={{
+                  borderTop: `1px solid ${T.RULE}`,
+                  cursor: "zoom-in",
+                }}
+              >
+                <td style={{ padding: "16px" }}>
+                  <strong style={{ fontFamily: T.SERIF, fontSize: 18 }}>
+                    {row.name}
+                  </strong>
+                  <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 4 }}>
+                    {row.functionLabel}
+                  </div>
+                </td>
+                <td style={{ padding: "16px", textAlign: "right", fontWeight: 850 }}>
+                  {row.activeUsers}
+                </td>
+                <td style={{ padding: "16px", textAlign: "right", fontWeight: 850 }}>
+                  {row.adoption}
+                </td>
+                <td style={{ padding: "16px", textAlign: "right", fontWeight: 850 }}>
+                  {row.promisedValue}
+                </td>
+                <td style={{ padding: "16px", textAlign: "right", fontWeight: 850 }}>
+                  {row.financeValidated}
+                </td>
+                <td style={{ padding: "16px" }}>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 7,
+                      borderRadius: 999,
+                      background: gateDotBg(row.status),
+                      color: gateDotColor(row.status),
+                      padding: "6px 9px",
+                      fontWeight: 900,
+                      fontSize: 12,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: 999,
+                        background: gateDotColor(row.status),
+                      }}
+                    />
+                    {row.claimState}
+                  </span>
+                </td>
+                <td style={{ padding: "16px", textAlign: "right" }}>
+                  <button
+                    type="button"
+                    onClick={() => onSelect(row)}
+                    style={{
+                      border: `1px solid ${T.RULE_STRONG}`,
+                      borderRadius: 999,
+                      background: "#fff",
+                      color: T.INK,
+                      padding: "7px 11px",
+                      fontWeight: 850,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Inspect
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }
@@ -5897,6 +6084,11 @@ interface TowerAiToolTraceRow {
   evidence: Array<{ source: string; caveat: string }>;
 }
 
+interface TowerToolTraceTenant {
+  tenantKey: string;
+  tenantName: string;
+}
+
 function gateDotColor(state: TowerToolGateState): string {
   if (state === "ok") return T.GREEN;
   if (state === "partial") return T.AMBER;
@@ -5992,7 +6184,7 @@ function aiPortfolioDisplayReason(row: TowerMartAiPortfolioItem): string {
     : "Hold the next tranche until evidence gates clear.";
 }
 
-function normalizedTowerTenantKey(command: TowerMartCommandCenterRow): string {
+function normalizedTowerTenantKey(command: TowerToolTraceTenant): string {
   return `${command.tenantKey} ${command.tenantName}`.toLowerCase();
 }
 
@@ -6329,7 +6521,7 @@ function meridianReferenceToolTraceRows(): TowerAiToolTraceRow[] {
 }
 
 function tenantReferenceToolTraceRows(
-  command: TowerMartCommandCenterRow,
+  command: TowerToolTraceTenant,
 ): TowerAiToolTraceRow[] {
   const tenant = normalizedTowerTenantKey(command);
   if (/meridian|healthcare/.test(tenant)) {
@@ -6440,7 +6632,7 @@ function tenantReferenceToolTraceRows(
 
 function mergeTowerToolTraceRows(
   portfolioRows: ReadonlyArray<TowerAiPortfolioDisplayRow>,
-  command: TowerMartCommandCenterRow,
+  command: TowerToolTraceTenant,
 ): TowerAiToolTraceRow[] {
   const loaded = portfolioRows.map(towerToolTraceFromPortfolioRow);
   const reference = tenantReferenceToolTraceRows(command);
@@ -8049,6 +8241,8 @@ function CxoGovernedCommandCenter({
           aiSpend={aiSpend}
           candidateAi={candidateAi}
           rows={aiRows}
+          tenantKey={model.tenantKey}
+          tenantName={model.tenantName}
         />
       ) : null}
 
