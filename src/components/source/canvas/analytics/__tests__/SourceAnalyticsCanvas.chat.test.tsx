@@ -60,6 +60,11 @@ import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
 import { SAMPLE_SCOPE_STAGE } from "../sample-view-model";
 import type { StageAnalyticsView } from "../view-model";
 import type { SourcingEventSummary } from "@/lib/source/types";
+import {
+  SOURCE_AI_DRAFT_GOVERNANCE_LABEL,
+  SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
+  SOURCE_CLIENT_FINAL_GOVERNANCE_MESSAGE,
+} from "@/lib/source/artifact-governance";
 
 const originalFetch = global.fetch;
 
@@ -170,6 +175,60 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     fireEvent.click(screen.getByRole("button", { name: /approvals/i }));
 
     expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
+  });
+
+  it("labels file-ledger generated drafts and client finals from artifact state", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Lakeshore"
+        artifacts={[
+          {
+            id: "generated-draft",
+            stageKey: "scope",
+            artifactGroup: "generated",
+            title: "Scope Memo",
+            fileFormat: "docx",
+            status: "draft",
+          },
+          {
+            id: "uploaded-evidence",
+            stageKey: "scope",
+            artifactGroup: "upload",
+            title: "Ticket History",
+            fileFormat: "csv",
+            status: "preliminary",
+          },
+          {
+            id: "client-final",
+            stageKey: "scope",
+            artifactGroup: "upload",
+            title: "Approved Scope Memo",
+            fileFormat: "pdf",
+            status: "client_final",
+            isClientFinal: true,
+            isCurrentAuthoritative: true,
+            sourceGeneratedArtifactId: "generated-draft",
+          },
+        ]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /^files$/i }));
+
+    const files = screen.getByTestId("source-shell-v2-files");
+    expect(files).toHaveTextContent(SOURCE_AI_DRAFT_GOVERNANCE_LABEL);
+    expect(files).toHaveTextContent(SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE);
+    expect(files).toHaveTextContent("File evidence");
+    expect(files).toHaveTextContent("Client-approved final");
+    expect(files).toHaveTextContent(SOURCE_CLIENT_FINAL_GOVERNANCE_MESSAGE);
+    expect(
+      screen.getByTestId("source-shell-file-governance-generated-draft"),
+    ).toHaveTextContent("Human review is required");
+    expect(
+      screen.queryByTestId("source-shell-file-governance-uploaded-evidence"),
+    ).not.toBeInTheDocument();
   });
 
   it("does not tell users that event approval belongs in the old Source Approvals page", () => {
