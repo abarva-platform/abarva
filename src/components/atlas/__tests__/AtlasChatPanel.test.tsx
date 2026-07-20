@@ -246,7 +246,7 @@ describe("AtlasChatPanel · adapter", () => {
       <AtlasChatPanel
         messages={MESSAGES}
         pending={true}
-        pendingMessage="Checking governed Tower evidence"
+        pendingMessage="Validating supporting evidence..."
         onSubmit={jest.fn()}
         suggestions={[]}
         onSuggestion={jest.fn()}
@@ -256,7 +256,7 @@ describe("AtlasChatPanel · adapter", () => {
     );
 
     const thread = screen.getByTestId("agent-dock-thread");
-    expect(thread).toHaveTextContent("Checking governed Tower evidence");
+    expect(thread).toHaveTextContent("Validating supporting evidence...");
     expect(thread).not.toHaveTextContent("aVa is thinking…");
   });
 

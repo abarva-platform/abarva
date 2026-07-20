@@ -18,6 +18,11 @@ import {
 } from "@/lib/tower/tower-v3-runtime-view";
 import { isTowerV3ContextRuntimeEnabled } from "@/lib/tower/tower-v3-runtime-flag";
 import type { TowerValueClaim } from "@/lib/enterprise-knowledge/contracts";
+import {
+  normalizeTowerVisualContract,
+  selectTowerVisualContract,
+  type TowerVisualContract,
+} from "@/lib/cio-tower/visual-contract";
 
 const MODEL_NAME = "claude-sonnet-4-6";
 const PROMPT_VERSION = "cio_tower_advisor_prompt_v3";
@@ -99,6 +104,7 @@ export interface CioTowerPromptContext {
   relationships: CioTowerRelationshipRow[];
   gaps: string[];
   valueClaimPolicy: CioTowerValueClaimPolicy;
+  visualContract: TowerVisualContract;
   towerV3RuntimeView?: TowerV3RuntimeViewModel | null;
 }
 
@@ -137,6 +143,7 @@ export interface CioTowerVisibleAnswerContract {
   answer: string;
   tables?: CioTowerVisibleTable[];
   tabs?: CioTowerVisibleTab[];
+  visualContract?: TowerVisualContract | null;
   followUpQuestion?: string | null;
 }
 
@@ -439,6 +446,7 @@ export function parseVisibleAnswerContract(
     answer: parsed.answer,
     tables: parsed.tables ?? [],
     tabs: parsed.tabs ?? [],
+    visualContract: normalizeTowerVisualContract(parsed.visualContract),
     followUpQuestion: parsed.followUpQuestion ?? null,
   };
 }
@@ -474,6 +482,20 @@ export function buildCioTowerClaudePrompt(
     `- Source-of-truth status: ${context.valueClaimPolicy.sourceOfTruthStatus}; v3 reconciliation: ${context.valueClaimPolicy.v3ReconciliationStatus}.`,
     `- Realized-value language allowed: ${context.valueClaimPolicy.realizedValueLanguageAllowed ? "yes" : "no"}.`,
     `- Claim gate: ${context.valueClaimPolicy.claim.gateStatus}; outcome-proof language stays blocked until finance-attested baseline and actuals evidence is reconciled.`,
+  ];
+  const visualContractLines = [
+    `- Question intent: ${context.visualContract.questionIntent}.`,
+    `- Recommended visual: ${context.visualContract.recommendedVisual}.`,
+    `- Required data: ${context.visualContract.requiredData.join("; ") || "none"}.`,
+    `- Axes: ${[
+      context.visualContract.axes?.x ? `x=${context.visualContract.axes.x}` : null,
+      context.visualContract.axes?.y ? `y=${context.visualContract.axes.y}` : null,
+      context.visualContract.axes?.size ? `size=${context.visualContract.axes.size}` : null,
+      context.visualContract.axes?.color ? `color=${context.visualContract.axes.color}` : null,
+    ].filter(Boolean).join("; ") || "none"}.`,
+    `- Executive takeaway: ${context.visualContract.executiveTakeaway}`,
+    `- Source boundary: ${context.visualContract.sourceBoundary}`,
+    ...context.visualContract.annotations.map((annotation) => `- Annotation: ${annotation}`),
   ];
   const towerV3Runtime = context.towerV3RuntimeView;
   const towerV3Lines = towerV3Runtime
@@ -573,7 +595,13 @@ export function buildCioTowerClaudePrompt(
     "- You own every user-visible word in the JSON fields.",
     "- AbarVa will render the strings exactly as returned. It will not rewrite, summarize, scrub, relabel, infer, or improve them.",
     "- Put the main prose in answer.",
-    "- If a table, chart, graph, ranking, trend, portfolio, or comparison helps, include tables[]. The renderer will display your title, column labels, and cell text exactly and may visualize the table later.",
+    "- Choose a visualContract that explains which visual best supports the executive decision, why, what the axes mean, what annotations matter, and what source boundary applies.",
+    "- Do not generate chart JSON. Do not hand-draw charts. The renderer owns the chart.",
+    "- If a visualContract recommends a chart, include tables[] with the chart-ready data needed for that visual. The renderer will build the chart from those supported rows.",
+    "- For a 2x2 visual, include numeric 0-100 columns for value and complexity/readiness whenever those scores are loaded or safely contract-derived.",
+    "- For a trend visual, include period rows and numeric metric values; do not invent missing periods.",
+    "- For a waterfall or value-bridge visual, include stage rows and numeric value amounts; label forecast/planning stages honestly.",
+    "- For heatmap, vendor, distribution, or comparison visuals, include ranked rows with the loaded metric and a plain-English evidence or gap note.",
     "- If multiple panes help, include tabs[]. The renderer will place your tab labels and prose exactly.",
     "- If no table is needed, return tables as an empty array.",
     "- Do not duplicate table content inside answer. Use tables[] only.",
@@ -584,6 +612,7 @@ export function buildCioTowerClaudePrompt(
     '  "answer": "final user-visible answer text",',
     '  "tables": [{"id":"short_id","title":"visible title","columns":["visible column"],"rows":[["visible cell"]]}],',
     '  "tabs": [{"id":"short_id","label":"visible tab label","prose":"visible prose","tables": []}],',
+    '  "visualContract": {"questionIntent":"comparison","recommendedVisual":"horizontal_bar","requiredData":["visible business data required"],"axes":{"x":"visible x axis","y":"visible y axis"},"annotations":["visible annotation"],"executiveTakeaway":"why this visual matters","sourceBoundary":"what this visual may and may not claim"},',
     '  "followUpQuestion": "one specific optional follow-up question, or null"',
     "}",
     "",
@@ -632,6 +661,9 @@ export function buildCioTowerClaudePrompt(
     "",
     "Tower value-claim policy:",
     valueClaimPolicyLines.join("\n"),
+    "",
+    "Tower visual contract to use:",
+    visualContractLines.join("\n"),
     "",
     "Answer now. Return the JSON object only.",
   ].join("\n");
@@ -998,6 +1030,7 @@ export function buildCioTowerFallbackAnswer(
         tables: [],
       },
     ],
+    visualContract: context.visualContract,
     followUpQuestion: buildCioTowerFallbackFollowUp(context, intent, {
       totalBudget,
       runBudget,
@@ -1125,6 +1158,7 @@ function buildTowerV3FallbackAnswer(
         tables: [],
       },
     ],
+    visualContract: context.visualContract,
     followUpQuestion: topGap?.title
       ? `Should Tower turn "${topGap.title}" into a 30-day measurement plan with owners and evidence requests?`
       : "Which claim gate should Tower close first?",
@@ -1233,6 +1267,11 @@ export async function loadCioTowerPromptContext(args: {
     relationships,
     gaps: deriveGaps(contract, measures, relevantFacts, valueClaimPolicy),
     valueClaimPolicy,
+    visualContract: selectTowerVisualContract({
+      question: args.question,
+      contractKey: contract.contract_key,
+      artifactType: contract.artifact_type,
+    }),
     towerV3RuntimeView,
   };
 }
@@ -1266,6 +1305,7 @@ async function persistPromptAndTrace(args: {
     relationships: args.context.relationships,
     gaps: args.context.gaps,
     valueClaimPolicy: args.context.valueClaimPolicy,
+    visualContract: args.context.visualContract,
     towerV3RuntimeView: args.context.towerV3RuntimeView,
   };
   const tx = createTxSession("abarva-cio-tower-answer-trace");
@@ -1379,6 +1419,7 @@ export async function answerCioTowerQuestion(args: {
     );
   }
   if (parsedOutput) {
+    parsedOutput.visualContract ??= context.visualContract;
     for (const visibleText of collectVisibleTextFromContract(parsedOutput)) {
       validationErrors.push(...validateVisibleAnswer(visibleText));
     }
