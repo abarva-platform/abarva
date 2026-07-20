@@ -187,7 +187,8 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
           {
             id: "generated-draft",
             stageKey: "scope",
-            artifactGroup: "generated",
+            artifactFamily: "sourcing_strategy",
+            sourceOrigin: "generated",
             title: "Scope Memo",
             fileFormat: "docx",
             status: "draft",

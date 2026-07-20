@@ -144,6 +144,7 @@ export interface SourceShellArtifactLike {
   artifactGroup?: string | null;
   artifactType?: string | null;
   artifactFamily?: string | null;
+  sourceOrigin?: string | null;
   title?: string | null;
   fileName?: string | null;
   fileFormat?: string | null;
@@ -351,11 +352,12 @@ function taskSourceBasis(task: StageTaskView): SourceShellEvidenceBasis {
 function toFileItem(artifact: SourceShellArtifactLike): SourceShellFileItem {
   const stageKey = String(artifact.stageKey ?? artifact.sourcingStage ?? "other");
   const group = String(artifact.artifactGroup ?? artifact.artifactFamily ?? "artifact");
+  const sourceOrigin = String(artifact.sourceOrigin ?? "");
   const state = String(
     artifact.status ?? artifact.approvalState ?? artifact.evidenceState ?? "registered",
   );
   const isClientFinal = artifact.isClientFinal === true || state === "client_final";
-  const governance = fileGovernanceFor({ group, isClientFinal });
+  const governance = fileGovernanceFor({ group, sourceOrigin, isClientFinal });
   return {
     id: artifact.id,
     stageKey,
@@ -372,9 +374,11 @@ function toFileItem(artifact: SourceShellArtifactLike): SourceShellFileItem {
 
 function fileGovernanceFor({
   group,
+  sourceOrigin,
   isClientFinal,
 }: {
   group: string;
+  sourceOrigin: string;
   isClientFinal: boolean;
 }): { label: string; message: string | null } {
   if (isClientFinal) {
@@ -384,7 +388,7 @@ function fileGovernanceFor({
     };
   }
 
-  if (group === "generated") {
+  if (group === "generated" || sourceOrigin === "generated") {
     return {
       label: SOURCE_AI_DRAFT_GOVERNANCE_LABEL,
       message: SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
