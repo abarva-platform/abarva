@@ -510,17 +510,13 @@ function intelligenceSafeSuggestedQuestions(
     groundingText,
     tenant,
   );
-
-  const candidates =
-    queryCandidates.length > 0
-      ? queryCandidates
-      : groundingCandidates.slice(0, 2);
+  const focusCandidates = buildFocusedIntelligenceFallbacks(queryText, tenant);
 
   return dedupe([
-    ...candidates,
-    `Which ${tenant} evidence is strongest, inferred, or still missing?`,
-    `What should ${tenant} validate this week to make the recommendation executable?`,
-    "Which owner should review the evidence boundary before this becomes board-ready?",
+    ...queryCandidates,
+    ...focusCandidates,
+    ...groundingCandidates.slice(0, Math.max(0, 3 - queryCandidates.length)),
+    ...buildIntelligenceClosingCandidates(queryText, tenant),
   ])
     .map(normalizeSuggestedQuestionText)
     .filter(isPolishedSuggestedQuestion)
@@ -538,10 +534,26 @@ function buildIntelligenceFollowupCandidates(
       text,
     )
   ) {
-    candidates.push(
-      `Which ${tenant} AI bets have loaded value, readiness, and owner evidence today?`,
-      `Which top AI bet should ${tenant} fund, hold, or retire after evidence review?`,
-    );
+    if (
+      /\b(rank|2x2|matrix|value.*complexity|complexity.*value)\b/i.test(text)
+    ) {
+      candidates.push(
+        `What evidence would move each ${tenant} use case on the value-complexity matrix?`,
+        `Which use case has the clearest sponsor, data, and value proof?`,
+      );
+    } else if (
+      /\b(ready to fund|fund now|hold for evidence|funding)\b/i.test(text)
+    ) {
+      candidates.push(
+        `Which funded bet has enough owner, value, and readiness evidence today?`,
+        `Which held bet needs one proof point before funding?`,
+      );
+    } else {
+      candidates.push(
+        `Which market AI pattern actually fits ${tenant}'s loaded constraints?`,
+        `What tenant-specific evidence changes the generic AI trend ranking?`,
+      );
+    }
   }
   if (
     /\b(agent assist|contact.?center|call.?center|member service|customer service|service desk|case management|first.?contact)\b/i.test(
@@ -552,7 +564,11 @@ function buildIntelligenceFollowupCandidates(
       `Which ${tenant} contact-center systems, data feeds, and escalation owners should we validate first?`,
     );
   }
-  if (/\b(fraud|dispute|aci|backlog|request|case)\b/i.test(text)) {
+  if (
+    /\b(fraud|dispute|aci|backlog|transaction request|service request)\b/i.test(
+      text,
+    )
+  ) {
     candidates.push(
       `What evidence would make the fraud or dispute backlog value case board-safe for ${tenant}?`,
     );
@@ -610,13 +626,21 @@ function buildIntelligenceFollowupCandidates(
       text,
     )
   ) {
-    candidates.push(
-      `What board-safe value proof should ${tenant}'s CFO require before funding the next wave?`,
-    );
+    if (/\b(cfo|roi|baseline|measured value)\b/i.test(text)) {
+      candidates.push(
+        `Which value baseline should ${tenant}'s CFO accept or reject first?`,
+      );
+    } else if (/\b(board|board-safe)\b/i.test(text)) {
+      candidates.push(
+        `Which missing proof would change the board recommendation most?`,
+      );
+    } else {
+      candidates.push(
+        `Which value assumption needs proof before ${tenant} funds this?`,
+      );
+    }
   }
-  if (
-    /\b(moves|phase|p0|p1|p2|p3|p4|p5|tower|execute|execution)\b/i.test(text)
-  ) {
+  if (/\b(moves|phase|p0|p1|p2|p3|p4|p5|tower)\b/i.test(text)) {
     candidates.push(
       `How should Moves and Tower turn this ${tenant} decision into owners, gates, and value tracking?`,
     );
@@ -672,6 +696,118 @@ function buildIntelligenceFollowupCandidates(
   }
 
   return dedupe(candidates);
+}
+
+function buildFocusedIntelligenceFallbacks(
+  text: string,
+  tenant: string,
+): string[] {
+  const focus = inferIntelligenceFocus(text);
+  if (!focus) return [];
+  return [
+    `What current-state evidence would most change the ${focus} recommendation?`,
+    `Who should own the next ${focus} validation step at ${tenant}?`,
+    `Which data, system, or process gap could block ${focus} execution?`,
+  ];
+}
+
+function buildIntelligenceClosingCandidates(
+  text: string,
+  tenant: string,
+): string[] {
+  if (/\b(board|cfo|executive|funding|invest)\b/i.test(text)) {
+    return [
+      `What one-slide decision story should ${tenant} take to the CFO?`,
+      "Which caveat must stay visible before this becomes board-ready?",
+      "What would change this recommendation after the next evidence review?",
+    ];
+  }
+  if (/\b(moves|tower|execute|execution|phase)\b/i.test(text)) {
+    return [
+      "Which P0-P5 gate should own the next evidence decision?",
+      `What should Tower track if ${tenant} funds this work?`,
+      "Which owner should accept the evidence boundary before execution?",
+    ];
+  }
+  return [
+    "What would change this recommendation after the next evidence review?",
+    "Which owner should validate the highest-risk assumption?",
+    `What should ${tenant} confirm before treating this as client-ready?`,
+  ];
+}
+
+function inferIntelligenceFocus(text: string): string | null {
+  const normalized = text.toLowerCase();
+  if (
+    /\b(agent assist|contact.?center|call.?center|member service|customer service)\b/.test(
+      normalized,
+    )
+  ) {
+    return "agent assist";
+  }
+  if (/\b(fraud|dispute|transaction monitoring|sar|aml)\b/.test(normalized)) {
+    return "fraud operations";
+  }
+  if (
+    /\b(credit spreading|commercial credit|fair lending|model validation)\b/.test(
+      normalized,
+    )
+  ) {
+    return "credit automation";
+  }
+  if (
+    /\b(data readiness|data foundation|feature store|lakehouse|semantic layer|lineage|metric basis)\b/.test(
+      normalized,
+    )
+  ) {
+    return "data foundation";
+  }
+  if (
+    /\b(technology stack|tech stack|systems?|platform|mainframe|cloud|integration|infrastructure)\b/.test(
+      normalized,
+    )
+  ) {
+    return "technology stack";
+  }
+  if (
+    /\b(vendor|contract|renewal|source|sla|commercial|buy|spend)\b/.test(
+      normalized,
+    )
+  ) {
+    return "vendor decision";
+  }
+  if (
+    /\b(governance|risk|control|audit|compliance|explainability)\b/.test(
+      normalized,
+    )
+  ) {
+    return "governance model";
+  }
+  if (
+    /\b(industry|case stud|benchmark|real-world|real world|market pattern|peer)\b/.test(
+      normalized,
+    )
+  ) {
+    return "industry benchmark";
+  }
+  if (
+    /\b(interview|priority|priorities|executive signal|business signal)\b/.test(
+      normalized,
+    )
+  ) {
+    return "interview priority";
+  }
+  if (/\b(rank|2x2|matrix|use cases?|portfolio)\b/.test(normalized)) {
+    return "portfolio ranking";
+  }
+  if (
+    /\b(top ai|ai investment|ai trend|ai trends|fund|funding)\b/.test(
+      normalized,
+    )
+  ) {
+    return "AI investment";
+  }
+  return null;
 }
 
 function normalizeSuggestedQuestionText(question: string): string {

@@ -58,8 +58,14 @@ export async function generateFollowups(args: {
     .slice(0, 3000);
 
   const prompt = `Given the question, answer, and client grounding context, propose 3 follow-up questions the user is
-likely to ask next. Each should drill deeper OR pivot to an adjacent concern.
-For client strategy or AI/use-case topics, make the follow-ups tenant-specific: ask about loaded current-state systems, data readiness, interview priorities, AI tool usage, process bottlenecks, evidence gaps, or module handoffs when those appear in grounding context.
+likely to ask next. Each should feel like a senior consultant continuing the exact conversation.
+
+Rules:
+- Make each question specific to the user's question and the answer; do not use generic evidence boilerplate.
+- Each question must be one sentence, under 18 words, and end with a question mark.
+- Prefer named client context from grounding: systems, data readiness, interview priorities, AI-tool usage, process bottlenecks, value proof, owners, or module handoffs.
+- Ask three different kinds of questions: one evidence probe, one decision/owner probe, and one execution or risk probe.
+- Do not ask AbarVa to approve, certify, negotiate, replace advisors, or claim unsupported live product capabilities.
 Return JSON only: { "followups": ["...", "...", "..."] }
 
 Question: ${args.query}
