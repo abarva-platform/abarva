@@ -187,7 +187,7 @@ export function sanitizeSuggestedQuestions(
           "out_of_scope",
         ].includes(violation.category),
       ) ||
-      /\b(approve the phase|certify value automatically|compare all .*MSAs|classif(?:y|ies).*legacy.*active|replace .*(?:advisor|Gartner|Forrester|ISG|UpperEdge|McKinsey|Bain|Big Four))\b/i.test(
+      /\b(approve the phase|certif(?:y|ies|ication|ied)\b|compare all .*MSAs|classif(?:y|ies).*legacy.*active|replace .*(?:advisor|Gartner|Forrester|ISG|UpperEdge|McKinsey|Bain|Big Four))\b/i.test(
         question,
       );
     if (unsafe) {
