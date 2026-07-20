@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -38,8 +38,9 @@ Source Files now uses authored document bodies from the live Source artifact-sta
 - Pass — ESLint on changed files: `npx eslint src/lib/source/source-event-shell-v2.ts src/lib/source/__tests__/source-event-shell-v2.test.ts 'src/app/(maestro)/source/events/[eventId]/page.tsx'`.
 - Pass — TypeScript compile: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false`.
 - Pass — release governance: `npm run release:check`.
-- Pending — ACA deploy after merge.
-- Pending — signed-in production browser proof that the FS Demo Source Files matrix shows at least one `Content scored` artifact.
+- Pass — PR checks for #5124: all GitHub checks passed before merge, including ESLint, Typecheck + reasoning-layer tests, Chrome Firefox Safari mobile smoke, production readiness, Lighthouse budget, public axe accessibility, release record, and hygiene gates.
+- Pass — ACA deploy after merge: run `29730725194` completed successfully for main SHA `3e2b05ef66a480b56b4b1ee95c14cba8fa29024e`.
+- Pass — signed-in production browser proof: FS Demo Source event `/source/events/dcd31955-e1ac-416b-8c3b-52b83e8650de?stage=scope`, Files workspace, artifact lifecycle matrix reported `CONTENT SCORED 1`, `CONTENT BLOCKERS 3`, `CONTENT WARNINGS 0`; screenshot saved to `/Users/anand/Downloads/source-5124-live-artifact-state-body-content-qa.png`.
 
 ## Rollout Plan
 
@@ -49,11 +50,11 @@ Merge via PR to `main`, let the repo-owned Azure Container Apps deploy workflow 
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: None outside the repo-owned workflow.
-- Approved image digest: Pending deploy.
-- ACA runtime invariant: Pending deploy.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:0abd25ff083165accee8368297493c365739d520fb8be8956a14e1c3c58c6284`
+- ACA runtime invariant: Passed in deploy run `29730725194`; 100% traffic holder `ca-abarva-web-lab-eastus--m3e2b05ef`.
 - Worker image invariant: Not affected.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Yes.
+- Live signed-in proof required: Completed.
 
 ## Rollback Plan
 
@@ -61,10 +62,12 @@ Revert the PR. The route will return to registry-only artifact content, which is
 
 ## Audit Evidence
 
-- PR URL: Pending.
-- CI checks: Pending.
-- ACA deploy: Pending.
-- Signed-in screenshot: Pending.
+- PR URL: `https://github.com/abarva-platform/abarva/pull/5124`
+- CI checks: `https://github.com/abarva-platform/abarva/pull/5124/checks`
+- ACA deploy: `https://github.com/abarva-platform/abarva/actions/runs/29730725194`
+- Production revision: `ca-abarva-web-lab-eastus--m3e2b05ef`
+- Signed-in screenshot: `/Users/anand/Downloads/source-5124-live-artifact-state-body-content-qa.png`
+- Signed-in proof counters: `CONTENT SCORED 1`, `CONTENT BLOCKERS 3`, `CONTENT WARNINGS 0`.
 
 ## Known Gaps
 
