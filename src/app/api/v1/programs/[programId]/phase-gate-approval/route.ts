@@ -4,6 +4,34 @@
 // bypass gates: it first verifies durable phase capture, then uses the existing
 // P0 close helper or governed advancePhase path to create approved phase
 // snapshots and advance the Move.
+//
+// INCIDENT 2026-07-20 (fixed here): this route used to call
+// `preparePhaseGateApprovalRecords`, which — for EVERY phase, unconditionally
+// — auto-CREATED a placeholder `deliverables_v2` row (content: literally
+// "P{phase} gate approval record\n\n{rationale}", no real generated content)
+// for a hardcoded `PHASE_GATE_DELIVERABLES` map, then immediately called
+// `signOffDeliverable` on it, all BEFORE `evaluateGate` ever ran. For P3 the
+// map's keys (`design_spec`, `requirements_traceability`) were STALE — the
+// real orchestrator registry (deliverable-registry.ts) has never produced
+// those exact type keys since it was restructured to produce
+// `target_state_architecture`/`solution_design`/`operating_model_design`/
+// `sourcing_strategy` instead. Because no real row with those stale keys
+// could ever exist, this branch fabricated-and-signed-off a fake stand-in
+// EVERY time, regardless of whether real P3 generation had run at all — this
+// is exactly how a real Move (MEMBER AI ASSIST) advanced P3→P4 with zero real
+// P3 deliverables ever generated. `evaluateGate`'s `design_approved`/
+// `requirements_design_outcome_trace` hard checks then genuinely found these
+// fabricated, self-signed rows and passed — this was never a gate bypass or
+// an override; it was a real hard-gate pass on fabricated evidence.
+//
+// Fix: this route no longer creates or signs off ANYTHING. `evaluateGate`
+// (governance.ts) already independently and correctly checks every phase's
+// REAL required deliverables against REAL `deliverables_v2` rows (updated
+// this session to also require role approvals where applicable, and to
+// require a genuinely completed phase module before any free-text fallback
+// can contribute) — that is the single, authoritative gate. Duplicating a
+// subset of that logic here with a second, stale, unmaintained map was the
+// root cause; the fix is to delete the duplicate, not patch it again.
 
 import { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "@/app/api/v1/programs/_auth";
@@ -11,11 +39,7 @@ import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { getModuleState, getPhaseSnapshots, getProgramById } from "@/lib/programs/queries";
 import { evaluateGate } from "@/lib/programs/governance";
-import {
-  advancePhase,
-  ensurePhaseGateDeliverable,
-  signOffDeliverable,
-} from "@/lib/programs/mutations";
+import { advancePhase } from "@/lib/programs/mutations";
 import { closeP0OnApproval } from "@/lib/programs/origination-close";
 import { writeProgramAuditLogBestEffort } from "@/lib/programs/audit-log";
 import { saveGateDecisionArtifact } from "@/lib/programs/deliverables/gate-override-artifact";
@@ -27,25 +51,6 @@ import { persistP0PhaseCaptureFromSource } from "@/lib/programs/p0-phase-capture
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const PHASE_GATE_DELIVERABLES: Record<number, Array<{ typeKey: string; title: string }>> = {
-  1: [{ typeKey: "charter", title: "Program Charter" }],
-  2: [{ typeKey: "discovery_report", title: "Discovery & Diagnosis Report" }],
-  3: [
-    { typeKey: "design_spec", title: "Solution Design Specification" },
-    { typeKey: "requirements_traceability", title: "Requirements Traceability Matrix" },
-  ],
-  4: [
-    { typeKey: "execution_roadmap", title: "Execution Roadmap" },
-    { typeKey: "business_case", title: "Business Case" },
-    { typeKey: "readiness_and_change_plan", title: "Readiness & Change Plan" },
-    { typeKey: "tower_metric_plan", title: "Tower Metrics Plan" },
-  ],
-  5: [
-    { typeKey: "handoff_package", title: "Mobilization & Tower Handoff Package" },
-    { typeKey: "value_measurement_contract", title: "Value Measurement Contract" },
-  ],
-};
 
 function gateIdFor(programId: string, phase: number): string {
   return `moves-phase-gate:${programId}:P${phase}->P${phase + 1}`;
@@ -155,35 +160,6 @@ async function ensureSponsorAuthorityForApprover(
     approval_authority: "sponsor",
   });
   if (error) throw error;
-}
-
-async function preparePhaseGateApprovalRecords(
-  sb: ReturnType<typeof getAzureWriteFluentClient>,
-  ctx: Awaited<ReturnType<typeof requireTenancy>>,
-  programId: string,
-  phase: number,
-  rationale: string,
-): Promise<void> {
-  const gates = PHASE_GATE_DELIVERABLES[phase] ?? [];
-  for (const gate of gates) {
-    const result = await ensurePhaseGateDeliverable(
-      ctx,
-      programId,
-      {
-        deliverableTypeKey: gate.typeKey,
-        title: gate.title,
-        content: `P${phase} gate approval record\n\n${rationale}`,
-      },
-      { supabase: sb },
-    );
-    if (result.status !== "signed_off") {
-      await signOffDeliverable(ctx, programId, result.deliverableId, { supabase: sb });
-    }
-  }
-
-  if (phase === 1) {
-    await ensureSponsorAuthorityForApprover(sb, programId, ctx);
-  }
 }
 
 async function completeTerminalTowerHandoff(
@@ -399,7 +375,14 @@ export async function POST(
 
     const sb = getAzureWriteFluentClient();
     const toPhase = phase + 1;
-    await preparePhaseGateApprovalRecords(sb, ctx, programId, phase, rationale);
+    // No deliverable is created or signed off here — evaluateGate below is
+    // the single, authoritative check against REAL deliverables_v2 rows.
+    // ensureSponsorAuthorityForApprover is unrelated to deliverable
+    // fabrication (it only grants the approving user sponsor authority when
+    // none exists yet for P0→P1) and is kept as-is.
+    if (phase === 1) {
+      await ensureSponsorAuthorityForApprover(sb, programId, ctx);
+    }
     const gate = await evaluateGate(ctx, programId, phase, toPhase, { supabase: sb });
     const hardFails = gate.failedChecks.filter((check) => check.severity === "hard");
     if (hardFails.length > 0) {
