@@ -141,7 +141,55 @@ describe("buildSourceEventShellView", () => {
       name: "Scope Memo.pdf",
       format: "PDF",
       sourceBasis: "live_artifact",
+      needsComplianceReview: false,
+      complianceReviewLabel: null,
+      complianceReviewMessage: null,
     });
+  });
+
+  it("flags a file item for compliance review when the registry description carries the marker, without leaking the raw text", () => {
+    const view = buildSourceEventShellView({
+      event: EVENT,
+      tenantName: "FS Demo",
+      viewedStageKey: "scope",
+      stageView: SAMPLE_SCOPE_STAGE as StageAnalyticsView,
+      artifacts: [
+        {
+          id: "artifact-flagged",
+          stageKey: "scope",
+          artifactFamily: "scope_document",
+          originalName: "Scope Memo.pdf",
+          sourceFormat: "pdf",
+          evidenceState: "cited",
+          description:
+            "Generated Source deliverable. [compliance-review-flagged]",
+        },
+        {
+          id: "artifact-clean",
+          stageKey: "scope",
+          artifactFamily: "scope_document",
+          originalName: "App Inventory.xlsx",
+          sourceFormat: "xlsx",
+          evidenceState: "cited",
+          description: "Generated Source deliverable.",
+        },
+      ],
+    });
+
+    const flagged = view.files.items.find(
+      (item) => item.id === "artifact-flagged",
+    );
+    const clean = view.files.items.find((item) => item.id === "artifact-clean");
+
+    expect(flagged?.needsComplianceReview).toBe(true);
+    expect(flagged?.complianceReviewLabel).toBe("Compliance review required");
+    expect(flagged?.complianceReviewMessage).toBe(
+      "This draft was flagged for compliance review before external use.",
+    );
+
+    expect(clean?.needsComplianceReview).toBe(false);
+    expect(clean?.complianceReviewLabel).toBeNull();
+    expect(clean?.complianceReviewMessage).toBeNull();
   });
 
   it("exposes Intelligence Explorer context without implying chat responses are persisted", () => {

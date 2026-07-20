@@ -1595,8 +1595,24 @@ function FileCard({ item }: { item: SourceShellFileItem }) {
       <div style={{ color: ANALYTICS.MUTED, fontSize: 12, marginTop: 8 }}>
         {item.group} · {item.state}
       </div>
-      <div style={{ marginTop: 9 }}>
+      <div style={{ marginTop: 9, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         <EvidenceBadge basis={item.sourceBasis} label={item.governanceLabel} />
+        {item.needsComplianceReview ? (
+          <span
+            data-testid={`source-shell-file-compliance-flag-${item.id}`}
+            style={{
+              fontFamily: ANALYTICS.MONO,
+              fontSize: 10,
+              fontWeight: 800,
+              padding: '3px 8px',
+              borderRadius: 999,
+              background: ANALYTICS.AMBER_TINT,
+              color: ANALYTICS.AMBER_TEXT,
+            }}
+          >
+            {item.complianceReviewLabel}
+          </span>
+        ) : null}
       </div>
       {item.governanceMessage ? (
         <div
@@ -1609,6 +1625,19 @@ function FileCard({ item }: { item: SourceShellFileItem }) {
           }}
         >
           {item.governanceMessage}
+        </div>
+      ) : null}
+      {item.needsComplianceReview && item.complianceReviewMessage ? (
+        <div
+          data-testid={`source-shell-file-compliance-message-${item.id}`}
+          style={{
+            marginTop: 6,
+            color: ANALYTICS.AMBER_TEXT,
+            fontSize: 11.5,
+            lineHeight: 1.4,
+          }}
+        >
+          {item.complianceReviewMessage}
         </div>
       ) : null}
     </div>
