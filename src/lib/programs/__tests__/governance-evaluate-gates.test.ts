@@ -272,6 +272,66 @@ describe('evaluateGate', () => {
     );
   });
 
+  it('regression: a P3 architecture deliverable whose generation is still pending (in_review, not signed off) does not satisfy design_approved', async () => {
+    // Phase Advancement Control audit, scenario "pending generation": a
+    // deliverables_v2 row can exist (generation started) without being
+    // signed off yet. This must block the hard check exactly like a
+    // missing row — advancement while generation is still in flight must
+    // never be treated as a pass.
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 3,
+      archetype: null,
+    });
+    deliverablesFixture = [
+      { id: 'design', deliverable_type_key: 'target_state_architecture', status: 'in_review' },
+    ];
+    modulesFixture = [];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      3,
+      4,
+    );
+
+    expect(result.pass).toBe(false);
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: 'design_approved', severity: 'hard' }),
+      ]),
+    );
+  });
+
+  it('regression: a P3 architecture deliverable whose generation failed does not satisfy design_approved', async () => {
+    // Phase Advancement Control audit, scenario "failed generation": a
+    // deliverables_v2 row with a failed/errored status must block the hard
+    // check, not be silently treated as present-and-fine.
+    getProgramByIdMock.mockResolvedValue({
+      id: 'program-1',
+      currentPhase: 3,
+      archetype: null,
+    });
+    deliverablesFixture = [
+      { id: 'design', deliverable_type_key: 'target_state_architecture', status: 'error' },
+    ];
+    modulesFixture = [];
+
+    const result = await evaluateGate(
+      { clientId: 'client-1', userId: 'person-1' },
+      'program-1',
+      3,
+      4,
+    );
+
+    expect(result.pass).toBe(false);
+    expect(result.failedChecks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ check: 'design_approved', severity: 'hard' }),
+      ]),
+    );
+  });
+
   it('regression: requirements_design_outcome_trace no longer passes on free text alone with zero real P3 deliverables and no completed module (the live incident)', async () => {
     // Live incident 2026-07-20: a real Move (MEMBER AI ASSIST) advanced
     // P3->P4 with 0 P3 deliverables ever generated, because this hard check's
