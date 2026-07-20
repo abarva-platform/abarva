@@ -299,6 +299,18 @@ export async function evaluateGate(
   const isPresent = (row: { status: string } | undefined) => Boolean(row);
   const moduleCompleted = (...keys: string[]) => moduleRows
     .some((m) => keys.includes(m.module_key) && m.status === 'completed');
+  // Several HARD checks below fall back to matching common words (e.g.
+  // "outcome", "validation", "ready") against phaseCaptureText — the
+  // concatenated free-text `state_jsonb.value` of every `phase_N_*` module,
+  // regardless of that module's own status. That free-text match alone was
+  // enough to satisfy a BLOCKING hard gate with zero real deliverable,
+  // evidence, or even a completed module — confirmed live: a Move advanced
+  // P3→P4 via `requirements_design_outcome_trace`'s fallback with 0 P3
+  // deliverables generated. Every such fallback below is now additionally
+  // gated on at least one `phase_N_*` module actually being `completed`
+  // (a real, explicit user action), not merely present/in-progress/draft.
+  const phaseModulesCompleted = (phase: number) => moduleRows
+    .some((m) => m.module_key.startsWith(`phase_${phase}_`) && m.status === 'completed');
 
   const charterRow = deliverableRows
     .find((d) => d.deliverable_type_key === 'charter');
@@ -505,7 +517,8 @@ export async function evaluateGate(
           isSignedOff(findDeliverable('baseline', 'baseline_metrics', 'value_baseline')) ||
           (
             fromPhase === 2 &&
-            /\bbaseline|current state|metric|volume|cost|quality|cycle time|handle time\b/.test(phaseCaptureText)
+            /\bbaseline|current state|metric|volume|cost|quality|cycle time|handle time\b/.test(phaseCaptureText) &&
+            phaseModulesCompleted(fromPhase)
           );
         break;
       case 'discovery_stakeholders_named':
@@ -516,7 +529,8 @@ export async function evaluateGate(
           !discoveryReportHasHardGap
         ) || (
           fromPhase === 2 &&
-          /\b(stakeholder|owner|ownership|sponsor|business|technology|risk|finance|operations|architecture|compliance|privacy|security|supervisor|steward|handoff|queue|role)\b/.test(phaseCaptureText)
+          /\b(stakeholder|owner|ownership|sponsor|business|technology|risk|finance|operations|architecture|compliance|privacy|security|supervisor|steward|handoff|queue|role)\b/.test(phaseCaptureText) &&
+          phaseModulesCompleted(fromPhase)
         );
         break;
       case 'p2_readiness_cleared':
@@ -527,7 +541,8 @@ export async function evaluateGate(
         ) || (
           fromPhase === 2 &&
           /\b(proceed|recommend|clear|ready|no unresolved hard)\b/.test(phaseCaptureText) &&
-          !/\b(do not advance|kill|stop|unresolved hard gap)\b/.test(phaseCaptureText)
+          !/\b(do not advance|kill|stop|unresolved hard gap)\b/.test(phaseCaptureText) &&
+          phaseModulesCompleted(fromPhase)
         );
         break;
       case 'discovery_notes_ingested':
@@ -537,7 +552,8 @@ export async function evaluateGate(
           discoveryReportHasWorkshopEvidence ||
           (
             fromPhase === 2 &&
-            /\b(current state|finding|baseline|metric|gap|root cause|handoff|process|data quality|governance|evidence confidence|recommendation)\b/.test(phaseCaptureText)
+            /\b(current state|finding|baseline|metric|gap|root cause|handoff|process|data quality|governance|evidence confidence|recommendation)\b/.test(phaseCaptureText) &&
+            phaseModulesCompleted(fromPhase)
           );
         break;
       case 'current_state_summary_drafted':
@@ -554,7 +570,8 @@ export async function evaluateGate(
         pass = isPresent(requirementsTraceRow) ||
           (
             fromPhase === 3 &&
-            /\b(requirement|trace|outcome|root cause|design choice|evidence-backed|validation)\b/.test(phaseCaptureText)
+            /\b(requirement|trace|outcome|root cause|design choice|evidence-backed|validation)\b/.test(phaseCaptureText) &&
+            phaseModulesCompleted(fromPhase)
           );
         break;
       case 'vendor_selection_approved': {
@@ -572,13 +589,18 @@ export async function evaluateGate(
           briefString.includes('milestone') ||
           (
             fromPhase === 4 &&
-            /\b(milestone|30\/60\/90|30-60-90|roadmap|sequence|critical path)\b/.test(phaseCaptureText)
+            /\b(milestone|30\/60\/90|30-60-90|roadmap|sequence|critical path)\b/.test(phaseCaptureText) &&
+            phaseModulesCompleted(fromPhase)
           );
         break;
       case 'execution_success_criteria_defined':
         pass = isPresent(findDeliverable('execution_success_criteria', 'execution_roadmap', 'success_criteria')) ||
           briefString.includes('success criteria') ||
-          (fromPhase === 4 && /\b(success criteria|target|baseline|measurement|kpi)\b/.test(phaseCaptureText));
+          (
+            fromPhase === 4 &&
+            /\b(success criteria|target|baseline|measurement|kpi)\b/.test(phaseCaptureText) &&
+            phaseModulesCompleted(fromPhase)
+          );
         break;
       case 'delivery_raci_named':
         pass = isPresent(findDeliverable('delivery_raci', 'raci', 'operating_model')) ||
@@ -603,11 +625,13 @@ export async function evaluateGate(
       case 'value_measurement_contract_signed_off': pass = isSignedOff(valueMeasurementContractRow); break;
       case 'launch_readiness_attested':
         pass = fromPhase === 5 &&
-          /\b(launch readiness|go\/no-go|go-no-go|entry criteria|environment|access|ready)\b/.test(phaseCaptureText);
+          /\b(launch readiness|go\/no-go|go-no-go|entry criteria|environment|access|ready)\b/.test(phaseCaptureText) &&
+          phaseModulesCompleted(fromPhase);
         break;
       case 'tower_cadence_defined':
         pass = fromPhase === 5 &&
-          /\b(tower|cadence|governance|measurement|reporting|review)\b/.test(phaseCaptureText);
+          /\b(tower|cadence|governance|measurement|reporting|review)\b/.test(phaseCaptureText) &&
+          phaseModulesCompleted(fromPhase);
         break;
       case 'p5_open_risks_recorded':
         pass = fromPhase === 5 &&
