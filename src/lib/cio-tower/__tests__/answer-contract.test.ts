@@ -135,6 +135,44 @@ describe('CIO Tower right-answer contract scorer', () => {
     );
   });
 
+  it('treats chart asks as requiring governed chart-ready table data', () => {
+    const chartContract: CioTowerRightAnswerContract = {
+      id: 'skyharbor-run-change-chart',
+      tenantKey: 'skyharbor-air',
+      question: 'Chart the run versus change technology budget split.',
+      route: 'deterministic',
+      artifact: 'chart',
+      expectedMetrics: [
+        {
+          measureKey: 'total_it_budget_fy26',
+          label: 'FY26 IT budget',
+          displayValue: '$248.0M',
+        },
+      ],
+      minimumTableRows: 1,
+      maximumLatencyMs: 3000,
+    };
+
+    expect(
+      scoreCioTowerRightAnswerContract(chartContract, {
+        visibleText: 'SkyHarbor has $248.0M in FY26 initiative budget across the top IT program set.',
+        modelOutput: visibleOutput(),
+        latencyMs: 1200,
+      }).pass,
+    ).toBe(true);
+
+    const missingTable = scoreCioTowerRightAnswerContract(chartContract, {
+      visibleText: 'SkyHarbor has $248.0M in FY26 initiative budget across the top IT program set.',
+      modelOutput: visibleOutput({ tables: [] }),
+      latencyMs: 1200,
+    });
+
+    expect(missingTable.pass).toBe(false);
+    expect(missingTable.checks.filter((check) => !check.pass).map((check) => check.id)).toEqual(
+      expect.arrayContaining(['artifact:chart', 'minimum_table_rows']),
+    );
+  });
+
   it('fails raw IDs, old branding, and internal machinery language even when the metric is present', () => {
     const score = scoreCioTowerRightAnswerContract(topProgramsContract, {
       visibleText:

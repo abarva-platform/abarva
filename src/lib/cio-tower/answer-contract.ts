@@ -131,8 +131,11 @@ function hasArtifact(
 ): boolean {
   if (expected === 'prose') return true;
   if (!output) return false;
+  const hasStructuredTable = (output.tables?.length ?? 0) > 0
+    || (output.tabs ?? []).some((tab) => (tab.tables?.length ?? 0) > 0);
   if (expected === 'table') return (output.tables?.length ?? 0) > 0
     || (output.tabs ?? []).some((tab) => (tab.tables?.length ?? 0) > 0);
+  if (expected === 'chart') return hasStructuredTable;
   if (expected === 'card') return Boolean(output.answer?.trim());
   return false;
 }
@@ -210,7 +213,7 @@ export function buildCioTowerRightAnswerContract({
     expectedMetrics,
     forbiddenPhrases,
     mustNotIncludeMetricValues,
-    minimumTableRows: item.artifact === 'table' ? 1 : undefined,
+    minimumTableRows: item.artifact === 'table' || item.artifact === 'chart' ? 1 : undefined,
     maximumLatencyMs: Math.max(item.latencyTargetMs * 2, item.route === 'deterministic' ? 2500 : 5000),
     notes: [
       `category=${item.category}`,
