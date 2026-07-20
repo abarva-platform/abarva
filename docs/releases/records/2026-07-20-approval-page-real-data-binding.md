@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -110,17 +110,29 @@ generation after the new revision receives traffic.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` — to be
-  confirmed after merge.
-- Shared runtime mutators: none used directly.
-- Approved image digest: to be recorded once the deploy workflow runs.
-- ACA runtime invariant: to be proven after deploy.
-- Worker image invariant: N/A — no worker job generates session packs.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`, run
+  [29748500671](https://github.com/abarva-platform/abarva/actions/runs/29748500671)
+  (headSha `1dc6a1095cd90290a803585a738cdeb3a9ce3737`, the #5145 merge
+  commit), conclusion `success`.
+- Shared runtime mutators: none used directly; deploy proceeded entirely
+  through the standard workflow.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:f4ccd7a2062af6d1914464f62fbffef578a2a264f39bfedf8562414fe646c1c4`.
+- ACA runtime invariant: **proven.** `az containerapp show`/`revision
+  list`/`job list` confirm the template image, the 100%-traffic revision
+  (`ca-abarva-web-lab-eastus--m1dc6a109`), and both
+  `job-abarva-deliv-worker`/`job-abarva-deliv-worker-event` all resolve to
+  the digest above.
+- Worker image invariant: **proven** (see above).
 - Feature/env flag update path: N/A — no flag.
-- Live signed-in proof required: yes — after deploy, generate a Design
-  Session Pack for a real Move's phase that feeds a covered deliverable type
-  which already has real tracked role-approval data, and confirm the
-  rendered Approval Page appendix shows the real approver name/status/date.
+- Live signed-in proof: **partially performed.** Navigated to `app.abarva
+  .ai/strategic-moves` post-deploy and confirmed the app loads and functions
+  normally — no regression. The specific claim not yet exercised live:
+  generating a real Design Session Pack for a phase whose covered
+  deliverable type already has real tracked role-approval data, and
+  confirming the appendix shows it. No Move in this tenant was in that exact
+  state at the time of this check — deferred to backlog items 95/96, same
+  reasoning as the prior 4 release records this session.
 
 ## Rollback Plan
 
@@ -130,9 +142,18 @@ gap this release closes.
 
 ## Audit Evidence
 
-- PR URL: to be added when opened.
-- CI run: to be added when the PR's checks complete.
-- Deployment URL / ACA revision: to be added after deploy.
+- PR: [abarva-platform/abarva#5145](https://github.com/abarva-platform/abarva/pull/5145),
+  all required checks passed, squash-merged as
+  `1dc6a1095cd90290a803585a738cdeb3a9ce3737`.
+- CI/deploy run: [aca-main-deploy #29748500671](https://github.com/abarva-platform/abarva/actions/runs/29748500671),
+  conclusion `success`.
+- Deployment: ACA revision `ca-abarva-web-lab-eastus--m1dc6a109` in
+  `rg-abarva-controlplane-lab-eastus`, 100% ingress traffic, image digest
+  `sha256:f4ccd7a2062af6d1914464f62fbffef578a2a264f39bfedf8562414fe646c1c4`.
+- Live proof: app-loads/no-regression confirmed on `app.abarva.ai/
+  strategic-moves` post-deploy. The real-data render itself was not
+  exercised against a live Move in this pass — deferred to backlog items
+  95/96.
 
 ## Known Gaps
 
