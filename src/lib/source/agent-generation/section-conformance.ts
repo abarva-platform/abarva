@@ -1,4 +1,5 @@
 import type { SourceArtifactBodyGenerationMetadata } from "./types";
+import { getSourceArtifactProfile } from "@/lib/source/documentation-standards/source-artifact-profiles";
 
 export type SourceSectionVerificationStatus = "verified" | "incomplete";
 
@@ -9,7 +10,16 @@ export interface SourceSectionVerification {
   missingSections: string[];
 }
 
-export const SOURCE_ARTIFACT_REQUIRED_SECTIONS = {
+// Hand-tuned literal overrides. `source-artifact-profiles.ts`'s
+// `requiredExhibits` is the canonical artifact-quality contract for what a
+// Source artifact must contain — these two entries exist because their
+// authored section titles were written independently of (and, for d05,
+// materially differ in content from) that profile's exhibit keys, and
+// changing them would alter behavior that generation prompts were tuned
+// against. New artifact codes should NOT be added here — extend
+// `requiredExhibits` on the profile instead; `getRequiredSectionsForArtifact`
+// below derives a heading list from it automatically.
+const SOURCE_ARTIFACT_REQUIRED_SECTIONS_OVERRIDES = {
   d01_strategy_memo: [
     "Decision requested",
     "Why now",
@@ -28,17 +38,37 @@ export const SOURCE_ARTIFACT_REQUIRED_SECTIONS = {
   ],
 } as const satisfies Record<string, readonly string[]>;
 
+/** @deprecated Kept for external callers reading the literal override map directly; prefer `getRequiredSectionsForArtifact`. */
+export const SOURCE_ARTIFACT_REQUIRED_SECTIONS =
+  SOURCE_ARTIFACT_REQUIRED_SECTIONS_OVERRIDES;
+
 export type SourceSectionVerifiedArtifactCode =
-  keyof typeof SOURCE_ARTIFACT_REQUIRED_SECTIONS;
+  keyof typeof SOURCE_ARTIFACT_REQUIRED_SECTIONS_OVERRIDES;
+
+// Long generation-pipeline codes are `<shortProfileCode>_<slug>` (e.g.
+// "d01_strategy_memo" -> "d01"). Mirrors quality-review.ts's
+// shortSourceArtifactCode — duplicated locally (a one-line pure split) rather
+// than imported, to avoid a cross-module dependency between the gate layer
+// and this structural-verification layer for a trivial helper.
+function shortArtifactCode(artifactCode: string): string {
+  return artifactCode.split("_")[0] ?? artifactCode;
+}
+
+function humanizeExhibitKey(key: string): string {
+  return key.replaceAll("_", " ").replace(/\b\w/g, (m) => m.toUpperCase());
+}
 
 export function getRequiredSectionsForArtifact(
   artifactCode: string,
 ): readonly string[] {
-  return (
-    SOURCE_ARTIFACT_REQUIRED_SECTIONS[
+  const override =
+    SOURCE_ARTIFACT_REQUIRED_SECTIONS_OVERRIDES[
       artifactCode as SourceSectionVerifiedArtifactCode
-    ] ?? []
-  );
+    ];
+  if (override) return override;
+
+  const profile = getSourceArtifactProfile(shortArtifactCode(artifactCode));
+  return profile?.requiredExhibits.map(humanizeExhibitKey) ?? [];
 }
 
 export function formatRequiredSectionsForPrompt(artifactCode: string): string {

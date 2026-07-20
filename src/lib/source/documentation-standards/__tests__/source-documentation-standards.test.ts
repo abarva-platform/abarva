@@ -7,6 +7,7 @@ import {
   scanForBannedTerms,
   runDocumentQA,
   buildLanguagePolicyBlock,
+  appendLanguagePolicyBlock,
   resolveArtifactFormat,
 } from "../source-documentation-standards";
 
@@ -277,6 +278,52 @@ describe("Language policy block", () => {
     const block = buildLanguagePolicyBlock("d05");
     expect(block).toContain("senior sourcing consultant");
     expect(block).toContain("What this means for the decision");
+  });
+});
+
+describe("appendLanguagePolicyBlock (generation prompt path)", () => {
+  it("appends artifact-specific requirements onto the base prompt without altering it", () => {
+    const base = "You are drafting the Value Target Brief. Do the thing.";
+    const result = appendLanguagePolicyBlock(base, "d02");
+
+    expect(result.startsWith(base)).toBe(true);
+    expect(result).toContain("internal working artifact");
+    expect(result).toContain("Value Target Brief");
+  });
+
+  it("carries the artifact's own decision purpose and risk depth into the prompt, not a generic default", () => {
+    const d01Result = appendLanguagePolicyBlock("BASE", "d01");
+    const d24Result = appendLanguagePolicyBlock("BASE", "d24");
+
+    expect(d01Result).toContain("Approve the sourcing event");
+    expect(d01Result).toContain("executive-narrative");
+    expect(d24Result).toContain("board-grade");
+    expect(d24Result).not.toContain("Approve the sourcing event");
+  });
+
+  it("does not leak D09's RFP-evidence-coverage-map language into a non-RFP artifact's prompt", () => {
+    // d01 legitimately mentions "RFP" in its own decision purpose (it
+    // authorizes RFP preparation) — that's real, artifact-specific content,
+    // not a leak. What must never appear is the D09-specific evidence
+    // coverage-map machinery from quality-review.ts's buildSourceQualitySourceContext.
+    const result = appendLanguagePolicyBlock("BASE", "d01");
+    expect(result).toContain("RFP preparation");
+    expect(result).not.toContain("D09 RFP evidence coverage semantics");
+    expect(result).not.toContain("normalized from uploaded D09 coverage map");
+  });
+
+  it("includes the banned-terms prevention instruction for a client-facing artifact, complementing the deterministic backstop scan", () => {
+    const result = appendLanguagePolicyBlock("BASE", "d01");
+    expect(result).toContain("Do not use any of these terms in the main body");
+    // The backstop scan (scanForBannedTerms) is a separate, independent
+    // mechanism — this instruction is prevention at generation time, not a
+    // replacement for the post-generation deterministic scan.
+    expect(scanForBannedTerms("This mentions d09.", "d01")).toContain("d09");
+  });
+
+  it("returns the base prompt unchanged for an unregistered artifact code", () => {
+    const base = "Unmodified base prompt.";
+    expect(appendLanguagePolicyBlock(base, "not-a-real-code")).toBe(base);
   });
 });
 

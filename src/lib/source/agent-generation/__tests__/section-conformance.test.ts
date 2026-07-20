@@ -143,6 +143,39 @@ describe("Source artifact section conformance", () => {
       "## §1 · In scope",
     );
   });
+
+  it("keeps the exact literal override for codes with hand-tuned section text, even though it differs from the profile's requiredExhibits", () => {
+    // d05's profile requiredExhibits (in_scope_towers, support_tiers, ...)
+    // are materially different content from its literal override below —
+    // this proves the override wins outright, it is not silently replaced
+    // by a derived list.
+    expect(getRequiredSectionsForArtifact("d05_scope_memo")).toEqual([
+      "Executive summary",
+      "In scope",
+      "Out of scope",
+      "Boundary clarifications",
+      "Scope owner + approval",
+    ]);
+  });
+
+  it("derives required sections from source-artifact-profiles.ts's requiredExhibits for a code with no literal override", () => {
+    // d16 (Evaluation Scorecard) has no entry in the literal override map —
+    // this proves the canonical profile now backs verification for codes
+    // that previously had zero section coverage at all.
+    expect(getRequiredSectionsForArtifact("d16_scorecard")).toEqual([
+      "Vendor X Criteria Matrix",
+      "Weighted Totals",
+      "Evidence Citations",
+      "Panel Scores",
+      "Disqualification Flags",
+      "Executive Ranking Summary",
+    ]);
+  });
+
+  it("falls back to an empty list for an unregistered artifact code", () => {
+    expect(getRequiredSectionsForArtifact("not-a-real-code")).toEqual([]);
+    expect(verifyArtifactSections("not-a-real-code", "any body")).toBeNull();
+  });
 });
 
 function completeD01Body(decisionRequestedHeading: string): string {

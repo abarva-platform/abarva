@@ -549,6 +549,22 @@ Language rules:
 - Do not use any of these terms in the main body: ${bannedList}.`;
 }
 
+/**
+ * Appends the canonical artifact-quality language policy to a prompt
+ * template's own hand-tuned system prompt, additively. Never rewrites or
+ * removes any of the base prompt's structural instructions — a template
+ * author's carefully-tuned "required sections" or tone guidance stays
+ * exactly as written. Returns the base prompt unchanged when no profile is
+ * registered for `artifactCode` (short code, e.g. "d01").
+ */
+export function appendLanguagePolicyBlock(
+  systemPrompt: string,
+  artifactCode: string,
+): string {
+  const policy = buildLanguagePolicyBlock(artifactCode);
+  return policy ? `${systemPrompt}\n\n${policy}` : systemPrompt;
+}
+
 // ── Banned terms scanner (lightweight, for fast inline checks) ────────────────
 
 export function bannedTermsForProfile(artifactCode: string): string[] {
