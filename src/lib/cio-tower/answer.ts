@@ -927,7 +927,7 @@ function buildCioTowerFallbackFollowUp(
     context.contract.contract_key === "tower_value_realization"
   ) {
     if (measures.promisedValue !== null && measures.measuredValue !== null) {
-      return `Which funded programs explain the gap between ${money(measures.promisedValue)} promised value and ${money(measures.measuredValue)} measured value?`;
+      return `Which funded programs explain the gap between ${money(measures.promisedValue)} promised value and ${money(measures.measuredValue)} attestation-pending measurement evidence?`;
     }
     return "Which funded programs need finance-attested value proof before more capital is released?";
   }
@@ -973,7 +973,9 @@ export function buildCioTowerFallbackAnswer(
     const promisedPart =
       promisedValue !== null ? `${money(promisedValue)} promised value` : "promised value";
     const measuredPart =
-      measuredValue !== null ? `${money(measuredValue)} measured value` : "measured value evidence";
+      measuredValue !== null
+        ? `${money(measuredValue)} attestation-pending measurement evidence`
+        : "attestation-pending measurement evidence";
     answer = `The value story is promising, but it is not outcome-proof yet. In ${towerContextLabel(context.tenantName)}, Tower shows ${promisedPart} against ${measuredPart}. I would inspect the largest promise-to-measurement gaps before approving more funding.`;
   } else if (intent === "program_budget") {
     const initiativePart =
@@ -982,8 +984,8 @@ export function buildCioTowerFallbackAnswer(
         : "funded initiatives";
     const measuredPart =
       measuredValue !== null
-        ? `${money(measuredValue)} measured value`
-        : "measured-value evidence";
+        ? `${money(measuredValue)} attestation-pending measurement evidence`
+        : "attestation-pending measurement evidence";
     answer = `Treat the initiative list as a funding-control view, not a success story. In ${towerContextLabel(context.tenantName)}, Tower can inspect ${initiativePart}, but each program still needs ${measuredPart} and owner-attested evidence before it becomes a scale decision.`;
   } else if (intent === "evidence_gap") {
     answer = `The board-readiness gap is evidence quality, not another dashboard view. In ${towerContextLabel(context.tenantName)}, use the loaded budget and value measures for inspection, but hold any realized-value claim until finance-attested baselines, owner signoff, and source-system lineage are complete.`;
@@ -1005,7 +1007,7 @@ export function buildCioTowerFallbackAnswer(
     answer = `The Tower dashboard has enough governed values for a budget-control conversation, but not enough for a board-grade value claim. Inspect budget, vendor exposure, measurement evidence, and evidence gaps before treating the dashboard as decision-ready.`;
   }
 
-  const rows = fallbackMetricRows(context);
+  const rows = fallbackMetricRows(context).slice(0, 5);
   return {
     version: "cio_tower_visible_answer_v1",
     answer,
@@ -1025,8 +1027,8 @@ export function buildCioTowerFallbackAnswer(
         id: "trust_boundary",
         label: "Trust boundary",
         prose: context.valueClaimPolicy.realizedValueLanguageAllowed
-          ? "Measured-value language is allowed only where the Tower value-claim gate has enough finance-attested support."
-          : "Do not call value realized or proven yet. Tower can support budget control, measurement readiness, and gap inspection until value claims pass the finance-evidence gate.",
+          ? "Outcome-value language is allowed only where the Tower value-claim gate has enough finance-attested support."
+          : "Do not state outcome value as complete yet. Tower can support budget control, measurement readiness, and gap inspection until value claims pass the finance-evidence gate.",
         tables: [],
       },
     ],

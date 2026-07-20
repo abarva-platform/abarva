@@ -740,6 +740,115 @@ describe('cio tower answer contract', () => {
     });
   });
 
+  it('keeps deterministic fallbacks inside visible-contract validation limits', () => {
+    const fallback = buildCioTowerFallbackAnswer(
+      context({
+        tenantName: 'Airline Demo',
+        question:
+          'Create a 2x2 matrix of AI programs by value and execution confidence. Which should get more funding first?',
+        measures: [
+          {
+            measure_key: 'total_it_budget_fy26',
+            label: 'FY26 IT budget',
+            description: 'Committed FY26 IT budget envelope.',
+            period: 'fy26',
+            basis: 'committed',
+            scope: 'enterprise_envelope',
+            value_numeric: '2578000000',
+            value_json: { row_count: 13 },
+            source_fact_keys: ['fact-budget-1'],
+            formula_version: 'cio_tower_v1',
+          },
+          {
+            measure_key: 'run_budget_fy26',
+            label: 'FY26 run budget',
+            description: 'Run budget.',
+            period: 'fy26',
+            basis: 'committed',
+            scope: 'enterprise_envelope',
+            value_numeric: '1710000000',
+            value_json: { row_count: 13 },
+            source_fact_keys: ['fact-run-1'],
+            formula_version: 'cio_tower_v1',
+          },
+          {
+            measure_key: 'change_budget_fy26',
+            label: 'FY26 change budget',
+            description: 'Change budget.',
+            period: 'fy26',
+            basis: 'committed',
+            scope: 'enterprise_envelope',
+            value_numeric: '868000000',
+            value_json: { row_count: 13 },
+            source_fact_keys: ['fact-change-1'],
+            formula_version: 'cio_tower_v1',
+          },
+          {
+            measure_key: 'initiative_budget_fy26',
+            label: 'Funded initiatives',
+            description: 'Funded initiative envelope.',
+            period: 'fy26',
+            basis: 'committed',
+            scope: 'enterprise_envelope',
+            value_numeric: '1030000000',
+            value_json: { row_count: 13 },
+            source_fact_keys: ['fact-initiative-1'],
+            formula_version: 'cio_tower_v1',
+          },
+          {
+            measure_key: 'promised_value_fy26',
+            label: 'Promised value',
+            description: 'Planning value hypothesis.',
+            period: 'fy26',
+            basis: 'forecast',
+            scope: 'enterprise_envelope',
+            value_numeric: '3400000000',
+            value_json: { row_count: 13 },
+            source_fact_keys: ['fact-promised-1'],
+            formula_version: 'cio_tower_v1',
+          },
+          {
+            measure_key: 'measured_value_ytd',
+            label: 'Measurement evidence YTD',
+            description: 'Attestation-pending measurement evidence.',
+            period: 'fy26',
+            basis: 'measured',
+            scope: 'enterprise_envelope',
+            value_numeric: '432000000',
+            value_json: { row_count: 13 },
+            source_fact_keys: ['fact-measurement-1'],
+            formula_version: 'cio_tower_v1',
+          },
+          {
+            measure_key: 'actual_spend_ytd',
+            label: 'Actual spend YTD',
+            description: 'Actual spend.',
+            period: 'fy26',
+            basis: 'actual',
+            scope: 'enterprise_envelope',
+            value_numeric: '539300000',
+            value_json: { row_count: 13 },
+            source_fact_keys: ['fact-spend-1'],
+            formula_version: 'cio_tower_v1',
+          },
+        ],
+      }),
+    );
+    const visibleText = [
+      fallback.answer,
+      ...(fallback.tables ?? []).flatMap((table) => [
+        table.title,
+        ...table.columns,
+        ...table.rows.flat(),
+      ]),
+      ...(fallback.tabs ?? []).flatMap((tab) => [tab.label, tab.prose]),
+      fallback.followUpQuestion ?? '',
+    ].join(' ');
+
+    expect(fallback.tables?.[0]?.rows).toHaveLength(5);
+    expect(validateVisibleAnswer(visibleText)).toEqual([]);
+  });
+
   it('does not repeat the budget-mix fallback when the generated follow-up asks for run drivers', () => {
     const fallback = buildCioTowerFallbackAnswer(
       context({
