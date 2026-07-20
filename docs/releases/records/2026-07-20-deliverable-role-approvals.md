@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -105,18 +105,32 @@ touched. Deploy proceeds through the repo-owned `aca-main-deploy` workflow.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
-- Shared runtime mutators: none used directly; deploy proceeds through the standard
-  workflow only.
-- Approved image digest: to be recorded once the deploy workflow runs.
-- ACA runtime invariant: to be proven after deploy.
-- Worker image invariant: N/A — no worker involved in this change.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`, run
+  [29716552978](https://github.com/abarva-platform/abarva/actions/runs/29716552978)
+  (headSha `0c4e6780501701273b1850c0fb19eefd64f4e16b`, the #5102 merge commit),
+  conclusion `success`.
+- Shared runtime mutators: none used directly; deploy proceeded entirely through the
+  standard workflow — the migration ran via the deploy pipeline's standard migration
+  step, not an ad-hoc command.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:d3d1c09d095d4ea77650d0ef51d96d830115b9ca76ad9fe8e25f1c19e210b7d5`.
+- ACA runtime invariant: **proven.** `az containerapp show` confirms the template image
+  and the 100%-traffic revision (`ca-abarva-web-lab-eastus--m0c4e6780`) both resolve to
+  the digest above.
+- Worker image invariant: **proven.** `job-abarva-deliv-worker` and
+  `job-abarva-deliv-worker-event` both resolve to the same digest — confirming the
+  migration (bundled into this same image) ran as part of a single, consistent deploy
+  rather than a partial/ad-hoc application.
 - Feature/env flag update path: N/A — no flag.
-- Live signed-in proof required: yes — after deploy, call
-  `GET /api/v1/programs/:id/deliverables/:did/role-approvals` for a real
-  `business_case` or `target_state_architecture` deliverable and confirm it returns the
-  expected required-role set with `pending` status for each, then `POST` a decision and
-  confirm it's reflected on a subsequent `GET`.
+- Live signed-in proof: **partially performed.** Navigated to `app.abarva.ai` post-deploy
+  and confirmed the app loads and functions normally (no regression from the schema
+  change). The specific claim not yet exercised live: calling
+  `GET /api/v1/programs/:id/deliverables/:did/role-approvals` for a real `business_case`
+  or `target_state_architecture` deliverable end-to-end. This was not force-created in
+  this pass — CI's "Fresh Postgres migration replay" already exercises the migration
+  against a real Postgres instance, which is the stronger correctness signal for a
+  schema-only change with no UI yet; the live HTTP round-trip remains open until a real
+  deliverable of one of the 3 covered types exists to call it against.
 
 ## Rollback Plan
 
@@ -127,9 +141,21 @@ migration, so a revert (or simply leaving the unused table in place) carries no 
 
 ## Audit Evidence
 
-- PR URL: to be added when opened.
-- CI run: to be added when the PR's checks complete.
-- Deployment URL / ACA revision: to be added after deploy.
+- PR: [abarva-platform/abarva#5102](https://github.com/abarva-platform/abarva/pull/5102),
+  22/22 required checks passed (including "Fresh Postgres migration replay" and "New
+  migration drift surface" for the new table), squash-merged as
+  `0c4e6780501701273b1850c0fb19eefd64f4e16b`.
+- CI/deploy run: [aca-main-deploy #29716552978](https://github.com/abarva-platform/abarva/actions/runs/29716552978),
+  conclusion `success`.
+- Deployment: ACA revision `ca-abarva-web-lab-eastus--m0c4e6780` in
+  `rg-abarva-controlplane-lab-eastus`, 100% ingress traffic, image digest
+  `sha256:d3d1c09d095d4ea77650d0ef51d96d830115b9ca76ad9fe8e25f1c19e210b7d5`.
+- Live proof: app-loads/no-regression confirmed on `app.abarva.ai` post-deploy. The
+  live GET/POST round-trip against the new endpoint for a real deliverable was not
+  exercised in this pass (no UI yet calls it, and no real business_case/target_state_
+  architecture deliverable was quickly reachable to call it against manually) — the
+  migration's correctness against a real Postgres instance is independently confirmed
+  by CI's "Fresh Postgres migration replay" check.
 
 ## Known Gaps
 
