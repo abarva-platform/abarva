@@ -71,6 +71,34 @@ describe("Tower visual contract", () => {
     });
   });
 
+  it("lets explicit value-bridge wording beat generic AI portfolio wording", () => {
+    const contract = selectTowerVisualContract({
+      question:
+        "Show the promised versus claimable Tower value bridge for our AI portfolio.",
+      contractKey: "tower_ai_portfolio",
+      artifactType: "portfolio",
+    });
+
+    expect(contract).toMatchObject({
+      questionIntent: "waterfall",
+      recommendedVisual: "waterfall",
+    });
+  });
+
+  it("lets explicit vendor and spend exposure wording beat incidental risk wording", () => {
+    const contract = selectTowerVisualContract({
+      question:
+        "Which vendors or towers dominate our AI spend exposure and value risk?",
+      contractKey: "tower_value_realization",
+      artifactType: "risk",
+    });
+
+    expect(contract).toMatchObject({
+      questionIntent: "financial",
+      recommendedVisual: "treemap",
+    });
+  });
+
   it("streams business-readable progress labels without implementation language", () => {
     const labels = towerProgressEventsForQuestion(
       "Create a 2x2 matrix of AI programs by value and execution confidence.",

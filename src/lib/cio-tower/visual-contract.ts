@@ -84,6 +84,58 @@ export function selectTowerVisualContract({
     };
   }
 
+  if (
+    hasAny(questionText, [
+      /\b(waterfall|funnel|bridge|promised|validated|claimable|value gap|losing value|value leakage|leakage|measurement readiness)\b/,
+    ])
+  ) {
+    return {
+      questionIntent: "waterfall",
+      recommendedVisual: "waterfall",
+      requiredData: [
+        "value stage",
+        "stage amount",
+        "claim status or proof gate",
+      ],
+      axes: {
+        x: "Value stage",
+        y: "Amount",
+      },
+      annotations: [
+        "Separate promised or forecast value from finance-attested value.",
+        "Label blocked claim gates as measurement work, not outcomes.",
+      ],
+      executiveTakeaway:
+        "Show where forecast value falls out before it becomes board-usable value.",
+      sourceBoundary:
+        "Do not present forecast, promised, or partial measurement fields as realized outcomes.",
+    };
+  }
+
+  if (hasAny(questionText, [/\b(vendor|vendors|supplier|suppliers|contract|renewal|cost driver|concentration|spend exposure|financial exposure)\b/])) {
+    return {
+      questionIntent: "financial",
+      recommendedVisual: "treemap",
+      requiredData: [
+        "vendor or service name",
+        "spend, exposure, or renewal value",
+        "owner or evidence gap",
+      ],
+      axes: {
+        x: "Vendor or service",
+        y: "Financial exposure",
+      },
+      annotations: [
+        "Highlight concentration and renewal windows.",
+        "Call out missing contract economics before ranking leverage.",
+      ],
+      executiveTakeaway:
+        "Show which cost pools or suppliers deserve commercial inspection first.",
+      sourceBoundary:
+        "Rank only loaded spend or contract exposure fields; missing vendor economics must be stated as gaps.",
+    };
+  }
+
   if (hasAny(questionText, [/\b(heatmap|risk|unhealthy|control|gap|evidence|readiness)\b/])) {
     return {
       questionIntent: "heatmap",
@@ -139,12 +191,7 @@ export function selectTowerVisualContract({
     };
   }
 
-  if (
-    hasAny(text, [
-      /\b(waterfall|funnel|promised|validated|claimable|value gap|losing value|value leakage|measurement readiness)\b/,
-      /\btower_value_realization\b/,
-    ])
-  ) {
+  if (hasAny(text, [/\btower_value_realization\b/])) {
     return {
       questionIntent: "waterfall",
       recommendedVisual: "waterfall",
