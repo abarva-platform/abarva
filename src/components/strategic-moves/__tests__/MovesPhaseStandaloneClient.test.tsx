@@ -740,7 +740,11 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByRole("heading", { name: "Choose the Approach" })).toBeInTheDocument();
     expect(screen.getByText("Files & Evidence")).toBeInTheDocument();
     expect(screen.getByText("Step 1 of 5")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Use the tabs to finish this phase" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "What this phase needs" })).toBeInTheDocument();
+    expect(screen.getAllByText(/Purpose/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Do now/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Done when/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Live state/i).length).toBeGreaterThan(0);
     expect(screen.getByRole("tab", { name: /Prepare/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Compare Options/i })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Approve & Build/i })).toBeInTheDocument();

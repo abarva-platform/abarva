@@ -7,10 +7,8 @@ import { extractArtifacts } from "@/lib/agent/artifacts";
 import type { DeliverableContentSignal } from "@/lib/deliverables/deliverable-content-signals";
 import { CurrentStateReadinessPanel } from "@/components/strategic-moves/CurrentStateReadinessPanel";
 import { artifactStatusLabel, FileCabinetPanel } from "@/components/strategic-moves/FileCabinetPanel";
-import { NexusCurrentStateBriefingPanel } from "@/components/strategic-moves/NexusCurrentStateBriefingPanel";
 import { PhaseApproveAndBuild } from "@/components/strategic-moves/PhaseApproveAndBuild";
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
-import { SessionPlaybookPanel } from "@/components/strategic-moves/SessionPlaybookPanel";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
@@ -77,7 +75,7 @@ interface MovesPhaseStandaloneClientProps {
   initialSubstepKey?: SubstepKey;
 }
 
-type WorkspaceView = "phase" | "files" | "playbook" | "intelligence";
+type WorkspaceView = "phase" | "files" | "intelligence";
 
 type UploadWorkStatus = "idle" | "uploading" | "uploaded" | "error";
 type DecisionOptionSaveStatus = "idle" | "saving" | "saved" | "error";
@@ -365,9 +363,7 @@ export function MovesPhaseStandaloneClient({
       ? `${phase.code} workflow`
       : workspaceView === "files"
         ? "Files & Evidence"
-        : workspaceView === "playbook"
-          ? "Session Playbook"
-          : "Phase Intelligence";
+        : "Phase Intelligence";
   const primaryActionLabel = isHistoricalPhase
     ? terminalComplete
       ? "Open Tower →"
@@ -825,7 +821,7 @@ export function MovesPhaseStandaloneClient({
               type="button"
             >
               <span>▦</span>
-              Phase Workspace
+              Stage workspace
             </button>
             <button
               className={`mxw-lib-link ${workspaceView === "files" ? "viewing" : ""}`}
@@ -837,17 +833,6 @@ export function MovesPhaseStandaloneClient({
             >
               <span>▣</span>
               Files & Evidence
-            </button>
-            <button
-              className={`mxw-lib-link ${workspaceView === "playbook" ? "viewing" : ""}`}
-              onClick={() => {
-                setWorkspaceView("playbook");
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              type="button"
-            >
-              <span>▤</span>
-              Session Playbook
             </button>
             <button
               className={`mxw-lib-link ${workspaceView === "intelligence" ? "viewing" : ""}`}
@@ -901,43 +886,7 @@ export function MovesPhaseStandaloneClient({
                   deliverable — the real Artifact Vault for this Move, not a preview.
                 </p>
               </div>
-              <WorkspaceSurfaceTabs
-                activeView={workspaceView}
-                onSelect={(view) => {
-                  setWorkspaceView(view);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-              />
               <FileCabinetPanel moveId={move.id} phase={phase.phase} />
-            </>
-          ) : workspaceView === "playbook" ? (
-            <>
-              <div className="mxw-crumb">
-                <button onClick={() => setWorkspaceView("phase")} type="button">
-                  {move.name}
-                </button>
-                <span>/</span>
-                Session Playbook
-              </div>
-              <div className="mxw-stage-head">
-                <div className="mxw-agent-chip">
-                  <span />
-                  AVA · MOVES
-                </div>
-                <h1>Session Playbook</h1>
-                <p>
-                  Discussion guides, frameworks, and capture templates for the sessions in this
-                  phase — the same prep kit facilitators use to run each working session.
-                </p>
-              </div>
-              <WorkspaceSurfaceTabs
-                activeView={workspaceView}
-                onSelect={(view) => {
-                  setWorkspaceView(view);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-              />
-              <SessionPlaybookPanel moveId={move.id} phase={phase.phase} />
             </>
           ) : workspaceView === "intelligence" ? (
             <>
@@ -959,13 +908,6 @@ export function MovesPhaseStandaloneClient({
                   and governed gate/evidence truth.
                 </p>
               </div>
-              <WorkspaceSurfaceTabs
-                activeView={workspaceView}
-                onSelect={(view) => {
-                  setWorkspaceView(view);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-              />
               <PhaseIntelligencePanel moveId={move.id} phase={phase.phase} />
             </>
           ) : (
@@ -998,14 +940,6 @@ export function MovesPhaseStandaloneClient({
                   </em>
                 </div>
               </div>
-
-              <WorkspaceSurfaceTabs
-                activeView={workspaceView}
-                onSelect={(view) => {
-                  setWorkspaceView(view);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-              />
 
               <div className="mxw-stage-bar">
                 <div className="mxw-progress">
@@ -1183,39 +1117,6 @@ export function MovesPhaseStandaloneClient({
   );
 }
 
-function WorkspaceSurfaceTabs({
-  activeView,
-  onSelect,
-}: {
-  activeView: WorkspaceView;
-  onSelect: (view: WorkspaceView) => void;
-}) {
-  const tabs: Array<{ view: WorkspaceView; label: string; help: string }> = [
-    { view: "phase", label: "Steps", help: "Run the phase workflow" },
-    { view: "files", label: "Files", help: "Evidence and generated artifacts" },
-    { view: "playbook", label: "Guides", help: "Session playbook and templates" },
-    { view: "intelligence", label: "Intelligence", help: "Evidence-backed readout" },
-  ];
-
-  return (
-    <div className="mxw-surface-tabs" role="tablist" aria-label="Moves workspace surfaces">
-      {tabs.map((tab) => (
-        <button
-          aria-selected={activeView === tab.view}
-          className={activeView === tab.view ? "active" : ""}
-          key={tab.view}
-          onClick={() => onSelect(tab.view)}
-          role="tab"
-          title={tab.help}
-          type="button"
-        >
-          {tab.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 function PhaseBody({
   carriesForwardContent,
   currentStateReadiness,
@@ -1317,19 +1218,7 @@ function PhaseBody({
       );
     }
 
-    return (
-      <>
-        <HowToCard />
-        <section className="mxw-zone">
-          <h2>Templates & sessions</h2>
-          <p>
-            Run the workshop with these templates; upload the completed output
-            to record the choice and carry evidence forward.
-          </p>
-          <TemplatesAndSessions phase={phase} />
-        </section>
-      </>
-    );
+    return null;
   }
 
   if (substep === "current") {
@@ -2329,25 +2218,51 @@ function PhasePreparePanel({
     <section className="mxw-command" aria-label={`${phase.code} workflow command center`}>
       <header>
         <div>
-          <span>{phase.code} command center</span>
-          <h2>{terminalComplete ? "Tower handoff complete" : "Use the tabs to finish this phase"}</h2>
+          <span>{phase.code} stage plan</span>
+          <h2>{terminalComplete ? "Tower handoff complete" : "What this phase needs"}</h2>
           <p>
             {terminalComplete
               ? "This Move is complete. Tower is now the execution and value-tracking surface."
-              : "Start here to see what the phase needs. Then move across the tabs: upload evidence, review findings, and run Approve & Build."}
+              : "Use this as the phase briefing. The step tabs above are the workflow: prepare, upload or decide, review, then approve and build."}
           </p>
         </div>
         <strong>{phase.code}</strong>
       </header>
-      <section className="mxw-zone">
-        <h2>What Nexus already knows</h2>
-        <p>
-          Before you upload anything for {phase.code}, review the enterprise
-          context Nexus already has for this Move — confirm it, correct it, or
-          flag what&apos;s missing.
-        </p>
-      </section>
-      <NexusCurrentStateBriefingPanel moveId={move.id} />
+      <div className="mxw-command-table">
+        <div>
+          <span>Purpose</span>
+          <p>
+            Confirm what {phase.code} must prove before the next gate can carry
+            the work forward.
+          </p>
+          <b>{phase.title}</b>
+        </div>
+        <div>
+          <span>Do now</span>
+          <p>
+            Check the sessions, templates, evidence slots, and open blockers
+            below before uploading files or approving anything.
+          </p>
+          <b>Prepare</b>
+        </div>
+        <div>
+          <span>Done when</span>
+          <p>
+            The team knows exactly which outputs to upload, which gaps can
+            carry, and what Approve & Build will generate.
+          </p>
+          <b>Ready for next tab</b>
+        </div>
+        <div>
+          <span>Live state</span>
+          <p>
+            {missingEvidenceCount} missing or partial evidence item
+            {missingEvidenceCount === 1 ? "" : "s"} · {openHardGateCount} hard
+            gate{openHardGateCount === 1 ? "" : "s"} open.
+          </p>
+          <b>{nextPhaseLabel}</b>
+        </div>
+      </div>
       <div className="mxw-command-grid">
         <article>
           <span>Recommended sessions</span>
@@ -2752,32 +2667,6 @@ function EvidenceUploadControl({
         </div>
       ) : null}
     </div>
-  );
-}
-
-function HowToCard() {
-  return (
-    <section className="mxw-howto">
-      <header>
-        <span>a</span>
-        <h2>How to complete this phase</h2>
-      </header>
-      <div className="mxw-howflow">
-        {[
-          ["Review", "Read what AbarVa found, then download the recommended templates."],
-          ["Run", "Conduct the working session with your SMEs and upload the summary."],
-          ["Approve", "Confirm what changed, then approve to unlock the next phase."],
-        ].map(([title, detail], index) => (
-          <div className="mxw-how-step" key={title}>
-            <span>{index + 1}</span>
-            <div>
-              <strong>{title}</strong>
-              <small>{detail}</small>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 

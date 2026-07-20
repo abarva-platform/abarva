@@ -10,12 +10,13 @@
 
 ## Plain-English Summary
 
-Moves phase pages now use the step tabs as the workflow control instead of mixing a top-level Continue button with lower upload, review, and approval controls. The active step explains purpose, action, proof, live state, and the one next action in context. P1-P5 labels were tightened to match how users run the work: prepare, upload/review, inspect findings/options, record decisions, and Approve & Build.
+Moves phase pages now use the attached Source-style Moves shell as the runtime contract: the left rail owns phase and workspace navigation, the stage tabs own the phase workflow, and the active step is the only primary work surface. The old in-phase Session Playbook/long-scroll guidance surface is no longer mounted inside the phase route; Files & Evidence, Phase Intelligence, and Approvals remain first-class workspace surfaces. The Prepare tab is now a compact purpose/action/proof/live-state table instead of a long instruction page.
 
 ## Layer Impact
 
 - `global-control-lane`: shared Moves page UX and workflow guidance for all tenants.
 - Runtime data paths are unchanged. Uploads, Files & Evidence, Phase Intelligence, P0 approval, and P1-P5 Approve & Build continue to use existing APIs and component contracts.
+- Retired runtime mount: the old in-phase Session Playbook surface is not rendered from the phase shell. The component remains in the repository for now, but the active phase route no longer exposes it as a page in the workflow.
 
 ## Client Applicability
 
@@ -28,12 +29,15 @@ Moves phase pages now use the step tabs as the workflow control instead of mixin
 ## Changes Included
 
 - `src/components/strategic-moves/MovesPhaseStandaloneClient.tsx`
+  - Removes the in-phase Session Playbook workspace mount and duplicate horizontal workspace tabs.
+  - Keeps the attached shell pattern: left workspace rail, stage tabs, active step focus, Files & Evidence, Phase Intelligence, and Approvals.
+  - Replaces the old Prepare copy with a compact phase briefing table.
 - `src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx`
 
 ## QA / Validation
 
-- Pass: `npx jest src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx --runInBand`
-- Pass: `npx eslint src/components/strategic-moves/MovesPhaseStandaloneClient.tsx src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx`
+- Pass: `npx jest src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.tsx --runInBand`
+- Pass: `npx eslint src/components/strategic-moves/MovesPhaseStandaloneClient.tsx src/components/strategic-moves/StrategicMoveOriginateClient.tsx src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx`
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`
 - Pass: `npm run release:check`
 - Pass: `git diff --check`
