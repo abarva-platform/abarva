@@ -184,7 +184,7 @@ describe("recordRoleApprovalDecision", () => {
   });
 
   it("upserts a role decision keyed on (deliverable_id, role)", async () => {
-    let upsertPayload: Record<string, unknown> | null = null;
+    let upsertPayload: { decided_at: string | null } | null = null;
     fromMock.mockImplementation((table: string) => {
       if (table === "deliverables_v2") return selectDeliverableExists({ data: { id: "deliverable-1" }, error: null });
       if (table === "deliverable_role_approvals") {
@@ -231,11 +231,11 @@ describe("recordRoleApprovalDecision", () => {
       }),
     );
     // approved/rejected decisions stamp decided_at; pending/reviewed do not
-    expect((upsertPayload as { decided_at: string | null }).decided_at).toBeTruthy();
+    expect(upsertPayload!.decided_at).toBeTruthy();
   });
 
   it("does not stamp decided_at for a 'reviewed' (non-terminal) decision", async () => {
-    let upsertPayload: Record<string, unknown> | null = null;
+    let upsertPayload: { decided_at: string | null } | null = null;
     fromMock.mockImplementation((table: string) => {
       if (table === "deliverables_v2") return selectDeliverableExists({ data: { id: "deliverable-1" }, error: null });
       if (table === "deliverable_role_approvals") {
@@ -259,7 +259,7 @@ describe("recordRoleApprovalDecision", () => {
       role: "technology",
       status: "reviewed",
     });
-    expect((upsertPayload as { decided_at: string | null }).decided_at).toBeNull();
+    expect(upsertPayload!.decided_at).toBeNull();
   });
 
   it("throws when the deliverable does not exist in this program (tenancy boundary)", async () => {
