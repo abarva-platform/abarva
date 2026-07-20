@@ -77,7 +77,7 @@ function mockFetchSequence(opts: {
 describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
   it("does not call onBuildSettled while the run is still queued/running", async () => {
     mockFetchSequence({ runId: "run_pending", intermediateStatus: "running", finalStatus: "succeeded" });
-    const onBuildSettled = jest.fn(async () => {});
+    const onBuildSettled = jest.fn<Promise<void>, [BuildSettledResult]>(async () => {});
 
     render(
       <PhaseApproveAndBuild
@@ -102,14 +102,14 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
     expect(onBuildSettled).not.toHaveBeenCalled();
 
     await waitFor(() => expect(onBuildSettled).toHaveBeenCalledTimes(1), { timeout: 8000 });
-    const result = onBuildSettled.mock.calls[0][0] as BuildSettledResult;
+    const result = onBuildSettled.mock.calls[0][0];
     expect(result.succeededKeys).toEqual(["charter"]);
     expect(result.failedKeys).toEqual([]);
   });
 
   it("reports a failed deliverable in failedKeys instead of silently succeeding", async () => {
     mockFetchSequence({ runId: "run_fails", intermediateStatus: "running", finalStatus: "failed" });
-    const onBuildSettled = jest.fn(async () => {});
+    const onBuildSettled = jest.fn<Promise<void>, [BuildSettledResult]>(async () => {});
 
     render(
       <PhaseApproveAndBuild
@@ -128,7 +128,7 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
     });
 
     await waitFor(() => expect(onBuildSettled).toHaveBeenCalledTimes(1), { timeout: 8000 });
-    const result = onBuildSettled.mock.calls[0][0] as BuildSettledResult;
+    const result = onBuildSettled.mock.calls[0][0];
     expect(result.succeededKeys).toEqual([]);
     expect(result.failedKeys).toEqual(["charter"]);
   });
@@ -159,7 +159,7 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
       }
       throw new Error(`Unexpected fetch: ${url}`);
     }) as typeof fetch;
-    const onBuildSettled = jest.fn(async () => {});
+    const onBuildSettled = jest.fn<Promise<void>, [BuildSettledResult]>(async () => {});
 
     render(
       <PhaseApproveAndBuild
@@ -178,7 +178,7 @@ describe("PhaseApproveAndBuild onBuildSettled sequencing", () => {
     });
 
     await waitFor(() => expect(onBuildSettled).toHaveBeenCalledTimes(1), { timeout: 8000 });
-    const result = onBuildSettled.mock.calls[0][0] as BuildSettledResult;
+    const result = onBuildSettled.mock.calls[0][0];
     expect(result.succeededKeys).toEqual([]);
     expect(result.failedKeys).toEqual(["charter"]);
   });
