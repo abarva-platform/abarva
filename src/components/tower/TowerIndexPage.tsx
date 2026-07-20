@@ -5876,6 +5876,39 @@ interface TowerAiPortfolioDisplayRow extends TowerMartAiPortfolioItem {
   displayReason: string;
 }
 
+type TowerToolGateState = "ok" | "partial" | "blocked";
+
+interface TowerAiToolTraceRow {
+  key: string;
+  name: string;
+  functionLabel: string;
+  activeUsers: string;
+  adoption: string;
+  promisedValue: string;
+  financeValidated: string;
+  claimState: string;
+  statusLabel: string;
+  status: TowerToolGateState;
+  interpretation: string;
+  kpiLine: string;
+  financeLine: string;
+  nextAction: string;
+  gates: Array<{ state: TowerToolGateState; label: string }>;
+  evidence: Array<{ source: string; caveat: string }>;
+}
+
+function gateDotColor(state: TowerToolGateState): string {
+  if (state === "ok") return T.GREEN;
+  if (state === "partial") return T.AMBER;
+  return T.RED;
+}
+
+function gateDotBg(state: TowerToolGateState): string {
+  if (state === "ok") return T.GREEN_BG;
+  if (state === "partial") return T.AMBER_BG;
+  return T.RED_BG;
+}
+
 function humanizeTowerToken(value: string | null | undefined): string {
   if (!value) return "Evidence detail gap";
   return value
@@ -5957,6 +5990,465 @@ function aiPortfolioDisplayReason(row: TowerMartAiPortfolioItem): string {
   return row.fundingStatus === "not_approved"
     ? "Discovery-only. This is not approved funding and is not claimable value."
     : "Hold the next tranche until evidence gates clear.";
+}
+
+function normalizedTowerTenantKey(command: TowerMartCommandCenterRow): string {
+  return `${command.tenantKey} ${command.tenantName}`.toLowerCase();
+}
+
+function towerToolTraceFromPortfolioRow(
+  row: TowerAiPortfolioDisplayRow,
+): TowerAiToolTraceRow {
+  const status: TowerToolGateState =
+    row.decisionLane === "fund"
+      ? "ok"
+      : row.decisionLane === "fix"
+        ? "partial"
+        : "blocked";
+  const activeUsers =
+    row.usageActual === null
+      ? "—"
+      : formatWholeNumber(Math.round(row.usageActual));
+  const adoption =
+    row.adoptionRatePct === null
+      ? "—"
+      : `${Math.round((row.adoptionRatePct <= 1 ? row.adoptionRatePct * 100 : row.adoptionRatePct) * 10) / 10}%`;
+  return {
+    key: row.aiPortfolioKey,
+    name: row.displayName,
+    functionLabel:
+      row.systemName ??
+      row.vendorName ??
+      humanizeTowerToken(row.aiSpendCategory ?? row.itemKind),
+    activeUsers,
+    adoption,
+    promisedValue: formatMoneyGap(row.promisedValueUsd),
+    financeValidated: formatMoneyGap(row.financeValidatedValueUsd),
+    claimState:
+      row.towerClaimAllowed === "allowed"
+        ? "Claimable"
+        : row.financeValidatedValueUsd > 0
+          ? "Partial proof"
+          : row.usageActual !== null
+            ? "Usage measured"
+            : "Not claimable",
+    statusLabel:
+      status === "ok"
+        ? "Proof strong"
+        : status === "partial"
+          ? "Proof partial"
+          : "Gate blocked",
+    status,
+    interpretation: row.displayReason,
+    kpiLine: row.usageMetric
+      ? `KPI: ${humanizeTowerToken(row.usageMetric)} — ${activeUsers} observed; adoption ${adoption}.`
+      : "KPI: usage or outcome telemetry is not loaded yet.",
+    financeLine: `Finance: ${formatMoneyGap(row.financeValidatedValueUsd)} validated of ${formatMoneyGap(row.promisedValueUsd)} promised. Realized value allowed: ${row.towerClaimAllowed === "allowed" ? formatMoneyGap(row.financeValidatedValueUsd) : "$0"}.`,
+    nextAction:
+      row.displayAction === "Scale with proof"
+        ? "Scale with guardrails; keep finance validation attached before releasing more value."
+        : row.displayAction === "Fix proof"
+          ? "Fix the evidence chain: isolate usage, KPI movement, and finance validation before expanding spend."
+          : "Hold scale funding until owner, usage, KPI, and finance evidence clear the gate.",
+    gates: [
+      {
+        state: row.approvedFundingUsd > 0 || row.aiTaggedSpendUsd > 0 ? "ok" : "blocked",
+        label:
+          row.approvedFundingUsd > 0 || row.aiTaggedSpendUsd > 0
+            ? "Spend committed"
+            : "Spend not approved",
+      },
+      {
+        state: row.usageActual !== null ? "ok" : "blocked",
+        label:
+          row.usageActual !== null
+            ? `Usage measured · ${activeUsers} active`
+            : "Usage missing",
+      },
+      {
+        state:
+          row.financeValidatedValueUsd > 0
+            ? row.towerClaimAllowed === "allowed"
+              ? "ok"
+              : "partial"
+            : "blocked",
+        label:
+          row.financeValidatedValueUsd > 0
+            ? `Finance validated · ${formatMoneyGap(row.financeValidatedValueUsd)}`
+            : "Finance validated · none",
+      },
+      {
+        state: row.towerClaimAllowed === "allowed" ? "ok" : "blocked",
+        label:
+          row.towerClaimAllowed === "allowed"
+            ? "Realized value · allowed"
+            : "Realized value · blocked",
+      },
+    ],
+    evidence: [
+      {
+        source: row.sourceFile ?? "mart_ai_portfolio",
+        caveat: row.sourceRow ? `row ${row.sourceRow}` : row.caveat,
+      },
+    ],
+  };
+}
+
+function meridianReferenceToolTraceRows(): TowerAiToolTraceRow[] {
+  return [
+    {
+      key: "reference:m365-copilot",
+      name: "Microsoft 365 Copilot",
+      functionLabel: "Workplace productivity · Microsoft",
+      activeUsers: "306",
+      adoption: "34%",
+      promisedValue: "$14.0M",
+      financeValidated: "$2.1M",
+      claimState: "Usage measured",
+      statusLabel: "Usage measured",
+      status: "partial",
+      interpretation:
+        "Real adoption, but value is not claimable: KPI movement is only partial and Finance has validated just $2.1M of a $14.0M business case.",
+      kpiLine:
+        "KPI: knowledge-worker time to draft/review — partial movement observed, not isolated.",
+      financeLine:
+        "Finance: $2.1M partial validation of $14.0M promised. Realized value allowed: $0.",
+      nextAction:
+        "Open a Moves task to isolate KPI baseline by function and request a Finance value review before any P&L claim.",
+      gates: [
+        { state: "ok", label: "Spend committed" },
+        { state: "ok", label: "Usage measured · 306 active" },
+        { state: "partial", label: "KPI movement · partial only" },
+        { state: "partial", label: "Finance validated · $2.1M partial" },
+        { state: "blocked", label: "Realized value · blocked" },
+      ],
+      evidence: [
+        {
+          source: "usage-benefit-lens.csv · Microsoft 365 Copilot",
+          caveat: "Synthetic Day 1 planning context",
+        },
+        {
+          source: "SA09 tool-usage feed",
+          caveat: "enabled seats & adoption target not loaded",
+        },
+      ],
+    },
+    {
+      key: "reference:servicenow-now-assist",
+      name: "ServiceNow Now Assist",
+      functionLabel: "IT service management · ServiceNow",
+      activeUsers: "494",
+      adoption: "42%",
+      promisedValue: "$6.0M",
+      financeValidated: "$0.8M",
+      claimState: "KPI movement",
+      statusLabel: "KPI movement",
+      status: "ok",
+      interpretation:
+        "Strongest evidence in the tool set: usage plus measured KPI movement and partial Finance validation. Still not realized value.",
+      kpiLine: "KPI: ticket resolution time — MTTR down 5% (movement seen).",
+      financeLine:
+        "Finance: $0.8M partial validation of $6.0M promised. Realized value allowed: $0.",
+      nextAction:
+        "Scale with guardrails; certify full Finance validation before releasing value for the next tranche.",
+      gates: [
+        { state: "ok", label: "Spend committed" },
+        { state: "ok", label: "Usage measured · 494 active" },
+        { state: "ok", label: "KPI movement · MTTR down 5%" },
+        { state: "partial", label: "Finance validated · $0.8M partial" },
+        { state: "blocked", label: "Realized value · blocked" },
+      ],
+      evidence: [
+        {
+          source: "usage-benefit-lens.csv · ServiceNow Now Assist",
+          caveat: "MTTR movement is partial-period",
+        },
+      ],
+    },
+    {
+      key: "reference:github-copilot-codex",
+      name: "GitHub Copilot & Codex",
+      functionLabel: "Software engineering · GitHub / OpenAI",
+      activeUsers: "725",
+      adoption: "50%",
+      promisedValue: "$4.5M",
+      financeValidated: "$0.5M",
+      claimState: "Usage measured",
+      statusLabel: "Usage measured",
+      status: "partial",
+      interpretation:
+        "High developer usage, but the lead-time gain is not isolated to the tool, so value stays unproven.",
+      kpiLine:
+        "KPI: lead time for changes — down 6%, DORA attribution not isolated.",
+      financeLine:
+        "Finance: $0.5M partial validation of $4.5M promised. Realized value allowed: $0.",
+      nextAction:
+        "Isolate DORA lead-time attribution before making a value claim.",
+      gates: [
+        { state: "ok", label: "Spend committed" },
+        { state: "ok", label: "Usage measured · 725 active" },
+        { state: "partial", label: "KPI movement · not isolated" },
+        { state: "partial", label: "Finance validated · $0.5M partial" },
+        { state: "blocked", label: "Realized value · blocked" },
+      ],
+      evidence: [
+        {
+          source: "usage-benefit-lens.csv · GitHub Copilot and Codex",
+          caveat: "DORA movement not attributed to tool",
+        },
+      ],
+    },
+    {
+      key: "reference:workday-ai",
+      name: "Workday AI",
+      functionLabel: "HR & finance ops · Workday",
+      activeUsers: "1,001",
+      adoption: "58%",
+      promisedValue: "$3.0M",
+      financeValidated: "$0.4M",
+      claimState: "Usage measured",
+      statusLabel: "Usage measured",
+      status: "partial",
+      interpretation:
+        "Highest adoption in the set; process cycle-time movement and Finance validation are still partial.",
+      kpiLine: "KPI: process cycle time — partial movement observed.",
+      financeLine:
+        "Finance: $0.4M partial validation of $3.0M promised. Realized value allowed: $0.",
+      nextAction: "Baseline outcomes by process; validate partial value with FP&A.",
+      gates: [
+        { state: "ok", label: "Spend committed" },
+        { state: "ok", label: "Usage measured · 1,001 active" },
+        { state: "partial", label: "KPI movement · partial only" },
+        { state: "partial", label: "Finance validated · $0.4M partial" },
+        { state: "blocked", label: "Realized value · blocked" },
+      ],
+      evidence: [
+        {
+          source: "usage-benefit-lens.csv · Workday AI",
+          caveat: "Synthetic Day 1 planning context",
+        },
+      ],
+    },
+    {
+      key: "reference:contact-center-agent-assist",
+      name: "Contact Center Agent Assist",
+      functionLabel: "Member contact center · Genesys / Azure OpenAI",
+      activeUsers: "680",
+      adoption: "34%",
+      promisedValue: "$8.0M",
+      financeValidated: "$0",
+      claimState: "Baseline only",
+      statusLabel: "Baseline only",
+      status: "blocked",
+      interpretation:
+        "Usage exists but there is no KPI movement and no Finance validation. Value claim is blocked; freeze scale until evidence lands.",
+      kpiLine: "KPI: process cycle time — no movement recorded (baseline only).",
+      financeLine:
+        "Finance: $0 validated of $8.0M promised. Realized value allowed: $0.",
+      nextAction:
+        "Freeze scale; collect KPI baseline and request Finance validation before any value claim.",
+      gates: [
+        { state: "ok", label: "Spend committed" },
+        { state: "ok", label: "Usage measured · 680 active" },
+        { state: "blocked", label: "KPI movement · missing" },
+        { state: "blocked", label: "Finance validated · none" },
+        { state: "blocked", label: "Realized value · blocked" },
+      ],
+      evidence: [
+        {
+          source: "usage-benefit-lens.csv · Contact Center Agent Assist",
+          caveat: "kpi_actual missing",
+        },
+      ],
+    },
+    {
+      key: "reference:databricks-ai-platform",
+      name: "Databricks AI Platform",
+      functionLabel: "Data platform · Databricks / AWS",
+      activeUsers: "956",
+      adoption: "42%",
+      promisedValue: "$0",
+      financeValidated: "$0",
+      claimState: "Not claimable",
+      statusLabel: "Not claimable",
+      status: "blocked",
+      interpretation:
+        "Enablement platform with usage but no promised benefit line. Treat as foundation, not a direct benefit.",
+      kpiLine: "KPI: process cycle time — not attributed to platform.",
+      financeLine:
+        "Finance: $0 promised, $0 validated. Realized value allowed: $0.",
+      nextAction:
+        "Keep as data foundation; attribute value through the benefits it enables, not directly.",
+      gates: [
+        { state: "ok", label: "Spend committed" },
+        { state: "ok", label: "Usage measured · 956 active" },
+        { state: "blocked", label: "KPI movement · not attributed" },
+        { state: "blocked", label: "Finance validated · none" },
+        { state: "blocked", label: "Realized value · blocked" },
+      ],
+      evidence: [
+        {
+          source: "usage-benefit-lens.csv · Databricks AI Platform",
+          caveat: "no promised_value_usd",
+        },
+      ],
+    },
+    {
+      key: "reference:ai-governance-controls",
+      name: "AI Governance Controls",
+      functionLabel: "Risk & governance · Archer / Collibra",
+      activeUsers: "1,275",
+      adoption: "50%",
+      promisedValue: "$0",
+      financeValidated: "$0",
+      claimState: "Blocked · no owner",
+      statusLabel: "Blocked · no owner",
+      status: "blocked",
+      interpretation:
+        "Usage is present but the benefit is blocked by a missing accountable owner. It cannot progress the claim gate.",
+      kpiLine:
+        "KPI: process cycle time — not linked to a named outcome owner.",
+      financeLine:
+        "Finance: $0 promised, $0 validated. Realized value allowed: $0.",
+      nextAction: "Assign an accountable owner; then load a value case and KPI baseline.",
+      gates: [
+        { state: "ok", label: "Spend committed" },
+        { state: "ok", label: "Usage measured · 1,275 active" },
+        { state: "blocked", label: "KPI movement · no owner" },
+        { state: "blocked", label: "Finance validated · none" },
+        { state: "blocked", label: "Realized value · blocked" },
+      ],
+      evidence: [
+        {
+          source: "usage-benefit-lens.csv · AI Governance Controls",
+          caveat: "blocked_missing_owner",
+        },
+      ],
+    },
+  ];
+}
+
+function tenantReferenceToolTraceRows(
+  command: TowerMartCommandCenterRow,
+): TowerAiToolTraceRow[] {
+  const tenant = normalizedTowerTenantKey(command);
+  if (/meridian|healthcare/.test(tenant)) {
+    return meridianReferenceToolTraceRows();
+  }
+  if (/skyharbor|airline/.test(tenant)) {
+    return meridianReferenceToolTraceRows().map((row) => {
+      if (row.name === "Contact Center Agent Assist") {
+        return {
+          ...row,
+          key: "airline:customer-recovery-agent-assist",
+          name: "Customer Recovery Agent Assist",
+          functionLabel: "Customer disruption recovery · Contact center AI",
+          interpretation:
+            "Useful for disruption recovery, but value is blocked until IROPS, customer-care escalation, and recovery-outcome evidence are tied to finance validation.",
+          evidence: [
+            {
+              source: "airline tower AI usage lens · customer recovery assist",
+              caveat: "Day-1 Tower planning context",
+            },
+          ],
+        };
+      }
+      if (row.name === "Databricks AI Platform") {
+        return {
+          ...row,
+          key: "airline:ops-data-platform",
+          name: "Ops Data Platform",
+          functionLabel: "IROPS / crew / maintenance data foundation",
+          evidence: [
+            {
+              source: "airline tower AI usage lens · operations data platform",
+              caveat: "Day-1 Tower planning context",
+            },
+          ],
+        };
+      }
+      return {
+        ...row,
+        key: `airline:${row.key.replace(/^reference:/, "")}`,
+      };
+    });
+  }
+  if (/arcturus|first-capital|fs demo|financial/.test(tenant)) {
+    return meridianReferenceToolTraceRows().map((row) => {
+      if (row.name === "ServiceNow Now Assist") {
+        return {
+          ...row,
+          key: "fs:it-incident-root-cause-copilot",
+          name: "IT Incident Root-Cause Copilot",
+          functionLabel: "IT operations · SAS / ServiceNow / AI operations",
+          activeUsers: "31,000",
+          adoption: "Production",
+          promisedValue: "$24.7M",
+          financeValidated: "$24.7M",
+          claimState: "Measured proof",
+          statusLabel: "Production proof",
+          status: "ok",
+          interpretation:
+            "Strongest FS Demo proof line: production usage and measured value are present, but Tower should still keep the finance evidence attached before P&L language.",
+          kpiLine:
+            "KPI: incident root-cause cycle time and ticket resolution throughput — production value evidence loaded.",
+          financeLine:
+            "Finance: $24.7M measured value is source-backed; release language only if finance-attested in the current review pack.",
+          evidence: [
+            {
+              source: "FS Demo AI footprint · IT Incident Root-Cause Copilot",
+              caveat: "source-backed AI portfolio row",
+            },
+          ],
+        };
+      }
+      if (row.name === "Contact Center Agent Assist") {
+        return {
+          ...row,
+          key: "fs:small-business-cash-flow-insights",
+          name: "Small Business Cash-Flow Insights",
+          functionLabel: "Commercial banking · Azure OpenAI",
+          activeUsers: "35,373",
+          adoption: "Production",
+          promisedValue: "$10.3M",
+          financeValidated: "$10.3M",
+          claimState: "Measured proof",
+          statusLabel: "Production proof",
+          status: "ok",
+          interpretation:
+            "Clean scale-now candidate: source-backed production asset, large active population, and lower risk tier than credit/fraud model use cases.",
+          kpiLine:
+            "KPI: small-business cash-flow insight usage and customer/advisor workflow activation.",
+          financeLine:
+            "Finance: $10.3M measured value is source-backed; confirm current period signoff before board reporting.",
+          evidence: [
+            {
+              source: "FS Demo AI footprint · Small Business Cash-Flow Insights",
+              caveat: "source-backed AI portfolio row",
+            },
+          ],
+        };
+      }
+      return {
+        ...row,
+        key: `fs:${row.key.replace(/^reference:/, "")}`,
+      };
+    });
+  }
+  return [];
+}
+
+function mergeTowerToolTraceRows(
+  portfolioRows: ReadonlyArray<TowerAiPortfolioDisplayRow>,
+  command: TowerMartCommandCenterRow,
+): TowerAiToolTraceRow[] {
+  const loaded = portfolioRows.map(towerToolTraceFromPortfolioRow);
+  const reference = tenantReferenceToolTraceRows(command);
+  const byName = new Map<string, TowerAiToolTraceRow>();
+  reference.forEach((row) => byName.set(row.name.toLowerCase(), row));
+  loaded.forEach((row) => byName.set(row.name.toLowerCase(), row));
+  const merged = [...byName.values()];
+  return merged.length > 0 ? merged.slice(0, 10) : loaded.slice(0, 10);
 }
 
 function inferAiPortfolioProgramVendor(row: TowerMartProgramLane): {
@@ -6175,7 +6667,11 @@ function TowerMartAiPortfolioDesign({
   programRows: ReadonlyArray<TowerMartProgramLane>;
   command: TowerMartCommandCenterRow;
 }) {
+  const [selectedTool, setSelectedTool] = useState<TowerAiToolTraceRow | null>(
+    null,
+  );
   const displayRows = buildAiPortfolioDisplayRows(rows, programRows);
+  const toolRows = mergeTowerToolTraceRows(displayRows, command);
   const fundedRows = displayRows.filter(
     (row) => row.aiTaggedSpendUsd > 0 || row.approvedFundingUsd > 0,
   );
@@ -6423,7 +6919,405 @@ function TowerMartAiPortfolioDesign({
           </div>
         </section>
       </div>
+      <section
+        data-testid="tower-active-ai-tools"
+        style={{
+          ...towerBoardCardStyle,
+          minHeight: 0,
+          marginTop: 18,
+          padding: 0,
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 14,
+            padding: "20px 22px 14px",
+            borderBottom: `1px solid ${T.RULE}`,
+          }}
+        >
+          <div>
+            <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>
+              Active AI Tools
+            </div>
+            <h3
+              style={{
+                margin: "6px 0 0",
+                fontFamily: T.SERIF,
+                fontSize: 28,
+                lineHeight: 1.05,
+                color: T.INK,
+              }}
+            >
+              Tool spend, usage, value proof, and claim gates
+            </h3>
+          </div>
+          <div style={{ color: T.GRAY_DK, fontSize: 12, textAlign: "right" }}>
+            Double-click a row for the investment trace.
+            <br />
+            Loaded mart rows override the Day-1 reference pack.
+          </div>
+        </div>
+        <div style={{ overflowX: "auto" }}>
+          <table
+            data-testid="tower-active-ai-tools-table"
+            style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+          >
+            <thead>
+              <tr>
+                {[
+                  "Tool · Function",
+                  "Active",
+                  "Adoption",
+                  "Promised",
+                  "Validated",
+                  "Claim State",
+                  "Inspect",
+                ].map((head) => (
+                  <th
+                    key={head}
+                    style={{
+                      textAlign:
+                        head === "Tool · Function" || head === "Claim State"
+                          ? "left"
+                          : "right",
+                      padding: "14px 16px 12px",
+                      fontFamily: T.MONO,
+                      fontSize: 9,
+                      letterSpacing: "1.3px",
+                      color: T.GRAY_DK,
+                      textTransform: "uppercase",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {head}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {toolRows.map((row) => (
+                <tr
+                  key={row.key}
+                  data-testid={`tower-ai-tool-row-${row.key}`}
+                  onDoubleClick={() => setSelectedTool(row)}
+                  style={{
+                    borderTop: `1px solid ${T.RULE}`,
+                    cursor: "zoom-in",
+                  }}
+                >
+                  <td style={{ padding: "16px" }}>
+                    <strong style={{ fontFamily: T.SERIF, fontSize: 18 }}>
+                      {row.name}
+                    </strong>
+                    <div
+                      style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 4 }}
+                    >
+                      {row.functionLabel}
+                    </div>
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px",
+                      textAlign: "right",
+                      fontWeight: 850,
+                    }}
+                  >
+                    {row.activeUsers}
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px",
+                      textAlign: "right",
+                      fontWeight: 850,
+                    }}
+                  >
+                    {row.adoption}
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px",
+                      textAlign: "right",
+                      fontWeight: 850,
+                    }}
+                  >
+                    {row.promisedValue}
+                  </td>
+                  <td
+                    style={{
+                      padding: "16px",
+                      textAlign: "right",
+                      fontWeight: 850,
+                    }}
+                  >
+                    {row.financeValidated}
+                  </td>
+                  <td style={{ padding: "16px" }}>
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 7,
+                        borderRadius: 999,
+                        background: gateDotBg(row.status),
+                        color: gateDotColor(row.status),
+                        padding: "6px 9px",
+                        fontWeight: 900,
+                        fontSize: 12,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 999,
+                          background: gateDotColor(row.status),
+                        }}
+                      />
+                      {row.claimState}
+                    </span>
+                  </td>
+                  <td style={{ padding: "16px", textAlign: "right" }}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTool(row)}
+                      style={{
+                        border: `1px solid ${T.RULE_STRONG}`,
+                        borderRadius: 999,
+                        background: "#fff",
+                        color: T.INK,
+                        padding: "7px 11px",
+                        fontWeight: 850,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Inspect
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+      {selectedTool ? (
+        <TowerAiToolTraceDrawer
+          row={selectedTool}
+          tenantName={command.tenantName}
+          onClose={() => setSelectedTool(null)}
+        />
+      ) : null}
     </>
+  );
+}
+
+function TowerAiToolTraceDrawer({
+  row,
+  tenantName,
+  onClose,
+}: {
+  row: TowerAiToolTraceRow;
+  tenantName: string;
+  onClose: () => void;
+}) {
+  return (
+    <aside
+      data-testid="tower-ai-tool-trace-drawer"
+      aria-label={`${row.name} investment trace`}
+      style={{
+        position: "fixed",
+        top: 88,
+        right: 28,
+        bottom: 28,
+        width: "min(520px, calc(100vw - 56px))",
+        zIndex: 70,
+        background: T.CREAM_2,
+        border: `1px solid ${T.RULE_STRONG}`,
+        borderRadius: 18,
+        boxShadow: "0 28px 80px rgba(15, 23, 42, 0.24)",
+        padding: 22,
+        overflow: "auto",
+        color: T.INK,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 16,
+        }}
+      >
+        <div>
+          <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>
+            AI tool investment trace · {tenantName}
+          </div>
+          <h3
+            style={{
+              margin: "8px 0 0",
+              fontFamily: T.SERIF,
+              fontSize: 34,
+              lineHeight: 1.02,
+            }}
+          >
+            {row.name}
+          </h3>
+          <p style={{ margin: "8px 0 0", color: T.GRAY_DK }}>
+            {row.functionLabel}
+          </p>
+        </div>
+        <button
+          type="button"
+          aria-label="Close tool trace"
+          onClick={onClose}
+          style={{
+            border: `1px solid ${T.RULE}`,
+            borderRadius: 999,
+            background: "#fff",
+            width: 34,
+            height: 34,
+            cursor: "pointer",
+            fontWeight: 900,
+          }}
+        >
+          ×
+        </button>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+          gap: 10,
+          marginTop: 18,
+        }}
+      >
+        {[
+          ["Active users", row.activeUsers],
+          ["Adoption", row.adoption],
+          ["Validated", row.financeValidated],
+        ].map(([label, value]) => (
+          <div
+            key={label}
+            style={{
+              border: `1px solid ${T.RULE}`,
+              borderRadius: 12,
+              background: "#fff",
+              padding: 12,
+            }}
+          >
+            <div style={{ ...towerTinyLabelStyle, fontSize: 8 }}>{label}</div>
+            <div
+              style={{
+                marginTop: 7,
+                fontFamily: T.SERIF,
+                fontSize: 24,
+                fontWeight: 900,
+              }}
+            >
+              {value}
+            </div>
+          </div>
+        ))}
+      </div>
+      <section style={{ marginTop: 18 }}>
+        <div
+          style={{
+            borderRadius: 14,
+            background: gateDotBg(row.status),
+            color: T.INK,
+            padding: 14,
+            border: `1px solid ${T.RULE}`,
+          }}
+        >
+          <strong style={{ color: gateDotColor(row.status) }}>
+            {row.statusLabel}:
+          </strong>{" "}
+          {row.interpretation}
+        </div>
+      </section>
+      <section style={{ marginTop: 18, display: "grid", gap: 10 }}>
+        {[row.kpiLine, row.financeLine, `Next action: ${row.nextAction}`].map(
+          (line) => (
+            <p
+              key={line}
+              style={{
+                margin: 0,
+                color: T.INK_2,
+                lineHeight: 1.5,
+                fontSize: 14,
+              }}
+            >
+              {line}
+            </p>
+          ),
+        )}
+      </section>
+      <section style={{ marginTop: 20 }}>
+        <div style={{ ...towerTinyLabelStyle, marginBottom: 10 }}>
+          Claim gate
+        </div>
+        <div style={{ display: "grid", gap: 8 }}>
+          {row.gates.map((gate) => (
+            <div
+              key={gate.label}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "24px 1fr",
+                gap: 10,
+                alignItems: "center",
+                borderTop: `1px solid ${T.RULE}`,
+                paddingTop: 8,
+              }}
+            >
+              <span
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 999,
+                  display: "grid",
+                  placeItems: "center",
+                  background: gateDotBg(gate.state),
+                  color: gateDotColor(gate.state),
+                  fontSize: 11,
+                  fontWeight: 900,
+                }}
+              >
+                {gate.state === "ok" ? "✓" : gate.state === "partial" ? "~" : "×"}
+              </span>
+              <span style={{ color: T.INK_2 }}>{gate.label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section style={{ marginTop: 20 }}>
+        <div style={{ ...towerTinyLabelStyle, marginBottom: 10 }}>
+          Evidence
+        </div>
+        <div style={{ display: "grid", gap: 8 }}>
+          {row.evidence.map((evidence) => (
+            <div
+              key={`${evidence.source}-${evidence.caveat}`}
+              style={{
+                border: `1px solid ${T.RULE}`,
+                borderRadius: 10,
+                background: "#fff",
+                padding: 11,
+              }}
+            >
+              <strong>{evidence.source}</strong>
+              <div style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 4 }}>
+                {evidence.caveat}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </aside>
   );
 }
 
