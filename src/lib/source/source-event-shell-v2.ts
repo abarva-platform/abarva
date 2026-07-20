@@ -50,6 +50,7 @@ export interface SourceShellStep {
   file: StageTaskView["file"] | null;
   template: StageTaskView["template"] | null;
   provenance: StageTaskView["provenance"] | null;
+  factTemplateCode: StageTaskView["factTemplateCode"] | null;
 }
 
 export interface SourceShellFileItem {
@@ -311,6 +312,7 @@ function toShellStep(task: StageTaskView, firstInGroup: boolean): SourceShellSte
     file: task.file ?? null,
     template: task.template ?? null,
     provenance: task.provenance ?? null,
+    factTemplateCode: task.factTemplateCode ?? null,
   };
 }
 

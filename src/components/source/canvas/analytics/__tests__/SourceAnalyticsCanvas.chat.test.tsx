@@ -18,7 +18,7 @@
 // matching the pattern already used by StrategyStage.test.tsx.
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
@@ -61,6 +61,8 @@ import { SAMPLE_SCOPE_STAGE } from "../sample-view-model";
 import type { StageAnalyticsView } from "../view-model";
 import type { SourcingEventSummary } from "@/lib/source/types";
 
+const originalFetch = global.fetch;
+
 function makeEvent(
   overrides: Partial<SourcingEventSummary> = {},
 ): SourcingEventSummary {
@@ -94,6 +96,10 @@ function makeEvent(
 describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
   beforeEach(() => {
     mockAskAnythingBar.mockClear();
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
   it("mounts AskAnythingBar with surface='source-detail' and an event+stage scopeLabel after Ask aVa opens", () => {
@@ -197,6 +203,64 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
       <SourceAnalyticsCanvas event={event} viewStage="scope" tenantName="Lakeshore" />,
     );
     expect(screen.getByTestId("source-analytics-canvas")).toBeInTheDocument();
+  });
+
+  it("uses the real governed uploader in the focused provide step", async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          artifact: {
+            id: "artifact-1",
+            originalName: "volumetrics.csv",
+            sourceFormat: "csv",
+            sizeBytes: 4096,
+            parseStatus: "parsed",
+          },
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          eventId: "evt-1",
+          templateCode: "VOLUMETRICS_V1",
+          factsWritten: 7,
+          unmappedColumns: [],
+          rejectedRows: [],
+        }),
+      });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Lakeshore"
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("task-file-input"), {
+      target: {
+        files: [
+          new File([new Uint8Array(16)], "volumetrics.csv", { type: "text/csv" }),
+        ],
+      },
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(String(fetchMock.mock.calls[0][0])).toContain(
+      "/api/v1/source/evt-1/artifacts/upload",
+    );
+    expect(String(fetchMock.mock.calls[1][0])).toContain(
+      "/api/v1/source/evt-1/facts/ingest-file",
+    );
+    expect(await screen.findByText("volumetrics.csv")).toBeInTheDocument();
+    expect(screen.getByTestId("fact-ingest-result")).toHaveTextContent(
+      /7 facts written/i,
+    );
   });
 });
 

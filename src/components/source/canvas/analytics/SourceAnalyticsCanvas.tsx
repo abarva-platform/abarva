@@ -18,6 +18,7 @@ import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
 import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
 import { ANALYTICS } from './analytics-tokens';
 import { IntelPanel } from './IntelPanel';
+import { TaskProvideUpload } from './TaskChecklist';
 import { ValueWaterfall } from './ValueWaterfall';
 import { StepInsightPanel } from './insights';
 import {
@@ -794,13 +795,25 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
           {activeStep.help}
         </p>
 
-        <StepDetail step={activeStep} />
+        <StepDetail
+          step={activeStep}
+          eventId={view.event.id}
+          stageKey={view.stage.key}
+        />
       </div>
     </section>
   );
 }
 
-function StepDetail({ step }: { step: SourceEventShellView['stage']['activeStep'] }) {
+function StepDetail({
+  step,
+  eventId,
+  stageKey,
+}: {
+  step: SourceEventShellView['stage']['activeStep'];
+  eventId: string;
+  stageKey: SourceStageKey;
+}) {
   if (!step) return null;
 
   if (step.rows.length > 0) {
@@ -843,39 +856,12 @@ function StepDetail({ step }: { step: SourceEventShellView['stage']['activeStep'
   if (step.type === 'provide') {
     return (
       <div style={{ marginLeft: 42, maxWidth: 680 }}>
-        <div
-          style={{
-            border: `1px dashed ${ANALYTICS.LINE_STRONG}`,
-            borderRadius: 10,
-            background: ANALYTICS.CARD,
-            padding: '18px',
-            display: 'grid',
-            gridTemplateColumns: '36px 1fr',
-            gap: 12,
-            alignItems: 'center',
-          }}
-        >
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 8,
-              border: `1px solid ${ANALYTICS.LINE}`,
-              display: 'grid',
-              placeItems: 'center',
-              color: ANALYTICS.BLUE,
-              fontSize: 22,
-            }}
-          >
-            ↑
-          </div>
-          <div>
-            <div style={{ fontWeight: 800 }}>Drop a file here, or browse</div>
-            <div style={{ color: ANALYTICS.MUTED, fontSize: 13, marginTop: 3 }}>
-              {step.file?.format ?? step.template?.format ?? 'CSV or XLSX'} · up to 100 MB
-            </div>
-          </div>
-        </div>
+        <TaskProvideUpload
+          signed={/letter|commit/i.test(step.title)}
+          eventId={eventId}
+          stageKey={stageKey}
+          factTemplateCode={step.factTemplateCode ?? undefined}
+        />
       </div>
     );
   }

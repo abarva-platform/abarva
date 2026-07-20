@@ -219,7 +219,7 @@ function TaskRow({
           {task.file ? (
             <FileChip file={task.file} />
           ) : task.type === 'provide' && !task.template ? (
-            <DropZone
+            <TaskProvideUpload
               signed={/letter|commit/i.test(task.title)}
               eventId={eventId}
               stageKey={stageKey}
@@ -584,7 +584,7 @@ interface DropZoneProps {
  *
  * Without `eventId` the zone stays presentational (sample/preview mode).
  */
-function DropZone({
+export function TaskProvideUpload({
   signed,
   eventId,
   stageKey,
