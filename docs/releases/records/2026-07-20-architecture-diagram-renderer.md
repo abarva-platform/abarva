@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -92,20 +92,25 @@ no worker job. Deploy proceeds through the repo-owned `aca-main-deploy` workflow
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
-- Shared runtime mutators: none used directly; deploy proceeds through the standard
-  workflow only.
-- Approved image digest: to be recorded once the deploy workflow runs.
-- ACA runtime invariant: to be proven after deploy.
-- Worker image invariant: N/A — no worker involved in this change.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`, run
+  [29715096821](https://github.com/abarva-platform/abarva/actions/runs/29715096821)
+  (headSha `e9d32443b31392bb19ecc0c2b1c4e149ba853c02`, the #5096 merge commit),
+  conclusion `success`.
+- Shared runtime mutators: none used directly; deploy proceeded entirely through the
+  standard workflow.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:eb101a9d2faca95f86282d58e7e3cab250166aecf88ed7b571e77ea413fbb729`.
+- ACA runtime invariant: **proven.** `az containerapp show` confirms the template image
+  and the 100%-traffic revision (`ca-abarva-web-lab-eastus--me9d32443`) both resolve to
+  the digest above.
+- Worker image invariant: **proven.** `job-abarva-deliv-worker` and
+  `job-abarva-deliv-worker-event` both resolve to the same digest.
 - Feature/env flag update path: N/A — no flag.
-- Live signed-in proof required: yes — the next real Target State Architecture generated
-  via "Approve & Build" should visually show the new swimlane/legend/flow rendering
-  instead of the old generic flow boxes; this depends on a Move reaching that generation
-  step with real evidence, which was not available in the previous release's live-proof
-  pass either (tracked there as a known gap) — this release does not attempt to force
-  that live-proof, but the rendering itself is unit-tested and visually spot-checked
-  above.
+- Live signed-in proof: **not yet performed.** The next real Target State Architecture
+  generated via "Approve & Build" should visually show the new swimlane/legend/flow
+  rendering instead of the old generic flow boxes; this depends on a Move reaching that
+  generation step with real evidence, which was not available in this or the prior
+  release's live-proof pass either (same known gap, not force-created for this check).
 
 ## Rollback Plan
 
@@ -115,9 +120,17 @@ the generic flow-diagram fallback they used before, with no other change.
 
 ## Audit Evidence
 
-- PR URL: to be added when opened.
-- CI run: to be added when the PR's checks complete.
-- Deployment URL / ACA revision: to be added after deploy.
+- PR: [abarva-platform/abarva#5096](https://github.com/abarva-platform/abarva/pull/5096),
+  20/20 required checks passed, squash-merged as `e9d32443b31392bb19ecc0c2b1c4e149ba853c02`.
+- CI/deploy run: [aca-main-deploy #29715096821](https://github.com/abarva-platform/abarva/actions/runs/29715096821),
+  conclusion `success`.
+- Deployment: ACA revision `ca-abarva-web-lab-eastus--me9d32443` in
+  `rg-abarva-controlplane-lab-eastus`, 100% ingress traffic, image digest
+  `sha256:eb101a9d2faca95f86282d58e7e3cab250166aecf88ed7b571e77ea413fbb729`.
+- Live proof: app-loads/no-regression confirmed on `app.abarva.ai` post-deploy. A live
+  generation-cycle proof (real Target State Architecture rendering the new swimlane
+  diagrams) was not reachable in this pass — same open item as the artifact-quality-
+  contract release.
 
 ## Known Gaps
 
