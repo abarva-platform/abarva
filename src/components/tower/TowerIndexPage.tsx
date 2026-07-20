@@ -106,6 +106,73 @@ interface CioTowerChatResponse {
   gaps?: string[];
 }
 
+type TowerChatStreamEvent =
+  | {
+      type: "status";
+      phase?: string;
+      label?: string;
+    }
+  | ({
+      type: "tower-answer";
+    } & Partial<CioTowerChatResponse>)
+  | {
+      type: "error";
+      response?: string;
+      modelOutput?: TowerChatVisibleAnswer;
+      detail?: string;
+    }
+  | {
+      type: "done";
+      traceKey?: string;
+      latencyMs?: number;
+    };
+
+async function readTowerChatStream(
+  response: Response,
+  onStatus: (label: string) => void,
+): Promise<Partial<CioTowerChatResponse>> {
+  if (!response.body) {
+    return (await response.json().catch(() => ({}))) as Partial<CioTowerChatResponse>;
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let finalPayload: Partial<CioTowerChatResponse> | null = null;
+  let errorPayload: Partial<CioTowerChatResponse> | null = null;
+
+  const handleLine = (line: string) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    const event = JSON.parse(trimmed) as TowerChatStreamEvent;
+    if (event.type === "status" && event.label) {
+      onStatus(event.label);
+      return;
+    }
+    if (event.type === "tower-answer") {
+      finalPayload = event;
+      return;
+    }
+    if (event.type === "error") {
+      errorPayload = event;
+    }
+  };
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split(/\r?\n/);
+    buffer = lines.pop() ?? "";
+    for (const line of lines) handleLine(line);
+  }
+  buffer += decoder.decode();
+  if (buffer.trim()) handleLine(buffer);
+
+  if (errorPayload) return errorPayload;
+  return finalPayload ?? {};
+}
+
 function labelizeCioMeasureKey(value: string): string {
   return value
     .replace(/_/g, " ")
@@ -11196,6 +11263,9 @@ export function TowerIndexPage({
     initialOpener,
   ]);
   const [atlasPending, setAtlasPending] = useState(false);
+  const [atlasPendingMessage, setAtlasPendingMessage] = useState<string | null>(
+    null,
+  );
   const [atlasThreadId, setAtlasThreadId] = useState<string | null>(null);
   const initialPrompts: string[] = hasTowerEvidenceForAva
     ? [
@@ -11246,20 +11316,29 @@ export function TowerIndexPage({
       }
 
       setAtlasPending(true);
+      setAtlasPendingMessage("Grounding Tower context");
       const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 45_000);
+      const timeout = window.setTimeout(() => controller.abort(), 90_000);
       try {
         const res = await fetch("/api/tower/cio-chat", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            Accept: "application/x-ndjson",
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             message: trimmed,
+            stream: true,
           }),
           signal: controller.signal,
         });
-        const json = (await res
-          .json()
-          .catch(() => ({}))) as Partial<CioTowerChatResponse>;
+        const json = res.headers
+          .get("content-type")
+          ?.includes("application/x-ndjson")
+          ? await readTowerChatStream(res, setAtlasPendingMessage)
+          : ((await res
+              .json()
+              .catch(() => ({}))) as Partial<CioTowerChatResponse>);
         const modelOutput = json.modelOutput;
         if (!res.ok || !modelOutput?.answer) {
           setAtlasMessages((prev) => [
@@ -11320,6 +11399,7 @@ export function TowerIndexPage({
       } finally {
         window.clearTimeout(timeout);
         setAtlasPending(false);
+        setAtlasPendingMessage(null);
       }
     },
     [activeTenantName, clientId, atlasThreadId],
@@ -11613,6 +11693,7 @@ export function TowerIndexPage({
       <AtlasChatPanel
         messages={atlasMessages}
         pending={atlasPending}
+        pendingMessage={atlasPendingMessage ?? undefined}
         onSubmit={sendToAtlas}
         suggestions={atlasSuggestions}
         onSuggestion={handleAtlasSuggestion}

@@ -6,7 +6,7 @@
 //
 // Coverage:
 //   - Translates AtlasMessage[] → AgentDock thread (atlas → agent role).
-//   - Adds a transient "aVa is thinking…" turn while pending=true.
+//   - Adds a transient progress turn while pending=true.
 //   - Routes suggestion clicks to the caller's onSuggestion (no compose).
 //   - Forwards composer submit (text + attachments) to onSubmit.
 //   - Renders the workspace pane in side-rail mode by default.
@@ -239,6 +239,25 @@ describe("AtlasChatPanel · adapter", () => {
 
     const thread = screen.getByTestId("agent-dock-thread");
     expect(thread).toHaveTextContent("aVa is thinking…");
+  });
+
+  it("uses a streamed pending status when provided", () => {
+    render(
+      <AtlasChatPanel
+        messages={MESSAGES}
+        pending={true}
+        pendingMessage="Checking governed Tower evidence"
+        onSubmit={jest.fn()}
+        suggestions={[]}
+        onSuggestion={jest.fn()}
+        workspace={<div>w</div>}
+        surface={SURFACE}
+      />,
+    );
+
+    const thread = screen.getByTestId("agent-dock-thread");
+    expect(thread).toHaveTextContent("Checking governed Tower evidence");
+    expect(thread).not.toHaveTextContent("aVa is thinking…");
   });
 
   it("renders in side-rail mode by default and persists per-surface", () => {
