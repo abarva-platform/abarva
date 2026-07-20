@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -95,16 +95,21 @@ effect.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` — to be
-  confirmed after merge.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`, run
+  [29750365143](https://github.com/abarva-platform/abarva/actions/runs/29750365143)
+  (headSha `bd6a589f536b38dc35e02ddb8005c6c71cb48a98`, the #5148 merge
+  commit), conclusion `success`.
 - Shared runtime mutators: none used directly.
-- Approved image digest: to be recorded once the deploy workflow runs.
-- ACA runtime invariant: to be proven after deploy (routine — no behavior
-  change to verify beyond the standard health check).
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:5245615e2e9119a3991d91b6c8ebb5f235e05db14364b0fd580268bedb111f1d`.
+- ACA runtime invariant: **proven** — the workflow's own runtime-invariant
+  check passed (100%-traffic revision `ca-abarva-web-lab-eastus--mbd6a589f`
+  matches the built image digest).
 - Worker image invariant: N/A.
 - Feature/env flag update path: N/A — no flag.
-- Live signed-in proof required: no — test-only change with no runtime
-  behavior difference; the standard post-deploy health check is sufficient.
+- Live signed-in proof: **not applicable**, as documented above — test-only
+  change with no runtime behavior difference. The workflow's own automated
+  production health check passed as part of the deploy.
 
 ## Rollback Plan
 
@@ -112,9 +117,14 @@ Revert the merge commit. Test-only — no data or schema impact either way.
 
 ## Audit Evidence
 
-- PR URL: to be added when opened.
-- CI run: to be added when the PR's checks complete.
-- Deployment URL / ACA revision: to be added after deploy.
+- PR: [abarva-platform/abarva#5148](https://github.com/abarva-platform/abarva/pull/5148),
+  all required checks passed, squash-merged as
+  `bd6a589f536b38dc35e02ddb8005c6c71cb48a98`.
+- CI/deploy run: [aca-main-deploy #29750365143](https://github.com/abarva-platform/abarva/actions/runs/29750365143),
+  conclusion `success`.
+- Deployment: ACA revision `ca-abarva-web-lab-eastus--mbd6a589f`, 100%
+  ingress traffic, image digest
+  `sha256:5245615e2e9119a3991d91b6c8ebb5f235e05db14364b0fd580268bedb111f1d`.
 
 ## Known Gaps
 
