@@ -30,11 +30,13 @@ import {
   type DockMode,
 } from "@/components/agent/AgentDock";
 import type { AtlasSuggestion } from "@/lib/atlas/types";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 
 export interface AtlasMessage {
   id: string;
   role: "atlas" | "user";
   content: string;
+  agentAnswer?: AvaAnswerPacket | null;
 }
 
 export const ATLAS_AGENT: AgentProfile = {
@@ -124,6 +126,7 @@ export function AtlasChatPanel({
       id: m.id,
       role: m.role === "atlas" ? "agent" : "user",
       body: visibleAvaCopy(m.content),
+      agentAnswer: m.agentAnswer ?? undefined,
     }));
     if (pending) {
       base.push({
