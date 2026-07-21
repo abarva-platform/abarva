@@ -274,8 +274,8 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   stage's work under the correct stage label, eroding trust in stage navigation and QA proof.
 - **Severity**: P4 (stage navigation correctness / shell trust)
 - **Workstream**: Stage route/view coherence
-- **Status**: `Candidate` — implementation and full 11-stage fallback regression complete; see PR
-  below.
+- **Status**: `Live-proven` — merged in PR below and deployed through ACA main deploy run
+  [29874391399](https://github.com/abarva-platform/abarva/actions/runs/29874391399).
 - **Dependencies**: none — uses existing view-model contract, no schema/API/data changes.
 - **Acceptance criteria**: the fallback selector explicitly maps every existing fixture-backed
   canonical stage; Scope has its own explicit branch; Pricing, Executive Decision, and Transition
@@ -292,8 +292,7 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
 
 ## Ready / in progress
 
-`SOURCE-SHELL-003` and `SOURCE-SHELL-004` remain next larger backlog items. `SOURCE-SHELL-007`
-is a narrow correctness follow-up discovered during live proof and can be handled independently.
+`SOURCE-SHELL-003` and `SOURCE-SHELL-004` remain next larger backlog items.
 
 ## Blocked
 

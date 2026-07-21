@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -54,22 +54,27 @@ not invent fake fixture content, and it does not show Scope work under another s
 - `blocked by unrelated baseline failures` — `npx jest src/components/source/canvas/analytics/__tests__ --runInBand` — 63/65 passing. The two failures are the known baseline failures named in the handoff: `StrategyStage.test.tsx` cannot find `intel-panel`, and `SourceAnalyticsCanvas.thread.test.tsx` cannot find the old `Ask Ava` composer label.
 - `blocked by unrelated baseline type errors` — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` reaches TypeScript and then fails on existing Home graph dependencies/types: missing `@xyflow/react`, missing `@dagrejs/dagre`, and implicit `any` parameters in `HomeKnowledgeDesignContractSurface.tsx`. No errors reference the Source files touched here.
 - `pass` — `npm run release:check` — Release Control Gate and Deploy Authority Gate passed.
+- `pass` — GitHub PR checks for [#5242](https://github.com/abarva-platform/abarva/pull/5242), including ESLint, Typecheck + reasoning-layer tests, Chrome Firefox Safari mobile smoke, Production readiness gate, Release record and impact note, and the governance gates.
+- `pass` — ACA main deploy run [29874391399](https://github.com/abarva-platform/abarva/actions/runs/29874391399) deployed main commit `0c65c742`, which contains this release's merge commit `6438a0c3`.
+- `pass` — independent ACA runtime invariant check at `2026-07-21T22:45:19.769Z`: template image and 100% traffic revision image both `acrabarvalab001.azurecr.io/abarva/web@sha256:e322d727559e596e309d24745a77ab3161a7b4911a6250e6d068afd77824e02c`; active revision `ca-abarva-web-lab-eastus--m0c65c742`; traffic 100%; `/api/health` returned `ok=true`.
+- `pass` — signed-in production browser proof with `.auth/agent-meridian.json` against `https://app.abarva.ai/source/events/cea10d0a-6d5d-49d2-8522-173c2d6fd520?stage=responses`: page stayed signed in, rendered `Confirm vendor response coverage`, and did not render Scope's `Provide the volumetrics`.
+- `pass` — signed-in production browser proof with `.auth/agent-meridian.json` against `https://app.abarva.ai/source/events/cea10d0a-6d5d-49d2-8522-173c2d6fd520?stage=pricing`: page stayed signed in, rendered `No illustrative preview has been built for Pricing yet`, rendered `No required steps are defined for this stage yet`, and did not render Scope's `Provide the volumetrics`.
 
 ## Rollout Plan
 
-Merge to `main` via PR. The repo-owned ACA main deploy workflow builds and deploys the next
-production image for `app.abarva.ai`. No migration, feature flag, worker job, or manual runtime
-mutation is required.
+Merged to `main` via PR [#5242](https://github.com/abarva-platform/abarva/pull/5242). The
+repo-owned ACA main deploy workflow deployed a later main commit that contains this release. No
+migration, feature flag, worker job, or manual runtime mutation was required.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: none.
-- Approved image digest: to be recorded after merge and deploy.
-- ACA runtime invariant: to be verified after merge and deploy.
+- Approved image digest: `sha256:e322d727559e596e309d24745a77ab3161a7b4911a6250e6d068afd77824e02c`.
+- ACA runtime invariant: passed for `ca-abarva-web-lab-eastus--m0c65c742` at 100% traffic.
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes.
+- Live signed-in proof required: completed.
 
 ## Rollback Plan
 
@@ -80,11 +85,13 @@ is needed.
 
 - PR: [#5242](https://github.com/abarva-platform/abarva/pull/5242).
 - Focused regression and lint output: see QA / Validation.
-- Signed-in live proof: to be added after deploy.
+- Deploy run: [29874391399](https://github.com/abarva-platform/abarva/actions/runs/29874391399).
+- Runtime proof bundle: `/tmp/source-shell-fallback-aca-proof/runtime-invariant-proof.json`.
+- Signed-in live proof screenshots: `/tmp/source-shell-fallback-responses.png` and
+  `/tmp/source-shell-fallback-pricing.png`.
 
 ## Known Gaps
 
-- Full signed-in live proof is pending deploy.
 - Real sample fixtures for Pricing, Executive Decision, and Transition are intentionally not built
   in this bug-fix slice. The placeholder is honest and prevents cross-stage mislabeling; fixture
   design remains future product work.
