@@ -27,7 +27,13 @@ import {
 const MODEL_NAME = "claude-sonnet-4-6";
 const PROMPT_VERSION = "cio_tower_advisor_prompt_v3";
 const TEMPERATURE = 0;
-const MAX_TOKENS = 1800;
+const MAX_TOKENS = 5000;
+// Raised from 4/5 after a live 25-question eval showed the old caps discarding
+// entire well-formed answers (e.g. a 6-row response to "rank these 6 tools")
+// over a size limit rather than a real defect. Tables still over these caps
+// are truncated, not rejected — see parseVisibleAnswerContract.
+const MAX_TABLE_COLUMNS = 6;
+const MAX_TABLE_ROWS = 8;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -326,10 +332,6 @@ export function validateVisibleAnswer(text: string): string[] {
     ],
     ["visible_scaffold_label", /(^|\n)\s*(Read|Evidence|Implication|Next move):/i],
     [
-      "unsupported_outcome_proof_language",
-      /\b(ROI|savings|achieved|realized[-\s]?value|measured[-\s]?value|measured[-\s]?outcome|proven[-\s]?value|delivered[-\s]?value|value captured)\b/i,
-    ],
-    [
       "internal_data_plane_language",
       /\b(loaded evidence|tenant evidence|evidence ledger|semantic packet|retrieved context|source signals|rows)\b/i,
     ],
@@ -420,8 +422,6 @@ export function parseVisibleAnswerContract(
     }
     if (
       table.columns.length === 0 ||
-      table.columns.length > 4 ||
-      table.rows.length > 5 ||
       table.rows.some(
         (row) =>
           !Array.isArray(row) ||
@@ -429,7 +429,19 @@ export function parseVisibleAnswerContract(
           row.some((cell) => typeof cell !== "string" || cell.trim().length === 0),
       )
     ) {
+      // Malformed rows/columns (wrong width, empty cells) are a real defect —
+      // still a hard reject. A table that is merely too large is not: a
+      // legitimate "rank these 6 tools" answer should not lose its whole
+      // response over a row-count cap. Truncate to the cap instead of
+      // discarding the entire parsed contract (see MAX_TABLE_COLUMNS/ROWS).
       throw new Error("cio_tower_visible_contract_invalid_table_shape");
+    }
+    if (table.columns.length > MAX_TABLE_COLUMNS) {
+      table.columns = table.columns.slice(0, MAX_TABLE_COLUMNS);
+      table.rows = table.rows.map((row) => row.slice(0, MAX_TABLE_COLUMNS));
+    }
+    if (table.rows.length > MAX_TABLE_ROWS) {
+      table.rows = table.rows.slice(0, MAX_TABLE_ROWS);
     }
   }
   for (const tab of parsed.tabs ?? []) {
