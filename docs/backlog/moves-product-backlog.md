@@ -527,6 +527,19 @@ worked examples from the design conversation.
   NOT a rewrite, given this component's size and live-traffic exposure. `MovePhaseExplorer.tsx`
   work is retained as unused infra; do not build further phases against it.
 
+- **Phase 4 verified (2026-07-20, no code change needed)**: audited `PhaseApproveAndBuild.tsx`
+  and `MovesPhaseStandaloneClient.tsx`'s wiring. The two-sequential-calls requirement is
+  ALREADY correctly implemented in production: `onBuildSettled` fires only once every queued
+  deliverable reaches a terminal status (`PhaseApproveAndBuild.tsx` line ~267), and only then
+  does `approvePhaseGateAfterBuild` (`MovesPhaseStandaloneClient.tsx` line ~637) check for
+  failures and separately POST `/api/v1/programs/[id]/phase-gate-approval`. This matches
+  MOVES-GATE-002 (already Runtime Proven). No fix required; item closed as verified.
+- **Phase 5 — open scope question, not yet started**: the live UI has no standalone
+  cross-phase "Approvals & advance" view — approval is submitted inline per-phase via the
+  Approve & Build flow above (already correctly gated). Building a NEW cross-phase Approvals
+  list page would be net-new UI surface, not visual polish on an existing page, and needs an
+  owner call on whether it's wanted at all before design/build work starts.
+
 ---
 
 ## Architecture decisions (reference — see design doc for full detail)
