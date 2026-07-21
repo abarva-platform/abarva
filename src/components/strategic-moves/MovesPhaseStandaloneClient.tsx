@@ -1305,59 +1305,131 @@ export function MovesPhaseStandaloneClient({
                           />
 
                           {finderShellEnabled ? (
-                            <FinderStepsColumns
-                              comingUpExpanded={finderComingUpOpen}
-                              onPhaseCaptureValueChange={setPhaseCaptureValue}
-                              onSelectSection={setFinderSelectedSectionKey}
-                              onSelectSubstep={setSubstepIndex}
-                              onToggleComingUp={() =>
-                                setFinderComingUpOpen((open) => !open)
-                              }
-                              phase={phase}
-                              phaseCaptureSections={phaseCaptureSections}
-                              phaseCaptureValues={phaseCaptureValues}
-                              readinessPack={finderReadinessPack}
-                              selectedSectionKey={finderSelectedSectionKey}
-                              substepBody={
-                                <PhaseBody
-                                  carriesForwardContent={carriesForwardContent}
-                                  currentStateReadiness={currentStateReadiness}
-                                  evidenceCount={evidenceCount}
-                                  evidenceNeedPackets={evidenceNeedPackets}
-                                  gateApproved={gateApproved}
-                                  gateApprovalMessage={gateApprovalMessage}
-                                  gateApprovalStatus={gateApprovalStatus}
-                                  isHistoricalPhase={isHistoricalPhase}
-                                  move={move}
-                                  onApproveAfterBuild={
-                                    approvePhaseGateAfterBuild
-                                  }
-                                  onContinueCurrentPhase={
-                                    continueToCurrentPhase
-                                  }
-                                  onApproveP0Gate={approveP0Gate}
-                                  onFinalizePhaseCapture={finalizePhaseCapture}
-                                  onOpenFiles={openFilesWorkspace}
-                                  onPhaseCaptureValueChange={
-                                    setPhaseCaptureValue
-                                  }
-                                  onSelectOption={setSelectedOption}
-                                  nextOpenPhaseContract={nextOpenPhaseContract}
-                                  p3OptionSet={p3OptionSet}
-                                  phase={phase}
-                                  phaseCaptureBlocker={phaseCaptureBlocker}
-                                  phaseCaptureCompleteCount={
-                                    phaseCaptureCompleteCount
-                                  }
-                                  phaseCaptureSections={phaseCaptureSections}
-                                  phaseCaptureValues={phaseCaptureValues}
-                                  selectedOption={selectedOption}
-                                  substep={substep.key}
-                                  terminalComplete={terminalComplete}
-                                />
-                              }
-                              substepIndex={substepIndex}
-                            />
+                            phase.phase === 1 ? (
+                              <PhaseContractStepsCanvas
+                                comingUpExpanded={finderComingUpOpen}
+                                onPhaseCaptureValueChange={setPhaseCaptureValue}
+                                onSelectSection={setFinderSelectedSectionKey}
+                                onSelectSubstep={setSubstepIndex}
+                                onToggleComingUp={() =>
+                                  setFinderComingUpOpen((open) => !open)
+                                }
+                                phase={phase}
+                                phaseCaptureSections={phaseCaptureSections}
+                                phaseCaptureValues={phaseCaptureValues}
+                                readinessPack={finderReadinessPack}
+                                selectedSectionKey={finderSelectedSectionKey}
+                                substepBody={
+                                  <PhaseBody
+                                    carriesForwardContent={
+                                      carriesForwardContent
+                                    }
+                                    currentStateReadiness={
+                                      currentStateReadiness
+                                    }
+                                    evidenceCount={evidenceCount}
+                                    evidenceNeedPackets={evidenceNeedPackets}
+                                    gateApproved={gateApproved}
+                                    gateApprovalMessage={gateApprovalMessage}
+                                    gateApprovalStatus={gateApprovalStatus}
+                                    isHistoricalPhase={isHistoricalPhase}
+                                    move={move}
+                                    onApproveAfterBuild={
+                                      approvePhaseGateAfterBuild
+                                    }
+                                    onContinueCurrentPhase={
+                                      continueToCurrentPhase
+                                    }
+                                    onApproveP0Gate={approveP0Gate}
+                                    onFinalizePhaseCapture={
+                                      finalizePhaseCapture
+                                    }
+                                    onOpenFiles={openFilesWorkspace}
+                                    onPhaseCaptureValueChange={
+                                      setPhaseCaptureValue
+                                    }
+                                    onSelectOption={setSelectedOption}
+                                    nextOpenPhaseContract={
+                                      nextOpenPhaseContract
+                                    }
+                                    p3OptionSet={p3OptionSet}
+                                    phase={phase}
+                                    phaseCaptureBlocker={phaseCaptureBlocker}
+                                    phaseCaptureCompleteCount={
+                                      phaseCaptureCompleteCount
+                                    }
+                                    phaseCaptureSections={phaseCaptureSections}
+                                    phaseCaptureValues={phaseCaptureValues}
+                                    selectedOption={selectedOption}
+                                    substep={substep.key}
+                                    terminalComplete={terminalComplete}
+                                  />
+                                }
+                                substepIndex={substepIndex}
+                              />
+                            ) : (
+                              <FinderStepsColumns
+                                comingUpExpanded={finderComingUpOpen}
+                                onPhaseCaptureValueChange={setPhaseCaptureValue}
+                                onSelectSection={setFinderSelectedSectionKey}
+                                onSelectSubstep={setSubstepIndex}
+                                onToggleComingUp={() =>
+                                  setFinderComingUpOpen((open) => !open)
+                                }
+                                phase={phase}
+                                phaseCaptureSections={phaseCaptureSections}
+                                phaseCaptureValues={phaseCaptureValues}
+                                readinessPack={finderReadinessPack}
+                                selectedSectionKey={finderSelectedSectionKey}
+                                substepBody={
+                                  <PhaseBody
+                                    carriesForwardContent={
+                                      carriesForwardContent
+                                    }
+                                    currentStateReadiness={
+                                      currentStateReadiness
+                                    }
+                                    evidenceCount={evidenceCount}
+                                    evidenceNeedPackets={evidenceNeedPackets}
+                                    gateApproved={gateApproved}
+                                    gateApprovalMessage={gateApprovalMessage}
+                                    gateApprovalStatus={gateApprovalStatus}
+                                    isHistoricalPhase={isHistoricalPhase}
+                                    move={move}
+                                    onApproveAfterBuild={
+                                      approvePhaseGateAfterBuild
+                                    }
+                                    onContinueCurrentPhase={
+                                      continueToCurrentPhase
+                                    }
+                                    onApproveP0Gate={approveP0Gate}
+                                    onFinalizePhaseCapture={
+                                      finalizePhaseCapture
+                                    }
+                                    onOpenFiles={openFilesWorkspace}
+                                    onPhaseCaptureValueChange={
+                                      setPhaseCaptureValue
+                                    }
+                                    onSelectOption={setSelectedOption}
+                                    nextOpenPhaseContract={
+                                      nextOpenPhaseContract
+                                    }
+                                    p3OptionSet={p3OptionSet}
+                                    phase={phase}
+                                    phaseCaptureBlocker={phaseCaptureBlocker}
+                                    phaseCaptureCompleteCount={
+                                      phaseCaptureCompleteCount
+                                    }
+                                    phaseCaptureSections={phaseCaptureSections}
+                                    phaseCaptureValues={phaseCaptureValues}
+                                    selectedOption={selectedOption}
+                                    substep={substep.key}
+                                    terminalComplete={terminalComplete}
+                                  />
+                                }
+                                substepIndex={substepIndex}
+                              />
+                            )
                           ) : (
                             <>
                               <div className="mxw-stage-bar">
@@ -1729,6 +1801,188 @@ function finderSectionHasValue(
   values: PhaseCaptureValues,
 ): boolean {
   return Boolean(String(values[section.key] ?? "").trim());
+}
+
+function PhaseContractStepsCanvas({
+  comingUpExpanded,
+  onPhaseCaptureValueChange,
+  onSelectSection,
+  onSelectSubstep,
+  onToggleComingUp,
+  phase,
+  phaseCaptureSections,
+  phaseCaptureValues,
+  readinessPack,
+  selectedSectionKey,
+  substepBody,
+  substepIndex,
+}: {
+  comingUpExpanded: boolean;
+  onPhaseCaptureValueChange: (key: string, value: string) => void;
+  onSelectSection: (key: string | null) => void;
+  onSelectSubstep: (index: number) => void;
+  onToggleComingUp: () => void;
+  phase: PhaseContract;
+  phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
+  phaseCaptureValues: PhaseCaptureValues;
+  readinessPack: NextPhaseReadinessPack;
+  selectedSectionKey: string | null;
+  substepBody: ReactNode;
+  substepIndex: number;
+}) {
+  const selectedSection = selectedSectionKey
+    ? (phaseCaptureSections.find(
+        (section) => section.key === selectedSectionKey,
+      ) ?? null)
+    : null;
+  const selectedWorkflow = selectedSectionKey === null;
+  const detailStepNumber =
+    selectedSection != null
+      ? phaseCaptureSections.findIndex(
+          (section) => section.key === selectedSection.key,
+        ) + 1
+      : phaseCaptureSections.length + substepIndex + 1;
+  const totalStepCount = phaseCaptureSections.length + phase.substeps.length;
+  const detailComplete = selectedSection
+    ? finderSectionHasValue(selectedSection, phaseCaptureValues)
+    : substepIndex < phase.substeps.length - 1
+      ? true
+      : false;
+  const detailTitle =
+    selectedSection?.label ??
+    phase.substeps[substepIndex]?.label ??
+    phase.title;
+
+  return (
+    <section
+      className="mxw-contract-card"
+      aria-label={`${phase.code} phase shell`}
+      data-testid="mxw-contract-card"
+    >
+      <aside className="mxw-contract-nav" aria-label={`${phase.code} steps`}>
+        <div className="mxw-contract-group">
+          <div className="mxw-contract-group-label">Inputs</div>
+          {phaseCaptureSections.map((section) => {
+            const complete = finderSectionHasValue(section, phaseCaptureValues);
+            const selected = selectedSectionKey === section.key;
+            return (
+              <button
+                className={`mxw-contract-step ${selected ? "active" : ""}`}
+                key={section.key}
+                onClick={() => onSelectSection(section.key)}
+                type="button"
+              >
+                <span className={complete ? "done" : ""} aria-hidden>
+                  {complete ? "✓" : ""}
+                </span>
+                <strong>{section.label}</strong>
+              </button>
+            );
+          })}
+        </div>
+        <div className="mxw-contract-group">
+          <div className="mxw-contract-group-label">Workflow</div>
+          {phase.substeps.map((item, index) => {
+            const active = selectedWorkflow && index === substepIndex;
+            const complete = index < substepIndex;
+            return (
+              <button
+                className={`mxw-contract-step ${active ? "active" : ""}`}
+                key={item.key}
+                onClick={() => {
+                  onSelectSubstep(index);
+                  onSelectSection(null);
+                }}
+                type="button"
+              >
+                <span className={complete ? "done" : ""} aria-hidden>
+                  {complete ? "✓" : ""}
+                </span>
+                <strong>{item.label}</strong>
+              </button>
+            );
+          })}
+        </div>
+        <div className="mxw-contract-comingup">
+          <button
+            aria-expanded={comingUpExpanded}
+            onClick={onToggleComingUp}
+            type="button"
+          >
+            What {readinessPack.nextPhaseLabel} will need
+          </button>
+          {comingUpExpanded ? (
+            readinessPack.openNeeds.length > 0 ? (
+              <div>
+                {readinessPack.openNeeds.slice(0, 6).map((need) => (
+                  <span
+                    className={need.priority === "required" ? "req" : ""}
+                    key={need.evidenceSlot}
+                  >
+                    {need.evidenceSlot}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p>No open evidence needs for the next phase yet.</p>
+            )
+          ) : null}
+        </div>
+        <div className="mxw-contract-nav-foot">
+          Use the left steps in order. Approve &amp; Build remains the governed
+          close; it is not a visual-only button.
+        </div>
+      </aside>
+
+      <section
+        className="mxw-contract-detail"
+        aria-label={`${detailTitle} detail`}
+      >
+        <div className="mxw-contract-detail-top">
+          <span className={detailComplete ? "done" : ""} aria-hidden>
+            {detailComplete ? "✓" : ""}
+          </span>
+          <small>
+            Step {Math.max(detailStepNumber, 1)} of {totalStepCount}
+          </small>
+          <h2>{detailTitle}</h2>
+          <em>Provide</em>
+          <b>{detailComplete ? "Done" : "Open"}</b>
+        </div>
+
+        {selectedSection ? (
+          <div className="mxw-contract-form">
+            <p>{selectedSection.description}</p>
+            {finderSectionHasValue(selectedSection, phaseCaptureValues) ? (
+              <div className="mxw-contract-captured">
+                {phaseCaptureValues[selectedSection.key]}
+              </div>
+            ) : null}
+            {selectedSection.structured === "facts" ? (
+              <FinderFactsTable
+                rawValue={phaseCaptureValues[selectedSection.key] ?? ""}
+              />
+            ) : null}
+            <textarea
+              aria-label={selectedSection.label}
+              className="mxw-contract-input"
+              onChange={(event) =>
+                onPhaseCaptureValueChange(
+                  selectedSection.key,
+                  event.target.value,
+                )
+              }
+              placeholder={selectedSection.description}
+              rows={selectedSection.structured === "facts" ? 4 : 6}
+              value={phaseCaptureValues[selectedSection.key] ?? ""}
+            />
+          </div>
+        ) : (
+          <div className="mxw-contract-legacy-body">{substepBody}</div>
+        )}
+      </section>
+    </section>
+  );
 }
 
 function FinderStepsColumns({
@@ -3996,7 +4250,7 @@ function MovesStandaloneStyles() {
 .mxw-lib-link span{width:22px;height:22px;border-radius:6px;background:var(--card);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
 .mxw-foot{margin-top:auto;padding:14px 8px 0;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint);line-height:1.6}
 .mxw-foot b{color:var(--muted);font-weight:600}
-.mxw-shell{width:100%;max-width:1120px;margin:0 auto;padding:26px 40px 60px}
+.mxw-shell{width:100%;max-width:none;margin:0;padding:26px clamp(32px,4vw,56px) 60px}
 .mxw-crumb{font-size:12px;color:var(--muted);margin-bottom:14px}
 .mxw-crumb a,.mxw-crumb button{color:var(--muted);background:none;border:0;font:inherit;cursor:pointer}
 .mxw-crumb a:hover,.mxw-crumb button:hover{color:var(--ink)}
@@ -4474,9 +4728,47 @@ function MovesStandaloneStyles() {
 .mxw-finder-fact-value{margin-right:6px}
 .mxw-finder-citation-toggle{border:none;background:#e4ecf9;color:#2a5aa8;border-radius:999px;width:20px;height:20px;line-height:20px;font-size:11px;cursor:pointer;padding:0}
 .mxw-finder-citation-caption{display:block;margin-top:4px;font-size:11.5px;color:#5b6c8a}
+.mxw-contract-card{display:grid;grid-template-columns:272px minmax(0,1fr);min-height:458px;border:1px solid rgba(12,26,58,.12);border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 12px 32px rgba(12,26,58,.05)}
+.mxw-contract-nav{border-right:1px solid rgba(12,26,58,.09);background:#fbfbfc;padding:24px 12px 16px;display:flex;flex-direction:column;gap:16px}
+.mxw-contract-group{display:grid;gap:5px}
+.mxw-contract-group-label{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#a7adb8;padding:0 8px 5px}
+.mxw-contract-step{appearance:none;border:1px solid transparent;border-radius:8px;background:transparent;color:#7b8aa5;cursor:pointer;display:grid;grid-template-columns:20px minmax(0,1fr);align-items:center;gap:10px;min-height:34px;padding:7px 8px;text-align:left;width:100%}
+.mxw-contract-step:hover{background:rgba(42,90,168,.06)}
+.mxw-contract-step.active{border-color:rgba(42,90,168,.14);background:#fff;color:#0c1a3a;box-shadow:inset 3px 0 0 #2a5aa8}
+.mxw-contract-step>span{width:18px;height:18px;border-radius:999px;border:1px solid rgba(12,26,58,.18);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900}
+.mxw-contract-step>span.done{border-color:#1d9e75;background:#1d9e75}
+.mxw-contract-step strong{min-width:0;font-size:13px;font-weight:700;line-height:1.2;color:inherit}
+.mxw-contract-comingup{border-top:1px solid rgba(12,26,58,.08);padding:14px 8px 0}
+.mxw-contract-comingup button{appearance:none;border:0;background:transparent;color:#5b6c8a;cursor:pointer;font-size:12px;font-weight:800;line-height:1.35;padding:0;text-align:left}
+.mxw-contract-comingup div{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.mxw-contract-comingup span{border:1px solid rgba(42,90,168,.14);border-radius:999px;background:#e4ecf9;color:#2a5aa8;font-size:10.5px;font-weight:800;line-height:1.2;padding:5px 8px}
+.mxw-contract-comingup span.req{border-color:rgba(186,117,23,.18);background:#fbf1df;color:#8a5a12}
+.mxw-contract-comingup p{color:#8b95a8;font-size:11.5px;line-height:1.35;margin:10px 0 0}
+.mxw-contract-nav-foot{margin-top:auto;border-top:1px solid rgba(12,26,58,.08);padding:14px 8px 0;color:#8b95a8;font-size:11.5px;line-height:1.35}
+.mxw-contract-detail{padding:28px 30px 24px;min-width:0}
+.mxw-contract-detail-top{display:grid;grid-template-columns:22px auto minmax(0,auto) auto auto;align-items:center;gap:10px;margin-bottom:18px}
+.mxw-contract-detail-top>span{width:18px;height:18px;border-radius:999px;border:1px solid rgba(12,26,58,.18);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:900}
+.mxw-contract-detail-top>span.done{border-color:#1d9e75;background:#1d9e75}
+.mxw-contract-detail-top small{color:#8b95a8;font-size:12px;font-weight:700;white-space:nowrap}
+.mxw-contract-detail-top h2{margin:0;color:#0c1a3a;font-size:16px;font-weight:800;line-height:1.2;min-width:0}
+.mxw-contract-detail-top em,.mxw-contract-detail-top b{border-radius:8px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:9px;font-style:normal;font-weight:800;letter-spacing:.12em;padding:4px 7px;text-transform:uppercase}
+.mxw-contract-detail-top em{background:rgba(42,90,168,.09);color:#5b6c8a}
+.mxw-contract-detail-top b{background:rgba(12,26,58,.06);color:#8b95a8}
+.mxw-contract-detail-top>span.done~b{background:rgba(29,158,117,.13);color:#147c5b}
+.mxw-contract-form{display:grid;gap:13px}
+.mxw-contract-form p{margin:0;color:#4d5d79;font-size:14px;line-height:1.5}
+.mxw-contract-captured{border-left:2px solid rgba(29,158,117,.45);color:#0c1a3a;font-size:13px;line-height:1.5;padding-left:10px;white-space:pre-wrap}
+.mxw-contract-input{width:100%;resize:vertical;border:1px solid rgba(12,26,58,.16);border-radius:10px;background:#fff;color:#0c1a3a;font:inherit;font-size:13.5px;line-height:1.45;padding:12px}
+.mxw-contract-input:focus{outline:2px solid rgba(42,90,168,.18);border-color:rgba(42,90,168,.45)}
+.mxw-contract-legacy-body>.mxw-zone:first-child,.mxw-contract-legacy-body>.mxw-review:first-child,.mxw-contract-legacy-body>.mxw-action-panel:first-child{margin-top:0}
+.mxw-contract-legacy-body .mxw-capture.compact{display:none}
 @media (max-width:960px){
   .mxw-finder-steps{flex-direction:column}
   .mxw-finder-steps-menu{width:100%;flex-basis:auto}
+  .mxw-contract-card{grid-template-columns:1fr}
+  .mxw-contract-nav{border-right:0;border-bottom:1px solid rgba(12,26,58,.09)}
+  .mxw-contract-detail-top{grid-template-columns:22px auto minmax(0,1fr)}
+  .mxw-contract-detail-top em,.mxw-contract-detail-top b{justify-self:start}
 }
 /*
  * MOVES-UI-002 approvals overview — gated behind moves_approvals_overview_v1,

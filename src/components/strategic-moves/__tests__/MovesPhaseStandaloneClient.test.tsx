@@ -412,6 +412,57 @@ describe("MovesPhaseStandaloneClient", () => {
         screen.getByRole("complementary", { name: "Move phases" }),
       ).toBeInTheDocument();
     });
+
+    it("flag on, P1: renders the P0-style contract canvas while preserving real workflow controls", () => {
+      mockUseFeature.mockImplementation(
+        (key: string) => key === "moves_finder_shell_v1",
+      );
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({
+            currentPhase: 1,
+            phaseLabel: "P1 Charter",
+          })}
+          phaseNum={1}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const contractCard = screen.getByTestId("mxw-contract-card");
+      expect(contractCard).toBeInTheDocument();
+      expect(
+        within(contractCard).getAllByText("Sponsor commitment").length,
+      ).toBeGreaterThan(0);
+      expect(
+        within(contractCard).getByRole("button", { name: /Upload Evidence/i }),
+      ).toBeInTheDocument();
+      expect(
+        within(contractCard).getByRole("button", { name: /Approve & Build/i }),
+      ).toBeInTheDocument();
+
+      fireEvent.click(
+        within(contractCard).getByRole("button", { name: /Upload Evidence/i }),
+      );
+      expect(
+        screen.getByRole("heading", { name: "Upload evidence for P1" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Upload decision files" }),
+      ).toBeInTheDocument();
+
+      fireEvent.click(
+        within(contractCard).getByRole("button", { name: /Approve & Build/i }),
+      );
+      expect(
+        screen.getByRole("heading", { name: "Gate approval" }),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Full phase close executed")).toBeInTheDocument();
+      expect(
+        screen.getByText(/Approve & Build runs context extract/i),
+      ).toBeInTheDocument();
+    });
   });
 
   describe("MOVES-UI-003 rail collapse/expand toggle (moves_finder_shell_v1)", () => {
