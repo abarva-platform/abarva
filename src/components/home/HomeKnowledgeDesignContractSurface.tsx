@@ -2296,18 +2296,35 @@ export function buildRelationshipTopology(edges: HomeRelationshipEdge[]): {
   // omitting this is what silently dropped every edge in the prior version
   // of this component (nodes and the marker definition rendered, but zero
   // edge paths -- confirmed live on production).
+  // Node/edge ids must be short, opaque, safe identifiers -- never the raw
+  // entity name. This data includes full executive-interview-quote
+  // sentences as "to" values (hundreds of characters, with slashes,
+  // colons, commas, periods), and using those verbatim as React Flow
+  // ids broke every internal DOM lookup React Flow uses to resolve each
+  // edge's endpoint handle position -- confirmed live via onInit:
+  // React Flow's internal store held the correct node/edge COUNT, but
+  // rendered zero edge paths, because the ids themselves were unusable.
+  // The real name lives only in `data.label` (truncated for display) and
+  // `data.fullName` (untruncated, for a future tooltip).
+  const sourceIdByName = new Map(
+    finalSources.map((name, index) => [name, `source-${index}`]),
+  );
+  const targetIdByName = new Map(
+    Array.from(topTargetSet).map((name, index) => [name, `target-${index}`]),
+  );
+
   const nodes: FlowNode[] = [
     ...finalSources.map((name) => ({
-      id: `source:${name}`,
-      data: { label: truncateNodeLabel(name) },
+      id: sourceIdByName.get(name)!,
+      data: { label: truncateNodeLabel(name), fullName: name },
       position: { x: 0, y: 0 },
       sourcePosition: Position.Right,
       targetPosition: Position.Left,
       className: "nkh-flow-node nkh-flow-node-source",
     })),
     ...Array.from(topTargetSet).map((name) => ({
-      id: `target:${name}`,
-      data: { label: truncateNodeLabel(name) },
+      id: targetIdByName.get(name)!,
+      data: { label: truncateNodeLabel(name), fullName: name },
       position: { x: 0, y: 0 },
       sourcePosition: Position.Right,
       targetPosition: Position.Left,
@@ -2318,13 +2335,16 @@ export function buildRelationshipTopology(edges: HomeRelationshipEdge[]): {
   const seen = new Set<string>();
   const flowEdges: FlowEdge[] = [];
   for (const edge of visibleEdges) {
-    const id = `source:${edge.from}->target:${edge.to}`;
+    const sourceId = sourceIdByName.get(edge.from);
+    const targetId = targetIdByName.get(edge.to);
+    if (!sourceId || !targetId) continue;
+    const id = `${sourceId}->${targetId}`;
     if (seen.has(id)) continue;
     seen.add(id);
     flowEdges.push({
       id,
-      source: `source:${edge.from}`,
-      target: `target:${edge.to}`,
+      source: sourceId,
+      target: targetId,
       label: edge.relationship,
       type: "smoothstep",
       style: { stroke: HOME_CHART_COLORS.teal, strokeOpacity: 0.55 },
@@ -2423,31 +2443,6 @@ function RelationshipTopologyGraph({
               edgeCount: topology.edges.length,
               firstEdge: topology.edges[0],
               firstTwoNodeIds: topology.nodes.slice(0, 2).map((n) => n.id),
-            });
-          }}
-          onInit={(instance) => {
-            const internalNodes = instance.getNodes();
-            const internalEdges = instance.getEdges();
-            console.error("[nkh-topology onInit]", {
-              propsNodeCount: topology.nodes.length,
-              propsEdgeCount: topology.edges.length,
-              internalNodeCount: internalNodes.length,
-              internalEdgeCount: internalEdges.length,
-              firstInternalEdge: internalEdges[0]
-                ? JSON.parse(JSON.stringify(internalEdges[0]))
-                : null,
-              firstInternalNode: internalNodes[0]
-                ? JSON.parse(
-                    JSON.stringify({
-                      id: internalNodes[0].id,
-                      position: internalNodes[0].position,
-                      measured: internalNodes[0].measured,
-                      sourcePosition: internalNodes[0].sourcePosition,
-                      targetPosition: internalNodes[0].targetPosition,
-                    }),
-                  )
-                : null,
-              viewport: instance.getViewport(),
             });
           }}
         >

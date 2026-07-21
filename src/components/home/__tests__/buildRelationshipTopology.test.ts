@@ -50,11 +50,11 @@ describe("buildRelationshipTopology", () => {
     expect(result.edges.length).toBeGreaterThan(0);
 
     const sourceNodeIds = result.nodes
-      .filter((node) => node.id.startsWith("source:"))
+      .filter((node) => node.id.startsWith("source-"))
       .map((node) => node.id);
     const targetNodeIds = new Set(
       result.nodes
-        .filter((node) => node.id.startsWith("target:"))
+        .filter((node) => node.id.startsWith("target-"))
         .map((node) => node.id),
     );
     expect(sourceNodeIds.length).toBeGreaterThan(0);
@@ -78,11 +78,11 @@ describe("buildRelationshipTopology", () => {
     const result = buildRelationshipTopology(edges);
     const sourceNodeIds = new Set(
       result.nodes
-        .filter((node) => node.id.startsWith("source:"))
+        .filter((node) => node.id.startsWith("source-"))
         .map((node) => node.id),
     );
     const targetNodeIds = result.nodes
-      .filter((node) => node.id.startsWith("target:"))
+      .filter((node) => node.id.startsWith("target-"))
       .map((node) => node.id);
 
     for (const targetId of targetNodeIds) {
@@ -125,5 +125,30 @@ describe("buildRelationshipTopology", () => {
       expect(node.sourcePosition).toBe(Position.Right);
       expect(node.targetPosition).toBe(Position.Left);
     }
+  });
+
+  it("never uses the raw entity name as a node/edge id (regression: the derived relationship graph's 'to' values can be full executive-interview-quote sentences, hundreds of characters with slashes/colons/commas/periods -- using those verbatim as React Flow ids broke every internal DOM lookup React Flow uses to resolve an edge's endpoint handle position. Confirmed live via onInit: React Flow's internal store held the correct node/edge COUNT, but rendered zero edge paths, because the ids themselves were unusable)", () => {
+    const longQuoteTarget =
+      'CEO / Enterprise Strategy says: "Unified clinical + claims lakehouse is promising, but strategy is not decision-grade until Epic Clarity evidence closes." The team wants Nexus to preserve this as context, not produce sourcing-event outputs yet.';
+    const edges: HomeRelationshipEdge[] = [
+      edge(
+        "Unified clinical + claims lakehouse relationship candidate",
+        longQuoteTarget,
+      ),
+    ];
+    const result = buildRelationshipTopology(edges);
+    expect(result.nodes.length).toBe(2);
+    expect(result.edges.length).toBe(1);
+    for (const node of result.nodes) {
+      // ids stay short and use only characters safe for DOM/CSS lookups.
+      expect(node.id.length).toBeLessThan(20);
+      expect(node.id).toMatch(/^(source|target)-\d+$/);
+      // the real name lives in data.label/data.fullName, not the id.
+      expect(node.id).not.toContain(longQuoteTarget);
+    }
+    const flowEdge = result.edges[0];
+    expect(flowEdge.source.length).toBeLessThan(20);
+    expect(flowEdge.target.length).toBeLessThan(20);
+    expect(flowEdge.id.length).toBeLessThan(40);
   });
 });
