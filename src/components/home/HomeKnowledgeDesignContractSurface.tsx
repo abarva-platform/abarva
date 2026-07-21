@@ -629,6 +629,7 @@ export function HomeKnowledgeDesignContractSurface({
             decisionCannot={slots.DEC_CANNOT ?? []}
             decisionCan={slots.DEC_CAN ?? []}
             dimensions={dimensions}
+            onSelectDimension={selectDimension}
             pack={pack}
             priorities={slots.PRIORITIES ?? []}
             signals={slots.SIGNALS ?? []}
@@ -1126,6 +1127,7 @@ function EnterpriseOverview({
   decisionCannot,
   decisionCan,
   dimensions,
+  onSelectDimension,
   pack,
   priorities,
   signals,
@@ -1135,6 +1137,7 @@ function EnterpriseOverview({
   decisionCannot: string[];
   decisionCan: string[];
   dimensions: HomeKnowledgeDimension[];
+  onSelectDimension: (key: string) => void;
   pack: HomeKnowledgeDesignContractPack;
   priorities: HomeKnowledgeRecord[];
   signals: HomeKnowledgeRecord[];
@@ -1151,6 +1154,11 @@ function EnterpriseOverview({
         dimensions={dimensions}
         pack={pack}
         useCases={useCases}
+      />
+
+      <SixQuestionsLanding
+        dimensions={dimensions}
+        onSelectDimension={onSelectDimension}
       />
 
       <section className="nkh-at-glance" aria-label="Enterprise at a glance">
@@ -1282,6 +1290,115 @@ function EnterpriseOverview({
         <UseCasePriorityCards useCases={useCases} compact />
       </section>
     </div>
+  );
+}
+
+interface SixQuestionCard {
+  key: string;
+  question: string;
+  dimensionKeys: string[];
+}
+
+/**
+ * "Do not make the page a list of 19 tabs with one chart each. The landing
+ * view should open with six visual questions... each dimension becomes a
+ * drill-down." Every stat below comes straight from the already-loaded
+ * dimension.count/status fields -- no new data, no invented scores. A card
+ * only renders once at least one of its mapped dimensions is actually
+ * loaded, so a thin/future pack degrades gracefully instead of showing a
+ * zeroed-out question.
+ */
+const SIX_LANDING_QUESTIONS: SixQuestionCard[] = [
+  {
+    key: "organized",
+    question: "How is the enterprise organized?",
+    dimensionKeys: ["org", "functions", "workforce"],
+  },
+  {
+    key: "value-flow",
+    question: "Where does value flow?",
+    dimensionKeys: ["budget", "programs"],
+  },
+  {
+    key: "runs-it",
+    question: "What systems and data run it?",
+    dimensionKeys: ["apps", "infra", "data", "vendors"],
+  },
+  {
+    key: "transformation",
+    question: "Where is transformation occurring?",
+    dimensionKeys: ["programs", "ai"],
+  },
+  {
+    key: "risk-evidence",
+    question: "Where are risk and evidence weak?",
+    dimensionKeys: ["risks", "evidence"],
+  },
+  {
+    key: "opportunity",
+    question: "Where are the largest opportunities?",
+    dimensionKeys: ["ai", "metrics"],
+  },
+];
+
+function SixQuestionsLanding({
+  dimensions,
+  onSelectDimension,
+}: {
+  dimensions: HomeKnowledgeDimension[];
+  onSelectDimension: (key: string) => void;
+}) {
+  const byKey = new Map(
+    dimensions.map((dimension) => [dimension.key, dimension]),
+  );
+
+  const cards = SIX_LANDING_QUESTIONS.map((question) => {
+    const matched = question.dimensionKeys
+      .map((key) => byKey.get(key))
+      .filter((dimension): dimension is HomeKnowledgeDimension =>
+        Boolean(dimension),
+      );
+    if (!matched.length) return null;
+    const totalRecords = matched.reduce(
+      (sum, dimension) => sum + (dimension.count ?? 0),
+      0,
+    );
+    const decisionGrade = matched.filter(
+      (dimension) => dimension.status === "source-backed",
+    ).length;
+    return { ...question, matched, totalRecords, decisionGrade };
+  }).filter((card): card is NonNullable<typeof card> => Boolean(card));
+
+  if (!cards.length) return null;
+
+  return (
+    <section className="nkh-six-questions" aria-label="Start here">
+      <div className="nkh-inline-head">
+        <div className="nkh-kicker">Start here</div>
+        <span>
+          Six questions every CXO conversation starts with — open any card for
+          the dimension behind it.
+        </span>
+      </div>
+      <div className="nkh-six-questions-grid">
+        {cards.map((card) => (
+          <button
+            key={card.key}
+            type="button"
+            className="nkh-six-question-card"
+            onClick={() => onSelectDimension(card.matched[0].key)}
+          >
+            <span className="nkh-six-question-title">{card.question}</span>
+            <strong>{card.totalRecords.toLocaleString()} records</strong>
+            <span className="nkh-six-question-meta">
+              {card.decisionGrade} of {card.matched.length} dimension
+              {card.matched.length === 1 ? "" : "s"} decision-grade ·{" "}
+              {card.matched.map((dimension) => dimension.name).join(", ")}
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -3085,6 +3202,39 @@ const styles = `
 .nkh-enterprise-overview {
   display: grid;
   gap: 22px;
+}
+.nkh-six-questions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.nkh-six-question-card {
+  text-align: left;
+  border: 1px solid #eceae2;
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px 18px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s ease;
+}
+.nkh-six-question-card:hover {
+  border-color: #157f74;
+}
+.nkh-six-question-title {
+  font: 700 13px var(--sans);
+  color: #6d675f;
+}
+.nkh-six-question-card strong {
+  font: 700 22px var(--serif, serif);
+  color: #161411;
+}
+.nkh-six-question-meta {
+  font: 400 11.5px var(--sans);
+  color: #6d675f;
 }
 .nkh-at-glance {
   border-top: 1px solid #e7e5dc;
