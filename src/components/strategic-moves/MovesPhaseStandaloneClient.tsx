@@ -1,14 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Component,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { AvaAskMark } from "@/components/agent-answer/AvaAskMark";
 import { extractArtifacts } from "@/lib/agent/artifacts";
 import type { DeliverableContentSignal } from "@/lib/deliverables/deliverable-content-signals";
 import { CurrentStateReadinessPanel } from "@/components/strategic-moves/CurrentStateReadinessPanel";
-import { artifactStatusLabel, FileCabinetPanel } from "@/components/strategic-moves/FileCabinetPanel";
+import {
+  artifactStatusLabel,
+  FileCabinetPanel,
+} from "@/components/strategic-moves/FileCabinetPanel";
 import { PhaseApproveAndBuild } from "@/components/strategic-moves/PhaseApproveAndBuild";
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
+import { useFeature } from "@/lib/features/use-feature";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
@@ -100,8 +112,7 @@ const PHASES: PhaseContract[] = [
     navLabel: "Originate",
     title: "Originate",
     question: "What business bet should become a governed Move?",
-    lede:
-      "Capture the intent, sponsor, value hypothesis, and first evidence family before the work becomes a program.",
+    lede: "Capture the intent, sponsor, value hypothesis, and first evidence family before the work becomes a program.",
     substeps: [
       { key: "prepare", label: "Prepare" },
       { key: "decide", label: "Frame" },
@@ -128,14 +139,17 @@ const PHASES: PhaseContract[] = [
     navLabel: "Charter",
     title: "Charter",
     question: "What exactly are we committing to investigate?",
-    lede:
-      "Turn the idea into a bounded charter: scope, owner, success measures, assumptions, and the gate that protects the next phase.",
+    lede: "Turn the idea into a bounded charter: scope, owner, success measures, assumptions, and the gate that protects the next phase.",
     substeps: [
       { key: "prepare", label: "Charter Inputs" },
       { key: "decide", label: "Upload Evidence" },
       { key: "approve", label: "Approve & Build" },
     ],
-    sessions: ["Sponsor charter review", "Scope boundary workshop", "Success metric review"],
+    sessions: [
+      "Sponsor charter review",
+      "Scope boundary workshop",
+      "Success metric review",
+    ],
     templates: [
       { name: "Strategic Move Charter", type: "DOCX" },
       { name: "Scope Boundary Matrix", type: "XLSX" },
@@ -156,15 +170,19 @@ const PHASES: PhaseContract[] = [
     navLabel: "Understand Current State",
     title: "Understand Current State",
     question: "What is true now, before we design the future state?",
-    lede:
-      "Use operational evidence, metrics, systems, workforce signals, and constraints to diagnose the current state before choosing a path.",
+    lede: "Use operational evidence, metrics, systems, workforce signals, and constraints to diagnose the current state before choosing a path.",
     substeps: [
       { key: "prepare", label: "Prepare" },
       { key: "current", label: "Upload & Review" },
       { key: "findings", label: "Review Findings" },
       { key: "approve", label: "Approve & Build" },
     ],
-    sessions: ["Current-state walkthrough", "KPI and baseline review", "Systems and handoff review", "Root-cause review"],
+    sessions: [
+      "Current-state walkthrough",
+      "KPI and baseline review",
+      "Systems and handoff review",
+      "Root-cause review",
+    ],
     templates: [
       { name: "Current-State Process Map", type: "DOCX" },
       { name: "Operational Baseline", type: "XLSX" },
@@ -186,8 +204,7 @@ const PHASES: PhaseContract[] = [
     navLabel: "Choose the Approach",
     title: "Choose the Approach",
     question: "Which solution approach should we use?",
-    lede:
-      "Strategy-phase solutioning: we design each lane just enough to estimate effort, sequence the roadmap, and map the risks - not to build it here. aVa recommends; you decide with your SMEs and approve.",
+    lede: "Strategy-phase solutioning: we design each lane just enough to estimate effort, sequence the roadmap, and map the risks - not to build it here. aVa recommends; you decide with your SMEs and approve.",
     substeps: [
       { key: "prepare", label: "Prepare" },
       { key: "options", label: "Compare Options" },
@@ -223,16 +240,21 @@ const PHASES: PhaseContract[] = [
     code: "P4",
     navLabel: "Build the Plan",
     title: "Build the Plan",
-    question: "What plan, value case, and sequencing should leadership approve?",
-    lede:
-      "Convert the chosen approach into workstreams, delivery scenarios, economics, dependencies, and the executive commit package.",
+    question:
+      "What plan, value case, and sequencing should leadership approve?",
+    lede: "Convert the chosen approach into workstreams, delivery scenarios, economics, dependencies, and the executive commit package.",
     substeps: [
       { key: "prepare", label: "Prepare" },
       { key: "value", label: "Value Case" },
       { key: "workstreams", label: "Plan Workstreams" },
       { key: "approve", label: "Approve & Build" },
     ],
-    sessions: ["Value case workshop", "Delivery scenario review", "Roadmap sequencing", "Executive commit review"],
+    sessions: [
+      "Value case workshop",
+      "Delivery scenario review",
+      "Roadmap sequencing",
+      "Executive commit review",
+    ],
     templates: [
       { name: "Roadmap & Business Case", type: "PPTX" },
       { name: "Delivery Scenario Model", type: "XLSX" },
@@ -254,14 +276,17 @@ const PHASES: PhaseContract[] = [
     navLabel: "Prepare to Execute",
     title: "Prepare to Execute",
     question: "Is the organization ready to execute and track outcomes?",
-    lede:
-      "Prepare ownership, controls, adoption, value tracking, and Tower handoff so approved value can be measured after launch.",
+    lede: "Prepare ownership, controls, adoption, value tracking, and Tower handoff so approved value can be measured after launch.",
     substeps: [
       { key: "prepare", label: "Prepare" },
       { key: "workstreams", label: "Execution Readiness" },
       { key: "approve", label: "Approve & Build" },
     ],
-    sessions: ["Mobilization readiness", "Controls and adoption review", "Tower metric handoff"],
+    sessions: [
+      "Mobilization readiness",
+      "Controls and adoption review",
+      "Tower metric handoff",
+    ],
     templates: [
       { name: "Mobilization Handoff", type: "DOCX" },
       { name: "Adoption & Controls Plan", type: "XLSX" },
@@ -314,6 +339,60 @@ function moneyRange(valueAtStake: StrategicMove["valueAtStake"]): string {
   return `${formatter.format(projected.low)}-${formatter.format(projected.high)}`;
 }
 
+// ---------------------------------------------------------------------------
+// MOVES-UI-001 finder-shell flag gate.
+//
+// Ports MovePhaseExplorer.tsx's same guard: `useFeature()` resolves the
+// active tenant via `useClientContext()`, which depends on Clerk's
+// `useUser()` and Next's router hooks. Every real page render sits under
+// the app's <ClerkProvider>/app-router tree, so this always resolves in
+// production. Isolated renders (unit tests, storybook-style harnesses)
+// don't have that provider stack — rather than crash the whole workspace,
+// fall back to the pre-existing (flag-off) rendering, which has no such
+// dependency. This keeps the "flag off -> byte-for-byte legacy render"
+// guarantee intact even when the flag itself can't be evaluated.
+//
+// Purely presentational: `finderShellEnabled` only toggles CSS class names
+// added in this file's <style> block. It does not touch workspaceView
+// state, tab-switching logic, or any data fetch.
+// ---------------------------------------------------------------------------
+
+class FinderShellErrorBoundary extends Component<
+  { children: ReactNode; fallback: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    return this.state.hasError ? this.props.fallback : this.props.children;
+  }
+}
+
+function FinderShellFlagReader({
+  children,
+}: {
+  children: (finderShellEnabled: boolean) => ReactNode;
+}) {
+  const finderShellEnabled = useFeature("moves_finder_shell_v1");
+  return <>{children(finderShellEnabled)}</>;
+}
+
+function FinderShellGate({
+  children,
+}: {
+  children: (finderShellEnabled: boolean) => ReactNode;
+}) {
+  return (
+    <FinderShellErrorBoundary fallback={<>{children(false)}</>}>
+      <FinderShellFlagReader>{children}</FinderShellFlagReader>
+    </FinderShellErrorBoundary>
+  );
+}
+
 export function MovesPhaseStandaloneClient({
   move,
   phaseNum,
@@ -346,18 +425,22 @@ export function MovesPhaseStandaloneClient({
   const [gateApprovalStatus, setGateApprovalStatus] = useState<
     "idle" | "approving" | "approved" | "blocked"
   >(isHistoricalPhase ? "approved" : "idle");
-  const [gateApprovalMessage, setGateApprovalMessage] = useState<string | null>(null);
+  const [gateApprovalMessage, setGateApprovalMessage] = useState<string | null>(
+    null,
+  );
   const [draftedBrief] = useState<Record<number, string>>({});
   const substep = phase.substeps[substepIndex] ?? phase.substeps[0];
-  const progressPct = Math.round(((substepIndex + 1) / phase.substeps.length) * 100);
+  const progressPct = Math.round(
+    ((substepIndex + 1) / phase.substeps.length) * 100,
+  );
   const isFinalSubstep = substepIndex === phase.substeps.length - 1;
   const nextSubstep = phase.substeps[substepIndex + 1] ?? null;
-  const phaseProgressDone = isHistoricalPhase || gateApproved
-    ? phase.substeps.length
-    : Math.min(substepIndex + 1, phase.substeps.length);
-  const phaseReadinessLabel = isHistoricalPhase || gateApproved
-    ? "Complete"
-    : `${progressPct}% ready`;
+  const phaseProgressDone =
+    isHistoricalPhase || gateApproved
+      ? phase.substeps.length
+      : Math.min(substepIndex + 1, phase.substeps.length);
+  const phaseReadinessLabel =
+    isHistoricalPhase || gateApproved ? "Complete" : `${progressPct}% ready`;
   const workspaceSurfaceLabel =
     workspaceView === "phase"
       ? `${phase.code} workflow`
@@ -389,7 +472,10 @@ export function MovesPhaseStandaloneClient({
       (instrument) => instrument.status === "committed",
     ).length ?? 0;
   const evidenceCount = committedReadinessCount || move.linkedEvidence.length;
-  const moveValueRange = useMemo(() => moneyRange(move.valueAtStake), [move.valueAtStake]);
+  const moveValueRange = useMemo(
+    () => moneyRange(move.valueAtStake),
+    [move.valueAtStake],
+  );
   const p3DesignInputsPack = useMemo(
     () =>
       buildP3DesignInputsPackFromSignals({
@@ -441,18 +527,20 @@ export function MovesPhaseStandaloneClient({
     ],
   );
   const selectedP3OptionLabel = useMemo(
-    () => p3OptionSet.options.find((option) => option.id === selectedOption)?.label,
+    () =>
+      p3OptionSet.options.find((option) => option.id === selectedOption)?.label,
     [p3OptionSet.options, selectedOption],
   );
-  const [phaseCaptureValues, setPhaseCaptureValues] = useState<PhaseCaptureValues>(() =>
-    buildPhaseCaptureItems({
-      draftedBrief,
-      move,
-      phase,
-      selectedOption,
-      selectedOptionLabel: selectedP3OptionLabel,
-    }),
-  );
+  const [phaseCaptureValues, setPhaseCaptureValues] =
+    useState<PhaseCaptureValues>(() =>
+      buildPhaseCaptureItems({
+        draftedBrief,
+        move,
+        phase,
+        selectedOption,
+        selectedOptionLabel: selectedP3OptionLabel,
+      }),
+    );
   const phaseCaptureSections = useMemo(
     () => getPhaseCaptureSections(phase.phase),
     [phase.phase],
@@ -547,7 +635,9 @@ export function MovesPhaseStandaloneClient({
           pendingBuffer = remaining;
           const display = committedVisible.trimEnd();
           setAvaThread((prev) =>
-            prev.map((m) => (m.id === assistantId ? { ...m, text: display } : m)),
+            prev.map((m) =>
+              m.id === assistantId ? { ...m, text: display } : m,
+            ),
           );
         }
 
@@ -556,7 +646,9 @@ export function MovesPhaseStandaloneClient({
           committedVisible += final.visibleText;
           setAvaThread((prev) =>
             prev.map((m) =>
-              m.id === assistantId ? { ...m, text: committedVisible.trimEnd() } : m,
+              m.id === assistantId
+                ? { ...m, text: committedVisible.trimEnd() }
+                : m,
             ),
           );
         }
@@ -573,7 +665,15 @@ export function MovesPhaseStandaloneClient({
         setAvaStreaming(false);
       }
     },
-    [avaStreaming, move.displayCode, move.id, move.name, move.tenant.name, phase.title, phaseNum],
+    [
+      avaStreaming,
+      move.displayCode,
+      move.id,
+      move.name,
+      move.tenant.name,
+      phase.title,
+      phaseNum,
+    ],
   );
 
   function continueStep() {
@@ -598,24 +698,31 @@ export function MovesPhaseStandaloneClient({
       window.location.assign("/tower");
       return;
     }
-    window.location.assign(`/strategic-moves/${move.id}/phase/${nextOpenPhase}`);
+    window.location.assign(
+      `/strategic-moves/${move.id}/phase/${nextOpenPhase}`,
+    );
   }
 
   async function finalizePhaseCapture() {
     setGateApproved(false);
     setGateApprovalStatus("approving");
-    setGateApprovalMessage("Finalizing phase capture before starting the governed build...");
+    setGateApprovalMessage(
+      "Finalizing phase capture before starting the governed build...",
+    );
     const finalizeBody: Record<string, unknown> = {
       phase: phase.phase,
       complete: true,
       sections: phaseCaptureValues,
     };
-    const finalizeRes = await fetch(`/api/v1/programs/${move.id}/phase-capture`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(finalizeBody),
-    });
+    const finalizeRes = await fetch(
+      `/api/v1/programs/${move.id}/phase-capture`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(finalizeBody),
+      },
+    );
     const finalize = (await finalizeRes.json().catch(() => ({}))) as {
       ok?: boolean;
       missing?: string[];
@@ -653,29 +760,40 @@ export function MovesPhaseStandaloneClient({
     }
     if (result.succeededKeys.length === 0) {
       setGateApprovalStatus("blocked");
-      throw new Error("No required deliverables completed generation for this phase.");
+      throw new Error(
+        "No required deliverables completed generation for this phase.",
+      );
     }
     setGateApprovalStatus("approving");
     setGateApprovalMessage(
       `${result.succeededKeys.length} required output${result.succeededKeys.length === 1 ? "" : "s"} built. Submitting gate approval...`,
     );
 
-    const approvalRes = await fetch(`/api/v1/programs/${move.id}/phase-gate-approval`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        phase: phase.phase,
-        rationale: `P${phase.phase} reviewed, required phase outputs started, and gate approval submitted through the standalone Moves workspace.`,
-      }),
-    });
+    const approvalRes = await fetch(
+      `/api/v1/programs/${move.id}/phase-gate-approval`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phase: phase.phase,
+          rationale: `P${phase.phase} reviewed, required phase outputs started, and gate approval submitted through the standalone Moves workspace.`,
+        }),
+      },
+    );
     const approval = (await approvalRes.json().catch(() => ({}))) as {
       ok?: boolean;
       missing?: string[];
       blockedBy?: string[];
       alreadyApproved?: boolean;
       newPhase?: number | null;
-      gate?: { failedChecks?: Array<{ severity: string; reason?: string; check: string }> };
+      gate?: {
+        failedChecks?: Array<{
+          severity: string;
+          reason?: string;
+          check: string;
+        }>;
+      };
       detail?: string;
       error?: string;
     };
@@ -714,7 +832,9 @@ export function MovesPhaseStandaloneClient({
     if (nextPhase !== null) {
       window.setTimeout(() => {
         window.location.assign(
-          nextPhase > 5 ? "/tower" : `/strategic-moves/${move.id}/phase/${nextPhase}`,
+          nextPhase > 5
+            ? "/tower"
+            : `/strategic-moves/${move.id}/phase/${nextPhase}`,
         );
       }, 250);
     }
@@ -733,412 +853,464 @@ export function MovesPhaseStandaloneClient({
     } catch (err) {
       setGateApproved(false);
       setGateApprovalStatus("blocked");
-      setGateApprovalMessage(err instanceof Error ? err.message : "Gate approval failed.");
+      setGateApprovalMessage(
+        err instanceof Error ? err.message : "Gate approval failed.",
+      );
     }
   }
 
   return (
-    <main className="mxw" data-testid="moves-phase-standalone">
-      <MovesStandaloneStyles />
-      <div className="mxw-contextbar" aria-label="Move context">
-        <div>
-          <span>MOVES</span>
-          <strong>{move.displayCode || move.name}</strong>
-          <em>{supportLine}</em>
-        </div>
-        <div>
-          <span>{workspaceSurfaceLabel}</span>
-          <strong>
-            Phase {phase.phase + 1} of {PHASES.length} · {phase.title}
-          </strong>
-        </div>
-      </div>
-      <div className="mxw-surface">
-        <aside className="mxw-side" aria-label="Move phases">
-          <div className="mxw-move">
-            <Link className="mxw-back" href="/strategic-moves">
-              ← All Moves
-            </Link>
-            <h2>{move.name}</h2>
-            <p>{supportLine}</p>
-          </div>
-          <div className="mxw-side-label">Phases</div>
-          <nav className="mxw-phase-list">
-            {PHASES.map((item) => {
-              const tally = phaseTallies.find((row) => row.phase === item.phase);
-              const state =
-                tally?.state === "done"
-                  ? "done"
-                  : item.phase < move.currentPhase
-                    ? "done"
-                    : item.phase === move.currentPhase
-                      ? "current"
-                      : "up";
-              const viewing = item.phase === phase.phase;
-              const phaseBody = (
-                <>
-                  <span className="mxw-phase-dot">
-                    {state === "done" ? "✓" : item.code}
-                  </span>
-                  <span className="mxw-phase-name">{item.navLabel}</span>
-                  <span className="mxw-phase-state">
-                    {tally ? `${tally.met} of ${tally.total}` : state === "done"
-                      ? "Complete"
-                      : state === "current"
-                        ? "In progress"
-                        : "Upcoming"}
-                  </span>
-                </>
-              );
-              return (
-                <div className="mxw-phase-row" key={item.code}>
-                  {item.phase <= move.currentPhase ? (
-                    <Link
-                      className={`mxw-phase ${state} ${viewing ? "viewing" : ""}`}
-                      href={`/strategic-moves/${move.id}/phase/${item.phase}`}
-                      title={
-                        tally
-                          ? `${tally.met} of ${tally.total} gate criteria met`
-                          : undefined
-                      }
-                    >
-                      {phaseBody}
-                    </Link>
-                  ) : (
-                    <button
-                      className={`mxw-phase ${state} ${viewing ? "viewing" : ""}`}
-                      disabled
-                      title={
-                        tally
-                          ? `${tally.met} of ${tally.total} gate criteria met`
-                          : undefined
-                      }
-                    >
-                      {phaseBody}
-                    </button>
-                  )}
-                  {item.phase < 5 ? <span className="mxw-connector" /> : null}
-                </div>
-              );
-            })}
-          </nav>
-          <div className="mxw-side-label mxw-workspace-label">Workspace</div>
-          <div className="mxw-rail-extra">
-            <button
-              className={`mxw-lib-link ${workspaceView === "phase" ? "viewing" : ""}`}
-              onClick={() => {
-                setWorkspaceView("phase");
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              type="button"
-            >
-              <span>▦</span>
-              Stage workspace
-            </button>
-            <button
-              className={`mxw-lib-link ${workspaceView === "files" ? "viewing" : ""}`}
-              onClick={() => {
-                setWorkspaceView("files");
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              type="button"
-            >
-              <span>▣</span>
-              Files & Evidence
-            </button>
-            <button
-              className={`mxw-lib-link ${workspaceView === "intelligence" ? "viewing" : ""}`}
-              onClick={() => {
-                setWorkspaceView("intelligence");
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              type="button"
-            >
-              <span>◈</span>
-              Phase Intelligence
-            </button>
-            <button
-              className={`mxw-lib-link ${
-                workspaceView === "phase" && substep.key === "approve" ? "viewing" : ""
-              }`}
-              onClick={() => {
-                setWorkspaceView("phase");
-                setSubstepIndex(phase.substeps.length - 1);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              type="button"
-            >
-              <span>✓</span>
-              Approvals
-            </button>
-          </div>
-          <p className="mxw-foot">
-            <b>aVa</b> guides P0-P4 · Atlas takes over P5 Execute.
-          </p>
-        </aside>
-
-        <section className="mxw-shell" aria-label={`${phase.code} phase workspace`}>
-          {workspaceView === "files" ? (
-            <>
-              <div className="mxw-crumb">
-                <button onClick={() => setWorkspaceView("phase")} type="button">
-                  {move.name}
-                </button>
-                <span>/</span>
-                Files & Evidence
-              </div>
-              <div className="mxw-stage-head">
-                <div className="mxw-agent-chip">
-                  <span />
-                  AVA · MOVES
-                </div>
-                <h1>Files & Evidence</h1>
-                <p>
-                  Every input template, client-loaded evidence file, and AbarVa-generated
-                  deliverable — the real Artifact Vault for this Move, not a preview.
-                </p>
-              </div>
-              <WorkspaceSurfaceTabs
-                activeView={workspaceView}
-                onSelect={setWorkspaceView}
-              />
-              <FileCabinetPanel moveId={move.id} phase={phase.phase} />
-            </>
-          ) : workspaceView === "intelligence" ? (
-            <>
-              <div className="mxw-crumb">
-                <button onClick={() => setWorkspaceView("phase")} type="button">
-                  {move.name}
-                </button>
-                <span>/</span>
-                Phase Intelligence
-              </div>
-              <div className="mxw-stage-head">
-                <div className="mxw-agent-chip">
-                  <span />
-                  AVA · MOVES
-                </div>
-                <h1>Phase Intelligence</h1>
-                <p>
-                  The short readout for this phase: key decision, function-pack signal,
-                  and governed gate/evidence truth.
-                </p>
-              </div>
-              <WorkspaceSurfaceTabs
-                activeView={workspaceView}
-                onSelect={setWorkspaceView}
-              />
-              <PhaseIntelligencePanel moveId={move.id} phase={phase.phase} />
-            </>
-          ) : (
-            <>
-              <div className="mxw-crumb">
-                <Link href={`/strategic-moves/${move.id}/phase/${move.currentPhase ?? 0}`}>
-                  {move.name}
-                </Link>
-                <span>/</span>
-                {phase.code} · {phase.title}
-              </div>
-
-              <div className="mxw-stage-head">
-                <div className="mxw-agent-chip">
-                  <span />
-                  AVA · MOVES
-                </div>
-                <h1>{phase.title}</h1>
-                <div className="mxw-question">{phase.question}</div>
-                <p>{phase.lede}</p>
-                <div className="mxw-progress-card" aria-label="Phase progress">
-                  <strong>
-                    {phaseProgressDone} / {phase.substeps.length}
-                  </strong>
-                  <span className="mxw-track">
-                    <span style={{ width: `${progressPct}%` }} />
-                  </span>
-                  <em>
-                    {phaseReadinessLabel} · {substep.label}
-                  </em>
-                </div>
-              </div>
-
-              <WorkspaceSurfaceTabs
-                activeView={workspaceView}
-                onSelect={setWorkspaceView}
-              />
-
-              <div className="mxw-stage-bar">
-                <div className="mxw-progress">
-                  <span className="mxw-track">
-                    <span style={{ width: `${progressPct}%` }} />
-                  </span>
-                  <span className="mxw-step-label">
-                    <b>
-                      Step {substepIndex + 1} of {phase.substeps.length}
-                    </b>{" "}
-                    · {substep.label}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mxw-substeps" role="tablist" aria-label="Phase steps">
-                {phase.substeps.map((item, index) => (
-                  <button
-                    aria-selected={index === substepIndex}
-                    className={`mxw-substep ${
-                      index < substepIndex
-                        ? "done"
-                        : index === substepIndex
-                          ? "cur"
-                          : "up"
-                    }`}
-                    key={item.key}
-                    onClick={() => setSubstepIndex(index)}
-                    role="tab"
-                    type="button"
-                  >
-                    <span>{index < substepIndex ? "✓" : index + 1}</span>
-                    <b>{item.label}</b>
-                  </button>
-                ))}
-              </div>
-
-              <PhaseWorkflowGuide
-                actionLabel={primaryActionLabel}
-                evidenceCount={evidenceCount}
-                gateOpenCount={openHardGateCount}
-                nextLabel={nextSubstep?.label ?? null}
-                onAction={
-                  isHistoricalPhase
-                    ? continueToCurrentPhase
-                    : isFinalSubstep
-                      ? phase.phase === 0
-                        ? () => void approveP0Gate()
-                        : focusGateAction
-                      : continueStep
-                }
-                phase={phase}
-                substep={substep.key}
-              />
-
-              <PhaseBody
-                carriesForwardContent={carriesForwardContent}
-                currentStateReadiness={currentStateReadiness}
-                evidenceCount={evidenceCount}
-                evidenceNeedPackets={evidenceNeedPackets}
-                gateApproved={gateApproved}
-                gateApprovalMessage={gateApprovalMessage}
-                gateApprovalStatus={gateApprovalStatus}
-                isHistoricalPhase={isHistoricalPhase}
-                move={move}
-                onApproveAfterBuild={approvePhaseGateAfterBuild}
-                onContinueCurrentPhase={continueToCurrentPhase}
-                onApproveP0Gate={approveP0Gate}
-                onFinalizePhaseCapture={finalizePhaseCapture}
-                onOpenFiles={openFilesWorkspace}
-                onPhaseCaptureValueChange={setPhaseCaptureValue}
-                onSelectOption={setSelectedOption}
-                nextOpenPhaseContract={nextOpenPhaseContract}
-                p3OptionSet={p3OptionSet}
-                phase={phase}
-                phaseCaptureBlocker={phaseCaptureBlocker}
-                phaseCaptureCompleteCount={phaseCaptureCompleteCount}
-                phaseCaptureSections={phaseCaptureSections}
-                phaseCaptureValues={phaseCaptureValues}
-                selectedOption={selectedOption}
-                substep={substep.key}
-                terminalComplete={terminalComplete}
-              />
-            </>
-          )}
-        </section>
-      </div>
-
-      <button
-        aria-expanded={avaOpen}
-        className="mxw-ava-fab"
-        onClick={() => setAvaOpen((open) => !open)}
-        type="button"
-      >
-        <AvaAskMark
-          variant="avatar-dark"
-          style={{ maxWidth: 28, minWidth: 28, width: 28 }}
-        />
-        Ask aVa
-      </button>
-      <aside className={`mxw-ava-pop ${avaOpen ? "open" : ""}`} aria-label="Ask aVa">
-        <div className="mxw-ava-head">
-          <AvaAskMark
-            variant="avatar-dark"
-            style={{ maxWidth: 30, minWidth: 30, width: 30 }}
-          />
-          <div>
-            <strong>aVa</strong>
-            <small>{phase.avaRole}</small>
-          </div>
-          <button onClick={() => setAvaOpen(false)} type="button">
-            ×
-          </button>
-        </div>
-        <div className="mxw-ava-body">
-          {avaThread.length === 0 ? (
-            <>
-              <p>{phase.avaContext}</p>
-              <div className="mxw-suggested">
-                {workspaceView !== "phase" ? "Ask about this workspace" : "Ask about this phase"}
-              </div>
-              {phase.avaQuestions.map((question) => (
-                <button
-                  key={question}
-                  type="button"
-                  onClick={() => void sendAvaMessage(question)}
-                  disabled={avaStreaming}
-                >
-                  {question}
-                </button>
-              ))}
-            </>
-          ) : (
-            <div className="mxw-ava-thread">
-              {avaThread.map((turn) => (
-                <div key={turn.id} className={`mxw-ava-turn mxw-ava-turn-${turn.role}`}>
-                  <span className="mxw-ava-turn-who">
-                    {turn.role === "user" ? "You" : "aVa"}
-                  </span>
-                  <p>
-                    {turn.text ||
-                      (turn.role === "assistant" && avaStreaming ? "…" : "")}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        <form
-          className="mxw-ava-composer"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void sendAvaMessage(avaInput);
-          }}
+    <FinderShellGate>
+      {(finderShellEnabled) => (
+        <main
+          className={`mxw${finderShellEnabled ? " mxw-finder-on" : ""}`}
+          data-testid="moves-phase-standalone"
+          {...(finderShellEnabled ? { "data-finder-shell": "on" } : {})}
         >
-          <textarea
-            value={avaInput}
-            onChange={(event) => setAvaInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
+          <MovesStandaloneStyles />
+          <div className="mxw-contextbar" aria-label="Move context">
+            <div>
+              <span>MOVES</span>
+              <strong>{move.displayCode || move.name}</strong>
+              <em>{supportLine}</em>
+            </div>
+            <div>
+              <span>{workspaceSurfaceLabel}</span>
+              <strong>
+                Phase {phase.phase + 1} of {PHASES.length} · {phase.title}
+              </strong>
+            </div>
+          </div>
+          <div className="mxw-surface">
+            <aside className="mxw-side" aria-label="Move phases">
+              <div className="mxw-move">
+                <Link className="mxw-back" href="/strategic-moves">
+                  ← All Moves
+                </Link>
+                <h2>{move.name}</h2>
+                <p>{supportLine}</p>
+              </div>
+              <div className="mxw-side-label">Phases</div>
+              <nav className="mxw-phase-list">
+                {PHASES.map((item) => {
+                  const tally = phaseTallies.find(
+                    (row) => row.phase === item.phase,
+                  );
+                  const state =
+                    tally?.state === "done"
+                      ? "done"
+                      : item.phase < move.currentPhase
+                        ? "done"
+                        : item.phase === move.currentPhase
+                          ? "current"
+                          : "up";
+                  const viewing = item.phase === phase.phase;
+                  const phaseBody = (
+                    <>
+                      <span className="mxw-phase-dot">
+                        {state === "done" ? "✓" : item.code}
+                      </span>
+                      <span className="mxw-phase-name">{item.navLabel}</span>
+                      <span className="mxw-phase-state">
+                        {tally
+                          ? `${tally.met} of ${tally.total}`
+                          : state === "done"
+                            ? "Complete"
+                            : state === "current"
+                              ? "In progress"
+                              : "Upcoming"}
+                      </span>
+                    </>
+                  );
+                  return (
+                    <div className="mxw-phase-row" key={item.code}>
+                      {item.phase <= move.currentPhase ? (
+                        <Link
+                          className={`mxw-phase ${state} ${viewing ? "viewing" : ""}`}
+                          href={`/strategic-moves/${move.id}/phase/${item.phase}`}
+                          title={
+                            tally
+                              ? `${tally.met} of ${tally.total} gate criteria met`
+                              : undefined
+                          }
+                        >
+                          {phaseBody}
+                        </Link>
+                      ) : (
+                        <button
+                          className={`mxw-phase ${state} ${viewing ? "viewing" : ""}`}
+                          disabled
+                          title={
+                            tally
+                              ? `${tally.met} of ${tally.total} gate criteria met`
+                              : undefined
+                          }
+                        >
+                          {phaseBody}
+                        </button>
+                      )}
+                      {item.phase < 5 ? (
+                        <span className="mxw-connector" />
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </nav>
+              <div className="mxw-side-label mxw-workspace-label">
+                Workspace
+              </div>
+              <div className="mxw-rail-extra">
+                <button
+                  className={`mxw-lib-link ${workspaceView === "phase" ? "viewing" : ""}`}
+                  onClick={() => {
+                    setWorkspaceView("phase");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  type="button"
+                >
+                  <span>▦</span>
+                  Stage workspace
+                </button>
+                <button
+                  className={`mxw-lib-link ${workspaceView === "files" ? "viewing" : ""}`}
+                  onClick={() => {
+                    setWorkspaceView("files");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  type="button"
+                >
+                  <span>▣</span>
+                  Files & Evidence
+                </button>
+                <button
+                  className={`mxw-lib-link ${workspaceView === "intelligence" ? "viewing" : ""}`}
+                  onClick={() => {
+                    setWorkspaceView("intelligence");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  type="button"
+                >
+                  <span>◈</span>
+                  Phase Intelligence
+                </button>
+                <button
+                  className={`mxw-lib-link ${
+                    workspaceView === "phase" && substep.key === "approve"
+                      ? "viewing"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    setWorkspaceView("phase");
+                    setSubstepIndex(phase.substeps.length - 1);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  type="button"
+                >
+                  <span>✓</span>
+                  Approvals
+                </button>
+              </div>
+              <p className="mxw-foot">
+                <b>aVa</b> guides P0-P4 · Atlas takes over P5 Execute.
+              </p>
+            </aside>
+
+            <section
+              className="mxw-shell"
+              aria-label={`${phase.code} phase workspace`}
+            >
+              {workspaceView === "files" ? (
+                <>
+                  <div className="mxw-crumb">
+                    <button
+                      onClick={() => setWorkspaceView("phase")}
+                      type="button"
+                    >
+                      {move.name}
+                    </button>
+                    <span>/</span>
+                    Files & Evidence
+                  </div>
+                  <div className="mxw-stage-head">
+                    <div className="mxw-agent-chip">
+                      <span />
+                      AVA · MOVES
+                    </div>
+                    <h1>Files & Evidence</h1>
+                    <p>
+                      Every input template, client-loaded evidence file, and
+                      AbarVa-generated deliverable — the real Artifact Vault for
+                      this Move, not a preview.
+                    </p>
+                  </div>
+                  <WorkspaceSurfaceTabs
+                    activeView={workspaceView}
+                    onSelect={setWorkspaceView}
+                  />
+                  <FileCabinetPanel moveId={move.id} phase={phase.phase} />
+                </>
+              ) : workspaceView === "intelligence" ? (
+                <>
+                  <div className="mxw-crumb">
+                    <button
+                      onClick={() => setWorkspaceView("phase")}
+                      type="button"
+                    >
+                      {move.name}
+                    </button>
+                    <span>/</span>
+                    Phase Intelligence
+                  </div>
+                  <div className="mxw-stage-head">
+                    <div className="mxw-agent-chip">
+                      <span />
+                      AVA · MOVES
+                    </div>
+                    <h1>Phase Intelligence</h1>
+                    <p>
+                      The short readout for this phase: key decision,
+                      function-pack signal, and governed gate/evidence truth.
+                    </p>
+                  </div>
+                  <WorkspaceSurfaceTabs
+                    activeView={workspaceView}
+                    onSelect={setWorkspaceView}
+                  />
+                  <PhaseIntelligencePanel
+                    moveId={move.id}
+                    phase={phase.phase}
+                  />
+                </>
+              ) : (
+                <>
+                  <div className="mxw-crumb">
+                    <Link
+                      href={`/strategic-moves/${move.id}/phase/${move.currentPhase ?? 0}`}
+                    >
+                      {move.name}
+                    </Link>
+                    <span>/</span>
+                    {phase.code} · {phase.title}
+                  </div>
+
+                  <div className="mxw-stage-head">
+                    <div className="mxw-agent-chip">
+                      <span />
+                      AVA · MOVES
+                    </div>
+                    <h1>{phase.title}</h1>
+                    <div className="mxw-question">{phase.question}</div>
+                    <p>{phase.lede}</p>
+                    <div
+                      className="mxw-progress-card"
+                      aria-label="Phase progress"
+                    >
+                      <strong>
+                        {phaseProgressDone} / {phase.substeps.length}
+                      </strong>
+                      <span className="mxw-track">
+                        <span style={{ width: `${progressPct}%` }} />
+                      </span>
+                      <em>
+                        {phaseReadinessLabel} · {substep.label}
+                      </em>
+                    </div>
+                  </div>
+
+                  <WorkspaceSurfaceTabs
+                    activeView={workspaceView}
+                    onSelect={setWorkspaceView}
+                  />
+
+                  <div className="mxw-stage-bar">
+                    <div className="mxw-progress">
+                      <span className="mxw-track">
+                        <span style={{ width: `${progressPct}%` }} />
+                      </span>
+                      <span className="mxw-step-label">
+                        <b>
+                          Step {substepIndex + 1} of {phase.substeps.length}
+                        </b>{" "}
+                        · {substep.label}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div
+                    className="mxw-substeps"
+                    role="tablist"
+                    aria-label="Phase steps"
+                  >
+                    {phase.substeps.map((item, index) => (
+                      <button
+                        aria-selected={index === substepIndex}
+                        className={`mxw-substep ${
+                          index < substepIndex
+                            ? "done"
+                            : index === substepIndex
+                              ? "cur"
+                              : "up"
+                        }`}
+                        key={item.key}
+                        onClick={() => setSubstepIndex(index)}
+                        role="tab"
+                        type="button"
+                      >
+                        <span>{index < substepIndex ? "✓" : index + 1}</span>
+                        <b>{item.label}</b>
+                      </button>
+                    ))}
+                  </div>
+
+                  <PhaseWorkflowGuide
+                    actionLabel={primaryActionLabel}
+                    evidenceCount={evidenceCount}
+                    gateOpenCount={openHardGateCount}
+                    nextLabel={nextSubstep?.label ?? null}
+                    onAction={
+                      isHistoricalPhase
+                        ? continueToCurrentPhase
+                        : isFinalSubstep
+                          ? phase.phase === 0
+                            ? () => void approveP0Gate()
+                            : focusGateAction
+                          : continueStep
+                    }
+                    phase={phase}
+                    substep={substep.key}
+                  />
+
+                  <PhaseBody
+                    carriesForwardContent={carriesForwardContent}
+                    currentStateReadiness={currentStateReadiness}
+                    evidenceCount={evidenceCount}
+                    evidenceNeedPackets={evidenceNeedPackets}
+                    gateApproved={gateApproved}
+                    gateApprovalMessage={gateApprovalMessage}
+                    gateApprovalStatus={gateApprovalStatus}
+                    isHistoricalPhase={isHistoricalPhase}
+                    move={move}
+                    onApproveAfterBuild={approvePhaseGateAfterBuild}
+                    onContinueCurrentPhase={continueToCurrentPhase}
+                    onApproveP0Gate={approveP0Gate}
+                    onFinalizePhaseCapture={finalizePhaseCapture}
+                    onOpenFiles={openFilesWorkspace}
+                    onPhaseCaptureValueChange={setPhaseCaptureValue}
+                    onSelectOption={setSelectedOption}
+                    nextOpenPhaseContract={nextOpenPhaseContract}
+                    p3OptionSet={p3OptionSet}
+                    phase={phase}
+                    phaseCaptureBlocker={phaseCaptureBlocker}
+                    phaseCaptureCompleteCount={phaseCaptureCompleteCount}
+                    phaseCaptureSections={phaseCaptureSections}
+                    phaseCaptureValues={phaseCaptureValues}
+                    selectedOption={selectedOption}
+                    substep={substep.key}
+                    terminalComplete={terminalComplete}
+                  />
+                </>
+              )}
+            </section>
+          </div>
+
+          <button
+            aria-expanded={avaOpen}
+            className="mxw-ava-fab"
+            onClick={() => setAvaOpen((open) => !open)}
+            type="button"
+          >
+            <AvaAskMark
+              variant="avatar-dark"
+              style={{ maxWidth: 28, minWidth: 28, width: 28 }}
+            />
+            Ask aVa
+          </button>
+          <aside
+            className={`mxw-ava-pop ${avaOpen ? "open" : ""}`}
+            aria-label="Ask aVa"
+          >
+            <div className="mxw-ava-head">
+              <AvaAskMark
+                variant="avatar-dark"
+                style={{ maxWidth: 30, minWidth: 30, width: 30 }}
+              />
+              <div>
+                <strong>aVa</strong>
+                <small>{phase.avaRole}</small>
+              </div>
+              <button onClick={() => setAvaOpen(false)} type="button">
+                ×
+              </button>
+            </div>
+            <div className="mxw-ava-body">
+              {avaThread.length === 0 ? (
+                <>
+                  <p>{phase.avaContext}</p>
+                  <div className="mxw-suggested">
+                    {workspaceView !== "phase"
+                      ? "Ask about this workspace"
+                      : "Ask about this phase"}
+                  </div>
+                  {phase.avaQuestions.map((question) => (
+                    <button
+                      key={question}
+                      type="button"
+                      onClick={() => void sendAvaMessage(question)}
+                      disabled={avaStreaming}
+                    >
+                      {question}
+                    </button>
+                  ))}
+                </>
+              ) : (
+                <div className="mxw-ava-thread">
+                  {avaThread.map((turn) => (
+                    <div
+                      key={turn.id}
+                      className={`mxw-ava-turn mxw-ava-turn-${turn.role}`}
+                    >
+                      <span className="mxw-ava-turn-who">
+                        {turn.role === "user" ? "You" : "aVa"}
+                      </span>
+                      <p>
+                        {turn.text ||
+                          (turn.role === "assistant" && avaStreaming
+                            ? "…"
+                            : "")}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <form
+              className="mxw-ava-composer"
+              onSubmit={(event) => {
                 event.preventDefault();
                 void sendAvaMessage(avaInput);
-              }
-            }}
-            placeholder={`Ask aVa about ${phase.title.toLowerCase()}…`}
-            rows={2}
-            disabled={avaStreaming}
-          />
-          <button type="submit" disabled={avaStreaming || !avaInput.trim()}>
-            Send
-          </button>
-        </form>
-      </aside>
-    </main>
+              }}
+            >
+              <textarea
+                value={avaInput}
+                onChange={(event) => setAvaInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    void sendAvaMessage(avaInput);
+                  }
+                }}
+                placeholder={`Ask aVa about ${phase.title.toLowerCase()}…`}
+                rows={2}
+                disabled={avaStreaming}
+              />
+              <button type="submit" disabled={avaStreaming || !avaInput.trim()}>
+                Send
+              </button>
+            </form>
+          </aside>
+        </main>
+      )}
+    </FinderShellGate>
   );
 }
 
@@ -1156,7 +1328,11 @@ function WorkspaceSurfaceTabs({
   ];
 
   return (
-    <div className="mxw-surface-tabs" role="tablist" aria-label="Move workspace views">
+    <div
+      className="mxw-surface-tabs"
+      role="tablist"
+      aria-label="Move workspace views"
+    >
       {tabs.map((tab) => (
         <button
           aria-selected={activeView === tab.view}
@@ -1236,9 +1412,7 @@ function PhaseBody({
   terminalComplete: boolean;
 }) {
   if (phase.phase === 0 && substep !== "approve") {
-    return (
-      <P0OriginationHandoff move={move} />
-    );
+    return <P0OriginationHandoff move={move} />;
   }
 
   if (substep === "prepare") {
@@ -1259,7 +1433,10 @@ function PhaseBody({
               selected solution approach; P3 will choose the approach after
               current-state evidence, constraints, and readiness are proven.
             </p>
-            <PostureCards selectedOption={selectedOption} onSelectOption={onSelectOption} />
+            <PostureCards
+              selectedOption={selectedOption}
+              onSelectOption={onSelectOption}
+            />
           </section>
         </>
       );
@@ -1272,7 +1449,9 @@ function PhaseBody({
         <PhasePreparePanel
           evidenceNeedPackets={evidenceNeedPackets}
           move={move}
-          nextPhaseLabel={nextPhase ? phaseWorkspaceLabel(nextPhase) : "Tower handoff"}
+          nextPhaseLabel={
+            nextPhase ? phaseWorkspaceLabel(nextPhase) : "Tower handoff"
+          }
           phase={phase}
           terminalComplete={terminalComplete}
         />
@@ -1313,7 +1492,9 @@ function PhaseBody({
           <div>
             <span>a</span>
             <strong>What we found this phase</strong>
-            <em>{evidenceCount} evidence item{evidenceCount === 1 ? "" : "s"}</em>
+            <em>
+              {evidenceCount} evidence item{evidenceCount === 1 ? "" : "s"}
+            </em>
           </div>
           <p>
             aVa groups current-state evidence into process, data, systems,
@@ -1334,14 +1515,25 @@ function PhaseBody({
           </p>
           <div className="mxw-findings">
             {[
-              ["Process", "Current handoffs, delays, rework, and decision points."],
-              ["Systems", "Applications, data stores, integrations, and constraints."],
-              ["Value", "Baseline metrics, run cost, leakage, and impact measures."],
+              [
+                "Process",
+                "Current handoffs, delays, rework, and decision points.",
+              ],
+              [
+                "Systems",
+                "Applications, data stores, integrations, and constraints.",
+              ],
+              [
+                "Value",
+                "Baseline metrics, run cost, leakage, and impact measures.",
+              ],
             ].map(([lane, detail]) => (
               <article className="mxw-finding" key={lane}>
                 <span>{lane}</span>
                 <strong>{detail}</strong>
-                <small>Evidence-backed when cited; otherwise held as a gap.</small>
+                <small>
+                  Evidence-backed when cited; otherwise held as a gap.
+                </small>
               </article>
             ))}
           </div>
@@ -1371,9 +1563,9 @@ function PhaseBody({
             <h2>Files to upload</h2>
             <p>
               Upload sponsor review notes, scope workshop notes, success metric
-              decisions, stakeholder map updates, or completed charter templates.
-              Multiple files are allowed; uploaded files stay as Move evidence
-              until reviewed.
+              decisions, stakeholder map updates, or completed charter
+              templates. Multiple files are allowed; uploaded files stay as Move
+              evidence until reviewed.
             </p>
             <TemplatesAndSessions phase={phase} />
           </section>
@@ -1412,7 +1604,9 @@ function PhaseBody({
     return (
       <>
         <section className="mxw-approach">
-          <div>Assembled from your evidence + readiness - not a blank prompt</div>
+          <div>
+            Assembled from your evidence + readiness - not a blank prompt
+          </div>
           <h2>Recommended strategy path</h2>
           <p>
             The options are scored from the P2 design inputs, readiness gaps,
@@ -1436,17 +1630,28 @@ function PhaseBody({
   if (substep === "canvas" || substep === "workstreams") {
     return (
       <section className="mxw-zone">
-        <h2>{substep === "canvas" ? "The Building-Blocks Canvas" : "Workstreams"}</h2>
+        <h2>
+          {substep === "canvas" ? "The Building-Blocks Canvas" : "Workstreams"}
+        </h2>
         <p>
-          Design fidelity is strategy-grade: each lane is defined just far enough
-          to estimate effort, sequence the roadmap, and price the risk.
+          Design fidelity is strategy-grade: each lane is defined just far
+          enough to estimate effort, sequence the roadmap, and price the risk.
         </p>
         <div className="mxw-lanes">
           {[
-            ["Process", "Workflow changes, decision rights, and handoff model."],
+            [
+              "Process",
+              "Workflow changes, decision rights, and handoff model.",
+            ],
             ["Data", "Evidence, semantic layer, quality rules, and lineage."],
-            ["Technology", "Integration, automation, platform, and control posture."],
-            ["People", "Human + AI work split, adoption, and operating ownership."],
+            [
+              "Technology",
+              "Integration, automation, platform, and control posture.",
+            ],
+            [
+              "People",
+              "Human + AI work split, adoption, and operating ownership.",
+            ],
           ].map(([lane, detail], index) => (
             <article className="mxw-lane" key={lane}>
               <header>
@@ -1465,7 +1670,10 @@ function PhaseBody({
     return (
       <section className="mxw-zone">
         <h2>The value case</h2>
-        <p>Value stays explicit: projected impact, delivery cost, sensitivity, and assumptions.</p>
+        <p>
+          Value stays explicit: projected impact, delivery cost, sensitivity,
+          and assumptions.
+        </p>
         <div className="mxw-value-grid">
           <div>
             <span>Projected</span>
@@ -1484,20 +1692,25 @@ function PhaseBody({
     );
   }
 
-  const nextPhaseContract = PHASES.find((item) => item.phase === phase.phase + 1) ?? null;
+  const nextPhaseContract =
+    PHASES.find((item) => item.phase === phase.phase + 1) ?? null;
   const hardGateCriteria = move.gateCriteria.filter(
     (criterion) => criterion.severity === "hard",
   );
   const softGateCriteria = move.gateCriteria.filter(
     (criterion) => criterion.severity === "soft",
   );
-  const openHardCriteria = hardGateCriteria.filter((criterion) => !criterion.completed);
+  const openHardCriteria = hardGateCriteria.filter(
+    (criterion) => !criterion.completed,
+  );
   const p0ApprovalGeneratedCriteria = new Set([
     "program_seed_recorded",
     "value_hypothesis_seed",
   ]);
   const readinessPack = buildNextPhaseReadinessPack({
-    nextPhaseLabel: nextPhaseContract ? `${nextPhaseContract.code} ${nextPhaseContract.title}` : "Tower handoff",
+    nextPhaseLabel: nextPhaseContract
+      ? `${nextPhaseContract.code} ${nextPhaseContract.title}`
+      : "Tower handoff",
     nextPhaseNum: phase.phase + 1,
     isTerminalHandoff: !nextPhaseContract,
     evidenceNeedPackets,
@@ -1557,27 +1770,33 @@ function PhaseBody({
           terminalComplete ? (
             <p>
               This Move has completed P5 and handed off to Tower. The approved
-              output is carrying forward into the execution and value-tracking surface.
+              output is carrying forward into the execution and value-tracking
+              surface.
             </p>
           ) : (
             <p>
-              This phase is already approved and read-only. The approved output is
-              carrying forward into {nextOpenPhaseContract.code} {nextOpenPhaseContract.title}.
+              This phase is already approved and read-only. The approved output
+              is carrying forward into {nextOpenPhaseContract.code}{" "}
+              {nextOpenPhaseContract.title}.
             </p>
           )
         ) : (
           <p>
-            Approve only after the record is reviewed and decision evidence is on
-            file. The approved version is what carries forward.
+            Approve only after the record is reviewed and decision evidence is
+            on file. The approved version is what carries forward.
           </p>
         )}
         <div className="mxw-exec-readout">
           <article>
-            <span className="mxw-exec-label">What Nexus learned this phase</span>
+            <span className="mxw-exec-label">
+              What Nexus learned this phase
+            </span>
             {readinessPack.carriesForwardContent.length > 0 ? (
               <p>
                 {readinessPack.carriesForwardContent.length} item
-                {readinessPack.carriesForwardContent.length === 1 ? "" : "s"}{" "}
+                {readinessPack.carriesForwardContent.length === 1
+                  ? ""
+                  : "s"}{" "}
                 generated this phase. Full detail is in Next phase readiness
                 below.
               </p>
@@ -1596,7 +1815,8 @@ function PhaseBody({
           </article>
           <article>
             <span className="mxw-exec-label">What remains uncertain</span>
-            {openHardCriteria.length > 0 || softGateCriteria.some((c) => !c.completed) ? (
+            {openHardCriteria.length > 0 ||
+            softGateCriteria.some((c) => !c.completed) ? (
               <ul>
                 {openHardCriteria.map((criterion) => (
                   <li key={criterion.id}>{criterion.label} — blocking</li>
@@ -1604,7 +1824,9 @@ function PhaseBody({
                 {softGateCriteria
                   .filter((criterion) => !criterion.completed)
                   .map((criterion) => (
-                    <li key={criterion.id}>{criterion.label} — carries as a caveat</li>
+                    <li key={criterion.id}>
+                      {criterion.label} — carries as a caveat
+                    </li>
                   ))}
               </ul>
             ) : (
@@ -1656,19 +1878,25 @@ function PhaseBody({
             {gateApprovalMessage}
           </div>
         ) : null}
-        {phase.phase === 0 && !isHistoricalPhase && openHardCriteria.length > 0 ? (
+        {phase.phase === 0 &&
+        !isHistoricalPhase &&
+        openHardCriteria.length > 0 ? (
           <div className="mxw-gate-note">
             <strong>Why some checks are still open</strong>
             <span>
-              P0 approval itself signs the origination brief, so the seed and value
-              checks turn green during approval. If anything remains blocked after
-              approval, the exact failed check will appear here.
+              P0 approval itself signs the origination brief, so the seed and
+              value checks turn green during approval. If anything remains
+              blocked after approval, the exact failed check will appear here.
             </span>
           </div>
         ) : null}
         <div className="mxw-approve-build" id="mxw-approve-build-action">
           {isHistoricalPhase ? (
-            <button className="mxw-gate-button" onClick={onContinueCurrentPhase} type="button">
+            <button
+              className="mxw-gate-button"
+              onClick={onContinueCurrentPhase}
+              type="button"
+            >
               {terminalComplete
                 ? "Open Tower →"
                 : `Continue to ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title} →`}
@@ -1694,7 +1922,9 @@ function PhaseBody({
               onClick={() => void onApproveP0Gate()}
               type="button"
             >
-              {gateApprovalStatus === "approving" ? "Approving..." : "Approve gate →"}
+              {gateApprovalStatus === "approving"
+                ? "Approving..."
+                : "Approve gate →"}
             </button>
           )}
         </div>
@@ -1721,60 +1951,74 @@ function PhaseBody({
         ) : null}
       </section>
       {!isHistoricalPhase ? (
-      <section className="mxw-gate">
-        <header>
-          <div>
-            <h2>Gate criteria</h2>
-            <p>
-              Hard criteria block the next phase. Soft criteria can carry forward
-              as explicit caveats in the gate record.
-            </p>
-          </div>
-          <strong>
-            {hardGateCriteria.filter((criterion) => criterion.completed).length} of{" "}
-            {hardGateCriteria.length || move.gateCriteria.length}
-          </strong>
-        </header>
-        {move.gateCriteria.length > 0 ? (
-          <>
-            <div className="mxw-gate-group">
-              <span className="mxw-gate-group-label">Blocking hard gate</span>
-              {(hardGateCriteria.length ? hardGateCriteria : move.gateCriteria).map((criterion) => (
-                <span
-                  className={`${criterion.completed ? "met" : ""} ${
-                    phase.phase === 0 && p0ApprovalGeneratedCriteria.has(criterion.id)
-                      ? "approval-generated"
-                      : ""
-                  }`}
-                  key={criterion.id}
-                >
-                  {criterion.completed ? "✓" : "○"} {criterion.label}
-                  {phase.phase === 0 &&
-                  !criterion.completed &&
-                  p0ApprovalGeneratedCriteria.has(criterion.id) ? (
-                    <em>Completed by approving this gate</em>
-                  ) : null}
-                </span>
-              ))}
+        <section className="mxw-gate">
+          <header>
+            <div>
+              <h2>Gate criteria</h2>
+              <p>
+                Hard criteria block the next phase. Soft criteria can carry
+                forward as explicit caveats in the gate record.
+              </p>
             </div>
-            {softGateCriteria.length > 0 ? (
+            <strong>
+              {
+                hardGateCriteria.filter((criterion) => criterion.completed)
+                  .length
+              }{" "}
+              of {hardGateCriteria.length || move.gateCriteria.length}
+            </strong>
+          </header>
+          {move.gateCriteria.length > 0 ? (
+            <>
               <div className="mxw-gate-group">
-                <span className="mxw-gate-group-label">Carry-forward soft criteria</span>
-                {softGateCriteria.map((criterion) => (
-                  <span className={criterion.completed ? "met" : "soft-open"} key={criterion.id}>
+                <span className="mxw-gate-group-label">Blocking hard gate</span>
+                {(hardGateCriteria.length
+                  ? hardGateCriteria
+                  : move.gateCriteria
+                ).map((criterion) => (
+                  <span
+                    className={`${criterion.completed ? "met" : ""} ${
+                      phase.phase === 0 &&
+                      p0ApprovalGeneratedCriteria.has(criterion.id)
+                        ? "approval-generated"
+                        : ""
+                    }`}
+                    key={criterion.id}
+                  >
                     {criterion.completed ? "✓" : "○"} {criterion.label}
-                    {!criterion.completed ? <em>Can carry as a caveat</em> : null}
+                    {phase.phase === 0 &&
+                    !criterion.completed &&
+                    p0ApprovalGeneratedCriteria.has(criterion.id) ? (
+                      <em>Completed by approving this gate</em>
+                    ) : null}
                   </span>
                 ))}
               </div>
-            ) : null}
-          </>
-        ) : (
-          <div>
-            <span>No gate criteria are configured for this transition.</span>
-          </div>
-        )}
-      </section>
+              {softGateCriteria.length > 0 ? (
+                <div className="mxw-gate-group">
+                  <span className="mxw-gate-group-label">
+                    Carry-forward soft criteria
+                  </span>
+                  {softGateCriteria.map((criterion) => (
+                    <span
+                      className={criterion.completed ? "met" : "soft-open"}
+                      key={criterion.id}
+                    >
+                      {criterion.completed ? "✓" : "○"} {criterion.label}
+                      {!criterion.completed ? (
+                        <em>Can carry as a caveat</em>
+                      ) : null}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <div>
+              <span>No gate criteria are configured for this transition.</span>
+            </div>
+          )}
+        </section>
       ) : null}
       <section className="mxw-readiness">
         <h2>Next: {readinessPack.nextPhaseLabel} readiness</h2>
@@ -1786,7 +2030,10 @@ function PhaseBody({
         {readinessPack.openNeeds.length > 0 ? (
           <div className="mxw-readiness-needs">
             {readinessPack.openNeeds.map((need) => (
-              <article className={`mxw-readiness-need ${need.priority}`} key={need.evidenceSlot}>
+              <article
+                className={`mxw-readiness-need ${need.priority}`}
+                key={need.evidenceSlot}
+              >
                 <header>
                   <strong>{need.evidenceSlot}</strong>
                   <span>{need.priority}</span>
@@ -1814,7 +2061,9 @@ function PhaseBody({
         ) : null}
         {readinessPack.suggestedSessions.length > 0 ? (
           <div className="mxw-readiness-sessions">
-            <h3>Suggested working sessions for {readinessPack.nextPhaseLabel}</h3>
+            <h3>
+              Suggested working sessions for {readinessPack.nextPhaseLabel}
+            </h3>
             <div>
               {readinessPack.suggestedSessions.map((session) => (
                 <span key={session}>{session}</span>
@@ -1920,8 +2169,8 @@ function P0CapturedBriefReview({ move }: { move: StrategicMove }) {
           <span>P0 brief captured</span>
           <h2>Review your seven Originate answers</h2>
           <p>
-            These are the answers saved from Start a Move. Gate criteria below are
-            a separate governance checklist.
+            These are the answers saved from Start a Move. Gate criteria below
+            are a separate governance checklist.
           </p>
         </div>
         <strong>{capturedCount} of 7</strong>
@@ -1932,7 +2181,10 @@ function P0CapturedBriefReview({ move }: { move: StrategicMove }) {
       </div>
       <div className="mxw-p0-brief-grid">
         {rows.map((row, index) => (
-          <article className={row.value ? "captured" : "missing"} key={row.label}>
+          <article
+            className={row.value ? "captured" : "missing"}
+            key={row.label}
+          >
             <span>{String(index + 1).padStart(2, "0")}</span>
             <div>
               <strong>{row.label}</strong>
@@ -1945,18 +2197,14 @@ function P0CapturedBriefReview({ move }: { move: StrategicMove }) {
   );
 }
 
-function P0OriginationHandoff({
-  move,
-}: {
-  move: StrategicMove;
-}) {
+function P0OriginationHandoff({ move }: { move: StrategicMove }) {
   return (
     <section className="mxw-zone mxw-p0-handoff">
       <div className="mxw-p0-handoff-kicker">P0 origination captured</div>
       <h2>Review the captured Move brief and approve the gate</h2>
       <p>
-        The seven-question P0 origination flow now lives in the dedicated Start a
-        Move workspace. This phase route is the governed shell for review,
+        The seven-question P0 origination flow now lives in the dedicated Start
+        a Move workspace. This phase route is the governed shell for review,
         attestation, Files & Evidence, and gate approval.
       </p>
       <div className="mxw-p0-handoff-card">
@@ -1972,7 +2220,10 @@ function P0OriginationHandoff({
   );
 }
 
-function textOrDraft(draftedBrief: Record<number, string>, index: number): string {
+function textOrDraft(
+  draftedBrief: Record<number, string>,
+  index: number,
+): string {
   return draftedBrief[index]?.trim() || ORIGINATE_FIELDS[index]?.draft || "";
 }
 
@@ -2022,7 +2273,8 @@ function buildPhaseCaptureItems({
     };
   }
 
-  const selectedOptionDisplay = selectedOptionLabel || optionLabelForPhase(phase.phase, selectedOption);
+  const selectedOptionDisplay =
+    selectedOptionLabel || optionLabelForPhase(phase.phase, selectedOption);
   if (phase.phase === 1) {
     const scope =
       charterString(
@@ -2107,14 +2359,19 @@ function workflowCopyFor(
   if (phase.phase === 0) {
     if (substep === "approve") {
       return {
-        outcome: "Approve the captured Originate brief as the source of truth for Charter.",
-        action: "Review the seven saved answers, then approve only if sponsor role, scope, value, evidence, and readiness assumptions are clear.",
-        proof: "P1 opens with the brief carried forward and the gate decision recorded.",
+        outcome:
+          "Approve the captured Originate brief as the source of truth for Charter.",
+        action:
+          "Review the seven saved answers, then approve only if sponsor role, scope, value, evidence, and readiness assumptions are clear.",
+        proof:
+          "P1 opens with the brief carried forward and the gate decision recorded.",
       };
     }
     return {
-      outcome: "Confirm the Move is framed clearly enough to become governed work.",
-      action: "Use the captured brief as the record; edit in Start a Move if the problem, name, archetype, sponsor role, scope, evidence, value, or readiness is wrong.",
+      outcome:
+        "Confirm the Move is framed clearly enough to become governed work.",
+      action:
+        "Use the captured brief as the record; edit in Start a Move if the problem, name, archetype, sponsor role, scope, evidence, value, or readiness is wrong.",
       proof: "All seven origination fields are present before gate approval.",
     };
   }
@@ -2146,30 +2403,40 @@ function workflowCopyFor(
         phase.phase === 1
           ? "Upload sponsor review notes, scope workshop files, success metric decisions, stakeholder maps, or completed Charter templates. Multiple files are allowed."
           : "Confirm the preferred approach with SMEs, then upload the decision summary, tradeoffs, and caveats.",
-      proof: "Uploaded files appear immediately here and in Files & Evidence as Move evidence that still requires review.",
+      proof:
+        "Uploaded files appear immediately here and in Files & Evidence as Move evidence that still requires review.",
     };
   }
 
   if (substep === "current" || substep === "findings") {
     return {
-      outcome: "Turn uploaded evidence into a reviewable current-state diagnosis.",
+      outcome:
+        "Turn uploaded evidence into a reviewable current-state diagnosis.",
       action:
         substep === "current"
           ? "Open Files & Evidence to add or review the documents this phase needs, then return here to inspect readiness."
           : "Review the findings lanes, challenge unsupported claims, and keep missing facts as explicit gaps.",
-      proof: "Process, systems, data, controls, workforce, and value claims are backed by evidence or marked as gaps.",
+      proof:
+        "Process, systems, data, controls, workforce, and value claims are backed by evidence or marked as gaps.",
     };
   }
 
   if (substep === "options") {
     return {
-      outcome: "Compare feasible solution paths using the evidence carried from P2.",
-      action: "Review the deterministic scores, readiness gaps, building blocks, and recommendation before selecting or overriding an option.",
-      proof: "The chosen approach is traceable to P2 evidence, constraints, and open gaps.",
+      outcome:
+        "Compare feasible solution paths using the evidence carried from P2.",
+      action:
+        "Review the deterministic scores, readiness gaps, building blocks, and recommendation before selecting or overriding an option.",
+      proof:
+        "The chosen approach is traceable to P2 evidence, constraints, and open gaps.",
     };
   }
 
-  if (substep === "canvas" || substep === "workstreams" || substep === "value") {
+  if (
+    substep === "canvas" ||
+    substep === "workstreams" ||
+    substep === "value"
+  ) {
     return {
       outcome:
         substep === "value"
@@ -2179,7 +2446,8 @@ function workflowCopyFor(
         substep === "value"
           ? "Check projected value, cost, assumptions, sensitivity, and evidence posture before approval."
           : "Review the lanes, workstreams, dependencies, controls, owners, and Tower handoff implications.",
-      proof: "The gate package can explain what will be done, by whom, in what sequence, with what evidence.",
+      proof:
+        "The gate package can explain what will be done, by whom, in what sequence, with what evidence.",
     };
   }
 
@@ -2187,7 +2455,8 @@ function workflowCopyFor(
     outcome: "Run the full phase close, not just a visual approval.",
     action:
       "Approve & Build only after inputs and evidence are ready. AbarVa will create the context extract, queue deliverables, record the gate decision, and prepare the next phase handoff.",
-    proof: "The final row moves from Open to Complete only when the governed build has executed.",
+    proof:
+      "The final row moves from Open to Complete only when the governed build has executed.",
   };
 }
 
@@ -2209,16 +2478,31 @@ function PhaseWorkflowGuide({
   substep: SubstepKey;
 }) {
   const guide = workflowCopyFor(phase, substep);
-  const stepIndex = Math.max(0, phase.substeps.findIndex((item) => item.key === substep)) + 1;
+  const stepIndex =
+    Math.max(
+      0,
+      phase.substeps.findIndex((item) => item.key === substep),
+    ) + 1;
   return (
-    <section className="mxw-workflow-guide" aria-label="Current phase workflow guidance">
+    <section
+      className="mxw-workflow-guide"
+      aria-label="Current phase workflow guidance"
+    >
       <div className="mxw-guide-head">
         <div>
-          <span>{phase.code} step {stepIndex}</span>
-          <strong>{phase.substeps[stepIndex - 1]?.label ?? "Current step"}</strong>
+          <span>
+            {phase.code} step {stepIndex}
+          </span>
+          <strong>
+            {phase.substeps[stepIndex - 1]?.label ?? "Current step"}
+          </strong>
           <em>{nextLabel ? `Next: ${nextLabel}` : "Final step"}</em>
         </div>
-        <button className="mxw-btn mxw-primary" onClick={onAction} type="button">
+        <button
+          className="mxw-btn mxw-primary"
+          onClick={onAction}
+          type="button"
+        >
           {actionLabel}
         </button>
       </div>
@@ -2238,8 +2522,9 @@ function PhaseWorkflowGuide({
         <div>
           <span>Live state</span>
           <p>
-            {evidenceCount} evidence item{evidenceCount === 1 ? "" : "s"} visible ·{" "}
-            {gateOpenCount} hard gate{gateOpenCount === 1 ? "" : "s"} open
+            {evidenceCount} evidence item{evidenceCount === 1 ? "" : "s"}{" "}
+            visible · {gateOpenCount} hard gate{gateOpenCount === 1 ? "" : "s"}{" "}
+            open
           </p>
         </div>
       </div>
@@ -2276,11 +2561,18 @@ function PhasePreparePanel({
   ).length;
 
   return (
-    <section className="mxw-command" aria-label={`${phase.code} workflow command center`}>
+    <section
+      className="mxw-command"
+      aria-label={`${phase.code} workflow command center`}
+    >
       <header>
         <div>
           <span>{phase.code} stage plan</span>
-          <h2>{terminalComplete ? "Tower handoff complete" : "What this phase needs"}</h2>
+          <h2>
+            {terminalComplete
+              ? "Tower handoff complete"
+              : "What this phase needs"}
+          </h2>
           <p>
             {terminalComplete
               ? "This Move is complete. Tower is now the execution and value-tracking surface."
@@ -2346,8 +2638,14 @@ function PhasePreparePanel({
         <article>
           <span>Current blockers</span>
           <ul>
-            <li>{missingEvidenceCount} evidence item{missingEvidenceCount === 1 ? "" : "s"} missing or partial</li>
-            <li>{openHardGateCount} hard gate{openHardGateCount === 1 ? "" : "s"} open</li>
+            <li>
+              {missingEvidenceCount} evidence item
+              {missingEvidenceCount === 1 ? "" : "s"} missing or partial
+            </li>
+            <li>
+              {openHardGateCount} hard gate{openHardGateCount === 1 ? "" : "s"}{" "}
+              open
+            </li>
             <li>Next phase: {nextPhaseLabel}</li>
           </ul>
         </article>
@@ -2380,7 +2678,10 @@ function EvidenceNeedTable({
         <span>Status</span>
       </div>
       {evidenceNeedPackets.slice(0, compact ? 5 : undefined).map((packet) => (
-        <div className="mxw-evidence-row" key={`${packet.familyId}-${packet.evidenceSlot}`}>
+        <div
+          className="mxw-evidence-row"
+          key={`${packet.familyId}-${packet.evidenceSlot}`}
+        >
           <strong>{packet.evidenceSlot}</strong>
           <p>{packet.whyItMatters}</p>
           <em className={packet.status}>{statusLabel(packet.status)}</em>
@@ -2413,18 +2714,24 @@ function DecisionOptionsActionPanel({
       },
       {
         label: "Balanced transformation path",
-        rationaleFor: "Balances value, control, feasibility, and change readiness.",
-        rationaleAgainst: "Requires coordinated business, data, technology, and adoption work.",
+        rationaleFor:
+          "Balances value, control, feasibility, and change readiness.",
+        rationaleAgainst:
+          "Requires coordinated business, data, technology, and adoption work.",
       },
       {
         label: "Full redesign",
-        rationaleFor: "Highest long-term value if evidence supports broader change.",
-        rationaleAgainst: "Highest readiness burden and sponsor commitment required.",
+        rationaleFor:
+          "Highest long-term value if evidence supports broader change.",
+        rationaleAgainst:
+          "Highest readiness burden and sponsor commitment required.",
       },
     ],
     [],
   );
-  const [title, setTitle] = useState(`${moveName} P${phase} key design decision`);
+  const [title, setTitle] = useState(
+    `${moveName} P${phase} key design decision`,
+  );
   const [ownerRole, setOwnerRole] = useState("Move sponsor");
   const [selectedIndex, setSelectedIndex] = useState(1);
   const [options, setOptions] = useState(defaultOptions);
@@ -2471,7 +2778,11 @@ function DecisionOptionsActionPanel({
     };
     if (!res.ok || !payload.ok) {
       setStatus("error");
-      setMessage(payload.detail || payload.error || `Decision record failed (HTTP ${res.status})`);
+      setMessage(
+        payload.detail ||
+          payload.error ||
+          `Decision record failed (HTTP ${res.status})`,
+      );
       return;
     }
     setStatus("saved");
@@ -2491,16 +2802,25 @@ function DecisionOptionsActionPanel({
           <div className="mxw-kdd-fields">
             <label>
               Decision title
-              <input value={title} onChange={(event) => setTitle(event.target.value)} />
+              <input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+              />
             </label>
             <label>
               Owner role
-              <input value={ownerRole} onChange={(event) => setOwnerRole(event.target.value)} />
+              <input
+                value={ownerRole}
+                onChange={(event) => setOwnerRole(event.target.value)}
+              />
             </label>
           </div>
           <div className="mxw-kdd-options">
             {options.map((option, index) => (
-              <article className={selectedIndex === index ? "selected" : ""} key={index}>
+              <article
+                className={selectedIndex === index ? "selected" : ""}
+                key={index}
+              >
                 <label className="mxw-kdd-radio">
                   <input
                     checked={selectedIndex === index}
@@ -2512,18 +2832,24 @@ function DecisionOptionsActionPanel({
                 </label>
                 <input
                   aria-label={`Option ${index + 1} label`}
-                  onChange={(event) => updateOption(index, "label", event.target.value)}
+                  onChange={(event) =>
+                    updateOption(index, "label", event.target.value)
+                  }
                   value={option.label}
                 />
                 <textarea
                   aria-label={`Option ${index + 1} rationale for`}
-                  onChange={(event) => updateOption(index, "rationaleFor", event.target.value)}
+                  onChange={(event) =>
+                    updateOption(index, "rationaleFor", event.target.value)
+                  }
                   rows={2}
                   value={option.rationaleFor}
                 />
                 <textarea
                   aria-label={`Option ${index + 1} rationale against`}
-                  onChange={(event) => updateOption(index, "rationaleAgainst", event.target.value)}
+                  onChange={(event) =>
+                    updateOption(index, "rationaleAgainst", event.target.value)
+                  }
                   rows={2}
                   value={option.rationaleAgainst}
                 />
@@ -2585,7 +2911,6 @@ function DecisionEvidenceActionPanel({
   );
 }
 
-
 function EvidenceUploadControl({
   buttonLabel,
   moveId,
@@ -2602,20 +2927,27 @@ function EvidenceUploadControl({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [status, setStatus] = useState<UploadWorkStatus>("idle");
   const [message, setMessage] = useState("");
-  const [phaseArtifacts, setPhaseArtifacts] = useState<PhaseEvidenceArtifact[]>([]);
+  const [phaseArtifacts, setPhaseArtifacts] = useState<PhaseEvidenceArtifact[]>(
+    [],
+  );
 
   const loadPhaseArtifacts = useCallback(async () => {
     try {
-      const res = await fetch(`/api/v1/programs/${moveId}/artifacts?family=uploaded_evidence`, {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `/api/v1/programs/${moveId}/artifacts?family=uploaded_evidence`,
+        {
+          credentials: "include",
+        },
+      );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const payload = (await res.json().catch(() => ({}))) as {
         artifacts?: PhaseEvidenceArtifact[];
       };
       const rows = Array.isArray(payload.artifacts) ? payload.artifacts : [];
       setPhaseArtifacts(
-        rows.filter((a) => a.phase === phase && a.lifecycleState !== "superseded"),
+        rows.filter(
+          (a) => a.phase === phase && a.lifecycleState !== "superseded",
+        ),
       );
     } catch {
       // Leave the last-known list in place; the "Open Files & Evidence" link
@@ -2628,7 +2960,8 @@ function EvidenceUploadControl({
   }, [loadPhaseArtifacts]);
 
   async function uploadOne(file: File, totalCount: number): Promise<void> {
-    const uploadTitle = totalCount > 1 ? `${title} - ${file.name}` : title || file.name;
+    const uploadTitle =
+      totalCount > 1 ? `${title} - ${file.name}` : title || file.name;
     const form = new FormData();
     form.append("file", file);
     form.append("phase", String(phase));
@@ -2665,7 +2998,9 @@ function EvidenceUploadControl({
         const file = selectedFiles[index];
         if (!file) continue;
         if (selectedFiles.length > 1) {
-          setMessage(`Uploading ${index + 1} of ${selectedFiles.length}: ${file.name}`);
+          setMessage(
+            `Uploading ${index + 1} of ${selectedFiles.length}: ${file.name}`,
+          );
         }
         await uploadOne(file, selectedFiles.length);
       }
@@ -2707,7 +3042,10 @@ function EvidenceUploadControl({
         ) : null}
       </div>
       {phaseArtifacts.length > 0 ? (
-        <div className="mxw-uploaded-files" aria-label="Uploaded evidence for this phase">
+        <div
+          className="mxw-uploaded-files"
+          aria-label="Uploaded evidence for this phase"
+        >
           <header>
             <strong>Uploaded for this phase</strong>
             {onOpenFiles ? (
@@ -2721,7 +3059,9 @@ function EvidenceUploadControl({
               <span>{artifact.fileName ?? artifact.title}</span>
               <em>
                 v{artifact.version} · {artifactStatusLabel(artifact.status)}
-                {artifact.qualityScore != null ? ` · Automated quality signal ${artifact.qualityScore}/100` : ""}
+                {artifact.qualityScore != null
+                  ? ` · Automated quality signal ${artifact.qualityScore}/100`
+                  : ""}
               </em>
             </div>
           ))}
@@ -2785,7 +3125,9 @@ function PhaseCaptureEditor({
       <header>
         <div>
           <span>{phase.code} source of truth</span>
-          <h2>{phase.phase === 1 ? "Charter inputs" : `${phase.title} inputs`}</h2>
+          <h2>
+            {phase.phase === 1 ? "Charter inputs" : `${phase.title} inputs`}
+          </h2>
           <p>
             These are the fields the gate saves and approves. Edit them here
             before running Approve &amp; Build.
@@ -2800,7 +3142,10 @@ function PhaseCaptureEditor({
           const value = values[section.key] ?? "";
           const complete = value.trim().length > 0;
           return (
-            <label className={`mxw-capture-card ${complete ? "complete" : ""}`} key={section.key}>
+            <label
+              className={`mxw-capture-card ${complete ? "complete" : ""}`}
+              key={section.key}
+            >
               <span>{String(index + 1).padStart(2, "0")}</span>
               <strong>{section.label}</strong>
               <small>{section.description}</small>
@@ -2821,7 +3166,9 @@ function PhaseCaptureEditor({
 
 function P3OptionSummary({ optionSet }: { optionSet: P3OptionSet }) {
   const recommendation = optionSet.recommendedOptionId
-    ? optionSet.options.find((option) => option.id === optionSet.recommendedOptionId)
+    ? optionSet.options.find(
+        (option) => option.id === optionSet.recommendedOptionId,
+      )
     : null;
 
   return (
@@ -2829,11 +3176,16 @@ function P3OptionSummary({ optionSet }: { optionSet: P3OptionSet }) {
       <div>
         <span>Source</span>
         <strong>P2 design inputs pack</strong>
-        <small>{optionSet.evidenceBasis.length} evidence signal{optionSet.evidenceBasis.length === 1 ? "" : "s"}</small>
+        <small>
+          {optionSet.evidenceBasis.length} evidence signal
+          {optionSet.evidenceBasis.length === 1 ? "" : "s"}
+        </small>
       </div>
       <div>
         <span>Recommendation</span>
-        <strong>{recommendation ? recommendation.label : "Provisional only"}</strong>
+        <strong>
+          {recommendation ? recommendation.label : "Provisional only"}
+        </strong>
         <small>
           {recommendation
             ? `${recommendation.confidence} confidence - human decision still required`
@@ -2843,7 +3195,9 @@ function P3OptionSummary({ optionSet }: { optionSet: P3OptionSet }) {
       <div>
         <span>Open gaps</span>
         <strong>{optionSet.missingEvidence.length}</strong>
-        <small>{optionSet.missingEvidence[0] ?? "No required gap listed"}</small>
+        <small>
+          {optionSet.missingEvidence[0] ?? "No required gap listed"}
+        </small>
       </div>
     </div>
   );
@@ -2905,7 +3259,9 @@ function OptionCards({
           {option.notRecommendedYetReasons.length > 0 ? (
             <div className="mxw-option-caution">
               <b>Not recommended yet if:</b>
-              <span>{option.notRecommendedYetReasons.slice(0, 3).join(" ")}</span>
+              <span>
+                {option.notRecommendedYetReasons.slice(0, 3).join(" ")}
+              </span>
             </div>
           ) : null}
         </button>
@@ -2961,7 +3317,8 @@ function PostureCards({
 function optionLabelForPhase(phase: number, selectedOption: string): string {
   if (phase === 1) {
     if (selectedOption === "A") return "Improve the current process";
-    if (selectedOption === "C") return "Evaluate major transformation potential";
+    if (selectedOption === "C")
+      return "Evaluate major transformation potential";
     return "Explore a balanced transformation";
   }
 
@@ -3435,6 +3792,19 @@ function MovesStandaloneStyles() {
   .mxw-options small{grid-column:2}
   .mxw-options dl,.mxw-option-meta,.mxw-option-blocks,.mxw-option-caution{grid-column:2}
 }
+/*
+ * MOVES-UI-001 finder-shell visual polish — gated by .mxw-finder-on, which
+ * MovesPhaseStandaloneClient only adds to the root <main> when the
+ * moves_finder_shell_v1 flag resolves true. Every rule below is additive:
+ * none of it touches a bare .mxw-* selector, so the flag-off render stays
+ * byte-for-byte identical to the tree above. Tokens match the merged
+ * MovePhaseExplorer.module.css palette (navy/blue/teal/amber).
+ */
+.mxw-finder-on .mxw-phase-name{color:#0c1a3a}
+.mxw-finder-on .mxw-phase.up .mxw-phase-name{color:#0c1a3a}
+.mxw-finder-on .mxw-phase.viewing{background:#e4ecf9}
+.mxw-finder-on .mxw-phase.viewing:before{content:none}
+.mxw-finder-on .mxw-surface-tabs button.active::before{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2px;border-radius:999px;background:#2a5aa8}
       `}</style>
   );
 }

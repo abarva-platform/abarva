@@ -16,16 +16,30 @@ import type { StrategicMove } from "@/lib/programs/types.ui";
 // jsdom's test environment doesn't provide these globally; the component
 // runs in a real browser in production, where all three always exist.
 if (typeof global.TextEncoder === "undefined") {
-  (global as unknown as { TextEncoder: typeof TextEncoder }).TextEncoder = TextEncoder;
+  (global as unknown as { TextEncoder: typeof TextEncoder }).TextEncoder =
+    TextEncoder;
 }
 if (typeof global.TextDecoder === "undefined") {
   (global as unknown as { TextDecoder: typeof TextDecoder }).TextDecoder =
     TextDecoder as unknown as typeof global.TextDecoder;
 }
 if (typeof global.ReadableStream === "undefined") {
-  (global as unknown as { ReadableStream: typeof ReadableStream }).ReadableStream =
-    ReadableStream;
+  (
+    global as unknown as { ReadableStream: typeof ReadableStream }
+  ).ReadableStream = ReadableStream;
 }
+
+// MOVES-UI-001: `useFeature` resolves the active tenant via
+// `useClientContext()`, which needs Clerk's `useUser()` + Next's router
+// hooks. This test file renders the component with none of that provider
+// stack, so without a mock the hook would throw and the component's own
+// FinderShellErrorBoundary would (correctly) fall back to flag-off — which
+// is exactly what we want for every existing test in this file (flag-off
+// parity). The flag-on assertions below override this mock per-test.
+const mockUseFeature = jest.fn(() => false);
+jest.mock("@/lib/features/use-feature", () => ({
+  useFeature: (key: string) => mockUseFeature(key),
+}));
 
 jest.mock("next/link", () => {
   return function MockLink({
@@ -65,7 +79,11 @@ function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
       description: "Phase capture in progress",
     },
     statusColor: "green",
-    sponsor: { id: "sponsor", name: "Victor Hale", role: "Chief Technology Officer" },
+    sponsor: {
+      id: "sponsor",
+      name: "Victor Hale",
+      role: "Chief Technology Officer",
+    },
     participants: [],
     valueAtStake: {
       projected: { low: 75_000_000, high: 145_000_000, currency: "USD" },
@@ -172,144 +190,222 @@ describe("MovesPhaseStandaloneClient", () => {
 
   beforeEach(() => {
     window.scrollTo = jest.fn();
-    window.open = jest.fn(() => ({} as Window));
+    window.open = jest.fn(() => ({}) as Window);
+    mockUseFeature.mockReset();
+    mockUseFeature.mockImplementation(() => false);
     uploadedEvidenceArtifacts = [];
-    global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
+    global.fetch = jest.fn(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
 
-      if (url.includes("/artifacts/upload") && init?.method === "POST") {
-        const form = init.body as FormData;
-        const file = form.get("file") as File;
-        uploadedEvidenceArtifacts.push({
-          artifactId: `artifact-${uploadedEvidenceArtifacts.length + 1}`,
-          fileName: file.name,
-          title: String(form.get("title") ?? file.name),
-          phase: Number(form.get("phase") ?? 0),
-          version: 1,
-          status: "draft",
-          lifecycleState: "current",
-          qualityScore: null,
-          createdAt: new Date(0).toISOString(),
-          downloadUrl: "#",
-        });
-        return { ok: true, status: 200, json: async () => ({ ok: true }) } as Response;
-      }
-
-      if (url.includes("/artifacts?family=uploaded_evidence")) {
-        return {
-          ok: true,
-          status: 200,
-          json: async () => ({ artifacts: uploadedEvidenceArtifacts }),
-        } as Response;
-      }
-
-      if (url.includes("/api/chat/agent")) {
-        const encoder = new TextEncoder();
-        const body = new ReadableStream({
-          start(controller) {
-            controller.enqueue(encoder.encode("The two blocking gate items are "));
-            controller.enqueue(encoder.encode("the requirements trace and the risk register."));
-            controller.close();
-          },
-        });
-        return { ok: true, status: 200, body } as unknown as Response;
-      }
-
-      if (url.includes("/api/v1/deliverables/generate-phase")) {
-        return {
-          ok: true,
-          status: 202,
-          json: async () => ({
-            deliverables: [
-              {
-                deliverableTypeKey: "target_state_architecture",
-                documentTitle: "Target State Reference Architecture",
-                runId: "run-1",
-                status: "queued",
-              },
-              {
-                deliverableTypeKey: "solution_design",
-                documentTitle: "Solution Design Specification",
-                runId: "run-2",
-                status: "queued",
-              },
-            ],
-          }),
-        } as Response;
-      }
-
-      if (url.includes("/api/v1/deliverables/runs/")) {
-        return {
-          ok: true,
-          status: 200,
-          json: async () => ({
-            status: "succeeded",
-            artifactId: "artifact-1",
-            blobUrl: "/api/v1/artifacts/artifact-1?download=1",
-            progressPct: 100,
-            progressLabel: "Built",
-          }),
-        } as Response;
-      }
-
-      if (url.includes("/playbook")) {
-        return new Promise<Response>(() => {});
-      }
-
-      if (url.includes("/phase-intelligence")) {
-        return {
-          ok: true,
-          status: 200,
-          json: async () => ({
+        if (url.includes("/artifacts/upload") && init?.method === "POST") {
+          const form = init.body as FormData;
+          const file = form.get("file") as File;
+          uploadedEvidenceArtifacts.push({
+            artifactId: `artifact-${uploadedEvidenceArtifacts.length + 1}`,
+            fileName: file.name,
+            title: String(form.get("title") ?? file.name),
+            phase: Number(form.get("phase") ?? 0),
+            version: 1,
+            status: "draft",
+            lifecycleState: "current",
+            qualityScore: null,
+            createdAt: new Date(0).toISOString(),
+            downloadUrl: "#",
+          });
+          return {
             ok: true,
-            moveId: "37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4",
-            phase: 3,
-            generatedAt: "2026-07-18T00:00:00Z",
-            items: [
-              {
-                id: "decision",
-                eyebrow: "Key design decision",
-                title: "Governed agent workspace",
-                body: "Selected because it balances productivity, control, and adoption.",
-                sourceLabel: "Decision thread",
-                tone: "success",
-                href: "/dossier/thread-1",
-                hrefLabel: "See full decision record",
-                facts: ["3 alternatives captured"],
-              },
-              {
-                id: "strategic_signal",
-                eyebrow: "Strategic signal",
-                title: "Agent-handled productivity improvement",
-                body: "8-22% is a labeled planning range, not a committed target.",
-                sourceLabel: "Member-service Agent Assist Function Pack",
-                tone: "default",
-                facts: ["Measured as: cost per resolved contact"],
-              },
-              {
-                id: "gate_evidence",
-                eyebrow: "Gate and evidence truth",
-                title: "1 hard gate open; 1 required evidence gap.",
-                body: "Upload the missing source file or record a waiver.",
-                sourceLabel: "Governance + evidence readiness",
-                tone: "danger",
-                facts: ["1/2 hard gates met"],
-              },
-            ],
-          }),
-        } as Response;
-      }
+            status: 200,
+            json: async () => ({ ok: true }),
+          } as Response;
+        }
 
-      return {
-        ok: true,
-        status: 200,
-        json: async () => ({ ok: true }),
-      } as Response;
-    });
+        if (url.includes("/artifacts?family=uploaded_evidence")) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ artifacts: uploadedEvidenceArtifacts }),
+          } as Response;
+        }
+
+        if (url.includes("/api/chat/agent")) {
+          const encoder = new TextEncoder();
+          const body = new ReadableStream({
+            start(controller) {
+              controller.enqueue(
+                encoder.encode("The two blocking gate items are "),
+              );
+              controller.enqueue(
+                encoder.encode("the requirements trace and the risk register."),
+              );
+              controller.close();
+            },
+          });
+          return { ok: true, status: 200, body } as unknown as Response;
+        }
+
+        if (url.includes("/api/v1/deliverables/generate-phase")) {
+          return {
+            ok: true,
+            status: 202,
+            json: async () => ({
+              deliverables: [
+                {
+                  deliverableTypeKey: "target_state_architecture",
+                  documentTitle: "Target State Reference Architecture",
+                  runId: "run-1",
+                  status: "queued",
+                },
+                {
+                  deliverableTypeKey: "solution_design",
+                  documentTitle: "Solution Design Specification",
+                  runId: "run-2",
+                  status: "queued",
+                },
+              ],
+            }),
+          } as Response;
+        }
+
+        if (url.includes("/api/v1/deliverables/runs/")) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              status: "succeeded",
+              artifactId: "artifact-1",
+              blobUrl: "/api/v1/artifacts/artifact-1?download=1",
+              progressPct: 100,
+              progressLabel: "Built",
+            }),
+          } as Response;
+        }
+
+        if (url.includes("/playbook")) {
+          return new Promise<Response>(() => {});
+        }
+
+        if (url.includes("/phase-intelligence")) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              ok: true,
+              moveId: "37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4",
+              phase: 3,
+              generatedAt: "2026-07-18T00:00:00Z",
+              items: [
+                {
+                  id: "decision",
+                  eyebrow: "Key design decision",
+                  title: "Governed agent workspace",
+                  body: "Selected because it balances productivity, control, and adoption.",
+                  sourceLabel: "Decision thread",
+                  tone: "success",
+                  href: "/dossier/thread-1",
+                  hrefLabel: "See full decision record",
+                  facts: ["3 alternatives captured"],
+                },
+                {
+                  id: "strategic_signal",
+                  eyebrow: "Strategic signal",
+                  title: "Agent-handled productivity improvement",
+                  body: "8-22% is a labeled planning range, not a committed target.",
+                  sourceLabel: "Member-service Agent Assist Function Pack",
+                  tone: "default",
+                  facts: ["Measured as: cost per resolved contact"],
+                },
+                {
+                  id: "gate_evidence",
+                  eyebrow: "Gate and evidence truth",
+                  title: "1 hard gate open; 1 required evidence gap.",
+                  body: "Upload the missing source file or record a waiver.",
+                  sourceLabel: "Governance + evidence readiness",
+                  tone: "danger",
+                  facts: ["1/2 hard gates met"],
+                },
+              ],
+            }),
+          } as Response;
+        }
+
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ ok: true }),
+        } as Response;
+      },
+    );
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
+  });
+
+  describe("MOVES-UI-001 finder-shell flag (moves_finder_shell_v1)", () => {
+    it("renders exactly the legacy markup when the flag is off — no finder-shell class or data attribute", () => {
+      mockUseFeature.mockImplementation(() => false);
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const root = screen.getByTestId("moves-phase-standalone");
+      expect(root.className).toBe("mxw");
+      expect(root).not.toHaveClass("mxw-finder-on");
+      expect(root).not.toHaveAttribute("data-finder-shell");
+    });
+
+    it("falls back to the legacy render when useFeature throws (no Clerk/router context)", () => {
+      mockUseFeature.mockImplementation(() => {
+        throw new Error("useUser must be used within <ClerkProvider>");
+      });
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const root = screen.getByTestId("moves-phase-standalone");
+      expect(root.className).toBe("mxw");
+      expect(root).not.toHaveClass("mxw-finder-on");
+    });
+
+    it("adds the finder-shell class and data attribute when the flag is on, without changing tab/phase structure", () => {
+      mockUseFeature.mockImplementation(() => true);
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const root = screen.getByTestId("moves-phase-standalone");
+      expect(root).toHaveClass("mxw", "mxw-finder-on");
+      expect(root).toHaveAttribute("data-finder-shell", "on");
+
+      // The tab/step control structure and phase nav are untouched — only
+      // presentation (CSS scoped under .mxw-finder-on) changes, per the
+      // "no restructuring" constraint.
+      expect(
+        screen.getByRole("tablist", { name: "Move workspace views" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("complementary", { name: "Move phases" }),
+      ).toBeInTheDocument();
+    });
   });
 
   it("does not render the retired P0 originate form inside the phase workspace", () => {
@@ -333,13 +429,25 @@ describe("MovesPhaseStandaloneClient", () => {
     ).toBeInTheDocument();
     // Single primary CTA (the step-navigation bar) drives progress here now —
     // the P0 handoff card no longer renders its own duplicate button/link.
-    expect(screen.getByRole("button", { name: "Continue to Frame →" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Review P0 gate →" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Open gate link" })).not.toBeInTheDocument();
-    expect(screen.queryByText("Originate a strategic move")).not.toBeInTheDocument();
-    expect(screen.queryByText(/Capture each section by talking to aVa/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Continue to Frame →" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Review P0 gate →" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Open gate link" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Originate a strategic move"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Capture each section by talking to aVa/i),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/Let aVa draft this/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Promote to P1 Charter/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Promote to P1 Charter/i),
+    ).not.toBeInTheDocument();
   });
 
   it("honors P0 focus=gate by opening gate approval instead of the retired form", () => {
@@ -357,12 +465,22 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Gate approval" })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Approve gate →" }).length).toBeGreaterThan(0);
-    expect(screen.queryByText("Originate a strategic move")).not.toBeInTheDocument();
-    expect(screen.queryByText(/What's the bet \/ hypothesis/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Gate approval" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: "Approve gate →" }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.queryByText("Originate a strategic move"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/What's the bet \/ hypothesis/i),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/Let aVa draft this/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Promote to P1 Charter/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Promote to P1 Charter/i),
+    ).not.toBeInTheDocument();
   });
 
   it("shows completed P0 as read-only when the Move has already advanced to P1", () => {
@@ -381,12 +499,22 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     expect(screen.getAllByText(/already approved/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("button", { name: /Continue to P1 Charter/i }).length).toBeGreaterThan(0);
-    expect(screen.queryByRole("button", { name: "Approve gate →" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Gate criteria" })).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: /Continue to P1 Charter/i }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole("button", { name: "Approve gate →" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Gate criteria" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Blocking hard gate")).not.toBeInTheDocument();
-    expect(screen.queryByText("Carry-forward soft criteria")).not.toBeInTheDocument();
-    expect(screen.queryByText("Originate a strategic move")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Carry-forward soft criteria"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Originate a strategic move"),
+    ).not.toBeInTheDocument();
   });
 
   it("renders terminal P5 as complete and routes the primary action to Tower", () => {
@@ -413,17 +541,27 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByRole("link", { name: /Prepare to Execute\s+2 of 2/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Open Tower →" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Open Tower →" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Tower handoff complete")).toBeInTheDocument();
     expect(screen.queryByText(/Complete this phase/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Attest and advance to Tower handoff/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Complete the steps above/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Generate Session Pack/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Attest and advance to Tower handoff/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Complete the steps above/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Generate Session Pack/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Generate Execution & Readiness/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /Continue to P5 Prepare to Execute/i }),
+      screen.queryByRole("button", {
+        name: /Continue to P5 Prepare to Execute/i,
+      }),
     ).not.toBeInTheDocument();
   });
 
@@ -460,16 +598,30 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    expect(screen.getByText("Review your seven Originate answers")).toBeInTheDocument();
+    expect(
+      screen.getByText("Review your seven Originate answers"),
+    ).toBeInTheDocument();
     expect(screen.getByText("7 of 7")).toBeInTheDocument();
     expect(screen.getByText("Move name")).toBeInTheDocument();
-    expect(screen.getAllByText("Member Service Agent Assist").length).toBeGreaterThan(0);
-    expect(screen.getByText("Business problem / opportunity")).toBeInTheDocument();
-    expect(screen.getByText(/Members experience long calls/i)).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Member Service Agent Assist").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByText("Business problem / opportunity"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Members experience long calls/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("Sponsor / title")).toBeInTheDocument();
-    expect(screen.getByText(/Chief Digital and Information Officer/i)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Gate approval" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Gate criteria" })).toBeInTheDocument();
+    expect(
+      screen.getByText(/Chief Digital and Information Officer/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Gate approval" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Gate criteria" }),
+    ).toBeInTheDocument();
   });
 
   it("frames P1 as a posture hypothesis, not a solution approach recommendation", () => {
@@ -490,18 +642,35 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByRole("heading", { name: "Initial transformation posture" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Charter inputs" })).toBeInTheDocument();
-    expect((screen.getByLabelText("Sponsor commitment") as HTMLTextAreaElement).value).toContain(
-      "Sponsor/title:",
-    );
-    expect((screen.getByLabelText("Scope boundary") as HTMLTextAreaElement).value).not.toBe("");
-    expect((screen.getByLabelText("Success criteria") as HTMLTextAreaElement).value).not.toBe("");
-    expect(screen.getByText(/starting hypothesis for P2 discovery/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Charter inputs" }),
+    ).toBeInTheDocument();
+    expect(
+      (screen.getByLabelText("Sponsor commitment") as HTMLTextAreaElement)
+        .value,
+    ).toContain("Sponsor/title:");
+    expect(
+      (screen.getByLabelText("Scope boundary") as HTMLTextAreaElement).value,
+    ).not.toBe("");
+    expect(
+      (screen.getByLabelText("Success criteria") as HTMLTextAreaElement).value,
+    ).not.toBe("");
+    expect(
+      screen.getByText(/starting hypothesis for P2 discovery/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("Improve the current process")).toBeInTheDocument();
-    expect(screen.getByText("Explore a balanced transformation")).toBeInTheDocument();
-    expect(screen.getByText("Evaluate major transformation potential")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Decide the approach" })).not.toBeInTheDocument();
-    expect(screen.queryByText("Phased platform + operating-model shift")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Explore a balanced transformation"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Evaluate major transformation potential"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Decide the approach" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Phased platform + operating-model shift"),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/aVa recommends/i)).not.toBeInTheDocument();
   });
 
@@ -520,19 +689,33 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Upload evidence for P1" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Files to upload" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Continue to Approve & Build →" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Charter inputs" })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Upload evidence for P1" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Files to upload" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Continue to Approve & Build →" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Charter inputs" }),
+    ).not.toBeInTheDocument();
 
-    const input = screen.getByLabelText("Upload decision files") as HTMLInputElement;
+    const input = screen.getByLabelText(
+      "Upload decision files",
+    ) as HTMLInputElement;
     expect(input).toHaveAttribute("multiple");
 
     fireEvent.change(input, {
       target: {
         files: [
-          new File(["scope"], "scope-boundary.xlsx", { type: "application/vnd.ms-excel" }),
-          new File(["notes"], "sponsor-review.docx", { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }),
+          new File(["scope"], "scope-boundary.xlsx", {
+            type: "application/vnd.ms-excel",
+          }),
+          new File(["notes"], "sponsor-review.docx", {
+            type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          }),
         ],
       },
     });
@@ -544,7 +727,9 @@ describe("MovesPhaseStandaloneClient", () => {
     // The list is real lifecycle data re-fetched from the artifact vault after
     // upload, not an ephemeral client-side echo of what was just picked.
     expect(screen.getAllByText(/v1 · draft/).length).toBe(2);
-    expect(screen.getByRole("button", { name: "Open Files & Evidence" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Open Files & Evidence" }),
+    ).toBeInTheDocument();
   });
 
   it("shows the P1 charter capture fields at gate approval and blocks build until they are complete", () => {
@@ -562,7 +747,9 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Charter inputs" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Charter inputs" }),
+    ).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Sponsor commitment"), {
       target: { value: "" },
     });
@@ -571,7 +758,10 @@ describe("MovesPhaseStandaloneClient", () => {
       name: /Complete phase inputs before build/i,
     });
     expect(buildButton).toBeDisabled();
-    expect(screen.getAllByText(/Complete 1 phase input before Approve & Build/i).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/Complete 1 phase input before Approve & Build/i)
+        .length,
+    ).toBeGreaterThan(0);
   });
 
   it("keeps solution approach selection in P3 after discovery evidence", () => {
@@ -608,13 +798,22 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Decide the approach" })).toBeInTheDocument();
     expect(
-      screen.getAllByText("Governed agent-assist layer on current systems").length,
+      screen.getByRole("heading", { name: "Decide the approach" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Governed agent-assist layer on current systems")
+        .length,
     ).toBeGreaterThan(0);
-    expect(screen.queryByText("Phased platform + operating-model shift")).not.toBeInTheDocument();
-    expect(screen.queryByText("Optimize the current workflow")).not.toBeInTheDocument();
-    expect(screen.queryByText("Large transformation program")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Phased platform + operating-model shift"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Optimize the current workflow"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Large transformation program"),
+    ).not.toBeInTheDocument();
     expect(screen.getAllByText(/aVa recommends/i).length).toBeGreaterThan(0);
     expect(
       screen.queryByRole("heading", { name: "Initial transformation posture" }),
@@ -641,7 +840,8 @@ describe("MovesPhaseStandaloneClient", () => {
             artifactType: "execution_roadmap",
             title: "Roadmap & Business Case",
             phase: 4,
-            reason: "Cost baseline is needed for a final-quality Roadmap & Business Case.",
+            reason:
+              "Cost baseline is needed for a final-quality Roadmap & Business Case.",
           },
         ],
         canDraftBoundary: {
@@ -670,11 +870,15 @@ describe("MovesPhaseStandaloneClient", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: /Approve & Build/i }));
 
-    expect(screen.getByText(/Next: P4 Build the Plan readiness/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Next: P4 Build the Plan readiness/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("Cost baseline")).toBeInTheDocument();
     expect(screen.getByText(/Format: CSV, XLSX/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/traceable cost and value assumptions before funding-grade estimates/i),
+      screen.getByText(
+        /traceable cost and value assumptions before funding-grade estimates/i,
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByText("Suggested working sessions for P4 Build the Plan"),
@@ -689,7 +893,8 @@ describe("MovesPhaseStandaloneClient", () => {
           {
             key: "workstreams",
             heading: "Workstream Breakdown",
-            snippet: "Data platform migration led by J. Alvarez; clinical workflow cutover led by R. Chen.",
+            snippet:
+              "Data platform migration led by J. Alvarez; clinical workflow cutover led by R. Chen.",
           },
         ]}
         evidenceNeedPackets={[]}
@@ -705,7 +910,9 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.getByText("Carries forward from this phase's generated work"),
     ).toBeInTheDocument();
     expect(screen.getByText("Workstream Breakdown")).toBeInTheDocument();
-    expect(screen.getByText(/Data platform migration led by J. Alvarez/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Data platform migration led by J. Alvarez/i),
+    ).toBeInTheDocument();
   });
 
   it("omits the carries-forward section when no real content signals were extracted", () => {
@@ -737,26 +944,44 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: "Choose the Approach" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Choose the Approach" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Files & Evidence")).toBeInTheDocument();
     expect(screen.getByText("Step 1 of 5")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "What this phase needs" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "What this phase needs" }),
+    ).toBeInTheDocument();
     expect(screen.getAllByText(/Purpose/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Do now/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Done when/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Live state/i).length).toBeGreaterThan(0);
     expect(screen.getByRole("tab", { name: /Prepare/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Compare Options/i })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Approve & Build/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", { name: /Compare Options/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("tab", { name: /Approve & Build/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Recommended sessions")).toBeInTheDocument();
     expect(screen.getByText("Current blockers")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Upload files" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Review gate" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Upload files" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Review gate" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText("Solution Options Canvas")).toBeInTheDocument();
-    expect(screen.queryByText("How to complete this phase")).not.toBeInTheDocument();
-    expect(screen.queryByText("Sessions and templates for this phase")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("How to complete this phase"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Sessions and templates for this phase"),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/Phase Sessions/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Templates & sessions" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Templates & sessions" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/Phase complete/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/To advance to P4/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/View dossier/i)).not.toBeInTheDocument();
@@ -812,8 +1037,12 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    expect(screen.queryByText(/Phase Sessions · P3 Design/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Generate Session Pack/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Phase Sessions · P3 Design/i),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Generate Session Pack/i }),
+    ).not.toBeInTheDocument();
     expect(global.fetch).not.toHaveBeenCalledWith(
       "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/playbook?phase=3",
       expect.anything(),
@@ -836,14 +1065,20 @@ describe("MovesPhaseStandaloneClient", () => {
       expect.anything(),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Phase Intelligence/i }));
-    expect(screen.getByRole("heading", { name: "Phase Intelligence" })).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Phase Intelligence/i }),
+    );
+    expect(
+      screen.getByRole("heading", { name: "Phase Intelligence" }),
+    ).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByText("Governed agent workspace")).toBeInTheDocument();
     });
     expect(screen.getByText(/labeled planning range/)).toBeInTheDocument();
-    expect(screen.getByText("1 hard gate open; 1 required evidence gap.")).toBeInTheDocument();
+    expect(
+      screen.getByText("1 hard gate open; 1 required evidence gap."),
+    ).toBeInTheDocument();
     expect(global.fetch).toHaveBeenCalledWith(
       "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/phase-intelligence?phase=3",
       expect.objectContaining({ credentials: "include" }),
@@ -866,7 +1101,8 @@ describe("MovesPhaseStandaloneClient", () => {
             acceptedFormats: ["DOCX"],
             exampleTemplate: "Architecture constraints memo",
             exampleContent: [],
-            whyItMatters: "The design lane needs real architecture constraints.",
+            whyItMatters:
+              "The design lane needs real architecture constraints.",
             blockedArtifacts: [],
             canDraftBoundary: {
               canDraft: false,
@@ -888,55 +1124,75 @@ describe("MovesPhaseStandaloneClient", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: /Record Decision/i }));
 
-    expect(screen.getByRole("heading", { name: "Decide the approach" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Upload evidence for approach decision" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Decide the approach" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Upload evidence for approach decision",
+      }),
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: /Approve & Build/i }));
 
-    expect(screen.getByRole("heading", { name: "Gate approval" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Gate approval" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/1 required next-phase prep item/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/These items are carried forward as next-phase preparation/i),
+      screen.getByText(
+        /These items are carried forward as next-phase preparation/i,
+      ),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Approve & Build P3 Choose the Approach/i }),
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Choose the Approach/i,
+      }),
     ).toBeEnabled();
   });
 
   it("Files & Evidence renders a real generated deliverable as an actual downloadable link", async () => {
-    (global.fetch as jest.Mock).mockImplementation(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes("/artifacts") && !url.includes("/artifacts/")) {
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url.includes("/artifacts") && !url.includes("/artifacts/")) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({
+              ok: true,
+              count: 1,
+              artifacts: [
+                {
+                  artifactId: "d74ed94a-a600-46ee-ad5d-a505556c4cac",
+                  artifactType: "target_state_architecture",
+                  family: "generated_deliverable",
+                  title:
+                    "CANARY — SkyHarbor Recovery Command IROPS Target Architecture",
+                  phase: 3,
+                  fileFormat: "html",
+                  fileName: null,
+                  version: 1,
+                  status: "board_ready",
+                  lifecycleState: "current",
+                  qualityScore: 100,
+                  createdAt: "2026-07-11T23:26:23.000Z",
+                  downloadUrl:
+                    "/api/v1/artifacts/d74ed94a-a600-46ee-ad5d-a505556c4cac",
+                },
+              ],
+            }),
+          } as Response;
+        }
         return {
           ok: true,
           status: 200,
-          json: async () => ({
-            ok: true,
-            count: 1,
-            artifacts: [
-              {
-                artifactId: "d74ed94a-a600-46ee-ad5d-a505556c4cac",
-                artifactType: "target_state_architecture",
-                family: "generated_deliverable",
-                title: "CANARY — SkyHarbor Recovery Command IROPS Target Architecture",
-                phase: 3,
-                fileFormat: "html",
-                fileName: null,
-                version: 1,
-                status: "board_ready",
-                lifecycleState: "current",
-                qualityScore: 100,
-                createdAt: "2026-07-11T23:26:23.000Z",
-                downloadUrl: "/api/v1/artifacts/d74ed94a-a600-46ee-ad5d-a505556c4cac",
-              },
-            ],
-          }),
+          json: async () => ({ ok: true }),
         } as Response;
-      }
-      return { ok: true, status: 200, json: async () => ({ ok: true }) } as Response;
-    });
+      },
+    );
 
     render(
       <MovesPhaseStandaloneClient
@@ -952,7 +1208,9 @@ describe("MovesPhaseStandaloneClient", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/CANARY — SkyHarbor Recovery Command IROPS Target Architecture/i),
+        screen.getByText(
+          /CANARY — SkyHarbor Recovery Command IROPS Target Architecture/i,
+        ),
       ).toBeInTheDocument();
     });
 
@@ -980,7 +1238,9 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /Files & Evidence/i }));
-    expect(screen.getByRole("heading", { name: "Files & Evidence" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Files & Evidence" }),
+    ).toBeInTheDocument();
     // The real File Cabinet vault (FileCabinetPanel) is mounted here, not a
     // static per-phase mock — it fetches the move's real artifacts and shows
     // this loading/empty state until they resolve.
@@ -996,14 +1256,26 @@ describe("MovesPhaseStandaloneClient", () => {
       ),
     ).toBe(false);
 
-    fireEvent.click(screen.getByRole("button", { name: /CANARY - SkyHarbor/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /CANARY - SkyHarbor/i }),
+    );
     fireEvent.click(screen.getByRole("tab", { name: /Approve & Build/i }));
-    expect(screen.getByRole("button", { name: /Review governed build/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Approve & advance/i })).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Approve & Build P3 Choose the Approach/i }),
+      screen.getByRole("button", { name: /Review governed build/i }),
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Approve & Build P3 Choose the Approach/i }));
+    expect(
+      screen.queryByRole("button", { name: /Approve & advance/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Choose the Approach/i,
+      }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Choose the Approach/i,
+      }),
+    );
     await waitFor(() => {
       expect(screen.getAllByText(/Gate approved/i).length).toBeGreaterThan(0);
     });
@@ -1022,11 +1294,13 @@ describe("MovesPhaseStandaloneClient", () => {
       "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/phase-gate-approval",
       expect.objectContaining({ credentials: "include", method: "POST" }),
     );
-    const phaseCaptureCall = (global.fetch as jest.Mock).mock.calls.find(([url]) =>
-      String(url).includes("/phase-capture"),
+    const phaseCaptureCall = (global.fetch as jest.Mock).mock.calls.find(
+      ([url]) => String(url).includes("/phase-capture"),
     );
     expect(phaseCaptureCall).toBeTruthy();
-    const phaseCaptureBody = JSON.parse(String(phaseCaptureCall?.[1]?.body ?? "{}"));
+    const phaseCaptureBody = JSON.parse(
+      String(phaseCaptureCall?.[1]?.body ?? "{}"),
+    );
     expect(phaseCaptureBody.sections).toEqual(
       expect.objectContaining({
         solution_approach: expect.any(String),
@@ -1055,11 +1329,15 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /Ask aVa/i }));
-    fireEvent.click(screen.getByRole("button", { name: /What must be true before P4\?/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /What must be true before P4\?/i }),
+    );
 
     await waitFor(() => {
       expect(
-        screen.getByText(/The two blocking gate items are the requirements trace/i),
+        screen.getByText(
+          /The two blocking gate items are the requirements trace/i,
+        ),
       ).toBeInTheDocument();
     });
 
@@ -1070,8 +1348,12 @@ describe("MovesPhaseStandaloneClient", () => {
     const chatBody = JSON.parse(String(chatCall?.[1]?.body ?? "{}"));
     expect(chatBody.message).toBe("What must be true before P4?");
     expect(chatBody.programId).toBe("37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4");
-    expect(chatBody.surfaceContext.programId).toBe("37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4");
-    expect(chatBody.surfaceContext.moveId).toBe("37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4");
+    expect(chatBody.surfaceContext.programId).toBe(
+      "37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4",
+    );
+    expect(chatBody.surfaceContext.moveId).toBe(
+      "37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4",
+    );
     expect(chatBody.surfaceContext.phase).toBe(3);
   });
 
@@ -1088,15 +1370,21 @@ describe("MovesPhaseStandaloneClient", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Ask aVa/i }));
     const textarea = screen.getByPlaceholderText(/Ask aVa about/i);
-    fireEvent.change(textarea, { target: { value: "Where are we over-designing?" } });
+    fireEvent.change(textarea, {
+      target: { value: "Where are we over-designing?" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Send" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Where are we over-designing?")).toBeInTheDocument();
+      expect(
+        screen.getByText("Where are we over-designing?"),
+      ).toBeInTheDocument();
     });
     await waitFor(() => {
       expect(
-        screen.getByText(/The two blocking gate items are the requirements trace/i),
+        screen.getByText(
+          /The two blocking gate items are the requirements trace/i,
+        ),
       ).toBeInTheDocument();
     });
     expect((textarea as HTMLTextAreaElement).value).toBe("");
