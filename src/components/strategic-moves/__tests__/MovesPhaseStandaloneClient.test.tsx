@@ -3,7 +3,13 @@
  */
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import type { ReactNode } from "react";
 import { TextDecoder, TextEncoder } from "util";
 import { ReadableStream } from "stream/web";
@@ -405,6 +411,132 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.getByRole("complementary", { name: "Move phases" }),
       ).toBeInTheDocument();
+    });
+  });
+
+  describe("MOVES-UI-002 approvals overview (moves_approvals_overview_v1)", () => {
+    it("flag off: the rail's Approvals link behaves exactly as before — jumps straight into the current phase's approve substep, no overview rendered", () => {
+      mockUseFeature.mockImplementation(() => false);
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /^.?\s*Approvals$/i }),
+      );
+
+      expect(
+        screen.getByRole("tab", { name: /Approve & Build/i }),
+      ).toHaveAttribute("aria-selected", "true");
+      expect(screen.queryByText("Approvals overview")).not.toBeInTheDocument();
+      expect(
+        screen.queryByLabelText("Approvals overview"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("flag on: opens the overview list instead, with every row reproducible from the mocked getMovePhaseTallies output alone", () => {
+      mockUseFeature.mockImplementation(
+        (key: string) => key === "moves_approvals_overview_v1",
+      );
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 3 })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /^.?\s*Approvals$/i }),
+      );
+
+      expect(
+        screen.getByRole("heading", { name: "Approvals overview" }),
+      ).toBeInTheDocument();
+      const overview = screen.getByLabelText("Approvals overview");
+
+      // P0-P2 are "done" in the mocked tallies (met === total) -> Approved.
+      expect(screen.getAllByText("Approved").length).toBe(3);
+      // P3 is "current" with met=0/total=2 -> not yet submitted, exact tally
+      // text sourced only from the mocked row's met/total fields.
+      expect(
+        screen.getByText("0/2 met — not yet submitted"),
+      ).toBeInTheDocument();
+      expect(screen.getAllByText("0 of 2 met").length).toBeGreaterThan(0);
+      // P4/P5 are "upcoming" -> Not reached.
+      expect(screen.getAllByText("Not reached").length).toBe(2);
+      // Approver is always the static "Sponsor" label, once per phase row.
+      expect(within(overview).getAllByText("Sponsor").length).toBe(6);
+    });
+
+    it("flag on, current-phase row: Review & approve returns to the phase workspace at the approve substep", () => {
+      mockUseFeature.mockImplementation(
+        (key: string) => key === "moves_approvals_overview_v1",
+      );
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 3 })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /^.?\s*Approvals$/i }),
+      );
+      const overview = screen.getByLabelText("Approvals overview");
+      fireEvent.click(
+        within(overview).getByRole("button", { name: /Review & approve/i }),
+      );
+
+      expect(
+        screen.getByRole("tab", { name: /Approve & Build/i }),
+      ).toHaveAttribute("aria-selected", "true");
+      expect(screen.queryByText("Approvals overview")).not.toBeInTheDocument();
+    });
+
+    it("flag on, another reachable phase row: Review & approve is a real link to that phase's route", () => {
+      mockUseFeature.mockImplementation(
+        (key: string) => key === "moves_approvals_overview_v1",
+      );
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({ currentPhase: 3 })}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: /^.?\s*Approvals$/i }),
+      );
+      const overview = screen.getByLabelText("Approvals overview");
+
+      const links = within(overview).getAllByRole("link", {
+        name: /Review & approve/i,
+      });
+      // P0, P1, P2 are reachable (<= currentPhase 3) and are not the viewed
+      // phase (P3), so each renders a real Link to its own phase route.
+      expect(links.map((link) => link.getAttribute("href"))).toEqual([
+        "/strategic-moves/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/phase/0",
+        "/strategic-moves/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/phase/1",
+        "/strategic-moves/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/phase/2",
+      ]);
+
+      // P4/P5 are not yet reachable — no link, no button, just a plain label.
+      expect(within(overview).getAllByText("Not yet reachable").length).toBe(2);
     });
   });
 
