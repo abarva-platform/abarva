@@ -11,6 +11,16 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import dagre from "@dagrejs/dagre";
+import {
+  Background,
+  Controls,
+  MarkerType,
+  ReactFlow,
+  type Edge as FlowEdge,
+  type Node as FlowNode,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 
 import type {
   HomeKnowledgeDataColumn,
@@ -2198,65 +2208,173 @@ function DimensionPrimaryVisual({
   );
 }
 
-const TOPOLOGY_MAX_NODES_PER_SIDE = 10;
+const TOPOLOGY_MAX_SOURCE_NODES = 8;
+const TOPOLOGY_MAX_TARGET_NODES = 14;
+const TOPOLOGY_NODE_WIDTH = 220;
+const TOPOLOGY_NODE_HEIGHT = 40;
+
+function truncateNodeLabel(label: string): string {
+  return label.length > 34 ? `${label.slice(0, 33)}…` : label;
+}
 
 /**
- * Real bipartite topology graph, not a fabricated force-directed layout.
- * Source entities (apps, vendors, use cases) on the left, the systems/data
- * they connect to on the right, one line per real derived edge. Custom SVG
- * rather than a graph library (no react-flow/xyflow dependency exists in
- * this repo yet, and this shape doesn't need one) — same approach Tower's
- * chat-answer charts already use for custom visuals.
+ * Selects a genuinely CONNECTED subgraph, not independently-ranked
+ * endpoints on each side. An earlier version ranked "from" nodes and "to"
+ * nodes separately by degree and kept only edges where BOTH endpoints made
+ * their own top-10 cut — with 500+ distinct sources and 650+ distinct
+ * targets that intersection was frequently empty, producing a graph with
+ * visible node dots and zero visible edges (confirmed live). Fixed here:
+ * rank sources by out-degree, take the top N, then include every real edge
+ * FROM those sources; rank targets only among that already-connected edge
+ * set, so every rendered node has at least one rendered edge.
+ */
+export function buildRelationshipTopology(edges: HomeRelationshipEdge[]): {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+  sourceCount: number;
+  targetCount: number;
+  totalSources: number;
+  totalTargets: number;
+} {
+  const empty = {
+    nodes: [] as FlowNode[],
+    edges: [] as FlowEdge[],
+    sourceCount: 0,
+    targetCount: 0,
+    totalSources: 0,
+    totalTargets: 0,
+  };
+  if (!edges.length) return empty;
+
+  const fromCounts = new Map<string, number>();
+  for (const edge of edges) {
+    fromCounts.set(edge.from, (fromCounts.get(edge.from) ?? 0) + 1);
+  }
+  const totalSources = fromCounts.size;
+
+  const topSourceSet = new Set(
+    Array.from(fromCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, TOPOLOGY_MAX_SOURCE_NODES)
+      .map(([name]) => name),
+  );
+
+  const candidateEdges = edges.filter((edge) => topSourceSet.has(edge.from));
+
+  const toCounts = new Map<string, number>();
+  for (const edge of candidateEdges) {
+    toCounts.set(edge.to, (toCounts.get(edge.to) ?? 0) + 1);
+  }
+  const totalTargets = toCounts.size;
+
+  const topTargetSet = new Set(
+    Array.from(toCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, TOPOLOGY_MAX_TARGET_NODES)
+      .map(([name]) => name),
+  );
+
+  const visibleEdges = candidateEdges.filter((edge) =>
+    topTargetSet.has(edge.to),
+  );
+  // If capping targets left a source with no surviving edge, drop it too --
+  // never render a disconnected node.
+  const connectedSources = new Set(visibleEdges.map((edge) => edge.from));
+  const finalSources = Array.from(topSourceSet).filter((name) =>
+    connectedSources.has(name),
+  );
+
+  const nodes: FlowNode[] = [
+    ...finalSources.map((name) => ({
+      id: `source:${name}`,
+      data: { label: truncateNodeLabel(name) },
+      position: { x: 0, y: 0 },
+      className: "nkh-flow-node nkh-flow-node-source",
+    })),
+    ...Array.from(topTargetSet).map((name) => ({
+      id: `target:${name}`,
+      data: { label: truncateNodeLabel(name) },
+      position: { x: 0, y: 0 },
+      className: "nkh-flow-node nkh-flow-node-target",
+    })),
+  ];
+
+  const seen = new Set<string>();
+  const flowEdges: FlowEdge[] = [];
+  for (const edge of visibleEdges) {
+    const id = `source:${edge.from}->target:${edge.to}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    flowEdges.push({
+      id,
+      source: `source:${edge.from}`,
+      target: `target:${edge.to}`,
+      label: edge.relationship,
+      type: "smoothstep",
+      style: { stroke: HOME_CHART_COLORS.teal, strokeOpacity: 0.55 },
+      markerEnd: {
+        type: MarkerType.ArrowClosed,
+        color: HOME_CHART_COLORS.teal,
+      },
+    });
+  }
+
+  return {
+    nodes: layoutTopologyWithDagre(nodes, flowEdges),
+    edges: flowEdges,
+    sourceCount: finalSources.length,
+    targetCount: topTargetSet.size,
+    totalSources,
+    totalTargets,
+  };
+}
+
+function layoutTopologyWithDagre(
+  nodes: FlowNode[],
+  edges: FlowEdge[],
+): FlowNode[] {
+  const graph = new dagre.graphlib.Graph();
+  graph.setDefaultEdgeLabel(() => ({}));
+  graph.setGraph({ rankdir: "LR", nodesep: 20, ranksep: 160 });
+  for (const node of nodes) {
+    graph.setNode(node.id, {
+      width: TOPOLOGY_NODE_WIDTH,
+      height: TOPOLOGY_NODE_HEIGHT,
+    });
+  }
+  for (const edge of edges) {
+    graph.setEdge(edge.source, edge.target);
+  }
+  dagre.layout(graph);
+  return nodes.map((node) => {
+    const position = graph.node(node.id);
+    return {
+      ...node,
+      position: {
+        x: position.x - TOPOLOGY_NODE_WIDTH / 2,
+        y: position.y - TOPOLOGY_NODE_HEIGHT / 2,
+      },
+    };
+  });
+}
+
+/**
+ * Real relationship topology, rendered with React Flow (@xyflow/react) +
+ * dagre auto-layout -- the standard open-source graph library for this
+ * shape (this repo's own architecture guidance names React Flow for "true
+ * enterprise graph topology," Recharts isn't the right tool here).
  */
 function RelationshipTopologyGraph({
   edges,
 }: {
   edges: HomeRelationshipEdge[];
 }) {
-  if (!edges.length) return null;
+  const topology = useMemo(() => buildRelationshipTopology(edges), [edges]);
+  if (!topology.nodes.length) return null;
 
-  const fromCounts = new Map<string, number>();
-  const toCounts = new Map<string, number>();
-  for (const edge of edges) {
-    fromCounts.set(edge.from, (fromCounts.get(edge.from) ?? 0) + 1);
-    toCounts.set(edge.to, (toCounts.get(edge.to) ?? 0) + 1);
-  }
-  const rank = (counts: Map<string, number>) =>
-    Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
-
-  const fromRanked = rank(fromCounts);
-  const toRanked = rank(toCounts);
-  const fromNodes = fromRanked
-    .slice(0, TOPOLOGY_MAX_NODES_PER_SIDE)
-    .map(([n]) => n);
-  const toNodes = toRanked
-    .slice(0, TOPOLOGY_MAX_NODES_PER_SIDE)
-    .map(([n]) => n);
-  const hiddenFrom = fromRanked.length - fromNodes.length;
-  const hiddenTo = toRanked.length - toNodes.length;
-
-  const rowHeight = 34;
-  const height = Math.max(fromNodes.length, toNodes.length) * rowHeight + 24;
-  const width = 720;
-  const leftX = 158;
-  const rightX = width - 158;
-
-  const fromY = new Map(
-    fromNodes.map((node, index) => [
-      node,
-      20 + index * rowHeight + rowHeight / 2,
-    ]),
-  );
-  const toY = new Map(
-    toNodes.map((node, index) => [
-      node,
-      20 + index * rowHeight + rowHeight / 2,
-    ]),
-  );
-
-  const visibleEdges = edges.filter(
-    (edge) => fromY.has(edge.from) && toY.has(edge.to),
-  );
+  const showingSubset =
+    topology.sourceCount < topology.totalSources ||
+    topology.targetCount < topology.totalTargets;
 
   return (
     <div
@@ -2269,77 +2387,25 @@ function RelationshipTopologyGraph({
         <span>
           {edges.length} evidenced connection{edges.length === 1 ? "" : "s"}{" "}
           derived from loaded integration, vendor, and use-case data
-          {hiddenFrom || hiddenTo
-            ? ` · showing top ${fromNodes.length} of ${fromRanked.length} sources, ${toNodes.length} of ${toRanked.length} targets`
+          {showingSubset
+            ? ` · showing ${topology.sourceCount} of ${topology.totalSources} sources, ${topology.targetCount} of ${topology.totalTargets} targets they connect to`
             : ""}
         </span>
       </div>
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        width="100%"
-        role="img"
-        style={{ maxHeight: 420 }}
-      >
-        {visibleEdges.map((edge, index) => {
-          const y1 = fromY.get(edge.from)!;
-          const y2 = toY.get(edge.to)!;
-          const midX = (leftX + rightX) / 2;
-          return (
-            <path
-              key={`${edge.from}-${edge.to}-${index}`}
-              d={`M ${leftX + 6} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${rightX - 6} ${y2}`}
-              fill="none"
-              stroke={HOME_CHART_COLORS.teal}
-              strokeOpacity={0.28}
-              strokeWidth={1.5}
-            >
-              <title>{`${edge.from} ${edge.relationship} ${edge.to}`}</title>
-            </path>
-          );
-        })}
-        {fromNodes.map((node) => (
-          <g key={`from-${node}`}>
-            <circle
-              cx={leftX}
-              cy={fromY.get(node)}
-              r={4}
-              fill={HOME_CHART_COLORS.ink}
-            />
-            <text
-              x={leftX - 10}
-              y={fromY.get(node)}
-              textAnchor="end"
-              dominantBaseline="middle"
-              fontSize={11}
-              fontWeight={700}
-              fill={HOME_CHART_COLORS.ink2}
-            >
-              {node.length > 26 ? `${node.slice(0, 25)}…` : node}
-            </text>
-          </g>
-        ))}
-        {toNodes.map((node) => (
-          <g key={`to-${node}`}>
-            <circle
-              cx={rightX}
-              cy={toY.get(node)}
-              r={4}
-              fill={HOME_CHART_COLORS.amber}
-            />
-            <text
-              x={rightX + 10}
-              y={toY.get(node)}
-              textAnchor="start"
-              dominantBaseline="middle"
-              fontSize={11}
-              fontWeight={700}
-              fill={HOME_CHART_COLORS.ink2}
-            >
-              {node.length > 26 ? `${node.slice(0, 25)}…` : node}
-            </text>
-          </g>
-        ))}
-      </svg>
+      <div className="nkh-topology-canvas">
+        <ReactFlow
+          nodes={topology.nodes}
+          edges={topology.edges}
+          fitView
+          nodesDraggable={false}
+          nodesConnectable={false}
+          elementsSelectable={false}
+          proOptions={{ hideAttribution: true }}
+        >
+          <Background gap={18} />
+          <Controls showInteractive={false} />
+        </ReactFlow>
+      </div>
     </div>
   );
 }
@@ -4384,8 +4450,37 @@ const styles = `
   padding: 16px 18px;
   margin-top: 14px;
 }
-.nkh-topology-graph svg {
-  display: block;
+.nkh-topology-canvas {
+  height: 420px;
+  margin-top: 14px;
+  border: 1px solid #eceae2;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.nkh-topology-canvas .react-flow__node.nkh-flow-node {
+  border-radius: 8px;
+  font: 700 11px var(--sans);
+  padding: 8px 12px;
+  width: 220px;
+  text-align: left;
+  box-shadow: none;
+}
+.nkh-topology-canvas .react-flow__node.nkh-flow-node-source {
+  background: #161411;
+  color: #fffdf8;
+  border: 1px solid #161411;
+}
+.nkh-topology-canvas .react-flow__node.nkh-flow-node-target {
+  background: #fbf8f1;
+  color: #34302a;
+  border: 1px solid #e3d2b0;
+}
+.nkh-topology-canvas .react-flow__edge-text {
+  font: 400 9px var(--sans);
+  fill: #6d675f;
+}
+.nkh-topology-canvas .react-flow__attribution {
+  display: none;
 }
 .nkh-dashboard-tile,
 .nkh-dashboard-split section {
