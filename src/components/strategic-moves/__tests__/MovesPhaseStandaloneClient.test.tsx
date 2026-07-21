@@ -42,7 +42,7 @@ if (typeof global.ReadableStream === "undefined") {
 // FinderShellErrorBoundary would (correctly) fall back to flag-off — which
 // is exactly what we want for every existing test in this file (flag-off
 // parity). The flag-on assertions below override this mock per-test.
-const mockUseFeature = jest.fn(() => false);
+const mockUseFeature = jest.fn<boolean, [string]>(() => false);
 jest.mock("@/lib/features/use-feature", () => ({
   useFeature: (key: string) => mockUseFeature(key),
 }));
