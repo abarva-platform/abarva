@@ -26,14 +26,19 @@ name: Database migration — lab
 on:
   workflow_dispatch:
     inputs:
+      # Deliberately NO default. A required choice input with a default still
+      # lets a dispatch that omits the input silently fall through to that
+      # default — confirmed by a real incident where a dispatch missing
+      # -f mode=apply silently ran mode=status instead. Omitting the default
+      # forces every dispatch (UI or API) to explicitly pick one; there is no
+      # "did nothing wrong, just used the safe default" path.
       mode:
-        description: "status = preflight only (safe, read-only). apply = run pending migrations against the live database."
+        description: "REQUIRED, no default — you must explicitly choose. status = preflight only (safe, read-only). apply = run pending migrations against the live database."
         required: true
         type: choice
         options:
           - status
           - apply
-        default: status
       confirm:
         description: "Required for mode=apply only: type APPLY exactly to proceed. Ignored for mode=status."
         required: false
@@ -74,6 +79,25 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      # First real step, before any other logic runs: make the dispatched
+      # mode impossible to miss, in the log and in the step summary. This
+      # exists because a prior real dispatch silently ran status when apply
+      # was intended and the operator only learned that after the fact from
+      # the per-step conclusions, not from anything visible up front.
+      - name: Announce dispatched mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "::notice title=Dispatched mode::mode=${{ inputs.mode }}"
+          {
+            echo "## Dispatched mode: \`${{ inputs.mode }}\`"
+            if [[ "${{ inputs.mode }}" == "apply" ]]; then
+              echo "This run WILL attempt to mutate the live lab database if confirmation passes."
+            else
+              echo "Read-only preflight. No schema mutation will be attempted."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       # Only main HEAD is ever eligible — a workflow_dispatch defaults to
       # whatever ref/branch the operator picks in the UI, so this asserts it
@@ -304,6 +328,7 @@ jobs:
             }
             const ledger = JSON.parse(lines.slice(beginIdx + 1, endIdx).join(""));
             const chain = {
+              mode: process.env.DISPATCH_MODE,
               workflowRunId: process.env.GITHUB_RUN_ID,
               workflowRunUrl: `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
               commitSha: process.env.GITHUB_SHA,
@@ -322,6 +347,7 @@ jobs:
         env:
           ACA_REVISION: ${{ steps.image.outputs.revision }}
           ACA_IMAGE: ${{ steps.image.outputs.image }}
+          DISPATCH_MODE: ${{ inputs.mode }}
 
       - name: Write run summary
         if: always()
@@ -359,6 +385,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: db-migration-lab
+          name: db-migration-lab-${{ inputs.mode }}-${{ github.run_id }}
           path: audit-artifacts/db-migration-lab
           if-no-files-found: warn

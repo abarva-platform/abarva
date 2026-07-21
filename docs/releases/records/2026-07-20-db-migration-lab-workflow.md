@@ -129,6 +129,19 @@ touched.
   in `status` mode too, not just `apply`. It is a pure read; seeing the full applied-
   migration ledger during preflight (not just the pending list) is real evidence for
   investigating *why* a migration is pending before ever approving an apply.
+- `.github/workflows/db-migration-lab.yml` (fourth pass — mode fail-closed hardening):
+  a real incident during this release's own apply (a dispatch that omitted `-f
+  mode=apply` silently ran `mode=status` instead, because `required: true` with a
+  `default:` still lets GitHub Actions fall through to the default on omission)
+  motivated this fix.
+  - Removed `default: status` from the `mode` input entirely — every dispatch (UI or
+    API) must now explicitly choose `status` or `apply`; there is no silent fallback.
+  - New "Announce dispatched mode" step, first in the job, prints the resolved mode to
+    both the log (`::notice::`) and `$GITHUB_STEP_SUMMARY` before any other logic runs.
+  - `mode` added as an explicit field in `audit-chain.json`.
+  - Upload artifact name now includes both mode and run id
+    (`db-migration-lab-<mode>-<run-id>`), so a downloaded evidence bundle is
+    self-describing outside of run context.
 - This release record.
 
 ## QA / Validation
@@ -141,6 +154,11 @@ touched.
   scripts/ops/__tests__/submit-aca-operator-job.test.ts` — clean.
 - `pass` — YAML syntax of `db-migration-lab.yml` validated with `js-yaml` (no
   `actionlint` available in this environment).
+- `pending` — **mode fail-closed real verification.** After merge, a real
+  `workflow_dispatch` omitting the `mode` input should be attempted and confirmed to
+  be rejected by the GitHub API (not silently defaulted), proving the fix actually
+  closes the gap that caused the earlier silent-status incident. To be updated with
+  the real result once run.
 - `pass` — **Isolated Postgres integration test**, real `postgres:16-alpine` via Docker:
   full 271-migration replay from zero; drift detection correctly fires exit-1 on a
   tampered already-applied migration file and clears once restored; advisory lock
@@ -255,19 +273,31 @@ existing call sites' behavior when `--plan-only` isn't passed.
   root cause is a ~2-day gap in the pre-existing manual `db:migrate` runbook path, not
   a project-wide "deploy never applies migrations" pattern (272 continuously-applied
   ledger entries going back to migration `001` rule that out).
-- **`deliverable_role_approvals` defect, proven via real reproduction, not just
-  code-reading**: Log Analytics search (`log-abarva-observability-lab-eastus`,
-  `ContainerAppConsoleLogs_CL`) since the #5141 gate-enforcement deploy found zero real
-  incidents — no live user had hit this yet. A controlled reproduction (fresh Postgres,
-  all 271 pre-apply migrations applied, `deliverable_role_approvals` dropped to match
-  the exact live gap) issued the real query `getRoleApprovalSummary()` runs via the
-  real `getAzureWriteFluentClient()`, capturing the real error:
-  `relation "deliverable_role_approvals" does not exist` — exactly what
-  `if (error) throw error` (line 146) would throw, propagating through
-  `meetsApprovalBar` → `governance.ts`'s `design_approved`/`business_case_approved`
-  gate checks → `POST /api/v1/programs/:id/advance` and `.../phase-gate-approval` for
-  `business_case`/`target_state_architecture`/`operating_model` deliverables. Latent,
-  not active — now closed by this release's apply.
+- **`deliverable_role_approvals` defect — precise classification** (corrected
+  2026-07-21 after review; an earlier draft of this record's own summary blurred
+  "confirmed defect" and "observed incident," which are different claims):
+  - Missing production schema: **confirmed** — the table did not exist against the
+    live database prior to this release's apply (see the dossier above).
+  - Throwing code path: **confirmed** — a controlled reproduction (fresh Postgres, all
+    271 pre-apply migrations applied, `deliverable_role_approvals` dropped to match
+    the exact live gap) issued the real query `getRoleApprovalSummary()` runs via the
+    real `getAzureWriteFluentClient()` and captured the real error:
+    `relation "deliverable_role_approvals" does not exist` — exactly what
+    `if (error) throw error` (line 146) would throw.
+  - Affected gate/artifact combinations: **confirmed** — propagates through
+    `meetsApprovalBar` → `governance.ts`'s `design_approved`/`business_case_approved`
+    gate checks → `POST /api/v1/programs/:id/advance` and `.../phase-gate-approval`,
+    for `business_case`/`target_state_architecture`/`operating_model` deliverables
+    only.
+  - Observed live production invocation: **not proven.** A Log Analytics search
+    (`log-abarva-observability-lab-eastus`, `ContainerAppConsoleLogs_CL`) since the
+    #5141 gate-enforcement deploy found zero matching incidents — no real request
+    trace, exception, or affected user execution was found.
+  - **Precise statement:** the missing table created a confirmed latent runtime defect
+    in the gate-evaluation path. The code would throw when the affected gate and
+    artifact combinations were evaluated, but no evidence was found that a live
+    production user had triggered that exact path before remediation. This release's
+    apply closed the gap before any observed incident, not in response to one.
 - **Real `apply` dispatch** ([run 29789097644](https://github.com/abarva-platform/abarva/actions/runs/29789097644),
   2026-07-20T23:53Z–00:10Z, all 17 steps `success`): applied all 3 pending migrations.
   - Apply log: `✓ 3 migrations applied` — `deliverable_role_approvals.sql`,
