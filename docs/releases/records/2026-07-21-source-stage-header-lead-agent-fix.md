@@ -6,7 +6,9 @@
 
 ## Status
 
-`candidate` — PR open, not yet merged.
+`released` — merged, deployed, ACA runtime invariant confirmed. Live signed-in proof
+partially performed: the `aVa` branch is confirmed live and correct; the `Atlas` branch could
+not be observed with currently-existing tenant data (see Known Gaps).
 
 ## Plain-English Summary
 
@@ -54,9 +56,25 @@ simpler two-way split is a separate product decision, not a bug fix.
 tsconfig.json` — no errors reference either changed file (pre-existing, unrelated errors in
   `MovesPhaseStandaloneClient.test.tsx` confirmed present on `origin/main` before this change).
 - `pass` — `npx eslint` on both changed files — 0 errors.
-- Live signed-in browser proof: not performed — same standing gap as the rest of this
-  session's Source work (Clerk one-time-email-code wall, no inbox access). Low risk given the
-  change is a single derived string with a passing regression test covering both branches.
+- `pass` (partial) — **live signed-in browser proof performed**, unlike the rest of this
+  session's Source work: used the already-authenticated Chrome session (claude-in-chrome,
+  signed in as Anand Sundaram · Healthcare Demo tenant) against the real deployed
+  `app.abarva.ai`. Opened a real event
+  (`https://app.abarva.ai/source/events/c03ffe14-49fb-403e-8d47-ed23c9fea9e2`, "Healthcare
+  Demo claims processing and adjudication platform support Sourcing Event") at its real
+  current stage — confirmed the header reads exactly `STAGE 02 · AVA` for Scope, matching
+  the fix's expected `aVa` branch and the rail note's own claim. This is a real positive
+  control on live production data, not a fabricated claim.
+  - **Not verified live**: the `Atlas` branch (Transition/Value). All 3 real events currently
+    in this tenant's portfolio are at Strategy (step 1/11) or Scope (step 2/11) — none has
+    reached Transition or Value. Attempted `?stage=value` query override on an intake-pending
+    event; the server correctly redirected back to the intake-approval gate (real,
+    correct product behavior — the canvas does not unlock before intake approval). Advancing
+    a real event to Transition/Value would require approving its intake and driving it
+    through 9 more real stage gates — a real, audit-logged, state-mutating sequence on
+    production data, which was not performed without explicit authorization. The `Atlas`
+    branch remains verified only by the unit regression test (`Stage 11 · Atlas` assertion
+    in `SourceAnalyticsCanvas.stageHeader.test.tsx`), not by a live click-through.
 
 ## Rollout Plan
 
@@ -69,12 +87,14 @@ existing, already-shipped surface — no migration, no flag.
   merge to `main`).
 - Shared runtime mutators: none from this PR directly — deploy happens via the standard
   workflow only.
-- Approved image digest: to be recorded after merge and deploy.
-- ACA runtime invariant: to be verified after merge and deploy.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:9ed818c5f56f616426107f0e177c75b6915c86c5c7166239bbb7edae96a85521`.
+- ACA runtime invariant: **proven.** `az containerapp show` confirms the template image
+  matches the digest above, active revision `ca-abarva-web-lab-eastus--m74ea0750` (matches
+  merge commit `74ea0750c645bb6fc9cfaad69b7cf5b5a74b9ece`), 100% traffic.
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes, per the standing Source verification gap
-  (`SOURCE-GUIDEBOOK-002`) — not performed for the same reason.
+- Live signed-in proof required: yes — partially performed, see QA / Validation. The `aVa`
+  branch is proven live; the `Atlas` branch is not, for the reason stated there.
 
 ## Rollback Plan
 
@@ -84,13 +104,22 @@ this string).
 
 ## Audit Evidence
 
-- PR: [abarva-platform/abarva#5192](https://github.com/abarva-platform/abarva/pull/5192).
+- PR: [abarva-platform/abarva#5192](https://github.com/abarva-platform/abarva/pull/5192),
+  merged as `74ea0750c645bb6fc9cfaad69b7cf5b5a74b9ece`.
+- Deploy: [aca-main-deploy #29835158468](https://github.com/abarva-platform/abarva/actions/runs/29835158468),
+  `success`.
 - Test/typecheck/lint logs: see QA / Validation.
-- Deployment evidence: to be added after merge.
+- Live click-through: real screenshot of `STAGE 02 · AVA` on the real Healthcare Demo
+  claims-processing event's Scope stage, captured in this session's transcript (not committed
+  as a file).
 
 ## Known Gaps
 
-- Live signed-in browser proof not performed — same open item as `SOURCE-GUIDEBOOK-002`.
+- Live signed-in proof of the `Atlas` branch specifically (Transition/Value stages) is not
+  performed — not for the usual Clerk-auth-wall reason (that gap is now closed for this
+  tenant/session), but because no real event in the currently-available tenant data has
+  reached those stages, and forcing one there would require real, audit-logged production
+  mutations not authorized for this check. Covered by the unit regression test only.
 - The broader question of whether the five-agent `stage-canvas-config.ts` model should
   replace the rail note's simpler two-way aVa/Atlas split is out of scope here and remains
   open.
