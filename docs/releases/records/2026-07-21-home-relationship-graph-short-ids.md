@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`shipped` — live-verified 2026-07-21
 
 ## Plain-English Summary
 
@@ -40,7 +40,7 @@ Run in a fresh isolated `git worktree` off current `origin/main` (includes `#521
 - `NODE_OPTIONS='--max-old-space-size=8192' npx next build` — pass (exit 0).
 - `npx jest src/components/home/__tests__/buildRelationshipTopology.test.ts` — pass (7/7, including the new long-name regression test).
 - `npx jest src/lib/home src/components/home` — pass: 210 passed / 54 failed / 264 total, exact-failing-test-name diff against a freshly rebuilt baseline off the exact same `origin/main` commit: 0 new failures.
-- Live signed-in browser DOM check after deploy — not-run yet; this is the definitive proof for this candidate given the last two "verified" attempts were both wrong. Must confirm `.react-flow__edge-path` count > 0 on the deployed Relationships dimension before this is called done, not just that CI/build passed.
+- **Live signed-in browser DOM check, post-deploy (2026-07-21)** — PASS. Merged as `a3dd4ddb7`, deployed via `aca-main-deploy.yml` run `29863710085`, ACA revision `ca-abarva-web-lab-eastus--ma3dd4ddb` at 100% traffic, template image and revision image both confirmed matching digest `sha256:bbeb847a41f917025ecaf11d60afc9302ea22d4b12ab2ee8e2440c0bd74503fb`. On the live Relationships dimension for Meridian Health (signed in as `Anand Sundaram · Healthcare Demo`): `document.querySelectorAll('.react-flow__node').length` → 22, `.react-flow__edge-path` → **14**, `.react-flow__edge` → **14** (matches `propsEdgeCount`/`internalEdgeCount` from the `#5230` diagnostic exactly). Went one step further than a count check, given this bug's history: sampled the actual `d` attribute and `getTotalLength()` of three edge paths — all real, non-degenerate geometry (e.g. `M222 525.5L242 525.5L 295,525.5Q...`, length ≈182px), not zero-length or malformed paths.
 
 ## Rollout Plan
 
@@ -67,4 +67,4 @@ Revert the PR. Contained change to id generation inside one function; reverting 
 
 ## Known Gaps
 
-- Not yet live-verified. Given the history on this exact bug, no claim of "fixed" should be made until the live DOM check runs and shows a non-zero edge-path count.
+- None known for this bug. Live-verified with real edge-path geometry (not just a non-zero count) on the deployed Relationships dimension for Meridian Health, closing out the four-attempt investigation (`#5215` → `#5224` → `#5228`/`#5230` → this fix). Other tenants' relationship-graph datasets (SkyHarbor, First Capital, Lakeshore) were out of scope for this fix and are tracked separately.
