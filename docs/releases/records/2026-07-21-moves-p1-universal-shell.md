@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -46,18 +46,26 @@ Moves P1 Charter now uses the same contract-shell pattern proven on P0 when the 
   - Note: Next/Turbopack emitted existing broad dynamic-file-pattern warnings outside the Moves slice, but completed successfully.
 - Pass: `npm run release:check`
 - Pass: `git diff --check`
-- Pending: ACA deploy, runtime invariant, and signed-in browser proof after PR merge.
+- Pass: GitHub PR checks for PR #5231 and PR #5234.
+- Pass: ACA deploy for code merge SHA `e8f8be354959b9dd0f2b4a6f837a83221a74f709`.
+- Pass: ACA runtime invariant confirmed revision `ca-abarva-web-lab-eastus--me8f8be35`, 100% traffic, image digest `sha256:276e3df34ac24dc607b363102c32edcfbcb25c3bd54e46cbfa3709d3f01463ca`.
+- Pass: signed-in Meridian browser proof on `/strategic-moves/51d7652a-957d-4067-9c2c-607a6daaf5cf/phase/1`.
+  - Contract shell present.
+  - Initial active step: `Sponsor commitment`.
+  - Upload Evidence workflow row present.
+  - Approve & Build workflow row present.
+  - Legacy P1 summary was not the initial detail pane.
 
 ## Rollout Plan
 
-Merge through a PR to `main`. The repo-owned ACA main deploy workflow builds and deploys the image. After deploy, verify the ACA runtime invariant, then run signed-in browser proof on a flag-enabled tenant to confirm the P1 page uses the P0-style contract shell and preserves upload and Approve & Build controls.
+Merged through PRs to `main`. The repo-owned ACA main deploy workflow built and deployed the image. Runtime invariant and signed-in browser proof were completed on a flag-enabled Meridian tenant.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: None in this PR.
-- Approved image digest: Pending ACA deploy.
-- ACA runtime invariant: Pending ACA deploy.
+- Approved image digest: `sha256:276e3df34ac24dc607b363102c32edcfbcb25c3bd54e46cbfa3709d3f01463ca`
+- ACA runtime invariant: Passed, `ca-abarva-web-lab-eastus--me8f8be35` latest ready and 100% traffic.
 - Worker image invariant: Not applicable.
 - Feature/env flag update path: Existing `moves_finder_shell_v1`; no flag mutation in this PR.
 - Live signed-in proof required: Yes.
@@ -68,10 +76,13 @@ Fastest rollback is disabling or excluding the affected tenant from `moves_finde
 
 ## Audit Evidence
 
-- PR URL: Pending.
-- Merge SHA: Pending.
-- ACA revision: Pending.
-- Signed-in proof: Pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/5231
+- Follow-up PR URL: https://github.com/abarva-platform/abarva/pull/5234
+- Merge SHA: `7952eb608f23f95cb1c34c8cb6eaa82f1819c1d1`
+- Follow-up merge SHA: `e8f8be354959b9dd0f2b4a6f837a83221a74f709`
+- ACA revision: `ca-abarva-web-lab-eastus--me8f8be35`
+- Image digest: `sha256:276e3df34ac24dc607b363102c32edcfbcb25c3bd54e46cbfa3709d3f01463ca`
+- Signed-in proof bundle: `proof/moves-p1-universal-shell-final-2026-07-21`
 
 ## Known Gaps
 
