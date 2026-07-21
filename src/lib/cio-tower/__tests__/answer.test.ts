@@ -461,22 +461,28 @@ describe('cio tower answer contract', () => {
     expect(prompt).not.toContain('source source-1 row 14');
   });
 
-  it('blocks unsafe outcome-proof language while allowing natural prose punctuation', () => {
+  it('allows ROI/savings/realized-value language and blocks other unsafe patterns', () => {
+    // The outcome-proof-language check was removed 2026-07-20: a live 25-
+    // question eval showed it firing on correctly-hedged, honest sentences
+    // ("Realized-value language is blocked until v3-reconciled measured
+    // actuals...", "Measured outcome evidence... is absent") and discarding
+    // the ENTIRE well-formed answer (tables, visualContract, everything) for
+    // a generic fallback — a worse outcome than just showing the real text.
     expect(
       validateVisibleAnswer(
         'The CIO cannot defend AI ROI until the finance-attestation gate clears.',
       ),
-    ).toContain('unsupported_outcome_proof_language');
+    ).not.toContain('unsupported_outcome_proof_language');
     expect(
       validateVisibleAnswer(
         'None of the claims can move to realized value until baselines are signed.',
       ),
-    ).toContain('unsupported_outcome_proof_language');
+    ).not.toContain('unsupported_outcome_proof_language');
     expect(
       validateVisibleAnswer(
         'The dashboard shows $185.7M in measured-value-YTD figures.',
       ),
-    ).toContain('unsupported_outcome_proof_language');
+    ).not.toContain('unsupported_outcome_proof_language');
     expect(
       validateVisibleAnswer(
         'Fifth, managed-service and contract evidence: service scope, SLA schedules, and vendor baselines are incomplete.',
@@ -624,28 +630,63 @@ describe('cio tower answer contract', () => {
     ).toThrow('cio_tower_visible_contract_invalid_table_shape');
   });
 
-  it('rejects oversized tables so Tower answers stay board-readable', () => {
-    expect(() =>
-      parseVisibleAnswerContract(
-        JSON.stringify({
-          version: 'cio_tower_visible_answer_v1',
-          answer: 'Use the complete table for the executive read.',
-          tables: [
-            {
-              id: 'oversized_table',
-              title: 'Oversized ranked view',
-              columns: ['Initiative', 'Gate'],
-              rows: Array.from({ length: 6 }, (_, index) => [
-                `Initiative ${index + 1}`,
-                'Caveated',
-              ]),
-            },
-          ],
-          tabs: [],
-          followUpQuestion: null,
-        }),
-      ),
-    ).toThrow('cio_tower_visible_contract_invalid_table_shape');
+  it('keeps a well-formed 6-row answer intact instead of discarding it', () => {
+    // A live 25-question production eval found a 6-row answer to an explicit
+    // "rank these 6 tools" question losing its ENTIRE response (tables,
+    // visualContract, everything) to the generic fallback over the old
+    // 5-row cap. 6 rows is under the new MAX_TABLE_ROWS (8) and must survive
+    // untouched — this is the exact regression case, not just a synthetic one.
+    const parsed = parseVisibleAnswerContract(
+      JSON.stringify({
+        version: 'cio_tower_visible_answer_v1',
+        answer: 'Use the complete table for the executive read.',
+        tables: [
+          {
+            id: 'ranked_view',
+            title: 'Ranked view',
+            columns: ['Initiative', 'Gate'],
+            rows: Array.from({ length: 6 }, (_, index) => [
+              `Initiative ${index + 1}`,
+              'Caveated',
+            ]),
+          },
+        ],
+        tabs: [],
+        followUpQuestion: null,
+      }),
+    );
+    expect(parsed.tables?.[0]?.rows).toHaveLength(6);
+  });
+
+  it('truncates a table that exceeds MAX_TABLE_ROWS/MAX_TABLE_COLUMNS rather than discarding it', () => {
+    const parsed = parseVisibleAnswerContract(
+      JSON.stringify({
+        version: 'cio_tower_visible_answer_v1',
+        answer: 'Use the complete table for the executive read.',
+        tables: [
+          {
+            id: 'oversized_table',
+            title: 'Oversized ranked view',
+            columns: ['Initiative', 'Value', 'Readiness', 'Owner', 'Risk', 'Status', 'Extra'],
+            rows: Array.from({ length: 10 }, (_, index) => [
+              `Initiative ${index + 1}`,
+              'High',
+              'Ready',
+              'CIO',
+              'Low',
+              'Active',
+              'Drop me',
+            ]),
+          },
+        ],
+        tabs: [],
+        followUpQuestion: null,
+      }),
+    );
+    const table = parsed.tables?.[0];
+    expect(table?.columns).toHaveLength(6);
+    expect(table?.rows).toHaveLength(8);
+    expect(table?.rows[0]).toHaveLength(6);
   });
 
   it('routes portfolio-company budget and value-proof questions to the right Tower contracts', () => {
