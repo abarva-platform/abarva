@@ -1708,7 +1708,7 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
-    it("flag on: renders the two-column Steps view sourced only from getPhaseCaptureSections/phaseCaptureValues — no fabricated section names", () => {
+    it("flag on: renders the contract-card Steps view sourced only from getPhaseCaptureSections/phaseCaptureValues — no fabricated section names", () => {
       mockUseFeature.mockImplementation(() => true);
       const move = makeMove({
         currentPhase: 2,
@@ -1724,7 +1724,9 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
 
-      const menu = screen.getByRole("navigation", { name: "Phase steps" });
+      expect(screen.queryByTestId("mxw-finder-steps")).not.toBeInTheDocument();
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+      const menu = screen.getByLabelText("P2 steps");
       // Every real P2 capture-section label appears — nothing invented.
       [
         "Current-state findings",
@@ -1741,10 +1743,10 @@ describe("MovesPhaseStandaloneClient", () => {
       // under "Workflow" — not a fabricated category.
       expect(within(menu).getByText("Upload & Review")).toBeInTheDocument();
       expect(within(menu).getByText("Approve & Build")).toBeInTheDocument();
-      // The default detail pane (no section selected) is the exact same
-      // PhaseBody render the legacy stepper uses for the current substep.
+      // P2 now follows the same shell contract as P1: the first real input is
+      // selected by default instead of landing on an old workflow summary.
       expect(
-        screen.getByRole("heading", { name: "What this phase needs" }),
+        screen.getByRole("heading", { name: "Current-state findings" }),
       ).toBeInTheDocument();
     });
 
@@ -1764,7 +1766,7 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
 
-      const menu = screen.getByRole("navigation", { name: "Phase steps" });
+      const menu = screen.getByLabelText("P2 steps");
       fireEvent.click(
         within(menu).getByRole("button", { name: /Current-state findings/i }),
       );
@@ -1811,7 +1813,7 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
 
-      const menu = screen.getByRole("navigation", { name: "Phase steps" });
+      const menu = screen.getByLabelText("P2 steps");
       fireEvent.click(
         within(menu).getByRole("button", { name: /Baseline metrics/i }),
       );
@@ -1872,7 +1874,7 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
 
-      const menu = screen.getByRole("navigation", { name: "Phase steps" });
+      const menu = screen.getByLabelText("P2 steps");
       // P2's real "current" substep is literally "Upload & Review" — the
       // only upload-type step reachable for this phase's real data.
       fireEvent.click(
@@ -1950,19 +1952,19 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
 
-      const comingUp = screen.getByTestId("mxw-finder-comingup");
+      const comingUp = screen.getByTestId("mxw-contract-comingup");
       const toggle = within(comingUp).getByRole("button", {
         name: "What P3 Choose the Approach will need",
       });
       expect(toggle).toHaveAttribute("aria-expanded", "false");
       expect(
-        screen.queryByTestId("mxw-finder-comingup-chips"),
+        screen.queryByTestId("mxw-contract-comingup-chips"),
       ).not.toBeInTheDocument();
 
       fireEvent.click(toggle);
       expect(toggle).toHaveAttribute("aria-expanded", "true");
       expect(
-        within(screen.getByTestId("mxw-finder-comingup-chips")).getByText(
+        within(screen.getByTestId("mxw-contract-comingup-chips")).getByText(
           "Systems inventory",
         ),
       ).toBeInTheDocument();
@@ -1970,7 +1972,7 @@ describe("MovesPhaseStandaloneClient", () => {
       fireEvent.click(toggle);
       expect(toggle).toHaveAttribute("aria-expanded", "false");
       expect(
-        screen.queryByTestId("mxw-finder-comingup-chips"),
+        screen.queryByTestId("mxw-contract-comingup-chips"),
       ).not.toBeInTheDocument();
     });
   });
