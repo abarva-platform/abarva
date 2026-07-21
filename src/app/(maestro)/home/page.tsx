@@ -24,7 +24,7 @@ import {
   buildHomeSummarySnapshotFromModuleContext,
 } from "@/lib/home/home-summary-snapshot";
 import { readHomeKnowledgeDesignContractForTenant } from "@/lib/home/home-knowledge-design-contract";
-import { readDerivedRelationshipGraphEdges } from "@/lib/home/derive-relationship-edges";
+import { readDerivedRelationshipGraphEdges } from "@/lib/home/read-derived-relationship-graph";
 import { getLocalCxoRuntimeBrowser } from "@/lib/home/local-cxo-runtime";
 import { getHomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
 import { getHomeV7ContextBrowser } from "@/lib/home/v7-context-browser";
