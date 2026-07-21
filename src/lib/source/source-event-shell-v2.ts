@@ -1,8 +1,8 @@
-import { SOURCE_STAGE_LABELS, SOURCE_STAGE_ORDER } from "@/lib/source/constants";
-import type {
-  SourceStageKey,
-  SourcingEventSummary,
-} from "@/lib/source/types";
+import {
+  SOURCE_STAGE_LABELS,
+  SOURCE_STAGE_ORDER,
+} from "@/lib/source/constants";
+import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import {
   SOURCE_AI_DRAFT_GOVERNANCE_LABEL,
   SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
@@ -15,6 +15,7 @@ import {
   buildSourceArtifactLifecycleSummary,
   type SourceArtifactLifecycleSummary,
 } from "@/lib/source/artifact-lifecycle-matrix";
+import { specByCode } from "@/lib/source/canonical-specs/artifact-specs";
 import type {
   IntelProvenance,
   StageAnalyticsView,
@@ -25,7 +26,12 @@ import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
 import type { SourceEventArtifactState } from "@/lib/source/canvas-substrate/types";
 import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
 
-export type SourceShellWorkspace = "steps" | "files" | "intelligence" | "approvals" | "guidebook";
+export type SourceShellWorkspace =
+  | "steps"
+  | "files"
+  | "intelligence"
+  | "approvals"
+  | "guidebook";
 
 export type SourceShellEvidenceBasis =
   | "live_fact"
@@ -77,6 +83,15 @@ export interface SourceShellFileItem {
   state: string;
   group: string;
   sourceBasis: SourceShellEvidenceBasis;
+  /**
+   * Whether this artifact is required for stage-gate promotion
+   * (`authoritative`, derived from the canonical spec's `gateDefining` flag
+   * — same source of truth `ArtifactLifecyclePanel`'s Gate-defining/
+   * Supporting split already uses) or purely supporting context
+   * (`evidence`). Defaults to `evidence` for artifact codes with no
+   * canonical spec match, so an unknown artifact never falsely gates.
+   */
+  artifactRole: "authoritative" | "evidence";
   governanceLabel: string;
   governanceMessage: string | null;
   /** True when the backstop compliance scan flagged this artifact for review. */
@@ -140,7 +155,12 @@ export interface SourceEventShellView {
     key: SourceStageKey;
     label: string;
     purpose: string;
-    pattern: "intake" | "upload-heavy" | "workflow" | "analytics-heavy" | "negotiation";
+    pattern:
+      | "intake"
+      | "upload-heavy"
+      | "workflow"
+      | "analytics-heavy"
+      | "negotiation";
     ready: number;
     total: number;
     readyPct: number;
@@ -150,7 +170,11 @@ export interface SourceEventShellView {
   };
   files: {
     items: SourceShellFileItem[];
-    byStage: { stageKey: string; stageLabel: string; items: SourceShellFileItem[] }[];
+    byStage: {
+      stageKey: string;
+      stageLabel: string;
+      items: SourceShellFileItem[];
+    }[];
     lifecycle: SourceArtifactLifecycleSummary;
   };
   intelligence: SourceShellIntelligenceExplorer;
@@ -224,14 +248,14 @@ export function mergeSourceShellArtifactsWithArtifactStateBodies(
     return {
       ...artifact,
       body: state.body,
-      bodyMarkdown: state.bodyFormat === "markdown" ? state.body : artifact.bodyMarkdown,
-      renderedText: state.bodyFormat !== "markdown" ? state.body : artifact.renderedText,
+      bodyMarkdown:
+        state.bodyFormat === "markdown" ? state.body : artifact.bodyMarkdown,
+      renderedText:
+        state.bodyFormat !== "markdown" ? state.body : artifact.renderedText,
     };
   });
   const existingCodes = new Set(
-    merged
-      .map(artifactCodeFor)
-      .filter((code): code is string => Boolean(code)),
+    merged.map(artifactCodeFor).filter((code): code is string => Boolean(code)),
   );
 
   for (const state of authoredStates) {
@@ -274,26 +298,36 @@ export function buildSourceEventShellView(
   const total = tasks.length;
   const viewedStageLabel =
     SOURCE_STAGE_LABELS[input.viewedStageKey] ?? input.stageView.stageName;
-  const currentStageIndex = SOURCE_STAGE_ORDER.indexOf(input.event.currentStageKey);
+  const currentStageIndex = SOURCE_STAGE_ORDER.indexOf(
+    input.event.currentStageKey,
+  );
 
-  const journey: SourceShellJourneyStage[] = SOURCE_STAGE_ORDER.map((stageKey, index) => {
-    const viewed = stageKey === input.viewedStageKey;
-    const current = stageKey === input.event.currentStageKey;
-    const stageDone = stageKey === input.viewedStageKey ? ready : index < currentStageIndex ? 1 : 0;
-    const stageTotal = stageKey === input.viewedStageKey ? Math.max(total, 1) : 1;
-    const state: SourceShellJourneyStage["state"] =
-      index < currentStageIndex ? "past" : current ? "current" : "future";
-    return {
-      key: stageKey,
-      label: SOURCE_STAGE_LABELS[stageKey] ?? stageKey,
-      index: index + 1,
-      current,
-      viewed,
-      done: stageDone,
-      total: stageTotal,
-      state,
-    };
-  });
+  const journey: SourceShellJourneyStage[] = SOURCE_STAGE_ORDER.map(
+    (stageKey, index) => {
+      const viewed = stageKey === input.viewedStageKey;
+      const current = stageKey === input.event.currentStageKey;
+      const stageDone =
+        stageKey === input.viewedStageKey
+          ? ready
+          : index < currentStageIndex
+            ? 1
+            : 0;
+      const stageTotal =
+        stageKey === input.viewedStageKey ? Math.max(total, 1) : 1;
+      const state: SourceShellJourneyStage["state"] =
+        index < currentStageIndex ? "past" : current ? "current" : "future";
+      return {
+        key: stageKey,
+        label: SOURCE_STAGE_LABELS[stageKey] ?? stageKey,
+        index: index + 1,
+        current,
+        viewed,
+        done: stageDone,
+        total: stageTotal,
+        state,
+      };
+    },
+  );
 
   const groups = groupSteps(tasks);
   const stepsById = new Map(
@@ -313,7 +347,10 @@ export function buildSourceEventShellView(
         item.stageKey === input.event.currentStageKey,
     ) ?? null;
   const stepInsight = input.stepInsight ?? input.stageView.stepInsight ?? null;
-  const intelSourceBasis = intelligenceBasis(input.stageView.intel.provenance, stepInsight);
+  const intelSourceBasis = intelligenceBasis(
+    input.stageView.intel.provenance,
+    stepInsight,
+  );
 
   return {
     event: {
@@ -368,7 +405,8 @@ export function buildSourceEventShellView(
         id: `${input.viewedStageKey}-finding-${index + 1}`,
         tag: point.tag,
         text: point.text,
-        sourceBasis: point.tone === "archetype" ? "archetype" : intelSourceBasis,
+        sourceBasis:
+          point.tone === "archetype" ? "archetype" : intelSourceBasis,
       })),
       stepInsight,
       captureSemantics: {
@@ -411,7 +449,10 @@ function groupSteps(tasks: readonly StageTaskView[]): SourceShellStepGroup[] {
   }));
 }
 
-function toShellStep(task: StageTaskView, firstInGroup: boolean): SourceShellStep {
+function toShellStep(
+  task: StageTaskView,
+  firstInGroup: boolean,
+): SourceShellStep {
   const captured = isTaskCaptured(task);
   return {
     id: task.id,
@@ -446,34 +487,60 @@ function taskGroupLabel(task: StageTaskView): string {
 }
 
 function taskSourceBasis(task: StageTaskView): SourceShellEvidenceBasis {
-  if (task.evidenceComplete === true || task.factTemplateCode) return "live_fact";
+  if (task.evidenceComplete === true || task.factTemplateCode)
+    return "live_fact";
   if (task.file) return "live_artifact";
   return "computed";
 }
 
 function toFileItem(artifact: SourceShellArtifactLike): SourceShellFileItem {
-  const stageKey = String(artifact.stageKey ?? artifact.sourcingStage ?? "other");
-  const artifactCode = String(
-    artifact.artifactCode ?? artifact.artifactKind ?? artifact.artifactType ?? "",
+  const stageKey = String(
+    artifact.stageKey ?? artifact.sourcingStage ?? "other",
   );
-  const group = String(artifact.artifactGroup ?? artifact.artifactFamily ?? "artifact");
+  const artifactCode = String(
+    artifact.artifactCode ??
+      artifact.artifactKind ??
+      artifact.artifactType ??
+      "",
+  );
+  const group = String(
+    artifact.artifactGroup ?? artifact.artifactFamily ?? "artifact",
+  );
   const sourceOrigin = String(artifact.sourceOrigin ?? "");
   const state = String(
-    artifact.status ?? artifact.approvalState ?? artifact.evidenceState ?? "registered",
+    artifact.status ??
+      artifact.approvalState ??
+      artifact.evidenceState ??
+      "registered",
   );
-  const isClientFinal = artifact.isClientFinal === true || state === "client_final";
+  const isClientFinal =
+    artifact.isClientFinal === true || state === "client_final";
   const governance = fileGovernanceFor({ group, sourceOrigin, isClientFinal });
   const needsComplianceReview = hasComplianceReviewFlag(artifact.description);
+  const artifactRole: "authoritative" | "evidence" = specByCode(artifactCode)
+    ?.gateDefining
+    ? "authoritative"
+    : "evidence";
   return {
     id: artifact.id,
     artifactCode,
     stageKey,
-    stageLabel: SOURCE_STAGE_LABELS[stageKey as SourceStageKey] ?? humanize(stageKey),
-    format: String(artifact.fileFormat ?? artifact.sourceFormat ?? "unknown").toUpperCase(),
-    name: String(artifact.title ?? artifact.fileName ?? artifact.originalName ?? artifact.artifactType ?? "Source artifact"),
+    stageLabel:
+      SOURCE_STAGE_LABELS[stageKey as SourceStageKey] ?? humanize(stageKey),
+    format: String(
+      artifact.fileFormat ?? artifact.sourceFormat ?? "unknown",
+    ).toUpperCase(),
+    name: String(
+      artifact.title ??
+        artifact.fileName ??
+        artifact.originalName ??
+        artifact.artifactType ??
+        "Source artifact",
+    ),
     state,
     group,
     sourceBasis: "live_artifact",
+    artifactRole,
     governanceLabel: governance.label,
     governanceMessage: governance.message,
     needsComplianceReview,
@@ -534,7 +601,9 @@ function fileGovernanceFor({
   };
 }
 
-function groupFilesByStage(items: SourceShellFileItem[]): SourceEventShellView["files"]["byStage"] {
+function groupFilesByStage(
+  items: SourceShellFileItem[],
+): SourceEventShellView["files"]["byStage"] {
   const groups = new Map<string, SourceShellFileItem[]>();
   for (const item of items) {
     const list = groups.get(item.stageKey) ?? [];
@@ -561,7 +630,11 @@ function stagePattern(
   stageKey: SourceStageKey,
 ): SourceEventShellView["stage"]["pattern"] {
   if (stageKey === "responses" || stageKey === "rfp") return "upload-heavy";
-  if (stageKey === "pricing" || stageKey === "evaluation" || stageKey === "value") {
+  if (
+    stageKey === "pricing" ||
+    stageKey === "evaluation" ||
+    stageKey === "value"
+  ) {
     return "analytics-heavy";
   }
   if (stageKey === "bafo") return "negotiation";
@@ -579,5 +652,8 @@ function humanize(value: string): string {
 }
 
 function slug(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
