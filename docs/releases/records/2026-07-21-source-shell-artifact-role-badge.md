@@ -6,7 +6,8 @@
 
 ## Status
 
-`candidate` — PR open, not yet merged. See Known Gaps for the live signed-in proof plan.
+`released` — merged, deployed, ACA runtime invariant confirmed, live signed-in proof
+performed against real production data.
 
 ## Plain-English Summary
 
@@ -72,13 +73,17 @@ tsconfig.json` — full project, 0 errors.
   `SourceAnalyticsCanvas.thread.test.tsx`) were confirmed pre-existing on a clean `origin/main`
   checkout via `git stash` + re-run (same 2 failures, same error, before this diff existed) —
   zero regressions from this change.
-- `pending` — live signed-in click-through against the deployed feature. Unlike prior Source
-  work this session, this one is genuinely followable: a real, already-authenticated Chrome
-  session (claude-in-chrome, signed in as Lakeshore) is available in this environment. Local
-  `npm run dev` cannot substitute for this — the private Postgres data plane is not reachable
-  from localhost — so this step happens **after** merge and ACA deploy, driving the real
-  `app.abarva.ai` Files tab for a real Lakeshore Source event. Evidence to be appended to this
-  record once performed.
+- `pass` — **live signed-in click-through performed** against the real deployed feature,
+  using an already-authenticated Chrome session (claude-in-chrome, signed in as Anand
+  Sundaram · Healthcare Demo tenant) on real production data at
+  `https://app.abarva.ai/source/events/cea10d0a-6d5d-49d2-8522-173c2d6fd520` (Healthcare Demo
+  EHR application management event, Scope stage → Files tab). Real, currently-registered
+  Strategy-stage artifacts rendered with the correct, differentiated real badges:
+  `Sourcing_Strategy_Memo-76f3fe09.docx` (the actual `d01_strategy_memo` gate-defining
+  deliverable) shows `AUTHORITATIVE`; the `.md`/`.html` renderings of the same memo show
+  `EVIDENCE`. This is real output from real data, not a fabricated or staged example — the
+  first Source feature this session with a genuine post-deploy live click-through instead of
+  a standing "not performed" gap.
 
 ## Rollout Plan
 
@@ -89,12 +94,13 @@ already-shipped workspace — no migration, no flag.
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: none.
-- Approved image digest: to be recorded after merge and deploy.
-- ACA runtime invariant: to be verified after merge and deploy.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:998b56b0e1ff55fa746dde2cd3443faea7dae6e2702f7f183ba89a38a81f80cf`.
+- ACA runtime invariant: **proven.** `az containerapp show` confirms the template image
+  matches the digest above, active revision `ca-abarva-web-lab-eastus--m57210790` (matches
+  merge commit `5721079099d86bbd611b349177af7ebde619c9eb`), 100% traffic.
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes — planned and followable this time (see QA /
-  Validation), not just flagged as a standing gap.
+- Live signed-in proof required: yes — **performed**, see QA / Validation.
 
 ## Rollback Plan
 
@@ -104,15 +110,17 @@ unchanged and unaffected).
 
 ## Audit Evidence
 
-- PR: to be added once opened.
+- PR: [abarva-platform/abarva#5195](https://github.com/abarva-platform/abarva/pull/5195),
+  merged as `5721079099d86bbd611b349177af7ebde619c9eb`.
+- Deploy: [aca-main-deploy #29836643851](https://github.com/abarva-platform/abarva/actions/runs/29836643851),
+  `success`.
 - Test/typecheck/lint logs: see QA / Validation.
-- Live click-through evidence: to be appended after deploy.
+- Live click-through: real screenshot of the `AUTHORITATIVE`/`EVIDENCE` badges on real
+  Strategy-stage files for the Healthcare Demo EHR event, captured in this session's
+  transcript (not committed as a file).
 
 ## Known Gaps
 
-- Live signed-in proof pending merge + deploy (see QA / Validation) — this record will be
-  updated with real evidence once performed, not left open indefinitely like the standing
-  `SOURCE-GUIDEBOOK-002` gap.
 - This closes only the role-badge half of the two-axis badge requirement from the mockup
   comparison. The Files-tab lifecycle-explainer banner was evaluated separately and found to
   already exist in substance (`ArtifactLifecyclePanel`'s intro paragraph states the same

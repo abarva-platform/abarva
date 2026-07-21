@@ -100,7 +100,10 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   event's Transition and Value stages.
 - **Severity**: P7 (cosmetic)
 - **Workstream**: Workspace UX
-- **Status**: `Merged` — PR merged; ACA deploy/runtime-proof evidence pending.
+- **Status**: `Runtime Proven` (partial) — merged, deployed, ACA runtime invariant confirmed;
+  the `aVa` branch is live-verified on real production data, the `Atlas` branch is not (no
+  real event in current tenant data has reached Transition/Value — see the release record's
+  Known Gaps).
 - **Dependencies**: none.
 - **Acceptance criteria**: header label derives from `view.stage.key`
   (`transition`/`value` → Atlas, else aVa) instead of a hardcoded string. Met.
@@ -124,7 +127,9 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   panel.
 - **Severity**: P6 (workspace UX / information density)
 - **Workstream**: Workspace UX
-- **Status**: `Merged` — PR merged; ACA deploy/runtime-proof evidence pending.
+- **Status**: `Runtime Proven` — merged, deployed, ACA runtime invariant confirmed, live
+  signed-in click-through performed against real production data (real `.docx` shows
+  `AUTHORITATIVE`, real `.md`/`.html` renderings of the same memo show `EVIDENCE`).
 - **Dependencies**: none — reuses the existing `specByCode().gateDefining` lookup, no new
   derivation logic, no schema change.
 - **Acceptance criteria**: `SourceShellFileItem` carries `artifactRole`; `FileCard` renders
@@ -133,7 +138,7 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   `SourceAnalyticsCanvas.artifactRoleBadge.test.tsx` (new) — functional: real click to open
   the Files tab, real differing badge output from two real spec codes, real status values,
   real unknown-code fallback.
-- **PR**: to be recorded on merge.
+- **PR**: #5195, merged as `5721079099d86bbd611b349177af7ebde619c9eb`.
 - **Discovered from**: direct comparison against the user's mockup.
 - **Notes / remaining gaps**: the Files-tab lifecycle-explainer banner half of the mockup's
   two-axis pattern was evaluated and found to already exist in substance
