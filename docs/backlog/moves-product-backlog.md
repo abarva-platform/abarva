@@ -401,16 +401,31 @@ worked examples from the design conversation.
   systems that don't accept DOCX) have no supported export.
 - **Severity**: P2 (capability gap, not a defect)
 - **Workstream**: Deliverable quality and consulting depth
-- **Status**: `Approved` — independent of MOVES-ARTIFACT-001, does not touch the new lifecycle
-  schema, safe to execute while design decisions are pending
+- **Status**: `Deployed` — reconciled 2026-07-21; this was already merged and live but
+  not yet reflected here. `@react-pdf/renderer`-based PDF export with content parity to
+  DOCX (sections, tables, rasterised exhibits, disclosure text via shared constants).
 - **Dependencies**: none
-- **Acceptance criteria**: TBD at implementation time (format parity with DOCX export, exhibit
-  rendering, AI-disclosure block present per §10 of the standing directive)
-- **Required tests**: TBD
-- **PR**: not yet opened
+- **Acceptance criteria**: format parity with DOCX export, exhibit rendering,
+  AI-disclosure block present per §10 of the standing directive — all met.
+- **Required tests**: `renderers.test.ts` (4 new: valid PDF buffer, exhibit
+  title+description, rasterisation-failure fallback, disclosure text present);
+  `route.test.ts` (2 new: `pdf`-prescribed artifact serves real `%PDF-` buffer,
+  `?format=pdf` override).
+- **PR**: #5170
+- **Merge SHA**: `0b59e44bc4612d0fe4402ce86cf13007303ba156`
+- **Deploy run**: confirmed live — the merge commit is an ancestor of the currently
+  active ACA revision (`ca-abarva-web-lab-eastus--m4a429034`, confirmed via
+  `az containerapp show` during a later, unrelated deploy).
+- **Runtime proof**: code path proven via real tests (15/16 + 10/10 passing, zero new
+  regressions vs. clean-baseline comparison). No live PDF download has been exercised
+  end-to-end (requires a real `generated_artifacts` row with `outputFormat: 'pdf'`) —
+  explicitly noted as a reasonable follow-up in the release record, not a merge
+  blocker.
+- **Release record**: `docs/releases/records/2026-07-20-orchestrator-pdf-renderer.md`
 - **Discovered from**: earlier session backlog (pre-dates the Phase Advancement Control program)
-- **Notes / remaining gaps**: this is the next safe, independent, unblocked item — see the return
-  summary in this turn's response for the recommendation to begin it now.
+- **Notes / remaining gaps**: no UI download link was added for PDF specifically
+  (existing callers don't hardcode format, so no caller-side change was needed); PDF
+  typography uses default fonts, not brand fonts (separate, previously-deferred slice).
 
 ### MOVES-QUALITY-002 — Live E2E proof, P4 business-case generation + approval cycle
 

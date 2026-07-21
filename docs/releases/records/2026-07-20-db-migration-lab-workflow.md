@@ -154,11 +154,12 @@ touched.
   scripts/ops/__tests__/submit-aca-operator-job.test.ts` — clean.
 - `pass` — YAML syntax of `db-migration-lab.yml` validated with `js-yaml` (no
   `actionlint` available in this environment).
-- `pending` — **mode fail-closed real verification.** After merge, a real
-  `workflow_dispatch` omitting the `mode` input should be attempted and confirmed to
-  be rejected by the GitHub API (not silently defaulted), proving the fix actually
-  closes the gap that caused the earlier silent-status incident. To be updated with
-  the real result once run.
+- `pass` — **mode fail-closed real verification.** After merge, `gh workflow run
+  db-migration-lab.yml --ref main` (no `-f mode=...`) was attempted for real. Result:
+  `could not create workflow dispatch event: HTTP 422: Required input 'mode' not
+  provided`. The GitHub API rejected the dispatch outright — no workflow run was even
+  created. This is exactly the incident this fix closes: the earlier silent-status
+  dispatch is no longer possible.
 - `pass` — **Isolated Postgres integration test**, real `postgres:16-alpine` via Docker:
   full 271-migration replay from zero; drift detection correctly fires exit-1 on a
   tampered already-applied migration file and clears once restored; advisory lock
