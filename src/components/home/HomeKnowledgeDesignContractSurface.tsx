@@ -1177,43 +1177,6 @@ function EnterpriseOverview({
         useCases={useCases}
       />
 
-      <SixQuestionsLanding
-        dimensions={dimensions}
-        onSelectDimension={onSelectDimension}
-      />
-
-      <ContextHorizon nextEvidence={nextEvidence} onOpenGaps={onOpenGaps} />
-
-      <section className="nkh-at-glance" aria-label="Enterprise at a glance">
-        <div className="nkh-inline-head">
-          <div className="nkh-kicker">Enterprise at a glance</div>
-          <span>known facts · every metric traceable to evidence</span>
-        </div>
-        <div className="nkh-fact-grid">
-          {executiveFacts.map((fact, index) => (
-            <article key={`${fact.label}-${index}`} className="nkh-fact-card">
-              <span>{asText(fact.label)}</span>
-              <strong>{asText(fact.value)}</strong>
-              <p>{asText(fact.sub)}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="nkh-intel-canvas-card">
-        <div className="nkh-canvas-copy">
-          <div className="nkh-kicker">Context concentration</div>
-          <h2>Where the enterprise story is strongest</h2>
-          <p>
-            The largest loaded domains show where Nexus can already orient a
-            C-suite conversation. Thin or directional domains should become the
-            next evidence requests before value, sourcing, or operating-model
-            claims are treated as decision-grade.
-          </p>
-        </div>
-        <DimensionVolumeChart dimensions={dimensions} />
-      </section>
-
       <section className="nkh-story-card nkh-boardroom-brief">
         <div className="nkh-kicker">Enterprise Brief</div>
         <h2>{title}</h2>
@@ -1250,6 +1213,43 @@ function EnterpriseOverview({
           ))}
         </div>
       </section>
+
+      <section className="nkh-at-glance" aria-label="Enterprise at a glance">
+        <div className="nkh-inline-head">
+          <div className="nkh-kicker">Enterprise at a glance</div>
+          <span>selected facts · every metric traceable to evidence</span>
+        </div>
+        <div className="nkh-fact-grid">
+          {executiveFacts.slice(0, 6).map((fact, index) => (
+            <article key={`${fact.label}-${index}`} className="nkh-fact-card">
+              <span>{asText(fact.label)}</span>
+              <strong>{asText(fact.value)}</strong>
+              <p>{asText(fact.sub)}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="nkh-intel-canvas-card">
+        <div className="nkh-canvas-copy">
+          <div className="nkh-kicker">Context concentration</div>
+          <h2>Where the enterprise story is strongest</h2>
+          <p>
+            The largest loaded domains show where Nexus can already orient a
+            C-suite conversation. Thin or directional domains should become the
+            next evidence requests before value, sourcing, or operating-model
+            claims are treated as decision-grade.
+          </p>
+        </div>
+        <DimensionVolumeChart dimensions={dimensions} />
+      </section>
+
+      <SixQuestionsLanding
+        dimensions={dimensions}
+        onSelectDimension={onSelectDimension}
+      />
+
+      <ContextHorizon nextEvidence={nextEvidence} onOpenGaps={onOpenGaps} />
 
       <section className="nkh-leadership-signals">
         <div className="nkh-inline-head">
@@ -1873,7 +1873,7 @@ function UseCasesView({
 }) {
   const summary = narrativeString(pack, "use_cases_summary");
   return (
-    <div className="nkh-section">
+    <div className="nkh-section nkh-usecases-mode">
       <p className="nkh-tab-intro">
         {summary ||
           "The candidate AI portfolio is a longlist for prioritization. No opportunity is production-ready until its evidence gate is cleared."}
@@ -2437,7 +2437,7 @@ function RelationshipTopologyGraph({
           nodesConnectable={false}
           elementsSelectable={false}
           proOptions={{ hideAttribution: true }}
-          onError={(code, message) => {
+          onError={(code: string, message: string) => {
             console.error("[nkh-topology react-flow error]", code, message, {
               nodeCount: topology.nodes.length,
               edgeCount: topology.edges.length,
@@ -2640,22 +2640,22 @@ function UseCasePriorityRechart({
       aria-label="Top use case priority chart"
       data-testid="home-knowledge-usecase-priority-recharts"
     >
-      <ResponsiveContainer width="100%" height={360}>
+      <ResponsiveContainer width="100%" height={320}>
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ top: 8, right: 26, bottom: 4, left: 176 }}
-          barCategoryGap={14}
+          margin={{ top: 10, right: 28, bottom: 10, left: 190 }}
+          barCategoryGap={12}
         >
           <CartesianGrid horizontal={false} stroke={HOME_CHART_COLORS.line} />
           <XAxis type="number" hide domain={[0, 5]} />
           <YAxis
             type="category"
             dataKey="name"
-            width={176}
+            width={190}
             tick={{
               fill: HOME_CHART_COLORS.ink2,
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: 700,
             }}
             axisLine={false}
@@ -5458,25 +5458,27 @@ const styles = `
 }
 .nkh-usecase-board {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
-  margin: 0 0 22px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  margin: 0 0 24px;
 }
 .nkh-usecase-rechart {
   width: 100%;
-  height: 250px;
-  margin: 0 0 18px;
+  min-height: 344px;
+  height: auto;
+  margin: 0 0 24px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface-2);
-  padding: 8px 10px;
+  overflow: hidden;
+  padding: 12px 14px;
 }
 .nkh-usecase-board.is-compact {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   margin-bottom: 0;
 }
 .nkh-usecase-priority {
-  min-height: 220px;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--line);
@@ -5507,6 +5509,7 @@ const styles = `
   color: var(--ink);
   font-size: 15px;
   line-height: 1.28;
+  overflow-wrap: anywhere;
 }
 .nkh-usecase-priority p {
   margin: 9px 0 16px;
@@ -5531,6 +5534,14 @@ const styles = `
   color: var(--ink);
   font-size: 12px;
   font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.nkh-usecases-mode {
+  display: grid;
+  gap: 18px;
+}
+.nkh-usecases-mode .nkh-table-wrap {
+  margin-top: 0;
 }
 .nkh-usecase-preview {
   padding: 22px 24px;
@@ -5556,7 +5567,8 @@ const styles = `
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface-2);
-  padding: 8px 10px;
+  overflow: hidden;
+  padding: 12px 14px;
 }
 .nkh-chart-tooltip {
   max-width: 280px;
@@ -5744,6 +5756,55 @@ const styles = `
 .nkh-ai-thesis-grid p {
   font-size: 12.5px;
   line-height: 1.48;
+}
+.nkh-boardroom-brief {
+  display: grid;
+  gap: 22px;
+}
+.nkh-boardroom-brief h2 {
+  max-width: 980px;
+  margin-bottom: 0;
+}
+.nkh-boardroom-brief .nkh-kicker {
+  margin-bottom: -10px;
+}
+.nkh-executive-summary {
+  columns: 1;
+  max-width: 1080px;
+}
+.nkh-executive-summary p {
+  margin: 0;
+  max-width: 980px;
+  font-size: 15px;
+  line-height: 1.62;
+}
+.nkh-executive-summary p + p {
+  margin-top: 12px;
+}
+.nkh-brief-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  border: 0;
+}
+.nkh-story-block {
+  min-width: 0;
+}
+.nkh-priority-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.nkh-priority-list article {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--ink);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 16px 18px;
+}
+.nkh-priority-list article > span {
+  line-height: 1;
 }
 .nkh-source-inventory {
   overflow: auto;
