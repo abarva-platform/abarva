@@ -22,7 +22,11 @@ import { PhaseApproveAndBuild } from "@/components/strategic-moves/PhaseApproveA
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
 import { useFeature } from "@/lib/features/use-feature";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
-import { getPhaseCaptureSections } from "@/lib/programs/phase-capture-contract";
+import {
+  getPhaseCaptureSections,
+  type PhaseCaptureSection,
+} from "@/lib/programs/phase-capture-contract";
+import { parseDiagnosisFacts } from "@/lib/programs/diagnosis-facts";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
 import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import {
@@ -31,7 +35,10 @@ import {
   type P3OptionSet,
 } from "@/lib/programs/phase-templates/p3-option-assembler";
 import { buildingBlockLabel } from "@/lib/programs/phase-templates/building-blocks";
-import { buildNextPhaseReadinessPack } from "@/lib/programs/phase-templates/next-phase-readiness-pack";
+import {
+  buildNextPhaseReadinessPack,
+  type NextPhaseReadinessPack,
+} from "@/lib/programs/phase-templates/next-phase-readiness-pack";
 import type { StrategicMove } from "@/lib/programs/types.ui";
 
 interface AvaChatMessage {
@@ -449,6 +456,16 @@ export function MovesPhaseStandaloneClient({
   );
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("phase");
   const [substepIndex, setSubstepIndex] = useState(initialSubstepIndex);
+  // MOVES-UI-001 Steps two-column view (moves_finder_shell_v1 only). Which
+  // left-menu row is showing in the right detail pane: a real phase-capture
+  // section key, or null to fall back to the current substep's existing
+  // PhaseBody render (the same component/props the flag-off stepper uses —
+  // reused, not duplicated). Independent of substepIndex so browsing a
+  // capture section never disturbs the real substep/gate state.
+  const [finderSelectedSectionKey, setFinderSelectedSectionKey] = useState<
+    string | null
+  >(null);
+  const [finderComingUpOpen, setFinderComingUpOpen] = useState(false);
   const [avaOpen, setAvaOpen] = useState(false);
   const [avaThread, setAvaThread] = useState<AvaChatMessage[]>([]);
   const [avaInput, setAvaInput] = useState("");
@@ -597,6 +614,32 @@ export function MovesPhaseStandaloneClient({
           phaseCaptureMissingCount === 1 ? "" : "s"
         } before Approve & Build.`
       : null;
+  // MOVES-UI-001 Steps two-column "Coming up" card. Same real inputs and same
+  // function (`buildNextPhaseReadinessPack`) the Approve substep already uses
+  // for its "Next phase readiness" section below — computed once here so the
+  // two-column view (which renders outside that substep) can show it without
+  // a second data source. Pure/sync, no new fetch.
+  const finderNextPhaseContract = nextPhaseFor(phase);
+  const finderReadinessPack: NextPhaseReadinessPack = useMemo(
+    () =>
+      buildNextPhaseReadinessPack({
+        nextPhaseLabel: finderNextPhaseContract
+          ? `${finderNextPhaseContract.code} ${finderNextPhaseContract.title}`
+          : "Tower handoff",
+        nextPhaseNum: phase.phase + 1,
+        isTerminalHandoff: !finderNextPhaseContract,
+        evidenceNeedPackets,
+        suggestedSessions: finderNextPhaseContract?.sessions ?? [],
+        suggestedTemplates: finderNextPhaseContract?.templates ?? [],
+        carriesForwardContent,
+      }),
+    [
+      carriesForwardContent,
+      evidenceNeedPackets,
+      finderNextPhaseContract,
+      phase.phase,
+    ],
+  );
   const openHardGateCount = move.gateCriteria.filter(
     (criterion) => criterion.severity === "hard" && !criterion.completed,
   ).length;
@@ -1210,94 +1253,149 @@ export function MovesPhaseStandaloneClient({
                         onSelect={setWorkspaceView}
                       />
 
-                      <div className="mxw-stage-bar">
-                        <div className="mxw-progress">
-                          <span className="mxw-track">
-                            <span style={{ width: `${progressPct}%` }} />
-                          </span>
-                          <span className="mxw-step-label">
-                            <b>
-                              Step {substepIndex + 1} of {phase.substeps.length}
-                            </b>{" "}
-                            · {substep.label}
-                          </span>
-                        </div>
-                      </div>
+                      {finderShellEnabled ? (
+                        <FinderStepsColumns
+                          comingUpExpanded={finderComingUpOpen}
+                          onPhaseCaptureValueChange={setPhaseCaptureValue}
+                          onSelectSection={setFinderSelectedSectionKey}
+                          onSelectSubstep={setSubstepIndex}
+                          onToggleComingUp={() =>
+                            setFinderComingUpOpen((open) => !open)
+                          }
+                          phase={phase}
+                          phaseCaptureSections={phaseCaptureSections}
+                          phaseCaptureValues={phaseCaptureValues}
+                          readinessPack={finderReadinessPack}
+                          selectedSectionKey={finderSelectedSectionKey}
+                          substepBody={
+                            <PhaseBody
+                              carriesForwardContent={carriesForwardContent}
+                              currentStateReadiness={currentStateReadiness}
+                              evidenceCount={evidenceCount}
+                              evidenceNeedPackets={evidenceNeedPackets}
+                              gateApproved={gateApproved}
+                              gateApprovalMessage={gateApprovalMessage}
+                              gateApprovalStatus={gateApprovalStatus}
+                              isHistoricalPhase={isHistoricalPhase}
+                              move={move}
+                              onApproveAfterBuild={approvePhaseGateAfterBuild}
+                              onContinueCurrentPhase={continueToCurrentPhase}
+                              onApproveP0Gate={approveP0Gate}
+                              onFinalizePhaseCapture={finalizePhaseCapture}
+                              onOpenFiles={openFilesWorkspace}
+                              onPhaseCaptureValueChange={setPhaseCaptureValue}
+                              onSelectOption={setSelectedOption}
+                              nextOpenPhaseContract={nextOpenPhaseContract}
+                              p3OptionSet={p3OptionSet}
+                              phase={phase}
+                              phaseCaptureBlocker={phaseCaptureBlocker}
+                              phaseCaptureCompleteCount={
+                                phaseCaptureCompleteCount
+                              }
+                              phaseCaptureSections={phaseCaptureSections}
+                              phaseCaptureValues={phaseCaptureValues}
+                              selectedOption={selectedOption}
+                              substep={substep.key}
+                              terminalComplete={terminalComplete}
+                            />
+                          }
+                          substepIndex={substepIndex}
+                        />
+                      ) : (
+                        <>
+                          <div className="mxw-stage-bar">
+                            <div className="mxw-progress">
+                              <span className="mxw-track">
+                                <span style={{ width: `${progressPct}%` }} />
+                              </span>
+                              <span className="mxw-step-label">
+                                <b>
+                                  Step {substepIndex + 1} of{" "}
+                                  {phase.substeps.length}
+                                </b>{" "}
+                                · {substep.label}
+                              </span>
+                            </div>
+                          </div>
 
-                      <div
-                        className="mxw-substeps"
-                        role="tablist"
-                        aria-label="Phase steps"
-                      >
-                        {phase.substeps.map((item, index) => (
-                          <button
-                            aria-selected={index === substepIndex}
-                            className={`mxw-substep ${
-                              index < substepIndex
-                                ? "done"
-                                : index === substepIndex
-                                  ? "cur"
-                                  : "up"
-                            }`}
-                            key={item.key}
-                            onClick={() => setSubstepIndex(index)}
-                            role="tab"
-                            type="button"
+                          <div
+                            className="mxw-substeps"
+                            role="tablist"
+                            aria-label="Phase steps"
                           >
-                            <span>
-                              {index < substepIndex ? "✓" : index + 1}
-                            </span>
-                            <b>{item.label}</b>
-                          </button>
-                        ))}
-                      </div>
+                            {phase.substeps.map((item, index) => (
+                              <button
+                                aria-selected={index === substepIndex}
+                                className={`mxw-substep ${
+                                  index < substepIndex
+                                    ? "done"
+                                    : index === substepIndex
+                                      ? "cur"
+                                      : "up"
+                                }`}
+                                key={item.key}
+                                onClick={() => setSubstepIndex(index)}
+                                role="tab"
+                                type="button"
+                              >
+                                <span>
+                                  {index < substepIndex ? "✓" : index + 1}
+                                </span>
+                                <b>{item.label}</b>
+                              </button>
+                            ))}
+                          </div>
 
-                      <PhaseWorkflowGuide
-                        actionLabel={primaryActionLabel}
-                        evidenceCount={evidenceCount}
-                        gateOpenCount={openHardGateCount}
-                        nextLabel={nextSubstep?.label ?? null}
-                        onAction={
-                          isHistoricalPhase
-                            ? continueToCurrentPhase
-                            : isFinalSubstep
-                              ? phase.phase === 0
-                                ? () => void approveP0Gate()
-                                : focusGateAction
-                              : continueStep
-                        }
-                        phase={phase}
-                        substep={substep.key}
-                      />
+                          <PhaseWorkflowGuide
+                            actionLabel={primaryActionLabel}
+                            evidenceCount={evidenceCount}
+                            gateOpenCount={openHardGateCount}
+                            nextLabel={nextSubstep?.label ?? null}
+                            onAction={
+                              isHistoricalPhase
+                                ? continueToCurrentPhase
+                                : isFinalSubstep
+                                  ? phase.phase === 0
+                                    ? () => void approveP0Gate()
+                                    : focusGateAction
+                                  : continueStep
+                            }
+                            phase={phase}
+                            substep={substep.key}
+                          />
 
-                      <PhaseBody
-                        carriesForwardContent={carriesForwardContent}
-                        currentStateReadiness={currentStateReadiness}
-                        evidenceCount={evidenceCount}
-                        evidenceNeedPackets={evidenceNeedPackets}
-                        gateApproved={gateApproved}
-                        gateApprovalMessage={gateApprovalMessage}
-                        gateApprovalStatus={gateApprovalStatus}
-                        isHistoricalPhase={isHistoricalPhase}
-                        move={move}
-                        onApproveAfterBuild={approvePhaseGateAfterBuild}
-                        onContinueCurrentPhase={continueToCurrentPhase}
-                        onApproveP0Gate={approveP0Gate}
-                        onFinalizePhaseCapture={finalizePhaseCapture}
-                        onOpenFiles={openFilesWorkspace}
-                        onPhaseCaptureValueChange={setPhaseCaptureValue}
-                        onSelectOption={setSelectedOption}
-                        nextOpenPhaseContract={nextOpenPhaseContract}
-                        p3OptionSet={p3OptionSet}
-                        phase={phase}
-                        phaseCaptureBlocker={phaseCaptureBlocker}
-                        phaseCaptureCompleteCount={phaseCaptureCompleteCount}
-                        phaseCaptureSections={phaseCaptureSections}
-                        phaseCaptureValues={phaseCaptureValues}
-                        selectedOption={selectedOption}
-                        substep={substep.key}
-                        terminalComplete={terminalComplete}
-                      />
+                          <PhaseBody
+                            carriesForwardContent={carriesForwardContent}
+                            currentStateReadiness={currentStateReadiness}
+                            evidenceCount={evidenceCount}
+                            evidenceNeedPackets={evidenceNeedPackets}
+                            gateApproved={gateApproved}
+                            gateApprovalMessage={gateApprovalMessage}
+                            gateApprovalStatus={gateApprovalStatus}
+                            isHistoricalPhase={isHistoricalPhase}
+                            move={move}
+                            onApproveAfterBuild={approvePhaseGateAfterBuild}
+                            onContinueCurrentPhase={continueToCurrentPhase}
+                            onApproveP0Gate={approveP0Gate}
+                            onFinalizePhaseCapture={finalizePhaseCapture}
+                            onOpenFiles={openFilesWorkspace}
+                            onPhaseCaptureValueChange={setPhaseCaptureValue}
+                            onSelectOption={setSelectedOption}
+                            nextOpenPhaseContract={nextOpenPhaseContract}
+                            p3OptionSet={p3OptionSet}
+                            phase={phase}
+                            phaseCaptureBlocker={phaseCaptureBlocker}
+                            phaseCaptureCompleteCount={
+                              phaseCaptureCompleteCount
+                            }
+                            phaseCaptureSections={phaseCaptureSections}
+                            phaseCaptureValues={phaseCaptureValues}
+                            selectedOption={selectedOption}
+                            substep={substep.key}
+                            terminalComplete={terminalComplete}
+                          />
+                        </>
+                      )}
                     </>
                   )}
                 </section>
@@ -1540,6 +1638,270 @@ function ApprovalsOverview({
         );
       })}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// MOVES-UI-001 Phase 3b — Steps two-column view (moves_finder_shell_v1 only).
+//
+// Replaces the horizontal substep tab strip with a macOS-Finder-style
+// left sub-menu + right detail pane, per the owner-approved reference. Real
+// data only:
+//   - "{phase.code} inputs" rows = `getPhaseCaptureSections(phase.phase)`,
+//     the SAME contract the legacy PhaseCaptureEditor already renders — no
+//     fabricated categories. Complete/blocked status reuses the identical
+//     `String(value ?? "").trim()` check the legacy stepper's completeness
+//     count already uses.
+//   - "Workflow" rows = `phase.substeps`, the SAME array driving the legacy
+//     stepper's done/current/upcoming state (`substepIndex`) — one source of
+//     truth, not a second one. Selecting a row renders `substepBody`, which
+//     the caller builds from the EXACT SAME <PhaseBody> element/props used in
+//     the flag-off path (see call site), so every substep-specific real
+//     control (upload inputs, decision panels, gate approval) keeps working
+//     unmodified.
+//   - "What {phase} will need" = `buildNextPhaseReadinessPack` output,
+//     already computed from real evidence-need packets — no new fetch.
+// ---------------------------------------------------------------------------
+
+function finderSectionHasValue(
+  section: PhaseCaptureSection,
+  values: PhaseCaptureValues,
+): boolean {
+  return Boolean(String(values[section.key] ?? "").trim());
+}
+
+function FinderStepsColumns({
+  comingUpExpanded,
+  onPhaseCaptureValueChange,
+  onSelectSection,
+  onSelectSubstep,
+  onToggleComingUp,
+  phase,
+  phaseCaptureSections,
+  phaseCaptureValues,
+  readinessPack,
+  selectedSectionKey,
+  substepBody,
+  substepIndex,
+}: {
+  comingUpExpanded: boolean;
+  onPhaseCaptureValueChange: (key: string, value: string) => void;
+  onSelectSection: (key: string | null) => void;
+  onSelectSubstep: (index: number) => void;
+  onToggleComingUp: () => void;
+  phase: PhaseContract;
+  phaseCaptureSections: ReturnType<typeof getPhaseCaptureSections>;
+  phaseCaptureValues: PhaseCaptureValues;
+  readinessPack: NextPhaseReadinessPack;
+  selectedSectionKey: string | null;
+  substepBody: ReactNode;
+  substepIndex: number;
+}) {
+  const selectedSection = selectedSectionKey
+    ? (phaseCaptureSections.find(
+        (section) => section.key === selectedSectionKey,
+      ) ?? null)
+    : null;
+
+  return (
+    <div className="mxw-finder-steps" data-testid="mxw-finder-steps">
+      <nav aria-label="Phase steps" className="mxw-finder-steps-menu">
+        <div className="mxw-finder-step-group">
+          <h3>{phase.code} inputs</h3>
+          <ul>
+            {phaseCaptureSections.map((section) => {
+              const complete = finderSectionHasValue(
+                section,
+                phaseCaptureValues,
+              );
+              const blocked = section.required && !complete;
+              const selected = selectedSectionKey === section.key;
+              return (
+                <li key={section.key}>
+                  <button
+                    aria-current={selected ? "true" : undefined}
+                    className={`mxw-finder-step-row${selected ? " selected" : ""}${blocked ? " blocked" : ""}${complete ? " complete" : ""}`}
+                    onClick={() => onSelectSection(section.key)}
+                    type="button"
+                  >
+                    <span aria-hidden="true" className="mxw-finder-step-dot" />
+                    <span className="mxw-finder-step-title">
+                      {section.label}
+                    </span>
+                    {blocked ? (
+                      <span className="mxw-finder-step-subtitle">
+                        Needs input
+                      </span>
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+        <div className="mxw-finder-step-group">
+          <h3>Workflow</h3>
+          <ul>
+            {phase.substeps.map((item, index) => {
+              const isCurrent = index === substepIndex;
+              const selected = selectedSectionKey === null && isCurrent;
+              const done = index < substepIndex;
+              return (
+                <li key={item.key}>
+                  <button
+                    aria-current={selected ? "true" : undefined}
+                    className={`mxw-finder-step-row${selected ? " selected" : ""}${done ? " complete" : ""}`}
+                    onClick={() => {
+                      onSelectSubstep(index);
+                      onSelectSection(null);
+                    }}
+                    type="button"
+                  >
+                    <span aria-hidden="true" className="mxw-finder-step-dot" />
+                    <span className="mxw-finder-step-title">{item.label}</span>
+                    {isCurrent ? (
+                      <span className="mxw-finder-step-now">now</span>
+                    ) : null}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+        <div className="mxw-finder-comingup" data-testid="mxw-finder-comingup">
+          <button
+            aria-expanded={comingUpExpanded}
+            className="mxw-finder-comingup-toggle"
+            onClick={onToggleComingUp}
+            type="button"
+          >
+            What {readinessPack.nextPhaseLabel} will need
+          </button>
+          {comingUpExpanded ? (
+            readinessPack.openNeeds.length > 0 ? (
+              <div
+                className="mxw-finder-comingup-chips"
+                data-testid="mxw-finder-comingup-chips"
+              >
+                {readinessPack.openNeeds.map((need) => (
+                  <span
+                    className={`mxw-finder-chip ${
+                      need.priority === "required" ? "req" : "opt"
+                    }`}
+                    key={need.evidenceSlot}
+                  >
+                    {need.evidenceSlot}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="mxw-finder-comingup-empty">
+                No open evidence needs for {readinessPack.nextPhaseLabel} yet.
+              </p>
+            )
+          ) : null}
+        </div>
+      </nav>
+      <div
+        aria-label={
+          selectedSection
+            ? `${selectedSection.label} detail`
+            : `${phase.substeps[substepIndex]?.label ?? phase.substeps[0]?.label ?? phase.code} detail`
+        }
+        className="mxw-finder-detail"
+      >
+        {selectedSection ? (
+          <section className="mxw-finder-detail-panel">
+            <header>
+              <h2>{selectedSection.label}</h2>
+              <p>{selectedSection.description}</p>
+            </header>
+            {selectedSection.structured === "facts" ? (
+              <FinderFactsTable
+                rawValue={phaseCaptureValues[selectedSection.key] ?? ""}
+              />
+            ) : null}
+            <textarea
+              aria-label={selectedSection.label}
+              className="mxw-finder-detail-input"
+              onChange={(event) =>
+                onPhaseCaptureValueChange(
+                  selectedSection.key,
+                  event.target.value,
+                )
+              }
+              rows={selectedSection.structured === "facts" ? 3 : 6}
+              value={phaseCaptureValues[selectedSection.key] ?? ""}
+            />
+          </section>
+        ) : (
+          substepBody
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Structured "facts" review table (metric · value, with an inline citation
+// toggle) for phase-capture sections marked `structured: "facts"` — today
+// only P2's `baseline_metrics`. Facts and their `source` field are real,
+// already-shipped data (`diagnosis-facts.ts`, used by phase generation) — not
+// invented for this view. The "◈" citation toggle only ever renders for a
+// fact whose `source` is non-empty; most legacy/free-text captures parse to a
+// source-less fact, so the toggle legitimately does not appear for them.
+function FinderFactsTable({ rawValue }: { rawValue: string }) {
+  const facts = useMemo(() => parseDiagnosisFacts(rawValue), [rawValue]);
+  const [openSourceIndex, setOpenSourceIndex] = useState<number | null>(null);
+
+  if (facts.length === 0) {
+    return (
+      <p className="mxw-finder-facts-empty">
+        No baseline metrics captured yet.
+      </p>
+    );
+  }
+
+  return (
+    <table className="mxw-finder-facts-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        {facts.map((fact, index) => (
+          <tr key={`${fact.metric}-${index}`}>
+            <td>{fact.metric}</td>
+            <td>
+              <span className="mxw-finder-fact-value">{fact.value}</span>
+              {fact.source ? (
+                <>
+                  <button
+                    aria-expanded={openSourceIndex === index}
+                    aria-label={`Show source for ${fact.metric}`}
+                    className="mxw-finder-citation-toggle"
+                    onClick={() =>
+                      setOpenSourceIndex((current) =>
+                        current === index ? null : index,
+                      )
+                    }
+                    type="button"
+                  >
+                    {"◈"}
+                  </button>
+                  {openSourceIndex === index ? (
+                    <span className="mxw-finder-citation-caption">
+                      {fact.source}
+                    </span>
+                  ) : null}
+                </>
+              ) : null}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
@@ -3996,6 +4358,45 @@ function MovesStandaloneStyles() {
 .mxw-finder-on .mxw-phase.viewing{background:#e4ecf9}
 .mxw-finder-on .mxw-phase.viewing:before{content:none}
 .mxw-finder-on .mxw-surface-tabs button.active::before{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2px;border-radius:999px;background:#2a5aa8}
+/*
+ * MOVES-UI-001 Steps two-column view — <FinderStepsColumns>, mounted only
+ * when moves_finder_shell_v1 resolves true (see call site). Same token set
+ * as the finder-shell polish rules above (navy/blue/teal/amber); no new
+ * colors introduced.
+ */
+.mxw-finder-steps{display:flex;gap:24px;align-items:flex-start}
+.mxw-finder-steps-menu{width:280px;flex:0 0 280px;display:flex;flex-direction:column;gap:18px}
+.mxw-finder-step-group h3{margin:0 0 8px;font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:#5b6c8a;font-weight:800}
+.mxw-finder-step-group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.mxw-finder-step-row{width:100%;display:flex;align-items:center;gap:8px;flex-wrap:wrap;text-align:left;background:none;border:none;border-radius:8px;padding:7px 8px;cursor:pointer;font-size:13px;color:#28364f}
+.mxw-finder-step-row:hover{background:#f1f3f8}
+.mxw-finder-step-row.selected{background:#e4ecf9;color:#0c1a3a}
+.mxw-finder-step-dot{width:7px;height:7px;border-radius:999px;background:#8b95a8;flex:0 0 auto}
+.mxw-finder-step-row.complete .mxw-finder-step-dot{background:#1d9e75}
+.mxw-finder-step-row.blocked .mxw-finder-step-dot{background:#ba7517}
+.mxw-finder-step-title{flex:1;font-weight:600;color:#0c1a3a}
+.mxw-finder-step-subtitle{width:100%;padding-left:15px;font-size:11px;color:#8a5a12}
+.mxw-finder-step-now{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.4px;color:#2a5aa8;background:#e4ecf9;border-radius:999px;padding:2px 7px}
+.mxw-finder-comingup{border-top:1px solid rgba(12,26,58,.10);padding-top:12px}
+.mxw-finder-comingup-toggle{width:100%;text-align:left;background:none;border:none;padding:0;font-size:12px;font-weight:700;color:#0c1a3a;cursor:pointer}
+.mxw-finder-comingup-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.mxw-finder-chip{font-size:11px;border-radius:999px;padding:4px 10px;background:#e4ecf9;color:#2a5aa8}
+.mxw-finder-chip.req{background:#fbf1df;color:#ba7517}
+.mxw-finder-comingup-empty{margin-top:10px;font-size:12px;color:#5b6c8a}
+.mxw-finder-detail{flex:1;min-width:0}
+.mxw-finder-detail-panel header h2{margin:0 0 4px;font-family:Fraunces,Georgia,serif;color:#0c1a3a}
+.mxw-finder-detail-panel header p{margin:0 0 14px;color:#5b6c8a;font-size:13px}
+.mxw-finder-detail-input{width:100%;border:1px solid rgba(12,26,58,.16);border-radius:10px;padding:12px;font-size:13.5px;color:#28364f;font-family:inherit}
+.mxw-finder-facts-table{width:100%;border-collapse:collapse}
+.mxw-finder-facts-table th{text-align:left;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#5b6c8a;padding:6px 10px;border-bottom:1px solid rgba(12,26,58,.14)}
+.mxw-finder-facts-table td{padding:8px 10px;border-bottom:1px solid rgba(12,26,58,.08);font-size:13px;color:#28364f;vertical-align:top}
+.mxw-finder-fact-value{margin-right:6px}
+.mxw-finder-citation-toggle{border:none;background:#e4ecf9;color:#2a5aa8;border-radius:999px;width:20px;height:20px;line-height:20px;font-size:11px;cursor:pointer;padding:0}
+.mxw-finder-citation-caption{display:block;margin-top:4px;font-size:11.5px;color:#5b6c8a}
+@media (max-width:960px){
+  .mxw-finder-steps{flex-direction:column}
+  .mxw-finder-steps-menu{width:100%;flex-basis:auto}
+}
 /*
  * MOVES-UI-002 approvals overview — gated behind moves_approvals_overview_v1,
  * not moves_finder_shell_v1. Rendered only when workspaceView === "approvals",
