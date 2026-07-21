@@ -26,6 +26,10 @@ import {
   resolveHomeDimensionVisualContract,
 } from "@/lib/home/home-dimension-visualization-contract";
 import type { HomeDimensionCrossLensFilter } from "@/lib/home/home-dimension-visualization-contract";
+import {
+  deriveHomeRelationshipEdges,
+  type HomeRelationshipEdge,
+} from "@/lib/home/derive-relationship-edges";
 
 type TopTab = "overview" | "gaps" | "usecases" | "proof";
 type DimensionTab = "summary" | "data" | "relationships" | "gaps" | "evidence";
@@ -276,6 +280,10 @@ export function HomeKnowledgeDesignContractSurface({
 }: HomeKnowledgeDesignContractSurfaceProps) {
   const slots = pack.design_slots;
   const dimensions = useMemo(() => slots.DIMS ?? [], [slots.DIMS]);
+  const relationshipEdges = useMemo(
+    () => deriveHomeRelationshipEdges(slots.DATA ?? {}),
+    [slots.DATA],
+  );
   const [topTab, setTopTab] = useState<TopTab>(pickInitialTab(selectedTab));
   const [surfaceMode, setSurfaceMode] = useState<SurfaceMode>(
     selectedDimension ? "dimension" : "enterprise",
@@ -666,6 +674,9 @@ export function HomeKnowledgeDesignContractSurface({
               tab={dimensionTab}
               tableQuery={tableQuery}
               relationship={activeRelationship}
+              relationshipEdges={
+                activeDimension?.key === "rel" ? relationshipEdges : []
+              }
             />
           </div>
         ) : null}
@@ -740,6 +751,7 @@ function DimensionView({
   tab,
   tableQuery,
   relationship,
+  relationshipEdges,
 }: {
   columns: HomeKnowledgeDataColumn[];
   dataSet?: HomeKnowledgeDataSet;
@@ -747,6 +759,7 @@ function DimensionView({
   evidence: HomeKnowledgeEvidence[];
   confidenceOptions: string[];
   confidenceValue: string;
+  relationshipEdges: HomeRelationshipEdge[];
   facetOptions: string[];
   facetValue: string;
   crossFilters: HomeDimensionCrossLensFilter[];
@@ -1057,6 +1070,9 @@ function DimensionView({
             This chain shows how the dimension connects across the enterprise.
             Open the Relationships dimension to trace any node end-to-end.
           </div>
+          {relationshipEdges.length ? (
+            <RelationshipTopologyGraph edges={relationshipEdges} />
+          ) : null}
         </div>
       ) : null}
 
@@ -1990,6 +2006,152 @@ function DimensionPrimaryVisual({
       fieldB={fieldB}
       title={`${fieldA.label} × ${fieldB.label}`}
     />
+  );
+}
+
+const TOPOLOGY_MAX_NODES_PER_SIDE = 10;
+
+/**
+ * Real bipartite topology graph, not a fabricated force-directed layout.
+ * Source entities (apps, vendors, use cases) on the left, the systems/data
+ * they connect to on the right, one line per real derived edge. Custom SVG
+ * rather than a graph library (no react-flow/xyflow dependency exists in
+ * this repo yet, and this shape doesn't need one) — same approach Tower's
+ * chat-answer charts already use for custom visuals.
+ */
+function RelationshipTopologyGraph({
+  edges,
+}: {
+  edges: HomeRelationshipEdge[];
+}) {
+  if (!edges.length) return null;
+
+  const fromCounts = new Map<string, number>();
+  const toCounts = new Map<string, number>();
+  for (const edge of edges) {
+    fromCounts.set(edge.from, (fromCounts.get(edge.from) ?? 0) + 1);
+    toCounts.set(edge.to, (toCounts.get(edge.to) ?? 0) + 1);
+  }
+  const rank = (counts: Map<string, number>) =>
+    Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+
+  const fromRanked = rank(fromCounts);
+  const toRanked = rank(toCounts);
+  const fromNodes = fromRanked
+    .slice(0, TOPOLOGY_MAX_NODES_PER_SIDE)
+    .map(([n]) => n);
+  const toNodes = toRanked
+    .slice(0, TOPOLOGY_MAX_NODES_PER_SIDE)
+    .map(([n]) => n);
+  const hiddenFrom = fromRanked.length - fromNodes.length;
+  const hiddenTo = toRanked.length - toNodes.length;
+
+  const rowHeight = 34;
+  const height = Math.max(fromNodes.length, toNodes.length) * rowHeight + 24;
+  const width = 720;
+  const leftX = 158;
+  const rightX = width - 158;
+
+  const fromY = new Map(
+    fromNodes.map((node, index) => [
+      node,
+      20 + index * rowHeight + rowHeight / 2,
+    ]),
+  );
+  const toY = new Map(
+    toNodes.map((node, index) => [
+      node,
+      20 + index * rowHeight + rowHeight / 2,
+    ]),
+  );
+
+  const visibleEdges = edges.filter(
+    (edge) => fromY.has(edge.from) && toY.has(edge.to),
+  );
+
+  return (
+    <div
+      className="nkh-topology-graph"
+      aria-label="Enterprise relationship graph"
+      data-testid="home-knowledge-relationship-topology"
+    >
+      <div className="nkh-crosstab-head">
+        <strong>How systems actually connect</strong>
+        <span>
+          {edges.length} evidenced connection{edges.length === 1 ? "" : "s"}{" "}
+          derived from loaded integration, vendor, and use-case data
+          {hiddenFrom || hiddenTo
+            ? ` · showing top ${fromNodes.length} of ${fromRanked.length} sources, ${toNodes.length} of ${toRanked.length} targets`
+            : ""}
+        </span>
+      </div>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        width="100%"
+        role="img"
+        style={{ maxHeight: 420 }}
+      >
+        {visibleEdges.map((edge, index) => {
+          const y1 = fromY.get(edge.from)!;
+          const y2 = toY.get(edge.to)!;
+          const midX = (leftX + rightX) / 2;
+          return (
+            <path
+              key={`${edge.from}-${edge.to}-${index}`}
+              d={`M ${leftX + 6} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${rightX - 6} ${y2}`}
+              fill="none"
+              stroke={HOME_CHART_COLORS.teal}
+              strokeOpacity={0.28}
+              strokeWidth={1.5}
+            >
+              <title>{`${edge.from} ${edge.relationship} ${edge.to}`}</title>
+            </path>
+          );
+        })}
+        {fromNodes.map((node) => (
+          <g key={`from-${node}`}>
+            <circle
+              cx={leftX}
+              cy={fromY.get(node)}
+              r={4}
+              fill={HOME_CHART_COLORS.ink}
+            />
+            <text
+              x={leftX - 10}
+              y={fromY.get(node)}
+              textAnchor="end"
+              dominantBaseline="middle"
+              fontSize={11}
+              fontWeight={700}
+              fill={HOME_CHART_COLORS.ink2}
+            >
+              {node.length > 26 ? `${node.slice(0, 25)}…` : node}
+            </text>
+          </g>
+        ))}
+        {toNodes.map((node) => (
+          <g key={`to-${node}`}>
+            <circle
+              cx={rightX}
+              cy={toY.get(node)}
+              r={4}
+              fill={HOME_CHART_COLORS.amber}
+            />
+            <text
+              x={rightX + 10}
+              y={toY.get(node)}
+              textAnchor="start"
+              dominantBaseline="middle"
+              fontSize={11}
+              fontWeight={700}
+              fill={HOME_CHART_COLORS.ink2}
+            >
+              {node.length > 26 ? `${node.slice(0, 25)}…` : node}
+            </text>
+          </g>
+        ))}
+      </svg>
+    </div>
   );
 }
 
@@ -3937,6 +4099,16 @@ const styles = `
   justify-content: center;
   font: 700 12px var(--sans);
   color: #161411;
+}
+.nkh-topology-graph {
+  border: 1px solid #eceae2;
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px 18px;
+  margin-top: 14px;
+}
+.nkh-topology-graph svg {
+  display: block;
 }
 .nkh-dashboard-tile,
 .nkh-dashboard-split section {
