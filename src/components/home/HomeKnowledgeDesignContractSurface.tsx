@@ -2425,6 +2425,31 @@ function RelationshipTopologyGraph({
               firstTwoNodeIds: topology.nodes.slice(0, 2).map((n) => n.id),
             });
           }}
+          onInit={(instance) => {
+            const internalNodes = instance.getNodes();
+            const internalEdges = instance.getEdges();
+            console.error("[nkh-topology onInit]", {
+              propsNodeCount: topology.nodes.length,
+              propsEdgeCount: topology.edges.length,
+              internalNodeCount: internalNodes.length,
+              internalEdgeCount: internalEdges.length,
+              firstInternalEdge: internalEdges[0]
+                ? JSON.parse(JSON.stringify(internalEdges[0]))
+                : null,
+              firstInternalNode: internalNodes[0]
+                ? JSON.parse(
+                    JSON.stringify({
+                      id: internalNodes[0].id,
+                      position: internalNodes[0].position,
+                      measured: internalNodes[0].measured,
+                      sourcePosition: internalNodes[0].sourcePosition,
+                      targetPosition: internalNodes[0].targetPosition,
+                    }),
+                  )
+                : null,
+              viewport: instance.getViewport(),
+            });
+          }}
         >
           <Background gap={18} />
           <Controls showInteractive={false} />
