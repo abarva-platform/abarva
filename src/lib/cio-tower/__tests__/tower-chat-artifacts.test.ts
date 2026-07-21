@@ -195,4 +195,110 @@ describe("buildTowerChatAvaAnswerPacket", () => {
       { label: "IROPS Agentic Recovery Cockpit", x: 38, y: 82 },
     ]);
   });
+
+  it("handles quadrant labels using dimension names other than value/complexity", () => {
+    // Regression test for a live production bug: a real Tower answer used
+    // "value" and "evidence confidence" as its 2x2 axes ("High Value / Lower
+    // Evidence"), but the parser only recognized the literal word
+    // "complexity" for the x-axis, so it silently produced zero chartable
+    // points and no chart ever rendered — verified live in the browser
+    // (recharts/SVG DOM inspection showed no chart from the chat response).
+    const packet = buildTowerChatAvaAnswerPacket({
+      ...baseArgs,
+      question:
+        "Create a 2x2 matrix of our AI initiatives by business value and evidence confidence.",
+      modelOutput: {
+        answer:
+          "Five AI initiatives are loaded with enough Tower data to place on a 2x2. The axes are forecast value commitment (vertical) and evidence confidence (horizontal).",
+        tables: [
+          {
+            id: "ai_2x2_matrix",
+            title: "AI Initiatives — Business Value vs. Evidence Confidence (2x2 Placement)",
+            columns: [
+              "Initiative",
+              "Forecast Value (FY26)",
+              "Evidence Status",
+              "2x2 Quadrant",
+            ],
+            rows: [
+              [
+                "M365 Copilot Productivity Enablement",
+                "$14.0M",
+                "Finance-attestation pending ($2.1M YTD signal unattested)",
+                "High Value / Lower Evidence",
+              ],
+              [
+                "ServiceNow AI / ITSM Automation Pilot",
+                "$6.0M",
+                "No YTD actuals loaded",
+                "High Value / Lower Evidence",
+              ],
+              [
+                "Developer Productivity AI / SDLC Automation",
+                "$4.5M",
+                "No YTD actuals loaded",
+                "Moderate Value / Lower Evidence",
+              ],
+              [
+                "Workday HR/Finance AI Workflow Pilot",
+                "$3.0M",
+                "No YTD actuals loaded",
+                "Moderate Value / Lower Evidence",
+              ],
+              [
+                "AI Governance / Model Risk Controls",
+                "No forecast loaded",
+                "$8.0M budget; enabler/control layer only",
+                "No Value Claim / Mandatory Gate",
+              ],
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(packet.charts?.[0]?.kind).toBe("quadrant-matrix");
+    const points = (
+      packet.charts?.[0]?.data as { points: Array<Record<string, unknown>> }
+    ).points;
+    // 4 of 5 rows plot (High/Moderate Value paired with Lower Evidence);
+    // the 5th ("No Value Claim / Mandatory Gate") correctly has no plottable
+    // position and is excluded rather than guessed at.
+    expect(points).toEqual([
+      { label: "M365 Copilot Productivity Enablement", x: 38, y: 82 },
+      { label: "ServiceNow AI / ITSM Automation Pilot", x: 38, y: 82 },
+      { label: "Developer Productivity AI / SDLC Automation", x: 38, y: 58 },
+      { label: "Workday HR/Finance AI Workflow Pilot", x: 38, y: 58 },
+    ]);
+  });
+
+  it("downgrades a mislabeled quadrant-matrix chart to horizontal-bar when it has no plottable points", () => {
+    // A "2x2" question that produces a table with no "quadrant" label column
+    // and only 1 numeric column used to still be tagged kind:"quadrant-matrix"
+    // with a {data,xKey,yKey} shape a quadrant renderer can't use — effectively
+    // an invisible chart. It should downgrade to a shape-matching kind instead.
+    const packet = buildTowerChatAvaAnswerPacket({
+      ...baseArgs,
+      question: "Create a 2x2 matrix of our vendors by spend.",
+      modelOutput: {
+        answer: "Only one dimension is loaded for this vendor set.",
+        tables: [
+          {
+            id: "vendor_spend",
+            title: "Vendor spend",
+            columns: ["Vendor", "Annual spend"],
+            rows: [
+              ["Vendor A", "$4.0M"],
+              ["Vendor B", "$2.5M"],
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(packet.charts?.[0]?.kind).toBe("horizontal-bar");
+    expect(packet.charts?.[0]?.data).toHaveProperty("xKey");
+    expect(packet.charts?.[0]?.data).toHaveProperty("yKey");
+    expect(packet.charts?.[0]?.data).not.toHaveProperty("points");
+  });
 });
