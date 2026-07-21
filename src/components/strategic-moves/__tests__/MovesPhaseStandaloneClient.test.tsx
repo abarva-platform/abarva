@@ -1225,7 +1225,8 @@ describe("MovesPhaseStandaloneClient", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("renders the compact phase command center for P2-P5 instead of the legacy prepare wall", () => {
+  it("renders P3 in the contract shell instead of the older prepare wall", () => {
+    mockUseFeature.mockImplementation(() => true);
     render(
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
@@ -1240,32 +1241,47 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.getByRole("heading", { name: "Choose the Approach" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Files & Evidence")).toBeInTheDocument();
-    expect(screen.getByText("Step 1 of 5")).toBeInTheDocument();
+    expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+    expect(screen.queryByTestId("mxw-finder-steps")).not.toBeInTheDocument();
+    const menu = screen.getByLabelText("P3 steps");
     expect(
-      screen.getByRole("heading", { name: "What this phase needs" }),
+      within(menu).getByRole("button", {
+        name: /Solution approach & options/i,
+      }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText(/Purpose/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Do now/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Done when/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Live state/i).length).toBeGreaterThan(0);
-    expect(screen.getByRole("tab", { name: /Prepare/i })).toBeInTheDocument();
+    expect(screen.getByText("Step 1 of 12")).toBeInTheDocument();
     expect(
-      screen.getByRole("tab", { name: /Compare Options/i }),
+      screen.getByRole("heading", { name: /Solution approach & options/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("tab", { name: /Approve & Build/i }),
+      within(menu).getByRole("button", { name: /Compare Options/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Recommended sessions")).toBeInTheDocument();
-    expect(screen.getByText("Current blockers")).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("button", { name: /Record Decision/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("button", { name: /Design Canvas/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("button", { name: /Approve & Build/i }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Upload files" }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Review gate" }),
     ).not.toBeInTheDocument();
-    expect(screen.getByText("Solution Options Canvas")).toBeInTheDocument();
+
+    fireEvent.click(
+      within(menu).getByRole("button", { name: /Compare Options/i }),
+    );
+    expect(screen.getByText("Options & recommendation")).toBeInTheDocument();
+    expect(screen.getByText("P2 design inputs pack")).toBeInTheDocument();
     expect(
       screen.queryByText("How to complete this phase"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "What this phase needs" }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByText("Sessions and templates for this phase"),
