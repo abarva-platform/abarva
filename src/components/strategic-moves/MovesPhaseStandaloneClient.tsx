@@ -1308,7 +1308,7 @@ export function MovesPhaseStandaloneClient({
                           />
 
                           {finderShellEnabled ? (
-                            phase.phase === 1 ? (
+                            phase.phase >= 1 && phase.phase <= 2 ? (
                               <PhaseContractStepsCanvas
                                 comingUpExpanded={finderComingUpOpen}
                                 onPhaseCaptureValueChange={setPhaseCaptureValue}
@@ -1800,7 +1800,7 @@ function ApprovalsOverview({
 // ---------------------------------------------------------------------------
 
 function getInitialFinderSectionKey(phaseNum: number): string | null {
-  if (phaseNum !== 1) {
+  if (phaseNum < 1 || phaseNum > 2) {
     return null;
   }
   return getPhaseCaptureSections(phaseNum)[0]?.key ?? null;
@@ -1913,7 +1913,10 @@ function PhaseContractStepsCanvas({
             );
           })}
         </div>
-        <div className="mxw-contract-comingup">
+        <div
+          className="mxw-contract-comingup"
+          data-testid="mxw-contract-comingup"
+        >
           <button
             aria-expanded={comingUpExpanded}
             onClick={onToggleComingUp}
@@ -1923,7 +1926,7 @@ function PhaseContractStepsCanvas({
           </button>
           {comingUpExpanded ? (
             readinessPack.openNeeds.length > 0 ? (
-              <div>
+              <div data-testid="mxw-contract-comingup-chips">
                 {readinessPack.openNeeds.slice(0, 6).map((need) => (
                   <span
                     className={need.priority === "required" ? "req" : ""}
