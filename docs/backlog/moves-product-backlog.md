@@ -697,6 +697,38 @@ worked examples from the design conversation.
 
 ---
 
+### MOVES-UI-006 — P0 promoted to the universal shell; port P1-P5 to match
+
+- **Problem statement**: MOVES-UI-001/002/003/004 (this document's earlier entries) restyled
+  the rail and step-menu chrome around P1-P5's phase workspace, but deliberately reused
+  `<PhaseBody>` (the actual step content) unmodified at every step, as a risk-reduction
+  default. That meant the visible step content never matched the owner-approved reference
+  design — a real scope gap, called out directly by the owner (2026-07-21): "you are giving a
+  lot of excuses... you were given a specific contract to replicate the design 1:1."
+  A separate build (PR #5219 + release-proof PR #5222, authored outside this session) rebuilt
+  **P0 Originate** as a genuine 1:1 match of the reference shell — real content styling, not
+  just chrome — and deployed it. Verified independently in this session: current live commit
+  `c47528f47` (ACA revision `mc47528f4`) descends directly from the shell commit `e7532938`;
+  no console errors on a live signed-in check of `/strategic-moves/[id]/phase/0`.
+- **Owner ruling**: "P0 can and should be the universal shell for P0-P5... P0 is now the
+  design contract. P1-P5 are not all migrated yet; the right next slice is to port each phase
+  onto this same shell model with phase-specific step/data bindings."
+- **Severity**: P8 (cosmetic/UX — no data-model or security impact)
+- **Workstream**: Files/workspace UX
+- **Status**: `Ready` — not yet started; coordinate before starting to avoid duplicate work
+  (a parallel Codex session built the P0 reference and may continue the P1-P5 port)
+- **Scope**: port P1 Charter, P2 Understand Current State, P3 Choose the Approach, P4 Build
+  the Plan, and P5 Prepare to Execute onto the exact shell model P0 now uses — real content
+  styling (not just rail/step-menu chrome), with each phase's own step/data bindings. This
+  supersedes the narrower MOVES-UI-001 Steps-two-column scope (§ MOVES-UI-001) as the
+  authoritative direction for phase-workspace visual parity going forward.
+- **Explicit non-goals carried forward**: no schema migration, no new approval-model fields,
+  no change to `evaluateGate()`/gate-approval flow, no fabricated per-role/`requires_revalidation`
+  state — same constraints as every prior MOVES-UI-00x item.
+- **Discovered from**: owner directive, 2026-07-21.
+
+---
+
 ## Architecture decisions (reference — see design doc for full detail)
 
 Recorded here for durability; full rationale lives in
