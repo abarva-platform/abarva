@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -21,6 +21,15 @@ import type {
   HomeKnowledgeGap,
   HomeKnowledgeRecord,
 } from "@/lib/home/home-knowledge-design-contract";
+import {
+  dimensionRowsSupportPrimaryVisual,
+  resolveHomeDimensionVisualContract,
+} from "@/lib/home/home-dimension-visualization-contract";
+import type { HomeDimensionCrossLensFilter } from "@/lib/home/home-dimension-visualization-contract";
+import {
+  deriveHomeRelationshipEdges,
+  type HomeRelationshipEdge,
+} from "@/lib/home/derive-relationship-edges";
 
 type TopTab = "overview" | "gaps" | "usecases" | "proof";
 type DimensionTab = "summary" | "data" | "relationships" | "gaps" | "evidence";
@@ -31,6 +40,14 @@ interface HomeKnowledgeDesignContractSurfaceProps {
   selectedDimension?: string | null;
   selectedTab?: string | null;
   selectedSource?: string | null;
+  /**
+   * Edges from the tenant's derived relationship-graph.json, read
+   * server-side (see home/page.tsx) since this component is client-only
+   * and can't touch the filesystem. When non-empty, preferred over the
+   * field-parsing fallback (deriveHomeRelationshipEdges) computed from
+   * the pack's own DATA slots — it's the richer, dedicated graph source.
+   */
+  derivedRelationshipEdges?: HomeRelationshipEdge[];
 }
 
 const DIMENSION_TABS: Array<{ key: DimensionTab; label: string }> = [
@@ -268,9 +285,17 @@ export function HomeKnowledgeDesignContractSurface({
   selectedDimension,
   selectedTab,
   selectedSource,
+  derivedRelationshipEdges = [],
 }: HomeKnowledgeDesignContractSurfaceProps) {
   const slots = pack.design_slots;
   const dimensions = useMemo(() => slots.DIMS ?? [], [slots.DIMS]);
+  const relationshipEdges = useMemo(
+    () =>
+      derivedRelationshipEdges.length
+        ? derivedRelationshipEdges
+        : deriveHomeRelationshipEdges(slots.DATA ?? {}),
+    [derivedRelationshipEdges, slots.DATA],
+  );
   const [topTab, setTopTab] = useState<TopTab>(pickInitialTab(selectedTab));
   const [surfaceMode, setSurfaceMode] = useState<SurfaceMode>(
     selectedDimension ? "dimension" : "enterprise",
@@ -283,6 +308,9 @@ export function HomeKnowledgeDesignContractSurface({
   const [tableQuery, setTableQuery] = useState("");
   const [facetValue, setFacetValue] = useState("all");
   const [confidenceValue, setConfidenceValue] = useState("all");
+  const [crossFilterValues, setCrossFilterValues] = useState<
+    Record<string, string>
+  >({});
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
 
@@ -351,6 +379,40 @@ export function HomeKnowledgeDesignContractSurface({
     ).sort((a, b) => a.localeCompare(b));
   }, [activeRows, statusColumnKey]);
 
+  /**
+   * Cross-lens filters beyond the dataset's single built-in `.facet` field
+   * and the auto-detected confidence column — driven by
+   * HomeDimensionVisualizationContract.crossLensFilters for the active
+   * dimension. Each filter only appears once its field has at least one
+   * non-empty, non-"Needs evidence" value in the loaded rows — an empty
+   * dropdown is worse than no dropdown.
+   */
+  const activeCrossFilters = useMemo(() => {
+    const contract = resolveHomeDimensionVisualContract(activeDimension?.key);
+    return contract.crossLensFilters.filter(
+      (filter) =>
+        filter.key !== dataSetFacetKey(activeData) &&
+        filter.key !== statusColumnKey,
+    );
+  }, [activeData, activeDimension?.key, statusColumnKey]);
+
+  const crossFilterOptions = useMemo(() => {
+    const options: Record<string, string[]> = {};
+    for (const filter of activeCrossFilters) {
+      const values = Array.from(
+        new Set(
+          activeRows
+            .map((row) => asText(row[filter.key]))
+            .filter(
+              (value) => value && value.toLowerCase() !== "needs evidence",
+            ),
+        ),
+      ).sort((a, b) => a.localeCompare(b));
+      if (values.length) options[filter.key] = values;
+    }
+    return options;
+  }, [activeCrossFilters, activeRows]);
+
   const visibleRows = useMemo(() => {
     const query = tableQuery.trim().toLowerCase();
     const facet = dataSetFacetKey(activeData);
@@ -363,7 +425,12 @@ export function HomeKnowledgeDesignContractSurface({
         !statusColumnKey ||
         confidenceValue === "all" ||
         sourceStatus(row[statusColumnKey]) === confidenceValue;
-      return matchesQuery && matchesFacet && matchesConfidence;
+      const matchesCrossFilters = Object.entries(crossFilterValues).every(
+        ([key, value]) => value === "all" || asText(row[key]) === value,
+      );
+      return (
+        matchesQuery && matchesFacet && matchesConfidence && matchesCrossFilters
+      );
     });
     if (!sortKey) return rows;
     return [...rows].sort((a, b) =>
@@ -373,6 +440,7 @@ export function HomeKnowledgeDesignContractSurface({
     activeData,
     activeRows,
     confidenceValue,
+    crossFilterValues,
     facetValue,
     sortKey,
     statusColumnKey,
@@ -389,6 +457,7 @@ export function HomeKnowledgeDesignContractSurface({
     setTableQuery("");
     setFacetValue("all");
     setConfidenceValue("all");
+    setCrossFilterValues({});
     setSortKey(null);
     setSelectedRowIndex(null);
   }
@@ -560,6 +629,9 @@ export function HomeKnowledgeDesignContractSurface({
             decisionCannot={slots.DEC_CANNOT ?? []}
             decisionCan={slots.DEC_CAN ?? []}
             dimensions={dimensions}
+            nextEvidence={slots.NEXT_EVIDENCE ?? []}
+            onOpenGaps={() => setTopTab("gaps")}
+            onSelectDimension={selectDimension}
             pack={pack}
             priorities={slots.PRIORITIES ?? []}
             signals={slots.SIGNALS ?? []}
@@ -597,6 +669,9 @@ export function HomeKnowledgeDesignContractSurface({
               confidenceValue={confidenceValue}
               facetOptions={facetOptions}
               facetValue={facetValue}
+              crossFilters={activeCrossFilters}
+              crossFilterOptions={crossFilterOptions}
+              crossFilterValues={crossFilterValues}
               gaps={activeGaps}
               insight={activeInsight}
               rows={visibleRows}
@@ -605,6 +680,7 @@ export function HomeKnowledgeDesignContractSurface({
               setDimensionTab={setDimensionTab}
               setConfidenceValue={setConfidenceValue}
               setFacetValue={setFacetValue}
+              setCrossFilterValues={setCrossFilterValues}
               setSelectedRowIndex={setSelectedRowIndex}
               setSortKey={setSortKey}
               setTableQuery={setTableQuery}
@@ -613,6 +689,9 @@ export function HomeKnowledgeDesignContractSurface({
               tab={dimensionTab}
               tableQuery={tableQuery}
               relationship={activeRelationship}
+              relationshipEdges={
+                activeDimension?.key === "rel" ? relationshipEdges : []
+              }
             />
           </div>
         ) : null}
@@ -667,6 +746,9 @@ function DimensionView({
   confidenceValue,
   facetOptions,
   facetValue,
+  crossFilters,
+  crossFilterOptions,
+  crossFilterValues,
   gaps,
   insight,
   rows,
@@ -675,6 +757,7 @@ function DimensionView({
   setDimensionTab,
   setConfidenceValue,
   setFacetValue,
+  setCrossFilterValues,
   setSelectedRowIndex,
   setSortKey,
   setTableQuery,
@@ -683,6 +766,7 @@ function DimensionView({
   tab,
   tableQuery,
   relationship,
+  relationshipEdges,
 }: {
   columns: HomeKnowledgeDataColumn[];
   dataSet?: HomeKnowledgeDataSet;
@@ -690,8 +774,15 @@ function DimensionView({
   evidence: HomeKnowledgeEvidence[];
   confidenceOptions: string[];
   confidenceValue: string;
+  relationshipEdges: HomeRelationshipEdge[];
   facetOptions: string[];
   facetValue: string;
+  crossFilters: HomeDimensionCrossLensFilter[];
+  crossFilterOptions: Record<string, string[]>;
+  crossFilterValues: Record<string, string>;
+  setCrossFilterValues: (
+    updater: (previous: Record<string, string>) => Record<string, string>,
+  ) => void;
   gaps: HomeKnowledgeGap[];
   insight?: {
     findings?: string[];
@@ -811,6 +902,8 @@ function DimensionView({
             <MetricTile label="Last Refreshed" value="Jul 2026" />
           </div>
 
+          <DimensionPrimaryVisual dimensionKey={dimension.key} rows={rows} />
+
           <div className="nkh-dashboard-split">
             {insight?.breakdown?.rows?.length ? (
               <section>
@@ -883,6 +976,33 @@ function DimensionView({
                 </select>
               </label>
             ) : null}
+            {crossFilters
+              .filter((filter) => crossFilterOptions[filter.key]?.length)
+              .map((filter) => (
+                <label key={filter.key}>
+                  {filter.label}
+                  <select
+                    value={crossFilterValues[filter.key] ?? "all"}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setCrossFilterValues((previous) => ({
+                        ...previous,
+                        [filter.key]: value,
+                      }));
+                      setSelectedRowIndex(null);
+                    }}
+                  >
+                    <option value="all">
+                      All {filter.label.toLowerCase()}
+                    </option>
+                    {crossFilterOptions[filter.key].map((option) => (
+                      <option key={option} value={option}>
+                        {option.replaceAll("_", " ")}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
             <span className="nkh-chip">
               Showing {rows.length} of {dimension.count ?? rows.length}
             </span>
@@ -965,6 +1085,9 @@ function DimensionView({
             This chain shows how the dimension connects across the enterprise.
             Open the Relationships dimension to trace any node end-to-end.
           </div>
+          {relationshipEdges.length ? (
+            <RelationshipTopologyGraph edges={relationshipEdges} />
+          ) : null}
         </div>
       ) : null}
 
@@ -1006,6 +1129,9 @@ function EnterpriseOverview({
   decisionCannot,
   decisionCan,
   dimensions,
+  nextEvidence,
+  onOpenGaps,
+  onSelectDimension,
   pack,
   priorities,
   signals,
@@ -1015,6 +1141,9 @@ function EnterpriseOverview({
   decisionCannot: string[];
   decisionCan: string[];
   dimensions: HomeKnowledgeDimension[];
+  nextEvidence: HomeKnowledgeRecord[];
+  onOpenGaps: () => void;
+  onSelectDimension: (key: string) => void;
   pack: HomeKnowledgeDesignContractPack;
   priorities: HomeKnowledgeRecord[];
   signals: HomeKnowledgeRecord[];
@@ -1032,6 +1161,13 @@ function EnterpriseOverview({
         pack={pack}
         useCases={useCases}
       />
+
+      <SixQuestionsLanding
+        dimensions={dimensions}
+        onSelectDimension={onSelectDimension}
+      />
+
+      <ContextHorizon nextEvidence={nextEvidence} onOpenGaps={onOpenGaps} />
 
       <section className="nkh-at-glance" aria-label="Enterprise at a glance">
         <div className="nkh-inline-head">
@@ -1162,6 +1298,167 @@ function EnterpriseOverview({
         <UseCasePriorityCards useCases={useCases} compact />
       </section>
     </div>
+  );
+}
+
+interface SixQuestionCard {
+  key: string;
+  question: string;
+  dimensionKeys: string[];
+}
+
+/**
+ * "Do not make the page a list of 19 tabs with one chart each. The landing
+ * view should open with six visual questions... each dimension becomes a
+ * drill-down." Every stat below comes straight from the already-loaded
+ * dimension.count/status fields -- no new data, no invented scores. A card
+ * only renders once at least one of its mapped dimensions is actually
+ * loaded, so a thin/future pack degrades gracefully instead of showing a
+ * zeroed-out question.
+ */
+const SIX_LANDING_QUESTIONS: SixQuestionCard[] = [
+  {
+    key: "organized",
+    question: "How is the enterprise organized?",
+    dimensionKeys: ["org", "functions", "workforce"],
+  },
+  {
+    key: "value-flow",
+    question: "Where does value flow?",
+    dimensionKeys: ["budget", "programs"],
+  },
+  {
+    key: "runs-it",
+    question: "What systems and data run it?",
+    dimensionKeys: ["apps", "infra", "data", "vendors"],
+  },
+  {
+    key: "transformation",
+    question: "Where is transformation occurring?",
+    dimensionKeys: ["programs", "ai"],
+  },
+  {
+    key: "risk-evidence",
+    question: "Where are risk and evidence weak?",
+    dimensionKeys: ["risks", "evidence"],
+  },
+  {
+    key: "opportunity",
+    question: "Where are the largest opportunities?",
+    dimensionKeys: ["ai", "metrics"],
+  },
+];
+
+function SixQuestionsLanding({
+  dimensions,
+  onSelectDimension,
+}: {
+  dimensions: HomeKnowledgeDimension[];
+  onSelectDimension: (key: string) => void;
+}) {
+  const byKey = new Map(
+    dimensions.map((dimension) => [dimension.key, dimension]),
+  );
+
+  const cards = SIX_LANDING_QUESTIONS.map((question) => {
+    const matched = question.dimensionKeys
+      .map((key) => byKey.get(key))
+      .filter((dimension): dimension is HomeKnowledgeDimension =>
+        Boolean(dimension),
+      );
+    if (!matched.length) return null;
+    const totalRecords = matched.reduce(
+      (sum, dimension) => sum + (dimension.count ?? 0),
+      0,
+    );
+    const decisionGrade = matched.filter(
+      (dimension) => dimension.status === "source-backed",
+    ).length;
+    return { ...question, matched, totalRecords, decisionGrade };
+  }).filter((card): card is NonNullable<typeof card> => Boolean(card));
+
+  if (!cards.length) return null;
+
+  return (
+    <section className="nkh-six-questions" aria-label="Start here">
+      <div className="nkh-inline-head">
+        <div className="nkh-kicker">Start here</div>
+        <span>
+          Six questions every CXO conversation starts with — open any card for
+          the dimension behind it.
+        </span>
+      </div>
+      <div className="nkh-six-questions-grid">
+        {cards.map((card) => (
+          <button
+            key={card.key}
+            type="button"
+            className="nkh-six-question-card"
+            onClick={() => onSelectDimension(card.matched[0].key)}
+          >
+            <span className="nkh-six-question-title">{card.question}</span>
+            <strong>{card.totalRecords.toLocaleString()} records</strong>
+            <span className="nkh-six-question-meta">
+              {card.decisionGrade} of {card.matched.length} dimension
+              {card.matched.length === 1 ? "" : "s"} decision-grade ·{" "}
+              {card.matched.map((dimension) => dimension.name).join(", ")}
+            </span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * "Tease a future" — but honestly. Ghost/dashed cards for what's NOT yet
+ * loaded, sourced entirely from the pack's own approved NEXT_EVIDENCE slot
+ * (curated evidence-gap items with an owner_hint, already rendered
+ * elsewhere in the Evidence Gaps tab) — never invented domain names. If a
+ * tenant's pack has no NEXT_EVIDENCE entries, this renders nothing rather
+ * than guessing what might be missing.
+ */
+function ContextHorizon({
+  nextEvidence,
+  onOpenGaps,
+}: {
+  nextEvidence: HomeKnowledgeRecord[];
+  onOpenGaps: () => void;
+}) {
+  if (!nextEvidence.length) return null;
+  const preview = nextEvidence.slice(0, 4);
+
+  return (
+    <section className="nkh-context-horizon" aria-label="Context horizon">
+      <div className="nkh-inline-head">
+        <div className="nkh-kicker">Context horizon</div>
+        <span>
+          {nextEvidence.length} evidence request
+          {nextEvidence.length === 1 ? "" : "s"} would sharpen this picture once
+          closed — not loaded yet.
+        </span>
+      </div>
+      <div className="nkh-horizon-grid">
+        {preview.map((item, index) => (
+          <button
+            key={`${asText(item.item)}-${index}`}
+            type="button"
+            className="nkh-horizon-card"
+            onClick={onOpenGaps}
+          >
+            <span className="nkh-horizon-tag">Not yet loaded</span>
+            <strong>{asText(item.item)}</strong>
+            <p>{asText(item.unlocks)}</p>
+            {item.owner_hint ? <em>{asText(item.owner_hint)}</em> : null}
+          </button>
+        ))}
+      </div>
+      {nextEvidence.length > preview.length ? (
+        <button type="button" className="nkh-horizon-more" onClick={onOpenGaps}>
+          View all {nextEvidence.length} evidence requests →
+        </button>
+      ) : null}
+    </section>
   );
 }
 
@@ -1740,6 +2037,309 @@ function DimensionVolumeChart({
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+    </div>
+  );
+}
+
+/**
+ * Governed categorical cross-tab heatmap — the shared renderer behind
+ * `estate_bubble_matrix`, `risk_control_heatmap`, and `value_readiness_matrix`
+ * in home-dimension-visualization-contract.ts. Plots two REAL categorical
+ * fields against each other (count per cell); never invents a numeric score.
+ * Rows whose value for either field is missing or the "Needs evidence"
+ * placeholder are excluded from the grid and reported as a pending count
+ * instead — that gap is usually the more important story than the grid.
+ */
+function CategoricalCrossTabHeatmap({
+  rows,
+  fieldA,
+  fieldB,
+  title,
+}: {
+  rows: HomeKnowledgeRecord[];
+  fieldA: { key: string; label: string };
+  fieldB: { key: string; label: string };
+  title: string;
+}) {
+  const isUnevidenced = (value: string) =>
+    !value || value.trim().toLowerCase() === "needs evidence";
+
+  const evidenced = rows.filter(
+    (row) =>
+      !isUnevidenced(asText(row[fieldA.key])) &&
+      !isUnevidenced(asText(row[fieldB.key])),
+  );
+  const pending = rows.length - evidenced.length;
+
+  const aValues = Array.from(
+    new Set(evidenced.map((row) => asText(row[fieldA.key]))),
+  ).sort();
+  const bValues = Array.from(
+    new Set(evidenced.map((row) => asText(row[fieldB.key]))),
+  ).sort();
+
+  if (!evidenced.length || !aValues.length || !bValues.length) return null;
+
+  function cellCount(a: string, b: string): number {
+    return evidenced.filter(
+      (row) => asText(row[fieldA.key]) === a && asText(row[fieldB.key]) === b,
+    ).length;
+  }
+
+  const maxCount = Math.max(
+    1,
+    ...aValues.flatMap((a) => bValues.map((b) => cellCount(a, b))),
+  );
+
+  function cellFill(count: number): string {
+    if (!count) return "transparent";
+    const intensity = 0.16 + (count / maxCount) * 0.74;
+    return `rgba(21, 127, 116, ${intensity.toFixed(2)})`;
+  }
+
+  return (
+    <div
+      className="nkh-crosstab-heatmap"
+      aria-label={title}
+      data-testid="home-knowledge-crosstab-heatmap"
+    >
+      <div className="nkh-crosstab-head">
+        <strong>{title}</strong>
+        <span>
+          {evidenced.length} of {rows.length} rows evidenced for both{" "}
+          {fieldA.label.toLowerCase()} and {fieldB.label.toLowerCase()}
+          {pending > 0 ? ` · ${pending} pending evidence` : ""}
+        </span>
+      </div>
+      <div
+        className="nkh-crosstab-grid"
+        style={{
+          gridTemplateColumns: `148px repeat(${bValues.length}, minmax(64px, 1fr))`,
+        }}
+      >
+        <div className="nkh-crosstab-corner" />
+        {bValues.map((b) => (
+          <div key={b} className="nkh-crosstab-col-label">
+            {b.replaceAll("_", " ")}
+          </div>
+        ))}
+        {aValues.map((a) => (
+          <Fragment key={a}>
+            <div className="nkh-crosstab-row-label">
+              {a.replaceAll("_", " ")}
+            </div>
+            {bValues.map((b) => {
+              const count = cellCount(a, b);
+              return (
+                <div
+                  key={`${a}-${b}`}
+                  className="nkh-crosstab-cell"
+                  style={{ background: cellFill(count) }}
+                  title={`${a.replaceAll("_", " ")} × ${b.replaceAll("_", " ")}: ${count}`}
+                >
+                  {count || ""}
+                </div>
+              );
+            })}
+          </Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const CROSS_TAB_VISUAL_TYPES = new Set([
+  "estate_bubble_matrix",
+  "footprint_stacked_bar",
+  "risk_control_heatmap",
+  "value_readiness_matrix",
+]);
+
+/**
+ * Looks up this dimension's HomeDimensionVisualizationContract entry and
+ * renders its primary visual when the loaded rows actually carry the
+ * required fields — otherwise renders nothing, leaving the existing
+ * breakdown/EvidenceMix treatment as the only primary content (zero
+ * regression for dimensions without a Phase-1 renderer, or whose data
+ * doesn't support one yet).
+ */
+function DimensionPrimaryVisual({
+  dimensionKey,
+  rows,
+}: {
+  dimensionKey: string;
+  rows: HomeKnowledgeRecord[];
+}) {
+  const contract = resolveHomeDimensionVisualContract(dimensionKey);
+  if (!dimensionRowsSupportPrimaryVisual(contract, rows)) return null;
+  if (!CROSS_TAB_VISUAL_TYPES.has(contract.primaryVisual)) return null;
+
+  const [fieldAKey, fieldBKey] = contract.requiredFields;
+  const fieldA = {
+    key: fieldAKey,
+    label:
+      contract.crossLensFilters.find((f) => f.key === fieldAKey)?.label ??
+      fieldAKey.replaceAll("_", " "),
+  };
+  const fieldB = {
+    key: fieldBKey,
+    label:
+      contract.crossLensFilters.find((f) => f.key === fieldBKey)?.label ??
+      fieldBKey.replaceAll("_", " "),
+  };
+
+  return (
+    <CategoricalCrossTabHeatmap
+      rows={rows}
+      fieldA={fieldA}
+      fieldB={fieldB}
+      title={`${fieldA.label} × ${fieldB.label}`}
+    />
+  );
+}
+
+const TOPOLOGY_MAX_NODES_PER_SIDE = 10;
+
+/**
+ * Real bipartite topology graph, not a fabricated force-directed layout.
+ * Source entities (apps, vendors, use cases) on the left, the systems/data
+ * they connect to on the right, one line per real derived edge. Custom SVG
+ * rather than a graph library (no react-flow/xyflow dependency exists in
+ * this repo yet, and this shape doesn't need one) — same approach Tower's
+ * chat-answer charts already use for custom visuals.
+ */
+function RelationshipTopologyGraph({
+  edges,
+}: {
+  edges: HomeRelationshipEdge[];
+}) {
+  if (!edges.length) return null;
+
+  const fromCounts = new Map<string, number>();
+  const toCounts = new Map<string, number>();
+  for (const edge of edges) {
+    fromCounts.set(edge.from, (fromCounts.get(edge.from) ?? 0) + 1);
+    toCounts.set(edge.to, (toCounts.get(edge.to) ?? 0) + 1);
+  }
+  const rank = (counts: Map<string, number>) =>
+    Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
+
+  const fromRanked = rank(fromCounts);
+  const toRanked = rank(toCounts);
+  const fromNodes = fromRanked
+    .slice(0, TOPOLOGY_MAX_NODES_PER_SIDE)
+    .map(([n]) => n);
+  const toNodes = toRanked
+    .slice(0, TOPOLOGY_MAX_NODES_PER_SIDE)
+    .map(([n]) => n);
+  const hiddenFrom = fromRanked.length - fromNodes.length;
+  const hiddenTo = toRanked.length - toNodes.length;
+
+  const rowHeight = 34;
+  const height = Math.max(fromNodes.length, toNodes.length) * rowHeight + 24;
+  const width = 720;
+  const leftX = 158;
+  const rightX = width - 158;
+
+  const fromY = new Map(
+    fromNodes.map((node, index) => [
+      node,
+      20 + index * rowHeight + rowHeight / 2,
+    ]),
+  );
+  const toY = new Map(
+    toNodes.map((node, index) => [
+      node,
+      20 + index * rowHeight + rowHeight / 2,
+    ]),
+  );
+
+  const visibleEdges = edges.filter(
+    (edge) => fromY.has(edge.from) && toY.has(edge.to),
+  );
+
+  return (
+    <div
+      className="nkh-topology-graph"
+      aria-label="Enterprise relationship graph"
+      data-testid="home-knowledge-relationship-topology"
+    >
+      <div className="nkh-crosstab-head">
+        <strong>How systems actually connect</strong>
+        <span>
+          {edges.length} evidenced connection{edges.length === 1 ? "" : "s"}{" "}
+          derived from loaded integration, vendor, and use-case data
+          {hiddenFrom || hiddenTo
+            ? ` · showing top ${fromNodes.length} of ${fromRanked.length} sources, ${toNodes.length} of ${toRanked.length} targets`
+            : ""}
+        </span>
+      </div>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        width="100%"
+        role="img"
+        style={{ maxHeight: 420 }}
+      >
+        {visibleEdges.map((edge, index) => {
+          const y1 = fromY.get(edge.from)!;
+          const y2 = toY.get(edge.to)!;
+          const midX = (leftX + rightX) / 2;
+          return (
+            <path
+              key={`${edge.from}-${edge.to}-${index}`}
+              d={`M ${leftX + 6} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${rightX - 6} ${y2}`}
+              fill="none"
+              stroke={HOME_CHART_COLORS.teal}
+              strokeOpacity={0.28}
+              strokeWidth={1.5}
+            >
+              <title>{`${edge.from} ${edge.relationship} ${edge.to}`}</title>
+            </path>
+          );
+        })}
+        {fromNodes.map((node) => (
+          <g key={`from-${node}`}>
+            <circle
+              cx={leftX}
+              cy={fromY.get(node)}
+              r={4}
+              fill={HOME_CHART_COLORS.ink}
+            />
+            <text
+              x={leftX - 10}
+              y={fromY.get(node)}
+              textAnchor="end"
+              dominantBaseline="middle"
+              fontSize={11}
+              fontWeight={700}
+              fill={HOME_CHART_COLORS.ink2}
+            >
+              {node.length > 26 ? `${node.slice(0, 25)}…` : node}
+            </text>
+          </g>
+        ))}
+        {toNodes.map((node) => (
+          <g key={`to-${node}`}>
+            <circle
+              cx={rightX}
+              cy={toY.get(node)}
+              r={4}
+              fill={HOME_CHART_COLORS.amber}
+            />
+            <text
+              x={rightX + 10}
+              y={toY.get(node)}
+              textAnchor="start"
+              dominantBaseline="middle"
+              fontSize={11}
+              fontWeight={700}
+              fill={HOME_CHART_COLORS.ink2}
+            >
+              {node.length > 26 ? `${node.slice(0, 25)}…` : node}
+            </text>
+          </g>
+        ))}
+      </svg>
     </div>
   );
 }
@@ -2662,6 +3262,94 @@ const styles = `
 .nkh-enterprise-overview {
   display: grid;
   gap: 22px;
+}
+.nkh-six-questions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.nkh-six-question-card {
+  text-align: left;
+  border: 1px solid #eceae2;
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px 18px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s ease;
+}
+.nkh-six-question-card:hover {
+  border-color: #157f74;
+}
+.nkh-six-question-title {
+  font: 700 13px var(--sans);
+  color: #6d675f;
+}
+.nkh-six-question-card strong {
+  font: 700 22px var(--serif, serif);
+  color: #161411;
+}
+.nkh-six-question-meta {
+  font: 400 11.5px var(--sans);
+  color: #6d675f;
+}
+.nkh-horizon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.nkh-horizon-card {
+  text-align: left;
+  border: 1.5px dashed #c9c2b4;
+  border-radius: 12px;
+  background: transparent;
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: inherit;
+}
+.nkh-horizon-card:hover {
+  border-color: #a96d16;
+  background: #fbf8f1;
+}
+.nkh-horizon-tag {
+  align-self: flex-start;
+  font: 700 9px var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a96d16;
+  border: 1px solid #e3d2b0;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.nkh-horizon-card strong {
+  font: 700 13.5px var(--sans);
+  color: #34302a;
+}
+.nkh-horizon-card p {
+  margin: 0;
+  font: 400 12px/1.45 var(--sans);
+  color: #6d675f;
+}
+.nkh-horizon-card em {
+  font: 400 11px var(--sans);
+  font-style: normal;
+  color: #a1998a;
+}
+.nkh-horizon-more {
+  margin-top: 12px;
+  border: none;
+  background: none;
+  color: #157f74;
+  font: 700 12px var(--sans);
+  cursor: pointer;
+  padding: 0;
 }
 .nkh-at-glance {
   border-top: 1px solid #e7e5dc;
@@ -3632,6 +4320,72 @@ const styles = `
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 13px;
   margin-bottom: 14px;
+}
+.nkh-crosstab-heatmap {
+  border: 1px solid #eceae2;
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.nkh-crosstab-head {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 14px;
+}
+.nkh-crosstab-head strong {
+  font: 700 14px var(--serif, serif);
+  color: #161411;
+}
+.nkh-crosstab-head span {
+  font: 400 12px var(--sans);
+  color: #6d675f;
+}
+.nkh-crosstab-grid {
+  display: grid;
+  gap: 4px;
+  overflow-x: auto;
+}
+.nkh-crosstab-corner {
+  min-width: 148px;
+}
+.nkh-crosstab-col-label,
+.nkh-crosstab-row-label {
+  font: 700 10.5px var(--sans);
+  letter-spacing: 0.02em;
+  color: #34302a;
+  text-transform: capitalize;
+}
+.nkh-crosstab-col-label {
+  align-self: end;
+  padding-bottom: 6px;
+  text-align: center;
+}
+.nkh-crosstab-row-label {
+  display: flex;
+  align-items: center;
+  padding-right: 10px;
+}
+.nkh-crosstab-cell {
+  min-height: 40px;
+  border-radius: 6px;
+  border: 1px solid #eceae2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 12px var(--sans);
+  color: #161411;
+}
+.nkh-topology-graph {
+  border: 1px solid #eceae2;
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px 18px;
+  margin-top: 14px;
+}
+.nkh-topology-graph svg {
+  display: block;
 }
 .nkh-dashboard-tile,
 .nkh-dashboard-split section {

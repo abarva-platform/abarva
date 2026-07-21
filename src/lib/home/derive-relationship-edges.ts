@@ -1,0 +1,124 @@
+import type {
+  HomeKnowledgeDataSet,
+  HomeKnowledgeRecord,
+} from "./home-knowledge-design-contract";
+
+// =============================================================================
+// Home relationship-edge derivation
+// -----------------------------------------------------------------------------
+// The Home Knowledge design-contract pack's "rel" (Relationships) dimension
+// carries the same schema as Risks & Controls -- it has no real relationship
+// fields (confirmed against datasets/tenant-inputs/meridian-health/...). But
+// several OTHER dimensions already carry real, evidenced, semicolon-delimited
+// cross-references that were never parsed into graph edges:
+//   - apps.integrations / infra.integrations: "Epic Bridges; Clarity; Caboodle"
+//   - vendors.linked_systems: "MER-SYS-EPIC-HYPERSPACE; MER-SYS-EPIC-CLARITY"
+//   - data.systems: "Epic Clarity; Epic Caboodle; Claims administration platform"
+// This module parses those fields into real (from, relationship, to) edges.
+// No fabrication: an edge only exists here because a loaded row's own text
+// says so.
+//
+// PURE, CLIENT-SAFE ONLY. HomeKnowledgeDesignContractSurface.tsx ("use
+// client") imports deriveHomeRelationshipEdges directly -- this file must
+// never import node:fs/node:path or anything else Node-only, or Turbopack
+// fails the client bundle with "the chunking context does not support
+// external modules (request: node:fs)". The filesystem-reading counterpart
+// (readDerivedRelationshipGraphEdges) lives in
+// read-derived-relationship-graph.ts, a server-only module imported only by
+// home/page.tsx.
+// =============================================================================
+
+export interface HomeRelationshipEdge {
+  from: string;
+  fromType: string;
+  relationship: string;
+  to: string;
+  sourceDimension: string;
+  sourceField: string;
+}
+
+const EDGE_SOURCES: ReadonlyArray<{
+  dimensionKey: string;
+  field: string;
+  relationship: string;
+  fromType: string;
+}> = [
+  {
+    dimensionKey: "apps",
+    field: "integrations",
+    relationship: "integrates with",
+    fromType: "application",
+  },
+  {
+    dimensionKey: "infra",
+    field: "integrations",
+    relationship: "integrates with",
+    fromType: "application",
+  },
+  {
+    dimensionKey: "vendors",
+    field: "linked_systems",
+    relationship: "supplies",
+    fromType: "vendor",
+  },
+  {
+    dimensionKey: "data",
+    field: "systems",
+    relationship: "runs on",
+    fromType: "use case",
+  },
+];
+
+function splitDelimited(value: unknown): string[] {
+  if (typeof value !== "string") return [];
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.toLowerCase() === "needs evidence") return [];
+  return trimmed
+    .split(/[;,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function rowName(row: HomeKnowledgeRecord): string {
+  const value = row.business_name ?? row.context_item;
+  return typeof value === "string" ? value.trim() : "";
+}
+
+/**
+ * Derives real graph edges from the already-loaded DATA slots of a Home
+ * Knowledge design-contract pack. Only rows whose source field carries a
+ * real, non-empty, non-"Needs evidence" value produce edges. Deduplicates
+ * identical (from, relationship, to) triples across dimensions that share
+ * the same underlying schema (e.g. `apps`/`infra` both carry `integrations`
+ * for the same systems in some tenant packs).
+ */
+export function deriveHomeRelationshipEdges(
+  data: Record<string, HomeKnowledgeDataSet | undefined>,
+): HomeRelationshipEdge[] {
+  const seen = new Set<string>();
+  const edges: HomeRelationshipEdge[] = [];
+
+  for (const source of EDGE_SOURCES) {
+    const rows = data[source.dimensionKey]?.rows ?? [];
+    for (const row of rows) {
+      const from = rowName(row);
+      if (!from) continue;
+      for (const to of splitDelimited(row[source.field])) {
+        if (to === from) continue;
+        const key = `${from} ${source.relationship} ${to}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        edges.push({
+          from,
+          fromType: source.fromType,
+          relationship: source.relationship,
+          to,
+          sourceDimension: source.dimensionKey,
+          sourceField: source.field,
+        });
+      }
+    }
+  }
+
+  return edges;
+}
