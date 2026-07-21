@@ -156,14 +156,29 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   glance; must infer state from the cross-event inbox plus each stage's own gate card.
 - **Severity**: P5 (workspace UX / governance visibility)
 - **Workstream**: Approval/authority/lineage controls
-- **Status**: `Proposed` — not started.
-- **Dependencies**: a decision on named-approver-role resolution — real client contacts via
-  `persons`/`person_client_memberships` (same source the Source approval-email work uses)
-  with a static per-archetype role label as fallback, to be confirmed and documented rather
-  than assumed.
-- **Acceptance criteria**: TBD on start — will list explicit criteria before implementation,
-  following the same discipline as `SOURCE-GUIDEBOOK-002`.
+- **Status**: `Merged` — PR merged; migration dependency applied and confirmed live
+  (`2026-07-21-source-event-approvals-stage-key-migration`); ACA deploy/runtime-proof
+  evidence for the app-code PR pending.
+- **Dependencies**: `source_event_approvals.stage_key` migration — **resolved**: real
+  investigation of `source-access-policy.ts` found Source approval authority is a flat,
+  per-person capability uniform across all 11 stages, with no per-stage named-approver-role
+  data anywhere. Rather than fabricate that concept, the ledger shows the real historical
+  approver (Clerk-resolved) when a matching `stage_key` row exists, and a plain, honest
+  authorization statement otherwise — not a named individual invented for stages nobody is
+  specifically assigned to.
+- **Acceptance criteria**: `SourceShellApprovalsWorkspace.ledger` carries the real 11-row
+  ledger; approved/current/locked derives from stage position (always reliable); approver
+  name/timestamp is real-or-null, never guessed; UI renders it in the Approvals workspace.
+  Met.
+- **Required tests**: `approval-ledger.test.ts` (7 pure-function cases, including the
+  send-back/most-recent-row-wins case and the honest-null case) +
+  `SourceAnalyticsCanvas.approvalLedger.test.tsx` (2 functional UI cases, real click + real
+  differing rendered output).
+- **PR**: schema — #5201 (merged, applied); app code — to be recorded on merge.
 - **Discovered from**: direct comparison against the user's mockup.
+- **Notes / remaining gaps**: no event in currently-available tenant data has a
+  `stage_key`-tagged approval yet (migration just landed) — every ledger currently shows the
+  honest "not recorded" path for its already-approved stages, which is correct, not a bug.
 
 ### SOURCE-SHELL-004 — Two-track artifact approval (Track A/B)
 
