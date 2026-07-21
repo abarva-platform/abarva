@@ -1852,6 +1852,7 @@ function AskAvaLauncher({
 function FileCard({ item }: { item: SourceShellFileItem }) {
   return (
     <div
+      data-testid={`source-shell-file-card-${item.id}`}
       style={{
         border: `1px solid ${ANALYTICS.LINE_SOFT}`,
         borderRadius: 8,
@@ -1875,9 +1876,24 @@ function FileCard({ item }: { item: SourceShellFileItem }) {
         </span>
       </div>
       <div style={{ color: ANALYTICS.MUTED, fontSize: 12, marginTop: 8 }}>
-        {item.group} · {item.state}
+        {item.group} ·{" "}
+        <span
+          data-testid={`source-shell-file-status-${item.id}`}
+          style={{
+            display: "inline-flex",
+            borderRadius: 999,
+            background: "rgba(10,10,11,0.06)",
+            color: ANALYTICS.INK_2,
+            padding: "1px 7px",
+            fontSize: 10.5,
+            fontWeight: 700,
+          }}
+        >
+          {item.state}
+        </span>
       </div>
       <div style={{ marginTop: 9, display: "flex", flexWrap: "wrap", gap: 6 }}>
+        <ArtifactRoleBadge role={item.artifactRole} />
         <EvidenceBadge basis={item.sourceBasis} label={item.governanceLabel} />
         {item.needsComplianceReview ? (
           <span
@@ -2095,6 +2111,31 @@ function EmptyCard({ text }: { text: string }) {
     >
       {text}
     </div>
+  );
+}
+
+function ArtifactRoleBadge({ role }: { role: "authoritative" | "evidence" }) {
+  const tone =
+    role === "authoritative"
+      ? { bg: ANALYTICS.BLUE_TINT, fg: ANALYTICS.BLUE }
+      : { bg: "rgba(10,10,11,0.06)", fg: ANALYTICS.MUTED };
+  return (
+    <span
+      data-testid="source-shell-file-role-badge"
+      style={{
+        display: "inline-flex",
+        borderRadius: 999,
+        background: tone.bg,
+        color: tone.fg,
+        padding: "3px 8px",
+        fontSize: 10,
+        fontWeight: 800,
+        letterSpacing: "0.03em",
+        textTransform: "uppercase",
+      }}
+    >
+      {role === "authoritative" ? "Authoritative" : "Evidence"}
+    </span>
   );
 }
 
