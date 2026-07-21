@@ -26,6 +26,9 @@ describe("canonicalClientDisplayName", () => {
     expect(canonicalClientDisplayName({ key: "meridian" })).toBe(
       "Healthcare Demo",
     );
+    expect(canonicalClientDisplayName({ key: "meridian-health" })).toBe(
+      "Healthcare Demo",
+    );
     expect(
       canonicalClientDisplayName({
         key: "meridian",
@@ -101,6 +104,12 @@ describe("canonicalClientDisplayName", () => {
     expect(getClientOption("skyharbor").name).toBe("Airline Demo");
     expect(getClientOption("lakeshore").name).toBe("Lakeshore Holdings");
     expect(getClientOption("arcturus").name).toBe("FS Demo");
+    expect(canonicalClientDisplayName({ key: "skyharbor-air" })).toBe(
+      "Airline Demo",
+    );
+    expect(canonicalClientDisplayName({ key: "first-capital" })).toBe(
+      "FS Demo",
+    );
     expect(
       canonicalClientDisplayName({ name: "First Capital Financial" }),
     ).toBe("FS Demo");

@@ -55,7 +55,7 @@ const DEMO_SAFE_TEXT_REPLACEMENTS: ReadonlyArray<readonly [RegExp, string]> = [
   [/\bSkyHarbor Air Group\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
   [/\bSkyHarbor Airlines\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
   [/\bSkyHarbor Air\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
-  [/\bSkyHarbor\b(?!\s+Air\b)/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  [/\bSkyHarbor\b/gi, DEMO_SAFE_CLIENT_NAMES.skyharbor],
   [/\bLakeshore Holdings Industries\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
   [/\bLakeshore Industries\b/gi, DEMO_SAFE_CLIENT_NAMES.lakeshore],
   [
@@ -81,6 +81,7 @@ const DEMO_SAFE_LITERAL_TEXT_REPLACEMENTS: ReadonlyArray<
   ["SkyHarbor Air Group", DEMO_SAFE_CLIENT_NAMES.skyharbor],
   ["SkyHarbor Airlines", DEMO_SAFE_CLIENT_NAMES.skyharbor],
   ["SkyHarbor Air", DEMO_SAFE_CLIENT_NAMES.skyharbor],
+  ["SkyHarbor", DEMO_SAFE_CLIENT_NAMES.skyharbor],
   ["Lakeshore Holdings Industries", DEMO_SAFE_CLIENT_NAMES.lakeshore],
   ["Lakeshore Industries", DEMO_SAFE_CLIENT_NAMES.lakeshore],
   ["Lakeshore Holdings", DEMO_SAFE_CLIENT_NAMES.lakeshore],
@@ -298,6 +299,7 @@ export function canonicalClientDisplayName(args: {
 
   if (
     key === "meridian" ||
+    key === "meridian-health" ||
     normalizedName === "meridian health" ||
     normalizedName === "meridian health system" ||
     normalizedName === "healthcare demo" ||
@@ -319,6 +321,7 @@ export function canonicalClientDisplayName(args: {
     key === "arcturus" ||
     key === "firstcapital" ||
     key === "first-capital" ||
+    key === "first-capital-financial" ||
     normalizedName === "arcturus financial group" ||
     normalizedName === "arcturus financial" ||
     normalizedName === "first capital financial" ||
@@ -326,6 +329,17 @@ export function canonicalClientDisplayName(args: {
     normalizedName === "financial services demo"
   ) {
     return DEMO_SAFE_CLIENT_NAMES.arcturus;
+  }
+
+  if (
+    key === "skyharbor-air" ||
+    key === "skyharbor" ||
+    normalizedName === "skyharbor air group" ||
+    normalizedName === "skyharbor airlines" ||
+    normalizedName === "skyharbor air" ||
+    normalizedName === "skyharbor"
+  ) {
+    return DEMO_SAFE_CLIENT_NAMES.skyharbor;
   }
 
   if (
