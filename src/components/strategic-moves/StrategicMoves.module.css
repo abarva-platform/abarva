@@ -3707,3 +3707,120 @@
 .factsAdd:hover {
   border-color: var(--abarva-ink-black);
 }
+
+/* ---------------------------------------------------------------------
+   MOVES-UI-004 — Finder-shell visual pass on the P0 Origination main
+   content (StrategicMoveOriginateClient.tsx), gated behind
+   moves_finder_shell_v1 via .finderShellOn, which that component only
+   adds to the root #orig-page wrapper when the flag resolves true.
+
+   This is additive/scoped-only, mirroring the .mxw-finder-on precedent
+   in MovesPhaseStandaloneClient.tsx: every rule below is nested under
+   .finderShellOn and targets an existing class by name — none of it
+   edits a bare .p0*/.scaffold*/.origin* selector above, so the flag-off
+   render of every other consumer of this shared stylesheet
+   (MoveApprovalsOverview, the phase-workspace pages, etc.) stays
+   byte-for-byte identical. Tokens match the merged
+   MovePhaseExplorer.module.css palette (navy/blue/teal/amber).
+   --------------------------------------------------------------------- */
+
+.finderShellOn {
+  --fs-navy: #0c1a3a;
+  --fs-slate: #8b95a8;
+  --fs-slate-strong: #5b6c8a;
+  --fs-blue: #2a5aa8;
+  --fs-blue-strong: #1d3f7a;
+  --fs-blue-tint: #e4ecf9;
+  --fs-teal: #1d9e75;
+  --fs-teal-strong: #1f7a55;
+  --fs-amber: #ba7517;
+  --fs-amber-strong: #8a5a12;
+  --fs-line: #e2e6ee;
+
+  --fs-font-display: var(--font-fraunces), "Fraunces", Georgia, serif;
+  --fs-font-body: var(--font-inter), "Inter", -apple-system,
+    BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --fs-font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace,
+    "SF Mono", Menlo, monospace;
+}
+
+/* P0 header: eyebrow / title / subtitle */
+.finderShellOn .p0Eyebrow {
+  font-family: var(--fs-font-mono);
+  color: var(--fs-blue);
+}
+
+.finderShellOn .p0Title {
+  font-family: var(--fs-font-display);
+  color: var(--fs-navy);
+}
+
+.finderShellOn .p0Subtitle {
+  color: var(--fs-slate-strong);
+}
+
+/* Tab strip */
+.finderShellOn .p0Tab {
+  color: var(--fs-navy);
+  border-color: transparent;
+}
+
+.finderShellOn .p0Tab strong {
+  color: var(--fs-slate-strong);
+}
+
+.finderShellOn .p0Tab small {
+  color: var(--fs-slate);
+}
+
+.finderShellOn .p0TabActive {
+  background: var(--fs-blue-tint);
+  border-color: var(--fs-line);
+  box-shadow: none;
+}
+
+.finderShellOn .p0TabActive::before {
+  background: var(--fs-blue);
+}
+
+/* Question / step cards */
+.finderShellOn .p0SectionTitle {
+  font-family: var(--fs-font-display);
+  color: var(--fs-navy);
+}
+
+.finderShellOn .p0GroupCount {
+  color: var(--fs-slate-strong);
+}
+
+.finderShellOn .p0QuestionCard {
+  border-color: var(--fs-line);
+  background: #ffffff;
+}
+
+.finderShellOn .p0QuestionCardDone {
+  border-color: var(--fs-teal);
+}
+
+.finderShellOn .p0QuestionNumber {
+  font-family: var(--fs-font-mono);
+  color: var(--fs-slate);
+}
+
+.finderShellOn .p0QuestionLabel {
+  color: var(--fs-navy);
+}
+
+.finderShellOn .p0QuestionHelp {
+  color: var(--fs-slate-strong);
+}
+
+.finderShellOn .p0QuestionStatus {
+  border-color: var(--fs-line);
+  color: var(--fs-slate-strong);
+}
+
+.finderShellOn .p0CapturedText {
+  border-left-color: var(--fs-teal);
+  color: var(--fs-navy);
+}
