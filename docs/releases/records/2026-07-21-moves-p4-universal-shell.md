@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -45,20 +45,21 @@ Moves P4 Build the Plan now uses the same contract-shell pattern proven on P0, P
 - Pass: `npm run build`
 - Pass: `npm run release:check`
 - Pass: `git diff --check`
-- Not-run: PR checks.
-- Not-run: ACA deploy and runtime invariant.
-- Not-run: signed-in browser proof on a flag-enabled tenant P4 route.
+- Pass: PR checks on #5247.
+- Pass: ACA deploy run `29875789646`.
+- Pass: ACA runtime invariant confirmed revision `ca-abarva-web-lab-eastus--m9865cd67`, image digest `sha256:9f9773c15ad6589e2dc018b65a08191cbd995187e0ce55017deb43a51cbdae08`, 100% traffic.
+- Pass: Signed-in Meridian browser proof on P4 route confirmed the contract card renders, the older finder/prepare wall is absent, all P4 contract rows are present, and all non-mutating row selections update without failed network requests.
 
 ## Rollout Plan
 
-Open a PR to `main`, let GitHub checks pass, squash merge, deploy through the repo-owned ACA main deploy workflow, verify the ACA runtime invariant, then run signed-in P4 browser proof.
+Completed through PR #5247, squash merge, ACA main deploy, runtime invariant verification, and signed-in P4 browser proof.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: None in this PR.
-- Approved image digest: Pending ACA deploy.
-- ACA runtime invariant: Pending ACA deploy.
+- Approved image digest: `sha256:9f9773c15ad6589e2dc018b65a08191cbd995187e0ce55017deb43a51cbdae08`.
+- ACA runtime invariant: Confirmed for revision `ca-abarva-web-lab-eastus--m9865cd67` with 100% traffic.
 - Worker image invariant: Not applicable.
 - Feature/env flag update path: Existing `moves_finder_shell_v1`; no flag mutation in this PR.
 - Live signed-in proof required: Yes.
@@ -69,11 +70,15 @@ Fastest rollback is disabling or excluding the affected tenant from `moves_finde
 
 ## Audit Evidence
 
-- PR URL: Pending.
-- Merge SHA: Pending.
-- ACA revision: Pending.
-- Image digest: Pending.
-- Signed-in proof bundle: Pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/5247
+- Merge SHA: `9865cd6740a0dcd0949b09cea17097a0379d22dc`
+- ACA deploy run: https://github.com/abarva-platform/abarva/actions/runs/29875789646
+- ACA revision: `ca-abarva-web-lab-eastus--m9865cd67`
+- Image digest: `sha256:9f9773c15ad6589e2dc018b65a08191cbd995187e0ce55017deb43a51cbdae08`
+- Signed-in proof bundle: `proof/moves-p4-universal-shell-final-2026-07-21`
+  - Screenshot: `meridian-p4-contract-shell-live.png`
+  - Full-page screenshot: `meridian-p4-contract-shell-live-fullpage.png`
+  - Browser proof JSON: `p4-browser-proof.json`
 
 ## Known Gaps
 
