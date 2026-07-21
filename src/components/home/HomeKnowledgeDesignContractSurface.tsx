@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -21,6 +21,10 @@ import type {
   HomeKnowledgeGap,
   HomeKnowledgeRecord,
 } from "@/lib/home/home-knowledge-design-contract";
+import {
+  dimensionRowsSupportPrimaryVisual,
+  resolveHomeDimensionVisualContract,
+} from "@/lib/home/home-dimension-visualization-contract";
 
 type TopTab = "overview" | "gaps" | "usecases" | "proof";
 type DimensionTab = "summary" | "data" | "relationships" | "gaps" | "evidence";
@@ -810,6 +814,8 @@ function DimensionView({
             />
             <MetricTile label="Last Refreshed" value="Jul 2026" />
           </div>
+
+          <DimensionPrimaryVisual dimensionKey={dimension.key} rows={rows} />
 
           <div className="nkh-dashboard-split">
             {insight?.breakdown?.rows?.length ? (
@@ -1741,6 +1747,163 @@ function DimensionVolumeChart({
         </BarChart>
       </ResponsiveContainer>
     </div>
+  );
+}
+
+/**
+ * Governed categorical cross-tab heatmap — the shared renderer behind
+ * `estate_bubble_matrix`, `risk_control_heatmap`, and `value_readiness_matrix`
+ * in home-dimension-visualization-contract.ts. Plots two REAL categorical
+ * fields against each other (count per cell); never invents a numeric score.
+ * Rows whose value for either field is missing or the "Needs evidence"
+ * placeholder are excluded from the grid and reported as a pending count
+ * instead — that gap is usually the more important story than the grid.
+ */
+function CategoricalCrossTabHeatmap({
+  rows,
+  fieldA,
+  fieldB,
+  title,
+}: {
+  rows: HomeKnowledgeRecord[];
+  fieldA: { key: string; label: string };
+  fieldB: { key: string; label: string };
+  title: string;
+}) {
+  const isUnevidenced = (value: string) =>
+    !value || value.trim().toLowerCase() === "needs evidence";
+
+  const evidenced = rows.filter(
+    (row) =>
+      !isUnevidenced(asText(row[fieldA.key])) &&
+      !isUnevidenced(asText(row[fieldB.key])),
+  );
+  const pending = rows.length - evidenced.length;
+
+  const aValues = Array.from(
+    new Set(evidenced.map((row) => asText(row[fieldA.key]))),
+  ).sort();
+  const bValues = Array.from(
+    new Set(evidenced.map((row) => asText(row[fieldB.key]))),
+  ).sort();
+
+  if (!evidenced.length || !aValues.length || !bValues.length) return null;
+
+  function cellCount(a: string, b: string): number {
+    return evidenced.filter(
+      (row) => asText(row[fieldA.key]) === a && asText(row[fieldB.key]) === b,
+    ).length;
+  }
+
+  const maxCount = Math.max(
+    1,
+    ...aValues.flatMap((a) => bValues.map((b) => cellCount(a, b))),
+  );
+
+  function cellFill(count: number): string {
+    if (!count) return "transparent";
+    const intensity = 0.16 + (count / maxCount) * 0.74;
+    return `rgba(21, 127, 116, ${intensity.toFixed(2)})`;
+  }
+
+  return (
+    <div
+      className="nkh-crosstab-heatmap"
+      aria-label={title}
+      data-testid="home-knowledge-crosstab-heatmap"
+    >
+      <div className="nkh-crosstab-head">
+        <strong>{title}</strong>
+        <span>
+          {evidenced.length} of {rows.length} rows evidenced for both{" "}
+          {fieldA.label.toLowerCase()} and {fieldB.label.toLowerCase()}
+          {pending > 0 ? ` · ${pending} pending evidence` : ""}
+        </span>
+      </div>
+      <div
+        className="nkh-crosstab-grid"
+        style={{
+          gridTemplateColumns: `148px repeat(${bValues.length}, minmax(64px, 1fr))`,
+        }}
+      >
+        <div className="nkh-crosstab-corner" />
+        {bValues.map((b) => (
+          <div key={b} className="nkh-crosstab-col-label">
+            {b.replaceAll("_", " ")}
+          </div>
+        ))}
+        {aValues.map((a) => (
+          <Fragment key={a}>
+            <div className="nkh-crosstab-row-label">
+              {a.replaceAll("_", " ")}
+            </div>
+            {bValues.map((b) => {
+              const count = cellCount(a, b);
+              return (
+                <div
+                  key={`${a}-${b}`}
+                  className="nkh-crosstab-cell"
+                  style={{ background: cellFill(count) }}
+                  title={`${a.replaceAll("_", " ")} × ${b.replaceAll("_", " ")}: ${count}`}
+                >
+                  {count || ""}
+                </div>
+              );
+            })}
+          </Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const CROSS_TAB_VISUAL_TYPES = new Set([
+  "estate_bubble_matrix",
+  "footprint_stacked_bar",
+  "risk_control_heatmap",
+  "value_readiness_matrix",
+]);
+
+/**
+ * Looks up this dimension's HomeDimensionVisualizationContract entry and
+ * renders its primary visual when the loaded rows actually carry the
+ * required fields — otherwise renders nothing, leaving the existing
+ * breakdown/EvidenceMix treatment as the only primary content (zero
+ * regression for dimensions without a Phase-1 renderer, or whose data
+ * doesn't support one yet).
+ */
+function DimensionPrimaryVisual({
+  dimensionKey,
+  rows,
+}: {
+  dimensionKey: string;
+  rows: HomeKnowledgeRecord[];
+}) {
+  const contract = resolveHomeDimensionVisualContract(dimensionKey);
+  if (!dimensionRowsSupportPrimaryVisual(contract, rows)) return null;
+  if (!CROSS_TAB_VISUAL_TYPES.has(contract.primaryVisual)) return null;
+
+  const [fieldAKey, fieldBKey] = contract.requiredFields;
+  const fieldA = {
+    key: fieldAKey,
+    label:
+      contract.crossLensFilters.find((f) => f.key === fieldAKey)?.label ??
+      fieldAKey.replaceAll("_", " "),
+  };
+  const fieldB = {
+    key: fieldBKey,
+    label:
+      contract.crossLensFilters.find((f) => f.key === fieldBKey)?.label ??
+      fieldBKey.replaceAll("_", " "),
+  };
+
+  return (
+    <CategoricalCrossTabHeatmap
+      rows={rows}
+      fieldA={fieldA}
+      fieldB={fieldB}
+      title={`${fieldA.label} × ${fieldB.label}`}
+    />
   );
 }
 
@@ -3632,6 +3795,62 @@ const styles = `
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 13px;
   margin-bottom: 14px;
+}
+.nkh-crosstab-heatmap {
+  border: 1px solid #eceae2;
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.nkh-crosstab-head {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 14px;
+}
+.nkh-crosstab-head strong {
+  font: 700 14px var(--serif, serif);
+  color: #161411;
+}
+.nkh-crosstab-head span {
+  font: 400 12px var(--sans);
+  color: #6d675f;
+}
+.nkh-crosstab-grid {
+  display: grid;
+  gap: 4px;
+  overflow-x: auto;
+}
+.nkh-crosstab-corner {
+  min-width: 148px;
+}
+.nkh-crosstab-col-label,
+.nkh-crosstab-row-label {
+  font: 700 10.5px var(--sans);
+  letter-spacing: 0.02em;
+  color: #34302a;
+  text-transform: capitalize;
+}
+.nkh-crosstab-col-label {
+  align-self: end;
+  padding-bottom: 6px;
+  text-align: center;
+}
+.nkh-crosstab-row-label {
+  display: flex;
+  align-items: center;
+  padding-right: 10px;
+}
+.nkh-crosstab-cell {
+  min-height: 40px;
+  border-radius: 6px;
+  border: 1px solid #eceae2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 12px var(--sans);
+  color: #161411;
 }
 .nkh-dashboard-tile,
 .nkh-dashboard-split section {
