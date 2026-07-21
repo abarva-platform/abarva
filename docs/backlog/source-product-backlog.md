@@ -90,13 +90,111 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
 - **Discovered from**: `SOURCE-GUIDEBOOK-001`'s own Known Gaps.
 - **Notes / remaining gaps**: none yet.
 
+### SOURCE-SHELL-001 — Stage header lead-agent label was hardcoded
+
+- **Problem statement**: found while comparing a user-provided Source Event Shell redesign
+  mockup against the live app. The stage header printed "Stage NN · aVa" for every stage,
+  including Transition and Value, contradicting the canvas's own rail note on the same page
+  ("aVa guides steps 1-9 · Atlas takes over for Transition & Value").
+- **User/business impact**: cosmetic but visibly self-contradictory copy on every Source
+  event's Transition and Value stages.
+- **Severity**: P7 (cosmetic)
+- **Workstream**: Workspace UX
+- **Status**: `Runtime Proven` (partial) — merged, deployed, ACA runtime invariant confirmed;
+  the `aVa` branch is live-verified on real production data, the `Atlas` branch is not (no
+  real event in current tenant data has reached Transition/Value — see the release record's
+  Known Gaps).
+- **Dependencies**: none.
+- **Acceptance criteria**: header label derives from `view.stage.key`
+  (`transition`/`value` → Atlas, else aVa) instead of a hardcoded string. Met.
+- **Required tests**: `SourceAnalyticsCanvas.stageHeader.test.tsx` (new) — asserts both
+  branches.
+- **PR**: #5192
+- **Discovered from**: direct comparison against the user's mockup, which correctly showed
+  "STAGE 11 · ATLAS" for Value.
+- **Notes / remaining gaps**: deliberately does not reconcile with the separate, richer
+  `Nexus`/`Sentinel`/`Governance`/`Atlas`/`aVa` per-stage model in `stage-canvas-config.ts`
+  (used by a different, older component) — that's a separate product decision.
+
+### SOURCE-SHELL-002 — Per-file artifact role badge (Authoritative/Evidence)
+
+- **Problem statement**: the mockup showed each Files-tab file tagged `AUTHORITATIVE` or
+  `EVIDENCE` — whether the file is required to gate the stage. Live Source already computed
+  this exact classification (`ArtifactLifecyclePanel`'s Gate-defining/Supporting split) but
+  only showed it in the aggregate quality matrix, not per file.
+- **User/business impact**: a user scanning the Files tab couldn't tell at a glance which
+  files actually matter for gate advancement without cross-referencing the separate matrix
+  panel.
+- **Severity**: P6 (workspace UX / information density)
+- **Workstream**: Workspace UX
+- **Status**: `Runtime Proven` — merged, deployed, ACA runtime invariant confirmed, live
+  signed-in click-through performed against real production data (real `.docx` shows
+  `AUTHORITATIVE`, real `.md`/`.html` renderings of the same memo show `EVIDENCE`).
+- **Dependencies**: none — reuses the existing `specByCode().gateDefining` lookup, no new
+  derivation logic, no schema change.
+- **Acceptance criteria**: `SourceShellFileItem` carries `artifactRole`; `FileCard` renders
+  an `ArtifactRoleBadge`; unknown artifact codes default to `evidence` (fail-safe). Met.
+- **Required tests**:
+  `SourceAnalyticsCanvas.artifactRoleBadge.test.tsx` (new) — functional: real click to open
+  the Files tab, real differing badge output from two real spec codes, real status values,
+  real unknown-code fallback.
+- **PR**: #5195, merged as `5721079099d86bbd611b349177af7ebde619c9eb`.
+- **Discovered from**: direct comparison against the user's mockup.
+- **Notes / remaining gaps**: the Files-tab lifecycle-explainer banner half of the mockup's
+  two-axis pattern was evaluated and found to already exist in substance
+  (`ArtifactLifecyclePanel`'s intro paragraph) — not duplicated with different wording.
+
+### SOURCE-SHELL-003 — Single-event Approvals ledger view
+
+- **Problem statement**: the mockup's "Approvals & advance" page shows one event's full
+  11-stage gate history as a table — named approver role per gate, sequential
+  APPROVED/LOCKED chips. Live `ApprovalsWorkspace` is a cross-event inbox of pending
+  approvals only; the real governance mechanics (server-enforced sequential gates,
+  append-only `source_event_approvals`) already exist, but this per-event table view does
+  not.
+- **User/business impact**: no single place to see one event's full governance history at a
+  glance; must infer state from the cross-event inbox plus each stage's own gate card.
+- **Severity**: P5 (workspace UX / governance visibility)
+- **Workstream**: Approval/authority/lineage controls
+- **Status**: `Proposed` — not started.
+- **Dependencies**: a decision on named-approver-role resolution — real client contacts via
+  `persons`/`person_client_memberships` (same source the Source approval-email work uses)
+  with a static per-archetype role label as fallback, to be confirmed and documented rather
+  than assumed.
+- **Acceptance criteria**: TBD on start — will list explicit criteria before implementation,
+  following the same discipline as `SOURCE-GUIDEBOOK-002`.
+- **Discovered from**: direct comparison against the user's mockup.
+
+### SOURCE-SHELL-004 — Two-track artifact approval (Track A/B)
+
+- **Problem statement**: the mockup's design-contract page specifies that artifact
+  acceptance and the stage gate are two distinct approvals — an authoritative artifact must
+  be explicitly accepted (author, timestamp, rationale, append-only) independent of the gate
+  being armed. No live equivalent exists; today acceptance is inferred from artifact status
+  flags, not recorded as its own action.
+- **User/business impact**: no accountable, auditable record of who accepted a specific
+  artifact as final and why, independent of the separate gate-approval record.
+- **Severity**: P4 (approval/authority/lineage controls)
+- **Workstream**: Approval/authority/lineage controls
+- **Status**: `Proposed` — not started. Requires a real database migration through the
+  governed migration lane (`db-migration-lab.yml`) — the highest-scrutiny category in this
+  repo's governance model.
+- **Dependencies**: schema design using the field list already specified in the mockup's own
+  design-contract page (`artifact_role`, `artifact_origin`, `artifact_state`,
+  `authoritative_version_id`, `supersedes_artifact_id`, `diff_summary`, `drift_status`,
+  `accepted_by`/`accepted_at`, `approval_rationale`, `gate_precondition_status`,
+  `downstream_context_policy`) as the source of truth rather than an invented shape.
+- **Acceptance criteria**: TBD on start — will list explicit criteria including the governed
+  migration plan/apply/evidence sequence before implementation.
+- **Discovered from**: user-directed follow-up after reviewing the mockup's Track A/B
+  prototype; UI copy explicitly must NOT say "Track A"/"Track B" on screen — plain language
+  ("Artifact status"/"Stage gate") per direct user feedback.
+
 ---
 
 ## Ready / in progress
 
-None — the one safe, independent, unblocked item (`SOURCE-GUIDEBOOK-003`) is now
-complete. Remaining Source work either requires authored content (out of scope for an
-agent to fabricate) or is blocked on authenticated test access (`SOURCE-GUIDEBOOK-002`).
+`SOURCE-SHELL-003` and `SOURCE-SHELL-004` are next, in that order — see entries above.
 
 ## Blocked
 

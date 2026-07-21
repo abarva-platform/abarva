@@ -42,7 +42,7 @@ if (typeof global.ReadableStream === "undefined") {
 // FinderShellErrorBoundary would (correctly) fall back to flag-off — which
 // is exactly what we want for every existing test in this file (flag-off
 // parity). The flag-on assertions below override this mock per-test.
-const mockUseFeature = jest.fn(() => false);
+const mockUseFeature = jest.fn<boolean, [string]>(() => false);
 jest.mock("@/lib/features/use-feature", () => ({
   useFeature: (key: string) => mockUseFeature(key),
 }));
@@ -1520,5 +1520,298 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
     expect((textarea as HTMLTextAreaElement).value).toBe("");
+  });
+
+  describe("MOVES-UI-001 Steps two-column view (moves_finder_shell_v1)", () => {
+    it("flag off: renders no two-column steps view, and the legacy horizontal stepper still drives substep navigation", () => {
+      mockUseFeature.mockImplementation(() => false);
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Understand Current State",
+          })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(screen.queryByTestId("mxw-finder-steps")).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("tablist", { name: "Phase steps" }),
+      ).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("tab", { name: /Upload & Review/i }));
+      expect(
+        screen.getByRole("heading", { name: "Evidence checklist" }),
+      ).toBeInTheDocument();
+    });
+
+    it("flag on: renders the two-column Steps view sourced only from getPhaseCaptureSections/phaseCaptureValues — no fabricated section names", () => {
+      mockUseFeature.mockImplementation(() => true);
+      const move = makeMove({
+        currentPhase: 2,
+        phaseLabel: "P2 Understand Current State",
+      });
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={move}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const menu = screen.getByRole("navigation", { name: "Phase steps" });
+      // Every real P2 capture-section label appears — nothing invented.
+      [
+        "Current-state findings",
+        "Baseline metrics",
+        "Gaps / root causes",
+        "Process handoffs",
+        "Data quality / governance",
+        "Evidence confidence",
+        "Recommendation",
+      ].forEach((label) => {
+        expect(within(menu).getByText(label)).toBeInTheDocument();
+      });
+      // The real substeps (same array driving the legacy stepper) appear
+      // under "Workflow" — not a fabricated category.
+      expect(within(menu).getByText("Upload & Review")).toBeInTheDocument();
+      expect(within(menu).getByText("Approve & Build")).toBeInTheDocument();
+      // The default detail pane (no section selected) is the exact same
+      // PhaseBody render the legacy stepper uses for the current substep.
+      expect(
+        screen.getByRole("heading", { name: "What this phase needs" }),
+      ).toBeInTheDocument();
+    });
+
+    it("clicking a phase-input row updates the detail pane to that section's real captured value; clicking a workflow row restores the real substep content", () => {
+      mockUseFeature.mockImplementation(() => true);
+      const move = makeMove({
+        currentPhase: 2,
+        phaseLabel: "P2 Understand Current State",
+      });
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={move}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const menu = screen.getByRole("navigation", { name: "Phase steps" });
+      fireEvent.click(
+        within(menu).getByRole("button", { name: /Current-state findings/i }),
+      );
+
+      // Detail pane really switched: heading + description now visible, and
+      // the value shown is the section's real captured value (traces to the
+      // real move.name — not invented text).
+      expect(
+        screen.getByRole("heading", { name: "Current-state findings" }),
+      ).toBeInTheDocument();
+      expect(
+        (screen.getByLabelText("Current-state findings") as HTMLTextAreaElement)
+          .value,
+      ).toContain(move.name);
+      expect(
+        screen.queryByRole("heading", { name: "What this phase needs" }),
+      ).not.toBeInTheDocument();
+
+      // Now click a real Workflow (substep) row — the detail pane must show
+      // that substep's real, already-existing PhaseBody content again.
+      fireEvent.click(
+        within(menu).getByRole("button", { name: /Upload & Review/i }),
+      );
+      expect(
+        screen.getByRole("heading", { name: "Evidence checklist" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("heading", { name: "Current-state findings" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("citation toggle: absent by default (no captured source), then appears and actually reveals/hides the source caption once a real source is captured", () => {
+      mockUseFeature.mockImplementation(() => true);
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Understand Current State",
+          })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const menu = screen.getByRole("navigation", { name: "Phase steps" });
+      fireEvent.click(
+        within(menu).getByRole("button", { name: /Baseline metrics/i }),
+      );
+
+      // The auto-populated default value is free text, not structured JSON,
+      // so parseDiagnosisFacts yields a single source-less fact — the
+      // citation toggle must not render for it. This is the explicit
+      // "absent, not fabricated" case.
+      expect(screen.getByText("Captured note")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /Show source for/i }),
+      ).not.toBeInTheDocument();
+
+      // Capture a real structured fact with a source (as
+      // diagnosis-facts.ts's own contract supports) via the same textarea
+      // the legacy PhaseCaptureEditor already uses to write this value.
+      fireEvent.change(screen.getByLabelText("Baseline metrics"), {
+        target: {
+          value: JSON.stringify([
+            {
+              metric: "Cycle time",
+              value: "18.4 days",
+              source: "Intake work queue export",
+            },
+          ]),
+        },
+      });
+
+      expect(screen.getByText("Cycle time")).toBeInTheDocument();
+      const toggle = screen.getByRole("button", {
+        name: "Show source for Cycle time",
+      });
+      expect(
+        screen.queryByText("Intake work queue export"),
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(toggle);
+      expect(screen.getByText("Intake work queue export")).toBeInTheDocument();
+
+      fireEvent.click(toggle);
+      expect(
+        screen.queryByText("Intake work queue export"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("upload-type workflow step: the real file input reachable from the two-column detail pane invokes the same existing upload wiring (no new handler built)", async () => {
+      mockUseFeature.mockImplementation(() => true);
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Understand Current State",
+          })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const menu = screen.getByRole("navigation", { name: "Phase steps" });
+      // P2's real "current" substep is literally "Upload & Review" — the
+      // only upload-type step reachable for this phase's real data.
+      fireEvent.click(
+        within(menu).getByRole("button", { name: /Upload & Review/i }),
+      );
+
+      const input = screen.getByLabelText(
+        "Upload P2 files",
+      ) as HTMLInputElement;
+      fireEvent.change(input, {
+        target: {
+          files: [
+            new File(["baseline"], "baseline-extract.csv", {
+              type: "text/csv",
+            }),
+          ],
+        },
+      });
+
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/artifacts/upload",
+          expect.objectContaining({ method: "POST" }),
+        );
+      });
+      await waitFor(() => {
+        expect(screen.getByText("baseline-extract.csv")).toBeInTheDocument();
+      });
+    });
+
+    it("'Coming up' card: collapsed by default, expands/collapses the real readiness-pack chips in the DOM, and is bound only to real evidence-need packets", () => {
+      mockUseFeature.mockImplementation(() => true);
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[
+            {
+              moveId: "37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4",
+              phase: 2,
+              artifactType: "solution_design",
+              evidenceSlot: "Systems inventory",
+              familyId: "systems_inventory",
+              priority: "required",
+              ownerSource: "Client owner / evidence steward",
+              acceptedFormats: ["XLSX"],
+              exampleTemplate: "Systems landscape extract",
+              exampleContent: [],
+              whyItMatters: "P3 solution options need the real systems map.",
+              blockedArtifacts: [
+                {
+                  artifactType: "solution_options",
+                  title: "Solution Options Canvas",
+                  phase: 3,
+                  reason: "Systems inventory is needed to scope integration.",
+                },
+              ],
+              canDraftBoundary: {
+                canDraft: false,
+                canDraftLabel: "",
+                cannotDraftLabel: "",
+              },
+              preliminaryGenerationCaveat: null,
+              waiverOption: null,
+              nextAction: "Upload the systems landscape extract.",
+              status: "missing",
+              evidenceTitles: [],
+            },
+          ]}
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Understand Current State",
+          })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const comingUp = screen.getByTestId("mxw-finder-comingup");
+      const toggle = within(comingUp).getByRole("button", {
+        name: "What P3 Choose the Approach will need",
+      });
+      expect(toggle).toHaveAttribute("aria-expanded", "false");
+      expect(
+        screen.queryByTestId("mxw-finder-comingup-chips"),
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(toggle);
+      expect(toggle).toHaveAttribute("aria-expanded", "true");
+      expect(
+        within(screen.getByTestId("mxw-finder-comingup-chips")).getByText(
+          "Systems inventory",
+        ),
+      ).toBeInTheDocument();
+
+      fireEvent.click(toggle);
+      expect(toggle).toHaveAttribute("aria-expanded", "false");
+      expect(
+        screen.queryByTestId("mxw-finder-comingup-chips"),
+      ).not.toBeInTheDocument();
+    });
   });
 });
