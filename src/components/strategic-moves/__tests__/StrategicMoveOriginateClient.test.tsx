@@ -9,7 +9,6 @@ import {
   render,
   screen,
   waitFor,
-  within,
 } from "@testing-library/react";
 import { TextDecoder } from "util";
 import { StrategicMoveOriginateClient } from "../StrategicMoveOriginateClient";
@@ -20,18 +19,6 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: mockPush,
   }),
-}));
-
-// MOVES-UI-004: same useFeature() mock pattern as
-// MovePhaseExplorer.finder-shell.test.tsx. Defaults to `false` in
-// beforeEach below so every pre-existing test in this file keeps
-// asserting the flag-off (current) rendering, deterministically rather
-// than relying on the error-boundary fallback (no ClerkProvider in this
-// render tree).
-const mockUseFeature = jest.fn<boolean, [string]>();
-
-jest.mock("@/lib/features/use-feature", () => ({
-  useFeature: (key: string) => mockUseFeature(key),
 }));
 
 function makeMockBody(text: string) {
@@ -115,13 +102,16 @@ function sendDockMessage(message: string) {
 }
 
 function selectP0Tab(step: number) {
-  const label =
-    step <= 2
-      ? /frame the bet/i
-      : step <= 4
-        ? /govern the move/i
-        : /prove readiness/i;
-  fireEvent.click(screen.getByRole("tab", { name: label }));
+  const labels = [
+    /business problem or opportunity/i,
+    /transformation pattern/i,
+    /executive sponsor/i,
+    /move scope and guardrails/i,
+    /value hypothesis/i,
+    /evidence families to collect/i,
+    /evidence families to collect/i,
+  ];
+  fireEvent.click(screen.getByRole("button", { name: labels[step - 1] }));
 }
 
 function submitP0Section(container: HTMLElement, step: number, value: string) {
@@ -131,13 +121,12 @@ function submitP0Section(container: HTMLElement, step: number, value: string) {
   ) as HTMLTextAreaElement | null;
   expect(input).not.toBeNull();
   fireEvent.change(input!, { target: { value } });
-  const section = container.querySelector(
-    `#orig-canvas-brief-section-${step}`,
-  ) as HTMLElement | null;
-  expect(section).not.toBeNull();
   fireEvent.click(
-    within(section!).getByRole("button", {
-      name: /submit section|update section/i,
+    screen.getByRole("button", {
+      name:
+        step === 7
+          ? /submit readiness|update readiness/i
+          : /submit section|update section/i,
     }),
   );
 }
@@ -151,7 +140,6 @@ describe("StrategicMoveOriginateClient", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFetchWithChatArtifact("");
-    mockUseFeature.mockReturnValue(false);
   });
 
   it("requires all seven Move brief sections before promotion", async () => {
@@ -204,10 +192,13 @@ describe("StrategicMoveOriginateClient", () => {
     );
     expect(screen.queryByText(/^Ava$/)).not.toBeInTheDocument();
 
-    const promoteButton = screen.getByRole("button", {
-      name: /promote to p1 charter/i,
+    fireEvent.click(
+      screen.getByRole("button", { name: /approve and build the charter/i }),
+    );
+    const approveButton = screen.getByRole("button", {
+      name: /^approve and build$/i,
     });
-    expect(promoteButton).toBeDisabled();
+    expect(approveButton).toBeDisabled();
     expect(screen.getAllByText("0 of 7")[0]).toBeInTheDocument();
     expect(
       screen.getByText(/Describe the business problem or opportunity/i),
@@ -220,13 +211,13 @@ describe("StrategicMoveOriginateClient", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText("4 of 7 required sections complete"),
+        screen.getAllByText(/4 of 7 complete/i)[0],
       ).toBeInTheDocument();
     });
 
-    expect(promoteButton).toBeDisabled();
+    expect(approveButton).toBeDisabled();
     expect(
-      screen.getByText("Complete all 7 brief sections to promote."),
+      screen.getByText(/finish the remaining P0 answers/i),
     ).toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/chat/agent",
@@ -310,7 +301,7 @@ describe("StrategicMoveOriginateClient", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Ready to promote")).toBeInTheDocument();
+      expect(screen.getByText(/All steps complete/i)).toBeInTheDocument();
     });
     selectP0Tab(3);
     expect(
@@ -319,8 +310,11 @@ describe("StrategicMoveOriginateClient", () => {
     expect(
       screen.queryByText("Dr. Anita Krishnamurthy"),
     ).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: /approve and build the charter/i }),
+    );
     expect(
-      screen.getByRole("button", { name: /promote to p1 charter/i }),
+      screen.getByRole("button", { name: /^approve and build$/i }),
     ).toBeEnabled();
   });
 
@@ -337,7 +331,7 @@ describe("StrategicMoveOriginateClient", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("Ready to promote")).toBeInTheDocument();
+      expect(screen.getByText(/All steps complete/i)).toBeInTheDocument();
     });
     expect(
       screen.getByDisplayValue("Kyriba Treasury Controls Proof"),
@@ -346,14 +340,17 @@ describe("StrategicMoveOriginateClient", () => {
     expect(
       screen.getByDisplayValue("CFO and Treasurer, with CIO support."),
     ).toBeInTheDocument();
-    selectP0Tab(1);
+    selectP0Tab(2);
     expect(
       screen.getAllByText(
         "Treasury modernization and finance-controls move.",
       )[0],
     ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: /approve and build the charter/i }),
+    );
     expect(
-      screen.getByRole("button", { name: /promote to p1 charter/i }),
+      screen.getByRole("button", { name: /^approve and build$/i }),
     ).toBeEnabled();
   });
 
@@ -388,8 +385,8 @@ describe("StrategicMoveOriginateClient", () => {
       "Contact Center Agent Assist — agent augmentation for member-service operations.",
       "Chief Operating Officer, with CDIO as data/platform co-sponsor.",
       "Claims status, prior authorization status, benefits and eligibility, CRM history, and agent knowledge lookup.",
-      "Call metrics, CRM history, claims samples, prior authorization samples, benefits and eligibility samples, systems inventory, controls, and value assumptions.",
       "Reduce avoidable handle time, repeat contact, transfers, and manual rework while improving answer consistency.",
+      "Call metrics, CRM history, claims samples, prior authorization samples, benefits and eligibility samples, systems inventory, controls, and value assumptions.",
       "CRM, claims, eligibility, prior authorization, knowledge, identity, audit, data quality, and PHI controls need validation.",
     ];
 
@@ -397,9 +394,12 @@ describe("StrategicMoveOriginateClient", () => {
       submitP0Section(container, index + 1, value);
     });
 
-    expect(screen.getByText("Ready to promote")).toBeInTheDocument();
+    expect(screen.getByText(/All steps complete/i)).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: /approve and build the charter/i }),
+    );
     expect(
-      screen.getByRole("button", { name: /promote to p1 charter/i }),
+      screen.getByRole("button", { name: /^approve and build$/i }),
     ).toBeEnabled();
     expect(fetchMock).not.toHaveBeenCalledWith(
       "/api/chat/agent",
@@ -408,7 +408,7 @@ describe("StrategicMoveOriginateClient", () => {
 
     await act(async () => {
       fireEvent.click(
-        screen.getByRole("button", { name: /promote to p1 charter/i }),
+        screen.getByRole("button", { name: /^approve and build$/i }),
       );
     });
 
@@ -473,8 +473,8 @@ describe("StrategicMoveOriginateClient", () => {
       "Contact Center Agent Assist.",
       "COO.",
       "Member-service call center workflows.",
-      "Call metrics and CRM history.",
       "Reduce handle time and repeat contact.",
+      "Call metrics and CRM history.",
       "CRM, claims, eligibility, and PHI controls need validation.",
     ].forEach((value, index) => {
       submitP0Section(container, index + 1, value);
@@ -482,7 +482,7 @@ describe("StrategicMoveOriginateClient", () => {
 
     selectP0Tab(1);
     fireEvent.change(
-      screen.getByLabelText(/what should this move be called/i),
+      screen.getByLabelText(/move title/i),
       {
         target: {
           value:
@@ -491,9 +491,12 @@ describe("StrategicMoveOriginateClient", () => {
       },
     );
 
+    fireEvent.click(
+      screen.getByRole("button", { name: /approve and build the charter/i }),
+    );
     await act(async () => {
       fireEvent.click(
-        screen.getByRole("button", { name: /promote to p1 charter/i }),
+        screen.getByRole("button", { name: /^approve and build$/i }),
       );
     });
 
@@ -507,26 +510,8 @@ describe("StrategicMoveOriginateClient", () => {
     );
   });
 
-  // MOVES-UI-004 — extend the Finder-shell visual pass to the P0
-  // Origination main content. Mirrors MovePhaseExplorer.finder-shell.test
-  // .tsx's flag-off/flag-on split.
-  describe("moves_finder_shell_v1 gating (MOVES-UI-004)", () => {
-    it("renders byte-identical current styling when the flag is off", () => {
-      mockUseFeature.mockReturnValue(false);
-      const { container } = render(
-        <StrategicMoveOriginateClient tenantName="Apex Retail" />,
-      );
-
-      const page = container.querySelector("#orig-page");
-      expect(page).not.toBeNull();
-      // Exactly the pre-existing class, no finderShellOn appended.
-      expect(page).toHaveClass("page");
-      expect(page?.className).toBe("page");
-      expect(page).not.toHaveClass("finderShellOn");
-    });
-
-    it("adds the finderShellOn ancestor class and restyled header when the flag is on", () => {
-      mockUseFeature.mockReturnValue(true);
+  describe("P0 HTML contract shell", () => {
+    it("renders the universal Moves shell structure for origination", () => {
       const { container } = render(
         <StrategicMoveOriginateClient tenantName="Lakeshore Holdings" />,
       );
@@ -534,40 +519,51 @@ describe("StrategicMoveOriginateClient", () => {
       const page = container.querySelector("#orig-page");
       expect(page).not.toBeNull();
       expect(page).toHaveClass("page");
-      expect(page).toHaveClass("finderShellOn");
-
-      // P0 header + tab strip still render their content and classes;
-      // this is a CSS-token pass only, no structural change.
-      expect(screen.getByText("Shape the Move brief")).toBeInTheDocument();
-      expect(screen.getByText("P0 · Originate")).toBeInTheDocument();
       expect(
-        screen.getByRole("tab", { name: /frame the bet/i }),
+        screen.getByRole("complementary", {
+          name: /move journey: phase 0/i,
+        }),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Phases")).toBeInTheDocument();
+      expect(screen.getByText("Workspace")).toBeInTheDocument();
+      expect(screen.getByText("Files & Evidence")).toBeInTheDocument();
+      expect(screen.getByText("Phase Intelligence")).toBeInTheDocument();
+      expect(screen.getByText("Approvals")).toBeInTheDocument();
+      expect(screen.getAllByText("P0 Originate")[0]).toBeInTheDocument();
+      expect(screen.getByText("P0 · aVa")).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /steps/i }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("tab", { name: /govern the move/i }),
+        screen.getByRole("tab", { name: /files/i }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("tab", { name: /prove readiness/i }),
+        screen.getByRole("tab", { name: /intelligence/i }),
       ).toBeInTheDocument();
-
-      // Question cards still render under the flag-gated ancestor —
-      // the wizard structure itself is unchanged, only nested under
-      // .finderShellOn does the CSS module now restyle these classes.
       expect(
-        screen.getByText(/What business problem or opportunity/i),
+        screen.getByRole("button", {
+          name: /business problem or opportunity/i,
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", {
+          name: /approve and build the charter/i,
+        }),
       ).toBeInTheDocument();
     });
 
-    it("does not change wizard behavior when the flag is on (promotion still requires all 7 sections)", async () => {
-      mockUseFeature.mockReturnValue(true);
+    it("keeps P0 promotion blocked until all 7 sections are captured", async () => {
       const { container } = render(
         <StrategicMoveOriginateClient tenantName="Meridian Health" />,
       );
 
-      const promoteButton = screen.getByRole("button", {
-        name: /promote to p1 charter/i,
+      fireEvent.click(
+        screen.getByRole("button", { name: /approve and build the charter/i }),
+      );
+      const approveButton = screen.getByRole("button", {
+        name: /^approve and build$/i,
       });
-      expect(promoteButton).toBeDisabled();
+      expect(approveButton).toBeDisabled();
 
       submitP0Section(
         container,
@@ -575,9 +571,9 @@ describe("StrategicMoveOriginateClient", () => {
         "Members experience long calls because agents navigate too many systems.",
       );
 
-      expect(promoteButton).toBeDisabled();
+      expect(approveButton).toBeDisabled();
       expect(
-        screen.getByText("1 of 7 required sections complete"),
+        screen.getAllByText(/1 of 7 complete/i)[0],
       ).toBeInTheDocument();
     });
   });
