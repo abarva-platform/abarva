@@ -2417,6 +2417,14 @@ function RelationshipTopologyGraph({
           nodesConnectable={false}
           elementsSelectable={false}
           proOptions={{ hideAttribution: true }}
+          onError={(code, message) => {
+            console.error("[nkh-topology react-flow error]", code, message, {
+              nodeCount: topology.nodes.length,
+              edgeCount: topology.edges.length,
+              firstEdge: topology.edges[0],
+              firstTwoNodeIds: topology.nodes.slice(0, 2).map((n) => n.id),
+            });
+          }}
         >
           <Background gap={18} />
           <Controls showInteractive={false} />
