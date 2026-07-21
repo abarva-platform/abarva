@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -45,20 +45,26 @@ Moves P3 Choose the Approach now uses the same contract-shell pattern proven on 
 - Pass: `npm run build`
 - Pass: `npm run release:check`
 - Pass: `git diff --check`
-- Not-run: PR checks.
-- Not-run: ACA deploy and runtime invariant.
-- Not-run: signed-in browser proof on a flag-enabled tenant P3 route.
+- Pass: PR #5243 checks passed in GitHub.
+- Pass: ACA deploy run `29874391399` completed successfully for merge SHA `0c65c74254836c64e10b4f5d13bd763b1ed9091a`.
+- Pass: ACA runtime invariant confirmed on `ca-abarva-web-lab-eastus--m0c65c742` with 100% traffic and digest `sha256:e322d727559e596e309d24745a77ab3161a7b4911a6250e6d068afd77824e02c`.
+- Pass: signed-in Meridian browser proof on `/strategic-moves/cd51e4fe-b5c4-4024-bc46-73afaff4e4b7/phase/3?proof=0c65c742`.
+  - Contract card present.
+  - Older finder prepare wall absent.
+  - P3 header, Solution approach, Compare Options, Record Decision, Design Canvas, and Approve & Build present.
+  - No-mutation clicks across P3 rows updated the right pane.
+  - No browser console errors after filtering expected Clerk/dev and RSC prefetch abort noise.
 
 ## Rollout Plan
 
-Open a PR to `main`, let GitHub checks pass, squash merge, deploy through the repo-owned ACA main deploy workflow, verify the ACA runtime invariant, then run signed-in P3 browser proof.
+Complete. PR #5243 was squash-merged, deployed through the repo-owned ACA main workflow, runtime-invariant checked, and browser-proven on a signed-in Meridian P3 route.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: None in this PR.
-- Approved image digest: Pending ACA deploy.
-- ACA runtime invariant: Pending ACA deploy.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:e322d727559e596e309d24745a77ab3161a7b4911a6250e6d068afd77824e02c`
+- ACA runtime invariant: Confirmed, latest ready revision and 100% traffic revision both `ca-abarva-web-lab-eastus--m0c65c742`.
 - Worker image invariant: Not applicable.
 - Feature/env flag update path: Existing `moves_finder_shell_v1`; no flag mutation in this PR.
 - Live signed-in proof required: Yes.
@@ -69,11 +75,15 @@ Fastest rollback is disabling or excluding the affected tenant from `moves_finde
 
 ## Audit Evidence
 
-- PR URL: Pending.
-- Merge SHA: Pending.
-- ACA revision: Pending.
-- Image digest: Pending.
-- Signed-in proof bundle: Pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/5243
+- Merge SHA: `0c65c74254836c64e10b4f5d13bd763b1ed9091a`
+- ACA deploy run: https://github.com/abarva-platform/abarva/actions/runs/29874391399
+- ACA revision: `ca-abarva-web-lab-eastus--m0c65c742`
+- Image digest: `sha256:e322d727559e596e309d24745a77ab3161a7b4911a6250e6d068afd77824e02c`
+- Signed-in proof bundle: `proof/moves-p3-universal-shell-final-2026-07-21`
+  - `meridian-p3-contract-shell-live.png`
+  - `meridian-p3-contract-shell-live-fullpage.png`
+  - `p3-browser-proof.json`
 
 ## Known Gaps
 
