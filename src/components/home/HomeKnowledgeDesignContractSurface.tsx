@@ -16,6 +16,7 @@ import {
   Background,
   Controls,
   MarkerType,
+  Position,
   ReactFlow,
   type Edge as FlowEdge,
   type Node as FlowNode,
@@ -2288,17 +2289,28 @@ export function buildRelationshipTopology(edges: HomeRelationshipEdge[]): {
     connectedSources.has(name),
   );
 
+  // dagre lays these out left-to-right (rankdir: "LR"), but React Flow's
+  // default node handles point Top (target) / Bottom (source) -- meant for
+  // vertical flows. Every official React Flow + dagre example sets
+  // sourcePosition/targetPosition explicitly to match the layout direction;
+  // omitting this is what silently dropped every edge in the prior version
+  // of this component (nodes and the marker definition rendered, but zero
+  // edge paths -- confirmed live on production).
   const nodes: FlowNode[] = [
     ...finalSources.map((name) => ({
       id: `source:${name}`,
       data: { label: truncateNodeLabel(name) },
       position: { x: 0, y: 0 },
+      sourcePosition: Position.Right,
+      targetPosition: Position.Left,
       className: "nkh-flow-node nkh-flow-node-source",
     })),
     ...Array.from(topTargetSet).map((name) => ({
       id: `target:${name}`,
       data: { label: truncateNodeLabel(name) },
       position: { x: 0, y: 0 },
+      sourcePosition: Position.Right,
+      targetPosition: Position.Left,
       className: "nkh-flow-node nkh-flow-node-target",
     })),
   ];

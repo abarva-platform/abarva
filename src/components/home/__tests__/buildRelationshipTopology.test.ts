@@ -1,3 +1,5 @@
+import { Position } from "@xyflow/react";
+
 import { buildRelationshipTopology } from "../HomeKnowledgeDesignContractSurface";
 import type { HomeRelationshipEdge } from "@/lib/home/derive-relationship-edges";
 
@@ -113,5 +115,15 @@ describe("buildRelationshipTopology", () => {
     // Not every node should be stacked at the exact same coordinate.
     const uniquePositions = new Set(positions.map((p) => `${p.x},${p.y}`));
     expect(uniquePositions.size).toBeGreaterThan(1);
+  });
+
+  it("sets sourcePosition/targetPosition matching the LR dagre layout on every node (regression: omitting this silently drops every edge -- React Flow's default handles point Top/Bottom, for vertical flows, confirmed live: nodes and the marker def rendered, zero edge paths)", () => {
+    const edges: HomeRelationshipEdge[] = [edge("A", "X")];
+    const result = buildRelationshipTopology(edges);
+    expect(result.nodes.length).toBeGreaterThan(0);
+    for (const node of result.nodes) {
+      expect(node.sourcePosition).toBe(Position.Right);
+      expect(node.targetPosition).toBe(Position.Left);
+    }
   });
 });
