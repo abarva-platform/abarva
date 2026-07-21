@@ -30,7 +30,7 @@ The Start a Move page now better matches the rest of the Moves phase shell. P0 k
 
 - `src/components/strategic-moves/StrategicMoveOriginateClient.tsx`
 - `src/components/strategic-moves/StrategicMoves.module.css`
-- PR URL: Pending
+- PR URL: https://github.com/abarva-platform/abarva/pull/5213
 - Commit SHA: Pending
 
 ## QA / Validation
@@ -62,7 +62,7 @@ Revert the PR and redeploy through the repo-owned ACA main deploy workflow. Sinc
 
 ## Audit Evidence
 
-- PR URL: Pending
+- PR URL: https://github.com/abarva-platform/abarva/pull/5213
 - Merge SHA: Pending
 - ACA revision: Pending
 - Signed-in screenshot: Pending
