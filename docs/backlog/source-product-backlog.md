@@ -57,41 +57,46 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
 - **Discovered from**: a proposal for consulting-grade Source artifact governance,
   referencing Moves' Workshop Facilitator Guide pattern.
 - **Notes / remaining gaps**: only the Strategy stage has authored content (the other 10
-  stages correctly hide the tab, not show it empty); guidebook section bodies render as
-  plain pre-wrapped text, not parsed Markdown (tracked as `SOURCE-GUIDEBOOK-003`); no
-  authoring/edit UI exists yet.
+  stages correctly hide the tab, not show it empty); no authoring/edit UI exists yet.
+
+### SOURCE-GUIDEBOOK-003 — Render guidebook section bodies as real Markdown
+
+- **Problem statement**: `SourceStageGuidebookSection.body` is typed and documented as
+  Markdown, but `GuidebookWorkspace` in `SourceAnalyticsCanvas.tsx` rendered it with
+  `whiteSpace: 'pre-wrap'` plain text — the seeded Strategy agenda's numbered list
+  showed literal `1. `/`2. ` prefixes instead of a real ordered list.
+- **User/business impact**: Cosmetic (content-fidelity), not a defect.
+- **Severity**: P7 (cosmetic / content-quality)
+- **Workstream**: Workspace UX
+- **Status**: `Deployed` — real Markdown rendering via `react-markdown` +
+  `remark-gfm` + `rehype-sanitize` (already-bundled dependencies, no new one added).
+- **Dependencies**: none.
+- **Acceptance criteria**: met — real `<ol>`/`<li>` output confirmed via
+  `renderToStaticMarkup` against the real library and the real seeded agenda content.
+- **Required tests**:
+  `src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.guidebook.test.tsx`
+  — asserts rendering delegates to `ReactMarkdown` (this repo's global Jest mock for
+  `react-markdown` is a hard passthrough, so the committed test can only guard against
+  regressing back to plain text; real markup rendering was verified separately, see the
+  release record).
+- **PR**: #5180
+- **Merge SHA**: `7888cab375fde5224bb03f6b9b7100a46ef66deb`
+- **Deploy run**: [aca-main-deploy #29793844800](https://github.com/abarva-platform/abarva/actions/runs/29793844800),
+  `success`
+- **Runtime proof**: ACA revision `ca-abarva-web-lab-eastus--m7888cab3` confirmed
+  matching the deploy digest via `az containerapp show`. Live signed-in
+  server-to-database rendering not proven — same open item as `SOURCE-GUIDEBOOK-002`.
+- **Release record**: `docs/releases/records/2026-07-20-source-guidebook-markdown-rendering.md`
+- **Discovered from**: `SOURCE-GUIDEBOOK-001`'s own Known Gaps.
+- **Notes / remaining gaps**: none yet.
 
 ---
 
 ## Ready / in progress
 
-### SOURCE-GUIDEBOOK-003 — Render guidebook section bodies as real Markdown
-
-- **Problem statement**: `SourceStageGuidebookSection.body` is typed and documented as
-  Markdown, but `GuidebookWorkspace` in `SourceAnalyticsCanvas.tsx` renders it with
-  `whiteSpace: 'pre-wrap'` plain text — numbered lists, emphasis, etc. in authored
-  content will not render as intended.
-- **User/business impact**: Cosmetic today (the one authored guidebook's content
-  happens to read acceptably as plain text), but will degrade as more stages get
-  authored content with real Markdown structure (headings, lists).
-- **Severity**: P7 (cosmetic / content-quality, not a defect)
-- **Workstream**: Workspace UX
-- **Status**: `Ready` — safe, independent, unblocked; no schema/migration/design
-  decision required.
-- **Dependencies**: none.
-- **Acceptance criteria**: guidebook section bodies render real Markdown (at minimum:
-  paragraphs, numbered/bulleted lists, emphasis) using the same rendering approach
-  already used elsewhere in this codebase (avoid introducing a new Markdown dependency
-  if an existing one is already in the bundle for another surface); the existing
-  guidebook render tests continue to pass with updated assertions for the new output
-  shape.
-- **Required tests**: extend
-  `src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.guidebook.test.tsx`
-  with a case asserting a authored list/emphasis renders as real markup, not literal
-  `1. ...`/`**...**` text.
-- **PR**: not yet opened.
-- **Discovered from**: `SOURCE-GUIDEBOOK-001`'s own Known Gaps.
-- **Notes / remaining gaps**: none yet.
+None — the one safe, independent, unblocked item (`SOURCE-GUIDEBOOK-003`) is now
+complete. Remaining Source work either requires authored content (out of scope for an
+agent to fabricate) or is blocked on authenticated test access (`SOURCE-GUIDEBOOK-002`).
 
 ## Blocked
 
