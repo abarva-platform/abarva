@@ -90,7 +90,8 @@ export type FeatureFlagKey =
   | "tower_cxo_claude_story_blocks"
   | "moves_phase_workspace_v2"
   | "moves_pattern_assembly"
-  | "moves_ava_chat_hardening";
+  | "moves_ava_chat_hardening"
+  | "moves_finder_shell_v1";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -113,6 +114,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
       "Moves phase workspace: AbarVa assembles candidate solution options/tradeoffs/risks via Claude (audited egress) from a governed packet, then validates each item (evidence_backed / needs_confirmation / not_allowed). Claude never invents baselines, value, evidence, readiness, or approvals — the validator labels any unbacked number needs_confirmation and any overreach not_allowed; on error it falls back to the deterministic feed-forward. Requires moves_phase_workspace_v2 + ANTHROPIC_API_KEY. Tenant opt-in; default off. Lakeshore proved first (2026-07-08); SkyHarbor added 2026-07-08 for cross-tenant proof (not overfit to Lakeshore's Legal Contract Intake use case). Env: ABARVA_FEATURE_MOVES_PATTERN_ASSEMBLY_TENANTS.",
     policy: "tenant",
     includeTenants: ["lakeshore", "skyharbor"],
+  },
+  {
+    key: "moves_finder_shell_v1",
+    summary:
+      "2026-07-20: Finder-style visual rebuild of the Moves phase-workspace rail (MovePhaseExplorer) — grouped icon rail (Phases group, then Workspace group), collapse/expand to an icon-only rail, a soft-blue selection tint on the active row, connector-line tree styling, an amber 'AI-draft not yet final' dot on phase rows with a pending authoritative draft, and an amber blocked-reason subtitle under a blocked phase row. Purely presentational chrome — binds only to the same phase-tally/gate props the current rail already receives; no new data fetching, no schema or API changes. When off, the rail renders byte-for-byte identical to the existing MovePhaseExplorer. Not yet cross-tenant proven; default off for every tenant. Env: ABARVA_FEATURE_MOVES_FINDER_SHELL_V1_TENANTS.",
+    policy: "tenant",
+    includeTenants: [],
   },
   {
     key: "moves_phase_workspace_v2",
