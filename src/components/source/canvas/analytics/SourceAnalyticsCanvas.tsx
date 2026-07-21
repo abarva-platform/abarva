@@ -50,6 +50,7 @@ import type {
   AvaLauncherView,
   StageAnalyticsView,
   StepInsightView,
+  VendorCoverageView,
 } from "./view-model";
 
 interface SourceAnalyticsCanvasProps {
@@ -876,6 +877,7 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
           step={activeStep}
           eventId={view.event.id}
           stageKey={view.stage.key}
+          stepInsight={view.intelligence.stepInsight}
         />
       </div>
     </section>
@@ -886,10 +888,12 @@ function StepDetail({
   step,
   eventId,
   stageKey,
+  stepInsight,
 }: {
   step: SourceEventShellView["stage"]["activeStep"];
   eventId: string;
   stageKey: SourceStageKey;
+  stepInsight: SourceEventShellView["intelligence"]["stepInsight"];
 }) {
   if (!step) return null;
 
@@ -934,6 +938,19 @@ function StepDetail({
   }
 
   if (step.type === "provide") {
+    // Real per-vendor lever-coverage data, when it exists — never a
+    // fabricated file/requirements-completeness table. Gated on the exact
+    // factTemplateCode this step's upload parses into (not a title guess)
+    // and on the insight being genuinely live (real response_addressed
+    // facts exist), matching this codebase's own model-vs-live discipline.
+    const vendorCoverage =
+      step.factTemplateCode === "RESPONSE_COVERAGE_V1" &&
+      stepInsight?.kind === "response_coverage" &&
+      !stepInsight.isModel &&
+      stepInsight.vendors &&
+      stepInsight.vendors.length > 0
+        ? stepInsight.vendors
+        : null;
     return (
       <div style={{ marginLeft: 42, maxWidth: 680 }}>
         <TaskProvideUpload
@@ -942,6 +959,9 @@ function StepDetail({
           stageKey={stageKey}
           factTemplateCode={step.factTemplateCode ?? undefined}
         />
+        {vendorCoverage ? (
+          <VendorResponseCoverageList vendors={vendorCoverage} />
+        ) : null}
       </div>
     );
   }
@@ -949,6 +969,94 @@ function StepDetail({
   return (
     <div style={{ marginLeft: 42 }}>
       <ActionButton>{step.cta}</ActionButton>
+    </div>
+  );
+}
+
+/**
+ * Real per-vendor value-lever coverage, inline in the Responses "ingest"
+ * step body — reuses the same computed data the Intelligence tab's
+ * response-coverage insight already shows, so there is one source of
+ * truth for "which vendor addressed what," not two. Status is derived
+ * from real addressed/partial/dodged/notYetAnswered counts, never from a
+ * separate, unverified file-upload record.
+ */
+function VendorResponseCoverageList({
+  vendors,
+}: {
+  vendors: readonly VendorCoverageView[];
+}) {
+  return (
+    <div style={{ marginTop: 16, display: "grid", gap: 8 }}>
+      <div
+        style={{
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 10,
+          fontWeight: 800,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: ANALYTICS.FAINT,
+        }}
+      >
+        Vendor coverage
+      </div>
+      {vendors.map((vendor) => {
+        const engaged = vendor.addressed + vendor.partial;
+        const status: "complete" | "partial" | "awaiting" =
+          vendor.addressed === vendor.totalLevers
+            ? "complete"
+            : engaged > 0
+              ? "partial"
+              : "awaiting";
+        const tone =
+          status === "complete"
+            ? { bg: ANALYTICS.GREEN_TINT, fg: ANALYTICS.GREEN_TEXT }
+            : status === "partial"
+              ? { bg: ANALYTICS.AMBER_TINT, fg: ANALYTICS.AMBER_TEXT }
+              : { bg: "rgba(10,10,11,0.06)", fg: ANALYTICS.MUTED };
+        return (
+          <div
+            key={vendor.vendorId}
+            data-testid={`source-shell-vendor-coverage-${vendor.vendorId}`}
+            style={{
+              ...CARD_STYLE,
+              padding: "10px 14px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 12,
+            }}
+          >
+            <span style={{ fontWeight: 700, fontSize: 13 }}>
+              {vendor.vendorId}
+            </span>
+            <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
+                {engaged} of {vendor.totalLevers} levers addressed
+              </span>
+              <span
+                style={{
+                  display: "inline-flex",
+                  borderRadius: 999,
+                  background: tone.bg,
+                  color: tone.fg,
+                  padding: "3px 8px",
+                  fontSize: 10,
+                  fontWeight: 800,
+                  letterSpacing: "0.03em",
+                  textTransform: "uppercase",
+                }}
+              >
+                {status === "complete"
+                  ? "Complete"
+                  : status === "partial"
+                    ? "Partial"
+                    : "Awaiting"}
+              </span>
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }

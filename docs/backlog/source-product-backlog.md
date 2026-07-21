@@ -205,6 +205,40 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   prototype; UI copy explicitly must NOT say "Track A"/"Track B" on screen — plain language
   ("Artifact status"/"Stage gate") per direct user feedback.
 
+### SOURCE-SHELL-005 — Real per-vendor coverage in the Responses step body
+
+- **Problem statement**: the mockup's Responses stage shows each vendor's response
+  completeness inline in the step body (Halcyon MS/Northgate Global "complete", Vantage
+  Digital "partial", Cormorant IT "awaiting"). Live `StepDetail` rendered only a bare upload
+  prompt with no per-vendor breakdown.
+- **User/business impact**: no at-a-glance view of which vendors have actually responded to
+  which value levers while working the Responses step; that data existed but only surfaced
+  in the separate Intelligence tab.
+- **Severity**: P5 (workspace UX / information density)
+- **Workstream**: Stage step-body content parity
+- **Status**: `Merged` — see PR below.
+- **Dependencies**: none — reuses the already-live `buildResponseCoverageInsight` →
+  `VendorCoverageView` computation (Intelligence tab's `response_coverage` insight); no new
+  data source.
+- **Acceptance criteria**: when the active step's `factTemplateCode` is
+  `RESPONSE_COVERAGE_V1` and the insight is genuinely live (`isModel: false`) with vendor
+  data, `StepDetail` renders a `VendorResponseCoverageList` below the upload widget — real
+  addressed/partial counts over `totalLevers`, status Complete/Partial/Awaiting derived from
+  those counts. Renders nothing extra when the insight is still the honest MODEL state. Met.
+- **Required tests**: `SourceAnalyticsCanvas.vendorResponseCoverage.test.tsx` — fixture-drift
+  guard + real live-data render assertions + honest-MODEL-state no-render assertion.
+- **PR**: to be recorded on merge.
+- **Discovered from**: mockup-anchored audit pass across Responses/Evaluation/Executive
+  Decision/Selection stages.
+- **Notes / remaining gaps**: does not replicate the mockup's file-chip / document-upload
+  treatment (`response.pdf`, "148 requirements answered") — that would require a different,
+  not-currently-computed data source (per-document upload tracking cross-referenced by
+  vendor). Surfaces real per-vendor **value-lever** coverage instead, reusing the one
+  source of truth the Intelligence tab already has, rather than fabricating a second one.
+  Two other candidate gaps from the same audit pass (Evaluation should-cost step body,
+  Executive Decision bridge step body) were investigated and retracted — direct mockup
+  verification showed both already match live behavior.
+
 ---
 
 ## Ready / in progress
