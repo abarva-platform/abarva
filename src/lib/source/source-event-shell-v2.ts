@@ -3,6 +3,7 @@ import {
   SOURCE_STAGE_ORDER,
 } from "@/lib/source/constants";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
+import type { ApprovalLedgerRow } from "@/lib/source/approval-ledger-model";
 import {
   SOURCE_AI_DRAFT_GOVERNANCE_LABEL,
   SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
@@ -125,6 +126,8 @@ export interface SourceShellApprovalsWorkspace {
   items: ApprovalsInboxItem[];
   currentStageItem: ApprovalsInboxItem | null;
   readinessLine: string;
+  /** Full 11-stage per-event ledger — see approval-ledger.ts. Empty when not loaded. */
+  ledger: ApprovalLedgerRow[];
 }
 
 export interface SourceShellGuidebookWorkspace {
@@ -225,6 +228,7 @@ export interface BuildSourceEventShellViewInput {
   stepInsight?: StepInsightView | null;
   artifacts?: readonly SourceShellArtifactLike[];
   approvalItems?: readonly ApprovalsInboxItem[];
+  approvalLedger?: readonly ApprovalLedgerRow[];
   activeWorkspace?: SourceShellWorkspace;
   intelligenceOpen?: boolean;
   /** Facilitator guidebook for the viewed stage. null = not authored for this stage (expected — most stages have no guidebook yet), not an error. */
@@ -421,6 +425,7 @@ export function buildSourceEventShellView(
       readinessLine:
         currentStageItem?.readiness ??
         "No approval item is currently routed for this viewed stage.",
+      ledger: Array.from(input.approvalLedger ?? []),
     },
     guidebook: {
       available: input.guidebook != null,

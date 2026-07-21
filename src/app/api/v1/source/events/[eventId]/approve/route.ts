@@ -228,6 +228,7 @@ export async function POST(
     approvalAction: decision.approvalAction,
     approvedByUserId: tenancy.userId,
     notes: composeApprovalNotes(body.notes, body.action, currentStageKey),
+    stageKey: currentStageKey,
   });
 
   if (!approvalWrite.ok) {
