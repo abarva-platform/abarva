@@ -191,18 +191,39 @@ function findColumnByLabel(
   );
 }
 
+// Reads the qualifier word(s) in one half of a quadrant label ("High Value",
+// "Lower Evidence", "No Value Claim") and maps it to a 0-100 score, WITHOUT
+// hardcoding which dimension name (value/complexity/evidence/readiness/risk/
+// whatever) it's paired with. A live production eval found the previous
+// version — which only recognized the literal words "value" and "complexity"
+// — silently produced zero chartable points for a real answer whose axes
+// were "value" and "evidence confidence" ("High Value / Lower Evidence"),
+// because the regex required "complexity" specifically. "No X" (e.g. "No
+// Value Claim") returns null on purpose — that means the model is saying
+// there's no measurable position on this axis, not a low one; the caller
+// should exclude that point from the plot rather than guess a coordinate.
+function levelScoreFromText(
+  text: string,
+  scale: { high: number; moderate: number; low: number },
+): number | null {
+  if (/\bno\b/.test(text)) return null;
+  if (/\bhigh(?:est|er)?\b|\bstrong\b|\bsignificant\b/.test(text))
+    return scale.high;
+  if (/\bmoderate\b|\bmedium\b|\bmid\b/.test(text)) return scale.moderate;
+  if (/\blow(?:er)?\b|\bsmall\b|\bweak\b|\bminimal\b|\bcontained\b/.test(text))
+    return scale.low;
+  return null;
+}
+
 function scoreFromQuadrantLabel(value: string): { x: number; y: number } | null {
   const normalized = value.toLowerCase();
-  const hasHighValue = /\bhigh(?:est)?\s+value\b/.test(normalized);
-  const hasModerateValue = /\bmoderate\s+value\b/.test(normalized);
-  const hasLowValue = /\blower?\s+value\b|\blow\s+value\b/.test(normalized);
-  const hasHighComplexity = /\bhigh(?:er)?\s+complexity\b/.test(normalized);
-  const hasLowerComplexity =
-    /\blower?\s+complexity\b|\blow\s+complexity\b|\bcontained\b/.test(
-      normalized,
-    );
-  const y = hasHighValue ? 82 : hasModerateValue ? 58 : hasLowValue ? 35 : null;
-  const x = hasHighComplexity ? 78 : hasLowerComplexity ? 38 : null;
+  const [yPart, xPart] = normalized.split("/").map((part) => part.trim());
+  if (!yPart || !xPart) return null;
+  // Same numeric scale as before this fix — only the word-matching
+  // generalized, so labels using the original "value"/"complexity" wording
+  // still plot at the exact same coordinates.
+  const y = levelScoreFromText(yPart, { high: 82, moderate: 58, low: 35 });
+  const x = levelScoreFromText(xPart, { high: 78, moderate: 58, low: 38 });
   if (x === null || y === null) return null;
   return { x, y };
 }
@@ -276,9 +297,17 @@ function chartFromTable(
   const y = numbers[0];
   if (!y) return null;
   const y2 = numbers[1];
+  // Reaching here with kind === "quadrant-matrix" means neither the
+  // label-based nor the 2-numeric-column quadrant path above produced valid
+  // points (e.g. no "quadrant" column and fewer than 2 numeric columns).
+  // This branch's data shape ({data, xKey, yKey}) is a single-series bar/line
+  // shape, not the {points} shape a quadrant-matrix renderer expects — tagging
+  // it "quadrant-matrix" here would silently fail to render anything.
+  // Downgrade to horizontal-bar so the shape and the kind stay consistent.
+  const effectiveKind = kind === "quadrant-matrix" ? "horizontal-bar" : kind;
   return {
     id: `${table.id}_chart`,
-    kind,
+    kind: effectiveKind,
     title: table.title ?? "Tower answer visual",
     subtitle:
       visualContract?.executiveTakeaway ??
