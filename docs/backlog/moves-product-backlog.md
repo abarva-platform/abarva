@@ -47,7 +47,7 @@ efficiency, (8) cosmetic.
 ### MOVES-GATE-002 — Approval submitted before generation completed
 
 - **Problem statement**: `PhaseApproveAndBuild.tsx`'s `onBuildQueued` fired gate-approval submission
-  the instant generation jobs were *queued*, not once they reached a terminal state; a failed job
+  the instant generation jobs were _queued_, not once they reached a terminal state; a failed job
   did not block submission.
 - **User/business impact**: Same root incident as MOVES-GATE-001 — the UI sequencing bug that
   triggered the fabricated-evidence path to run at all.
@@ -69,7 +69,7 @@ efficiency, (8) cosmetic.
 
 ### MOVES-GATE-003 — Misleading override terminology
 
-- **Problem statement**: A normal, hard-gate-clean pass with unmet *soft* criteria was labeled
+- **Problem statement**: A normal, hard-gate-clean pass with unmet _soft_ criteria was labeled
   "(override)" in the Phase Gate Decision artifact and API response, indistinguishable from an
   actual bypass — of which no code path in this route has ever had one.
 - **User/business impact**: Made a real incident (MOVES-GATE-001) initially look like a governed,
@@ -133,7 +133,7 @@ efficiency, (8) cosmetic.
 - **Dependencies**: none
 - **Acceptance criteria**: `phase-capture/route.ts` creates no `deliverables_v2` row; sign-off
   rejects unrecognized/stale type keys and rejects capture-derived (`structured_data.source ===
-  'phase_capture'`) content via the plain-JSON approval path.
+'phase_capture'`) content via the plain-JSON approval path.
 - **Required tests**: capture completion never touches `deliverables_v2`; sign-off rejects
   unrecognized type key; sign-off rejects capture-derived provenance on a legitimately-registered
   type key; normal sign-off still works; authority still checked first.
@@ -236,23 +236,23 @@ efficiency, (8) cosmetic.
 - **Discovered from**: MOVES-ARTIFACT-001 design pass
 - **Decision table** (proposed mapping, awaiting confirmation or correction):
 
-| `reviewer_role_code` | Maps to gate role | Rationale |
-|---|---|---|
-| `business_owner` | `business` | Direct match |
-| `technology_owner` | `technology` | Direct match |
-| `architecture` | `technology` | Architecture review satisfies the technology gate role |
-| `finance` | `finance` | Direct match |
-| `risk` | `risk_security` | Direct match |
-| `security` | `risk_security` | Direct match |
-| `artifact_owner` | *(none)* | Descriptive only — the person accountable for the artifact, not a gate-satisfying reviewer capacity |
-| `workstream_lead` | *(none)* | Descriptive only |
-| `data` | *(none)* | Descriptive only — no data-specific gate role exists today; raise as a future gate-role candidate if needed |
-| `legal` | *(none)* | Descriptive only — no legal gate role exists today |
-| `procurement` | *(none)* | Descriptive only |
-| `executive_sponsor` | *(none — but drives `requiresClientAuthority`/gate policy separately)* | Executive sign-off is tracked as a distinct gate-policy flag, not folded into the 4-role axis |
-| `client_authority` | *(none — but required for `client_final`/`requiresClientAuthority`)* | Same as above |
-| `abarva_quality` | *(none)* | Internal QA capacity, descriptive only |
-| `other` | *(none, requires `reviewer_role_label`)* | Catch-all |
+| `reviewer_role_code` | Maps to gate role                                                      | Rationale                                                                                                   |
+| -------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `business_owner`     | `business`                                                             | Direct match                                                                                                |
+| `technology_owner`   | `technology`                                                           | Direct match                                                                                                |
+| `architecture`       | `technology`                                                           | Architecture review satisfies the technology gate role                                                      |
+| `finance`            | `finance`                                                              | Direct match                                                                                                |
+| `risk`               | `risk_security`                                                        | Direct match                                                                                                |
+| `security`           | `risk_security`                                                        | Direct match                                                                                                |
+| `artifact_owner`     | _(none)_                                                               | Descriptive only — the person accountable for the artifact, not a gate-satisfying reviewer capacity         |
+| `workstream_lead`    | _(none)_                                                               | Descriptive only                                                                                            |
+| `data`               | _(none)_                                                               | Descriptive only — no data-specific gate role exists today; raise as a future gate-role candidate if needed |
+| `legal`              | _(none)_                                                               | Descriptive only — no legal gate role exists today                                                          |
+| `procurement`        | _(none)_                                                               | Descriptive only                                                                                            |
+| `executive_sponsor`  | _(none — but drives `requiresClientAuthority`/gate policy separately)_ | Executive sign-off is tracked as a distinct gate-policy flag, not folded into the 4-role axis               |
+| `client_authority`   | _(none — but required for `client_final`/`requiresClientAuthority`)_   | Same as above                                                                                               |
+| `abarva_quality`     | _(none)_                                                               | Internal QA capacity, descriptive only                                                                      |
+| `other`              | _(none, requires `reviewer_role_label`)_                               | Catch-all                                                                                                   |
 
 **Owner decision needed**: confirm this mapping, or specify corrections (e.g., should `data` map to
 `technology`? should `legal`/`procurement` map to `risk_security`?).
@@ -274,26 +274,26 @@ efficiency, (8) cosmetic.
   `minimumLifecycleState` / `requiredReviewerRoles` / `requiresClientAuthority` / `depthBand` for
   each):
 
-| `deliverableTypeKey` | Phase | `minimumLifecycleState` | `requiredReviewerRoles` | `requiresClientAuthority` | `depthBand` |
-|---|---|---|---|---|---|
-| `charter` | 1 | *(reviewer's example: `client_final`)* | — | true | ? |
-| `discovery_report` | 1 | *(reviewer's example: `human_approved`, "Diagnostic findings")* | — | false | ? |
-| `root_cause_worksheet` | 1 | ? | ? | ? | ? |
-| `target_state_architecture` | 3 | *(reviewer's example: `human_approved`)* | `architecture` | false | ? |
-| `solution_design` | 3 | ? | ? | ? | ? |
-| `operating_model_design` | 3 | ? | ? | ? | ? |
-| `sourcing_strategy` | 3 | ? | ? | ? | ? |
-| `p3_design` (deprecated alias) | 3 | ? | ? | ? | ? |
-| `execution_roadmap` | 4 | ? | ? | ? | ? |
-| `business_case` | 4 | *(reviewer's example: `human_approved`)* | `finance` | false | ? |
-| `financial_model` | 4 | ? | ? | ? | ? |
-| `tower_metrics_plan` | 4 | ? | ? | ? | ? |
-| `roadmap` (deprecated alias) | 4 | ? | ? | ? | ? |
-| `handoff_package` | 5 | *(reviewer's "Mobilization authorization" example: `client_final`)* | `executive_sponsor` | true | ? |
-| `value_measurement_contract` | 5 | ? | ? | ? | ? |
-| Workshop guide (no registry key yet — non-gate working doc) | — | *(reviewer's example: `human_approved`)* | — | false | ? |
+| `deliverableTypeKey`                                        | Phase | `minimumLifecycleState`                                             | `requiredReviewerRoles` | `requiresClientAuthority` | `depthBand` |
+| ----------------------------------------------------------- | ----- | ------------------------------------------------------------------- | ----------------------- | ------------------------- | ----------- |
+| `charter`                                                   | 1     | _(reviewer's example: `client_final`)_                              | —                       | true                      | ?           |
+| `discovery_report`                                          | 1     | _(reviewer's example: `human_approved`, "Diagnostic findings")_     | —                       | false                     | ?           |
+| `root_cause_worksheet`                                      | 1     | ?                                                                   | ?                       | ?                         | ?           |
+| `target_state_architecture`                                 | 3     | _(reviewer's example: `human_approved`)_                            | `architecture`          | false                     | ?           |
+| `solution_design`                                           | 3     | ?                                                                   | ?                       | ?                         | ?           |
+| `operating_model_design`                                    | 3     | ?                                                                   | ?                       | ?                         | ?           |
+| `sourcing_strategy`                                         | 3     | ?                                                                   | ?                       | ?                         | ?           |
+| `p3_design` (deprecated alias)                              | 3     | ?                                                                   | ?                       | ?                         | ?           |
+| `execution_roadmap`                                         | 4     | ?                                                                   | ?                       | ?                         | ?           |
+| `business_case`                                             | 4     | _(reviewer's example: `human_approved`)_                            | `finance`               | false                     | ?           |
+| `financial_model`                                           | 4     | ?                                                                   | ?                       | ?                         | ?           |
+| `tower_metrics_plan`                                        | 4     | ?                                                                   | ?                       | ?                         | ?           |
+| `roadmap` (deprecated alias)                                | 4     | ?                                                                   | ?                       | ?                         | ?           |
+| `handoff_package`                                           | 5     | _(reviewer's "Mobilization authorization" example: `client_final`)_ | `executive_sponsor`     | true                      | ?           |
+| `value_measurement_contract`                                | 5     | ?                                                                   | ?                       | ?                         | ?           |
+| Workshop guide (no registry key yet — non-gate working doc) | —     | _(reviewer's example: `human_approved`)_                            | —                       | false                     | ?           |
 
-**Owner decision needed**: fill in every `?` cell. Rows in *italics* already have the reviewer's own
+**Owner decision needed**: fill in every `?` cell. Rows in _italics_ already have the reviewer's own
 worked examples from the design conversation.
 
 ### MOVES-DESIGN-003 — ACA lifecycle backfill contract
@@ -310,18 +310,18 @@ worked examples from the design conversation.
 - **Discovered from**: MOVES-ARTIFACT-001 design pass, §6 Phase 1 plan
 - **Decision table**:
 
-| Contract element | Options / question for owner |
-|---|---|
-| Eligible legacy records | All `deliverables_v2` rows with `status = 'signed_off'`, tenant-unscoped (all tenants) — confirm scope, or restrict to specific tenants first? |
-| Inference rules | As specified in design doc §3.12: `approved_artifact_id`-backed rows → `human_approved`, `authoritative_flag_source='legacy_backfill'`; `signed_off_version`-only rows → same state but `requires_revalidation=true`. Confirm or adjust. |
-| `requires_revalidation` handling | Should gate policies that require `client_final` treat a `requires_revalidation=true` row as an automatic block, or merely a warning? |
-| Batching | Per-tenant, or a single all-tenant run? What batch size / rate limit against Postgres? |
-| Dry-run report | Required before any live run — proof bundle format: rows to be backfilled, confidence breakdown, any rows that cannot be inferred at all (e.g. `signed_off = true` but no `signed_off_version` set). |
-| Idempotency key | Proposed: `(deliverable_id, version)` — a backfill event is a no-op if one already exists for that pair. Confirm. |
-| Rollback | Since new columns/table are additive, rollback = stop reading them (code-level), leave backfilled rows in place — is this acceptable, or is a hard delete of backfilled rows required if the backfill is later found wrong? |
-| Audit output | What's the minimum required proof artifact — a Blob-stored report? A `maestro_oversight_flags` summary row per tenant? Both? |
-| Failure handling | Does one tenant's backfill failure block the whole run, or does the job skip and report per-tenant, continuing others? |
-| Operator path | Confirm this runs through the sanctioned ACA Job path only — no `az containerapp exec`, no local script against production Postgres. |
+| Contract element                 | Options / question for owner                                                                                                                                                                                                             |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Eligible legacy records          | All `deliverables_v2` rows with `status = 'signed_off'`, tenant-unscoped (all tenants) — confirm scope, or restrict to specific tenants first?                                                                                           |
+| Inference rules                  | As specified in design doc §3.12: `approved_artifact_id`-backed rows → `human_approved`, `authoritative_flag_source='legacy_backfill'`; `signed_off_version`-only rows → same state but `requires_revalidation=true`. Confirm or adjust. |
+| `requires_revalidation` handling | Should gate policies that require `client_final` treat a `requires_revalidation=true` row as an automatic block, or merely a warning?                                                                                                    |
+| Batching                         | Per-tenant, or a single all-tenant run? What batch size / rate limit against Postgres?                                                                                                                                                   |
+| Dry-run report                   | Required before any live run — proof bundle format: rows to be backfilled, confidence breakdown, any rows that cannot be inferred at all (e.g. `signed_off = true` but no `signed_off_version` set).                                     |
+| Idempotency key                  | Proposed: `(deliverable_id, version)` — a backfill event is a no-op if one already exists for that pair. Confirm.                                                                                                                        |
+| Rollback                         | Since new columns/table are additive, rollback = stop reading them (code-level), leave backfilled rows in place — is this acceptable, or is a hard delete of backfilled rows required if the backfill is later found wrong?              |
+| Audit output                     | What's the minimum required proof artifact — a Blob-stored report? A `maestro_oversight_flags` summary row per tenant? Both?                                                                                                             |
+| Failure handling                 | Does one tenant's backfill failure block the whole run, or does the job skip and report per-tenant, continuing others?                                                                                                                   |
+| Operator path                    | Confirm this runs through the sanctioned ACA Job path only — no `az containerapp exec`, no local script against production Postgres.                                                                                                     |
 
 **Owner decision needed**: resolve every row above before this job can be scoped/built.
 
@@ -471,6 +471,47 @@ worked examples from the design conversation.
 - **Notes / remaining gaps**: infrastructure is NOT provisioned by the design document — building it
   is separate, still-to-be-scoped implementation work this item tracks. Do not provision
   infrastructure until the design is reviewed.
+
+---
+
+## UI/UX shell (chrome only — no schema impact)
+
+### MOVES-UI-001 — Finder-style phase-shell rebuild
+
+- **Problem statement**: the Moves phase workspace's current chrome (horizontal step-tracker,
+  flat deliverable-card grid) tested poorly against a Microsoft/Stripe-caliber bar. A macOS
+  Finder-style direction (grouped icon rail, underline Steps/Files/Intelligence tabs, two-column
+  step detail, inline evidence citations, collapsible next-phase preview) was prototyped and
+  approved by the owner (2026-07-20) as the replacement shell.
+- **Reference**: `docs/specs/programs/moves-phase-shell-ui-backend-reconciliation.md` — maps every
+  mockup element to its real (or not-yet-real) backend field. Read before wiring any view.
+- **Severity**: P8 (cosmetic/UX — no data-model or security impact)
+- **Workstream**: Files/workspace UX
+- **Status**: `In Progress`
+- **Rollout plan** (flag: `moves_finder_shell_v1`, tenant policy, off by default):
+  1. **Design tokens** — Fraunces/Inter/JetBrains Mono + navy/blue/teal palette scoped to Moves
+     phase-workspace components only (no bleed into Intelligence/Source/Tower chrome).
+  2. **Rail rebuild** (`MovePhaseExplorer.tsx`) — grouped Finder sidebar (Phases/Workspace),
+     collapse/expand, blocked-reason subtitle, AI-draft-not-final dot — bound to the real
+     phase-tally helper and gate data already computed server-side. No new backend calls.
+  3. **Steps/Files/Intelligence tab shell** — underline tab control replacing the current
+     step-tracker; two-column steps view (menu + detail pane); inline citation reveal bound to
+     existing Files & Evidence data (`extractExhibitContent`), not fabricated.
+  4. **Approve & Build correctness** — audit `PhaseApproveAndBuild.tsx` to confirm/enforce the
+     button fires two sequential calls (`generate-phase`, then a separate
+     `phase-gate-approval` submission) — never one combined action. This is a correctness
+     requirement, not a style choice: a combined action would regress the fabrication bug fixed
+     in `MOVES-GATE-*`/item #100.
+  5. **Approvals view** — scoped to what `governance.ts` actually returns today (single
+     `sponsor` approverRole, one `founder_approval_requests` row). Per-role rows and any
+     `requires_revalidation` chip are explicitly **not** built into production UI — those bind to
+     nothing until `MOVES-ARTIFACT-001` ships.
+  6. **QA + rollout** — lint/typecheck/unit tests; PR + release record (`global-control-lane`,
+     flag-gated); cross-prove on 1–2 tenants; live-verify signed-in; then decide default-on.
+- **Explicit non-goals**: no schema migration, no new approval-model fields, no change to
+  `evaluateGate()` semantics. Chrome and interaction layer only.
+- **Discovered from**: owner design-review session 2026-07-20 (Claude Design prototype iteration
+  - this session's reconciliation pass).
 
 ---
 
