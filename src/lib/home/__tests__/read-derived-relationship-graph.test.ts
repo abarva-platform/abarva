@@ -18,13 +18,31 @@ describe("readDerivedRelationshipGraphEdges", () => {
     ).toBe(true);
   });
 
-  it("returns [] for a tenant with no derived graph file", () => {
+  it("loads derived graph files for every generated Home tenant", () => {
+    for (const tenantKey of [
+      "skyharbor-air",
+      "first-capital",
+      "lakeshore-holdings",
+      "apex-retail",
+    ]) {
+      const edges = readDerivedRelationshipGraphEdges(tenantKey, { rootDir });
+      expect(edges.length).toBeGreaterThan(100);
+      expect(edges.every((edge) => edge.from !== edge.to)).toBe(true);
+    }
+  });
+
+  it("uses display names from the generated graph when present", () => {
+    const edges = readDerivedRelationshipGraphEdges("skyharbor-air", {
+      rootDir,
+    });
     expect(
-      readDerivedRelationshipGraphEdges("skyharbor-air", { rootDir }),
-    ).toEqual([]);
+      edges.some(
+        (edge) => edge.from === "Catering" && edge.to === "Catering Hub 8",
+      ),
+    ).toBe(true);
     expect(
-      readDerivedRelationshipGraphEdges("first-capital", { rootDir }),
-    ).toEqual([]);
+      edges.some((edge) => edge.from === "7dda43b02448c829"),
+    ).toBe(false);
   });
 
   it("returns [] for null/undefined/empty tenant key", () => {

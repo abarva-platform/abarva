@@ -30,8 +30,10 @@ interface RawRelationshipGraphEdge {
   relationship_type: string;
   from_object_type: string;
   from_object_id: string;
+  from_object_name?: string;
   to_object_type: string;
   to_object_id: string;
+  to_object_name?: string;
 }
 
 interface RawRelationshipGraphFile {
@@ -81,13 +83,13 @@ export function readDerivedRelationshipGraphEdges(
           edge.from_object_id !== edge.to_object_id,
       )
       .map((edge) => ({
-        from: edge.from_object_id,
+        from: edge.from_object_name || edge.from_object_id,
         fromType: edge.from_object_type || "entity",
         relationship: (edge.relationship_type || "relates to").replaceAll(
           "_",
           " ",
         ),
-        to: edge.to_object_id,
+        to: edge.to_object_name || edge.to_object_id,
         sourceDimension: "derived_relationship_graph",
         sourceField: edge.relationship_type,
       }));
