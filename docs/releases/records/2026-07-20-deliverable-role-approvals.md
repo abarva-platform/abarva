@@ -109,18 +109,27 @@ touched. Deploy proceeds through the repo-owned `aca-main-deploy` workflow.
   [29716552978](https://github.com/abarva-platform/abarva/actions/runs/29716552978)
   (headSha `0c4e6780501701273b1850c0fb19eefd64f4e16b`, the #5102 merge commit),
   conclusion `success`.
-- Shared runtime mutators: none used directly; deploy proceeded entirely through the
-  standard workflow — the migration ran via the deploy pipeline's standard migration
-  step, not an ad-hoc command.
+- Shared runtime mutators: **CORRECTION (2026-07-20, added during migration-lane
+  investigation):** the claim below that "the migration ran via the deploy pipeline's
+  standard migration step" was wrong. `aca-main-deploy.yml` has no migration-apply step
+  — it never has. The migration sat pending against the live database from this PR's
+  merge (2026-07-19T23:18) until the governed migration lane's real `apply` dispatch
+  applied it on 2026-07-20T23:53Z–00:10Z (see
+  `docs/releases/records/2026-07-20-db-migration-lab-workflow.md`, run
+  [29789097644](https://github.com/abarva-platform/abarva/actions/runs/29789097644)).
+  During that gap, `governance.ts`'s gate evaluation for `design_approved`/
+  `business_case_approved` on covered deliverable types would have thrown a real
+  (though never actually observed — confirmed via Log Analytics) runtime error on
+  querying this table. That gap is now closed.
 - Approved image digest:
   `acrabarvalab001.azurecr.io/abarva/web@sha256:d3d1c09d095d4ea77650d0ef51d96d830115b9ca76ad9fe8e25f1c19e210b7d5`.
-- ACA runtime invariant: **proven.** `az containerapp show` confirms the template image
-  and the 100%-traffic revision (`ca-abarva-web-lab-eastus--m0c4e6780`) both resolve to
-  the digest above.
-- Worker image invariant: **proven.** `job-abarva-deliv-worker` and
-  `job-abarva-deliv-worker-event` both resolve to the same digest — confirming the
-  migration (bundled into this same image) ran as part of a single, consistent deploy
-  rather than a partial/ad-hoc application.
+- ACA runtime invariant: **proven for the code deploy only** — `az containerapp show`
+  confirmed the template image and the 100%-traffic revision
+  (`ca-abarva-web-lab-eastus--m0c4e6780`) resolved to the digest above. This does not
+  extend to the database migration; see the correction above.
+- Worker image invariant: **proven for the code deploy only**, same caveat as above —
+  `job-abarva-deliv-worker` and `job-abarva-deliv-worker-event` matching the same
+  digest confirms a single consistent code deploy, not that the migration ran.
 - Feature/env flag update path: N/A — no flag.
 - Live signed-in proof: **partially performed.** Navigated to `app.abarva.ai` post-deploy
   and confirmed the app loads and functions normally (no regression from the schema

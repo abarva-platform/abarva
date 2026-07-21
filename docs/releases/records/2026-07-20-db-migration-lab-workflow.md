@@ -6,14 +6,13 @@
 
 ## Status
 
-`candidate` — code reviewed and merge-ready. This second pass adds Anand's review
-feedback: a complete "golden idle state" check, repository readback, a permanent audit
-chain, and a CI self-test workflow proving the full sequence via a real
-`workflow_dispatch` against disposable Postgres (locally re-verified end-to-end — see
-QA / Validation). **The real ACA-job pathway to the live Azure lab database has still
-not been exercised end-to-end via this workflow** — deliberately left for a real
-dispatch after merge. No migration has been applied through this lane. See QA /
-Validation and Known Gaps.
+`released` — the governed lane is live and has completed a real apply against the
+shared lab database. Sequence: PR #5156 merged → real `status` dispatch caught a real
+bug (`verifyIdle()` missing `"Stopped"`, fixed in #5165) → real `status` dispatch came
+back completely clean (run 29784270343, `idleVerified: true`) → per-migration dossiers
+built and evidence-backed (owning PR, merge commit, ledger state, why each was pending)
+→ real `apply` dispatch (run 29789097644) applied all 3 pending migrations cleanly.
+Full detail in QA / Validation and Audit Evidence.
 
 ## Plain-English Summary
 
@@ -241,6 +240,60 @@ existing call sites' behavior when `--plan-only` isn't passed.
   success`, all 17 steps green in 1m21s, including Apply, Schema readback, Migration
   ledger, and Repository readback against a real disposable GitHub Actions Postgres
   service container.
+- **Real `status` dispatch #1** ([run 29780099664](https://github.com/abarva-platform/abarva/actions/runs/29780099664)):
+  proved the ACA-job → Azure Postgres transport for the first time; surfaced the
+  `terminalStatus()` bug (fixed in #5165).
+- **Real `status` dispatch #2** ([run 29784270343](https://github.com/abarva-platform/abarva/actions/runs/29784270343)):
+  fully clean, `idleVerified: true` both invocations, real migration ledger
+  (`totalApplied: 272`, most recent applied 2026-07-18T16:30:26Z) confirming the
+  3-migration pending gap and ruling out ledger reset / wrong database / hash mismatch.
+- **Migration dossiers**: `deliverable_role_approvals` (PR #5102, merge
+  `0c4e6780501701273b1850c0fb19eefd64f4e16b`, deploy run 29716552978 success — code
+  live, migration never applied) and `source_stage_guidebooks` + seed (PR #5135, merge
+  `02c08d3e28f16d6fe708fb9caaca3c56d3e1547b`, deploy run 29744269332 success — same
+  pattern). Both merged after the last successful manual apply (2026-07-18T16:30:26Z);
+  root cause is a ~2-day gap in the pre-existing manual `db:migrate` runbook path, not
+  a project-wide "deploy never applies migrations" pattern (272 continuously-applied
+  ledger entries going back to migration `001` rule that out).
+- **`deliverable_role_approvals` defect, proven via real reproduction, not just
+  code-reading**: Log Analytics search (`log-abarva-observability-lab-eastus`,
+  `ContainerAppConsoleLogs_CL`) since the #5141 gate-enforcement deploy found zero real
+  incidents — no live user had hit this yet. A controlled reproduction (fresh Postgres,
+  all 271 pre-apply migrations applied, `deliverable_role_approvals` dropped to match
+  the exact live gap) issued the real query `getRoleApprovalSummary()` runs via the
+  real `getAzureWriteFluentClient()`, capturing the real error:
+  `relation "deliverable_role_approvals" does not exist` — exactly what
+  `if (error) throw error` (line 146) would throw, propagating through
+  `meetsApprovalBar` → `governance.ts`'s `design_approved`/`business_case_approved`
+  gate checks → `POST /api/v1/programs/:id/advance` and `.../phase-gate-approval` for
+  `business_case`/`target_state_architecture`/`operating_model` deliverables. Latent,
+  not active — now closed by this release's apply.
+- **Real `apply` dispatch** ([run 29789097644](https://github.com/abarva-platform/abarva/actions/runs/29789097644),
+  2026-07-20T23:53Z–00:10Z, all 17 steps `success`): applied all 3 pending migrations.
+  - Apply log: `✓ 3 migrations applied` — `deliverable_role_approvals.sql`,
+    `source_stage_guidebooks.sql`, `source_stage_guidebooks_seed_strategy.sql`, in order.
+  - Schema readback: `"migrations": 275` (272 + 3, exact match), `"publicTables": 422`.
+  - Repository readback (real `getSourceStageGuidebook()` call, not raw SQL):
+    `{"ok":true,"stageKey":"strategy","clientKey":null,"title":"Strategy Gate
+    Review","status":"published","sectionCount":5,"version":1}` — confirms the table,
+    the seeded row, `client_key IS NULL` as designed, `stage_key = "strategy"`, and
+    that the real application code path can read it.
+  - Affected-feature health: `{"ok":true,"checks":{"postgres":true,
+    "direct_postgres":true}}`.
+  - Migration ledger post-apply: `totalApplied: 275`, latest entry
+    `20260720131500_source_stage_guidebooks_seed_strategy.sql` with real sha256
+    `47a741a3b5cafdfeae5a726b5c2d83bb175637970bca34919e7bf7d2044fb012` (matches the
+    hash independently computed during local/CI verification earlier).
+  - Audit chain: `{"workflowRunId":"29789097644","commitSha":
+    "0b59e44bc4612d0fe4402ce86cf13007303ba156","operator":"anandsundaram-hash",
+    "migrationName":"20260720131500_source_stage_guidebooks_seed_strategy.sql",
+    "migrationSha256":"47a741a3b5...","totalMigrationsApplied":275,
+    "databaseTarget":"ca-abarva-web-lab-eastus (rg-abarva-controlplane-lab-eastus)",
+    "applicationRevision":"ca-abarva-web-lab-eastus--m0b59e44b","imageDigest":
+    "...@sha256:2c88e2d7dcacd95a397e441a8f2e009d0c31f5e7205cbc8a962efe8f60f7f624"}`.
+  - Idle verification post-apply: `{"idleVerified":true,"problems":[]}`.
+  - Both migrations are purely additive (`CREATE TABLE IF NOT EXISTS`,
+    `INSERT ... ON CONFLICT DO NOTHING`) — no existing table, row, or schema touched.
 
 ## Known Gaps
 
@@ -254,12 +307,13 @@ existing call sites' behavior when `--plan-only` isn't passed.
   via a read-only `az containerapp job execution show`) was misclassified as
   non-terminal. Fixed and covered by two new direct-import unit tests (see the
   follow-up commit). This is exactly why status mode was run before apply.
-- **The `source_stage_guidebooks` migration from PR #5135 has still not been applied to
-  any real environment.** This release only builds the lane; it does not use it yet. The
-  guidebook feature and any UI reading `source_stage_guidebooks` remain correctly
-  dormant until a `mode=apply` run confirms the table, seed row, and repository read
-  path via `docs/releases/records/2026-07-20-source-stage-guidebooks-foundation.md`'s
-  own outstanding verification steps.
+- **RESOLVED 2026-07-20T23:53Z, run [29789097644](https://github.com/abarva-platform/abarva/actions/runs/29789097644):**
+  all 3 pending migrations applied via `mode=apply`. See Audit Evidence for the full
+  readback/repository-readback/health/ledger/audit-chain results. A first apply
+  dispatch (run 29788617578) accidentally ran without `-f mode=apply -f confirm=APPLY`
+  set, so it silently ran `status` again (harmless — every apply-only step reported
+  `skipped`, confirmed via the GitHub Actions API before treating anything as applied).
+  The corrected redispatch is the one that actually ran.
 - **The isolated-Postgres integration coverage lives in this session's manual testing
   notes, not as an automated test file.** `run-migrations.integration.test.ts` (referenced
   in `run-migrations.test.ts`'s header comment) does not exist yet — a real follow-up if
