@@ -341,6 +341,7 @@
     "audit:home-knowledge-preview": "npx tsx scripts/audit/build-home-knowledge-preview-proof.ts",
     "audit:home-knowledge-pressure": "npx tsx scripts/audit/build-home-knowledge-pressure-proof.ts",
     "audit:home-knowledge-cutover": "npx tsx scripts/audit/build-home-knowledge-cutover-proof.ts",
+    "home:knowledge-pack-v2:write": "node scripts/knowledge/build-home-knowledge-pack-v2.mjs --tenant=all --write-db --approve",
     "generate:knowledge-dimension-narratives": "npx tsx scripts/knowledge/generate-knowledge-dimension-narratives.ts",
     "audit:knowledge-dimension-narratives": "npx tsx scripts/knowledge/audit-knowledge-dimension-narratives.ts",
     "generate:knowledge-home-insights": "npx tsx scripts/knowledge/generate-knowledge-home-insights.ts",
