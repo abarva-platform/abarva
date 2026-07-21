@@ -25,6 +25,7 @@ import {
   dimensionRowsSupportPrimaryVisual,
   resolveHomeDimensionVisualContract,
 } from "@/lib/home/home-dimension-visualization-contract";
+import type { HomeDimensionCrossLensFilter } from "@/lib/home/home-dimension-visualization-contract";
 
 type TopTab = "overview" | "gaps" | "usecases" | "proof";
 type DimensionTab = "summary" | "data" | "relationships" | "gaps" | "evidence";
@@ -287,6 +288,9 @@ export function HomeKnowledgeDesignContractSurface({
   const [tableQuery, setTableQuery] = useState("");
   const [facetValue, setFacetValue] = useState("all");
   const [confidenceValue, setConfidenceValue] = useState("all");
+  const [crossFilterValues, setCrossFilterValues] = useState<
+    Record<string, string>
+  >({});
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
 
@@ -355,6 +359,40 @@ export function HomeKnowledgeDesignContractSurface({
     ).sort((a, b) => a.localeCompare(b));
   }, [activeRows, statusColumnKey]);
 
+  /**
+   * Cross-lens filters beyond the dataset's single built-in `.facet` field
+   * and the auto-detected confidence column — driven by
+   * HomeDimensionVisualizationContract.crossLensFilters for the active
+   * dimension. Each filter only appears once its field has at least one
+   * non-empty, non-"Needs evidence" value in the loaded rows — an empty
+   * dropdown is worse than no dropdown.
+   */
+  const activeCrossFilters = useMemo(() => {
+    const contract = resolveHomeDimensionVisualContract(activeDimension?.key);
+    return contract.crossLensFilters.filter(
+      (filter) =>
+        filter.key !== dataSetFacetKey(activeData) &&
+        filter.key !== statusColumnKey,
+    );
+  }, [activeData, activeDimension?.key, statusColumnKey]);
+
+  const crossFilterOptions = useMemo(() => {
+    const options: Record<string, string[]> = {};
+    for (const filter of activeCrossFilters) {
+      const values = Array.from(
+        new Set(
+          activeRows
+            .map((row) => asText(row[filter.key]))
+            .filter(
+              (value) => value && value.toLowerCase() !== "needs evidence",
+            ),
+        ),
+      ).sort((a, b) => a.localeCompare(b));
+      if (values.length) options[filter.key] = values;
+    }
+    return options;
+  }, [activeCrossFilters, activeRows]);
+
   const visibleRows = useMemo(() => {
     const query = tableQuery.trim().toLowerCase();
     const facet = dataSetFacetKey(activeData);
@@ -367,7 +405,12 @@ export function HomeKnowledgeDesignContractSurface({
         !statusColumnKey ||
         confidenceValue === "all" ||
         sourceStatus(row[statusColumnKey]) === confidenceValue;
-      return matchesQuery && matchesFacet && matchesConfidence;
+      const matchesCrossFilters = Object.entries(crossFilterValues).every(
+        ([key, value]) => value === "all" || asText(row[key]) === value,
+      );
+      return (
+        matchesQuery && matchesFacet && matchesConfidence && matchesCrossFilters
+      );
     });
     if (!sortKey) return rows;
     return [...rows].sort((a, b) =>
@@ -377,6 +420,7 @@ export function HomeKnowledgeDesignContractSurface({
     activeData,
     activeRows,
     confidenceValue,
+    crossFilterValues,
     facetValue,
     sortKey,
     statusColumnKey,
@@ -393,6 +437,7 @@ export function HomeKnowledgeDesignContractSurface({
     setTableQuery("");
     setFacetValue("all");
     setConfidenceValue("all");
+    setCrossFilterValues({});
     setSortKey(null);
     setSelectedRowIndex(null);
   }
@@ -601,6 +646,9 @@ export function HomeKnowledgeDesignContractSurface({
               confidenceValue={confidenceValue}
               facetOptions={facetOptions}
               facetValue={facetValue}
+              crossFilters={activeCrossFilters}
+              crossFilterOptions={crossFilterOptions}
+              crossFilterValues={crossFilterValues}
               gaps={activeGaps}
               insight={activeInsight}
               rows={visibleRows}
@@ -609,6 +657,7 @@ export function HomeKnowledgeDesignContractSurface({
               setDimensionTab={setDimensionTab}
               setConfidenceValue={setConfidenceValue}
               setFacetValue={setFacetValue}
+              setCrossFilterValues={setCrossFilterValues}
               setSelectedRowIndex={setSelectedRowIndex}
               setSortKey={setSortKey}
               setTableQuery={setTableQuery}
@@ -671,6 +720,9 @@ function DimensionView({
   confidenceValue,
   facetOptions,
   facetValue,
+  crossFilters,
+  crossFilterOptions,
+  crossFilterValues,
   gaps,
   insight,
   rows,
@@ -679,6 +731,7 @@ function DimensionView({
   setDimensionTab,
   setConfidenceValue,
   setFacetValue,
+  setCrossFilterValues,
   setSelectedRowIndex,
   setSortKey,
   setTableQuery,
@@ -696,6 +749,12 @@ function DimensionView({
   confidenceValue: string;
   facetOptions: string[];
   facetValue: string;
+  crossFilters: HomeDimensionCrossLensFilter[];
+  crossFilterOptions: Record<string, string[]>;
+  crossFilterValues: Record<string, string>;
+  setCrossFilterValues: (
+    updater: (previous: Record<string, string>) => Record<string, string>,
+  ) => void;
   gaps: HomeKnowledgeGap[];
   insight?: {
     findings?: string[];
@@ -889,6 +948,33 @@ function DimensionView({
                 </select>
               </label>
             ) : null}
+            {crossFilters
+              .filter((filter) => crossFilterOptions[filter.key]?.length)
+              .map((filter) => (
+                <label key={filter.key}>
+                  {filter.label}
+                  <select
+                    value={crossFilterValues[filter.key] ?? "all"}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setCrossFilterValues((previous) => ({
+                        ...previous,
+                        [filter.key]: value,
+                      }));
+                      setSelectedRowIndex(null);
+                    }}
+                  >
+                    <option value="all">
+                      All {filter.label.toLowerCase()}
+                    </option>
+                    {crossFilterOptions[filter.key].map((option) => (
+                      <option key={option} value={option}>
+                        {option.replaceAll("_", " ")}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
             <span className="nkh-chip">
               Showing {rows.length} of {dimension.count ?? rows.length}
             </span>
