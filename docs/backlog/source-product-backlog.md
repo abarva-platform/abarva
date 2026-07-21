@@ -251,7 +251,7 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   right stage label, making live QA and operator guidance misleading.
 - **Severity**: P4 (stage navigation correctness / shell trust)
 - **Workstream**: Stage route/view coherence
-- **Status**: `Candidate` — implementation and focused regression complete; PR pending.
+- **Status**: `Merged` — see PR below.
 - **Dependencies**: none — uses existing stage sample view models, no schema/API/data changes.
 - **Acceptance criteria**: when `viewStage` is `responses` or `evaluation` and the route has no
   live fact-backed `stageView`, `SourceAnalyticsCanvas` falls back to that requested stage's
@@ -260,16 +260,40 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   "Provide the volumetrics" step does not.
 - **Required tests**: `SourceAnalyticsCanvas.vendorResponseCoverage.test.tsx` — viewed-stage
   fallback coherence regression plus existing vendor-coverage checks.
-- **PR**: to be recorded on merge.
+- **PR**: [#5239](https://github.com/abarva-platform/abarva/pull/5239).
 - **Discovered from**: signed-in live proof attempt for `SOURCE-SHELL-005` against a Healthcare
   Demo Source event currently sitting at Scope.
+
+### SOURCE-SHELL-007 — Honest placeholders for Source stages without sample fixtures
+
+- **Problem statement**: after `SOURCE-SHELL-006`, Responses and Evaluation correctly use their
+  own fallback scaffolds, but Pricing, Executive Decision, and Transition still had no sample
+  fixtures. With no live `stageView`, those stages could still fall through to Scope's sample
+  body because the fallback selector's final default was `SAMPLE_SCOPE_STAGE`.
+- **User/business impact**: users opening a stage without live facts could still see another
+  stage's work under the correct stage label, eroding trust in stage navigation and QA proof.
+- **Severity**: P4 (stage navigation correctness / shell trust)
+- **Workstream**: Stage route/view coherence
+- **Status**: `Candidate` — implementation and full 11-stage fallback regression complete; see PR
+  below.
+- **Dependencies**: none — uses existing view-model contract, no schema/API/data changes.
+- **Acceptance criteria**: the fallback selector explicitly maps every existing fixture-backed
+  canonical stage; Scope has its own explicit branch; Pricing, Executive Decision, and Transition
+  render stage-specific "no illustrative preview built yet" placeholders with zero tasks rather
+  than Scope content.
+- **Required tests**: `SourceAnalyticsCanvas.stageFallbacks.test.tsx` iterates the real
+  `SOURCE_STAGE_ORDER` and renders `SourceAnalyticsCanvas` with `stageView={undefined}` for all 11
+  canonical stages.
+- **PR**: [#5242](https://github.com/abarva-platform/abarva/pull/5242).
+- **Discovered from**: follow-up root-cause prompt for
+  `SOURCE_SHELL_SAMPLE_STAGE_FALLBACK_FIX_PROMPT_2026-07-21`.
 
 ---
 
 ## Ready / in progress
 
-`SOURCE-SHELL-003` and `SOURCE-SHELL-004` remain next larger backlog items. `SOURCE-SHELL-006`
-is a narrow correctness fix discovered during live proof and can be handled independently.
+`SOURCE-SHELL-003` and `SOURCE-SHELL-004` remain next larger backlog items. `SOURCE-SHELL-007`
+is a narrow correctness follow-up discovered during live proof and can be handled independently.
 
 ## Blocked
 

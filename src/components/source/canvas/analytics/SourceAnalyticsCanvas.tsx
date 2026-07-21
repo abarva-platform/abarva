@@ -30,7 +30,10 @@ import {
 } from "@/lib/source/artifact-lifecycle-matrix";
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
 import type { ApprovalLedgerRow } from "@/lib/source/approval-ledger-model";
-import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
+import {
+  SOURCE_STAGE_LABELS,
+  normalizeSourceStageKey,
+} from "@/lib/source/constants";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
 import { ANALYTICS } from "./analytics-tokens";
@@ -112,14 +115,60 @@ const BUTTON_STYLE: CSSProperties = {
 };
 
 function sampleStageViewFor(stageKey: SourceStageKey): StageAnalyticsView {
-  if (stageKey === "strategy") return SAMPLE_STRATEGY_STAGE;
-  if (stageKey === "rfp") return SAMPLE_RFP_STAGE;
-  if (stageKey === "responses") return SAMPLE_RESPONSES_STAGE;
-  if (stageKey === "evaluation") return SAMPLE_EVALUATION_STAGE;
-  if (stageKey === "bafo") return SAMPLE_BAFO_STAGE;
-  if (stageKey === "selection") return SAMPLE_SELECTION_STAGE;
-  if (stageKey === "value") return SAMPLE_VALUE_STAGE;
-  return SAMPLE_SCOPE_STAGE;
+  const canonicalStageKey = normalizeSourceStageKey(stageKey) ?? stageKey;
+
+  switch (canonicalStageKey) {
+    case "strategy":
+      return SAMPLE_STRATEGY_STAGE;
+    case "scope":
+      return SAMPLE_SCOPE_STAGE;
+    case "rfp":
+      return SAMPLE_RFP_STAGE;
+    case "responses":
+      return SAMPLE_RESPONSES_STAGE;
+    case "evaluation":
+      return SAMPLE_EVALUATION_STAGE;
+    case "bafo":
+      return SAMPLE_BAFO_STAGE;
+    case "selection":
+      return SAMPLE_SELECTION_STAGE;
+    case "value":
+      return SAMPLE_VALUE_STAGE;
+    case "pricing":
+    case "executive_decision":
+    case "transition":
+      return placeholderStageViewFor(canonicalStageKey);
+    default:
+      return placeholderStageViewFor(canonicalStageKey);
+  }
+}
+
+function placeholderStageViewFor(stageKey: string): StageAnalyticsView {
+  const stageLabel =
+    SOURCE_STAGE_LABELS[stageKey as SourceStageKey] ?? "Source stage";
+  return {
+    stageKey,
+    stageName: stageLabel,
+    purpose: `No illustrative preview has been built for ${stageLabel} yet. Live Source facts will render here when available; this placeholder is intentionally empty rather than showing another stage's work.`,
+    intel: {
+      provenance: "sample",
+      lead: `No ${stageLabel} sample preview is available yet.`,
+      points: [
+        {
+          tone: "muted",
+          tag: "Not built",
+          text: `A ${stageLabel} illustrative preview has not been authored yet. This prevents Scope content from appearing under the ${stageLabel} label.`,
+        },
+      ],
+    },
+    tasks: [],
+    gate: {
+      approver: "Stage owner",
+      confirms: [],
+      generates: [],
+      nextStageName: null,
+    },
+  };
 }
 
 export function SourceAnalyticsCanvas({
