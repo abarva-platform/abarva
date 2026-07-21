@@ -542,6 +542,53 @@ worked examples from the design conversation.
 
 ---
 
+### MOVES-UI-002 — Approvals overview (Phase 5 of MOVES-UI-001, scoped)
+
+- **Problem statement**: the live Moves phase workspace has no single place to see gate/approval
+  status across all 6 phases at a glance — approval is only visible/actionable one phase at a
+  time via the inline Approve & Build flow. The owner asked to scope (not yet build) a
+  cross-phase Approvals overview to close out MOVES-UI-001.
+- **Severity**: P8 (cosmetic/UX — no data-model or security impact)
+- **Workstream**: Files/workspace UX
+- **Status**: `Ready`
+- **Real data this binds to (no fabrication)**:
+  - `getMovePhaseTallies(move)` (`src/lib/programs/phase-explorer-tallies.ts`) — already computed,
+    deterministic, no-fabrication per-phase `{ phase, label, met, total, state: "done"|"current"|"upcoming" }`
+    for all 6 phases from the SAME rule catalog (`gateCriteriaForPhase`) the real gate-approval
+    flow evaluates against. This is the entire data source for the list — no new fetch needed.
+  - Approver role: every `GATE_RULES` entry's `approverRole` is currently the constant `"sponsor"`
+    (`governance.ts`) — render this as a static "Sponsor" label per row, not a fabricated named
+    person. Do not imply a multi-role approval model exists (per the reconciliation note).
+  - Action: reuse the existing per-phase Approve & Build flow (`PhaseApproveAndBuild.tsx` +
+    `approvePhaseGateAfterBuild` in `MovesPhaseStandaloneClient.tsx`) — a row's "Review & approve"
+    action navigates to that phase's existing inline flow. No new API route.
+- **Design**:
+  - New `workspaceView` value (e.g. `"approvals"`) in `MovesPhaseStandaloneClient.tsx`, reachable
+    from the rail's existing "Approvals" link (today it jumps straight into the current phase's
+    last substep — change it to open this overview instead, phase-jump remains one click away).
+  - A simple list/table, one row per phase: phase label, tally (`met`/`total`), status derived
+    from `state` (`done` → "Approved"; `current` → "`met`/`total` met — not yet submitted" or
+    "Ready to submit" if `met === total`; `upcoming` → "Not reached"), approver column always
+    "Sponsor", and a "Review & approve" link/button that sets `workspaceView` back to `"phase"`
+    and jumps to that phase's approve substep (existing navigation, just re-triggered from here).
+  - Visual treatment matches the already-shipped Finder-shell tokens (navy labels, blue accents,
+    amber for not-ready, teal-green for approved) for consistency with the rest of MOVES-UI-001.
+- **Flag**: new `moves_approvals_overview_v1` (tenant policy, `includeTenants: []` — separate
+  from `moves_finder_shell_v1` so this can be rolled back independently, since it's new
+  navigable surface, not pure CSS polish).
+- **Explicit non-goals**: no per-role approval rows, no `requires_revalidation` state, no new
+  approval-submission endpoint, no change to `evaluateGate()`/`GATE_RULES`. A future
+  `MOVES-ARTIFACT-001`-backed richer model is a separate, later item.
+- **Acceptance criteria**: flag off → rail's "Approvals" link behaves exactly as it does today
+  (byte-for-byte); flag on → link opens the overview list; every row's tally/status is
+  reproducible from `getMovePhaseTallies` output alone (test asserts no data invented beyond
+  that function's return shape); "Review & approve" navigates correctly to the target phase's
+  existing approve substep.
+- **Discovered from**: owner request "SCOPE A PHASE 5 APPROVAL" (2026-07-20/21), closing out the
+  MOVES-UI-001 open decision on Phase 5.
+
+---
+
 ## Architecture decisions (reference — see design doc for full detail)
 
 Recorded here for durability; full rationale lives in
