@@ -71,6 +71,25 @@ describe("SourceAnalyticsCanvas — vendor response coverage (Responses step bod
     );
   });
 
+  it("renders the requested Responses scaffold when no live stage view is available", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={{
+          ...makeEvent(),
+          currentStageKey: "scope",
+          currentStageLabel: "Scope",
+        }}
+        viewStage="responses"
+        tenantName="Healthcare Demo"
+      />,
+    );
+
+    expect(
+      screen.getAllByText("Confirm vendor response coverage").length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByText("Provide the volumetrics")).not.toBeInTheDocument();
+  });
+
   it("renders real per-vendor coverage rows when the insight is genuinely live", () => {
     const liveInsight: ResponseCoverageInsightView = {
       kind: "response_coverage",

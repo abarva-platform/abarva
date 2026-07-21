@@ -454,6 +454,9 @@ legacy-v-dimension-token,src/lib/home/know/__tests__/v7-home-ask.test.ts,non-loa
 legacy-v-file-name,src/lib/home/know/__tests__/v7-home-ask.test.ts,non-loader historical reference
 v6-v7-current-state,src/lib/home/know/__tests__/v7-home-ask.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/home/know/dossier-source-loader.ts,non-loader historical reference
+legacy-v-dimension-token,src/lib/home/know/dossier-source-loader.ts,non-loader historical reference
+legacy-v-file-name,src/lib/home/know/dossier-source-loader.ts,non-loader historical reference
+v6-v7-current-state,src/lib/home/know/dossier-source-loader.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/home/know/v6-home-ask.ts,non-loader historical reference
 legacy-v-pack-label,src/lib/home/know/v6-home-ask.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/home/know/v6-home-ask.ts,non-loader historical reference
@@ -492,6 +495,7 @@ legacy-v-dimension-token,src/lib/programs/__tests__/move-context-extract.test.ts
 legacy-v-file-name,src/lib/programs/__tests__/move-context-extract.test.ts,non-loader historical reference
 current-state-pack,src/lib/programs/__tests__/move-context-extract.test.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/semantic-dossiers/__tests__/universal-dimension-dossier.test.ts,non-loader historical reference
+legacy-v-dimension-token,src/lib/semantic-dossiers/build-universal-dimension-dossier.ts,non-loader historical reference
 synthetic-v-folder-reference,src/lib/source/vendor-inference-economics.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/tower/__tests__/v7-tower-projection.test.ts,non-loader historical reference
 legacy-v-dimension-token,src/lib/tower/v7-tower-projection.ts,non-loader historical reference

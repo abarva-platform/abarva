@@ -41,6 +41,8 @@ import { StepInsightPanel } from "./insights";
 import {
   SAMPLE_SCOPE_STAGE,
   SAMPLE_RFP_STAGE,
+  SAMPLE_RESPONSES_STAGE,
+  SAMPLE_EVALUATION_STAGE,
   SAMPLE_BAFO_STAGE,
   SAMPLE_SELECTION_STAGE,
   SAMPLE_VALUE_STAGE,
@@ -112,6 +114,8 @@ const BUTTON_STYLE: CSSProperties = {
 function sampleStageViewFor(stageKey: SourceStageKey): StageAnalyticsView {
   if (stageKey === "strategy") return SAMPLE_STRATEGY_STAGE;
   if (stageKey === "rfp") return SAMPLE_RFP_STAGE;
+  if (stageKey === "responses") return SAMPLE_RESPONSES_STAGE;
+  if (stageKey === "evaluation") return SAMPLE_EVALUATION_STAGE;
   if (stageKey === "bafo") return SAMPLE_BAFO_STAGE;
   if (stageKey === "selection") return SAMPLE_SELECTION_STAGE;
   if (stageKey === "value") return SAMPLE_VALUE_STAGE;

@@ -227,7 +227,7 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   those counts. Renders nothing extra when the insight is still the honest MODEL state. Met.
 - **Required tests**: `SourceAnalyticsCanvas.vendorResponseCoverage.test.tsx` — fixture-drift
   guard + real live-data render assertions + honest-MODEL-state no-render assertion.
-- **PR**: to be recorded on merge.
+- **PR**: [#5239](https://github.com/abarva-platform/abarva/pull/5239).
 - **Discovered from**: mockup-anchored audit pass across Responses/Evaluation/Executive
   Decision/Selection stages.
 - **Notes / remaining gaps**: does not replicate the mockup's file-chip / document-upload
@@ -239,11 +239,37 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   Executive Decision bridge step body) were investigated and retracted — direct mockup
   verification showed both already match live behavior.
 
+### SOURCE-SHELL-006 — Keep viewed stage label and step body coherent
+
+- **Problem statement**: a live Source event sitting at Scope could be opened with
+  `?stage=responses`; the header, breadcrumb, and rail correctly said Responses, but the
+  Steps workspace rendered the Scope fallback scaffold ("Provide the volumetrics",
+  "Inclusions & exclusions", "Baseline evidence", "Boundary & owner"). The page was mixing
+  the requested viewed-stage label with the generic Scope sample fallback when no live stage
+  view existed for the requested stage.
+- **User/business impact**: users reviewing a future stage could see the wrong work under the
+  right stage label, making live QA and operator guidance misleading.
+- **Severity**: P4 (stage navigation correctness / shell trust)
+- **Workstream**: Stage route/view coherence
+- **Status**: `Candidate` — implementation and focused regression complete; PR pending.
+- **Dependencies**: none — uses existing stage sample view models, no schema/API/data changes.
+- **Acceptance criteria**: when `viewStage` is `responses` or `evaluation` and the route has no
+  live fact-backed `stageView`, `SourceAnalyticsCanvas` falls back to that requested stage's
+  own scaffold rather than Scope. The focused regression uses an event whose current stage is
+  Scope while `viewStage="responses"` and verifies the Responses step appears and Scope's
+  "Provide the volumetrics" step does not.
+- **Required tests**: `SourceAnalyticsCanvas.vendorResponseCoverage.test.tsx` — viewed-stage
+  fallback coherence regression plus existing vendor-coverage checks.
+- **PR**: to be recorded on merge.
+- **Discovered from**: signed-in live proof attempt for `SOURCE-SHELL-005` against a Healthcare
+  Demo Source event currently sitting at Scope.
+
 ---
 
 ## Ready / in progress
 
-`SOURCE-SHELL-003` and `SOURCE-SHELL-004` are next, in that order — see entries above.
+`SOURCE-SHELL-003` and `SOURCE-SHELL-004` remain next larger backlog items. `SOURCE-SHELL-006`
+is a narrow correctness fix discovered during live proof and can be handled independently.
 
 ## Blocked
 
