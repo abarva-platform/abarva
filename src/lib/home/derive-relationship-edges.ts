@@ -69,6 +69,24 @@ const EDGE_SOURCES: ReadonlyArray<{
   },
 ];
 
+function asString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function addEdge(
+  edges: HomeRelationshipEdge[],
+  seen: Set<string>,
+  edge: HomeRelationshipEdge,
+) {
+  const from = edge.from.trim();
+  const to = edge.to.trim();
+  if (!from || !to || from === to) return;
+  const key = `${from} ${edge.relationship} ${to}`;
+  if (seen.has(key)) return;
+  seen.add(key);
+  edges.push({ ...edge, from, to });
+}
+
 function splitDelimited(value: unknown): string[] {
   if (typeof value !== "string") return [];
   const trimmed = value.trim();
@@ -98,17 +116,45 @@ export function deriveHomeRelationshipEdges(
   const seen = new Set<string>();
   const edges: HomeRelationshipEdge[] = [];
 
+  for (const row of data.rel?.rows ?? []) {
+    const explicitFrom = asString(row.from_object_name);
+    const explicitTo = asString(row.to_object_name);
+    if (explicitFrom && explicitTo) {
+      addEdge(edges, seen, {
+        from: explicitFrom,
+        fromType: asString(row.from_object_type) || "entity",
+        relationship:
+          asString(row.relationship_type).replaceAll("_", " ") ||
+          "relates to",
+        to: explicitTo,
+        sourceDimension: "rel",
+        sourceField: "from_object_name/to_object_name",
+      });
+      continue;
+    }
+
+    const businessName = asString(row.business_name);
+    const useCase = asString(row.use_case);
+    const from = businessName || useCase;
+    for (const to of splitDelimited(row.affected_systems)) {
+      addEdge(edges, seen, {
+        from,
+        fromType: useCase ? "use case" : "relationship",
+        relationship: "depends on",
+        to,
+        sourceDimension: "rel",
+        sourceField: "affected_systems",
+      });
+    }
+  }
+
   for (const source of EDGE_SOURCES) {
     const rows = data[source.dimensionKey]?.rows ?? [];
     for (const row of rows) {
       const from = rowName(row);
       if (!from) continue;
       for (const to of splitDelimited(row[source.field])) {
-        if (to === from) continue;
-        const key = `${from} ${source.relationship} ${to}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        edges.push({
+        addEdge(edges, seen, {
           from,
           fromType: source.fromType,
           relationship: source.relationship,

@@ -84,6 +84,58 @@ describe("deriveHomeRelationshipEdges", () => {
     expect(edges).toHaveLength(1);
   });
 
+  it("parses explicit relationship rows from the rel dimension", () => {
+    const edges = deriveHomeRelationshipEdges({
+      rel: {
+        columns: [],
+        rows: [
+          {
+            from_object_name: "Finance",
+            relationship_type: "uses",
+            to_object_name: "SAP S/4HANA",
+          },
+        ],
+      },
+    });
+    expect(edges).toEqual([
+      {
+        from: "Finance",
+        fromType: "entity",
+        relationship: "uses",
+        to: "SAP S/4HANA",
+        sourceDimension: "rel",
+        sourceField: "from_object_name/to_object_name",
+      },
+    ]);
+  });
+
+  it("parses Meridian-style affected systems relationship rows", () => {
+    const edges = deriveHomeRelationshipEdges({
+      rel: {
+        columns: [],
+        rows: [
+          {
+            business_name:
+              "Unified clinical + claims lakehouse: No certified medallion architecture",
+            use_case: "Unified clinical + claims lakehouse",
+            affected_systems: "Epic Clarity; Epic Caboodle; Databricks on AWS",
+          },
+        ],
+      },
+    });
+    expect(edges).toEqual([
+      expect.objectContaining({
+        from: "Unified clinical + claims lakehouse: No certified medallion architecture",
+        relationship: "depends on",
+        to: "Epic Clarity",
+        sourceDimension: "rel",
+        sourceField: "affected_systems",
+      }),
+      expect.objectContaining({ to: "Epic Caboodle" }),
+      expect.objectContaining({ to: "Databricks on AWS" }),
+    ]);
+  });
+
   it("returns [] for an empty/missing data map", () => {
     expect(deriveHomeRelationshipEdges({})).toEqual([]);
   });
