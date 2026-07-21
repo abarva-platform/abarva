@@ -22,6 +22,18 @@ jest.mock("next/navigation", () => ({
   }),
 }));
 
+// MOVES-UI-004: same useFeature() mock pattern as
+// MovePhaseExplorer.finder-shell.test.tsx. Defaults to `false` in
+// beforeEach below so every pre-existing test in this file keeps
+// asserting the flag-off (current) rendering, deterministically rather
+// than relying on the error-boundary fallback (no ClerkProvider in this
+// render tree).
+const mockUseFeature = jest.fn<boolean, [string]>();
+
+jest.mock("@/lib/features/use-feature", () => ({
+  useFeature: (key: string) => mockUseFeature(key),
+}));
+
 function makeMockBody(text: string) {
   const bytes = new Uint8Array(Array.from(text).map((c) => c.charCodeAt(0)));
   let yielded = false;
@@ -112,11 +124,7 @@ function selectP0Tab(step: number) {
   fireEvent.click(screen.getByRole("tab", { name: label }));
 }
 
-function submitP0Section(
-  container: HTMLElement,
-  step: number,
-  value: string,
-) {
+function submitP0Section(container: HTMLElement, step: number, value: string) {
   selectP0Tab(step);
   const input = container.querySelector(
     `#orig-canvas-brief-section-${step}-input`,
@@ -143,6 +151,7 @@ describe("StrategicMoveOriginateClient", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFetchWithChatArtifact("");
+    mockUseFeature.mockReturnValue(false);
   });
 
   it("requires all seven Move brief sections before promotion", async () => {
@@ -307,7 +316,9 @@ describe("StrategicMoveOriginateClient", () => {
     expect(
       screen.getByDisplayValue("CFO and Treasurer, with CIO support."),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Dr. Anita Krishnamurthy")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Dr. Anita Krishnamurthy"),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /promote to p1 charter/i }),
     ).toBeEnabled();
@@ -328,8 +339,9 @@ describe("StrategicMoveOriginateClient", () => {
     await waitFor(() => {
       expect(screen.getByText("Ready to promote")).toBeInTheDocument();
     });
-    expect(screen.getByDisplayValue("Kyriba Treasury Controls Proof"))
-      .toBeInTheDocument();
+    expect(
+      screen.getByDisplayValue("Kyriba Treasury Controls Proof"),
+    ).toBeInTheDocument();
     selectP0Tab(3);
     expect(
       screen.getByDisplayValue("CFO and Treasurer, with CIO support."),
@@ -469,12 +481,15 @@ describe("StrategicMoveOriginateClient", () => {
     });
 
     selectP0Tab(1);
-    fireEvent.change(screen.getByLabelText(/what should this move be called/i), {
-      target: {
-        value:
-          "Members experience long calls and inconsistent answers because agents navigate too many systems",
+    fireEvent.change(
+      screen.getByLabelText(/what should this move be called/i),
+      {
+        target: {
+          value:
+            "Members experience long calls and inconsistent answers because agents navigate too many systems",
+        },
       },
-    });
+    );
 
     await act(async () => {
       fireEvent.click(
@@ -490,5 +505,80 @@ describe("StrategicMoveOriginateClient", () => {
         ),
       }),
     );
+  });
+
+  // MOVES-UI-004 — extend the Finder-shell visual pass to the P0
+  // Origination main content. Mirrors MovePhaseExplorer.finder-shell.test
+  // .tsx's flag-off/flag-on split.
+  describe("moves_finder_shell_v1 gating (MOVES-UI-004)", () => {
+    it("renders byte-identical current styling when the flag is off", () => {
+      mockUseFeature.mockReturnValue(false);
+      const { container } = render(
+        <StrategicMoveOriginateClient tenantName="Apex Retail" />,
+      );
+
+      const page = container.querySelector("#orig-page");
+      expect(page).not.toBeNull();
+      // Exactly the pre-existing class, no finderShellOn appended.
+      expect(page).toHaveClass("page");
+      expect(page?.className).toBe("page");
+      expect(page).not.toHaveClass("finderShellOn");
+    });
+
+    it("adds the finderShellOn ancestor class and restyled header when the flag is on", () => {
+      mockUseFeature.mockReturnValue(true);
+      const { container } = render(
+        <StrategicMoveOriginateClient tenantName="Lakeshore Holdings" />,
+      );
+
+      const page = container.querySelector("#orig-page");
+      expect(page).not.toBeNull();
+      expect(page).toHaveClass("page");
+      expect(page).toHaveClass("finderShellOn");
+
+      // P0 header + tab strip still render their content and classes;
+      // this is a CSS-token pass only, no structural change.
+      expect(screen.getByText("Shape the Move brief")).toBeInTheDocument();
+      expect(screen.getByText("P0 · Originate")).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /frame the bet/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /govern the move/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("tab", { name: /prove readiness/i }),
+      ).toBeInTheDocument();
+
+      // Question cards still render under the flag-gated ancestor —
+      // the wizard structure itself is unchanged, only nested under
+      // .finderShellOn does the CSS module now restyle these classes.
+      expect(
+        screen.getByText(/What business problem or opportunity/i),
+      ).toBeInTheDocument();
+    });
+
+    it("does not change wizard behavior when the flag is on (promotion still requires all 7 sections)", async () => {
+      mockUseFeature.mockReturnValue(true);
+      const { container } = render(
+        <StrategicMoveOriginateClient tenantName="Meridian Health" />,
+      );
+
+      const promoteButton = screen.getByRole("button", {
+        name: /promote to p1 charter/i,
+      });
+      expect(promoteButton).toBeDisabled();
+
+      submitP0Section(
+        container,
+        1,
+        "Members experience long calls because agents navigate too many systems.",
+      );
+
+      expect(promoteButton).toBeDisabled();
+      expect(
+        screen.getByText("1 of 7 required sections complete"),
+      ).toBeInTheDocument();
+    });
   });
 });
