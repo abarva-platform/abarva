@@ -904,6 +904,10 @@ function DimensionView({
 
           <DimensionPrimaryVisual dimensionKey={dimension.key} rows={rows} />
 
+          {dimension.key === "rel" && relationshipEdges.length ? (
+            <RelationshipTopologyGraph edges={relationshipEdges} />
+          ) : null}
+
           <div className="nkh-dashboard-split">
             {insight?.breakdown?.rows?.length ? (
               <section>
