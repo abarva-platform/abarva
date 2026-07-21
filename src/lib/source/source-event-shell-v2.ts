@@ -23,8 +23,9 @@ import type {
 } from "@/components/source/canvas/analytics/view-model";
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
 import type { SourceEventArtifactState } from "@/lib/source/canvas-substrate/types";
+import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
 
-export type SourceShellWorkspace = "steps" | "files" | "intelligence" | "approvals";
+export type SourceShellWorkspace = "steps" | "files" | "intelligence" | "approvals" | "guidebook";
 
 export type SourceShellEvidenceBasis =
   | "live_fact"
@@ -111,6 +112,12 @@ export interface SourceShellApprovalsWorkspace {
   readinessLine: string;
 }
 
+export interface SourceShellGuidebookWorkspace {
+  available: boolean;
+  record: SourceStageGuidebookRecord | null;
+  emptyMessage: string;
+}
+
 export interface SourceEventShellView {
   event: {
     id: string;
@@ -148,6 +155,7 @@ export interface SourceEventShellView {
   };
   intelligence: SourceShellIntelligenceExplorer;
   approvals: SourceShellApprovalsWorkspace;
+  guidebook: SourceShellGuidebookWorkspace;
 }
 
 export interface SourceShellArtifactLike {
@@ -195,6 +203,8 @@ export interface BuildSourceEventShellViewInput {
   approvalItems?: readonly ApprovalsInboxItem[];
   activeWorkspace?: SourceShellWorkspace;
   intelligenceOpen?: boolean;
+  /** Facilitator guidebook for the viewed stage. null = not authored for this stage (expected — most stages have no guidebook yet), not an error. */
+  guidebook?: SourceStageGuidebookRecord | null;
 }
 
 export function mergeSourceShellArtifactsWithArtifactStateBodies(
@@ -320,7 +330,7 @@ export function buildSourceEventShellView(
     },
     workspaces: {
       active: activeWorkspace,
-      available: ["steps", "files", "intelligence", "approvals"],
+      available: ["steps", "files", "intelligence", "approvals", "guidebook"],
     },
     journey,
     stage: {
@@ -373,6 +383,11 @@ export function buildSourceEventShellView(
       readinessLine:
         currentStageItem?.readiness ??
         "No approval item is currently routed for this viewed stage.",
+    },
+    guidebook: {
+      available: input.guidebook != null,
+      record: input.guidebook ?? null,
+      emptyMessage: `No facilitator guidebook has been authored for the ${viewedStageLabel} stage yet.`,
     },
   };
 }
