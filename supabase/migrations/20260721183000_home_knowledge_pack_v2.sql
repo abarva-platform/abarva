@@ -216,9 +216,11 @@ CREATE TABLE IF NOT EXISTS public.home_knowledge_narratives (
   approval_status TEXT NOT NULL DEFAULT 'candidate'
     CHECK (approval_status IN ('candidate', 'approved', 'rejected')),
   sort_order INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (pack_id, section_key, COALESCE(dimension_key, ''))
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS home_knowledge_narratives_unique_idx
+  ON public.home_knowledge_narratives (pack_id, section_key, COALESCE(dimension_key, ''));
 
 CREATE INDEX IF NOT EXISTS home_knowledge_narratives_section_idx
   ON public.home_knowledge_narratives (tenant_key, pack_id, section_key);
