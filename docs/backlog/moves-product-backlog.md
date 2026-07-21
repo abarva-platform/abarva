@@ -178,6 +178,15 @@ efficiency, (8) cosmetic.
 - **Discovered from**: MOVES-GATE-001 root-cause investigation
 - **Notes / remaining gaps**: **Do not alter the phase without explicit owner authorization.** Full
   incident record and required remediation steps: `docs/incidents/2026-07-20-member-ai-assist-p4-phase-integrity-disputed.md`.
+  **New finding, unresolved**: an attempt to prepare the full owner-decision dossier hit a live,
+  signed-in read of the Strategic Moves list showing this Move currently at **P3** (60% complete),
+  not P4 — see `docs/incidents/2026-07-20-member-ai-assist-decision-dossier.md`. Deeper verification
+  (the Move's detail page, real `deliverables_v2`/approval state) could not be completed because the
+  browser session for this tenant expired mid-investigation with no re-authentication path available
+  in this environment (OTP-only sign-in, no email inbox access, no in-app tenant switcher). **The
+  owner should confirm the Move's actual current phase from their own signed-in session before this
+  dossier's remaining questions (artifacts present, approvals present/missing, gate pass/fail,
+  recommended option) can be answered accurately.**
 
 ---
 
