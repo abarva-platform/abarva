@@ -121,3 +121,228 @@ div.row:not(.rowCurrent):not(.rowDone) .label {
     display: none;
   }
 }
+
+/* ---------------------------------------------------------------------
+   Finder shell — MOVES-UI-001 Phase 1-2, gated behind moves_finder_shell_v1
+   (src/lib/features/registry.ts). Scoped entirely under .finderShell so it
+   cannot leak into the legacy rail above or any other product surface.
+
+   Fonts: reuses the app's already-loaded next/font vars set on <html> in
+   src/app/layout.tsx (--font-fraunces, --font-inter, --font-jetbrains-mono)
+   — no new font loading here.
+   --------------------------------------------------------------------- */
+
+.finderShell {
+  --fs-navy: #0c1a3a;
+  --fs-slate: #8b95a8;
+  --fs-slate-strong: #5b6c8a;
+  --fs-blue: #2a5aa8;
+  --fs-blue-strong: #1d3f7a;
+  --fs-blue-tint: #e4ecf9;
+  --fs-teal: #1d9e75;
+  --fs-teal-strong: #1f7a55;
+  --fs-amber: #ba7517;
+  --fs-amber-strong: #8a5a12;
+  --fs-rail-bg: #fafafb;
+  --fs-canvas: #ffffff;
+  --fs-line: #e2e6ee;
+
+  --fs-font-display: var(--font-fraunces), "Fraunces", Georgia, serif;
+  --fs-font-body: var(--font-inter), "Inter", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", system-ui, sans-serif;
+  --fs-font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace,
+    "SF Mono", Menlo, monospace;
+
+  flex: none;
+  width: 216px;
+  background: var(--fs-rail-bg);
+  border-right: 1px solid var(--fs-line);
+  padding: 14px 10px;
+  align-self: stretch;
+  font-family: var(--fs-font-body);
+  transition: width 0.15s ease;
+}
+
+.finderShellCollapsed {
+  width: 58px;
+  padding: 14px 6px;
+}
+
+.finderCollapseToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin: 0 0 10px auto;
+  border: 1px solid var(--fs-line);
+  border-radius: 6px;
+  background: var(--fs-canvas);
+  color: var(--fs-slate-strong);
+  font-size: 11px;
+  cursor: pointer;
+}
+.finderCollapseToggle:hover {
+  border-color: var(--fs-blue);
+  color: var(--fs-blue-strong);
+}
+.finderShellCollapsed .finderCollapseToggle {
+  margin: 0 auto 10px;
+}
+
+.finderGroup {
+  margin-bottom: 14px;
+}
+.finderGroup:last-of-type {
+  margin-bottom: 0;
+}
+
+.finderGroupLabel {
+  font-family: var(--fs-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--fs-slate);
+  padding: 0 6px 8px;
+}
+
+.finderGroupRows {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  position: relative;
+  padding-left: 6px;
+  border-left: 1px solid var(--fs-line);
+  margin-left: 10px;
+}
+.finderShellCollapsed .finderGroupRows {
+  padding-left: 0;
+  border-left: none;
+  margin-left: 0;
+  align-items: center;
+}
+
+.finderRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  align-items: start;
+  gap: 8px;
+  padding: 6px 6px;
+  border-radius: 7px;
+  color: var(--fs-navy);
+  text-decoration: none;
+  font-size: 12.5px;
+}
+.finderShellCollapsed .finderRow {
+  grid-template-columns: 20px;
+  justify-content: center;
+  padding: 5px;
+}
+
+/* Connector-line tree styling: a short horizontal tick from the group's
+   vertical guide line to each row's badge. */
+.finderGroupRows .finderRow::before {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 16px;
+  width: 6px;
+  height: 1px;
+  background: var(--fs-line);
+}
+.finderShellCollapsed .finderGroupRows .finderRow::before {
+  display: none;
+}
+
+a.finderRow:hover {
+  background: #f1f4fa;
+}
+
+.finderRowActive {
+  background: var(--fs-blue-tint);
+  box-shadow: none;
+}
+
+.finderBadge {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--fs-slate);
+  display: grid;
+  place-items: center;
+  font-family: var(--fs-font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--fs-slate-strong);
+  background: var(--fs-canvas);
+}
+.finderRowActive .finderBadge {
+  border-color: var(--fs-blue);
+  color: var(--fs-blue-strong);
+}
+.finderBadgeDone {
+  border-color: var(--fs-teal);
+  color: var(--fs-teal-strong);
+}
+
+.finderRowBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.finderRowLabelLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.finderLabel {
+  color: var(--fs-navy);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.finderLabelCurrent {
+  font-weight: 700;
+  color: var(--fs-navy);
+}
+
+.finderDraftDot {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--fs-amber);
+}
+
+.finderBlockedSubtitle {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--fs-amber-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.finderTally {
+  font-family: var(--fs-font-mono);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--fs-slate);
+  white-space: nowrap;
+  align-self: center;
+}
+.finderRowActive .finderTally {
+  color: var(--fs-slate-strong);
+}
+
+@media (max-width: 900px) {
+  .finderShell {
+    display: none;
+  }
+}
