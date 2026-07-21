@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -40,7 +40,7 @@ Moves P0 Origination now uses the supplied Moves Phase Shell design as the produ
 - Pass: `npx eslint src/components/strategic-moves/StrategicMoveOriginateClient.tsx src/components/strategic-moves/MovePhaseExplorer.tsx src/components/strategic-moves/__tests__/StrategicMoveOriginateClient.test.tsx src/components/strategic-moves/__tests__/MovePhaseExplorer.finder-shell.test.tsx`
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`
 - Pass: `node -e "const fs=require('fs'); const postcss=require('postcss'); const css=fs.readFileSync('src/components/strategic-moves/StrategicMoves.module.css','utf8'); postcss.parse(css,{from:'src/components/strategic-moves/StrategicMoves.module.css'}); console.log('css parse ok')"`
-- Pending: production signed-in visual proof on `https://app.abarva.ai/strategic-moves/new` after ACA deploy.
+- Pass: production signed-in visual proof on `https://app.abarva.ai/strategic-moves/new` using Meridian agent auth state. The browser-visible page rendered the P0 contract shell with phase rail, workspace links, Steps/Files/Intelligence tabs, left step menu, right detail pane, and Approve and Build step.
 
 ## Rollout Plan
 
@@ -50,8 +50,8 @@ Merge through PR to `main`, allow the repo-owned Azure Container Apps deploy wor
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: None outside the repo-owned workflow.
-- Approved image digest: Pending deploy.
-- ACA runtime invariant: Pending deploy.
+- Approved image digest: `sha256:ecb2564d92b870b7411d268d1bb7496dc5b09ec1174284b614174c5873311bd7`.
+- ACA runtime invariant: Pass. Template image and 100% traffic revision both used `acrabarvalab001.azurecr.io/abarva/web@sha256:ecb2564d92b870b7411d268d1bb7496dc5b09ec1174284b614174c5873311bd7`.
 - Worker image invariant: Not applicable.
 - Feature/env flag update path: Not applicable.
 - Live signed-in proof required: Yes.
@@ -62,9 +62,13 @@ Revert the PR and redeploy through the repo-owned ACA main workflow. No migratio
 
 ## Audit Evidence
 
-- PR URL: Pending.
-- ACA revision: Pending.
-- Live screenshot: Pending.
+- PR URL: `https://github.com/abarva-platform/abarva/pull/5219`.
+- Merge SHA: `3ebe2b49f4a74ab880451f31c0906d4d7f560a01`.
+- ACA deploy run: `https://github.com/abarva-platform/abarva/actions/runs/29855932943`.
+- ACA revision: `ca-abarva-web-lab-eastus--m3ebe2b49`.
+- Traffic: 100%.
+- Runtime proof bundle: GitHub artifact `aca-main-deploy` from run `29855932943`; local verification copy at `/tmp/aca-main-deploy-29855932943-1784658089`.
+- Live screenshot: `/Users/anand/Downloads/moves-p0-shell-live-proof-2026-07-21/agent-meridian-strategic-moves-new.png`.
 - Validation output: local command output in the Codex task.
 
 ## Known Gaps
