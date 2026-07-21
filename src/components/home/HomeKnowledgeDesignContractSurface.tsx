@@ -629,6 +629,8 @@ export function HomeKnowledgeDesignContractSurface({
             decisionCannot={slots.DEC_CANNOT ?? []}
             decisionCan={slots.DEC_CAN ?? []}
             dimensions={dimensions}
+            nextEvidence={slots.NEXT_EVIDENCE ?? []}
+            onOpenGaps={() => setTopTab("gaps")}
             onSelectDimension={selectDimension}
             pack={pack}
             priorities={slots.PRIORITIES ?? []}
@@ -1127,6 +1129,8 @@ function EnterpriseOverview({
   decisionCannot,
   decisionCan,
   dimensions,
+  nextEvidence,
+  onOpenGaps,
   onSelectDimension,
   pack,
   priorities,
@@ -1137,6 +1141,8 @@ function EnterpriseOverview({
   decisionCannot: string[];
   decisionCan: string[];
   dimensions: HomeKnowledgeDimension[];
+  nextEvidence: HomeKnowledgeRecord[];
+  onOpenGaps: () => void;
   onSelectDimension: (key: string) => void;
   pack: HomeKnowledgeDesignContractPack;
   priorities: HomeKnowledgeRecord[];
@@ -1160,6 +1166,8 @@ function EnterpriseOverview({
         dimensions={dimensions}
         onSelectDimension={onSelectDimension}
       />
+
+      <ContextHorizon nextEvidence={nextEvidence} onOpenGaps={onOpenGaps} />
 
       <section className="nkh-at-glance" aria-label="Enterprise at a glance">
         <div className="nkh-inline-head">
@@ -1398,6 +1406,58 @@ function SixQuestionsLanding({
           </button>
         ))}
       </div>
+    </section>
+  );
+}
+
+/**
+ * "Tease a future" — but honestly. Ghost/dashed cards for what's NOT yet
+ * loaded, sourced entirely from the pack's own approved NEXT_EVIDENCE slot
+ * (curated evidence-gap items with an owner_hint, already rendered
+ * elsewhere in the Evidence Gaps tab) — never invented domain names. If a
+ * tenant's pack has no NEXT_EVIDENCE entries, this renders nothing rather
+ * than guessing what might be missing.
+ */
+function ContextHorizon({
+  nextEvidence,
+  onOpenGaps,
+}: {
+  nextEvidence: HomeKnowledgeRecord[];
+  onOpenGaps: () => void;
+}) {
+  if (!nextEvidence.length) return null;
+  const preview = nextEvidence.slice(0, 4);
+
+  return (
+    <section className="nkh-context-horizon" aria-label="Context horizon">
+      <div className="nkh-inline-head">
+        <div className="nkh-kicker">Context horizon</div>
+        <span>
+          {nextEvidence.length} evidence request
+          {nextEvidence.length === 1 ? "" : "s"} would sharpen this picture once
+          closed — not loaded yet.
+        </span>
+      </div>
+      <div className="nkh-horizon-grid">
+        {preview.map((item, index) => (
+          <button
+            key={`${asText(item.item)}-${index}`}
+            type="button"
+            className="nkh-horizon-card"
+            onClick={onOpenGaps}
+          >
+            <span className="nkh-horizon-tag">Not yet loaded</span>
+            <strong>{asText(item.item)}</strong>
+            <p>{asText(item.unlocks)}</p>
+            {item.owner_hint ? <em>{asText(item.owner_hint)}</em> : null}
+          </button>
+        ))}
+      </div>
+      {nextEvidence.length > preview.length ? (
+        <button type="button" className="nkh-horizon-more" onClick={onOpenGaps}>
+          View all {nextEvidence.length} evidence requests →
+        </button>
+      ) : null}
     </section>
   );
 }
@@ -3235,6 +3295,61 @@ const styles = `
 .nkh-six-question-meta {
   font: 400 11.5px var(--sans);
   color: #6d675f;
+}
+.nkh-horizon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+.nkh-horizon-card {
+  text-align: left;
+  border: 1.5px dashed #c9c2b4;
+  border-radius: 12px;
+  background: transparent;
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: inherit;
+}
+.nkh-horizon-card:hover {
+  border-color: #a96d16;
+  background: #fbf8f1;
+}
+.nkh-horizon-tag {
+  align-self: flex-start;
+  font: 700 9px var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a96d16;
+  border: 1px solid #e3d2b0;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.nkh-horizon-card strong {
+  font: 700 13.5px var(--sans);
+  color: #34302a;
+}
+.nkh-horizon-card p {
+  margin: 0;
+  font: 400 12px/1.45 var(--sans);
+  color: #6d675f;
+}
+.nkh-horizon-card em {
+  font: 400 11px var(--sans);
+  font-style: normal;
+  color: #a1998a;
+}
+.nkh-horizon-more {
+  margin-top: 12px;
+  border: none;
+  background: none;
+  color: #157f74;
+  font: 700 12px var(--sans);
+  cursor: pointer;
+  padding: 0;
 }
 .nkh-at-glance {
   border-top: 1px solid #e7e5dc;
