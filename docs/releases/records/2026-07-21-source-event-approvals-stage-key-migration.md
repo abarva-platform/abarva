@@ -6,8 +6,8 @@
 
 ## Status
 
-`candidate` — migration file merging now; apply run through the governed lane
-(`db-migration-lab.yml`) to follow in this same record.
+`released` — migration merged and applied for real against the live database via the
+governed lane. Real apply-run evidence recorded below.
 
 ## Plain-English Summary
 
@@ -48,8 +48,24 @@ source_event_approvals ADD COLUMN IF NOT EXISTS stage_key TEXT;` + a supporting 
 - `pass` — migration is purely additive (nullable column, no default, no rewrite of existing
   rows) — on modern Postgres this is a fast, metadata-only `ALTER TABLE`, not a full table
   rewrite.
-- `not-run` — governed migration lane `status` (preflight) run, then `apply` run with real
-  evidence, to be recorded here once dispatched.
+- `pass` — governed migration lane `status` (preflight) run
+  [#29841857799](https://github.com/abarva-platform/abarva/actions/runs/29841857799)
+  correctly detected the migration as pending (`Pending migrations (1): -
+20260721142419_source_event_approvals_stage_key.sql`) before applying anything.
+- `pass` — `apply` run
+  [#29842334104](https://github.com/abarva-platform/abarva/actions/runs/29842334104) applied
+  it for real against the live database: `✓ 20260721142419_source_event_approvals_stage_key.sql
+... ✓` / `✓ Applied 1 pending migration`. The migration ledger's `totalApplied` count moved
+  from 275 to 276, and the generic schema readback (`verify-azure-postgres-schema.ts`)
+  confirms `"migrations": 276` post-apply.
+- A first preflight dispatch
+  [#29840661117](https://github.com/abarva-platform/abarva/actions/runs/29840661117) reported
+  "No pending migrations" — not a real problem: the migration lane resolves migrations from
+  the _currently deployed_ ACA image, and that dispatch raced ahead of this PR's own
+  `aca-main-deploy` run (still in progress at dispatch time). Re-ran after confirming the
+  deploy completed and the ACA runtime invariant matched this PR's merge commit; the retry
+  correctly detected the pending migration. Recorded here so the false-negative isn't
+  mistaken for evidence the migration didn't apply.
 
 ## Rollout Plan
 
@@ -83,8 +99,18 @@ column carries no constraint that other data could depend on.
 
 ## Audit Evidence
 
-- PR: to be added once opened.
-- Migration lane run (status + apply): to be added once dispatched.
+- PR: [abarva-platform/abarva#5201](https://github.com/abarva-platform/abarva/pull/5201),
+  merged as `5d144937e5b5992527ea94d459c29d4657d344e2`.
+- Deploy (needed only so the migration lane's image-resolution step could see this file):
+  [aca-main-deploy #29840617286](https://github.com/abarva-platform/abarva/actions/runs/29840617286),
+  `success`. ACA runtime invariant confirmed: revision `ca-abarva-web-lab-eastus--m5d144937`,
+  100% traffic, matching the merge commit.
+- Migration lane preflight:
+  [#29841857799](https://github.com/abarva-platform/abarva/actions/runs/29841857799),
+  `success`, correctly detected 1 pending migration.
+- Migration lane apply:
+  [#29842334104](https://github.com/abarva-platform/abarva/actions/runs/29842334104),
+  `success`, real apply confirmed in evidence logs.
 
 ## Known Gaps
 
