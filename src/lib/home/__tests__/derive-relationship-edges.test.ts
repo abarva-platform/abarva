@@ -63,9 +63,9 @@ describe("deriveHomeRelationshipEdges", () => {
   });
 
   it("excludes non-business placeholders and pack ids from graph labels", () => {
-    expect(isBusinessReadableRelationshipLabel("Passenger service system")).toBe(
-      true,
-    );
+    expect(
+      isBusinessReadableRelationshipLabel("Passenger service system"),
+    ).toBe(true);
     expect(isBusinessReadableRelationshipLabel("not_loaded")).toBe(false);
     expect(
       isBusinessReadableRelationshipLabel("owner_to_confirm_in_workshops"),
@@ -74,6 +74,13 @@ describe("deriveHomeRelationshipEdges", () => {
     expect(
       isBusinessReadableRelationshipLabel("skyharbor-air-v6-v7-upgrade"),
     ).toBe(false);
+    expect(isBusinessReadableRelationshipLabel("standard_2026_07_v3")).toBe(
+      false,
+    );
+    expect(isBusinessReadableRelationshipLabel("PROG-DATA-FOUNDATION")).toBe(
+      false,
+    );
+    expect(isBusinessReadableRelationshipLabel("CHG-DATA-01")).toBe(false);
 
     const edges = deriveHomeRelationshipEdges({
       rel: {

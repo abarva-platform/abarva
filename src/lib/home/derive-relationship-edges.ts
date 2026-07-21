@@ -85,8 +85,10 @@ export function isBusinessReadableRelationshipLabel(value: unknown): boolean {
     return false;
   }
   if (normalized.includes("_to_confirm")) return false;
+  if (/^[a-z0-9]+(?:_[a-z0-9]+)+$/i.test(label)) return false;
   if (/^[a-z0-9-]+-v\d/i.test(label)) return false;
   if (/^(app|sys|data|ven|rel|ctx)-\d{2,}$/i.test(label)) return false;
+  if (/^[A-Z]{2,}(?:-[A-Z0-9]+){1,}$/i.test(label)) return false;
   if (/^[a-z]{2,}-[a-z]+-[a-z0-9-]+-\d{2,}$/i.test(label)) return false;
   return true;
 }
@@ -148,8 +150,7 @@ export function deriveHomeRelationshipEdges(
         from: explicitFrom,
         fromType: asString(row.from_object_type) || "entity",
         relationship:
-          asString(row.relationship_type).replaceAll("_", " ") ||
-          "relates to",
+          asString(row.relationship_type).replaceAll("_", " ") || "relates to",
         to: explicitTo,
         sourceDimension: "rel",
         sourceField: "from_object_name/to_object_name",
