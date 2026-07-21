@@ -469,7 +469,7 @@ export function MovesPhaseStandaloneClient({
   // capture section never disturbs the real substep/gate state.
   const [finderSelectedSectionKey, setFinderSelectedSectionKey] = useState<
     string | null
-  >(null);
+  >(() => getInitialFinderSectionKey(phase.phase));
   const [finderComingUpOpen, setFinderComingUpOpen] = useState(false);
   const [avaOpen, setAvaOpen] = useState(false);
   const [avaThread, setAvaThread] = useState<AvaChatMessage[]>([]);
@@ -604,6 +604,9 @@ export function MovesPhaseStandaloneClient({
     () => getPhaseCaptureSections(phase.phase),
     [phase.phase],
   );
+  useEffect(() => {
+    setFinderSelectedSectionKey(getInitialFinderSectionKey(phase.phase));
+  }, [phase.phase]);
   const phaseCaptureCompleteCount = useMemo(
     () =>
       phaseCaptureSections.filter((section) =>
@@ -1795,6 +1798,13 @@ function ApprovalsOverview({
 //   - "What {phase} will need" = `buildNextPhaseReadinessPack` output,
 //     already computed from real evidence-need packets — no new fetch.
 // ---------------------------------------------------------------------------
+
+function getInitialFinderSectionKey(phaseNum: number): string | null {
+  if (phaseNum !== 1) {
+    return null;
+  }
+  return getPhaseCaptureSections(phaseNum)[0]?.key ?? null;
+}
 
 function finderSectionHasValue(
   section: PhaseCaptureSection,

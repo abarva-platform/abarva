@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Moves P1 Charter now uses the same contract-shell pattern proven on P0 when the Finder shell flag is enabled. The phase keeps the left-side phase rail, then uses a focused two-pane work surface: phase inputs and workflow steps on the left, the selected step detail on the right. The old long-page P1 layout remains available through the feature flag rollback path and P2-P5 are unchanged in this slice.
+Moves P1 Charter now uses the same contract-shell pattern proven on P0 when the Finder shell flag is enabled. The phase keeps the left-side phase rail, then uses a focused two-pane work surface: phase inputs and workflow steps on the left, the selected step detail on the right. P1 opens on the first guided input instead of a legacy summary panel, while upload and Approve & Build remain available in the workflow group. The old long-page P1 layout remains available through the feature flag rollback path and P2-P5 are unchanged in this slice.
 
 ## Layer Impact
 
@@ -30,6 +30,7 @@ Moves P1 Charter now uses the same contract-shell pattern proven on P0 when the 
 
 - `src/components/strategic-moves/MovesPhaseStandaloneClient.tsx`
   - Adds the P1 contract-shell canvas behind `moves_finder_shell_v1`.
+  - Defaults P1 to the first guided input row so the phase starts with a clear user action.
   - Preserves the existing `PhaseBody` controls for uploads, evidence review, and Approve & Build.
   - Expands the Finder shell canvas to use the available page width.
 - `src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx`
