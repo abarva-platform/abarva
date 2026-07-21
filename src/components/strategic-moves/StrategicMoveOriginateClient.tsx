@@ -1194,6 +1194,43 @@ export function StrategicMoveOriginateClient({
                         id="orig-canvas-brief"
                         className={styles.p0ActiveWork}
                       >
+                        <section className={styles.p0CommandCenter}>
+                          <div className={styles.p0CommandHead}>
+                            <span>P0 command center</span>
+                            <strong>Use the tabs to originate this Move</strong>
+                          </div>
+                          <div className={styles.p0CommandTable}>
+                            <div>
+                              <span>Purpose</span>
+                              <p>
+                                Capture the seven answers that become the
+                                governed P1 charter seed.
+                              </p>
+                            </div>
+                            <div>
+                              <span>Do now</span>
+                              <p>
+                                Work left to right: frame the bet, define
+                                governance, then prove readiness.
+                              </p>
+                            </div>
+                            <div>
+                              <span>Done when</span>
+                              <p>
+                                All seven answers are captured and promotion
+                                creates the P0 gate review.
+                              </p>
+                            </div>
+                            <div>
+                              <span>Live state</span>
+                              <p>
+                                {requiredFilled} of {REQUIRED_FIELD_COUNT}{" "}
+                                captured ·{" "}
+                                {canPromote ? "ready for P1 gate" : "not ready"}
+                              </p>
+                            </div>
+                          </div>
+                        </section>
                         <div className={styles.p0ActiveHead}>
                           <div>
                             <div className={styles.p0Eyebrow}>
