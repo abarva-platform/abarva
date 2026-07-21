@@ -1,14 +1,20 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useMemo, useState, type CSSProperties, type ComponentPropsWithoutRef, type ReactNode } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeSanitize from 'rehype-sanitize';
-import { AskAnythingBar } from '@/components/agent/AskAnythingBar';
-import { AppShell } from '@/components/shell/AppShell';
-import { AcceptClientFinalButton } from '@/components/source/canvas/workspace-tabs/AcceptClientFinalButton';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ComponentPropsWithoutRef,
+  type ReactNode,
+} from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeSanitize from "rehype-sanitize";
+import { AskAnythingBar } from "@/components/agent/AskAnythingBar";
+import { AppShell } from "@/components/shell/AppShell";
+import { AcceptClientFinalButton } from "@/components/source/canvas/workspace-tabs/AcceptClientFinalButton";
 import {
   buildSourceEventShellView,
   type SourceEventShellView,
@@ -17,33 +23,33 @@ import {
   type SourceShellFileItem,
   type SourceShellStepGroup,
   type SourceShellWorkspace,
-} from '@/lib/source/source-event-shell-v2';
+} from "@/lib/source/source-event-shell-v2";
 import {
   buildSourceArtifactStandardsCsv,
   type SourceArtifactLifecycleRow,
-} from '@/lib/source/artifact-lifecycle-matrix';
-import type { ApprovalsInboxItem } from '@/lib/source/approvals-inbox';
-import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
-import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
-import type { SourceStageGuidebookRecord } from '@/lib/source/stage-guidebooks/types';
-import { ANALYTICS } from './analytics-tokens';
-import { IntelPanel } from './IntelPanel';
-import { TaskProvideUpload } from './TaskChecklist';
-import { ValueWaterfall } from './ValueWaterfall';
-import { StepInsightPanel } from './insights';
+} from "@/lib/source/artifact-lifecycle-matrix";
+import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
+import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
+import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
+import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
+import { ANALYTICS } from "./analytics-tokens";
+import { IntelPanel } from "./IntelPanel";
+import { TaskProvideUpload } from "./TaskChecklist";
+import { ValueWaterfall } from "./ValueWaterfall";
+import { StepInsightPanel } from "./insights";
 import {
   SAMPLE_SCOPE_STAGE,
   SAMPLE_RFP_STAGE,
   SAMPLE_BAFO_STAGE,
   SAMPLE_SELECTION_STAGE,
   SAMPLE_VALUE_STAGE,
-} from './sample-view-model';
-import { SAMPLE_STRATEGY_STAGE } from './strategy-sample-view-model';
+} from "./sample-view-model";
+import { SAMPLE_STRATEGY_STAGE } from "./strategy-sample-view-model";
 import type {
   AvaLauncherView,
   StageAnalyticsView,
   StepInsightView,
-} from './view-model';
+} from "./view-model";
 
 interface SourceAnalyticsCanvasProps {
   event: SourcingEventSummary;
@@ -62,7 +68,7 @@ interface SourceAnalyticsCanvasProps {
 const MAIN_STYLE: CSSProperties = {
   flex: 1,
   minHeight: 0,
-  overflow: 'hidden',
+  overflow: "hidden",
   fontFamily: ANALYTICS.SANS,
   color: ANALYTICS.INK,
   background: ANALYTICS.PAGE_BG,
@@ -71,15 +77,15 @@ const MAIN_STYLE: CSSProperties = {
 const WORK_PANE_STYLE: CSSProperties = {
   flex: 1,
   minHeight: 0,
-  overflowY: 'auto',
+  overflowY: "auto",
 };
 
 const CANVAS_STYLE: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: '264px minmax(0, 1fr)',
+  display: "grid",
+  gridTemplateColumns: "264px minmax(0, 1fr)",
   gap: 0,
-  minHeight: '100%',
-  alignItems: 'stretch',
+  minHeight: "100%",
+  alignItems: "stretch",
 };
 
 const CARD_STYLE: CSSProperties = {
@@ -94,18 +100,18 @@ const BUTTON_STYLE: CSSProperties = {
   borderRadius: 8,
   background: ANALYTICS.CARD,
   color: ANALYTICS.INK,
-  cursor: 'pointer',
+  cursor: "pointer",
   fontFamily: ANALYTICS.SANS,
   fontSize: 12,
   fontWeight: 700,
 };
 
 function sampleStageViewFor(stageKey: SourceStageKey): StageAnalyticsView {
-  if (stageKey === 'strategy') return SAMPLE_STRATEGY_STAGE;
-  if (stageKey === 'rfp') return SAMPLE_RFP_STAGE;
-  if (stageKey === 'bafo') return SAMPLE_BAFO_STAGE;
-  if (stageKey === 'selection') return SAMPLE_SELECTION_STAGE;
-  if (stageKey === 'value') return SAMPLE_VALUE_STAGE;
+  if (stageKey === "strategy") return SAMPLE_STRATEGY_STAGE;
+  if (stageKey === "rfp") return SAMPLE_RFP_STAGE;
+  if (stageKey === "bafo") return SAMPLE_BAFO_STAGE;
+  if (stageKey === "selection") return SAMPLE_SELECTION_STAGE;
+  if (stageKey === "value") return SAMPLE_VALUE_STAGE;
   return SAMPLE_SCOPE_STAGE;
 }
 
@@ -120,7 +126,7 @@ export function SourceAnalyticsCanvas({
   guidebook = null,
 }: SourceAnalyticsCanvasProps) {
   const router = useRouter();
-  const [workspace, setWorkspace] = useState<SourceShellWorkspace>('steps');
+  const [workspace, setWorkspace] = useState<SourceShellWorkspace>("steps");
   const [avaOpen, setAvaOpen] = useState(false);
 
   const baseStageView = useMemo(
@@ -143,7 +149,7 @@ export function SourceAnalyticsCanvas({
         artifacts,
         approvalItems,
         activeWorkspace: workspace,
-        intelligenceOpen: workspace === 'intelligence',
+        intelligenceOpen: workspace === "intelligence",
         guidebook,
       }),
     [
@@ -170,7 +176,7 @@ export function SourceAnalyticsCanvas({
         sourceEventId: event.id,
         sourceEventCode: event.code,
         viewStage,
-        surfaceVariant: 'source_analytics_v2',
+        surfaceVariant: "source_analytics_v2",
       }}
       topBarProps={{
         tenantName,
@@ -186,7 +192,7 @@ export function SourceAnalyticsCanvas({
               workspace={workspace}
               onWorkspaceChange={setWorkspace}
             />
-            <div style={{ minWidth: 0, padding: '28px 92px 150px' }}>
+            <div style={{ minWidth: 0, padding: "28px 92px 150px" }}>
               <SourceWorkspace
                 view={shellView}
                 stageView={resolvedStageView}
@@ -198,7 +204,10 @@ export function SourceAnalyticsCanvas({
           </div>
         </div>
       </main>
-      <AskAvaLauncher open={avaOpen} onClick={() => setAvaOpen((value) => !value)} />
+      <AskAvaLauncher
+        open={avaOpen}
+        onClick={() => setAvaOpen((value) => !value)}
+      />
       {avaOpen ? (
         <AskAnythingBar
           agent="sentinel"
@@ -225,7 +234,7 @@ function SourceShellRail({
       data-testid="source-shell-v2-rail"
       style={{
         minWidth: 0,
-        padding: '24px 16px 18px',
+        padding: "24px 16px 18px",
         borderRight: `1px solid ${ANALYTICS.LINE}`,
         background: ANALYTICS.PAGE_BG,
       }}
@@ -235,7 +244,7 @@ function SourceShellRail({
         style={{
           color: ANALYTICS.MUTED,
           fontSize: 12,
-          textDecoration: 'none',
+          textDecoration: "none",
         }}
       >
         ← All Source events
@@ -246,7 +255,7 @@ function SourceShellRail({
             fontFamily: ANALYTICS.SERIF,
             fontSize: 20,
             fontWeight: 700,
-            letterSpacing: '-0.3px',
+            letterSpacing: "-0.3px",
             lineHeight: 1.12,
           }}
         >
@@ -261,23 +270,23 @@ function SourceShellRail({
       </div>
 
       <RailLabel>Journey</RailLabel>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {view.journey.map((stage) => (
           <Link
             key={stage.key}
             href={`/source/events/${view.event.id}?stage=${stage.key}`}
             style={{
-              display: 'grid',
-              gridTemplateColumns: '22px 1fr auto',
+              display: "grid",
+              gridTemplateColumns: "22px 1fr auto",
               gap: 9,
-              alignItems: 'center',
-              padding: '8px 9px',
+              alignItems: "center",
+              padding: "8px 9px",
               borderRadius: 8,
               border: stage.viewed
                 ? `1px solid ${ANALYTICS.LINE}`
-                : '1px solid transparent',
-              background: stage.viewed ? ANALYTICS.CARD : 'transparent',
-              textDecoration: 'none',
+                : "1px solid transparent",
+              background: stage.viewed ? ANALYTICS.CARD : "transparent",
+              textDecoration: "none",
             }}
           >
             <span
@@ -285,35 +294,35 @@ function SourceShellRail({
                 width: 20,
                 height: 20,
                 borderRadius: 999,
-                display: 'grid',
-                placeItems: 'center',
+                display: "grid",
+                placeItems: "center",
                 background:
-                  stage.state === 'past'
+                  stage.state === "past"
                     ? ANALYTICS.INK
                     : stage.current
                       ? ANALYTICS.BLUE
                       : ANALYTICS.CARD,
                 color:
-                  stage.state === 'past' || stage.current
-                    ? '#fff'
+                  stage.state === "past" || stage.current
+                    ? "#fff"
                     : ANALYTICS.FAINT,
                 border:
-                  stage.state === 'past' || stage.current
-                    ? 'none'
+                  stage.state === "past" || stage.current
+                    ? "none"
                     : `1px solid ${ANALYTICS.LINE_STRONG}`,
                 fontFamily: ANALYTICS.MONO,
                 fontSize: 9,
                 fontWeight: 800,
               }}
             >
-              {stage.state === 'past'
-                ? '✓'
-                : String(stage.index).padStart(2, '0')}
+              {stage.state === "past"
+                ? "✓"
+                : String(stage.index).padStart(2, "0")}
             </span>
             <span
               style={{
                 color:
-                  stage.viewed || stage.current || stage.state === 'past'
+                  stage.viewed || stage.current || stage.state === "past"
                     ? ANALYTICS.INK
                     : ANALYTICS.MUTED,
                 fontSize: 13,
@@ -330,7 +339,7 @@ function SourceShellRail({
                 fontWeight: 700,
               }}
             >
-              {stage.viewed ? `${stage.done}/${stage.total}` : ''}
+              {stage.viewed ? `${stage.done}/${stage.total}` : ""}
             </span>
           </Link>
         ))}
@@ -346,25 +355,25 @@ function SourceShellRail({
         <RailLabel>Workspace</RailLabel>
         <WorkspaceButton
           label="Files & deliverables"
-          active={workspace === 'files'}
-          onClick={() => onWorkspaceChange('files')}
+          active={workspace === "files"}
+          onClick={() => onWorkspaceChange("files")}
         />
         <WorkspaceButton
           label="Intelligence Explorer"
-          badge={workspace === 'intelligence' ? 'open' : 'hidden'}
-          active={workspace === 'intelligence'}
-          onClick={() => onWorkspaceChange('intelligence')}
+          badge={workspace === "intelligence" ? "open" : "hidden"}
+          active={workspace === "intelligence"}
+          onClick={() => onWorkspaceChange("intelligence")}
         />
         <WorkspaceButton
           label="Approvals"
-          active={workspace === 'approvals'}
-          onClick={() => onWorkspaceChange('approvals')}
+          active={workspace === "approvals"}
+          onClick={() => onWorkspaceChange("approvals")}
         />
         {view.guidebook.available ? (
           <WorkspaceButton
             label="Guidebook"
-            active={workspace === 'guidebook'}
-            onClick={() => onWorkspaceChange('guidebook')}
+            active={workspace === "guidebook"}
+            onClick={() => onWorkspaceChange("guidebook")}
           />
         ) : null}
       </div>
@@ -380,13 +389,13 @@ function SourceShellRail({
       >
         <Link
           href="/source"
-          style={{ color: ANALYTICS.MUTED, textDecoration: 'none' }}
+          style={{ color: ANALYTICS.MUTED, textDecoration: "none" }}
         >
           Design contract →
         </Link>
         <div style={{ marginTop: 14 }}>
-          <b style={{ color: ANALYTICS.INK_2 }}>aVa</b> guides steps 1–9 ·
-          Atlas takes over for Transition &amp; Value.
+          <b style={{ color: ANALYTICS.INK_2 }}>aVa</b> guides steps 1–9 · Atlas
+          takes over for Transition &amp; Value.
         </div>
       </div>
     </aside>
@@ -406,7 +415,7 @@ function SourceWorkspace({
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
   onClientFinalAccepted: () => void;
 }) {
-  if (workspace === 'files') {
+  if (workspace === "files") {
     return (
       <FilesWorkspace
         view={view}
@@ -414,29 +423,36 @@ function SourceWorkspace({
       />
     );
   }
-  if (workspace === 'intelligence') {
+  if (workspace === "intelligence") {
     return <IntelligenceWorkspace view={view} stageView={stageView} />;
   }
-  if (workspace === 'approvals') return <ApprovalsWorkspace view={view} />;
-  if (workspace === 'guidebook') return <GuidebookWorkspace view={view} />;
+  if (workspace === "approvals") return <ApprovalsWorkspace view={view} />;
+  if (workspace === "guidebook") return <GuidebookWorkspace view={view} />;
 
   return (
     <section data-testid="source-shell-v2-steps">
       <StageHeader view={view} />
-      <StageModeTabs workspace={workspace} onWorkspaceChange={onWorkspaceChange} />
+      <StageModeTabs
+        workspace={workspace}
+        onWorkspaceChange={onWorkspaceChange}
+      />
       <WorkflowBlocks groups={view.stage.groups} />
       <FocusedWorkPanel view={view} />
     </section>
   );
 }
 
-function StageHeader({
-  view,
-}: {
-  view: SourceEventShellView;
-}) {
+function StageHeader({ view }: { view: SourceEventShellView }) {
   const stageIndex =
     view.journey.find((stage) => stage.key === view.stage.key)?.index ?? 1;
+  // Matches the rail note's own claim ("aVa guides steps 1-9 · Atlas takes
+  // over for Transition & Value") rather than the separate, richer
+  // Nexus/Sentinel/Governance/Atlas/aVa model in stage-canvas-config.ts —
+  // reconciling those two models is a separate product decision.
+  const leadAgentLabel =
+    view.stage.key === "transition" || view.stage.key === "value"
+      ? "Atlas"
+      : "aVa";
 
   return (
     <header style={{ marginBottom: 22, maxWidth: 1040 }}>
@@ -451,10 +467,10 @@ function StageHeader({
       </div>
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 230px',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) 230px",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
           gap: 22,
         }}
       >
@@ -465,12 +481,12 @@ function StageHeader({
               fontFamily: ANALYTICS.MONO,
               fontSize: 10,
               fontWeight: 800,
-              letterSpacing: '0.14em',
-              textTransform: 'uppercase',
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
               marginBottom: 8,
             }}
           >
-            Stage {String(stageIndex).padStart(2, '0')} · aVa
+            Stage {String(stageIndex).padStart(2, "0")} · {leadAgentLabel}
           </div>
           <h1
             style={{
@@ -478,14 +494,14 @@ function StageHeader({
               fontSize: 35,
               lineHeight: 1,
               margin: 0,
-              letterSpacing: '-0.5px',
+              letterSpacing: "-0.5px",
             }}
           >
             {view.stage.label}
           </h1>
           <p
             style={{
-              margin: '10px 0 0',
+              margin: "10px 0 0",
               color: ANALYTICS.INK_2,
               fontSize: 17,
               lineHeight: 1.45,
@@ -499,15 +515,15 @@ function StageHeader({
           style={{
             ...CARD_STYLE,
             minWidth: 0,
-            padding: '18px 18px 17px',
-            boxShadow: 'none',
+            padding: "18px 18px 17px",
+            boxShadow: "none",
           }}
         >
           <div
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
               fontSize: 13,
               color: ANALYTICS.INK_2,
               fontWeight: 700,
@@ -535,19 +551,20 @@ function StageHeader({
               marginTop: 12,
               background: ANALYTICS.LINE_SOFT,
               borderRadius: 999,
-              overflow: 'hidden',
+              overflow: "hidden",
             }}
           >
             <div
               style={{
                 width: `${view.stage.readyPct}%`,
-                height: '100%',
+                height: "100%",
                 background: ANALYTICS.GREEN,
               }}
             />
           </div>
           <div style={{ color: ANALYTICS.FAINT, fontSize: 12, marginTop: 8 }}>
-            {view.stage.readyPct}% ready · {view.stage.pattern.replace('-', ' ')}
+            {view.stage.readyPct}% ready ·{" "}
+            {view.stage.pattern.replace("-", " ")}
           </div>
         </div>
       </div>
@@ -563,17 +580,17 @@ function StageModeTabs({
   onWorkspaceChange: (workspace: SourceShellWorkspace) => void;
 }) {
   const tabs: { key: SourceShellWorkspace; label: ReactNode }[] = [
-    { key: 'steps', label: 'Steps' },
-    { key: 'files', label: 'Files' },
-    { key: 'intelligence', label: <>✦ Intelligence</> },
+    { key: "steps", label: "Steps" },
+    { key: "files", label: "Files" },
+    { key: "intelligence", label: <>✦ Intelligence</> },
   ];
 
   return (
     <div
       style={{
-        display: 'inline-flex',
+        display: "inline-flex",
         gap: 2,
-        margin: '0 0 22px',
+        margin: "0 0 22px",
         padding: 3,
         borderRadius: 10,
         background: ANALYTICS.SOFT,
@@ -588,16 +605,18 @@ function StageModeTabs({
             type="button"
             onClick={() => onWorkspaceChange(tab.key)}
             style={{
-              border: active ? `1px solid ${ANALYTICS.LINE}` : '1px solid transparent',
+              border: active
+                ? `1px solid ${ANALYTICS.LINE}`
+                : "1px solid transparent",
               borderRadius: 8,
-              background: active ? ANALYTICS.CARD : 'transparent',
+              background: active ? ANALYTICS.CARD : "transparent",
               color: active ? ANALYTICS.INK : ANALYTICS.MUTED,
-              boxShadow: active ? ANALYTICS.SHADOW_SM : 'none',
-              cursor: 'pointer',
+              boxShadow: active ? ANALYTICS.SHADOW_SM : "none",
+              cursor: "pointer",
               fontFamily: ANALYTICS.SANS,
               fontSize: 13,
               fontWeight: 700,
-              padding: '8px 17px',
+              padding: "8px 17px",
             }}
           >
             {tab.label}
@@ -612,27 +631,29 @@ function WorkflowBlocks({ groups }: { groups: SourceShellStepGroup[] }) {
   return (
     <div
       style={{
-        display: 'grid',
+        display: "grid",
         gridTemplateColumns: `repeat(${Math.min(Math.max(groups.length, 1), 3)}, minmax(0, 1fr))`,
         gap: 10,
         marginBottom: 20,
       }}
     >
       {groups.map((group, index) => {
-        const done = group.steps.filter((step) => step.status === 'captured').length;
+        const done = group.steps.filter(
+          (step) => step.status === "captured",
+        ).length;
         return (
           <div
             key={group.id}
             style={{
               ...CARD_STYLE,
-              padding: '13px 14px',
+              padding: "13px 14px",
               borderColor: index === 0 ? ANALYTICS.BLUE : ANALYTICS.LINE,
             }}
           >
             <div
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
+                display: "flex",
+                justifyContent: "space-between",
                 gap: 10,
                 fontWeight: 800,
                 fontSize: 14,
@@ -646,7 +667,7 @@ function WorkflowBlocks({ groups }: { groups: SourceShellStepGroup[] }) {
               </span>
             </div>
             <div style={{ color: ANALYTICS.MUTED, fontSize: 12, marginTop: 7 }}>
-              {group.steps.map((step) => step.title).join(' · ')}
+              {group.steps.map((step) => step.title).join(" · ")}
             </div>
           </div>
         );
@@ -658,8 +679,8 @@ function WorkflowBlocks({ groups }: { groups: SourceShellStepGroup[] }) {
 function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
   const flatSteps = view.stage.groups.flatMap((group) => group.steps);
   const activeStep =
-    flatSteps.find((step) => step.status === 'active') ??
-    flatSteps.find((step) => step.status !== 'captured') ??
+    flatSteps.find((step) => step.status === "active") ??
+    flatSteps.find((step) => step.status !== "captured") ??
     flatSteps[0] ??
     null;
   const activeIndex = activeStep
@@ -667,52 +688,54 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
     : -1;
 
   if (!activeStep) {
-    return <EmptyCard text="No required steps are defined for this stage yet." />;
+    return (
+      <EmptyCard text="No required steps are defined for this stage yet." />
+    );
   }
 
   return (
     <section
       style={{
         ...CARD_STYLE,
-        display: 'grid',
-        gridTemplateColumns: '272px minmax(0, 1fr)',
+        display: "grid",
+        gridTemplateColumns: "272px minmax(0, 1fr)",
         maxWidth: 1040,
-        overflow: 'hidden',
-        boxShadow: 'none',
+        overflow: "hidden",
+        boxShadow: "none",
       }}
     >
       <div
         style={{
           borderRight: `1px solid ${ANALYTICS.LINE}`,
-          padding: '24px 14px 18px',
+          padding: "24px 14px 18px",
           background: ANALYTICS.PAGE_BG,
         }}
       >
         {view.stage.groups.map((group) => (
           <div key={group.id} style={{ marginBottom: 18 }}>
             <RailLabel>{group.label}</RailLabel>
-            <div style={{ display: 'grid', gap: 4 }}>
+            <div style={{ display: "grid", gap: 4 }}>
               {group.steps.map((step) => {
                 const active = step.id === activeStep.id;
-                const done = step.status === 'captured';
+                const done = step.status === "captured";
                 return (
                   <div
                     key={step.id}
                     style={{
-                      display: 'grid',
-                      gridTemplateColumns: '20px minmax(0, 1fr) auto',
+                      display: "grid",
+                      gridTemplateColumns: "20px minmax(0, 1fr) auto",
                       gap: 8,
-                      alignItems: 'center',
+                      alignItems: "center",
                       border: active
                         ? `1px solid ${ANALYTICS.LINE}`
-                        : '1px solid transparent',
+                        : "1px solid transparent",
                       borderLeft: active
                         ? `2px solid ${ANALYTICS.BLUE}`
-                        : '2px solid transparent',
+                        : "2px solid transparent",
                       borderRadius: 8,
-                      background: active ? ANALYTICS.CARD : 'transparent',
-                      padding: '8px 7px',
-                      boxShadow: active ? ANALYTICS.SHADOW_SM : 'none',
+                      background: active ? ANALYTICS.CARD : "transparent",
+                      padding: "8px 7px",
+                      boxShadow: active ? ANALYTICS.SHADOW_SM : "none",
                     }}
                   >
                     <StepDot done={done} active={active} />
@@ -737,7 +760,7 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
                           fontFamily: ANALYTICS.MONO,
                           fontSize: 8,
                           fontWeight: 800,
-                          textTransform: 'uppercase',
+                          textTransform: "uppercase",
                         }}
                       >
                         now
@@ -763,17 +786,23 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
         </div>
       </div>
 
-      <div style={{ padding: '28px 30px 34px' }}>
+      <div style={{ padding: "28px 30px 34px" }}>
         <div
           style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
             gap: 16,
             marginBottom: 14,
           }}
         >
-          <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr', gap: 14 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "28px 1fr",
+              gap: 14,
+            }}
+          >
             <StepDot active />
             <div>
               <div
@@ -782,7 +811,7 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
                   fontFamily: ANALYTICS.MONO,
                   fontSize: 10,
                   fontWeight: 800,
-                  letterSpacing: '0.05em',
+                  letterSpacing: "0.05em",
                   marginBottom: 4,
                 }}
               >
@@ -790,7 +819,7 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
               </div>
               <h2
                 style={{
-                  display: 'inline',
+                  display: "inline",
                   fontSize: 17,
                   lineHeight: 1.3,
                   margin: 0,
@@ -798,22 +827,31 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
               >
                 {activeStep.title}
               </h2>
-              <EvidenceBadge basis={activeStep.sourceBasis} label={activeStep.type} />
+              <EvidenceBadge
+                basis={activeStep.sourceBasis}
+                label={activeStep.type}
+              />
             </div>
           </div>
           <span
             style={{
               borderRadius: 999,
-              background: activeStep.status === 'captured' ? ANALYTICS.GREEN_TINT : ANALYTICS.AMBER_TINT,
-              color: activeStep.status === 'captured' ? ANALYTICS.GREEN_TEXT : ANALYTICS.AMBER_TEXT,
+              background:
+                activeStep.status === "captured"
+                  ? ANALYTICS.GREEN_TINT
+                  : ANALYTICS.AMBER_TINT,
+              color:
+                activeStep.status === "captured"
+                  ? ANALYTICS.GREEN_TEXT
+                  : ANALYTICS.AMBER_TEXT,
               fontSize: 10,
               fontWeight: 800,
-              padding: '5px 9px',
-              textTransform: 'uppercase',
-              whiteSpace: 'nowrap',
+              padding: "5px 9px",
+              textTransform: "uppercase",
+              whiteSpace: "nowrap",
             }}
           >
-            {activeStep.status === 'captured' ? 'Done' : 'Do this now'}
+            {activeStep.status === "captured" ? "Done" : "Do this now"}
           </span>
         </div>
 
@@ -822,7 +860,7 @@ function FocusedWorkPanel({ view }: { view: SourceEventShellView }) {
             color: ANALYTICS.INK_2,
             fontSize: 14,
             lineHeight: 1.55,
-            margin: '0 0 16px 42px',
+            margin: "0 0 16px 42px",
             maxWidth: 720,
           }}
         >
@@ -844,7 +882,7 @@ function StepDetail({
   eventId,
   stageKey,
 }: {
-  step: SourceEventShellView['stage']['activeStep'];
+  step: SourceEventShellView["stage"]["activeStep"];
   eventId: string;
   stageKey: SourceStageKey;
 }) {
@@ -857,7 +895,7 @@ function StepDetail({
           marginLeft: 42,
           border: `1px solid ${ANALYTICS.LINE}`,
           borderRadius: 8,
-          overflow: 'hidden',
+          overflow: "hidden",
           maxWidth: 680,
         }}
       >
@@ -865,29 +903,32 @@ function StepDetail({
           <div
             key={`${row.key}-${index}`}
             style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr auto',
+              display: "grid",
+              gridTemplateColumns: "1fr auto",
               gap: 16,
-              padding: '10px 12px',
-              borderTop: index === 0 ? 'none' : `1px solid ${ANALYTICS.LINE_SOFT}`,
+              padding: "10px 12px",
+              borderTop:
+                index === 0 ? "none" : `1px solid ${ANALYTICS.LINE_SOFT}`,
               color: ANALYTICS.INK_2,
               fontSize: 13,
             }}
           >
             <span>{row.key}</span>
-            <b style={{ color: row.flag ? ANALYTICS.AMBER_TEXT : ANALYTICS.INK }}>
+            <b
+              style={{ color: row.flag ? ANALYTICS.AMBER_TEXT : ANALYTICS.INK }}
+            >
               {row.value}
             </b>
           </div>
         ))}
-        <div style={{ padding: '12px' }}>
+        <div style={{ padding: "12px" }}>
           <ActionButton>{step.cta}</ActionButton>
         </div>
       </div>
     );
   }
 
-  if (step.type === 'provide') {
+  if (step.type === "provide") {
     return (
       <div style={{ marginLeft: 42, maxWidth: 680 }}>
         <TaskProvideUpload
@@ -920,17 +961,22 @@ function StepDot({
         width: active ? 26 : 18,
         height: active ? 26 : 18,
         borderRadius: 999,
-        display: 'grid',
-        placeItems: 'center',
-        background: done ? ANALYTICS.GREEN : active ? ANALYTICS.BLUE : ANALYTICS.CARD,
-        color: done || active ? '#fff' : 'transparent',
-        border: done || active ? 'none' : `1.5px solid ${ANALYTICS.LINE_STRONG}`,
+        display: "grid",
+        placeItems: "center",
+        background: done
+          ? ANALYTICS.GREEN
+          : active
+            ? ANALYTICS.BLUE
+            : ANALYTICS.CARD,
+        color: done || active ? "#fff" : "transparent",
+        border:
+          done || active ? "none" : `1.5px solid ${ANALYTICS.LINE_STRONG}`,
         fontSize: 11,
         fontWeight: 900,
         flexShrink: 0,
       }}
     >
-      {done ? '✓' : active ? '' : ''}
+      {done ? "✓" : active ? "" : ""}
     </span>
   );
 }
@@ -940,15 +986,15 @@ function ActionButton({ children }: { children: ReactNode }) {
     <button
       type="button"
       style={{
-        border: 'none',
+        border: "none",
         borderRadius: 8,
         background: ANALYTICS.INK,
-        color: '#fff',
-        cursor: 'pointer',
+        color: "#fff",
+        cursor: "pointer",
         fontFamily: ANALYTICS.SANS,
         fontSize: 13,
         fontWeight: 800,
-        padding: '11px 16px',
+        padding: "11px 16px",
       }}
     >
       {children}
@@ -977,14 +1023,17 @@ function FilesWorkspace({
       {view.files.byStage.length === 0 ? (
         <EmptyCard text="No Source artifacts are registered for this event yet." />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {view.files.byStage.map((group) => (
-            <section key={group.stageKey} style={{ ...CARD_STYLE, padding: 18 }}>
+            <section
+              key={group.stageKey}
+              style={{ ...CARD_STYLE, padding: 18 }}
+            >
               <div
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                   marginBottom: 12,
                 }}
               >
@@ -998,13 +1047,13 @@ function FilesWorkspace({
                   {group.stageLabel}
                 </h2>
                 <span style={{ color: ANALYTICS.MUTED, fontSize: 12 }}>
-                  {group.items.length} item{group.items.length === 1 ? '' : 's'}
+                  {group.items.length} item{group.items.length === 1 ? "" : "s"}
                 </span>
               </div>
               <div
                 style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
                   gap: 10,
                 }}
               >
@@ -1032,23 +1081,23 @@ function ArtifactLifecyclePanel({
   const standardsCsvHref = `data:text/csv;charset=utf-8,${encodeURIComponent(
     buildSourceArtifactStandardsCsv(lifecycle.rows),
   )}`;
-  const standardsCsvFilename = `${view.event.code || 'source-event'}-artifact-standards.csv`;
+  const standardsCsvFilename = `${view.event.code || "source-event"}-artifact-standards.csv`;
   const summaryItems = [
-    ['Quality score', `${lifecycle.quality.score}/100`],
-    ['Hard fails', String(lifecycle.quality.hardFailCount)],
-    ['Missing required', String(lifecycle.quality.missingRequiredCount)],
-    ['Review-required', String(lifecycle.quality.reviewRequiredCount)],
-    ['Content scored', String(lifecycle.quality.contentScoredCount)],
-    ['Content blockers', String(lifecycle.quality.contentBlockerCount)],
-    ['Content warnings', String(lifecycle.quality.contentWarningCount)],
-    ['Expected artifacts', String(lifecycle.expectedCount)],
-    ['Required', String(lifecycle.requiredCount)],
-    ['Gate-defining', String(lifecycle.gateDefiningCount)],
-    ['Prompt-backed', String(lifecycle.promptBackedCount)],
-    ['Export-routed', String(lifecycle.renderableCount)],
-    ['AI drafts', String(lifecycle.aiDraftCount)],
-    ['Client finals', String(lifecycle.clientFinalCount)],
-    ['Evidence-only', String(lifecycle.evidenceOnlyCount)],
+    ["Quality score", `${lifecycle.quality.score}/100`],
+    ["Hard fails", String(lifecycle.quality.hardFailCount)],
+    ["Missing required", String(lifecycle.quality.missingRequiredCount)],
+    ["Review-required", String(lifecycle.quality.reviewRequiredCount)],
+    ["Content scored", String(lifecycle.quality.contentScoredCount)],
+    ["Content blockers", String(lifecycle.quality.contentBlockerCount)],
+    ["Content warnings", String(lifecycle.quality.contentWarningCount)],
+    ["Expected artifacts", String(lifecycle.expectedCount)],
+    ["Required", String(lifecycle.requiredCount)],
+    ["Gate-defining", String(lifecycle.gateDefiningCount)],
+    ["Prompt-backed", String(lifecycle.promptBackedCount)],
+    ["Export-routed", String(lifecycle.renderableCount)],
+    ["AI drafts", String(lifecycle.aiDraftCount)],
+    ["Client finals", String(lifecycle.clientFinalCount)],
+    ["Evidence-only", String(lifecycle.evidenceOnlyCount)],
   ];
 
   return (
@@ -1058,10 +1107,10 @@ function ArtifactLifecyclePanel({
     >
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
+          display: "flex",
+          justifyContent: "space-between",
           gap: 18,
-          alignItems: 'flex-start',
+          alignItems: "flex-start",
         }}
       >
         <div>
@@ -1072,14 +1121,14 @@ function ArtifactLifecyclePanel({
               fontSize: 11,
               fontWeight: 900,
               letterSpacing: 1.2,
-              textTransform: 'uppercase',
+              textTransform: "uppercase",
             }}
           >
             Artifact lifecycle
           </div>
           <h2
             style={{
-              margin: '6px 0 0',
+              margin: "6px 0 0",
               fontFamily: ANALYTICS.SERIF,
               fontSize: 22,
             }}
@@ -1088,7 +1137,7 @@ function ArtifactLifecyclePanel({
           </h2>
           <p
             style={{
-              margin: '6px 0 0',
+              margin: "6px 0 0",
               color: ANALYTICS.MUTED,
               fontSize: 13,
               lineHeight: 1.5,
@@ -1102,14 +1151,15 @@ function ArtifactLifecyclePanel({
           <p
             data-testid="source-artifact-quality-scope"
             style={{
-              margin: '8px 0 0',
+              margin: "8px 0 0",
               color: ANALYTICS.MUTED,
               fontSize: 12,
               lineHeight: 1.45,
               maxWidth: 760,
             }}
           >
-            Quality rubric: {lifecycle.quality.label}. {lifecycle.quality.scopeLabel}
+            Quality rubric: {lifecycle.quality.label}.{" "}
+            {lifecycle.quality.scopeLabel}
           </p>
           <a
             href={standardsCsvHref}
@@ -1117,12 +1167,12 @@ function ArtifactLifecyclePanel({
             data-testid="source-artifact-standards-export"
             style={{
               ...BUTTON_STYLE,
-              display: 'inline-flex',
-              alignItems: 'center',
+              display: "inline-flex",
+              alignItems: "center",
               gap: 7,
               marginTop: 12,
-              padding: '9px 12px',
-              textDecoration: 'none',
+              padding: "9px 12px",
+              textDecoration: "none",
             }}
           >
             Export standards CSV
@@ -1130,8 +1180,8 @@ function ArtifactLifecyclePanel({
         </div>
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, minmax(82px, 1fr))',
+            display: "grid",
+            gridTemplateColumns: "repeat(4, minmax(82px, 1fr))",
             gap: 8,
             minWidth: 430,
           }}
@@ -1142,7 +1192,7 @@ function ArtifactLifecyclePanel({
               style={{
                 border: `1px solid ${ANALYTICS.LINE_SOFT}`,
                 borderRadius: 8,
-                padding: '9px 10px',
+                padding: "9px 10px",
                 background: ANALYTICS.SOFT,
               }}
             >
@@ -1152,7 +1202,7 @@ function ArtifactLifecyclePanel({
                   color: ANALYTICS.MUTED,
                   fontSize: 9.5,
                   fontWeight: 900,
-                  textTransform: 'uppercase',
+                  textTransform: "uppercase",
                 }}
               >
                 {label}
@@ -1176,7 +1226,7 @@ function ArtifactLifecyclePanel({
           marginTop: 16,
           border: `1px solid ${ANALYTICS.LINE_SOFT}`,
           borderRadius: 8,
-          overflow: 'visible',
+          overflow: "visible",
         }}
       >
         {rowsByStage.map((group) => (
@@ -1205,17 +1255,17 @@ function LifecycleStageRows({
     <div>
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: '180px minmax(220px, 1fr) 180px 190px 180px',
+          display: "grid",
+          gridTemplateColumns: "180px minmax(220px, 1fr) 180px 190px 180px",
           gap: 12,
-          padding: '10px 12px',
+          padding: "10px 12px",
           background: ANALYTICS.SOFT,
           borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
           color: ANALYTICS.MUTED,
           fontFamily: ANALYTICS.MONO,
           fontSize: 10,
           fontWeight: 900,
-          textTransform: 'uppercase',
+          textTransform: "uppercase",
         }}
       >
         <div>{group.stageLabel}</div>
@@ -1229,12 +1279,12 @@ function LifecycleStageRows({
           key={row.code}
           data-testid={`source-artifact-lifecycle-row-${row.code}`}
           style={{
-            display: 'grid',
-            gridTemplateColumns: '180px minmax(220px, 1fr) 180px 190px 180px',
+            display: "grid",
+            gridTemplateColumns: "180px minmax(220px, 1fr) 180px 190px 180px",
             gap: 12,
-            padding: '12px',
+            padding: "12px",
             borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
-            alignItems: 'start',
+            alignItems: "start",
           }}
         >
           <div>
@@ -1250,7 +1300,9 @@ function LifecycleStageRows({
               {row.code} · {row.requirementLabel} · {row.gateLabel}
             </div>
           </div>
-          <div style={{ color: ANALYTICS.INK_2, fontSize: 12, lineHeight: 1.45 }}>
+          <div
+            style={{ color: ANALYTICS.INK_2, fontSize: 12, lineHeight: 1.45 }}
+          >
             <strong>{row.guidelineLabel}</strong>
             <div style={{ marginTop: 6, color: ANALYTICS.MUTED }}>
               {row.audienceLabel}
@@ -1265,7 +1317,11 @@ function LifecycleStageRows({
           </div>
           <div>
             <EvidenceBadge
-              basis={row.lifecycleState === 'not_registered' ? 'missing' : 'live_artifact'}
+              basis={
+                row.lifecycleState === "not_registered"
+                  ? "missing"
+                  : "live_artifact"
+              }
               label={row.lifecycleLabel}
             />
             <div
@@ -1285,13 +1341,18 @@ function LifecycleStageRows({
               data-testid={`source-artifact-content-quality-${row.code}`}
               style={{
                 marginTop: 8,
-                color: row.contentQuality.state === 'blocked' ? '#8A3A12' : ANALYTICS.INK_2,
+                color:
+                  row.contentQuality.state === "blocked"
+                    ? "#8A3A12"
+                    : ANALYTICS.INK_2,
                 fontSize: 11.5,
                 fontWeight: 800,
               }}
             >
-              Content QA{' '}
-              {row.contentQuality.score === null ? 'not scored' : `${row.contentQuality.score}/100`}
+              Content QA{" "}
+              {row.contentQuality.score === null
+                ? "not scored"
+                : `${row.contentQuality.score}/100`}
             </div>
             <div style={{ marginTop: 3, color: ANALYTICS.MUTED, fontSize: 11 }}>
               {row.contentQuality.label}
@@ -1300,34 +1361,46 @@ function LifecycleStageRows({
               {row.familyLabel}
             </div>
           </div>
-          <div style={{ color: ANALYTICS.MUTED, fontSize: 11.5, lineHeight: 1.45 }}>
-            <strong style={{ color: ANALYTICS.INK_2 }}>{row.prompt.modelLabel}</strong>
+          <div
+            style={{ color: ANALYTICS.MUTED, fontSize: 11.5, lineHeight: 1.45 }}
+          >
+            <strong style={{ color: ANALYTICS.INK_2 }}>
+              {row.prompt.modelLabel}
+            </strong>
             <br />
             {row.prompt.maxTokensLabel}
             <br />
             {row.exportFormatsLabel}
           </div>
-          <div style={{ color: ANALYTICS.INK_2, fontSize: 12, lineHeight: 1.45 }}>
+          <div
+            style={{ color: ANALYTICS.INK_2, fontSize: 12, lineHeight: 1.45 }}
+          >
             <strong>{row.approvalLabel}</strong>
             <br />
             {row.governanceMessage}
-            {row.quality.hardFails.length > 0 || row.quality.warnings.length > 0 ? (
+            {row.quality.hardFails.length > 0 ||
+            row.quality.warnings.length > 0 ? (
               <div
                 style={{
                   marginTop: 8,
-                  color: row.quality.hardFails.length > 0 ? '#8A3A12' : ANALYTICS.MUTED,
+                  color:
+                    row.quality.hardFails.length > 0
+                      ? "#8A3A12"
+                      : ANALYTICS.MUTED,
                   fontSize: 11.5,
                 }}
               >
                 {row.quality.hardFails[0] ?? row.quality.warnings[0]}
               </div>
             ) : null}
-            {row.contentQuality.state !== 'passed' ? (
+            {row.contentQuality.state !== "passed" ? (
               <div
                 style={{
                   marginTop: 8,
                   color:
-                    row.contentQuality.state === 'blocked' ? '#8A3A12' : ANALYTICS.MUTED,
+                    row.contentQuality.state === "blocked"
+                      ? "#8A3A12"
+                      : ANALYTICS.MUTED,
                   fontSize: 11.5,
                 }}
               >
@@ -1336,7 +1409,7 @@ function LifecycleStageRows({
                   row.contentQuality.nextAction}
               </div>
             ) : null}
-            {row.lifecycleState === 'ai_draft' ? (
+            {row.lifecycleState === "ai_draft" ? (
               <div style={{ marginTop: 10 }}>
                 <AcceptClientFinalButton
                   eventId={eventId}
@@ -1383,13 +1456,13 @@ function IntelligenceWorkspace({
       />
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 320px',
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) 320px",
           gap: 16,
-          alignItems: 'start',
+          alignItems: "start",
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {view.intelligence.stepInsight ? (
             <StepInsightPanel insight={view.intelligence.stepInsight} />
           ) : null}
@@ -1418,10 +1491,10 @@ function ApprovalsWorkspace({ view }: { view: SourceEventShellView }) {
         <EmptyCard text={view.approvals.readinessLine} />
       )}
       {view.approvals.items.length > 0 ? (
-        <div style={{ marginTop: 14, display: 'grid', gap: 10 }}>
+        <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
           {view.approvals.items.map((item) => (
             <ApprovalCard
-              key={`${item.eventId}-${item.kind}-${item.stageKey ?? 'intake'}`}
+              key={`${item.eventId}-${item.kind}-${item.stageKey ?? "intake"}`}
               item={item}
             />
           ))}
@@ -1438,39 +1511,96 @@ function ApprovalsWorkspace({ view }: { view: SourceEventShellView }) {
 // file's own ANALYTICS tokens rather than AgentMarkdown's chat-specific
 // chart/citation overrides, which don't apply to facilitator content.
 type GuidebookMarkdownComponents = NonNullable<
-  ComponentPropsWithoutRef<typeof ReactMarkdown>['components']
+  ComponentPropsWithoutRef<typeof ReactMarkdown>["components"]
 >;
 
 const GUIDEBOOK_MARKDOWN_COMPONENTS: GuidebookMarkdownComponents = {
   p: ({ children }) => (
-    <p style={{ margin: '0 0 0.6em', fontSize: 14, lineHeight: 1.6, color: ANALYTICS.INK_2 }}>
+    <p
+      style={{
+        margin: "0 0 0.6em",
+        fontSize: 14,
+        lineHeight: 1.6,
+        color: ANALYTICS.INK_2,
+      }}
+    >
       {children}
     </p>
   ),
   ul: ({ children }) => (
-    <ul style={{ margin: '0 0 0.6em', paddingLeft: '1.3em', fontSize: 14, lineHeight: 1.6, color: ANALYTICS.INK_2 }}>
+    <ul
+      style={{
+        margin: "0 0 0.6em",
+        paddingLeft: "1.3em",
+        fontSize: 14,
+        lineHeight: 1.6,
+        color: ANALYTICS.INK_2,
+      }}
+    >
       {children}
     </ul>
   ),
   ol: ({ children }) => (
-    <ol style={{ margin: '0 0 0.6em', paddingLeft: '1.3em', fontSize: 14, lineHeight: 1.6, color: ANALYTICS.INK_2 }}>
+    <ol
+      style={{
+        margin: "0 0 0.6em",
+        paddingLeft: "1.3em",
+        fontSize: 14,
+        lineHeight: 1.6,
+        color: ANALYTICS.INK_2,
+      }}
+    >
       {children}
     </ol>
   ),
-  li: ({ children }) => <li style={{ margin: '0.15em 0' }}>{children}</li>,
-  strong: ({ children }) => <strong style={{ fontWeight: 700, color: ANALYTICS.INK }}>{children}</strong>,
+  li: ({ children }) => <li style={{ margin: "0.15em 0" }}>{children}</li>,
+  strong: ({ children }) => (
+    <strong style={{ fontWeight: 700, color: ANALYTICS.INK }}>
+      {children}
+    </strong>
+  ),
   em: ({ children }) => <em>{children}</em>,
   h1: ({ children }) => (
-    <h4 style={{ fontFamily: ANALYTICS.SERIF, fontSize: 16, margin: '0.6em 0 0.3em', color: ANALYTICS.INK }}>{children}</h4>
+    <h4
+      style={{
+        fontFamily: ANALYTICS.SERIF,
+        fontSize: 16,
+        margin: "0.6em 0 0.3em",
+        color: ANALYTICS.INK,
+      }}
+    >
+      {children}
+    </h4>
   ),
   h2: ({ children }) => (
-    <h4 style={{ fontFamily: ANALYTICS.SERIF, fontSize: 15, margin: '0.6em 0 0.3em', color: ANALYTICS.INK }}>{children}</h4>
+    <h4
+      style={{
+        fontFamily: ANALYTICS.SERIF,
+        fontSize: 15,
+        margin: "0.6em 0 0.3em",
+        color: ANALYTICS.INK,
+      }}
+    >
+      {children}
+    </h4>
   ),
   h3: ({ children }) => (
-    <h4 style={{ fontFamily: ANALYTICS.SERIF, fontSize: 14, margin: '0.6em 0 0.3em', color: ANALYTICS.INK }}>{children}</h4>
+    <h4
+      style={{
+        fontFamily: ANALYTICS.SERIF,
+        fontSize: 14,
+        margin: "0.6em 0 0.3em",
+        color: ANALYTICS.INK,
+      }}
+    >
+      {children}
+    </h4>
   ),
   a: ({ children, href }) => (
-    <a href={href} style={{ color: ANALYTICS.BLUE, textDecoration: 'underline' }}>
+    <a
+      href={href}
+      style={{ color: ANALYTICS.BLUE, textDecoration: "underline" }}
+    >
       {children}
     </a>
   ),
@@ -1495,33 +1625,41 @@ function GuidebookWorkspace({ view }: { view: SourceEventShellView }) {
       <WorkspaceTitle
         eyebrow="Guidebook"
         title={record?.title ?? `${view.stage.label} facilitator guide`}
-        subtitle={record?.purpose ?? 'Agenda and talking points for the working session that moves this stage to its gate.'}
+        subtitle={
+          record?.purpose ??
+          "Agenda and talking points for the working session that moves this stage to its gate."
+        }
       />
       {!record ? (
         <EmptyCard text={view.guidebook.emptyMessage} />
       ) : (
-        <div style={{ display: 'grid', gap: 12 }}>
+        <div style={{ display: "grid", gap: 12 }}>
           <div
             style={{
-              display: 'flex',
+              display: "flex",
               gap: 16,
               fontFamily: ANALYTICS.MONO,
               fontSize: 11,
               color: ANALYTICS.FAINT,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
             }}
           >
             <span>{record.durationMinutes} min</span>
-            <span>{record.clientKey ? 'Tenant guidebook' : 'Global default'}</span>
+            <span>
+              {record.clientKey ? "Tenant guidebook" : "Global default"}
+            </span>
           </div>
           {record.sections.map((section, index) => (
-            <article key={`${section.type}-${index}`} style={{ ...CARD_STYLE, padding: 18 }}>
+            <article
+              key={`${section.type}-${index}`}
+              style={{ ...CARD_STYLE, padding: 18 }}
+            >
               <div
                 style={{
-                  display: 'flex',
-                  alignItems: 'baseline',
-                  justifyContent: 'space-between',
+                  display: "flex",
+                  alignItems: "baseline",
+                  justifyContent: "space-between",
                   gap: 12,
                   marginBottom: 8,
                 }}
@@ -1536,7 +1674,13 @@ function GuidebookWorkspace({ view }: { view: SourceEventShellView }) {
                   {section.title}
                 </h3>
                 {section.timeBoxMinutes != null ? (
-                  <span style={{ fontFamily: ANALYTICS.MONO, fontSize: 11, color: ANALYTICS.FAINT }}>
+                  <span
+                    style={{
+                      fontFamily: ANALYTICS.MONO,
+                      fontSize: 11,
+                      color: ANALYTICS.FAINT,
+                    }}
+                  >
                     {section.timeBoxMinutes} min
                   </span>
                 ) : null}
@@ -1552,15 +1696,15 @@ function GuidebookWorkspace({ view }: { view: SourceEventShellView }) {
 
 function IntelligenceExplorerCard({ view }: { view: SourceEventShellView }) {
   return (
-    <aside style={{ ...CARD_STYLE, padding: 18, position: 'sticky', top: 18 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <aside style={{ ...CARD_STYLE, padding: 18, position: "sticky", top: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <div
           style={{
             width: 32,
             height: 32,
             borderRadius: 8,
-            display: 'grid',
-            placeItems: 'center',
+            display: "grid",
+            placeItems: "center",
             background: ANALYTICS.TEAL_DEEP,
             color: ANALYTICS.TEAL_BRIGHT,
             fontFamily: ANALYTICS.SERIF,
@@ -1579,15 +1723,15 @@ function IntelligenceExplorerCard({ view }: { view: SourceEventShellView }) {
       <p style={{ color: ANALYTICS.INK_2, fontSize: 13, lineHeight: 1.55 }}>
         {view.intelligence.lead}
       </p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
         {view.intelligence.contextChips.map((chip) => (
           <span
             key={chip}
             style={{
               borderRadius: 999,
-              background: 'rgba(10,10,11,0.06)',
+              background: "rgba(10,10,11,0.06)",
               color: ANALYTICS.MUTED,
-              padding: '4px 8px',
+              padding: "4px 8px",
               fontSize: 11,
               fontWeight: 700,
             }}
@@ -1601,7 +1745,7 @@ function IntelligenceExplorerCard({ view }: { view: SourceEventShellView }) {
           marginTop: 16,
           paddingTop: 14,
           borderTop: `1px solid ${ANALYTICS.LINE_SOFT}`,
-          display: 'grid',
+          display: "grid",
           gap: 10,
         }}
       >
@@ -1639,11 +1783,11 @@ function IntelligenceExplorerCard({ view }: { view: SourceEventShellView }) {
         disabled
         style={{
           ...BUTTON_STYLE,
-          width: '100%',
+          width: "100%",
           marginTop: 10,
-          padding: '10px 12px',
+          padding: "10px 12px",
           color: ANALYTICS.FAINT,
-          cursor: 'not-allowed',
+          cursor: "not-allowed",
         }}
       >
         {view.intelligence.captureSemantics.saveActionLabel}
@@ -1666,20 +1810,20 @@ function AskAvaLauncher({
       aria-expanded={open}
       onClick={onClick}
       style={{
-        position: 'fixed',
+        position: "fixed",
         right: 24,
         bottom: 24,
         zIndex: 90,
-        border: 'none',
+        border: "none",
         borderRadius: 999,
         background: ANALYTICS.TEAL_DEEP,
-        color: '#fff',
-        cursor: 'pointer',
-        display: 'inline-flex',
-        alignItems: 'center',
+        color: "#fff",
+        cursor: "pointer",
+        display: "inline-flex",
+        alignItems: "center",
         gap: 10,
-        padding: '11px 16px 11px 12px',
-        boxShadow: '0 16px 36px rgba(10,10,11,0.22)',
+        padding: "11px 16px 11px 12px",
+        boxShadow: "0 16px 36px rgba(10,10,11,0.22)",
         fontFamily: ANALYTICS.SANS,
         fontSize: 13,
         fontWeight: 800,
@@ -1692,15 +1836,15 @@ function AskAvaLauncher({
           borderRadius: 999,
           background: ANALYTICS.TEAL_BRIGHT,
           color: ANALYTICS.TEAL_DEEP,
-          display: 'grid',
-          placeItems: 'center',
+          display: "grid",
+          placeItems: "center",
           fontFamily: ANALYTICS.SERIF,
           fontWeight: 900,
         }}
       >
         a
       </span>
-      <span>{open ? 'Close aVa' : 'Ask aVa'}</span>
+      <span>{open ? "Close aVa" : "Ask aVa"}</span>
     </button>
   );
 }
@@ -1715,7 +1859,9 @@ function FileCard({ item }: { item: SourceShellFileItem }) {
         background: ANALYTICS.SOFT,
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+      <div
+        style={{ display: "flex", justifyContent: "space-between", gap: 10 }}
+      >
         <span style={{ fontWeight: 800, fontSize: 13 }}>{item.name}</span>
         <span
           style={{
@@ -1731,7 +1877,7 @@ function FileCard({ item }: { item: SourceShellFileItem }) {
       <div style={{ color: ANALYTICS.MUTED, fontSize: 12, marginTop: 8 }}>
         {item.group} · {item.state}
       </div>
-      <div style={{ marginTop: 9, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+      <div style={{ marginTop: 9, display: "flex", flexWrap: "wrap", gap: 6 }}>
         <EvidenceBadge basis={item.sourceBasis} label={item.governanceLabel} />
         {item.needsComplianceReview ? (
           <span
@@ -1740,7 +1886,7 @@ function FileCard({ item }: { item: SourceShellFileItem }) {
               fontFamily: ANALYTICS.MONO,
               fontSize: 10,
               fontWeight: 800,
-              padding: '3px 8px',
+              padding: "3px 8px",
               borderRadius: 999,
               background: ANALYTICS.AMBER_TINT,
               color: ANALYTICS.AMBER_TEXT,
@@ -1797,16 +1943,16 @@ function ApprovalCard({
     >
       <div
         style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           gap: 14,
         }}
       >
         <div>
           <div style={{ fontWeight: 800 }}>{item.ask}</div>
           <div style={{ color: ANALYTICS.MUTED, fontSize: 13, marginTop: 5 }}>
-            {item.eventCode} · {item.stageLabel ?? 'Intake'}
+            {item.eventCode} · {item.stageLabel ?? "Intake"}
           </div>
           <div style={{ color: ANALYTICS.INK_2, fontSize: 13, marginTop: 8 }}>
             {item.readiness}
@@ -1816,8 +1962,8 @@ function ApprovalCard({
           href={item.href}
           style={{
             ...BUTTON_STYLE,
-            padding: '10px 12px',
-            textDecoration: 'none',
+            padding: "10px 12px",
+            textDecoration: "none",
             flexShrink: 0,
           }}
         >
@@ -1844,8 +1990,8 @@ function WorkspaceTitle({
           fontFamily: ANALYTICS.MONO,
           fontSize: 10,
           fontWeight: 800,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
           color: ANALYTICS.FAINT,
           marginBottom: 8,
         }}
@@ -1857,7 +2003,7 @@ function WorkspaceTitle({
           fontFamily: ANALYTICS.SERIF,
           margin: 0,
           fontSize: 34,
-          letterSpacing: '-0.4px',
+          letterSpacing: "-0.4px",
         }}
       >
         {title}
@@ -1865,7 +2011,7 @@ function WorkspaceTitle({
       <p
         style={{
           color: ANALYTICS.INK_2,
-          margin: '8px 0 0',
+          margin: "8px 0 0",
           fontSize: 16,
           maxWidth: 780,
           lineHeight: 1.45,
@@ -1893,25 +2039,27 @@ function WorkspaceButton({
       type="button"
       onClick={onClick}
       style={{
-        width: '100%',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        border: active ? `1px solid ${ANALYTICS.LINE}` : '1px solid transparent',
+        width: "100%",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        border: active
+          ? `1px solid ${ANALYTICS.LINE}`
+          : "1px solid transparent",
         borderRadius: 8,
-        background: active ? ANALYTICS.CARD : 'transparent',
-        padding: '9px 10px',
-        cursor: 'pointer',
+        background: active ? ANALYTICS.CARD : "transparent",
+        padding: "9px 10px",
+        cursor: "pointer",
         fontFamily: ANALYTICS.SANS,
         fontSize: 13,
         fontWeight: active ? 800 : 650,
         color: active ? ANALYTICS.INK : ANALYTICS.INK_2,
-        textAlign: 'left',
+        textAlign: "left",
       }}
     >
       <span>{label}</span>
       <span style={{ color: badge ? ANALYTICS.FAINT : ANALYTICS.AMBER_TEXT }}>
-        {badge ?? '•'}
+        {badge ?? "•"}
       </span>
     </button>
   );
@@ -1925,9 +2073,9 @@ function RailLabel({ children }: { children: ReactNode }) {
         fontFamily: ANALYTICS.MONO,
         fontSize: 10,
         fontWeight: 800,
-        letterSpacing: '0.14em',
-        margin: '0 0 8px',
-        textTransform: 'uppercase',
+        letterSpacing: "0.14em",
+        margin: "0 0 8px",
+        textTransform: "uppercase",
       }}
     >
       {children}
@@ -1958,28 +2106,28 @@ function EvidenceBadge({
   label?: string;
 }) {
   const tone =
-    basis === 'live_fact' || basis === 'live_artifact'
+    basis === "live_fact" || basis === "live_artifact"
       ? { bg: ANALYTICS.GREEN_TINT, fg: ANALYTICS.GREEN_TEXT }
-      : basis === 'sample'
-        ? { bg: 'rgba(10,10,11,0.06)', fg: ANALYTICS.MUTED }
-        : basis === 'missing'
+      : basis === "sample"
+        ? { bg: "rgba(10,10,11,0.06)", fg: ANALYTICS.MUTED }
+        : basis === "missing"
           ? { bg: ANALYTICS.AMBER_TINT, fg: ANALYTICS.AMBER_TEXT }
           : { bg: ANALYTICS.BLUE_TINT, fg: ANALYTICS.BLUE };
   return (
     <span
       style={{
-        display: 'inline-flex',
+        display: "inline-flex",
         borderRadius: 999,
         background: tone.bg,
         color: tone.fg,
-        padding: '3px 8px',
+        padding: "3px 8px",
         fontSize: 10,
         fontWeight: 800,
-        letterSpacing: '0.03em',
-        textTransform: 'uppercase',
+        letterSpacing: "0.03em",
+        textTransform: "uppercase",
       }}
     >
-      {label ?? basis.replaceAll('_', ' ')}
+      {label ?? basis.replaceAll("_", " ")}
     </span>
   );
 }
