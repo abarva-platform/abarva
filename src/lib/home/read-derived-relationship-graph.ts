@@ -1,7 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import type { HomeRelationshipEdge } from "./derive-relationship-edges";
+import {
+  isBusinessReadableRelationshipLabel,
+  type HomeRelationshipEdge,
+} from "./derive-relationship-edges";
 
 // =============================================================================
 // Derived relationship graph loader
@@ -80,7 +83,13 @@ export function readDerivedRelationshipGraphEdges(
         (edge) =>
           edge.from_object_id &&
           edge.to_object_id &&
-          edge.from_object_id !== edge.to_object_id,
+          edge.from_object_id !== edge.to_object_id &&
+          isBusinessReadableRelationshipLabel(
+            edge.from_object_name || edge.from_object_id,
+          ) &&
+          isBusinessReadableRelationshipLabel(
+            edge.to_object_name || edge.to_object_id,
+          ),
       )
       .map((edge) => ({
         from: edge.from_object_name || edge.from_object_id,
