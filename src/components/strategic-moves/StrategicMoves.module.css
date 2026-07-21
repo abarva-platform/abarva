@@ -3717,7 +3717,7 @@
    This is additive/scoped-only, mirroring the .mxw-finder-on precedent
    in MovesPhaseStandaloneClient.tsx: every rule below is nested under
    .finderShellOn and targets an existing class by name — none of it
-   edits a bare .p0*/.scaffold*/.origin* selector above, so the flag-off
+   edits a bare .p0-, .scaffold-, or .origin-prefixed selector above, so the flag-off
    render of every other consumer of this shared stylesheet
    (MoveApprovalsOverview, the phase-workspace pages, etc.) stays
    byte-for-byte identical. Tokens match the merged
