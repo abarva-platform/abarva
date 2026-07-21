@@ -512,6 +512,20 @@ worked examples from the design conversation.
   `evaluateGate()` semantics. Chrome and interaction layer only.
 - **Discovered from**: owner design-review session 2026-07-20 (Claude Design prototype iteration
   - this session's reconciliation pass).
+- **Correction (2026-07-20, same day)**: Phase 1-2 (PR #5183, merged) and the Phase 3 build both
+  targeted `MovePhaseExplorer.tsx` / `PhaseWorkspaceComposition.tsx` / `MovePhaseWorkspacePanel.tsx`
+  — these are **not mounted on the live Moves phase route**. Verified via call-graph: the real
+  route (`src/app/(maestro)/strategic-moves/[moveId]/phase/[phaseNum]/page.tsx`) mounts
+  `MovesPhaseStandaloneClient.tsx` (a separate 3,440-line component with its own rail and its own
+  Steps/Files/Intelligence tabs, styled via an inline `<style>` block using `mxw-*` classes and
+  existing CSS custom properties). PR #5183 is harmless (flag off, fully tested) and is left
+  merged rather than reverted — it is simply inert. The Phase 3 build was **not merged** (same dead
+  path, no point compounding it). **Rollout target for all remaining phases is corrected to
+  `MovesPhaseStandaloneClient.tsx` directly** — apply the Finder-shell visual treatment (grouped
+  selection tint, draft dot, blocked-reason subtitle, navy-not-grey labels) to its existing
+  `mxw-rail-extra`/`mxw-side-label`/tab markup via additive CSS + minimal prop/className changes,
+  NOT a rewrite, given this component's size and live-traffic exposure. `MovePhaseExplorer.tsx`
+  work is retained as unused infra; do not build further phases against it.
 
 ---
 
