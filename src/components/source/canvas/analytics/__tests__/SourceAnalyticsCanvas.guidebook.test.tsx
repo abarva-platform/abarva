@@ -119,6 +119,19 @@ describe("SourceAnalyticsCanvas — guidebook workspace", () => {
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Global default")).toBeInTheDocument();
+
+    // Section bodies render through ReactMarkdown, not the old plain-text
+    // <p style="white-space: pre-wrap"> paragraph — this repo's global Jest
+    // mock for react-markdown (src/__tests__/__mocks__/react-markdown.tsx)
+    // is a hard passthrough (no real parsing), so a DOM assertion here can
+    // only catch "did this regress back to a plain <p>", not "does list/
+    // emphasis markup render correctly." That claim is verified separately,
+    // against the real (unmocked) library and the real authored agenda
+    // content, via renderToStaticMarkup — confirmed real <ol>/<li> output,
+    // zero literal "1. " text remaining.
+    expect(
+      document.querySelector('[data-testid="source-shell-v2-guidebook"] [data-mock="react-markdown"]'),
+    ).toBeInTheDocument();
   });
 
   it("does not show the Guidebook tab at all when no guidebook is authored for the viewed stage", () => {

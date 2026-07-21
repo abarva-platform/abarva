@@ -2,7 +2,10 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import { useMemo, useState, type CSSProperties, type ComponentPropsWithoutRef, type ReactNode } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeSanitize from 'rehype-sanitize';
 import { AskAnythingBar } from '@/components/agent/AskAnythingBar';
 import { AppShell } from '@/components/shell/AppShell';
 import { AcceptClientFinalButton } from '@/components/source/canvas/workspace-tabs/AcceptClientFinalButton';
@@ -1428,6 +1431,63 @@ function ApprovalsWorkspace({ view }: { view: SourceEventShellView }) {
   );
 }
 
+// Guidebook section bodies are authored Markdown (see
+// SourceStageGuidebookSection.body's own type comment) — reuses the same
+// react-markdown/remark-gfm/rehype-sanitize dependencies already bundled
+// for AgentMarkdown (src/lib/agent/markdownRenderer.tsx), styled with this
+// file's own ANALYTICS tokens rather than AgentMarkdown's chat-specific
+// chart/citation overrides, which don't apply to facilitator content.
+type GuidebookMarkdownComponents = NonNullable<
+  ComponentPropsWithoutRef<typeof ReactMarkdown>['components']
+>;
+
+const GUIDEBOOK_MARKDOWN_COMPONENTS: GuidebookMarkdownComponents = {
+  p: ({ children }) => (
+    <p style={{ margin: '0 0 0.6em', fontSize: 14, lineHeight: 1.6, color: ANALYTICS.INK_2 }}>
+      {children}
+    </p>
+  ),
+  ul: ({ children }) => (
+    <ul style={{ margin: '0 0 0.6em', paddingLeft: '1.3em', fontSize: 14, lineHeight: 1.6, color: ANALYTICS.INK_2 }}>
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol style={{ margin: '0 0 0.6em', paddingLeft: '1.3em', fontSize: 14, lineHeight: 1.6, color: ANALYTICS.INK_2 }}>
+      {children}
+    </ol>
+  ),
+  li: ({ children }) => <li style={{ margin: '0.15em 0' }}>{children}</li>,
+  strong: ({ children }) => <strong style={{ fontWeight: 700, color: ANALYTICS.INK }}>{children}</strong>,
+  em: ({ children }) => <em>{children}</em>,
+  h1: ({ children }) => (
+    <h4 style={{ fontFamily: ANALYTICS.SERIF, fontSize: 16, margin: '0.6em 0 0.3em', color: ANALYTICS.INK }}>{children}</h4>
+  ),
+  h2: ({ children }) => (
+    <h4 style={{ fontFamily: ANALYTICS.SERIF, fontSize: 15, margin: '0.6em 0 0.3em', color: ANALYTICS.INK }}>{children}</h4>
+  ),
+  h3: ({ children }) => (
+    <h4 style={{ fontFamily: ANALYTICS.SERIF, fontSize: 14, margin: '0.6em 0 0.3em', color: ANALYTICS.INK }}>{children}</h4>
+  ),
+  a: ({ children, href }) => (
+    <a href={href} style={{ color: ANALYTICS.BLUE, textDecoration: 'underline' }}>
+      {children}
+    </a>
+  ),
+};
+
+function GuidebookSectionBody({ body }: { body: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeSanitize]}
+      components={GUIDEBOOK_MARKDOWN_COMPONENTS}
+    >
+      {body}
+    </ReactMarkdown>
+  );
+}
+
 function GuidebookWorkspace({ view }: { view: SourceEventShellView }) {
   const record = view.guidebook.record;
   return (
@@ -1481,17 +1541,7 @@ function GuidebookWorkspace({ view }: { view: SourceEventShellView }) {
                   </span>
                 ) : null}
               </div>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 14,
-                  lineHeight: 1.6,
-                  color: ANALYTICS.INK_2,
-                  whiteSpace: 'pre-wrap',
-                }}
-              >
-                {section.body}
-              </p>
+              <GuidebookSectionBody body={section.body} />
             </article>
           ))}
         </div>
