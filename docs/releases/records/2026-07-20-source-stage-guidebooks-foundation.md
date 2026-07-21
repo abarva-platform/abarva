@@ -6,9 +6,18 @@
 
 ## Status
 
-`candidate` — code is deployed and live. **The database migration is not confirmed
-applied to the live database** — see QA / Validation and Known Gaps below for the full
-investigation. Do not advance this to `released` until that is resolved.
+`released` — code is deployed and live. **The database migration is now confirmed
+applied to the live database**, via the governed migration lane
+(`docs/releases/records/2026-07-20-db-migration-lab-workflow.md`), real apply run
+[29789097644](https://github.com/abarva-platform/abarva/actions/runs/29789097644),
+2026-07-20T23:53Z–00:10Z. Real repository readback (the actual
+`getSourceStageGuidebook()` function, not raw SQL) confirms:
+`{"ok":true,"stageKey":"strategy","clientKey":null,"title":"Strategy Gate
+Review","status":"published","sectionCount":5,"version":1}`. See that release record's
+Audit Evidence for the full schema-readback/ledger/audit-chain detail. The gap between
+this feature's original deploy (2026-07-20T12:58Z) and its actual migration apply
+(2026-07-20T23:53Z–00:10Z) was ~11 hours — the exact structural gap the migration lane
+was built to close.
 
 ## Plain-English Summary
 
@@ -90,27 +99,23 @@ in production earlier, not generic filler content.
   ... Azure PITR restore and seed/data-copy replay remain separate live-environment
   drills." Recording the pass honestly as what it actually proves (replay-from-zero
   correctness), not as live-database evidence.
-- `NOT CONFIRMED` — **Live-database application.** Investigated after the code deploy
-  completed: the ACA main-deploy workflow
-  (`.github/workflows/aca-main-deploy.yml`) has **no migration-apply step** — it builds
-  and ships the container image only. Applying a migration to the real Azure lab
-  database is a distinct, manual operator action per
-  `docs/runbooks/db-migration.md` (`npm run db:migrate`, run by someone with a live
-  `AZURE_DATABASE_URL`/`DATABASE_URL`). This environment has neither the credential nor
-  network path to run it (confirmed: `npm run db:migrate:dry` fails immediately with "no
-  DATABASE_URL"; this session's private-VNet-reachability limitation was already known
-  from earlier work). **The `source_stage_guidebooks` table's live existence has not been
-  verified.** Practical impact today is zero — no shipped code path calls
-  `getSourceStageGuidebook()` yet — but this must be resolved (migration applied and
-  confirmed) before any UI surface that reads this table can be built or claimed working.
+- `CONFIRMED` — **Live-database application.** This finding (the ACA main-deploy
+  workflow has no migration-apply step) is exactly what motivated building the governed
+  migration lane
+  (`docs/releases/records/2026-07-20-db-migration-lab-workflow.md`). That lane's real
+  `apply` dispatch (run
+  [29789097644](https://github.com/abarva-platform/abarva/actions/runs/29789097644))
+  applied this migration to the live lab database. Real repository readback confirms
+  the table, the seeded Strategy row, `client_key IS NULL`, and `stage_key = "strategy"`
+  — via the actual `getSourceStageGuidebook()` function, not raw SQL. See that record's
+  Audit Evidence for full detail.
 
 ## Rollout Plan
 
-Merge to main via the repo-owned ACA main-deploy workflow, which ships the code only.
-**Applying the migration to the live database is a separate, manual step** — see QA /
-Validation and Known Gaps. Both migration files are purely additive
-(`CREATE TABLE IF NOT EXISTS`, `INSERT ... ON CONFLICT DO NOTHING`) — no existing table,
-route, or UI is touched by either the code or the pending schema change.
+Merged to main via the repo-owned ACA main-deploy workflow (code only), then applied to
+the live database via the governed migration lane's `apply` dispatch — see QA /
+Validation. Both migration files are purely additive (`CREATE TABLE IF NOT EXISTS`,
+`INSERT ... ON CONFLICT DO NOTHING`) — no existing table, route, or UI was touched.
 
 ## Deployment Authority
 
@@ -144,20 +149,15 @@ data-loss risk from either the deploy or a rollback.
   ACA runtime invariant verified 2026-07-20T13:05:14Z — template image, active image, and
   the 100%-traffic revision (`ca-abarva-web-lab-eastus--m02c08d3e`) all match digest
   `sha256:eddd35962f173162229b68b5684aaa3792912a8ca70da685de5d11721c9658c3`; health check
-  `ok: true`. **This confirms the code is live; it does not confirm the database
-  migration is applied — see QA / Validation above.**
+  `ok: true`. Code-live confirmation; the database-migration confirmation is now in QA /
+  Validation above (`CONFIRMED`, via the governed migration lane).
 
 ## Known Gaps
 
-- **The database migration has not been confirmed applied to the live database.** This
-  is the most important open item in this record — see the `NOT CONFIRMED` line in QA /
-  Validation above for the full investigation. Resolving it requires an operator with
-  live `AZURE_DATABASE_URL`/`DATABASE_URL` access to run `npm run db:migrate` per
-  `docs/runbooks/db-migration.md` against the target environment, then verify via
-  `npm run db:verify:canonical-tenants` or a direct row-count check that
-  `source_stage_guidebooks` exists with its one seeded Strategy row. Until that happens,
-  any code path that calls `getSourceStageGuidebook()` (none exist yet) would fail at
-  runtime with a missing-table error, not a graceful `null`.
+- **RESOLVED 2026-07-20T23:53Z–00:10Z** — the database migration is now confirmed
+  applied via the governed migration lane's real `apply` dispatch (run
+  [29789097644](https://github.com/abarva-platform/abarva/actions/runs/29789097644)).
+  See QA / Validation for the full readback evidence.
 - **No read surface exists yet.** This release ships the schema, types, repository, and
   one real authored guidebook, but nothing in the product UI or API calls
   `getSourceStageGuidebook()` yet. A user cannot see this content today. The next slice

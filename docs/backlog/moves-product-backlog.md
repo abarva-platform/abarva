@@ -202,10 +202,9 @@ efficiency, (8) cosmetic.
   review of the specific version in question; no visible client-vs-AI-vs-uploaded provenance.
 - **Severity**: P1/P2 (capability gap, not an active exploit)
 - **Workstream**: Approval, authority, and artifact-lineage controls; deliverable quality
-- **Status**: `Needs Owner Decision` (design is now decision-complete — see below; the remaining
-  blocker is explicit sign-off on the recommendations, not unresolved design work)
-- **Dependencies**: MOVES-DESIGN-001, MOVES-DESIGN-002, MOVES-DESIGN-003 must be approved (or
-  amended) before Phase 1 schema implementation begins
+- **Status**: `Needs Owner Decision`
+- **Dependencies**: MOVES-DESIGN-001, MOVES-DESIGN-002, MOVES-DESIGN-003 must resolve before Phase 1
+  schema implementation begins
 - **Acceptance criteria**: see design doc §§2–6 for the full Phase-1 schema/behavior contract
 - **Required tests**: full state-transition table (valid + explicitly-invalid transitions),
   revocation, supersession, 3 legacy-backfill scenarios — specified in design doc §6, not yet written
@@ -218,50 +217,111 @@ efficiency, (8) cosmetic.
   "the recent gate-control work fixed whether a phase is allowed to advance... it does not by itself
   complete the broader deliverable governance and quality model"
 - **Notes / remaining gaps**: 7 connected workstreams, approved sequence **A → C → B → D → E → F →
-  G**. Full design: `docs/specs/programs/deliverable-quality-and-approval-lifecycle-design.md`
-  (v3 — decision-complete). Do not begin schema implementation until the owner approves or amends
-  §3.8/§3.7/§11 of that document (MOVES-DESIGN-001/002/003, below).
+  G**. Full design: `docs/specs/programs/deliverable-quality-and-approval-lifecycle-design.md`. Do
+  not begin schema implementation until MOVES-DESIGN-001/002/003 resolve.
 
 ---
 
 ## Required design decisions before Phase 1 implementation
 
-All three items below are **decision-complete** as of design doc v3 — each has a specific,
-adoptable recommendation, not an open questionnaire. What remains is the owner choosing to adopt
-(or amend) the recommendation; no further research or design work is needed to unblock Phase 1.
-
 ### MOVES-DESIGN-001 — Reviewer-role to gate-role mapping
 
-- **Status**: `Needs Owner Decision` — recommendation ready
-- **Final mapping, exceptions, and consequences**: design doc §3.8 (all 16 `reviewer_role_code`
-  values resolved, including the addition of `compliance` as a 16th code; explicit
-  separation-of-duties and self-approval-prohibition rules enforced at the write path)
-- **Recommended decision**: adopt §3.8 as written.
-- **Owner action needed**: approve, or specify corrections.
+- **Problem statement**: The new `reviewer_role_code` taxonomy (15 values) must map onto the
+  existing 4-value `REQUIRED_APPROVAL_ROLES` gate axis (`business`, `technology`, `finance`,
+  `risk_security`) without silently collapsing meaning.
+- **Severity**: Blocks MOVES-ARTIFACT-001 Phase 1
+- **Workstream**: Approval, authority, and artifact-lineage controls
+- **Status**: `Needs Owner Decision`
+- **Dependencies**: none (pure decision, no code)
+- **Discovered from**: MOVES-ARTIFACT-001 design pass
+- **Decision table** (proposed mapping, awaiting confirmation or correction):
+
+| `reviewer_role_code` | Maps to gate role | Rationale |
+|---|---|---|
+| `business_owner` | `business` | Direct match |
+| `technology_owner` | `technology` | Direct match |
+| `architecture` | `technology` | Architecture review satisfies the technology gate role |
+| `finance` | `finance` | Direct match |
+| `risk` | `risk_security` | Direct match |
+| `security` | `risk_security` | Direct match |
+| `artifact_owner` | *(none)* | Descriptive only — the person accountable for the artifact, not a gate-satisfying reviewer capacity |
+| `workstream_lead` | *(none)* | Descriptive only |
+| `data` | *(none)* | Descriptive only — no data-specific gate role exists today; raise as a future gate-role candidate if needed |
+| `legal` | *(none)* | Descriptive only — no legal gate role exists today |
+| `procurement` | *(none)* | Descriptive only |
+| `executive_sponsor` | *(none — but drives `requiresClientAuthority`/gate policy separately)* | Executive sign-off is tracked as a distinct gate-policy flag, not folded into the 4-role axis |
+| `client_authority` | *(none — but required for `client_final`/`requiresClientAuthority`)* | Same as above |
+| `abarva_quality` | *(none)* | Internal QA capacity, descriptive only |
+| `other` | *(none, requires `reviewer_role_label`)* | Catch-all |
+
+**Owner decision needed**: confirm this mapping, or specify corrections (e.g., should `data` map to
+`technology`? should `legal`/`procurement` map to `risk_security`?).
 
 ### MOVES-DESIGN-002 — Full artifact gate-policy matrix
 
-- **Status**: `Needs Owner Decision` — recommendation ready
-- **Complete 16-artifact matrix**: design doc §3.7 (all 16 governed types — the 15
-  `DELIVERABLE_REGISTRY` entries plus `origination_brief`/P0 — every cell filled; ambiguous cases
-  resolved with recommended-vs-alternative-vs-risk reasoning, not left blank)
-- **Recommended decision**: adopt §3.7 as written, including its two most consequential calls —
-  `charter` and `execution_roadmap` both require `client_final`, not just `human_approved` — and its
-  flagged Known Gap (`sourcing_strategy`/`tower_metrics_plan` have no independently-named
-  `governance.ts` hard check today; recommended to add one as part of Workstream F).
-- **Owner action needed**: approve, or specify corrections.
+- **Problem statement**: The design doc's gate-policy table (§3.7) only illustrates 6 example
+  artifact types. All 16 `DELIVERABLE_REGISTRY` gate-artifact types need a defined policy before
+  Workstream F (gate integration) can consume this data.
+- **Severity**: Blocks Workstream F (not Phase 1 schema — schema is type-agnostic data, this is
+  per-type configuration)
+- **Workstream**: Deliverable quality; approval/authority controls
+- **Status**: `Needs Owner Decision`
+- **Dependencies**: MOVES-DESIGN-001 (reviewer-role mapping) should resolve first so this matrix's
+  `requiredReviewerRoles` column is meaningful
+- **Discovered from**: MOVES-ARTIFACT-001 design pass — explicitly flagged as illustrative-only in
+  v1/v2 of the design doc
+- **Decision table needed** (columns per artifact type, current registry keys listed; owner to fill
+  `minimumLifecycleState` / `requiredReviewerRoles` / `requiresClientAuthority` / `depthBand` for
+  each):
+
+| `deliverableTypeKey` | Phase | `minimumLifecycleState` | `requiredReviewerRoles` | `requiresClientAuthority` | `depthBand` |
+|---|---|---|---|---|---|
+| `charter` | 1 | *(reviewer's example: `client_final`)* | — | true | ? |
+| `discovery_report` | 1 | *(reviewer's example: `human_approved`, "Diagnostic findings")* | — | false | ? |
+| `root_cause_worksheet` | 1 | ? | ? | ? | ? |
+| `target_state_architecture` | 3 | *(reviewer's example: `human_approved`)* | `architecture` | false | ? |
+| `solution_design` | 3 | ? | ? | ? | ? |
+| `operating_model_design` | 3 | ? | ? | ? | ? |
+| `sourcing_strategy` | 3 | ? | ? | ? | ? |
+| `p3_design` (deprecated alias) | 3 | ? | ? | ? | ? |
+| `execution_roadmap` | 4 | ? | ? | ? | ? |
+| `business_case` | 4 | *(reviewer's example: `human_approved`)* | `finance` | false | ? |
+| `financial_model` | 4 | ? | ? | ? | ? |
+| `tower_metrics_plan` | 4 | ? | ? | ? | ? |
+| `roadmap` (deprecated alias) | 4 | ? | ? | ? | ? |
+| `handoff_package` | 5 | *(reviewer's "Mobilization authorization" example: `client_final`)* | `executive_sponsor` | true | ? |
+| `value_measurement_contract` | 5 | ? | ? | ? | ? |
+| Workshop guide (no registry key yet — non-gate working doc) | — | *(reviewer's example: `human_approved`)* | — | false | ? |
+
+**Owner decision needed**: fill in every `?` cell. Rows in *italics* already have the reviewer's own
+worked examples from the design conversation.
 
 ### MOVES-DESIGN-003 — ACA lifecycle backfill contract
 
-- **Status**: `Needs Owner Decision` — recommendation ready
-- **Resolved contract**: design doc §11 (all 9 originally-open questions answered: tenant-batched
-  dry-run-then-apply, `approved_artifact_id`-only eligibility for non-revalidated authority,
-  advisory-locked/idempotent/restartable execution, bounded batches, immutable per-record audit
-  output with explicit skip/fail reasons, rollback scoped to the exact workflow run, sanctioned ACA
-  Job path only)
-- **Recommended decision**: adopt §11 as written; run the first real `apply` against a single named
-  tenant, not an all-tenant rollout, as a deliberate rollout-safety choice.
-- **Owner action needed**: approve, or specify corrections.
+- **Problem statement**: Backfilling every existing signed-off deliverable's lifecycle history is a
+  mutating, all-tenant operator data build. Per `docs/ops/aca-data-build-job-rule.md`, this must run
+  as a governed ACA Job, not an ad-hoc script — but the job's exact contract (batching, dry-run,
+  idempotency, rollback, audit output) is not yet defined.
+- **Severity**: Blocks MOVES-ARTIFACT-001 Phase 1 step 2 (backfill)
+- **Workstream**: Approval/authority controls; data remediation
+- **Status**: `Needs Owner Decision`
+- **Dependencies**: MOVES-ARTIFACT-001 schema (Phase 1 step 1) must land first; this defines how
+  step 2 runs against it
+- **Discovered from**: MOVES-ARTIFACT-001 design pass, §6 Phase 1 plan
+- **Decision table**:
+
+| Contract element | Options / question for owner |
+|---|---|
+| Eligible legacy records | All `deliverables_v2` rows with `status = 'signed_off'`, tenant-unscoped (all tenants) — confirm scope, or restrict to specific tenants first? |
+| Inference rules | As specified in design doc §3.12: `approved_artifact_id`-backed rows → `human_approved`, `authoritative_flag_source='legacy_backfill'`; `signed_off_version`-only rows → same state but `requires_revalidation=true`. Confirm or adjust. |
+| `requires_revalidation` handling | Should gate policies that require `client_final` treat a `requires_revalidation=true` row as an automatic block, or merely a warning? |
+| Batching | Per-tenant, or a single all-tenant run? What batch size / rate limit against Postgres? |
+| Dry-run report | Required before any live run — proof bundle format: rows to be backfilled, confidence breakdown, any rows that cannot be inferred at all (e.g. `signed_off = true` but no `signed_off_version` set). |
+| Idempotency key | Proposed: `(deliverable_id, version)` — a backfill event is a no-op if one already exists for that pair. Confirm. |
+| Rollback | Since new columns/table are additive, rollback = stop reading them (code-level), leave backfilled rows in place — is this acceptable, or is a hard delete of backfilled rows required if the backfill is later found wrong? |
+| Audit output | What's the minimum required proof artifact — a Blob-stored report? A `maestro_oversight_flags` summary row per tenant? Both? |
+| Failure handling | Does one tenant's backfill failure block the whole run, or does the job skip and report per-tenant, continuing others? |
+| Operator path | Confirm this runs through the sanctioned ACA Job path only — no `az containerapp exec`, no local script against production Postgres. |
 
 **Owner decision needed**: resolve every row above before this job can be scoped/built.
 
@@ -341,30 +401,16 @@ adoptable recommendation, not an open questionnaire. What remains is the owner c
   systems that don't accept DOCX) have no supported export.
 - **Severity**: P2 (capability gap, not a defect)
 - **Workstream**: Deliverable quality and consulting depth
-- **Status**: `Runtime Proven`
+- **Status**: `Approved` — independent of MOVES-ARTIFACT-001, does not touch the new lifecycle
+  schema, safe to execute while design decisions are pending
 - **Dependencies**: none
-- **Acceptance criteria**: format parity with DOCX export (sections, in-document tables, rasterised
-  exhibit diagrams, recommendation, next actions, checklist, assumptions, source register),
-  AI-disclosure block present (shared constants, identical wording to DOCX/HTML), no new heavy
-  dependency (`@react-pdf/renderer` — already used across Programs/Source/Intelligence/Tower).
-- **Required tests**: valid PDF buffer with full content; exhibit title/description present;
-  rasterisation-failure fallback (no thrown error); disclosure text present; route serves real PDF
-  for `pdf`-prescribed artifacts and honors `?format=pdf` override.
-- **PR**: #5170
-- **Merge SHA**: `0b59e44bc4612d0fe4402ce86cf13007303ba156`
-- **Deploy run**: `29785592357` — success
-- **Runtime proof**: ACA template image `sha256:2c88e2d7dcacd95a397e441a8f2e009d0c31f5e7205cbc8a962efe8f60f7f624`
-  = 100%-traffic revision image, verified 2026-07-20; `app.abarva.ai` read-only health check passed
-- **Release record**: `docs/releases/records/2026-07-20-orchestrator-pdf-renderer.md`
-- **Discovered from**: earlier session backlog (pre-dates the Phase Advancement Control program);
-  selected as the next safe, independent, unblocked item per the standing Moves Continuous
-  Execution Directive while MOVES-ARTIFACT-001 (PR #5168) awaited owner sign-off
-- **Notes / remaining gaps**: no UI download link added for PDF specifically — existing callers
-  (`PhaseDocumentsPanel.tsx`, `GenerateDeliverableButton.tsx`, the Maestro dossier page) call the
-  route without a hardcoded format, so any artifact with `outputFormat: 'pdf'` now renders correctly
-  with no caller-side change needed. PDF typography uses `@react-pdf/renderer`'s built-in fonts
-  (same as every other PDF renderer in this codebase) — brand font registration remains a
-  previously-deferred, cross-cutting slice, not specific to this item.
+- **Acceptance criteria**: TBD at implementation time (format parity with DOCX export, exhibit
+  rendering, AI-disclosure block present per §10 of the standing directive)
+- **Required tests**: TBD
+- **PR**: not yet opened
+- **Discovered from**: earlier session backlog (pre-dates the Phase Advancement Control program)
+- **Notes / remaining gaps**: this is the next safe, independent, unblocked item — see the return
+  summary in this turn's response for the recommendation to begin it now.
 
 ### MOVES-QUALITY-002 — Live E2E proof, P4 business-case generation + approval cycle
 
@@ -403,7 +449,7 @@ adoptable recommendation, not an open questionnaire. What remains is the owner c
 - **Required tests**: a reset-and-reseed run produces byte-identical fixture state twice in a row;
   every §7 scenario is independently exercisable; no fixture data ever appears in a production-tenant
   query
-- **PR**: #TBD (design doc: `docs/specs/programs/moves-isolated-e2e-test-tenant.md`)
+- **PR**: #5171 (design doc: `docs/specs/programs/moves-isolated-e2e-test-tenant.md`)
 - **Discovered from**: the standing "no further live phase transitions against production data"
   constraint from the MEMBER AI ASSIST incident audit, combined with `MOVES-QUALITY-002` being
   otherwise permanently blocked
