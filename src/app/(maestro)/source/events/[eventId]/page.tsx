@@ -26,6 +26,7 @@ import { buildLiveStageView } from "@/lib/source/facts/view/stage-analytics-buil
 import { buildStepInsight } from "@/lib/source/facts/view/step-insight-builder";
 import { hydrateTaskEvidenceState } from "@/lib/source/facts/view/task-evidence-hydration";
 import { loadApprovalsInbox } from "@/lib/source/approvals-inbox";
+import { loadApprovalLedger } from "@/lib/source/approval-ledger";
 import {
   buildStrategyStageView,
   deriveStrategyIntakeFacts,
@@ -102,28 +103,31 @@ export default async function SourceEventDetailPage({
     // (a reload / tab switch must reflect uploaded facts, not reset to empty).
     let hydrationFactInputs: Record<string, number> = {};
     const analyticsRegistryArtifacts =
-      await listSourceArtifactsForSourceEventIdWithContent(event.id).catch((error) => {
-        console.error(
-          "[SourceEventDetailPage] source_artifacts registry read failed for analytics shell",
-          error instanceof Error ? error.message : String(error),
-        );
-        return [];
-      });
-    const analyticsArtifactStates = await listArtifactStatesForEvent(event.id).catch(
-      (error) => {
-        console.error(
-          "[SourceEventDetailPage] source artifact states read failed for analytics shell",
-          error instanceof Error ? error.message : String(error),
-        );
-        return [];
-      },
-    );
+      await listSourceArtifactsForSourceEventIdWithContent(event.id).catch(
+        (error) => {
+          console.error(
+            "[SourceEventDetailPage] source_artifacts registry read failed for analytics shell",
+            error instanceof Error ? error.message : String(error),
+          );
+          return [];
+        },
+      );
+    const analyticsArtifactStates = await listArtifactStatesForEvent(
+      event.id,
+    ).catch((error) => {
+      console.error(
+        "[SourceEventDetailPage] source artifact states read failed for analytics shell",
+        error instanceof Error ? error.message : String(error),
+      );
+      return [];
+    });
     const analyticsArtifacts = mergeSourceShellArtifactsWithArtifactStateBodies(
       analyticsRegistryArtifacts,
       analyticsArtifactStates,
     );
-    const analyticsHydrationArtifacts = analyticsArtifacts.flatMap((artifact) =>
-      artifact.stageKey ? [{ stageKey: artifact.stageKey }] : [],
+    const analyticsHydrationArtifacts = analyticsArtifacts.flatMap(
+      (artifact) =>
+        artifact.stageKey ? [{ stageKey: artifact.stageKey }] : [],
     );
     const analyticsApprovalItems = activeClient?.key
       ? (
@@ -137,14 +141,26 @@ export default async function SourceEventDetailPage({
         ).items
       : [];
     const analyticsGuidebook = activeClient?.key
-      ? await getSourceStageGuidebook(viewStage, activeClient.key).catch((error) => {
-          console.error(
-            "[SourceEventDetailPage] stage guidebook read failed for analytics shell",
-            error instanceof Error ? error.message : String(error),
-          );
-          return null;
-        })
+      ? await getSourceStageGuidebook(viewStage, activeClient.key).catch(
+          (error) => {
+            console.error(
+              "[SourceEventDetailPage] stage guidebook read failed for analytics shell",
+              error instanceof Error ? error.message : String(error),
+            );
+            return null;
+          },
+        )
       : null;
+    const analyticsApprovalLedger = await loadApprovalLedger(
+      event.id,
+      event.currentStageKey,
+    ).catch((error) => {
+      console.error(
+        "[SourceEventDetailPage] approval ledger read failed for analytics shell",
+        error instanceof Error ? error.message : String(error),
+      );
+      return [];
+    });
 
     if (activeClient?.key) {
       try {
@@ -265,10 +281,12 @@ export default async function SourceEventDetailPage({
             }
           | undefined = undefined;
         if (viewStage === "evaluation") {
-          const { signalPresent, bidsByVendor, vendors } = await readVendorBids({
-            eventId: event.id,
-            clientKey: activeClient.key,
-          });
+          const { signalPresent, bidsByVendor, vendors } = await readVendorBids(
+            {
+              eventId: event.id,
+              clientKey: activeClient.key,
+            },
+          );
           vendorBids = signalPresent
             ? { bids: [...bidsByVendor.values()], vendors }
             : undefined;
@@ -374,6 +392,7 @@ export default async function SourceEventDetailPage({
         stepInsight={stepInsight}
         artifacts={analyticsArtifacts}
         approvalItems={analyticsApprovalItems}
+        approvalLedger={analyticsApprovalLedger}
         guidebook={analyticsGuidebook}
       />
     );

@@ -29,6 +29,7 @@ import {
   type SourceArtifactLifecycleRow,
 } from "@/lib/source/artifact-lifecycle-matrix";
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
+import type { ApprovalLedgerRow } from "@/lib/source/approval-ledger-model";
 import { SOURCE_STAGE_LABELS } from "@/lib/source/constants";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
@@ -59,6 +60,7 @@ interface SourceAnalyticsCanvasProps {
   stepInsight?: StepInsightView;
   artifacts?: readonly SourceShellArtifactLike[];
   approvalItems?: readonly ApprovalsInboxItem[];
+  approvalLedger?: readonly ApprovalLedgerRow[];
   /** Facilitator guidebook for the viewed stage; null when none has been authored yet. */
   guidebook?: SourceStageGuidebookRecord | null;
   /** Legacy prop retained for route compatibility; the duplicate launcher is no longer rendered. */
@@ -123,6 +125,7 @@ export function SourceAnalyticsCanvas({
   stepInsight,
   artifacts = [],
   approvalItems = [],
+  approvalLedger = [],
   guidebook = null,
 }: SourceAnalyticsCanvasProps) {
   const router = useRouter();
@@ -148,12 +151,14 @@ export function SourceAnalyticsCanvas({
         stepInsight,
         artifacts,
         approvalItems,
+        approvalLedger,
         activeWorkspace: workspace,
         intelligenceOpen: workspace === "intelligence",
         guidebook,
       }),
     [
       approvalItems,
+      approvalLedger,
       artifacts,
       event,
       guidebook,
@@ -1500,7 +1505,111 @@ function ApprovalsWorkspace({ view }: { view: SourceEventShellView }) {
           ))}
         </div>
       ) : null}
+      {view.approvals.ledger.length > 0 ? (
+        <ApprovalLedgerTable ledger={view.approvals.ledger} />
+      ) : null}
     </section>
+  );
+}
+
+function ApprovalLedgerTable({ ledger }: { ledger: ApprovalLedgerRow[] }) {
+  return (
+    <div style={{ marginTop: 28 }}>
+      <div
+        style={{
+          fontFamily: ANALYTICS.MONO,
+          fontSize: 10,
+          fontWeight: 800,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          color: ANALYTICS.FAINT,
+          marginBottom: 8,
+        }}
+      >
+        Approval ledger
+      </div>
+      <div style={{ ...CARD_STYLE, overflow: "hidden" }}>
+        <table
+          data-testid="source-shell-approval-ledger"
+          style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+        >
+          <thead>
+            <tr style={{ borderBottom: `1px solid ${ANALYTICS.LINE}` }}>
+              {["Stage", "Status", "Approval"].map((h) => (
+                <th
+                  key={h}
+                  style={{
+                    textAlign: "left",
+                    padding: "10px 14px",
+                    color: ANALYTICS.MUTED,
+                    fontFamily: ANALYTICS.MONO,
+                    fontSize: 10,
+                    fontWeight: 800,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {ledger.map((row) => (
+              <tr
+                key={row.stageKey}
+                data-testid={`source-shell-approval-ledger-row-${row.stageKey}`}
+                style={{ borderBottom: `1px solid ${ANALYTICS.LINE_SOFT}` }}
+              >
+                <td style={{ padding: "10px 14px", fontWeight: 700 }}>
+                  {String(row.index).padStart(2, "0")} · {row.stageLabel}
+                </td>
+                <td style={{ padding: "10px 14px" }}>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      borderRadius: 999,
+                      padding: "3px 8px",
+                      fontSize: 10,
+                      fontWeight: 800,
+                      letterSpacing: "0.03em",
+                      textTransform: "uppercase",
+                      background:
+                        row.state === "approved"
+                          ? ANALYTICS.GREEN_TINT
+                          : row.state === "current"
+                            ? ANALYTICS.BLUE_TINT
+                            : "rgba(10,10,11,0.06)",
+                      color:
+                        row.state === "approved"
+                          ? ANALYTICS.GREEN_TEXT
+                          : row.state === "current"
+                            ? ANALYTICS.BLUE
+                            : ANALYTICS.MUTED,
+                    }}
+                  >
+                    {row.state === "approved"
+                      ? "Approved"
+                      : row.state === "current"
+                        ? "In progress"
+                        : "Locked"}
+                  </span>
+                </td>
+                <td style={{ padding: "10px 14px", color: ANALYTICS.INK_2 }}>
+                  {row.authorizationNote}
+                  {row.approvedAtIso ? (
+                    <span style={{ color: ANALYTICS.MUTED }}>
+                      {" "}
+                      · {new Date(row.approvedAtIso).toLocaleDateString()}
+                    </span>
+                  ) : null}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 

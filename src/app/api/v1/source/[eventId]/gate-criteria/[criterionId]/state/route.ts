@@ -349,6 +349,7 @@ export async function PATCH(req: NextRequest, { params }: RouteCtx) {
           humanReason: reason,
           resolution: approverResolution,
         }),
+        stageKey: criterionRow.from_stage,
       });
       if (!approvalWrite.ok || !approvalWrite.data?.id) {
         return Response.json(

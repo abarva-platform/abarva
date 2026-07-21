@@ -53,9 +53,11 @@ export interface SourceApprovalWrite {
   readonly clientKey: string;
   readonly fromState: string;
   readonly toState: string;
-  readonly approvalAction: 'admin_review' | 'rejected' | 'sent_back';
+  readonly approvalAction: "admin_review" | "rejected" | "sent_back";
   readonly approvedByUserId: string;
   readonly notes: string | null;
+  /** The canonical stage key this approval was for, or null if unknown. */
+  readonly stageKey?: string | null;
 }
 
 /** Append a gate-criterion approval/waiver record and return its id. */
@@ -66,6 +68,8 @@ export interface SourceCriterionApprovalWrite {
   readonly approvalAction: "stage_advance" | "admin_review";
   readonly approvedByUserId: string;
   readonly notes: string | null;
+  /** The canonical stage key this approval was for, or null if unknown. */
+  readonly stageKey?: string | null;
 }
 
 /** Append a named Source event activity log row. */
@@ -260,6 +264,7 @@ export function createSupabaseSourceWriteAdapter(
           from_state: input.fromState,
           to_state: input.toState,
           notes: input.notes,
+          stage_key: input.stageKey ?? null,
         });
       if (approvalError) {
         // Non-fatal — the event is already updated. Surface for the route log.
@@ -281,6 +286,7 @@ export function createSupabaseSourceWriteAdapter(
           from_state: input.fromState,
           to_state: input.toState,
           notes: input.notes,
+          stage_key: input.stageKey ?? null,
         })
         .select("id")
         .single();
@@ -494,8 +500,8 @@ export function createAzureSourceWriteAdapter(
           );
           await run(
             `INSERT INTO source_event_approvals
-               (event_id, action, approved_by_user_id, from_state, to_state, notes)
-             VALUES ($1,$2,$3,$4,$5,$6)`,
+               (event_id, action, approved_by_user_id, from_state, to_state, notes, stage_key)
+             VALUES ($1,$2,$3,$4,$5,$6,$7)`,
             [
               input.eventId,
               input.approvalAction,
@@ -503,6 +509,7 @@ export function createAzureSourceWriteAdapter(
               input.fromState,
               input.toState,
               input.notes,
+              input.stageKey ?? null,
             ],
           );
         });
@@ -517,8 +524,8 @@ export function createAzureSourceWriteAdapter(
         const rows = await session((run) =>
           run<{ id: string }>(
             `INSERT INTO source_event_approvals
-               (event_id, action, approved_by_user_id, from_state, to_state, notes)
-             VALUES ($1,$2,$3,$4,$5,$6)
+               (event_id, action, approved_by_user_id, from_state, to_state, notes, stage_key)
+             VALUES ($1,$2,$3,$4,$5,$6,$7)
              RETURNING id`,
             [
               input.eventId,
@@ -527,6 +534,7 @@ export function createAzureSourceWriteAdapter(
               input.fromState,
               input.toState,
               input.notes,
+              input.stageKey ?? null,
             ],
           ),
         );
