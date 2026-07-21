@@ -418,7 +418,35 @@ worked examples from the design conversation.
 - **PR**: none
 - **Discovered from**: earlier session backlog
 - **Notes / remaining gaps**: blocked on isolated-tenant capability, not on any open design decision
-  — does not become unblocked by resolving MOVES-DESIGN-001/002/003.
+  — does not become unblocked by resolving MOVES-DESIGN-001/002/003. Enablement design now exists
+  (`MOVES-TEST-001`, below) — the actual tenant is not yet provisioned.
+
+### MOVES-TEST-001 — Isolated governed Moves test tenant
+
+- **Problem statement**: `MOVES-QUALITY-002` (and any future live-proof need) is blocked because no
+  safe, isolated place exists to run a live phase transition without touching shared production data.
+- **User/business impact**: without this, live E2E verification of the phase-gate/approval-lifecycle
+  system can only ever be proven via unit/integration tests, never a true signed-in, end-to-end
+  browser proof — a real gap in this program's own evidence standard.
+- **Severity**: P2 (test-infrastructure gap, not a defect)
+- **Workstream**: Automation and efficiency / test enablement
+- **Status**: `Needs Design Review`
+- **Dependencies**: this design document's review/approval; recommended (not required) to sequence
+  after `MOVES-ARTIFACT-001`'s schema lands, so fixtures are seeded against the final lifecycle
+  schema rather than needing to be reseeded once that schema changes
+- **Acceptance criteria**: the isolated tenant exists, is provisioned via a sanctioned ACA Job (never
+  ad-hoc), is invisible to production tenant pickers/demo surfaces, and its fixture set covers every
+  scenario in the design document's §7
+- **Required tests**: a reset-and-reseed run produces byte-identical fixture state twice in a row;
+  every §7 scenario is independently exercisable; no fixture data ever appears in a production-tenant
+  query
+- **PR**: #5171 (design doc: `docs/specs/programs/moves-isolated-e2e-test-tenant.md`)
+- **Discovered from**: the standing "no further live phase transitions against production data"
+  constraint from the MEMBER AI ASSIST incident audit, combined with `MOVES-QUALITY-002` being
+  otherwise permanently blocked
+- **Notes / remaining gaps**: infrastructure is NOT provisioned by the design document — building it
+  is separate, still-to-be-scoped implementation work this item tracks. Do not provision
+  infrastructure until the design is reviewed.
 
 ---
 
