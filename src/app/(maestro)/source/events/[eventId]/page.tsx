@@ -31,6 +31,7 @@ import {
   deriveStrategyIntakeFacts,
 } from "@/lib/source/facts/view/strategy-stage-builder";
 import { mergeSourceShellArtifactsWithArtifactStateBodies } from "@/lib/source/source-event-shell-v2";
+import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repository";
 import { requireTenancy } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
@@ -135,6 +136,15 @@ export default async function SourceEventDetailPage({
           })
         ).items
       : [];
+    const analyticsGuidebook = activeClient?.key
+      ? await getSourceStageGuidebook(viewStage, activeClient.key).catch((error) => {
+          console.error(
+            "[SourceEventDetailPage] stage guidebook read failed for analytics shell",
+            error instanceof Error ? error.message : String(error),
+          );
+          return null;
+        })
+      : null;
 
     if (activeClient?.key) {
       try {
@@ -364,6 +374,7 @@ export default async function SourceEventDetailPage({
         stepInsight={stepInsight}
         artifacts={analyticsArtifacts}
         approvalItems={analyticsApprovalItems}
+        guidebook={analyticsGuidebook}
       />
     );
   }

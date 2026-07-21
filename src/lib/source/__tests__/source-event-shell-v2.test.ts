@@ -242,6 +242,58 @@ describe("buildSourceEventShellView", () => {
     expect(view.approvals.readinessLine).toBe(APPROVAL.readiness);
     expect(view.stage.gateReadinessLine).toContain("approval workspace");
   });
+
+  it("marks guidebook unavailable and returns an empty-state message when no guidebook is authored for the viewed stage", () => {
+    const view = buildSourceEventShellView({
+      event: EVENT,
+      tenantName: "FS Demo",
+      viewedStageKey: "scope",
+      stageView: SAMPLE_SCOPE_STAGE as StageAnalyticsView,
+      guidebook: null,
+    });
+
+    expect(view.guidebook.available).toBe(false);
+    expect(view.guidebook.record).toBeNull();
+    expect(view.guidebook.emptyMessage).toContain("Scope");
+    expect(view.workspaces.available).toContain("guidebook");
+  });
+
+  it("surfaces an authored guidebook record as-is when one exists for the viewed stage", () => {
+    const guidebook = {
+      id: "guidebook-1",
+      stageKey: "strategy" as const,
+      clientKey: null,
+      title: "Strategy Gate Review",
+      purpose: "Get a clean sponsor decision on whether this event goes to market.",
+      durationMinutes: 20,
+      status: "published" as const,
+      sections: [
+        {
+          type: "purpose" as const,
+          title: "What this session is for",
+          body: "The Strategy gate is a sponsor decision, not a status update.",
+          timeBoxMinutes: null,
+        },
+      ],
+      version: 1,
+      createdBy: null,
+      updatedBy: null,
+      publishedAt: "2026-07-20T13:15:00.000Z",
+      createdAt: "2026-07-20T13:15:00.000Z",
+      updatedAt: "2026-07-20T13:15:00.000Z",
+    };
+
+    const view = buildSourceEventShellView({
+      event: EVENT,
+      tenantName: "FS Demo",
+      viewedStageKey: "strategy",
+      stageView: SAMPLE_SCOPE_STAGE as StageAnalyticsView,
+      guidebook,
+    });
+
+    expect(view.guidebook.available).toBe(true);
+    expect(view.guidebook.record).toBe(guidebook);
+  });
 });
 
 describe("mergeSourceShellArtifactsWithArtifactStateBodies", () => {

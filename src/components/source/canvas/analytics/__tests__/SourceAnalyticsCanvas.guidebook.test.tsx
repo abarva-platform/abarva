@@ -1,0 +1,138 @@
+/**
+ * @jest-environment jsdom
+ */
+
+// Renders the real (unmocked) SourceAnalyticsCanvas with a guidebook record
+// passed through and confirms the "Guidebook" workspace tab appears, opens,
+// and renders the real content — and that the tab is absent entirely when
+// no guidebook has been authored for the viewed stage (the empty-state
+// logic itself is covered separately in source-event-shell-v2.test.ts).
+
+import "@testing-library/jest-dom";
+import { fireEvent, render, screen } from "@testing-library/react";
+
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
+  usePathname: () => "/source/events/evt-1",
+  useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({ eventId: "evt-1" }),
+}));
+
+jest.mock("@clerk/nextjs", () => ({
+  useUser: () => ({ isLoaded: true, user: null }),
+  useClerk: () => ({ signOut: jest.fn() }),
+  ClerkProvider: ({ children }: { children: React.ReactNode }) => children,
+  SignedIn: ({ children }: { children: React.ReactNode }) => children,
+  SignedOut: () => null,
+  UserButton: () => null,
+}));
+
+import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
+import type { SourcingEventSummary } from "@/lib/source/types";
+import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
+
+function makeEvent(
+  overrides: Partial<SourcingEventSummary> = {},
+): SourcingEventSummary {
+  return {
+    id: "evt-1",
+    code: "LSH-AMS-2026",
+    name: "Lakeshore AMS Renewal",
+    accountName: "Lakeshore",
+    leadAgent: "Sentinel",
+    archetype: "AMS",
+    rigor: "standard",
+    status: "active",
+    statusLabel: "Active",
+    priority: "high",
+    currentStageKey: "strategy",
+    currentStageLabel: "Strategy",
+    openAlerts: 0,
+    owner: "K. Oshima",
+    agingDays: 4,
+    blocker: null,
+    nextAction: "Confirm mandate",
+    isAtRisk: false,
+    valueAtStakeUsd: 1_000_000,
+    projectedValueUsd: 200_000,
+    realizedValueUsd: 0,
+    nextDecision: "Approve strategy gate",
+    ...overrides,
+  } as SourcingEventSummary;
+}
+
+const GUIDEBOOK: SourceStageGuidebookRecord = {
+  id: "guidebook-1",
+  stageKey: "strategy",
+  clientKey: null,
+  title: "Strategy Gate Review",
+  purpose: "Get a clean sponsor decision on whether this event goes to market.",
+  durationMinutes: 20,
+  status: "published",
+  sections: [
+    {
+      type: "purpose",
+      title: "What this session is for",
+      body: "The Strategy gate is a sponsor decision, not a status update.",
+      timeBoxMinutes: null,
+    },
+    {
+      type: "agenda",
+      title: "Agenda (20 min)",
+      body: "1. Why now\n2. Decision owner\n3. Scope boundary",
+      timeBoxMinutes: 20,
+    },
+  ],
+  version: 1,
+  createdBy: null,
+  updatedBy: null,
+  publishedAt: "2026-07-20T13:15:00.000Z",
+  createdAt: "2026-07-20T13:15:00.000Z",
+  updatedAt: "2026-07-20T13:15:00.000Z",
+};
+
+describe("SourceAnalyticsCanvas — guidebook workspace", () => {
+  it("shows the Guidebook rail tab, and opens it to render the real content when a guidebook exists", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="strategy"
+        tenantName="Lakeshore"
+        guidebook={GUIDEBOOK}
+      />,
+    );
+
+    const tab = screen.getByRole("button", { name: /Guidebook/i });
+    fireEvent.click(tab);
+
+    expect(screen.getByTestId("source-shell-v2-guidebook")).toBeInTheDocument();
+    expect(screen.getByText("Strategy Gate Review")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Get a clean sponsor decision on whether this event goes to market.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("What this session is for")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "The Strategy gate is a sponsor decision, not a status update.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Global default")).toBeInTheDocument();
+  });
+
+  it("does not show the Guidebook tab at all when no guidebook is authored for the viewed stage", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent({ currentStageKey: "scope", currentStageLabel: "Scope" })}
+        viewStage="scope"
+        tenantName="Lakeshore"
+        guidebook={null}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /Guidebook/i }),
+    ).not.toBeInTheDocument();
+  });
+});

@@ -22,6 +22,7 @@ import {
 import type { ApprovalsInboxItem } from '@/lib/source/approvals-inbox';
 import { SOURCE_STAGE_LABELS } from '@/lib/source/constants';
 import type { SourceStageKey, SourcingEventSummary } from '@/lib/source/types';
+import type { SourceStageGuidebookRecord } from '@/lib/source/stage-guidebooks/types';
 import { ANALYTICS } from './analytics-tokens';
 import { IntelPanel } from './IntelPanel';
 import { TaskProvideUpload } from './TaskChecklist';
@@ -49,6 +50,8 @@ interface SourceAnalyticsCanvasProps {
   stepInsight?: StepInsightView;
   artifacts?: readonly SourceShellArtifactLike[];
   approvalItems?: readonly ApprovalsInboxItem[];
+  /** Facilitator guidebook for the viewed stage; null when none has been authored yet. */
+  guidebook?: SourceStageGuidebookRecord | null;
   /** Legacy prop retained for route compatibility; the duplicate launcher is no longer rendered. */
   avaLauncher?: AvaLauncherView;
 }
@@ -111,6 +114,7 @@ export function SourceAnalyticsCanvas({
   stepInsight,
   artifacts = [],
   approvalItems = [],
+  guidebook = null,
 }: SourceAnalyticsCanvasProps) {
   const router = useRouter();
   const [workspace, setWorkspace] = useState<SourceShellWorkspace>('steps');
@@ -137,11 +141,13 @@ export function SourceAnalyticsCanvas({
         approvalItems,
         activeWorkspace: workspace,
         intelligenceOpen: workspace === 'intelligence',
+        guidebook,
       }),
     [
       approvalItems,
       artifacts,
       event,
+      guidebook,
       resolvedStageView,
       stepInsight,
       tenantName,
@@ -351,6 +357,13 @@ function SourceShellRail({
           active={workspace === 'approvals'}
           onClick={() => onWorkspaceChange('approvals')}
         />
+        {view.guidebook.available ? (
+          <WorkspaceButton
+            label="Guidebook"
+            active={workspace === 'guidebook'}
+            onClick={() => onWorkspaceChange('guidebook')}
+          />
+        ) : null}
       </div>
       <div
         style={{
@@ -402,6 +415,7 @@ function SourceWorkspace({
     return <IntelligenceWorkspace view={view} stageView={stageView} />;
   }
   if (workspace === 'approvals') return <ApprovalsWorkspace view={view} />;
+  if (workspace === 'guidebook') return <GuidebookWorkspace view={view} />;
 
   return (
     <section data-testid="source-shell-v2-steps">
@@ -1410,6 +1424,78 @@ function ApprovalsWorkspace({ view }: { view: SourceEventShellView }) {
           ))}
         </div>
       ) : null}
+    </section>
+  );
+}
+
+function GuidebookWorkspace({ view }: { view: SourceEventShellView }) {
+  const record = view.guidebook.record;
+  return (
+    <section data-testid="source-shell-v2-guidebook">
+      <WorkspaceTitle
+        eyebrow="Guidebook"
+        title={record?.title ?? `${view.stage.label} facilitator guide`}
+        subtitle={record?.purpose ?? 'Agenda and talking points for the working session that moves this stage to its gate.'}
+      />
+      {!record ? (
+        <EmptyCard text={view.guidebook.emptyMessage} />
+      ) : (
+        <div style={{ display: 'grid', gap: 12 }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: 16,
+              fontFamily: ANALYTICS.MONO,
+              fontSize: 11,
+              color: ANALYTICS.FAINT,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+            }}
+          >
+            <span>{record.durationMinutes} min</span>
+            <span>{record.clientKey ? 'Tenant guidebook' : 'Global default'}</span>
+          </div>
+          {record.sections.map((section, index) => (
+            <article key={`${section.type}-${index}`} style={{ ...CARD_STYLE, padding: 18 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  marginBottom: 8,
+                }}
+              >
+                <h3
+                  style={{
+                    fontFamily: ANALYTICS.SERIF,
+                    margin: 0,
+                    fontSize: 18,
+                  }}
+                >
+                  {section.title}
+                </h3>
+                {section.timeBoxMinutes != null ? (
+                  <span style={{ fontFamily: ANALYTICS.MONO, fontSize: 11, color: ANALYTICS.FAINT }}>
+                    {section.timeBoxMinutes} min
+                  </span>
+                ) : null}
+              </div>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 14,
+                  lineHeight: 1.6,
+                  color: ANALYTICS.INK_2,
+                  whiteSpace: 'pre-wrap',
+                }}
+              >
+                {section.body}
+              </p>
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
