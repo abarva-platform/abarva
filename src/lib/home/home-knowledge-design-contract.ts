@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { Client, type ClientConfig } from "pg";
 
 export type HomeKnowledgePrimitive = string | number | boolean | null;
 
@@ -139,6 +140,88 @@ export interface HomeKnowledgeDesignContractDiagnostics {
 export interface HomeKnowledgeDesignContractResult {
   pack: HomeKnowledgeDesignContractPack | null;
   diagnostics: HomeKnowledgeDesignContractDiagnostics;
+}
+
+function disablePostgresSsl(connectionString: string): boolean {
+  try {
+    const url = new URL(connectionString);
+    if (url.searchParams.get("sslmode")?.toLowerCase() === "disable") {
+      return true;
+    }
+    return ["localhost", "127.0.0.1", "::1"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function homeKnowledgeDatabaseUrl(): string | null {
+  return (
+    process.env.ABARVA_AZURE_DATABASE_URL ??
+    process.env.AZURE_DATABASE_URL ??
+    process.env.DATABASE_URL ??
+    null
+  );
+}
+
+function homeKnowledgeClientConfig(connectionString: string): ClientConfig {
+  return {
+    connectionString,
+    application_name: "home-knowledge-pack-v2-read",
+    ssl: disablePostgresSsl(connectionString)
+      ? false
+      : { rejectUnauthorized: false },
+  };
+}
+
+export async function readHomeKnowledgeDesignContractForTenantFromPostgres(
+  tenantKey: string | null | undefined,
+): Promise<HomeKnowledgeDesignContractResult | null> {
+  const diagnostics: HomeKnowledgeDesignContractDiagnostics = {
+    selectedSource: null,
+    rejectedSources: [],
+  };
+  const normalizedTenant = tenantKey?.trim().toLowerCase();
+  if (!normalizedTenant) return null;
+  const connectionString = homeKnowledgeDatabaseUrl();
+  if (!connectionString) return null;
+
+  const client = new Client(homeKnowledgeClientConfig(connectionString));
+  try {
+    await client.connect();
+    const result = await client.query<{
+      pack_version: string;
+      render_pack: HomeKnowledgeDesignContractPack;
+    }>(
+      `SELECT pack_version, render_pack
+         FROM public.home_knowledge_packs
+        WHERE tenant_key = $1
+          AND status = 'approved'
+          AND effective_to IS NULL
+        ORDER BY effective_from DESC NULLS LAST, created_at DESC
+        LIMIT 1`,
+      [normalizedTenant],
+    );
+    const row = result.rows[0];
+    if (!row?.render_pack) return null;
+    const rejection = validateDesignContractPack(row.render_pack, normalizedTenant);
+    if (rejection) {
+      diagnostics.rejectedSources.push({
+        path: `postgres:home_knowledge_packs:${row.pack_version}`,
+        reason: rejection,
+      });
+      return { pack: null, diagnostics };
+    }
+    diagnostics.selectedSource = `postgres:home_knowledge_packs:${row.pack_version}`;
+    return { pack: row.render_pack, diagnostics };
+  } catch (error) {
+    diagnostics.rejectedSources.push({
+      path: "postgres:home_knowledge_packs",
+      reason: error instanceof Error ? error.message : "unreadable Postgres pack",
+    });
+    return { pack: null, diagnostics };
+  } finally {
+    await client.end().catch(() => undefined);
+  }
 }
 
 export function readHomeKnowledgeDesignContractForTenant(
