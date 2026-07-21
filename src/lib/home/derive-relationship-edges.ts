@@ -73,6 +73,24 @@ function asString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+export function isBusinessReadableRelationshipLabel(value: unknown): boolean {
+  const label = asString(value);
+  if (!label) return false;
+  const normalized = label.toLowerCase();
+  if (
+    normalized === "not_loaded" ||
+    normalized === "not loaded" ||
+    normalized === "needs evidence"
+  ) {
+    return false;
+  }
+  if (normalized.includes("_to_confirm")) return false;
+  if (/^[a-z0-9-]+-v\d/i.test(label)) return false;
+  if (/^(app|sys|data|ven|rel|ctx)-\d{2,}$/i.test(label)) return false;
+  if (/^[a-z]{2,}-[a-z]+-[a-z0-9-]+-\d{2,}$/i.test(label)) return false;
+  return true;
+}
+
 function addEdge(
   edges: HomeRelationshipEdge[],
   seen: Set<string>,
@@ -80,7 +98,13 @@ function addEdge(
 ) {
   const from = edge.from.trim();
   const to = edge.to.trim();
-  if (!from || !to || from === to) return;
+  if (
+    !isBusinessReadableRelationshipLabel(from) ||
+    !isBusinessReadableRelationshipLabel(to) ||
+    from === to
+  ) {
+    return;
+  }
   const key = `${from} ${edge.relationship} ${to}`;
   if (seen.has(key)) return;
   seen.add(key);

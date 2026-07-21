@@ -1,7 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { deriveHomeRelationshipEdges } from "../derive-relationship-edges";
+import {
+  deriveHomeRelationshipEdges,
+  isBusinessReadableRelationshipLabel,
+} from "../derive-relationship-edges";
 import type { HomeKnowledgeDesignContractPack } from "../home-knowledge-design-contract";
 
 describe("deriveHomeRelationshipEdges", () => {
@@ -57,6 +60,61 @@ describe("deriveHomeRelationshipEdges", () => {
       },
     });
     expect(edges).toEqual([]);
+  });
+
+  it("excludes non-business placeholders and pack ids from graph labels", () => {
+    expect(isBusinessReadableRelationshipLabel("Passenger service system")).toBe(
+      true,
+    );
+    expect(isBusinessReadableRelationshipLabel("not_loaded")).toBe(false);
+    expect(
+      isBusinessReadableRelationshipLabel("owner_to_confirm_in_workshops"),
+    ).toBe(false);
+    expect(isBusinessReadableRelationshipLabel("APP-0418")).toBe(false);
+    expect(
+      isBusinessReadableRelationshipLabel("skyharbor-air-v6-v7-upgrade"),
+    ).toBe(false);
+
+    const edges = deriveHomeRelationshipEdges({
+      rel: {
+        columns: [],
+        rows: [
+          {
+            from_object_name: "Commercial",
+            relationship_type: "depends_on",
+            to_object_name: "not_loaded",
+          },
+          {
+            from_object_name: "Ground Ops",
+            relationship_type: "uses",
+            to_object_name: "Passenger service system",
+          },
+        ],
+      },
+      apps: {
+        columns: [],
+        rows: [
+          {
+            business_name: "skyharbor-air-v6-v7-upgrade",
+            integrations: "SAP Finance",
+          },
+          {
+            business_name: "Cargo operations portal",
+            integrations: "APP-0418; Crew scheduling platform",
+          },
+        ],
+      },
+    });
+    expect(edges).toEqual([
+      expect.objectContaining({
+        from: "Ground Ops",
+        to: "Passenger service system",
+      }),
+      expect.objectContaining({
+        from: "Cargo operations portal",
+        to: "Crew scheduling platform",
+      }),
+    ]);
   });
 
   it("drops a self-referential edge", () => {
