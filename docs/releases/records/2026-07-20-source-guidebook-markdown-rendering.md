@@ -6,7 +6,11 @@
 
 ## Status
 
-`candidate` — code complete, typecheck/lint/tests clean.
+`candidate` — code deployed and live (PR #5180, merged as
+`7888cab375fde5224bb03f6b9b7100a46ef66deb`, ACA runtime invariant confirmed). Same
+proof-state distinction as `SOURCE-GUIDEBOOK-001`: deployment/component/library-level
+Markdown rendering are all proven; live signed-in server-to-database rendering
+(`SOURCE-GUIDEBOOK-002`) is not.
 
 ## Plain-English Summary
 
@@ -84,11 +88,16 @@ existing, already-shipped workspace — no migration, no flag.
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` — to run after
-  merge.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`, run
+  [29793844800](https://github.com/abarva-platform/abarva/actions/runs/29793844800),
+  conclusion `success`.
 - Shared runtime mutators: none.
-- Approved image digest: recorded once the deploy run completes.
-- ACA runtime invariant: to be verified post-deploy.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:eb5cd5a3a305f525b2e17408863c4b2119a54401770ca05d9978e574fd7e0c36`.
+- ACA runtime invariant: **proven.** `az containerapp show` confirms the template
+  image matches the digest above and the active revision is
+  `ca-abarva-web-lab-eastus--m7888cab3` (matches merge commit
+  `7888cab375fde5224bb03f6b9b7100a46ef66deb`).
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
 - Live signed-in proof required: yes — same gap as `SOURCE-GUIDEBOOK-001`/`-002`; not
@@ -101,7 +110,10 @@ regression in fidelity, not a defect — the underlying seeded content is unchan
 
 ## Audit Evidence
 
-- PR: to be opened from branch `codex/source-guidebook-003-markdown` against `main`.
+- PR: [abarva-platform/abarva#5180](https://github.com/abarva-platform/abarva/pull/5180),
+  21/21 checks passed, squash-merged as `7888cab375fde5224bb03f6b9b7100a46ef66deb`.
+- Deployment: ACA revision `ca-abarva-web-lab-eastus--m7888cab3`, image digest
+  `sha256:eb5cd5a3a305f525b2e17408863c4b2119a54401770ca05d9978e574fd7e0c36`.
 - Typecheck/lint/test logs: clean (see QA / Validation).
 - Real-library Markdown rendering evidence: see QA / Validation (script output
   recorded in this session's transcript, not committed as a file).
