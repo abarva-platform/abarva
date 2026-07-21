@@ -11,7 +11,7 @@ export interface ClientOption {
 export const DEMO_SAFE_CLIENT_NAMES = {
   apexretail: "Retail Demo",
   meridian: "Healthcare Demo",
-  arcturus: "Financial Services Demo",
+  arcturus: "FS Demo",
   northstar: "Clinical Technology Demo",
   skyharbor: "Airline Demo",
   lakeshore: "Lakeshore Holdings",

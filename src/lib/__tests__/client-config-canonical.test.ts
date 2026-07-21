@@ -103,18 +103,18 @@ describe("canonicalClientDisplayName", () => {
   it("uses generic demo names for all launch-demo tenants", () => {
     expect(getClientOption("skyharbor").name).toBe("Airline Demo");
     expect(getClientOption("lakeshore").name).toBe("Lakeshore Holdings");
-    expect(getClientOption("arcturus").name).toBe("Financial Services Demo");
+    expect(getClientOption("arcturus").name).toBe("FS Demo");
     expect(canonicalClientDisplayName({ key: "skyharbor-air" })).toBe(
       "Airline Demo",
     );
     expect(canonicalClientDisplayName({ key: "first-capital" })).toBe(
-      "Financial Services Demo",
+      "FS Demo",
     );
     expect(
       canonicalClientDisplayName({ name: "First Capital Financial" }),
-    ).toBe("Financial Services Demo");
+    ).toBe("FS Demo");
     expect(
       canonicalClientDisplayName({ name: "Arcturus Financial Group" }),
-    ).toBe("Financial Services Demo");
+    ).toBe("FS Demo");
   });
 });
