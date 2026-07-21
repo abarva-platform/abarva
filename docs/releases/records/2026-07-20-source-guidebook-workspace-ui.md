@@ -6,8 +6,11 @@
 
 ## Status
 
-`candidate` — code complete, typecheck/lint/tests clean. Live signed-in browser proof
-not yet performed (see QA / Validation).
+`candidate` — code deployed and live (PR #5175, merged and deployed via run 29790788429,
+ACA runtime invariant proven). **Live signed-in browser proof has not been performed**
+— attempted, blocked by Clerk's one-time-email-code sign-in with no inbox access
+available to this agent. See QA / Validation for the honest detail. Do not advance to
+`released` until a real signed-in visit confirms the tab renders against live data.
 
 ## Plain-English Summary
 
@@ -88,29 +91,41 @@ undecided).
   pre-existing, unrelated failures confirmed present on a clean baseline via `git
   stash` before this change was applied (`StrategyStage.test.tsx`,
   `SourceAnalyticsCanvas.thread.test.tsx`) — zero regressions introduced.
-- `pending` — `npm run release:check` — to run before PR.
-- `not yet performed` — live signed-in browser proof. This environment has hit a
-  Clerk-auth wall on every prior attempt this session for the Source surface; if still
-  blocked, this will be reported honestly rather than claimed.
+- `pass` — `node scripts/release-check.mjs --base origin/main --head HEAD` — all gates
+  pass.
+- `NOT PERFORMED` — **live signed-in browser proof.** Attempted via the claude-in-chrome
+  browser: `app.abarva.ai/source/portfolio` redirected to `/sign-in`, which requires a
+  Clerk one-time email code. No inbox access is available to retrieve that code, and
+  entering credentials/completing an auth flow on the user's behalf is out of scope
+  for this agent regardless. **This claim is honestly left open, not asserted.** The
+  code path itself is covered by real RTL render tests (see above) — those confirm the
+  component tree renders correctly given real props; they do not confirm the live
+  server-side `getSourceStageGuidebook()` call wires through correctly against the
+  real Postgres data. A human (or an agent with real Source-tenant sign-in access)
+  should visit a Strategy-stage Source event and confirm the Guidebook tab appears and
+  renders the seeded content before this is considered fully proven end-to-end.
 
 ## Rollout Plan
 
-Merge to `main` via the repo-owned ACA main-deploy workflow. Pure additive code change
-— no migration, no flag, no existing render path altered for the 10 stages without a
-guidebook (the tab simply doesn't render). The one existing stage with content
-(Strategy) will show the new tab immediately on the next deploy.
+Merged to `main` via the repo-owned ACA main-deploy workflow. Pure additive code
+change — no migration, no flag, no existing render path altered for the 10 stages
+without a guidebook (the tab simply doesn't render).
 
 ## Deployment Authority
 
-- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml` — to run after
-  merge.
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`, run
+  [29790788429](https://github.com/abarva-platform/abarva/actions/runs/29790788429),
+  conclusion `success`.
 - Shared runtime mutators: none.
-- Approved image digest: recorded once the deploy run completes.
-- ACA runtime invariant: to be verified post-deploy.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:e6da2026d47c9eb458f1731088cc79f82ec36433449ef9ddfc697893bd592b60`.
+- ACA runtime invariant: **proven.** `az containerapp show` confirms the template
+  image matches the digest above and the active revision is
+  `ca-abarva-web-lab-eastus--m4a429034` (matches merge commit
+  `4a4290345db4624bbcee08e4f66f98574b82c5fe`).
 - Worker image invariant: N/A — no worker code touched.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes — a signed-in visit to a Source event's Strategy
-  stage confirming the Guidebook tab renders the real seeded content.
+- Live signed-in proof required: yes — **not yet performed**, see QA / Validation.
 
 ## Rollback Plan
 
@@ -120,7 +135,12 @@ workspace or on the underlying `source_stage_guidebooks` data.
 
 ## Audit Evidence
 
-- PR: to be opened from branch `codex/source-guidebook-workspace-ui` against `main`.
+- PR: [abarva-platform/abarva#5175](https://github.com/abarva-platform/abarva/pull/5175),
+  21/21 checks passed, squash-merged as `4a4290345db4624bbcee08e4f66f98574b82c5fe`.
+- CI/deploy run: [aca-main-deploy #29790788429](https://github.com/abarva-platform/abarva/actions/runs/29790788429),
+  conclusion `success`.
+- Deployment: ACA revision `ca-abarva-web-lab-eastus--m4a429034`, image digest
+  `sha256:e6da2026d47c9eb458f1731088cc79f82ec36433449ef9ddfc697893bd592b60`.
 - Typecheck/lint/test logs: clean (see QA / Validation).
 
 ## Known Gaps
