@@ -667,6 +667,36 @@ worked examples from the design conversation.
 
 ---
 
+### MOVES-UI-005 — Remove legacy Moves shell (scheduled cleanup, do not start early)
+
+- **Problem statement**: `moves_finder_shell_v1`/`moves_approvals_overview_v1` were promoted
+  from a 4-tenant allowlist to `platform` (default-on for all tenants) on 2026-07-21, per owner
+  directive: "fix it - I need to see the new shell and after a week we will delete." The legacy
+  code (`MovePhaseExplorerLegacy` in `MovePhaseExplorer.tsx`, the flag-off JSX branches in
+  `MovesPhaseStandaloneClient.tsx` and `StrategicMoveOriginateClient.tsx`, and the pre-existing
+  bare-selector CSS in `StrategicMoves.module.css`) is being kept deliberately as the rollback
+  path during a soak window — do NOT remove it before the window closes.
+- **Severity**: P8 (cosmetic cleanup — no functional risk either way, but premature removal
+  eliminates the rollback lever for a change that just went to 100% of tenants same-day)
+- **Workstream**: Files/workspace UX
+- **Status**: `Blocked` (blocked on the soak window, not on any technical dependency)
+- **Do not start before**: 2026-07-28 (one week after the 2026-07-21 default-on promotion)
+- **Scope, once unblocked**: remove `MovePhaseExplorerLegacy` and its flag branch;
+  remove the flag-off JSX branch in `MovesPhaseStandaloneClient.tsx` and
+  `StrategicMoveOriginateClient.tsx` (promote the flag-on branch to be the only branch); remove
+  the now-dead bare `.p0*`/legacy rail CSS rules these components no longer read; remove the
+  `moves_finder_shell_v1`/`moves_approvals_overview_v1` flags themselves from
+  `src/lib/features/registry.ts` and all `useFeature(...)` call sites.
+- **Acceptance criteria before starting**: no tenant has reported a Moves-shell regression
+  since 2026-07-21; a fresh live signed-in check across at least 2-3 tenants confirms the
+  default-on shell is still working correctly at the time this item is picked up (the app may
+  have changed in the intervening week — re-verify, don't assume last week's proof still
+  holds).
+- **Discovered from**: owner directive, 2026-07-21, closing the loop on the MOVES-UI-001/002
+  rollout.
+
+---
+
 ## Architecture decisions (reference — see design doc for full detail)
 
 Recorded here for durability; full rationale lives in
