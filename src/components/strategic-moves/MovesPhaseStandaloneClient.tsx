@@ -1308,7 +1308,7 @@ export function MovesPhaseStandaloneClient({
                           />
 
                           {finderShellEnabled ? (
-                            phase.phase >= 1 && phase.phase <= 4 ? (
+                            phase.phase >= 1 && phase.phase <= 5 ? (
                               <PhaseContractStepsCanvas
                                 comingUpExpanded={finderComingUpOpen}
                                 onPhaseCaptureValueChange={setPhaseCaptureValue}
@@ -1800,7 +1800,7 @@ function ApprovalsOverview({
 // ---------------------------------------------------------------------------
 
 function getInitialFinderSectionKey(phaseNum: number): string | null {
-  if (phaseNum < 1 || phaseNum > 4) {
+  if (phaseNum < 1 || phaseNum > 5) {
     return null;
   }
   return getPhaseCaptureSections(phaseNum)[0]?.key ?? null;

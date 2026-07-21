@@ -1375,6 +1375,90 @@ describe("MovesPhaseStandaloneClient", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("renders P5 in the contract shell instead of the older prepare wall", () => {
+    mockUseFeature.mockImplementation(() => true);
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove({
+          currentPhase: 5,
+          phaseLabel: "P5 Prepare to Execute",
+        })}
+        phaseNum={5}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Prepare to Execute" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Files & Evidence")).toBeInTheDocument();
+    expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+    expect(screen.queryByTestId("mxw-finder-steps")).not.toBeInTheDocument();
+    const menu = screen.getByLabelText("P5 steps");
+    expect(
+      within(menu).getByRole("button", { name: /Mobilization plan & RACI/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Step 1 of 10")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /Mobilization plan & RACI/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("button", { name: /Launch readiness/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("button", {
+        name: /Value-proof rules & metrics/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("button", {
+        name: /Governance & Tower cadence/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("button", {
+        name: /Open risks & client-to-complete/i,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("button", { name: /Recommendation to launch/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("button", { name: /Execution Readiness/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(menu).getByRole("button", { name: /Approve & Build/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Upload files" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Review gate" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(
+      within(menu).getByRole("button", { name: /Execution Readiness/i }),
+    );
+    expect(
+      screen.getByRole("heading", { name: "Execution Readiness" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("How to complete this phase"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "What this phase needs" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Sessions and templates for this phase"),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Phase Sessions/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Templates & sessions" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("mounts governed current-state readiness in the current-state workspace before the static findings lanes", () => {
     render(
       <MovesPhaseStandaloneClient
