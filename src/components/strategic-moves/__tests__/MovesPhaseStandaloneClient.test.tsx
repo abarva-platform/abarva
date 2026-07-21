@@ -414,6 +414,115 @@ describe("MovesPhaseStandaloneClient", () => {
     });
   });
 
+  describe("MOVES-UI-003 rail collapse/expand toggle (moves_finder_shell_v1)", () => {
+    it("flag off: no collapse toggle renders at all, and the rail is byte-parity with pre-existing (expanded-only) behavior", () => {
+      mockUseFeature.mockImplementation(() => false);
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      expect(
+        screen.queryByRole("button", { name: /collapse phase rail/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /expand phase rail/i }),
+      ).not.toBeInTheDocument();
+
+      const rail = screen.getByRole("complementary", { name: "Move phases" });
+      expect(rail).not.toHaveClass("mxw-side-collapsed");
+      // Labels are always present — the collapsed, icon-only code path is
+      // unreachable when the flag is off.
+      expect(screen.getByText("Understand Current State")).toBeInTheDocument();
+      expect(screen.getByText("Stage workspace")).toBeInTheDocument();
+    });
+
+    it("flag on: renders a collapse toggle; clicking it collapses the rail to an icon-only strip (real DOM/class change), and clicking again expands it back", () => {
+      mockUseFeature.mockImplementation(() => true);
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const rail = screen.getByRole("complementary", { name: "Move phases" });
+      expect(rail).not.toHaveClass("mxw-side-collapsed");
+      expect(screen.getByText("Understand Current State")).toBeInTheDocument();
+
+      const toggle = screen.getByRole("button", {
+        name: "Collapse phase rail",
+      });
+      expect(toggle).toHaveAttribute("aria-expanded", "true");
+      expect(toggle).toHaveTextContent("«");
+
+      fireEvent.click(toggle);
+
+      // Real DOM/class change, not just an internal state flip: the rail
+      // picks up the collapsed modifier class and its group/phase labels
+      // stop rendering entirely.
+      expect(rail).toHaveClass("mxw-side-collapsed");
+      expect(
+        screen.queryByText("Understand Current State"),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText("Stage workspace")).not.toBeInTheDocument();
+      const expandToggle = screen.getByRole("button", {
+        name: "Expand phase rail",
+      });
+      expect(expandToggle).toHaveAttribute("aria-expanded", "false");
+      expect(expandToggle).toHaveTextContent("»");
+
+      fireEvent.click(expandToggle);
+
+      expect(rail).not.toHaveClass("mxw-side-collapsed");
+      expect(screen.getByText("Understand Current State")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Collapse phase rail" }),
+      ).toBeInTheDocument();
+    });
+
+    it("flag on, collapsed: a reachable phase's icon is still a real link to its phase route (navigation survives collapse)", () => {
+      mockUseFeature.mockImplementation(() => true);
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove()}
+          phaseNum={3}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      fireEvent.click(
+        screen.getByRole("button", { name: "Collapse phase rail" }),
+      );
+
+      // Phase 2 ("Understand Current State") is <= currentPhase (3), so it
+      // renders as a Link both expanded and collapsed — reuses the same
+      // click/navigation handler, just hides the text label.
+      const rail = screen.getByRole("complementary", { name: "Move phases" });
+      const phaseLink = within(rail).getByTitle(
+        "Understand Current State · 2 of 2",
+      );
+      expect(phaseLink.tagName).toBe("A");
+      expect(phaseLink).toHaveAttribute(
+        "href",
+        `/strategic-moves/${"37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4"}/phase/2`,
+      );
+      expect(
+        within(phaseLink).queryByText("Understand Current State"),
+      ).toBeNull();
+    });
+  });
+
   describe("MOVES-UI-002 approvals overview (moves_approvals_overview_v1)", () => {
     it("flag off: the rail's Approvals link behaves exactly as before — jumps straight into the current phase's approve substep, no overview rendered", () => {
       mockUseFeature.mockImplementation(() => false);
