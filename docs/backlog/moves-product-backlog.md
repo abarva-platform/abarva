@@ -586,6 +586,47 @@ worked examples from the design conversation.
   existing approve substep.
 - **Discovered from**: owner request "SCOPE A PHASE 5 APPROVAL" (2026-07-20/21), closing out the
   MOVES-UI-001 open decision on Phase 5.
+- **Live E2E verified (2026-07-21)**: full driven click/upload pass completed against Meridian
+  (signed-in) and First Capital (flag-off control), per
+  `docs/codex-handoff/MOVES_UI_001_E2E_CLICK_UPLOAD_VERIFICATION_PROMPT_2026-07-21.md`. Proof
+  bundle: `proof/moves-ui-001-002-e2e-20260721/`. Results: rail phase navigation, all four
+  workspace links, every Steps left-menu row (detail-pane updates confirmed), a real file-picker
+  upload (appeared correctly in Files & Evidence), the "Coming up" expand/collapse with real
+  P3 need-tags, the Files tab's real lifecycle states, the Intelligence tab, the Approvals
+  overview (one row per phase, "Sponsor" approver, correct "Review & approve" navigation), and
+  the flag-off control tenant (First Capital rendered the original stepper, confirmed via
+  `mxw-finder-on=false`) all **PASS**. One real gap found — see MOVES-UI-003 below. Two
+  pre-existing, out-of-scope observations logged (not caused by this work, not fixed here): (a)
+  file upload is single-file only with no drag-and-drop target — a capability gap in the
+  existing `EvidenceUploadControl`, not something MOVES-UI-001/002 touched; (b) the Clerk OTP
+  sign-in UI can visually stick on "Verifying..." even after the session succeeds, and RSC
+  prefetch requests produce benign `net::ERR_ABORTED` console noise during navigation — both
+  pre-existing and outside this backlog item's scope.
+
+### MOVES-UI-003 — Rail collapse/expand toggle (gap found in E2E verification)
+
+- **Problem statement**: MOVES-UI-001's design intent (and the owner-approved reference)
+  included a collapse/expand toggle shrinking the rail to a ~58px icon-only strip. The Phase
+  1-2 redirect to the real live component (`MovesPhaseStandaloneClient.tsx`, after discovering
+  the original rail work landed in an unmounted component) was deliberately scoped narrower —
+  label color, selection tint, and the tab underline only — and never included the collapse
+  toggle. The 2026-07-21 E2E verification pass confirmed it is genuinely absent from the live
+  rail DOM.
+- **Severity**: P8 (cosmetic/UX — no data-model or security impact)
+- **Workstream**: Files/workspace UX
+- **Status**: `Ready`
+- **Scope**: add a real collapse/expand toggle to the live rail in
+  `MovesPhaseStandaloneClient.tsx`, gated behind the existing `moves_finder_shell_v1` flag
+  (flag off → no toggle, current behavior unchanged). Collapsed state: icon-only rail (phase
+  badges only, no labels), same pattern already used in `MovePhaseExplorer.tsx`'s (unmounted)
+  implementation — reuse those exact visual dimensions/icon treatment rather than reinventing
+  them.
+- **Acceptance criteria**: flag-off byte-parity test; flag-on toggle click collapses/expands the
+  rail with a real DOM state change (not just a class flip with no visual effect); collapsed
+  rail still allows phase navigation via icon click; live E2E re-verified on at least one proof
+  tenant.
+- **Discovered from**: `docs/codex-handoff/MOVES_UI_001_E2E_CLICK_UPLOAD_VERIFICATION_PROMPT_2026-07-21.md`
+  execution, finding #1.
 
 ---
 
