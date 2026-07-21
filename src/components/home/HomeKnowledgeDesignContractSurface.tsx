@@ -1952,8 +1952,8 @@ function ProofView({
         <section className="nkh-next-evidence-panel">
           <div className="nkh-kicker">Recommended Next Evidence</div>
           <p>
-            What Meridian should upload or confirm next, and what each item
-            unlocks.
+            What {pack.tenant_name} should upload or confirm next, and what each
+            item unlocks.
           </p>
           <div className="nkh-next-list">
             {nextEvidence.slice(0, 8).map((item, index) => (
