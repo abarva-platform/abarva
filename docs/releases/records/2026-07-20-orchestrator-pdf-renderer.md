@@ -6,7 +6,12 @@
 
 ## Status
 
-`candidate`
+`released` — merged as PR #5170, confirmed live (the merge commit is an ancestor of
+the currently active ACA revision `ca-abarva-web-lab-eastus--m4a429034`, confirmed via
+`az containerapp show` during a later, unrelated deploy). Code path proven via real
+tests; a full live PDF-download click-through has not been exercised (requires a real
+`generated_artifacts` row with `outputFormat: 'pdf'`) — not a blocker per the Known
+Gaps below.
 
 ## Plain-English Summary
 
@@ -107,7 +112,8 @@ defect) behavior.
 ## Audit Evidence
 
 - This release record.
-- PR (to be opened) with the diff and CI run link.
+- PR: [abarva-platform/abarva#5170](https://github.com/abarva-platform/abarva/pull/5170),
+  merged as `0b59e44bc4612d0fe4402ce86cf13007303ba156`.
 - Canonical backlog entry: `MOVES-QUALITY-001` in `docs/backlog/moves-product-backlog.md`.
 
 ## Known Gaps

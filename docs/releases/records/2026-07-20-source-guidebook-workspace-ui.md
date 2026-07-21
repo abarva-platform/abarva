@@ -6,11 +6,18 @@
 
 ## Status
 
-`candidate` — code deployed and live (PR #5175, merged and deployed via run 29790788429,
-ACA runtime invariant proven). **Live signed-in browser proof has not been performed**
-— attempted, blocked by Clerk's one-time-email-code sign-in with no inbox access
-available to this agent. See QA / Validation for the honest detail. Do not advance to
-`released` until a real signed-in visit confirms the tab renders against live data.
+`candidate` — corrected 2026-07-21 to separate distinct proof states rather than one
+blended "deployed and live" status, which risked implying more than was actually
+verified:
+
+| Proof state | Status |
+|---|---|
+| Migration + seed applied to the live database | **Proven** — real apply run 29789097644, real repository readback (see `2026-07-20-db-migration-lab-workflow.md`) |
+| Component rendering (real RTL tests, real props, no mocks on the code under test) | **Proven** — 13/13 tests passing, see QA / Validation |
+| Deployment invariant (image built, pushed, serving traffic) | **Proven** — ACA revision `ca-abarva-web-lab-eastus--m4a429034` confirmed matching the merge commit |
+| Signed-in, live server-to-database rendering (a real user opening the tab and seeing real content) | **PENDING** — attempted via claude-in-chrome, blocked by Clerk's one-time-email-code sign-in with no inbox access available to this agent. Not claimed, not observed. Tracked as `SOURCE-GUIDEBOOK-002`. |
+
+Do not describe this feature as "Runtime Proven" until the fourth row is closed.
 
 ## Plain-English Summary
 
@@ -157,4 +164,6 @@ workspace or on the underlying `source_stage_guidebooks` data.
   formatting).
 - **No authoring/edit UI** — matches the foundation record's own stated scope; this
   release is read-only.
-- **Live signed-in browser proof not yet performed** — see QA / Validation.
+- **Live signed-in browser proof not yet performed** — see QA / Validation. Tracked as
+  `SOURCE-GUIDEBOOK-002` in `docs/backlog/source-product-backlog.md`, status `Ready /
+  Blocked only on authenticated test access`.
