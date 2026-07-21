@@ -46,7 +46,7 @@ export interface MovePhaseExplorerProps {
 
 const WORKSPACE_GROUP_ITEMS = [
   { key: "files", label: "Files & Evidence" },
-  { key: "intelligence", label: "Phase Intelligence (aVa)" },
+  { key: "intelligence", label: "Phase Intelligence" },
   { key: "approvals", label: "Approvals" },
 ] as const;
 

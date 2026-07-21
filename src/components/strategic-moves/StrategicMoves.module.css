@@ -11,7 +11,7 @@
 
 .phaseBody {
   display: grid;
-  grid-template-columns: 252px minmax(0, 1fr);
+  grid-template-columns: 258px minmax(0, 1fr);
   align-items: stretch;
   gap: 0;
   margin: 0;
@@ -24,14 +24,215 @@
 
 .p0Workspace {
   min-height: calc(100vh - 106px);
-  background: var(--canon-bg-cream);
+  background: #f8f7f4;
   display: flex;
   flex-direction: column;
   overflow: auto;
 }
 
+.p0ShellRail {
+  min-height: calc(100vh - 106px);
+  border-right: 1px solid rgba(12, 26, 58, 0.1);
+  background: #fbfaf8;
+  color: #0c1a3a;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 18px;
+  overflow: auto;
+}
+
+.p0RailBack {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #8b95a8;
+  cursor: pointer;
+  font-family: var(--abarva-sans);
+  font-size: 12px;
+  line-height: 1;
+  margin: 18px 0 14px;
+  padding: 0;
+  text-align: left;
+}
+
+.p0RailMoveContext {
+  border-bottom: 1px solid rgba(12, 26, 58, 0.08);
+  padding: 0 0 22px;
+}
+
+.p0RailMoveContext h2 {
+  color: #0c1a3a;
+  font-family: var(--abarva-serif);
+  font-size: 17px;
+  line-height: 1.08;
+  margin: 0 0 8px;
+}
+
+.p0RailMoveContext p {
+  color: #7b8aa5;
+  font-size: 12px;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.p0RailSection {
+  border-bottom: 1px solid rgba(12, 26, 58, 0.08);
+  padding: 20px 0;
+}
+
+.p0RailSectionLabel {
+  color: #9aa4b4;
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+
+.p0RailRows,
+.p0RailWorkspaceRows {
+  display: grid;
+  gap: 7px;
+}
+
+.p0RailPhaseRow {
+  border-radius: 8px;
+  color: #6f7f99;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 7px 8px;
+  position: relative;
+}
+
+.p0RailPhaseRowCurrent {
+  background: #fff;
+  box-shadow:
+    inset 3px 0 0 #0c1a3a,
+    0 1px 5px rgba(12, 26, 58, 0.08);
+  color: #0c1a3a;
+}
+
+.p0RailPhaseRowDone {
+  color: #0c1a3a;
+}
+
+.p0RailPhaseBadge {
+  align-items: center;
+  background: #fff;
+  border: 1px solid rgba(12, 26, 58, 0.16);
+  border-radius: 999px;
+  color: #8b95a8;
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 800;
+  height: 22px;
+  justify-content: center;
+  width: 22px;
+}
+
+.p0RailPhaseRowCurrent .p0RailPhaseBadge,
+.p0RailPhaseRowDone .p0RailPhaseBadge {
+  background: #0c1a3a;
+  border-color: #0c1a3a;
+  color: #fff;
+}
+
+.p0RailPhaseLabel {
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  min-width: 0;
+}
+
+.p0RailPhaseTally {
+  color: #7b8aa5;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.p0RailPhaseRowCurrent .p0RailPhaseTally {
+  color: #7b8aa5;
+}
+
+.p0RailTower {
+  color: #8b95a8;
+  font-size: 12px;
+  padding: 7px 8px;
+}
+
+.p0RailWorkspaceRows button {
+  appearance: none;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #2c2c2a;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 7px 8px;
+  text-align: left;
+}
+
+.p0RailWorkspaceRows button:hover,
+.p0RailWorkspaceActive {
+  background: #fff;
+}
+
+.p0RailWorkspaceRows button > span:first-child {
+  align-items: center;
+  background: #fff;
+  border: 1px solid rgba(12, 26, 58, 0.1);
+  border-radius: 5px;
+  color: #0c1a3a;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 800;
+  height: 21px;
+  justify-content: center;
+  width: 21px;
+}
+
+.p0RailWorkspaceRows button small {
+  color: #8b95a8;
+  font-family: var(--abarva-mono);
+  font-size: 9px;
+}
+
+.p0RailAmberDot {
+  background: #ba7517;
+  border-radius: 999px;
+  height: 6px;
+  justify-self: end;
+  width: 6px;
+}
+
+.p0RailFooter {
+  margin-top: auto;
+  padding: 20px 2px 0;
+}
+
+.p0RailFooter span {
+  color: #7b8aa5;
+  font-size: 12px;
+}
+
+.p0RailFooter p {
+  color: #8b95a8;
+  font-size: 11.5px;
+  line-height: 1.55;
+  margin: 16px 0 0;
+}
+
 .p0Header {
-  width: min(100%, 1500px);
+  width: min(100%, 1040px);
   margin: 0 auto;
   padding: 28px 32px 12px;
 }
@@ -86,6 +287,13 @@
   box-shadow: 0 10px 26px rgba(20, 20, 19, 0.05);
 }
 
+.p0ProgressPillHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .p0ProgressPill span {
   font-size: 24px;
   font-weight: 900;
@@ -108,6 +316,376 @@
   height: 100%;
   border-radius: inherit;
   background: #2f8f66;
+}
+
+.p0ModeTabs {
+  width: min(100%, 1040px);
+  margin: 14px auto 0;
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgba(12, 26, 58, 0.06);
+  align-self: center;
+}
+
+.p0ModeTab {
+  appearance: none;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #5b6c8a;
+  cursor: pointer;
+  font-family: var(--abarva-sans);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 15px;
+}
+
+.p0ModeTabActive {
+  background: #fff;
+  color: #0c1a3a;
+  box-shadow: 0 1px 4px rgba(12, 26, 58, 0.12);
+}
+
+.p0ContractCard {
+  display: grid;
+  grid-template-columns: 272px minmax(0, 1fr);
+  min-height: 458px;
+  border: 1px solid rgba(12, 26, 58, 0.12);
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 12px 32px rgba(12, 26, 58, 0.05);
+}
+
+.p0ContractNav {
+  border-right: 1px solid rgba(12, 26, 58, 0.09);
+  background: #fbfbfc;
+  padding: 24px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.p0ContractGroup {
+  display: grid;
+  gap: 5px;
+}
+
+.p0ContractGroupLabel {
+  font-family: var(--abarva-mono);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #a7adb8;
+  padding: 0 8px 5px;
+}
+
+.p0ContractStep {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #7b8aa5;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 7px 8px;
+  text-align: left;
+  width: 100%;
+}
+
+.p0ContractStep:hover {
+  background: rgba(42, 90, 168, 0.06);
+}
+
+.p0ContractStepActive {
+  border-color: rgba(42, 90, 168, 0.14);
+  background: #fff;
+  color: #0c1a3a;
+  box-shadow: inset 3px 0 0 #2a5aa8;
+}
+
+.p0ContractStep span:last-child {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.p0ContractStepIcon {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(12, 26, 58, 0.18);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.p0ContractStepIconDone {
+  border-color: #1d9e75;
+  background: #1d9e75;
+}
+
+.p0ContractNavFoot {
+  margin-top: auto;
+  border-top: 1px solid rgba(12, 26, 58, 0.08);
+  padding: 14px 8px 0;
+  color: #8b95a8;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.p0ContractDetail {
+  padding: 28px 30px 24px;
+  min-width: 0;
+}
+
+.p0ContractDetailTop {
+  display: grid;
+  grid-template-columns: 22px auto minmax(0, auto) auto auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.p0ContractDetailTop h2 {
+  margin: 0;
+  color: #0c1a3a;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+  min-width: 0;
+}
+
+.p0ContractStepMeta {
+  color: #8b95a8;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.p0ContractProvide,
+.p0ContractDonePill {
+  border-radius: 8px;
+  font-family: var(--abarva-mono);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 4px 7px;
+  text-transform: uppercase;
+}
+
+.p0ContractProvide {
+  background: rgba(42, 90, 168, 0.09);
+  color: #5b6c8a;
+}
+
+.p0ContractDonePill {
+  background: rgba(12, 26, 58, 0.06);
+  color: #8b95a8;
+}
+
+.p0ContractDonePillOn {
+  background: rgba(29, 158, 117, 0.13);
+  color: #147c5b;
+}
+
+.p0ContractForm,
+.p0ContractApprove {
+  margin-top: 18px;
+  display: grid;
+  gap: 13px;
+}
+
+.p0ContractForm p,
+.p0ContractApprove p {
+  margin: 0;
+  color: #4d5d79;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.p0ContractCaptured {
+  border-left: 2px solid rgba(29, 158, 117, 0.45);
+  color: #0c1a3a;
+  font-size: 13px;
+  line-height: 1.5;
+  padding-left: 10px;
+}
+
+.p0ContractNameRow {
+  border: 1px solid rgba(12, 26, 58, 0.1);
+  border-radius: 10px;
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+}
+
+.p0ContractNameRow label {
+  color: #5b6c8a;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.p0ContractNameRow small {
+  color: #8b95a8;
+  font-size: 11.5px;
+}
+
+.p0FoundationInset {
+  border: 1px solid rgba(12, 26, 58, 0.1);
+  border-radius: 10px;
+  background: #fbfbfc;
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 13px;
+}
+
+.p0FoundationInset div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.p0FoundationInset strong {
+  color: #0c1a3a;
+  font-size: 13px;
+}
+
+.p0FoundationInset span {
+  color: #8b95a8;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.p0FoundationInset p {
+  color: #4d5d79;
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.p0ExpectedEvidence {
+  display: grid;
+  gap: 8px;
+  margin-top: 5px;
+  padding-top: 18px;
+}
+
+.p0ExpectedEvidence span {
+  color: #8b95a8;
+  font-family: var(--abarva-mono);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.p0ExpectedEvidence div,
+.p0EvidencePills span {
+  width: fit-content;
+  border: 1px solid rgba(12, 26, 58, 0.1);
+  border-radius: 7px;
+  background: #f6f8fb;
+  color: #35506f;
+  font-size: 12px;
+  padding: 7px 10px;
+}
+
+.p0ContractActionRow {
+  border-top: 1px solid rgba(12, 26, 58, 0.09);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 4px;
+  padding-top: 18px;
+}
+
+.p0ApproveBuildButton {
+  border: 0;
+  border-radius: 9px;
+  background: #1d9e75;
+  color: #fff;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 800;
+  padding: 11px 22px;
+}
+
+.p0ApproveBuildButton:disabled {
+  background: rgba(12, 26, 58, 0.12);
+  color: #8b95a8;
+  cursor: not-allowed;
+}
+
+.p0ContractActionRow span {
+  color: #8b95a8;
+  font-size: 12.5px;
+}
+
+.p0ContractEmptyPane {
+  border: 1px solid rgba(12, 26, 58, 0.12);
+  border-radius: 14px;
+  background: #fff;
+  padding: 28px 30px;
+  min-height: 260px;
+  box-shadow: 0 12px 32px rgba(12, 26, 58, 0.05);
+}
+
+.p0ContractEmptyPane h2 {
+  margin: 0 0 8px;
+  font-family: var(--abarva-serif);
+  font-size: 24px;
+  color: #0c1a3a;
+}
+
+.p0ContractEmptyPane p {
+  max-width: 760px;
+  color: #5b6c8a;
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0 0 16px;
+}
+
+.p0EvidencePills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.p0ContractMoveName {
+  width: min(100%, 1040px);
+  margin: 0 auto 24px;
+  color: #8b95a8;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.p0ContractMoveName span {
+  font-family: var(--abarva-mono);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.p0ContractMoveName strong {
+  color: #0c1a3a;
+  font-size: 13px;
 }
 
 .p0TabStrip {
@@ -204,7 +782,7 @@
 .p0ActiveWork {
   flex: 1;
   min-height: 0;
-  width: min(100%, 1500px);
+  width: min(100%, 1040px);
   margin: 0 auto;
   padding: 18px 32px 20px;
   overflow: auto;

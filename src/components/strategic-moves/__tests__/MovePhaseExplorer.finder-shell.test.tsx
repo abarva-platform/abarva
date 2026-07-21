@@ -72,7 +72,7 @@ describe("MovePhaseExplorer · moves_finder_shell_v1 gating", () => {
     expect(screen.getByText("Phases")).toBeInTheDocument();
     expect(screen.getByText("Workspace")).toBeInTheDocument();
     expect(screen.getByText("Files & Evidence")).toBeInTheDocument();
-    expect(screen.getByText("Phase Intelligence (aVa)")).toBeInTheDocument();
+    expect(screen.getByText("Phase Intelligence")).toBeInTheDocument();
     expect(screen.getByText("Approvals")).toBeInTheDocument();
 
     // New compact tally format ("met/total" not "met of total").
