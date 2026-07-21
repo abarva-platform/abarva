@@ -6,8 +6,8 @@ import type {
   HomeKnowResponse,
 } from "@/lib/home/know/home-know-contract";
 import { sanitizeHomeKnowVisiblePayloadWithAudit } from "@/lib/home/know/home-demo-safe-response";
+import { buildHomeKnowResponse } from "@/lib/home/know/home-know-engine";
 import { applyHomeV6ExecutiveSynthesis } from "@/lib/home/know/home-v6-executive-synthesis";
-import { applyHomeKnowClaudeSynthesis } from "@/lib/home/know/home-know-claude-synthesis";
 import { answerHomeKnowFromV6 } from "@/lib/home/know/v6-home-ask";
 import { toHomeKnowResponseFromV6 } from "@/lib/home/know/v6-home-know-response";
 import { answerHomeKnowFromV7 } from "@/lib/home/know/v7-home-ask";
@@ -33,38 +33,58 @@ export async function POST(req: NextRequest) {
 
   const tenantKey =
     tenant?.canonicalKey ?? payload.tenantKey ?? payload.client ?? null;
+  let homeKnowFallbackReason: string | null = null;
   let v7FallbackReason: string | null = null;
-  const response = await buildV7HomeKnowResponse({
+  const response = await buildEnterpriseHomeKnowResponse({
     question: payload.question,
     tenantKey,
-    tenantDisplayName: tenant?.displayName ?? null,
+    client: payload.client ?? payload.tenantKey ?? tenantKey,
     includeTrace,
-  }).catch((error) => {
-    v7FallbackReason =
-      error instanceof Error ? error.message : String(error ?? "unknown");
-    if (includeTrace) {
-      console.warn("[home-know.v7-fallback]", {
-        route: "/api/home/know/ask",
+  })
+    .catch((error) => {
+      homeKnowFallbackReason =
+        error instanceof Error ? error.message : String(error ?? "unknown");
+      if (includeTrace) {
+        console.warn("[home-know.enterprise-fallback]", {
+          route: "/api/home/know/ask",
+          tenantKey,
+          reason: homeKnowFallbackReason,
+        });
+      }
+      return buildV7HomeKnowResponse({
+        question: payload.question,
         tenantKey,
-        reason: v7FallbackReason,
+        tenantDisplayName: tenant?.displayName ?? null,
+        includeTrace,
       });
-    }
-    return buildV6HomeKnowResponse({
-      question: payload.question,
-      tenantKey,
-      tenantDisplayName: tenant?.displayName ?? null,
-      includeTrace,
-    });
-  }).catch((error): Promise<HomeKnowResponse> | HomeKnowResponse =>
-    blockedHomeKnowResponse({
-      question: payload.question,
-      tenantKey: tenantKey ?? "unknown",
-      reason:
-        error instanceof Error
-          ? `V7 and V6 Home contracts unavailable: ${error.message}`
-          : "V7 and V6 Home contracts unavailable.",
-    }),
-  );
+    })
+    .catch((error) => {
+      v7FallbackReason =
+        error instanceof Error ? error.message : String(error ?? "unknown");
+      if (includeTrace) {
+        console.warn("[home-know.v7-fallback]", {
+          route: "/api/home/know/ask",
+          tenantKey,
+          reason: v7FallbackReason,
+        });
+      }
+      return buildV6HomeKnowResponse({
+        question: payload.question,
+        tenantKey,
+        tenantDisplayName: tenant?.displayName ?? null,
+        includeTrace,
+      });
+    })
+    .catch((error): Promise<HomeKnowResponse> | HomeKnowResponse =>
+      blockedHomeKnowResponse({
+        question: payload.question,
+        tenantKey: tenantKey ?? "unknown",
+        reason:
+          error instanceof Error
+            ? `V7 and V6 Home contracts unavailable: ${error.message}`
+            : "V7 and V6 Home contracts unavailable.",
+      }),
+    );
 
   const { payload: safeResponse, audit: visibleSanitizer } =
     sanitizeHomeKnowVisiblePayloadWithAudit(response);
@@ -74,6 +94,9 @@ export async function POST(req: NextRequest) {
       fallbackUsed: true,
       reason: [
         safeResponse.safety.composerTrace.reason,
+        homeKnowFallbackReason
+          ? `Enterprise Home dossier fallback: ${homeKnowFallbackReason}`
+          : null,
         `V7 request-time fallback: ${v7FallbackReason}`,
       ]
         .filter(Boolean)
@@ -124,6 +147,7 @@ export async function POST(req: NextRequest) {
           ...safeResponse,
           trace: {
             composerTrace: safeResponse.safety.composerTrace ?? null,
+            homeKnowFallbackReason,
             v7FallbackReason,
             visibleSanitizer,
             finalPrompt:
@@ -146,6 +170,23 @@ export async function POST(req: NextRequest) {
   );
 }
 
+async function buildEnterpriseHomeKnowResponse(input: {
+  question: string;
+  tenantKey: string | null;
+  client: string | null;
+  includeTrace: boolean;
+}): Promise<HomeKnowResponse> {
+  if (!input.tenantKey && !input.client) {
+    throw new Error("tenant key required for Enterprise Home dossier");
+  }
+  return buildHomeKnowResponse({
+    question: input.question,
+    tenantKey: input.tenantKey,
+    client: input.client,
+    operatorTrace: input.includeTrace,
+  });
+}
+
 async function buildV7HomeKnowResponse(input: {
   question: string;
   tenantKey: string | null;
@@ -158,13 +199,7 @@ async function buildV7HomeKnowResponse(input: {
     tenantDisplayName: input.tenantDisplayName,
     includeTrace: input.includeTrace,
   });
-  const response = toHomeKnowResponseFromV7(result, { question: input.question });
-  return applyHomeKnowClaudeSynthesis({
-    response,
-    tenantKey: result.tenant.canonicalKey,
-    tenantDisplayName: result.tenant.displayName,
-    includeTrace: input.includeTrace,
-  });
+  return toHomeKnowResponseFromV7(result, { question: input.question });
 }
 
 async function buildV6HomeKnowResponse(input: {

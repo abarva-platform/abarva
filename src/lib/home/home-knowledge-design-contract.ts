@@ -30,7 +30,11 @@ export interface HomeKnowledgeDataColumn {
 export interface HomeKnowledgeDataSet {
   columns: HomeKnowledgeDataColumn[];
   rows: HomeKnowledgeRecord[];
-  facet?: string;
+  facet?: string | { k?: string; label?: string };
+  source_file?: string;
+  source_layer?: string;
+  refreshed_at?: string;
+  row_count?: number;
 }
 
 export interface HomeKnowledgeStory {
@@ -75,7 +79,12 @@ export interface HomeKnowledgeEvidence {
 }
 
 export interface HomeKnowledgeVisualBlock {
-  type?: "metric_strip" | "decision_matrix" | "dependency_flow" | "evidence_bar" | string;
+  type?:
+    | "metric_strip"
+    | "decision_matrix"
+    | "dependency_flow"
+    | "evidence_bar"
+    | string;
   title?: string;
   subtitle?: string;
   data?: Record<string, unknown>;

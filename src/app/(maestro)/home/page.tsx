@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { currentUser } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 
 import { HomeKnowledgeDesignContractSurface } from "@/components/home/HomeKnowledgeDesignContractSurface";
 import { HomeSurface } from "@/components/home/HomeSurface";
@@ -10,7 +12,9 @@ import { getTenantSourceFiles } from "@/lib/context-ingestion/tenant-context-rea
 import {
   canonicalClientDisplayName,
   getClientOption,
+  inferClientKeyFromEmail,
 } from "@/lib/client-config";
+import { ACTIVE_CLIENT_COOKIE } from "@/lib/tenant/resolveTenant";
 import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
 import { buildHomeDataQualityModel } from "@/lib/home/home-data-quality";
 import { buildHomeEnglishSummary } from "@/lib/home/home-english-summary";
@@ -152,15 +156,34 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const requestedTab = firstSearchParam(params?.tab);
   const candidatePreviewParam = firstSearchParam(params?.candidatePreview);
   const candidatePreviewEnabled = candidatePreviewParam === "true";
-  const activeClient = await getActiveClientRow(requestedClient).catch(
-    () => null,
-  );
+  const [activeClient, clerkUser, cookieStore] = await Promise.all([
+    getActiveClientRow(requestedClient).catch(() => null),
+    currentUser().catch(() => null),
+    cookies().catch(() => null),
+  ]);
+  const cookieClientKey = cookieStore?.get(ACTIVE_CLIENT_COOKIE)?.value ?? null;
+  const clerkEmail =
+    clerkUser?.primaryEmailAddress?.emailAddress ??
+    clerkUser?.emailAddresses?.[0]?.emailAddress ??
+    null;
+  const metadataClientKey =
+    (clerkUser?.publicMetadata?.clientId as string | undefined) ??
+    (clerkUser?.publicMetadata?.defaultClientId as string | undefined) ??
+    null;
+  const inferredClientKey =
+    metadataClientKey ?? inferClientKeyFromEmail(clerkEmail);
   const homeTenantKey =
     bindingTenantKey(requestedClient) ??
+    bindingTenantKey(cookieClientKey) ??
+    bindingTenantKey(inferredClientKey) ??
     bindingTenantKey(activeClient?.key) ??
     bindingTenantKey(activeClient?.name);
   const displayClientKey =
-    activeClient?.key ?? homeTenantKey ?? requestedClient;
+    cookieClientKey ??
+    inferredClientKey ??
+    activeClient?.key ??
+    homeTenantKey ??
+    requestedClient;
   const activeTenantName =
     canonicalClientDisplayName({
       key: displayClientKey,

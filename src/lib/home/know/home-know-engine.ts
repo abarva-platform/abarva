@@ -1294,7 +1294,12 @@ function coverageTable(
         align: "right",
         format: "number",
       },
-      { key: "fact_count", label: "Source support", align: "right", format: "number" },
+      {
+        key: "fact_count",
+        label: "Source support",
+        align: "right",
+        format: "number",
+      },
       {
         key: "relationship_count",
         label: "Relationships",
@@ -2273,6 +2278,14 @@ export function validateHomeKnowResponse(
   let prose = response.prose;
   let unsupportedClaimsRemoved = response.safety.unsupportedClaimsRemoved;
   const evidence = hasUsableDossierEvidence(response);
+  const evidenceChannels = mergeEvidenceChannels(
+    evidence.evidenceChannels,
+    response.safety.evidenceChannels,
+    response.safety.composerTrace?.evidenceChannels,
+  );
+  const usableEvidence =
+    evidence.usable ||
+    Object.values(evidenceChannels).some((count) => count > 0);
   const templatePrefix = /\b(Read|Evidence|Implication|Next move):\s*/gi;
   if (templatePrefix.test(prose)) {
     prose = prose
@@ -2333,12 +2346,12 @@ export function validateHomeKnowResponse(
       blockedDecisionFrames: true,
       blockedInternalCodes: true,
       unsupportedClaimsRemoved,
-      usableEvidence: evidence.usable,
-      evidenceStatus: evidence.usable ? "usable_dossier" : "empty_dossier",
+      usableEvidence,
+      evidenceStatus: usableEvidence ? "usable_dossier" : "empty_dossier",
       evidenceReason: evidence.reason,
-      evidenceChannels: evidence.evidenceChannels,
+      evidenceChannels,
       frontendTripwireShouldFire:
-        !evidence.usable &&
+        !usableEvidence &&
         (BLOCKED_PUBLIC_TEXT.test(prose) ||
           INTERNAL_CODE_RE.test(prose) ||
           lookupHasDecisionLanguage ||
@@ -2357,24 +2370,50 @@ export function validateHomeKnowResponse(
     prose: finalProse,
     safety: {
       ...repaired.safety,
-      unsupportedClaimsRemoved:
-        repaired.safety.unsupportedClaimsRemoved + 1,
+      unsupportedClaimsRemoved: repaired.safety.unsupportedClaimsRemoved + 1,
     },
   });
 }
 
+function mergeEvidenceChannels(
+  ...items: Array<HomeKnowResponse["safety"]["evidenceChannels"] | undefined>
+): NonNullable<HomeKnowResponse["safety"]["evidenceChannels"]> {
+  const merged: NonNullable<HomeKnowResponse["safety"]["evidenceChannels"]> = {
+    facts: 0,
+    tables: 0,
+    charts: 0,
+    graphs: 0,
+    citations: 0,
+    sourceCoverage: 0,
+    sections: 0,
+    rollups: 0,
+    relationshipPaths: 0,
+    metrics: 0,
+    gaps: 0,
+  };
+  for (const item of items) {
+    if (!item) continue;
+    for (const key of Object.keys(merged) as Array<keyof typeof merged>) {
+      merged[key] = Math.max(merged[key], item[key] ?? 0);
+    }
+  }
+  return merged;
+}
+
 function sanitizePublicHomeText(value: string): string {
-  return scrubHomePublicAnswerText(value
-    .replace(BLOCKED_PUBLIC_TEXT_REPLACE, "available business material")
-    .replace(INTERNAL_CODE_REPLACE, "the source reference")
-    .replace(/\bthe cited record\b/gi, "the source reference")
-    .replace(
-      /\bas a current-state loaded context\b/gi,
-      "from the current picture",
-    )
-    .replace(/\bcurrent-state loaded context\b/gi, "current picture")
-    .replace(/\bprimary loaded context\b/gi, "primary source support")
-    .replace(/\s{2,}/g, " "));
+  return scrubHomePublicAnswerText(
+    value
+      .replace(BLOCKED_PUBLIC_TEXT_REPLACE, "available business material")
+      .replace(INTERNAL_CODE_REPLACE, "the source reference")
+      .replace(/\bthe cited record\b/gi, "the source reference")
+      .replace(
+        /\bas a current-state loaded context\b/gi,
+        "from the current picture",
+      )
+      .replace(/\bcurrent-state loaded context\b/gi, "current picture")
+      .replace(/\bprimary loaded context\b/gi, "primary source support")
+      .replace(/\s{2,}/g, " "),
+  );
 }
 
 function cleanLabel(value: unknown): string | null {
