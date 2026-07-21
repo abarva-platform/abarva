@@ -24,6 +24,7 @@ import {
   buildHomeSummarySnapshotFromModuleContext,
 } from "@/lib/home/home-summary-snapshot";
 import { readHomeKnowledgeDesignContractForTenant } from "@/lib/home/home-knowledge-design-contract";
+import { readDerivedRelationshipGraphEdges } from "@/lib/home/derive-relationship-edges";
 import { getLocalCxoRuntimeBrowser } from "@/lib/home/local-cxo-runtime";
 import { getHomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
 import { getHomeV7ContextBrowser } from "@/lib/home/v7-context-browser";
@@ -197,7 +198,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     : null;
   const designContract =
     readHomeKnowledgeDesignContractForTenant(homeTenantKey);
-  if (homeTenantKey === "meridian-health" && designContract.pack) {
+  if (designContract.pack) {
     return (
       <AppShell
         surface="home"
@@ -223,6 +224,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             selectedDimension={requestedDimension}
             selectedSource={designContract.diagnostics.selectedSource}
             selectedTab={requestedTab}
+            derivedRelationshipEdges={readDerivedRelationshipGraphEdges(
+              homeTenantKey,
+            )}
           />
         </main>
       </AppShell>

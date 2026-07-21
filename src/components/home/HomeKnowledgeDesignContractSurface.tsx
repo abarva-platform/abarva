@@ -40,6 +40,14 @@ interface HomeKnowledgeDesignContractSurfaceProps {
   selectedDimension?: string | null;
   selectedTab?: string | null;
   selectedSource?: string | null;
+  /**
+   * Edges from the tenant's derived relationship-graph.json, read
+   * server-side (see home/page.tsx) since this component is client-only
+   * and can't touch the filesystem. When non-empty, preferred over the
+   * field-parsing fallback (deriveHomeRelationshipEdges) computed from
+   * the pack's own DATA slots — it's the richer, dedicated graph source.
+   */
+  derivedRelationshipEdges?: HomeRelationshipEdge[];
 }
 
 const DIMENSION_TABS: Array<{ key: DimensionTab; label: string }> = [
@@ -277,12 +285,16 @@ export function HomeKnowledgeDesignContractSurface({
   selectedDimension,
   selectedTab,
   selectedSource,
+  derivedRelationshipEdges = [],
 }: HomeKnowledgeDesignContractSurfaceProps) {
   const slots = pack.design_slots;
   const dimensions = useMemo(() => slots.DIMS ?? [], [slots.DIMS]);
   const relationshipEdges = useMemo(
-    () => deriveHomeRelationshipEdges(slots.DATA ?? {}),
-    [slots.DATA],
+    () =>
+      derivedRelationshipEdges.length
+        ? derivedRelationshipEdges
+        : deriveHomeRelationshipEdges(slots.DATA ?? {}),
+    [derivedRelationshipEdges, slots.DATA],
   );
   const [topTab, setTopTab] = useState<TopTab>(pickInitialTab(selectedTab));
   const [surfaceMode, setSurfaceMode] = useState<SurfaceMode>(
