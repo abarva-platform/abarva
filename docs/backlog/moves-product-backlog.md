@@ -630,6 +630,43 @@ worked examples from the design conversation.
 
 ---
 
+### MOVES-UI-004 — Extend Finder-shell to the Origination flow's main content
+
+- **Problem statement**: `StrategicMoveOriginateClient.tsx` (`/strategic-moves/new`, the P0
+  Origination wizard) already mounts `MovePhaseExplorer.tsx` for its rail — so the Finder-shell
+  rail (grouped Phases/Workspace, navy labels, blue selection tint, collapse toggle) already
+  renders correctly there once a tenant is in `moves_finder_shell_v1`'s `includeTenants` (fixed
+  same-day: First Capital added). But the rail was only ever half the picture: the page's main
+  content area (the "Shape the Move brief" P0 wizard — tab strip, sub-tabs, question cards) is
+  styled via the separate, shared `StrategicMoves.module.css` and does not use any Finder-shell
+  tokens (Fraunces headings, navy/blue palette, JetBrains-Mono-style labels) at all. The owner's
+  reference mockup (`Downloads/Moves Phase Shell.html`) shows P0 Originate using the exact same
+  two-column Steps pattern as P1-P5 — not a structurally distinct wizard — confirming the
+  design intent is one unified visual system across every phase including P0.
+- **Severity**: P8 (cosmetic/UX — no data-model or security impact)
+- **Workstream**: Files/workspace UX
+- **Status**: `Ready`
+- **Scope**: apply the Finder-shell visual tokens (typography, palette, spacing) to
+  `StrategicMoveOriginateClient.tsx`'s main content area — the P0 header, tab strip, and
+  question/step cards — so it reads as the same product as the phase-workspace pages. Gate
+  entirely behind the existing `moves_finder_shell_v1` flag (flag off → current Origination
+  styling, unchanged). This is a visual/typography pass on the EXISTING wizard structure (7
+  steps across Frame/Govern/Prove Readiness) — **not** a structural rebuild into the two-column
+  Steps pattern used on P1-P5. A follow-up item can consider that bigger structural change
+  separately, once this visual-consistency pass is proven safe.
+- **Constraint**: `StrategicMoves.module.css` is shared by other components — new rules must be
+  scoped under a flag-gated ancestor class (mirroring the `.mxw-finder-on` pattern already used
+  in `MovesPhaseStandaloneClient.tsx`), never edited as bare/global selectors, so nothing else
+  consuming that stylesheet is affected.
+- **Acceptance criteria**: flag-off byte-parity test; flag-on shows navy headings/labels (not
+  grey), the same blue/teal/amber semantic colors as the phase-workspace pages, and Fraunces
+  for the "Shape the Move brief" headline — verified with a real functional test, not just a
+  snapshot.
+- **Discovered from**: owner review of the live Origination screen (2026-07-21) plus the
+  reference mockup showing P0 using the same pattern as P1-P5.
+
+---
+
 ## Architecture decisions (reference — see design doc for full detail)
 
 Recorded here for durability; full rationale lives in
