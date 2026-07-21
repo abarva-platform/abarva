@@ -1895,12 +1895,12 @@ function UseCasesView({
             {useCases.map((useCase, index) => (
               <tr key={`${useCase.name}-${index}`}>
                 <td>{asText(useCase.name)}</td>
-                <td>{asText(useCase.fn)}</td>
+                <td>{asText(useCase.fn) || asText(useCase.business_function)}</td>
                 <td>
                   <span className="nkh-pill">{asText(useCase.stage)}</span>
                 </td>
-                <td>{asText(useCase.value)}</td>
-                <td>{asText(useCase.gate)}</td>
+                <td>{asText(useCase.value) || asText(useCase.value_thesis)}</td>
+                <td>{asText(useCase.evidence_gate) || asText(useCase.gate)}</td>
               </tr>
             ))}
           </tbody>
@@ -2596,13 +2596,20 @@ function UseCasePriorityCards({
           className="nkh-usecase-priority"
         >
           <div className="nkh-usecase-rank">
-            {String(index + 1).padStart(2, "0")}
+            {String(asText(useCase.priority_rank) || index + 1).padStart(2, "0")}
           </div>
           <div>
-            <span>{asText(useCase.fn) || "Enterprise"}</span>
+            <span>
+              {asText(useCase.fn) ||
+                asText(useCase.business_function) ||
+                "Enterprise"}
+            </span>
             <h3>{asText(useCase.name)}</h3>
             <p>
-              {asText(useCase.gate) || "Evidence gate must clear before scale."}
+              {asText(useCase.change_strategy) ||
+                asText(useCase.evidence_gate) ||
+                asText(useCase.gate) ||
+                "Evidence gate must clear before scale."}
             </p>
           </div>
           <dl>
@@ -2612,7 +2619,11 @@ function UseCasePriorityCards({
             </div>
             <div>
               <dt>Value signal</dt>
-              <dd>{asText(useCase.value) || "not certified"}</dd>
+              <dd>
+                {asText(useCase.value) ||
+                  asText(useCase.value_thesis) ||
+                  "not certified"}
+              </dd>
             </div>
           </dl>
         </article>
@@ -2628,10 +2639,10 @@ function UseCasePriorityRechart({
 }) {
   const data = useCases.slice(0, 5).map((useCase, index) => ({
     name: asText(useCase.name) || `Use case ${index + 1}`,
-    score: Math.max(1, 5 - index),
-    function: asText(useCase.fn) || "Enterprise",
-    gate: asText(useCase.gate) || "Evidence gate required",
-    value: asText(useCase.value) || "not certified",
+    score: Number(asText(useCase.total_priority_score)) || Math.max(1, 5 - index),
+    function: asText(useCase.fn) || asText(useCase.business_function) || "Enterprise",
+    gate: asText(useCase.evidence_gate) || asText(useCase.gate) || "Evidence gate required",
+    value: asText(useCase.value_thesis) || asText(useCase.value) || "not certified",
   }));
   if (!data.length) return null;
   return (
@@ -2648,7 +2659,7 @@ function UseCasePriorityRechart({
           barCategoryGap={12}
         >
           <CartesianGrid horizontal={false} stroke={HOME_CHART_COLORS.line} />
-          <XAxis type="number" hide domain={[0, 5]} />
+          <XAxis type="number" hide domain={[0, 10]} />
           <YAxis
             type="category"
             dataKey="name"

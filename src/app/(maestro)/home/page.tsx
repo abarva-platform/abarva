@@ -23,7 +23,10 @@ import {
   buildHomeSummarySnapshot,
   buildHomeSummarySnapshotFromModuleContext,
 } from "@/lib/home/home-summary-snapshot";
-import { readHomeKnowledgeDesignContractForTenant } from "@/lib/home/home-knowledge-design-contract";
+import {
+  readHomeKnowledgeDesignContractForTenant,
+  readHomeKnowledgeDesignContractForTenantFromPostgres,
+} from "@/lib/home/home-knowledge-design-contract";
 import { readDerivedRelationshipGraphEdges } from "@/lib/home/read-derived-relationship-graph";
 import { getLocalCxoRuntimeBrowser } from "@/lib/home/local-cxo-runtime";
 import { getHomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
@@ -196,8 +199,17 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const clientOption = displayClientKey
     ? getClientOption(displayClientKey)
     : null;
-  const designContract =
+  const fileDesignContract =
     readHomeKnowledgeDesignContractForTenant(homeTenantKey);
+  const postgresDesignContract = await withHomePageTimeout(
+    "Home Knowledge Pack v2",
+    readHomeKnowledgeDesignContractForTenantFromPostgres(homeTenantKey),
+    null,
+    1_200,
+  );
+  const designContract = postgresDesignContract?.pack
+    ? postgresDesignContract
+    : fileDesignContract;
   if (designContract.pack) {
     return (
       <AppShell
