@@ -715,8 +715,21 @@ worked examples from the design conversation.
   onto this same shell model with phase-specific step/data bindings."
 - **Severity**: P8 (cosmetic/UX — no data-model or security impact)
 - **Workstream**: Files/workspace UX
-- **Status**: `Ready` — not yet started; coordinate before starting to avoid duplicate work
-  (a parallel Codex session built the P0 reference and may continue the P1-P5 port)
+- **Status**: `In Progress` — P1 done, P2-P5 remain
+- **Progress**:
+  - **P1 Charter**: `Runtime Proven` (2026-07-21). PR #5231 (port), #5234 (fix: opens on the
+    first guided input — "Sponsor commitment" — not the old summary card), #5236 (release
+    record with live proof). Gated behind `moves_finder_shell_v1` per this item's own handoff
+    instructions (`docs/codex-handoff/MOVES_UI_006_P1_P5_UNIVERSAL_SHELL_PORT_PROMPT_2026-07-21.md`)
+    — confirmed in code (`useFeature("moves_finder_shell_v1")` at the P1 render path). The
+    two-sequential-calls Approve & Build wiring (`onBuildSettled` → `approvePhaseGateAfterBuild`)
+    confirmed unchanged. ACA revision `m8dae82b9`, digest
+    `sha256:d4765788e572a5f9408a7d30c7ef8def58faf46dd915b26af99443a5a6ec2802`, independently
+    verified (runtime invariant + live signed-in check on `/phase/1`, real content matching the
+    reported screenshot, no console errors).
+  - **P2 Understand Current State, P3 Choose the Approach, P4 Build the Plan, P5 Prepare to
+    Execute**: not yet ported. Next slice is P2, same design bar, same flag-gating discipline,
+    no workflow regression — per owner's own framing.
 - **Scope**: port P1 Charter, P2 Understand Current State, P3 Choose the Approach, P4 Build
   the Plan, and P5 Prepare to Execute onto the exact shell model P0 now uses — real content
   styling (not just rail/step-menu chrome), with each phase's own step/data bindings. This
