@@ -11,6 +11,7 @@ import {
 } from "./ApprovalRoutingPanel";
 import { IntakeChatTrail, type IntakeChatTurn } from "./IntakeChatTrail";
 import { IntakeFactsReview, type IntakeFact } from "./IntakeFactsReview";
+import type { ApprovalLedgerRow } from "@/lib/source/approval-ledger-model";
 
 interface EventApprovalCardProps {
   eventId: string;
@@ -19,8 +20,11 @@ interface EventApprovalCardProps {
   lifecycleState: string;
   createdBy: ApprovalPerson;
   createdAt: string;
+  evidenceUpdatedAt: string | null;
   capturedFacts: readonly IntakeFact[];
   intakeChatTurns: readonly IntakeChatTurn[];
+  approvalLedger?: readonly ApprovalLedgerRow[];
+  artifactAcceptances?: readonly ApprovalArtifactAcceptance[];
   sponsor: ApprovalPerson;
   coApprover?: ApprovalPerson | null;
   pilotMode: boolean;
@@ -51,6 +55,18 @@ interface ActionResult {
   error?: string;
 }
 
+export interface ApprovalArtifactAcceptance {
+  id: string;
+  artifactId: string;
+  artifactName: string;
+  stageKey: string;
+  acceptedBy: string;
+  acceptedAt: string;
+  contentDriftStatus: string;
+  gatePreconditionStatus: string;
+  approvalRationale: string;
+}
+
 export function EventApprovalCard({
   eventId,
   eventName,
@@ -58,8 +74,11 @@ export function EventApprovalCard({
   lifecycleState,
   createdBy,
   createdAt,
+  evidenceUpdatedAt,
   capturedFacts,
   intakeChatTurns,
+  approvalLedger = [],
+  artifactAcceptances = [],
   sponsor,
   coApprover,
   pilotMode,
@@ -93,7 +112,17 @@ export function EventApprovalCard({
     currentUserId && createdBy.userId && currentUserId === createdBy.userId,
   );
   const ageLabel = useMemo(() => formatAge(createdAt), [createdAt]);
+  const evidenceFreshnessLabel = useMemo(
+    () => formatFreshness(evidenceUpdatedAt),
+    [evidenceUpdatedAt],
+  );
   const briefFacts = capturedFacts.slice(0, 5);
+  const recordedApprovalRows = approvalLedger.filter(
+    (row) => row.state === "approved" || row.approvedAtIso,
+  );
+  const artifactAcceptanceRows = artifactAcceptances.filter(
+    (acceptance) => acceptance.acceptedAt,
+  );
   const blockerLabel = !currentUserCanApprove
     ? "You do not have approval rights for this event."
     : !reasonReady
@@ -251,7 +280,8 @@ export function EventApprovalCard({
             style={DISCLOSURE_STYLE}
           >
             <summary style={DISCLOSURE_SUMMARY_STYLE}>
-              Evidence reviewed · {capturedFacts.length} facts
+              Evidence reviewed · {capturedFacts.length} facts ·{" "}
+              {evidenceFreshnessLabel}
             </summary>
             <div style={DISCLOSURE_BODY_STYLE}>
               <IntakeFactsReview facts={capturedFacts} />
@@ -263,10 +293,18 @@ export function EventApprovalCard({
             style={DISCLOSURE_STYLE}
           >
             <summary style={DISCLOSURE_SUMMARY_STYLE}>
-              Intake audit trail · {intakeChatTurns.length} turn
-              {intakeChatTurns.length === 1 ? "" : "s"}
+              Audit history · {intakeChatTurns.length} intake turn
+              {intakeChatTurns.length === 1 ? "" : "s"} ·{" "}
+              {recordedApprovalRows.length} approval
+              {recordedApprovalRows.length === 1 ? "" : "s"} ·{" "}
+              {artifactAcceptanceRows.length} acceptance
+              {artifactAcceptanceRows.length === 1 ? "" : "s"}
             </summary>
             <div style={DISCLOSURE_BODY_STYLE}>
+              <GovernanceHistory
+                approvalRows={recordedApprovalRows}
+                artifactAcceptances={artifactAcceptanceRows}
+              />
               <IntakeChatTrail turns={intakeChatTurns} />
             </div>
           </details>
@@ -501,6 +539,108 @@ function formatAge(createdAt: string): string {
   const hours = Math.floor(minutes / 60);
   if (hours < 48) return `${hours} hr`;
   return `${Math.floor(hours / 24)} d`;
+}
+
+function formatFreshness(updatedAt: string | null): string {
+  if (!updatedAt) return "freshness unavailable";
+  return `updated ${formatAge(updatedAt)} ago`;
+}
+
+function GovernanceHistory({
+  approvalRows,
+  artifactAcceptances,
+}: {
+  approvalRows: readonly ApprovalLedgerRow[];
+  artifactAcceptances: readonly ApprovalArtifactAcceptance[];
+}) {
+  const hasApprovals = approvalRows.length > 0;
+  const hasAcceptances = artifactAcceptances.length > 0;
+
+  return (
+    <section
+      data-testid="source-approval-governance-history"
+      style={GOVERNANCE_STYLE}
+    >
+      <div style={GOVERNANCE_SECTION_STYLE}>
+        <div style={GOVERNANCE_HEADER_STYLE}>
+          <span>Stage approvals</span>
+          <span>
+            {approvalRows.length} recorded approval
+            {approvalRows.length === 1 ? "" : "s"}
+          </span>
+        </div>
+        {hasApprovals ? (
+          <div style={GOVERNANCE_LIST_STYLE}>
+            {approvalRows.map((row) => (
+              <article
+                key={row.stageKey}
+                data-testid={`source-approval-governance-ledger-row-${row.stageKey}`}
+                style={GOVERNANCE_ROW_STYLE}
+              >
+                <div style={GOVERNANCE_ROW_MAIN_STYLE}>
+                  <strong>
+                    {String(row.index).padStart(2, "0")} · {row.stageLabel}
+                  </strong>
+                  <span>
+                    {row.approverName ?? "Approver not recorded"}
+                    {row.approvedAtIso
+                      ? ` · ${new Date(row.approvedAtIso).toLocaleDateString()}`
+                      : ""}
+                  </span>
+                </div>
+                <p style={GOVERNANCE_NOTE_STYLE}>{row.authorizationNote}</p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p style={GOVERNANCE_EMPTY_STYLE}>
+            No prior stage approvals are recorded for this event yet.
+          </p>
+        )}
+      </div>
+
+      <div style={GOVERNANCE_SECTION_STYLE}>
+        <div style={GOVERNANCE_HEADER_STYLE}>
+          <span>Artifact acceptances</span>
+          <span>
+            {artifactAcceptances.length} recorded acceptance
+            {artifactAcceptances.length === 1 ? "" : "s"}
+          </span>
+        </div>
+        {hasAcceptances ? (
+          <div style={GOVERNANCE_LIST_STYLE}>
+            {artifactAcceptances.map((acceptance) => (
+              <article
+                key={acceptance.id}
+                data-testid={`source-approval-artifact-acceptance-${acceptance.id}`}
+                style={GOVERNANCE_ROW_STYLE}
+              >
+                <div style={GOVERNANCE_ROW_MAIN_STYLE}>
+                  <strong>{acceptance.artifactName}</strong>
+                  <span>
+                    Accepted by {acceptance.acceptedBy} ·{" "}
+                    {new Date(acceptance.acceptedAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <p style={GOVERNANCE_NOTE_STYLE}>
+                  {acceptance.approvalRationale}
+                </p>
+                <div style={GOVERNANCE_META_STYLE}>
+                  Stage: {acceptance.stageKey.replaceAll("_", " ")} · Drift:{" "}
+                  {acceptance.contentDriftStatus.replaceAll("_", " ")} · Gate:{" "}
+                  {acceptance.gatePreconditionStatus.replaceAll("_", " ")}
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p style={GOVERNANCE_EMPTY_STYLE}>
+            No artifact acceptances are recorded for this event yet.
+          </p>
+        )}
+      </div>
+    </section>
+  );
 }
 
 const PAGE_STYLE: CSSProperties = {
@@ -807,6 +947,72 @@ const DISCLOSURE_BODY_STYLE: CSSProperties = {
   gap: 14,
   borderTop: `1px solid ${SHELL.CARD_LINE}`,
   padding: 14,
+};
+
+const GOVERNANCE_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 12,
+};
+
+const GOVERNANCE_SECTION_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 10,
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 8,
+  background: "#fbfaf7",
+  padding: "12px 14px",
+};
+
+const GOVERNANCE_HEADER_STYLE: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 12,
+  fontFamily: SHELL.MONO,
+  fontSize: 10,
+  fontWeight: 700,
+  color: SHELL.INK_MUTED,
+};
+
+const GOVERNANCE_LIST_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 10,
+};
+
+const GOVERNANCE_ROW_STYLE: CSSProperties = {
+  borderTop: `1px solid ${SHELL.CARD_LINE_SOFT}`,
+  paddingTop: 10,
+};
+
+const GOVERNANCE_ROW_MAIN_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 4,
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  lineHeight: 1.35,
+  color: SHELL.INK,
+};
+
+const GOVERNANCE_NOTE_STYLE: CSSProperties = {
+  margin: "6px 0 0",
+  fontFamily: SHELL.SANS,
+  fontSize: 12.5,
+  lineHeight: 1.4,
+  color: SHELL.INK_SOFT,
+};
+
+const GOVERNANCE_META_STYLE: CSSProperties = {
+  marginTop: 6,
+  fontFamily: SHELL.MONO,
+  fontSize: 10,
+  color: SHELL.INK_MUTED,
+};
+
+const GOVERNANCE_EMPTY_STYLE: CSSProperties = {
+  margin: 0,
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  lineHeight: 1.45,
+  color: SHELL.INK_SOFT,
 };
 
 const PANEL_DISCLOSURE_STYLE: CSSProperties = {

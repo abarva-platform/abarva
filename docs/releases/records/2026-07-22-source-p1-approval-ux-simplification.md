@@ -82,3 +82,21 @@ Revert the PR to restore the prior long approval-page layout. No migration, data
   - `npx eslint src/components/source/approval/EventApprovalCard.tsx src/components/source/approval/__tests__/EventApprovalCard.test.tsx` — passed.
   - `git diff --check` — passed.
   - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` — passed.
+
+## 2026-07-22 Governance History + Evidence Freshness Addendum
+
+- `src/app/(maestro)/source/events/[eventId]/approval/page.tsx`
+  - Loads the existing Source approval ledger and latest artifact acceptances through read-only repository functions for the current event.
+  - Passes the event row's real `updated_at` timestamp as the honest evidence freshness source; no per-fact timestamps are fabricated.
+- `src/components/source/approval/EventApprovalCard.tsx`
+  - Adds the event-level freshness signal to the collapsed evidence summary.
+  - Expands the audit disclosure from intake-chat-only to governance history: recorded stage approvals, recorded artifact acceptances, and the existing intake trail.
+  - Keeps governed data collapsed but reachable; approval action payloads, permissions, gate confirmations, and routing behavior are unchanged.
+- `src/components/source/approval/__tests__/EventApprovalCard.test.tsx`
+  - Covers governance history rendering, honest empty states, and the evidence freshness summary.
+- `docs/backlog/source-product-backlog.md`
+  - Moves `SOURCE-APPROVAL-UX-002` and `SOURCE-APPROVAL-UX-003` to candidate status and `004` into verification pending live proof.
+- Validation:
+  - `npx jest src/components/source/approval/__tests__/EventApprovalCard.test.tsx --runInBand` — passed, `8/8` tests. Jest printed existing duplicate manual mock warnings for mdast/micromark mocks.
+  - `npx eslint src/app/(maestro)/source/events/[eventId]/approval/page.tsx src/components/source/approval/EventApprovalCard.tsx src/components/source/approval/__tests__/EventApprovalCard.test.tsx` — passed.
+  - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` — passed after refreshing the isolated temp-worktree `node_modules`; no tracked package files changed.

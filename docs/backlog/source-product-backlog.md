@@ -205,7 +205,7 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   existing computed-only UI concept (`SourceShellFileItem.artifactRole`) rather than creating a
   second, colliding vocabulary. See the release record for the full field-by-field accounting.
 - **Acceptance criteria**: new `source_artifact_acceptances` table (append-only); `POST
-  .../artifacts/:artifactCode/accept` route, `artifactState`/`artifactRole` computed
+.../artifacts/:artifactCode/accept` route, `artifactState`/`artifactRole` computed
   server-side (never trusted from the client), requires a non-empty `approvalRationale`; an
   "Artifact status" panel on each File Cabinet card showing the latest real acceptance or an
   honest never-accepted state, with an Accept form; the existing "Stage gate" panel
@@ -409,7 +409,8 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   where a reviewer would most want to see them.
 - **Severity**: P5 (workspace UX / decision clarity)
 - **Workstream**: Approval/authority/lineage controls
-- **Status**: `Proposed` — not started.
+- **Status**: `Candidate` — implemented in branch
+  `codex/source-approval-ux-slices-002-004`; local tests passed; PR/deploy/live proof pending.
 - **Dependencies**: none — `loadApprovalLedger()` (`SOURCE-SHELL-003`) and
   `listArtifactAcceptances()`/`getLatestArtifactAcceptancesByArtifactIds()`
   (`SOURCE-SHELL-004`) already exist and are already tested; this wires existing repository
@@ -449,7 +450,8 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   the evidence behind this approval is current or stale.
 - **Severity**: P6 (workspace UX polish)
 - **Workstream**: Approval/authority/lineage controls
-- **Status**: `Proposed` — not started.
+- **Status**: `Candidate` — implemented in branch
+  `codex/source-approval-ux-slices-002-004`; local tests passed; PR/deploy/live proof pending.
 - **Dependencies**: none — check what timestamp field is actually available on captured
   intake facts (likely `capturedAt`/`updatedAt` on the underlying fact record; verify the real
   field name before assuming one) and surface it, no schema change if one already exists.
@@ -483,7 +485,8 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   they've actually closed the gap.
 - **Severity**: P5 (workspace UX / decision clarity, closing verification)
 - **Workstream**: Approval/authority/lineage controls
-- **Status**: `Proposed` — not started, depends on `002` and `003` landing first.
+- **Status**: `In verification` — `002` and `003` are implemented locally; final live
+  acceptance-criteria proof still pending PR/deploy.
 - **Dependencies**: `SOURCE-APPROVAL-UX-002`, `SOURCE-APPROVAL-UX-003`.
 - **Acceptance criteria**: all 5 criteria from the recommendations doc's "Suggested acceptance
   criteria" section checked against the real, deployed page via live signed-in browser proof —
@@ -508,11 +511,10 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
 
 ## Ready / in progress
 
-`SOURCE-APPROVAL-UX-002` and `SOURCE-APPROVAL-UX-003` are next, in parallel; `004` follows as
-the closing verification pass. See execution instructions embedded in each entry above —
-standing authority to merge, deploy, live-verify, and proceed to the next slice without
-pausing for confirmation between slices, same as every closed `SOURCE-SHELL`/
-`SOURCE-APPROVAL-UX` item above.
+`SOURCE-APPROVAL-UX-002` and `SOURCE-APPROVAL-UX-003` are implemented in branch
+`codex/source-approval-ux-slices-002-004`; `004` is in verification and closes only after
+PR/deploy/live signed-in proof confirms the 5 acceptance criteria. Standing authority remains
+in place to merge, deploy, live-verify, and update these entries honestly without pausing.
 
 ## Blocked
 
