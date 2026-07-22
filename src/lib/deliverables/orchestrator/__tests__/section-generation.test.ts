@@ -182,10 +182,15 @@ describe("assembleDeliverable", () => {
     ).toEqual(
       expect.arrayContaining([
         expect.arrayContaining([
-          "The program will generate $8.5M in year one.",
+          expect.stringContaining(
+            "The program will generate $8.5M in year one.",
+          ),
         ]),
       ]),
     );
+    expect(
+      doc.tables.find((t) => t.key === "open_inputs_required")?.rows.flat().join(" "),
+    ).toContain("[ASSUMPTION TO VALIDATE:");
   });
 
   it("consolidates scattered per-section [CLIENT TO COMPLETE] tags into one Open Inputs table (regression 2026-07-08)", () => {
@@ -238,8 +243,10 @@ describe("assembleDeliverable", () => {
       .map((r) => r.join(" "))
       .join(" | ");
     expect(rowText).toMatch(/capex range/);
-    expect(rowText).toMatch(/TBC/);
-    expect(rowText).toMatch(/to be confirmed/i);
+    expect(rowText).toMatch(/requires confirmation/i);
+    expect(rowText).not.toMatch(
+      /\[CLIENT TO COMPLETE[^\]]*\]|\bTBC\b|\bto be confirmed\b/gi,
+    );
   });
 });
 
