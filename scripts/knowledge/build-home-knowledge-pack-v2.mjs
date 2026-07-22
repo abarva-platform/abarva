@@ -22,6 +22,7 @@ const jsonColumnsByTable = new Map([
   ["home_knowledge_ai_readiness", new Set(["evidence_refs"])],
   ["home_knowledge_dimension_module_implications", new Set(["evidence_refs"])],
   ["home_knowledge_next_evidence_requests", new Set([])],
+  ["home_knowledge_strategic_narratives", new Set(["affected_entities", "dependencies", "evidence_refs"])],
 ]);
 
 const insertColumnsByTable = new Map([
@@ -78,6 +79,12 @@ const insertColumnsByTable = new Map([
   ["home_knowledge_next_evidence_requests", [
     "pack_id", "tenant_key", "title", "narrative", "requesting_dimension_key",
     "unlocks_narrative", "requesting_role_hint", "collection_route", "sort_order",
+  ]],
+  ["home_knowledge_strategic_narratives", [
+    "pack_id", "tenant_key", "narrative_type", "title", "classification",
+    "executive_narrative", "current_state", "target_state_or_relevance",
+    "affected_entities", "value_hypothesis", "dependencies", "evidence_gate",
+    "evidence_refs", "confidence", "recommended_next_action", "sort_order",
   ]],
 ]);
 
@@ -414,16 +421,143 @@ function claudeNarrativeTool() {
   };
 }
 
+// Strategic narratives are their own dedicated call. Folding them into the
+// main tool overloaded a single completion (7 output sections) and the last
+// section -- these -- got truncated first. A focused call gives the forward-
+// looking layer the full token budget and a sharper C-suite prompt.
+const CLAUDE_STRATEGIC_TOOL_NAME = "submit_home_knowledge_strategic_narratives";
+
+function claudeStrategicSystemPrompt() {
+  return [
+    "You are a senior C-suite strategy consultant (think top-tier firm) writing the forward-looking layer of an enterprise knowledge brief for a board pre-read.",
+    "Audience: CEO / CFO / CIO / CDAO / COO. This is the 'where the industry is going, how we could operate differently, and what change theses to weigh' section.",
+    "",
+    "Ground EVERYTHING in THIS tenant's supplied context -- its systems, data, vendors, functions, use cases, constraints, interview signals, and industry rows. Name specific tenant systems/functions/use cases. No generic strategy-deck filler.",
+    "",
+    "Data boundary (synthetic, PHI-free, planning-grade demo context):",
+    "- Never claim realized savings, achieved ROI, production readiness, or a completed platform. AWS/Databricks (where present) are target direction, not current.",
+    "- Never invent a fact, system, owner, or number not in the supplied context.",
+    "- Never write 'proven', 'value is real', 'fully loaded', or 'production-ready' as an assertion. Value is always a HYPOTHESIS until operational + finance validation.",
+    "- Product name is Nexus. No 'AbarVa', no raw record/evidence IDs in prose, no product jargon.",
+    "",
+    "Produce three kinds of strategic narrative (all in one strategic_narratives array, each tagged with narrative_type):",
+    "",
+    "1. industry_movement (3-5): where the industry is moving that is relevant to this tenant. classification = 'industry_pattern'. current_state = the general industry shift; target_state_or_relevance = why it matters to THIS tenant (name the tenant evidence that makes it relevant); affected_entities = tenant functions/systems/use cases it touches; value_hypothesis; evidence_gate; recommended_next_action. NEVER say the tenant has adopted it -- it is an external force.",
+    "",
+    "2. new_way_of_operating (3-5) -- fills the 'New Ways of Operating' surface. classification = 'strategic_inference'. A plausible FUTURE operating-model pattern grounded in tenant facts + an industry movement + a real constraint. current_state = how the work is done today (name the systems/functions); target_state_or_relevance = how it could be done (the shift); affected_entities = functions/roles/systems/data/controls it changes; value_hypothesis (a hypothesis, never realized value); dependencies; evidence_gate (the single evidence that makes it decision-grade); recommended_next_action (route to Moves/Intelligence). These are OPTIONS for leadership, explicitly not proven outcomes.",
+    "",
+    "3. change_thesis (3-5). classification = 'strategic_inference'. A supported change thesis: current enterprise condition -> target operating condition, with the industry force behind it. Fill current_state, target_state_or_relevance, affected_entities, value_hypothesis, dependencies, evidence_gate, recommended_next_action.",
+    "",
+    "Every entry: executive_narrative = 2-4 crisp sentences (issue -> implication -> decision); confidence = 0-1 honest about supporting evidence; evidence_refs from the context where they exist. Boardroom-grade, tenant-specific, calm, credible, no hype, no unsupported realized-value claims.",
+    "",
+    `Call the ${CLAUDE_STRATEGIC_TOOL_NAME} tool exactly once with your complete strategic_narratives array (aim for 9-15 entries total across the three types).`,
+  ].join("\n");
+}
+
+function claudeStrategicTool() {
+  return {
+    name: CLAUDE_STRATEGIC_TOOL_NAME,
+    description: "Submit the tenant's forward-looking strategic narratives: industry movements, new ways of operating, and change theses.",
+    input_schema: {
+      type: "object",
+      required: ["strategic_narratives"],
+      properties: {
+        strategic_narratives: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["narrative_type", "title", "classification", "executive_narrative"],
+            properties: {
+              narrative_type: { type: "string", enum: ["industry_movement", "new_way_of_operating", "change_thesis"] },
+              title: { type: "string" },
+              classification: {
+                type: "string",
+                enum: ["loaded_fact", "derived_measure", "industry_pattern", "strategic_inference", "missing_evidence"],
+              },
+              executive_narrative: { type: "string" },
+              current_state: { type: "string" },
+              target_state_or_relevance: { type: "string" },
+              affected_entities: { type: "array", items: { type: "string" } },
+              value_hypothesis: { type: "string" },
+              dependencies: { type: "array", items: { type: "string" } },
+              evidence_gate: { type: "string" },
+              evidence_refs: { type: "array", items: { type: "string" } },
+              confidence: { type: "number" },
+              recommended_next_action: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+  };
+}
+
+function anthropicClient(Anthropic) {
+  return new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+    timeout: Number(process.env.HOME_KNOWLEDGE_CLAUDE_TIMEOUT_MS || 180000),
+  });
+}
+
+// One forced-tool-use call with retry/backoff. Reused by every scoped call.
+async function invokeClaudeTool(client, { tool, system, promptPacket, maxTokens }) {
+  const maxAttempts = 3;
+  let lastError = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const message = await client.messages.create({
+        model,
+        max_tokens: maxTokens,
+        system,
+        messages: [{ role: "user", content: JSON.stringify(promptPacket) }],
+        tools: [tool],
+        tool_choice: { type: "tool", name: tool.name },
+      });
+      const toolUse = message.content.find((block) => block.type === "tool_use" && block.name === tool.name);
+      if (!toolUse) throw new Error(`Claude response did not include the expected tool_use block (${tool.name}).`);
+      return toolUse.input;
+    } catch (error) {
+      lastError = error;
+      const retryable = error?.status === 429 || (typeof error?.status === "number" && error.status >= 500);
+      if (!retryable || attempt === maxAttempts) break;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
+    }
+  }
+  throw new Error(`Claude call failed for ${tool.name} after ${maxAttempts} attempt(s): ${lastError?.message ?? lastError}`);
+}
+
+// Dedicated forward-looking call: industry movements, new ways of operating,
+// change theses. Kept separate from the main pack call so it gets the full
+// token budget and a focused C-suite prompt. Never blocks the pack -- a
+// failure here logs and returns [] so the rest of the pack still ships.
+async function callClaudeForStrategicNarratives(promptPacket) {
+  if (!useClaude || !process.env.ANTHROPIC_API_KEY) return [];
+  try {
+    const Anthropic = (await import("@anthropic-ai/sdk")).default;
+    const result = await invokeClaudeTool(anthropicClient(Anthropic), {
+      tool: claudeStrategicTool(),
+      system: claudeStrategicSystemPrompt(),
+      promptPacket,
+      maxTokens: Number(process.env.HOME_KNOWLEDGE_STRATEGIC_MAX_TOKENS || 12000),
+    });
+    const arr = asArray(result?.strategic_narratives);
+    if (process.env.HOME_KNOWLEDGE_DEBUG) {
+      console.error(`[strategic-narratives] returned ${arr.length} entries; keys=${result ? Object.keys(result).join(",") : "null"}`);
+    }
+    return arr;
+  } catch (error) {
+    console.error(`[strategic-narratives] generation failed (non-fatal): ${error?.message ?? error}`);
+    return [];
+  }
+}
+
 async function callClaudeForPack(promptPacket) {
   if (!useClaude) return null;
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error("ANTHROPIC_API_KEY is required for --use-claude; refusing to fabricate narrative content.");
   }
   const Anthropic = (await import("@anthropic-ai/sdk")).default;
-  const client = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-    timeout: Number(process.env.HOME_KNOWLEDGE_CLAUDE_TIMEOUT_MS || 180000),
-  });
+  const client = anthropicClient(Anthropic);
   const tool = claudeNarrativeTool();
   const maxAttempts = 3;
   let lastError = null;
@@ -463,6 +597,9 @@ function mergeClaudeNarrativesIntoPack(pack, claudeResult) {
     tier: claudeResult.tier ?? null,
     ai_readiness: asArray(claudeResult.ai_readiness),
     dimension_module_implications: asArray(claudeResult.dimension_module_implications),
+    // strategic_narratives come from their own dedicated call (see
+    // normalizePack); seed empty here so the shape is stable.
+    strategic_narratives: [],
   };
   // Match Claude's use cases back to source records by name, but fall back to
   // array position when the source names are non-unique. Several source packs
@@ -747,6 +884,11 @@ async function normalizePack(pack, sourceFile, sourceText) {
   ].join("\n\n");
   const claudeResult = await callClaudeForPack(promptPacket);
   const claudeMatch = mergeClaudeNarrativesIntoPack(pack, claudeResult);
+  // Dedicated forward-looking call (industry movements, new ways of operating,
+  // change theses). Only runs when the main pack call produced brief_model.
+  if (pack.brief_model) {
+    pack.brief_model.strategic_narratives = await callClaudeForStrategicNarratives(promptPacket);
+  }
   const useCases = enrichUseCases(pack);
   const graph = buildNodesAndEdges(pack);
   const renderPack = {
@@ -914,6 +1056,28 @@ async function normalizePack(pack, sourceFile, sourceText) {
       return true;
     });
   const nextEvidenceRequestRows = buildNextEvidenceRequests(pack);
+  const NARRATIVE_TYPES = new Set(["industry_movement", "new_way_of_operating", "change_thesis"]);
+  const CLASSIFICATIONS = new Set(["loaded_fact", "derived_measure", "industry_pattern", "strategic_inference", "missing_evidence"]);
+  const strategicNarrativeRows = asArray(brief.strategic_narratives)
+    .map((row, index) => ({
+      narrative_type: asText(row.narrative_type).trim(),
+      title: asText(row.title).trim(),
+      classification: CLASSIFICATIONS.has(asText(row.classification)) ? asText(row.classification) : "strategic_inference",
+      executive_narrative: asText(row.executive_narrative).trim(),
+      current_state: asText(row.current_state) || null,
+      target_state_or_relevance: asText(row.target_state_or_relevance) || null,
+      affected_entities: asArray(row.affected_entities).map(asText).filter(Boolean),
+      value_hypothesis: asText(row.value_hypothesis) || null,
+      dependencies: asArray(row.dependencies).map(asText).filter(Boolean),
+      evidence_gate: asText(row.evidence_gate) || null,
+      evidence_refs: evidenceRefs(row),
+      confidence: Number.isFinite(Number(row.confidence)) ? Number(row.confidence) : null,
+      recommended_next_action: asText(row.recommended_next_action) || null,
+      sort_order: index + 1,
+    }))
+    // A strategic narrative with no type/title/narrative is dropped rather
+    // than stored as an empty shell.
+    .filter((row) => NARRATIVE_TYPES.has(row.narrative_type) && row.title && row.executive_narrative);
   const quality = {
     source_file: path.relative(repoRoot, sourceFile),
     prompt_file: `reports/home-knowledge-pack-v2/${pack.tenant_key}/claude-strategy-prompt.json`,
@@ -927,6 +1091,7 @@ async function normalizePack(pack, sourceFile, sourceText) {
     ai_readiness: aiReadinessRows.length,
     dimension_module_implications: dimensionModuleImplicationRows.length,
     next_evidence_requests: nextEvidenceRequestRows.length,
+    strategic_narratives: strategicNarrativeRows.length,
     tier: packTierRows[0]?.tier ?? null,
     warnings: [],
   };
@@ -980,6 +1145,7 @@ async function normalizePack(pack, sourceFile, sourceText) {
     ai_readiness: aiReadinessRows,
     dimension_module_implications: dimensionModuleImplicationRows,
     next_evidence_requests: nextEvidenceRequestRows,
+    strategic_narratives: strategicNarrativeRows,
     claude_prompt: promptPacket,
   };
   normalized.pack.content_hash = sha256(JSON.stringify({
@@ -994,6 +1160,7 @@ async function normalizePack(pack, sourceFile, sourceText) {
     aiReadinessRows,
     dimensionModuleImplicationRows,
     nextEvidenceRequestRows,
+    strategicNarrativeRows,
   }));
   return normalized;
 }
@@ -1073,6 +1240,7 @@ async function writeNormalizedToDb(client, normalized) {
       "home_knowledge_ai_readiness",
       "home_knowledge_dimension_module_implications",
       "home_knowledge_next_evidence_requests",
+      "home_knowledge_strategic_narratives",
     ]) {
       await client.query(`DELETE FROM public.${table} WHERE pack_id = $1`, [packId]);
     }
@@ -1098,6 +1266,7 @@ async function writeNormalizedToDb(client, normalized) {
     await insertMany("home_knowledge_ai_readiness", normalized.ai_readiness);
     await insertMany("home_knowledge_dimension_module_implications", normalized.dimension_module_implications);
     await insertMany("home_knowledge_next_evidence_requests", normalized.next_evidence_requests);
+    await insertMany("home_knowledge_strategic_narratives", normalized.strategic_narratives);
     await client.query("COMMIT");
     return packId;
   } catch (error) {
