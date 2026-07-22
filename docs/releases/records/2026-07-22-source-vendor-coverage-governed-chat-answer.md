@@ -176,7 +176,7 @@ no data migration either direction; `source_event_facts` and its schema are unto
 
 ## Audit Evidence
 
-- PR: to be recorded on open.
+- PR: [abarva-platform/abarva#5341](https://github.com/abarva-platform/abarva/pull/5341).
 - Deploy run: to be recorded after merge.
 - ACA runtime invariant: to be recorded after merge and deploy.
 - Live signed-in proof: to be captured — ask a real vendor-coverage question on a real event
