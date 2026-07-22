@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
@@ -353,6 +354,7 @@ export function MovesPhaseStandaloneClient({
   currentStateReadiness = null,
   initialSubstepKey,
 }: MovesPhaseStandaloneClientProps) {
+  const router = useRouter();
   const phase = phaseFor(phaseNum);
   const currentPhase = move.currentPhase ?? 0;
   const terminalComplete = Boolean(move.terminalComplete);
@@ -549,6 +551,9 @@ export function MovesPhaseStandaloneClient({
   const setPhaseCaptureValue = useCallback((key: string, value: string) => {
     setPhaseCaptureValues((prev) => ({ ...prev, [key]: value }));
   }, []);
+  const refreshPhase = useCallback(() => {
+    router.refresh();
+  }, [router]);
 
   // aVa chat send. Ported from the retired StrategicMovePhaseClient's `send`
   // — same endpoint, same surfaceContext shape. Critically keeps
@@ -1215,6 +1220,7 @@ export function MovesPhaseStandaloneClient({
                                     onPhaseCaptureValueChange={
                                       setPhaseCaptureValue
                                     }
+                                    onRefreshPhase={refreshPhase}
                                     onSelectOption={setSelectedOption}
                                     nextOpenPhaseContract={
                                       nextOpenPhaseContract
@@ -1277,6 +1283,7 @@ export function MovesPhaseStandaloneClient({
                                     onPhaseCaptureValueChange={
                                       setPhaseCaptureValue
                                     }
+                                    onRefreshPhase={refreshPhase}
                                     onSelectOption={setSelectedOption}
                                     nextOpenPhaseContract={
                                       nextOpenPhaseContract
@@ -2035,6 +2042,7 @@ function PhaseBody({
   onFinalizePhaseCapture,
   onOpenFiles,
   onPhaseCaptureValueChange,
+  onRefreshPhase,
   onSelectOption,
   nextOpenPhaseContract,
   p3OptionSet,
@@ -2066,6 +2074,7 @@ function PhaseBody({
   onFinalizePhaseCapture: () => Promise<void>;
   onOpenFiles: () => void;
   onPhaseCaptureValueChange: (key: string, value: string) => void;
+  onRefreshPhase: () => void;
   onSelectOption: (value: string) => void;
   nextOpenPhaseContract: PhaseContract;
   p3OptionSet: P3OptionSet;
@@ -2129,6 +2138,18 @@ function PhaseBody({
   }
 
   if (substep === "current") {
+    if (phase.phase === 2 && currentStateReadiness) {
+      return (
+        <CurrentStateFamilyUploadPanel
+          moveId={move.id}
+          onOpenFiles={onOpenFiles}
+          onRefreshPhase={onRefreshPhase}
+          phase={phase.phase}
+          readiness={currentStateReadiness}
+        />
+      );
+    }
+
     return (
       <>
         <DecisionEvidenceActionPanel
@@ -3510,6 +3531,288 @@ function DecisionEvidenceActionPanel({
   );
 }
 
+type CurrentStateInstrument = ReadinessReport["instruments"][number];
+
+type FamilyUploadResult = {
+  familyKey: string;
+  familyLabel: string;
+  fileName: string;
+  status: "uploaded" | "error";
+  detail: string;
+};
+
+function normalizeUploadName(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, " ");
+}
+
+function inferCurrentStateFamilies(
+  fileName: string,
+  instruments: CurrentStateInstrument[],
+): CurrentStateInstrument[] {
+  const normalized = normalizeUploadName(fileName);
+  const candidateKeys = new Set<string>();
+
+  if (
+    /\b(workshop|process|handoff|workflow|current state|sop|walkthrough)\b/.test(
+      normalized,
+    )
+  ) {
+    candidateKeys.add("commercial_lending_process_map");
+  }
+  if (
+    /\b(metric|metrics|baseline|kpi|cycle|volume|queue|aging|onboarding)\b/.test(
+      normalized,
+    )
+  ) {
+    candidateKeys.add("commercial_lending_metrics_baseline");
+  }
+  if (/\b(kyc|defect|exception|audit|document)\b/.test(normalized)) {
+    candidateKeys.add("kyc_document_defect_log");
+  }
+  if (
+    /\b(system|systems|application|apps|data|inventory|integration|architecture|core|crm|los)\b/.test(
+      normalized,
+    )
+  ) {
+    candidateKeys.add("lending_systems_data_landscape");
+  }
+  if (
+    /\b(policy|knowledge|checklist|covenant|content|procedure|guidance)\b/.test(
+      normalized,
+    )
+  ) {
+    candidateKeys.add("credit_policy_knowledge_inventory");
+  }
+  if (
+    /\b(control|controls|approval|authority|risk|compliance|guardrail|privacy)\b/.test(
+      normalized,
+    )
+  ) {
+    candidateKeys.add("banking_controls_human_approval");
+  }
+  if (
+    /\b(org|organization|stakeholder|change|training|adoption|readiness|role|owner)\b/.test(
+      normalized,
+    )
+  ) {
+    candidateKeys.add("lending_org_change_readiness");
+  }
+  if (
+    /\b(delivery|estimate|estimation|implementation|capacity|release|sdlc|itsm|roadmap)\b/.test(
+      normalized,
+    )
+  ) {
+    candidateKeys.add("solution_delivery_estimation_context");
+  }
+
+  const directMatches = instruments.filter((instrument) =>
+    candidateKeys.has(instrument.key),
+  );
+  if (directMatches.length > 0) return directMatches;
+
+  const firstMissingHard = instruments.find(
+    (instrument) =>
+      instrument.documentFamily &&
+      instrument.severity === "hard" &&
+      instrument.status !== "committed",
+  );
+  if (firstMissingHard) return [firstMissingHard];
+
+  const firstMissing = instruments.find(
+    (instrument) =>
+      instrument.documentFamily && instrument.status !== "committed",
+  );
+  return firstMissing ? [firstMissing] : [];
+}
+
+function CurrentStateFamilyUploadPanel({
+  moveId,
+  onOpenFiles,
+  onRefreshPhase,
+  phase,
+  readiness,
+}: {
+  moveId: string;
+  onOpenFiles: () => void;
+  onRefreshPhase: () => void;
+  phase: number;
+  readiness: ReadinessReport;
+}) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [results, setResults] = useState<FamilyUploadResult[]>([]);
+  const documentFamilies = readiness.instruments.filter(
+    (instrument) => instrument.documentFamily,
+  );
+  const openFamilies = documentFamilies.filter(
+    (instrument) => instrument.status !== "committed",
+  );
+  const reviewRequiredCount = documentFamilies.filter(
+    (instrument) => instrument.status === "review_required",
+  ).length;
+
+  async function uploadFileForFamily(
+    file: File,
+    instrument: CurrentStateInstrument,
+  ): Promise<FamilyUploadResult> {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("phase", String(phase));
+    form.append("family", instrument.key);
+    form.append("archetypeId", readiness.archetypeId);
+    const res = await fetch(
+      `/api/v1/programs/${moveId}/current-state/ingest-doc`,
+      {
+        method: "POST",
+        credentials: "include",
+        body: form,
+      },
+    );
+    const payload = (await res.json().catch(() => ({}))) as {
+      reviewState?: string;
+      detail?: string;
+      error?: string;
+    };
+    if (!res.ok) {
+      return {
+        familyKey: instrument.key,
+        familyLabel: instrument.label,
+        fileName: file.name,
+        status: "error",
+        detail:
+          payload.detail || payload.error || `Upload failed (HTTP ${res.status})`,
+      };
+    }
+    return {
+      familyKey: instrument.key,
+      familyLabel: instrument.label,
+      fileName: file.name,
+      status: "uploaded",
+      detail:
+        payload.reviewState === "committed"
+          ? "Committed to readiness"
+          : "Uploaded for review",
+    };
+  }
+
+  async function uploadBulk(files: FileList | null | undefined) {
+    const selectedFiles = Array.from(files ?? []);
+    if (selectedFiles.length === 0 || busy) return;
+    setBusy(true);
+    setResults([]);
+    setMessage(
+      `Mapping ${selectedFiles.length} file${
+        selectedFiles.length === 1 ? "" : "s"
+      } to current-state evidence families...`,
+    );
+    const nextResults: FamilyUploadResult[] = [];
+    try {
+      for (const file of selectedFiles) {
+        const mappedFamilies = inferCurrentStateFamilies(file.name, openFamilies);
+        if (mappedFamilies.length === 0) {
+          nextResults.push({
+            familyKey: "unmapped",
+            familyLabel: "No open current-state family",
+            fileName: file.name,
+            status: "error",
+            detail: "No open document evidence family was available for this file.",
+          });
+          continue;
+        }
+        setMessage(
+          `Uploading ${file.name} to ${mappedFamilies
+            .map((family) => family.label)
+            .join(", ")}...`,
+        );
+        for (const family of mappedFamilies) {
+          nextResults.push(await uploadFileForFamily(file, family));
+        }
+      }
+      setResults(nextResults);
+      const succeeded = nextResults.filter(
+        (row) => row.status === "uploaded",
+      ).length;
+      const failed = nextResults.length - succeeded;
+      setMessage(
+        `${succeeded} mapped upload${succeeded === 1 ? "" : "s"} created${failed ? `; ${failed} failed` : ""}. Review-required items must still be accepted before they become gate-ready.`,
+      );
+      onRefreshPhase();
+    } finally {
+      setBusy(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  return (
+    <section className="mxw-family-upload" aria-label="Current-state evidence upload">
+      <header>
+        <div>
+          <span>Family-aware upload</span>
+          <h2>Upload evidence into the P2 readiness map</h2>
+          <p>
+            Files uploaded here are mapped to the evidence families the gate
+            evaluates. They land as review-required evidence first; approved
+            evidence is what can satisfy readiness and feed generation.
+          </p>
+        </div>
+        <button className="mxw-btn" onClick={onOpenFiles} type="button">
+          Open Files &amp; Evidence
+        </button>
+      </header>
+      <div className="mxw-family-upload-strip">
+        <input
+          aria-label="Upload P2 current-state evidence files"
+          className="mxw-hidden-file"
+          multiple
+          onChange={(event) => void uploadBulk(event.currentTarget.files)}
+          ref={inputRef}
+          type="file"
+        />
+        <button
+          className="mxw-btn mxw-primary"
+          disabled={busy || openFamilies.length === 0}
+          onClick={() => inputRef.current?.click()}
+          type="button"
+        >
+          {busy ? "Uploading..." : "Upload P2 evidence files"}
+        </button>
+        <span>
+          {readiness.coverageScore}% collected · {reviewRequiredCount} awaiting
+          review · {readiness.hardGaps.length} hard gap
+          {readiness.hardGaps.length === 1 ? "" : "s"}
+        </span>
+      </div>
+      {message ? <p className="mxw-family-upload-message">{message}</p> : null}
+      {results.length > 0 ? (
+        <div className="mxw-family-results" aria-label="Mapped upload results">
+          {results.map((row, index) => (
+            <div className={row.status} key={`${row.fileName}-${row.familyKey}-${index}`}>
+              <strong>{row.fileName}</strong>
+              <span>{row.familyLabel}</span>
+              <em>{row.detail}</em>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      <div className="mxw-family-table">
+        <div className="head">
+          <span>Evidence family</span>
+          <span>Why it matters</span>
+          <span>Status</span>
+        </div>
+        {documentFamilies.map((instrument) => (
+          <div key={instrument.key}>
+            <strong>{instrument.label}</strong>
+            <p>{instrument.whyNeeded}</p>
+            <em className={instrument.status}>{instrument.status.replace(/_/g, " ")}</em>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function EvidenceUploadControl({
   buttonLabel,
   moveId,
@@ -4133,6 +4436,32 @@ function MovesStandaloneStyles() {
 .mxw-action-panel span{display:block;font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:var(--green);font-weight:900;margin-bottom:4px}
 .mxw-action-panel h2{font-family:Georgia,serif;font-size:20px;font-weight:700;letter-spacing:-.35px;line-height:1.15;margin:0;color:var(--ink)}
 .mxw-action-panel p{font-size:13px;color:var(--ink-2);line-height:1.45;margin:5px 0 0;max-width:72ch}
+.mxw-family-upload{border:1px solid rgba(29,143,104,.28);border-radius:14px;background:linear-gradient(180deg,var(--green-tint),var(--card) 68%);box-shadow:var(--shadow);padding:18px;display:grid;gap:14px}
+.mxw-family-upload>header{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;border-bottom:1px solid rgba(29,143,104,.18);padding-bottom:13px}
+.mxw-family-upload>header span{display:block;font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--green);font-weight:900;margin-bottom:4px}
+.mxw-family-upload>header h2{font-family:Georgia,serif;font-size:21px;font-weight:700;letter-spacing:-.35px;line-height:1.15;margin:0;color:var(--ink)}
+.mxw-family-upload>header p{font-size:13px;color:var(--ink-2);line-height:1.45;margin:5px 0 0;max-width:74ch}
+.mxw-family-upload-strip{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.mxw-family-upload-strip>span{font-size:12.5px;color:var(--muted);font-weight:750}
+.mxw-family-upload-message{border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink-2);font-size:12.5px;line-height:1.45;margin:0;padding:10px 12px}
+.mxw-family-results{display:grid;gap:6px}
+.mxw-family-results div{display:grid;grid-template-columns:minmax(180px,.8fr) minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:10px;background:#fff;padding:9px 11px}
+.mxw-family-results div.uploaded{border-color:rgba(29,143,104,.25);background:var(--green-tint)}
+.mxw-family-results div.error{border-color:rgba(180,35,24,.25);background:#fff7f6}
+.mxw-family-results strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;color:var(--ink)}
+.mxw-family-results span{font-size:12px;color:var(--ink-2)}
+.mxw-family-results em{font-style:normal;font-size:11px;font-weight:850;color:var(--muted);white-space:nowrap}
+.mxw-family-results div.uploaded em{color:var(--green)}
+.mxw-family-results div.error em{color:#b42318}
+.mxw-family-table{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
+.mxw-family-table>div{display:grid;grid-template-columns:minmax(190px,.8fr) minmax(0,1.4fr) 116px;gap:12px;align-items:center;border-bottom:1px solid var(--line);padding:11px 12px}
+.mxw-family-table>div:last-child{border-bottom:0}
+.mxw-family-table>.head{background:var(--soft);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:900}
+.mxw-family-table strong{font-size:12.5px;color:var(--ink);line-height:1.3}
+.mxw-family-table p{font-size:12px;color:var(--muted);line-height:1.35;margin:0}
+.mxw-family-table em{justify-self:start;border:1px solid var(--line-2);border-radius:999px;background:var(--soft);color:var(--muted);font-style:normal;font-size:10px;font-weight:900;padding:5px 8px;text-transform:capitalize}
+.mxw-family-table em.committed{border-color:rgba(29,143,104,.35);background:var(--green-tint);color:var(--green)}
+.mxw-family-table em.review_required{border-color:rgba(176,115,15,.35);background:var(--amber-tint);color:var(--amber)}
 .mxw-upload{margin-top:20px;border:1px dashed var(--line-2);border-radius:13px;background:var(--soft);padding:18px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .mxw-upload strong{display:block;font-size:14px}
 .mxw-upload span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
