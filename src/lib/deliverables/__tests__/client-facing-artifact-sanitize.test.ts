@@ -18,4 +18,20 @@ describe("sanitizeClientFacingArtifactHtml", () => {
     expect(html).not.toMatch(/\bP2 inputs\b/i);
     expect(html).not.toMatch(/\bsubstrate\b/i);
   });
+
+  it("rewrites client-completion placeholders into normal evidence-gap language", () => {
+    const html = sanitizeClientFacingArtifactHtml(`
+      <p>[CLIENT TO COMPLETE: validation owner]</p>
+      <p>Cycle time baseline is TBC and the escalation owner is to be confirmed.</p>
+      <p>CLIENT TO COMPLETE: business signoff.</p>
+    `);
+
+    expect(html).toContain("Client input required: validation owner");
+    expect(html).toContain("Cycle time baseline requires confirmation");
+    expect(html).toContain("escalation owner requires confirmation");
+    expect(html).toContain("Client input required: business signoff");
+    expect(html).not.toMatch(/CLIENT TO COMPLETE/i);
+    expect(html).not.toMatch(/\bTBC\b/i);
+    expect(html).not.toMatch(/\[CLIENT TO COMPLETE:/i);
+  });
 });
