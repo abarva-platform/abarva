@@ -141,6 +141,13 @@ export interface AtlasPageState {
    */
   currentResponse: string;
   currentResponseParts: AgentResponsePart[];
+  /**
+   * The in-flight turn's governed AvaAnswerPacket, if the surface's ask()
+   * opted into NDJSON and the route returned an `agent-answer` line. Reset
+   * to `undefined` on the next ask()/clearResponse(), mirroring
+   * currentResponse/currentResponseParts.
+   */
+  currentAgentAnswer?: AvaAnswerPacket;
   isStreaming: boolean;
   error: string | null;
   suggestedActions: SuggestedAction[];

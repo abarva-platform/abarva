@@ -24,6 +24,7 @@ import { PendingAttachmentChip } from '@/components/programs/attachments/Attachm
 import { toAttachmentChipRef } from '@/lib/programs/attachments/types';
 import type { InlineFile } from '@/lib/shell/atlas-page-state';
 import { AgentResponseParts } from '@/components/agent/AgentResponseParts';
+import { AgentAnswerRenderer } from '@/components/agent-answer/AgentAnswerRenderer';
 
 // Mime types we can extract text from client-side with FileReader.readAsText().
 const TEXT_EXTRACTABLE: ReadonlySet<string> = new Set([
@@ -114,11 +115,12 @@ export function AskAnythingBar({
   const ask         = pageState?.ask           ?? localStream.ask;
   const response    = pageState?.currentResponse ?? localStream.response;
   const responseParts = pageState?.currentResponseParts ?? [];
+  const agentAnswer = pageState?.currentAgentAnswer;
   const isStreaming  = pageState?.isStreaming     ?? localStream.isStreaming;
   const error       = pageState?.error            ?? localStream.error;
   const clearLocal  = pageState?.clearResponse    ?? localStream.clear;
 
-  const hasResponse = !!(response || error || responseParts.length > 0);
+  const hasResponse = !!(response || error || responseParts.length > 0 || agentAnswer);
 
   // ── Auto-grow textarea ──────────────────────────────────────────────────
 
@@ -312,6 +314,11 @@ export function AskAnythingBar({
                       <span className="aab-cursor">▋</span>
                     )}
                   </div>
+                  {agentAnswer ? (
+                    <div style={{ marginTop: 10, maxHeight: 420, overflowY: 'auto' }}>
+                      <AgentAnswerRenderer answer={agentAnswer} showProse={false} />
+                    </div>
+                  ) : null}
                 </div>
                 {/* Dismiss */}
                 <button

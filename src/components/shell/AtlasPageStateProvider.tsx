@@ -146,6 +146,9 @@ export function AtlasPageStateProvider({
   const [currentResponseParts, setCurrentResponseParts] = useState<
     AgentResponsePart[]
   >([]);
+  const [currentAgentAnswer, setCurrentAgentAnswer] = useState<
+    AvaAnswerPacket | undefined
+  >(undefined);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -255,6 +258,7 @@ export function AtlasPageStateProvider({
       setConversation((prev) => [...prev, userTurn]);
       setCurrentResponse("");
       setCurrentResponseParts([]);
+      setCurrentAgentAnswer(undefined);
       setError(null);
       setIsStreaming(true);
       // CB-6 · the broker assembles the bundle BEFORE streaming starts,
@@ -390,6 +394,7 @@ export function AtlasPageStateProvider({
 
           setCurrentResponse(shapedText);
           setCurrentResponseParts(responseParts);
+          setCurrentAgentAnswer(agentAnswer);
           const agentTurn: ChatTurn = {
             id: `agt-${Date.now()}`,
             role: "agent",
@@ -546,6 +551,7 @@ export function AtlasPageStateProvider({
         setConversation((prev) => [...prev, agentTurn]);
         setCurrentResponse("");
         setCurrentResponseParts([]);
+        setCurrentAgentAnswer(undefined);
       } catch (e) {
         if ((e as Error).name === "AbortError" && !timedOut) return; // intentional cancel
         if (timedOut) {
@@ -591,6 +597,7 @@ export function AtlasPageStateProvider({
   const clearResponse = useCallback(() => {
     setCurrentResponse("");
     setCurrentResponseParts([]);
+    setCurrentAgentAnswer(undefined);
     setError(null);
   }, []);
 
@@ -604,6 +611,7 @@ export function AtlasPageStateProvider({
     conversation,
     currentResponse,
     currentResponseParts,
+    currentAgentAnswer,
     isStreaming,
     error,
     suggestedActions: [],
