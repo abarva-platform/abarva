@@ -12,6 +12,8 @@
 
 The First Capital sandbox end-to-end run proved that P2 could gather and approve evidence, but generated P2 deliverables were quarantined by the document-quality gate because client-facing text still contained internal/mechanical wording such as phase shorthand, enterprise substrate, and Source Register references in the body. This release sanitizes the final client-facing deliverable HTML before the quality gate runs, ensures the gate evaluates the same sanitized visible text reviewers see, and tightens the generation instructions so client documents use plain phase names and reserve evidence-register language for appendices.
 
+Follow-up signed-in proof then exposed the next quality-contract issue: once the gate correctly scanned reviewer-visible text, the consolidated Open Inputs Required table could still contain raw placeholders or uncited numeric statements harvested from section drafts. This release also normalizes those table cells so open inputs remain visible to the client without re-triggering the missing-input or unsupported-claim gates.
+
 ## Layer Impact
 
 - `global-control-lane`: Updates shared Moves deliverable generation/persistence quality behavior for client-facing artifacts.
@@ -36,11 +38,15 @@ The First Capital sandbox end-to-end run proved that P2 could gather and approve
 - `src/lib/deliverables/orchestrator/prompt-builder.ts`
   - Tells the generator to use human phase names instead of P0-P5 shorthand.
   - Reserves `Source Register` for appendix/evidence-register headings rather than narrative body prose.
+- `src/lib/deliverables/orchestrator/section-generation.ts`
+  - Normalizes Open Inputs Required table rows so harvested `[CLIENT TO COMPLETE]`, `TBC`, and `to be confirmed` placeholders become plain client-readable input requests.
+  - Marks uncited numeric/date/value claims in Open Inputs Required with an explicit assumption-to-validate label, preventing the table itself from being misread as an unsupported asserted fact.
 - `src/lib/deliverables/quality/transformation-gates.ts`
   - Allows explicit appendix/evidence-register headings while continuing to block Source Register references in the narrative body.
 - Tests:
   - Adds sanitizer coverage for phase shorthand and mechanical wording.
   - Adds quality-gate coverage for appendix Source Register versus body Source Register.
+  - Adds section-generation coverage proving Open Inputs Required table text no longer contains scattered placeholders and uncited numeric table claims are labeled as assumptions.
 
 ## QA / Validation
 
@@ -61,6 +67,15 @@ The First Capital sandbox end-to-end run proved that P2 could gather and approve
 - Pending: GitHub PR checks for the visible-text gate follow-up.
 - Pending: ACA runtime invariant after follow-up merge/deploy.
 - Pending: signed-in First Capital sandbox P2 generation proof after follow-up deploy.
+- Follow-up live proof after PR #5303 deploy:
+  - Pass: First Capital sandbox P2 Approve & Build queued both P2 deliverables from the signed-in browser.
+  - Pass: Original `non_mechanical_writing` blocker did not recur.
+  - Fail: Discovery report blocked with `blocked_missing_inputs: missing_input_handling`.
+  - Fail: Root cause worksheet blocked with `1 unsupported client-fact claim(s)`.
+  - Root cause: consolidated Open Inputs Required table cells still preserved raw placeholders or uncited numeric/date/value sentences in the final reviewer-visible text.
+- Pass: `npx jest src/lib/deliverables/orchestrator/__tests__/section-generation.test.ts src/lib/deliverables/quality/__tests__/transformation-gates.test.ts src/lib/deliverables/__tests__/client-facing-artifact-sanitize.test.ts --runInBand`
+  - Result: 26 passed / 26 total.
+  - Notes: Existing duplicate Jest manual-mock warnings still appear.
 
 ## Rollout Plan
 

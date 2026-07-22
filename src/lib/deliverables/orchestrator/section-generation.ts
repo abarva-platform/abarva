@@ -106,6 +106,24 @@ export interface ConsolidatedOpenInput {
   detail: string;
 }
 
+function normalizeOpenInputDetail(detail: string): string {
+  const normalized = detail
+    .replace(/\[CLIENT TO COMPLETE:?\s*([^\]]*)\]/gi, (_match, inner: string) =>
+      inner?.trim() ? `Client input required: ${inner.trim()}` : "Client input required",
+    )
+    .replace(/\bTBC\b/g, "requires confirmation")
+    .replace(/\bto be confirmed\b/gi, "requires confirmation")
+    .replace(/\s+/g, " ")
+    .trim();
+  return normalized || "Client input required";
+}
+
+function normalizeUnsupportedClaimForOpenInputs(claim: string): string {
+  const normalized = normalizeOpenInputDetail(claim);
+  if (!FACT_LIKE.test(normalized) || SUPPORTED.test(normalized)) return normalized;
+  return `${normalized} [ASSUMPTION TO VALIDATE: numeric/date/value claim requires client confirmation or cited source before it is treated as committed.]`;
+}
+
 /**
  * Sections are generated independently (one bounded-parallel model call each), so a
  * section may legitimately mark its OWN missing input inline per the prompt's own
@@ -209,12 +227,17 @@ function openInputsTable(
 ): RenderableTable | null {
   const rows: string[][] = [];
   for (const m of req.missingEvidence ?? []) {
-    rows.push([m.label, m.whyItMatters, m.completionPath, "Open input"]);
+    rows.push([
+      m.label,
+      normalizeOpenInputDetail(m.whyItMatters),
+      normalizeOpenInputDetail(m.completionPath),
+      "Open input",
+    ]);
   }
   for (const c of unsupportedClaims) {
     rows.push([
       c.sectionTitle,
-      c.claim,
+      normalizeUnsupportedClaimForOpenInputs(c.claim),
       c.treatment === "assumption_to_validate"
         ? "Confirm the assumption or replace it with a cited source."
         : "Provide supporting source evidence before asserting this as fact.",
