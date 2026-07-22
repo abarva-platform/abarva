@@ -662,8 +662,18 @@ export function assembleMartFromFacts(
     );
   }
 
+  // The command-center AI-tagged spend LENS is the governed annual budget
+  // figure (08.ai_tagged_budget_usd), read directly — never the sum of per-tool
+  // telemetry, which is monthly actual and would double-count an annual lens.
+  // Telemetry rolls up at the program level (agg.aiTaggedSpend) as usage
+  // evidence; only if no governed lens fact exists do we fall back to it.
+  const governedAiTaggedLens = sumBudget(facts, BUDGET_METRIC_KEYS.aiTagged);
+  const telemetryAiSpend = aggregates.reduce(
+    (sum, a) => sum + a.aiTaggedSpend,
+    0,
+  );
   const aiTaggedSpendTotal = round(
-    aggregates.reduce((sum, a) => sum + a.aiTaggedSpend, 0),
+    governedAiTaggedLens > 0 ? governedAiTaggedLens : telemetryAiSpend,
   );
 
   // --- Command center ------------------------------------------------------

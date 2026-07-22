@@ -11,6 +11,11 @@ export const BUDGET_METRIC_KEYS = {
   total: "it_budget_total_usd",
   run: "it_budget_run_usd",
   change: "it_budget_change_usd",
+  // The governed AI-tagged spend LENS: an annual, non-additive view inside the
+  // budget (08.ai_tagged_budget_usd). Distinct from real telemetry monthly
+  // actuals — it is the budget lens the command center headlines, not a sum of
+  // per-tool monthly run cost.
+  aiTagged: "it_ai_tagged_budget_usd",
 } as const;
 
 /** Per-program value/funding metrics (V3 side, canonical_program_key set). */
