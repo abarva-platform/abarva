@@ -1008,6 +1008,17 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(
       screen.getAllByText("M365 Copilot Productivity").length,
     ).toBeGreaterThan(0);
+    // The board is the default chapter; each lane opens as its own chapter so
+    // programs beyond the board preview stay reachable rather than stranded.
+    expect(screen.getByTestId("tower-lanes-chapter-intro")).toHaveTextContent(
+      "Missing fields become blockers",
+    );
+    fireEvent.click(screen.getByRole("tab", { name: /^Fund/ }));
+    expect(screen.getByTestId("tower-lane-chapter-fund")).toBeInTheDocument();
+    expect(screen.getByTestId("tower-lanes-chapter-intro")).toHaveTextContent(
+      "protect or scale",
+    );
+    fireEvent.click(screen.getByRole("tab", { name: /All lanes/ }));
     fireEvent.click(screen.getByRole("button", { name: /AI Portfolio/ }));
     expect(screen.getByTestId("tower-ai-portfolio-story")).toHaveTextContent(
       "This is not an AI shopping list",
@@ -1063,6 +1074,16 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       screen.getByText("Fix Copilot adoption before expansion"),
     ).toBeInTheDocument();
     expect(screen.queryByText("$2.6B")).not.toBeInTheDocument();
+    // Evidence opens on posture, not on the raw lineage table.
+    fireEvent.click(screen.getByRole("button", { name: "Evidence" }));
+    expect(
+      screen.getByTestId("tower-evidence-chapter-intro"),
+    ).toHaveTextContent("which decisions stay blocked");
+    expect(screen.getByTestId("tower-evidence-posture")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: /Full trace/ }));
+    expect(
+      screen.getByTestId("tower-evidence-chapter-intro"),
+    ).toHaveTextContent("full audit backing");
   });
 
   it("restores the reference tool-spend drill-in for FS Demo and Airline mart tenants", () => {
