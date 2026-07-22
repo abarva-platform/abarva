@@ -342,6 +342,100 @@ const MOVES_DISCOVERY: DeliverableStructure = {
   ],
 };
 
+const MOVES_ROOT_CAUSE_WORKSHEET: DeliverableStructure = {
+  module: "moves",
+  deliverableType: "root_cause_worksheet",
+  purpose:
+    "Explain the small set of evidence-backed root causes behind the current-state symptoms and what they imply for P3 design.",
+  decisionToSupport:
+    "Agree the root-cause diagnosis, confidence level, and remaining validation gaps before choosing solution options.",
+  sections: [
+    s(
+      "exec_answer",
+      "Executive Answer",
+      "State the root-cause thesis in 3-5 bullets: what is really driving the problem, how confident we are, and what must still be validated. Do not restate the full discovery report.",
+      "mixed",
+      [],
+      "Keep under 175 words. Lead with the answer, not methodology.",
+    ),
+    s(
+      "symptom_cause_table",
+      "Symptoms vs. Causes",
+      "Map each major symptom to the likely root cause, cited evidence, confidence, and implication.",
+      "mixed",
+      ["process_evidence", "metrics_baseline", "systems_inventory", "data_quality", "operating_model"],
+      "Use a compact table. Separate cited facts from hypotheses to validate.",
+    ),
+    s(
+      "root_cause_tree",
+      "Root-Cause Tree",
+      "Show the 2-4 highest-signal root-cause branches and the evidence that supports or weakens each branch.",
+      "mixed",
+      ["pain_points", "handoffs", "technology_stack", "controls", "workforce_signals"],
+      "Use issue-tree logic: symptom -> cause branch -> evidence -> implication. Do not create dozens of leaves.",
+    ),
+    s(
+      "confidence_gaps",
+      "Confidence & Open Gaps",
+      "Separate high-confidence causes from areas that remain unproven, including the specific evidence needed to close each gap.",
+      "mixed",
+      ["evidence_gaps", "source_register"],
+      "Use a short confidence table; never fabricate certainty.",
+    ),
+    s(
+      "p3_implications",
+      "Implications for P3 Options",
+      "Translate the diagnosis into design constraints and solution-option questions for P3. Do not design the solution here.",
+      "mixed",
+      [],
+      "Keep to decision-useful implications: process, data/platform, controls, change, and value measurement.",
+    ),
+  ],
+  requiredSectionKeys: [
+    "exec_answer",
+    "symptom_cause_table",
+    "root_cause_tree",
+    "confidence_gaps",
+    "p3_implications",
+  ],
+  fixedStructure: true,
+  forbiddenSectionTopics: [
+    "target state",
+    "target-state",
+    "future state",
+    "solution architecture",
+    "technical architecture",
+    "implementation roadmap",
+    "business case",
+    "financial model",
+  ],
+  prohibitedContent: [
+    "This is a P2 diagnostic artifact, not a P3 solution design or P4 business case. Do not prescribe the final architecture, operating model, roadmap, vendor path, or investment case.",
+    "Do not produce a long discovery report. Keep the artifact issue-tree led and focused on the few root causes that matter for the next decision.",
+  ],
+  expectedExhibits: [
+    {
+      key: "symptom_cause_table",
+      title: "Symptoms vs. Root Causes",
+      kind: "matrix",
+      purpose:
+        "Shows which observed symptoms map to each likely root cause, with evidence and confidence.",
+      preferredFormat: "docx",
+      requiredElements: ["symptom", "likely cause", "evidence", "confidence", "P3 implication"],
+    },
+    {
+      key: "root_cause_tree",
+      title: "Root-Cause Tree",
+      kind: "diagram",
+      purpose:
+        "Shows the issue-tree logic from symptoms to root-cause branches and supporting evidence.",
+      preferredFormat: "docx",
+      requiredElements: ["symptom", "cause branch", "evidence", "gap", "implication"],
+      legendRequired: true,
+    },
+  ],
+};
+
 const MOVES_TARGET_ARCHITECTURE: DeliverableStructure = {
   module: "moves",
   // MUST match the real gate-artifact key used throughout governance.ts /
@@ -1077,6 +1171,7 @@ export const DELIVERABLE_STRUCTURES: DeliverableStructure[] = [
   MOVES_BUSINESS_CASE,
   MOVES_ROADMAP,
   MOVES_DISCOVERY,
+  MOVES_ROOT_CAUSE_WORKSHEET,
   MOVES_TARGET_ARCHITECTURE,
   MOVES_OPERATING_MODEL,
   MOVES_ESTIMATE,

@@ -26,6 +26,7 @@ import type { OrchestrationResult } from "./orchestrator";
 import { assessClientDeliverable } from "@/lib/deliverables/quality/assess-deliverable";
 import {
   buildContractInput,
+  deliverableKeyForRegistryKey,
   deliverableKeyForOrchestratorType,
 } from "@/lib/deliverables/quality/deliverable-key-map";
 import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
@@ -158,6 +159,10 @@ export async function persistDeliverable(
   const deliverableKey = deliverableKeyForOrchestratorType(
     result.brief.deliverableType,
   );
+  const contractDeliverableKey =
+    deliverableKeyForRegistryKey(opts.deliverableTypeKey) ?? deliverableKey;
+  const resolvedDeliverableTypeKey =
+    opts.deliverableTypeKey ?? deliverableKey ?? result.brief.deliverableType;
   let profileRenderedHtml = false;
   // True whenever a profile/deck renderer deliberately overrides outputFormat to
   // "html" as an alternate presentation of the SAME governed document — not a
@@ -172,8 +177,8 @@ export async function persistDeliverable(
   // ── Stage 6: renderer selection by profile (flag-gated rollout) ──
   // When the generation passes produced structured models, render the profile's
   // renderer (e.g. the premium HTML architecture exhibit) instead of prose.
-  if (opts.renderViaProfile && deliverableKey) {
-    const profile = DELIVERABLE_PROFILES[deliverableKey];
+  if (opts.renderViaProfile && contractDeliverableKey) {
+    const profile = DELIVERABLE_PROFILES[contractDeliverableKey];
     const models = opts.structuredModels;
     if (profile.renderer === "html_architecture" && models?.architectureModel) {
       html = renderArchitectureHtml(models.architectureModel);
@@ -225,8 +230,8 @@ export async function persistDeliverable(
   // cannot be served as client-ready. Tenant-agnostic; runs for every tenant.
   let qualityQuarantined = false;
   let qualityQuarantineReason: string | null = null;
-  if (deliverableKey) {
-    const profile = DELIVERABLE_PROFILES[deliverableKey];
+  if (contractDeliverableKey) {
+    const profile = DELIVERABLE_PROFILES[contractDeliverableKey];
     const architectureSignals: Partial<ArchitectureContractSignals> = opts
       .structuredModels?.architectureModel
       ? deriveArchitectureContractSignals(
@@ -249,7 +254,7 @@ export async function persistDeliverable(
 
     const contractInput = buildContractInput({
       doc,
-      deliverableKey,
+      deliverableKey: contractDeliverableKey,
       // Omit outputFormat entirely when the render was a deliberate profile/deck
       // override — format_fit treats a missing outputFormat as "nothing to check"
       // (see checkFormatFit), which is correct here: the html IS the deliverable
@@ -271,7 +276,7 @@ export async function persistDeliverable(
         architectureSignals.exhibitsRenderedAsVisual ??
         renderedVisualsPresent(html),
       ...architectureSignals,
-      deliverableKey,
+      deliverableKey: contractDeliverableKey,
     });
     if (!assessment.clientReady) {
       const blockingFindings = assessment.quality.findings.filter((f) => f.severity === "block");
@@ -295,7 +300,7 @@ export async function persistDeliverable(
               : null;
           console.warn(
             `[persistDeliverable][non_mechanical_writing] matchedTerm=${JSON.stringify(term)} ` +
-              `deliverableKey=${deliverableKey} clientId=${opts.clientId} sourceArtifactRef=${opts.sourceArtifactRef}` +
+              `deliverableKey=${contractDeliverableKey} clientId=${opts.clientId} sourceArtifactRef=${opts.sourceArtifactRef}` +
               (snippet ? ` snippet=${JSON.stringify(snippet)}` : " snippet=<not found in narrativeText>"),
           );
         }
@@ -367,8 +372,6 @@ export async function persistDeliverable(
   };
 
   const save = deps.save ?? saveGeneratedArtifact;
-  const resolvedDeliverableTypeKey =
-    opts.deliverableTypeKey ?? deliverableKey ?? result.brief.deliverableType;
   const renderableDocWithType = {
     ...doc,
     deliverableTypeKey: resolvedDeliverableTypeKey,

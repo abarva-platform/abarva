@@ -39,6 +39,15 @@ export function deliverableKeyForOrchestratorType(
   return ORCH_TYPE_TO_KEY[deliverableType];
 }
 
+export function deliverableKeyForRegistryKey(
+  registryKey?: string | null,
+): DeliverableKey | undefined {
+  if (!registryKey) return undefined;
+  return registryKey in DELIVERABLE_PROFILES
+    ? (registryKey as DeliverableKey)
+    : undefined;
+}
+
 const VALID_EXHIBITS = new Set<string>(
   Object.values(DELIVERABLE_PROFILES).flatMap((p) => p.requiredExhibits),
 );

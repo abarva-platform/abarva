@@ -116,11 +116,10 @@ describe('POST /api/v1/deliverables/generate-phase', () => {
     }
   });
 
-  it('carries the canonical registry key through queued runs when multiple artifacts share an orchestrator type', async () => {
-    // P2 intentionally maps both the discovery report and the root-cause worksheet
-    // through the discovery_report orchestrator type. The durable queue payload must
-    // still preserve the registry key so later client approval updates the correct
-    // deliverables_v2 slot instead of guessing from title text.
+  it('queues P2 root-cause with its own type and canonical registry key', async () => {
+    // P2 discovery and root-cause are sibling artifacts, not two copies of the
+    // same discovery binder. The queue payload must preserve the registry key
+    // and now routes root-cause through its own issue-tree brief.
     const res = await POST(req({
       moveId: 'm-2',
       phase: 2,
@@ -141,7 +140,7 @@ describe('POST /api/v1/deliverables/generate-phase', () => {
     );
     expect(rootCauseResponse).toEqual(expect.objectContaining({
       deliverableTypeKey: 'root_cause_worksheet',
-      deliverableType: 'discovery_report',
+      deliverableType: 'root_cause_worksheet',
       status: 'queued',
     }));
 
@@ -151,11 +150,11 @@ describe('POST /api/v1/deliverables/generate-phase', () => {
         'root_cause_worksheet',
     );
     expect(rootCauseCreate).toEqual(expect.objectContaining({
-      deliverableType: 'discovery_report',
+      deliverableType: 'root_cause_worksheet',
     }));
     expect(rootCauseCreate?.jobPayload).toEqual(expect.objectContaining({
       deliverableTypeKey: 'root_cause_worksheet',
-      deliverableType: 'discovery_report',
+      deliverableType: 'root_cause_worksheet',
       sourceArtifactRef: 'm-2',
     }));
   });

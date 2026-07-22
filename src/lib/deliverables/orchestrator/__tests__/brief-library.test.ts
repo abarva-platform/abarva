@@ -36,6 +36,7 @@ describe('deliverable structures', () => {
     expect(getDeliverableStructure('moves', 'charter')).toBeTruthy();
     expect(getDeliverableStructure('moves', 'business_case')).toBeTruthy();
     expect(getDeliverableStructure('moves', 'roadmap')).toBeTruthy();
+    expect(getDeliverableStructure('moves', 'root_cause_worksheet')).toBeTruthy();
     expect(getDeliverableStructure('source', 'sourcing_strategy_memo')).toBeTruthy();
     for (const d of DELIVERABLE_STRUCTURES) {
       expect(d.requiredSectionKeys.length).toBeGreaterThan(0);
@@ -49,6 +50,30 @@ describe('deliverable structures', () => {
         ),
       ).toBe(true);
     }
+  });
+
+  it('root_cause_worksheet has its own fixed issue-tree structure, not the discovery report binder', () => {
+    const brief = getArtifactBrief(
+      req({
+        module: 'moves',
+        deliverableType: 'root_cause_worksheet',
+        useCaseArchetype: 'AI_PDLC',
+      }),
+    );
+    expect(brief.deliverableType).toBe('root_cause_worksheet');
+    expect(brief.fixedStructure).toBe(true);
+    expect(brief.requiredSections).toEqual([
+      'exec_answer',
+      'symptom_cause_table',
+      'root_cause_tree',
+      'confidence_gaps',
+      'p3_implications',
+    ]);
+    expect(brief.expectedExhibits.map((e) => e.key)).toEqual([
+      'symptom_cause_table',
+      'root_cause_tree',
+    ]);
+    expect(brief.recommendedStructure.map((s) => s.key)).not.toContain('maturity');
   });
 });
 
