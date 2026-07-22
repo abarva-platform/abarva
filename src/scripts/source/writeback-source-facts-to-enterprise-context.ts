@@ -18,10 +18,9 @@ import { config } from "dotenv";
 import { canonicalTenantKey } from "@/lib/tenant-keys";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
 import type { SourceEventFactRow } from "@/lib/source/facts/fact-types";
-import {
-  resolveSourceEventUuidForClient,
-  type SourceEventRow,
-} from "@/lib/source/queries";
+import { getSourceEventSeed } from "@/lib/source/mock-seed";
+import type { SourceEventRow } from "@/lib/source/queries";
+import { tenantAliasesFor } from "@/lib/tenant/aliases";
 import {
   buildSourceContextWritebackPlan,
   writeSourceFactsToEnterpriseContext,
@@ -92,28 +91,38 @@ function parseArgs(): CliOptions {
   };
 }
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function readResolvedEvent(
   clientKey: string,
   eventId: string,
 ): Promise<SourceEventRow> {
-  const resolvedEventId = await resolveSourceEventUuidForClient(
-    eventId,
-    clientKey,
+  const clientKeys = tenantAliasesFor(clientKey);
+  const seedEvent = getSourceEventSeed(eventId);
+  const eventCodes = Array.from(
+    new Set(
+      [eventId, seedEvent?.code].filter((value): value is string =>
+        Boolean(value),
+      ),
+    ),
   );
-  if (!resolvedEventId) {
-    throw new Error(`No Source event found for ${clientKey}:${eventId}`);
-  }
-
-  const { data, error } = await getAzureReadFluentClient()
+  const baseQuery = getAzureReadFluentClient()
     .from("source_events")
     .select(
       "id,client_key,event_code,event_name,event_type,current_stage_key,lifecycle_state,linked_program_id,estimated_value_usd,trigger_description,scope_description,decision_owner,created_by_user_id,created_at,updated_at",
     )
-    .eq("id", resolvedEventId)
-    .maybeSingle<SourceEventRow>();
+    .in("client_key", clientKeys)
+    .order("updated_at", { ascending: false })
+    .limit(1);
+
+  const query = UUID_REGEX.test(eventId)
+    ? baseQuery.eq("id", eventId)
+    : baseQuery.in("event_code", eventCodes);
+  const { data, error } = await query.maybeSingle<SourceEventRow>();
   if (error) throw new Error(error.message);
   if (!data)
-    throw new Error(`Resolved Source event disappeared: ${resolvedEventId}`);
+    throw new Error(`No Source event found for ${clientKey}:${eventId}`);
   return data;
 }
 
