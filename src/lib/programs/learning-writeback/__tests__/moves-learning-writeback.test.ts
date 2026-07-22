@@ -474,6 +474,119 @@ describe("Moves learning review queue", () => {
     expect(preview.nextAction).toContain("cite-render verification");
   });
 
+  it("explains missing applicable-agent metadata as a canonical promotion blocker", () => {
+    const queue = summarizeMovesLearningReviewCandidates("arcturus", [
+      {
+        id: "rec-1",
+        tenant_key: "first-capital",
+        canonical_record_id: "moves-learning-move-1-approved_evidence-ev-1",
+        record_subtype: "approved_evidence",
+        title: "Loan onboarding baseline",
+        source_record_id: "ev-1",
+        payload: {
+          moveId: "move-1",
+          moveName: "Commercial Lending Agent Assist",
+          phase: 2,
+          sourceBasis: "approved_evidence",
+          sourceId: "ev-1",
+          title: "Loan onboarding baseline",
+          summary: "Cycle time is 11.8 days and KYC rework is 27%.",
+          evidenceRefs: ["ev-1", "artifact-input-1"],
+          confidenceLevel: "high",
+        },
+        agent_readiness_status: "not_reviewed",
+        retrievability: "search_indexed",
+        tenant_id: "client-1",
+        source_layer: "tenant_context",
+        classification: "internal",
+        readiness_source_basis: "approved_evidence",
+        policy_validation_status: "pass",
+        confidence_level: "high",
+        provenance: { moveId: "move-1", sourceId: "ev-1" },
+      },
+    ]);
+
+    const preview = buildMovesLearningPromotionPreview(queue.candidates[0]!);
+    const packet = buildMovesLearningReviewPacket(queue.candidates[0]!);
+
+    expect(preview.status).toBe("blocked");
+    expect(preview.checks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Agent context eligibility",
+          status: "blocked",
+          detail: expect.stringContaining(
+            "Applicable-agent metadata is missing",
+          ),
+        }),
+      ]),
+    );
+    expect(packet.blockers).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          "Applicable-agent metadata is missing; expected canonical ids include nexus, tower, and steward",
+        ),
+      ]),
+    );
+  });
+
+  it("explains legacy applicable-agent values instead of hiding them behind a generic blocker", () => {
+    const queue = summarizeMovesLearningReviewCandidates("arcturus", [
+      {
+        id: "rec-1",
+        tenant_key: "first-capital",
+        canonical_record_id: "moves-learning-move-1-approved_evidence-ev-1",
+        record_subtype: "approved_evidence",
+        title: "Loan onboarding baseline",
+        source_record_id: "ev-1",
+        payload: {
+          moveId: "move-1",
+          moveName: "Commercial Lending Agent Assist",
+          phase: 2,
+          sourceBasis: "approved_evidence",
+          sourceId: "ev-1",
+          title: "Loan onboarding baseline",
+          summary: "Cycle time is 11.8 days and KYC rework is 27%.",
+          evidenceRefs: ["ev-1", "artifact-input-1"],
+          confidenceLevel: "high",
+        },
+        agent_readiness_status: "not_reviewed",
+        retrievability: "search_indexed",
+        tenant_id: "client-1",
+        source_layer: "tenant_context",
+        classification: "internal",
+        readiness_source_basis: "approved_evidence",
+        policy_validation_status: "pass",
+        confidence_level: "high",
+        applicable_agents: ["moves", "intelligence", "tower", "nexus"],
+        provenance: { moveId: "move-1", sourceId: "ev-1" },
+      },
+    ]);
+
+    const preview = buildMovesLearningPromotionPreview(queue.candidates[0]!);
+    const packet = buildMovesLearningReviewPacket(queue.candidates[0]!);
+
+    expect(preview.status).toBe("blocked");
+    expect(preview.checks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Agent context eligibility",
+          status: "blocked",
+          detail: expect.stringContaining(
+            "legacy/non-canonical values (moves, intelligence)",
+          ),
+        }),
+      ]),
+    );
+    expect(packet.blockers).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          "Applicable-agent metadata contains legacy/non-canonical values (moves, intelligence)",
+        ),
+      ]),
+    );
+  });
+
   it("flags any already active-looking Moves learning row as an investigation", () => {
     const queue = summarizeMovesLearningReviewCandidates("arcturus", [
       {
