@@ -23,6 +23,8 @@ export interface OrchestratorDeliverableRunJobPayload {
   kind?: 'orchestrator_deliverable';
   module: string;
   useCaseArchetype: string;
+  /** Canonical deliverables_v2 registry key when it differs from the orchestrator type. */
+  deliverableTypeKey?: string;
   deliverableType: string;
   audience?: string[];
   decisionContext: string;

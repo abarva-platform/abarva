@@ -5,17 +5,20 @@ const tenancy = { clientId: 'client-uuid', clientKey: 'skyharbor-air', userId: '
 const createCalls: Array<Record<string, unknown>> = [];
 let createBehavior: (input: Record<string, unknown>) => { id: string } = () => ({ id: 'run-default' });
 const createMoveContextExtract = jest.fn(
-  async (_input: Record<string, unknown>): Promise<Record<string, unknown>> => ({
-    status: 'created',
-    extractId: 'extract-1',
-    artifactId: 'artifact-1',
-    evidenceId: 'evidence-1',
-    sourceMode: 'active_home_context',
-    attachedEvidenceItems: [],
-    suggestedContextItems: [],
-    excludedContextItems: [],
-    gapItems: [],
-  }),
+  async (input: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    void input;
+    return {
+      status: 'created',
+      extractId: 'extract-1',
+      artifactId: 'artifact-1',
+      evidenceId: 'evidence-1',
+      sourceMode: 'active_home_context',
+      attachedEvidenceItems: [],
+      suggestedContextItems: [],
+      excludedContextItems: [],
+      gapItems: [],
+    };
+  },
 );
 
 jest.mock('@/lib/auth/tenancy', () => ({
@@ -29,11 +32,14 @@ jest.mock('@/lib/deliverables/orchestrator/runs-repository', () => ({
   }),
 }));
 const validateDeliverableTenantInvariant = jest.fn(
-  async (_input: Record<string, unknown>): Promise<Record<string, unknown>> => ({
-    ok: true,
-    sourceKind: 'move',
-    sourceId: 'm-1',
-  }),
+  async (input: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    void input;
+    return {
+      ok: true,
+      sourceKind: 'move',
+      sourceId: 'm-1',
+    };
+  },
 );
 jest.mock('@/lib/deliverables/orchestrator/tenant-invariant', () => ({
   validateDeliverableTenantInvariant: (input: Record<string, unknown>) =>
@@ -108,6 +114,50 @@ describe('POST /api/v1/deliverables/generate-phase', () => {
       expect(c.module).toBe('moves');
       expect((c.jobPayload as { sourceArtifactRef: string }).sourceArtifactRef).toBe('m-1');
     }
+  });
+
+  it('carries the canonical registry key through queued runs when multiple artifacts share an orchestrator type', async () => {
+    // P2 intentionally maps both the discovery report and the root-cause worksheet
+    // through the discovery_report orchestrator type. The durable queue payload must
+    // still preserve the registry key so later client approval updates the correct
+    // deliverables_v2 slot instead of guessing from title text.
+    const res = await POST(req({
+      moveId: 'm-2',
+      phase: 2,
+      useCaseArchetype: 'commercial_lending_agent_assist',
+      moveName: 'Commercial Lending Agent Assist',
+      clientDisplayName: 'First Capital',
+    }));
+    expect(res.status).toBe(202);
+    const json = (await res.json()) as {
+      deliverables: Array<{
+        deliverableTypeKey: string;
+        deliverableType: string;
+        status: string;
+      }>;
+    };
+    const rootCauseResponse = json.deliverables.find(
+      (d) => d.deliverableTypeKey === 'root_cause_worksheet',
+    );
+    expect(rootCauseResponse).toEqual(expect.objectContaining({
+      deliverableTypeKey: 'root_cause_worksheet',
+      deliverableType: 'discovery_report',
+      status: 'queued',
+    }));
+
+    const rootCauseCreate = createCalls.find(
+      (c) =>
+        (c.jobPayload as { deliverableTypeKey?: string }).deliverableTypeKey ===
+        'root_cause_worksheet',
+    );
+    expect(rootCauseCreate).toEqual(expect.objectContaining({
+      deliverableType: 'discovery_report',
+    }));
+    expect(rootCauseCreate?.jobPayload).toEqual(expect.objectContaining({
+      deliverableTypeKey: 'root_cause_worksheet',
+      deliverableType: 'discovery_report',
+      sourceArtifactRef: 'm-2',
+    }));
   });
 
   it('creates a candidate-preview extract only for an explicit acknowledged preview request', async () => {

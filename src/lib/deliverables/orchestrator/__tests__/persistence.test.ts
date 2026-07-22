@@ -125,6 +125,53 @@ describe('persistDeliverable', () => {
     );
   });
 
+  it('honors the queued registry key when the orchestrator type is shared by another Moves deliverable', async () => {
+    let extraMeta: unknown;
+    const mockSave = (async (
+      _input: unknown,
+      _rendered: unknown,
+      extra: unknown,
+    ) => {
+      extraMeta = extra;
+      return { id: 'art-root-cause-shared-type', clientId: 'c1', metadata: {} } as unknown as GeneratedArtifactRecord;
+    }) as never;
+
+    const req = amsRfpRequest({ module: 'moves', deliverableType: 'discovery_report' });
+    const result = {
+      ok: true,
+      brief: getArtifactBrief(req),
+      document: {
+        ...goodDocument(),
+        title: 'FS Demo — Commercial Lending Current-State Discovery',
+      },
+      quality: { pass: true, blockers: [], warnings: [], metrics: {} as never },
+      passTrace: [],
+    } as OrchestrationResult;
+
+    await persistDeliverable(
+      result,
+      {
+        clientId: 'c1',
+        renderedBy: 'u1',
+        sourceArtifactRef: 'move:prog-1:phase:2',
+        tenantPolicy,
+        deliverableTypeKey: 'root_cause_worksheet',
+      },
+      { save: mockSave },
+    );
+
+    const meta = extraMeta as Record<string, unknown>;
+    expect(meta.deliverableTypeKey).toBe('root_cause_worksheet');
+    expect(meta.registryKey).toBe('root_cause_worksheet');
+    expect(meta.deliverableType).toBe('discovery_report');
+    expect((meta.renderableDoc as Record<string, unknown>).deliverableTypeKey).toBe(
+      'root_cause_worksheet',
+    );
+    expect((meta.renderableDoc as Record<string, unknown>).deliverableType).toBe(
+      'discovery_report',
+    );
+  });
+
   it('prescribes docx for a narrative deliverable (rfp_package)', async () => {
     let rendered: Record<string, unknown> | undefined;
     const mockSave = (async (_input: unknown, r: unknown) => {

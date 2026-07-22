@@ -238,6 +238,9 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
     const result = await runDeliverableForTenant({
       module: orchestratorPayload.module as DeliverableModule,
       useCaseArchetype: orchestratorPayload.useCaseArchetype,
+      ...(orchestratorPayload.deliverableTypeKey
+        ? { deliverableTypeKey: orchestratorPayload.deliverableTypeKey }
+        : {}),
       deliverableType: orchestratorPayload.deliverableType,
       audience: orchestratorPayload.audience as AudienceRole[] | undefined,
       decisionContext: orchestratorPayload.decisionContext,

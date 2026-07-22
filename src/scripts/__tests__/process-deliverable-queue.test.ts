@@ -142,6 +142,48 @@ describe('processDeliverableQueue', () => {
     );
   });
 
+  it('preserves a queued Moves registry key when it differs from the orchestrator deliverable type', async () => {
+    const movesRun = {
+      ...claimedRow('run-root-cause'),
+      module: 'moves',
+      deliverableType: 'discovery_report',
+      jobPayload: {
+        module: 'moves',
+        useCaseArchetype: 'commercial_lending_agent_assist',
+        deliverableTypeKey: 'root_cause_worksheet',
+        deliverableType: 'discovery_report',
+        decisionContext: 'Root-cause diagnostic',
+        clientDisplayName: 'First Capital',
+        initiativeDisplayName: 'Commercial Lending Agent Assist',
+        sourceArtifactRef: 'move-1',
+      },
+    };
+    claimNextDeliverableRun.mockResolvedValueOnce(movesRun).mockResolvedValueOnce(null);
+    runDeliverableForTenant.mockResolvedValue({
+      ok: true,
+      artifactId: 'art-root-cause',
+      sectionCount: 7,
+      retrievedEvidence: 5,
+      warnings: [],
+    });
+
+    await processDeliverableQueue({ workerId: 'worker-root-cause', batchSize: 5 });
+
+    expect(runDeliverableForTenant).toHaveBeenCalledWith(
+      expect.objectContaining({
+        module: 'moves',
+        deliverableType: 'discovery_report',
+        deliverableTypeKey: 'root_cause_worksheet',
+        sourceArtifactRef: 'move-1',
+        tenantClientKey: 'skyharbor-air',
+      }),
+    );
+    expect(completeDeliverableRun).toHaveBeenCalledWith(
+      'run-root-cause',
+      expect.objectContaining({ status: 'succeeded', artifactId: 'art-root-cause' }),
+    );
+  });
+
   it('maps a blocked result to status blocked', async () => {
     claimNextDeliverableRun.mockResolvedValueOnce(claimedRow('run-2')).mockResolvedValueOnce(null);
     runDeliverableForTenant.mockResolvedValue({ ok: false, blockers: ['no register'], blockedReason: 'gate blocked' });
