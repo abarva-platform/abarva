@@ -2427,6 +2427,9 @@ function PhaseBody({
   const openHardCriteria = hardGateCriteria.filter(
     (criterion) => !criterion.completed,
   );
+  const hardMetCount = hardGateCriteria.filter((c) => c.completed).length;
+  const hardTotalCount = hardGateCriteria.length || move.gateCriteria.length;
+  const gateReady = hardTotalCount === 0 || hardMetCount >= hardTotalCount;
   const p0ApprovalGeneratedCriteria = new Set([
     "program_seed_recorded",
     "value_hypothesis_seed",
@@ -2489,57 +2492,74 @@ function PhaseBody({
         />
       ) : null}
       <section className="mxw-review">
-        <h2>Gate approval</h2>
-        {isHistoricalPhase ? (
-          terminalComplete ? (
+        <div className="mxw-decision-head">
+          <div>
+            <span className="mxw-decision-eyebrow">Decision needed</span>
+            <h2>
+              {isHistoricalPhase
+                ? terminalComplete
+                  ? `${phase.code} complete — handed off to Tower`
+                  : `${phase.code} approved`
+                : `Approve ${phase.code} ${phase.title}?`}
+            </h2>
             <p>
-              This Move has completed P5 and handed off to Tower. The approved
-              output is carrying forward into the execution and value-tracking
-              surface.
+              {isHistoricalPhase ? (
+                terminalComplete ? (
+                  <>
+                    This Move has completed P5 and handed off to Tower. The
+                    approved output is carrying forward into the execution and
+                    value-tracking surface.
+                  </>
+                ) : (
+                  <>
+                    This phase is already approved and read-only. The
+                    approved output is carrying forward into{" "}
+                    {nextOpenPhaseContract.code} {nextOpenPhaseContract.title}.
+                  </>
+                )
+              ) : (
+                <>
+                  Approve only after the record is reviewed and decision
+                  evidence is on file. The approved version is what carries
+                  forward.
+                </>
+              )}
             </p>
-          ) : (
-            <p>
-              This phase is already approved and read-only. The approved output
-              is carrying forward into {nextOpenPhaseContract.code}{" "}
-              {nextOpenPhaseContract.title}.
-            </p>
-          )
-        ) : (
-          <p>
-            Approve only after the record is reviewed and decision evidence is
-            on file. The approved version is what carries forward.
-          </p>
-        )}
-        <div className="mxw-exec-readout">
-          <article>
-            <span className="mxw-exec-label">
-              What Nexus learned this phase
+          </div>
+          {!isHistoricalPhase ? (
+            <span
+              className={`mxw-decision-pill ${gateReady ? "ready" : "blocked"}`}
+            >
+              {hardTotalCount > 0
+                ? gateReady
+                  ? `Gate ready · ${hardMetCount}/${hardTotalCount} hard met`
+                  : `Gate blocked · ${hardMetCount}/${hardTotalCount} hard met`
+                : "No hard gates on this transition"}
             </span>
-            {readinessPack.carriesForwardContent.length > 0 ? (
-              <p>
-                {readinessPack.carriesForwardContent.length} item
-                {readinessPack.carriesForwardContent.length === 1
-                  ? ""
-                  : "s"}{" "}
-                generated this phase. Full detail is in Next phase readiness
-                below.
-              </p>
-            ) : (
-              <p>No generated content is on file yet for this phase.</p>
-            )}
-          </article>
+          ) : null}
+        </div>
+        {!isHistoricalPhase && phase.phase >= 3 ? (
+          <DecisionOptionsActionPanel
+            moveId={move.id}
+            moveName={move.name}
+            phase={phase.phase}
+          />
+        ) : null}
+        <div className="mxw-decision-cards">
           <article>
-            <span className="mxw-exec-label">What evidence supports it</span>
+            <span className="mxw-exec-label">Evidence supporting it</span>
             <p>
               {evidenceCount} approved or agent-ready evidence item
               {evidenceCount === 1 ? "" : "s"} used by the gate ·{" "}
-              {hardGateCriteria.filter((c) => c.completed).length} of{" "}
-              {hardGateCriteria.length || move.gateCriteria.length} hard gate
-              criteria met.
+              {hardMetCount} of {hardTotalCount} hard gate criteria met.
             </p>
           </article>
-          <article>
-            <span className="mxw-exec-label">What remains uncertain</span>
+          <article
+            className={
+              !isHistoricalPhase && !gateReady ? "mxw-decision-blocked" : ""
+            }
+          >
+            <span className="mxw-exec-label">Quality &amp; blockers</span>
             {openHardCriteria.length > 0 ||
             softGateCriteria.some((c) => !c.completed) ? (
               <ul>
@@ -2569,50 +2589,9 @@ function PhaseBody({
             </p>
           </article>
         </div>
-        {!isHistoricalPhase && phase.phase >= 3 ? (
-          <DecisionOptionsActionPanel
-            moveId={move.id}
-            moveName={move.name}
-            phase={phase.phase}
-          />
-        ) : null}
-        <table className="mxw-gate-table">
-          <thead>
-            <tr>
-              <th>Gate item</th>
-              <th>What it means</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {gateAttestationRows.map((item) => (
-              <tr key={item.item}>
-                <td>{item.item}</td>
-                <td>{item.meaning}</td>
-                <td>
-                  <span className={item.met ? "met" : "pending"}>
-                    {item.met ? "Complete" : "Open"}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
         {gateApprovalMessage ? (
           <div className={`mxw-gate-message ${gateApprovalStatus}`}>
             {gateApprovalMessage}
-          </div>
-        ) : null}
-        {phase.phase === 0 &&
-        !isHistoricalPhase &&
-        openHardCriteria.length > 0 ? (
-          <div className="mxw-gate-note">
-            <strong>Why some checks are still open</strong>
-            <span>
-              P0 approval itself signs the origination brief, so the seed and
-              value checks turn green during approval. If anything remains
-              blocked after approval, the exact failed check will appear here.
-            </span>
           </div>
         ) : null}
         <div className="mxw-approve-build" id="mxw-approve-build-action">
@@ -2675,210 +2654,154 @@ function PhaseBody({
           </div>
         ) : null}
       </section>
-      {phase.phase === 0 && !isHistoricalPhase ? (
-        <section className="mxw-gate">
-          <header>
-            <div>
-              <h2>Gate criteria</h2>
-              <p>
-                Hard criteria block the next phase. Soft criteria can carry
-                forward as explicit caveats in the gate record.
-              </p>
-            </div>
-            <strong>
-              {
-                hardGateCriteria.filter((criterion) => criterion.completed)
-                  .length
-              }{" "}
-              of {hardGateCriteria.length || move.gateCriteria.length}
-            </strong>
-          </header>
-          {move.gateCriteria.length > 0 ? (
-            <>
-              <div className="mxw-gate-group">
-                <span className="mxw-gate-group-label">Blocking hard gate</span>
-                {(hardGateCriteria.length
-                  ? hardGateCriteria
-                  : move.gateCriteria
-                ).map((criterion) => (
-                  <span
-                    className={`${criterion.completed ? "met" : ""} ${
-                      phase.phase === 0 &&
-                      p0ApprovalGeneratedCriteria.has(criterion.id)
-                        ? "approval-generated"
-                        : ""
-                    }`}
-                    key={criterion.id}
-                  >
-                    {criterion.completed ? "✓" : "○"} {criterion.label}
-                    {phase.phase === 0 &&
-                    !criterion.completed &&
-                    p0ApprovalGeneratedCriteria.has(criterion.id) ? (
-                      <em>Completed by approving this gate</em>
-                    ) : null}
-                  </span>
-                ))}
-              </div>
-              {softGateCriteria.length > 0 ? (
-                <div className="mxw-gate-group">
+      <div
+        className="mxw-approval-disclosures"
+        aria-label={`${phase.code} approval supporting detail`}
+      >
+        {!isHistoricalPhase ? (
+          <details>
+            <summary>
+              <span>Gate criteria</span>
+              <strong>
+                {hardMetCount} of {hardTotalCount} hard met
+              </strong>
+            </summary>
+            {move.gateCriteria.length > 0 ? (
+              <>
+                <div className="mxw-gate-group compact">
                   <span className="mxw-gate-group-label">
-                    Carry-forward soft criteria
+                    Blocking hard gate
                   </span>
-                  {softGateCriteria.map((criterion) => (
+                  {(hardGateCriteria.length
+                    ? hardGateCriteria
+                    : move.gateCriteria
+                  ).map((criterion) => (
                     <span
-                      className={criterion.completed ? "met" : "soft-open"}
+                      className={`${criterion.completed ? "met" : ""} ${
+                        phase.phase === 0 &&
+                        p0ApprovalGeneratedCriteria.has(criterion.id)
+                          ? "approval-generated"
+                          : ""
+                      }`}
                       key={criterion.id}
                     >
                       {criterion.completed ? "✓" : "○"} {criterion.label}
-                      {!criterion.completed ? (
-                        <em>Can carry as a caveat</em>
+                      {phase.phase === 0 &&
+                      !criterion.completed &&
+                      p0ApprovalGeneratedCriteria.has(criterion.id) ? (
+                        <em>Completed by approving this gate</em>
                       ) : null}
                     </span>
                   ))}
                 </div>
-              ) : null}
-            </>
-          ) : (
-            <div>
-              <span>No gate criteria are configured for this transition.</span>
-            </div>
-          )}
-        </section>
-      ) : null}
-      {phase.phase >= 1 ? (
-        <div
-          className="mxw-approval-disclosures"
-          aria-label={`${phase.code} approval supporting detail`}
-        >
-          {!isHistoricalPhase ? (
-            <details>
-              <summary>
-                <span>Gate criteria</span>
-                <strong>
-                  {
-                    hardGateCriteria.filter((criterion) => criterion.completed)
-                      .length
-                  }{" "}
-                  of {hardGateCriteria.length || move.gateCriteria.length} hard
-                  met
-                </strong>
-              </summary>
-              {move.gateCriteria.length > 0 ? (
-                <>
+                {softGateCriteria.length > 0 ? (
                   <div className="mxw-gate-group compact">
                     <span className="mxw-gate-group-label">
-                      Blocking hard gate
+                      Carry-forward soft criteria
                     </span>
-                    {(hardGateCriteria.length
-                      ? hardGateCriteria
-                      : move.gateCriteria
-                    ).map((criterion) => (
+                    {softGateCriteria.map((criterion) => (
                       <span
-                        className={criterion.completed ? "met" : ""}
+                        className={criterion.completed ? "met" : "soft-open"}
                         key={criterion.id}
                       >
                         {criterion.completed ? "✓" : "○"} {criterion.label}
+                        {!criterion.completed ? (
+                          <em>Can carry as a caveat</em>
+                        ) : null}
                       </span>
                     ))}
                   </div>
-                  {softGateCriteria.length > 0 ? (
-                    <div className="mxw-gate-group compact">
-                      <span className="mxw-gate-group-label">
-                        Carry-forward soft criteria
-                      </span>
-                      {softGateCriteria.map((criterion) => (
-                        <span
-                          className={
-                            criterion.completed ? "met" : "soft-open"
-                          }
-                          key={criterion.id}
-                        >
-                          {criterion.completed ? "✓" : "○"} {criterion.label}
-                          {!criterion.completed ? (
-                            <em>Can carry as a caveat</em>
-                          ) : null}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
-                </>
-              ) : (
-                <p>No gate criteria are configured for this transition.</p>
-              )}
-            </details>
-          ) : null}
-          <details>
-            <summary>
-              <span>Next: {readinessPack.nextPhaseLabel} readiness</span>
-              <strong>
-                {readinessPack.openNeeds.length === 0
-                  ? "No required gaps"
-                  : `${readinessPack.openNeeds.length} prep item${
-                      readinessPack.openNeeds.length === 1 ? "" : "s"
-                    }`}
-              </strong>
-            </summary>
-            <p>
-              {readinessPack.isFullyReady
-                ? "No required evidence gaps are open for the next phase. It can start with what's already on file."
-                : "Bring these before the next phase starts, so it never opens cold."}
-            </p>
-            {readinessPack.openNeeds.length > 0 ? (
-              <div className="mxw-readiness-needs compact">
-                {readinessPack.openNeeds.map((need) => (
-                  <article
-                    className={`mxw-readiness-need ${need.priority}`}
-                    key={need.evidenceSlot}
-                  >
-                    <header>
-                      <strong>{need.evidenceSlot}</strong>
-                      <span>{need.priority}</span>
-                    </header>
-                    <p>{need.whyItMatters}</p>
-                    <div className="mxw-rn-meta">
-                      <span>Format: {need.acceptedFormats.join(", ")}</span>
-                      <span>Template: {need.exampleTemplate}</span>
-                    </div>
-                    <em>{need.nextAction}</em>
-                  </article>
-                ))}
-              </div>
-            ) : null}
-            {readinessPack.carriesForwardContent.length > 0 ? (
-              <div className="mxw-readiness-carries">
-                <h3>Carries forward from this phase&apos;s generated work</h3>
-                {readinessPack.carriesForwardContent.map((signal) => (
-                  <article className="mxw-readiness-carry" key={signal.key}>
-                    <strong>{signal.heading}</strong>
-                    <p>{signal.snippet}</p>
-                  </article>
-                ))}
-              </div>
-            ) : null}
-            {readinessPack.suggestedSessions.length > 0 ? (
-              <div className="mxw-readiness-sessions">
-                <h3>
-                  Suggested working sessions for {readinessPack.nextPhaseLabel}
-                </h3>
-                <div>
-                  {readinessPack.suggestedSessions.map((session) => (
-                    <span key={session}>{session}</span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
+                ) : null}
+              </>
+            ) : (
+              <p>No gate criteria are configured for this transition.</p>
+            )}
           </details>
-        </div>
-      ) : (
-        <section className="mxw-readiness">
-          <h2>Next: {readinessPack.nextPhaseLabel} readiness</h2>
+        ) : null}
+        <details>
+          <summary>
+            <span>How completion is checked</span>
+            <strong>
+              {gateAttestationRows.filter((r) => r.met).length} of{" "}
+              {gateAttestationRows.length} met
+            </strong>
+          </summary>
+          <table className="mxw-gate-table">
+            <thead>
+              <tr>
+                <th>Gate item</th>
+                <th>What it means</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {gateAttestationRows.map((item) => (
+                <tr key={item.item}>
+                  <td>{item.item}</td>
+                  <td>{item.meaning}</td>
+                  <td>
+                    <span className={item.met ? "met" : "pending"}>
+                      {item.met ? "Complete" : "Open"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {phase.phase === 0 && !isHistoricalPhase && openHardCriteria.length > 0 ? (
+            <div className="mxw-gate-note">
+              <strong>Why some checks are still open</strong>
+              <span>
+                P0 approval itself signs the origination brief, so the seed
+                and value checks turn green during approval. If anything
+                remains blocked after approval, the exact failed check will
+                appear here.
+              </span>
+            </div>
+          ) : null}
+        </details>
+        <details>
+          <summary>
+            <span>What Nexus generated this phase</span>
+            <strong>
+              {readinessPack.carriesForwardContent.length === 0
+                ? "Nothing yet"
+                : `${readinessPack.carriesForwardContent.length} item${
+                    readinessPack.carriesForwardContent.length === 1 ? "" : "s"
+                  }`}
+            </strong>
+          </summary>
+          {readinessPack.carriesForwardContent.length > 0 ? (
+            <div className="mxw-readiness-carries">
+              {readinessPack.carriesForwardContent.map((signal) => (
+                <article className="mxw-readiness-carry" key={signal.key}>
+                  <strong>{signal.heading}</strong>
+                  <p>{signal.snippet}</p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p>No generated content is on file yet for this phase.</p>
+          )}
+        </details>
+        <details>
+          <summary>
+            <span>Next: {readinessPack.nextPhaseLabel} readiness</span>
+            <strong>
+              {readinessPack.openNeeds.length === 0
+                ? "No required gaps"
+                : `${readinessPack.openNeeds.length} prep item${
+                    readinessPack.openNeeds.length === 1 ? "" : "s"
+                  }`}
+            </strong>
+          </summary>
           <p>
             {readinessPack.isFullyReady
               ? "No required evidence gaps are open for the next phase. It can start with what's already on file."
               : "Bring these before the next phase starts, so it never opens cold."}
           </p>
           {readinessPack.openNeeds.length > 0 ? (
-            <div className="mxw-readiness-needs">
+            <div className="mxw-readiness-needs compact">
               {readinessPack.openNeeds.map((need) => (
                 <article
                   className={`mxw-readiness-need ${need.priority}`}
@@ -2910,8 +2833,8 @@ function PhaseBody({
               </div>
             </div>
           ) : null}
-        </section>
-      )}
+        </details>
+      </div>
     </>
   );
 }
@@ -4553,6 +4476,20 @@ function MovesStandaloneStyles() {
 .mxw-exec-readout ul{margin:0;padding-left:16px;display:grid;gap:5px}
 .mxw-exec-readout li{font-size:12.8px;line-height:1.4;color:var(--ink-2)}
 .mxw-exec-label{display:block;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--faint);font-weight:800;margin-bottom:8px}
+.mxw-decision-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.mxw-decision-eyebrow{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:6px}
+.mxw-decision-head h2{margin:0}
+.mxw-decision-head>div>p{font-size:13.5px;color:var(--ink-2);line-height:1.5;margin:8px 0 0;max-width:640px}
+.mxw-decision-pill{flex:0 0 auto;border-radius:999px;padding:8px 14px;font-size:12.5px;font-weight:800;white-space:nowrap;border:1px solid var(--line-2);background:var(--soft);color:var(--muted)}
+.mxw-decision-pill.ready{border-color:rgba(29,143,104,.35);background:var(--green-tint);color:var(--green)}
+.mxw-decision-pill.blocked{border-color:rgba(176,115,15,.35);background:var(--amber-tint);color:#6d4300}
+.mxw-decision-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.mxw-decision-cards article{border:1px solid var(--line);border-radius:12px;background:var(--soft);padding:14px 16px}
+.mxw-decision-cards article.mxw-decision-blocked{border-color:rgba(176,115,15,.3);background:var(--amber-tint)}
+.mxw-decision-cards p{font-size:12.8px;line-height:1.45;color:var(--ink-2);margin:0}
+.mxw-decision-cards ul{margin:0;padding-left:16px;display:grid;gap:5px}
+.mxw-decision-cards li{font-size:12.8px;line-height:1.4;color:var(--ink-2)}
+@media (max-width:700px){.mxw-decision-head{flex-direction:column}.mxw-decision-cards{grid-template-columns:1fr}}
 .mxw-gate-table{width:100%;border-collapse:separate;border-spacing:0;margin:15px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
 .mxw-gate-table th{background:var(--soft);border-bottom:1px solid var(--line);color:var(--faint);font-size:10px;letter-spacing:.7px;text-transform:uppercase;text-align:left;padding:10px 12px}
 .mxw-gate-table td{border-bottom:1px solid var(--line);font-size:12.8px;line-height:1.42;color:var(--ink-2);padding:11px 12px;vertical-align:top}

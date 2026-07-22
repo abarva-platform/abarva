@@ -519,7 +519,7 @@ describe("MovesPhaseStandaloneClient", () => {
         within(contractCard).getByRole("button", { name: /Approve & Build/i }),
       );
       expect(
-        screen.getByRole("heading", { name: "Gate approval" }),
+        screen.getByRole("heading", { name: "Approve P1 Charter?" }),
       ).toBeInTheDocument();
       expect(screen.getByText("Full phase close executed")).toBeInTheDocument();
       expect(
@@ -798,7 +798,7 @@ describe("MovesPhaseStandaloneClient", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: "Gate approval" }),
+      screen.getByRole("heading", { name: "Approve P0 Originate?" }),
     ).toBeInTheDocument();
     expect(
       screen.getAllByRole("button", { name: "Approve gate →" }).length,
@@ -949,11 +949,9 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.getByText(/Chief Digital and Information Officer/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Gate approval" }),
+      screen.getByRole("heading", { name: "Approve P0 Originate?" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Gate criteria" }),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Gate criteria")).toBeInTheDocument();
   });
 
   it("frames P1 as a posture hypothesis, not a solution approach recommendation", () => {
@@ -1342,7 +1340,7 @@ describe("MovesPhaseStandaloneClient", () => {
     fireEvent.click(contractStepButton(/Approve & Build/i));
 
     expect(
-      screen.getByText("Carries forward from this phase's generated work"),
+      screen.getByText("What Nexus generated this phase"),
     ).toBeInTheDocument();
     expect(screen.getByText("Workstream Breakdown")).toBeInTheDocument();
     expect(
@@ -1364,8 +1362,11 @@ describe("MovesPhaseStandaloneClient", () => {
     fireEvent.click(contractStepButton(/Approve & Build/i));
 
     expect(
-      screen.queryByText("Carries forward from this phase's generated work"),
-    ).not.toBeInTheDocument();
+      screen.getByText("What Nexus generated this phase"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("No generated content is on file yet for this phase."),
+    ).toBeInTheDocument();
   });
 
   it("renders P3 in the contract shell instead of the older prepare wall", () => {
@@ -1826,7 +1827,7 @@ describe("MovesPhaseStandaloneClient", () => {
     fireEvent.click(contractStepButton(/Approve & Build/i));
 
     expect(
-      screen.getByRole("heading", { name: "Gate approval" }),
+      screen.getByRole("heading", { name: "Approve P3 Choose the Approach?" }),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/1 required next-phase prep item/i),
