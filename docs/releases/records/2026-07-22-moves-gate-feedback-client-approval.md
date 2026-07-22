@@ -1,0 +1,87 @@
+# 2026-07-22 Moves Gate Feedback And Client Approval Bridge
+
+## Release ID
+
+`2026-07-22-moves-gate-feedback-client-approval`
+
+## Status
+
+`candidate`
+
+## Plain-English Summary
+
+Moves now tells the user when Approve & Build generated a phase draft but the phase gate is still blocked by a human approval requirement. Generated AI drafts in Files & Evidence can be accepted as authoritative by an approved reviewer, or replaced by an uploaded client-approved final, so the gate evaluates the governed deliverable record instead of leaving the user stuck.
+
+## Layer Impact
+
+- `global-control-lane`: Shared Strategic Moves UI and API behavior changes for Files & Evidence and phase approval feedback.
+- `client-data-lane`: Authorized client approval writes update Move-scoped deliverable records and optional approved replacement artifacts. No tenant data is read across tenant boundaries.
+
+## Client Applicability
+
+- All clients: Strategic Moves users whose tenants have the Moves shell enabled.
+- Specific clients: None.
+- Internal only: No.
+- Public/demo only: No.
+- Feature flag: Uses the existing Moves shell availability path; no new flag is introduced.
+
+## Changes Included
+
+- `src/components/strategic-moves/MovesPhaseStandaloneClient.tsx`
+  - Surfaces a clear blocked state when generation succeeds but phase gate approval returns a hard blocker.
+  - Clarifies that uploaded evidence is not authoritative until reviewed or accepted.
+- `src/components/strategic-moves/FileCabinetPanel.tsx`
+  - Stops direct generated artifacts from invoking the P2 sponsor-review decision endpoint.
+  - Adds a client-approval action for AI-prepared generated deliverables.
+  - Allows an approver to accept the AI draft or upload an edited client-approved final.
+- `src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/route.ts`
+  - Bridges a generated Move artifact into the governed deliverables source of truth.
+  - Preserves tenant checks, program checks, authority checks, and source lineage.
+  - Writes only Move-scoped authoritative deliverable state.
+- Tests updated for gate-blocker feedback, sponsor-review route gating, and generated-draft client approval detection.
+
+## QA / Validation
+
+Candidate validation:
+
+- Pass: `npx jest src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts --runInBand`
+- Pass: `npx eslint src/components/strategic-moves/MovesPhaseStandaloneClient.tsx src/components/strategic-moves/FileCabinetPanel.tsx 'src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/route.ts' src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx src/components/strategic-moves/__tests__/FileCabinetPanel.labels.test.ts`
+- Blocked: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` fails on current `origin/main` Home graph dependency resolution outside this Moves change (`@xyflow/react`, `@dagrejs/dagre`).
+- Pending: `npm run release:check`
+- Pending: `git diff --check`
+- Pending: PR checks.
+- Pending: ACA deploy and signed-in sandbox proof.
+
+## Rollout Plan
+
+Merge through PR to `main`. The repo-owned Azure Container Apps deploy workflow builds and deploys the image to `app.abarva.ai`. Verify ACA runtime invariant, then run signed-in proof only on the First Capital sandbox Move.
+
+## Deployment Authority
+
+- Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
+- Shared runtime mutators: none outside the repo-owned deploy workflow
+- Approved image digest: pending deploy
+- ACA runtime invariant: pending deploy
+- Worker image invariant: not applicable
+- Feature/env flag update path: none
+- Live signed-in proof required: yes
+
+## Rollback Plan
+
+Revert the PR or roll back the ACA revision to the previous known-good digest. No schema or migration changes are included. The API route can be disabled by rollback without altering existing approved deliverable records.
+
+## Audit Evidence
+
+- PR URL: pending
+- Merge SHA: pending
+- Deploy run: pending
+- ACA revision: pending
+- Local production discovery proof bundle: `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722`
+- Synthetic data pack: `/Users/anand/Downloads/firstcapital-moves-e2e-synthetic-pack-2026-07-22`
+
+## Known Gaps
+
+- This does not change deliverable prompt length or document structure.
+- This does not auto-review uploaded evidence.
+- This does not make AI-generated drafts authoritative without human action.
+- This does not complete the full P0-P5 synthetic E2E run; that proof follows deployment.

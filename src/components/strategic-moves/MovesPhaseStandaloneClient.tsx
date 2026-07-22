@@ -773,16 +773,19 @@ export function MovesPhaseStandaloneClient({
         ?.filter((check) => check.severity === "hard")
         .map((check) => check.reason || check.check)
         .join("; ");
-      setGateApprovalStatus("blocked");
-      throw new Error(
+      const blockedMessage =
         hard ||
-          (approval.missing?.length
-            ? `P${phase.phase} capture is incomplete - missing: ${approval.missing.join(", ")}`
-            : "") ||
-          approval.detail ||
-          approval.error ||
-          `Gate approval failed (HTTP ${approvalRes.status})`,
+        (approval.missing?.length
+          ? `P${phase.phase} capture is incomplete - missing: ${approval.missing.join(", ")}`
+          : "") ||
+        approval.detail ||
+        approval.error ||
+        `Gate approval failed (HTTP ${approvalRes.status})`;
+      setGateApprovalStatus("blocked");
+      setGateApprovalMessage(
+        `Build completed, but the phase gate is blocked: ${blockedMessage}. Review the open gate item, approve or upload the client-approved deliverable in Files & Evidence, then re-run Approve & Build.`,
       );
+      throw new Error(blockedMessage);
     }
 
     setGateApproved(true);
@@ -2399,7 +2402,7 @@ function PhaseBody({
     {
       item: "Evidence attached or carried as gap",
       meaning:
-        "Uploaded files, reviewed evidence, or explicit caveats are visible before approval.",
+        "Reviewed/approved evidence or explicit caveats are visible before approval. Uploaded files do not become authoritative until reviewed.",
       met: evidenceReady,
     },
     {
@@ -2471,8 +2474,9 @@ function PhaseBody({
           <article>
             <span className="mxw-exec-label">What evidence supports it</span>
             <p>
-              {evidenceCount} evidence item{evidenceCount === 1 ? "" : "s"} on
-              file · {hardGateCriteria.filter((c) => c.completed).length} of{" "}
+              {evidenceCount} approved or agent-ready evidence item
+              {evidenceCount === 1 ? "" : "s"} used by the gate ·{" "}
+              {hardGateCriteria.filter((c) => c.completed).length} of{" "}
               {hardGateCriteria.length || move.gateCriteria.length} hard gate
               criteria met.
             </p>
