@@ -40,7 +40,7 @@
  * expect a reset-to-strategy helper; if it does not exist yet, those
  * tests document the gap and are annotated `test.skip()`.
  */
-// Crawl 2026-06-04: 2/11 green, 9 skipped (gaps documented inline).
+// Crawl 2026-07-22: SOURCE-SHELL-003/004/005/006-007 coverage added; governed local run blocked by private Azure Postgres DNS.
 import {
   auditedTest as test,
   expect,
@@ -50,6 +50,7 @@ import {
   captureArtifact,
 } from './_audit-harness';
 import { signInAs } from './_auth';
+import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import {
   RESPONSIBLE_AI_ACKNOWLEDGMENT_ROUTE,
   RESPONSIBLE_AI_ACKNOWLEDGMENT_VERSION,
@@ -58,6 +59,18 @@ import {
 // ─── Seed anchor ───────────────────────────────────────────────────────────
 const APEX_AMS_EVENT_ID = 'apex-retail-ams-outsourcing-2026';
 const APEX_AMS_EVENT_UUID = '969440b7-a5e7-4b4c-9ff5-61b53894a994';
+
+const STRATEGY_CONFIRMATIONS = {
+  strategyMemoReviewed: true,
+  valueTargetConfirmed: true,
+  archetypeRigorConfirmed: true,
+} as const;
+
+const WORKED_STAGE_CONFIRMATIONS = {
+  evidenceComplete: true,
+  exclusionsReviewed: true,
+  stageFinal: true,
+} as const;
 
 // ─── Selectors (mirror tests/e2e source canvas conventions) ────────────────
 const SEL = {
@@ -72,6 +85,12 @@ const SEL = {
   aiDraftLabel: '[data-testid="ai-draft-label"], [aria-label="AI Draft"]',
   stageCanvasPanel: '[data-testid="source-stage-canvas-panel"]',
   gateTab: '[data-testid="source-canvas-gate-tab"]',
+} as const;
+
+const SOURCE_SHELL_WORKSPACES = {
+  steps: /^Steps$/i,
+  files: /Files & deliverables/i,
+  approvals: /^Approvals$/i,
 } as const;
 
 async function openGoldenEventStage(
@@ -102,6 +121,82 @@ async function resetGoldenEventToStrategy(
     `/api/v1/source/${APEX_AMS_EVENT_ID}/test-reset`,
   );
   expect(response.status()).toBe(200);
+}
+
+function confirmationsForStage(stageKey: string): Record<string, boolean> {
+  return stageKey === 'strategy'
+    ? { ...STRATEGY_CONFIRMATIONS }
+    : { ...WORKED_STAGE_CONFIRMATIONS };
+}
+
+async function approveCurrentStageViaApi(
+  page: import('@playwright/test').Page,
+  stageKey: string,
+  runId: string,
+): Promise<unknown> {
+  const note = `${runId} · approve ${stageKey} gate via golden-event E2E.`;
+  const response = await page.request.post(
+    `/api/v1/source/events/${APEX_AMS_EVENT_UUID}/approve`,
+    {
+      data: {
+        action: 'approve',
+        notes: note,
+        confirmations: confirmationsForStage(stageKey),
+        selfApproveIfAuthorized: true,
+      },
+    },
+  );
+  const text = await response.text();
+  expect(response.status(), text).toBe(200);
+  const payload = text ? JSON.parse(text) : null;
+  expect(payload).toMatchObject({ ok: true, action: 'approve' });
+  return payload;
+}
+
+async function approveStagesViaApi(
+  page: import('@playwright/test').Page,
+  stages: string[],
+  runId: string,
+): Promise<void> {
+  for (const stageKey of stages) {
+    await approveCurrentStageViaApi(page, stageKey, runId);
+  }
+}
+
+async function approvalRowsForRun(runId: string): Promise<
+  Array<{
+    stage_key: string | null;
+    action: string | null;
+    notes: string | null;
+    created_at: string | null;
+  }>
+> {
+  const { data, error } = await getAzureReadFluentClient()
+    .from('source_event_approvals')
+    .select('stage_key, action, notes, created_at')
+    .eq('event_id', APEX_AMS_EVENT_UUID)
+    .order('created_at', { ascending: false })
+    .limit(80);
+  expect(error?.message ?? null, 'source_event_approvals read').toBeNull();
+  return ((data ?? []) as Array<{
+    stage_key: string | null;
+    action: string | null;
+    notes: string | null;
+    created_at: string | null;
+  }>).filter((row) => row.notes?.includes(runId));
+}
+
+async function openSourceShellWorkspace(
+  page: import('@playwright/test').Page,
+  name: RegExp,
+): Promise<void> {
+  const button = page.getByRole('button', { name }).first();
+  await expect(button).toBeVisible({ timeout: 15000 });
+  await button.click();
+}
+
+function sourceShell(page: import('@playwright/test').Page) {
+  return page.locator('[data-testid="source-analytics-canvas"]');
 }
 
 async function acknowledgeResponsibleAiAndReturn(
@@ -604,6 +699,7 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
   test.describe.configure({ mode: 'serial' });
 
   test.beforeEach(async ({ page }) => {
+    test.setTimeout(120000);
     await signInAs(page, 'apex-vp-sourcing');
     await resetGoldenEventToStrategy(page);
     await openGoldenEventStage(page, 'strategy');
@@ -792,6 +888,196 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
         navigationTrace,
       });
     });
+  });
+
+  // ────────────────────────────────────────────────────────────────────────
+  // SOURCE-SHELL-003 · Approvals ledger
+  // ────────────────────────────────────────────────────────────────────────
+  test('SOURCE-SHELL-003 · Approvals ledger records stage-keyed gate approvals', async ({
+    page,
+  }) => {
+    test.setTimeout(120000);
+    const runId = `SOURCE-SHELL-003-${Date.now()}`;
+
+    await step(page, 'Approve Strategy, Scope, and RFP through the real gate API', async () => {
+      await approveStagesViaApi(page, ['strategy', 'scope', 'rfp'], runId);
+      const rows = await approvalRowsForRun(runId);
+      await captureArtifact(page, 'approvals-ledger', 'stage-approval-rows.json', {
+        navigationTrace: [
+          `runId=${runId}`,
+          ...rows.map((row) => JSON.stringify(row)),
+        ],
+      });
+      expect(rows).toHaveLength(3);
+      expect(rows.map((row) => row.stage_key).sort()).toEqual([
+        'rfp',
+        'scope',
+        'strategy',
+      ]);
+      expect(rows.every((row) => row.action === 'admin_review')).toBeTruthy();
+    });
+
+    await step(page, 'Approvals workspace renders the 11-row ledger from real event state', async () => {
+      await openGoldenEventStage(page, 'responses');
+      await openSourceShellWorkspace(page, SOURCE_SHELL_WORKSPACES.approvals);
+      const ledger = page.locator('[data-testid="source-shell-approval-ledger"]');
+      await expect(ledger).toBeVisible({ timeout: 15000 });
+      await expect(page.locator('[data-testid^="source-shell-approval-ledger-row-"]')).toHaveCount(11);
+      for (const stageKey of ['strategy', 'scope', 'rfp']) {
+        await expect(
+          page.locator(`[data-testid="source-shell-approval-ledger-row-${stageKey}"]`),
+        ).toContainText(/Approved|approved/i);
+      }
+      await expect(
+        page.locator('[data-testid="source-shell-approval-ledger-row-responses"]'),
+      ).toContainText(/In progress/i);
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────────
+  // SOURCE-SHELL-004 · Artifact acceptances
+  // ────────────────────────────────────────────────────────────────────────
+  test('SOURCE-SHELL-004 · Artifact acceptance is separate from the stage gate', async ({
+    page,
+  }) => {
+    test.setTimeout(120000);
+    const runId = `SOURCE-SHELL-004-${Date.now()}`;
+    const rationale = `${runId} · Vendor-response evidence reviewed and accepted as authoritative for golden-event E2E.`;
+
+    await step(page, 'Open Files workspace and accept a real artifact through the UI form', async () => {
+      await openGoldenEventStage(page, 'responses');
+      await openSourceShellWorkspace(page, SOURCE_SHELL_WORKSPACES.files);
+      await expect(page.locator('[data-testid="source-shell-v2-files"]')).toBeVisible({
+        timeout: 15000,
+      });
+
+      const acceptToggle = page
+        .locator('[data-testid^="source-shell-artifact-accept-toggle-"]')
+        .first();
+      await expect(acceptToggle).toBeVisible({ timeout: 15000 });
+      const toggleTestId = await acceptToggle.getAttribute('data-testid');
+      expect(toggleTestId).toBeTruthy();
+      const artifactCode = toggleTestId!.replace(
+        'source-shell-artifact-accept-toggle-',
+        '',
+      );
+
+      await acceptToggle.click();
+      const form = page.locator(
+        `[data-testid="source-shell-artifact-accept-form-${artifactCode}"]`,
+      );
+      await expect(form).toBeVisible({ timeout: 15000 });
+      await form.locator('textarea[name="approvalRationale"]').fill(rationale);
+      await form.locator('select[name="contentDriftStatus"]').selectOption('current');
+      await form.locator('select[name="gatePreconditionStatus"]').selectOption('ready');
+      await form.locator('select[name="downstreamContextPolicy"]').selectOption('restricted');
+      await form
+        .locator('input[name="diffSummary"]')
+        .fill('Golden-event E2E acceptance after SOURCE-SHELL-004 wiring.');
+
+      const acceptResponsePromise = page.waitForResponse((response) => {
+        return (
+          response.url().includes(`/artifacts/${artifactCode}/accept`) &&
+          response.request().method() === 'POST'
+        );
+      });
+      await form.getByRole('button', { name: /^Accept$/i }).click();
+      const acceptResponse = await acceptResponsePromise;
+      const body = await acceptResponse.text();
+      expect(acceptResponse.status(), body).toBe(200);
+
+      const statusPanel = page.locator(
+        `[data-testid="source-shell-artifact-status-${artifactCode}"]`,
+      );
+      await expect(statusPanel).toBeVisible({ timeout: 30000 });
+      await expect(statusPanel).toContainText(rationale, { timeout: 30000 });
+      await expect(statusPanel).toContainText(/Accepted by/i);
+      await expect(statusPanel).toContainText(/Gate precondition: ready/i);
+    });
+
+    await step(page, 'Stage approvals remain a separate workspace after artifact acceptance', async () => {
+      await openSourceShellWorkspace(page, SOURCE_SHELL_WORKSPACES.approvals);
+      await expect(page.locator('[data-testid="source-shell-v2-approvals"]')).toBeVisible({
+        timeout: 15000,
+      });
+      await expect(page.locator('[data-testid="source-shell-approval-ledger"]')).toBeVisible({
+        timeout: 15000,
+      });
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────────
+  // SOURCE-SHELL-005 · Vendor response coverage
+  // ────────────────────────────────────────────────────────────────────────
+  test('SOURCE-SHELL-005 · Responses stage renders real per-vendor coverage', async ({
+    page,
+  }) => {
+    test.setTimeout(90000);
+
+    await step(page, 'Responses step body shows live vendor coverage rows', async () => {
+      await openGoldenEventStage(page, 'responses');
+      await openSourceShellWorkspace(page, SOURCE_SHELL_WORKSPACES.steps);
+      await expect(sourceShell(page)).toContainText('Confirm vendor response coverage', {
+        timeout: 15000,
+      });
+      await expect(sourceShell(page)).not.toContainText('Provide the volumetrics');
+      await expect(sourceShell(page)).toContainText('Vendor coverage', {
+        timeout: 15000,
+      });
+      const rows = page.locator('[data-testid^="source-shell-vendor-coverage-"]');
+      await expect(rows.first()).toBeVisible({ timeout: 15000 });
+      const rowCount = await rows.count();
+      expect(rowCount).toBeGreaterThan(0);
+      const firstRowText = (await rows.first().innerText()).trim();
+      expect(firstRowText).toMatch(/\d+ of \d+ levers addressed/);
+      expect(firstRowText).toMatch(/Complete|Partial|Awaiting/);
+      await captureArtifact(page, 'responses', 'vendor-coverage-summary.json', {
+        navigationTrace: [`rowCount=${rowCount}`, firstRowText],
+      });
+    });
+  });
+
+  // ────────────────────────────────────────────────────────────────────────
+  // SOURCE-SHELL-006/007 · Stage fallback honesty
+  // ────────────────────────────────────────────────────────────────────────
+  test('SOURCE-SHELL-006/007 · Future stages never fall back to Scope content', async ({
+    page,
+  }) => {
+    test.setTimeout(120000);
+    const expectations = [
+      {
+        stage: 'executive_decision',
+        label: 'Executive Decision',
+        marker: /No illustrative preview has been built for Executive Decision yet/i,
+      },
+      {
+        stage: 'selection',
+        label: 'Selection',
+        marker: /Confirm committed value at award/i,
+      },
+      {
+        stage: 'transition',
+        label: 'Transition',
+        marker: /No illustrative preview has been built for Transition yet/i,
+      },
+      {
+        stage: 'value',
+        label: 'Value',
+        marker: /Confirm realized value to date/i,
+      },
+    ] as const;
+
+    for (const item of expectations) {
+      await step(page, `Future-stage fallback is stage-matched for ${item.label}`, async () => {
+        await openGoldenEventStage(page, item.stage);
+        await openSourceShellWorkspace(page, SOURCE_SHELL_WORKSPACES.steps);
+        await expect(sourceShell(page).getByRole('heading', { name: item.label })).toBeVisible({
+          timeout: 15000,
+        });
+        await expect(sourceShell(page)).toContainText(item.marker, { timeout: 15000 });
+        await expect(sourceShell(page)).not.toContainText('Provide the volumetrics');
+      });
+    }
   });
 
   // ────────────────────────────────────────────────────────────────────────
