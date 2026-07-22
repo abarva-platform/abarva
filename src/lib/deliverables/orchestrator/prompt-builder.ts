@@ -132,11 +132,18 @@ function buildContextBlock(
           )
           .join("\n");
 
+  const latitude = brief.fixedStructure
+    ? `This artifact uses a FIXED STRUCTURE. Do not add sections, exhibits, tables, appendices, or decision views beyond the recommended structure unless explicitly listed under EXPECTED EXHIBITS or EXPECTED TABLES. ${brief.allowedExpertKnowledge}`
+    : `Use your expert knowledge to design the best artifact for this use case. You are NOT limited to the minimum sections — add sections, exhibits, tables, and decision views if they materially improve the artifact. ${brief.allowedExpertKnowledge}`;
+  const structureLabel = brief.fixedStructure
+    ? "REQUIRED STRUCTURE (exhaustive — do not add sections)"
+    : "RECOMMENDED STRUCTURE (a senior consultant's baseline — improve on it)";
+
   return [
     `MISSION: Create the best possible ${req.deliverableType.replace(/_/g, " ")} for ${req.clientDisplayName} — initiative "${req.initiativeDisplayName}" — for ${audience} to support this decision:`,
     `  ${req.decisionContext}`,
     ``,
-    `EXPERT LATITUDE: Use your expert knowledge to design the best artifact for this use case. You are NOT limited to the minimum sections — add sections, exhibits, tables, and decision views if they materially improve the artifact. ${brief.allowedExpertKnowledge}`,
+    `EXPERT LATITUDE: ${latitude}`,
     ``,
     `GOVERNANCE BOUNDARY: ${brief.disallowedFabrication} ${brief.citationPolicy}`,
     ``,
@@ -154,13 +161,20 @@ function buildContextBlock(
     `APPROVED ASSUMPTIONS (use, labelled):`,
     assumptions,
     ``,
-    `RECOMMENDED STRUCTURE (a senior consultant's baseline — improve on it):`,
+    `${structureLabel}:`,
     brief.recommendedStructure
       .map(
-        (s, i) => `  ${i + 1}. ${s.title} — ${s.intent} [${s.groundingMode}]`,
+        (s, i) =>
+          `  ${i + 1}. ${s.title} — ${s.intent} [${s.groundingMode}] Section instruction: ${s.expertLatitude}`,
       )
       .join("\n"),
     ``,
+    ...(brief.fixedStructure
+      ? [
+          `FIXED-STRUCTURE DISCIPLINE: The generated sectionPlan must use exactly these section keys, in this order: ${brief.recommendedStructure.map((s) => s.key).join(", ")}. Do not split, rename, duplicate, or add sections.`,
+          ``,
+        ]
+      : []),
     ...(brief.forbiddenSectionTopics && brief.forbiddenSectionTopics.length > 0
       ? [
           `PHASE DISCIPLINE — OUT OF SCOPE for this deliverable (these belong to later phases; do NOT add sections, exhibits, or extended analysis on them, even to "improve" the artifact): ${brief.forbiddenSectionTopics.join("; ")}. Keep this document to the decision it must drive; reference later-phase work only as a forward pointer, never as analysis.`,
@@ -191,7 +205,9 @@ function buildContextBlock(
 }
 
 /** The narrative-spine requirement: this document must argue a case, not fill sections. */
-function narrativeSpineInstruction(req: DeliverableIntelligenceRequest): string {
+function narrativeSpineInstruction(
+  req: DeliverableIntelligenceRequest,
+): string {
   const qb = req.qualityBar;
   const asks: string[] = [];
   if (qb.requiresCentralTension)
@@ -211,7 +227,9 @@ function narrativeSpineInstruction(req: DeliverableIntelligenceRequest): string 
 }
 
 /** The size-range discipline instruction — a range is a boundary, not a target to hit by padding. */
-function sizeDisciplineInstruction(req: DeliverableIntelligenceRequest): string {
+function sizeDisciplineInstruction(
+  req: DeliverableIntelligenceRequest,
+): string {
   const qb = req.qualityBar;
   if (!qb.targetBodyWordsMax) return "";
   return `\nSIZE DISCIPLINE: Target ${qb.minBodyWords.toLocaleString()}–${qb.targetBodyWordsMax.toLocaleString()} body words for this artifact type. Do not optimize for minimum length OR maximum length — optimize for decision usefulness, professional completeness, visual clarity, evidence traceability, and human usability. Use this range as a discipline boundary, not permission to omit necessary analysis below it or pad with filler, generic methodology prose, or unsupported detail above it. Every section must advance the decision, evidence, design, or approval this artifact exists to drive.`;
@@ -289,10 +307,13 @@ export function buildPassPrompt(
         `3. If a section carries no client-specific facts (pure expert framing, methodology, narrative, or standard boilerplate), set its groundingMode to "expert_template" — those need no citations, assumptions, or placeholders.`,
         `4. Prefer "expert_template" for any section you cannot ground with the evidence/assumptions/placeholders above, rather than marking it governed_facts/mixed and leaving it ungrounded.`,
       ].join("\n");
+      const architectInstruction = brief.fixedStructure
+        ? `PASS 1 — ARTIFACT ARCHITECT. Produce a generation plan for this fixed-structure deliverable. Use exactly the REQUIRED STRUCTURE keys from the context block, in the same order. Do NOT add, split, rename, or duplicate sections. You may improve the rationale within each required section, but the outline itself is locked. DO NOT draft the full document yet.`
+        : `PASS 1 — ARTIFACT ARCHITECT. Design the best possible structure for this deliverable. Use your expert knowledge of consulting, technology strategy, sourcing, transformation, and executive decision-making. Identify required sections, optional sections, exhibits, tables, and placeholders. Propose enhancements beyond the baseline structure where they raise quality. DO NOT draft the full document yet.`;
       user = [
         context,
         ``,
-        `PASS 1 — ARTIFACT ARCHITECT. Design the best possible structure for this deliverable. Use your expert knowledge of consulting, technology strategy, sourcing, transformation, and executive decision-making. Identify required sections, optional sections, exhibits, tables, and placeholders. Propose enhancements beyond the baseline structure where they raise quality. DO NOT draft the full document yet.`,
+        architectInstruction,
         ``,
         planValidityRules,
         ``,

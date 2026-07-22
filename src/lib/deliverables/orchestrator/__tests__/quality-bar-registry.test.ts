@@ -12,7 +12,9 @@ describe("resolveQualityBar", () => {
     expect(qb.enforceMaxAsBlocker).toBe(true);
     // the Charter's whole point is staying concise — its band must be
     // materially smaller than the architecture doc's.
-    expect(qb.targetBodyWordsMax!).toBeLessThan(4_000);
+    expect(qb.minSections).toBe(7);
+    expect(qb.minBodyWords).toBe(900);
+    expect(qb.targetBodyWordsMax!).toBeLessThanOrEqual(2_400);
   });
 
   it("gives Target State Architecture a substantial band whose ceiling only WARNS", () => {

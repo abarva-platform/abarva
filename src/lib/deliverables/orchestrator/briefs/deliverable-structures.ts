@@ -19,6 +19,11 @@ export interface DeliverableStructure {
   sections: BriefSection[];
   requiredSectionKeys: string[];
   /**
+   * Some artifacts are approval instruments, not open-ended consulting reports.
+   * When true, the planner must treat `sections` as the whole document shape.
+   */
+  fixedStructure?: boolean;
+  /**
    * Topics that belong to a LATER phase and must not appear as sections here
    * (phase discipline). E.g. a P1 Charter frames the decision to fund discovery
    * — it does not pre-empt P2's current-state analysis or P3's target-state
@@ -73,83 +78,71 @@ const MOVES_CHARTER: DeliverableStructure = {
   sections: [
     s(
       "exec_summary",
-      "Executive Summary",
-      "One tight section: the problem, the recommended approach at a headline level, the preliminary value hypothesis ($M–$M, labelled PRELIMINARY), program duration, and the decision sought. Framing only — NOT a current-state analysis.",
+      "Executive Summary & Decision Ask",
+      "One tight section: the problem, why it matters now, the preliminary value hypothesis (labelled PRELIMINARY), and the approval requested. Framing only — NOT a current-state analysis, solution design, or implementation plan.",
       "mixed",
-    ),
-    s(
-      "decision_required",
-      "Decision Required",
-      "State the explicit charter ask and exactly what approval authorizes: a funded discovery & design gate, not a build.",
-      "mixed",
-    ),
-    s(
-      "sponsor_commitment",
-      "Sponsor Commitment & Change Readiness",
-      "Named sponsor, role, decision rights, review cadence, commitment evidence; key decision-makers, contributors, and blockers as named roles. State change readiness explicitly: the sponsor's commitment is not only to FUND the technology but to DRIVE the business-process change and OWN the measurement the outcome depends on. Where the client is not yet willing to change a process, record it as a readiness risk, not a gap to paper over.",
-      "mixed",
+      [],
+      "Keep this section under 250 words. Do not add subsections.",
     ),
     s(
       "problem_opportunity",
-      "Problem, Opportunity & Why Now",
-      "Why now and the value at stake — executive framing only. Do NOT pre-empt P2 with a detailed current-state evidence analysis.",
+      "Problem / Opportunity Being Chartered",
+      "Define the business problem or opportunity in plain English, including the trigger, affected business area, and the consequence of doing nothing. Do not assert baselines, root causes, or operating metrics unless cited or labelled as assumptions to validate.",
       "mixed",
+      [],
+      "Keep this section under 250 words. This is hypothesis framing, not P2 findings.",
     ),
     s(
-      "objectives",
-      "Strategic Objectives",
-      "Target outcomes and the success measures that define done.",
+      "sponsor_commitment",
+      "Sponsor, Decision Rights & Change Commitment",
+      "Capture accountable role/title, operating owners, decision rights, review cadence, and the commitment to drive business-process change and measurement. Use roles/titles; do not invent named people.",
       "mixed",
+      [],
+      "Keep this section under 300 words. Use a compact RACI-style table if useful.",
     ),
     s(
       "scope",
       "Scope & Out-of-Scope",
-      "Explicit in-scope / out-of-scope boundary — specific capabilities and business processes, not generic.",
+      "Explicit in-scope / out-of-scope boundary — specific business process, user cohort, capability, system/data domain, and decision boundary. Keep future-state design out of the charter.",
       "mixed",
+      [],
+      "Keep this section under 300 words. A simple in/out table is preferred.",
     ),
     s(
       "success_criteria",
-      "Success Criteria, Value Hypothesis & Measurement",
-      "Define success as a four-part commitment (see SUCCESS-CRITERIA-STANDARD): (1) BUSINESS OUTCOMES — the business result the move must produce, stated as a business change, not a feature/technology; (2) KEY METRICS — the KPIs that prove each outcome, each with a current baseline and a target (label every figure PRELIMINARY_ESTIMATE with its assumption, or cite it); (3) MEASUREMENT AFTER DEPLOYMENT — how each metric will actually be measured post-go-live: data source/instrumentation, owner, cadence, and the enablement needed to capture it (if it cannot be measured with what exists today, that enablement is a scope item — surface it, mark [CLIENT TO COMPLETE], never assume it); (4) BUSINESS-PROCESS CHANGE — the specific process/operating-model changes the client commits to make to enable the outcome (technology alone rarely delivers it). Include the preliminary value range $M–$M.",
+      "Success Criteria & Value Hypothesis",
+      "Define success as a four-part commitment: business outcomes, key metrics, post-deployment measurement approach, and the business-process changes required. Label every baseline/target/value figure as cited, PRELIMINARY_ESTIMATE, or [CLIENT TO COMPLETE].",
       "mixed",
-    ),
-    s(
-      "governance_gates",
-      "Governance, Operating Model & Phase Gates",
-      "Steering committee, escalation path, decision velocity, high-level RACI, and the stage gates ahead (P2→P5) with entry criteria.",
-      "mixed",
+      [],
+      "Keep this section under 450 words. Use a compact table; do not build the P4 business case here.",
     ),
     s(
       "kill_criterion",
-      "Key Risks, Dependencies & Kill Criterion",
-      "Top risks, issues and dependencies with mitigations, plus a specific, observable condition that would terminate the program — not a vague risk statement.",
+      "Risks, Dependencies & Kill Criteria",
+      "Top risks, issues, dependencies, and a specific observable condition that would stop or redirect the Move. Keep the register to the highest-signal items.",
       "mixed",
-    ),
-    s(
-      "evidence_gaps",
-      "Evidence Gaps & Client-to-Complete",
-      "What must still be confirmed in discovery; mark each [CLIENT TO COMPLETE], never invent.",
-      "client_to_complete",
+      [],
+      "Keep this section under 350 words. Include the risk/issues/dependencies table required by the quality gate.",
     ),
     s(
       "recommendation",
-      "Recommendation & Next Actions",
-      "Clear recommendation and the immediate next steps into P2 discovery.",
+      "Recommendation & P2 Handoff",
+      "Give the clear recommendation: approve the charter to start P2 discovery, approve with caveats, or hold. Include the immediate next actions, evidence families, workshops, and owner roles P2 must complete before any design or build decision.",
       "mixed",
+      [],
+      "Keep this section under 300 words. Use bullets grouped by business, process, systems/data, controls, and value.",
     ),
   ],
   requiredSectionKeys: [
     "exec_summary",
-    "decision_required",
-    "sponsor_commitment",
     "problem_opportunity",
-    "objectives",
+    "sponsor_commitment",
     "scope",
     "success_criteria",
-    "governance_gates",
     "kill_criterion",
     "recommendation",
   ],
+  fixedStructure: true,
   forbiddenSectionTopics: [
     "current state",
     "current-state",

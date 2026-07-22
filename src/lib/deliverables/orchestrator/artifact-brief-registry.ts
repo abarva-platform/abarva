@@ -557,6 +557,7 @@ function composeBrief(
     optionalSections: sections
       .map((s) => s.key)
       .filter((k) => !structure.requiredSectionKeys.includes(k)),
+    fixedStructure: structure.fixedStructure,
     forbiddenSectionTopics: structure.forbiddenSectionTopics,
     prohibitedContent: structure.prohibitedContent,
     // Deliverable-type exhibits (e.g. the architecture views a Target State
