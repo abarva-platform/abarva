@@ -217,10 +217,11 @@ export const HOME_DIMENSION_VISUALIZATION_CONTRACT: HomeDimensionVisualizationCo
     ),
     rel: entry(
       "rel",
-      "risk_control_heatmap",
+      "relationship_topology",
       "qualitative",
       ["risk_or_gap", "metric_boundary"],
       filters(["metric_boundary", "Boundary type"]),
+      "topology_graph",
     ),
     evidence: entry(
       "evidence",

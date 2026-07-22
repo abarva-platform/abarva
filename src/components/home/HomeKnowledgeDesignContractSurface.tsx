@@ -833,6 +833,8 @@ function DimensionView({
   tableQuery: string;
   relationship?: { chain?: string[]; note?: string };
 }) {
+  const isRelationshipDimension = dimension.key === "rel";
+
   function exportCsv() {
     const header = columns.map((column) => csvCell(column.label)).join(",");
     const body = rows
@@ -924,11 +926,15 @@ function DimensionView({
             <MetricTile label="Last Refreshed" value="Jul 2026" />
           </div>
 
-          <DimensionPrimaryVisual dimensionKey={dimension.key} rows={rows} />
-
-          {dimension.key === "rel" && relationshipEdges.length ? (
-            <RelationshipTopologyGraph edges={relationshipEdges} />
-          ) : null}
+          {isRelationshipDimension ? (
+            <RelationshipDimensionGraphSection
+              edges={relationshipEdges}
+              gaps={gaps}
+              rowCount={dataSet?.row_count ?? rows.length}
+            />
+          ) : (
+            <DimensionPrimaryVisual dimensionKey={dimension.key} rows={rows} />
+          )}
 
           <div className="nkh-dashboard-split">
             {insight?.breakdown?.rows?.length ? (
@@ -1094,6 +1100,13 @@ function DimensionView({
             {relationship?.note ??
               "Relationship interpretation is advisory until source evidence is validated."}
           </p>
+          {isRelationshipDimension ? (
+            <RelationshipDimensionGraphSection
+              edges={relationshipEdges}
+              gaps={gaps}
+              rowCount={dataSet?.row_count ?? rows.length}
+            />
+          ) : null}
           <section className="nkh-relationship-card">
             <div className="nkh-chain">
               {(relationship?.chain?.length
@@ -1111,7 +1124,7 @@ function DimensionView({
             This chain shows how the dimension connects across the enterprise.
             Open the Relationships dimension to trace any node end-to-end.
           </div>
-          {relationshipEdges.length ? (
+          {!isRelationshipDimension && relationshipEdges.length ? (
             <RelationshipTopologyGraph edges={relationshipEdges} />
           ) : null}
         </div>
@@ -2693,6 +2706,140 @@ function layoutTopologyWithDagre(
       },
     };
   });
+}
+
+function RelationshipDimensionGraphSection({
+  edges,
+  gaps,
+  rowCount,
+}: {
+  edges: HomeRelationshipEdge[];
+  gaps: HomeKnowledgeGap[];
+  rowCount: number;
+}) {
+  return (
+    <section className="nkh-relationship-graph-section">
+      {edges.length ? (
+        <RelationshipTopologyGraph edges={edges} />
+      ) : (
+        <EmptyState
+          title="Relationship graph is not loaded yet"
+          body="The Relationships dimension has rows, but no validated source-to-target edges are available for a graph view yet."
+        />
+      )}
+      <RelationshipArtOfPossible
+        edges={edges}
+        gaps={gaps}
+        rowCount={rowCount}
+      />
+    </section>
+  );
+}
+
+function RelationshipArtOfPossible({
+  edges,
+  gaps,
+  rowCount,
+}: {
+  edges: HomeRelationshipEdge[];
+  gaps: HomeKnowledgeGap[];
+  rowCount: number;
+}) {
+  const sourceDimensions = new Set(edges.map((edge) => edge.sourceDimension));
+  const hasField = (dimension: string, field: string) =>
+    edges.some(
+      (edge) =>
+        edge.sourceDimension === dimension && edge.sourceField.includes(field),
+    );
+  const opportunities = [
+    {
+      title: "Ownership spine",
+      status: sourceDimensions.has("org") ? "Mapped" : "Add next",
+      why: "Connect business units, functions, accountable owners, and decision rights so every AI or transformation bet has a named executive path.",
+    },
+    {
+      title: "System-to-system integration",
+      status:
+        hasField("apps", "integrations") || hasField("infra", "integrations")
+          ? "Mapped"
+          : "Add next",
+      why: "Show how applications, platforms, data stores, and integration layers depend on each other before Moves changes scope or Tower tracks impact.",
+    },
+    {
+      title: "Vendor-to-system exposure",
+      status: hasField("vendors", "linked_systems") ? "Mapped" : "Add next",
+      why: "Tie third-party spend, renewals, operational risk, and AI/tool ownership to the systems vendors actually support.",
+    },
+    {
+      title: "Process-to-data lineage",
+      status: hasField("data", "systems") ? "Mapped" : "Add next",
+      why: "Trace which process bottlenecks depend on which source systems, data domains, and analytics products.",
+    },
+    {
+      title: "Risk and control propagation",
+      status:
+        sourceDimensions.has("rel") && edges.length ? "Partial" : "Add next",
+      why: "Make gaps visible as connected constraints: missing controls, weak data lineage, evidence blockers, and operating-model dependencies.",
+    },
+    {
+      title: "Outcome and value linkage",
+      status: "Add next",
+      why: "Connect initiatives, expected value, cost pools, KPIs, and Tower realization measures so the graph explains what changes the P&L.",
+    },
+  ];
+  const mappedCount = opportunities.filter((item) =>
+    /mapped|partial/i.test(item.status),
+  ).length;
+  const gapText =
+    gaps
+      .map((gap) => gap.missing || gap.blocks || gap.needed)
+      .filter(Boolean)
+      .slice(0, 2)
+      .join(" ") ||
+    "No relationship-specific gap narrative is loaded yet; use the opportunity map below as the collection plan.";
+
+  return (
+    <section className="nkh-relationship-possible">
+      <div className="nkh-crosstab-head">
+        <strong>What this graph unlocks</strong>
+        <span>
+          {edges.length
+            ? `${edges.length} validated edges are visible today across ${mappedCount} relationship families.`
+            : `${rowCount.toLocaleString()} relationship rows are loaded, but graph-ready edge pairs still need projection.`}
+        </span>
+      </div>
+      <p>
+        A board-grade context layer should not just list records. It should show
+        how ownership, systems, data, vendors, risks, initiatives, and outcomes
+        move together. That is what lets Intelligence answer better than a
+        generic LLM, Moves scope change realistically, Source target the right
+        evidence, and Tower explain value realization.
+      </p>
+      <div className="nkh-relationship-gap-callout">
+        <span>Current expansion signal</span>
+        <strong>{gapText}</strong>
+      </div>
+      <div className="nkh-relationship-possible-grid">
+        {opportunities.map((item) => (
+          <article key={item.title}>
+            <span
+              className={
+                /mapped/i.test(item.status)
+                  ? "is-mapped"
+                  : /partial/i.test(item.status)
+                    ? "is-partial"
+                    : ""
+              }
+            >
+              {item.status}
+            </span>
+            <strong>{item.title}</strong>
+            <p>{item.why}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 /**
@@ -4957,6 +5104,82 @@ const styles = `
   padding: 16px 18px;
   margin-top: 14px;
 }
+.nkh-relationship-graph-section {
+  display: grid;
+  gap: 16px;
+}
+.nkh-relationship-possible {
+  border: 1px solid #ded8cc;
+  border-radius: 12px;
+  background: #fffefa;
+  padding: 18px;
+}
+.nkh-relationship-possible > p {
+  max-width: 980px;
+  margin: 12px 0 14px;
+  color: #34302a;
+  font: 400 14px/1.65 var(--sans);
+}
+.nkh-relationship-gap-callout {
+  display: grid;
+  gap: 6px;
+  border: 1px dashed #d8c394;
+  border-radius: 10px;
+  background: #fbf8f1;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+.nkh-relationship-gap-callout span {
+  color: #86550d;
+  font: 800 9.5px var(--sans);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.nkh-relationship-gap-callout strong {
+  color: #17202e;
+  font: 700 14px/1.55 var(--sans);
+}
+.nkh-relationship-possible-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.nkh-relationship-possible-grid article {
+  min-height: 148px;
+  border: 1px solid #eceae2;
+  border-radius: 10px;
+  background: #fff;
+  padding: 14px 15px;
+}
+.nkh-relationship-possible-grid article > span {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 3px 9px;
+  background: #f7eadb;
+  color: #9a5d10;
+  font: 800 9px var(--sans);
+  letter-spacing: .11em;
+  text-transform: uppercase;
+}
+.nkh-relationship-possible-grid article > span.is-mapped {
+  background: #e6f4ee;
+  color: #14724d;
+}
+.nkh-relationship-possible-grid article > span.is-partial {
+  background: #eef4ff;
+  color: #2458b4;
+}
+.nkh-relationship-possible-grid strong {
+  display: block;
+  margin-top: 10px;
+  color: #17202e;
+  font: 800 14px var(--sans);
+}
+.nkh-relationship-possible-grid p {
+  margin: 8px 0 0;
+  color: #5a636f;
+  font: 400 12.5px/1.5 var(--sans);
+}
 .nkh-topology-canvas {
   height: 420px;
   margin-top: 14px;
@@ -6673,6 +6896,7 @@ const styles = `
   .nkh-signal-list,
   .nkh-interesting-grid,
 	  .nkh-dashboard-grid,
+	  .nkh-relationship-possible-grid,
 	  .nkh-ai-thesis-grid,
 	  .nkh-ai-proofline,
 	  .nkh-source-meta,

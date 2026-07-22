@@ -504,6 +504,7 @@ async function enrichHomeEnterpriseBriefPack(
   const dataByDimension: Record<string, HomeKnowledgeDataSet> = {
     ...(slots.DATA ?? {}),
   };
+  const typedRowsByDimension = new Map<string, HomeKnowledgeRecord[]>();
   for (const row of overlay.dimensionRows) {
     const dimensionKey = String(row.dimension_key ?? "");
     if (!dimensionKey) continue;
@@ -525,6 +526,9 @@ async function enrichHomeEnterpriseBriefPack(
       evidence_refs: readEvidenceRefs(row.evidence_refs),
     };
     const existing = dataByDimension[dimensionKey];
+    const typedRows = typedRowsByDimension.get(dimensionKey) ?? [];
+    typedRows.push(merged);
+    typedRowsByDimension.set(dimensionKey, typedRows);
     dataByDimension[dimensionKey] = {
       columns: existing?.columns?.length
         ? existing.columns
@@ -539,8 +543,8 @@ async function enrichHomeEnterpriseBriefPack(
       source_file: existing?.source_file,
       source_layer: existing?.source_layer ?? "home_knowledge_dimension_rows",
       refreshed_at: existing?.refreshed_at,
-      row_count: (existing?.row_count ?? 0) + 1,
-      rows: [...(existing?.rows ?? []), merged],
+      row_count: typedRows.length,
+      rows: typedRows,
     };
   }
 
