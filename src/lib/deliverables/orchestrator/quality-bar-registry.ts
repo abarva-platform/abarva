@@ -38,7 +38,7 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     // it must not become a 40-page strategy or solution report. Hard ceiling.
     minSections: 7,
     minBodyWords: 900, // ~2 pages
-    targetBodyWordsMax: 3_000, // ~6-8 pages with evidence-backed tables
+    targetBodyWordsMax: 1_600, // ~3-4 pages; a charter is a gate memo, not a report
     enforceMaxAsBlocker: true,
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
