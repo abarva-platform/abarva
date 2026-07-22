@@ -54,6 +54,7 @@ Candidate validation:
 - Pending: ACA deploy and signed-in sandbox proof.
 - Follow-up live finding after PR #5282: saved FS sandbox agent could reach P1 gate approval but received `403 approver authority or higher required` on the new client-approval bridge. This follow-up aligns the P1 bridge with the existing P1 phase-gate authority initialization path.
 - Follow-up live finding after PR #5283: authority initialization was present but ran after the early authorization check. The route now verifies Move-scoped artifact and deliverable phase first, initializes P1 sponsor authority when needed, then enforces the normal approver/sponsor check.
+- Follow-up live finding after PR #5284: P1 generated charter cards are labeled as charter deliverables in the Move File Cabinet, but the underlying orchestrator persistence stores Moves outputs as the generic `move_board_pack` artifact container. The client-approval bridge now resolves the registered deliverable key from artifact metadata / renderable document fields first, then applies a narrow title fallback for `move_board_pack` outputs.
 
 ## Rollout Plan
 
