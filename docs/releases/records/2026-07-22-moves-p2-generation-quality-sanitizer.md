@@ -41,6 +41,8 @@ Follow-up signed-in proof then exposed the next quality-contract issue: once the
 - `src/lib/deliverables/orchestrator/section-generation.ts`
   - Normalizes Open Inputs Required table rows so harvested `[CLIENT TO COMPLETE]`, `TBC`, and `to be confirmed` placeholders become plain client-readable input requests.
   - Marks uncited numeric/date/value claims in Open Inputs Required with an explicit assumption-to-validate label, preventing the table itself from being misread as an unsupported asserted fact.
+- `src/lib/deliverables/client-facing-artifact-sanitize.ts`
+  - Adds a final global sanitizer for bracketed and unbracketed client-completion placeholders that may appear outside the Open Inputs Required table, rewriting them as normal client input requests before the artifact is quality-scored or saved.
 - `src/lib/deliverables/quality/transformation-gates.ts`
   - Allows explicit appendix/evidence-register headings while continuing to block Source Register references in the narrative body.
 - Tests:
@@ -76,6 +78,15 @@ Follow-up signed-in proof then exposed the next quality-contract issue: once the
 - Pass: `npx jest src/lib/deliverables/orchestrator/__tests__/section-generation.test.ts src/lib/deliverables/quality/__tests__/transformation-gates.test.ts src/lib/deliverables/__tests__/client-facing-artifact-sanitize.test.ts --runInBand`
   - Result: 26 passed / 26 total.
   - Notes: Existing duplicate Jest manual-mock warnings still appear.
+- Follow-up live proof after PR #5304 deploy:
+  - Pass: First Capital sandbox P2 Approve & Build queued both P2 deliverables from the signed-in browser.
+  - Pass: Context extract attached eligible Move evidence and excluded candidate preview data.
+  - Fail: Discovery report still blocked with `blocked_missing_inputs: missing_input_handling`.
+  - Root cause: reviewer-visible body text still included `[CLIENT TO COMPLETE: validation owner]` outside the Open Inputs Required table.
+- Pass: `npx jest src/lib/deliverables/__tests__/client-facing-artifact-sanitize.test.ts src/lib/deliverables/quality/__tests__/transformation-gates.test.ts src/lib/deliverables/orchestrator/__tests__/section-generation.test.ts --runInBand`
+  - Result: 27 passed / 27 total.
+  - Notes: Existing duplicate Jest manual-mock warnings still appear.
+- Pass: `npx eslint src/lib/deliverables/client-facing-artifact-sanitize.ts src/lib/deliverables/__tests__/client-facing-artifact-sanitize.test.ts`
 
 ## Rollout Plan
 
@@ -112,6 +123,9 @@ Revert this PR or remove the merged commit from the next ACA image. Rollback res
 - Follow-up PR URL: Pending.
 - Follow-up ACA deployment proof: Pending.
 - Follow-up signed-in browser proof: Pending.
+- PR #5304 live proof bundle:
+  - `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/65-open-input-runtime/65-p2-exact-button-generation-proof.json`
+  - `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/65-open-input-runtime/65-open-input-run-poll-history.json`
 
 ## Known Gaps
 

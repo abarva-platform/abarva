@@ -4,6 +4,12 @@
 // exhibits are otherwise correct.
 
 const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
+  [/\[CLIENT TO COMPLETE:\s*([^\]]+)\]/gi, "Client input required: $1"],
+  [/\bCLIENT TO COMPLETE:\s*/gi, "Client input required: "],
+  [/\bis\s+TBC\b/gi, "requires confirmation"],
+  [/\bis\s+to be confirmed\b/gi, "requires confirmation"],
+  [/\bTBC\b/gi, "requires confirmation"],
+  [/\bto be confirmed\b/gi, "requires confirmation"],
   [/<strong>P([1-5])<\/strong>(\s*[—-])/gi, "<strong>Priority $1</strong>$2"],
   [/<b>P([1-5])<\/b>(\s*[—-])/gi, "<b>Priority $1</b>$2"],
   [/\*\*P([1-5])\*\*(\s*[—-])/g, "**Priority $1**$2"],
