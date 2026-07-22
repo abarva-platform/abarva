@@ -512,7 +512,13 @@ function SourceWorkspace({
   if (workspace === "intelligence") {
     return <IntelligenceWorkspace view={view} stageView={stageView} />;
   }
-  if (workspace === "approvals") return <ApprovalsWorkspace view={view} />;
+  if (workspace === "approvals")
+    return (
+      <ApprovalsWorkspace
+        view={view}
+        onGoToSteps={() => onWorkspaceChange("steps")}
+      />
+    );
   if (workspace === "guidebook") return <GuidebookWorkspace view={view} />;
 
   return (
@@ -1275,11 +1281,38 @@ function ArtifactLifecyclePanel({
   onClientFinalAccepted: () => void;
 }) {
   const lifecycle = view.files.lifecycle;
-  const rowsByStage = groupLifecycleRows(lifecycle.rows);
+  // Default to the stage the user is actually viewing — a wall of every
+  // artifact standard across all 11 stages (most of them not reached yet)
+  // is exactly the "lines and lines of content" this panel should avoid.
+  // One click still reaches every stage when that's genuinely needed.
+  const [showAllStages, setShowAllStages] = useState(false);
+  const visibleLifecycleRows = showAllStages
+    ? lifecycle.rows
+    : lifecycle.rows.filter((row) => row.stageLabel === view.stage.label);
+  const rowsByStage = groupLifecycleRows(visibleLifecycleRows);
   const standardsCsvHref = `data:text/csv;charset=utf-8,${encodeURIComponent(
     buildSourceArtifactStandardsCsv(lifecycle.rows),
   )}`;
   const standardsCsvFilename = `${view.event.code || "source-event"}-artifact-standards.csv`;
+  // The raw quality score is scored against the FULL 11-stage artifact set,
+  // so it's mechanically low for any event that hasn't finished yet — "2/100"
+  // reads as "broken," not "on track," for an event 3 steps into its second
+  // stage. Lead with what's actually due so far instead.
+  const reachedStageLabels = new Set(
+    view.journey.filter((stage) => stage.state !== "future").map((stage) => stage.label),
+  );
+  const rowsDueSoFar = lifecycle.rows.filter((row) =>
+    reachedStageLabels.has(row.stageLabel),
+  );
+  const rowsRegisteredSoFar = rowsDueSoFar.filter(
+    (row) => row.lifecycleState !== "not_registered",
+  );
+  const currentStageLabel =
+    SOURCE_STAGE_LABELS[view.event.currentStageKey] ?? "the current stage";
+  const stageRelativeProgressLabel =
+    rowsDueSoFar.length > 0
+      ? `${rowsRegisteredSoFar.length} of ${rowsDueSoFar.length} artifacts due through ${currentStageLabel} are registered`
+      : null;
   const summaryItems = [
     ["Quality score", `${lifecycle.quality.score}/100`],
     ["Hard fails", String(lifecycle.quality.hardFailCount)],
@@ -1346,6 +1379,22 @@ function ArtifactLifecyclePanel({
             client-final version is accepted back into Source as the
             authoritative artifact of record.
           </p>
+          {stageRelativeProgressLabel ? (
+            <p
+              data-testid="source-artifact-stage-relative-progress"
+              style={{
+                margin: "8px 0 0",
+                color: ANALYTICS.INK,
+                fontSize: 13,
+                fontWeight: 800,
+                lineHeight: 1.4,
+              }}
+            >
+              {stageRelativeProgressLabel} — the quality score below is
+              scored against the full 11-stage set, so it stays low by
+              design until the event nears completion.
+            </p>
+          ) : null}
           <p
             data-testid="source-artifact-quality-scope"
             style={{
@@ -1359,22 +1408,50 @@ function ArtifactLifecyclePanel({
             Quality rubric: {lifecycle.quality.label}.{" "}
             {lifecycle.quality.scopeLabel}
           </p>
-          <a
-            href={standardsCsvHref}
-            download={standardsCsvFilename}
-            data-testid="source-artifact-standards-export"
+          <div
             style={{
-              ...BUTTON_STYLE,
-              display: "inline-flex",
+              display: "flex",
               alignItems: "center",
-              gap: 7,
+              gap: 10,
               marginTop: 12,
-              padding: "9px 12px",
-              textDecoration: "none",
+              flexWrap: "wrap",
             }}
           >
-            Export standards CSV
-          </a>
+            <a
+              href={standardsCsvHref}
+              download={standardsCsvFilename}
+              data-testid="source-artifact-standards-export"
+              style={{
+                ...BUTTON_STYLE,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                padding: "9px 12px",
+                textDecoration: "none",
+              }}
+            >
+              Export standards CSV
+            </a>
+            <button
+              type="button"
+              data-testid="source-artifact-lifecycle-scope-toggle"
+              onClick={() => setShowAllStages((value) => !value)}
+              style={{
+                border: "none",
+                background: "none",
+                color: ANALYTICS.BLUE,
+                fontFamily: ANALYTICS.SANS,
+                fontSize: 12.5,
+                fontWeight: 700,
+                cursor: "pointer",
+                padding: "9px 4px",
+              }}
+            >
+              {showAllStages
+                ? `Show ${view.stage.label} only`
+                : `Show all 11 stages`}
+            </button>
+          </div>
         </div>
         <div
           style={{
@@ -1427,14 +1504,22 @@ function ArtifactLifecyclePanel({
           overflow: "visible",
         }}
       >
-        {rowsByStage.map((group) => (
-          <LifecycleStageRows
-            key={group.stageLabel}
-            eventId={view.event.id}
-            group={group}
-            onClientFinalAccepted={onClientFinalAccepted}
-          />
-        ))}
+        {rowsByStage.length === 0 ? (
+          <div style={{ padding: 16 }}>
+            <EmptyCard
+              text={`No artifact standards are defined for ${view.stage.label} yet.`}
+            />
+          </div>
+        ) : (
+          rowsByStage.map((group) => (
+            <LifecycleStageRows
+              key={group.stageLabel}
+              eventId={view.event.id}
+              group={group}
+              onClientFinalAccepted={onClientFinalAccepted}
+            />
+          ))
+        )}
       </div>
     </section>
   );
@@ -1591,7 +1676,14 @@ function LifecycleStageRows({
                 {row.quality.hardFails[0] ?? row.quality.warnings[0]}
               </div>
             ) : null}
-            {row.contentQuality.state !== "passed" ? (
+            {row.contentQuality.blockers[0] ??
+            row.contentQuality.warnings[0] ??
+            null ? (
+              // Real per-row blockers/warnings only. The not-scored case's
+              // explanation is already shown once, for the whole panel, in
+              // the "Quality rubric" scope line above — repeating the exact
+              // same sentence on every not-yet-registered row (often 25+ of
+              // them) was pure scroll-noise with zero new information.
               <div
                 style={{
                   marginTop: 8,
@@ -1602,9 +1694,7 @@ function LifecycleStageRows({
                   fontSize: 11.5,
                 }}
               >
-                {row.contentQuality.blockers[0] ??
-                  row.contentQuality.warnings[0] ??
-                  row.contentQuality.nextAction}
+                {row.contentQuality.blockers[0] ?? row.contentQuality.warnings[0]}
               </div>
             ) : null}
             {row.lifecycleState === "ai_draft" ? (
@@ -1675,7 +1765,13 @@ function IntelligenceWorkspace({
   );
 }
 
-function ApprovalsWorkspace({ view }: { view: SourceEventShellView }) {
+function ApprovalsWorkspace({
+  view,
+  onGoToSteps,
+}: {
+  view: SourceEventShellView;
+  onGoToSteps: () => void;
+}) {
   return (
     <section data-testid="source-shell-v2-approvals">
       <WorkspaceTitle
@@ -1684,7 +1780,11 @@ function ApprovalsWorkspace({ view }: { view: SourceEventShellView }) {
         subtitle="The workflow prepares the evidence; this page records the approval decision."
       />
       {view.approvals.currentStageItem ? (
-        <ApprovalCard item={view.approvals.currentStageItem} featured />
+        <ApprovalCard
+          item={view.approvals.currentStageItem}
+          featured
+          onGoToSteps={onGoToSteps}
+        />
       ) : (
         <EmptyCard text={view.approvals.readinessLine} />
       )}
@@ -2262,10 +2362,26 @@ function FileCard({
 function ApprovalCard({
   item,
   featured = false,
+  onGoToSteps,
 }: {
   item: ApprovalsInboxItem;
   featured?: boolean;
+  onGoToSteps?: () => void;
 }) {
+  // The featured card's stage-gate href always points at the page the user
+  // is already viewing (this event, this stage) — a <Link> there is a
+  // same-URL nav that visibly does nothing. The real decision controls for a
+  // stage gate live in the Steps workspace, so switch tabs there instead.
+  // Intake approvals keep their real, distinct /approval decision page.
+  const goToStepsInstead =
+    featured && item.kind === "stage_gate" && Boolean(onGoToSteps);
+  const buttonStyle = {
+    ...BUTTON_STYLE,
+    padding: "10px 12px",
+    textDecoration: "none",
+    flexShrink: 0,
+  } as const;
+
   return (
     <section
       style={{
@@ -2291,17 +2407,20 @@ function ApprovalCard({
             {item.readiness}
           </div>
         </div>
-        <Link
-          href={item.href}
-          style={{
-            ...BUTTON_STYLE,
-            padding: "10px 12px",
-            textDecoration: "none",
-            flexShrink: 0,
-          }}
-        >
-          {item.actionLabel}
-        </Link>
+        {goToStepsInstead ? (
+          <button
+            type="button"
+            data-testid="source-approval-card-go-to-steps"
+            onClick={onGoToSteps}
+            style={buttonStyle}
+          >
+            Go to steps to decide
+          </button>
+        ) : (
+          <Link href={item.href} style={buttonStyle}>
+            {item.actionLabel}
+          </Link>
+        )}
       </div>
     </section>
   );
