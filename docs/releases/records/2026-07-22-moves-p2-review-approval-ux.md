@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -44,20 +44,33 @@ The signed-in First Capital sandbox Move exposed a confusing P2 review workflow:
   - Result: 44 passed / 44 total.
   - Notes: Existing duplicate Jest mock warnings and an existing `EvidenceUploadControl` act warning still appear; neither is introduced by this change.
 - Pass: `npx eslint src/components/strategic-moves/MovesPhaseStandaloneClient.tsx src/components/strategic-moves/CurrentStateReadinessPanel.tsx src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx`
+- Pass: `npm run release:check`
+- Pass: `git diff --check`
+- Warning: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`
+  - Result: Failed on pre-existing Home optional dependency resolution for `@xyflow/react` and `@dagrejs/dagre`; no Moves-specific type errors surfaced before that stop.
+- Pass: Signed-in production browser proof against the First Capital sandbox Move after deploy.
+  - Review Findings showed `6 APPROVED EVIDENCE ITEMS`.
+  - Approve & Build showed `Gate blocked · 3/5 hard met · Approve & Build`.
+  - The stale label `100% ready · Approve & Build` was absent.
+  - No browser console errors or failed non-prefetch network requests were observed.
 
 ## Rollout Plan
 
-Merge through PR to `main`. The repo-owned ACA deploy workflow should build and deploy the exact merge SHA to `ca-abarva-web-lab-eastus`. After deployment, verify the ACA runtime invariant and rerun the signed-in First Capital P2 review page check.
+Merged through PR to `main`. The repo-owned ACA deploy workflow built and deployed the exact merge SHA to `ca-abarva-web-lab-eastus`. The ACA runtime invariant was verified and the signed-in First Capital P2 review page check was rerun after deploy.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: None outside the repo-owned deploy workflow.
-- Approved image digest: Pending deploy.
-- ACA runtime invariant: Pending deploy.
+- PR URL: https://github.com/abarva-platform/abarva/pull/5289
+- Merge SHA: `3c256b3cc5496c9c3297335a7fb5f768ddff70b5`
+- Deploy workflow run: https://github.com/abarva-platform/abarva/actions/runs/29911309077
+- Approved image digest: `sha256:d7bc2a00462d06883fc8c6b45f38e186b1dc3e9d80e5ac1e5e1c4e773efc91bb`
+- ACA revision: `ca-abarva-web-lab-eastus--m3c256b3c`
+- ACA runtime invariant: Passed; 100% traffic was assigned to the approved revision/image.
 - Worker image invariant: Not affected.
 - Feature/env flag update path: Not affected.
-- Live signed-in proof required: Yes, First Capital sandbox Move P2 Review Findings and Approve & Build views.
+- Live signed-in proof required: Completed against First Capital sandbox Move P2 Review Findings and Approve & Build views.
 
 ## Rollback Plan
 
@@ -69,9 +82,12 @@ Revert this PR or remove the merged commit from the next ACA image. Backend evid
   - `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/33-35-p2-post-ingest-ui-proof.json`
   - `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/36-38-p2-current-state-review-approval-proof.json`
   - `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/46-p2-inpage-generation-poll-proof.json`
-- PR URL: Pending.
-- ACA deployment proof: Pending.
-- Signed-in browser proof after deploy: Pending.
+- Post-deploy signed-in proof:
+  - `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/47-post-ux-hotfix-p2-page-proof.json`
+  - `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/47-post-ux-hotfix-p2-page-playwright.png`
+  - `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/48-49-post-ux-hotfix-p2-workflow-proof.json`
+  - `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/48-post-ux-hotfix-p2-review-findings.png`
+  - `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/49-post-ux-hotfix-p2-approve-build.png`
 
 ## Known Gaps
 
