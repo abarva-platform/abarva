@@ -33,6 +33,7 @@ Source now has a governed writeback path that can project eligible typed Source 
 - `src/lib/source/context-writeback/__tests__/source-context-writeback.test.ts`: Regression coverage for eligibility, deterministic replay IDs, readiness status, persistence mapping, and store failure handling.
 - Follow-up runtime fix: the operator script uses a narrow Source event resolver instead of importing the full route query module, so the deployed ACA job runtime does not trip `server-only` under `tsx`.
 - Follow-up data-shape fix: the writeback planner accepts finite numeric values returned from Azure/Postgres as strings, so valid cited numeric facts are not skipped as `missing_value`.
+- Follow-up operator-job fix: the script accepts `SOURCE_WRITEBACK_CLIENT_KEY`, `SOURCE_WRITEBACK_EVENT_ID`, `SOURCE_WRITEBACK_APPLY`, and `SOURCE_WRITEBACK_OUT_DIR` env vars so the approved ACA operator-job wrapper can run dry-run/apply without unsupported npm pass-through arguments.
 
 ## QA / Validation
 
@@ -50,7 +51,12 @@ Source now has a governed writeback path that can project eligible typed Source 
 - PASS — Numeric coercion fix validation: `npx eslint src/lib/source/context-writeback` passed.
 - PASS — Numeric coercion fix validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` passed.
 - PASS — Numeric coercion fix validation: `npm run release:check` passed.
-- NOT RUN — Operator dry-run against live Azure/Postgres: expected to run from a VNet-visible ACA/operator context if local network cannot reach the private data plane.
+- PASS — Runtime dry-run after numeric coercion deploy: `az containerapp exec ... npm run source:enterprise-context:writeback -- --client-key lakeshore --event-id c05872d8-0465-4bc8-8eeb-ff3d42ac6761` executed on revision `ca-abarva-web-lab-eastus--mcaf85929` with `factsRead=14`, `eligible=14`, `skipped=0`, and `writeStatus=not_applied`.
+- PASS — Operator-job env support validation: `SOURCE_WRITEBACK_CLIENT_KEY=lakeshore SOURCE_WRITEBACK_EVENT_ID=c05872d8-0465-4bc8-8eeb-ff3d42ac6761 npm run source:enterprise-context:writeback -- --help` showed env-driven usage.
+- PASS — Operator-job env support validation: `npx eslint src/scripts/source/writeback-source-facts-to-enterprise-context.ts` passed.
+- PASS — Operator-job env support validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` passed.
+- PASS — Operator-job env support validation: `npm run release:check` passed.
+- NOT RUN — Operator-job apply after env support: pending merge/deploy of the env-driven script. Apply must run through the approved ACA operator-job lane, not web-container exec.
 
 ## Rollout Plan
 

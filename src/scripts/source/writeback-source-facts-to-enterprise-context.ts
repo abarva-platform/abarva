@@ -69,13 +69,25 @@ function valueAfter(args: readonly string[], flag: string): string | null {
 function parseArgs(): CliOptions {
   const args = process.argv.slice(2);
   const clientKey =
-    valueAfter(args, "--client-key") ?? valueAfter(args, "--client");
-  const eventId = valueAfter(args, "--event-id") ?? valueAfter(args, "--event");
+    valueAfter(args, "--client-key") ??
+    valueAfter(args, "--client") ??
+    process.env.SOURCE_WRITEBACK_CLIENT_KEY ??
+    process.env.SOURCE_CONTEXT_WRITEBACK_CLIENT_KEY;
+  const eventId =
+    valueAfter(args, "--event-id") ??
+    valueAfter(args, "--event") ??
+    process.env.SOURCE_WRITEBACK_EVENT_ID ??
+    process.env.SOURCE_CONTEXT_WRITEBACK_EVENT_ID;
+  const apply =
+    args.includes("--apply") ||
+    process.env.SOURCE_WRITEBACK_APPLY === "true" ||
+    process.env.SOURCE_CONTEXT_WRITEBACK_APPLY === "true";
   if (!clientKey || !eventId || args.includes("--help")) {
     throw new Error(
       [
         "Usage:",
         "  npm run source:enterprise-context:writeback -- --client-key <tenant> --event-id <uuid|code|slug> [--apply] [--out-dir <dir>]",
+        "  SOURCE_WRITEBACK_CLIENT_KEY=<tenant> SOURCE_WRITEBACK_EVENT_ID=<uuid|code|slug> npm run source:enterprise-context:writeback",
         "",
         "Default is dry-run. Use --apply only through the approved ACA operator-job lane.",
       ].join("\n"),
@@ -84,9 +96,11 @@ function parseArgs(): CliOptions {
   return {
     clientKey: canonicalTenantKey(clientKey),
     eventId,
-    apply: args.includes("--apply"),
+    apply,
     outDir:
       valueAfter(args, "--out-dir") ??
+      process.env.SOURCE_WRITEBACK_OUT_DIR ??
+      process.env.SOURCE_CONTEXT_WRITEBACK_OUT_DIR ??
       "reports/source-enterprise-context-writeback/latest",
   };
 }
