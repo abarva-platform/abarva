@@ -1,6 +1,7 @@
 import { getActiveClientRow } from "@/lib/active-client";
 import { getTenantPendingChunks } from "@/lib/context-ingestion/tenant-context-read-model";
 import {
+  buildMovesLearningReviewPacket,
   getMovesLearningReviewQueue,
   type MovesLearningReviewCandidate,
   type MovesLearningReviewQueue,
@@ -121,84 +122,180 @@ function MovesLearningQueueSection({
         </div>
       ) : (
         <div style={{ display: "grid", gap: 10 }}>
-          {queue.candidates.map((candidate) => (
-            <article
-              key={candidate.id}
-              style={{
-                border: "1px solid #e3decf",
-                borderRadius: 8,
-                background: "#ffffff",
-                padding: 14,
-                display: "grid",
-                gap: 10,
-              }}
-            >
-              <div
+          {queue.candidates.map((candidate) => {
+            const reviewPacket = buildMovesLearningReviewPacket(candidate);
+            return (
+              <article
+                key={candidate.id}
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 16,
-                  alignItems: "flex-start",
+                  border: "1px solid #e3decf",
+                  borderRadius: 8,
+                  background: "#ffffff",
+                  padding: 14,
+                  display: "grid",
+                  gap: 12,
                 }}
               >
-                <div>
-                  <div style={{ color: "#6b665c", fontSize: 12 }}>
-                    {phaseLabel(candidate.phase)} · {candidate.sourceBasis}
-                  </div>
-                  <h3 style={{ margin: "4px 0", fontSize: 17 }}>
-                    {candidate.title}
-                  </h3>
-                  <p style={{ margin: 0, color: "#514c43", lineHeight: 1.5 }}>
-                    {candidate.summary}
-                  </p>
-                </div>
-                <span
+                <div
                   style={{
-                    border: "1px solid #f3c27a",
-                    borderRadius: 999,
-                    color: "#8a4b00",
-                    background: "#fff7e8",
-                    padding: "5px 9px",
-                    whiteSpace: "nowrap",
-                    fontSize: 12,
-                    fontWeight: 700,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 16,
+                    alignItems: "flex-start",
                   }}
                 >
-                  Review required
-                </span>
-              </div>
-              <dl
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "130px 1fr 130px 1fr",
-                  gap: "8px 12px",
-                  margin: 0,
-                  color: "#34312b",
-                  fontSize: 13,
-                }}
-              >
-                <dt style={{ color: "#6b665c" }}>Move</dt>
-                <dd style={{ margin: 0 }}>
-                  {candidate.moveName ?? candidate.moveId ?? "Unknown"}
-                </dd>
-                <dt style={{ color: "#6b665c" }}>Status</dt>
-                <dd style={{ margin: 0 }}>{renderCandidateStatus(candidate)}</dd>
-                <dt style={{ color: "#6b665c" }}>Source ID</dt>
-                <dd style={{ margin: 0 }}>{candidate.sourceId ?? "Unknown"}</dd>
-                <dt style={{ color: "#6b665c" }}>Evidence refs</dt>
-                <dd style={{ margin: 0 }}>
-                  {candidate.evidenceRefs.length > 0
-                    ? candidate.evidenceRefs.join(", ")
-                    : "None recorded"}
-                </dd>
-              </dl>
-              {candidate.confidenceRationale ? (
-                <p style={{ margin: 0, color: "#6b665c", fontSize: 13 }}>
-                  {candidate.confidenceRationale}
-                </p>
-              ) : null}
-            </article>
-          ))}
+                  <div>
+                    <div style={{ color: "#6b665c", fontSize: 12 }}>
+                      {phaseLabel(candidate.phase)} · {candidate.sourceBasis}
+                    </div>
+                    <h3 style={{ margin: "4px 0", fontSize: 17 }}>
+                      {candidate.title}
+                    </h3>
+                    <p style={{ margin: 0, color: "#514c43", lineHeight: 1.5 }}>
+                      {candidate.summary}
+                    </p>
+                  </div>
+                  <span
+                    style={{
+                      border: "1px solid #f3c27a",
+                      borderRadius: 999,
+                      color: "#8a4b00",
+                      background: "#fff7e8",
+                      padding: "5px 9px",
+                      whiteSpace: "nowrap",
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {reviewPacket.actionLabel}
+                  </span>
+                </div>
+                <dl
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "130px 1fr 130px 1fr",
+                    gap: "8px 12px",
+                    margin: 0,
+                    color: "#34312b",
+                    fontSize: 13,
+                  }}
+                >
+                  <dt style={{ color: "#6b665c" }}>Move</dt>
+                  <dd style={{ margin: 0 }}>
+                    {candidate.moveName ?? candidate.moveId ?? "Unknown"}
+                  </dd>
+                  <dt style={{ color: "#6b665c" }}>Status</dt>
+                  <dd style={{ margin: 0 }}>{renderCandidateStatus(candidate)}</dd>
+                  <dt style={{ color: "#6b665c" }}>Source ID</dt>
+                  <dd style={{ margin: 0 }}>{candidate.sourceId ?? "Unknown"}</dd>
+                  <dt style={{ color: "#6b665c" }}>Evidence refs</dt>
+                  <dd style={{ margin: 0 }}>
+                    {candidate.evidenceRefs.length > 0
+                      ? candidate.evidenceRefs.join(", ")
+                      : "None recorded"}
+                  </dd>
+                </dl>
+
+                <div
+                  style={{
+                    border: "1px solid #dbe7f3",
+                    borderRadius: 8,
+                    background: "#f8fbff",
+                    padding: 12,
+                    display: "grid",
+                    gap: 10,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <strong style={{ display: "block", marginBottom: 4 }}>
+                        Steward review packet
+                      </strong>
+                      <p
+                        style={{
+                          margin: 0,
+                          color: "#435166",
+                          fontSize: 13,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {reviewPacket.whyHere}
+                      </p>
+                    </div>
+                    <div>
+                      <strong style={{ display: "block", marginBottom: 4 }}>
+                        Safe next step
+                      </strong>
+                      <p
+                        style={{
+                          margin: 0,
+                          color: "#435166",
+                          fontSize: 13,
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {reviewPacket.safeNextStep}
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div style={{ color: "#6b665c", fontSize: 12 }}>
+                        Inspect
+                      </div>
+                      <ul style={{ margin: "4px 0 0 18px", padding: 0 }}>
+                        {reviewPacket.inspect.map((item) => (
+                          <li key={item} style={{ fontSize: 13, lineHeight: 1.5 }}>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <div style={{ color: "#6b665c", fontSize: 12 }}>
+                        Blocks active use
+                      </div>
+                      <ul style={{ margin: "4px 0 0 18px", padding: 0 }}>
+                        {reviewPacket.blockers.length > 0 ? (
+                          reviewPacket.blockers.map((item) => (
+                            <li
+                              key={item}
+                              style={{ fontSize: 13, lineHeight: 1.5 }}
+                            >
+                              {item}
+                            </li>
+                          ))
+                        ) : (
+                          <li style={{ fontSize: 13, lineHeight: 1.5 }}>
+                            No deterministic blocker found; still requires
+                            steward sign-off before active context use.
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {candidate.confidenceRationale ? (
+                  <p style={{ margin: 0, color: "#6b665c", fontSize: 13 }}>
+                    {candidate.confidenceRationale}
+                  </p>
+                ) : null}
+              </article>
+            );
+          })}
         </div>
       )}
     </section>
