@@ -3,6 +3,7 @@ import {
   evaluatePromotion,
   type ReadinessRow,
 } from "@/lib/governance/promotion-evaluator";
+import { APPLICABLE_AGENTS } from "@/lib/governance/context-corpus-policy";
 import { canonicalTenantKey, tenantAliasesFor } from "@/lib/tenant/aliases";
 
 import {
@@ -253,15 +254,44 @@ function toPromotionReadinessRow(
   };
 }
 
-function missingEligibilityReasons(row: ReadinessRow): string[] {
+const APPLICABLE_AGENT_SET = new Set<string>(APPLICABLE_AGENTS);
+const APPLICABLE_AGENT_HINT =
+  "expected canonical ids include nexus, tower, and steward";
+
+function applicableAgentEligibilityBlocker(row: ReadinessRow): string | null {
+  const agents = row.applicable_agents ?? [];
+  if (agents.length === 0) {
+    return `Applicable-agent metadata is missing; ${APPLICABLE_AGENT_HINT}.`;
+  }
+
+  const invalidAgents = agents.filter(
+    (agent) => !APPLICABLE_AGENT_SET.has(agent),
+  );
+  if (invalidAgents.length > 0) {
+    return `Applicable-agent metadata contains legacy/non-canonical values (${invalidAgents.join(", ")}); ${APPLICABLE_AGENT_HINT}.`;
+  }
+
+  return null;
+}
+
+function promotionEligibilityBlockers(row: ReadinessRow): string[] {
   const evaluation = evaluatePromotion(row);
   const criteria = evaluation.criteria;
-  const missing: string[] = [];
-  if (!criteria.source_basis_present) missing.push("source basis");
-  if (!criteria.confidence_present) missing.push("confidence");
-  if (!criteria.provenance_present) missing.push("provenance");
-  if (!criteria.applicable_agents_valid) missing.push("valid applicable agents");
-  return missing;
+  const blockers: string[] = [];
+  if (!criteria.source_basis_present) {
+    blockers.push("Source basis is missing.");
+  }
+  if (!criteria.confidence_present) {
+    blockers.push("Confidence level is missing.");
+  }
+  if (!criteria.provenance_present) {
+    blockers.push("Provenance is missing.");
+  }
+  const agentBlocker = applicableAgentEligibilityBlocker(row);
+  if (!criteria.applicable_agents_valid && agentBlocker) {
+    blockers.push(agentBlocker);
+  }
+  return blockers;
 }
 
 export function buildMovesLearningReviewPacket(
@@ -301,8 +331,10 @@ export function buildMovesLearningReviewPacket(
   if (candidate.policyValidationStatus !== "pass") {
     blockers.push("Context/corpus policy has not passed.");
   }
-  for (const missing of missingEligibilityReasons(toPromotionReadinessRow(candidate))) {
-    blockers.push(`Missing ${missing}; canonical promotion eligibility is incomplete.`);
+  for (const blocker of promotionEligibilityBlockers(
+    toPromotionReadinessRow(candidate),
+  )) {
+    blockers.push(`${blocker} Canonical promotion eligibility is incomplete.`);
   }
   if (candidate.readinessStatus !== "agent_ready") {
     blockers.push("Not agent-ready; held for stewardship.");
@@ -415,7 +447,7 @@ export function buildMovesLearningPromotionPreview(
       status: eligibilityReady ? "pass" : "blocked",
       detail: eligibilityReady
         ? "Source basis, confidence, provenance, and applicable-agent metadata are present."
-        : `Missing ${missingEligibilityReasons(readinessRow).join(", ")} before this can enter active context.`,
+        : `${promotionEligibilityBlockers(readinessRow).join(" ")} This cannot enter active context until canonical metadata is repaired and steward-reviewed.`,
     },
     {
       label: "Azure retrieval index",
