@@ -156,6 +156,91 @@ describe("AgentAnswerRenderer", () => {
     expect(container.querySelector("[data-chart-renderer='svg']")).toBeNull();
   });
 
+  it("renders value-proof waterfall charts as an executive proof ladder", () => {
+    const chart: AnswerChart = {
+      id: "chart-value-proof",
+      kind: "horizontal-bar",
+      title: "AI Investment Value Waterfall — FY26 Posture by Stage",
+      subtitle:
+        "Promise, partial validation, and claimable value are distinct states.",
+      xKey: "stage",
+      yKey: "amount",
+      unit: "usd",
+      data: {
+        type: "horizontal-bar",
+        xKey: "stage",
+        yKey: "amount",
+        unit: "usd",
+        data: [
+          {
+            stage: "FY26 AI-tagged committed spend",
+            amount: 53_700_000,
+            claim_status: "Committed — not yet measured",
+          },
+          {
+            stage: "Forecast value commitment",
+            amount: 35_500_000,
+            claim_status: "Forecast / planning only",
+          },
+          {
+            stage: "Finance-validated partial value",
+            amount: 3_800_000,
+            claim_status: "Partial — attestation pending",
+          },
+          {
+            stage: "Finance-attested realized value",
+            amount: 0,
+            claim_status: "Blocked — no realized value allowed",
+          },
+        ],
+      },
+      citationIds: ["c1"],
+    };
+
+    const { container } = render(
+      <AnswerChartRenderer chart={chart} citations={citations} />,
+    );
+
+    expect(
+      container.querySelector("[data-chart-exhibit='value-proof-ladder']"),
+    ).not.toBeNull();
+    expect(screen.getByLabelText("Value proof ladder")).toBeInTheDocument();
+    expect(screen.getByText("$53.7M")).toBeInTheDocument();
+    expect(screen.getByText("$35.5M")).toBeInTheDocument();
+    expect(screen.getByText("$3.8M")).toBeInTheDocument();
+    expect(
+      screen.getByText("Blocked — no realized value allowed"),
+    ).toBeInTheDocument();
+  });
+
+  it("adds executive quadrant guidance to portfolio matrix charts", () => {
+    const chart: AnswerChart = {
+      id: "chart-quadrant-guided",
+      kind: "quadrant-matrix",
+      title: "AI portfolio value versus readiness",
+      data: {
+        points: [
+          { label: "Copilot productivity", x: 72, y: 78 },
+          { label: "ServiceNow AI", x: 58, y: 62 },
+          { label: "Member service AI Assist", x: 32, y: 84 },
+        ],
+      },
+      citationIds: ["c1"],
+    };
+
+    const { container } = render(
+      <AnswerChartRenderer chart={chart} citations={citations} />,
+    );
+
+    expect(
+      container.querySelector("[data-chart-exhibit='portfolio-quadrant']"),
+    ).not.toBeNull();
+    expect(screen.getByLabelText("Quadrant guide")).toBeInTheDocument();
+    expect(screen.getByText("Scale with proof")).toBeInTheDocument();
+    expect(screen.getByText("Fix adoption first")).toBeInTheDocument();
+    expect(screen.getByText("Freeze or stop")).toBeInTheDocument();
+  });
+
   it("renders a typed AnswerTable with formatting and citations", () => {
     const table: AnswerTable = {
       id: "table-1",
@@ -323,7 +408,8 @@ describe("AgentAnswerRenderer", () => {
       screen.getByRole("button", { name: "Export PDF" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Dependency graph")).toBeInTheDocument();
-    expect(screen.getByText("2 nodes · 1 links")).toBeInTheDocument();
+    expect(screen.getByText("Relationship map")).toBeInTheDocument();
+    expect(screen.queryByText(/nodes ·/i)).not.toBeInTheDocument();
     expect(screen.getByLabelText("Dependency graph")).toBeInTheDocument();
     expect(screen.queryByText("F12 IT budget")).not.toBeInTheDocument();
   });
@@ -488,5 +574,49 @@ describe("AgentAnswerRenderer", () => {
     expect(visibleText).not.toMatch(/\bsupporting material\b/i);
     expect(visibleText).toContain("business areas");
     expect(visibleText).toContain("business signals");
+  });
+
+  it("removes numeric substrate counts from CXO-visible prose", () => {
+    const answer: AvaAnswerPacket = {
+      surface: "tower",
+      mode: "ANALYZE",
+      tenantKey: "meridian-health",
+      question: "What should the CIO do next?",
+      intent: "recommendation",
+      status: "answered",
+      directAnswer:
+        "Tower is using 300 rows, 500 facts, 800 edges, and 42 nodes. The business issue is that AI value is still gated until usage and finance validation improve.",
+      factsUsed: [],
+      metricsUsed: [],
+      relationshipsUsed: [],
+      expertsUsed: [],
+      artifacts: [],
+      citations: [],
+      gaps: [],
+      caveats: [],
+      nextSteps: [],
+      quality: {
+        confidence: "medium",
+        evidenceStrength: "partial",
+        tenantGrounding: "partial",
+        answerCompleteness: "partial",
+      },
+      safety: {
+        tenantFencePassed: true,
+        rawIdsSuppressed: true,
+        forbiddenLanguagePassed: true,
+        unsupportedClaimsBlocked: true,
+      },
+    };
+
+    const { container } = render(<AgentAnswerRenderer answer={answer} />);
+    const visibleText = container.textContent ?? "";
+
+    expect(visibleText).toContain(
+      "The business issue is that AI value is still gated",
+    );
+    expect(visibleText).not.toMatch(
+      /\b\d[\d,]*\s+(?:rows?|facts?|edges?|nodes?)\b/i,
+    );
   });
 });

@@ -16,6 +16,7 @@ import {
   LabelList,
   Line,
   LineChart,
+  ReferenceArea,
   ReferenceLine,
   Scatter,
   ScatterChart,
@@ -73,6 +74,23 @@ const CSS = `
 .agentAnswer .aaChartKeyItem{display:flex;gap:7px;min-width:0}
 .agentAnswer .aaChartKeyIndex{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;flex:0 0 auto;border-radius:999px;background:#e8f3ed;color:#166534;font-size:10px;font-weight:900}
 .agentAnswer .aaChartKeyLabel{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.agentAnswer .aaValueProofExhibit{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(220px,.55fr);gap:14px;padding:16px;background:radial-gradient(circle at 12% 0%,#ffffff 0,#ffffff 38%,#fbfcfd 100%)}
+.agentAnswer .aaValueProofChart{border:1px solid var(--aa-line);border-radius:10px;overflow:hidden;background:#fff}
+.agentAnswer .aaValueProofChart .aaRechart{border:0;box-shadow:none;background:transparent;padding:14px 16px 10px}
+.agentAnswer .aaProofLadder{display:grid;gap:8px;align-content:start}
+.agentAnswer .aaProofStep{display:grid;gap:6px;border:1px solid var(--aa-line);border-radius:10px;background:#fff;padding:10px 11px;box-shadow:0 8px 22px rgba(16,24,40,.06)}
+.agentAnswer .aaProofStep[data-posture='blocked'],.agentAnswer .aaProofStep[data-posture='gated']{border-color:#f0c7c7;background:#fff8f8}
+.agentAnswer .aaProofStep[data-posture='partial'],.agentAnswer .aaProofStep[data-posture='validate']{border-color:#ead4a8;background:#fffaf0}
+.agentAnswer .aaProofStep[data-posture='claimable'],.agentAnswer .aaProofStep[data-posture='scale']{border-color:#b9dac6;background:#f6fbf8}
+.agentAnswer .aaProofStepTop{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.agentAnswer .aaProofStepLabel{font-size:12px;font-weight:850;line-height:1.25}
+.agentAnswer .aaProofStepValue{font-family:var(--font-geist-mono),ui-monospace,monospace;font-size:12px;font-weight:900;white-space:nowrap;color:#111827}
+.agentAnswer .aaProofStepMeta{font-size:11px;line-height:1.3;color:var(--aa-muted)}
+.agentAnswer .aaProofTrack{height:6px;border-radius:999px;background:#e7e5df;overflow:hidden}
+.agentAnswer .aaProofTrackFill{height:100%;border-radius:999px;background:#166534}
+.agentAnswer .aaQuadrantLabels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:0 18px 10px}
+.agentAnswer .aaQuadrantLabel{border:1px solid var(--aa-line);border-radius:9px;background:#fff;padding:8px 9px;color:var(--aa-muted);font-size:11px;line-height:1.3}
+.agentAnswer .aaQuadrantLabel strong{display:block;color:var(--aa-ink);font-size:12px}
 .agentAnswer .aaGraphSvg{display:block;width:100%;height:auto;background:radial-gradient(circle at 50% 0%,#ffffff 0,#ffffff 48%,#f8fafc 100%)}
 .agentAnswer .aaGraphNode{fill:#f6fbf8;stroke:#b9dac6;stroke-width:1.5;filter:drop-shadow(0 2px 4px rgba(17,24,39,.08))}
 .agentAnswer .aaGraphEdge{stroke:#738091;stroke-width:1.5;marker-end:url(#aaArrow)}
@@ -92,6 +110,7 @@ const CSS = `
 .agentAnswer .aaNote,.agentAnswer .aaCitations{padding:10px 12px;border-top:1px solid var(--aa-line);color:var(--aa-muted);font-size:12px}
 .agentAnswer .aaCitations{display:flex;flex-wrap:wrap;gap:7px;background:var(--aa-soft)}
 .agentAnswer .aaCitation{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--aa-line);border-radius:999px;background:var(--aa-paper);padding:3px 8px;color:var(--aa-muted);text-decoration:none}
+@media (max-width: 820px){.agentAnswer .aaValueProofExhibit{grid-template-columns:1fr}.agentAnswer .aaQuadrantLabels{grid-template-columns:1fr}.agentAnswer .aaChartHead{align-items:flex-start}.agentAnswer .aaArtifactBadge{white-space:normal;text-align:right}}
 `;
 
 type SvgBuilderName = Extract<keyof typeof SvgCharts, string>;
@@ -606,6 +625,69 @@ function formatRechartValue(value: unknown, unit?: string): string {
   }).format(value);
 }
 
+function normalizePosture(value: unknown): string {
+  const text = String(value ?? "").toLowerCase();
+  if (
+    /\b(block|gate|freeze|stop|zero|not claimable|not realized)\b/.test(text)
+  ) {
+    return "blocked";
+  }
+  if (/\b(partial|validate|forecast|planning|pending|fix)\b/.test(text)) {
+    return "partial";
+  }
+  if (/\b(scale|claimable|attested|proved|protect)\b/.test(text)) {
+    return "scale";
+  }
+  return "partial";
+}
+
+function rowDisplayLabel(row: RechartRow, key: string): string {
+  return String(row[key] ?? "").trim();
+}
+
+function valueProofStatus(row: RechartRow): string {
+  const keys = Object.keys(row);
+  const statusKey =
+    keys.find((key) => /claim/i.test(key) && /status/i.test(key)) ??
+    keys.find((key) => /^status$/i.test(key)) ??
+    keys.find((key) => /\bstatus\b/i.test(key)) ??
+    keys.find((key) => /\bposture\b/i.test(key)) ??
+    keys.find((key) => /\bgate\b/i.test(key)) ??
+    keys.find((key) => /\bstage\b/i.test(key));
+  return statusKey ? String(row[statusKey] ?? "") : "";
+}
+
+function isValueProofSeries(
+  chart: AnswerChart,
+  series: RechartSeries,
+): boolean {
+  const title = `${chart.title ?? ""} ${chart.subtitle ?? ""}`.toLowerCase();
+  if (
+    chart.kind === "waterfall" ||
+    chart.kind === "value-bridge" ||
+    /\b(value proof|value waterfall|value funnel|claimable|attestation|validated|realized|promised)\b/.test(
+      title,
+    )
+  ) {
+    return true;
+  }
+  const joinedLabels = series.rows
+    .map((row) => rowDisplayLabel(row, series.xKey))
+    .join(" ")
+    .toLowerCase();
+  const stageHits = [
+    "committed",
+    "forecast",
+    "promised",
+    "validated",
+    "attested",
+    "realized",
+    "claimable",
+    "blocked",
+  ].filter((token) => joinedLabels.includes(token)).length;
+  return stageHits >= 3;
+}
+
 function SafeAgentResponsiveContainer({
   children,
 }: {
@@ -645,6 +727,131 @@ function SafeAgentResponsiveContainer({
   );
 }
 
+function ValueProofExhibit({
+  chart,
+  series,
+}: {
+  chart: AnswerChart;
+  series: RechartSeries;
+}) {
+  const rows = series.rows.slice(0, 6);
+  const maxValue = Math.max(
+    1,
+    ...rows.map((row) => numericRowValue(row, series.yKey) ?? 0),
+  );
+  const yAxisWidth = horizontalAxisWidth(rows, series.xKey);
+
+  return (
+    <div
+      className="aaValueProofExhibit"
+      data-chart-exhibit="value-proof-ladder"
+    >
+      <div className="aaValueProofChart">
+        <div
+          className="aaRechart"
+          data-chart-kind={chart.kind}
+          data-chart-renderer="recharts"
+          style={
+            {
+              "--aa-chart-height": `${Math.max(300, rows.length * 42 + 96)}px`,
+            } as CSSProperties
+          }
+        >
+          <SafeAgentResponsiveContainer>
+            <BarChart
+              barCategoryGap={10}
+              data={rows}
+              layout="vertical"
+              margin={{ top: 10, right: 54, bottom: 10, left: 4 }}
+            >
+              <CartesianGrid
+                horizontal={false}
+                stroke="#e5e7eb"
+                strokeDasharray="3 3"
+              />
+              <XAxis
+                domain={[0, maxValue]}
+                tickFormatter={(value) =>
+                  formatRechartValue(value, series.unit)
+                }
+                tickLine={false}
+                type="number"
+              />
+              <YAxis
+                dataKey={series.xKey}
+                tickFormatter={(value) => shortAxisLabel(value, 30)}
+                tickLine={false}
+                type="category"
+                width={yAxisWidth}
+              />
+              <Tooltip
+                contentStyle={RECHART_TOOLTIP_STYLE}
+                formatter={(value: unknown) => [
+                  formatRechartValue(value, series.unit),
+                  series.yKey,
+                ]}
+              />
+              <Bar dataKey={series.yKey} radius={[0, 4, 4, 0]}>
+                {rows.map((row, index) => (
+                  <Cell
+                    fill={
+                      normalizePosture(valueProofStatus(row)) === "blocked"
+                        ? "#b91c1c"
+                        : normalizePosture(valueProofStatus(row)) === "partial"
+                          ? "#d97706"
+                          : RECHART_COLORS[index % RECHART_COLORS.length]
+                    }
+                    key={`${String(row[series.xKey])}-${index}`}
+                  />
+                ))}
+                <LabelList
+                  dataKey={series.yKey}
+                  formatter={(value: unknown) =>
+                    formatRechartValue(value, series.unit)
+                  }
+                  position="right"
+                  style={{ fill: "#111827", fontSize: 11, fontWeight: 800 }}
+                />
+              </Bar>
+            </BarChart>
+          </SafeAgentResponsiveContainer>
+        </div>
+      </div>
+      <div className="aaProofLadder" aria-label="Value proof ladder">
+        {rows.map((row, index) => {
+          const value = numericRowValue(row, series.yKey) ?? 0;
+          const status = valueProofStatus(row);
+          const posture = normalizePosture(status);
+          const pct = Math.max(0, Math.min(100, (value / maxValue) * 100));
+          return (
+            <div
+              className="aaProofStep"
+              data-posture={posture}
+              key={`${String(row[series.xKey])}-${index}`}
+            >
+              <div className="aaProofStepTop">
+                <div className="aaProofStepLabel">
+                  {rowDisplayLabel(row, series.xKey)}
+                </div>
+                <div className="aaProofStepValue">
+                  {formatRechartValue(value, series.unit)}
+                </div>
+              </div>
+              {status ? <div className="aaProofStepMeta">{status}</div> : null}
+              <div aria-hidden="true" className="aaProofTrack">
+                <div
+                  className="aaProofTrackFill"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
   if (chart.kind === "quadrant-matrix" || chart.kind === "2x2-matrix") {
     const points = normalizeRechartQuadrant(chart);
@@ -654,12 +861,40 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
       <>
         <div
           className="aaRechart"
+          data-chart-exhibit="portfolio-quadrant"
           data-chart-kind={chart.kind}
           data-chart-renderer="recharts"
           style={{ "--aa-chart-height": "360px" } as CSSProperties}
         >
           <SafeAgentResponsiveContainer>
             <ScatterChart margin={{ top: 22, right: 20, bottom: 16, left: 8 }}>
+              <ReferenceArea
+                fill="#ecfdf5"
+                fillOpacity={0.5}
+                strokeOpacity={0}
+                x1={50}
+                x2={100}
+                y1={50}
+                y2={100}
+              />
+              <ReferenceArea
+                fill="#fffbeb"
+                fillOpacity={0.55}
+                strokeOpacity={0}
+                x1={0}
+                x2={50}
+                y1={50}
+                y2={100}
+              />
+              <ReferenceArea
+                fill="#fef2f2"
+                fillOpacity={0.45}
+                strokeOpacity={0}
+                x1={0}
+                x2={50}
+                y1={0}
+                y2={50}
+              />
               <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
               <XAxis
                 dataKey="x"
@@ -712,6 +947,24 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
             </ScatterChart>
           </SafeAgentResponsiveContainer>
         </div>
+        <div className="aaQuadrantLabels" aria-label="Quadrant guide">
+          <div className="aaQuadrantLabel">
+            <strong>Scale with proof</strong>
+            High value and lower complexity/readiness risk.
+          </div>
+          <div className="aaQuadrantLabel">
+            <strong>Fix adoption first</strong>
+            High value, but complexity or readiness still blocks scale.
+          </div>
+          <div className="aaQuadrantLabel">
+            <strong>Keep tactical</strong>
+            Easier work with limited strategic value.
+          </div>
+          <div className="aaQuadrantLabel">
+            <strong>Freeze or stop</strong>
+            Weak value and weak readiness until evidence improves.
+          </div>
+        </div>
         <div className="aaChartKey" aria-label="Chart key">
           {displayPoints.map((point) => (
             <div
@@ -737,6 +990,9 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
   const yAxisWidth = series.horizontal
     ? horizontalAxisWidth(series.rows, series.xKey)
     : 48;
+  if (isValueProofSeries(chart, series)) {
+    return <ValueProofExhibit chart={chart} series={series} />;
+  }
   if (chart.kind === "line") {
     return (
       <div
@@ -1091,9 +1347,7 @@ export function AnswerGraphRenderer({
         <div className="aaGraphTitle">
           {graph.title ?? "Relationship graph"}
         </div>
-        <div className="aaArtifactBadge">
-          {nodes.length} nodes · {edges.length} links
-        </div>
+        <div className="aaArtifactBadge">Relationship map</div>
       </div>
       <svg
         className="aaGraphSvg"
