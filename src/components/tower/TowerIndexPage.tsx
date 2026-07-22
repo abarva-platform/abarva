@@ -4467,8 +4467,8 @@ function TowerMartCommandCenter({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "minmax(420px, 1.35fr) minmax(260px, .65fr)",
-              gap: 22,
+              gridTemplateColumns: "minmax(420px, 1.05fr) minmax(360px, .95fr)",
+              gap: 18,
               alignItems: "start",
             }}
           >
@@ -4525,16 +4525,24 @@ function TowerMartCommandCenter({
               </div>
               <p
                 style={{
-                  margin: "18px 0 0",
+                  margin: "12px 0 0",
                   color: T.INK_2,
-                  lineHeight: 1.58,
-                  fontSize: 15,
+                  lineHeight: 1.5,
+                  fontSize: 13.5,
                 }}
               >
                 {budgetPostureNarrative}
               </p>
             </div>
-            <div style={{ display: "grid", gap: 14, minWidth: 0 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: 12,
+                alignContent: "start",
+                minWidth: 0,
+              }}
+            >
               <TowerMartCompactCard
                 label="Approved programs"
                 value={formatWholeNumber(model.programLanes.length)}
@@ -4810,7 +4818,7 @@ function TowerMartCommandCenter({
       </aside>
       <main
         style={{
-          padding: "24px clamp(28px, 4vw, 72px) 96px",
+          padding: "24px clamp(28px, 4vw, 72px) 28px",
           minWidth: 0,
           maxWidth: 1680,
           margin: "0 auto",
@@ -4915,9 +4923,9 @@ function TowerMartCommandCenter({
                 margin: 0,
                 fontFamily: T.SERIF,
                 color: T.INK,
-                fontSize: 52,
-                lineHeight: 1.02,
-                letterSpacing: "-0.035em",
+                fontSize: 38,
+                lineHeight: 1.04,
+                letterSpacing: "-0.032em",
                 fontWeight: 780,
               }}
             >
@@ -4962,9 +4970,9 @@ function TowerMartCommandCenter({
                 <div
                   style={{
                     fontFamily: T.SERIF,
-                    fontSize: 33,
-                    lineHeight: 1.05,
-                    marginTop: 10,
+                    fontSize: 28,
+                    lineHeight: 1.06,
+                    marginTop: 8,
                     fontWeight: 760,
                   }}
                 >
@@ -4972,9 +4980,10 @@ function TowerMartCommandCenter({
                 </div>
                 <p
                   style={{
-                    margin: "12px 0 0",
+                    margin: "9px 0 0",
                     color: "rgba(255,255,255,.78)",
-                    lineHeight: 1.45,
+                    lineHeight: 1.4,
+                    fontSize: 14,
                   }}
                 >
                   Primary blocker:{" "}
@@ -5127,8 +5136,8 @@ function TowerMartCommandCenter({
                 display: "flex",
                 justifyContent: "space-between",
                 borderTop: `1px solid ${T.RULE}`,
-                marginTop: 34,
-                paddingTop: 22,
+                marginTop: 18,
+                paddingTop: 14,
                 paddingRight: 84,
               }}
             >
@@ -5226,7 +5235,7 @@ const towerBoardCardStyle: CSSProperties = {
   border: `1px solid ${T.RULE_STRONG}`,
   borderRadius: 16,
   background: "#fff",
-  padding: 24,
+  padding: 18,
   minHeight: 0,
   boxShadow: "0 22px 48px rgba(15,23,42,.08)",
 };
@@ -5343,25 +5352,19 @@ function TowerBudgetSplitRechart({
   const data = [{ label: "FY26 technology budget", run, change }];
   return (
     <div
-      style={{ width: "100%", height: 142 }}
+      style={{ width: "100%", height: 76 }}
       data-testid="tower-budget-recharts"
     >
       <TowerSafeResponsiveContainer height="100%">
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ top: 12, right: 22, bottom: 8, left: 0 }}
+          margin={{ top: 8, right: 22, bottom: 4, left: 0 }}
           barCategoryGap={16}
         >
           <XAxis type="number" hide domain={[0, run + change]} />
           <YAxis type="category" dataKey="label" hide />
           <Tooltip content={<TowerChartTooltip />} />
-          <Legend
-            verticalAlign="bottom"
-            height={28}
-            iconType="circle"
-            wrapperStyle={{ color: T.INK_2, fontSize: 12 }}
-          />
           <Bar
             dataKey="run"
             name="Run budget"
@@ -5788,16 +5791,16 @@ function TowerMartCompactCard({
       style={{
         ...towerBoardCardStyle,
         minHeight: 0,
-        padding: 18,
+        padding: "12px 14px",
         boxShadow: "0 16px 34px rgba(15,23,42,.07)",
       }}
     >
       <div style={towerTinyLabelStyle}>{label}</div>
       <div
         style={{
-          marginTop: 8,
+          marginTop: 4,
           fontFamily: T.SERIF,
-          fontSize: 28,
+          fontSize: 25,
           lineHeight: 1,
           fontWeight: 900,
           color: tone === "gated" ? T.AMBER : T.INK,
@@ -5807,7 +5810,12 @@ function TowerMartCompactCard({
         {value}
       </div>
       <div
-        style={{ marginTop: 8, color: T.INK_2, lineHeight: 1.45, fontSize: 13 }}
+        style={{
+          marginTop: 6,
+          color: T.INK_2,
+          lineHeight: 1.4,
+          fontSize: 12.5,
+        }}
       >
         {detail}
       </div>
