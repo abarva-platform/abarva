@@ -132,7 +132,9 @@ async function readTowerChatStream(
   onStatus: (label: string) => void,
 ): Promise<Partial<CioTowerChatResponse>> {
   if (!response.body) {
-    return (await response.json().catch(() => ({}))) as Partial<CioTowerChatResponse>;
+    return (await response
+      .json()
+      .catch(() => ({}))) as Partial<CioTowerChatResponse>;
   }
 
   const reader = response.body.getReader();
@@ -181,21 +183,27 @@ function labelizeCioMeasureKey(value: string): string {
     .replace(/\bytd\b/gi, "YTD");
 }
 
-// ─── Tower design tokens — aligned with Intelligence executive canvas ─────────
+// ─── Tower design tokens — aligned with the Home/Intelligence shell language ──
+// Keys are unchanged (they are referenced throughout this file); only the values
+// moved from the older cream/beige palette to the SHELL set used by Home and
+// Intelligence (src/lib/shell/shell-tokens.ts): white paper, neutral gray rules,
+// navy ink. Semantic status colors (green/red/amber/purple) are kept so lane and
+// risk meaning does not shift — this is a visual-language change, not a
+// re-encoding of what the colors mean.
 const T = {
-  PAGE_BG: "#f7f4ee",
-  CREAM: "#f7f4ee",
-  CREAM_2: "#fffdf8",
-  CREAM_DEEP: "#eee7dc",
-  RULE: "#ded5c8",
-  RULE_STRONG: "#cfc6b8",
-  BORDER: "#ece4d8",
-  BORDER_STRONG: "#ded5c8",
-  INK: "#161411",
-  INK_2: "#34302a",
-  GRAY: "#8d8680",
-  GRAY_DK: "#6d675f",
-  GOLD: "#a96d16",
+  PAGE_BG: "#fafafa", // SHELL.PAPER_SOFT
+  CREAM: "#fafafa", // SHELL.PAPER_SOFT
+  CREAM_2: "#ffffff", // SHELL.CARD_WHITE
+  CREAM_DEEP: "#f4f4f4", // SHELL.PAPER_DEEP
+  RULE: "#e5e5e5", // SHELL.CARD_LINE
+  RULE_STRONG: "#dcdcdc",
+  BORDER: "#ebebeb", // SHELL.CARD_LINE_SOFT
+  BORDER_STRONG: "#e5e5e5", // SHELL.CARD_LINE
+  INK: "#0c1a3a", // SHELL.INK
+  INK_2: "#2a3a5e", // SHELL.INK_MID
+  GRAY: "#8b95a8", // SHELL.INK_MUTED
+  GRAY_DK: "#5b6c8a", // SHELL.INK_SOFT
+  GOLD: "#a06d28", // SHELL.PEACH_TEXT
   PURPLE: "#1B2B5C",
   PURPLE_BG: "#eef2ff",
   GREEN: "#218553",
@@ -3178,7 +3186,8 @@ function TowerActiveAiToolsPanel({
         <div style={{ color: T.GRAY_DK, fontSize: 12, textAlign: "right" }}>
           Double-click a row for the investment trace.
           <br />
-          Reference rows fill the demo tool-spend lens when mart rows are sparse.
+          Reference rows fill the demo tool-spend lens when mart rows are
+          sparse.
         </div>
       </div>
       <div style={{ overflowX: "auto" }}>
@@ -3237,16 +3246,40 @@ function TowerActiveAiToolsPanel({
                     {row.functionLabel}
                   </div>
                 </td>
-                <td style={{ padding: "16px", textAlign: "right", fontWeight: 850 }}>
+                <td
+                  style={{
+                    padding: "16px",
+                    textAlign: "right",
+                    fontWeight: 850,
+                  }}
+                >
                   {row.activeUsers}
                 </td>
-                <td style={{ padding: "16px", textAlign: "right", fontWeight: 850 }}>
+                <td
+                  style={{
+                    padding: "16px",
+                    textAlign: "right",
+                    fontWeight: 850,
+                  }}
+                >
                   {row.adoption}
                 </td>
-                <td style={{ padding: "16px", textAlign: "right", fontWeight: 850 }}>
+                <td
+                  style={{
+                    padding: "16px",
+                    textAlign: "right",
+                    fontWeight: 850,
+                  }}
+                >
                   {row.promisedValue}
                 </td>
-                <td style={{ padding: "16px", textAlign: "right", fontWeight: 850 }}>
+                <td
+                  style={{
+                    padding: "16px",
+                    textAlign: "right",
+                    fontWeight: 850,
+                  }}
+                >
                   {row.financeValidated}
                 </td>
                 <td style={{ padding: "16px" }}>
@@ -4846,24 +4879,12 @@ function TowerMartCommandCenter({
                 fontWeight: 780,
               }}
             >
-              AI Value Realization Control Tower{" "}
-              <span
-                style={{
-                  display: "inline-flex",
-                  verticalAlign: "middle",
-                  borderRadius: 999,
-                  background: "rgba(32,178,148,.12)",
-                  color: T.TEAL,
-                  fontFamily: T.MONO,
-                  fontSize: 10,
-                  letterSpacing: "1.5px",
-                  textTransform: "uppercase",
-                  padding: "5px 10px",
-                  marginLeft: 8,
-                }}
-              >
-                Reference
-              </span>
+              {/* The bare "REFERENCE" badge that used to sit here was a
+                  hardcoded label with no data behind it — it read as a warning
+                  that the numbers were reference/demo data when they are in
+                  fact the governed mart. Provenance is already stated, and
+                  truthfully, by the "Tower mart · source-backed" line above. */}
+              AI Value Realization Control Tower
             </h2>
             <p style={{ margin: "10px 0 0", color: T.INK_2, fontSize: 16 }}>
               AI activity is not value - $0 of{" "}
@@ -6244,7 +6265,10 @@ function towerToolTraceFromPortfolioRow(
           : "Hold scale funding until owner, usage, KPI, and finance evidence clear the gate.",
     gates: [
       {
-        state: row.approvedFundingUsd > 0 || row.aiTaggedSpendUsd > 0 ? "ok" : "blocked",
+        state:
+          row.approvedFundingUsd > 0 || row.aiTaggedSpendUsd > 0
+            ? "ok"
+            : "blocked",
         label:
           row.approvedFundingUsd > 0 || row.aiTaggedSpendUsd > 0
             ? "Spend committed"
@@ -6406,7 +6430,8 @@ function meridianReferenceToolTraceRows(): TowerAiToolTraceRow[] {
       kpiLine: "KPI: process cycle time — partial movement observed.",
       financeLine:
         "Finance: $0.4M partial validation of $3.0M promised. Realized value allowed: $0.",
-      nextAction: "Baseline outcomes by process; validate partial value with FP&A.",
+      nextAction:
+        "Baseline outcomes by process; validate partial value with FP&A.",
       gates: [
         { state: "ok", label: "Spend committed" },
         { state: "ok", label: "Usage measured · 1,001 active" },
@@ -6434,7 +6459,8 @@ function meridianReferenceToolTraceRows(): TowerAiToolTraceRow[] {
       status: "blocked",
       interpretation:
         "Usage exists but there is no KPI movement and no Finance validation. Value claim is blocked; freeze scale until evidence lands.",
-      kpiLine: "KPI: process cycle time — no movement recorded (baseline only).",
+      kpiLine:
+        "KPI: process cycle time — no movement recorded (baseline only).",
       financeLine:
         "Finance: $0 validated of $8.0M promised. Realized value allowed: $0.",
       nextAction:
@@ -6498,11 +6524,11 @@ function meridianReferenceToolTraceRows(): TowerAiToolTraceRow[] {
       status: "blocked",
       interpretation:
         "Usage is present but the benefit is blocked by a missing accountable owner. It cannot progress the claim gate.",
-      kpiLine:
-        "KPI: process cycle time — not linked to a named outcome owner.",
+      kpiLine: "KPI: process cycle time — not linked to a named outcome owner.",
       financeLine:
         "Finance: $0 promised, $0 validated. Realized value allowed: $0.",
-      nextAction: "Assign an accountable owner; then load a value case and KPI baseline.",
+      nextAction:
+        "Assign an accountable owner; then load a value case and KPI baseline.",
       gates: [
         { state: "ok", label: "Spend committed" },
         { state: "ok", label: "Usage measured · 1,275 active" },
@@ -6615,7 +6641,8 @@ function tenantReferenceToolTraceRows(
             "Finance: $10.3M measured value is source-backed; confirm current period signoff before board reporting.",
           evidence: [
             {
-              source: "FS Demo AI footprint · Small Business Cash-Flow Insights",
+              source:
+                "FS Demo AI footprint · Small Business Cash-Flow Insights",
               caveat: "source-backed AI portfolio row",
             },
           ],
@@ -7479,7 +7506,11 @@ function TowerAiToolTraceDrawer({
                   fontWeight: 900,
                 }}
               >
-                {gate.state === "ok" ? "✓" : gate.state === "partial" ? "~" : "×"}
+                {gate.state === "ok"
+                  ? "✓"
+                  : gate.state === "partial"
+                    ? "~"
+                    : "×"}
               </span>
               <span style={{ color: T.INK_2 }}>{gate.label}</span>
             </div>
@@ -7487,9 +7518,7 @@ function TowerAiToolTraceDrawer({
         </div>
       </section>
       <section style={{ marginTop: 20 }}>
-        <div style={{ ...towerTinyLabelStyle, marginBottom: 10 }}>
-          Evidence
-        </div>
+        <div style={{ ...towerTinyLabelStyle, marginBottom: 10 }}>Evidence</div>
         <div style={{ display: "grid", gap: 8 }}>
           {row.evidence.map((evidence) => (
             <div
@@ -7888,7 +7917,8 @@ function CxoGovernedCommandCenter({
       <section
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(280px, 1.2fr) repeat(3, minmax(180px, 1fr))",
+          gridTemplateColumns:
+            "minmax(280px, 1.2fr) repeat(3, minmax(180px, 1fr))",
           gap: 12,
           marginBottom: 22,
         }}
@@ -7926,7 +7956,13 @@ function CxoGovernedCommandCenter({
           >
             $0 claimable today
           </div>
-          <p style={{ margin: "12px 0 0", color: "rgba(255,255,255,.78)", lineHeight: 1.45 }}>
+          <p
+            style={{
+              margin: "12px 0 0",
+              color: "rgba(255,255,255,.78)",
+              lineHeight: 1.45,
+            }}
+          >
             Primary blocker: {primaryBlocker}
           </p>
         </div>
@@ -7965,7 +8001,14 @@ function CxoGovernedCommandCenter({
           >
             $0
           </div>
-          <p style={{ margin: "8px 0 0", color: T.INK_2, fontSize: 12.5, lineHeight: 1.35 }}>
+          <p
+            style={{
+              margin: "8px 0 0",
+              color: T.INK_2,
+              fontSize: 12.5,
+              lineHeight: 1.35,
+            }}
+          >
             Gated until finance validation and evidence proof are complete.
           </p>
         </div>
