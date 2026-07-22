@@ -895,9 +895,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       screen.getAllByText("AI Value Realization Control Tower").length,
     ).toBeGreaterThan(0);
     expect(screen.getByText(/\$0 claimable today/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/AI activity is not value/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/AI activity is not value/i)).toBeInTheDocument();
     expect(
       screen.queryByText("CXO Executive Dashboard"),
     ).not.toBeInTheDocument();
@@ -950,7 +948,9 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       "Customer Recovery Agent Assist",
     );
     fireEvent.doubleClick(
-      screen.getByTestId("tower-ai-tool-row-airline:customer-recovery-agent-assist"),
+      screen.getByTestId(
+        "tower-ai-tool-row-airline:customer-recovery-agent-assist",
+      ),
     );
     expect(screen.getByTestId("tower-ai-tool-trace-drawer")).toHaveTextContent(
       "Customer Recovery Agent Assist",
@@ -1015,14 +1015,29 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getByTestId("tower-ai-portfolio-matrix")).toHaveTextContent(
       "Scale with proof",
     );
-    expect(screen.getByTestId("tower-ai-watchlist")).toHaveTextContent(
-      "Candidate ideas are not approved funding",
-    );
+    // Position is the default chapter: quadrant plus the list of plotted items.
+    expect(screen.getByTestId("tower-ai-plotted-list")).toBeInTheDocument();
     expect(
       screen.getAllByText("M365 Copilot Productivity").length,
     ).toBeGreaterThan(0);
     expect(screen.getByText("Fix proof")).toBeInTheDocument();
     expect(screen.getByText(/\$2\.1M validated/)).toBeInTheDocument();
+    // The AI spend lens now lives in its own chapter rather than one long page.
+    fireEvent.click(screen.getByRole("tab", { name: /Funded & embedded/ }));
+    expect(screen.getByTestId("tower-ai-funded-list")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Candidate ideas are not approved funding/),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: /Candidate pipeline/ }));
+    expect(screen.getByTestId("tower-ai-candidate-list")).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Hold until gates clear").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/Member Service AI Assist/).length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByText("not_approved")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: /Active tools/ }));
     expect(screen.getByTestId("tower-active-ai-tools")).toHaveTextContent(
       "Tool spend, usage, value proof, and claim gates",
     );
@@ -1041,13 +1056,6 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.getByTestId("tower-ai-tool-trace-drawer")).toHaveTextContent(
       "Finance: $2.1M partial validation of $14.0M promised",
     );
-    expect(
-      screen.getAllByText("Hold until gates clear").length,
-    ).toBeGreaterThan(0);
-    expect(
-      screen.getAllByText(/Member Service AI Assist/).length,
-    ).toBeGreaterThan(0);
-    expect(screen.queryByText("not_approved")).not.toBeInTheDocument();
     fireEvent.click(
       screen.getByRole("button", { name: /Recommended Actions/ }),
     );
@@ -1097,12 +1105,13 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       );
 
       fireEvent.click(screen.getByRole("button", { name: /AI Portfolio/ }));
-      expect(screen.getByTestId("tower-active-ai-tools-table")).toHaveTextContent(
-        tenant.expectedTool,
-      );
-      expect(screen.getByTestId("tower-active-ai-tools-table")).toHaveTextContent(
-        "Microsoft 365 Copilot",
-      );
+      fireEvent.click(screen.getByRole("tab", { name: /Active tools/ }));
+      expect(
+        screen.getByTestId("tower-active-ai-tools-table"),
+      ).toHaveTextContent(tenant.expectedTool);
+      expect(
+        screen.getByTestId("tower-active-ai-tools-table"),
+      ).toHaveTextContent("Microsoft 365 Copilot");
       unmount();
     });
   });
