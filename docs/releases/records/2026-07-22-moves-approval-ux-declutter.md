@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`live-proven`
 
 ## Plain-English Summary
 
@@ -41,13 +41,17 @@ Candidate validation:
 - Blocked: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` fails on current `origin/main` Home graph dependency resolution outside this Moves change (`@xyflow/react`, `@dagrejs/dagre`).
 - Pass: `npm run release:check`
 - Pass: `git diff --check`
+- Pass: GitHub PR checks for PR #5280, including ESLint, typecheck + reasoning-layer tests, production readiness gate, browser matrix smoke, public axe accessibility, Lighthouse CI budget, bundle budget, release control gate, and hygiene gate.
 
 Live validation after deploy:
 
-- Pending: signed-in FS Demo or Meridian Move phase page shows the compact approval surface.
-- Pending: P1 approval no longer shows unrelated key-design-decision UI.
-- Pending: P2-P5 approval supporting detail is reachable through disclosure rows.
-- Pending: Existing upload, Files & Evidence, Phase Intelligence, and Approve & Build controls still render.
+- Pass: ACA main deploy run `29896419367` completed successfully for merge SHA `60dcbffda2103c7e165d98e5f2dc6b15cd0378f0`.
+- Pass: ACA runtime invariant confirmed on revision `ca-abarva-web-lab-eastus--m60dcbffd` with 100% traffic and image `acrabarvalab001.azurecr.io/abarva/web@sha256:b15e179c76bd83f5566ab46b17b0c03b0c484d3c336d9c4d62c2bd4d5c03010e`.
+- Pass: `https://app.abarva.ai/api/health` returned `ok: true` with Postgres checks healthy.
+- Pass: signed-in Meridian browser proof showed P0, P2, and P4 using the Finder-style shell with no old long session-pack blocks.
+- Pass: signed-in Meridian P1 approval proof showed no unrelated key-design-decision UI and no old long session-pack block.
+- Pass: Stage workspace, Files & Evidence, Phase Intelligence, and Approvals workspace links switched live with no browser console errors and no non-aborted network failures.
+- Pass: P2/P4 approval/workflow pages preserve Approve & Build controls while keeping the workflow rows central.
 
 ## Rollout Plan
 
@@ -57,8 +61,8 @@ Merge through PR to `main`. The repo-owned Azure Container Apps deploy workflow 
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: none outside the repo-owned deploy workflow
-- Approved image digest: to be recorded after deploy
-- ACA runtime invariant: required before live-proven status
+- Approved image digest: `sha256:b15e179c76bd83f5566ab46b17b0c03b0c484d3c336d9c4d62c2bd4d5c03010e`
+- ACA runtime invariant: confirmed on `ca-abarva-web-lab-eastus--m60dcbffd`
 - Worker image invariant: not applicable
 - Feature/env flag update path: none
 - Live signed-in proof required: yes
@@ -69,12 +73,19 @@ Revert the PR or roll back the ACA revision to the previous known-good digest. N
 
 ## Audit Evidence
 
-To be recorded:
-
-- PR URL
-- Merge SHA
-- ACA revision and digest
-- Signed-in screenshots for P1 and P2 approval views
+- PR URL: https://github.com/abarva-platform/abarva/pull/5280
+- Merge SHA: `60dcbffda2103c7e165d98e5f2dc6b15cd0378f0`
+- Deploy run: https://github.com/abarva-platform/abarva/actions/runs/29896419367
+- ACA revision: `ca-abarva-web-lab-eastus--m60dcbffd`
+- ACA image digest: `sha256:b15e179c76bd83f5566ab46b17b0c03b0c484d3c336d9c4d62c2bd4d5c03010e`
+- Local signed-in proof bundle: `proof/moves-approval-ux-live-20260722`
+- Screenshots captured:
+  - `04-p2-meridian-readonly.png`
+  - `05-p4-meridian-readonly.png`
+  - `09-p1-meridian-approval-readonly.png`
+  - `workspace-files-evidence.png`
+  - `workspace-phase-intelligence.png`
+  - `workspace-approvals.png`
 
 ## Known Gaps
 
