@@ -1229,9 +1229,6 @@ export function DataTable({
       {(table.title || table.note) && (
         <div className="aaTableHead">
           <div className="aaTableTitle">{table.title ?? "Table"}</div>
-          <span className="aaArtifactBadge">
-            {table.rows.length} row{table.rows.length === 1 ? "" : "s"}
-          </span>
         </div>
       )}
       <div className="aaTableScroll">

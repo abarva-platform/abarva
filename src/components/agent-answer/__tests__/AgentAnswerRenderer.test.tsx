@@ -268,6 +268,7 @@ describe("AgentAnswerRenderer", () => {
       screen.getByText("Includes run-cost categories only."),
     ).toBeInTheDocument();
     expect(screen.getByText("F12 IT budget")).toBeInTheDocument();
+    expect(screen.queryByText(/\b2 rows\b/i)).not.toBeInTheDocument();
   });
 
   it("suppresses non-renderable chart artifacts when other answer content is available", () => {
