@@ -409,8 +409,12 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   where a reviewer would most want to see them.
 - **Severity**: P5 (workspace UX / decision clarity)
 - **Workstream**: Approval/authority/lineage controls
-- **Status**: `Candidate` — implemented in branch
-  `codex/source-approval-ux-slices-002-004`; local tests passed; PR/deploy/live proof pending.
+- **Status**: `Merged — live-proven`. PR
+  [#5299](https://github.com/abarva-platform/abarva/pull/5299), merged as `cc81e1b`.
+  ACA deploy run `29917417511` succeeded; live signed-in proof captured on the SkyHarbor
+  Source approval page. The tested live event had no prior stage approvals or artifact
+  acceptances, so the proof confirms the honest empty state in production; render tests cover
+  populated approval-ledger and artifact-acceptance rows.
 - **Dependencies**: none — `loadApprovalLedger()` (`SOURCE-SHELL-003`) and
   `listArtifactAcceptances()`/`getLatestArtifactAcceptancesByArtifactIds()`
   (`SOURCE-SHELL-004`) already exist and are already tested; this wires existing repository
@@ -450,8 +454,11 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   the evidence behind this approval is current or stale.
 - **Severity**: P6 (workspace UX polish)
 - **Workstream**: Approval/authority/lineage controls
-- **Status**: `Candidate` — implemented in branch
-  `codex/source-approval-ux-slices-002-004`; local tests passed; PR/deploy/live proof pending.
+- **Status**: `Merged — live-proven`. PR
+  [#5299](https://github.com/abarva-platform/abarva/pull/5299), merged as `cc81e1b`.
+  ACA deploy run `29917417511` succeeded; live signed-in proof confirms the collapsed evidence
+  summary shows the event-level `updated_at` freshness signal (`Evidence reviewed · 5 facts ·
+updated 19 d ago` on the proof event).
 - **Dependencies**: none — check what timestamp field is actually available on captured
   intake facts (likely `capturedAt`/`updatedAt` on the underlying fact record; verify the real
   field name before assuming one) and surface it, no schema change if one already exists.
@@ -485,8 +492,13 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   they've actually closed the gap.
 - **Severity**: P5 (workspace UX / decision clarity, closing verification)
 - **Workstream**: Approval/authority/lineage controls
-- **Status**: `In verification` — `002` and `003` are implemented locally; final live
-  acceptance-criteria proof still pending PR/deploy.
+- **Status**: `Merged — live-proven`. PR
+  [#5299](https://github.com/abarva-platform/abarva/pull/5299), merged as `cc81e1b`.
+  Live signed-in proof confirmed all 5 acceptance criteria on the deployed Source approval
+  page: approval object and primary action visible, only one primary + one direct secondary
+  approval action visible, required confirmations visible without scrolling, evidence/audit
+  reachable within one click, and no unrelated future-stage or artifact-maintenance content
+  shown by default.
 - **Dependencies**: `SOURCE-APPROVAL-UX-002`, `SOURCE-APPROVAL-UX-003`.
 - **Acceptance criteria**: all 5 criteria from the recommendations doc's "Suggested acceptance
   criteria" section checked against the real, deployed page via live signed-in browser proof —
@@ -511,10 +523,9 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
 
 ## Ready / in progress
 
-`SOURCE-APPROVAL-UX-002` and `SOURCE-APPROVAL-UX-003` are implemented in branch
-`codex/source-approval-ux-slices-002-004`; `004` is in verification and closes only after
-PR/deploy/live signed-in proof confirms the 5 acceptance criteria. Standing authority remains
-in place to merge, deploy, live-verify, and update these entries honestly without pausing.
+No Source approval UX slices are currently ready/in progress. `SOURCE-APPROVAL-UX-001`
+through `004` are merged and live-proven; any next slice should be opened from a fresh
+verified UX finding.
 
 ## Blocked
 

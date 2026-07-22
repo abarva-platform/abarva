@@ -100,3 +100,31 @@ Revert the PR to restore the prior long approval-page layout. No migration, data
   - `npx jest src/components/source/approval/__tests__/EventApprovalCard.test.tsx --runInBand` — passed, `8/8` tests. Jest printed existing duplicate manual mock warnings for mdast/micromark mocks.
   - `npx eslint src/app/(maestro)/source/events/[eventId]/approval/page.tsx src/components/source/approval/EventApprovalCard.tsx src/components/source/approval/__tests__/EventApprovalCard.test.tsx` — passed.
   - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` — passed after refreshing the isolated temp-worktree `node_modules`; no tracked package files changed.
+
+## 2026-07-22 Live-Proof Addendum For SOURCE-APPROVAL-UX-002/003/004
+
+- PR: [#5299](https://github.com/abarva-platform/abarva/pull/5299), squash-merged as
+  `cc81e1b1fc01a9d1c28280ec924e14bd3b206741`.
+- ACA deploy workflow: `29917417511` — passed.
+- Live web revision: `ca-abarva-web-lab-eastus--mcc81e1b1`.
+- Live image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:797f7902a0e2a4ca1528d256c877cd7590705ca7a21cc8405d03bc5405dfa809`.
+- Traffic: `100%` to `ca-abarva-web-lab-eastus--mcc81e1b1`.
+- Health endpoint: `https://app.abarva.ai/api/health` returned `HTTP/2 200`.
+- Worker image invariant: `job-abarva-deliv-worker` and `job-abarva-deliv-worker-event`
+  are pinned to the same digest as web.
+- Signed-in browser proof:
+  `/tmp/source-prod-approval-governance-history-cc81e1b.png`.
+  - Route:
+    `https://app.abarva.ai/source/events/730a82cb-53df-4bcb-9388-2999f37a2cff/approval?proof=cc81e1b`.
+  - Evidence summary showed: `Evidence reviewed · 5 facts · updated 19 d ago`.
+  - Audit summary showed: `Audit history · 1 intake turn · 0 approvals · 0 acceptances`.
+  - Expanded audit history showed honest empty states for stage approvals and artifact
+    acceptances; render tests cover the populated governance-history case.
+  - Acceptance criteria pass: approval object and primary action visible, one primary + one
+    direct secondary action visible, required confirmations visible without scrolling,
+    evidence/audit reachable within one click, and no unrelated future-stage or
+    artifact-maintenance content shown by default.
+- Backlog update:
+  - `SOURCE-APPROVAL-UX-002`, `003`, and `004` marked `Merged — live-proven`.
+  - Ready/in-progress pointer cleared for this Source approval UX workstream.
