@@ -254,9 +254,10 @@ export async function persistDeliverable(
       // by design, not a mismatch against the profile's docx/pptx/xlsx contract.
       ...(deckRendered ? {} : { outputFormat: outputFormat as OutputFormat }),
       additionalExhibits,
-      ...(profileRenderedHtml
-        ? { narrativeTextOverride: visibleTextFromHtml(html) }
-        : {}),
+      // Evaluate the same sanitized visible text that will be persisted and
+      // shown to reviewers. The structured doc can contain draft-era mechanical
+      // wording that the final client-facing HTML has already normalized.
+      narrativeTextOverride: visibleTextFromHtml(html),
       ...(opts.tenantTerms ? { tenantTerms: opts.tenantTerms } : {}),
       ...(opts.governanceOk !== undefined
         ? { governanceOk: opts.governanceOk }
