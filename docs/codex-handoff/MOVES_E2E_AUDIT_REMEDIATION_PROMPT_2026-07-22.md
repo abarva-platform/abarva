@@ -5,9 +5,13 @@
 **Context**: A six-dimension audit of the Moves product (UI/UX, aVa chat analytics, artifact
 narrative quality, session/workshop guidebooks, client-upload/supersede, evidence persistence)
 found one repeating pattern: **a real, working capability already exists somewhere else in
-this codebase, and Moves either doesn't call it or ships a thinner bespoke copy.** None of the
-nine items below are "build from zero" — every one is wiring/integration or a scoped bug fix
-against infrastructure that's already proven elsewhere in this repo. Full audit detail:
+this codebase, and Moves either doesn't call it or ships a thinner bespoke copy.** A follow-up
+pass looked specifically at visual/copy polish (clutter, sentence length, label necessity,
+alignment, canvas-width usage, borders, navigation clarity) that the first pass didn't cover,
+and found several concrete, grounded issues on the live phase-workspace page — these are
+Phase 0 below. None of the items in this document are "build from zero" — every one is
+wiring/integration or a scoped bug fix against infrastructure that's already proven elsewhere in
+this repo, or a narrow, precisely-located polish fix. Full audit detail:
 `docs/backlog/moves-product-backlog.md` (add your findings there as you close each item,
 following the existing `MOVES-UI-00x`/`MOVES-CAPABILITY-00x` entry format).
 
@@ -39,10 +43,11 @@ following the existing `MOVES-UI-00x`/`MOVES-CAPABILITY-00x` entry format).
   `HEALTHCARE_PROVIDER-CODEX-2026`). Read-only navigation against real client-named Moves (e.g.
   "AI MEMBER ASSIST TRANSFORMATION") for verification purposes is fine and has been done
   repeatedly this session; do not click Approve & Build or submit a gate on it.
-- **Work phases in order.** Phase 1 is presentation/wiring only (no logic behavior change to
-  gates, evidence, or generation). Phase 2 changes content-quality logic. Phase 3 touches data
-  model and governance and is the highest-risk — do not start it until Phases 1-2 are merged,
-  deployed, and live-verified.
+- **Work phases in order.** Phase 0 is pure visual/copy polish (styling, markup, string edits —
+  zero data or behavior change). Phase 1 is presentation/wiring only (no logic behavior change
+  to gates, evidence, or generation). Phase 2 changes content-quality logic. Phase 3 touches
+  data model and governance and is the highest-risk — do not start it until Phases 0-2 are
+  merged, deployed, and live-verified.
 - **Every merged PR needs**: real tests (RTL `fireEvent`/actual assertions, not shape checks),
   a release record under `docs/releases/records/` following
   `docs/releases/templates/release-record-template.md`, and — for anything touching the shared
@@ -54,6 +59,145 @@ following the existing `MOVES-UI-00x`/`MOVES-CAPABILITY-00x` entry format).
   on the same section). Before starting any item, `git log --oneline -20 origin/main` and grep
   for related recent commits — if something has already shipped, verify it against the
   acceptance criteria below rather than redoing it.
+
+---
+
+## Phase 0 — Visual/copy polish on the live phase-workspace page (pure styling/markup, zero behavior change)
+
+All six items below were found by direct live-browser inspection of
+`/strategic-moves/[id]/phase/2` (the real "AI MEMBER ASSIST TRANSFORMATION" Move, read-only —
+no mutating action taken), cross-referenced against the exact rendering code in
+`src/components/strategic-moves/MovesPhaseStandaloneClient.tsx`. Every line number below was
+verified against `main` at commit `055c0d25c` — re-check before starting in case the file moved.
+
+### 0.1 Remove the duplicated content block in the step-detail panel
+
+**Problem**: when a capture section (e.g. "Current-state findings") is selected, the panel
+renders the exact same saved text **twice, back to back**, with no label explaining why:
+- `mxw-contract-captured` div (`:1798-1802`) — a read-only quote-styled block showing
+  `phaseCaptureValues[selectedSection.key]`.
+- The `<textarea>` directly below it (`:1808-1820`) — `value={phaseCaptureValues[selectedSection.key] ?? ""}`, i.e. the identical string, now editable.
+**Fix**: the read-only `mxw-contract-captured` block and the editable `<textarea>` should not
+both render the same content unmodified. Either (a) remove `mxw-contract-captured` entirely for
+sections with an existing value and let the textarea itself be the single source of truth
+(pre-filled, editable), or (b) if the read-only block exists to show "last saved" vs. "in
+progress" divergence, only render it when the two values actually differ, with a small label
+("Last saved" / "Editing") explaining the distinction. Do not leave both rendering identically
+with no explanation.
+**Acceptance criteria**: a completed section shows its content exactly once by default; if a
+"saved vs. draft" distinction is kept, it only appears when values diverge and is clearly
+labeled. Add a test asserting the read-only block is absent (or clearly differentiated) when
+`phaseCaptureValues[key]` matches what's already in the textarea.
+
+### 0.2 Stop hardcoding the "Provide" label
+
+**File**: `MovesPhaseStandaloneClient.tsx:1791` — `<em>Provide</em>` never varies; it renders on
+every step regardless of step type, next to a real, functional status pill
+(`<b>{detailComplete ? "Done" : "Open"}</b>`, `:1792`).
+**Fix**: either make this label reflect something real (e.g. distinguish a "provide input"
+step from a "review evidence" step, if that distinction exists elsewhere in the data model), or
+remove it — a label that never changes value carries no information and is exactly the kind of
+non-functional label to cut per this task's brief ("less labels — only required for
+functionality").
+**Acceptance criteria**: `Provide` either becomes a real, varying value, or is removed. Add/
+update a test reflecting whichever choice is made.
+
+### 0.3 Declutter the phase-progress stat card
+
+**File**: `MovesPhaseStandaloneClient.tsx` — the `.mxw-progress-card` in `.mxw-stage-head`
+(around `:1195-1205`) renders `{phaseProgressDone} / {phase.substeps.length}` as a large
+number, then a progress bar, then `{phaseReadinessLabel} · {substep.label}` — and
+`phaseReadinessLabel` itself is built (`:407-425`) by concatenating a percent, a "hard met"
+fraction, or a "Complete"/"Gate ready"/"Gate blocked" phrase depending on context. On the P2
+gate-blocked view this renders as a single dense line like `25% workflow · 3/5 hard met ·
+Prepare` — three different units of measure (a percent, a ratio, a stage name) joined by
+mid-dots with no visual hierarchy between them.
+**Fix**: give the card a clear one-thing-per-line hierarchy — e.g. the fraction/percent as the
+primary large number (already is), then the hard-gate ratio and current-stage name as two
+visually distinct secondary lines (or a small label + value pair each) instead of one
+run-on string. Do not remove the underlying information — it's real and useful — just stop
+compressing three different units into one dot-separated sentence.
+**Acceptance criteria**: the three pieces of information (workflow progress, hard-gate
+progress, current stage) are visually distinguishable at a glance, not read as one clause.
+
+### 0.4 Fix canvas-width underuse in the phase header
+
+**File**: `MovesPhaseStandaloneClient.tsx` inline CSS — `.mxw-stage-head p{...max-width:64ch...}`
+(around `:4387`). `.mxw-stage-head` itself is a grid with the text column at `minmax(0,1fr)`
+(`:4382`) — i.e. it can be considerably wider than 64 characters on a normal desktop viewport,
+but the subheading paragraph (`phase.lede`) is hard-capped at 64ch regardless, forcing
+unnecessary line wraps even when the actual available column is wider. Confirmed live: on
+`/phase/2` at standard desktop width, the lede paragraph wraps to 2 lines while roughly 300px of
+available column width sits unused to its right.
+**Fix**: either raise the cap to genuinely match the available column width (measure the real
+rendered column width at common breakpoints and set the max-width accordingly — don't just
+delete the cap and let it stretch to something illegibly wide either; a sensible readable
+measure, but one that actually reflects the space this grid gives it, not an arbitrary 64ch that
+was set without checking).
+**Acceptance criteria**: the phase lede paragraph on a standard desktop viewport uses
+meaningfully more of its available column width and wraps to fewer lines than it does today,
+without exceeding a comfortably readable line length.
+
+### 0.5 Tie the workflow-stage indicator to whichever stage the current Inputs section belongs to
+
+**File**: `MovesPhaseStandaloneClient.tsx:1722-1744` — the `Workflow` nav group's `active` state
+(`:1725`, `active = selectedWorkflow && index === substepIndex`) only lights up when a workflow
+substep itself is explicitly selected. While a user is working through `Inputs` section items
+(`:1702-1721` — which is where most step-completion time is actually spent; P2 has 7 Inputs vs.
+4 Workflow stages), the Workflow list shows no stage as active at all — a user deep in filling
+out Inputs has no visual answer to "which of the 4 workflow stages am I actually in right now?"
+The active-state CSS itself (`:4898`, a left inset-shadow + background change) is real and
+works correctly when a workflow item is selected — this is specifically about the gap while an
+Inputs item is selected instead.
+**Fix**: when an Inputs section is selected, compute which workflow stage that section logically
+belongs to (via whatever existing mapping ties capture sections to workflow substeps — check
+`getPhaseCaptureSections`/`phase.substeps` for an existing relationship before inventing a new
+one) and apply the same `active` treatment to that workflow row, not just to explicitly-clicked
+workflow rows.
+**Acceptance criteria**: at all times, exactly one Workflow row shows the active treatment,
+whether the user got there by clicking a workflow stage directly or by clicking an Inputs
+section that belongs to it. Add a test selecting an Inputs section and asserting its owning
+Workflow row is marked active.
+
+### 0.6 Give the "what's next" disclosure real default visibility, and separate it from unrelated generic footer copy
+
+**File**: `MovesPhaseStandaloneClient.tsx:1745-1776` — `mxw-contract-comingup` ("What
+{readinessPack.nextPhaseLabel} will need") is a click-to-expand `<button>` that defaults
+collapsed (`comingUpExpanded` state), with real content behind it
+(`readinessPack.openNeeds` chips, `:1756-1771`). Directly below it, separated only by a plain
+`border-top`, sits `mxw-contract-nav-foot` (`:1773-1776`) — generic, unrelated instructional
+copy ("Use the left steps in order. Approve & Build remains the governed close..."). Confirmed
+live: with the disclosure collapsed (its default state), these two blocks read as one
+undifferentiated paragraph of generic text, giving no visual signal that real, specific
+next-phase content exists one click away.
+**Fix**: two options, either is acceptable — (a) default the disclosure to expanded when
+`readinessPack.openNeeds.length > 0` (i.e. when there's actually something concrete to show),
+collapsing it only when there's nothing to show; or (b) keep it collapsed by default but give
+the toggle button stronger visual weight (not the same muted grey as the generic footer text
+right below it) so it reads as "click to reveal specific next-phase items," not as more
+boilerplate. Either way, add clearer visual separation between `mxw-contract-comingup` and
+`mxw-contract-nav-foot` so they don't read as one continuous block of generic text.
+**Acceptance criteria**: a user scanning the left rail can tell, without clicking, whether real
+next-phase-readiness content exists here — and the toggle is visually distinct from the
+unrelated generic instructional footer beneath it.
+
+### 0.7 Copy pass for sentence length and voice consistency
+
+**Files**: the `lede`/`avaContext`/similar narrative strings inside each phase's `PhaseContract`
+definition (`MovesPhaseStandaloneClient.tsx`, roughly `:114-310` — each phase P0-P5 has its own
+hand-authored strings). Confirmed inconsistent voice and sentence length across phases (e.g. P2's
+lede is a 24-word compound sentence; P3's `avaContext` reads conversationally; P5's is terser) —
+a byproduct of each phase's copy having been authored independently across many separate PRs.
+**Fix**: do a single editing pass over every phase's `lede`/`question`/`avaContext` strings
+(and the `mxw-contract-nav-foot` copy from 0.6 while you're in there) for: shorter sentences
+(prefer two short sentences over one compound one), consistent second-person/direct voice, and
+removing hedge-y filler words. This is copy-only — do not change the underlying `PhaseContract`
+structure, keys, or any logic that reads these fields.
+**Acceptance criteria**: no `lede`/`avaContext` string exceeds roughly 20 words per sentence;
+a side-by-side read of all six phases' ledes reads as one consistent voice, not six different
+authors. Since this is pure string content, a lightweight test asserting max sentence length
+(split on `.`/`?`/`!`, word-count per segment) across all `PHASES[].lede` values is a reasonable
+regression guard against this drifting back.
 
 ---
 
@@ -307,7 +451,7 @@ mutating backfill via ad hoc `az containerapp exec` or a production web request.
 
 ## Report format
 
-For each of the 9 items: PR number, what changed (file:line), test results (real
+For each item (Phase 0's 7 sub-items plus the original 9): PR number, what changed (file:line), test results (real
 `fireEvent`/assertion tests, not shape checks), release record path, and — for anything touching
 `MovesPhaseStandaloneClient.tsx` or a shared route — the ACA runtime-invariant confirmation and
 a live signed-in browser check (screenshot or described observation) before calling it done.
