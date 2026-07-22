@@ -133,8 +133,8 @@ function registryKeyFromMoveBoardPackTitle(title: string): string | null {
 
   const titleHints: Array<[RegExp, string]> = [
     [/\b(program )?charter\b/, "charter"],
-    [/\b(discovery|diagnosis|diagnostic)\b/, "discovery_report"],
     [/\broot cause\b/, "root_cause_worksheet"],
+    [/\b(discovery|diagnosis|diagnostic)\b/, "discovery_report"],
     [/\b(target state|reference) architecture\b/, "target_state_architecture"],
     [/\bsolution design\b/, "solution_design"],
     [/\boperating model\b/, "operating_model_design"],

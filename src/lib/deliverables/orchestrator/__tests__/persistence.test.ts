@@ -47,12 +47,12 @@ describe('persistDeliverable', () => {
     const input = savedInput as Record<string, unknown>;
     const rendered = savedRendered as Record<string, unknown>;
     expect(input.artifactType).toBe('source_board_pack'); // module=source
-    expect(input.title).toMatch(/SkyHarbor/);
+    expect(input.title).toBe(goodDocument().title);
     expect((input.sections as unknown[]).length).toBeGreaterThan(0);
     expect((input.facts as unknown[]).length).toBe(goodDocument().sourceRegister.length);
     expect(rendered.outputFormat).toBe('docx');
     expect(typeof rendered.html).toBe('string');
-    expect((rendered.html as string)).toMatch(/SkyHarbor/);
+    expect((rendered.html as string)).toMatch(goodDocument().title);
     expect(rendered.blobSha256).toMatch(/^[0-9a-f]{64}$/);
     expect(rendered.evidenceLedgerIds).toEqual(['ev-1', 'ev-2']);
     // generation_egress_audit is a UUID FK — link the first pass whose responseId is a
@@ -83,6 +83,46 @@ describe('persistDeliverable', () => {
     expect(meta).toBeDefined();
     expect(meta.renderableDoc).toBeDefined();
     expect((meta.renderableDoc as Record<string, unknown>).title).toBe(goodDocument().title);
+  });
+
+  it('persists the canonical deliverable key for later client approval', async () => {
+    let extraMeta: unknown;
+    const mockSave = (async (
+      _input: unknown,
+      _rendered: unknown,
+      extra: unknown,
+    ) => {
+      extraMeta = extra;
+      return { id: 'art-root', clientId: 'c1', metadata: {} } as unknown as GeneratedArtifactRecord;
+    }) as never;
+
+    const req = amsRfpRequest({ module: 'moves', deliverableType: 'root_cause' });
+    const result = {
+      ok: true,
+      brief: getArtifactBrief(req),
+      document: {
+        ...goodDocument(),
+        title: 'FS Demo — Onboarding & KYC Agent-Assist Discovery',
+      },
+      quality: { pass: true, blockers: [], warnings: [], metrics: {} as never },
+      passTrace: [],
+    } as OrchestrationResult;
+
+    await persistDeliverable(
+      result,
+      { clientId: 'c1', renderedBy: 'u1', sourceArtifactRef: 'move:prog-1:phase:2', tenantPolicy },
+      { save: mockSave },
+    );
+
+    const meta = extraMeta as Record<string, unknown>;
+    expect(meta.deliverableTypeKey).toBe('root_cause_worksheet');
+    expect(meta.registryKey).toBe('root_cause_worksheet');
+    expect((meta.renderableDoc as Record<string, unknown>).deliverableTypeKey).toBe(
+      'root_cause_worksheet',
+    );
+    expect((meta.renderableDoc as Record<string, unknown>).deliverableType).toBe(
+      'root_cause',
+    );
   });
 
   it('prescribes docx for a narrative deliverable (rfp_package)', async () => {
