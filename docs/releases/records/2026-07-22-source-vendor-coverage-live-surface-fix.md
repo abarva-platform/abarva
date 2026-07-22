@@ -110,7 +110,7 @@ before PR #5341) — no data migration either direction.
 
 ## Audit Evidence
 
-- PR: to be recorded on open.
+- PR: [abarva-platform/abarva#5346](https://github.com/abarva-platform/abarva/pull/5346).
 - Deploy run: to be recorded after merge.
 - ACA runtime invariant: to be recorded after merge and deploy.
 - Live signed-in proof: to be captured — the same Healthcare Demo event
