@@ -263,9 +263,15 @@ describe("Source answer engine", () => {
         "CDP-Round-1-Selection-Memo-2026-04-15.pdf",
       ]),
     );
-    expect(answer?.responseParts.some((part) => part.type === 'table')).toBe(true);
-    expect(answer?.responseParts.some((part) => part.type === 'barChart')).toBe(true);
-    expect(answer?.responseParts.some((part) => part.type === 'citations')).toBe(true);
+    expect(answer?.responseParts.some((part) => part.type === "table")).toBe(
+      true,
+    );
+    expect(answer?.responseParts.some((part) => part.type === "barChart")).toBe(
+      true,
+    );
+    expect(
+      answer?.responseParts.some((part) => part.type === "citations"),
+    ).toBe(true);
   });
 
   it("answers artifact standard questions from the canonical artifact profile context", () => {
@@ -522,13 +528,17 @@ describe("Source answer engine", () => {
     });
 
     expect(answer?.title).toBe("BAFO instruction answer");
-    expect(answer?.answerText).toContain("BAFO should focus on 3 unresolved commercial commitments");
+    expect(answer?.answerText).toContain(
+      "BAFO should focus on 3 unresolved commercial commitments",
+    );
     expect(answer?.answerText).toContain("Vendor A");
     expect(answer?.answerText).toContain("Vendor B");
     expect(answer?.answerText).toContain("Vendor C");
     expect(answer?.answerText).toContain("structured exhibits");
     expect(answer?.answerText).toContain("Do not award full scoring credit");
-    expect(answer?.recommendedNextAction).toContain("Issue the vendor-specific BAFO questions");
+    expect(answer?.recommendedNextAction).toContain(
+      "Issue the vendor-specific BAFO questions",
+    );
     expect(answer?.answerText).not.toContain("Mode:");
     expect(answer?.answerText).not.toContain("Current state:");
     expect(answer?.answerText).not.toContain("source_events");
@@ -536,18 +546,21 @@ describe("Source answer engine", () => {
   });
 
   it("keeps every BAFO vendor in the answer even when public citations are bounded", () => {
-    const highRankedChallengeEvidence = Array.from({ length: 8 }, (_, index) => ({
-      id: `source-event:sky:challenge-${index + 1}`,
-      segmentId: "sourcing_artifacts",
-      recordId: `CHALLENGE-${index + 1}`,
-      title: `Vendor challenge ${index + 1}`,
-      sourceType: "contextChunk" as const,
-      sourceDoc: "source_events",
-      excerpt:
-        "challenge: Require the vendor to reconcile narrative claims to structured pricing, SLA, staffing, transition, and assumptions exhibits.",
-      confidence: "high" as const,
-      score: 40 - index,
-    }));
+    const highRankedChallengeEvidence = Array.from(
+      { length: 8 },
+      (_, index) => ({
+        id: `source-event:sky:challenge-${index + 1}`,
+        segmentId: "sourcing_artifacts",
+        recordId: `CHALLENGE-${index + 1}`,
+        title: `Vendor challenge ${index + 1}`,
+        sourceType: "contextChunk" as const,
+        sourceDoc: "source_events",
+        excerpt:
+          "challenge: Require the vendor to reconcile narrative claims to structured pricing, SLA, staffing, transition, and assumptions exhibits.",
+        confidence: "high" as const,
+        score: 40 - index,
+      }),
+    );
     const contextWithManyBafoInstructions: SourceAgentContextBundle = {
       ...contextBundle,
       liveTenantContext: {
@@ -615,145 +628,167 @@ describe("Source answer engine", () => {
   it.each([
     ["Which vendor is leading?", "Vendor A is leading"],
     ["Which vendor is cheapest on normalized TCO?", "Vendor B is cheapest"],
-    ["Which vendor has the highest transition risk?", "Vendor B carries the highest transition risk"],
-    ["Which vendor is riskiest?", "Vendor B carries the highest transition risk"],
+    [
+      "Which vendor has the highest transition risk?",
+      "Vendor B carries the highest transition risk",
+    ],
+    [
+      "Which vendor is riskiest?",
+      "Vendor B carries the highest transition risk",
+    ],
     ["Why is Vendor B conditional?", "Vendor B is conditional because"],
-    ["Why should Vendor C remain in the process?", "Vendor C should remain in the process"],
-    ["Which vendor should advance to BAFO?", "Advance Vendor A as the risk-adjusted lead and Vendor C"],
-    ["Show the evaluation scorecard summary.", "The evaluation scorecard ranks Vendor A first"],
-    ["What is the final recommendation for the sourcing team?", "Vendor A is leading"],
-    ["What are the executive tradeoffs?", "continuity versus price versus service accountability"],
-  ])(
-    "answers evaluation scorecard question: %s",
-    (prompt, expectedLead) => {
-      const contextWithEvaluationScorecard: SourceAgentContextBundle = {
-        ...contextBundle,
-        sourcingEvent: {
-          ...contextBundle.sourcingEvent,
-          id: "skyh-test-event",
-          code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
-          name: "SkyHarbor AMS Outsourcing RFP",
-          accountName: "SkyHarbor Air",
-          archetype: "managed_services",
-          rigor: "strategic",
-          lifecycleStatus: "active",
-          owner: "CIO Office",
-          valueAtStakeUsd: 96_400_000,
-          currentStageKey: "evaluation",
-        },
-        liveTenantContext: {
-          ...liveTenantContext,
-          embeddedContextChunkCount: 0,
-          retrievedEvidence: [
-            {
-              id: "source-event:sky:eval-a",
-              segmentId: "sourcing_artifacts",
-              recordId: "vendor-a-evaluation-summary",
-              title: "Vendor A evaluation summary",
-              sourceType: "contextChunk",
-              sourceDoc: "source_events",
-              excerpt:
-                "Rank 1; weighted score 7.4/10; recommendation advance to bafo. Risk-adjusted leader at 7.4/10 because continuity, scope coverage, and transition confidence outweigh its weaker commercial remedies. Finalist posture: Preferred BAFO lead: advance, but require sharper commercial remedies before award. Tradeoffs: Best continuity and transition risk posture. Needs stronger productivity price-down, SLA credit economics, and transition fee holdbacks. Conditions: improve productivity credits and transition fee holdbacks.",
-              confidence: "high",
-              score: 30,
-            },
-            {
-              id: "source-event:sky:eval-b",
-              segmentId: "sourcing_artifacts",
-              recordId: "vendor-b-evaluation-summary",
-              title: "Vendor B evaluation summary",
-              sourceType: "contextChunk",
-              sourceDoc: "source_events",
-              excerpt:
-                "Rank 3; weighted score 6.6/10; recommendation hold until clarified. Lowest-cost price benchmark at 6.6/10, but coverage staffing, retained effort, pass-through exposure, and productivity economics must close before it can be treated as a preferred finalist. Finalist posture: Price benchmark only: hold from preferred-finalist status unless BAFO cures the named staffing, retained-effort, pass-through, and productivity gaps. Tradeoffs: Best apparent normalized TCO. Highest execution risk because productivity, staffing coverage, and retained-client effort remain conditional. Conditions: reconcile proposed coverage model to staffing table; include retained effort in normalized TCO.",
-              confidence: "high",
-              score: 29,
-            },
-            {
-              id: "source-event:sky:eval-c",
-              segmentId: "sourcing_artifacts",
-              recordId: "vendor-c-evaluation-summary",
-              title: "Vendor C evaluation summary",
-              sourceType: "contextChunk",
-              sourceDoc: "source_events",
-              excerpt:
-                "Rank 2; weighted score 7.2/10; recommendation advance with conditions. Service-quality specialist at 7.2/10 with strong SLA economics, but scope and transition caveats must be normalized before it can lead. Finalist posture: Conditional finalist: advance if corporate shared-services scope and transition timing are normalized. Tradeoffs: Best SLA remedy posture and clean evidence discipline. Narrower base scope and slower transition make the headline price less directly comparable. Conditions: normalize optional corporate tower and accelerated transition option.",
-              confidence: "high",
-              score: 28,
-            },
-            {
-              id: "source-event:sky:comparison-tco",
-              segmentId: "sourcing_artifacts",
-              recordId: "evaluation-comparison-normalized-tco",
-              title: "Normalized vendor comparison - Normalized 5-year TCO",
-              sourceType: "contextChunk",
-              sourceDoc: "source_events",
-              excerpt:
-                "Normalized 5-year TCO: Shows cost position after transition, optional, and one-time lines are visible. Vendor A: $96.4M; posture watch; Higher TCO reflects continuity. Vendor B: $91.8M; posture strength; Lowest TCO with retained-effort caveats. Vendor C: $94.3M; posture watch; Optional corporate support must be normalized.",
-              confidence: "high",
-              score: 27,
-            },
-            {
-              id: "source-event:sky:comparison-transition",
-              segmentId: "sourcing_artifacts",
-              recordId: "evaluation-comparison-transition-risk",
-              title: "Normalized vendor comparison - Transition risk",
-              sourceType: "contextChunk",
-              sourceDoc: "source_events",
-              excerpt:
-                "Transition risk: Highlights transition commitments. Vendor A: lower operational risk. Vendor B: Highest risk because client SME dependency and coverage proof remain open. Vendor C: schedule risk remains because stabilization extends beyond buyer target.",
-              confidence: "high",
-              score: 26,
-            },
-            {
-              id: "source-event:sky:impact-b",
-              segmentId: "sourcing_artifacts",
-              recordId: "vendor-b-score-impact",
-              title: "Vendor B score impact scenario",
-              sourceType: "contextChunk",
-              sourceDoc: "source_events",
-              excerpt:
-                "Score movement: 6.6 to 7.3 if cured; delta +0.7. BAFO cure: Reconcile 24x7 staffing to role/location tables, cap tooling pass-throughs, cost retained-client effort, and commit productivity price-downs. Required evidence: Shift/FTE/location table, retained-effort RACI with cost model, capped pass-through schedule, and year-by-year productivity credit. Decision impact: Vendor B can move from price benchmark to viable finalist, but not to risk-adjusted lead unless execution proof is contractual.",
-              confidence: "high",
-              score: 25,
-            },
-            {
-              id: "source-event:sky:finalist",
-              segmentId: "sourcing_artifacts",
-              recordId: "evaluation-finalist-recommendation",
-              title: "Finalist recommendation",
-              sourceType: "contextChunk",
-              sourceDoc: "source_events",
-              excerpt:
-                "Advance Vendor A as the risk-adjusted lead and Vendor C as a conditional service-accountability finalist. Keep Vendor B as the price benchmark only; it should not become a preferred finalist unless BAFO cures staffing coverage, retained-effort, pass-through, and productivity-credit gaps.",
-              confidence: "high",
-              score: 24,
-            },
-          ],
-        },
-      };
+    [
+      "Why should Vendor C remain in the process?",
+      "Vendor C should remain in the process",
+    ],
+    [
+      "Which vendor should advance to BAFO?",
+      "Advance Vendor A as the risk-adjusted lead and Vendor C",
+    ],
+    [
+      "Show the evaluation scorecard summary.",
+      "The evaluation scorecard ranks Vendor A first",
+    ],
+    [
+      "What is the final recommendation for the sourcing team?",
+      "Vendor A is leading",
+    ],
+    [
+      "What are the executive tradeoffs?",
+      "continuity versus price versus service accountability",
+    ],
+  ])("answers evaluation scorecard question: %s", (prompt, expectedLead) => {
+    const contextWithEvaluationScorecard: SourceAgentContextBundle = {
+      ...contextBundle,
+      sourcingEvent: {
+        ...contextBundle.sourcingEvent,
+        id: "skyh-test-event",
+        code: "SKYH-SKYHARBOR-AMS-OUTSOURCING-2026",
+        name: "SkyHarbor AMS Outsourcing RFP",
+        accountName: "SkyHarbor Air",
+        archetype: "managed_services",
+        rigor: "strategic",
+        lifecycleStatus: "active",
+        owner: "CIO Office",
+        valueAtStakeUsd: 96_400_000,
+        currentStageKey: "evaluation",
+      },
+      liveTenantContext: {
+        ...liveTenantContext,
+        embeddedContextChunkCount: 0,
+        retrievedEvidence: [
+          {
+            id: "source-event:sky:eval-a",
+            segmentId: "sourcing_artifacts",
+            recordId: "vendor-a-evaluation-summary",
+            title: "Vendor A evaluation summary",
+            sourceType: "contextChunk",
+            sourceDoc: "source_events",
+            excerpt:
+              "Rank 1; weighted score 7.4/10; recommendation advance to bafo. Risk-adjusted leader at 7.4/10 because continuity, scope coverage, and transition confidence outweigh its weaker commercial remedies. Finalist posture: Preferred BAFO lead: advance, but require sharper commercial remedies before award. Tradeoffs: Best continuity and transition risk posture. Needs stronger productivity price-down, SLA credit economics, and transition fee holdbacks. Conditions: improve productivity credits and transition fee holdbacks.",
+            confidence: "high",
+            score: 30,
+          },
+          {
+            id: "source-event:sky:eval-b",
+            segmentId: "sourcing_artifacts",
+            recordId: "vendor-b-evaluation-summary",
+            title: "Vendor B evaluation summary",
+            sourceType: "contextChunk",
+            sourceDoc: "source_events",
+            excerpt:
+              "Rank 3; weighted score 6.6/10; recommendation hold until clarified. Lowest-cost price benchmark at 6.6/10, but coverage staffing, retained effort, pass-through exposure, and productivity economics must close before it can be treated as a preferred finalist. Finalist posture: Price benchmark only: hold from preferred-finalist status unless BAFO cures the named staffing, retained-effort, pass-through, and productivity gaps. Tradeoffs: Best apparent normalized TCO. Highest execution risk because productivity, staffing coverage, and retained-client effort remain conditional. Conditions: reconcile proposed coverage model to staffing table; include retained effort in normalized TCO.",
+            confidence: "high",
+            score: 29,
+          },
+          {
+            id: "source-event:sky:eval-c",
+            segmentId: "sourcing_artifacts",
+            recordId: "vendor-c-evaluation-summary",
+            title: "Vendor C evaluation summary",
+            sourceType: "contextChunk",
+            sourceDoc: "source_events",
+            excerpt:
+              "Rank 2; weighted score 7.2/10; recommendation advance with conditions. Service-quality specialist at 7.2/10 with strong SLA economics, but scope and transition caveats must be normalized before it can lead. Finalist posture: Conditional finalist: advance if corporate shared-services scope and transition timing are normalized. Tradeoffs: Best SLA remedy posture and clean evidence discipline. Narrower base scope and slower transition make the headline price less directly comparable. Conditions: normalize optional corporate tower and accelerated transition option.",
+            confidence: "high",
+            score: 28,
+          },
+          {
+            id: "source-event:sky:comparison-tco",
+            segmentId: "sourcing_artifacts",
+            recordId: "evaluation-comparison-normalized-tco",
+            title: "Normalized vendor comparison - Normalized 5-year TCO",
+            sourceType: "contextChunk",
+            sourceDoc: "source_events",
+            excerpt:
+              "Normalized 5-year TCO: Shows cost position after transition, optional, and one-time lines are visible. Vendor A: $96.4M; posture watch; Higher TCO reflects continuity. Vendor B: $91.8M; posture strength; Lowest TCO with retained-effort caveats. Vendor C: $94.3M; posture watch; Optional corporate support must be normalized.",
+            confidence: "high",
+            score: 27,
+          },
+          {
+            id: "source-event:sky:comparison-transition",
+            segmentId: "sourcing_artifacts",
+            recordId: "evaluation-comparison-transition-risk",
+            title: "Normalized vendor comparison - Transition risk",
+            sourceType: "contextChunk",
+            sourceDoc: "source_events",
+            excerpt:
+              "Transition risk: Highlights transition commitments. Vendor A: lower operational risk. Vendor B: Highest risk because client SME dependency and coverage proof remain open. Vendor C: schedule risk remains because stabilization extends beyond buyer target.",
+            confidence: "high",
+            score: 26,
+          },
+          {
+            id: "source-event:sky:impact-b",
+            segmentId: "sourcing_artifacts",
+            recordId: "vendor-b-score-impact",
+            title: "Vendor B score impact scenario",
+            sourceType: "contextChunk",
+            sourceDoc: "source_events",
+            excerpt:
+              "Score movement: 6.6 to 7.3 if cured; delta +0.7. BAFO cure: Reconcile 24x7 staffing to role/location tables, cap tooling pass-throughs, cost retained-client effort, and commit productivity price-downs. Required evidence: Shift/FTE/location table, retained-effort RACI with cost model, capped pass-through schedule, and year-by-year productivity credit. Decision impact: Vendor B can move from price benchmark to viable finalist, but not to risk-adjusted lead unless execution proof is contractual.",
+            confidence: "high",
+            score: 25,
+          },
+          {
+            id: "source-event:sky:finalist",
+            segmentId: "sourcing_artifacts",
+            recordId: "evaluation-finalist-recommendation",
+            title: "Finalist recommendation",
+            sourceType: "contextChunk",
+            sourceDoc: "source_events",
+            excerpt:
+              "Advance Vendor A as the risk-adjusted lead and Vendor C as a conditional service-accountability finalist. Keep Vendor B as the price benchmark only; it should not become a preferred finalist unless BAFO cures staffing coverage, retained-effort, pass-through, and productivity-credit gaps.",
+            confidence: "high",
+            score: 24,
+          },
+        ],
+      },
+    };
 
-      const answer = buildSourceAnswerEngine({
-        prompt,
-        contextBundle: contextWithEvaluationScorecard,
-        userRole: "cio",
-      });
+    const answer = buildSourceAnswerEngine({
+      prompt,
+      contextBundle: contextWithEvaluationScorecard,
+      userRole: "cio",
+    });
 
-      expect(answer?.title).toBe("Evaluation scorecard answer");
-      expect(answer?.answerText).toContain(expectedLead);
-      expect(answer?.answerText).toContain("Vendor A");
-      expect(answer?.answerText).toContain("Vendor B");
-      expect(answer?.answerText).toContain("Vendor C");
-      expect(answer?.answerText).toContain("What can change the score");
-      expect(answer?.answerText).not.toContain("Mode:");
-      expect(answer?.answerText).not.toContain("Current state:");
-      expect(answer?.answerText).not.toContain("source_events");
-      expect(answer?.answerText).not.toContain("Sourcing Artifacts");
-      const renderedPartText = JSON.stringify(answer?.responseParts ?? []);
-      expect(renderedPartText).not.toMatch(/Mode:|Current state:|source_events|Sourcing Artifacts|Source Artifacts/i);
-      expect(renderedPartText).toContain("Decision signals and sourcing implications");
-    },
-  );
+    expect(answer?.title).toBe("Evaluation scorecard answer");
+    expect(answer?.answerText).toContain(expectedLead);
+    expect(answer?.answerText).toContain("Vendor A");
+    expect(answer?.answerText).toContain("Vendor B");
+    expect(answer?.answerText).toContain("Vendor C");
+    expect(answer?.answerText).toContain("What can change the score");
+    expect(answer?.answerText).not.toContain("Mode:");
+    expect(answer?.answerText).not.toContain("Current state:");
+    expect(answer?.answerText).not.toContain("source_events");
+    expect(answer?.answerText).not.toContain("Sourcing Artifacts");
+    const renderedPartText = JSON.stringify(answer?.responseParts ?? []);
+    expect(renderedPartText).not.toMatch(
+      /Mode:|Current state:|source_events|Sourcing Artifacts|Source Artifacts/i,
+    );
+    expect(renderedPartText).toContain(
+      "Decision signals and sourcing implications",
+    );
+  });
 
   it("does not let client-final RFP authority hijack vendor advancement questions", () => {
     const sharedEvidence = [
@@ -896,6 +931,60 @@ describe("Source answer engine", () => {
     );
     expect(scopeFinalityAnswer?.answerText).not.toContain(
       "Client Final - Lakeshore Shared Services AMS RFP Pack.docx is the final Scope Memo",
+    );
+  });
+
+  it("uses the shared artifact-authority resolver for artifact governance answers", () => {
+    const contextWithAcceptedArtifact: SourceAgentContextBundle = {
+      ...contextBundle,
+      liveTenantContext: {
+        ...liveTenantContext,
+        embeddedContextChunkCount: 0,
+        retrievedEvidence: [
+          {
+            id: "source-artifact:current-authoritative",
+            segmentId: "sourcing_artifacts",
+            recordId: "current-authoritative",
+            title: "RFP Package - Current Authoritative",
+            sourceType: "contextChunk" as const,
+            sourceDoc: "source_artifacts",
+            excerpt:
+              'Artifact authority record: "Generated Current RFP.docx" is an AbarVa-generated draft. Artifact type: d09_rfp_pack; stage: rfp; status: draft; lifecycle: current; version: 8. Authority: clientFinal=false; currentAuthoritative=true; activeAcceptance=false; blobBacked=true.',
+            confidence: "high" as const,
+            score: 92,
+          },
+          {
+            id: "source-artifact:accepted-working-final",
+            segmentId: "sourcing_artifacts",
+            recordId: "accepted-working-final",
+            title: "RFP Package - Accepted",
+            sourceType: "contextChunk" as const,
+            sourceDoc: "source_artifacts",
+            excerpt:
+              'Artifact authority record: "Accepted Working RFP.docx" is a Source artifact. Artifact type: d09_rfp_pack; stage: rfp; status: draft; lifecycle: current; version: 5. Authority: clientFinal=false; currentAuthoritative=false; activeAcceptance=true; blobBacked=true. Lineage: supersedes a prior artifact version.',
+            confidence: "high" as const,
+            score: 90,
+          },
+        ],
+      },
+    };
+
+    const answer = buildSourceAnswerEngine({
+      prompt: "Which RFP version is final?",
+      contextBundle: contextWithAcceptedArtifact,
+      userRole: "cio",
+    });
+
+    expect(answer?.title).toBe("Artifact authority answer");
+    expect(answer?.answerText).toContain("Accepted Working RFP.docx");
+    expect(answer?.answerText).toContain(
+      "selected by the shared artifact-authority resolver",
+    );
+    expect(answer?.answerText).toContain(
+      "client-final authoritative rfp is not confirmed",
+    );
+    expect(answer?.answerText).not.toContain(
+      "Generated Current RFP.docx is the strongest available RFP",
     );
   });
 
@@ -1172,72 +1261,73 @@ describe("Source answer engine", () => {
   });
 
   it("answers contract optimization questions with question-specific sourcing guidance", () => {
-    const contractEvidence: SourceLiveTenantContextSnapshot["retrievedEvidence"] = [
-      {
-        id: "source-event:skyh:contract-optimization-recommended-path",
-        segmentId: "sourcing_artifacts",
-        recordId: "contract-optimization-recommended-path",
-        title: "Existing contract optimization recommended path",
-        sourceType: "contextChunk",
-        sourceDoc: "Source intake record",
-        excerpt:
-          "Immediate action: Issue a reservation-of-rights and cure notice covering invoice variance, SLA economics, staffing reconciliation, and change-order normalization before the renewal notice window closes. Primary path: Renegotiate the incumbent agreement with cure conditions, normalized run-rate baseline, stronger SLA credits, staffing true-up, and cataloged change-order controls. Fallback path: Prepare a competitive RFP if cure items remain unresolved or the incumbent cannot convert the evidence-backed levers into commercial commitments. Do not do: Do not renew as-is or treat the current run-rate as clean until leakage, staffing, SLA, and recurring change-order issues are resolved.",
-        confidence: "high",
-        score: 36,
-      },
-      {
-        id: "source-event:skyh:contract-optimization-finding-price",
-        segmentId: "sourcing_artifacts",
-        recordId: "contract-optimization-finding-price",
-        title:
-          "Contract optimization finding - Invoices are running above contracted baseline",
-        sourceType: "contextChunk",
-        sourceDoc: "Source intake record",
-        excerpt:
-          "price leakage: $791,000 of above-baseline invoice variance appears in the sampled months; annualized exposure is about $1,582,000. Implication: The incumbent commercial baseline cannot be treated as clean until pass-throughs, demand changes, and out-of-catalog charges are reconciled. Recommended action: Create a recovery and normalization schedule before renewal pricing.",
-        confidence: "high",
-        score: 34,
-      },
-      {
-        id: "source-event:skyh:contract-optimization-finding-sla",
-        segmentId: "sourcing_artifacts",
-        recordId: "contract-optimization-finding-sla",
-        title:
-          "Contract optimization finding - Service credits do not match operational criticality",
-        sourceType: "contextChunk",
-        sourceDoc: "Source intake record",
-        excerpt:
-          "sla credit leakage: 3 SLA commitment(s) show missed/weak performance economics or insufficient chronic-miss language. Implication: The buyer has operational risk without proportionate contractual remedy.",
-        confidence: "high",
-        score: 33,
-      },
-      {
-        id: "source-event:skyh:contract-optimization-finding-staffing",
-        segmentId: "sourcing_artifacts",
-        recordId: "contract-optimization-finding-staffing",
-        title:
-          "Contract optimization finding - Committed staffing and observed coverage do not fully reconcile",
-        sourceType: "contextChunk",
-        sourceDoc: "Source intake record",
-        excerpt:
-          "staffing variance: 12.0 of 114.0 committed FTE equivalent(s) are not visible in observed staffing or shift coverage. Estimated staffing value exposure is $2,220,000 annually.",
-        confidence: "high",
-        score: 32,
-      },
-      {
-        id: "source-event:skyh:contract-optimization-finding-change-order",
-        segmentId: "sourcing_artifacts",
-        recordId: "contract-optimization-finding-change-order",
-        title:
-          "Contract optimization finding - Change-order spend is not cleanly cataloged into the run baseline",
-        sourceType: "contextChunk",
-        sourceDoc: "Source intake record",
-        excerpt:
-          "change-order exposure: $1,152,000 of sampled exposure lacks clean catalog mapping, complete approval evidence, or one-time/recurring separation; $1,008,000 appears recurring.",
-        confidence: "high",
-        score: 31,
-      },
-    ];
+    const contractEvidence: SourceLiveTenantContextSnapshot["retrievedEvidence"] =
+      [
+        {
+          id: "source-event:skyh:contract-optimization-recommended-path",
+          segmentId: "sourcing_artifacts",
+          recordId: "contract-optimization-recommended-path",
+          title: "Existing contract optimization recommended path",
+          sourceType: "contextChunk",
+          sourceDoc: "Source intake record",
+          excerpt:
+            "Immediate action: Issue a reservation-of-rights and cure notice covering invoice variance, SLA economics, staffing reconciliation, and change-order normalization before the renewal notice window closes. Primary path: Renegotiate the incumbent agreement with cure conditions, normalized run-rate baseline, stronger SLA credits, staffing true-up, and cataloged change-order controls. Fallback path: Prepare a competitive RFP if cure items remain unresolved or the incumbent cannot convert the evidence-backed levers into commercial commitments. Do not do: Do not renew as-is or treat the current run-rate as clean until leakage, staffing, SLA, and recurring change-order issues are resolved.",
+          confidence: "high",
+          score: 36,
+        },
+        {
+          id: "source-event:skyh:contract-optimization-finding-price",
+          segmentId: "sourcing_artifacts",
+          recordId: "contract-optimization-finding-price",
+          title:
+            "Contract optimization finding - Invoices are running above contracted baseline",
+          sourceType: "contextChunk",
+          sourceDoc: "Source intake record",
+          excerpt:
+            "price leakage: $791,000 of above-baseline invoice variance appears in the sampled months; annualized exposure is about $1,582,000. Implication: The incumbent commercial baseline cannot be treated as clean until pass-throughs, demand changes, and out-of-catalog charges are reconciled. Recommended action: Create a recovery and normalization schedule before renewal pricing.",
+          confidence: "high",
+          score: 34,
+        },
+        {
+          id: "source-event:skyh:contract-optimization-finding-sla",
+          segmentId: "sourcing_artifacts",
+          recordId: "contract-optimization-finding-sla",
+          title:
+            "Contract optimization finding - Service credits do not match operational criticality",
+          sourceType: "contextChunk",
+          sourceDoc: "Source intake record",
+          excerpt:
+            "sla credit leakage: 3 SLA commitment(s) show missed/weak performance economics or insufficient chronic-miss language. Implication: The buyer has operational risk without proportionate contractual remedy.",
+          confidence: "high",
+          score: 33,
+        },
+        {
+          id: "source-event:skyh:contract-optimization-finding-staffing",
+          segmentId: "sourcing_artifacts",
+          recordId: "contract-optimization-finding-staffing",
+          title:
+            "Contract optimization finding - Committed staffing and observed coverage do not fully reconcile",
+          sourceType: "contextChunk",
+          sourceDoc: "Source intake record",
+          excerpt:
+            "staffing variance: 12.0 of 114.0 committed FTE equivalent(s) are not visible in observed staffing or shift coverage. Estimated staffing value exposure is $2,220,000 annually.",
+          confidence: "high",
+          score: 32,
+        },
+        {
+          id: "source-event:skyh:contract-optimization-finding-change-order",
+          segmentId: "sourcing_artifacts",
+          recordId: "contract-optimization-finding-change-order",
+          title:
+            "Contract optimization finding - Change-order spend is not cleanly cataloged into the run baseline",
+          sourceType: "contextChunk",
+          sourceDoc: "Source intake record",
+          excerpt:
+            "change-order exposure: $1,152,000 of sampled exposure lacks clean catalog mapping, complete approval evidence, or one-time/recurring separation; $1,008,000 appears recurring.",
+          confidence: "high",
+          score: 31,
+        },
+      ];
     const skyharborContractBundle: SourceAgentContextBundle = {
       ...contextBundle,
       tenant: {
@@ -1302,22 +1392,53 @@ describe("Source answer engine", () => {
       "Financial exposure: approximately $3.6M-$4.8M annualized, subject to vendor cure review.",
     );
     expect(renewAnswer?.answerText).toContain("Action required:");
-    expect(renewAnswer?.responseParts.some((part) => part.type === "barChart" && part.title === "Exposure by driver")).toBe(true);
-    expect(renewAnswer?.responseParts.some((part) => part.type === "table" && part.title === "Business impact lens")).toBe(true);
-    expect(renewAnswer?.responseParts.some((part) => part.type === "table" && part.title === "Contract optimization decision signals")).toBe(true);
-    expect(renewAnswer?.answerText).not.toContain("Contract optimization finding");
-    expect(cureAnswer?.answerText).toContain("The cure notice should preserve rights");
+    expect(
+      renewAnswer?.responseParts.some(
+        (part) =>
+          part.type === "barChart" && part.title === "Exposure by driver",
+      ),
+    ).toBe(true);
+    expect(
+      renewAnswer?.responseParts.some(
+        (part) =>
+          part.type === "table" && part.title === "Business impact lens",
+      ),
+    ).toBe(true);
+    expect(
+      renewAnswer?.responseParts.some(
+        (part) =>
+          part.type === "table" &&
+          part.title === "Contract optimization decision signals",
+      ),
+    ).toBe(true);
+    expect(renewAnswer?.answerText).not.toContain(
+      "Contract optimization finding",
+    );
+    expect(cureAnswer?.answerText).toContain(
+      "The cure notice should preserve rights",
+    );
     expect(cureAnswer?.answerText).toContain("Cure posture:");
     expect(cureAnswer?.answerText).toContain("Invoice cure");
     expect(cureAnswer?.answerText).toContain("Change-order cure");
-    expect(cureAnswer?.responseParts.some((part) => part.type === "table" && part.title === "Cure notice agenda")).toBe(true);
+    expect(
+      cureAnswer?.responseParts.some(
+        (part) => part.type === "table" && part.title === "Cure notice agenda",
+      ),
+    ).toBe(true);
     expect(cureAnswer?.answerText).not.toContain("\nAction:");
-    expect(exposureAnswer?.answerText).not.toContain("Operational pressure: - ");
+    expect(exposureAnswer?.answerText).not.toContain(
+      "Operational pressure: - ",
+    );
     expect(exposureAnswer?.answerText).toContain("Top exposure drivers:");
     expect(exposureAnswer?.answerText).toContain(
       "Financial exposure: approximately $3.6M-$4.8M annualized, subject to vendor cure review.",
     );
-    expect(exposureAnswer?.responseParts.some((part) => part.type === "barChart" && part.title === "Exposure by driver")).toBe(true);
+    expect(
+      exposureAnswer?.responseParts.some(
+        (part) =>
+          part.type === "barChart" && part.title === "Exposure by driver",
+      ),
+    ).toBe(true);
     expect(businessImpactAnswer?.title).toBe("Contract optimization answer");
     expect(businessImpactAnswer?.answerText).toContain(
       "The money leakage is concentrated in invoice variance",
@@ -1326,7 +1447,12 @@ describe("Source answer engine", () => {
     expect(businessImpactAnswer?.answerText).not.toMatch(
       /^Existing contract optimization recommended path is cited evidence/i,
     );
-    expect(businessImpactAnswer?.responseParts.some((part) => part.type === "table" && part.title === "Business impact lens")).toBe(true);
+    expect(
+      businessImpactAnswer?.responseParts.some(
+        (part) =>
+          part.type === "table" && part.title === "Business impact lens",
+      ),
+    ).toBe(true);
     expect(missingAnswer?.answerText).toContain(
       "not enough to approve a final commercial reset",
     );
@@ -1399,7 +1525,8 @@ describe("Source answer engine", () => {
     };
 
     const answer = buildSourceAnswerEngine({
-      prompt: "What evidence is loaded and what calculated findings can we use?",
+      prompt:
+        "What evidence is loaded and what calculated findings can we use?",
       contextBundle: contextWithContractEvidence,
       userRole: "cio",
     });

@@ -34,6 +34,7 @@ import {
   extractFindingExposureUsd,
   formatContractOptimizationMoney,
 } from "./contract-optimization";
+import { resolveAuthoritativeArtifact } from "./client-final-artifacts";
 
 export type SourceAnswerMode =
   | "current_state"
@@ -1029,6 +1030,7 @@ type ArtifactGovernanceRecord = {
   version: string;
   isClientFinal: boolean;
   isCurrentAuthoritative: boolean;
+  hasActiveAcceptance: boolean;
   isBlobBacked: boolean;
   isGeneratedDraft: boolean;
   linksToGeneratedDraft: boolean;
@@ -1081,9 +1083,10 @@ function buildSourceEventOverviewAnswer(args: {
 
   const accountName = event.accountName ?? "the client";
   const eventTitle = event.name ?? event.code ?? "this Source event";
-  const isLakeshoreSharedServices = /lakeshore|shared services|shared-services|ams/i.test(
-    `${accountName} ${eventTitle} ${event.code ?? ""}`,
-  );
+  const isLakeshoreSharedServices =
+    /lakeshore|shared services|shared-services|ams/i.test(
+      `${accountName} ${eventTitle} ${event.code ?? ""}`,
+    );
   const synopsis = isLakeshoreSharedServices
     ? "covering Finance, HR, Legal, Procurement, Treasury, Compliance, reporting, workflow, and collaboration support."
     : "that should be interpreted through its loaded evidence, stage gates, and artifacts.";
@@ -1199,10 +1202,9 @@ function buildArtifactStandardsAnswer(args: {
   const scopedRecords = requestedCode
     ? records.filter((record) => record.code === requestedCode)
     : records;
-  const answerRecords = (scopedRecords.length > 0 ? scopedRecords : records).slice(
-    0,
-    3,
-  );
+  const answerRecords = (
+    scopedRecords.length > 0 ? scopedRecords : records
+  ).slice(0, 3);
   const primary = answerRecords[0];
   if (!primary) return null;
 
@@ -1263,12 +1265,12 @@ function buildArtifactGovernanceAnswer(args: {
   if (asksVendorDecision) return null;
 
   const asksArtifactGovernance =
-    (/\b(final|authoritative|version|vendors? receive|client upload|uploaded final|generated final|generated draft|draft history|artifact lineage|which rfp|rfp version|rfp final|client[- ]?final|generated artifacts?|artifacts? exist|file cabinet|procurement review|before release)\b/.test(
+    /\b(final|authoritative|version|vendors? receive|client upload|uploaded final|generated final|generated draft|draft history|artifact lineage|which rfp|rfp version|rfp final|client[- ]?final|generated artifacts?|artifacts? exist|file cabinet|procurement review|before release)\b/.test(
       text,
     ) &&
-      /\b(rfp|artifact|artifacts|version|draft|vendors?|lineage|file cabinet|release|procurement)\b/.test(
-        text,
-      ));
+    /\b(rfp|artifact|artifacts|version|draft|vendors?|lineage|file cabinet|release|procurement)\b/.test(
+      text,
+    );
   if (!asksArtifactGovernance) return null;
 
   const records = args.evidence
@@ -1283,41 +1285,41 @@ function buildArtifactGovernanceAnswer(args: {
     : records;
   const answerRecords = scopedRecords.length > 0 ? scopedRecords : records;
 
-  // Precedence mirrors resolveAuthoritativeArtifact() in
-  // client-final-artifacts.ts (client-final+current-authoritative →
-  // client-final → current-authoritative → approved/locked status) — kept
-  // as a local implementation rather than a literal call because these
-  // records are regex-parsed from prose evidence excerpts (`status`,
-  // `version` are free-text tokens here, not the typed DB columns the
-  // shared resolver expects), but the DECISION ORDER must stay identical
-  // so this surface never disagrees with the render route's pick. Update
-  // both together.
-  const clientFinal =
-    answerRecords.find(
-      (record) => record.isClientFinal && record.isCurrentAuthoritative,
-    ) ??
-    answerRecords.find((record) => record.isClientFinal) ??
-    answerRecords.find((record) => record.isCurrentAuthoritative) ??
-    answerRecords.find(
-      (record) =>
-        record.status.toLowerCase() === "approved" ||
-        record.status.toLowerCase() === "locked",
-    );
+  const authoritativeRecord = resolveAuthoritativeArtifact(
+    answerRecords.map((record) => ({
+      record,
+      id: record.evidence.id,
+      lifecycleState: record.lifecycle,
+      status: record.status,
+      artifactGroup: record.isGeneratedDraft ? "generated" : null,
+      isClientFinal: record.isClientFinal,
+      isCurrentAuthoritative: record.isCurrentAuthoritative,
+      hasActiveAcceptance: record.hasActiveAcceptance,
+      version: parseArtifactAuthorityVersion(record.version),
+    })),
+  )?.record;
   const generatedDraft =
     answerRecords.find(
       (record) => record.isGeneratedDraft && record.supersededByLaterVersion,
     ) ?? answerRecords.find((record) => record.isGeneratedDraft);
-  if (!clientFinal && !generatedDraft) return null;
+  if (!authoritativeRecord && !generatedDraft) return null;
+
+  const clientFinal = authoritativeRecord?.isClientFinal
+    ? authoritativeRecord
+    : null;
 
   const artifactLabel = getArtifactAuthorityLabel(
-    requestedArtifactType ?? clientFinal?.artifactType ?? generatedDraft?.artifactType,
+    requestedArtifactType ??
+      authoritativeRecord?.artifactType ??
+      generatedDraft?.artifactType,
   );
   const artifactLabelLower = artifactLabel.toLowerCase();
   const finalName =
-    clientFinal?.fileName ?? `the current ${artifactLabelLower} artifact`;
+    authoritativeRecord?.fileName ??
+    `the current ${artifactLabelLower} artifact`;
   const finalVersion =
-    clientFinal?.version && clientFinal.version !== "unknown"
-      ? `version ${clientFinal.version}`
+    authoritativeRecord?.version && authoritativeRecord.version !== "unknown"
+      ? `version ${authoritativeRecord.version}`
       : "the current version";
   const draftName = generatedDraft?.fileName ?? "the AbarVa-generated draft";
   const artifactIsReady =
@@ -1334,9 +1336,15 @@ function buildArtifactGovernanceAnswer(args: {
     lead = artifactIsReady
       ? `Procurement should review the client-final ${artifactLabelLower} authority, accepted lineage, remaining gate criteria, and any vendor-response caveats before release.`
       : `Procurement should hold release until the ${artifactLabelLower} artifact is accepted as client-final, current authoritative, and Blob-backed.`;
-  } else if (/\b(generated artifacts?|artifacts? exist|file cabinet)\b/.test(text)) {
-    const generatedCount = answerRecords.filter((record) => record.isGeneratedDraft).length;
-    const clientFinalCount = answerRecords.filter((record) => record.isClientFinal).length;
+  } else if (
+    /\b(generated artifacts?|artifacts? exist|file cabinet)\b/.test(text)
+  ) {
+    const generatedCount = answerRecords.filter(
+      (record) => record.isGeneratedDraft,
+    ).length;
+    const clientFinalCount = answerRecords.filter(
+      (record) => record.isClientFinal,
+    ).length;
     lead = `The File Cabinet evidence confirms governed sourcing artifacts for this event, including ${generatedCount} generated draft lineage record(s) and ${clientFinalCount} client-final authoritative record(s) in the current answer slice.`;
   } else if (/\b(generate|generated|client upload|uploaded)\b/.test(text)) {
     lead = clientFinal
@@ -1345,7 +1353,7 @@ function buildArtifactGovernanceAnswer(args: {
   } else if (/\b(history|lineage)\b/.test(text)) {
     lead = clientFinal
       ? `${finalName} is the current authoritative ${artifactLabelLower} artifact in the File Cabinet, and ${draftName} remains preserved in history for lineage.`
-      : `${draftName} is visible in the File Cabinet artifact lineage; a client-final authoritative version is not confirmed.`;
+      : `${finalName} is the strongest available ${artifactLabelLower} artifact; ${draftName} is visible in the File Cabinet artifact lineage, but a client-final authoritative version is not confirmed.`;
   } else if (/\b(advance|stage)\b/.test(text)) {
     lead = artifactIsReady
       ? `The RFP artifact finality condition is satisfied: ${finalName} is client-final, current authoritative, and Blob-backed.`
@@ -1353,7 +1361,7 @@ function buildArtifactGovernanceAnswer(args: {
   } else {
     lead = clientFinal
       ? `${finalName} is the final ${artifactLabel} version of record.`
-      : `${draftName} is the available ${artifactLabelLower} draft; a client-final authoritative ${artifactLabelLower} is not confirmed.`;
+      : `${finalName} is the strongest available ${artifactLabel} version of record, but a client-final authoritative ${artifactLabelLower} is not confirmed.`;
   }
 
   const lineage = clientFinal
@@ -1363,7 +1371,9 @@ function buildArtifactGovernanceAnswer(args: {
     : `Lineage: ${draftName} remains available, but the client-final handoff is not confirmed.`;
   const authority = clientFinal
     ? `Authority: ${finalName} is the accepted client-final artifact, current authoritative version, and stored file of record; registry status is ${clientFinal.status} with ${clientFinal.lifecycle} lifecycle.`
-    : "Authority: no client-final authoritative RFP artifact is confirmed.";
+    : authoritativeRecord
+      ? `Authority: ${finalName} is selected by the shared artifact-authority resolver; registry status is ${authoritativeRecord.status} with ${authoritativeRecord.lifecycle} lifecycle, but it is not confirmed as client-final.`
+      : "Authority: no client-final authoritative RFP artifact is confirmed.";
   const gate = artifactIsReady
     ? "Gate implication: the artifact-version requirement can use the client-final file, but Source still needs any remaining stage criteria and human approval before external issuance."
     : "Gate implication: hold stage advancement until the client-final file is accepted and mapped as authoritative.";
@@ -1381,7 +1391,7 @@ function buildArtifactGovernanceAnswer(args: {
     currentStateFindings: [
       clientFinal
         ? `${finalName} is the current client-final ${artifactLabelLower} artifact.`
-        : `No client-final authoritative ${artifactLabelLower} artifact is confirmed.`,
+        : `${finalName} is the strongest available ${artifactLabelLower} artifact, but no client-final authoritative ${artifactLabelLower} artifact is confirmed.`,
       generatedDraft
         ? `${draftName} remains preserved as generated draft history.`
         : "Prior generated draft lineage is not visible in the current evidence slice.",
@@ -1466,8 +1476,9 @@ function parseArtifactStandardsRecord(
       "Generation contract: profiled in Source",
     exportFormats: generationExport?.[2]?.trim() ?? "profiled in Source",
     lifecycleState:
-      excerpt.match(/Lifecycle state for this event: ([^.]+)\./i)?.[1]?.trim() ??
-      "Lifecycle state not registered",
+      excerpt
+        .match(/Lifecycle state for this event: ([^.]+)\./i)?.[1]
+        ?.trim() ?? "Lifecycle state not registered",
     approvalRule:
       excerpt.match(/Approval rule: ([^.]+)\./i)?.[1]?.trim() ??
       "Human review required",
@@ -1483,6 +1494,11 @@ function getArtifactAuthorityLabel(artifactType?: string | null): string {
     default:
       return "artifact";
   }
+}
+
+function parseArtifactAuthorityVersion(version: string): number | undefined {
+  const parsed = Number.parseInt(version, 10);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 function parseArtifactGovernanceRecord(
@@ -1504,6 +1520,7 @@ function parseArtifactGovernanceRecord(
     version: excerpt.match(/version:\s*([^.;]+)/i)?.[1]?.trim() ?? "unknown",
     isClientFinal: /clientFinal=true/i.test(excerpt),
     isCurrentAuthoritative: /currentAuthoritative=true/i.test(excerpt),
+    hasActiveAcceptance: /activeAcceptance=true/i.test(excerpt),
     isBlobBacked: /blobBacked=true/i.test(excerpt),
     isGeneratedDraft: /\ban AbarVa-generated draft\b/i.test(excerpt),
     linksToGeneratedDraft: /links to the prior generated draft/i.test(excerpt),
@@ -1563,21 +1580,20 @@ function buildStructuredEvidenceAnswer(args: {
   const families = structuredEvidence
     .filter((item) => item.title.startsWith("Structured evidence - "))
     .map(parseStructuredEvidenceFamily)
-    .filter(
-      (family): family is StructuredEvidenceFamilyRecord => Boolean(family),
+    .filter((family): family is StructuredEvidenceFamilyRecord =>
+      Boolean(family),
     );
   const metrics = structuredEvidence
     .filter((item) => item.title.startsWith("Calculated metric - "))
     .map(parseStructuredEvidenceMetric)
-    .filter(
-      (metric): metric is StructuredEvidenceMetricRecord => Boolean(metric),
+    .filter((metric): metric is StructuredEvidenceMetricRecord =>
+      Boolean(metric),
     );
   const findings = structuredEvidence
     .filter((item) => item.title.startsWith("Supported finding - "))
     .map(parseStructuredEvidenceFinding)
-    .filter(
-      (finding): finding is StructuredEvidenceFindingRecord =>
-        Boolean(finding),
+    .filter((finding): finding is StructuredEvidenceFindingRecord =>
+      Boolean(finding),
     );
 
   const strongestFamilies = families
@@ -1590,7 +1606,9 @@ function buildStructuredEvidenceAnswer(args: {
   const metricLine =
     metrics.length > 0
       ? `The calculated sourcing metrics include ${formatList(
-          metrics.slice(0, 4).map((metric) => `${metric.label}: ${metric.value}`),
+          metrics
+            .slice(0, 4)
+            .map((metric) => `${metric.label}: ${metric.value}`),
         )}.`
       : "No calculated sourcing metrics are available yet.";
   const findingLine =
@@ -1611,9 +1629,13 @@ function buildStructuredEvidenceAnswer(args: {
 
   return {
     title: "Structured Source evidence answer",
-    answerText: [lead, metricLine, findingLine, gapLine, `Next action: ${nextAction}`].join(
-      "\n",
-    ),
+    answerText: [
+      lead,
+      metricLine,
+      findingLine,
+      gapLine,
+      `Next action: ${nextAction}`,
+    ].join("\n"),
     currentStateFindings: [
       lead,
       metrics[0] ? `${metrics[0].label}: ${metrics[0].value}.` : "",
@@ -1693,8 +1715,10 @@ function parseStructuredEvidenceFinding(
 ): StructuredEvidenceFindingRecord | null {
   const label = item.title.replace(/^Supported finding\s*-\s*/i, "").trim();
   if (!label) return null;
-  const [evidence = item.excerpt, implication = "Use this as sourcing evidence."] =
-    item.excerpt.split(/(?<=\.)\s+(?=This supports|This metric)/i);
+  const [
+    evidence = item.excerpt,
+    implication = "Use this as sourcing evidence.",
+  ] = item.excerpt.split(/(?<=\.)\s+(?=This supports|This metric)/i);
   return {
     label,
     evidence: cleanEvidenceExcerpt(evidence),
@@ -1748,11 +1772,13 @@ function buildStructuredEvidenceResponseParts(args: {
       type: "table",
       title: "Supported findings",
       columns: ["Finding", "Evidence", "Sourcing implication"],
-      rows: args.findings.slice(0, 5).map((finding) => [
-        finding.label,
-        finding.evidence,
-        finding.implication,
-      ]),
+      rows: args.findings
+        .slice(0, 5)
+        .map((finding) => [
+          finding.label,
+          finding.evidence,
+          finding.implication,
+        ]),
       caption:
         "Findings are generated from persisted evidence metrics, not raw document browsing.",
     });
@@ -2341,7 +2367,10 @@ function buildEvaluationDecisionAnswer(args: {
     leadSentence = `${transitionRisk.vendorName} carries the highest transition risk because execution confidence depends on closing staffing coverage, retained-client dependency, and cutover evidence.`;
   } else if (/\bvendor\s+b\b/.test(text) && /\bconditional|why\b/.test(text)) {
     leadSentence = `${vendorB.vendorName} is conditional because its price advantage depends on curing automation, staffing, retained-effort, pass-through, and productivity-credit gaps before it can receive preferred-finalist scoring credit.`;
-  } else if (/\bvendor\s+c\b/.test(text) && /\bremain|process|finalist\b/.test(text)) {
+  } else if (
+    /\bvendor\s+c\b/.test(text) &&
+    /\bremain|process|finalist\b/.test(text)
+  ) {
     leadSentence =
       "Vendor C should remain in the process because its stronger service-accountability and SLA economics create useful negotiation leverage, even though its shared-services scope and transition dependencies must be normalized before final scoring.";
   } else if (/\badvance\b/.test(text)) {
