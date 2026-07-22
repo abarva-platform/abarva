@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-The Moves P1 Charter generator is being tightened so a Charter remains a concise approval instrument for funding discovery and design. Live FS Demo proof showed the generator could produce an 11,374-word P1 Charter, which the quality gate correctly blocked as too long. This release fixes the upstream generation contract instead of loosening the quality gate.
+The Moves P1 Charter generator is being tightened so a Charter remains a concise approval instrument for funding discovery and design. Live FS Demo proof showed the generator could produce an 11,374-word P1 Charter, which the quality gate correctly blocked as too long. The first discipline fix reduced the draft to the intended seven-section structure, but a 2,400-word ceiling proved too tight for evidence-backed executive memos. This release keeps the hard ceiling while moving it to a practical 3,000-word maximum.
 
 ## Layer Impact
 
@@ -32,7 +32,7 @@ The Moves P1 Charter generator is being tightened so a Charter remains a concise
 - `src/lib/deliverables/orchestrator/artifact-brief-registry.ts`: carries the fixed-structure signal into composed briefs.
 - `src/lib/deliverables/orchestrator/prompt-builder.ts`: prevents fixed-structure artifacts from inviting extra sections/exhibits.
 - `src/lib/deliverables/orchestrator/generation-plan.ts`: drops any added charter sections before drafting.
-- `src/lib/deliverables/orchestrator/quality-bar-registry.ts`: right-sizes the Charter quality band to 7 sections, 900-2,400 body words, hard ceiling.
+- `src/lib/deliverables/orchestrator/quality-bar-registry.ts`: right-sizes the Charter quality band to 7 sections, 900-3,000 body words, hard ceiling.
 - Tests updated for the fixed charter structure and quality-bar bounds.
 
 ## QA / Validation
@@ -45,8 +45,9 @@ The Moves P1 Charter generator is being tightened so a Charter remains a concise
 
 Live proof required after deployment:
 
-- Not run yet: Rerun the FS Demo sandbox P1 Charter generation for `Codex Proof First Capital E2E 20260721`.
-- Not run yet: Confirm the run no longer blocks on the 11,374-word / 3,200-word ceiling failure.
+- Partial live proof: FS Demo sandbox run `d30d5db2-b7e7-40c9-83c2-cf2529a22ebf` generated exactly 7 sections and retrieved 12 evidence items, proving the 11,374-word / 3,200-word failure mode was removed.
+- Live blocker found: the same run produced 2,675 words and was blocked only by the new 2,400-word cap. This candidate raises the cap to 3,000 words while preserving a hard blocker against bloated charters.
+- Not run yet after this candidate: Rerun the FS Demo sandbox P1 Charter generation for `Codex Proof First Capital E2E 20260721`.
 - Not run yet: Confirm the generated Charter is concise, phase-appropriate, and visible in Files & Evidence.
 
 ## Rollout Plan
@@ -69,7 +70,8 @@ Revert the PR and redeploy the prior ACA image through the repo-owned deployment
 
 ## Audit Evidence
 
-- Live failure prompting the fix: FS Demo sandbox P1 generation run `f853c654-f381-430b-90a5-16f81982da1c` blocked with `document too long for this artifact: 11374 words; target ceiling 3200`.
+- Original live failure prompting the fix: FS Demo sandbox P1 generation run `f853c654-f381-430b-90a5-16f81982da1c` blocked with `document too long for this artifact: 11374 words; target ceiling 3200`.
+- Follow-up live proof after the fixed seven-section contract: FS Demo sandbox P1 generation run `d30d5db2-b7e7-40c9-83c2-cf2529a22ebf` produced 7 sections, retrieved 12 evidence items, and blocked only on `2675 words; target ceiling 2400`.
 - PR URL: Pending.
 - ACA revision: Pending.
 - Signed-in proof bundle: Pending.
