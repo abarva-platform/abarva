@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import { cloneElement, useCallback, useEffect, useRef, useState } from "react";
+import type { CSSProperties, ReactElement, ReactNode } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Bar,
@@ -13,7 +13,6 @@ import {
   Legend,
   ReferenceArea,
   ReferenceLine,
-  ResponsiveContainer,
   Scatter,
   ScatterChart,
   Tooltip,
@@ -231,17 +230,25 @@ function TowerSafeResponsiveContainer({
   children,
 }: {
   height: number | string;
-  children: ReactNode;
+  children: ReactElement;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [ready, setReady] = useState(false);
+  const [size, setSize] = useState<{ width: number; height: number } | null>(
+    null,
+  );
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
     const update = () => {
       const rect = node.getBoundingClientRect();
-      setReady(rect.width > 0 && rect.height > 0);
+      const width = Math.floor(rect.width);
+      const measuredHeight = Math.floor(rect.height);
+      setSize(
+        width > 0 && measuredHeight > 0
+          ? { width, height: measuredHeight }
+          : null,
+      );
     };
     update();
     if (typeof ResizeObserver === "undefined") {
@@ -255,16 +262,7 @@ function TowerSafeResponsiveContainer({
 
   return (
     <div ref={ref} style={{ width: "100%", height, minWidth: 1, minHeight: 1 }}>
-      {ready ? (
-        <ResponsiveContainer
-          width="100%"
-          height="100%"
-          minWidth={1}
-          minHeight={1}
-        >
-          {children}
-        </ResponsiveContainer>
-      ) : null}
+      {size ? cloneElement(children, size) : null}
     </div>
   );
 }
