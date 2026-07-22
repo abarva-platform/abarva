@@ -1,9 +1,14 @@
 import { azureRead, type AzureReadClient } from "@/lib/data-plane/azureRead";
+import {
+  evaluatePromotion,
+  type ReadinessRow,
+} from "@/lib/governance/promotion-evaluator";
 import { canonicalTenantKey, tenantAliasesFor } from "@/lib/tenant/aliases";
 
 import {
   MOVES_LEARNING_RECORD_TYPE,
   MOVES_LEARNING_SOURCE_SYSTEM,
+  MOVES_LEARNING_CONTEXT_TABLE,
   type MovesLearningPayload,
   type MovesLearningSourceBasis,
 } from "./types";
@@ -11,6 +16,9 @@ import {
 export interface MovesLearningReviewCandidate {
   readonly id: string;
   readonly tenantKey: string;
+  readonly objectTable: string;
+  readonly objectId: string;
+  readonly tenantId: string | null;
   readonly canonicalRecordId: string;
   readonly moveId: string | null;
   readonly moveName: string | null;
@@ -25,6 +33,12 @@ export interface MovesLearningReviewCandidate {
   readonly readinessStatus: string;
   readonly retrievability: string;
   readonly policyValidationStatus: string;
+  readonly sourceLayer: string;
+  readonly classification: string;
+  readonly readinessSourceBasis: string | null;
+  readonly applicableAgents: readonly string[];
+  readonly citedRenderVerifiedAt: string | null;
+  readonly readinessProvenance: Record<string, unknown> | null;
   readonly confidenceRationale: string | null;
   readonly lastSyncedAt: string | null;
 }
@@ -109,7 +123,16 @@ interface MovesLearningReviewRow {
   readonly agent_readiness_status?: string | null;
   readonly retrievability?: string | null;
   readonly policy_validation_status?: string | null;
+  readonly object_table?: string | null;
+  readonly object_id?: string | null;
+  readonly tenant_id?: string | null;
+  readonly source_layer?: string | null;
+  readonly classification?: string | null;
+  readonly readiness_source_basis?: string | null;
   readonly confidence_level?: string | null;
+  readonly applicable_agents?: readonly string[] | null;
+  readonly cited_render_verified_at?: string | Date | null;
+  readonly provenance?: Record<string, unknown> | null;
   readonly confidence_rationale?: string | null;
 }
 
@@ -136,6 +159,11 @@ function asStringArray(value: unknown): readonly string[] {
   return value.filter((item): item is string => typeof item === "string");
 }
 
+function asObject(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
 function increment(map: Record<string, number>, key: string): void {
   map[key] = (map[key] ?? 0) + 1;
 }
@@ -154,6 +182,13 @@ function toCandidate(row: MovesLearningReviewRow): MovesLearningReviewCandidate 
   return {
     id: asString(row.id) ?? asString(row.canonical_record_id) ?? title,
     tenantKey: asString(row.tenant_key) ?? "unknown",
+    objectTable: asString(row.object_table) ?? MOVES_LEARNING_CONTEXT_TABLE,
+    objectId:
+      asString(row.object_id) ??
+      asString(row.id) ??
+      asString(row.canonical_record_id) ??
+      title,
+    tenantId: asString(row.tenant_id),
     canonicalRecordId: asString(row.canonical_record_id) ?? "unknown",
     moveId: asString(payload.moveId),
     moveName: asString(payload.moveName),
@@ -169,6 +204,13 @@ function toCandidate(row: MovesLearningReviewRow): MovesLearningReviewCandidate 
     readinessStatus: asString(row.agent_readiness_status) ?? "missing_readiness",
     retrievability: asString(row.retrievability) ?? "not_available",
     policyValidationStatus: asString(row.policy_validation_status) ?? "missing",
+    sourceLayer: asString(row.source_layer) ?? "tenant_context",
+    classification: asString(row.classification) ?? "internal",
+    readinessSourceBasis:
+      asString(row.readiness_source_basis) ?? asString(payload.sourceBasis),
+    applicableAgents: asStringArray(row.applicable_agents),
+    citedRenderVerifiedAt: asIso(row.cited_render_verified_at),
+    readinessProvenance: asObject(row.provenance),
     confidenceRationale: asString(row.confidence_rationale),
     lastSyncedAt: asIso(row.last_synced_at),
   };
@@ -190,9 +232,42 @@ function isKnownLearningSourceBasis(value: string): boolean {
   );
 }
 
+function toPromotionReadinessRow(
+  candidate: MovesLearningReviewCandidate,
+): ReadinessRow {
+  return {
+    object_table: candidate.objectTable,
+    object_id: candidate.objectId,
+    client_key: canonicalTenantKey(candidate.tenantKey),
+    tenant_id: candidate.tenantId,
+    source_layer: candidate.sourceLayer,
+    agent_readiness_status: candidate.readinessStatus,
+    retrievability: candidate.retrievability,
+    classification: candidate.classification,
+    source_basis: candidate.readinessSourceBasis ?? candidate.sourceBasis,
+    confidence_level: candidate.confidenceLevel,
+    applicable_agents: [...candidate.applicableAgents],
+    cited_render_verified_at: candidate.citedRenderVerifiedAt,
+    policy_validation_status: candidate.policyValidationStatus,
+    provenance: candidate.readinessProvenance,
+  };
+}
+
+function missingEligibilityReasons(row: ReadinessRow): string[] {
+  const evaluation = evaluatePromotion(row);
+  const criteria = evaluation.criteria;
+  const missing: string[] = [];
+  if (!criteria.source_basis_present) missing.push("source basis");
+  if (!criteria.confidence_present) missing.push("confidence");
+  if (!criteria.provenance_present) missing.push("provenance");
+  if (!criteria.applicable_agents_valid) missing.push("valid applicable agents");
+  return missing;
+}
+
 export function buildMovesLearningReviewPacket(
   candidate: MovesLearningReviewCandidate,
 ): MovesLearningReviewPacket {
+  const evaluation = evaluatePromotion(toPromotionReadinessRow(candidate));
   const inspect = [
     candidate.moveName
       ? `Move: ${candidate.moveName}`
@@ -226,18 +301,18 @@ export function buildMovesLearningReviewPacket(
   if (candidate.policyValidationStatus !== "pass") {
     blockers.push("Context/corpus policy has not passed.");
   }
+  for (const missing of missingEligibilityReasons(toPromotionReadinessRow(candidate))) {
+    blockers.push(`Missing ${missing}; canonical promotion eligibility is incomplete.`);
+  }
   if (candidate.readinessStatus !== "agent_ready") {
     blockers.push("Not agent-ready; held for stewardship.");
   }
 
-  if (
-    candidate.readinessStatus === "agent_ready" ||
-    candidate.retrievability === "search_indexed"
-  ) {
+  if (candidate.readinessStatus === "agent_ready") {
     return {
       action: "investigate_active_promotion_violation",
       actionLabel: "Investigate before use",
-      whyHere: `${reviewPhaseLabel(candidate.phase)} ${sourceBasisLabel(candidate.sourceBasis)} from Moves appears promoted or indexed.`,
+      whyHere: `${reviewPhaseLabel(candidate.phase)} ${sourceBasisLabel(candidate.sourceBasis)} from Moves appears marked agent-ready.`,
       inspect,
       blockers:
         blockers.length > 0
@@ -263,7 +338,8 @@ export function buildMovesLearningReviewPacket(
   if (
     candidate.readinessStatus === "not_reviewed" ||
     candidate.policyValidationStatus !== "pass" ||
-    candidate.retrievability === "committed_not_indexed"
+    candidate.retrievability === "committed_not_indexed" ||
+    evaluation.recommendation === "remain_not_reviewed"
   ) {
     return {
       action: "hold_for_policy_review",
@@ -290,14 +366,32 @@ export function buildMovesLearningReviewPacket(
 export function buildMovesLearningPromotionPreview(
   candidate: MovesLearningReviewCandidate,
 ): MovesLearningPromotionPreview {
+  const readinessRow = toPromotionReadinessRow(candidate);
+  const evaluation = evaluatePromotion(readinessRow);
+  const criteria = evaluation.criteria;
   const hasLineage =
     isKnownLearningSourceBasis(candidate.sourceBasis) &&
     Boolean(candidate.sourceId) &&
     candidate.evidenceRefs.length > 0;
-  const policyPassed = candidate.policyValidationStatus === "pass";
-  const retrievalReady = candidate.retrievability === "search_indexed";
-  const agentReady = candidate.readinessStatus === "agent_ready";
-  const activeLooking = agentReady || retrievalReady;
+  const policyPassed =
+    candidate.policyValidationStatus === "pass" &&
+    criteria.policy_valid &&
+    criteria.tenant_scoped &&
+    criteria.classification_allowed;
+  const eligibilityReady =
+    criteria.source_basis_present &&
+    criteria.confidence_present &&
+    criteria.provenance_present &&
+    criteria.applicable_agents_valid;
+  const agentReady = evaluation.recommendation === "agent_ready";
+
+  const policyStatus: MovesLearningPromotionPreviewCheck["status"] = policyPassed
+    ? "pass"
+    : candidate.policyValidationStatus === "pending" ||
+        candidate.policyValidationStatus === "missing" ||
+        candidate.policyValidationStatus === "warn"
+      ? "pending"
+      : "blocked";
 
   const checks: MovesLearningPromotionPreviewCheck[] = [
     {
@@ -309,59 +403,77 @@ export function buildMovesLearningPromotionPreview(
     },
     {
       label: "Context policy",
-      status: policyPassed ? "pass" : "blocked",
+      status: policyStatus,
       detail: policyPassed
-        ? "Context/corpus policy status is pass."
-        : `Policy status is ${candidate.policyValidationStatus}; steward review is required.`,
+        ? "Context/corpus policy status is pass, tenant scope is present, and classification is allowed."
+        : evaluation.failure_reasons.length > 0
+          ? `Policy status is ${candidate.policyValidationStatus}; ${evaluation.failure_reasons.join("; ")}.`
+          : `Policy status is ${candidate.policyValidationStatus}; steward policy validation is still required.`,
+    },
+    {
+      label: "Agent context eligibility",
+      status: eligibilityReady ? "pass" : "blocked",
+      detail: eligibilityReady
+        ? "Source basis, confidence, provenance, and applicable-agent metadata are present."
+        : `Missing ${missingEligibilityReasons(readinessRow).join(", ")} before this can enter active context.`,
     },
     {
       label: "Azure retrieval index",
-      status: retrievalReady ? "pass" : "blocked",
-      detail: retrievalReady
-        ? "Candidate reports search-indexed retrievability."
+      status: criteria.indexed_or_retrievable ? "pass" : "blocked",
+      detail: criteria.indexed_or_retrievable
+        ? `Candidate is retrievable (${candidate.retrievability}).`
         : `Retrievability is ${candidate.retrievability}; it is not citeable by agents yet.`,
     },
     {
       label: "Citation rendering proof",
-      status: "pending",
-      detail:
-        "No cite-render proof is recorded on the Moves learning candidate yet.",
+      status: criteria.citation_renderable ? "pass" : "pending",
+      detail: criteria.citation_renderable
+        ? `Cite-render proof recorded at ${candidate.citedRenderVerifiedAt}.`
+        : "No end-to-end cite-render proof is recorded on the Moves learning candidate yet.",
     },
     {
       label: "Steward decision",
-      status: agentReady ? "pass" : "blocked",
+      status:
+        candidate.readinessStatus === "agent_ready"
+          ? agentReady
+            ? "investigate"
+            : "investigate"
+          : evaluation.recommendation === "promotion_candidate"
+            ? "pending"
+            : "blocked",
       detail: agentReady
-        ? "Candidate is marked agent-ready; verify the approval audit trail before use."
-        : `Readiness is ${candidate.readinessStatus}; active context use is blocked.`,
+        ? "Candidate is marked agent-ready; verify the explicit steward approval audit trail before use."
+        : evaluation.recommendation === "promotion_candidate"
+          ? "Canonical gates pass; steward sign-off is still required before changing active context."
+          : `Readiness is ${candidate.readinessStatus}; active context use is blocked.`,
     },
   ];
 
-  if (activeLooking) {
+  if (candidate.readinessStatus === "agent_ready") {
     return {
       status: "investigate",
       statusLabel: "Investigate",
       summary:
         "This candidate already has an active-use signal. Verify explicit steward approval, retrieval proof, and citation proof before any agent consumes it.",
-      checks: checks.map((check) =>
-        check.label === "Azure retrieval index" || check.label === "Steward decision"
-          ? { ...check, status: "investigate" }
-          : check,
-      ),
+      checks,
       nextAction:
         "Audit the promotion trail. If approval, indexing, and cite-render proof are missing, remove active-use signals before release.",
     };
   }
 
-  const blocked = checks.some((check) => check.status === "blocked");
-  if (blocked) {
+  if (
+    evaluation.recommendation !== "promotion_candidate" ||
+    !hasLineage ||
+    !policyPassed
+  ) {
     return {
       status: "blocked",
       statusLabel: "Not ready",
       summary:
-        "This candidate is safely persisted for stewardship, but it is not ready for active enterprise context or model retrieval.",
+        "This candidate is safely persisted for stewardship, but canonical promotion gates are not complete.",
       checks,
       nextAction:
-        "Complete source review, policy validation, indexing, cite-render verification, and steward approval as separate controlled steps.",
+        "Complete source review, context policy validation, canonical eligibility metadata, indexing, cite-render verification, and steward approval as separate controlled steps.",
     };
   }
 
@@ -369,7 +481,7 @@ export function buildMovesLearningPromotionPreview(
     status: "preview_ready",
     statusLabel: "Preview ready",
     summary:
-      "All deterministic checks are present for a read-only promotion preview. Do not mark agent-ready until a steward signs off.",
+      "Canonical promotion gates are satisfied for a read-only preview. Do not mark agent-ready until a steward signs off.",
     checks,
     nextAction:
       "Run a read-only promotion preview and capture retrieval/citation proof before any active-context update.",
@@ -533,10 +645,19 @@ export async function getMovesLearningReviewQueue(
        r.source_record_id,
        r.last_synced_at,
        r.payload,
+       g.object_table,
+       g.object_id,
+       g.tenant_id,
+       g.source_layer,
        g.agent_readiness_status,
        g.retrievability,
+       g.classification,
+       g.source_basis as readiness_source_basis,
        g.policy_validation_status,
        g.confidence_level,
+       g.applicable_agents,
+       g.cited_render_verified_at,
+       g.provenance,
        g.confidence_rationale
      from enterprise_context_records r
      left join governed_object_readiness g

@@ -192,7 +192,7 @@ function addRecord(args: {
     confidence_level,
     confidence_rationale:
       "Move-derived learning is persisted with source lineage, but remains not_reviewed until context policy, indexing, and cite-render verification promote it.",
-    applicable_agents: ["moves", "intelligence", "tower", "nexus"],
+    applicable_agents: ["nexus", "tower", "steward"],
     policy_validation_status: "pending",
     provenance: {
       sourceSystem: MOVES_LEARNING_SOURCE_SYSTEM,

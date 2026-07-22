@@ -451,11 +451,15 @@ describe("Moves learning review queue", () => {
 
     expect(preview.status).toBe("blocked");
     expect(preview.statusLabel).toBe("Not ready");
-    expect(preview.summary).toContain("not ready for active enterprise context");
+    expect(preview.summary).toContain("canonical promotion gates are not complete");
     expect(preview.checks).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ label: "Source lineage", status: "pass" }),
-        expect.objectContaining({ label: "Context policy", status: "blocked" }),
+        expect.objectContaining({ label: "Context policy", status: "pending" }),
+        expect.objectContaining({
+          label: "Agent context eligibility",
+          status: "blocked",
+        }),
         expect.objectContaining({
           label: "Azure retrieval index",
           status: "blocked",
@@ -492,7 +496,15 @@ describe("Moves learning review queue", () => {
         },
         agent_readiness_status: "agent_ready",
         retrievability: "search_indexed",
+        tenant_id: "client-1",
+        source_layer: "tenant_context",
+        classification: "internal",
+        readiness_source_basis: "gate_decision",
         policy_validation_status: "pass",
+        confidence_level: "medium",
+        applicable_agents: ["nexus", "tower", "steward"],
+        cited_render_verified_at: "2026-07-22T19:00:00.000Z",
+        provenance: { moveId: "move-1", sourceId: "gate-1" },
       },
     ]);
 
@@ -525,7 +537,15 @@ describe("Moves learning review queue", () => {
         },
         agent_readiness_status: "agent_ready",
         retrievability: "search_indexed",
+        tenant_id: "client-1",
+        source_layer: "tenant_context",
+        classification: "internal",
+        readiness_source_basis: "gate_decision",
         policy_validation_status: "pass",
+        confidence_level: "medium",
+        applicable_agents: ["nexus", "tower", "steward"],
+        cited_render_verified_at: "2026-07-22T19:00:00.000Z",
+        provenance: { moveId: "move-1", sourceId: "gate-1" },
       },
     ]);
 
@@ -537,7 +557,11 @@ describe("Moves learning review queue", () => {
       expect.arrayContaining([
         expect.objectContaining({
           label: "Azure retrieval index",
-          status: "investigate",
+          status: "pass",
+        }),
+        expect.objectContaining({
+          label: "Citation rendering proof",
+          status: "pass",
         }),
         expect.objectContaining({
           label: "Steward decision",
@@ -546,6 +570,69 @@ describe("Moves learning review queue", () => {
       ]),
     );
     expect(preview.nextAction).toContain("Audit the promotion trail");
+  });
+
+  it("marks fully gated but not-yet-stewarded candidates preview-ready", () => {
+    const queue = summarizeMovesLearningReviewCandidates("arcturus", [
+      {
+        id: "rec-1",
+        tenant_key: "first-capital",
+        canonical_record_id: "moves-learning-move-1-approved_evidence-ev-1",
+        record_subtype: "approved_evidence",
+        title: "Loan onboarding baseline",
+        source_record_id: "ev-1",
+        payload: {
+          moveId: "move-1",
+          moveName: "Commercial Lending Agent Assist",
+          phase: 2,
+          sourceBasis: "approved_evidence",
+          sourceId: "ev-1",
+          title: "Loan onboarding baseline",
+          summary: "Cycle time is 11.8 days and KYC rework is 27%.",
+          evidenceRefs: ["ev-1", "artifact-input-1"],
+          confidenceLevel: "high",
+        },
+        agent_readiness_status: "not_reviewed",
+        retrievability: "search_indexed",
+        tenant_id: "client-1",
+        source_layer: "tenant_context",
+        classification: "internal",
+        readiness_source_basis: "approved_evidence",
+        policy_validation_status: "pass",
+        confidence_level: "high",
+        applicable_agents: ["nexus", "tower", "steward"],
+        cited_render_verified_at: "2026-07-22T19:00:00.000Z",
+        provenance: { moveId: "move-1", sourceId: "ev-1" },
+      },
+    ]);
+
+    const preview = buildMovesLearningPromotionPreview(queue.candidates[0]!);
+
+    expect(preview.status).toBe("preview_ready");
+    expect(preview.statusLabel).toBe("Preview ready");
+    expect(preview.checks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: "Source lineage", status: "pass" }),
+        expect.objectContaining({ label: "Context policy", status: "pass" }),
+        expect.objectContaining({
+          label: "Agent context eligibility",
+          status: "pass",
+        }),
+        expect.objectContaining({
+          label: "Azure retrieval index",
+          status: "pass",
+        }),
+        expect.objectContaining({
+          label: "Citation rendering proof",
+          status: "pass",
+        }),
+        expect.objectContaining({
+          label: "Steward decision",
+          status: "pending",
+        }),
+      ]),
+    );
+    expect(preview.nextAction).toContain("read-only promotion preview");
   });
 
   it("builds a promotion rollup that summarizes why candidates are not active-context ready", () => {
@@ -571,6 +658,13 @@ describe("Moves learning review queue", () => {
         agent_readiness_status: "not_reviewed",
         retrievability: "committed_not_indexed",
         policy_validation_status: "pending",
+        tenant_id: "client-1",
+        source_layer: "tenant_context",
+        classification: "internal",
+        readiness_source_basis: "approved_evidence",
+        confidence_level: "high",
+        applicable_agents: ["nexus", "tower", "steward"],
+        provenance: { moveId: "move-1", sourceId: "ev-1" },
       },
       {
         id: "rec-2",
@@ -593,6 +687,13 @@ describe("Moves learning review queue", () => {
         agent_readiness_status: "not_reviewed",
         retrievability: "committed_not_indexed",
         policy_validation_status: "pass",
+        tenant_id: "client-1",
+        source_layer: "tenant_context",
+        classification: "internal",
+        readiness_source_basis: "client_approved_deliverable",
+        confidence_level: "medium",
+        applicable_agents: ["nexus", "tower", "steward"],
+        provenance: { moveId: "move-1", sourceId: "del-1" },
       },
     ]);
 
@@ -616,7 +717,12 @@ describe("Moves learning review queue", () => {
         expect.objectContaining({
           label: "Context policy",
           passed: 1,
-          blocked: 1,
+          pending: 1,
+        }),
+        expect.objectContaining({
+          label: "Agent context eligibility",
+          passed: 2,
+          blocked: 0,
         }),
         expect.objectContaining({
           label: "Azure retrieval index",
