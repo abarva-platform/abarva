@@ -65,6 +65,9 @@ Source now has a governed writeback path that can project eligible typed Source 
 - PASS — Readiness-row fix validation: `npx eslint src/lib/source/context-writeback src/scripts/source/writeback-source-facts-to-enterprise-context.ts` passed.
 - PASS — Readiness-row fix validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` passed.
 - PASS — Readiness-row fix validation: `npm run release:check` passed.
+- PASS — Readiness-row fix deployed through ACA main deploy run `29944332828` at revision `ca-abarva-web-lab-eastus--m3f34e172`; independent runtime invariant passed with digest `sha256:137ed72a045e6591a6efd5041de334f707ccdadb005417b211899eb73138a75e`, 100% traffic, and healthy `/api/health`.
+- PASS — Final ACA operator-job apply succeeded: execution `job-abarva-private-operator-eus-etxljkd` ran `source:enterprise-context:writeback` against the deployed digest and logged `writeStatus=written`, `factsRead=14`, `eligible=14`, `skipped=0`.
+- PASS — Final VNet readback from live ACA revision `ca-abarva-web-lab-eastus--m3f34e172` proved the committed data layers for event `c05872d8-0465-4bc8-8eeb-ff3d42ac6761`: `14` `enterprise_context_records`, `14` `enterprise_context_facts`, and `14` `governed_object_readiness` rows. Readiness remains intentionally conservative: `client_key=lakeshore-holdings`, `source_layer=tenant_context`, `agent_readiness_status=not_reviewed`, `retrievability=committed_not_indexed`, `policy_validation_status=pending`.
 
 ## Rollout Plan
 
