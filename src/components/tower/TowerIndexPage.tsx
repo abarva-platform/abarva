@@ -6902,6 +6902,20 @@ function TowerMartAiPortfolioDesign({
   const partialProofRows = displayRows.filter(
     (row) => row.financeValidatedValueUsd > 0 || row.usageActual !== null,
   );
+  // The quadrant is a capital-control instrument, not an inventory. Plot only
+  // items that carry real economics (spend, approved funding, or promised
+  // value) — a candidate idea with no money attached has no defensible
+  // position on a value/readiness axis, and hundreds of them turn the chart
+  // into an unreadable cloud. Candidates are surfaced by count and listed
+  // below instead. Ordered by economic weight so the biggest bets read first.
+  const PLOT_LIMIT = 14;
+  const economicWeight = (row: TowerAiPortfolioDisplayRow): number =>
+    row.aiTaggedSpendUsd + row.approvedFundingUsd + row.promisedValueUsd;
+  const plottedRows = displayRows
+    .filter((row) => economicWeight(row) > 0)
+    .sort((a, b) => economicWeight(b) - economicWeight(a))
+    .slice(0, PLOT_LIMIT);
+  const unplottedCount = displayRows.length - plottedRows.length;
   return (
     <>
       <TowerMartBackButton
@@ -6949,7 +6963,30 @@ function TowerMartAiPortfolioDesign({
             Each numbered point maps to the watchlist. Placement is lane-aware:
             scale with proof, fix adoption, fund readiness, or stop/re-scope.
           </p>
-          <TowerAiPortfolioRechart rows={displayRows} />
+          <TowerAiPortfolioRechart rows={plottedRows} />
+          {/* Honest disclosure: the quadrant plots only items carrying real
+              economics, so the CXO reads a legible set instead of a cloud of
+              overlapping candidate dots. Everything excluded is stated and
+              still reachable in the watchlist/candidate list below — nothing is
+              silently truncated. */}
+          {unplottedCount > 0 ? (
+            <p
+              data-testid="tower-ai-portfolio-plot-scope"
+              style={{
+                margin: "8px 0 0",
+                color: T.GRAY_DK,
+                fontSize: 12,
+                lineHeight: 1.4,
+              }}
+            >
+              Plotting the {plottedRows.length} funded and embedded AI items
+              that carry spend, funding, or promised value.{" "}
+              {unplottedCount.toLocaleString()} further portfolio row
+              {unplottedCount === 1 ? "" : "s"} — mostly candidate ideas with no
+              approved funding — are listed below rather than plotted, so the
+              quadrant stays readable.
+            </p>
+          ) : null}
           <div
             style={{
               display: "grid",
