@@ -468,6 +468,12 @@ export function assembleMartFromFacts(
 
   const pushEvidence = (
     section: string,
+    // Stable, UNIQUE identity for the row this evidence belongs to (the
+    // aggregate's identityKey). The lineage_key is built from this, not from
+    // the display name: many V3 rows legitimately share a business_name, so
+    // keying on the label collides and a batch upsert then fails with
+    // "ON CONFLICT DO UPDATE command cannot affect row a second time".
+    identityKey: string,
     displayedFact: string,
     valueNumeric: number | null,
     factKeys: string[],
@@ -475,7 +481,7 @@ export function assembleMartFromFacts(
     caveat = "",
   ): void => {
     evidence.push({
-      lineage_key: `${tenantKey}::${section}::${displayedFact}`.slice(0, 240),
+      lineage_key: `${tenantKey}::${section}::${identityKey}`.slice(0, 240),
       tenant_key: tenantKey,
       surface_section: section,
       displayed_fact: displayedFact,
@@ -592,6 +598,7 @@ export function assembleMartFromFacts(
       });
       pushEvidence(
         "program_decision_lanes",
+        agg.identityKey,
         `${agg.programName} decision lane`,
         agg.approvedFunding ?? 0,
         agg.factKeys,
@@ -662,6 +669,7 @@ export function assembleMartFromFacts(
     });
     pushEvidence(
       "ai_portfolio",
+      agg.identityKey,
       `${agg.programName} AI-tagged spend`,
       round(agg.aiTaggedSpend),
       agg.factKeys,
