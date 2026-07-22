@@ -23,6 +23,7 @@ import { usePendingAttachments } from '@/components/programs/attachments/usePend
 import { PendingAttachmentChip } from '@/components/programs/attachments/AttachmentChip';
 import { toAttachmentChipRef } from '@/lib/programs/attachments/types';
 import type { InlineFile } from '@/lib/shell/atlas-page-state';
+import { AgentResponseParts } from '@/components/agent/AgentResponseParts';
 
 // Mime types we can extract text from client-side with FileReader.readAsText().
 const TEXT_EXTRACTABLE: ReadonlySet<string> = new Set([
@@ -112,11 +113,12 @@ export function AskAnythingBar({
 
   const ask         = pageState?.ask           ?? localStream.ask;
   const response    = pageState?.currentResponse ?? localStream.response;
+  const responseParts = pageState?.currentResponseParts ?? [];
   const isStreaming  = pageState?.isStreaming     ?? localStream.isStreaming;
   const error       = pageState?.error            ?? localStream.error;
   const clearLocal  = pageState?.clearResponse    ?? localStream.clear;
 
-  const hasResponse = !!(response || error);
+  const hasResponse = !!(response || error || responseParts.length > 0);
 
   // ── Auto-grow textarea ──────────────────────────────────────────────────
 
@@ -299,10 +301,16 @@ export function AskAnythingBar({
                     maxHeight: 220, overflowY: 'auto',
                     whiteSpace: 'pre-wrap', wordBreak: 'break-word',
                   }}>
-                    {error
-                      ? <span style={{ color: '#c0392b' }}>Error: {error}</span>
-                      : response || <span style={{ opacity: 0.4 }}>…</span>
-                    }
+                    {error ? (
+                      <span style={{ color: '#c0392b' }}>Error: {error}</span>
+                    ) : responseParts.length > 0 ? (
+                      <div style={{ display: 'grid', gap: 10 }}>
+                        {response ? <div>{response}</div> : null}
+                        <AgentResponseParts parts={responseParts} />
+                      </div>
+                    ) : (
+                      response || <span style={{ opacity: 0.4 }}>…</span>
+                    )}
                     {isStreaming && (
                       <span className="aab-cursor">▋</span>
                     )}

@@ -71,6 +71,7 @@ import {
 import type { AttachmentChipRef } from "@/lib/programs/attachments/types";
 // Wave 1 · inline files for non-programs surfaces (no DB required).
 import type { InlineFile } from "@/lib/shell/atlas-page-state";
+import type { AgentResponsePart } from "@/lib/agent/response-parts";
 
 // ── Default surface-to-agent mapping ─────────────────────────────────────────
 
@@ -107,6 +108,20 @@ function getAgentTurnTimeoutMs(surface: string): number {
       : DEFAULT_AGENT_TURN_TIMEOUT_MS;
 }
 
+function isSourceAskSurface(surface: string): boolean {
+  return surface === "source" || surface === "source-detail" || surface.startsWith("/source");
+}
+
+function stringValue(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
+function normalizeSourceParts(value: unknown): AgentResponsePart[] {
+  return Array.isArray(value) ? (value as AgentResponsePart[]) : [];
+}
+
 // ── Context ───────────────────────────────────────────────────────────────────
 
 const AtlasPageStateContext = createContext<AtlasPageContextValue | null>(null);
@@ -127,6 +142,9 @@ export function AtlasPageStateProvider({
 
   const [conversation, setConversation] = useState<ChatTurn[]>([]);
   const [currentResponse, setCurrentResponse] = useState("");
+  const [currentResponseParts, setCurrentResponseParts] = useState<
+    AgentResponsePart[]
+  >([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -235,6 +253,7 @@ export function AtlasPageStateProvider({
 
       setConversation((prev) => [...prev, userTurn]);
       setCurrentResponse("");
+      setCurrentResponseParts([]);
       setError(null);
       setIsStreaming(true);
       // CB-6 · the broker assembles the bundle BEFORE streaming starts,
@@ -266,6 +285,70 @@ export function AtlasPageStateProvider({
           ...(attachments && attachments.length > 0 ? { attachments } : {}),
           ...(contextBundleMode ? { contextBundleMode } : {}),
         };
+        const sourceEventId = stringValue(mergedSurfaceContext.sourceEventId);
+        if (isSourceAskSurface(surface) && sourceEventId) {
+          const stageKey =
+            stringValue(mergedSurfaceContext.viewStage) ?? stage ?? undefined;
+          const selectedAttachmentIds = Array.isArray(
+            mergedSurfaceContext.selectedAttachmentIds,
+          )
+            ? mergedSurfaceContext.selectedAttachmentIds.filter(
+                (id): id is string => typeof id === "string",
+              )
+            : [];
+
+          const res = await fetch(
+            `/api/v1/source/${encodeURIComponent(sourceEventId)}/nexus/ask`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              signal: ctrl.signal,
+              body: JSON.stringify({
+                prompt: text.trim(),
+                mode: "event",
+                stageKey,
+                selectedAttachmentIds,
+              }),
+            },
+          );
+
+          if (!res.ok) throw new Error(`Source agent API ${res.status}`);
+          const payload = (await res.json().catch(() => null)) as {
+            summary?: string;
+            answer?: string;
+            agentResponseParts?: unknown;
+            nexusSummary?: { summary?: string } | null;
+            error?: { message?: string };
+          } | null;
+          const responseText =
+            payload?.summary ??
+            payload?.answer ??
+            payload?.nexusSummary?.summary ??
+            payload?.error?.message ??
+            "Ava could not produce a Source response right now.";
+          const responseParts = normalizeSourceParts(
+            payload?.agentResponseParts,
+          );
+          const shapedText = shapeAgentResponseForSurface(
+            surface,
+            responseText,
+          );
+
+          setCurrentResponse(shapedText);
+          setCurrentResponseParts(responseParts);
+          const agentTurn: ChatTurn = {
+            id: `agt-${Date.now()}`,
+            role: "agent",
+            text: shapedText,
+            agentName: resolvedAgentName,
+            timestamp: Date.now(),
+            responseParts:
+              responseParts.length > 0 ? responseParts : undefined,
+          };
+          setConversation((prev) => [...prev, agentTurn]);
+          return;
+        }
+
         const res = await fetch("/api/chat/agent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -407,6 +490,7 @@ export function AtlasPageStateProvider({
         };
         setConversation((prev) => [...prev, agentTurn]);
         setCurrentResponse("");
+        setCurrentResponseParts([]);
       } catch (e) {
         if ((e as Error).name === "AbortError" && !timedOut) return; // intentional cancel
         if (timedOut) {
@@ -451,6 +535,7 @@ export function AtlasPageStateProvider({
 
   const clearResponse = useCallback(() => {
     setCurrentResponse("");
+    setCurrentResponseParts([]);
     setError(null);
   }, []);
 
@@ -463,6 +548,7 @@ export function AtlasPageStateProvider({
     agentName: resolvedAgentName,
     conversation,
     currentResponse,
+    currentResponseParts,
     isStreaming,
     error,
     suggestedActions: [],

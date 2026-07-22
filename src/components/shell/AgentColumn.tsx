@@ -21,9 +21,11 @@ import { useAgentStream } from "@/hooks/useAgentStream";
 import { ATLAS_SYNTHESIS_TURN_ID } from "@/lib/shell/atlas-page-state";
 import { useAtlasPageState } from "@/hooks/useAtlasPageState";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
+import { AgentResponseParts } from "@/components/agent/AgentResponseParts";
 import {
   parseAgentResponseParts,
   type AgentChartSpec,
+  type AgentResponsePart,
 } from "@/lib/agent/response-parts";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -100,6 +102,7 @@ export function AgentColumn({
 
   const ask = pageState?.ask ?? localStream.ask;
   const response = pageState?.currentResponse ?? localStream.response;
+  const responseParts = pageState?.currentResponseParts ?? [];
   const isStreaming = pageState?.isStreaming ?? localStream.isStreaming;
   const error = pageState?.error ?? localStream.error;
   const clearLocal = pageState?.clearResponse ?? localStream.clear;
@@ -372,6 +375,7 @@ export function AgentColumn({
             key={turn.id}
             role={turn.role}
             text={turn.text}
+            responseParts={turn.responseParts}
             label={
               turn.role === "user"
                 ? "You"
@@ -414,7 +418,10 @@ export function AgentColumn({
                 </span>
               ) : (
                 <>
-                  <AgentResponseBody text={response} />
+                  <AgentResponseBody
+                    text={response}
+                    responseParts={responseParts}
+                  />
                   {isStreaming && (
                     <span
                       style={{
@@ -578,10 +585,12 @@ export function AgentColumn({
 function ChatBubble({
   role,
   text,
+  responseParts,
   label,
 }: {
   role: "user" | "agent";
   text: string;
+  responseParts?: AgentResponsePart[];
   label: string;
 }) {
   const isUser = role === "user";
@@ -629,13 +638,31 @@ function ChatBubble({
           wordBreak: "break-word",
         }}
       >
-        {isUser ? text : <AgentResponseBody text={text} />}
+        {isUser ? (
+          text
+        ) : (
+          <AgentResponseBody text={text} responseParts={responseParts} />
+        )}
       </div>
     </div>
   );
 }
 
-function AgentResponseBody({ text }: { text: string }) {
+function AgentResponseBody({
+  text,
+  responseParts,
+}: {
+  text: string;
+  responseParts?: AgentResponsePart[];
+}) {
+  if (responseParts && responseParts.length > 0) {
+    return (
+      <div style={{ display: "grid", gap: 10 }}>
+        {text ? <AgentMarkdown text={text} /> : null}
+        <AgentResponseParts parts={responseParts} />
+      </div>
+    );
+  }
   return (
     <>
       {parseAgentResponseParts(text).map((part, index) => {
