@@ -24,6 +24,7 @@
 import path from "node:path";
 import fs from "node:fs";
 import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
 import { config as loadEnv } from "dotenv";
 import { Client } from "pg";
 
@@ -55,6 +56,7 @@ interface CliArgs {
   v3Dir: string;
   dryRun: boolean;
   noDb: boolean;
+  emitProofBundle: boolean;
   actor: string;
   outDir: string;
 }
@@ -82,6 +84,10 @@ function parseArgs(argv: readonly string[]): CliArgs {
     // Local pure-pipeline run: skip the DB entirely (V3 CSVs only, no tower_*
     // telemetry, no alias crosswalk). Proves the projection without the VNet.
     noDb: args.includes("--no-db"),
+    // Emit the out-dir as a base64 tar between the proof markers the governed
+    // ACA operator wrapper (scripts/ops/submit-aca-operator-job.mjs) extracts
+    // from job logs — so a live ACA run returns its proof/summary/mart JSON.
+    emitProofBundle: args.includes("--emit-proof-bundle"),
     actor: get("--actor") ?? "tower-mart-cli",
     outDir:
       get("--out-dir") ??
@@ -358,6 +364,7 @@ async function main(): Promise<void> {
 
     if (args.dryRun || !client) {
       console.log(`\nDRY RUN — no DB write. Proof written to ${args.outDir}`);
+      if (args.emitProofBundle) emitProofBundle(args.outDir);
       return;
     }
 
@@ -377,9 +384,38 @@ async function main(): Promise<void> {
       actor: args.actor,
     });
     console.log("\nWrite complete: facts + mart committed with run tracking.");
+    if (args.emitProofBundle) emitProofBundle(args.outDir);
   } finally {
     if (client) await client.end();
   }
+}
+
+/**
+ * Tar the out-dir and print it, base64-encoded, between the proof markers the
+ * governed ACA operator wrapper extracts from job logs. Mirrors the pattern in
+ * scripts/tower/project-meridian-v3-to-cio-tower.mjs so a live ACA run returns
+ * its projection-summary.json + mart.json without any DB access from the
+ * caller.
+ */
+function emitProofBundle(outDir: string): void {
+  const tarPath = path.join(
+    path.dirname(outDir),
+    `${path.basename(outDir)}.tgz`,
+  );
+  const result = spawnSync(
+    "tar",
+    ["-czf", tarPath, "-C", path.dirname(outDir), path.basename(outDir)],
+    { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+  );
+  if (result.status !== 0) {
+    throw new Error(
+      `Failed to create proof bundle: ${result.stderr || result.stdout}`,
+    );
+  }
+  const payload = fs.readFileSync(tarPath).toString("base64");
+  console.log("__SEMANTIC2_PROOF_TGZ_BEGIN__");
+  console.log(payload);
+  console.log("__SEMANTIC2_PROOF_TGZ_END__");
 }
 
 // Placeholder invoked only on --write (live DB path). Kept in a separate
