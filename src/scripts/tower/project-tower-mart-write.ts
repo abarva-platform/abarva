@@ -64,43 +64,47 @@ export async function runInTransactionWithTracking(
   const runKey = `tower-mart::${tenantKey}::${meta.idempotencyKey}`;
   const gitSha = process.env.GIT_SHA ?? process.env.GITHUB_SHA ?? "local";
 
+  if (!identity.clientId) {
+    throw new Error(
+      `tower_mart_write_requires_resolved_client_id: tenant=${tenantKey}`,
+    );
+  }
+
   // The run row lives OUTSIDE the mart transaction so a failed run is still
   // recorded (status=failed) rather than rolled away with the data.
   let runId: string | null = null;
-  if (identity.clientId) {
-    const runRes = await client.query<{ id: string }>(
-      `INSERT INTO ai_control_refresh_runs
+  const runRes = await client.query<{ id: string }>(
+    `INSERT INTO ai_control_refresh_runs
          (client_id, client_key, refresh_run_key, reporting_period_start, reporting_period_end,
           run_type, status, rows_seen, rows_valid, parser_version, source_fingerprint, metadata)
        VALUES ($1,$2,$3, date_trunc('year', now())::date, (date_trunc('year', now()) + interval '1 year - 1 day')::date,
           'template_upload', 'received', $4, $4, $5, $6, $7)
        ON CONFLICT (client_id, refresh_run_key) DO UPDATE SET status='received', rows_seen=$4, rows_valid=$4, updated_at=now()
        RETURNING id`,
-      [
-        identity.clientId,
-        tenantKey,
-        runKey,
-        facts.length,
-        "unified_facts_v1",
-        meta.idempotencyKey,
-        JSON.stringify({
-          job: "project-tower-mart",
-          tenant_scope: tenantKey,
-          build_version: "tower_command_mart_v1",
-          idempotency_key: meta.idempotencyKey,
-          git_sha: gitSha,
-          operator: meta.actor,
-          mart_counts: {
-            command_center: mart.command_center.length,
-            program_decision_lanes: mart.program_decision_lanes.length,
-            ai_portfolio: mart.ai_portfolio.length,
-            required_field_gaps: mart.required_field_gaps.length,
-          },
-        }),
-      ],
-    );
-    runId = runRes.rows[0]?.id ?? null;
-  }
+    [
+      identity.clientId,
+      tenantKey,
+      runKey,
+      facts.length,
+      "unified_facts_v1",
+      meta.idempotencyKey,
+      JSON.stringify({
+        job: "project-tower-mart",
+        tenant_scope: tenantKey,
+        build_version: "tower_command_mart_v1",
+        idempotency_key: meta.idempotencyKey,
+        git_sha: gitSha,
+        operator: meta.actor,
+        mart_counts: {
+          command_center: mart.command_center.length,
+          program_decision_lanes: mart.program_decision_lanes.length,
+          ai_portfolio: mart.ai_portfolio.length,
+          required_field_gaps: mart.required_field_gaps.length,
+        },
+      }),
+    ],
+  );
+  runId = runRes.rows[0]?.id ?? null;
 
   try {
     await client.query("BEGIN");

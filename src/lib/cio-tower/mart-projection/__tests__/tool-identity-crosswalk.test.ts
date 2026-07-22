@@ -2,6 +2,7 @@ import {
   buildToolProgramCrosswalk,
   type ToolIdentityAlias,
 } from "../tool-identity-crosswalk";
+import { programKeyFromCode } from "../facts-from-v3";
 
 const ALIASES: ToolIdentityAlias[] = [
   {
@@ -93,5 +94,56 @@ describe("buildToolProgramCrosswalk", () => {
     );
     expect(conflicts).toHaveLength(1);
     expect(conflicts[0]).toContain("program::different");
+  });
+});
+
+// Guards the seed migration 20260721161000_cio_tower_meridian_tool_aliases_seed.sql
+// against the deterministic program-key slug: if programKeyFromCode() ever
+// changes, the hardcoded canonical_program_key values in the SQL seed would
+// silently stop resolving. This test fails loudly instead.
+describe("Meridian alias seed ↔ programKeyFromCode agreement", () => {
+  const SEED: Array<[string, string]> = [
+    ["tool::github-copilot", "PROG-DEV-PRODUCTIVITY"],
+    ["tool::claude-code", "PROG-DEV-PRODUCTIVITY"],
+    ["tool::cursor", "PROG-DEV-PRODUCTIVITY"],
+    ["tool::m365-copilot", "PROG-COPILOT-ADOPT"],
+    ["tool::servicenow-ai", "PROG-SNOW-AI"],
+    ["tool::workday-ai", "PROG-WORKDAY-AI"],
+  ];
+  const SEED_PROGRAM_KEYS: Record<string, string> = {
+    "PROG-DEV-PRODUCTIVITY": "program::prog-dev-productivity",
+    "PROG-COPILOT-ADOPT": "program::prog-copilot-adopt",
+    "PROG-SNOW-AI": "program::prog-snow-ai",
+    "PROG-WORKDAY-AI": "program::prog-workday-ai",
+  };
+
+  it("the seed's canonical_program_key values match programKeyFromCode()", () => {
+    for (const code of Object.keys(SEED_PROGRAM_KEYS)) {
+      expect(programKeyFromCode(code)).toBe(SEED_PROGRAM_KEYS[code]);
+    }
+  });
+
+  it("the seeded aliases build a crosswalk that resolves each tool to its program", () => {
+    const rows: ToolIdentityAlias[] = SEED.map(([toolKey, code]) => ({
+      tenant_key: "meridian-health",
+      canonical_tool_key: toolKey,
+      alias: toolKey,
+      vendor_name: null,
+      system_name: null,
+      program_code: code,
+      canonical_program_key: programKeyFromCode(code),
+      active: true,
+    }));
+    const { crosswalk, conflicts } = buildToolProgramCrosswalk(
+      rows,
+      "meridian-health",
+    );
+    expect(conflicts).toHaveLength(0);
+    expect(crosswalk.resolve("tool::github-copilot")?.programKey).toBe(
+      "program::prog-dev-productivity",
+    );
+    expect(crosswalk.resolve("tool::servicenow-ai")?.programCode).toBe(
+      "PROG-SNOW-AI",
+    );
   });
 });

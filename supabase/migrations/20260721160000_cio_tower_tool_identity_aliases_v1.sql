@@ -46,3 +46,18 @@ CREATE INDEX IF NOT EXISTS idx_cio_tower_tool_aliases_tenant_tool
 CREATE INDEX IF NOT EXISTS idx_cio_tower_tool_aliases_tenant_program
   ON cio_tower.tool_identity_aliases (tenant_key, canonical_program_key)
   WHERE active AND canonical_program_key IS NOT NULL;
+
+-- Row-level security, matching the rest of the cio_tower schema. The projection
+-- job writes via service_role (full access); authenticated reads are fenced to
+-- the caller's own tenant, so one client can never see another client's tool→
+-- program mappings. Stricter than the mart tables' permissive read on purpose:
+-- this is tenant configuration data, not an already-tenant-filtered read model.
+ALTER TABLE cio_tower.tool_identity_aliases ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS svc_all ON cio_tower.tool_identity_aliases;
+CREATE POLICY svc_all ON cio_tower.tool_identity_aliases
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS auth_read ON cio_tower.tool_identity_aliases;
+CREATE POLICY auth_read ON cio_tower.tool_identity_aliases
+  FOR SELECT TO authenticated USING (can_read_tenant_by_key(tenant_key));

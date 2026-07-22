@@ -361,6 +361,17 @@ async function main(): Promise<void> {
       return;
     }
 
+    // Fail closed: a live write MUST resolve to a real client_id. Otherwise the
+    // run cannot be tenant-attributed or tracked in ai_control_refresh_runs, and
+    // an untracked mutating data build is exactly what the ACA job rule forbids.
+    if (!identity.clientId) {
+      console.error(
+        `--write aborted: tenant "${args.tenant}" did not resolve to a clients.id. ` +
+          `Seed the tenant (clients.tenant_key) before running the governed write job.`,
+      );
+      process.exit(1);
+    }
+
     await writeMart(client, identity, mart, merged.facts, {
       idempotencyKey: idemKey,
       actor: args.actor,
