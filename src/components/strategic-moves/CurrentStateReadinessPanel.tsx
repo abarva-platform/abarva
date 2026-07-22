@@ -6,6 +6,7 @@
 // wired. Honest ladder: a family flips to "Committed" only after rows land in its
 // tower_* table (the server resolver re-reads on reload).
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type {
   ReadinessReport,
@@ -359,6 +360,10 @@ export function CurrentStateReadinessPanel({
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [reviewedEvidenceIds, setReviewedEvidenceIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const router = useRouter();
 
   if (!readiness || readiness.instruments.length === 0) return null;
 
@@ -482,10 +487,11 @@ export function CurrentStateReadinessPanel({
       );
       const j = await res.json();
       if (res.ok && j.ok) {
+        setReviewedEvidenceIds((prev) => new Set(prev).add(evidenceId));
         setNote(
           `${family}: evidence ${decision} — ${decision === "approved" ? "now committed" : "rejected, not committed"}. Refreshing…`,
         );
-        setTimeout(() => window.location.reload(), 900);
+        setTimeout(() => router.refresh(), 250);
       } else {
         setNote(`${family}: ${j.error || "review action failed"}`);
       }
@@ -692,6 +698,9 @@ export function CurrentStateReadinessPanel({
       <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
         {readiness.instruments.map((i) => {
           const wired = INGEST_WIRED.has(i.key);
+          const pendingReviews = i.pendingReviews.filter(
+            (p) => !reviewedEvidenceIds.has(p.evidenceId),
+          );
           return (
             <li
               key={i.key}
@@ -763,7 +772,7 @@ export function CurrentStateReadinessPanel({
                   : ""}
               </div>
               {/* Pending document reviews — the governed promotion control. */}
-              {i.documentFamily && i.pendingReviews.length > 0 && (
+              {i.documentFamily && pendingReviews.length > 0 && (
                 <div
                   style={{
                     marginTop: 4,
@@ -784,10 +793,10 @@ export function CurrentStateReadinessPanel({
                       marginBottom: 4,
                     }}
                   >
-                    {i.pendingReviews.length} parsed document
-                    {i.pendingReviews.length > 1 ? "s" : ""} awaiting review
+                    {pendingReviews.length} parsed document
+                    {pendingReviews.length > 1 ? "s" : ""} awaiting review
                   </div>
-                  {i.pendingReviews.map((p) => (
+                  {pendingReviews.map((p) => (
                     <div
                       key={p.evidenceId}
                       style={{

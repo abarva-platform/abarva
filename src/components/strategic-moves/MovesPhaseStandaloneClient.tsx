@@ -396,6 +396,18 @@ export function MovesPhaseStandaloneClient({
   );
   const [draftedBrief] = useState<Record<number, string>>({});
   const substep = phase.substeps[substepIndex] ?? phase.substeps[0];
+  const topLevelHardGateCriteria = move.gateCriteria.filter(
+    (criterion) => criterion.severity === "hard",
+  );
+  const topLevelHardGateMet = topLevelHardGateCriteria.filter(
+    (criterion) => criterion.completed,
+  ).length;
+  const topLevelHardGateTotal =
+    topLevelHardGateCriteria.length || move.gateCriteria.length;
+  const hardGateProgressLabel =
+    topLevelHardGateTotal > 0
+      ? `${topLevelHardGateMet}/${topLevelHardGateTotal} hard met`
+      : "no hard gates";
   const progressPct = Math.round(
     ((substepIndex + 1) / phase.substeps.length) * 100,
   );
@@ -404,7 +416,13 @@ export function MovesPhaseStandaloneClient({
       ? phase.substeps.length
       : Math.min(substepIndex + 1, phase.substeps.length);
   const phaseReadinessLabel =
-    isHistoricalPhase || gateApproved ? "Complete" : `${progressPct}% ready`;
+    isHistoricalPhase || gateApproved
+      ? "Complete"
+      : substep.key === "approve" && topLevelHardGateTotal > 0
+        ? topLevelHardGateMet >= topLevelHardGateTotal
+          ? `Gate ready · ${hardGateProgressLabel}`
+          : `Gate blocked · ${hardGateProgressLabel}`
+        : `${progressPct}% workflow · ${hardGateProgressLabel}`;
   const workspaceSurfaceLabel =
     workspaceView === "phase"
       ? `${phase.code} workflow`
@@ -424,6 +442,18 @@ export function MovesPhaseStandaloneClient({
     currentStateReadiness?.instruments.filter(
       (instrument) => instrument.status === "committed",
     ).length ?? 0;
+  const reviewRequiredReadinessCount =
+    currentStateReadiness?.instruments.reduce(
+      (count, instrument) => count + instrument.pendingReviews.length,
+      0,
+    ) ?? 0;
+  const visibleCurrentStateEvidenceCount =
+    committedReadinessCount + reviewRequiredReadinessCount;
+  const findingsEvidenceLabel = currentStateReadiness
+    ? reviewRequiredReadinessCount > 0
+      ? `${reviewRequiredReadinessCount} awaiting review · ${committedReadinessCount} approved`
+      : `${visibleCurrentStateEvidenceCount || committedReadinessCount} approved evidence item${(visibleCurrentStateEvidenceCount || committedReadinessCount) === 1 ? "" : "s"}`
+    : `${move.linkedEvidence.length} evidence item${move.linkedEvidence.length === 1 ? "" : "s"}`;
   const evidenceCount = committedReadinessCount || move.linkedEvidence.length;
   const moveValueRange = useMemo(
     () => moneyRange(move.valueAtStake),
@@ -1200,6 +1230,9 @@ export function MovesPhaseStandaloneClient({
                                       currentStateReadiness
                                     }
                                     evidenceCount={evidenceCount}
+                                    findingsEvidenceLabel={
+                                      findingsEvidenceLabel
+                                    }
                                     evidenceNeedPackets={evidenceNeedPackets}
                                     gateApproved={gateApproved}
                                     gateApprovalMessage={gateApprovalMessage}
@@ -1263,6 +1296,9 @@ export function MovesPhaseStandaloneClient({
                                       currentStateReadiness
                                     }
                                     evidenceCount={evidenceCount}
+                                    findingsEvidenceLabel={
+                                      findingsEvidenceLabel
+                                    }
                                     evidenceNeedPackets={evidenceNeedPackets}
                                     gateApproved={gateApproved}
                                     gateApprovalMessage={gateApprovalMessage}
@@ -2030,6 +2066,7 @@ function PhaseBody({
   carriesForwardContent,
   currentStateReadiness,
   evidenceCount,
+  findingsEvidenceLabel,
   evidenceNeedPackets,
   gateApproved,
   gateApprovalMessage,
@@ -2058,6 +2095,7 @@ function PhaseBody({
   carriesForwardContent: DeliverableContentSignal[];
   currentStateReadiness: ReadinessReport | null;
   evidenceCount: number;
+  findingsEvidenceLabel: string;
   evidenceNeedPackets: MoveEvidenceNeedPacket[];
   gateApproved: boolean;
   gateApprovalMessage: string | null;
@@ -2180,9 +2218,7 @@ function PhaseBody({
           <div>
             <span>a</span>
             <strong>What we found this phase</strong>
-            <em>
-              {evidenceCount} evidence item{evidenceCount === 1 ? "" : "s"}
-            </em>
+            <em>{findingsEvidenceLabel}</em>
           </div>
           <p>
             aVa groups current-state evidence into process, data, systems,
