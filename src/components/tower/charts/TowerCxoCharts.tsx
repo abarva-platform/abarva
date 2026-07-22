@@ -17,6 +17,7 @@
 // rows already carry "Owner not loaded" honestly upstream (CxoPortfolioValuePackTable)
 // — these charts don't invent a name where the fact table has none.
 
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
   Bar,
@@ -63,6 +64,49 @@ const CT = {
   SANS: 'var(--font-inter), "Inter", system-ui, sans-serif',
   MONO: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
 } as const;
+
+function TowerSafeResponsiveContainer({
+  height,
+  children,
+}: {
+  height: number | string;
+  children: ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const update = () => {
+      const rect = node.getBoundingClientRect();
+      setReady(rect.width > 0 && rect.height > 0);
+    };
+    update();
+    if (typeof ResizeObserver === "undefined") {
+      const frame = window.requestAnimationFrame(update);
+      return () => window.cancelAnimationFrame(frame);
+    }
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} style={{ width: "100%", height, minWidth: 1, minHeight: 1 }}>
+      {ready ? (
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          minWidth={1}
+          minHeight={1}
+        >
+          {children}
+        </ResponsiveContainer>
+      ) : null}
+    </div>
+  );
+}
 
 function formatMoneyShort(value: number | null | undefined): string {
   const n = Number(value ?? 0);
@@ -249,12 +293,7 @@ export function ValueBridgeChart({
       </div>
 
       <div style={{ height: 300, maxWidth: 594, minWidth: 1 }}>
-        <ResponsiveContainer
-          width="100%"
-          height="100%"
-          minWidth={1}
-          minHeight={1}
-        >
+        <TowerSafeResponsiveContainer height="100%">
           <BarChart
             data={data}
             margin={{ top: 34, right: 6, left: 6, bottom: 8 }}
@@ -307,7 +346,7 @@ export function ValueBridgeChart({
               />
             </Bar>
           </BarChart>
-        </ResponsiveContainer>
+        </TowerSafeResponsiveContainer>
       </div>
 
       <div style={{ marginTop: 26 }}>
@@ -434,11 +473,8 @@ export function ValueProvenBarChart({
       <ChartEyebrow>
         Finance validation vs. promised — top programs
       </ChartEyebrow>
-      <ResponsiveContainer
-        width="100%"
+      <TowerSafeResponsiveContainer
         height={Math.max(220, chartRows.length * 48)}
-        minWidth={1}
-        minHeight={1}
       >
         <BarChart
           data={chartRows}
@@ -501,7 +537,7 @@ export function ValueProvenBarChart({
             />
           </Bar>
         </BarChart>
-      </ResponsiveContainer>
+      </TowerSafeResponsiveContainer>
     </div>
   );
 }
@@ -719,11 +755,8 @@ export function BudgetRunChangeChart({
           Change — build &amp; transform
         </span>
       </div>
-      <ResponsiveContainer
-        width="100%"
+      <TowerSafeResponsiveContainer
         height={Math.max(240, chartRows.length * 46)}
-        minWidth={1}
-        minHeight={1}
       >
         <BarChart
           data={chartRows}
@@ -801,7 +834,7 @@ export function BudgetRunChangeChart({
             />
           </Bar>
         </BarChart>
-      </ResponsiveContainer>
+      </TowerSafeResponsiveContainer>
 
       {mostlyRunEntities.length > 0 ? (
         <div
@@ -1045,7 +1078,7 @@ export function BenchmarkRadarChart({
           apples to apples.
         </span>
       </div>
-      <ResponsiveContainer width="100%" height={340} minWidth={1} minHeight={1}>
+      <TowerSafeResponsiveContainer height={340}>
         <RadarChart data={radarData} outerRadius="72%">
           <PolarGrid stroke={CT.RULE} />
           <PolarAngleAxis
@@ -1088,7 +1121,7 @@ export function BenchmarkRadarChart({
             }}
           />
         </RadarChart>
-      </ResponsiveContainer>
+      </TowerSafeResponsiveContainer>
       <div
         style={{
           fontFamily: CT.SANS,
@@ -1320,7 +1353,7 @@ export function BenchmarkComparisonChart({
       <ChartEyebrow>
         Every measure, one shape — Lakeshore against the peer set
       </ChartEyebrow>
-      <ResponsiveContainer width="100%" height={280} minWidth={1} minHeight={1}>
+      <TowerSafeResponsiveContainer height={280}>
         <BarChart
           data={chartRows}
           margin={{ top: 8, right: 16, left: 4, bottom: 4 }}
@@ -1400,7 +1433,7 @@ export function BenchmarkComparisonChart({
             ))}
           </Bar>
         </BarChart>
-      </ResponsiveContainer>
+      </TowerSafeResponsiveContainer>
     </div>
   );
 }
