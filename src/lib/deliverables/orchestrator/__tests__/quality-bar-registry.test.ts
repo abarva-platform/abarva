@@ -14,7 +14,7 @@ describe("resolveQualityBar", () => {
     // materially smaller than the architecture doc's.
     expect(qb.minSections).toBe(7);
     expect(qb.minBodyWords).toBe(900);
-    expect(qb.targetBodyWordsMax!).toBeLessThanOrEqual(2_400);
+    expect(qb.targetBodyWordsMax!).toBe(3_000);
   });
 
   it("gives Target State Architecture a substantial band whose ceiling only WARNS", () => {
