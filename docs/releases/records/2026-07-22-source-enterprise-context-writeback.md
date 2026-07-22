@@ -31,6 +31,7 @@ Source now has a governed writeback path that can project eligible typed Source 
 - `src/scripts/source/writeback-source-facts-to-enterprise-context.ts`: Dry-run-first operator entrypoint that resolves a tenant-scoped Source event, reads its facts, reports eligibility/skips, and applies only with `--apply`.
 - `package.json`: Adds `source:enterprise-context:writeback`.
 - `src/lib/source/context-writeback/__tests__/source-context-writeback.test.ts`: Regression coverage for eligibility, deterministic replay IDs, readiness status, persistence mapping, and store failure handling.
+- Follow-up runtime fix: the operator script uses a narrow Source event resolver instead of importing the full route query module, so the deployed ACA job runtime does not trip `server-only` under `tsx`.
 
 ## QA / Validation
 
@@ -38,6 +39,10 @@ Source now has a governed writeback path that can project eligible typed Source 
 - PASS — `npx eslint src/lib/source/context-writeback src/scripts/source/writeback-source-facts-to-enterprise-context.ts`: passed.
 - PASS — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`: passed after refreshing the isolated worktree's declared dependencies. The first attempt was blocked by missing installed Home graph dependencies (`@xyflow/react`, `@dagrejs/dagre`) in this worktree's `node_modules`.
 - PASS — `npm run release:check`: passed after correcting this release record to include explicit pass/fail/not-run/blocked status for QA rows.
+- PASS — `az containerapp exec ... node -e "<package/script presence check>"`: passed on deployed revision `ca-abarva-web-lab-eastus--m21a8161f`; package script was present and `src/scripts/source/writeback-source-facts-to-enterprise-context.ts` existed in the image.
+- FAIL — `az containerapp exec ... npm run source:enterprise-context:writeback -- --client-key apex-retail --event-id apex-retail-ams-outsourcing-2026`: dry-run command failed before data access because the first merged script imported `src/lib/source/queries.ts`, which pulls a `server-only` dependency under `tsx` in the deployed operator runtime. Follow-up fix replaces that import with a narrow resolver.
+- PASS — Follow-up fix validation: `npx eslint src/scripts/source/writeback-source-facts-to-enterprise-context.ts` passed.
+- PASS — Follow-up fix validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` passed.
 - NOT RUN — Operator dry-run against live Azure/Postgres: expected to run from a VNet-visible ACA/operator context if local network cannot reach the private data plane.
 
 ## Rollout Plan
