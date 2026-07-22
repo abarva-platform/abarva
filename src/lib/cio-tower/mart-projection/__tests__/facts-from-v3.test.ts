@@ -68,6 +68,50 @@ describe("factsFromV3Budget", () => {
       ),
     ).toEqual([]);
   });
+
+  it("emits a governed AI-tagged spend lens fact from ai_tagged_budget_usd", () => {
+    const withAi: CsvRow[] = [
+      {
+        budget_row_level: "atomic_budget_fact",
+        budget_amount_usd: "100",
+        run_budget_usd: "100",
+        change_budget_usd: "0",
+        ai_tagged_budget_usd: "40",
+      },
+      {
+        budget_row_level: "atomic_budget_fact",
+        budget_amount_usd: "60",
+        run_budget_usd: "0",
+        change_budget_usd: "60",
+        ai_tagged_budget_usd: "13.7",
+      },
+    ];
+    const facts = factsFromV3Budget(withAi, ID);
+    const aiLens = facts.find(
+      (f) => readCanonicalIdentity(f)!.metric_key === "it_ai_tagged_budget_usd",
+    );
+    expect(aiLens?.value_numeric).toBeCloseTo(53.7, 5);
+    expect(aiLens?.view).toBe("app_run_cost");
+    expect(aiLens?.scope).toBe("enterprise_envelope");
+  });
+
+  it("emits no AI-tagged lens when no row carries ai_tagged_budget_usd", () => {
+    const noAi: CsvRow[] = [
+      {
+        budget_row_level: "atomic_budget_fact",
+        budget_amount_usd: "100",
+        run_budget_usd: "100",
+        change_budget_usd: "0",
+      },
+    ];
+    const facts = factsFromV3Budget(noAi, ID);
+    expect(
+      facts.some(
+        (f) =>
+          readCanonicalIdentity(f)!.metric_key === "it_ai_tagged_budget_usd",
+      ),
+    ).toBe(false);
+  });
 });
 
 describe("factsFromV3Programs", () => {

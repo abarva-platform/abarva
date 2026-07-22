@@ -125,10 +125,12 @@ export function factsFromV3Budget(
   let total = 0;
   let run = 0;
   let change = 0;
+  let aiTagged = 0;
   for (const r of atomic) {
     total += num(r.budget_amount_usd);
     run += num(r.run_budget_usd);
     change += num(r.change_budget_usd);
+    aiTagged += num(r.ai_tagged_budget_usd);
   }
   const file = "08_it_budget_spend_value.csv";
   const facts: CioTowerFactRow[] = [];
@@ -166,6 +168,25 @@ export function factsFromV3Budget(
         sourceFile: file,
         sourceRow: `sum(change_budget_usd) n=${atomic.length}`,
         canonical: budgetCanonical(BUDGET_METRIC_KEYS.change),
+      }),
+    );
+  }
+  // Governed AI-tagged spend lens (annual, non-additive) — the number the
+  // command center headlines. Emitted as its own enterprise-envelope fact so
+  // the assembler reads it directly, never by summing per-tool telemetry
+  // (which would mix monthly actuals into an annual budget lens).
+  if (aiTagged > 0) {
+    facts.push(
+      buildV3Fact({
+        tenantKey: identity.tenantKey,
+        keyParts: ["budget-ai-tagged"],
+        measure: "FY26 AI-tagged spend lens",
+        view: "app_run_cost",
+        scope: "enterprise_envelope",
+        valueNumeric: aiTagged,
+        sourceFile: file,
+        sourceRow: `sum(ai_tagged_budget_usd) n=${atomic.length}`,
+        canonical: budgetCanonical(BUDGET_METRIC_KEYS.aiTagged),
       }),
     );
   }
