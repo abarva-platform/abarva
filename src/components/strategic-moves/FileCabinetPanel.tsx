@@ -289,7 +289,7 @@ export function buildContextExtractReviewModel(
     gaps.length > 0
       ? `Do not treat P${targetPhase} as evidence-complete yet. Resolve the listed gaps before relying on this extract for phase decisions.`
       : attached.length > 0
-        ? `P${targetPhase} can proceed using the attached evidence. Suggested and excluded context remain review-only until a human approves or loads it as evidence.`
+        ? `P${targetPhase} has usable attached evidence, but phase advancement still requires the governed Approve & Build gate. Suggested and excluded context remain review-only until a human approves or loads it as evidence.`
         : `No agent-ready evidence is attached yet. Upload or approve source-backed evidence before using this extract for P${targetPhase}.`;
   return {
     artifact,
@@ -565,6 +565,7 @@ function ArtifactRow({
   const [clientApprovalReason, setClientApprovalReason] = useState("");
   const [clientApprovalBusy, setClientApprovalBusy] = useState(false);
   const [actionErr, setActionErr] = useState<string | null>(null);
+  const reviewPanelRef = useRef<HTMLDivElement | null>(null);
   const approvedFileInputRef = useRef<HTMLInputElement | null>(null);
   const roleLabel = artifactOutputRoleLabel(a);
   const canLoadSponsorReview = supportsSponsorReviewDecisionArtifact(a, moveId);
@@ -678,6 +679,16 @@ function ArtifactRow({
   useEffect(() => {
     void loadSponsorReview();
   }, [loadSponsorReview]);
+
+  useEffect(() => {
+    if (!reviewOpen) return;
+    window.requestAnimationFrame(() => {
+      reviewPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    });
+  }, [reviewOpen]);
 
   const submitSponsorDecision = useCallback(
     async (decision: SponsorReviewDecision) => {
@@ -1084,6 +1095,7 @@ function ArtifactRow({
       )}
       {reviewOpen && (
         <div
+          ref={reviewPanelRef}
           style={{
             border: "1px solid #D5DAE2",
             borderRadius: 8,
