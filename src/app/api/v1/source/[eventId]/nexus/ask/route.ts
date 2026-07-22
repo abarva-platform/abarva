@@ -40,6 +40,10 @@ import {
 import { enforceSourceExistingEventWriteTruth } from "@/lib/source/ava/answer-quality-gate";
 import { buildSourceArtifactStandardsContext } from "@/lib/source/artifact-lifecycle-matrix";
 import { buildVendorCoverageGovernedAnswer } from "@/lib/source/ava/vendor-coverage-governed-answer";
+import {
+  resolveAuthoritativeArtifactSlots,
+  type AuthoritativeArtifactCandidate,
+} from "@/lib/source/client-final-artifacts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,10 +54,12 @@ export const dynamic = "force-dynamic";
 function looksLikeVendorCoverageQuestion(prompt: string | undefined): boolean {
   if (!prompt) return false;
   const q = prompt.toLowerCase();
-  return /\b(vendor|vendors|bidder|bidders|proposal|proposals)\b/.test(q) &&
+  return (
+    /\b(vendor|vendors|bidder|bidders|proposal|proposals)\b/.test(q) &&
     /\b(coverage|addressed|dodged|respond|responded|response|responses|answer|answered|cover|covered)\b/.test(
       q,
-    );
+    )
+  );
 }
 
 function formatContractEvidenceMetricValue(
@@ -229,8 +235,7 @@ export async function POST(
     // NDJSON, and even then it always still carries the prose summary as its
     // first line so nothing about today's chat behavior is lost.
     const wantsNdjson =
-      request.headers.get("accept")?.includes("application/x-ndjson") ??
-      false;
+      request.headers.get("accept")?.includes("application/x-ndjson") ?? false;
     if (wantsNdjson) {
       let agentAnswer = null;
       if (eventId && looksLikeVendorCoverageQuestion(normalizedBody.prompt)) {
@@ -261,7 +266,9 @@ export async function POST(
       }
       const lines = [JSON.stringify({ type: "summary", ...response })];
       if (agentAnswer) {
-        lines.push(JSON.stringify({ type: "agent-answer", answer: agentAnswer }));
+        lines.push(
+          JSON.stringify({ type: "agent-answer", answer: agentAnswer }),
+        );
       }
       return new Response(lines.join("\n") + "\n", {
         status: response.httpStatus,
@@ -863,7 +870,24 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
   const artifacts = (
     (artifactRows as SourceArtifactContextRow[] | null) ?? []
   ).filter((artifact) => artifact.id);
-  const artifactIds = artifacts.map((artifact) => artifact.id);
+  const artifactAuthoritySlots = resolveAuthoritativeArtifactSlots(
+    artifacts.map(toArtifactAuthorityCandidate),
+    (artifact) => artifact.slotKey,
+  );
+  const authoritativeArtifactIdSet = new Set(
+    artifactAuthoritySlots.map((slot) => slot.authoritative.id),
+  );
+  const authoritativeArtifacts = artifactAuthoritySlots
+    .map((slot) =>
+      artifacts.find((artifact) => artifact.id === slot.authoritative.id),
+    )
+    .filter((artifact): artifact is SourceArtifactContextRow =>
+      Boolean(artifact),
+    );
+  const auditOnlyArtifacts = artifacts.filter(
+    (artifact) => !authoritativeArtifactIdSet.has(artifact.id),
+  );
+  const artifactIds = authoritativeArtifacts.map((artifact) => artifact.id);
   if (!artifactIds.length) {
     return { artifacts, chunks: [], facts: [], artifactEvidence: [] };
   }
@@ -905,10 +929,18 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
   }
   const chunks = (
     (chunkRows as SourceArtifactChunkContextRow[] | null) ?? []
-  ).filter((chunk) => chunk.artifact_id && chunk.chunk_text);
+  ).filter(
+    (chunk) =>
+      chunk.artifact_id &&
+      authoritativeArtifactIdSet.has(chunk.artifact_id) &&
+      chunk.chunk_text,
+  );
   const facts = (
     (factRows as SourceArtifactFactContextRow[] | null) ?? []
-  ).filter((fact) => fact.artifact_id);
+  ).filter(
+    (fact) =>
+      fact.artifact_id && authoritativeArtifactIdSet.has(fact.artifact_id),
+  );
   const artifactNameById = new Map(
     artifacts.map((artifact) => [
       artifact.id,
@@ -916,7 +948,7 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
     ]),
   );
   const artifactEvidence = [
-    ...artifacts.map((artifact, index) => ({
+    ...authoritativeArtifacts.map((artifact, index) => ({
       id: `source-artifact:${artifact.id}`,
       segmentId: inferSourceArtifactSegment(artifact),
       recordId: artifact.id,
@@ -935,23 +967,45 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
           : ("medium" as const),
       score: scoreSourceArtifactEvidence(artifact, index, "artifact"),
     })),
+    ...auditOnlyArtifacts.slice(0, 8).map((artifact, index) => ({
+      id: `source-artifact-audit:${artifact.id}`,
+      segmentId: "sourcing_artifacts",
+      recordId: artifact.id,
+      title:
+        artifact.title ??
+        artifact.file_name ??
+        artifact.original_name ??
+        "Source artifact history",
+      sourceDoc: "source_artifacts",
+      excerpt: formatSourceArtifactAuditExcerpt(artifact),
+      confidence: "medium" as const,
+      score: 3 - Math.min(index, 8) * 0.25,
+    })),
     ...chunks.slice(0, 18).map((chunk, index) => ({
       id: `source-artifact-chunk:${chunk.chunk_id}`,
-      segmentId: inferSourceArtifactSegmentById(chunk.artifact_id, artifacts),
+      segmentId: inferSourceArtifactSegmentById(
+        chunk.artifact_id,
+        authoritativeArtifacts,
+      ),
       recordId: chunk.chunk_id,
       title: `${artifactNameById.get(chunk.artifact_id) ?? "Source artifact"} excerpt`,
       sourceDoc: "source_artifact_chunks",
       excerpt: cleanContextText(chunk.chunk_text ?? ""),
       confidence: confidenceFromNumber(chunk.confidence),
       score: scoreSourceArtifactEvidence(
-        artifacts.find((artifact) => artifact.id === chunk.artifact_id),
+        authoritativeArtifacts.find(
+          (artifact) => artifact.id === chunk.artifact_id,
+        ),
         index,
         "chunk",
       ),
     })),
     ...facts.slice(0, 18).map((fact, index) => ({
       id: `source-artifact-fact:${fact.artifact_id}:${fact.fact_key ?? index}`,
-      segmentId: inferSourceArtifactSegmentById(fact.artifact_id, artifacts),
+      segmentId: inferSourceArtifactSegmentById(
+        fact.artifact_id,
+        authoritativeArtifacts,
+      ),
       recordId: `${fact.artifact_id}:${fact.fact_key ?? index}`,
       title: `${artifactNameById.get(fact.artifact_id) ?? "Source artifact"} fact`,
       sourceDoc: "source_artifact_facts",
@@ -959,13 +1013,36 @@ async function loadSourceEventArtifactContext(sourceEventId: string): Promise<{
       confidence: confidenceFromNumber(fact.confidence),
       score:
         scoreSourceArtifactEvidence(
-          artifacts.find((artifact) => artifact.id === fact.artifact_id),
+          authoritativeArtifacts.find(
+            (artifact) => artifact.id === fact.artifact_id,
+          ),
           index,
           "fact",
         ) - (fact.fact_type === "artifact_summary" ? 18 : 0),
     })),
   ];
   return { artifacts, chunks, facts, artifactEvidence };
+}
+
+function toArtifactAuthorityCandidate(
+  artifact: SourceArtifactContextRow,
+): AuthoritativeArtifactCandidate & { slotKey: string } {
+  return {
+    id: artifact.id,
+    version:
+      typeof artifact.version === "number"
+        ? artifact.version
+        : Number(artifact.version ?? 0),
+    lifecycleState: artifact.lifecycle_state,
+    status: artifact.status,
+    sourceOrigin: artifact.source_origin,
+    isClientFinal: artifact.is_client_final,
+    isCurrentAuthoritative: artifact.is_current_authoritative,
+    createdAt: artifact.created_at,
+    updatedAt: artifact.updated_at,
+    clientFinalAcceptedAt: artifact.client_final_accepted_at,
+    slotKey: `${artifact.stage_key ?? "unknown"}::${artifact.artifact_kind ?? artifact.id}`,
+  };
 }
 
 function formatSourceArtifactAuthorityExcerpt(
@@ -1010,6 +1087,26 @@ function formatSourceArtifactAuthorityExcerpt(
       : "",
     artifact.client_final_stakeholder_group
       ? `Client-final stakeholder group: ${artifact.client_final_stakeholder_group}.`
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function formatSourceArtifactAuditExcerpt(
+  artifact: SourceArtifactContextRow,
+): string {
+  const displayName =
+    artifact.file_name ??
+    artifact.original_name ??
+    artifact.title ??
+    "Source artifact";
+  const version = artifact.version ?? "unknown";
+  return [
+    `Artifact audit record: "${displayName}" is retained for lineage only and is not the authoritative artifact for downstream Source answers.`,
+    `Artifact type: ${artifact.artifact_kind ?? "unknown"}; stage: ${artifact.stage_key ?? "unknown"}; status: ${artifact.status ?? "unknown"}; lifecycle: ${artifact.lifecycle_state ?? "unknown"}; version: ${version}.`,
+    artifact.superseded_by_artifact_id
+      ? "Lineage: has been superseded by a later authoritative artifact version."
       : "",
   ]
     .filter(Boolean)
