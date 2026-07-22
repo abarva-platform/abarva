@@ -16,6 +16,7 @@ import { draftModuleDeliverable } from "@/lib/programs/nexus";
 import { signOffDeliverable } from "@/lib/programs/mutations";
 import { saveMoveArtifact } from "@/lib/programs/deliverables/move-artifacts";
 import {
+  type GeneratedArtifactRecord,
   getGeneratedArtifactById,
   renderableDocFromGeneratedArtifact,
   renderedHtmlFromGeneratedArtifact,
@@ -100,7 +101,9 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-function registryKeyForGeneratedType(type: string): string | null {
+function registryKeyForGeneratedType(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const type = value.trim();
   const fromProfile = deliverableKeyForOrchestratorType(type);
   if (
     fromProfile &&
@@ -111,6 +114,82 @@ function registryKeyForGeneratedType(type: string): string | null {
   return DELIVERABLE_REGISTRY.some((spec) => spec.deliverableTypeKey === type)
     ? type
     : null;
+}
+
+function normalizeForKeyMatch(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function registryKeyFromMoveBoardPackTitle(title: string): string | null {
+  const normalized = normalizeForKeyMatch(title);
+  const exactTitle = DELIVERABLE_REGISTRY.find(
+    (spec) => normalizeForKeyMatch(spec.documentTitle) === normalized,
+  );
+  if (exactTitle) return exactTitle.deliverableTypeKey;
+
+  const titleHints: Array<[RegExp, string]> = [
+    [/\b(program )?charter\b/, "charter"],
+    [/\b(discovery|diagnosis|diagnostic)\b/, "discovery_report"],
+    [/\broot cause\b/, "root_cause_worksheet"],
+    [/\b(target state|reference) architecture\b/, "target_state_architecture"],
+    [/\bsolution design\b/, "solution_design"],
+    [/\boperating model\b/, "operating_model_design"],
+    [/\bsourcing strategy\b/, "sourcing_strategy"],
+    [/\b(execution )?roadmap\b/, "execution_roadmap"],
+    [/\bbusiness case\b/, "business_case"],
+    [/\b(financial|estimate) model\b/, "financial_model"],
+    [/\btower metrics?\b/, "tower_metrics_plan"],
+    [/\bvalue measurement\b/, "value_measurement_contract"],
+    [/\b(handoff|mobilization)\b/, "handoff_package"],
+  ];
+  for (const [pattern, key] of titleHints) {
+    if (
+      pattern.test(normalized) &&
+      DELIVERABLE_REGISTRY.some((spec) => spec.deliverableTypeKey === key)
+    ) {
+      return key;
+    }
+  }
+  return null;
+}
+
+function registryKeyForGeneratedArtifact(
+  artifact: GeneratedArtifactRecord,
+  doc: Record<string, unknown> | null,
+): string | null {
+  const metadata = artifact.metadata ?? {};
+  const candidates: unknown[] = [
+    artifact.artifactType,
+    metadata.deliverableTypeKey,
+    metadata.deliverableType,
+    metadata.typeKey,
+    metadata.registryKey,
+    doc?.deliverableTypeKey,
+    doc?.deliverableType,
+    doc?.typeKey,
+    doc?.key,
+  ];
+  for (const candidate of candidates) {
+    const key = registryKeyForGeneratedType(candidate);
+    if (key) return key;
+  }
+
+  if (artifact.artifactType !== "move_board_pack") return null;
+
+  const titleCandidates = [
+    typeof doc?.title === "string" ? doc.title : null,
+    typeof metadata.title === "string" ? metadata.title : null,
+  ].filter((value): value is string => Boolean(value?.trim()));
+
+  for (const title of titleCandidates) {
+    const key = registryKeyFromMoveBoardPackTitle(title);
+    if (key) return key;
+  }
+
+  return null;
 }
 
 function generatedArtifactBelongsToMove(
@@ -184,14 +263,14 @@ export async function POST(
       );
     }
 
-    const deliverableTypeKey = registryKeyForGeneratedType(
-      artifact.artifactType,
-    );
+    const doc = renderableDocFromGeneratedArtifact(artifact);
+    const html = renderedHtmlFromGeneratedArtifact(artifact);
+    const deliverableTypeKey = registryKeyForGeneratedArtifact(artifact, doc);
     if (!deliverableTypeKey) {
       return Response.json(
         {
           error: "unsupported_artifact_type",
-          detail: `"${artifact.artifactType}" cannot be approved as a registered Move deliverable.`,
+          detail: `"${artifact.artifactType}" cannot be resolved to a registered Move deliverable.`,
         },
         { status: 422 },
       );
@@ -224,8 +303,6 @@ export async function POST(
       );
     }
 
-    const doc = renderableDocFromGeneratedArtifact(artifact);
-    const html = renderedHtmlFromGeneratedArtifact(artifact);
     const generatedContent = contentFromDoc(doc, html);
     if (!generatedContent) {
       return Response.json(
