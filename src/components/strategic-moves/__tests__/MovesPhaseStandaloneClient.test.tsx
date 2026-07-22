@@ -66,6 +66,12 @@ jest.mock("next/link", () => {
   };
 });
 
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    refresh: jest.fn(),
+  }),
+}));
+
 function makeMove(overrides: Partial<StrategicMove> = {}): StrategicMove {
   return {
     id: "37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4",
@@ -195,14 +201,35 @@ describe("MovesPhaseStandaloneClient", () => {
     createdAt: string;
     downloadUrl: string;
   }>;
+  let currentStateFamilyIngests: Array<{
+    family: string;
+    fileName: string;
+    phase: number;
+  }>;
 
   beforeEach(() => {
     window.scrollTo = jest.fn();
     window.open = jest.fn(() => ({}) as Window);
     uploadedEvidenceArtifacts = [];
+    currentStateFamilyIngests = [];
     global.fetch = jest.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input);
+
+        if (url.includes("/current-state/ingest-doc") && init?.method === "POST") {
+          const form = init.body as FormData;
+          const file = form.get("file") as File;
+          currentStateFamilyIngests.push({
+            family: String(form.get("family") ?? ""),
+            fileName: file.name,
+            phase: Number(form.get("phase") ?? 0),
+          });
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ ok: true, reviewState: "review_required" }),
+          } as Response;
+        }
 
         if (url.includes("/artifacts/upload") && init?.method === "POST") {
           const form = init.body as FormData;
@@ -992,6 +1019,107 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByRole("button", { name: "Open Files & Evidence" }),
     ).toBeInTheDocument();
+  });
+
+  it("routes P2 current-state uploads through readiness evidence families instead of generic artifact upload", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        currentStateReadiness={{
+          ...makeCurrentStateReadiness(),
+          archetypeId: "COMMERCIAL_LENDING_AGENT_ASSIST",
+          archetypeName: "Commercial Lending Agent Assist",
+          hardGaps: [
+            "commercial_lending_metrics_baseline",
+            "lending_systems_data_landscape",
+          ],
+          instruments: [
+            {
+              key: "commercial_lending_metrics_baseline",
+              label: "Commercial lending metrics baseline",
+              kind: "metric_baseline",
+              whyNeeded:
+                "Cycle time, rework, queue aging, exception volume, and service-level baseline.",
+              sourceDocHint: "Metrics export",
+              severity: "hard",
+              status: "missing",
+              backingTable: "program_evidence_items",
+              committedRows: 0,
+              rationale:
+                "Commercial Lending Agent Assist requires baseline metrics at diagnose.",
+              documentFamily: true,
+              pendingReviews: [],
+              evidenceDigest: [],
+            },
+            {
+              key: "lending_systems_data_landscape",
+              label: "Lending systems and data landscape",
+              kind: "document",
+              whyNeeded:
+                "Applications, data stores, integrations, ownership, and source-of-truth constraints.",
+              sourceDocHint: "Systems inventory",
+              severity: "hard",
+              status: "missing",
+              backingTable: "program_evidence_items",
+              committedRows: 0,
+              rationale:
+                "Commercial Lending Agent Assist requires systems context at diagnose.",
+              documentFamily: true,
+              pendingReviews: [],
+              evidenceDigest: [],
+            },
+          ],
+        }}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="current"
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Understand Current State",
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Upload evidence into the P2 readiness map",
+      }),
+    ).toBeInTheDocument();
+
+    const input = screen.getByLabelText(
+      "Upload P2 current-state evidence files",
+    ) as HTMLInputElement;
+    expect(input).toHaveAttribute("multiple");
+
+    fireEvent.change(input, {
+      target: {
+        files: [
+          new File(["metrics"], "commercial-loan-onboarding-metrics.csv", {
+            type: "text/csv",
+          }),
+          new File(["systems"], "systems-data-inventory.csv", {
+            type: "text/csv",
+          }),
+        ],
+      },
+    });
+
+    await waitFor(() => {
+      expect(currentStateFamilyIngests).toEqual([
+        {
+          family: "commercial_lending_metrics_baseline",
+          fileName: "commercial-loan-onboarding-metrics.csv",
+          phase: 2,
+        },
+        {
+          family: "lending_systems_data_landscape",
+          fileName: "systems-data-inventory.csv",
+          phase: 2,
+        },
+      ]);
+    });
+    expect(uploadedEvidenceArtifacts).toHaveLength(0);
   });
 
   it("shows the P1 charter capture fields at gate approval and blocks build until they are complete", () => {
