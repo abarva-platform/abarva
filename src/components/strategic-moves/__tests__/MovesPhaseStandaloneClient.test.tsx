@@ -188,6 +188,37 @@ function makeCurrentStateReadiness(): ReadinessReport {
   };
 }
 
+function makeReviewRequiredCurrentStateReadiness(): ReadinessReport {
+  const base = makeCurrentStateReadiness();
+  return {
+    ...base,
+    archetypeId: "COMMERCIAL_LENDING_AGENT_ASSIST",
+    archetypeName: "Commercial Lending Agent Assist",
+    instruments: [
+      {
+        ...base.instruments[0],
+        key: "commercial_lending_process_map",
+        label: "Commercial lending current-state process map",
+        status: "review_required",
+        sourceDocHint: "workflow notes",
+        documentFamily: true,
+        pendingReviews: [
+          {
+            evidenceId: "evidence-review-1",
+            reviewId: "review-1",
+            title: "Current-state workshop notes",
+            parseMethod: "office_parser",
+            confidence: 0.86,
+            submittedAt: "2026-07-22T00:00:00Z",
+          },
+        ],
+      },
+    ],
+    coverageScore: 50,
+    hardGaps: ["commercial_lending_process_map"],
+  };
+}
+
 describe("MovesPhaseStandaloneClient", () => {
   let uploadedEvidenceArtifacts: Array<{
     artifactId: string;
@@ -228,6 +259,18 @@ describe("MovesPhaseStandaloneClient", () => {
             ok: true,
             status: 200,
             json: async () => ({ ok: true, reviewState: "review_required" }),
+          } as Response;
+        }
+
+        if (
+          url.includes("/current-state/evidence/") &&
+          url.includes("/approve") &&
+          init?.method === "POST"
+        ) {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => ({ ok: true }),
           } as Response;
         }
 
@@ -1593,6 +1636,84 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.queryByRole("button", { name: "Continue to Approve & Build →" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("shows review-required current-state docs as visible evidence and removes the row immediately after approval", async () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        currentStateReadiness={makeReviewRequiredCurrentStateReadiness()}
+        evidenceNeedPackets={[]}
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Understand Current State",
+          linkedEvidence: [],
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(contractStepButton(/Review Findings/i));
+
+    expect(screen.getByText("1 awaiting review · 0 approved")).toBeInTheDocument();
+    expect(
+      screen.getByText("1 parsed document awaiting review"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Approve" }));
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith(
+        "/api/v1/programs/37ee2d85-5dc0-4d1f-862e-ab8eff60fdd4/current-state/evidence/evidence-review-1/approve",
+        expect.objectContaining({ method: "POST" }),
+      );
+    });
+    await waitFor(() => {
+      expect(
+        screen.queryByText("1 parsed document awaiting review"),
+      ).not.toBeInTheDocument();
+    });
+    expect(screen.getByText(/evidence approved/i)).toBeInTheDocument();
+  });
+
+  it("does not label an approval step ready when hard gate criteria remain blocked", () => {
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        initialSubstepKey="approve"
+        move={makeMove({
+          currentPhase: 2,
+          phaseLabel: "P2 Understand Current State",
+          gateCriteria: [
+            {
+              id: "g1",
+              label: "Inputs complete",
+              completed: true,
+              severity: "hard",
+              verified: true,
+            },
+            {
+              id: "g2",
+              label: "Discovery synthesis signed off",
+              completed: false,
+              severity: "hard",
+              verified: true,
+            },
+          ],
+        })}
+        phaseNum={2}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    expect(screen.getByLabelText("Phase progress")).toHaveTextContent(
+      "Gate blocked · 1/2 hard met",
+    );
+    expect(screen.getByLabelText("Phase progress")).not.toHaveTextContent(
+      "100% ready · Approve & Build",
+    );
   });
 
   it("does not load the legacy facilitated session playbook on the Prepare tab", () => {
