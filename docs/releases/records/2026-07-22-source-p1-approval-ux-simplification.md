@@ -72,3 +72,13 @@ Revert the PR to restore the prior long approval-page layout. No migration, data
 
 - Live browser proof is not yet captured because the PR is still draft and the local machine cannot reach the private Azure Postgres lab data plane.
 - The broader Source P1 approval workflow may need additional follow-on UX slices for final action-bar polish, keyboard flow, and mobile-density review.
+
+## 2026-07-22 Follow-Up Addendum
+
+- `src/components/source/approval/EventApprovalCard.tsx`
+  - Flattens the approval brief facts from tile-like blocks into a definition-list layout with subtle dividers, reducing visual nesting while preserving the same five governed facts and action logic.
+- Validation:
+  - `npx jest src/components/source/approval/__tests__/EventApprovalCard.test.tsx --runInBand` — passed, `6/6` tests. Jest printed existing duplicate manual mock warnings for mdast/micromark mocks.
+  - `npx eslint src/components/source/approval/EventApprovalCard.tsx src/components/source/approval/__tests__/EventApprovalCard.test.tsx` — passed.
+  - `git diff --check` — passed.
+  - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` — passed.

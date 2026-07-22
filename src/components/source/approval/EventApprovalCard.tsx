@@ -228,23 +228,28 @@ export function EventApprovalCard({
                 <div style={EYEBROW_STYLE}>Approval brief</div>
                 <h2 style={SECTION_TITLE_STYLE}>What you are approving</h2>
               </div>
-              <span style={READY_CHIP_STYLE}>{actionReady ? "Ready" : "Needs input"}</span>
+              <span style={READY_CHIP_STYLE}>
+                {actionReady ? "Ready" : "Needs input"}
+              </span>
             </div>
-            <div style={FACT_GRID_STYLE}>
+            <dl style={FACT_LIST_STYLE}>
               {briefFacts.map((fact) => (
-                <article key={fact.id} style={FACT_TILE_STYLE}>
-                  <div style={FACT_LABEL_STYLE}>{fact.label}</div>
-                  <div style={FACT_VALUE_STYLE}>{fact.value}</div>
-                </article>
+                <div key={fact.id} style={FACT_ROW_STYLE}>
+                  <dt style={FACT_LABEL_STYLE}>{fact.label}</dt>
+                  <dd style={FACT_VALUE_STYLE}>{fact.value}</dd>
+                </div>
               ))}
-            </div>
+            </dl>
             <div style={actionReady ? READY_STRIP_STYLE : BLOCKER_STRIP_STYLE}>
               <strong>Next required step</strong>
               <span>{blockerLabel}</span>
             </div>
           </section>
 
-          <details data-testid="source-approval-evidence-disclosure" style={DISCLOSURE_STYLE}>
+          <details
+            data-testid="source-approval-evidence-disclosure"
+            style={DISCLOSURE_STYLE}
+          >
             <summary style={DISCLOSURE_SUMMARY_STYLE}>
               Evidence reviewed · {capturedFacts.length} facts
             </summary>
@@ -253,9 +258,13 @@ export function EventApprovalCard({
             </div>
           </details>
 
-          <details data-testid="source-approval-audit-disclosure" style={DISCLOSURE_STYLE}>
+          <details
+            data-testid="source-approval-audit-disclosure"
+            style={DISCLOSURE_STYLE}
+          >
             <summary style={DISCLOSURE_SUMMARY_STYLE}>
-              Intake audit trail · {intakeChatTurns.length} turn{intakeChatTurns.length === 1 ? "" : "s"}
+              Intake audit trail · {intakeChatTurns.length} turn
+              {intakeChatTurns.length === 1 ? "" : "s"}
             </summary>
             <div style={DISCLOSURE_BODY_STYLE}>
               <IntakeChatTrail turns={intakeChatTurns} />
@@ -308,10 +317,15 @@ export function EventApprovalCard({
                   checked={strategyGate.sponsor}
                   disabled={!currentUserCanApprove || Boolean(busyAction)}
                   onChange={(event) =>
-                    setStrategyGate((g) => ({ ...g, sponsor: event.target.checked }))
+                    setStrategyGate((g) => ({
+                      ...g,
+                      sponsor: event.target.checked,
+                    }))
                   }
                 />
-                <span>Sponsor sign-off — the decision owners endorse this event.</span>
+                <span>
+                  Sponsor sign-off — the decision owners endorse this event.
+                </span>
               </label>
               <label style={CHECKBOX_ROW_STYLE}>
                 <input
@@ -320,10 +334,15 @@ export function EventApprovalCard({
                   checked={strategyGate.value}
                   disabled={!currentUserCanApprove || Boolean(busyAction)}
                   onChange={(event) =>
-                    setStrategyGate((g) => ({ ...g, value: event.target.checked }))
+                    setStrategyGate((g) => ({
+                      ...g,
+                      value: event.target.checked,
+                    }))
                   }
                 />
-                <span>Value target set — the savings and outcome envelope is agreed.</span>
+                <span>
+                  Value target set — the savings and outcome envelope is agreed.
+                </span>
               </label>
               <label style={CHECKBOX_ROW_STYLE}>
                 <input
@@ -332,10 +351,15 @@ export function EventApprovalCard({
                   checked={strategyGate.archetype}
                   disabled={!currentUserCanApprove || Boolean(busyAction)}
                   onChange={(event) =>
-                    setStrategyGate((g) => ({ ...g, archetype: event.target.checked }))
+                    setStrategyGate((g) => ({
+                      ...g,
+                      archetype: event.target.checked,
+                    }))
                   }
                 />
-                <span>Archetype confirmed — the sourcing archetype fits the work.</span>
+                <span>
+                  Archetype confirmed — the sourcing archetype fits the work.
+                </span>
               </label>
             </div>
           ) : (
@@ -406,7 +430,9 @@ export function EventApprovalCard({
           {notice ? <div style={NOTICE_STYLE}>{notice}</div> : null}
 
           <details style={PANEL_DISCLOSURE_STYLE}>
-            <summary style={DISCLOSURE_SUMMARY_STYLE}>Routing and audit details</summary>
+            <summary style={DISCLOSURE_SUMMARY_STYLE}>
+              Routing and audit details
+            </summary>
             <div style={PANEL_DISCLOSURE_BODY_STYLE}>
               <ApprovalRoutingPanel
                 sponsor={sponsor}
@@ -421,7 +447,9 @@ export function EventApprovalCard({
                     ? "Approve: the strategy gate is cleared here — the event advances to Scope and the memo drafts."
                     : "Approve: event unlocks at Stage 1 Strategy."}
                 </span>
-                <span>Co-approve: the event stays on this page until routed.</span>
+                <span>
+                  Co-approve: the event stays on this page until routed.
+                </span>
                 <span>
                   Request changes: the intake reopens with the current facts.
                 </span>
@@ -594,18 +622,19 @@ const READY_CHIP_STYLE: CSSProperties = {
   whiteSpace: "nowrap",
 };
 
-const FACT_GRID_STYLE: CSSProperties = {
+const FACT_LIST_STYLE: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-  gap: 10,
+  gap: 0,
+  margin: 0,
+  borderTop: `1px solid ${SHELL.CARD_LINE}`,
 };
 
-const FACT_TILE_STYLE: CSSProperties = {
-  minHeight: 82,
-  border: `1px solid ${SHELL.CARD_LINE}`,
-  borderRadius: 8,
-  background: SHELL.PAPER,
-  padding: 12,
+const FACT_ROW_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "minmax(150px, 0.34fr) minmax(0, 1fr)",
+  gap: 16,
+  padding: "13px 0",
+  borderBottom: `1px solid ${SHELL.CARD_LINE}`,
 };
 
 const FACT_LABEL_STYLE: CSSProperties = {
@@ -616,7 +645,7 @@ const FACT_LABEL_STYLE: CSSProperties = {
 };
 
 const FACT_VALUE_STYLE: CSSProperties = {
-  marginTop: 7,
+  margin: 0,
   fontFamily: SHELL.SANS,
   fontSize: 14,
   fontWeight: 700,
