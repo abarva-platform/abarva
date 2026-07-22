@@ -288,49 +288,52 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
 - **Discovered from**: follow-up root-cause prompt for
   `SOURCE_SHELL_SAMPLE_STAGE_FALLBACK_FIX_PROMPT_2026-07-21`.
 
----
-
-## Ready / in progress
-
-`SOURCE-SHELL-003` and `SOURCE-SHELL-004` remain next larger backlog items.
-
-## Blocked
-
 ### SOURCE-GUIDEBOOK-002 — Signed-in guidebook runtime certification
 
 - **Problem statement**: `SOURCE-GUIDEBOOK-001` shipped and is deployed, but a real
   signed-in user opening a Source event's Strategy stage and seeing the Guidebook tab
-  render real content from the live database has never been observed. Component-level
+  render real content from the live database had never been observed. Component-level
   tests are real and pass, but they do not exercise the live server-side
   `getSourceStageGuidebook()` call against real Postgres through a real authenticated
   session.
-- **User/business impact**: The feature is very likely working (every layer up to the
-  authenticated boundary is independently proven), but "very likely" is not "proven" —
-  this is the one remaining gap between deployed code and a certified user-facing
+- **User/business impact**: The feature was very likely working (every layer up to the
+  authenticated boundary was independently proven), but "very likely" is not "proven" —
+  this was the one remaining gap between deployed code and a certified user-facing
   feature.
 - **Severity**: P5 (verification/evidence gap, not a known defect)
 - **Workstream**: Live runtime verification
-- **Status**: `Ready / Blocked only on authenticated test access` — this agent attempted
-  live verification via the claude-in-chrome browser and was stopped by Clerk's
-  one-time-email-code sign-in flow with no inbox access available. Entering credentials
-  or bypassing authentication on the user's behalf is out of scope regardless of inbox
-  access.
-- **Dependencies**: an approved test account with either (a) reusable signed-in browser
-  storage state, or (b) inbox access to complete a one-time-code sign-in, or (c) a human
-  operator performing the click-through directly.
-- **Acceptance criteria**:
-  1. Authenticate using an approved test account or reusable signed-in storage state.
-  2. Open a Source event at the Strategy stage.
-  3. Verify the Guidebook workspace tab is visible.
-  4. Confirm the rendered title is "Strategy Gate Review".
-  5. Verify all five authored sections render.
+- **Status**: `Closed — live-proven 2026-07-21`. An earlier attempt via a fresh
+  claude-in-chrome browser was stopped by Clerk's one-time-email-code sign-in flow with
+  no inbox access available. Closed using an already-authenticated claude-in-chrome
+  session (the same one used to live-verify `SOURCE-SHELL-006`/`007` the same day) — no
+  credentials were entered by the agent at any point; the session was already signed in
+  as Anand Sundaram, Healthcare Demo tenant.
+- **Dependencies**: none (resolved).
+- **Acceptance criteria** — all met, see
+  `docs/releases/records/2026-07-20-source-guidebook-workspace-ui.md` for full evidence:
+  1. Authenticate using an approved test account or reusable signed-in storage state. Met.
+  2. Open a Source event at the Strategy stage. Met — event
+     `cea10d0a-6d5d-49d2-8522-173c2d6fd520`.
+  3. Verify the Guidebook workspace tab is visible. Met.
+  4. Confirm the rendered title is "Strategy Gate Review". Met.
+  5. Verify all five authored sections render. Met.
   6. Confirm stages without guidebooks hide the workspace tab (not shown-and-empty).
+     Met — verified on the Scope stage of the same event.
   7. Capture screenshot, response evidence, tenant/event identity, and the deployed
-     commit SHA.
+     commit SHA. Met — commit `01723ef0123a4e7d85716f1133ae67cd58f72263`.
   8. Add the evidence to `docs/releases/records/2026-07-20-source-guidebook-workspace-ui.md`.
-- **Required tests**: none new — this is a verification pass, not a code change.
-- **PR**: N/A.
+     Met.
+- **Required tests**: none new — this was a verification pass, not a code change.
+- **PR**: N/A (docs-only evidence update).
 - **Discovered from**: `SOURCE-GUIDEBOOK-001`'s deploy — flagged honestly rather than
-  claimed complete.
-- **Notes / remaining gaps**: do not use personal credentials or bypass authentication
-  to close this item.
+  claimed complete; closed once real signed-in access became available.
+
+---
+
+## Ready / in progress
+
+`SOURCE-SHELL-004` is the next larger backlog item.
+
+## Blocked
+
+None open.
