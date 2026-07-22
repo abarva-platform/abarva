@@ -72,6 +72,7 @@ import type { AttachmentChipRef } from "@/lib/programs/attachments/types";
 // Wave 1 · inline files for non-programs surfaces (no DB required).
 import type { InlineFile } from "@/lib/shell/atlas-page-state";
 import type { AgentResponsePart } from "@/lib/agent/response-parts";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 
 // ── Default surface-to-agent mapping ─────────────────────────────────────────
 
@@ -301,7 +302,16 @@ export function AtlasPageStateProvider({
             `/api/v1/source/${encodeURIComponent(sourceEventId)}/nexus/ask`,
             {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+                // Opt-in NDJSON: the route's default JSON response is
+                // unchanged for every caller that omits this header. Only
+                // with it present does the route also emit a structured
+                // `agent-answer` line for questions it recognizes (e.g.
+                // vendor response coverage) — see
+                // src/app/api/v1/source/[eventId]/nexus/ask/route.ts.
+                Accept: "application/x-ndjson",
+              },
               signal: ctrl.signal,
               body: JSON.stringify({
                 prompt: text.trim(),
@@ -313,21 +323,65 @@ export function AtlasPageStateProvider({
           );
 
           if (!res.ok) throw new Error(`Source agent API ${res.status}`);
-          const payload = (await res.json().catch(() => null)) as {
+
+          type SourceAskSummaryLine = {
+            type: "summary";
             summary?: string;
             answer?: string;
             agentResponseParts?: unknown;
             nexusSummary?: { summary?: string } | null;
             error?: { message?: string };
-          } | null;
+          };
+          type SourceAskAgentAnswerLine = {
+            type: "agent-answer";
+            answer?: AvaAnswerPacket;
+          };
+
+          let summaryLine: SourceAskSummaryLine | null = null;
+          let agentAnswer: AvaAnswerPacket | undefined;
+
+          const reader = res.body?.getReader();
+          if (reader) {
+            const decoder = new TextDecoder();
+            let buffer = "";
+            const applyLine = (raw: string) => {
+              const line = raw.trim();
+              if (!line) return;
+              let evt: SourceAskSummaryLine | SourceAskAgentAnswerLine;
+              try {
+                evt = JSON.parse(line);
+              } catch {
+                return;
+              }
+              if (evt.type === "summary") summaryLine = evt;
+              else if (evt.type === "agent-answer" && evt.answer)
+                agentAnswer = evt.answer;
+            };
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              buffer += decoder.decode(value, { stream: true });
+              let newlineIndex: number;
+              while ((newlineIndex = buffer.indexOf("\n")) >= 0) {
+                applyLine(buffer.slice(0, newlineIndex));
+                buffer = buffer.slice(newlineIndex + 1);
+              }
+            }
+            applyLine(buffer);
+          } else {
+            summaryLine = (await res.json().catch(() => null)) as
+              | SourceAskSummaryLine
+              | null;
+          }
+
           const responseText =
-            payload?.summary ??
-            payload?.answer ??
-            payload?.nexusSummary?.summary ??
-            payload?.error?.message ??
+            summaryLine?.summary ??
+            summaryLine?.answer ??
+            summaryLine?.nexusSummary?.summary ??
+            summaryLine?.error?.message ??
             "Ava could not produce a Source response right now.";
           const responseParts = normalizeSourceParts(
-            payload?.agentResponseParts,
+            summaryLine?.agentResponseParts,
           );
           const shapedText = shapeAgentResponseForSurface(
             surface,
@@ -344,6 +398,7 @@ export function AtlasPageStateProvider({
             timestamp: Date.now(),
             responseParts:
               responseParts.length > 0 ? responseParts : undefined,
+            agentAnswer,
           };
           setConversation((prev) => [...prev, agentTurn]);
           return;
