@@ -21,6 +21,7 @@ const jsonColumnsByTable = new Map([
   ["home_knowledge_pack_tier", new Set(["tier_conditions"])],
   ["home_knowledge_ai_readiness", new Set(["evidence_refs"])],
   ["home_knowledge_dimension_module_implications", new Set(["evidence_refs"])],
+  ["home_knowledge_next_evidence_requests", new Set([])],
 ]);
 
 const insertColumnsByTable = new Map([
@@ -73,6 +74,10 @@ const insertColumnsByTable = new Map([
   ]],
   ["home_knowledge_dimension_module_implications", [
     "pack_id", "tenant_key", "dimension_key", "module", "implication", "evidence_refs", "sort_order",
+  ]],
+  ["home_knowledge_next_evidence_requests", [
+    "pack_id", "tenant_key", "title", "narrative", "requesting_dimension_key",
+    "unlocks_narrative", "requesting_role_hint", "collection_route", "sort_order",
   ]],
 ]);
 
@@ -598,6 +603,70 @@ function enrichUseCases(pack) {
     });
 }
 
+// Dimension-appropriate collection route (2026-07-22 design review #12). A
+// pure function of the requesting dimension -- deterministic, not authored,
+// so a zero-state gives the right route instead of a generic "upload a
+// client export". Industry movements are corpus-fed, not a tenant upload.
+const COLLECTION_ROUTES = [
+  [/^(profile|budget)$/, "Finance attestation of sizing, budget, and value-base assumptions"],
+  [/^(functions|org|workforce|lenses)$/, "Capability/operating-model workshop with the owning function"],
+  [/^(programs|ai|opev)$/, "Program owner interview + delivery/adoption evidence"],
+  [/^(apps|infra|data)$/, "System owner + architecture inventory and integration evidence"],
+  [/^(vendors|ms)$/, "Procurement / vendor-management contract and commercial evidence"],
+  [/^(risks|evidence)$/, "Control owner sign-off + evidence lineage and governance review"],
+  [/^(metrics)$/, "Tower metrics + finance attestation of realized value"],
+  [/^(industry)$/, "Governed AbarVa industry corpus; tenant interview only to confirm local relevance"],
+];
+
+function collectionRouteFor(dimensionKey) {
+  const key = asText(dimensionKey).toLowerCase();
+  for (const [pattern, route] of COLLECTION_ROUTES) {
+    if (pattern.test(key)) return route;
+  }
+  return "Owner interview + supporting document export for this area";
+}
+
+// Wire the orphaned v3 home_knowledge_next_evidence_requests table from the
+// source pack's already-authored NEXT_EVIDENCE (enterprise-level) and DGAPS
+// (per-dimension) data. Fully deterministic -- no model authoring, no
+// fabrication. Every request carries a deterministic collection_route.
+function buildNextEvidenceRequests(pack) {
+  const rows = [];
+  let order = 0;
+  for (const item of pack.design_slots?.NEXT_EVIDENCE ?? []) {
+    const title = firstText(item, ["item", "title", "missing"]);
+    if (!title) continue;
+    order += 1;
+    rows.push({
+      title,
+      narrative: firstText(item, ["narrative", "blocks"]) || null,
+      requesting_dimension_key: null,
+      unlocks_narrative: firstText(item, ["unlocks", "unlocks_narrative"]) || null,
+      requesting_role_hint: firstText(item, ["owner_hint", "handoff", "owner"]) || null,
+      collection_route: collectionRouteFor(null),
+      sort_order: order,
+    });
+  }
+  const dgaps = pack.design_slots?.DGAPS ?? {};
+  for (const [dimensionKey, entries] of Object.entries(dgaps)) {
+    for (const entry of asArray(entries)) {
+      const title = firstText(entry, ["missing", "title", "item"]);
+      if (!title) continue;
+      order += 1;
+      rows.push({
+        title,
+        narrative: firstText(entry, ["needed", "blocks", "narrative"]) || null,
+        requesting_dimension_key: dimensionKey,
+        unlocks_narrative: firstText(entry, ["unlocks", "blocks"]) || null,
+        requesting_role_hint: firstText(entry, ["handoff", "owner_hint", "owner"]) || null,
+        collection_route: collectionRouteFor(dimensionKey),
+        sort_order: order,
+      });
+    }
+  }
+  return rows;
+}
+
 function buildNodesAndEdges(pack) {
   const nodes = new Map();
   const edges = new Map();
@@ -844,6 +913,7 @@ async function normalizePack(pack, sourceFile, sourceText) {
       seenDimModule.add(key);
       return true;
     });
+  const nextEvidenceRequestRows = buildNextEvidenceRequests(pack);
   const quality = {
     source_file: path.relative(repoRoot, sourceFile),
     prompt_file: `reports/home-knowledge-pack-v2/${pack.tenant_key}/claude-strategy-prompt.json`,
@@ -856,6 +926,7 @@ async function normalizePack(pack, sourceFile, sourceText) {
     executive_read: executiveReadRows.length,
     ai_readiness: aiReadinessRows.length,
     dimension_module_implications: dimensionModuleImplicationRows.length,
+    next_evidence_requests: nextEvidenceRequestRows.length,
     tier: packTierRows[0]?.tier ?? null,
     warnings: [],
   };
@@ -908,6 +979,7 @@ async function normalizePack(pack, sourceFile, sourceText) {
     pack_tier: packTierRows,
     ai_readiness: aiReadinessRows,
     dimension_module_implications: dimensionModuleImplicationRows,
+    next_evidence_requests: nextEvidenceRequestRows,
     claude_prompt: promptPacket,
   };
   normalized.pack.content_hash = sha256(JSON.stringify({
@@ -921,6 +993,7 @@ async function normalizePack(pack, sourceFile, sourceText) {
     packTierRows,
     aiReadinessRows,
     dimensionModuleImplicationRows,
+    nextEvidenceRequestRows,
   }));
   return normalized;
 }
@@ -999,6 +1072,7 @@ async function writeNormalizedToDb(client, normalized) {
       "home_knowledge_pack_tier",
       "home_knowledge_ai_readiness",
       "home_knowledge_dimension_module_implications",
+      "home_knowledge_next_evidence_requests",
     ]) {
       await client.query(`DELETE FROM public.${table} WHERE pack_id = $1`, [packId]);
     }
@@ -1023,6 +1097,7 @@ async function writeNormalizedToDb(client, normalized) {
     await insertMany("home_knowledge_pack_tier", normalized.pack_tier);
     await insertMany("home_knowledge_ai_readiness", normalized.ai_readiness);
     await insertMany("home_knowledge_dimension_module_implications", normalized.dimension_module_implications);
+    await insertMany("home_knowledge_next_evidence_requests", normalized.next_evidence_requests);
     await client.query("COMMIT");
     return packId;
   } catch (error) {
