@@ -41,6 +41,7 @@ export type StageId =
 // ── Conversation ──────────────────────────────────────────────────────────────
 
 import type { AttachmentChipRef } from "@/lib/programs/attachments/types";
+import type { AgentResponsePart } from "@/lib/agent/response-parts";
 // CB-6 · type-only import — the broker module is server-only, but type
 // imports are erased at compile time so this never traverses the
 // client bundle's webpack graph.
@@ -73,6 +74,12 @@ export interface ChatTurn {
    * carries the same refs so the agent can reference them.
    */
   attachments?: AttachmentChipRef[];
+  /**
+   * Optional structured answer parts emitted by governed surface-specific
+   * engines. Source uses this for evidence-backed metrics, tables, charts,
+   * citations, and next actions.
+   */
+  responseParts?: AgentResponsePart[];
 }
 
 export interface SuggestedAction {
@@ -125,6 +132,7 @@ export interface AtlasPageState {
    * completes and the text is flushed to `conversation`.
    */
   currentResponse: string;
+  currentResponseParts: AgentResponsePart[];
   isStreaming: boolean;
   error: string | null;
   suggestedActions: SuggestedAction[];
@@ -270,6 +278,7 @@ export function createAtlasPageState(seed: AtlasPageStateSeed): AtlasPageState {
       },
     ],
     currentResponse: "",
+    currentResponseParts: [],
     isStreaming: false,
     error: null,
     suggestedActions: seed.suggestedActions ?? [],

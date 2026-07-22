@@ -2,29 +2,19 @@
  * @jest-environment jsdom
  */
 
-// The Source event analytics canvas mounted `AskAnythingBar` (#4588) so a
-// question could reach `/api/chat/agent`, but nothing rendered the reply —
-// `AskAnythingBar` is a composer only, and the canvas had no conversation
-// THREAD component mounted anywhere. `AgentColumn` (mounted here via
-// `SentinelAgentColumn`, matching the established Source pattern already
-// used by `SourceIndexPage`/scorecard/value/artifacts pages) reads the SAME
-// shared `AtlasPageState` that `AskAnythingBar`'s composer writes into via
-// `pageState.ask(...)`, so it renders the live thread for both composers.
+// The Source event analytics canvas invokes `AskAnythingBar` from a hidden
+// launcher. The live shell uses the shared `AtlasPageState` bottom-panel path,
+// so Source-specific responses must route through the governed Source ask
+// endpoint and preserve the structured answer parts it already returns.
 //
-// This test exercises the REAL (unmocked) `AskAnythingBar` and
-// `SentinelAgentColumn` — not stubs — with a mocked `fetch` standing in for
-// `/api/chat/agent`, matching the streaming-body mock pattern already used by
-// `StewardChat.attachments.test.tsx` (`res.body.getReader()` returning
-// buffered chunks). It types a question into the composer, submits it, and
-// asserts BOTH the user's own sent question and the mocked assistant
-// response appear in the rendered thread — not just that the POST fired.
+// This test exercises the REAL (unmocked) launcher and `AskAnythingBar` with a
+// mocked `fetch` standing in for the governed Source ask endpoint. It types a
+// question into the composer, submits it, and asserts the mocked structured
+// assistant response renders in the invoked aVa panel — not just that the POST
+// fired.
 
 import "@testing-library/jest-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { TextDecoder } from "node:util";
-
-global.TextDecoder = TextDecoder as unknown as typeof global.TextDecoder;
-
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn(), replace: jest.fn(), refresh: jest.fn() }),
   usePathname: () => "/source/events/evt-1",
@@ -83,20 +73,29 @@ describe("SourceAnalyticsCanvas — live conversation thread", () => {
     jest.restoreAllMocks();
   });
 
-  it("renders both the sent question and the mocked assistant response in the thread (not just a fired POST)", async () => {
-    const streamedChunk = Buffer.from(
-      "Volumetrics and the sponsor letter are still outstanding for Scope.",
-    );
+  it("routes Source asks through the governed Source endpoint and renders structured parts", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: true,
-      body: {
-        getReader: () => ({
-          read: jest
-            .fn()
-            .mockResolvedValueOnce({ done: false, value: streamedChunk })
-            .mockResolvedValueOnce({ done: true, value: undefined }),
-        }),
-      },
+      json: async () => ({
+        summary:
+          "Volumetrics and the sponsor letter are still outstanding for Scope.",
+        agentResponseParts: [
+          {
+            type: "table",
+            title: "Open scope evidence",
+            columns: ["Evidence", "Status"],
+            rows: [["Volumetrics", "Missing"]],
+          },
+          {
+            type: "barChart",
+            title: "Readiness by evidence area",
+            bars: [
+              { label: "Requirements", value: 70 },
+              { label: "Volumetrics", value: 20 },
+            ],
+          },
+        ],
+      }),
     } as unknown as Response);
     global.fetch = fetchMock;
 
@@ -108,6 +107,8 @@ describe("SourceAnalyticsCanvas — live conversation thread", () => {
       />,
     );
 
+    fireEvent.click(screen.getByTestId("source-ask-ava-launcher"));
+
     // Type + submit through the REAL AskAnythingBar composer.
     const composer = screen.getByLabelText("Ask Ava") as HTMLTextAreaElement;
     fireEvent.change(composer, {
@@ -115,24 +116,18 @@ describe("SourceAnalyticsCanvas — live conversation thread", () => {
     });
     fireEvent.keyDown(composer, { key: "Enter" });
 
-    // The POST actually fired, scoped to this canvas's surface + event.
+    // The POST actually fired, scoped to this canvas's Source event + stage.
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
-    const [, requestInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url, requestInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/v1/source/evt-1/nexus/ask");
     const body = JSON.parse(String(requestInit.body));
-    expect(body.surface).toBe("source-detail");
-    expect(body.surfaceContext.sourceEventId).toBe("evt-1");
-    expect(body.message).toBe("What is still outstanding on Scope?");
+    expect(body.prompt).toBe("What is still outstanding on Scope?");
+    expect(body.mode).toBe("event");
+    expect(body.stageKey).toBe("scope");
 
-    // The user's own question is echoed in the live thread (SentinelAgentColumn).
-    await waitFor(() => {
-      expect(
-        screen.getByText("What is still outstanding on Scope?"),
-      ).toBeInTheDocument();
-    });
-
-    // The mocked assistant response also renders in the thread.
+    // The mocked assistant response renders in the invoked aVa panel.
     await waitFor(() => {
       expect(
         screen.getByText(
@@ -140,5 +135,9 @@ describe("SourceAnalyticsCanvas — live conversation thread", () => {
         ),
       ).toBeInTheDocument();
     });
+    expect(screen.getByTestId("agent-response-table")).toBeInTheDocument();
+    expect(screen.getByTestId("agent-response-bar-chart")).toBeInTheDocument();
+    expect(screen.getByText("Open scope evidence")).toBeInTheDocument();
+    expect(screen.getByText("Readiness by evidence area")).toBeInTheDocument();
   });
 });

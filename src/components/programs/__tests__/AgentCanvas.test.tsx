@@ -92,6 +92,7 @@ function makePageState(
     agentName: 'Nexus',
     conversation: [turn],
     currentResponse: '',
+    currentResponseParts: [],
     isStreaming: false,
     error: null,
     suggestedActions: [],
