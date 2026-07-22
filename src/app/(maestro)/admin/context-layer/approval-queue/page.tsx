@@ -2,6 +2,7 @@ import { getActiveClientRow } from "@/lib/active-client";
 import { getTenantPendingChunks } from "@/lib/context-ingestion/tenant-context-read-model";
 import {
   buildMovesLearningPromotionPreview,
+  buildMovesLearningPromotionRollup,
   buildMovesLearningReviewPacket,
   getMovesLearningReviewQueue,
   type MovesLearningReviewCandidate,
@@ -45,6 +46,7 @@ function MovesLearningQueueSection({
 }: {
   readonly queue: MovesLearningReviewQueue;
 }) {
+  const promotionRollup = buildMovesLearningPromotionRollup(queue.candidates);
   return (
     <section
       style={{
@@ -123,6 +125,188 @@ function MovesLearningQueueSection({
         </div>
       ) : (
         <div style={{ display: "grid", gap: 10 }}>
+          <div
+            style={{
+              border: "1px solid #dbe7f3",
+              borderRadius: 8,
+              background: "#f8fbff",
+              padding: 14,
+              display: "grid",
+              gap: 12,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 16,
+                alignItems: "flex-start",
+              }}
+            >
+              <div>
+                <p
+                  style={{
+                    color: "#1d4ed8",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    letterSpacing: 0,
+                    margin: 0,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Promotion dry-run rollup
+                </p>
+                <h3 style={{ margin: "5px 0", fontSize: 19 }}>
+                  Can Moves learning enter active enterprise context?
+                </h3>
+                <p
+                  style={{
+                    color: "#435166",
+                    fontSize: 13,
+                    lineHeight: 1.5,
+                    margin: 0,
+                  }}
+                >
+                  {promotionRollup.summary}
+                </p>
+              </div>
+              <span
+                style={{
+                  border: "1px solid #d8d2c4",
+                  borderRadius: 999,
+                  color:
+                    promotionRollup.status === "preview_ready"
+                      ? "#047857"
+                      : promotionRollup.status === "investigate"
+                        ? "#8a4b00"
+                        : "#514c43",
+                  padding: "5px 9px",
+                  whiteSpace: "nowrap",
+                  fontSize: 12,
+                  fontWeight: 700,
+                }}
+              >
+                {promotionRollup.statusLabel}
+              </span>
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                gap: 10,
+              }}
+            >
+              {[
+                ["Candidates", promotionRollup.totals.candidates],
+                ["Blocked", promotionRollup.totals.blockedCandidates],
+                ["Investigate", promotionRollup.totals.investigateCandidates],
+                ["Preview ready", promotionRollup.totals.previewReadyCandidates],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid #e3decf",
+                    borderRadius: 8,
+                    padding: 10,
+                  }}
+                >
+                  <div style={{ color: "#6b665c", fontSize: 12 }}>{label}</div>
+                  <strong style={{ display: "block", fontSize: 20, marginTop: 4 }}>
+                    {Number(value).toLocaleString()}
+                  </strong>
+                </div>
+              ))}
+            </div>
+            <table
+              style={{
+                background: "#ffffff",
+                border: "1px solid #e3decf",
+                borderCollapse: "collapse",
+                borderRadius: 8,
+                overflow: "hidden",
+                width: "100%",
+                fontSize: 13,
+              }}
+            >
+              <thead>
+                <tr>
+                  {["Promotion check", "Pass", "Blocked", "Pending", "Investigate"].map(
+                    (head) => (
+                      <th
+                        key={head}
+                        style={{
+                          borderBottom: "1px solid #e3decf",
+                          color: "#6b665c",
+                          fontSize: 11,
+                          letterSpacing: 0,
+                          padding: 8,
+                          textAlign: "left",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {head}
+                      </th>
+                    ),
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {promotionRollup.checks.map((check) => (
+                  <tr key={check.label}>
+                    <td
+                      style={{
+                        borderBottom: "1px solid #eee7d8",
+                        fontWeight: 700,
+                        padding: 8,
+                      }}
+                    >
+                      {check.label}
+                    </td>
+                    <td style={{ borderBottom: "1px solid #eee7d8", padding: 8 }}>
+                      {check.passed}
+                    </td>
+                    <td style={{ borderBottom: "1px solid #eee7d8", padding: 8 }}>
+                      {check.blocked}
+                    </td>
+                    <td style={{ borderBottom: "1px solid #eee7d8", padding: 8 }}>
+                      {check.pending}
+                    </td>
+                    <td style={{ borderBottom: "1px solid #eee7d8", padding: 8 }}>
+                      {check.investigate}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 12,
+              }}
+            >
+              <div>
+                <strong style={{ display: "block", marginBottom: 4 }}>
+                  Top blockers
+                </strong>
+                <p style={{ color: "#435166", fontSize: 13, margin: 0 }}>
+                  {promotionRollup.topBlockers.length > 0
+                    ? promotionRollup.topBlockers.join(" · ")
+                    : "No deterministic blocker found."}
+                </p>
+              </div>
+              <div>
+                <strong style={{ display: "block", marginBottom: 4 }}>
+                  Controlled next action
+                </strong>
+                <p style={{ color: "#435166", fontSize: 13, margin: 0 }}>
+                  {promotionRollup.nextAction}
+                </p>
+              </div>
+            </div>
+          </div>
+
           {queue.candidates.map((candidate) => {
             const reviewPacket = buildMovesLearningReviewPacket(candidate);
             const promotionPreview =
