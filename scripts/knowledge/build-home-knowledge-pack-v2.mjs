@@ -17,6 +17,10 @@ const jsonColumnsByTable = new Map([
   ["home_knowledge_relationship_nodes", new Set(["display_payload", "evidence_refs"])],
   ["home_knowledge_relationship_edges", new Set(["evidence_refs", "display_payload"])],
   ["home_knowledge_narratives", new Set(["evidence_refs"])],
+  ["home_knowledge_executive_read", new Set(["strengths", "constraints", "industry_forces", "tenant_reality", "horizons"])],
+  ["home_knowledge_pack_tier", new Set(["tier_conditions"])],
+  ["home_knowledge_ai_readiness", new Set(["evidence_refs"])],
+  ["home_knowledge_dimension_module_implications", new Set(["evidence_refs"])],
 ]);
 
 const insertColumnsByTable = new Map([
@@ -53,6 +57,22 @@ const insertColumnsByTable = new Map([
   ["home_knowledge_narratives", [
     "pack_id", "tenant_key", "section_key", "dimension_key", "title", "narrative", "generated_by",
     "prompt_version", "evidence_refs", "approval_status", "sort_order",
+  ]],
+  ["home_knowledge_executive_read", [
+    "pack_id", "tenant_key", "archetype", "one_sentence", "tension_headline",
+    "context_confidence_pct", "context_confidence_note", "data_foundation_summary",
+    "strengths", "constraints", "industry_forces", "tenant_reality", "horizons",
+  ]],
+  ["home_knowledge_pack_tier", [
+    "pack_id", "tenant_key", "tier", "tier_label", "tier_title", "tier_body",
+    "tier_conditions", "tier_basis",
+  ]],
+  ["home_knowledge_ai_readiness", [
+    "pack_id", "tenant_key", "readiness_dimension", "score_pct", "tone", "label",
+    "basis", "evidence_refs", "sort_order",
+  ]],
+  ["home_knowledge_dimension_module_implications", [
+    "pack_id", "tenant_key", "dimension_key", "module", "implication", "evidence_refs", "sort_order",
   ]],
 ]);
 
@@ -240,13 +260,39 @@ function claudeSystemPrompt() {
     "- Executive grain: issue, implication, decision, evidence gate. No product help copy.",
     "- Short, scannable sentences. No giant paragraphs.",
     "",
+    "Overclaim ban (this context is a synthetic demo scenario -- claims must not read as validated real-client production assertions):",
+    "- Never write \"proven\", \"value is real\", \"fully loaded\", \"realized savings\", \"achieved ROI\", or \"production-ready\" as an assertion of fact.",
+    "- A strength shows something WORKING IN THE LOADED SCENARIO, not a validated outcome. Phrase strengths as \"source-backed within the loaded context\" / \"adoption indicated in the loaded scenario\", not \"proven and adopted\".",
+    "- Distinguish four truth levels every time it matters: a loaded fact, a derived measure, an industry pattern, and a strategic inference. A mature capability is only \"better positioned to convert a value hypothesis into a measurable outcome\" -- realized value still requires operational and finance validation. Never say value \"is real\".",
+    "- Confidence describes breadth of loaded context, not verified outcomes. 'Rich' may describe breadth; it never means every required dimension is complete.",
+    "",
     "Word budgets (hard limits, do not exceed):",
     "- narratives.enterprise_brief, narratives.operating_model, narratives.relationship_map, narratives.use_cases, narratives.evidence_boundary: 75-130 words each.",
     "- use_cases[].client_context_signal, why_now, operating_model_change, change_strategy, readiness_barrier, evidence_gate, priority_rationale: 22-45 words each.",
     "- use_cases[].industry_pattern, value_thesis: 22-42 words each.",
     "- use_cases[].module_next_step: a short executive-readable fragment, under 15 words.",
     "",
-    `You must call the ${CLAUDE_NARRATIVE_TOOL_NAME} tool exactly once with your complete output. Echo each use case's "name" field back verbatim (character-for-character) from the input context so it can be matched to its source record.`,
+    "Executive-read block (executive_read) -- this fills the top of the CXO cockpit:",
+    "- archetype: a 3-8 word enterprise archetype label (e.g. 'Integrated Delivery Network + Health Plan').",
+    "- one_sentence: one sentence, <=40 words, that captures what this enterprise is and its defining tension.",
+    "- tension_headline: one sentence naming the single strategic tension leadership must resolve.",
+    "- strengths[]: 3-5 PROVEN strengths. A strength is only valid if the supplied context shows something actually working, adopted, or covered (not a hope or an intent). Each item: { text, evidence_refs }. If nothing is genuinely proven, return fewer items -- never manufacture a strength.",
+    "- constraints[]: 3-6 structural constraints, each { text, evidence_refs }, synthesized at the enterprise level (not raw per-dimension gaps).",
+    "- industry_forces[] and tenant_reality[]: two ORDERED, PAIRED lists of equal length (3-6 each). industry_forces[i] is where the industry is moving; tenant_reality[i] is where THIS tenant actually is on that same axis. Each item is a short phrase (<=10 words).",
+    "- horizons[]: the defensible leadership sequence, 2-3 entries, each { horizon: 'Act now'|'Build next'|'Prove later' (or similar), tone: 'option'|'evidence'|'watch', items: [2-4 short action phrases] }.",
+    "- context_confidence_pct: integer 0-100 reflecting how load-complete and evidence-backed the context is. context_confidence_note: one short sentence explaining it.",
+    "- data_foundation_summary: 40-90 words on the data & AI foundation state, honest about what is certified vs aspirational.",
+    "",
+    "Load tier (tier) -- lets one template serve rich and thin tenants honestly:",
+    "- tier: 'thin' | 'partial' | 'rich' based on evidence depth across dimensions. tier_label: a short human label. tier_title + tier_body: what this tier means for the reader. tier_conditions[]: ordered { text } list of what evidence would move it to the next tier. tier_basis: one sentence on why this tier was assigned. Be honest -- a thin tenant must read as thin, not be dressed up as rich.",
+    "",
+    "AI readiness (ai_readiness) -- ONLY emit a score you can defend:",
+    "- 3-6 entries, each { readiness_dimension, score_pct (0-100), tone: 'red'|'amber'|'green', label, basis, evidence_refs }. basis is REQUIRED and must name the specific loaded evidence the score rests on. If you cannot ground a score, omit that dimension entirely. Never fabricate a percentage.",
+    "",
+    "Per-dimension module implications (dimension_module_implications):",
+    "- For material dimensions, 1-3 entries each { dimension_key (echo verbatim from the input dimensions), module: 'intelligence'|'moves'|'source'|'tower', implication (one sentence tying THIS dimension's context to what that module can do), evidence_refs }.",
+    "",
+    `You must call the ${CLAUDE_NARRATIVE_TOOL_NAME} tool exactly once with your complete output. Echo each use case's "name" field and each dimension's "key" back verbatim (character-for-character) from the input context so they can be matched to their source records.`,
   ].join("\n");
 }
 
@@ -257,12 +303,20 @@ function claudeNarrativeTool() {
     "priority_rationale", "module_next_step",
   ];
   const strategyFields = Object.fromEntries(strategyFieldNames.map((key) => [key, { type: "string" }]));
+  const textWithEvidence = {
+    type: "object",
+    required: ["text"],
+    properties: {
+      text: { type: "string" },
+      evidence_refs: { type: "array", items: { type: "string" } },
+    },
+  };
   return {
     name: CLAUDE_NARRATIVE_TOOL_NAME,
-    description: "Submit the CXO strategy narratives and use-case strategy enrichment for this tenant's Home Knowledge Pack v2.",
+    description: "Submit the CXO strategy narratives, use-case enrichment, executive-read block, load tier, AI readiness, and per-dimension module implications for this tenant's Home Knowledge Pack.",
     input_schema: {
       type: "object",
-      required: ["narratives", "use_cases"],
+      required: ["narratives", "use_cases", "executive_read"],
       properties: {
         narratives: {
           type: "object",
@@ -281,6 +335,73 @@ function claudeNarrativeTool() {
             type: "object",
             required: ["name", ...strategyFieldNames],
             properties: { name: { type: "string" }, ...strategyFields },
+          },
+        },
+        executive_read: {
+          type: "object",
+          required: ["archetype", "one_sentence", "tension_headline", "strengths", "constraints", "industry_forces", "tenant_reality", "horizons"],
+          properties: {
+            archetype: { type: "string" },
+            one_sentence: { type: "string" },
+            tension_headline: { type: "string" },
+            context_confidence_pct: { type: "integer" },
+            context_confidence_note: { type: "string" },
+            data_foundation_summary: { type: "string" },
+            strengths: { type: "array", items: textWithEvidence },
+            constraints: { type: "array", items: textWithEvidence },
+            industry_forces: { type: "array", items: { type: "string" } },
+            tenant_reality: { type: "array", items: { type: "string" } },
+            horizons: {
+              type: "array",
+              items: {
+                type: "object",
+                required: ["horizon", "items"],
+                properties: {
+                  horizon: { type: "string" },
+                  tone: { type: "string" },
+                  items: { type: "array", items: { type: "string" } },
+                },
+              },
+            },
+          },
+        },
+        tier: {
+          type: "object",
+          properties: {
+            tier: { type: "string", enum: ["thin", "partial", "rich"] },
+            tier_label: { type: "string" },
+            tier_title: { type: "string" },
+            tier_body: { type: "string" },
+            tier_basis: { type: "string" },
+            tier_conditions: { type: "array", items: textWithEvidence },
+          },
+        },
+        ai_readiness: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["readiness_dimension", "score_pct", "basis"],
+            properties: {
+              readiness_dimension: { type: "string" },
+              score_pct: { type: "integer" },
+              tone: { type: "string", enum: ["red", "amber", "green"] },
+              label: { type: "string" },
+              basis: { type: "string" },
+              evidence_refs: { type: "array", items: { type: "string" } },
+            },
+          },
+        },
+        dimension_module_implications: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["dimension_key", "module", "implication"],
+            properties: {
+              dimension_key: { type: "string" },
+              module: { type: "string", enum: ["intelligence", "moves", "source", "tower"] },
+              implication: { type: "string" },
+              evidence_refs: { type: "array", items: { type: "string" } },
+            },
           },
         },
       },
@@ -305,7 +426,7 @@ async function callClaudeForPack(promptPacket) {
     try {
       const message = await client.messages.create({
         model,
-        max_tokens: Number(process.env.HOME_KNOWLEDGE_CLAUDE_MAX_TOKENS || 8000),
+        max_tokens: Number(process.env.HOME_KNOWLEDGE_CLAUDE_MAX_TOKENS || 12000),
         system: claudeSystemPrompt(),
         messages: [{ role: "user", content: JSON.stringify(promptPacket) }],
         tools: [tool],
@@ -325,30 +446,83 @@ async function callClaudeForPack(promptPacket) {
 }
 
 function mergeClaudeNarrativesIntoPack(pack, claudeResult) {
-  if (!claudeResult) return { matched: 0, total: (pack.design_slots?.USE_CASES ?? []).length };
+  const useCaseItems = pack.design_slots?.USE_CASES ?? [];
+  if (!claudeResult) return { matched: 0, total: useCaseItems.length, dimImplications: 0 };
   pack.narrative_sections = { ...(pack.narrative_sections ?? {}), ...(claudeResult.narratives ?? {}) };
   pack.generated_model = `${pack.generated_model ?? "approved-json-pack"} + claude:${model}`;
-  const useCaseItems = pack.design_slots?.USE_CASES ?? [];
-  const byName = new Map(
-    useCaseItems.map((item) => [
-      firstText(item, ["name", "use_case_name", "ai_use_case", "business_name"]).toLowerCase().trim(),
-      item,
-    ]),
+  // Brief-model structures land on the pack under a stable key so
+  // normalizePack can lift them into the v4 tables. These are authored,
+  // not deterministically derived, so they only exist when Claude ran.
+  pack.brief_model = {
+    executive_read: claudeResult.executive_read ?? null,
+    tier: claudeResult.tier ?? null,
+    ai_readiness: asArray(claudeResult.ai_readiness),
+    dimension_module_implications: asArray(claudeResult.dimension_module_implications),
+  };
+  // Match Claude's use cases back to source records by name, but fall back to
+  // array position when the source names are non-unique. Several source packs
+  // (e.g. SkyHarbor) label every use case identically ("AI opportunity"), so a
+  // name key can't disambiguate -- and Claude, correctly, authors distinct
+  // names that then match nothing. Claude returns use cases in priority order,
+  // so positional matching is the reliable fallback there.
+  const nameCounts = new Map();
+  for (const item of useCaseItems) {
+    const key = firstText(item, ["name", "use_case_name", "ai_use_case", "business_name"]).toLowerCase().trim();
+    nameCounts.set(key, (nameCounts.get(key) ?? 0) + 1);
+  }
+  const byUniqueName = new Map(
+    useCaseItems
+      .map((item) => [firstText(item, ["name", "use_case_name", "ai_use_case", "business_name"]).toLowerCase().trim(), item])
+      .filter(([key]) => key && nameCounts.get(key) === 1),
   );
+  const claudeUseCases = asArray(claudeResult.use_cases);
+  const claudeNamesUnique = new Set(claudeUseCases.map((e) => asText(e.name).toLowerCase().trim())).size === claudeUseCases.length;
+  // Every source name is a non-unique placeholder (SkyHarbor labels all 8
+  // "AI opportunity") -- name matching is impossible either way, and Claude,
+  // told to echo the name, echoes the same placeholder back. In that
+  // degenerate case, Claude's priority-ordered array position is the only
+  // usable signal, so go positional even though the echoed names aren't unique.
+  const sourceNamesAllCollide = byUniqueName.size === 0 && useCaseItems.length > 0;
+  // Positional matching is safe when the lengths line up and either Claude
+  // returned distinct names (normal case) or the source names are all
+  // indistinguishable placeholders (degenerate case above).
+  const usePositional =
+    claudeUseCases.length === useCaseItems.length && (claudeNamesUnique || sourceNamesAllCollide);
+  const strategyKeys = [
+    "industry_pattern", "client_context_signal", "why_now", "operating_model_change",
+    "change_strategy", "value_thesis", "readiness_barrier", "evidence_gate",
+    "priority_rationale", "module_next_step",
+  ];
   let matched = 0;
-  for (const entry of asArray(claudeResult.use_cases)) {
-    const target = byName.get(asText(entry.name).toLowerCase().trim());
-    if (!target) continue;
+  let matchMode = "name";
+  claudeUseCases.forEach((entry, index) => {
+    let target = byUniqueName.get(asText(entry.name).toLowerCase().trim());
+    if (!target && usePositional) {
+      target = useCaseItems[index];
+      matchMode = "positional";
+    }
+    if (!target) return;
     matched += 1;
-    for (const key of [
-      "industry_pattern", "client_context_signal", "why_now", "operating_model_change",
-      "change_strategy", "value_thesis", "readiness_barrier", "evidence_gate",
-      "priority_rationale", "module_next_step",
-    ]) {
+    for (const key of strategyKeys) {
       if (asText(entry[key]).trim()) target[key] = entry[key];
     }
-  }
-  return { matched, total: useCaseItems.length };
+    // Preserve Claude's authored use-case name when the source name was a
+    // generic placeholder, so the design shows real titles not "AI opportunity".
+    if (asText(entry.name).trim() && matchMode === "positional") {
+      target.name = entry.name;
+    }
+  });
+  pack.brief_model.use_case_match_mode = matchMode;
+  // Keep only dimension_module_implications whose dimension_key matches a real
+  // loaded dimension -- drops any hallucinated dimension key.
+  const dimKeys = new Set((pack.design_slots?.DIMS ?? []).map((d) => asText(d.key)));
+  pack.brief_model.dimension_module_implications =
+    pack.brief_model.dimension_module_implications.filter((row) => dimKeys.has(asText(row.dimension_key)));
+  return {
+    matched,
+    total: useCaseItems.length,
+    dimImplications: pack.brief_model.dimension_module_implications.length,
+  };
 }
 
 function industryPatternFor(useCase, pack) {
@@ -600,6 +774,76 @@ async function normalizePack(pack, sourceFile, sourceText) {
       approval_status: "candidate",
       sort_order: index + 1,
     }));
+  // v4 brief-model rows. Only present when Claude authored them (pack.brief_model
+  // is set by mergeClaudeNarrativesIntoPack); a deterministic-only build leaves
+  // these empty, so the new tables stay unpopulated rather than filled with
+  // fabricated executive content.
+  const brief = pack.brief_model ?? {};
+  const executiveReadRows = brief.executive_read
+    ? [{
+        archetype: asText(brief.executive_read.archetype) || null,
+        one_sentence: asText(brief.executive_read.one_sentence) || null,
+        tension_headline: asText(brief.executive_read.tension_headline) || null,
+        context_confidence_pct: Number.isFinite(Number(brief.executive_read.context_confidence_pct))
+          ? Math.max(0, Math.min(100, Math.round(Number(brief.executive_read.context_confidence_pct))))
+          : null,
+        context_confidence_note: asText(brief.executive_read.context_confidence_note) || null,
+        data_foundation_summary: asText(brief.executive_read.data_foundation_summary) || null,
+        strengths: asArray(brief.executive_read.strengths),
+        constraints: asArray(brief.executive_read.constraints),
+        industry_forces: asArray(brief.executive_read.industry_forces),
+        tenant_reality: asArray(brief.executive_read.tenant_reality),
+        horizons: asArray(brief.executive_read.horizons),
+      }]
+    : [];
+  const packTierRows = brief.tier
+    ? [{
+        tier: ["thin", "partial", "rich"].includes(asText(brief.tier.tier)) ? asText(brief.tier.tier) : "partial",
+        tier_label: asText(brief.tier.tier_label) || null,
+        tier_title: asText(brief.tier.tier_title) || null,
+        tier_body: asText(brief.tier.tier_body) || null,
+        tier_conditions: asArray(brief.tier.tier_conditions),
+        tier_basis: asText(brief.tier.tier_basis) || null,
+      }]
+    : [];
+  const seenReadiness = new Set();
+  const aiReadinessRows = asArray(brief.ai_readiness)
+    .map((row, index) => ({
+      readiness_dimension: asText(row.readiness_dimension).trim(),
+      score_pct: Math.max(0, Math.min(100, Math.round(Number(row.score_pct) || 0))),
+      tone: ["red", "amber", "green"].includes(asText(row.tone)) ? asText(row.tone) : null,
+      label: asText(row.label) || null,
+      basis: asText(row.basis) || null,
+      evidence_refs: evidenceRefs(row),
+      sort_order: index + 1,
+    }))
+    .filter((row) => {
+      // Enforce the grounding contract in code, not just the prompt: a
+      // readiness score without a stated basis is dropped, and duplicate
+      // dimensions (which would violate the unique index) are collapsed.
+      if (!row.readiness_dimension || !row.basis) return false;
+      const key = row.readiness_dimension.toLowerCase();
+      if (seenReadiness.has(key)) return false;
+      seenReadiness.add(key);
+      return true;
+    });
+  const seenDimModule = new Set();
+  const dimensionModuleImplicationRows = asArray(brief.dimension_module_implications)
+    .map((row, index) => ({
+      dimension_key: asText(row.dimension_key).trim(),
+      module: asText(row.module).trim(),
+      implication: asText(row.implication).trim(),
+      evidence_refs: evidenceRefs(row),
+      sort_order: index + 1,
+    }))
+    .filter((row) => {
+      if (!row.dimension_key || !row.implication) return false;
+      if (!["intelligence", "moves", "source", "tower"].includes(row.module)) return false;
+      const key = `${row.dimension_key}|${row.module}`;
+      if (seenDimModule.has(key)) return false;
+      seenDimModule.add(key);
+      return true;
+    });
   const quality = {
     source_file: path.relative(repoRoot, sourceFile),
     prompt_file: `reports/home-knowledge-pack-v2/${pack.tenant_key}/claude-strategy-prompt.json`,
@@ -609,6 +853,10 @@ async function normalizePack(pack, sourceFile, sourceText) {
     evidence_sources: evidence.length,
     relationship_nodes: graph.nodes.length,
     relationship_edges: graph.edges.length,
+    executive_read: executiveReadRows.length,
+    ai_readiness: aiReadinessRows.length,
+    dimension_module_implications: dimensionModuleImplicationRows.length,
+    tier: packTierRows[0]?.tier ?? null,
     warnings: [],
   };
   if (!useCases.every((u) => u.industry_pattern && u.client_context_signal && u.change_strategy)) {
@@ -656,6 +904,10 @@ async function normalizePack(pack, sourceFile, sourceText) {
     relationship_nodes: graph.nodes,
     relationship_edges: graph.edges,
     narratives,
+    executive_read: executiveReadRows,
+    pack_tier: packTierRows,
+    ai_readiness: aiReadinessRows,
+    dimension_module_implications: dimensionModuleImplicationRows,
     claude_prompt: promptPacket,
   };
   normalized.pack.content_hash = sha256(JSON.stringify({
@@ -665,6 +917,10 @@ async function normalizePack(pack, sourceFile, sourceText) {
     evidence,
     graph,
     narratives,
+    executiveReadRows,
+    packTierRows,
+    aiReadinessRows,
+    dimensionModuleImplicationRows,
   }));
   return normalized;
 }
@@ -739,6 +995,10 @@ async function writeNormalizedToDb(client, normalized) {
       "home_knowledge_relationship_nodes",
       "home_knowledge_relationship_edges",
       "home_knowledge_narratives",
+      "home_knowledge_executive_read",
+      "home_knowledge_pack_tier",
+      "home_knowledge_ai_readiness",
+      "home_knowledge_dimension_module_implications",
     ]) {
       await client.query(`DELETE FROM public.${table} WHERE pack_id = $1`, [packId]);
     }
@@ -759,6 +1019,10 @@ async function writeNormalizedToDb(client, normalized) {
     await insertMany("home_knowledge_relationship_nodes", normalized.relationship_nodes);
     await insertMany("home_knowledge_relationship_edges", normalized.relationship_edges);
     await insertMany("home_knowledge_narratives", normalized.narratives);
+    await insertMany("home_knowledge_executive_read", normalized.executive_read);
+    await insertMany("home_knowledge_pack_tier", normalized.pack_tier);
+    await insertMany("home_knowledge_ai_readiness", normalized.ai_readiness);
+    await insertMany("home_knowledge_dimension_module_implications", normalized.dimension_module_implications);
     await client.query("COMMIT");
     return packId;
   } catch (error) {
