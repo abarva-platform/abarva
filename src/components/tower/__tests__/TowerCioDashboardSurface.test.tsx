@@ -991,9 +991,21 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     ).toHaveStyle({
       minWidth: "0",
     });
-    expect(screen.getByTestId("tower-command-stepper")).toHaveStyle({
-      gridTemplateColumns: "repeat(3, minmax(180px, 1fr))",
+    // The step nav is a segmented control, not three static tiles: it exposes
+    // tab semantics and marks exactly one segment selected, so it reads and
+    // behaves as navigation.
+    const stepper = screen.getByTestId("tower-command-stepper");
+    expect(stepper).toHaveStyle({
+      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
     });
+    expect(stepper).toHaveAttribute("role", "tablist");
+    const steps = screen.getAllByRole("tab", {
+      name: /Posture|Signals|Decide/,
+    });
+    expect(steps).toHaveLength(3);
+    expect(
+      steps.filter((step) => step.getAttribute("aria-selected") === "true"),
+    ).toHaveLength(1);
     expect(screen.getByTestId("tower-budget-posture-card")).toHaveStyle({
       minHeight: "0",
     });

@@ -4420,6 +4420,7 @@ function TowerMartCommandCenter({
   const [activeSection, setActiveSection] =
     useState<TowerMartSection>("command");
   const [commandStep, setCommandStep] = useState<1 | 2 | 3>(1);
+  const [hoveredStep, setHoveredStep] = useState<1 | 2 | 3 | null>(null);
   const command = model.command;
   const budgetPostureNarrative = towerBudgetPostureNarrative(command);
   const blockingGaps = model.requiredFieldGaps.filter((gap) => gap.blocking);
@@ -4461,7 +4462,7 @@ function TowerMartCommandCenter({
   function renderCommandStep() {
     if (commandStep === 1) {
       return (
-        <section style={{ marginTop: 22 }}>
+        <section style={{ marginTop: 14 }}>
           <div style={towerEyebrowStyle}>Where the money is</div>
           <div
             style={{
@@ -4809,7 +4810,7 @@ function TowerMartCommandCenter({
       </aside>
       <main
         style={{
-          padding: "34px clamp(28px, 4vw, 72px) 138px",
+          padding: "24px clamp(28px, 4vw, 72px) 96px",
           minWidth: 0,
           maxWidth: 1680,
           margin: "0 auto",
@@ -4927,7 +4928,7 @@ function TowerMartCommandCenter({
                   truthfully, by the "Tower mart · source-backed" line above. */}
               AI Value Realization Control Tower
             </h2>
-            <p style={{ margin: "10px 0 0", color: T.INK_2, fontSize: 16 }}>
+            <p style={{ margin: "8px 0 0", color: T.INK_2, fontSize: 15.5 }}>
               AI activity is not value - $0 of{" "}
               {formatMoneyGap(command.promisedValueFy26)} promised is claimable
               today.
@@ -4938,7 +4939,11 @@ function TowerMartCommandCenter({
                 gridTemplateColumns:
                   "minmax(280px, 1.2fr) repeat(3, minmax(180px, 1fr))",
                 gap: 12,
-                marginTop: 22,
+                marginTop: 16,
+                // Size each card to its own content. Stretching three short
+                // metric cards to match the tall verdict card was producing
+                // ~90px of empty space each and pushing the fold down.
+                alignItems: "start",
               }}
             >
               <div
@@ -4947,8 +4952,8 @@ function TowerMartCommandCenter({
                   borderRadius: 16,
                   background: T.INK,
                   color: "#fff",
-                  padding: 20,
-                  minHeight: 150,
+                  padding: "16px 18px",
+                  minHeight: 132,
                 }}
               >
                 <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>
@@ -4957,9 +4962,9 @@ function TowerMartCommandCenter({
                 <div
                   style={{
                     fontFamily: T.SERIF,
-                    fontSize: 37,
+                    fontSize: 33,
                     lineHeight: 1.05,
-                    marginTop: 12,
+                    marginTop: 10,
                     fontWeight: 760,
                   }}
                 >
@@ -4994,45 +4999,69 @@ function TowerMartCommandCenter({
                 tone="gated"
               />
             </section>
+            {/* Step nav. Previously these were card-shaped buttons on a
+                near-white page, so they read as three static summary tiles and
+                nobody clicked them. Now they are one connected segmented
+                control — the same visual language as the analysis sub-tabs —
+                with a filled active segment, a hover state, and an explicit
+                arrow on the inactive ones. Also materially shorter, which is
+                what lets the Command Center fit without scrolling. */}
             <div
               data-testid="tower-command-stepper"
+              role="tablist"
+              aria-label="Command center steps"
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(3, minmax(180px, 1fr))",
-                gap: 16,
-                alignItems: "stretch",
-                marginTop: 24,
+                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                gap: 4,
+                marginTop: 16,
+                padding: 4,
+                background: T.PAGE_BG === "#fafafa" ? "#f1f1ef" : T.CREAM,
+                border: `1px solid ${T.RULE}`,
+                borderRadius: 999,
               }}
             >
               {commandSteps.map((step, index) => {
                 const stepNumber = (index + 1) as 1 | 2 | 3;
                 const selected = commandStep === stepNumber;
+                const hovered = hoveredStep === stepNumber && !selected;
                 return (
                   <button
                     key={step[0]}
                     type="button"
+                    role="tab"
+                    aria-selected={selected}
                     onClick={() => setCommandStep(stepNumber)}
+                    onMouseEnter={() => setHoveredStep(stepNumber)}
+                    onMouseLeave={() => setHoveredStep(null)}
+                    onFocus={() => setHoveredStep(stepNumber)}
+                    onBlur={() => setHoveredStep(null)}
                     style={{
-                      border: `1px solid ${selected ? T.TEAL_TINT : T.RULE}`,
-                      borderRadius: 14,
-                      background: selected ? T.CREAM_2 : "#fff",
-                      boxShadow: selected
-                        ? "0 16px 34px rgba(21,127,116,.12)"
-                        : "0 10px 24px rgba(15,23,42,.05)",
-                      minHeight: 62,
-                      padding: "12px 16px",
+                      border: "none",
+                      borderRadius: 999,
+                      background: selected
+                        ? T.INK
+                        : hovered
+                          ? "rgba(255,255,255,.95)"
+                          : "transparent",
+                      boxShadow: hovered
+                        ? "0 2px 10px rgba(15,23,42,.08)"
+                        : "none",
+                      padding: "9px 14px",
                       display: "flex",
                       alignItems: "center",
-                      gap: 14,
+                      justifyContent: "center",
+                      gap: 9,
                       cursor: "pointer",
-                      textAlign: "left",
                       minWidth: 0,
+                      transition: "background .12s ease, box-shadow .12s ease",
                     }}
                   >
                     <span
                       style={{
-                        width: 28,
-                        height: 28,
+                        width: 22,
+                        height: 22,
+                        flex: "0 0 auto",
                         borderRadius: 999,
                         display: "grid",
                         placeItems: "center",
@@ -5041,26 +5070,53 @@ function TowerMartCommandCenter({
                         border: selected
                           ? "none"
                           : `1px solid ${T.RULE_STRONG}`,
+                        fontSize: 12,
                         fontWeight: 900,
                       }}
                     >
                       {stepNumber}
                     </span>
-                    <span style={{ minWidth: 0 }}>
+                    <span
+                      style={{
+                        minWidth: 0,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        fontSize: 14,
+                      }}
+                    >
                       <span
                         style={{
-                          ...towerTinyLabelStyle,
-                          display: "block",
-                          fontSize: 8,
+                          fontWeight: 900,
+                          color: selected ? "#fff" : T.INK,
                         }}
                       >
-                        Step {stepNumber}
-                      </span>
-                      <span style={{ fontWeight: 900, color: T.INK }}>
                         {step[0]}
                       </span>{" "}
-                      <span style={{ color: T.INK_2 }}>· {step[1]}</span>
+                      <span
+                        style={{
+                          color: selected ? "rgba(255,255,255,.72)" : T.GRAY_DK,
+                        }}
+                      >
+                        · {step[1]}
+                      </span>
                     </span>
+                    {/* An explicit affordance on the segments you can move to,
+                        so the control reads as navigation rather than as three
+                        labels that happen to sit in a row. */}
+                    {!selected ? (
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          flex: "0 0 auto",
+                          color: hovered ? T.TEAL : T.GRAY,
+                          fontWeight: 900,
+                          fontSize: 13,
+                        }}
+                      >
+                        →
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
