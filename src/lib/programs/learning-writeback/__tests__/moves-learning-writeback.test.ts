@@ -1,5 +1,6 @@
 import {
   buildMovesLearningPromotionPreview,
+  buildMovesLearningPromotionRollup,
   buildMovesLearningReviewPacket,
   buildMovesLearningWritebackPlan,
   getMovesLearningReviewQueue,
@@ -545,6 +546,136 @@ describe("Moves learning review queue", () => {
       ]),
     );
     expect(preview.nextAction).toContain("Audit the promotion trail");
+  });
+
+  it("builds a promotion rollup that summarizes why candidates are not active-context ready", () => {
+    const queue = summarizeMovesLearningReviewCandidates("arcturus", [
+      {
+        id: "rec-1",
+        tenant_key: "first-capital",
+        canonical_record_id: "moves-learning-move-1-approved_evidence-ev-1",
+        record_subtype: "approved_evidence",
+        title: "Loan onboarding baseline",
+        source_record_id: "ev-1",
+        payload: {
+          moveId: "move-1",
+          moveName: "Commercial Lending Agent Assist",
+          phase: 2,
+          sourceBasis: "approved_evidence",
+          sourceId: "ev-1",
+          title: "Loan onboarding baseline",
+          summary: "Cycle time is 11.8 days and KYC rework is 27%.",
+          evidenceRefs: ["ev-1", "artifact-input-1"],
+          confidenceLevel: "high",
+        },
+        agent_readiness_status: "not_reviewed",
+        retrievability: "committed_not_indexed",
+        policy_validation_status: "pending",
+      },
+      {
+        id: "rec-2",
+        tenant_key: "first-capital",
+        canonical_record_id: "moves-learning-move-1-client_approved_deliverable-del-1",
+        record_subtype: "client_approved_deliverable",
+        title: "Client-approved charter",
+        source_record_id: "del-1",
+        payload: {
+          moveId: "move-1",
+          moveName: "Commercial Lending Agent Assist",
+          phase: 1,
+          sourceBasis: "client_approved_deliverable",
+          sourceId: "del-1",
+          title: "Client-approved charter",
+          summary: "Human-approved charter confirms the bounded first slice.",
+          evidenceRefs: ["del-1", "artifact-approved-charter"],
+          confidenceLevel: "medium",
+        },
+        agent_readiness_status: "not_reviewed",
+        retrievability: "committed_not_indexed",
+        policy_validation_status: "pass",
+      },
+    ]);
+
+    const rollup = buildMovesLearningPromotionRollup(queue.candidates);
+
+    expect(rollup.status).toBe("blocked");
+    expect(rollup.statusLabel).toBe("Not ready");
+    expect(rollup.totals).toEqual({
+      candidates: 2,
+      blockedCandidates: 2,
+      investigateCandidates: 0,
+      previewReadyCandidates: 0,
+    });
+    expect(rollup.checks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Source lineage",
+          passed: 2,
+          blocked: 0,
+        }),
+        expect.objectContaining({
+          label: "Context policy",
+          passed: 1,
+          blocked: 1,
+        }),
+        expect.objectContaining({
+          label: "Azure retrieval index",
+          passed: 0,
+          blocked: 2,
+        }),
+        expect.objectContaining({
+          label: "Citation rendering proof",
+          pending: 2,
+        }),
+        expect.objectContaining({
+          label: "Steward decision",
+          blocked: 2,
+        }),
+      ]),
+    );
+    expect(rollup.topBlockers).toEqual(
+      expect.arrayContaining([
+        "Azure retrieval index: 2",
+        "Citation rendering proof: 2",
+        "Steward decision: 2",
+      ]),
+    );
+    expect(rollup.nextAction).toContain("keeping all candidates out of default agent context");
+  });
+
+  it("promotion rollup escalates when any candidate has active-use signals", () => {
+    const queue = summarizeMovesLearningReviewCandidates("arcturus", [
+      {
+        id: "rec-1",
+        tenant_key: "first-capital",
+        canonical_record_id: "moves-learning-move-1-gate_decision-gate-1",
+        record_subtype: "gate_decision",
+        title: "Phase Gate Decision",
+        source_record_id: "gate-1",
+        payload: {
+          moveId: "move-1",
+          moveName: "Commercial Lending Agent Assist",
+          phase: 2,
+          sourceBasis: "gate_decision",
+          sourceId: "gate-1",
+          title: "Phase Gate Decision",
+          summary: "P2 approved with carried gaps.",
+          evidenceRefs: ["gate-1"],
+          confidenceLevel: "medium",
+        },
+        agent_readiness_status: "agent_ready",
+        retrievability: "search_indexed",
+        policy_validation_status: "pass",
+      },
+    ]);
+
+    const rollup = buildMovesLearningPromotionRollup(queue.candidates);
+
+    expect(rollup.status).toBe("investigate");
+    expect(rollup.statusLabel).toBe("Investigate");
+    expect(rollup.totals.investigateCandidates).toBe(1);
+    expect(rollup.summary).toContain("active-use signals");
+    expect(rollup.nextAction).toContain("Audit active-looking rows first");
   });
 
   it("reads using canonical and legacy tenant aliases", async () => {

@@ -74,6 +74,29 @@ export interface MovesLearningPromotionPreview {
   readonly nextAction: string;
 }
 
+export interface MovesLearningPromotionRollupCheck {
+  readonly label: string;
+  readonly passed: number;
+  readonly blocked: number;
+  readonly pending: number;
+  readonly investigate: number;
+}
+
+export interface MovesLearningPromotionRollup {
+  readonly status: "empty" | "blocked" | "investigate" | "preview_ready";
+  readonly statusLabel: string;
+  readonly summary: string;
+  readonly totals: {
+    readonly candidates: number;
+    readonly blockedCandidates: number;
+    readonly investigateCandidates: number;
+    readonly previewReadyCandidates: number;
+  };
+  readonly checks: readonly MovesLearningPromotionRollupCheck[];
+  readonly topBlockers: readonly string[];
+  readonly nextAction: string;
+}
+
 interface MovesLearningReviewRow {
   readonly id?: string | null;
   readonly tenant_key?: string | null;
@@ -350,6 +373,108 @@ export function buildMovesLearningPromotionPreview(
     checks,
     nextAction:
       "Run a read-only promotion preview and capture retrieval/citation proof before any active-context update.",
+  };
+}
+
+export function buildMovesLearningPromotionRollup(
+  candidates: readonly MovesLearningReviewCandidate[],
+): MovesLearningPromotionRollup {
+  if (candidates.length === 0) {
+    return {
+      status: "empty",
+      statusLabel: "No candidates",
+      summary:
+        "No Moves learning candidates are visible for this tenant yet. Run governed Move writeback after approved evidence, signed-off deliverables, or gate decisions exist.",
+      totals: {
+        candidates: 0,
+        blockedCandidates: 0,
+        investigateCandidates: 0,
+        previewReadyCandidates: 0,
+      },
+      checks: [],
+      topBlockers: [],
+      nextAction:
+        "Complete a governed Move phase and verify the learning ledger writes reviewable context candidates.",
+    };
+  }
+
+  const previews = candidates.map(buildMovesLearningPromotionPreview);
+  const checkMap = new Map<string, MovesLearningPromotionRollupCheck>();
+  const blockerCounts = new Map<string, number>();
+
+  for (const preview of previews) {
+    for (const check of preview.checks) {
+      const current =
+        checkMap.get(check.label) ?? {
+          label: check.label,
+          passed: 0,
+          blocked: 0,
+          pending: 0,
+          investigate: 0,
+        };
+      const next = {
+        ...current,
+        passed: current.passed + (check.status === "pass" ? 1 : 0),
+        blocked: current.blocked + (check.status === "blocked" ? 1 : 0),
+        pending: current.pending + (check.status === "pending" ? 1 : 0),
+        investigate:
+          current.investigate + (check.status === "investigate" ? 1 : 0),
+      };
+      checkMap.set(check.label, next);
+      if (check.status !== "pass") {
+        blockerCounts.set(check.label, (blockerCounts.get(check.label) ?? 0) + 1);
+      }
+    }
+  }
+
+  const blockedCandidates = previews.filter(
+    (preview) => preview.status === "blocked",
+  ).length;
+  const investigateCandidates = previews.filter(
+    (preview) => preview.status === "investigate",
+  ).length;
+  const previewReadyCandidates = previews.filter(
+    (preview) => preview.status === "preview_ready",
+  ).length;
+  const status: MovesLearningPromotionRollup["status"] =
+    investigateCandidates > 0
+      ? "investigate"
+      : blockedCandidates > 0
+        ? "blocked"
+        : "preview_ready";
+  const topBlockers = Array.from(blockerCounts.entries())
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+    .slice(0, 3)
+    .map(([label, count]) => `${label}: ${count}`);
+
+  return {
+    status,
+    statusLabel:
+      status === "investigate"
+        ? "Investigate"
+        : status === "preview_ready"
+          ? "Preview ready"
+          : "Not ready",
+    summary:
+      status === "investigate"
+        ? "One or more Moves learning candidates already show active-use signals. Stewardship should verify the promotion trail before agents consume them."
+        : status === "preview_ready"
+          ? "All deterministic checks are present for a read-only promotion preview. Steward approval and retrieval/citation proof must still be captured before active use."
+          : "Moves learning is persisted for stewardship, but active enterprise-context promotion is blocked until policy, indexing, citation proof, and steward decision checks are complete.",
+    totals: {
+      candidates: candidates.length,
+      blockedCandidates,
+      investigateCandidates,
+      previewReadyCandidates,
+    },
+    checks: Array.from(checkMap.values()),
+    topBlockers,
+    nextAction:
+      status === "investigate"
+        ? "Audit active-looking rows first; remove active-use signals if explicit steward approval, indexing, and cite-render proof are missing."
+        : status === "preview_ready"
+          ? "Run the read-only context/corpus promotion preview and capture retrieval plus citation evidence before any write to agent-ready context."
+          : "Resolve the top blockers, starting with policy validation and Azure retrieval indexing, while keeping all candidates out of default agent context.",
   };
 }
 
