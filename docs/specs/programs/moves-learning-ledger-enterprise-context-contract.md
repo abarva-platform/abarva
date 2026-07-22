@@ -49,7 +49,7 @@ Every promoted candidate derived from a Move must carry:
 | `claim_type` | Capability, system, process, KPI, risk, control, dependency, operating model, value hypothesis, or decision. |
 | `evidence_refs` | Citation refs back to source rows/files. |
 | `readiness_state` | Starts as `not_reviewed` or `promotion_candidate`; never `agent_ready` by default. |
-| `applicable_agents` | Usually `Moves`, optionally `Intelligence`, `Source`, or `Tower` after review. |
+| `applicable_agents` | Canonical governance agent ids only. New Move-derived candidates start with `nexus`, `tower`, and `steward`; broader module applicability is added only after review. |
 
 ## Promotion Rules
 

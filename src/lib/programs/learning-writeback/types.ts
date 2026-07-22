@@ -157,7 +157,7 @@ export interface MovesLearningReadinessDraft {
   readonly source_basis: MovesLearningSourceBasis;
   readonly confidence_level: "high" | "medium" | "low";
   readonly confidence_rationale: string;
-  readonly applicable_agents: readonly ["moves", "intelligence", "tower", "nexus"];
+  readonly applicable_agents: readonly ["nexus", "tower", "steward"];
   readonly policy_validation_status: "pending";
   readonly provenance: Record<string, unknown>;
   readonly backfill_reason: string;
