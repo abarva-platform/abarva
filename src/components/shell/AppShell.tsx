@@ -87,7 +87,15 @@ export function AppShell({
       style={{
         display: "grid",
         gridTemplateColumns: showAppRail ? "76px 1fr" : "1fr",
-        minHeight: "100vh",
+        // MaestroChrome already owns full-viewport height: it is a flex column
+        // of minHeight 100vh holding the top nav plus a flex:1 wrapper, and
+        // this shell is that wrapper's child. Re-asserting 100vh here demanded
+        // a whole viewport *below* the nav, so every shell-native surface was
+        // exactly navHeight taller than the window and always showed a
+        // scrollbar with nothing under the fold. Fill the space the parent
+        // gives instead of claiming the viewport a second time.
+        flex: 1,
+        minHeight: 0,
         overflow: "hidden",
       }}
     >
@@ -102,7 +110,7 @@ export function AppShell({
           display: "flex",
           flexDirection: "column",
           flex: 1,
-          minHeight: "100vh",
+          minHeight: 0,
           overflow: "hidden",
         }}
       >

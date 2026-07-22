@@ -4761,7 +4761,10 @@ function TowerMartCommandCenter({
       style={{
         background: T.PAGE_BG,
         borderTop: `1px solid ${T.RULE}`,
-        minHeight: "calc(100vh - 132px)",
+        // Was calc(100vh - 132px): a hardcoded guess at the chrome above
+        // this surface, which no longer matches the real nav height. The shell
+        // now sizes correctly, so simply fill it.
+        minHeight: "100%",
         margin: 0,
         width: "100%",
         boxSizing: "border-box",
