@@ -84,6 +84,55 @@ describe("client-final artifact governance", () => {
     ).toBe("generated");
   });
 
+  it("resolves an active-acceptance artifact above isCurrentAuthoritative but below client-final", () => {
+    // SOURCE-SHELL-004: an explicit, reasoned "accept as authoritative"
+    // record is a stronger signal than the inferred isCurrentAuthoritative
+    // flag, but a real client-final upload still wins.
+    const withoutClientFinal = resolveAuthoritativeArtifact([
+      {
+        id: "inferred-authoritative",
+        version: 1,
+        lifecycleState: "current",
+        isCurrentAuthoritative: true,
+      },
+      {
+        id: "explicitly-accepted",
+        version: 1,
+        lifecycleState: "current",
+        hasActiveAcceptance: true,
+      },
+    ]);
+    expect(withoutClientFinal?.id).toBe("explicitly-accepted");
+
+    const withClientFinal = resolveAuthoritativeArtifact([
+      {
+        id: "explicitly-accepted",
+        version: 1,
+        lifecycleState: "current",
+        hasActiveAcceptance: true,
+      },
+      {
+        id: "client-final-1",
+        version: 2,
+        lifecycleState: "current",
+        status: "client_final",
+        isClientFinal: true,
+      },
+    ]);
+    expect(withClientFinal?.id).toBe("client-final-1");
+  });
+
+  it("leaves existing callers unaffected when hasActiveAcceptance is never populated", () => {
+    // Callers that don't join acceptance data (every existing call site,
+    // pre-SOURCE-SHELL-004) simply never set this field — the new pool is
+    // empty and resolution falls through exactly as before.
+    expect(
+      resolveAuthoritativeArtifact([
+        { id: "approved", version: 1, lifecycleState: "current", status: "approved" },
+      ])?.id,
+    ).toBe("approved");
+  });
+
   it("builds a metadata-only change summary with the client ownership language", () => {
     const summary = buildClientFinalChangeSummary({
       previousGeneratedArtifactId: "draft-1",

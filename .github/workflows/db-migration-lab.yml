@@ -284,6 +284,25 @@ jobs:
             --out-dir audit-artifacts/db-migration-lab/repository-readback \
             | tee audit-artifacts/db-migration-lab/repository-readback.log
 
+      # SOURCE-SHELL-004: same "application can use it" proof, for the
+      # source_artifact_acceptances table — calls insertArtifactAcceptance /
+      # getLatestArtifactAcceptance against fully-synthetic, tenant-isolated
+      # fixture rows it creates itself (never touches real client data; see
+      # the script's own header comment).
+      - name: Repository readback — artifact acceptances
+        id: artifact_acceptances_readback
+        if: inputs.mode == 'apply'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run ops:aca-job -- \
+            --image "${{ steps.image.outputs.image }}" \
+            --script db:verify:source-artifact-acceptances \
+            --container db-migrate \
+            --secret-env DATABASE_URL=azure-postgres-control-database-url \
+            --out-dir audit-artifacts/db-migration-lab/artifact-acceptances-readback \
+            | tee audit-artifacts/db-migration-lab/artifact-acceptances-readback.log
+
       # Affected-feature verification: confirm the deployed application is
       # still healthy after the schema change. This is a coarse signal
       # (the health endpoint, not a per-migration feature probe) — a

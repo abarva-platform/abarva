@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { SourceAnalyticsCanvas } from "@/components/source/canvas/analytics";
-import { getSourcingEvent } from "@/lib/source/queries";
+import { getSourcingEvent, isUuid } from "@/lib/source/queries";
 import { getActiveClientRow } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { listSourceArtifactsForSourceEventIdWithContent } from "@/lib/source/artifact-registry";
@@ -32,6 +32,7 @@ import {
   deriveStrategyIntakeFacts,
 } from "@/lib/source/facts/view/strategy-stage-builder";
 import { mergeSourceShellArtifactsWithArtifactStateBodies } from "@/lib/source/source-event-shell-v2";
+import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact-acceptances";
 import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repository";
 import { requireTenancy } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
@@ -129,6 +130,28 @@ export default async function SourceEventDetailPage({
       (artifact) =>
         artifact.stageKey ? [{ stageKey: artifact.stageKey }] : [],
     );
+    // SOURCE-SHELL-004: real artifact ids only — synthetic pseudo-artifact
+    // ids (e.g. `artifact-state:<uuid>`, used for authored bodies with no
+    // registry row yet) can never have an acceptance record and would fail
+    // a UUID-typed `.in()` query.
+    const analyticsArtifactIds = analyticsArtifacts
+      .map((artifact) => artifact.id)
+      .filter((id): id is string => isUuid(id));
+    const analyticsLatestAcceptances = analyticsArtifactIds.length
+      ? Array.from(
+          (
+            await getLatestArtifactAcceptancesByArtifactIds(
+              analyticsArtifactIds,
+            ).catch((error) => {
+              console.error(
+                "[SourceEventDetailPage] artifact acceptances read failed for analytics shell",
+                error instanceof Error ? error.message : String(error),
+              );
+              return new Map();
+            })
+          ).values(),
+        )
+      : [];
     const analyticsApprovalItems = activeClient?.key
       ? (
           await loadApprovalsInbox(activeClient.key).catch((error) => {
@@ -394,6 +417,7 @@ export default async function SourceEventDetailPage({
         approvalItems={analyticsApprovalItems}
         approvalLedger={analyticsApprovalLedger}
         guidebook={analyticsGuidebook}
+        latestArtifactAcceptances={analyticsLatestAcceptances}
       />
     );
   }

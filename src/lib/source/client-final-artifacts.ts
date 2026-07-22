@@ -21,6 +21,15 @@ export interface AuthoritativeArtifactCandidate {
   createdAt?: string | null;
   updatedAt?: string | null;
   clientFinalAcceptedAt?: string | null;
+  /**
+   * True when this artifact has an active (non-superseded)
+   * `source_artifact_acceptances` row — an explicit, reasoned "accept as
+   * authoritative" action (SOURCE-SHELL-004), distinct from the inferred
+   * `isCurrentAuthoritative` flag. Optional: callers that don't join
+   * acceptance data simply leave this pool empty and fall through to the
+   * existing pools, unaffected.
+   */
+  hasActiveAcceptance?: boolean | null;
 }
 
 export interface ClientFinalChangeSummaryInput {
@@ -47,6 +56,7 @@ export function resolveAuthoritativeArtifact<
   );
   const pools = [
     current.filter((artifact) => isClientFinalArtifact(artifact)),
+    current.filter((artifact) => artifact.hasActiveAcceptance === true),
     current.filter((artifact) => artifact.isCurrentAuthoritative === true),
     current.filter(
       (artifact) =>

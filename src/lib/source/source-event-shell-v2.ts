@@ -26,6 +26,7 @@ import type {
 import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
 import type { SourceEventArtifactState } from "@/lib/source/canvas-substrate/types";
 import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
+import type { ArtifactAcceptanceRecord } from "@/lib/source/artifact-acceptances";
 
 export type SourceShellWorkspace =
   | "steps"
@@ -99,6 +100,14 @@ export interface SourceShellFileItem {
   needsComplianceReview: boolean;
   complianceReviewLabel: string | null;
   complianceReviewMessage: string | null;
+  /**
+   * The most recent explicit "accept as authoritative" record for this
+   * artifact (SOURCE-SHELL-004), or null if it has never been accepted.
+   * Distinct from `governanceLabel`/`governanceMessage` above, which are
+   * inferred from status flags — this is a real, reasoned, append-only
+   * action a human took.
+   */
+  latestAcceptance: ArtifactAcceptanceRecord | null;
 }
 
 export interface SourceShellIntelligenceFinding {
@@ -233,6 +242,8 @@ export interface BuildSourceEventShellViewInput {
   intelligenceOpen?: boolean;
   /** Facilitator guidebook for the viewed stage. null = not authored for this stage (expected — most stages have no guidebook yet), not an error. */
   guidebook?: SourceStageGuidebookRecord | null;
+  /** Latest acceptance record per artifact id (SOURCE-SHELL-004), keyed by `source_artifacts.id`. Artifacts with no key present have never been accepted. */
+  latestArtifactAcceptancesById?: ReadonlyMap<string, ArtifactAcceptanceRecord>;
 }
 
 export function mergeSourceShellArtifactsWithArtifactStateBodies(
@@ -341,7 +352,12 @@ export function buildSourceEventShellView(
     tasks
       .map((task) => stepsById.get(task.id))
       .find((step) => step && step.status !== "captured") ?? null;
-  const artifacts = (input.artifacts ?? []).map(toFileItem);
+  const artifacts = (input.artifacts ?? []).map((artifact) =>
+    toFileItem(
+      artifact,
+      input.latestArtifactAcceptancesById?.get(artifact.id) ?? null,
+    ),
+  );
   const lifecycle = buildSourceArtifactLifecycleSummary(input.artifacts ?? []);
   const approvals = Array.from(input.approvalItems ?? []);
   const currentStageItem =
@@ -498,7 +514,10 @@ function taskSourceBasis(task: StageTaskView): SourceShellEvidenceBasis {
   return "computed";
 }
 
-function toFileItem(artifact: SourceShellArtifactLike): SourceShellFileItem {
+function toFileItem(
+  artifact: SourceShellArtifactLike,
+  latestAcceptance: ArtifactAcceptanceRecord | null = null,
+): SourceShellFileItem {
   const stageKey = String(
     artifact.stageKey ?? artifact.sourcingStage ?? "other",
   );
@@ -555,6 +574,7 @@ function toFileItem(artifact: SourceShellArtifactLike): SourceShellFileItem {
     complianceReviewMessage: needsComplianceReview
       ? SOURCE_COMPLIANCE_REVIEW_FLAG_MESSAGE
       : null,
+    latestAcceptance,
   };
 }
 
