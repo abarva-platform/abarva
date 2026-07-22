@@ -365,9 +365,21 @@ export async function persistDeliverable(
   };
 
   const save = deps.save ?? saveGeneratedArtifact;
-  // Persist the FULL structured document alongside the HTML so the download route
-  // can render any prescribed format (docx/xlsx/html) on demand without re-running
-  // the orchestrator. Backward-compatible: older artifacts lack this and fall back
-  // to the stored HTML.
-  return save(input, rendered, { renderableDoc: doc });
+  const resolvedDeliverableTypeKey =
+    deliverableKey ?? result.brief.deliverableType;
+  const renderableDocWithType = {
+    ...doc,
+    deliverableTypeKey: resolvedDeliverableTypeKey,
+    deliverableType: result.brief.deliverableType,
+  };
+
+  // Persist the FULL structured document alongside the canonical deliverable
+  // key so later human approval writes back to the correct deliverables_v2 slot
+  // without guessing from a generated title.
+  return save(input, rendered, {
+    deliverableTypeKey: resolvedDeliverableTypeKey,
+    deliverableType: result.brief.deliverableType,
+    registryKey: resolvedDeliverableTypeKey,
+    renderableDoc: renderableDocWithType,
+  });
 }

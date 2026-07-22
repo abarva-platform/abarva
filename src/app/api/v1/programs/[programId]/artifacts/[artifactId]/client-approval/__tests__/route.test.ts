@@ -67,6 +67,16 @@ jest.mock("@/lib/programs/deliverable-registry", () => ({
       documentTitle: "Program Charter",
       phase: 1,
     },
+    {
+      deliverableTypeKey: "discovery_report",
+      documentTitle: "Discovery & Diagnosis Report",
+      phase: 2,
+    },
+    {
+      deliverableTypeKey: "root_cause_worksheet",
+      documentTitle: "Root Cause Analysis Worksheet",
+      phase: 2,
+    },
   ],
 }));
 
@@ -224,5 +234,49 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
     });
     expect(mockDraftModuleDeliverable).not.toHaveBeenCalled();
     expect(mockSignOffDeliverable).not.toHaveBeenCalled();
+  });
+
+  it("uses persisted deliverable metadata instead of guessing from a generic title", async () => {
+    mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 2 });
+    mockGetGeneratedArtifactById.mockResolvedValue({
+      ...generatedArtifact,
+      sourceArtifactRef: "move:prog-1:phase:2",
+      metadata: {
+        deliverableTypeKey: "root_cause_worksheet",
+        renderableDoc: {
+          title: "FS Demo — Onboarding & KYC Agent-Assist Discovery",
+          deliverableTypeKey: "root_cause_worksheet",
+          recommendation: "Use this root-cause worksheet to separate process, data, and control drivers.",
+          generatedSections: [
+            {
+              title: "Root causes",
+              bodyMarkdown:
+                "Exceptions, duplicated checks, and fragmented servicing evidence create rework.",
+            },
+          ],
+        },
+      },
+    });
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      request({ reason: "Client accepts the reviewed root-cause worksheet." }) as never,
+      { params },
+    );
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(200);
+    expect(json).toMatchObject({
+      ok: true,
+      deliverableTypeKey: "root_cause_worksheet",
+    });
+    expect(mockDraftModuleDeliverable).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({
+        programId: "prog-1",
+        moduleKey: "diagnose",
+        deliverableTypeKey: "root_cause_worksheet",
+      }),
+    );
   });
 });
