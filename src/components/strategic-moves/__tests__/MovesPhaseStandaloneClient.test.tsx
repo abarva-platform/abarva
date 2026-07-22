@@ -1758,6 +1758,62 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByText(/Ask about this phase/i)).toBeInTheDocument();
   });
 
+  it("surfaces the hard gate blocker after generation succeeds but approval returns 409", async () => {
+    const defaultFetch = (global.fetch as jest.Mock).getMockImplementation();
+    (global.fetch as jest.Mock).mockImplementation(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes("/phase-gate-approval")) {
+          return {
+            ok: false,
+            status: 409,
+            json: async () => ({
+              error: "gate_blocked",
+              gate: {
+                failedChecks: [
+                  {
+                    severity: "hard",
+                    check: "charter_signed_off",
+                    reason: "Charter signed off by sponsor",
+                  },
+                ],
+              },
+            }),
+          } as Response;
+        }
+        if (!defaultFetch) throw new Error(`unmocked fetch: ${url}`);
+        return defaultFetch(input, init);
+      },
+    );
+
+    render(
+      <MovesPhaseStandaloneClient
+        carriesForwardContent={[]}
+        evidenceNeedPackets={[]}
+        move={makeMove()}
+        phaseNum={3}
+        phaseTallies={[...phaseTallies]}
+      />,
+    );
+
+    fireEvent.click(contractStepButton(/Approve & Build/i));
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Approve & Build P3 Choose the Approach/i,
+      }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Build completed, but the phase gate is blocked/i),
+      ).toBeInTheDocument();
+    });
+    expect(screen.getAllByText(/Charter signed off by sponsor/i).length).toBeGreaterThan(0);
+    expect(
+      screen.getByText(/approve or upload the client-approved deliverable/i),
+    ).toBeInTheDocument();
+  });
+
   it("wires the aVa suggested questions to a real chat send, with programId set correctly to avoid the 'no active Move session' regression", async () => {
     render(
       <MovesPhaseStandaloneClient

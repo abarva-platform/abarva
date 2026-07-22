@@ -166,6 +166,35 @@ export function artifactStatusLabel(status: string): string {
     .replace(/_/g, " ");
 }
 
+export function supportsSponsorReviewDecisionArtifact(
+  artifact: Pick<
+    Artifact,
+    "artifactType" | "downloadUrl" | "family" | "lifecycleState" | "phase"
+  >,
+  moveId: string,
+): boolean {
+  if (artifact.lifecycleState !== "current") return false;
+  if (!artifact.downloadUrl.includes(`/api/v1/programs/${moveId}/artifacts/`)) {
+    return false;
+  }
+  if (artifact.phase === 2) return true;
+  return (
+    artifact.family === "approval_artifact" ||
+    /review|diagnostic|current.state|sponsor/i.test(artifact.artifactType)
+  );
+}
+
+export function supportsGeneratedClientApproval(
+  artifact: Pick<Artifact, "downloadUrl" | "family" | "lifecycleState" | "status">,
+): boolean {
+  return (
+    artifact.family === "generated_deliverable" &&
+    artifact.lifecycleState === "current" &&
+    artifact.downloadUrl.startsWith("/api/v1/artifacts/") &&
+    artifact.status !== "approved"
+  );
+}
+
 function fmtBytes(n: number | null): string {
   if (!n) return "—";
   if (n < 1024) return `${n} B`;
@@ -533,8 +562,13 @@ function ArtifactRow({
   );
   const [decisionRationale, setDecisionRationale] = useState("");
   const [missingEvidenceText, setMissingEvidenceText] = useState("");
+  const [clientApprovalReason, setClientApprovalReason] = useState("");
+  const [clientApprovalBusy, setClientApprovalBusy] = useState(false);
   const [actionErr, setActionErr] = useState<string | null>(null);
+  const approvedFileInputRef = useRef<HTMLInputElement | null>(null);
   const roleLabel = artifactOutputRoleLabel(a);
+  const canLoadSponsorReview = supportsSponsorReviewDecisionArtifact(a, moveId);
+  const canApproveGeneratedDraft = supportsGeneratedClientApproval(a);
 
   const openArtifact = useCallback(async () => {
     setBusy("open");
@@ -612,7 +646,7 @@ function ArtifactRow({
   }, [a.artifactId, feedbackText, moveId, onChanged, reviewBusy]);
 
   const loadSponsorReview = useCallback(async () => {
-    if (!reviewOpen || a.lifecycleState !== "current") return;
+    if (!reviewOpen || !canLoadSponsorReview) return;
     setPacketLoading(true);
     setActionErr(null);
     try {
@@ -639,7 +673,7 @@ function ArtifactRow({
     } finally {
       setPacketLoading(false);
     }
-  }, [a.artifactId, a.lifecycleState, moveId, reviewOpen]);
+  }, [a.artifactId, canLoadSponsorReview, moveId, reviewOpen]);
 
   useEffect(() => {
     void loadSponsorReview();
@@ -713,6 +747,100 @@ function ArtifactRow({
       onChanged,
       reviewBusy,
       sponsorReview,
+    ],
+  );
+
+  const acceptGeneratedDraft = useCallback(async () => {
+    if (!canApproveGeneratedDraft || clientApprovalBusy) return;
+    setClientApprovalBusy(true);
+    setActionErr(null);
+    try {
+      const res = await fetch(
+        `/api/v1/programs/${moveId}/artifacts/${a.artifactId}/client-approval`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            reason:
+              clientApprovalReason.trim() ||
+              "Client reviewer accepted the AI-prepared draft as the authoritative phase deliverable.",
+          }),
+        },
+      );
+      const json = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        detail?: string;
+      };
+      if (!res.ok || !json.ok) {
+        throw new Error(json.detail || json.error || `HTTP ${res.status}`);
+      }
+      setReviewOpen(false);
+      await onChanged();
+    } catch (e) {
+      setActionErr(e instanceof Error ? e.message : "client approval failed");
+    } finally {
+      setClientApprovalBusy(false);
+    }
+  }, [
+    a.artifactId,
+    canApproveGeneratedDraft,
+    clientApprovalBusy,
+    clientApprovalReason,
+    moveId,
+    onChanged,
+  ]);
+
+  const uploadApprovedReplacement = useCallback(
+    async (file: File | null | undefined) => {
+      if (!file || !canApproveGeneratedDraft || clientApprovalBusy) return;
+      setClientApprovalBusy(true);
+      setActionErr(null);
+      try {
+        const body = new FormData();
+        body.append("file", file);
+        body.append(
+          "reason",
+          clientApprovalReason.trim() ||
+            "Client reviewer uploaded an edited approved final to replace the AI-prepared draft.",
+        );
+        const res = await fetch(
+          `/api/v1/programs/${moveId}/artifacts/${a.artifactId}/client-approval`,
+          {
+            method: "POST",
+            credentials: "include",
+            body,
+          },
+        );
+        const json = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          error?: string;
+          detail?: string;
+        };
+        if (!res.ok || !json.ok) {
+          throw new Error(json.detail || json.error || `HTTP ${res.status}`);
+        }
+        setReviewOpen(false);
+        await onChanged();
+      } catch (e) {
+        setActionErr(
+          e instanceof Error ? e.message : "approved upload failed",
+        );
+      } finally {
+        setClientApprovalBusy(false);
+        if (approvedFileInputRef.current) {
+          approvedFileInputRef.current.value = "";
+        }
+      }
+    },
+    [
+      a.artifactId,
+      canApproveGeneratedDraft,
+      clientApprovalBusy,
+      clientApprovalReason,
+      moveId,
+      onChanged,
     ],
   );
 
@@ -1217,6 +1345,108 @@ function ArtifactRow({
               </>
             )}
           </div>
+          {canApproveGeneratedDraft ? (
+            <div
+              style={{
+                border: "1px solid #BBE3D3",
+                borderRadius: 8,
+                background: "#F2FBF7",
+                padding: 12,
+                marginBottom: 10,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 800,
+                  color: "#0F766E",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                Client approval
+              </div>
+              <p
+                style={{
+                  margin: "6px 0 10px",
+                  fontSize: 12.5,
+                  lineHeight: 1.45,
+                  color: "#334155",
+                }}
+              >
+                This is an AI-prepared draft. It can inform the gate only after
+                a human reviewer accepts it as authoritative or uploads an
+                edited client-approved final.
+              </p>
+              <textarea
+                value={clientApprovalReason}
+                onChange={(e) => setClientApprovalReason(e.target.value)}
+                rows={2}
+                placeholder="Approval rationale, e.g. Sponsor reviewed the charter and approved this version for P1 gate closure."
+                style={{
+                  width: "100%",
+                  resize: "vertical",
+                  border: "1px solid #A7D8C4",
+                  borderRadius: 6,
+                  padding: 8,
+                  fontSize: 12,
+                  lineHeight: 1.45,
+                  color: "#1A1A18",
+                  background: "#fff",
+                }}
+              />
+              <input
+                ref={approvedFileInputRef}
+                type="file"
+                style={{ display: "none" }}
+                onChange={(event) =>
+                  void uploadApprovedReplacement(event.target.files?.[0])
+                }
+              />
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 8,
+                  justifyContent: "flex-end",
+                  marginTop: 10,
+                }}
+              >
+                <button
+                  onClick={acceptGeneratedDraft}
+                  disabled={clientApprovalBusy}
+                  style={{
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    color: "#fff",
+                    background: clientApprovalBusy ? "#9AA3B2" : "#166534",
+                    border: "none",
+                    borderRadius: 5,
+                    padding: "7px 12px",
+                  }}
+                >
+                  {clientApprovalBusy
+                    ? "Recording…"
+                    : "Accept AI draft as authoritative"}
+                </button>
+                <button
+                  onClick={() => approvedFileInputRef.current?.click()}
+                  disabled={clientApprovalBusy}
+                  style={{
+                    fontSize: 11.5,
+                    fontWeight: 700,
+                    color: "#0F766E",
+                    background: "#fff",
+                    border: "1px solid #99D6C0",
+                    borderRadius: 5,
+                    padding: "7px 12px",
+                  }}
+                >
+                  Upload approved final
+                </button>
+              </div>
+            </div>
+          ) : null}
           <label
             style={{
               display: "block",

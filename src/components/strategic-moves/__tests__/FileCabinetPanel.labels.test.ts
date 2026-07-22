@@ -4,6 +4,8 @@ import {
   artifactStatusLabel,
   buildContextExtractReviewModel,
   isContextExtractArtifact,
+  supportsGeneratedClientApproval,
+  supportsSponsorReviewDecisionArtifact,
 } from "../FileCabinetPanel";
 
 describe("FileCabinetPanel artifact labels", () => {
@@ -31,6 +33,44 @@ describe("FileCabinetPanel artifact labels", () => {
   it("translates quarantined artifacts into client-facing review language", () => {
     expect(artifactStatusLabel("quarantined")).toBe("needs review");
     expect(artifactStatusLabel("board_ready")).toBe("ready");
+  });
+
+  it("does not load P2 sponsor review packets for direct generated artifacts", () => {
+    expect(
+      supportsSponsorReviewDecisionArtifact(
+        {
+          artifactType: "charter",
+          family: "generated_deliverable",
+          lifecycleState: "current",
+          phase: null,
+          downloadUrl: "/api/v1/artifacts/generated-charter-1",
+        },
+        "move-1",
+      ),
+    ).toBe(false);
+  });
+
+  it("recognizes generated artifacts that need client approval", () => {
+    expect(
+      supportsGeneratedClientApproval({
+        family: "generated_deliverable",
+        lifecycleState: "current",
+        status: "board_ready",
+        downloadUrl: "/api/v1/artifacts/generated-charter-1",
+      }),
+    ).toBe(true);
+    expect(
+      supportsSponsorReviewDecisionArtifact(
+        {
+          artifactType: "current_state_diagnostic",
+          family: "approval_artifact",
+          lifecycleState: "current",
+          phase: 2,
+          downloadUrl: "/api/v1/programs/move-1/artifacts/review-1/download",
+        },
+        "move-1",
+      ),
+    ).toBe(true);
   });
 
   it("recognizes and summarizes Move Context Extract artifacts", () => {
