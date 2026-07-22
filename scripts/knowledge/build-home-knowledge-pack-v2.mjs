@@ -8,6 +8,61 @@ const promptVersion = "home-knowledge-pack-v2-cxo-strategy-20260721";
 const generatorVersion = "home-pack-v2-builder-20260721";
 const artifactType = "NexusHomeKnowledgePackV2";
 
+const jsonColumnsByTable = new Map([
+  ["home_knowledge_packs", new Set(["source_context", "render_pack", "quality_report", "validation_issues"])],
+  ["home_knowledge_dimensions", new Set(["covers", "sources", "metadata"])],
+  ["home_knowledge_dimension_rows", new Set(["display_payload", "evidence_refs"])],
+  ["home_knowledge_use_cases", new Set(["supporting_dimensions", "required_context", "evidence_refs", "source_payload"])],
+  ["home_knowledge_evidence_sources", new Set(["parsed_into_dimensions", "lineage", "source_payload"])],
+  ["home_knowledge_relationship_nodes", new Set(["display_payload", "evidence_refs"])],
+  ["home_knowledge_relationship_edges", new Set(["evidence_refs", "display_payload"])],
+  ["home_knowledge_narratives", new Set(["evidence_refs"])],
+]);
+
+const insertColumnsByTable = new Map([
+  ["home_knowledge_dimensions", [
+    "pack_id", "tenant_key", "dimension_key", "display_name", "record_count", "evidence_count",
+    "confidence_status", "pct", "executive_summary", "cxo_meaning", "why_it_matters", "visual_type",
+    "covers", "sources", "metadata", "sort_order",
+  ]],
+  ["home_knowledge_dimension_rows", [
+    "pack_id", "tenant_key", "dimension_key", "source_record_id", "display_name", "display_summary",
+    "facet_1", "facet_2", "status", "confidence", "display_payload", "evidence_refs", "source_file", "sort_order",
+  ]],
+  ["home_knowledge_use_cases", [
+    "pack_id", "tenant_key", "use_case_key", "name", "business_function", "owner_hint", "stage",
+    "industry_pattern", "client_context_signal", "why_now", "operating_model_change", "change_strategy",
+    "value_thesis", "readiness_barrier", "evidence_gate", "priority_rank", "value_score",
+    "readiness_score", "evidence_score", "dependency_risk_score", "total_priority_score",
+    "priority_rationale", "module_next_step", "supporting_dimensions", "required_context",
+    "evidence_refs", "source_payload",
+  ]],
+  ["home_knowledge_evidence_sources", [
+    "pack_id", "tenant_key", "source_id", "source_name", "file_name", "file_type", "storage_uri",
+    "byte_size", "row_count", "loaded_by", "loaded_at", "source_date", "source_owner", "source_status",
+    "checksum", "parsed_into_dimensions", "lineage", "known_gaps", "source_payload",
+  ]],
+  ["home_knowledge_relationship_nodes", [
+    "pack_id", "tenant_key", "node_key", "node_type", "label", "group_name", "size_score",
+    "risk_score", "confidence", "display_payload", "evidence_refs", "sort_order",
+  ]],
+  ["home_knowledge_relationship_edges", [
+    "pack_id", "tenant_key", "edge_key", "from_node_key", "to_node_key", "relationship_type",
+    "relationship_strength", "evidence_basis", "confidence", "evidence_refs", "display_payload",
+  ]],
+  ["home_knowledge_narratives", [
+    "pack_id", "tenant_key", "section_key", "dimension_key", "title", "narrative", "generated_by",
+    "prompt_version", "evidence_refs", "approval_status", "sort_order",
+  ]],
+]);
+
+function dbValue(table, column, value) {
+  if (jsonColumnsByTable.get(table)?.has(column)) {
+    return JSON.stringify(value ?? null);
+  }
+  return value;
+}
+
 function loadEnvFile(file) {
   if (!fs.existsSync(file)) return;
   for (const line of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
@@ -190,6 +245,7 @@ function moduleForUseCase(useCase) {
 
 function enrichUseCases(pack) {
   const useCases = pack.design_slots?.USE_CASES ?? [];
+  const keyCounts = new Map();
   return useCases.map((item, index) => {
     const valueText = firstText(item, ["value", "value_hypothesis", "value_outcome", "target_or_promise"]);
     const gate = firstText(item, ["gate", "evidence_gate", "evidence_needed", "required_data", "risk_controls"]);
@@ -231,7 +287,12 @@ function enrichUseCases(pack) {
       source_payload: item,
     };
   }).sort((a, b) => b.total_priority_score - a.total_priority_score)
-    .map((item, index) => ({ ...item, priority_rank: index + 1 }));
+    .map((item, index) => {
+      const seen = keyCounts.get(item.use_case_key) ?? 0;
+      keyCounts.set(item.use_case_key, seen + 1);
+      const suffix = seen === 0 ? "" : `-${seen + 1}`;
+      return { ...item, use_case_key: `${item.use_case_key}${suffix}`, priority_rank: index + 1 };
+    });
 }
 
 function buildNodesAndEdges(pack) {
@@ -514,7 +575,7 @@ async function writeNormalizedToDb(client, normalized) {
       );
     }
     const packColumns = Object.keys(normalized.pack);
-    const packValues = packColumns.map((key) => normalized.pack[key]);
+    const packValues = packColumns.map((key) => dbValue("home_knowledge_packs", key, normalized.pack[key]));
     const packSql = `
       INSERT INTO public.home_knowledge_packs (${packColumns.join(", ")})
       VALUES (${packColumns.map((_, i) => `$${i + 1}`).join(", ")})
@@ -531,14 +592,24 @@ async function writeNormalizedToDb(client, normalized) {
         updated_at = now()
       RETURNING id`;
     const packId = (await client.query(packSql, packValues)).rows[0].id;
-    await client.query("DELETE FROM public.home_knowledge_dimensions WHERE pack_id = $1", [packId]);
+    for (const table of [
+      "home_knowledge_dimensions",
+      "home_knowledge_dimension_rows",
+      "home_knowledge_use_cases",
+      "home_knowledge_evidence_sources",
+      "home_knowledge_relationship_nodes",
+      "home_knowledge_relationship_edges",
+      "home_knowledge_narratives",
+    ]) {
+      await client.query(`DELETE FROM public.${table} WHERE pack_id = $1`, [packId]);
+    }
     const insertMany = async (table, rows, extra = {}) => {
       for (const row of rows) {
         const full = { pack_id: packId, tenant_key: normalized.pack.tenant_key, ...extra, ...row };
-        const columns = Object.keys(full);
+        const columns = insertColumnsByTable.get(table) ?? Object.keys(full);
         await client.query(
           `INSERT INTO public.${table} (${columns.join(", ")}) VALUES (${columns.map((_, i) => `$${i + 1}`).join(", ")})`,
-          columns.map((key) => full[key]),
+          columns.map((key) => dbValue(table, key, full[key])),
         );
       }
     };
