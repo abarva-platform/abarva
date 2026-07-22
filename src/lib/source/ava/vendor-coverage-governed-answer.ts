@@ -135,7 +135,23 @@ export interface BuildVendorCoverageGovernedAnswerInput {
 export async function buildVendorCoverageGovernedAnswer(
   input: BuildVendorCoverageGovernedAnswerInput,
 ): Promise<AvaAnswerPacket | null> {
-  if (!isCanonicalClientKey(input.clientKey)) return null;
+  const trace = (step: string, detail: Record<string, unknown>) => {
+    console.error(
+      '[source.vendor-coverage-governed-answer.trace]',
+      JSON.stringify({
+        step,
+        eventId: input.eventId,
+        clientKey: input.clientKey,
+        eventType: input.eventType,
+        ...detail,
+      }),
+    );
+  };
+
+  if (!isCanonicalClientKey(input.clientKey)) {
+    trace('not_canonical_client_key', {});
+    return null;
+  }
 
   const [factsRead, vendorResponses, vendorLeverFacts] = await Promise.all([
     readEventFacts({ eventId: input.eventId, clientKey: input.clientKey }),
@@ -149,10 +165,18 @@ export async function buildVendorCoverageGovernedAnswer(
     }),
   ]);
 
-  if (!vendorResponses.signalPresent) return null;
+  if (!vendorResponses.signalPresent) {
+    trace('no_vendor_response_signal', {
+      vendorLeverFactsCount: vendorLeverFacts.length,
+    });
+    return null;
+  }
 
   const archetype = resolveValueArchetype(input.eventType);
-  if (!archetype) return null;
+  if (!archetype) {
+    trace('no_archetype_resolved', {});
+    return null;
+  }
 
   const insight = buildResponseCoverageInsight(
     archetype,
@@ -160,8 +184,19 @@ export async function buildVendorCoverageGovernedAnswer(
     vendorResponses,
   );
   if (insight.isModel || !insight.vendors || insight.vendors.length === 0) {
+    trace('insight_not_live_or_no_vendors', {
+      archetypeId: archetype.id,
+      archetypeEventType: archetype.eventType,
+      isModel: insight.isModel,
+      vendorsCount: insight.vendors?.length ?? 0,
+      signalVendors: vendorResponses.vendors,
+    });
     return null;
   }
+  trace('insight_live_with_vendors', {
+    archetypeId: archetype.id,
+    vendorsCount: insight.vendors.length,
+  });
 
   const candidates = vendorLeverFacts.map((fact) =>
     governedCandidateFromVendorLeverFact(fact, {
