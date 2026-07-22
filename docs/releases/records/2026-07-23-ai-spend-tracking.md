@@ -1,4 +1,4 @@
-# 2026-07-23-ai-spend-tracking — AI spend attribution and daily digest
+# 2026-07-23-ai-spend-tracking — Infrastructure cost attribution and daily digest
 
 ## Release ID
 
@@ -36,6 +36,23 @@ is the evidence the meters are distinct. Any optimization aimed at the wrong
 meter cannot move the invoice, so the digest reports the two side by side and
 never sums them.
 
+Scope widened during review from AI-only to total infrastructure cost. Verified
+month-to-date position as of 2026-07-22:
+
+| Source          | Cost              | Basis                                |
+| --------------- | ----------------- | ------------------------------------ |
+| Anthropic API   | $3,227.89         | metered — 93.1% of known spend       |
+| Claude Max seat | $213.20           | flat, three identical invoices       |
+| Clerk           | $26.65            | flat, May/Jun/Jul all identical      |
+| GitHub          | $0.00 billed      | $561.25 gross, absorbed by allowance |
+| Azure           | not yet collected | needs a Cost Management Reader run   |
+
+GitHub deserves specific attention: billed cost is zero, but gross metered
+consumption rose from $21.89/day (Jul 1-11) to $33.61/day (Jul 18-22) and is
+trending to roughly $1,000/month. It is recorded as `gross_usd`, excluded from
+spend totals, and tracked as a leading indicator — the $0 is simultaneously
+accurate and misleading.
+
 No product surface, tenant data path, or runtime behavior changes.
 
 ## Layer Impact
@@ -67,8 +84,18 @@ No product surface, tenant data path, or runtime behavior changes.
 - `scripts/ai-cost/README.md` — process, setup, and how to read the numbers.
 - `.github/workflows/ai-cost-daily.yml` — 11:00 UTC daily collect → commit →
   email.
+- `scripts/ai-cost/azure-cost-report.mjs` — Azure Cost Management collector,
+  read-only by construction (asserts ARM host + CostManagement/query path
+  before issuing any call).
+- `config/cost-inputs/fixed-costs.json` — declared costs with no billing API
+  (Claude Max seat, Clerk, GitHub), each with an invoice source and
+  `verified_on` date.
+- `src/lib/observability/ai-workload-taxonomy.ts` — controlled vocabulary for
+  spend attribution (lanes, modules, workloads, task types).
 - `supabase/migrations/20260723090000_ai_cost_daily.sql` — `ai_cost_daily`
-  table, `ai_cost_daily_summary` view, service-role-only RLS.
+  table with billed/allocated/estimated cost separated by CHECK constraint,
+  plus `ai_cost_daily_billed`, `ai_cost_daily_cache_health` and
+  `ai_cost_daily_yield` views; service-role-only RLS.
 
 ## QA / Validation
 
@@ -102,12 +129,23 @@ No product surface, tenant data path, or runtime behavior changes.
   closed, all DDL idempotent (`CREATE TYPE` guarded by `EXCEPTION WHEN
 duplicate_object`, `CREATE TABLE/INDEX IF NOT EXISTS`, `CREATE OR REPLACE
 VIEW`, `DROP POLICY IF EXISTS` then `CREATE POLICY`).
+- Azure collector read-only guard verified by direct test: a
+  `Microsoft.App/containerApps` ARM path is blocked, a non-ARM host is blocked,
+  and only the CostManagement/query path is allowed.
+- `config/cost-inputs/fixed-costs.json` parses; all three entries carry a
+  source and a `verified_on` date.
+- Arithmetic check on GitHub: 22 daily gross values sum to $561.25 against the
+  page's $561.27 cumulative figure. An initial claim that gross had "tripled"
+  was wrong (actual 1.5x) and was corrected before commit.
 - `node scripts/release-check.mjs --base origin/main --head HEAD` — passed.
 
-**Not yet validated:** the Admin API collector has not executed against the live
-endpoints — no Admin API key exists yet. Response field names are read
-defensively and `--raw` exists to reconcile the shape on first run, but the
-first live run must be treated as unverified until its output is inspected.
+**Not yet validated:** neither the Anthropic Admin API collector nor the Azure
+collector has executed against live endpoints. No Admin API key exists yet, and
+the Azure run was deliberately left to the operator because `az` holds live
+credentials on this workstation. Both read response fields defensively; the
+Anthropic collector additionally ships a `--reconcile <usd>` gate that refuses
+to publish on drift against a Console figure. Treat the first live run of each
+as unverified until its output is inspected.
 
 ## Rollout Plan
 
