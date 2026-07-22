@@ -40,6 +40,21 @@ export interface MovesLearningReviewQueue {
   };
 }
 
+export type MovesLearningReviewAction =
+  | "investigate_active_promotion_violation"
+  | "review_source_lineage"
+  | "hold_for_policy_review"
+  | "ready_for_policy_promotion_preview";
+
+export interface MovesLearningReviewPacket {
+  readonly action: MovesLearningReviewAction;
+  readonly actionLabel: string;
+  readonly whyHere: string;
+  readonly inspect: readonly string[];
+  readonly blockers: readonly string[];
+  readonly safeNextStep: string;
+}
+
 interface MovesLearningReviewRow {
   readonly id?: string | null;
   readonly tenant_key?: string | null;
@@ -119,6 +134,115 @@ function toCandidate(row: MovesLearningReviewRow): MovesLearningReviewCandidate 
 
 function sourceBasisLabel(value: string): string {
   return value.replace(/_/g, " ");
+}
+
+function reviewPhaseLabel(phase: number | null): string {
+  return typeof phase === "number" ? `P${phase}` : "Phase unknown";
+}
+
+function isKnownLearningSourceBasis(value: string): boolean {
+  return (
+    value === "approved_evidence" ||
+    value === "client_approved_deliverable" ||
+    value === "gate_decision"
+  );
+}
+
+export function buildMovesLearningReviewPacket(
+  candidate: MovesLearningReviewCandidate,
+): MovesLearningReviewPacket {
+  const inspect = [
+    candidate.moveName
+      ? `Move: ${candidate.moveName}`
+      : candidate.moveId
+        ? `Move id: ${candidate.moveId}`
+        : "Move lineage missing",
+    candidate.sourceId
+      ? `Source id: ${candidate.sourceId}`
+      : "Source artifact id missing",
+    candidate.evidenceRefs.length > 0
+      ? `Evidence refs: ${candidate.evidenceRefs.join(", ")}`
+      : "Evidence refs missing",
+    candidate.confidenceLevel
+      ? `Confidence: ${candidate.confidenceLevel}`
+      : "Confidence not stated",
+  ];
+
+  const blockers: string[] = [];
+  if (!isKnownLearningSourceBasis(candidate.sourceBasis)) {
+    blockers.push("Unknown source basis; cannot route to context promotion.");
+  }
+  if (!candidate.sourceId) {
+    blockers.push("Source artifact/file reference is missing.");
+  }
+  if (candidate.evidenceRefs.length === 0) {
+    blockers.push("No evidence references are recorded.");
+  }
+  if (candidate.retrievability !== "search_indexed") {
+    blockers.push("Not indexed in Azure retrieval.");
+  }
+  if (candidate.policyValidationStatus !== "pass") {
+    blockers.push("Context/corpus policy has not passed.");
+  }
+  if (candidate.readinessStatus !== "agent_ready") {
+    blockers.push("Not agent-ready; held for stewardship.");
+  }
+
+  if (
+    candidate.readinessStatus === "agent_ready" ||
+    candidate.retrievability === "search_indexed"
+  ) {
+    return {
+      action: "investigate_active_promotion_violation",
+      actionLabel: "Investigate before use",
+      whyHere: `${reviewPhaseLabel(candidate.phase)} ${sourceBasisLabel(candidate.sourceBasis)} from Moves appears promoted or indexed.`,
+      inspect,
+      blockers:
+        blockers.length > 0
+          ? blockers
+          : ["Row is already active; verify promotion evidence immediately."],
+      safeNextStep:
+        "Confirm there is an explicit steward decision, retrieval proof, and cite-render proof before any agent consumes this row.",
+    };
+  }
+
+  if (!candidate.sourceId || candidate.evidenceRefs.length === 0) {
+    return {
+      action: "review_source_lineage",
+      actionLabel: "Fix lineage first",
+      whyHere: `${reviewPhaseLabel(candidate.phase)} ${sourceBasisLabel(candidate.sourceBasis)} was persisted by the Moves learning ledger.`,
+      inspect,
+      blockers,
+      safeNextStep:
+        "Resolve source artifact and evidence references before this candidate can enter promotion preview.",
+    };
+  }
+
+  if (
+    candidate.readinessStatus === "not_reviewed" ||
+    candidate.policyValidationStatus !== "pass" ||
+    candidate.retrievability === "committed_not_indexed"
+  ) {
+    return {
+      action: "hold_for_policy_review",
+      actionLabel: "Review required",
+      whyHere: `${reviewPhaseLabel(candidate.phase)} ${sourceBasisLabel(candidate.sourceBasis)} was persisted from governed Move activity.`,
+      inspect,
+      blockers,
+      safeNextStep:
+        "Steward reviews the source, classification, evidence refs, and confidence. Promotion remains separate and requires indexing plus cite-render proof.",
+    };
+  }
+
+  return {
+    action: "ready_for_policy_promotion_preview",
+    actionLabel: "Ready for preview",
+    whyHere: `${reviewPhaseLabel(candidate.phase)} ${sourceBasisLabel(candidate.sourceBasis)} has lineage and policy signals ready for a promotion preview.`,
+    inspect,
+    blockers,
+    safeNextStep:
+      "Run the read-only context/corpus promotion preview. Do not mark agent-ready without steward sign-off and retrieval proof.",
+  };
 }
 
 export function summarizeMovesLearningReviewCandidates(
