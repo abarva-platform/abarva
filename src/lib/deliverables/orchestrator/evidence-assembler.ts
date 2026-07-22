@@ -5,15 +5,18 @@
 // citation numbers are assigned and internal_only evidence is excluded for vendor-facing
 // audiences. The retriever is injectable so the mapping is unit-tested without Azure.
 
-import 'server-only';
+import "server-only";
 
 import {
   queryTenantContext as defaultQueryTenantContext,
   type TenantContextChunk,
-} from '@/lib/azure-search/tenant-context-retriever';
-import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
-import { buildSourceRegister, type GovernedCandidateLike } from './source-register';
-import type { GovernedEvidenceItem, SourceRegisterEntry } from './types';
+} from "@/lib/azure-search/tenant-context-retriever";
+import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
+import {
+  buildSourceRegister,
+  type GovernedCandidateLike,
+} from "./source-register";
+import type { GovernedEvidenceItem, SourceRegisterEntry } from "./types";
 
 export interface AssembleEvidenceParams {
   tenantClientKey: string;
@@ -36,13 +39,18 @@ type FluentDb = ReturnType<typeof getAzureWriteFluentClient>;
 
 function chunkToCandidate(chunk: TenantContextChunk): GovernedCandidateLike {
   const score = chunk.vectorScore ?? 0;
-  const confidence: GovernedCandidateLike['confidence'] = score > 0.8 ? 'high' : score > 0.5 ? 'medium' : 'low';
-  const disclosureTier: GovernedCandidateLike['disclosureTier'] =
-    chunk.classification === 'confidential' || chunk.classification === 'restricted' ? 'internal_only' : 'vendor_facing';
+  const confidence: GovernedCandidateLike["confidence"] =
+    score > 0.8 ? "high" : score > 0.5 ? "medium" : "low";
+  const disclosureTier: GovernedCandidateLike["disclosureTier"] =
+    chunk.classification === "confidential" ||
+    chunk.classification === "restricted"
+      ? "internal_only"
+      : "vendor_facing";
   return {
-    label: chunk.sourceDoc ?? chunk.sourceSegmentId ?? 'Tenant context',
+    label: chunk.sourceDoc ?? chunk.sourceSegmentId ?? "Tenant context",
     statement: chunk.text,
-    evidenceFamily: chunk.sourceBasis ?? chunk.sourceSegmentId ?? 'enterprise_context',
+    evidenceFamily:
+      chunk.sourceBasis ?? chunk.sourceSegmentId ?? "enterprise_context",
     confidence,
     disclosureTier,
     provenanceRef: chunk.chunkId,
@@ -50,29 +58,34 @@ function chunkToCandidate(chunk: TenantContextChunk): GovernedCandidateLike {
 }
 
 function stringOrNull(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() ? value.trim() : null;
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function numberOrDefault(value: unknown, fallback: number): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
-function confidenceFromScore(score: number): GovernedCandidateLike['confidence'] {
-  return score >= 0.75 ? 'high' : score >= 0.5 ? 'medium' : 'low';
+function confidenceFromScore(
+  score: number,
+): GovernedCandidateLike["confidence"] {
+  return score >= 0.75 ? "high" : score >= 0.5 ? "medium" : "low";
 }
 
 function sourceRefObject(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value)
+  return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};
 }
 
-function compactText(parts: Array<string | null | undefined>, max = 900): string {
+function compactText(
+  parts: Array<string | null | undefined>,
+  max = 900,
+): string {
   return parts
     .map((p) => p?.trim())
     .filter(Boolean)
-    .join(' ')
-    .replace(/\s+/g, ' ')
+    .join(" ")
+    .replace(/\s+/g, " ")
     .slice(0, max);
 }
 
@@ -87,18 +100,56 @@ function structuredSignals(value: unknown): string[] {
       if (text) out.push(`${label}: ${text}`);
     }
   };
-  take('decisions', 'Decision', 3);
-  take('risks', 'Risk', 3);
-  take('baseline_candidates', 'Baseline', 5);
-  take('action_items', 'Action', 2);
+  take("decisions", "Decision", 3);
+  take("risks", "Risk", 3);
+  take("baseline_candidates", "Baseline", 5);
+  take("action_items", "Action", 2);
   return out;
+}
+
+function phaseCaptureCandidate(
+  row: Record<string, unknown>,
+): GovernedCandidateLike | null {
+  const state = sourceRefObject(row.state_jsonb);
+  const value = stringOrNull(state.value);
+  if (!value) return null;
+
+  const moduleKey = stringOrNull(row.module_key);
+  const sectionKey =
+    stringOrNull(state.capture_section_key) ??
+    moduleKey?.replace(/^phase_\d+_/, "") ??
+    "phase_capture";
+  const label =
+    stringOrNull(state.label) ?? stringOrNull(row.module_name) ?? sectionKey;
+  const phaseNumber = Number.isInteger(row.phase_number)
+    ? Number(row.phase_number)
+    : null;
+  const status = stringOrNull(row.status);
+  const confidence: GovernedCandidateLike["confidence"] =
+    status === "completed" ? "high" : "medium";
+  const phasePrefix =
+    phaseNumber === null ? "Move capture" : `P${phaseNumber} capture`;
+
+  return {
+    label: `${phasePrefix}: ${label}`,
+    statement: `${label}: ${value}`,
+    evidenceFamily: `phase_capture:${sectionKey}`,
+    confidence,
+    asOf:
+      stringOrNull(row.completed_at) ??
+      stringOrNull(row.updated_at) ??
+      undefined,
+    disclosureTier: "internal_only",
+    provenanceRef:
+      stringOrNull(row.id) ?? moduleKey ?? `program_modules:${sectionKey}`,
+  };
 }
 
 function evidenceItemToCandidate(
   row: Record<string, unknown>,
   opts: {
     family?: string | null;
-    familyPrefix?: 'document_extract' | 'program_evidence';
+    familyPrefix?: "document_extract" | "program_evidence";
     title?: string | null;
     asOf?: string | null;
   } = {},
@@ -106,16 +157,13 @@ function evidenceItemToCandidate(
   const family =
     stringOrNull(opts.family) ??
     stringOrNull(row.evidence_type) ??
-    'current_state_evidence';
-  const title =
-    stringOrNull(opts.title) ??
-    stringOrNull(row.title) ??
-    family;
+    "current_state_evidence";
+  const title = stringOrNull(opts.title) ?? stringOrNull(row.title) ?? family;
   const signals = structuredSignals(row.extracted_structured);
   const statement = compactText(
     [
       stringOrNull(row.summary),
-      signals.length ? `Extracted signals: ${signals.join('; ')}` : null,
+      signals.length ? `Extracted signals: ${signals.join("; ")}` : null,
       stringOrNull(row.extracted_text),
     ],
     1000,
@@ -124,13 +172,10 @@ function evidenceItemToCandidate(
   return {
     label: title,
     statement,
-    evidenceFamily: `${opts.familyPrefix ?? 'program_evidence'}:${family}`,
+    evidenceFamily: `${opts.familyPrefix ?? "program_evidence"}:${family}`,
     confidence: confidenceFromScore(numberOrDefault(row.confidence, 0.72)),
-    asOf:
-      stringOrNull(opts.asOf) ??
-      stringOrNull(row.created_at) ??
-      undefined,
-    disclosureTier: 'internal_only',
+    asOf: stringOrNull(opts.asOf) ?? stringOrNull(row.created_at) ?? undefined,
+    disclosureTier: "internal_only",
     provenanceRef:
       stringOrNull(row.id) ??
       `program_evidence:${family}:${statement.slice(0, 48)}`,
@@ -138,7 +183,10 @@ function evidenceItemToCandidate(
 }
 
 async function loadMoveCurrentStateCandidates(
-  params: Pick<AssembleEvidenceParams, 'tenantClientKey' | 'clientId' | 'sourceArtifactRef'>,
+  params: Pick<
+    AssembleEvidenceParams,
+    "tenantClientKey" | "clientId" | "sourceArtifactRef"
+  >,
   db: FluentDb = getAzureWriteFluentClient(),
 ): Promise<GovernedCandidateLike[]> {
   const clientId = stringOrNull(params.clientId);
@@ -147,16 +195,47 @@ async function loadMoveCurrentStateCandidates(
 
   const candidates: GovernedCandidateLike[] = [];
 
+  // The operator's phase capture is the Move's own source of truth for the
+  // current generation pass. It is not a signable gate artifact by itself, but
+  // it must lead generation context so broad tenant facts cannot hijack a
+  // specific Move narrative.
+  try {
+    const { data: modules } = await db
+      .from("program_modules")
+      .select(
+        "id, module_key, module_name, phase_number, module_order, status, state_jsonb, updated_at, completed_at",
+      )
+      .eq("engagement_id", moveId)
+      .order("phase_number", { ascending: true })
+      .order("module_order", { ascending: true })
+      .limit(80);
+    if (Array.isArray(modules)) {
+      for (const row of modules as Array<Record<string, unknown>>) {
+        const status = stringOrNull(row.status);
+        if (status !== "completed" && status !== "in_progress") continue;
+        const moduleKey = stringOrNull(row.module_key);
+        if (!moduleKey?.startsWith("phase_")) continue;
+        const candidate = phaseCaptureCandidate(row);
+        if (candidate) candidates.push(candidate);
+      }
+    }
+  } catch {
+    // Older tenants or fixtures may not have phase-capture rows. Fall through to
+    // reviewed evidence and tenant context instead of failing generation.
+  }
+
   // Structured current-state CSVs land in canonical tower_* tables and write a
   // move-scoped evidence_ledger row. Pull those ledger claims into the governed
   // evidence prompt so the generated deliverable can cite them.
   try {
     const { data } = await db
-      .from('evidence_ledger')
-      .select('id, artifact_ref, claim_text, source_ref, freshness_at, confidence')
-      .eq('client_id', clientId)
-      .eq('surface', 'moves')
-      .order('created_at', { ascending: false })
+      .from("evidence_ledger")
+      .select(
+        "id, artifact_ref, claim_text, source_ref, freshness_at, confidence",
+      )
+      .eq("client_id", clientId)
+      .eq("surface", "moves")
+      .order("created_at", { ascending: false })
       .limit(80);
     if (Array.isArray(data)) {
       for (const row of data as Array<Record<string, unknown>>) {
@@ -164,7 +243,8 @@ async function loadMoveCurrentStateCandidates(
         if (stringOrNull(sourceRef.moveId) !== moveId) continue;
         const statement = stringOrNull(row.claim_text);
         if (!statement) continue;
-        const family = stringOrNull(sourceRef.family) ?? 'current_state_evidence';
+        const family =
+          stringOrNull(sourceRef.family) ?? "current_state_evidence";
         const fileRef = stringOrNull(sourceRef.fileRef);
         candidates.push({
           label: fileRef ?? family,
@@ -172,7 +252,7 @@ async function loadMoveCurrentStateCandidates(
           evidenceFamily: family,
           confidence: confidenceFromScore(numberOrDefault(row.confidence, 0.7)),
           asOf: stringOrNull(row.freshness_at) ?? undefined,
-          disclosureTier: 'internal_only',
+          disclosureTier: "internal_only",
           provenanceRef: stringOrNull(row.id) ?? `evidence_ledger:${family}`,
         });
       }
@@ -186,11 +266,11 @@ async function loadMoveCurrentStateCandidates(
   // summaries/signals first so explicit human review remains the preferred path.
   try {
     const { data: reviews } = await db
-      .from('program_evidence_reviews')
-      .select('evidence_id, family_key, source_ref, reviewed_at, decision')
-      .eq('tenant_key', params.tenantClientKey)
-      .eq('program_id', moveId)
-      .eq('decision', 'approved')
+      .from("program_evidence_reviews")
+      .select("evidence_id, family_key, source_ref, reviewed_at, decision")
+      .eq("tenant_key", params.tenantClientKey)
+      .eq("program_id", moveId)
+      .eq("decision", "approved")
       .limit(40);
     if (Array.isArray(reviews) && reviews.length > 0) {
       const reviewRows = reviews as Array<Record<string, unknown>>;
@@ -199,9 +279,11 @@ async function loadMoveCurrentStateCandidates(
         .filter((id): id is string => Boolean(id));
       if (evidenceIds.length > 0) {
         const { data: evidenceRows } = await db
-          .from('program_evidence_items')
-          .select('id, title, summary, extracted_text, extracted_structured, evidence_type, confidence, created_at')
-          .in('id', evidenceIds);
+          .from("program_evidence_items")
+          .select(
+            "id, title, summary, extracted_text, extracted_structured, evidence_type, confidence, created_at",
+          )
+          .in("id", evidenceIds);
         const byId = new Map(
           (Array.isArray(evidenceRows) ? evidenceRows : []).map((row) => [
             stringOrNull((row as Record<string, unknown>).id),
@@ -213,16 +295,20 @@ async function loadMoveCurrentStateCandidates(
           if (!evidenceId) continue;
           const row = byId.get(evidenceId);
           if (!row) continue;
-          if (stringOrNull(row.evidence_type) === 'move_context_extract_attached') continue;
+          if (
+            stringOrNull(row.evidence_type) === "move_context_extract_attached"
+          )
+            continue;
           const sourceRef = sourceRefObject(review.source_ref);
-          const family = stringOrNull(review.family_key) ?? 'current_state_evidence';
+          const family =
+            stringOrNull(review.family_key) ?? "current_state_evidence";
           const title =
             stringOrNull(sourceRef.filename) ??
             stringOrNull(row.title) ??
             family;
           const candidate = evidenceItemToCandidate(row, {
             family,
-            familyPrefix: 'document_extract',
+            familyPrefix: "document_extract",
             title,
             asOf: stringOrNull(review.reviewed_at),
           });
@@ -247,7 +333,7 @@ async function loadMoveCurrentStateCandidates(
       seen.add(key);
       return true;
     })
-    .slice(0, 12);
+    .slice(0, 24);
 }
 
 export async function assembleGovernedEvidence(
@@ -262,14 +348,20 @@ export async function assembleGovernedEvidence(
     filters: {
       minConfidence: params.minConfidence ?? 0.5,
       // vendor-facing generation should never even retrieve restricted/confidential
-      sensitivity: params.audienceIsVendorFacing ? ['public', 'internal'] : ['public', 'internal', 'confidential'],
+      sensitivity: params.audienceIsVendorFacing
+        ? ["public", "internal"]
+        : ["public", "internal", "confidential"],
     },
   });
-  const candidates = chunks.map(chunkToCandidate);
   const moveCandidates = await loadMoveCurrentStateCandidates(params, deps.db);
-  candidates.push(...moveCandidates);
+  const tenantCandidates = chunks.map(chunkToCandidate);
+  const candidates = [...moveCandidates, ...tenantCandidates];
   const { evidence, register } = buildSourceRegister(candidates, {
     audienceIsVendorFacing: params.audienceIsVendorFacing,
   });
-  return { evidence, sourceRegister: register, retrievedCount: candidates.length };
+  return {
+    evidence,
+    sourceRegister: register,
+    retrievedCount: candidates.length,
+  };
 }

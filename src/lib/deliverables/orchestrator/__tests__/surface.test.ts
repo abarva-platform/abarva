@@ -158,6 +158,95 @@ describe("assembleGovernedEvidence", () => {
     expect(out.sourceRegister).toHaveLength(1);
   });
 
+  it("prioritizes move phase-capture evidence ahead of broad tenant context", async () => {
+    const fakeQuery = (async () => [
+      chunk({
+        chunkId: "tenant-ai-portfolio",
+        sourceDoc: "First Capital AI portfolio",
+        sourceBasis: "enterprise_ai_portfolio",
+        text: "First Capital has several AI assets in financial crimes, regulatory change, and marketing operations.",
+        vectorScore: 0.92,
+      }),
+    ]) as never;
+    const fakeDb = {
+      from(table: string) {
+        if (table === "program_modules") {
+          return {
+            select: () => ({
+              eq: () => ({
+                order: () => ({
+                  order: () => ({
+                    limit: async () => ({
+                      data: [
+                        {
+                          id: "pm-1",
+                          module_key: "phase_1_scope_boundary",
+                          module_name: "Scope boundary",
+                          phase_number: 1,
+                          module_order: 1,
+                          status: "completed",
+                          state_jsonb: {
+                            capture_section_key: "scope_boundary",
+                            label: "Scope boundary",
+                            value:
+                              "Commercial loan onboarding from banker intake through KYC review, credit package assembly, covenant setup, and servicing handoff.",
+                          },
+                          completed_at: "2026-07-22T12:00:00Z",
+                        },
+                      ],
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "evidence_ledger") {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  order: () => ({
+                    limit: async () => ({ data: [] }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "program_evidence_reviews") {
+          return {
+            select: () => ({
+              eq: () => ({
+                eq: () => ({
+                  eq: () => ({
+                    limit: async () => ({ data: [] }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        throw new Error(`unexpected table ${table}`);
+      },
+    } as never;
+
+    const out = await assembleGovernedEvidence(
+      {
+        tenantClientKey: "arcturus",
+        clientId: "client-1",
+        sourceArtifactRef: "move-1",
+        query: "charter current state",
+      },
+      { queryTenantContext: fakeQuery, db: fakeDb },
+    );
+
+    expect(out.retrievedCount).toBe(2);
+    expect(out.evidence[0].evidenceFamily).toBe("phase_capture:scope_boundary");
+    expect(out.evidence[0].statement).toMatch(/Commercial loan onboarding/);
+    expect(out.evidence[1].evidenceFamily).toBe("enterprise_ai_portfolio");
+  });
+
   it("does not use unreviewed program evidence items as move citations", async () => {
     const fakeQuery = (async () => []) as never;
     const fakeDb = {
@@ -198,8 +287,7 @@ describe("assembleGovernedEvidence", () => {
                       data: [
                         {
                           id: "evidence-1",
-                          title:
-                            "SkyHarbor IROPS workshop decision ledger",
+                          title: "SkyHarbor IROPS workshop decision ledger",
                           summary:
                             "Client approved the two-plane architecture and triage-to-recovery operating model.",
                           extracted_structured: {
@@ -292,7 +380,14 @@ describe("buildDeliverableRequest", () => {
         initiativeDisplayName: "Contract Control",
       },
       evidence,
-      [{ citationNumber: 1, label: "SLA", evidenceFamily: "sla_baseline", confidence: "high" }],
+      [
+        {
+          citationNumber: 1,
+          label: "SLA",
+          evidenceFamily: "sla_baseline",
+          confidence: "high",
+        },
+      ],
     );
     expect(req.qualityBar.requiresSourceRegister).toBe(true);
   });
@@ -578,9 +673,11 @@ describe("runDeliverableForTenant", () => {
         passTrace: [],
       }) as OrchestrationResult) as never;
     const persist = (async (_r: unknown, opts: unknown) => {
-      fallbackModel = (opts as {
-        structuredModels?: { architectureModel?: typeof fallbackModel };
-      }).structuredModels?.architectureModel;
+      fallbackModel = (
+        opts as {
+          structuredModels?: { architectureModel?: typeof fallbackModel };
+        }
+      ).structuredModels?.architectureModel;
       return { id: "art-fallback" };
     }) as never;
     const plan: DeliverablePlan = {
