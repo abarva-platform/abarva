@@ -375,66 +375,136 @@ function snakeToCamelPackTier(
   };
 }
 
+interface HomeEnterpriseBriefOverlayRows {
+  dimensionRows: Array<Record<string, unknown>>;
+  useCases: Array<Record<string, unknown>>;
+  evidenceSources: Array<Record<string, unknown>>;
+  executiveRead?: Record<string, unknown>;
+  packTier?: Record<string, unknown>;
+  aiReadiness: Array<Record<string, unknown>>;
+  dimensionImplications: Array<Record<string, unknown>>;
+  nextEvidence: Array<Record<string, unknown>>;
+  strategicNarratives: Array<Record<string, unknown>>;
+}
+
+function overlayRows(value: unknown): Array<Record<string, unknown>> {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (row): row is Record<string, unknown> =>
+      Boolean(row) && typeof row === "object" && !Array.isArray(row),
+  );
+}
+
+function overlayRow(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+  return value as Record<string, unknown>;
+}
+
+async function readHomeEnterpriseBriefOverlay(
+  client: Client,
+  packId: string,
+): Promise<HomeEnterpriseBriefOverlayRows> {
+  const result = await client.query<Record<string, unknown>>(
+    `SELECT
+        COALESCE(
+          (
+            SELECT jsonb_agg(to_jsonb(d) ORDER BY d.dimension_key, d.sort_order, d.display_name)
+              FROM public.home_knowledge_dimension_rows d
+             WHERE d.pack_id = $1
+          ),
+          '[]'::jsonb
+        ) AS dimension_rows,
+        COALESCE(
+          (
+            SELECT jsonb_agg(to_jsonb(u) ORDER BY u.priority_rank, u.name)
+              FROM public.home_knowledge_use_cases u
+             WHERE u.pack_id = $1
+          ),
+          '[]'::jsonb
+        ) AS use_cases,
+        COALESCE(
+          (
+            SELECT jsonb_agg(to_jsonb(e) ORDER BY e.source_name)
+              FROM public.home_knowledge_evidence_sources e
+             WHERE e.pack_id = $1
+          ),
+          '[]'::jsonb
+        ) AS evidence_sources,
+        (
+          SELECT to_jsonb(er)
+            FROM public.home_knowledge_executive_read er
+           WHERE er.pack_id = $1
+           LIMIT 1
+        ) AS executive_read,
+        (
+          SELECT to_jsonb(t)
+            FROM public.home_knowledge_pack_tier t
+           WHERE t.pack_id = $1
+           LIMIT 1
+        ) AS pack_tier,
+        COALESCE(
+          (
+            SELECT jsonb_agg(to_jsonb(a) ORDER BY a.sort_order, a.readiness_dimension)
+              FROM public.home_knowledge_ai_readiness a
+             WHERE a.pack_id = $1
+          ),
+          '[]'::jsonb
+        ) AS ai_readiness,
+        COALESCE(
+          (
+            SELECT jsonb_agg(to_jsonb(i) ORDER BY i.dimension_key, i.sort_order)
+              FROM public.home_knowledge_dimension_module_implications i
+             WHERE i.pack_id = $1
+          ),
+          '[]'::jsonb
+        ) AS dimension_implications,
+        COALESCE(
+          (
+            SELECT jsonb_agg(to_jsonb(n) ORDER BY n.sort_order, n.title)
+              FROM public.home_knowledge_next_evidence_requests n
+             WHERE n.pack_id = $1
+          ),
+          '[]'::jsonb
+        ) AS next_evidence,
+        COALESCE(
+          (
+            SELECT jsonb_agg(to_jsonb(s) ORDER BY s.narrative_type, s.sort_order, s.title)
+              FROM public.home_knowledge_strategic_narratives s
+             WHERE s.pack_id = $1
+          ),
+          '[]'::jsonb
+        ) AS strategic_narratives`,
+    [packId],
+  );
+  const row = result.rows[0] ?? {};
+  return {
+    dimensionRows: overlayRows(row.dimension_rows),
+    useCases: overlayRows(row.use_cases),
+    evidenceSources: overlayRows(row.evidence_sources),
+    executiveRead: overlayRow(row.executive_read),
+    packTier: overlayRow(row.pack_tier),
+    aiReadiness: overlayRows(row.ai_readiness),
+    dimensionImplications: overlayRows(row.dimension_implications),
+    nextEvidence: overlayRows(row.next_evidence),
+    strategicNarratives: overlayRows(row.strategic_narratives),
+  };
+}
+
 async function enrichHomeEnterpriseBriefPack(
   client: Client,
   packId: string,
   packVersion: string,
   pack: HomeKnowledgeDesignContractPack,
 ): Promise<HomeKnowledgeDesignContractPack> {
-  const [
-    dimensionRows,
-    useCases,
-    evidenceSources,
-    executiveRead,
-    packTier,
-    aiReadiness,
-    dimensionImplications,
-    nextEvidence,
-    strategicNarratives,
-  ] = await Promise.all([
-    client.query(
-      `SELECT * FROM public.home_knowledge_dimension_rows WHERE pack_id = $1 ORDER BY dimension_key, sort_order, display_name`,
-      [packId],
-    ),
-    client.query(
-      `SELECT * FROM public.home_knowledge_use_cases WHERE pack_id = $1 ORDER BY priority_rank, name`,
-      [packId],
-    ),
-    client.query(
-      `SELECT * FROM public.home_knowledge_evidence_sources WHERE pack_id = $1 ORDER BY source_name`,
-      [packId],
-    ),
-    client.query(
-      `SELECT * FROM public.home_knowledge_executive_read WHERE pack_id = $1 LIMIT 1`,
-      [packId],
-    ),
-    client.query(
-      `SELECT * FROM public.home_knowledge_pack_tier WHERE pack_id = $1 LIMIT 1`,
-      [packId],
-    ),
-    client.query(
-      `SELECT * FROM public.home_knowledge_ai_readiness WHERE pack_id = $1 ORDER BY sort_order, readiness_dimension`,
-      [packId],
-    ),
-    client.query(
-      `SELECT * FROM public.home_knowledge_dimension_module_implications WHERE pack_id = $1 ORDER BY dimension_key, sort_order`,
-      [packId],
-    ),
-    client.query(
-      `SELECT * FROM public.home_knowledge_next_evidence_requests WHERE pack_id = $1 ORDER BY sort_order, title`,
-      [packId],
-    ),
-    client.query(
-      `SELECT * FROM public.home_knowledge_strategic_narratives WHERE pack_id = $1 ORDER BY narrative_type, sort_order, title`,
-      [packId],
-    ),
-  ]);
+  const overlay = await readHomeEnterpriseBriefOverlay(client, packId);
 
   const slots = { ...pack.design_slots };
   const dataByDimension: Record<string, HomeKnowledgeDataSet> = {
     ...(slots.DATA ?? {}),
   };
-  for (const row of dimensionRows.rows as Array<Record<string, unknown>>) {
+  for (const row of overlay.dimensionRows) {
     const dimensionKey = String(row.dimension_key ?? "");
     if (!dimensionKey) continue;
     const payload =
@@ -474,7 +544,7 @@ async function enrichHomeEnterpriseBriefPack(
     };
   }
 
-  const typedUseCases: HomeKnowledgeRecord[] = useCases.rows.map(
+  const typedUseCases: HomeKnowledgeRecord[] = overlay.useCases.map(
     (row: Record<string, unknown>) => ({
       key: row.use_case_key as string,
       name: row.name as string,
@@ -505,7 +575,7 @@ async function enrichHomeEnterpriseBriefPack(
     }),
   );
 
-  const typedEvidence: HomeKnowledgeEvidence[] = evidenceSources.rows.map(
+  const typedEvidence: HomeKnowledgeEvidence[] = overlay.evidenceSources.map(
     (row: Record<string, unknown>) => ({
       name: String(row.source_name ?? row.file_name ?? row.source_id ?? ""),
       type: String(row.file_type ?? "source"),
@@ -522,7 +592,7 @@ async function enrichHomeEnterpriseBriefPack(
     }),
   );
 
-  const typedNextEvidence: HomeKnowledgeRecord[] = nextEvidence.rows.map(
+  const typedNextEvidence: HomeKnowledgeRecord[] = overlay.nextEvidence.map(
     (row: Record<string, unknown>) => ({
       item: row.title as string,
       title: row.title as string,
@@ -534,13 +604,9 @@ async function enrichHomeEnterpriseBriefPack(
     }),
   );
 
-  const executive = snakeToCamelExecutiveRead(
-    executiveRead.rows[0] as Record<string, unknown> | undefined,
-  );
-  const tier = snakeToCamelPackTier(
-    packTier.rows[0] as Record<string, unknown> | undefined,
-  );
-  const strategic = strategicNarratives.rows.map(
+  const executive = snakeToCamelExecutiveRead(overlay.executiveRead);
+  const tier = snakeToCamelPackTier(overlay.packTier);
+  const strategic = overlay.strategicNarratives.map(
     (row: Record<string, unknown>): HomeEnterpriseBriefStrategicNarrative => ({
       narrativeType: String(row.narrative_type ?? ""),
       title: String(row.title ?? ""),
@@ -620,7 +686,7 @@ async function enrichHomeEnterpriseBriefPack(
       packVersion,
       executiveRead: executive,
       packTier: tier,
-      aiReadiness: aiReadiness.rows.map((row: Record<string, unknown>) => ({
+      aiReadiness: overlay.aiReadiness.map((row: Record<string, unknown>) => ({
         readinessDimension: String(row.readiness_dimension ?? ""),
         scorePct: Number(row.score_pct ?? 0),
         tone: row.tone as string | null | undefined,
@@ -629,7 +695,7 @@ async function enrichHomeEnterpriseBriefPack(
         evidenceRefs: readEvidenceRefs(row.evidence_refs),
       })),
       strategicNarratives: strategic,
-      dimensionModuleImplications: dimensionImplications.rows.map(
+      dimensionModuleImplications: overlay.dimensionImplications.map(
         (row: Record<string, unknown>) => ({
           dimensionKey: String(row.dimension_key ?? ""),
           module: String(row.module ?? ""),

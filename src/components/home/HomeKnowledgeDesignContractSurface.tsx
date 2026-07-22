@@ -621,7 +621,7 @@ export function HomeKnowledgeDesignContractSurface({
               ) : null}
             </div>
             <h1>
-              {pack.tenant_name}
+              <span>{pack.tenant_name}</span>{" "}
               <span className="nkh-demo-pill">Demo</span>
             </h1>
             <p>{enterpriseHeroSummary(pack)}</p>
@@ -6365,8 +6365,8 @@ const styles = `
   margin: 8px 0 12px;
   color: var(--ink);
   font-family: var(--serif);
-  font-size: clamp(30px, 3.2vw, 52px);
-  line-height: .98;
+  font-size: clamp(28px, 2.55vw, 42px);
+  line-height: 1.06;
   letter-spacing: 0;
 }
 .nkh-exec-one {

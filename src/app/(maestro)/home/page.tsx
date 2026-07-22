@@ -205,7 +205,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     "Home Knowledge Pack v2",
     readHomeKnowledgeDesignContractForTenantFromPostgres(homeTenantKey),
     null,
-    2_500,
+    1_800,
   );
   const designContract = postgresDesignContract?.pack
     ? postgresDesignContract
