@@ -240,7 +240,24 @@ export async function POST(
           tenantId: tenancy.clientId ?? null,
           question: normalizedBody.prompt ?? "",
           eventType: liveEventDetail?.archetype ?? null,
-        }).catch(() => null);
+        }).catch((err) => {
+          // A failure here must never break the chat turn — the caller
+          // still gets the prose summary line. But swallowing silently
+          // makes an honest `null` (no signal / no archetype / no vendor
+          // rows) indistinguishable from a real bug — log so the two
+          // are distinguishable in Log Analytics.
+          console.error(
+            "[source.nexus-ask.vendor-coverage-governed-answer.failed]",
+            JSON.stringify({
+              eventId,
+              clientKey: activeClientKey,
+              eventType: liveEventDetail?.archetype ?? null,
+              message: err instanceof Error ? err.message : String(err),
+              stack: err instanceof Error ? err.stack : undefined,
+            }),
+          );
+          return null;
+        });
       }
       const lines = [JSON.stringify({ type: "summary", ...response })];
       if (agentAnswer) {
