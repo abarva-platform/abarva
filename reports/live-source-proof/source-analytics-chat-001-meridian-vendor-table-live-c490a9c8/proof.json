@@ -1,0 +1,31 @@
+{
+  "checkedAt": "2026-07-22T19:18:04Z",
+  "purpose": "Final live-verify of SOURCE-ANALYTICS-CHAT-001 after the client-key alias fix (PR #5362, commit c490a9c86, deployed as ACA revision ca-abarva-web-lab-eastus--mc490a9c8, image acrabarvalab001.azurecr.io/abarva/web@sha256:2ab589478207c4fb11c7a30bf389c0de5a6159d1bc225e109e4ad7905a84fb63).",
+  "acaRuntimeInvariant": {
+    "templateImage": "acrabarvalab001.azurecr.io/abarva/web@sha256:2ab589478207c4fb11c7a30bf389c0de5a6159d1bc225e109e4ad7905a84fb63",
+    "activeRevision": "ca-abarva-web-lab-eastus--mc490a9c8",
+    "trafficWeight": 100,
+    "healthState": "Healthy",
+    "runningState": "Running"
+  },
+  "session": {
+    "signedInAs": "Anand Sundaram · Healthcare Demo (Meridian)",
+    "surface": "app.abarva.ai/source/events/cea10d0a-6d5d-49d2-8522-173c2d6fd520?stage=responses",
+    "widget": "AskAnythingBar (\"Ask aVa\" floating bottom toolbar)",
+    "questionAsked": "How are vendors doing on response coverage across the priced levers?"
+  },
+  "observedAnswer": {
+    "status": "answered",
+    "confidence": "high confidence",
+    "citationBadge": "direct fact · 100",
+    "tableTitle": "Vendor response coverage",
+    "columns": ["Vendor", "Addressed", "Partial", "Dodged", "Not Yet Answered", "$ At Stake Exposed"],
+    "rows": [
+      { "vendor": "Vendor Alpha", "addressed": 3, "partial": 1, "dodged": 2, "notYetAnswered": 0, "atStakeExposed": "$2.2M" },
+      { "vendor": "Vendor Beta", "addressed": 2, "partial": 2, "dodged": 2, "notYetAnswered": 0, "atStakeExposed": "$2.8M" }
+    ],
+    "summaryLine": "5 of 6 value dimensions answered across 2 vendors; 1 still dodged ($400K-$900K) - press each in evaluation."
+  },
+  "result": "PASS - a real, governed AvaAnswerPacket table (via AgentAnswerRenderer inside AskAnythingBar) rendered for a live signed-in Meridian user asking a real vendor-coverage question against real source_event_facts data, for the first time across this debugging chain (PRs #5341, #5346, #5350, #5358, #5361, #5362).",
+  "methodNote": "Captured via an already-authenticated claude-in-chrome MCP tab (tabId 427266256), not the mcp__Claude_Browser preview pane, because the preview pane's fresh session required a Clerk email one-time-code this agent cannot receive. Screenshot evidence lives in this session's tool-call history; this proof.json is the durable, committed record of what was observed."
+}

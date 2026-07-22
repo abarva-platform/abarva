@@ -580,21 +580,31 @@ updated 19 d ago` on the proof event).
   an actual table, only prose.
 - **Severity**: P3 (real capability gap, highest-leverage item from the 6-area UX audit)
 - **Workstream**: Analytics / aVa chat
-- **Status**: `Shipped — candidate, live-proof pending`. First slice built: vendor
-  response-coverage only (value waterfall and artifact-quality answers are explicit follow-on,
-  not in this slice). See
-  `docs/releases/records/2026-07-22-source-vendor-coverage-governed-chat-answer.md` for the
-  full build record, including the honest `retrievability: "not_indexed"` /
+- **Status**: `Shipped — live-proven`. First slice built: vendor response-coverage only
+  (value waterfall and artifact-quality answers are explicit follow-on, not in this slice).
+  See `docs/releases/records/2026-07-22-source-vendor-coverage-governed-chat-answer.md` for
+  the full build record, including the honest `retrievability: "not_indexed"` /
   `requireAgentReady: false` limitation this data class hits under the current governance
-  model. **Correction (same day, caught during live-verify)**: the initial client wiring
-  targeted `UniversalCanvasShell.tsx`/`AvaBottomBar.tsx`, which turned out to be unmounted
-  dead code — the real live Source event chat is the platform-wide
-  `AtlasPageStateProvider`/`AgentColumn` (rendered by `AppShell` on every page). See
-  `docs/releases/records/2026-07-22-source-vendor-coverage-live-surface-fix.md` for the
-  follow-up that moves the NDJSON request + `AgentAnswerRenderer` rendering to the real
-  surface; `UniversalCanvasShell`/`AvaBottomBar` remain in the tree as confirmed dead code,
-  flagged as cleanup debt, not deleted in this pass. Below is the original
-  architecture-decision grounding this build resolved:
+  model. **Correction chain (same day, caught during live-verify)**: the initial client
+  wiring targeted `UniversalCanvasShell.tsx`/`AvaBottomBar.tsx`, confirmed dead/unmounted
+  code — the real live Source chat surface turned out to be the floating `AskAnythingBar`
+  widget reading `AtlasPageStateProvider`'s transient state, not `AgentColumn`'s persisted
+  conversation list (both were tried in sequence; see
+  `docs/releases/records/2026-07-22-source-vendor-coverage-live-surface-fix.md` and
+  `docs/releases/records/2026-07-22-source-vendor-coverage-ask-anything-bar-fix.md`).
+  `UniversalCanvasShell`/`AvaBottomBar` remain in the tree as confirmed dead code, flagged as
+  cleanup debt, not deleted in this pass. Once wired to the real surface, the answer builder
+  still returned `null` — traced via structured logging
+  (`docs/releases/records/2026-07-22-source-vendor-coverage-answer-error-logging.md`,
+  `docs/releases/records/2026-07-22-source-vendor-coverage-branch-trace-logging.md`) and a
+  read-only Azure Log Analytics query to a client-key alias mismatch: Source event/fact tables
+  use legacy app-tier keys (`meridian`), not the canonical governance tenant keys
+  (`meridian-health`) the answer builder's first guard required. Fixed by canonicalizing only
+  the governance-facing key while keeping fact reads on the raw Source key — see
+  `docs/releases/records/2026-07-22-source-vendor-coverage-client-key-alias-fix.md` for the
+  fix and its final live-proof evidence (a real governed `Vendor response coverage` table
+  rendered for a signed-in Meridian user). Below is the original architecture-decision
+  grounding this build resolved:
   1. **No dormant transport exists.** Source's chat calls `/api/chat/agent`
      (`src/app/api/chat/agent/route.ts`, ~3630 lines, shared by many non-Source surfaces) —
      this route streams plain text only, with no NDJSON `agent-answer` event mechanism. The
@@ -725,8 +735,11 @@ maturity) is deliberately out of scope for the authority-layer work entirely.
 ## Ready / in progress
 
 `SOURCE-UX-DECLUTTER-001` batch 1 is merged and live-proven; `SOURCE-ANALYTICS-CHAT-001`
-(vendor-response-coverage governed chat answer) is merged, deployed, and live-verify in
-progress as of this reconciliation. `SOURCE-ARTIFACT-AUTHORITY-001` is next — start with the
+(vendor-response-coverage governed chat answer) is merged, deployed, and live-proven — a real
+signed-in Meridian user's vendor-coverage question renders a real governed table in the "Ask
+aVa" widget (see `docs/releases/records/2026-07-22-source-vendor-coverage-client-key-alias-fix.md`
+and `reports/live-source-proof/source-analytics-chat-001-meridian-vendor-table-live-c490a9c8/`).
+`SOURCE-ARTIFACT-AUTHORITY-001` is next — start with the
 `#1 + #2` slice (`SOURCE-ARTIFACT-AUTHORITY-001a`: rebase and ship the existing
 `/Users/anand/Projects/nexus-source-artifact-governance-20260722` worktree diff), per its own
 reconciliation table and recommended-PR section above. After that: `SOURCE-ARTIFACT-QUALITY-001`,
