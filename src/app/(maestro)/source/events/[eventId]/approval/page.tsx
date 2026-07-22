@@ -1,7 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/shell/AppShell";
 import { SourceWorkingPane } from "@/components/source/SourceWorkingPane";
-import { EventApprovalCard } from "@/components/source/approval/EventApprovalCard";
+import {
+  EventApprovalCard,
+  type ApprovalArtifactAcceptance,
+} from "@/components/source/approval/EventApprovalCard";
 import type { IntakeFact } from "@/components/source/approval/IntakeFactsReview";
 import type { IntakeChatTurn } from "@/components/source/approval/IntakeChatTrail";
 import { getActiveClientRow } from "@/lib/active-client";
@@ -10,9 +13,16 @@ import { canonicalClientDisplayName } from "@/lib/client-config";
 import { requireTenancy } from "@/lib/auth/tenancy";
 import { loadUserSourceAccessPolicy } from "@/lib/auth/source-access-policy";
 import { getAzureReadFluentClient } from "@/lib/data-plane/postgresCompat";
+import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact-acceptances";
+import { listSourceArtifactsForSourceEventId } from "@/lib/source/artifact-registry";
+import { loadApprovalLedger } from "@/lib/source/approval-ledger";
 import { formatSourceFinancialValue } from "@/lib/source/financial-display";
 import { parseSourceScopeDescription } from "@/lib/source/intake-summary";
-import { getSourcingEvent, type SourceEventRow } from "@/lib/source/queries";
+import {
+  getSourcingEvent,
+  isUuid,
+  type SourceEventRow,
+} from "@/lib/source/queries";
 
 export const metadata = { title: "Source · Event Approval · AbarVa" };
 export const dynamic = "force-dynamic";
@@ -58,6 +68,16 @@ export default async function SourceEventApprovalPage({
     }) ?? event.accountName;
   const currentUserCanApprove =
     sourceAccessPolicy?.canApproveSourceStages === true;
+  const [approvalLedger, artifactAcceptances] = await Promise.all([
+    loadApprovalLedger(event.id, row.current_stage_key).catch((error) => {
+      console.error(
+        "[SourceEventApprovalPage] approval ledger read failed",
+        error instanceof Error ? error.message : String(error),
+      );
+      return [];
+    }),
+    loadArtifactAcceptanceHistory(event.id),
+  ]);
 
   return (
     <AppShell
@@ -83,8 +103,11 @@ export default async function SourceEventApprovalPage({
             role: "Event creator",
           }}
           createdAt={row.created_at}
+          evidenceUpdatedAt={row.updated_at}
           capturedFacts={buildCapturedFacts(row)}
           intakeChatTurns={buildIntakeTrail(row)}
+          approvalLedger={approvalLedger}
+          artifactAcceptances={artifactAcceptances}
           sponsor={{
             displayName: row.decision_owner ?? event.owner,
             role: "Decision owner",
@@ -123,6 +146,55 @@ async function loadPersistedEventRow(
   return data as SourceEventRow;
 }
 
+async function loadArtifactAcceptanceHistory(
+  sourceEventId: string,
+): Promise<ApprovalArtifactAcceptance[]> {
+  const artifacts = await listSourceArtifactsForSourceEventId(
+    sourceEventId,
+  ).catch((error) => {
+    console.error(
+      "[SourceEventApprovalPage] source artifacts read failed for acceptance history",
+      error instanceof Error ? error.message : String(error),
+    );
+    return [];
+  });
+  const artifactIds = artifacts
+    .map((artifact) => artifact.id)
+    .filter((id): id is string => isUuid(id));
+  if (artifactIds.length === 0) return [];
+
+  const latestByArtifactId = await getLatestArtifactAcceptancesByArtifactIds(
+    artifactIds,
+  ).catch((error) => {
+    console.error(
+      "[SourceEventApprovalPage] artifact acceptances read failed for approval history",
+      error instanceof Error ? error.message : String(error),
+    );
+    return new Map();
+  });
+  const artifactNameById = new Map(
+    artifacts.map((artifact) => [
+      artifact.id,
+      artifact.originalName || artifact.artifactKind || artifact.id,
+    ]),
+  );
+
+  return Array.from(latestByArtifactId.values())
+    .sort((a, b) => b.acceptedAt.localeCompare(a.acceptedAt))
+    .map((acceptance) => ({
+      id: acceptance.id,
+      artifactId: acceptance.artifactId,
+      artifactName:
+        artifactNameById.get(acceptance.artifactId) ?? acceptance.artifactId,
+      stageKey: acceptance.stageKey,
+      acceptedBy: acceptance.acceptedBy,
+      acceptedAt: acceptance.acceptedAt,
+      contentDriftStatus: acceptance.contentDriftStatus,
+      gatePreconditionStatus: acceptance.gatePreconditionStatus,
+      approvalRationale: acceptance.approvalRationale,
+    }));
+}
+
 function buildCapturedFacts(row: SourceEventRow): IntakeFact[] {
   const scopeSummary = parseSourceScopeDescription(row.scope_description);
   const valueTarget =
@@ -144,8 +216,7 @@ function buildCapturedFacts(row: SourceEventRow): IntakeFact[] {
     {
       id: "scope-boundary",
       label: "Scope boundary",
-      value:
-        scopeSummary.scopeBoundary ?? "Scope boundary not captured yet.",
+      value: scopeSummary.scopeBoundary ?? "Scope boundary not captured yet.",
     },
     {
       id: "value-target",

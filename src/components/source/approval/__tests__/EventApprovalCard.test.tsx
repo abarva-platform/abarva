@@ -22,6 +22,7 @@ const baseProps = {
     role: "Event creator",
   },
   createdAt: "2026-06-04T20:00:00.000Z",
+  evidenceUpdatedAt: "2026-06-05T20:00:00.000Z",
   capturedFacts: [
     { id: "trigger", label: "Why now / trigger", value: "Renewal window" },
     { id: "owner", label: "Decision owner", value: "CIO Office" },
@@ -87,9 +88,85 @@ describe("EventApprovalCard", () => {
     expect(
       screen.getByTestId("source-approval-evidence-disclosure"),
     ).not.toBeNull();
-    expect(screen.getByText("Evidence reviewed · 5 facts")).not.toBeNull();
-    expect(screen.getByText("Intake audit trail · 1 turn")).not.toBeNull();
+    expect(
+      screen.getByText(/Evidence reviewed · 5 facts · updated .* ago/),
+    ).not.toBeNull();
+    expect(
+      screen.getByText(
+        "Audit history · 1 intake turn · 0 approvals · 0 acceptances",
+      ),
+    ).not.toBeNull();
     expect(screen.getByText("Routing and audit details")).not.toBeNull();
+  });
+
+  it("shows real governance history when approvals and artifact acceptances are present", () => {
+    render(
+      <EventApprovalCard
+        {...baseProps}
+        approvalLedger={[
+          {
+            stageKey: "strategy",
+            stageLabel: "Strategy",
+            index: 1,
+            state: "approved",
+            approverName: "Ada Lovelace",
+            approvedAtIso: "2026-06-06T15:00:00.000Z",
+            authorizationNote: "Approved by Ada Lovelace.",
+          },
+        ]}
+        artifactAcceptances={[
+          {
+            id: "acceptance-1",
+            artifactId: "artifact-1",
+            artifactName: "Strategy memo",
+            stageKey: "strategy",
+            acceptedBy: "Grace Hopper",
+            acceptedAt: "2026-06-07T15:00:00.000Z",
+            contentDriftStatus: "current",
+            gatePreconditionStatus: "ready",
+            approvalRationale:
+              "Reviewed and accepted as the authoritative memo.",
+          },
+        ]}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "Audit history · 1 intake turn · 1 approval · 1 acceptance",
+      ),
+    ).not.toBeNull();
+    expect(
+      screen.getByTestId("source-approval-governance-history"),
+    ).not.toBeNull();
+    expect(
+      screen.getByTestId("source-approval-governance-ledger-row-strategy"),
+    ).not.toBeNull();
+    expect(screen.getByText("01 · Strategy")).not.toBeNull();
+    expect(screen.getAllByText(/Ada Lovelace/).length).toBeGreaterThan(0);
+    expect(
+      screen.getByTestId("source-approval-artifact-acceptance-acceptance-1"),
+    ).not.toBeNull();
+    expect(screen.getByText("Strategy memo")).not.toBeNull();
+    expect(screen.getByText(/Accepted by Grace Hopper/)).not.toBeNull();
+    expect(
+      screen.getByText("Reviewed and accepted as the authoritative memo."),
+    ).not.toBeNull();
+  });
+
+  it("shows honest empty states when no governance records exist yet", () => {
+    render(<EventApprovalCard {...baseProps} />);
+
+    expect(
+      screen.getByText(
+        "No prior stage approvals are recorded for this event yet.",
+      ),
+    ).not.toBeNull();
+    expect(
+      screen.getByText(
+        "No artifact acceptances are recorded for this event yet.",
+      ),
+    ).not.toBeNull();
   });
 
   it("enables actions only after rationale and human confirmation", () => {
