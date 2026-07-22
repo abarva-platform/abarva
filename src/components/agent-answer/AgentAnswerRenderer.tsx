@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactElement,
+} from "react";
 import {
   Bar,
   BarChart,
@@ -351,8 +357,11 @@ function quadrantDisplayPoints(
 ): RechartQuadrantPoint[] {
   const shouldUseIndexLabels =
     points.length > 4 ||
-    new Set(points.map((point) => `${Math.round(point.x / 10)}:${Math.round(point.y / 10)}`))
-      .size < points.length;
+    new Set(
+      points.map(
+        (point) => `${Math.round(point.x / 10)}:${Math.round(point.y / 10)}`,
+      ),
+    ).size < points.length;
 
   return points.map((point, index) => ({
     ...point,
@@ -597,6 +606,50 @@ function formatRechartValue(value: unknown, unit?: string): string {
   }).format(value);
 }
 
+function SafeAgentResponsiveContainer({
+  children,
+}: {
+  children: ReactElement;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const update = () => {
+      const rect = node.getBoundingClientRect();
+      setReady(rect.width > 0 && rect.height > 0);
+    };
+    update();
+    if (typeof ResizeObserver === "undefined") {
+      const frame = window.requestAnimationFrame(update);
+      return () => window.cancelAnimationFrame(frame);
+    }
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      style={{ width: "100%", height: "100%", minWidth: 1, minHeight: 1 }}
+    >
+      {ready ? (
+        <ResponsiveContainer
+          height="100%"
+          minHeight={1}
+          minWidth={1}
+          width="100%"
+        >
+          {children}
+        </ResponsiveContainer>
+      ) : null}
+    </div>
+  );
+}
+
 function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
   if (chart.kind === "quadrant-matrix" || chart.kind === "2x2-matrix") {
     const points = normalizeRechartQuadrant(chart);
@@ -610,7 +663,7 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
           data-chart-renderer="recharts"
           style={{ "--aa-chart-height": "360px" } as CSSProperties}
         >
-          <ResponsiveContainer height="100%" width="100%">
+          <SafeAgentResponsiveContainer>
             <ScatterChart margin={{ top: 22, right: 20, bottom: 16, left: 8 }}>
               <CartesianGrid stroke="#e5e7eb" strokeDasharray="3 3" />
               <XAxis
@@ -662,11 +715,14 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
                 />
               </Scatter>
             </ScatterChart>
-          </ResponsiveContainer>
+          </SafeAgentResponsiveContainer>
         </div>
         <div className="aaChartKey" aria-label="Chart key">
           {displayPoints.map((point) => (
-            <div className="aaChartKeyItem" key={`${point.label}-${point.x}-${point.y}`}>
+            <div
+              className="aaChartKeyItem"
+              key={`${point.label}-${point.x}-${point.y}`}
+            >
               <span className="aaChartKeyIndex">{point.displayLabel}</span>
               <span className="aaChartKeyLabel" title={point.label}>
                 {point.label}
@@ -694,7 +750,7 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
         data-chart-renderer="recharts"
         style={{ "--aa-chart-height": `${chartHeight}px` } as CSSProperties}
       >
-        <ResponsiveContainer height="100%" width="100%">
+        <SafeAgentResponsiveContainer>
           <LineChart
             data={series.rows}
             margin={{ top: 12, right: 24, bottom: 12, left: 8 }}
@@ -734,7 +790,7 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
               />
             ) : null}
           </LineChart>
-        </ResponsiveContainer>
+        </SafeAgentResponsiveContainer>
       </div>
     );
   }
@@ -747,7 +803,7 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
       data-chart-renderer="recharts"
       style={{ "--aa-chart-height": `${chartHeight}px` } as CSSProperties}
     >
-      <ResponsiveContainer height="100%" width="100%">
+      <SafeAgentResponsiveContainer>
         <BarChart
           barCategoryGap={series.horizontal ? 10 : 18}
           data={series.rows}
@@ -832,7 +888,7 @@ function AnswerRechartRenderer({ chart }: { chart: AnswerChart }) {
             <Bar dataKey={series.yKey2} fill="#1d4ed8" radius={[4, 4, 0, 0]} />
           ) : null}
         </BarChart>
-      </ResponsiveContainer>
+      </SafeAgentResponsiveContainer>
     </div>
   );
 }
