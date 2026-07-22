@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed and live-proven`
 
 ## Plain-English Summary
 
@@ -37,24 +37,26 @@ This does not promote any candidate, index anything in Azure AI Search, mark any
 
 - Pass: `npx jest --runTestsByPath src/lib/programs/learning-writeback/__tests__/moves-learning-writeback.test.ts --runInBand`.
 - Pass: `npx eslint src/lib/programs/learning-writeback src/app/'(maestro)'/admin/context-layer/approval-queue/page.tsx`.
-- Pending: `npm run release:check`.
-- Pending: `git diff --check`.
-- Pending: GitHub PR checks.
-- Pending: ACA deploy and signed-in browser proof.
+- Pass: `npm run release:check`.
+- Pass: `git diff --check`.
+- Pass: GitHub PR checks for PR #5374.
+- Pass: ACA deploy run `29956191951`.
+- Pass: ACA runtime invariant proof in `proof/108-moves-learning-promotion-rollup-runtime`.
+- Pass: Signed-in browser proof in `proof/109-moves-learning-promotion-rollup-browser`.
 
 ## Rollout Plan
 
-Merge through PR to `main`, deploy through the repo-owned ACA main workflow, verify ACA runtime invariant, then open `/admin/context-layer/approval-queue` in a signed-in First Capital / FS Demo session. The page should show the existing Moves learning queue with a new Promotion dry-run rollup above the individual steward review packets.
+Completed. Merged through PR #5374 to `main`, deployed through the repo-owned ACA main workflow, verified ACA runtime invariant, then opened `/admin/context-layer/approval-queue` in a signed-in FS Demo session. The page shows the existing Moves learning queue with a new Promotion dry-run rollup above the individual steward review packets.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: Required because this changes an Admin runtime page.
 - Shared runtime mutators: None outside the repo-owned deploy workflow.
-- Approved image digest: Captured by ACA deploy after merge.
-- ACA runtime invariant: Required before claiming deployed.
+- Approved image digest: `sha256:e7dcfd30c0df02534aaecaac5258bf0f7fc981feb499ae02f205cda511555923`.
+- ACA runtime invariant: Passed.
 - Worker image invariant: No worker job change.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Required before claiming browser-visible.
+- Live signed-in proof required: Passed.
 
 ## Rollback Plan
 
@@ -62,12 +64,13 @@ Revert the PR and redeploy through the ACA main workflow. No data rollback is re
 
 ## Audit Evidence
 
-- PR URL: Pending.
-- Merge SHA: Pending.
-- ACA revision: Pending.
-- ACA digest: Pending.
-- Runtime invariant proof: Pending.
-- Signed-in browser proof: Pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/5374
+- Merge SHA: `b31efc137ca12db35dedd2e51fea21711f578a8c`
+- ACA deploy run: `29956191951`
+- ACA revision: `ca-abarva-web-lab-eastus--mb31efc13`
+- ACA digest: `sha256:e7dcfd30c0df02534aaecaac5258bf0f7fc981feb499ae02f205cda511555923`
+- Runtime invariant proof: `proof/108-moves-learning-promotion-rollup-runtime`
+- Signed-in browser proof: `proof/109-moves-learning-promotion-rollup-browser`
 
 ## Known Gaps
 
