@@ -37,6 +37,7 @@ Moves now tells the user when Approve & Build generated a phase draft but the ph
 - `src/app/api/v1/programs/[programId]/artifacts/[artifactId]/client-approval/route.ts`
   - Bridges a generated Move artifact into the governed deliverables source of truth.
   - Preserves tenant checks, program checks, authority checks, and source lineage.
+  - Aligns P1 client approval with the existing P1 gate authority behavior: when no sponsor participant exists yet, the current governed user is recorded as sponsor before approval. Later phases still require approver/sponsor authority.
   - Writes only Move-scoped authoritative deliverable state.
 - Tests updated for gate-blocker feedback, sponsor-review route gating, and generated-draft client approval detection.
 
@@ -51,6 +52,7 @@ Candidate validation:
 - Pending: `git diff --check`
 - Pending: PR checks.
 - Pending: ACA deploy and signed-in sandbox proof.
+- Follow-up live finding after PR #5282: saved FS sandbox agent could reach P1 gate approval but received `403 approver authority or higher required` on the new client-approval bridge. This follow-up aligns the P1 bridge with the existing P1 phase-gate authority initialization path.
 
 ## Rollout Plan
 
