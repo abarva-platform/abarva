@@ -534,7 +534,10 @@ updated 19 d ago` on the proof event).
   stage the user was viewing — reads as noise and alarm rather than progress.
 - **Severity**: P0 (approvals bugs) / P2 (declutter)
 - **Workstream**: Workspace UX
-- **Status**: `Merged` — see PR below.
+- **Status**: `Merged — live-proven`. Live signed-in verification confirmed: exactly one
+  approval card per event (no duplicate, no cross-event mixing), the "Go to steps to decide"
+  button correctly switches tabs, the stage-relative progress line and "Show all 11 stages"
+  toggle render with real data.
 - **Dependencies**: none.
 - **Acceptance criteria**: Approvals workspace shows only this event's items, never renders
   the featured item twice; the featured stage-gate card's CTA switches to Steps instead of
@@ -547,7 +550,8 @@ updated 19 d ago` on the proof event).
   render, CTA behavior); 2 existing `SourceAnalyticsCanvas.chat.test.tsx` cases updated for
   the new default stage-scoping (not weakened — they now explicitly toggle to all-stages,
   matching what they were actually testing).
-- **PR**: to be recorded on merge.
+- **PR**: [#5322](https://github.com/abarva-platform/abarva/pull/5322), squash-merged as
+  `1d01c16d82c8eee057a32bfe6ba2922c09d15cfd`.
 - **Discovered from**: 5 parallel-agent audits launched from a direct user request to evaluate
   UI/UX quality, aVa chat analytics capability, artifact narrative quality, guidebook content,
   and upload/persistence. One reported finding (the "✦ Intelligence" tab silently redirecting
