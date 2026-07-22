@@ -93,6 +93,8 @@
     "project:meridian-v3-cio-tower": "node scripts/tower/project-meridian-v3-to-cio-tower.mjs --dry-run --out-dir=reports/meridian-v3-cio-tower-projection",
     "project:meridian-v3-cio-tower:write-job": "MERIDIAN_CIO_TOWER_WRITE_APPROVED=true node scripts/tower/project-meridian-v3-to-cio-tower.mjs --write --emit-proof-bundle --out-dir=/tmp/meridian-v3-cio-tower-projection",
     "audit:meridian-v3-cio-tower-projection": "node scripts/tower/audit-meridian-v3-cio-tower-projection.mjs --report-dir=reports/meridian-v3-cio-tower-projection",
+    "project:tower-mart": "npx tsx src/scripts/tower/project-tower-mart.ts --dry-run",
+    "project:tower-mart:write-job": "npx tsx src/scripts/tower/project-tower-mart.ts --write",
     "verify:phs-health-plan-corpus": "npx tsx src/scripts/corpus/verify-phs-health-plan-corpus.ts",
     "generate:meridian-vnext-context": "python3 scripts/enterprise-context/generate-meridian-vnext.py",
     "verify:northstar-context-layer": "node scripts/verify/northstar-context-layer-scaffold.mjs",
