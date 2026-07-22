@@ -330,12 +330,22 @@ export function validateVisibleAnswer(text: string): string[] {
       "raw_id_or_internal_key",
       /\b[A-Z]{2,}[A-Z0-9_-]*-\d{2,}\b|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}/,
     ],
-    ["visible_scaffold_label", /(^|\n)\s*(Read|Evidence|Implication|Next move):/i],
+    [
+      "visible_scaffold_label",
+      /(^|\n)\s*(Read|Evidence|Implication|Next move):/i,
+    ],
     [
       "internal_data_plane_language",
-      /\b(loaded evidence|tenant evidence|evidence ledger|semantic packet|retrieved context|source signals|rows)\b/i,
+      /\b(loaded evidence|tenant evidence|evidence ledger|semantic packet|retrieved context|source signals|metric records|value records|active signals|usage signals|rows)\b/i,
     ],
-    ["code_fence_or_hidden_visual_payload", /```|abarva-canvas|chart\s*json|"\s*(?:type|data|series|x|y)\s*"\s*:/i],
+    [
+      "technical_count_as_evidence",
+      /\b\d[\d,]*(?:\.\d+)?\s+(?:source\s+signals?|usage\s+signals?|active\s+signals?|metric\s+records?|value\s+records?|facts?|rows?|edges?|nodes?|citations?|relationships?)\b/i,
+    ],
+    [
+      "code_fence_or_hidden_visual_payload",
+      /```|abarva-canvas|chart\s*json|"\s*(?:type|data|series|x|y)\s*"\s*:/i,
+    ],
     ["markdown_table_in_answer_field", /^\s*\|.+\|\s*$/m],
     ["atlas_branding", /\bAtlas\b/i],
   ];
@@ -346,9 +356,12 @@ export function validateVisibleAnswer(text: string): string[] {
 }
 
 function contractArtifactRequirements(contract: CioTowerContract): string[] {
-  const artifact = `${contract.intent} ${contract.artifact_type} ${contract.question_family}`.toLowerCase();
+  const artifact =
+    `${contract.intent} ${contract.artifact_type} ${contract.question_family}`.toLowerCase();
   const requiresTable =
-    /table|chart|graph|trend|rank|comparison|portfolio|split|waterfall/.test(artifact);
+    /table|chart|graph|trend|rank|comparison|portfolio|split|waterfall/.test(
+      artifact,
+    );
   const requiresRanking = /rank|top|largest|portfolio|priority/.test(artifact);
   const requiresTrend = /trend|fy25|fy26|year|period|waterfall/.test(artifact);
   return [
@@ -426,7 +439,9 @@ export function parseVisibleAnswerContract(
         (row) =>
           !Array.isArray(row) ||
           row.length !== table.columns.length ||
-          row.some((cell) => typeof cell !== "string" || cell.trim().length === 0),
+          row.some(
+            (cell) => typeof cell !== "string" || cell.trim().length === 0,
+          ),
       )
     ) {
       // Malformed rows/columns (wrong width, empty cells) are a real defect —
@@ -486,7 +501,9 @@ export function buildCioTowerClaudePrompt(
   });
 
   const gapLines = context.gaps.map((gap) => `- ${gap}`);
-  const artifactRequirementLines = contractArtifactRequirements(context.contract);
+  const artifactRequirementLines = contractArtifactRequirements(
+    context.contract,
+  );
   const permittedPostures = permittedDecisionPostures(context.contract);
   const valueClaimPolicyLines = [
     `- Projection fallback role: ${context.valueClaimPolicy.projectionRole}.`,
@@ -499,15 +516,29 @@ export function buildCioTowerClaudePrompt(
     `- Question intent: ${context.visualContract.questionIntent}.`,
     `- Recommended visual: ${context.visualContract.recommendedVisual}.`,
     `- Required data: ${context.visualContract.requiredData.join("; ") || "none"}.`,
-    `- Axes: ${[
-      context.visualContract.axes?.x ? `x=${context.visualContract.axes.x}` : null,
-      context.visualContract.axes?.y ? `y=${context.visualContract.axes.y}` : null,
-      context.visualContract.axes?.size ? `size=${context.visualContract.axes.size}` : null,
-      context.visualContract.axes?.color ? `color=${context.visualContract.axes.color}` : null,
-    ].filter(Boolean).join("; ") || "none"}.`,
+    `- Axes: ${
+      [
+        context.visualContract.axes?.x
+          ? `x=${context.visualContract.axes.x}`
+          : null,
+        context.visualContract.axes?.y
+          ? `y=${context.visualContract.axes.y}`
+          : null,
+        context.visualContract.axes?.size
+          ? `size=${context.visualContract.axes.size}`
+          : null,
+        context.visualContract.axes?.color
+          ? `color=${context.visualContract.axes.color}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join("; ") || "none"
+    }.`,
     `- Executive takeaway: ${context.visualContract.executiveTakeaway}`,
     `- Source boundary: ${context.visualContract.sourceBoundary}`,
-    ...context.visualContract.annotations.map((annotation) => `- Annotation: ${annotation}`),
+    ...context.visualContract.annotations.map(
+      (annotation) => `- Annotation: ${annotation}`,
+    ),
   ];
   const towerV3Runtime = context.towerV3RuntimeView;
   const towerV3Lines = towerV3Runtime
@@ -523,10 +554,12 @@ export function buildCioTowerClaudePrompt(
             `  - ${tab.label}: ${tab.sourceClassification}; ${tab.sourcePosture}; ${tab.rows} rows; caveat: ${tab.caveat}`,
         ),
         "- Top value hypotheses:",
-        ...towerV3Runtime.valueHypotheses.slice(0, 8).map(
-          (item) =>
-            `  - ${item.label}: ${item.value}; basis ${safeBasisLabel(item.claimBasis)}; gate ${item.gateStatus}; proof still required`,
-        ),
+        ...towerV3Runtime.valueHypotheses
+          .slice(0, 8)
+          .map(
+            (item) =>
+              `  - ${item.label}: ${item.value}; basis ${safeBasisLabel(item.claimBasis)}; gate ${item.gateStatus}; proof still required`,
+          ),
         "- Executive blocker themes:",
         ...towerV3Runtime.gapThemes.map(
           (theme) =>
@@ -577,6 +610,8 @@ export function buildCioTowerClaudePrompt(
     "- Lead with the actual answer, judgment, or recommendation.",
     "- Do not open with filler, a summary of the question, or a template.",
     "- Do not mention internal retrieval, evidence machinery, semantic packets, database rows, table names, JSON, source keys, record IDs, UUIDs, or debug terms.",
+    "- Do not use technical quantity counts as evidence. Never say things like '300 rows', '500 facts', '800 edges', '42 nodes', 'metric records', 'value records', 'source signals', or 'active signals' in user-visible prose.",
+    "- Translate internal coverage into executive meaning: say whether proof is broad enough, thin, fragmented, finance-attestation pending, usage-instrumentation missing, or source-backed enough for a decision.",
     '- Do not use visible scaffolding labels like "Read:", "Evidence:", "Implication:", or "Next move:".',
     "- Do not mention Atlas. The agent is aVa.",
     "- If the data is incomplete, state the specific missing business field in plain English.",
@@ -645,11 +680,7 @@ export function buildCioTowerClaudePrompt(
     artifactRequirementLines.join("\n"),
     "",
     ...(towerV3Runtime
-      ? [
-          "Primary governed Tower context:",
-          towerV3Lines.join("\n"),
-          "",
-        ]
+      ? ["Primary governed Tower context:", towerV3Lines.join("\n"), ""]
       : []),
     "Governed measures:",
     measureLines.length
@@ -836,15 +867,15 @@ function measureNumber(
   measures: CioTowerMeasureResult[],
   measureKey: string,
 ): number | null {
-  const raw = measures.find((measure) => measure.measure_key === measureKey)?.value_numeric;
+  const raw = measures.find(
+    (measure) => measure.measure_key === measureKey,
+  )?.value_numeric;
   if (raw === null || raw === undefined || raw === "") return null;
   const numeric = Number(raw);
   return Number.isFinite(numeric) ? numeric : null;
 }
 
-function fallbackMetricRows(
-  context: CioTowerPromptContext,
-): string[][] {
+function fallbackMetricRows(context: CioTowerPromptContext): string[][] {
   const keys = [
     ["Total technology budget", "total_it_budget_fy26"],
     ["Run budget", "run_budget_fy26"],
@@ -875,21 +906,35 @@ type CioTowerFallbackQuestionIntent =
   | "evidence_gap"
   | "general";
 
-function fallbackQuestionIntent(context: CioTowerPromptContext): CioTowerFallbackQuestionIntent {
+function fallbackQuestionIntent(
+  context: CioTowerPromptContext,
+): CioTowerFallbackQuestionIntent {
   const question = context.question.toLowerCase();
   if (
-    /(services?|vendors?|contracts?|owners?).*(driv|explain|behind|base|run)/i.test(question) ||
-    /(driv|explain|behind).*(services?|vendors?|contracts?|owners?)/i.test(question)
+    /(services?|vendors?|contracts?|owners?).*(driv|explain|behind|base|run)/i.test(
+      question,
+    ) ||
+    /(driv|explain|behind).*(services?|vendors?|contracts?|owners?)/i.test(
+      question,
+    )
   ) {
     return "run_drivers";
   }
   if (/vendor|renewal|contract|concentration|supplier/i.test(question)) {
     return "vendor_exposure";
   }
-  if (/gap.*(promised|measured|value)|promised.*measured|value[-\s]?proof|measured value|funded programs.*gap/i.test(question)) {
+  if (
+    /gap.*(promised|measured|value)|promised.*measured|value[-\s]?proof|measured value|funded programs.*gap/i.test(
+      question,
+    )
+  ) {
     return "value_gap";
   }
-  if (/run.*change|change.*run|crowding|budget.*going|budget.*mix|run base|change pool/i.test(question)) {
+  if (
+    /run.*change|change.*run|crowding|budget.*going|budget.*mix|run base|change pool/i.test(
+      question,
+    )
+  ) {
     return "budget_mix";
   }
   if (/program|initiative|ai investment|copilot|platform/i.test(question)) {
@@ -898,7 +943,8 @@ function fallbackQuestionIntent(context: CioTowerPromptContext): CioTowerFallbac
   if (/evidence|board[-\s]?ready|missing|gap|trust|attest/i.test(question)) {
     return "evidence_gap";
   }
-  if (context.contract.contract_key === "tower_value_realization") return "value_gap";
+  if (context.contract.contract_key === "tower_value_realization")
+    return "value_gap";
   if (
     context.contract.contract_key === "tower_run_change_split" ||
     context.contract.contract_key === "tower_total_it_spend" ||
@@ -944,7 +990,10 @@ function buildCioTowerFallbackFollowUp(
     return "Which funded programs need finance-attested value proof before more capital is released?";
   }
 
-  if (context.contract.contract_key === "tower_total_it_spend" && measures.totalBudget !== null) {
+  if (
+    context.contract.contract_key === "tower_total_it_spend" &&
+    measures.totalBudget !== null
+  ) {
     return `Where should the CIO inspect the ${money(measures.totalBudget)} budget first: run base, vendor exposure, or value-proof gaps?`;
   }
 
@@ -961,7 +1010,10 @@ export function buildCioTowerFallbackAnswer(
   const totalBudget = measureNumber(context.measures, "total_it_budget_fy26");
   const runBudget = measureNumber(context.measures, "run_budget_fy26");
   const changeBudget = measureNumber(context.measures, "change_budget_fy26");
-  const initiativeBudget = measureNumber(context.measures, "initiative_budget_fy26");
+  const initiativeBudget = measureNumber(
+    context.measures,
+    "initiative_budget_fy26",
+  );
   const promisedValue = measureNumber(context.measures, "promised_value_fy26");
   const measuredValue = measureNumber(context.measures, "measured_value_ytd");
   const hasRunChange = runBudget !== null || changeBudget !== null;
@@ -973,17 +1025,18 @@ export function buildCioTowerFallbackAnswer(
   let answer: string;
   if (intent === "run_drivers" || intent === "vendor_exposure") {
     const runPart =
-      runBudget !== null
-        ? `${money(runBudget)} run base`
-        : "run base";
+      runBudget !== null ? `${money(runBudget)} run base` : "run base";
     const changePart =
-      changeBudget !== null
-        ? ` and ${money(changeBudget)} change pool`
-        : "";
+      changeBudget !== null ? ` and ${money(changeBudget)} change pool` : "";
     answer = `This is the right drill-down, but the current Tower packet proves the enterprise ${runPart}${changePart}; it does not yet prove the service-by-service or vendor-by-vendor drivers. I would not rank vendors from this view until the run allocation, contract owner, renewal date, and application dependency fields are loaded.`;
-  } else if (intent === "value_gap" || context.contract.contract_key === "tower_value_realization") {
+  } else if (
+    intent === "value_gap" ||
+    context.contract.contract_key === "tower_value_realization"
+  ) {
     const promisedPart =
-      promisedValue !== null ? `${money(promisedValue)} promised value` : "promised value";
+      promisedValue !== null
+        ? `${money(promisedValue)} promised value`
+        : "promised value";
     const measuredPart =
       measuredValue !== null
         ? `${money(measuredValue)} attestation-pending measurement evidence`
@@ -1001,14 +1054,20 @@ export function buildCioTowerFallbackAnswer(
     answer = `Treat the initiative list as a funding-control view, not a success story. In ${towerContextLabel(context.tenantName)}, Tower can inspect ${initiativePart}, but each program still needs ${measuredPart} and owner-attested evidence before it becomes a scale decision.`;
   } else if (intent === "evidence_gap") {
     answer = `The board-readiness gap is evidence quality, not another dashboard view. In ${towerContextLabel(context.tenantName)}, use the loaded budget and value measures for inspection, but hold any realized-value claim until finance-attested baselines, owner signoff, and source-system lineage are complete.`;
-  } else if (intent === "budget_mix" || context.contract.contract_key === "tower_run_change_split" || hasRunChange) {
+  } else if (
+    intent === "budget_mix" ||
+    context.contract.contract_key === "tower_run_change_split" ||
+    hasRunChange
+  ) {
     const contextLabel = towerContextLabel(context.tenantName);
-    const budgetPart = totalBudget !== null
-      ? `In ${contextLabel}, ${money(totalBudget)} of FY26 technology budget is in view`
-      : `In ${contextLabel}, a Tower budget view is available`;
-    const splitPart = runBudget !== null && changeBudget !== null
-      ? `, and the mix is the point: ${money(runBudget)} is run versus ${money(changeBudget)} change.`
-      : ". The run/change split still needs a cleaner budget cut before it should drive a board decision.";
+    const budgetPart =
+      totalBudget !== null
+        ? `In ${contextLabel}, ${money(totalBudget)} of FY26 technology budget is in view`
+        : `In ${contextLabel}, a Tower budget view is available`;
+    const splitPart =
+      runBudget !== null && changeBudget !== null
+        ? `, and the mix is the point: ${money(runBudget)} is run versus ${money(changeBudget)} change.`
+        : ". The run/change split still needs a cleaner budget cut before it should drive a board decision.";
     answer = `This is a run-cost pressure question, not a value-realization win yet. ${budgetPart}${splitPart} I would use this as a budget-control conversation until finance-attested ${valueLanguage} is complete.`;
   } else if (context.contract.contract_key === "tower_total_it_spend") {
     answer =
@@ -1061,19 +1120,31 @@ function buildTowerV3FallbackAnswer(
   const view = context.towerV3RuntimeView;
   if (!view) throw new Error("tower_v3_runtime_view_missing");
   const intent = fallbackQuestionIntent(context);
-  const topValueRows = view.valueHypotheses.slice(0, 5).map((item) => [
-    item.label,
-    item.value,
-    item.claimBasis.replace(/_/g, " "),
-    item.gateStatus,
-  ]);
+  const topValueRows = view.valueHypotheses
+    .slice(0, 5)
+    .map((item) => [
+      item.label,
+      item.value,
+      item.claimBasis.replace(/_/g, " "),
+      item.gateStatus,
+    ]);
   const topGap = view.gapThemes[0];
-  const cioInsight = view.executiveInsights.find((insight) => insight.role === "CIO");
-  const cfoInsight = view.executiveInsights.find((insight) => insight.role === "CFO");
+  const cioInsight = view.executiveInsights.find(
+    (insight) => insight.role === "CIO",
+  );
+  const cfoInsight = view.executiveInsights.find(
+    (insight) => insight.role === "CFO",
+  );
   const cleanTitle = (value: string | undefined, fallback: string): string =>
-    (value?.replace(/[.]+$/g, "").trim() || fallback);
-  const cioTitle = cleanTitle(cioInsight?.insightTitle, "data foundation readiness");
-  const cfoTitle = cleanTitle(cfoInsight?.insightTitle, "baseline and actuals ownership");
+    value?.replace(/[.]+$/g, "").trim() || fallback;
+  const cioTitle = cleanTitle(
+    cioInsight?.insightTitle,
+    "data foundation readiness",
+  );
+  const cfoTitle = cleanTitle(
+    cfoInsight?.insightTitle,
+    "baseline and actuals ownership",
+  );
   const gateSummary = `${view.valueClaimCount} value-claim gates: ${view.gateCounts.allowed} allowed, ${view.gateCounts.caveated} caveated, ${view.gateCounts.blocked} blocked`;
   const inspectionRows = [
     cioInsight
@@ -1102,23 +1173,25 @@ function buildTowerV3FallbackAnswer(
           "Board use needs baselines, actuals, formulas, and claim gates.",
           "Hold outcome language until finance evidence is attached.",
         ],
-    ...view.gapThemes.slice(0, 3).map((theme) => [
-      theme.ownerOrSteward ?? theme.moduleHandoff,
-      theme.title,
-      theme.whyItMatters,
-      `Close with ${theme.requiredEvidence.slice(0, 2).join(" and ")}.`,
-    ]),
+    ...view.gapThemes
+      .slice(0, 3)
+      .map((theme) => [
+        theme.ownerOrSteward ?? theme.moduleHandoff,
+        theme.title,
+        theme.whyItMatters,
+        `Close with ${theme.requiredEvidence.slice(0, 2).join(" and ")}.`,
+      ]),
   ].slice(0, 5);
 
   let answer: string;
   if (intent === "value_gap") {
-    answer = `Use Tower as a value-governance view, not an outcome scoreboard. ${view.tenantName} has ${view.valueRecordCount} value records and ${gateSummary}, so the executive move is to rank forecast value while closing baseline, owner, and finance-attestation gaps. The CIO can use this to sequence measurement work; the CFO should hold board claims until the claim gates clear.`;
+    answer = `Use Tower as a value-governance view, not an outcome scoreboard. The current context supports a measurement agenda, but ${gateSummary}, so the executive move is to rank forecast value while closing baseline, owner, and finance-attestation gaps. The CIO can use this to sequence measurement work; the CFO should hold board claims until the claim gates clear.`;
   } else if (intent === "run_drivers" || intent === "vendor_exposure") {
     answer = `Tower can point to the service and vendor evidence blockers, but it should not rank commercial exposure from bridge diagnostics alone. The strongest current blocker is ${topGap?.title ?? "contract and service evidence"}. Send contract economics, SLA/KPI schedules, renewal windows, and vendor performance evidence to Source before turning this into a commercial-benefit case.`;
   } else if (intent === "program_budget" || intent === "budget_mix") {
-    answer = `This is a funding-control question. Tower has ${view.metricCount} metric records and ${view.valueRecordCount} value records from the governed context pack, but the budget and value cuts are still planning-grade until finance-controlled actuals and baselines are reconciled. I would fund measurement design first, then move only the best-evidenced programs into Moves.`;
+    answer = `This is a funding-control question. Tower has enough budget and value context to frame the decision, but the cuts are still planning-grade until finance-controlled actuals and baselines are reconciled. I would fund measurement design first, then move only the best-evidenced programs into Moves.`;
   } else if (intent === "evidence_gap") {
-    answer = `The board-readiness issue is claim discipline, not another dashboard. ${view.tenantName} has ${view.metricCount} metric records, ${view.valueRecordCount} value records, and ${gateSummary}; that is enough to design the measurement agenda, but not enough to make outcome-proof claims. I would have the CIO inspect ${cioTitle} first while the CFO locks ${cfoTitle}.`;
+    answer = `The board-readiness issue is claim discipline, not another dashboard. ${view.tenantName} has enough context to design the measurement agenda, but ${gateSummary}; that is not enough to make outcome-proof claims. I would have the CIO inspect ${cioTitle} first while the CFO locks ${cfoTitle}.`;
   } else {
     answer = `Tower is ready to guide measurement, readiness, and executive action, but not to certify outcomes. The CIO should focus on platform and operating-model gates; the CFO should focus on baselines, actuals, and claim discipline. The decision is not whether the dashboard is attractive; it is whether the claim gates are strong enough for the next executive meeting.`;
   }
@@ -1132,7 +1205,12 @@ function buildTowerV3FallbackAnswer(
             {
               id: "tower_board_readiness_path",
               title: "Board-readiness inspection path",
-              columns: ["Owner", "Inspect first", "Why it matters", "Decision to unlock"],
+              columns: [
+                "Owner",
+                "Inspect first",
+                "Why it matters",
+                "Decision to unlock",
+              ],
               rows: inspectionRows,
             },
           ]
@@ -1145,7 +1223,7 @@ function buildTowerV3FallbackAnswer(
                 rows: topValueRows,
               },
             ]
-        : [],
+          : [],
     tabs: [
       {
         id: "cio_view",
@@ -1210,7 +1288,9 @@ function deriveGaps(
     contract.contract_key === "tower_value_realization" &&
     !valueClaimPolicy.realizedValueLanguageAllowed
   ) {
-    gaps.push("Realized-value language is blocked until v3-reconciled measured evidence is loaded.");
+    gaps.push(
+      "Realized-value language is blocked until v3-reconciled measured evidence is loaded.",
+    );
   }
   if (!Number(actualSpend?.value_numeric)) {
     gaps.push("Actual spend YTD is missing or not separately loaded.");
@@ -1224,7 +1304,9 @@ function deriveGaps(
 function buildCioTowerValueClaimPolicy(
   measures: CioTowerMeasureResult[],
 ): CioTowerValueClaimPolicy {
-  const measuredValue = measures.find((measure) => measure.measure_key === "measured_value_ytd");
+  const measuredValue = measures.find(
+    (measure) => measure.measure_key === "measured_value_ytd",
+  );
   const claim = evaluateTowerValueClaimGate({
     claimId: "cio-tower-realized-value-language",
     claimKind: "realized_value",
