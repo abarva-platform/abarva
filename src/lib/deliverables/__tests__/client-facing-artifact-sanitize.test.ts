@@ -34,4 +34,17 @@ describe("sanitizeClientFacingArtifactHtml", () => {
     expect(html).not.toMatch(/\bTBC\b/i);
     expect(html).not.toMatch(/\[CLIENT TO COMPLETE:/i);
   });
+
+  it("rewrites phase-owner shorthand without touching filenames or appendix rows", () => {
+    const html = sanitizeClientFacingArtifactHtml(`
+      <p>Design needs the authoritative source P2 Compliance / Chief Risk Office (open input — see Open Inputs Required).</p>
+      <p>Review 08_p2_kyc_control_defect_log.csv in the appendix.</p>
+    `);
+
+    expect(html).toContain(
+      "authoritative source Priority 2 owner: Compliance / Chief Risk Office (open input",
+    );
+    expect(html).toContain("08_p2_kyc_control_defect_log.csv");
+    expect(html).not.toMatch(/\bP2 Compliance\b/);
+  });
 });

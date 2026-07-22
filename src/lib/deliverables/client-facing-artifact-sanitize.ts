@@ -13,6 +13,10 @@ const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/<strong>P([1-5])<\/strong>(\s*[—-])/gi, "<strong>Priority $1</strong>$2"],
   [/<b>P([1-5])<\/b>(\s*[—-])/gi, "<b>Priority $1</b>$2"],
   [/\*\*P([1-5])\*\*(\s*[—-])/g, "**Priority $1**$2"],
+  [
+    /\bP([1-5])\s+([A-Z][A-Za-z&/ ,.-]{2,90}?)(\s*\(open input\b)/g,
+    "Priority $1 owner: $2$3",
+  ],
   [/\bP([1-5])\s+inputs\b/gi, "Priority $1 inputs"],
   [/\bP([1-5])\s+input\b/gi, "Priority $1 input"],
   [/\bP0\s+origination\b/gi, "origination"],
