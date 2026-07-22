@@ -436,8 +436,9 @@ async function ensureResponsibleAiAcknowledged(page: Page): Promise<void> {
     },
   );
   if (response.status() !== 200) {
+    const responseBody = await response.text().catch(() => '');
     throw new Error(
-      `Responsible AI acknowledgment API returned ${response.status()}.`,
+      `Responsible AI acknowledgment API returned ${response.status()}: ${responseBody}`,
     );
   }
 
