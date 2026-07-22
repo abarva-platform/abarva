@@ -104,7 +104,7 @@ describe("anthropic key lanes", () => {
 
     it("throws naming both variables when neither is set", () => {
       expect(() => resolveAnthropicKeyForLane("prod-realtime")).toThrow(
-        /ANTHROPIC_API_KEY_PROD_REALTIME.*ANTHROPIC_API_KEY/s,
+        /ANTHROPIC_API_KEY_PROD_REALTIME[\s\S]*ANTHROPIC_API_KEY/,
       );
     });
   });
