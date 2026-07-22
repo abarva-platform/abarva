@@ -631,11 +631,105 @@ updated 19 d ago` on the proof event).
 
 ---
 
+### SOURCE-ARTIFACT-AUTHORITY-001 — One authoritative artifact per event+slot, consumed everywhere downstream
+
+- **Problem statement**: Source has a real, working artifact-authority resolver
+  (`resolveAuthoritativeArtifact()` in `src/lib/source/client-final-artifacts.ts`) and a real
+  precedence order (client-final → explicit acceptance → current-authoritative →
+  approved/locked → generated → any). It is correctly wired into the client-final route and
+  the artifact render route's client-final short-circuit, and into two aVa-adjacent modules
+  (`ava/mode-grounding.ts`, `source-answer-engine.ts`). But it is **not** the single downstream
+  authority layer yet — several real consumers still read raw/unscoped artifact records
+  instead of resolving through it, so a superseded or generated draft can still surface as if
+  it were current in some surfaces even after a client-final has been accepted.
+- **User/business impact**: A reviewer or downstream system (chat, Files list, direct
+  download, Deal Pack) can be shown or can retrieve a stale/generated version of an artifact
+  the client has already superseded with an accepted final — the exact trust failure the
+  client-final acceptance flow (`SOURCE-SHELL-004`, PR #5114) exists to prevent.
+- **Severity**: P4 (evidence-integrity / lineage-controls class — priority tier 4 in this
+  backlog's ordering)
+- **Workstream**: Deliverable/content quality, evidence integrity
+- **Status**: `Needs Owner Decision` — see reconciliation table below for what's already
+  fixed vs open, and the recommended next single PR.
+- **Reconciliation method**: inspected `origin/main` directly (not assumed from memory),
+  confirmed via `git grep` which real call sites already import
+  `resolveAuthoritativeArtifact`/`client-final-artifacts.ts`, and read the actual route bodies
+  for the two most consequential findings (render-route format-mismatch fallback,
+  nexus/ask's un-scoped evidence context) rather than taking the audit claims at face value.
+
+**Reconciliation table** (state as of `main` @ `d5610a737`, 2026-07-22):
+
+| # | Item | Already fixed on `main`? | Open gap | Proposed PR scope | Tests | Deploy proof needed |
+|---|---|---|---|---|---|---|
+| 1 | Artifact Authority Resolver (one artifact per event+slot, with audit history) | **Partially.** `resolveAuthoritativeArtifact()` exists and is correct (client-final → acceptance → current-authoritative → approved/locked → generated → any, tie-broken by acceptedAt/updatedAt/createdAt then version). No slot-grouping variant exists on `main` yet. | No `resolveAuthoritativeArtifactSlots()` — nothing returns "one winner + audit history" per event×artifact-code today. | Land the worktree's additive `resolveAuthoritativeArtifactSlots()` + `sourceOrigin` fallback (see below) as its own reviewable diff, or bundle with #2 (they're one coupled change in the current worktree). | Worktree already has 68 new lines of test coverage in `client-final-artifacts.test.ts` (uncommitted) — verify they assert slot-collapse + history ordering + `sourceOrigin` fallback explicitly. | None (pure lib addition, no route behavior changes by itself). |
+| 2 | aVa / Source ask authority slice | **Not fixed.** `nexus/ask/route.ts`'s `loadSourceEventArtifactContext()` builds `artifactEvidence`/chunks/facts from **all** artifact rows for the event, unscoped by authority — confirmed by direct read of `main`'s `route.ts` (no `resolveAuthoritativeArtifact` import at all). | Superseded/generated-draft chunks and facts can outrank or sit alongside client-final evidence in what aVa cites. | The worktree's uncommitted diff to this exact function already closes this: resolves per-slot winners, scopes `chunks`/`facts`/`artifactEvidence` to only authoritative artifact ids, and adds a bounded (`slice(0, 8)`) "audit-only lineage" evidence entry for superseded artifacts so they're citable as history but not as substantive evidence. Verified this diff touches a different region of `route.ts` than PR #5350's NDJSON branch — low rebase-conflict risk. | Worktree ran `npm test -- --runInBand client-final-artifacts.test.ts artifact-lifecycle-matrix.test.ts mode-grounding.test.ts` — PASS. Add a route-level test asserting a superseded draft's chunk text never appears in `artifactEvidence` when a client-final sibling exists. | Live signed-in: ask aVa about an artifact stage that has both a superseded generated draft and an accepted client-final; confirm the answer/citations trace only to the final. |
+| 3 | Files API/listing unification | **Not fixed.** `src/app/api/v1/source/events/[eventId]/artifacts/route.ts` has zero references to the resolver — confirmed via `git grep`. | Durable + fallback-generated rows for the same slot can both render in the Files list without collapsing to one authoritative row + a visible history affordance. | Separate PR, after #1/#2 land: wire this route through `resolveAuthoritativeArtifactSlots()`; preserve the existing `includeHistory` query param's raw-row behavior for audit mode. | New route test: same-slot durable+generated rows collapse to one row by default; `includeHistory=true` still returns all rows. | Live signed-in: Files tab for an event with a superseded draft + accepted final shows one row, with history reachable via the existing history affordance. |
+| 4 | Render/export authority slice — format-mismatch honesty | **Partially fixed, one confirmed real gap.** The render route (`.../[artifactCode]/render/route.ts`) already calls `resolveAuthoritativeArtifact()` and short-circuits to the client-final file **only when the requested format exactly matches the stored final's format** — confirmed by reading `streamClientFinalIfAvailable()` directly: `if (authoritative.fileFormat !== requestedFileFormat) return null;`. When it returns `null`, the caller (`if (clientFinalResponse) return clientFinalResponse;`) **silently falls through** to the normal generated-render path with no signal that a client-final exists in a different format. | A DOCX client-final + a `?format=pdf` request silently returns a freshly generated PDF draft, indistinguishable in the response from a case where no final exists at all. | Add an explicit branch: when `resolveAuthoritativeArtifact()` finds a client-final artifact but its format doesn't match the request, either (a) transcode/convert from the stored final rather than regenerating from scratch, or (b) return a clear 409/422 `{error: "client_final_format_mismatch", availableFormat, requestedFormat}` instead of silently generating. Standardize `x-source-artifact-authoritative` / governance-stage headers on every branch (client-final hit, mismatch, and generated-fallback) so callers can always tell which case fired. | New test: client-final exists as DOCX, request `?format=pdf` → asserts the new explicit behavior (not a silent generated-draft 200). | Live signed-in: request a client-final artifact in its stored format (should stream the real file) and in a mismatched format (should show the new explicit signal, not a silently-generated draft). |
+| 5 | Direct artifact download authority | **Not fixed.** `src/app/api/v1/source/artifacts/[artifactId]/download/route.ts` has zero references to the resolver — confirmed via `git grep`. | A direct download link to a generated-draft artifact id still streams that draft even when a client-final sibling for the same slot exists and the caller didn't explicitly ask for history. | Separate PR: resolve the requested id's slot, and if a more-authoritative sibling exists and the request isn't in explicit history mode, redirect/serve the authoritative sibling instead (with a clear indicator that a substitution happened). | New test: generated-draft id + client-final sibling in the same slot → returns/redirects to the final; explicit history-mode request still returns the originally-requested draft id. | Live signed-in: old draft download link for an artifact that has since gone client-final resolves to the final, not the stale draft. |
+| 6 | Deal Pack authority | **Not fixed.** `assemble-deal-pack.ts` reads `ctx.artifactStates` directly (confirmed via `git grep` — zero resolver references) rather than resolving through the shared authority layer or consulting File Cabinet client-final blobs. | Deal Pack can assemble from generated-draft context even when a client-final exists for the same artifact slot. | Separate PR, sequenced after #1: thread `resolveAuthoritativeArtifactSlots()` output into the Deal Pack assembler; client-final wins over `ctx.artifactStates` for any slot where both exist. | New test: Deal Pack output for a slot with both a superseded AI draft and an accepted client-final uses the final's content, and the draft appears (if at all) only as labeled audit history. | Live signed-in: generate a Deal Pack for an event with a mixed final/draft artifact set; confirm the final's content appears and the draft doesn't silently substitute. |
+| 7 | Governance label unification | **Partially fixed.** `src/lib/source/artifact-governance.ts` is already established this session (see `SOURCE-SHELL` slices above) as the canonical governance-stage/banner source, consumed by the 4 structured artifact families and by the render route's client-final path. `source-answer-engine.ts` has a **duplicated, hand-synced** precedence re-implementation (with an explicit code comment acknowledging the duplication risk: *"must stay identical so this surface never disagrees... Update both together"*) rather than calling the shared resolver directly — confirmed by reading the file. | Real (small, contained) drift risk: a future edit to `resolveAuthoritativeArtifact()`'s precedence order without the matching manual update in `source-answer-engine.ts` would silently desync aVa's answer-engine artifact selection from every other surface. | Separate, small PR: since `source-answer-engine.ts` parses regex-extracted prose evidence (not typed DB rows), either (a) normalize those records into the typed `AuthoritativeArtifactCandidate` shape early and call the real resolver, or (b) if that's not feasible without a larger refactor, add a unit test that runs both implementations against the same fixture set and asserts identical winners — turning the comment's promise into an enforced invariant. | New test: parallel-fixture equivalence test between `resolveAuthoritativeArtifact()` and the answer-engine's local logic (option b), or a call-site test if refactored to option (a). | None required for option (b) (test-only); live signed-in re-verification of aVa answers if refactored to option (a). |
+| 8 | Safe repair/regenerate old persisted drafts (`d01_strategy_memo` CONTENT BLOCKERS 3) | **Not fixed.** This is existing, already-identified debt from PR #5126's live-proof pass — the generation-hygiene sanitizer added there only prevents *future* generated drafts from carrying internal/mechanical terms; it does not touch already-persisted bodies. | The specific persisted `d01` artifact still fails content-blocker checks and has no safe repair/regenerate path that respects the locked/superseded-content rule. | Separate PR: a targeted, explicit "safe regenerate" action (not a silent overwrite) for a locked/superseded artifact — must produce an audit receipt and a before/after content-QA diff, and must not run automatically for any artifact the user hasn't explicitly selected. | New test: regenerate action on a locked artifact requires explicit confirmation, produces an audit row, and the before/after diff is captured. | Live signed-in: run the safe-regenerate action on the actual affected `d01` artifact and confirm the audit receipt + clean content-blocker result. |
+| 9 | Artifact prompt/workflow maturity by phase (d06, d08, d10, d12–d33 partial) | **Not assessed in this reconciliation pass** — real, large, multi-artifact-code scope explicitly called out by the requester as its own sequenced backlog (Pricing d19–d21 → Responses d13–d15 → Evaluation d16–d18 → Transition d29–d31 → Value d32–d33). | Prompt/workflow coverage gaps per the requester's own priority order. | Do not bundle with #1–#8. Scope and sequence as its own set of future backlog entries once #1–#7 (the authority-layer foundation) are live, since new per-phase artifact work should generate against the corrected authority model from day one rather than needing a second migration later. | TBD per artifact family, at scoping time. | TBD per artifact family, at scoping time. |
+
+**Partial worktree disposition** (`/Users/anand/Projects/nexus-source-artifact-governance-20260722`,
+branch `codex/source-artifact-governance-unification`, based on `main` @ `3f34e1723` — 4 commits
+behind current `main` as of this reconciliation):
+
+- **Decision: KEEP, rebase, and ship as the next PR.** The uncommitted diff is real, additive,
+  and directly closes reconciliation items #1 and #2 together (they are one coupled change in
+  this worktree — the slot-resolver extension exists specifically to serve the `nexus/ask`
+  scoping change). Read the full diff directly (not just the worktree's own self-report):
+  `client-final-artifacts.ts` gets a purely-additive `sourceOrigin` fallback field and a new
+  `resolveAuthoritativeArtifactSlots()` export (existing `resolveAuthoritativeArtifact()`
+  signature and behavior unchanged for every existing caller); `nexus/ask/route.ts`'s
+  `loadSourceEventArtifactContext()` is rewritten to scope chunks/facts/primary evidence to
+  authoritative-only artifact ids, with superseded artifacts demoted to a bounded, clearly
+  labeled "audit lineage" evidence entry rather than dropped or left indistinguishable from
+  live evidence.
+- **Real risk found and already checked**: this worktree's `nexus/ask/route.ts` diff and PR
+  #5350 (`fix(source): render governed vendor-coverage answer in the real AskAnythingBar` — do
+  not confuse with the different, also-merged PR #5341, `feat(source): first governed
+  structured chat answer`) both touch this same file. Direct diff comparison confirms they
+  touch different, non-overlapping regions (PR #5350/#5341's changes are in `POST()`'s
+  top-level NDJSON branch near the top of the file plus a new import; the worktree's diff is
+  entirely inside `loadSourceEventArtifactContext()` and two new helper functions near the
+  bottom) — rebase conflict risk is low, but must be verified for real by actually rebasing,
+  not assumed from this description.
+- **Before shipping**: (1) rebase the worktree branch onto current `origin/main` (currently 4
+  commits behind — includes both merged Source PRs from this session); (2) install a complete
+  dependency tree (`npm install`, not a `node_modules` symlink) so `tsc --noEmit` runs clean
+  without the `@xyflow/react`/`@dagrejs/dagre` false-missing-module errors this session hit
+  from a partial symlinked `node_modules` — needed to trust a clean typecheck result, not just
+  the targeted Jest run the worktree already passed; (3) re-run the full targeted test set
+  post-rebase; (4) write the release record documenting reconciliation items #1 and #2 as this
+  PR's real scope (do not silently expand it to cover #3–#9 in the same PR).
+- **Do not classify the `nexus-api-live-context` "AbarVa generated" vs "AbarVa-generated"
+  wording mismatch as a regression from this diff without an explicit before/after check** —
+  the worktree's own validation notes correctly flag this as needing verification, not
+  assumption, before either fixing it in this PR or filing it separately.
+
+**Recommended next single PR**: reconciliation items **#1 + #2 together** (the worktree's
+existing diff, rebased) — `SOURCE-ARTIFACT-AUTHORITY-001a`. This is the true dependency root:
+every other open item (#3 Files listing, #5 download, #6 Deal Pack) either directly imports
+`resolveAuthoritativeArtifactSlots()` or should, so shipping it first — narrowly scoped to the
+one route it's already wired into — gives every subsequent slice a real, tested primitive to
+build on rather than each slice re-deriving slot-collapse logic independently. Item #4
+(render-route format-mismatch honesty) is real and worth fixing but is independent of #1/#2 and
+should be its own follow-on PR, not bundled in. Items #3, #5, #6 are explicitly sequenced after
+#1/#2 land (per the requester's own execution order) and should each be their own PR. Items #7
+and #8 are small, independent, and can be picked up opportunistically. Item #9 (per-phase prompt
+maturity) is deliberately out of scope for the authority-layer work entirely.
+
+---
+
 ## Ready / in progress
 
-`SOURCE-UX-DECLUTTER-001` batch 1 is merged and live-proven. `SOURCE-ANALYTICS-CHAT-001` is
-next, pending a real implementation plan (transport + governance wiring — see its entry
-above for why this isn't a simple wiring task). After that: `SOURCE-ARTIFACT-QUALITY-001`,
+`SOURCE-UX-DECLUTTER-001` batch 1 is merged and live-proven; `SOURCE-ANALYTICS-CHAT-001`
+(vendor-response-coverage governed chat answer) is merged, deployed, and live-verify in
+progress as of this reconciliation. `SOURCE-ARTIFACT-AUTHORITY-001` is next — start with the
+`#1 + #2` slice (`SOURCE-ARTIFACT-AUTHORITY-001a`: rebase and ship the existing
+`/Users/anand/Projects/nexus-source-artifact-governance-20260722` worktree diff), per its own
+reconciliation table and recommended-PR section above. After that: `SOURCE-ARTIFACT-QUALITY-001`,
 `SOURCE-GUIDEBOOK-004`, `SOURCE-INGEST-001`. Continue the same standing authority already
 established this session for contained, low-risk changes: merge, deploy, and live-verify
 without pausing for confirmation between batches. Real stop conditions remain: a database
