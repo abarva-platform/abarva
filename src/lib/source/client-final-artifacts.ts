@@ -15,6 +15,7 @@ export interface AuthoritativeArtifactCandidate {
   version?: number;
   lifecycleState?: string | null;
   status?: string | null;
+  sourceOrigin?: string | null;
   artifactGroup?: string | null;
   isClientFinal?: boolean | null;
   isCurrentAuthoritative?: boolean | null;
@@ -42,6 +43,12 @@ export interface ClientFinalChangeSummaryInput {
   stakeholderGroup?: string | null;
 }
 
+export interface AuthoritativeArtifactSlot<T> {
+  slotKey: string;
+  authoritative: T;
+  history: T[];
+}
+
 export function isClientFinalArtifact(
   artifact: Pick<AuthoritativeArtifactCandidate, "status" | "isClientFinal">,
 ): boolean {
@@ -62,7 +69,11 @@ export function resolveAuthoritativeArtifact<
       (artifact) =>
         artifact.status === "approved" || artifact.status === "locked",
     ),
-    current.filter((artifact) => artifact.artifactGroup === "generated"),
+    current.filter(
+      (artifact) =>
+        artifact.artifactGroup === "generated" ||
+        artifact.sourceOrigin === "generated",
+    ),
     current,
   ];
 
@@ -71,6 +82,36 @@ export function resolveAuthoritativeArtifact<
     if (winner) return winner;
   }
   return null;
+}
+
+export function resolveAuthoritativeArtifactSlots<
+  T extends AuthoritativeArtifactCandidate,
+>(
+  artifacts: readonly T[],
+  slotKeyFor: (artifact: T) => string | null | undefined,
+): AuthoritativeArtifactSlot<T>[] {
+  const bySlot = new Map<string, T[]>();
+  for (const artifact of artifacts) {
+    const slotKey = slotKeyFor(artifact);
+    if (!slotKey) continue;
+    const slot = bySlot.get(slotKey) ?? [];
+    slot.push(artifact);
+    bySlot.set(slotKey, slot);
+  }
+
+  return [...bySlot.entries()]
+    .map(([slotKey, slotArtifacts]) => {
+      const authoritative = resolveAuthoritativeArtifact(slotArtifacts);
+      if (!authoritative) return null;
+      return {
+        slotKey,
+        authoritative,
+        history: latestFirst(
+          slotArtifacts.filter((artifact) => artifact.id !== authoritative.id),
+        ),
+      };
+    })
+    .filter((slot): slot is AuthoritativeArtifactSlot<T> => Boolean(slot));
 }
 
 export function buildClientFinalChangeSummary(
@@ -116,14 +157,18 @@ function latest<T extends AuthoritativeArtifactCandidate>(
   artifacts: readonly T[],
 ): T | null {
   if (artifacts.length === 0) return null;
-  return (
-    [...artifacts].sort((a, b) => {
-      const aTime = timestampFor(a);
-      const bTime = timestampFor(b);
-      if (aTime !== bTime) return bTime - aTime;
-      return (b.version ?? 0) - (a.version ?? 0);
-    })[0] ?? null
-  );
+  return latestFirst(artifacts)[0] ?? null;
+}
+
+function latestFirst<T extends AuthoritativeArtifactCandidate>(
+  artifacts: readonly T[],
+): T[] {
+  return [...artifacts].sort((a, b) => {
+    const aTime = timestampFor(a);
+    const bTime = timestampFor(b);
+    if (aTime !== bTime) return bTime - aTime;
+    return (b.version ?? 0) - (a.version ?? 0);
+  });
 }
 
 function timestampFor(artifact: AuthoritativeArtifactCandidate): number {

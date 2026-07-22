@@ -3,6 +3,7 @@ import {
   CLIENT_FINAL_GOVERNANCE_MESSAGE,
   isClientFinalArtifact,
   resolveAuthoritativeArtifact,
+  resolveAuthoritativeArtifactSlots,
 } from "../client-final-artifacts";
 import { SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE } from "../artifact-governance";
 
@@ -84,6 +85,75 @@ describe("client-final artifact governance", () => {
     ).toBe("generated");
   });
 
+  it("treats sourceOrigin=generated as a generated draft fallback", () => {
+    expect(
+      resolveAuthoritativeArtifact([
+        {
+          id: "uploaded-evidence",
+          version: 2,
+          lifecycleState: "current",
+          sourceOrigin: "uploaded",
+          updatedAt: "2026-07-04T10:00:00.000Z",
+        },
+        {
+          id: "generated-draft",
+          version: 1,
+          lifecycleState: "current",
+          sourceOrigin: "generated",
+          updatedAt: "2026-07-03T10:00:00.000Z",
+        },
+      ])?.id,
+    ).toBe("generated-draft");
+  });
+
+  it("resolves one authoritative artifact per lifecycle slot and demotes history", () => {
+    const slots = resolveAuthoritativeArtifactSlots(
+      [
+        {
+          id: "rfp-draft",
+          version: 1,
+          lifecycleState: "superseded",
+          sourceOrigin: "generated",
+          status: "draft",
+          updatedAt: "2026-07-03T10:00:00.000Z",
+          slotKey: "rfp::d09_rfp_pack",
+        },
+        {
+          id: "rfp-client-final",
+          version: 2,
+          lifecycleState: "current",
+          status: "client_final",
+          isClientFinal: true,
+          isCurrentAuthoritative: true,
+          clientFinalAcceptedAt: "2026-07-04T10:00:00.000Z",
+          slotKey: "rfp::d09_rfp_pack",
+        },
+        {
+          id: "scorecard-approved",
+          version: 1,
+          lifecycleState: "current",
+          status: "approved",
+          slotKey: "evaluation::d16_scorecard",
+        },
+      ],
+      (artifact) => artifact.slotKey,
+    );
+
+    expect(slots).toHaveLength(2);
+    expect(
+      slots.find((slot) => slot.slotKey === "rfp::d09_rfp_pack"),
+    ).toMatchObject({
+      authoritative: { id: "rfp-client-final" },
+      history: [{ id: "rfp-draft" }],
+    });
+    expect(
+      slots.find((slot) => slot.slotKey === "evaluation::d16_scorecard"),
+    ).toMatchObject({
+      authoritative: { id: "scorecard-approved" },
+      history: [],
+    });
+  });
+
   it("resolves an active-acceptance artifact above isCurrentAuthoritative but below client-final", () => {
     // SOURCE-SHELL-004: an explicit, reasoned "accept as authoritative"
     // record is a stronger signal than the inferred isCurrentAuthoritative
@@ -128,7 +198,12 @@ describe("client-final artifact governance", () => {
     // empty and resolution falls through exactly as before.
     expect(
       resolveAuthoritativeArtifact([
-        { id: "approved", version: 1, lifecycleState: "current", status: "approved" },
+        {
+          id: "approved",
+          version: 1,
+          lifecycleState: "current",
+          status: "approved",
+        },
       ])?.id,
     ).toBe("approved");
   });
