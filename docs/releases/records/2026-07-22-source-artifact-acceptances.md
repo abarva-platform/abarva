@@ -6,7 +6,8 @@
 
 ## Status
 
-`candidate` — PR open, migration not yet applied through the governed lane.
+`live-proven` — PR merged, deployed, migration applied through the governed lane, and the
+Accept action verified end-to-end via a real signed-in session. See Audit Evidence.
 
 ## Plain-English Summary
 
@@ -123,10 +124,28 @@ Full field-by-field accounting is in the plan
   parser — pre-existing, unrelated drift from other concurrent work on `main`).
 - `pass` — `node scripts/release-check.mjs --base origin/main --head HEAD` (after this record
   was added).
-- `NOT YET PERFORMED` — governed migration lane (`mode=status` then `mode=apply`) and live
-  signed-in proof — both require explicit user confirmation before dispatching, per this
-  repo's highest-scrutiny migration governance. Tracked as the immediate next step after this
-  PR merges.
+- `pass` (2026-07-22) — governed migration lane, dispatched with explicit user confirmation:
+  - `mode=status` (run [29891319495](https://github.com/abarva-platform/abarva/actions/runs/29891319495)) — read-only preflight confirmed `20260722150000_source_artifact_acceptances.sql`
+    pending, alongside 2 unrelated migrations from other concurrent work (applied together —
+    the lane always catches main fully current, not cherry-picked).
+  - `mode=apply` (run [29891595253](https://github.com/abarva-platform/abarva/actions/runs/29891595253)), confirmed via the required `APPLY` input — every step succeeded:
+    schema readback, our new "Repository readback — artifact acceptances" step, and the
+    post-migration health check (`{"ok": true, "checks": {"postgres": true,
+    "direct_postgres": true}}`).
+  - The repository readback genuinely round-tripped through real Postgres — real generated
+    UUIDs, `artifactState: "approved_for_external_use"`, `acceptedBy: "db-migration-lab"`,
+    matching exactly what `verify-artifact-acceptances-readback.ts` writes. Not asserted on
+    raw SQL; the actual `insertArtifactAcceptance`/`getLatestArtifactAcceptance` repository
+    functions production code uses were exercised.
+- `pass` (2026-07-22) — live signed-in proof. Real session (Anand Sundaram, Healthcare Demo
+  tenant), real event `cea10d0a-6d5d-49d2-8522-173c2d6fd520`, Strategy artifact
+  `Sourcing_Strategy_Memo-76f3fe09.docx`. Clicked "Accept as authoritative," filled the real
+  form (rationale, content drift, gate precondition, agent context eligibility — the exact
+  copy shown live matched the component source), submitted. The card re-rendered with a real
+  "Artifact status" panel: "Accepted by `d15d16a8-e5ad-4a0a-a1cf-93e06a3936d0` on 7/21/2026 —
+  '\"Live signed-in verification of SOURCE-SHELL-004 — real acceptance record.\"' — Gate
+  precondition: ready." A real Clerk user id, the exact rationale typed, and the exact gate
+  precondition selected — not a placeholder, not a mock.
 
 ## Rollout Plan
 
@@ -147,15 +166,16 @@ Full field-by-field accounting is in the plan
 - Migration deploy workflow: `.github/workflows/db-migration-lab.yml` (schema, separate
   dispatch, requires explicit `APPLY` confirmation).
 - Shared runtime mutators: none beyond the two workflows above.
-- Approved image digest: to be recorded once the app-code PR is merged and deployed.
-- ACA runtime invariant: to be verified after app-code deploy.
+- Approved image digest: `acrabarvalab001.azurecr.io/abarva/web@sha256:8695d870bf15f3a858fda2c7592d766eda043c17d54ee93cd342927db08d03a8`
+  (revision `ca-abarva-web-lab-eastus--m539ae678`, matching merge commit
+  `539ae678a9cb6cf0b93878894673c4d0f3b22437`) — confirmed `Healthy`, 100% traffic, at deploy
+  time. (`main` has moved further since via unrelated concurrent work; this app code is
+  present in every subsequent build.)
+- ACA runtime invariant: proven at deploy time — template image and 100%-traffic revision
+  both matched the digest above.
 - Worker image invariant: N/A — no worker code touched.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes — deferred until after the migration is applied (the new
-  UI panel gracefully shows the honest "never accepted" state before that, so app-code deploy
-  is safe to land ahead of the migration; the Accept action itself will fail with a clear
-  500/insert error until the table exists — acceptable for a `candidate` release, called out
-  explicitly here rather than silently).
+- Live signed-in proof required: yes — performed 2026-07-22, see QA / Validation.
 
 ## Rollback Plan
 
@@ -169,8 +189,14 @@ Full field-by-field accounting is in the plan
 
 ## Audit Evidence
 
-- PR: to be added once opened.
-- Migration lane run: to be added once dispatched.
+- PR: [abarva-platform/abarva#5264](https://github.com/abarva-platform/abarva/pull/5264),
+  squash-merged as `539ae678a9cb6cf0b93878894673c4d0f3b22437`.
+- App-code deploy run: [aca-main-deploy 29890407668](https://github.com/abarva-platform/abarva/actions/runs/29890407668), conclusion `success`.
+- Migration status run: [db-migration-lab 29891319495](https://github.com/abarva-platform/abarva/actions/runs/29891319495), conclusion `success`.
+- Migration apply run: [db-migration-lab 29891595253](https://github.com/abarva-platform/abarva/actions/runs/29891595253), conclusion `success` — every step
+  (schema readback, both repository readbacks, health check, audit chain) succeeded.
+- Live signed-in proof: real acceptance record created on a real production artifact,
+  2026-07-22 — see QA / Validation for the exact rendered content.
 - Typecheck/lint/test logs: see QA / Validation.
 
 ## Known Gaps
