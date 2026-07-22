@@ -568,18 +568,68 @@ updated 19 d ago` on the proof event).
   parse worker for PDF/XLSX/PPTX uploads currently stuck at `parse_status: "pending"` with no
   consumer).
 
+### SOURCE-ANALYTICS-CHAT-001 — Wire Source's aVa chat to the AgentAnswerRenderer pipeline
+
+- **Problem statement**: Source's chat surfaces (in-canvas `AvaBottomBar`, portfolio
+  `SourceEventsAgentDockView`) only stream raw prose. A real, already-live chart/table
+  rendering pipeline (`AgentAnswerRenderer`, driven by an `AvaAnswerPacket`) already works in
+  production on Home and Intelligence — Source just never builds a packet to hand it.
+- **User/business impact**: real, already-computed Source analytics (vendor response
+  coverage, value waterfall, artifact quality/lifecycle) can only be seen on their own canvas
+  panels — aVa chat can't answer a question like "how are vendors doing on coverage?" with
+  an actual table, only prose.
+- **Severity**: P3 (real capability gap, highest-leverage item from the 6-area UX audit)
+- **Workstream**: Analytics / aVa chat
+- **Status**: `Investigated — plan pending`. Deep grounding (not just the original audit pass)
+  found this is a real architecture decision, not a simple wiring task:
+  1. **No dormant transport exists.** Source's chat calls `/api/chat/agent`
+     (`src/app/api/chat/agent/route.ts`, ~3630 lines, shared by many non-Source surfaces) —
+     this route streams plain text only, with no NDJSON `agent-answer` event mechanism. The
+     real, proven `AvaAnswerPacket` pattern lives entirely on the separate
+     `/api/intelligence/ask` NDJSON route (Home + Intelligence), which Source does not call.
+     Building this means either retrofitting the large shared route (broad blast radius) or
+     adding a new Source branch to the Intelligence-ask route (new code, not flipping on
+     something latent) — both are real builds, not toggles.
+  2. **A real governance gap was found and deliberately NOT fixed here** — see
+     `docs/governance/CONTEXT_CORPUS_ENFORCEMENT_TRACKER_2026-06-08.md`'s "Known gap
+     (2026-07-22)" section: Home/Intelligence's actual live packet-building path
+     (`composeAvaAnswer`/`buildStructuredExhibits`) never calls the mandatory
+     `buildValidatedAgentContextBundle` gate — it hardcodes `safety` flags as passed rather
+     than deriving them from a real check. Per explicit user decision (2026-07-22): **build
+     the new Source chat-answer path as the first surface that actually wires the governance
+     gate into a live route** — do not just copy the existing (ungoverned) Home/Intelligence
+     pattern for consistency. Retrofitting Home/Intelligence's existing routes is tracked as
+     separate, deliberate follow-up work, not bundled into this item.
+  3. **`isSourceSurface()` may not even be firing today** — `SourceEventsAgentDockView.tsx`
+     sends `surface: 'source/events'` (no leading slash), which doesn't match
+     `isSourceSurface()`'s matcher (`src/app/api/chat/agent/route.ts`) — worth fixing
+     regardless of which transport path is chosen, since it gates whether Source-scoped
+     context/access-policy logic fires at all.
+- **Dependencies**: a real implementation plan covering the transport decision and the new
+  governance wiring (turning `VendorCoverageView`/waterfall/lifecycle data into
+  `GovernedCandidate[]` for `buildValidatedAgentContextBundle`) before any code is written.
+- **Acceptance criteria**: TBD — to be finalized in the implementation plan.
+- **Discovered from**: the 6-area UX audit's aVa chat/analytics capability finding, then
+  deep-grounded before implementation per this session's established discipline (verify
+  before building, especially for anything touching the mandatory governance gate).
+
 ---
 
 ## Ready / in progress
 
-`SOURCE-UX-DECLUTTER-001` batch 1 is merged. Next batches from the same audit, in
-recommended order: `SOURCE-ANALYTICS-CHAT-001` (highest leverage — infrastructure already
-exists, Source just isn't wired to it), then `SOURCE-ARTIFACT-QUALITY-001`,
+`SOURCE-UX-DECLUTTER-001` batch 1 is merged and live-proven. `SOURCE-ANALYTICS-CHAT-001` is
+next, pending a real implementation plan (transport + governance wiring — see its entry
+above for why this isn't a simple wiring task). After that: `SOURCE-ARTIFACT-QUALITY-001`,
 `SOURCE-GUIDEBOOK-004`, `SOURCE-INGEST-001`. Continue the same standing authority already
-established this session: merge, deploy, and live-verify each batch without pausing for
-confirmation between batches unless a real stop condition applies (migration needed,
-permission/payload semantics change, or an unfixable validation failure).
+established this session for contained, low-risk changes: merge, deploy, and live-verify
+without pausing for confirmation between batches. Real stop conditions remain: a database
+migration, a change to existing permissions/payload semantics, a broad-blast-radius change to
+widely-shared code (like the chat-answer transport decision above), or an unfixable
+validation failure.
 
 ## Blocked
 
-None open.
+None open. (Separately tracked, not blocking Source: the Home/Intelligence chat-governance
+gap in `docs/governance/CONTEXT_CORPUS_ENFORCEMENT_TRACKER_2026-06-08.md`'s "Known gap
+(2026-07-22)" section — flagged, not fixed, per explicit user decision to keep it as its own
+follow-up rather than bundle it into `SOURCE-ANALYTICS-CHAT-001`.)
