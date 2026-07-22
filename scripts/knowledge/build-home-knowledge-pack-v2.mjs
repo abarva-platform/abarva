@@ -518,7 +518,13 @@ async function invokeClaudeTool(client, { tool, system, promptPacket, maxTokens 
       return toolUse.input;
     } catch (error) {
       lastError = error;
-      const retryable = error?.status === 429 || (typeof error?.status === "number" && error.status >= 500);
+      // Retry on rate limits, server errors, AND transient network/timeout
+      // errors (no HTTP status: ECONNRESET, ETIMEDOUT, socket hang up, the SDK
+      // 'Request timed out'). The generation call is idempotent, and these
+      // no-status transients on the back-to-back second call were the cause of
+      // intermittent empty strategic_narratives.
+      const status = typeof error?.status === "number" ? error.status : null;
+      const retryable = status === null || status === 429 || status === 408 || status >= 500;
       if (!retryable || attempt === maxAttempts) break;
       await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
     }
@@ -576,7 +582,8 @@ async function callClaudeForPack(promptPacket) {
       return toolUse.input;
     } catch (error) {
       lastError = error;
-      const retryable = error?.status === 429 || (typeof error?.status === "number" && error.status >= 500);
+      const status = typeof error?.status === "number" ? error.status : null;
+      const retryable = status === null || status === 429 || status === 408 || status >= 500;
       if (!retryable || attempt === maxAttempts) break;
       await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
     }
@@ -1106,12 +1113,28 @@ async function normalizePack(pack, sourceFile, sourceText) {
       quality.warnings.push(`claude_use_case_narrative_partial_match:${claudeMatch.matched}/${claudeMatch.total}`);
     }
   }
+  // Content quality gate. The Claude-authored layer is generated over two API
+  // calls; the forward-looking (strategic_narratives) call is non-fatal and can
+  // transiently return nothing. When --use-claude and --approve are both set, do
+  // NOT approve a tenant whose required Claude content is missing -- that would
+  // put an empty executive read / empty "New Ways of Operating" live. Such a
+  // pack is written as 'candidate' instead, flagged, so a re-run can complete it.
+  const claudeContentMissing = [];
+  if (useClaude) {
+    if (executiveReadRows.length === 0) claudeContentMissing.push("executive_read");
+    if (strategicNarrativeRows.length === 0) claudeContentMissing.push("strategic_narratives");
+    if (aiReadinessRows.length === 0) claudeContentMissing.push("ai_readiness");
+  }
+  const approveThisTenant = approve && claudeContentMissing.length === 0;
+  if (approve && claudeContentMissing.length > 0) {
+    quality.warnings.push(`held_as_candidate_missing_claude_content:${claudeContentMissing.join("+")}`);
+  }
   const normalized = {
     pack: {
       tenant_key: pack.tenant_key,
       tenant_name: pack.tenant_name,
       pack_version: packVersion,
-      status: approve ? "approved" : "candidate",
+      status: approveThisTenant ? "approved" : "candidate",
       artifact_type: artifactType,
       source_pack_hash: sourceHash,
       source_dataset_version: asText(pack.source_context?.canonical_input_location),
@@ -1128,9 +1151,9 @@ async function normalizePack(pack, sourceFile, sourceText) {
       quality_report: quality,
       validation_status: quality.warnings.length ? "warn" : "pass",
       validation_issues: quality.warnings,
-      approved_by: approve ? "home-pack-v2-builder" : null,
-      approved_at: approve ? generatedAt : null,
-      effective_from: approve ? generatedAt : null,
+      approved_by: approveThisTenant ? "home-pack-v2-builder" : null,
+      approved_at: approveThisTenant ? generatedAt : null,
+      effective_from: approveThisTenant ? generatedAt : null,
       effective_to: null,
     },
     dimensions,
