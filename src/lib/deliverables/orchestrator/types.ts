@@ -17,31 +17,31 @@
 // Every client-specific claim must be cited [n], marked [ASSUMPTION TO VALIDATE],
 // or shown as [CLIENT TO COMPLETE] / [EVIDENCE MISSING].
 
-export type DeliverableModule = 'moves' | 'source' | 'tower' | 'intelligence';
+export type DeliverableModule = "moves" | "source" | "tower" | "intelligence";
 
-export type OutputFormat = 'docx' | 'pptx' | 'xlsx' | 'html' | 'pdf';
+export type OutputFormat = "docx" | "pptx" | "xlsx" | "html" | "pdf";
 
 export type AudienceRole =
-  | 'board'
-  | 'ceo'
-  | 'cio'
-  | 'cfo'
-  | 'cpo' // chief procurement officer
-  | 'cto'
-  | 'ciso'
-  | 'steering_committee'
-  | 'program_leadership'
-  | 'vendor_facing'
-  | 'procurement'
-  | 'legal';
+  | "board"
+  | "ceo"
+  | "cio"
+  | "cfo"
+  | "cpo" // chief procurement officer
+  | "cto"
+  | "ciso"
+  | "steering_committee"
+  | "program_leadership"
+  | "vendor_facing"
+  | "procurement"
+  | "legal";
 
 /** Where a section's client-specific content is allowed to come from. */
 export type SectionGroundingMode =
-  | 'governed_facts' // assert client facts only from cited governed evidence
-  | 'expert_template' // standard structure/boilerplate, no client facts
-  | 'assumption_driven' // expert content from approved assumptions, labelled
-  | 'client_to_complete' // guided placeholder; client judgment/legal — never invented
-  | 'mixed'; // governed facts + expert framing in one section
+  | "governed_facts" // assert client facts only from cited governed evidence
+  | "expert_template" // standard structure/boilerplate, no client facts
+  | "assumption_driven" // expert content from approved assumptions, labelled
+  | "client_to_complete" // guided placeholder; client judgment/legal — never invented
+  | "mixed"; // governed facts + expert framing in one section
 
 // ── Evidence inputs (already governed upstream; rendered clean for the model) ──
 
@@ -51,9 +51,9 @@ export interface GovernedEvidenceItem {
   label: string; // human-readable subject, e.g. "FY26 run-cost by tower"
   statement: string; // the clean fact text the model may assert
   evidenceFamily: string; // e.g. 'run_cost_baseline'
-  confidence: 'high' | 'medium' | 'low';
+  confidence: "high" | "medium" | "low";
   asOf?: string; // freshness, e.g. "FY2026"
-  disclosureTier: 'vendor_facing' | 'internal_only' | 'aggregate_only';
+  disclosureTier: "vendor_facing" | "internal_only" | "aggregate_only";
   /** opaque provenance handle kept OUT of the body; for audit/source-register only. */
   provenanceRef: string;
 }
@@ -70,7 +70,11 @@ export interface ClientCompleteItem {
   key: string;
   label: string;
   owner: AudienceRole | string;
-  reason: 'client_judgment' | 'legal_review' | 'procurement_signoff' | 'pricing_signoff';
+  reason:
+    | "client_judgment"
+    | "legal_review"
+    | "procurement_signoff"
+    | "pricing_signoff";
   placeholderText: string; // the guided [CLIENT TO COMPLETE] prose
 }
 
@@ -86,7 +90,7 @@ export interface SourceRegisterEntry {
   citationNumber: number;
   label: string;
   evidenceFamily: string;
-  confidence: 'high' | 'medium' | 'low';
+  confidence: "high" | "medium" | "low";
   asOf?: string;
 }
 
@@ -94,8 +98,8 @@ export interface SourceRegisterEntry {
 
 export interface FormattingProfile {
   bodyPointSize: number; // ~11pt
-  headingStyle: 'numbered' | 'unnumbered';
-  tableStyle: 'banded' | 'plain';
+  headingStyle: "numbered" | "unnumbered";
+  tableStyle: "banded" | "plain";
   /** wide datasets must move to an Excel companion rather than tiny in-doc tables. */
   wideDataToExcelCompanion: boolean;
   includeCoverPage: boolean;
@@ -128,7 +132,7 @@ export interface QualityBar {
   requiresCentralTension?: boolean; // what tension/problem the document is resolving
   requiresOptionsConsidered?: boolean; // real alternatives weighed, not one path presented as inevitable
   requiresEvidenceGapsNoted?: boolean; // what remains unproven must be stated, not implied away
-  tone: 'board_grade_consulting';
+  tone: "board_grade_consulting";
 }
 
 // ── 1 · DeliverableIntelligenceRequest ──
@@ -172,18 +176,18 @@ export interface ExpectedExhibit {
   key: string;
   title: string;
   kind:
-    | 'diagram'
-    | 'matrix'
-    | 'timeline'
-    | 'heatmap'
-    | 'flow'
-    | 'chart'
+    | "diagram"
+    | "matrix"
+    | "timeline"
+    | "heatmap"
+    | "flow"
+    | "chart"
     // Architecture views are distinct diagram KINDS, not one generic "diagram" box —
     // each answers a different question and needs different required elements.
-    | 'conceptual_architecture' // business/capability model: personas, capabilities, channels, trust boundaries, outcomes
-    | 'logical_architecture' // solution components: experience/orchestration/agents/models/context/integration/data/identity/observability/governance/human-in-the-loop
-    | 'physical_architecture' // deployable services: cloud boundaries, regions, networks, runtimes, endpoints, data platforms, queues, secrets, CI/CD
-    | 'agent_orchestration'; // the explicit trigger→router→planner→context→tool→model→gate→approval→action→trace flow
+    | "conceptual_architecture" // business/capability model: personas, capabilities, channels, trust boundaries, outcomes
+    | "logical_architecture" // solution components: experience/orchestration/agents/models/context/integration/data/identity/observability/governance/human-in-the-loop
+    | "physical_architecture" // deployable services: cloud boundaries, regions, networks, runtimes, endpoints, data platforms, queues, secrets, CI/CD
+    | "agent_orchestration"; // the explicit trigger→router→planner→context→tool→model→gate→approval→action→trace flow
   purpose: string;
   preferredFormat: OutputFormat; // e.g. wide matrices → 'xlsx'
   /**
@@ -222,9 +226,14 @@ export interface DeliverableArtifactBrief {
   prohibitedContent?: string[];
   audience: AudienceRole[];
   decisionToSupport: string;
-  recommendedStructure: BriefSection[]; // ordered; Claude MAY add more
+  recommendedStructure: BriefSection[]; // ordered baseline; fixed artifacts treat this as exhaustive
   requiredSections: string[]; // keys that must appear
   optionalSections: string[];
+  /**
+   * True for concise approval instruments where adding sections is product drift.
+   * Substantial artifacts leave this false so Claude can still add useful views.
+   */
+  fixedStructure?: boolean;
   /**
    * Phase-discipline guard. Topics that MUST NOT appear as sections in this
    * deliverable because they belong to a later phase (e.g. a P1 Charter must not
@@ -274,7 +283,7 @@ export interface ArtifactEnhancement {
 export interface TableExhibitPlanEntry {
   key: string;
   title: string;
-  kind: 'table' | 'exhibit';
+  kind: "table" | "exhibit";
   targetFormat: OutputFormat;
   groundingMode: SectionGroundingMode;
 }
@@ -294,7 +303,11 @@ export interface OutputPackagePlanEntry {
 export interface DeliverableGenerationPlan {
   sectionPlan: PlannedSection[];
   evidenceMapping: EvidenceMappingEntry[];
-  missingEvidenceHandling: { evidenceFamily: string; handledAs: SectionGroundingMode; note: string }[];
+  missingEvidenceHandling: {
+    evidenceFamily: string;
+    handledAs: SectionGroundingMode;
+    note: string;
+  }[];
   artifactEnhancementSuggestions: ArtifactEnhancement[];
   tableAndExhibitPlan: TableExhibitPlanEntry[];
   clientCompletePlan: ClientCompletePlanEntry[];
@@ -304,14 +317,14 @@ export interface DeliverableGenerationPlan {
 // ── Multi-pass flow ──
 
 export type GenerationPass =
-  | 'architect' // Pass 1 — design the best structure (no full draft)
-  | 'evidence_grounding' // Pass 2 — map evidence → sections, flag gaps
-  | 'full_draft' // Pass 3 — write the full document
-  | 'red_team' // Pass 4 — critique as a senior partner
-  | 'board_grade_rewrite' // Pass 5 — revise to board-grade
-  | 'render_package' // Pass 6 — structure for renderers
-  | 'section_draft' // decomposed: write ONE planned section (bounded-parallel fan-out)
-  | 'synthesis'; // decomposed: the doc-level structured fields (recommendation, tables, checklist)
+  | "architect" // Pass 1 — design the best structure (no full draft)
+  | "evidence_grounding" // Pass 2 — map evidence → sections, flag gaps
+  | "full_draft" // Pass 3 — write the full document
+  | "red_team" // Pass 4 — critique as a senior partner
+  | "board_grade_rewrite" // Pass 5 — revise to board-grade
+  | "render_package" // Pass 6 — structure for renderers
+  | "section_draft" // decomposed: write ONE planned section (bounded-parallel fan-out)
+  | "synthesis"; // decomposed: the doc-level structured fields (recommendation, tables, checklist)
 
 export interface PassPrompt {
   pass: GenerationPass;
@@ -386,7 +399,7 @@ export interface RenderableTable {
 export interface RenderableExhibit {
   key: string;
   title: string;
-  kind: ExpectedExhibit['kind'];
+  kind: ExpectedExhibit["kind"];
   description: string;
   targetFormat: OutputFormat;
 }

@@ -10,7 +10,7 @@ import type {
   DeliverableGenerationPlan,
   DeliverableIntelligenceRequest,
   PlanValidationResult,
-} from './types';
+} from "./types";
 
 /** True when any forbidden topic appears (case-insensitive) in the given text. */
 function matchesForbiddenTopic(
@@ -18,7 +18,7 @@ function matchesForbiddenTopic(
   topics: string[],
 ): boolean {
   if (!text) return false;
-  const haystack = text.toLowerCase().replace(/_/g, ' ');
+  const haystack = text.toLowerCase().replace(/_/g, " ");
   return topics.some((t) => haystack.includes(t.toLowerCase()));
 }
 
@@ -71,19 +71,54 @@ export function sanitizeGenerationPlan(
     }
   }
 
-  const valid = new Set(req.governedEvidenceBundle.map((e) => e.citationNumber));
+  if (brief?.fixedStructure) {
+    const requiredOrder = brief.recommendedStructure.map((s) => s.key);
+    const allowed = new Set(requiredOrder);
+    const byKey = new Map(
+      (plan.sectionPlan ?? [])
+        .filter((s) => allowed.has(s.key))
+        .map((s) => [s.key, s]),
+    );
+    plan.sectionPlan = requiredOrder
+      .map((key) => byKey.get(key))
+      .filter((s): s is DeliverableGenerationPlan["sectionPlan"][number] =>
+        Boolean(s),
+      );
+    if (Array.isArray(plan.artifactEnhancementSuggestions)) {
+      plan.artifactEnhancementSuggestions =
+        plan.artifactEnhancementSuggestions.filter((e) => {
+          const target = (
+            e.addsSectionOrExhibit ||
+            e.suggestion ||
+            ""
+          ).toLowerCase();
+          return !/\b(section|appendix|chapter)\b/.test(target);
+        });
+    }
+  }
+
+  const valid = new Set(
+    req.governedEvidenceBundle.map((e) => e.citationNumber),
+  );
   for (const s of plan.sectionPlan ?? []) {
-    s.evidenceCitations = (s.evidenceCitations ?? []).filter((n) => valid.has(n));
+    s.evidenceCitations = (s.evidenceCitations ?? []).filter((n) =>
+      valid.has(n),
+    );
     const grounded =
       s.evidenceCitations.length > 0 ||
       (s.placeholders ?? []).length > 0 ||
       (s.assumptionsUsed ?? []).length > 0;
-    if ((s.groundingMode === 'governed_facts' || s.groundingMode === 'mixed') && !grounded) {
-      s.groundingMode = 'expert_template';
+    if (
+      (s.groundingMode === "governed_facts" || s.groundingMode === "mixed") &&
+      !grounded
+    ) {
+      s.groundingMode = "expert_template";
     }
   }
   if (Array.isArray(plan.evidenceMapping)) {
-    plan.evidenceMapping = plan.evidenceMapping.filter((m) => valid.has(m.citationNumber));
+    plan.evidenceMapping = plan.evidenceMapping.filter((m) =>
+      valid.has(m.citationNumber),
+    );
   }
   return plan;
 }
@@ -105,51 +140,86 @@ export function validateGenerationPlan(
   // (section count, source register, no fabrication). The total-count check below stays
   // hard, so a genuinely thin plan is still rejected.
   for (const key of brief.requiredSections) {
-    if (!sectionKeys.has(key)) warnings.push(`plan does not key a section as "${key}" (covered later passes / checked by the quality gate)`);
+    if (!sectionKeys.has(key))
+      warnings.push(
+        `plan does not key a section as "${key}" (covered later passes / checked by the quality gate)`,
+      );
   }
 
   // every cited evidence number must exist in the bundle
-  const validCitations = new Set(req.governedEvidenceBundle.map((e) => e.citationNumber));
+  const validCitations = new Set(
+    req.governedEvidenceBundle.map((e) => e.citationNumber),
+  );
   for (const s of plan.sectionPlan) {
     for (const n of s.evidenceCitations) {
-      if (!validCitations.has(n)) errors.push(`section "${s.key}" cites [${n}] which is not in the governed evidence bundle`);
+      if (!validCitations.has(n))
+        errors.push(
+          `section "${s.key}" cites [${n}] which is not in the governed evidence bundle`,
+        );
     }
     // a governed_facts / mixed section that cites nothing AND has no placeholder is a fabrication risk
-    if ((s.groundingMode === 'governed_facts' || s.groundingMode === 'mixed') &&
-        s.evidenceCitations.length === 0 && s.placeholders.length === 0 && s.assumptionsUsed.length === 0) {
-      errors.push(`section "${s.key}" is ${s.groundingMode} but cites no evidence, uses no assumption, and has no placeholder — would fabricate client facts`);
+    if (
+      (s.groundingMode === "governed_facts" || s.groundingMode === "mixed") &&
+      s.evidenceCitations.length === 0 &&
+      s.placeholders.length === 0 &&
+      s.assumptionsUsed.length === 0
+    ) {
+      errors.push(
+        `section "${s.key}" is ${s.groundingMode} but cites no evidence, uses no assumption, and has no placeholder — would fabricate client facts`,
+      );
     }
   }
 
   // every missing-evidence family must be handled (placeholder/assumption/client-complete), not silently dropped
-  const handledFamilies = new Set(plan.missingEvidenceHandling.map((m) => m.evidenceFamily));
+  const handledFamilies = new Set(
+    plan.missingEvidenceHandling.map((m) => m.evidenceFamily),
+  );
   for (const m of req.missingEvidence) {
     if (!handledFamilies.has(m.evidenceFamily)) {
-      warnings.push(`missing-evidence family "${m.evidenceFamily}" not explicitly handled in the plan`);
+      warnings.push(
+        `missing-evidence family "${m.evidenceFamily}" not explicitly handled in the plan`,
+      );
     }
   }
 
   // every client-to-complete item must be placed somewhere
-  const placedClientComplete = new Set(plan.clientCompletePlan.map((c) => c.key));
+  const placedClientComplete = new Set(
+    plan.clientCompletePlan.map((c) => c.key),
+  );
   for (const c of req.clientCompleteItems) {
-    if (!placedClientComplete.has(c.key)) errors.push(`client-to-complete item "${c.key}" is not placed in the plan`);
+    if (!placedClientComplete.has(c.key))
+      errors.push(
+        `client-to-complete item "${c.key}" is not placed in the plan`,
+      );
   }
 
   // output package must cover the requested formats
   const plannedFormats = new Set(plan.outputPackagePlan.map((o) => o.format));
   for (const f of req.outputFormats) {
-    if (!plannedFormats.has(f)) warnings.push(`output format "${f}" not addressed in the output package plan`);
+    if (!plannedFormats.has(f))
+      warnings.push(
+        `output format "${f}" not addressed in the output package plan`,
+      );
   }
 
   // thin-plan guard
   if (plan.sectionPlan.length < brief.requiredSections.length) {
-    errors.push(`plan has ${plan.sectionPlan.length} sections; brief requires at least ${brief.requiredSections.length}`);
+    errors.push(
+      `plan has ${plan.sectionPlan.length} sections; brief requires at least ${brief.requiredSections.length}`,
+    );
   }
-  if (plan.tableAndExhibitPlan.length === 0 && (brief.expectedTables.length > 0 || brief.expectedExhibits.length > 0)) {
-    warnings.push('plan includes no tables/exhibits though the brief expects them');
+  if (
+    plan.tableAndExhibitPlan.length === 0 &&
+    (brief.expectedTables.length > 0 || brief.expectedExhibits.length > 0)
+  ) {
+    warnings.push(
+      "plan includes no tables/exhibits though the brief expects them",
+    );
   }
   if (plan.artifactEnhancementSuggestions.length === 0) {
-    warnings.push('plan proposes no enhancements beyond the baseline structure — may be too mechanical');
+    warnings.push(
+      "plan proposes no enhancements beyond the baseline structure — may be too mechanical",
+    );
   }
 
   return { ok: errors.length === 0, errors, warnings };

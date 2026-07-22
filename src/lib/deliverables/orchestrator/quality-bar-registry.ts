@@ -34,11 +34,11 @@ const DEFAULT_QUALITY_BAR: QualityBar = {
 /** key = `${module}::${deliverableType}` */
 const OVERRIDES: Record<string, QualityBarOverride> = {
   "moves::charter": {
-    // Concise commitment instrument — this is the artifact the "41-page Charter"
-    // complaint was actually about. Hard ceiling, enforced.
-    minSections: 8,
-    minBodyWords: 1_600, // ~4 pages
-    targetBodyWordsMax: 3_200, // ~7 pages
+    // Concise commitment instrument — the P1 Charter approves discovery/design;
+    // it must not become a 40-page strategy or solution report. Hard ceiling.
+    minSections: 7,
+    minBodyWords: 900, // ~2 pages
+    targetBodyWordsMax: 2_400, // ~5 pages
     enforceMaxAsBlocker: true,
     requiresCentralTension: true,
     requiresEvidenceGapsNoted: true,
@@ -100,5 +100,7 @@ export function resolveQualityBar(
   deliverableType: string,
 ): QualityBar {
   const override = OVERRIDES[`${module}::${deliverableType}`];
-  return override ? { ...DEFAULT_QUALITY_BAR, ...override } : { ...DEFAULT_QUALITY_BAR };
+  return override
+    ? { ...DEFAULT_QUALITY_BAR, ...override }
+    : { ...DEFAULT_QUALITY_BAR };
 }
