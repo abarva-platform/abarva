@@ -760,6 +760,45 @@ worked examples from the design conversation.
 
 ---
 
+### MOVES-UI-007 — P2 gate-approval decision surface (mechanical ledger → decision-first)
+
+- **Problem statement**: after PR #5286-#5290 fixed real P2 gate-block correctness (evidence
+  review, readiness-family binding, honest "Gate blocked · N/M hard met" state), the owner's
+  live feedback was that the product was right to block a weak deliverable but the UI did a
+  poor job explaining why. The page was a long, mechanical read: a generic 3-row attestation
+  table, a 4-quadrant exec readout, a gate-criteria block that only P0 got eagerly (P1+ had it
+  collapsed), and a floating Approve & Build button below all of it.
+- **Owner's requested shape**: a Stripe-like decision surface — (1) Decision needed, (2)
+  Evidence supporting it, (3) Quality/blockers, (4) What happens next — with mechanics moved
+  behind tabs/details and the primary action living inside the active step.
+- **Resolution**: PR #5291 ("simplify phase approval decision surface"), merged `c77df5ba1`,
+  ACA revision `ca-abarva-web-lab-eastus--mc77df5ba`, digest
+  `sha256:cdd734ae407e6b829af55d0cf3041379f89f448d4cc3e87f4956c4abf1a62efe`. Restructures
+  `PhaseBody`'s gate-approval section into a `DECISION` / `EVIDENCE` / `OPEN BLOCKERS` / `NEXT
+  PHASE READINESS` card row (left-border color-coded by state: amber blocked / green ready /
+  blue complete), with the generic gate-attestation ledger moved behind a `<details>` "Gate
+  execution checklist" disclosure. No changes to `governance.ts`, `evaluateGate()`, or the
+  Approve & Build two-sequential-calls wiring.
+- **Independent verification this session**: (1) runtime invariant — `az containerapp show`
+  confirms the ACA template image matches the 100%-traffic revision exactly; (2) commit
+  ancestry — `git merge-base --is-ancestor c77df5ba1 origin/main` confirmed; (3) live signed-in
+  check on the real, currently-blocked "AI MEMBER ASSIST TRANSFORMATION" Move (P2, `3/5 hard
+  gates met`) — the DECISION card correctly reads "P2 cannot advance yet", the OPEN BLOCKERS
+  card names the two actual unmet hard criteria by label ("Discovery synthesis report signed
+  off", "Diagnosis clears P2 without unresolved hard gaps or kill recommendation"), and the
+  gate execution checklist renders collapsed ("1/3 complete"). No console errors.
+- **Note on parallel work**: a duplicate redesign of this same section was built independently
+  in this session before discovering PR #5291 had already merged the same fix first (both
+  efforts converged on materially the same four-part structure). The duplicate PR (#5293) was
+  closed unmerged rather than reconciling two independent rewrites of the same code — #5291 is
+  the shipped, live-verified version.
+- **Status**: `Runtime Proven` (2026-07-22)
+- **Explicit non-goals**: no schema/gate-logic change, no data-plane change.
+- **Discovered from**: owner live feedback, 2026-07-22, following the P2 gate-block fix
+  (#5286-#5290).
+
+---
+
 ## Architecture decisions (reference — see design doc for full detail)
 
 Recorded here for durability; full rationale lives in
