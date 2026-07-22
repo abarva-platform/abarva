@@ -248,6 +248,68 @@ describe("assembleDeliverable", () => {
       /\[CLIENT TO COMPLETE[^\]]*\]|\bTBC\b|\bto be confirmed\b/gi,
     );
   });
+
+  it("repairs unsupported figures that appear in synthesis tables, checklists, recommendation, and next actions", () => {
+    const req = amsRfpRequest({
+      module: "moves",
+      deliverableType: "business_case",
+      missingEvidence: [],
+      clientCompleteItems: [],
+    });
+    const sections: RenderableSection[] = [
+      {
+        key: "current_state",
+        title: "Current State",
+        bodyMarkdown: "The current state is fragmented but evidence-backed [1].",
+        groundingMode: "mixed",
+        citationsUsed: [1],
+      },
+    ];
+    const doc = assembleDeliverable(
+      req,
+      sections,
+      {
+        recommendation:
+          "Approve the next validation gate after confirming the $5M benefit case.",
+        nextActions: ["Confirm the 2026 operating baseline with Finance."],
+        tables: [
+          {
+            key: "risk_register",
+            title: "Risk",
+            columns: ["Risk", "Implication"],
+            rows: [["Unproven benefit", "The value case assumes 12% productivity uplift."]],
+            targetFormat: "docx",
+          },
+        ],
+        clientCompleteChecklist: [
+          {
+            key: "finance_baseline",
+            label: "Confirm 2026 finance baseline",
+            owner: "Finance",
+            reason: "client_judgment",
+            placeholderText: "Needed before claiming $5M benefit.",
+          },
+        ],
+      },
+      req.governedEvidenceBundle,
+    );
+
+    const visibleStructuredText = [
+      doc.recommendation,
+      ...doc.nextActions,
+      ...doc.tables.flatMap((t) => t.rows.flat()),
+      ...doc.clientCompleteChecklist.flatMap((c) => [
+        c.label,
+        String(c.owner),
+        c.placeholderText ?? "",
+      ]),
+    ].join(" ");
+
+    expect(visibleStructuredText).toContain("[ASSUMPTION TO VALIDATE:");
+    expect(visibleStructuredText).toContain("$5M");
+    expect(visibleStructuredText).toContain("12%");
+    expect(visibleStructuredText).toContain("2026");
+  });
 });
 
 describe("consolidateOpenInputPlaceholders", () => {

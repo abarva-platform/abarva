@@ -124,6 +124,32 @@ function normalizeUnsupportedClaimForOpenInputs(claim: string): string {
   return `${normalized} [ASSUMPTION TO VALIDATE: numeric/date/value claim requires client confirmation or cited source before it is treated as committed.]`;
 }
 
+function repairStructuredClientFactText(value: string): string {
+  return repairUncitedFigures(normalizeOpenInputDetail(value));
+}
+
+function repairStructuredTable(table: RenderableTable): RenderableTable {
+  return {
+    ...table,
+    columns: table.columns.map((column) => normalizeOpenInputDetail(column)),
+    rows: table.rows.map((row) => row.map((cell) => repairStructuredClientFactText(cell))),
+  };
+}
+
+function repairStructuredChecklist(
+  checklist: RenderableDeliverable["clientCompleteChecklist"],
+): RenderableDeliverable["clientCompleteChecklist"] {
+  return checklist.map((item) => ({
+    ...item,
+    label: repairStructuredClientFactText(item.label),
+    owner: repairStructuredClientFactText(String(item.owner)),
+    reason: item.reason,
+    ...(item.placeholderText
+      ? { placeholderText: repairStructuredClientFactText(item.placeholderText) }
+      : {}),
+  }));
+}
+
 /**
  * Sections are generated independently (one bounded-parallel model call each), so a
  * section may legitimately mark its OWN missing input inline per the prompt's own
@@ -430,7 +456,7 @@ export function assembleDeliverable(
     })),
   ];
   const openInputs = openInputsTable(req, combinedClaims);
-  const tables = [...(synth.tables ?? [])];
+  const tables = (synth.tables ?? []).map(repairStructuredTable);
   if (openInputs && !tables.some((t) => t.key === openInputs.key)) {
     tables.push(openInputs);
   }
@@ -438,8 +464,9 @@ export function assembleDeliverable(
   if (riskTable) tables.push(riskTable);
   const checklist =
     synth.clientCompleteChecklist && synth.clientCompleteChecklist.length > 0
-      ? synth.clientCompleteChecklist
-      : (req.clientCompleteItems ?? []);
+      ? repairStructuredChecklist(synth.clientCompleteChecklist)
+      : repairStructuredChecklist(req.clientCompleteItems ?? []);
+  const nextActions = (synth.nextActions ?? []).map(repairStructuredClientFactText);
   return {
     title: honestTitle(req, synth),
     subtitle: synth.subtitle,
@@ -451,7 +478,9 @@ export function assembleDeliverable(
     sourceRegister: buildSourceRegister(evidence, cleanedSections),
     assumptions: req.approvedAssumptions ?? [],
     clientCompleteChecklist: checklist,
-    recommendation: fallbackRecommendation(req, cleanedSections, synth),
-    nextActions: synth.nextActions ?? [],
+    recommendation: repairStructuredClientFactText(
+      fallbackRecommendation(req, cleanedSections, synth),
+    ),
+    nextActions,
   };
 }
