@@ -16,6 +16,7 @@ describe("document-generation-policy", () => {
     "ABARVA_DOCGEN_QUALITY_PROFILE",
     "ABARVA_DOCGEN_MAX_PASS_TOKENS",
     "ABARVA_DOCGEN_PASS_FULL_DRAFT_MAX_TOKENS",
+    "ABARVA_DOCGEN_PASS_SECTION_DRAFT_MAX_TOKENS",
     "ABARVA_DOCGEN_BOARD_MAX_TOKENS",
     "ABARVA_DOCGEN_CHAT_MAX_TOKENS",
   ];
@@ -90,11 +91,44 @@ describe("document-generation-policy", () => {
     expect(estimateMaxPassOutputTokens()).toBe(66000);
   });
 
+  it("uses compact default section and synthesis budgets for P1 charters", () => {
+    expect(
+      resolvePassTokenBudget({
+        pass: "section_draft",
+        deliverableType: "Program Charter",
+      }),
+    ).toBe(900);
+    expect(
+      resolvePassTokenBudget({
+        pass: "synthesis",
+        deliverableType: "charter",
+      }),
+    ).toBe(1200);
+    expect(
+      resolvePassTokenBudget({
+        pass: "section_draft",
+        deliverableType: "business_case",
+      }),
+    ).toBe(12000);
+  });
+
+  it("still lets operators override compact charter pass budgets deliberately", () => {
+    process.env.ABARVA_DOCGEN_PASS_SECTION_DRAFT_MAX_TOKENS = "1500";
+    expect(
+      resolvePassTokenBudget({
+        pass: "section_draft",
+        deliverableType: "Program Charter",
+      }),
+    ).toBe(1500);
+  });
+
   it("boosts six-pass budgets with the real engagement profile", () => {
     process.env.ABARVA_DOCGEN_QUALITY_PROFILE = "real_engagement";
 
     expect(resolveDocGenQualityProfile()).toBe("real_engagement");
-    expect(resolveDocumentPolicy({ deliverableType: "business_case" })).toMatchObject({
+    expect(
+      resolveDocumentPolicy({ deliverableType: "business_case" }),
+    ).toMatchObject({
       qualityProfile: "real_engagement",
       maxTokens: 48000,
     });
@@ -111,7 +145,9 @@ describe("document-generation-policy", () => {
     process.env.ABARVA_DOCGEN_QUALITY_PROFILE = "premium_final";
 
     expect(resolveDocGenQualityProfile()).toBe("premium_final");
-    expect(resolveDocumentPolicy({ deliverableType: "business_case" })).toMatchObject({
+    expect(
+      resolveDocumentPolicy({ deliverableType: "business_case" }),
+    ).toMatchObject({
       qualityProfile: "premium_final",
       maxTokens: 128000,
     });

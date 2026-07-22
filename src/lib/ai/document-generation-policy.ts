@@ -217,7 +217,9 @@ export function resolvePassTokenBudget(
 ): number {
   const profile = qualityProfile();
   const envKey = `ABARVA_DOCGEN_PASS_${PASS_ENV_KEY[input.pass]}_MAX_TOKENS`;
-  const fallback = PASS_TOKEN_DEFAULTS[profile][input.pass];
+  const fallback =
+    compactPassFallback(profile, input) ??
+    PASS_TOKEN_DEFAULTS[profile][input.pass];
   const highStakes = input.highStakes ?? true;
   const requested = envTokens(envKey, fallback);
   const adjusted = highStakes ? requested : Math.round(requested * 0.6);
@@ -226,6 +228,34 @@ export function resolvePassTokenBudget(
     envTokens("ABARVA_DOCGEN_MAX_PASS_TOKENS", defaultMaxPassTokens(profile)),
   );
   return Math.max(1, capped);
+}
+
+function compactPassFallback(
+  profile: DocGenQualityProfile,
+  input: ResolvePassTokenBudgetInput,
+): number | null {
+  const deliverableKey = input.deliverableType
+    ? normalizeDeliverableKey(input.deliverableType)
+    : "";
+  if (deliverableKey !== "charter" && deliverableKey !== "program_charter") {
+    return null;
+  }
+
+  // A P1 Charter is a concise approval instrument. The live decomposed path
+  // drafts each section separately, so the default 12k+ token section runway can
+  // turn seven short sections into a long report even when the final quality gate
+  // has a hard ceiling. Keep this artifact's section/synthesis passes crisp by
+  // default; env overrides still work for controlled operator experiments.
+  const multiplier =
+    profile === "premium_final" ? 1.4 : profile === "real_engagement" ? 1.2 : 1;
+  switch (input.pass) {
+    case "section_draft":
+      return Math.round(900 * multiplier);
+    case "synthesis":
+      return Math.round(1200 * multiplier);
+    default:
+      return null;
+  }
 }
 
 export function estimateMaxPassOutputTokens(input?: {

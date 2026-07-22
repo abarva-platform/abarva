@@ -256,6 +256,46 @@ function conciseInstrumentDraftInstruction(
   ].join("\n");
 }
 
+function extractSectionWordBudget(text?: string): number | null {
+  if (!text) return null;
+  const match = text.match(/under\s+(\d+)\s+words/i);
+  if (!match) return null;
+  const n = Number.parseInt(match[1] ?? "", 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function conciseSectionDraftInstruction(
+  req: DeliverableIntelligenceRequest,
+  brief: DeliverableArtifactBrief,
+  section?: PlannedSection,
+): string {
+  const qb = req.qualityBar;
+  if (!qb.enforceMaxAsBlocker || !qb.targetBodyWordsMax) return "";
+  const structureSection = brief.recommendedStructure.find(
+    (s) => s.key === section?.key,
+  );
+  const sectionInstruction =
+    structureSection?.expertLatitude || section?.rationale || "";
+  const sectionCount = Math.max(brief.recommendedStructure.length, 1);
+  const fallbackBudget = Math.max(
+    120,
+    Math.floor(qb.targetBodyWordsMax / sectionCount),
+  );
+  const wordBudget =
+    extractSectionWordBudget(sectionInstruction) ?? fallbackBudget;
+
+  return [
+    `CONCISE SECTION RULES:`,
+    `- This is one section of a concise approval instrument, not a standalone report.`,
+    `- Hard cap for this section: ${wordBudget} body words.`,
+    `- Section-specific instruction: ${sectionInstruction || "stay concise and decision-oriented"}.`,
+    `- Use one compact table OR up to 4 tight bullets when it saves words; otherwise use one short paragraph.`,
+    `- Do not repeat the full source summary, methodology, background, appendix material, or boilerplate.`,
+    `- Do not write P2 current-state findings, P3 solution design, P4 economics, or implementation planning here.`,
+    `- Before returning, delete any sentence that does not help approve, caveat, or hold the P1 Charter decision.`,
+  ].join("\n");
+}
+
 const PLAN_SCHEMA_HINT = `Return ONLY JSON matching DeliverableGenerationPlan:
 { "sectionPlan":[{"key","title","groundingMode","evidenceCitations":[n],"assumptionsUsed":[],"placeholders":[],"rationale"}],
   "evidenceMapping":[{"citationNumber","usedInSections":[],"supportsClaim"}],
@@ -413,6 +453,7 @@ export function buildPassPrompt(
         ``,
         `WRITE ONLY THIS SECTION: "${s?.title ?? ""}"  (groundingMode: ${s?.groundingMode ?? "expert_template"}).`,
         `Intent: ${s?.rationale || s?.title || ""}`,
+        conciseSectionDraftInstruction(req, brief, s),
         `Write board-grade, senior-consulting Markdown for JUST this section (numbered sub-headings, tables/lists as needed). Use ONLY the assigned evidence below, cited [n]. For any client-specific number / $ / % / date you cannot ground, write [ASSUMPTION TO VALIDATE: <what>] or describe the required input for the Open Inputs Required table — NEVER invent. Before returning, verify EVERY figure has a [n], an approved assumption, or a placeholder tag.`,
         ``,
         `ASSIGNED EVIDENCE (the only [n] you may cite):`,
