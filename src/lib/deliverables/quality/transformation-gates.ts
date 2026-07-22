@@ -96,10 +96,26 @@ function isBinder(profile: DeliverableProfile): boolean {
   return profile.evidenceMode === "working_binder" || !profile.clientFacing;
 }
 
+function narrativeBodyForMachineryScan(text: string): string {
+  const appendixStart = text.search(
+    /(?:^|\n|\s)(?:appendix\s+[a-z0-9]+(?:\s*[—-]\s*|\s+))?(?:source|evidence)\s+register\b/i,
+  );
+  if (appendixStart < 0) return text;
+  const before = text.slice(0, appendixStart);
+  const marker = text.slice(Math.max(0, appendixStart - 30), appendixStart + 80);
+  // "Source Register" in a sentence like "tie this to the Source Register" is
+  // client-body machinery and must still be flagged. Only strip explicit register
+  // headings/appendix starts.
+  if (!/(?:^|\n|\s)appendix\s+[a-z0-9]+|(?:^|\n)\s*#{0,6}\s*(?:source|evidence)\s+register\b/i.test(marker)) {
+    return text;
+  }
+  return before;
+}
+
 /** Gate 1 — machinery vocabulary in the client narrative. */
 export function scanMachinery(input: GateInput): GateFinding[] {
   if (isBinder(input.profile)) return [];
-  const text = input.narrativeText;
+  const text = narrativeBodyForMachineryScan(input.narrativeText);
   const hits: string[] = [];
   for (const term of CLIENT_NARRATIVE_BANNED_TERMS) {
     // Word-boundary-ish match; phase labels like "P1" need a boundary so we

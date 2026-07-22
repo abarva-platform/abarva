@@ -4,6 +4,17 @@
 // exhibits are otherwise correct.
 
 const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
+  [/<strong>P([1-5])<\/strong>(\s*[—-])/gi, "<strong>Priority $1</strong>$2"],
+  [/<b>P([1-5])<\/b>(\s*[—-])/gi, "<b>Priority $1</b>$2"],
+  [/\*\*P([1-5])\*\*(\s*[—-])/g, "**Priority $1**$2"],
+  [/\bP([1-5])\s+inputs\b/gi, "Priority $1 inputs"],
+  [/\bP([1-5])\s+input\b/gi, "Priority $1 input"],
+  [/\bP0\s+origination\b/gi, "origination"],
+  [/\bP1\s+charter\b/gi, "charter"],
+  [/\bP2\s+(?:discovery|discover(?:y)?|discover\s*&\s*diagnose)\b/gi, "discovery"],
+  [/\bP3\s+(?:design|draft shaping|option(?:s)?|future-state design)\b/gi, "design"],
+  [/\bP4\s+(?:roadmap|business case|planning)\b/gi, "roadmap and business-case planning"],
+  [/\bP5\s+(?:handoff|execute|execution)\b/gi, "handoff"],
   [/\bsource rows\b/gi, "evidence details"],
   [/\bsource row\b/gi, "evidence detail"],
   [/\braw route\b/gi, "internal path"],
@@ -13,6 +24,9 @@ const CLIENT_ARTIFACT_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\bimplementation detail\b/gi, "delivery detail"],
   [/\bcanonical internal id\b/gi, "internal reference"],
   [/\bdebug\b/gi, "diagnostic"],
+  [/\bsubstrate\b/gi, "enterprise data foundation"],
+  [/\bcontext rows\b/gi, "evidence records"],
+  [/\btower rows\b/gi, "measurement records"],
   [/\bprompt[-\s]+injection\b/gi, "adversarial input attack"],
   [/\bprompt(?:s|ed|ing|[-\s]+(?:engineering|policy|policies|template|templates|instruction|instructions))?\b/gi, "request"],
 ];

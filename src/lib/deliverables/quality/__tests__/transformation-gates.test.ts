@@ -69,6 +69,27 @@ describe("transformation gates (W1)", () => {
     expect(r).toHaveLength(1);
   });
 
+  it("does not flag the evidence register when it is only an appendix", () => {
+    const r = scanMachinery(
+      base({
+        narrativeText:
+          "We recommend holding until the current-state baseline is signed off.\n\nAppendix A — Source Register\n[1] Call-center metrics.",
+      }),
+    );
+    expect(r).toHaveLength(0);
+  });
+
+  it("still flags Source Register when the body discusses the machinery", () => {
+    const r = scanMachinery(
+      base({
+        narrativeText:
+          "The recommendation is tied to the Source Register and should be reviewed before design.",
+      }),
+    );
+    expect(r).toHaveLength(1);
+    expect(r[0].detail?.join(" ")).toMatch(/source register/);
+  });
+
   it("blocks scattered missing-input placeholders, demanding one table", () => {
     const r = runTransformationGates(
       base({
