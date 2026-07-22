@@ -82,6 +82,7 @@ function artifactHonestyDiscipline(
 /** The standing role + governance system prompt shared by every pass. */
 export function buildSystemPrompt(req: DeliverableIntelligenceRequest): string {
   const expertise = describeUseCase(req.useCaseArchetype);
+  const conciseInstrument = req.qualityBar.enforceMaxAsBlocker === true;
   return [
     `You are a senior McKinsey partner, CIO/CFO/CPO advisor, and a recognized expert in enterprise technology transformation and ${expertise}.`,
     `You produce board-grade consulting artifacts that read like a senior engagement team prepared them for an executive steering committee — specific, structured, and decision-oriented.`,
@@ -96,7 +97,9 @@ export function buildSystemPrompt(req: DeliverableIntelligenceRequest): string {
     `- Use ONE consolidated Open Inputs Required table for missing inputs. Do not scatter [CLIENT TO COMPLETE] tags through the narrative.`,
     `- Where a client fact is missing, write [EVIDENCE MISSING: <what>], [ASSUMPTION TO VALIDATE: <what>], or [CLIENT TO COMPLETE: <what>] — never fabricate.`,
     `- Never expose internal source ids, chunk ids, table names, fact keys, or system status words in the body.`,
-    `- Do not optimize for short documents. Optimize for high-quality, decision-grade artifacts.`,
+    conciseInstrument
+      ? `- This artifact is a concise approval instrument with an enforced length ceiling. Respect brevity as a quality requirement: use compact tables, remove repetition, and do not expand into later-phase analysis.`
+      : `- Do not optimize for short documents. Optimize for high-quality, decision-grade artifacts.`,
   ].join("\n");
 }
 
@@ -232,7 +235,25 @@ function sizeDisciplineInstruction(
 ): string {
   const qb = req.qualityBar;
   if (!qb.targetBodyWordsMax) return "";
+  if (qb.enforceMaxAsBlocker) {
+    return `\nSIZE DISCIPLINE: Target ${qb.minBodyWords.toLocaleString()}–${qb.targetBodyWordsMax.toLocaleString()} body words for this artifact type. This ceiling is a HARD QUALITY GATE, not a suggestion. If you need to include many facts, compress them into compact tables; do not add explanatory prose, appendices, methodology sections, or later-phase analysis. The final document should feel like a crisp sponsor decision memo.`;
+  }
   return `\nSIZE DISCIPLINE: Target ${qb.minBodyWords.toLocaleString()}–${qb.targetBodyWordsMax.toLocaleString()} body words for this artifact type. Do not optimize for minimum length OR maximum length — optimize for decision usefulness, professional completeness, visual clarity, evidence traceability, and human usability. Use this range as a discipline boundary, not permission to omit necessary analysis below it or pad with filler, generic methodology prose, or unsupported detail above it. Every section must advance the decision, evidence, design, or approval this artifact exists to drive.`;
+}
+
+function conciseInstrumentDraftInstruction(
+  req: DeliverableIntelligenceRequest,
+): string {
+  const qb = req.qualityBar;
+  if (!qb.enforceMaxAsBlocker || !qb.targetBodyWordsMax) return "";
+  return [
+    `CONCISE APPROVAL-INSTRUMENT RULES:`,
+    `- The entire body must stay within ${qb.targetBodyWordsMax.toLocaleString()} words; prefer 1,200–1,500 when the evidence is rich.`,
+    `- Obey every per-section word budget in the REQUIRED STRUCTURE.`,
+    `- Use compact Markdown tables for scope, roles, value hypothesis, risks, and P2 handoff.`,
+    `- Do not include a cover letter, table of contents, appendix narrative, methodology explanation, or repeated source summaries.`,
+    `- Do not write P2 current-state findings, P3 solution design, P4 economics, or implementation planning here.`,
+  ].join("\n");
 }
 
 const PLAN_SCHEMA_HINT = `Return ONLY JSON matching DeliverableGenerationPlan:
@@ -335,7 +356,8 @@ export function buildPassPrompt(
       user = [
         context,
         ``,
-        `PASS 3 — FULL DRAFT. Using the approved plan below, write the FULL document in senior consulting style. Use governed evidence (cited [n]) for client facts; use expert knowledge for structure, framing, standard sections, exhibits, and professional language. Clearly mark every missing client fact with the correct placeholder tag. Include decision tables, evidence tables, a risk/issues/dependencies table, a client-to-complete checklist, a source register, and a clear recommendation with next steps. Write in Markdown with numbered headings.`,
+        `PASS 3 — FULL DRAFT. Using the approved plan below, write the FULL document in senior consulting style. Use governed evidence (cited [n]) for client facts; use expert knowledge for structure, framing, standard sections, exhibits, and professional language. Clearly mark every missing client fact with the correct placeholder tag. Include the required decision tables, risk/issues/dependencies table, client-to-complete checklist, source register, and a clear recommendation with next steps. Write in Markdown with numbered headings.`,
+        conciseInstrumentDraftInstruction(req),
         `APPROVED PLAN:`,
         inputs.approvedPlanJson ?? "(plan missing)",
       ].join("\n");
@@ -355,6 +377,7 @@ export function buildPassPrompt(
         context,
         ``,
         `PASS 5 — BOARD-GRADE REWRITE. Revise the draft to board-grade quality using the critique. Strengthen synthesis, implications, the decision ask, tables, exhibits, placeholders, and source discipline. Remove generic language and mechanical template-following. DO NOT add unsupported client facts — every client-specific claim stays cited, an approved assumption, or a placeholder. Return the full revised document in Markdown.`,
+        conciseInstrumentDraftInstruction(req),
         ``,
         `CRITIQUE TO ADDRESS:`,
         inputs.critiqueText ?? "(critique missing)",
