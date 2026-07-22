@@ -383,138 +383,136 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   the approval page "looked too cluttered for the decision being asked of the user."
 - **Notes / remaining gaps**: full target shape captured in
   `docs/codex-handoff/SOURCE_P1_APPROVAL_UX_RECOMMENDATIONS_2026-07-22.md` — this slice covers
-  recommendation point 1 only (first-viewport fact hierarchy). Points 2-5 (drawers, footer
-  action bar, checkout-style gating) are `SOURCE-APPROVAL-UX-002` through `005` below.
+  recommendation point 1 only (first-viewport fact hierarchy). Direct code inspection found
+  slice 1 actually shipped more of points 2-4 than initially assumed (evidence/audit
+  disclosures, disabled-until-ready Approve, overflow menu for secondary actions already
+  exist). What's genuinely still open — real governance history in the audit disclosure, an
+  evidence freshness signal, and a verification-first closing pass — is
+  `SOURCE-APPROVAL-UX-002` through `004` below.
 
-### SOURCE-APPROVAL-UX-002 — Evidence drawer (slice 2 of 5)
+### SOURCE-APPROVAL-UX-002 — Governance history in the audit disclosure
 
-- **Problem statement**: full evidence detail (artifact inventories, source basis, freshness)
-  still renders inline on the approval page rather than behind the collapsed drawer the
-  recommendations doc calls for — an approver who doesn't need to inspect evidence still pays
-  its visual cost.
-- **User/business impact**: same clutter problem as `SOURCE-APPROVAL-UX-001`, one layer deeper.
+- **Problem statement**: **correction to an earlier version of this entry** — direct
+  inspection of `EventApprovalCard.tsx` shows slice 1 already shipped both a collapsed evidence
+  disclosure (`data-testid="source-approval-evidence-disclosure"`, summary shows
+  `Evidence reviewed · N facts`) and a collapsed audit disclosure
+  (`data-testid="source-approval-audit-disclosure"`, summary shows
+  `Intake audit trail · N turns`) — the "build a collapsed drawer" work this entry originally
+  described is already done. The real, verified gap: the audit disclosure only renders
+  `IntakeChatTrail` (intake conversation turns) — it never queries or shows the
+  `SOURCE-SHELL-003` `source_event_approvals` ledger or the `SOURCE-SHELL-004`
+  `source_artifact_acceptances` records, even though the recommendations doc explicitly asked
+  for "prior approvals, acceptances, and reviewer notes" together in this drawer.
+- **User/business impact**: an approver reviewing this event's governance history sees only
+  the intake conversation, not who approved prior stage gates or accepted which artifacts as
+  authoritative — the two features shipped earlier this session are invisible on the one page
+  where a reviewer would most want to see them.
 - **Severity**: P5 (workspace UX / decision clarity)
 - **Workstream**: Approval/authority/lineage controls
 - **Status**: `Proposed` — not started.
-- **Dependencies**: none — reads already-governed data the approval page already has access
-  to; no schema change.
-- **Acceptance criteria**: a collapsed-by-default "Evidence" drawer on the approval page shows
-  a count and freshness signal when collapsed (per the recommendations doc's "counts and
-  freshness signals visible" requirement even while collapsed); expanding it reveals the full
-  evidence detail currently shown inline; no evidence data is dropped, only its default
-  visibility changes.
-- **Required tests**: collapsed-state render test (count/freshness visible, detail absent);
-  expanded-state render test (full detail present); existing `EventApprovalCard.test.tsx`
-  cases must still pass unmodified in behavior (payload/permissions/gate logic untouched).
+- **Dependencies**: none — `loadApprovalLedger()` (`SOURCE-SHELL-003`) and
+  `listArtifactAcceptances()`/`getLatestArtifactAcceptancesByArtifactIds()`
+  (`SOURCE-SHELL-004`) already exist and are already tested; this wires existing repository
+  functions into an existing disclosure, no schema change.
+- **Acceptance criteria**: the existing audit disclosure (or a clearly-labeled adjacent one, if
+  mixing intake chat with governance history reads badly) shows real approval-ledger rows and
+  real artifact-acceptance records for the event, alongside the existing intake chat turns; an
+  honest empty state when none exist yet (matching this session's established pattern — never
+  fabricate placeholder rows); the existing intake-chat content is not removed, only
+  supplemented.
+- **Required tests**: render test confirming real ledger + acceptance data appears when
+  present; honest-empty-state test when absent; existing `EventApprovalCard.test.tsx` cases
+  must still pass unmodified in behavior.
 - **Discovered from**: `docs/codex-handoff/SOURCE_P1_APPROVAL_UX_RECOMMENDATIONS_2026-07-22.md`,
-  recommendation point 2 ("Evidence drawer: collapsed by default, with counts and freshness
-  signals visible").
-- **Execution instructions** (apply to `002` and `003` together): these two drawers are
-  independent, self-contained components with no shared state — build them as two separate
-  parallel work threads (parallel agents/workers) rather than serially, then land them as
-  either one integration PR or two independent PRs, whichever produces a cleaner diff. Once
-  each slice passes its own full local validation (typecheck, lint, tests,
-  `release:check`), merge and deploy it — do not pause to ask before merging; this is
-  pre-approved standing authority for this workstream, matching how every other
-  `SOURCE-SHELL`/`SOURCE-APPROVAL-UX` slice this session was handled. After deploying,
-  capture live signed-in proof, update this backlog entry's status, and move directly to the
-  next slice in sequence (`003`, then `004`, then `005`) without stopping for confirmation
-  between slices. Only stop and ask if something in a slice touches a database migration,
-  changes existing approval permissions/payload semantics, or fails validation in a way that
-  isn't a simple fix — those remain real stop conditions, not this workflow's default.
+  recommendation point 2 — corrected against actual code state 2026-07-22 after an initial,
+  inaccurate version of this entry assumed no disclosure existed yet.
+- **Execution instructions** (apply to `002` and `003` together): these touch two different,
+  independent disclosures with no shared state — run them as two parallel work threads rather
+  than serially, land as one integration PR or two, whichever is cleaner. Once each slice
+  passes full local validation (typecheck, lint, tests, `release:check`), merge and deploy it
+  without pausing to ask first — standing authority for this workstream, matching every other
+  `SOURCE-SHELL`/`SOURCE-APPROVAL-UX` item this session. After deploying, capture live
+  signed-in proof, update this entry's status, and move to `004` without stopping for
+  confirmation. Real stop conditions: a database migration, a change to existing approval
+  permissions/payload semantics, or a validation failure that isn't a simple fix.
 
-### SOURCE-APPROVAL-UX-003 — Audit trail drawer (slice 3 of 5)
+### SOURCE-APPROVAL-UX-003 — Evidence freshness signal
 
-- **Problem statement**: the intake audit trail (prior approvals, artifact acceptances,
-  reviewer notes) renders inline rather than behind a collapsed drawer.
-- **User/business impact**: same clutter problem, audit-history-specific.
-- **Severity**: P5 (workspace UX / decision clarity)
+- **Problem statement**: **correction to an earlier version of this entry** — the evidence
+  disclosure already exists and already shows a count (`Evidence reviewed · N facts`); the
+  originally-described "build a drawer" task is done. The real, verified gap: neither
+  `EventApprovalCard.tsx`'s disclosure summary nor `IntakeFactsReview.tsx` (grepped directly,
+  zero hits for any date/timestamp/freshness field) shows any recency signal — the
+  recommendations doc specifically asked for "counts **and freshness signals** visible" while
+  collapsed, and only the count half exists today.
+- **User/business impact**: an approver can't tell, without expanding the disclosure, whether
+  the evidence behind this approval is current or stale.
+- **Severity**: P6 (workspace UX polish)
 - **Workstream**: Approval/authority/lineage controls
 - **Status**: `Proposed` — not started.
-- **Dependencies**: none — reads the already-shipped `SOURCE-SHELL-003` approvals ledger and
-  `SOURCE-SHELL-004` artifact-acceptance data the approval page already has access to; no
-  schema change.
-- **Acceptance criteria**: a collapsed-by-default "Audit trail" drawer shows prior stage-gate
-  approvals (from the `SOURCE-SHELL-003` ledger) and artifact acceptances (from
-  `SOURCE-SHELL-004`) together, with reviewer notes; expanding it reveals full detail; nothing
-  currently shown inline is dropped, only its default visibility changes.
-- **Required tests**: collapsed/expanded render tests; confirm real ledger + acceptance data
-  renders (not a placeholder) when present, and an honest empty state when absent.
+- **Dependencies**: none — check what timestamp field is actually available on captured
+  intake facts (likely `capturedAt`/`updatedAt` on the underlying fact record; verify the real
+  field name before assuming one) and surface it, no schema change if one already exists.
+- **Acceptance criteria**: the evidence disclosure's collapsed summary shows a freshness signal
+  (e.g. "updated 2 days ago" or the most-recent capture date) alongside the existing fact
+  count; if facts have materially different capture dates, show the most-stale one (worst
+  case, not best case) so the signal is honest about what an approver should actually verify.
+- **Required tests**: render test confirming the freshness signal appears with real data;
+  confirm it reflects the most-stale fact when facts have mixed dates.
 - **Discovered from**: `docs/codex-handoff/SOURCE_P1_APPROVAL_UX_RECOMMENDATIONS_2026-07-22.md`,
-  recommendation point 2 ("Audit trail drawer: collapsed by default, showing prior approvals,
-  acceptances, and reviewer notes").
+  recommendation point 2 — corrected against actual code state 2026-07-22.
 - **Execution instructions**: same as `SOURCE-APPROVAL-UX-002` — build in parallel with `002`,
-  merge/deploy/live-verify without pausing for confirmation, then continue to `004`.
+  merge/deploy/live-verify without pausing, then continue to `004`.
 
-### SOURCE-APPROVAL-UX-004 — Footer action bar + checkout-style gating (slice 4 of 5)
+### SOURCE-APPROVAL-UX-004 — Acceptance-criteria verification pass
 
-- **Problem statement**: approval/reject/request-changes actions and their surrounding
-  copy aren't yet organized into the recommended footer action bar (`Approve` / `Request
-  changes` / overflow menu), and `Approve` isn't yet disabled until blockers clear with the
-  blocker copy placed directly beside the disabled action.
-- **User/business impact**: the primary decision action isn't yet visually or behaviorally
-  distinct from lower-frequency actions; a blocked approval doesn't fail as clearly as it
-  should before submission.
-- **Severity**: P5 (workspace UX / decision clarity)
-- **Workstream**: Approval/authority/lineage controls
-- **Status**: `Proposed` — not started, depends on `002` and `003` landing first (the footer
-  bar's final layout assumes both drawers exist above it).
-- **Dependencies**: `SOURCE-APPROVAL-UX-002`, `SOURCE-APPROVAL-UX-003`.
-- **Acceptance criteria**: footer action bar shows `Approve`, `Request changes`, and a small
-  overflow menu for lower-frequency actions; `Approve` is disabled until all required gate
-  confirmations/blockers clear, with the blocker copy shown directly beside the disabled
-  action (not buried elsewhere on the page); the reject/request-changes flow stays symmetric
-  with approval (same visual weight, same confirmation pattern); existing approval API
-  payload, permissions, and gate-contract semantics unchanged — this is presentation and
-  client-side gating only, never a substitute for the server-side gate contract already
-  enforced in the approve/gate-decision routes.
-- **Required tests**: disabled-until-ready state test; blocker-copy-visible-beside-button
-  test; symmetric reject-flow test; confirm the existing gate contract is still
-  server-enforced (a disabled client button is UX, not the security boundary).
-- **Discovered from**: `docs/codex-handoff/SOURCE_P1_APPROVAL_UX_RECOMMENDATIONS_2026-07-22.md`,
-  recommendation points 2 and 4 ("Footer action bar" + "Make the page behave like a governed
-  checkout").
-- **Execution instructions**: sequential after `002`/`003` land (not parallel — this slice's
-  layout depends on both). Same standing merge/deploy/live-verify authority as `002`/`003` —
-  do not pause between landing this and starting `005`.
-
-### SOURCE-APPROVAL-UX-005 — Acceptance-criteria verification pass (slice 5 of 5)
-
-- **Problem statement**: the recommendations doc defines 5 explicit, testable acceptance
-  criteria for the whole approval-UX simplification effort (5-second scan test, ≤1 primary +
-  1 secondary action in the first viewport, required confirmations visible without scrolling,
-  evidence/audit reachable within one click, no unrelated future-stage/artifact-maintenance
-  content shown by default) — these have never been verified end-to-end against the finished
-  page.
-- **User/business impact**: without this pass, "done" is asserted per-slice but never
-  confirmed against the original design intent as a whole.
+- **Problem statement**: **correction to an earlier version of this entry** — the originally
+  proposed "footer action bar + checkout-style gating" slice is, on inspection, already
+  substantially shipped: `Approve` is already `disabled={!actionReady}`, blocker copy already
+  surfaces in the approval brief's "Next required step" strip, and the footer already
+  distinguishes a primary action (Approve) from lower-frequency ones (Request changes/Reject
+  already sit inside an "Other decisions" `<details>` overflow, "Send to co-approver" as the
+  visible secondary). What's actually unverified is whether this already-shipped shape
+  satisfies the recommendations doc's 5 explicit acceptance criteria (5-second scan test, ≤1
+  primary + 1 secondary action visible in the first viewport, required confirmations visible
+  without scrolling, evidence/audit reachable within one click, no unrelated
+  future-stage/artifact-maintenance content shown by default) — nobody has checked this against
+  the real, deployed page.
+- **User/business impact**: without this pass, "done" is asserted per-slice but never confirmed
+  against the original design intent as a whole, and `002`/`003` land without knowing whether
+  they've actually closed the gap.
 - **Severity**: P5 (workspace UX / decision clarity, closing verification)
 - **Workstream**: Approval/authority/lineage controls
-- **Status**: `Proposed` — not started, depends on `002`, `003`, and `004` all landing first.
-- **Dependencies**: `SOURCE-APPROVAL-UX-002`, `003`, `004`.
-- **Acceptance criteria**: all 5 criteria from
-  `docs/codex-handoff/SOURCE_P1_APPROVAL_UX_RECOMMENDATIONS_2026-07-22.md`'s "Suggested
-  acceptance criteria" section verified against the real, deployed page via live signed-in
-  browser proof (not asserted from reading the code) — including checking that governed
-  evidence/approvals/artifact-acceptance/audit records are never removed or hidden
-  permanently (only collapsed), matching the doc's own stated Non-Goals.
-- **Required tests**: none new — this is a verification pass over the prior three slices'
-  shipped behavior, not new functionality.
+- **Status**: `Proposed` — not started, depends on `002` and `003` landing first.
+- **Dependencies**: `SOURCE-APPROVAL-UX-002`, `SOURCE-APPROVAL-UX-003`.
+- **Acceptance criteria**: all 5 criteria from the recommendations doc's "Suggested acceptance
+  criteria" section checked against the real, deployed page via live signed-in browser proof —
+  not asserted from reading the code. For any criterion that fails, make the smallest
+  targeted fix that closes it (e.g. if "Request changes" being inside an overflow menu turns
+  out to fail the ≤1-primary/1-secondary-action criterion in practice, promote it to a visible
+  secondary button — don't rebuild the footer from scratch if it's already close). Confirm
+  governed evidence/approvals/artifact-acceptance/audit records are never removed or
+  permanently hidden (only collapsed), matching the doc's own stated Non-Goals.
+- **Required tests**: whatever's needed for any targeted fix made during this pass; none if all
+  5 criteria already pass.
 - **Discovered from**: `docs/codex-handoff/SOURCE_P1_APPROVAL_UX_RECOMMENDATIONS_2026-07-22.md`,
-  "Suggested acceptance criteria" + "Non-Goals" sections.
-- **Execution instructions**: this is the wrap-up slice — after it passes, update this
-  workstream's summary in the "Ready / in progress" section below to reflect closure (or
-  note what's still open, honestly, if a criterion doesn't pass).
+  "Suggested acceptance criteria" + "Non-Goals" sections — corrected against actual code state
+  2026-07-22 (originally split across two entries, `004`/`005`, on the wrong assumption that
+  the footer/gating work hadn't started; consolidated into one verification-first pass).
+- **Execution instructions**: this is the closing slice — verify first, fix only what's
+  genuinely failing, merge/deploy/live-verify without pausing between any targeted fixes. After
+  it passes, update the "Ready / in progress" section below to reflect closure, or note
+  honestly what's still open if a criterion doesn't pass and isn't a small fix.
 
 ---
 
 ## Ready / in progress
 
-`SOURCE-APPROVAL-UX-002` and `SOURCE-APPROVAL-UX-003` are next, in parallel; `004` then `005`
-follow sequentially. See execution instructions embedded in each entry above — standing
-authority to merge, deploy, live-verify, and proceed to the next slice without pausing for
-confirmation between slices, same as every closed `SOURCE-SHELL`/`SOURCE-APPROVAL-UX` item
-above.
+`SOURCE-APPROVAL-UX-002` and `SOURCE-APPROVAL-UX-003` are next, in parallel; `004` follows as
+the closing verification pass. See execution instructions embedded in each entry above —
+standing authority to merge, deploy, live-verify, and proceed to the next slice without
+pausing for confirmation between slices, same as every closed `SOURCE-SHELL`/
+`SOURCE-APPROVAL-UX` item above.
 
 ## Blocked
 
