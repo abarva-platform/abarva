@@ -57,6 +57,8 @@ export interface PersistDeliverableOptions {
   outputFormat?: GeneratedArtifactFormat; // default 'docx'
   /** governed evidence ledger ids used (for the artifact's audit trail). */
   evidenceLedgerIds?: string[];
+  /** Canonical deliverables_v2 registry key, when it differs from the orchestrator type. */
+  deliverableTypeKey?: string;
   userId?: string;
   /**
    * When true (the `moves_decision_storytelling` flag), render the artifact as the exhibit-led
@@ -366,7 +368,7 @@ export async function persistDeliverable(
 
   const save = deps.save ?? saveGeneratedArtifact;
   const resolvedDeliverableTypeKey =
-    deliverableKey ?? result.brief.deliverableType;
+    opts.deliverableTypeKey ?? deliverableKey ?? result.brief.deliverableType;
   const renderableDocWithType = {
     ...doc,
     deliverableTypeKey: resolvedDeliverableTypeKey,

@@ -231,6 +231,7 @@ export async function POST(req: NextRequest) {
         const jobPayload: DeliverableRunJobPayload = {
           module: 'moves',
           useCaseArchetype,
+          deliverableTypeKey: spec.deliverableTypeKey,
           deliverableType,
           decisionContext: `${moveName} — ${clientSafePhaseLabel}: ${spec.documentPurpose}`,
           clientDisplayName,

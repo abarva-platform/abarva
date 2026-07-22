@@ -38,6 +38,8 @@ export interface GenerateDeliverableServiceInput extends Omit<
   userId: string;
   /** the move / source-event id this deliverable is generated for. */
   sourceArtifactRef: string;
+  /** Canonical deliverables_v2 registry key, when different from the orchestrator type. */
+  deliverableTypeKey?: string;
   /** semantic query used to retrieve governed evidence. */
   evidenceQuery?: string;
   outputFormats?: OutputFormat[];
@@ -257,6 +259,9 @@ export async function runDeliverableForTenant(
     clientId: input.clientId,
     renderedBy: input.userId,
     sourceArtifactRef: input.sourceArtifactRef,
+    ...(input.deliverableTypeKey
+      ? { deliverableTypeKey: input.deliverableTypeKey }
+      : {}),
     tenantPolicy: policy,
     ...(explicitOverride ? { outputFormat: explicitOverride } : {}),
     userId: input.userId,
