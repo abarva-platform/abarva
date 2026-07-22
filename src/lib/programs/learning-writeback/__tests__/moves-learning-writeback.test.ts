@@ -1,10 +1,13 @@
 import {
   buildMovesLearningWritebackPlan,
+  getMovesLearningReviewQueue,
   summarizeMovesLearningReadback,
+  summarizeMovesLearningReviewCandidates,
   writeMovesLearningToEnterpriseContext,
   type MovesLearningMove,
   type MovesLearningWritebackStore,
 } from "@/lib/programs/learning-writeback";
+import type { AzureReadClient } from "@/lib/data-plane/azureRead";
 
 const move: MovesLearningMove = {
   id: "move-1",
@@ -314,5 +317,93 @@ describe("summarizeMovesLearningReadback", () => {
         policyValidationStatus: "pass",
       },
     ]);
+  });
+});
+
+describe("Moves learning review queue", () => {
+  it("summarizes persisted learning rows as reviewable, not agent-ready context", () => {
+    const queue = summarizeMovesLearningReviewCandidates("arcturus", [
+      {
+        id: "rec-1",
+        tenant_key: "first-capital",
+        canonical_record_id: "moves-learning-move-1-approved_evidence-ev-1",
+        record_subtype: "approved_evidence",
+        title: "Loan onboarding baseline",
+        source_record_id: "ev-1",
+        last_synced_at: "2026-07-22T18:00:00.000Z",
+        payload: {
+          moveId: "move-1",
+          moveName: "Commercial Lending Agent Assist",
+          tenantKey: "first-capital",
+          phase: 2,
+          sourceBasis: "approved_evidence",
+          sourceId: "ev-1",
+          claimType: "evidence",
+          title: "Loan onboarding baseline",
+          summary: "Cycle time is 11.8 days and KYC rework is 27%.",
+          evidenceRefs: ["ev-1", "artifact-input-1"],
+          confidenceLevel: "high",
+          writebackSchemaVersion: 1,
+        },
+        agent_readiness_status: "not_reviewed",
+        retrievability: "committed_not_indexed",
+        policy_validation_status: "pending",
+        confidence_level: "high",
+        confidence_rationale: "Approved Move evidence, pending steward review.",
+      },
+    ]);
+
+    expect(queue.canonicalTenantKey).toBe("first-capital");
+    expect(queue.counts.total).toBe(1);
+    expect(queue.counts.bySourceBasis).toEqual({ "approved evidence": 1 });
+    expect(queue.counts.byReadiness).toEqual({
+      "not_reviewed / committed_not_indexed / pending": 1,
+    });
+    expect(queue.candidates[0]).toMatchObject({
+      moveId: "move-1",
+      moveName: "Commercial Lending Agent Assist",
+      phase: 2,
+      readinessStatus: "not_reviewed",
+      retrievability: "committed_not_indexed",
+      policyValidationStatus: "pending",
+      evidenceRefs: ["ev-1", "artifact-input-1"],
+    });
+  });
+
+  it("reads using canonical and legacy tenant aliases", async () => {
+    const queries: Array<{ sql: string; params: readonly unknown[] }> = [];
+    const reader: AzureReadClient = {
+      async query(sql, params = []) {
+        queries.push({ sql, params });
+        return [];
+      },
+      async select() {
+        return [];
+      },
+      async maybeSingle() {
+        return null;
+      },
+      async count() {
+        return 0;
+      },
+      async withSession(fn) {
+        return fn(async () => []);
+      },
+    };
+
+    const queue = await getMovesLearningReviewQueue("arcturus", {
+      reader,
+      limit: 25,
+    });
+
+    expect(queue.tenantKey).toBe("arcturus");
+    expect(queue.canonicalTenantKey).toBe("first-capital");
+    expect(queries).toHaveLength(1);
+    expect(queries[0]?.params[0]).toEqual(
+      expect.arrayContaining(["arcturus", "first-capital"]),
+    );
+    expect(queries[0]?.params).toEqual(
+      expect.arrayContaining(["moves_learning", "moves_learning_ledger", 25]),
+    );
   });
 });
