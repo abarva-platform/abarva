@@ -6,7 +6,8 @@
 
 ## Status
 
-`candidate`
+`live-proven` — merged, deployed, and verified against the real production page with a
+signed-in session. See Audit Evidence.
 
 ## Plain-English Summary
 
@@ -135,7 +136,22 @@ stages lifecycle matrix — no data migration involved either direction.
 
 ## Audit Evidence
 
-- PR: to be added once opened.
+- PR: [abarva-platform/abarva#5322](https://github.com/abarva-platform/abarva/pull/5322),
+  squash-merged as `1d01c16d82c8eee057a32bfe6ba2922c09d15cfd`.
+- Deploy run: [aca-main-deploy 29931599144](https://github.com/abarva-platform/abarva/actions/runs/29931599144), conclusion `success`.
+- ACA runtime invariant: confirmed — template image and 100%-traffic revision
+  (`ca-abarva-web-lab-eastus--m1d01c16d`) both on digest
+  `sha256:4e3d1d4d76aea1467b56876906c822630654e6ec4bfad03db0ea93d7bcdf9cbb`, `Healthy`.
+- Live signed-in proof (Anand Sundaram, Healthcare Demo tenant, event
+  `cea10d0a-6d5d-49d2-8522-173c2d6fd520`):
+  - Evidence ledger shows the real stage-relative line: "1 of 8 artifacts due through Scope
+    are registered — the quality score below is scored against the full 11-stage set, so it
+    stays low by design until the event nears completion," with the "Show all 11 stages"
+    toggle visible. The per-row Approval column shows real blocker text, not the removed
+    boilerplate sentence.
+  - Approvals tab shows exactly one card for this event (no duplicate, no other events mixed
+    in) with a real "Go to steps to decide" button. Clicking it switches to the Steps tab in
+    place (same URL, real step content rendered) — confirmed not a dead/same-page link.
 - Test/typecheck/lint logs: see QA / Validation.
 
 ## Known Gaps
