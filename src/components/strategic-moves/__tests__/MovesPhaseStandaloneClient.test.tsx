@@ -1714,6 +1714,18 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByLabelText("Phase progress")).not.toHaveTextContent(
       "100% ready · Approve & Build",
     );
+    expect(screen.getByTestId("mxw-decision-surface")).toHaveTextContent(
+      "P2 cannot advance yet",
+    );
+    expect(screen.getByTestId("mxw-decision-surface")).toHaveTextContent(
+      "Resolve 1 hard gate blocker before advancing",
+    );
+    expect(screen.getByTestId("mxw-decision-surface")).toHaveTextContent(
+      "Hard: Discovery synthesis signed off",
+    );
+    expect(
+      screen.getByText("Gate execution checklist"),
+    ).toBeInTheDocument();
   });
 
   it("does not load the legacy facilitated session playbook on the Prepare tab", () => {
