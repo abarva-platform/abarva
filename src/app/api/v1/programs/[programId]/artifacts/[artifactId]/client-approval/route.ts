@@ -33,6 +33,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
+type ProgramMutationClient = Awaited<
+  ReturnType<typeof getProgramsRouteSupabase>
+>["supabase"];
+
 const PHASE_TO_MODULE_KEY: Record<number, string> = {
   1: "charter",
   2: "diagnose",
@@ -40,6 +44,52 @@ const PHASE_TO_MODULE_KEY: Record<number, string> = {
   4: "roadmap",
   5: "mobilize",
 };
+
+async function ensureSponsorAuthorityForP1ClientApproval(
+  sb: ProgramMutationClient,
+  programId: string,
+  ctx: Awaited<ReturnType<typeof requireTenancy>>,
+): Promise<void> {
+  const { data: sponsorRows, error: sponsorError } = await sb
+    .from("engagement_participants")
+    .select("id")
+    .eq("engagement_id", programId)
+    .eq("approval_authority", "sponsor")
+    .limit(1);
+  if (sponsorError) throw sponsorError;
+  if (((sponsorRows as Array<{ id: string }> | null) ?? []).length > 0) return;
+
+  const { data: currentRows, error: currentError } = await sb
+    .from("engagement_participants")
+    .select("id")
+    .eq("engagement_id", programId)
+    .eq("user_id", ctx.userId)
+    .limit(1);
+  if (currentError) throw currentError;
+
+  const currentParticipant = ((currentRows as Array<{ id: string }> | null) ?? [])[0];
+  if (currentParticipant) {
+    const { error } = await sb
+      .from("engagement_participants")
+      .update({
+        role: "Sponsor",
+        approval_authority: "sponsor",
+      })
+      .eq("id", currentParticipant.id)
+      .eq("engagement_id", programId);
+    if (error) throw error;
+    return;
+  }
+
+  const { error } = await sb.from("engagement_participants").insert({
+    engagement_id: programId,
+    user_id: ctx.userId,
+    user_name: ctx.email ?? ctx.userId,
+    role: "Sponsor",
+    approval_authority: "sponsor",
+  });
+  if (error) throw error;
+}
 
 function stripHtml(html: string): string {
   return html
@@ -169,6 +219,10 @@ export async function POST(
         { error: "unsupported_phase", detail: "Only P1-P5 artifacts can be approved here." },
         { status: 422 },
       );
+    }
+
+    if (phase === 1) {
+      await ensureSponsorAuthorityForP1ClientApproval(supabase, programId, ctx);
     }
 
     const doc = renderableDocFromGeneratedArtifact(artifact);
