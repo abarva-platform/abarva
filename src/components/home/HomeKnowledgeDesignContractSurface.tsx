@@ -188,7 +188,7 @@ function rowTitle(row: HomeKnowledgeRecord): string {
       "metric_name",
       "name",
       "title",
-    ]) || "Context row"
+    ]) || "Context item"
   );
 }
 
@@ -235,7 +235,7 @@ function executiveAtGlanceFacts(
     "Approved programs",
     "AI candidates",
     "Enterprise risks",
-    "Evidence items",
+    "Evidence support",
   ]);
   const designFacts = facts.filter((fact) =>
     designOrderedLabels.has(asText(fact.label)),
@@ -293,6 +293,33 @@ function dimensionShare(
   const total = dimensions.reduce((sum, item) => sum + (item.count ?? 0), 0);
   if (!total) return 0;
   return Math.round(((dimension.count ?? 0) / total) * 100);
+}
+
+function coveragePosture(count: unknown): string {
+  const value = typeof count === "number" ? count : Number(count);
+  if (!Number.isFinite(value) || value <= 0) return "Not loaded";
+  if (value >= 200) return "Broad coverage";
+  if (value >= 50) return "Good coverage";
+  if (value >= 10) return "Focused coverage";
+  return "Starter coverage";
+}
+
+function evidencePosture(count: unknown): string {
+  const value = typeof count === "number" ? count : Number(count);
+  if (!Number.isFinite(value) || value <= 0) return "Needs sources";
+  if (value >= 5) return "Well supported";
+  if (value >= 2) return "Supported";
+  return "Limited support";
+}
+
+function decisionGradePosture(decisionGrade: number, total: number): string {
+  if (!total) return "Not assessed";
+  if (decisionGrade === total) return "All supporting areas decision-grade";
+  if (decisionGrade >= Math.ceil(total / 2)) {
+    return "Most supporting areas decision-grade";
+  }
+  if (decisionGrade > 0) return "Some supporting areas decision-grade";
+  return "Needs evidence before decision use";
 }
 
 export function HomeKnowledgeDesignContractSurface({
@@ -594,11 +621,11 @@ export function HomeKnowledgeDesignContractSurface({
                 <span>
                   <strong>{dimension.name}</strong>
                   <small>
-                    {dimension.count ?? 0} records ·{" "}
-                    {statusLabel(dimension.status)}
+                    {coveragePosture(dimension.count)} ·{" "}
+                    {sourceStatus(dimension.status)}
                   </small>
                 </span>
-                <em>{dimension.count ?? 0}</em>
+                <em>Open</em>
               </button>
             ))}
           </div>
@@ -895,7 +922,7 @@ function DimensionView({
           {insight?.findings?.length ? (
             <>
               <div className="nkh-kicker nkh-section-kicker">
-                Interesting Facts
+                Executive Signals
               </div>
               <div className="nkh-interesting-grid">
                 {insight.findings.slice(0, 3).map((finding, index) => (
@@ -911,8 +938,8 @@ function DimensionView({
           <div className="nkh-kicker nkh-section-kicker">Dashboard</div>
           <div className="nkh-dashboard-grid">
             <MetricTile
-              label="Records"
-              value={(dimension.count ?? rows.length).toLocaleString()}
+              label="Coverage"
+              value={coveragePosture(dimension.count ?? rows.length)}
             />
             <MetricTile
               label="Confidence"
@@ -920,8 +947,8 @@ function DimensionView({
               tone={dimension.status}
             />
             <MetricTile
-              label="Evidence Items"
-              value={String(dimension.evCount ?? evidence.length)}
+              label="Evidence"
+              value={evidencePosture(dimension.evCount ?? evidence.length)}
             />
             <MetricTile label="Last Refreshed" value="Jul 2026" />
           </div>
@@ -960,7 +987,7 @@ function DimensionView({
         <div className="nkh-data-card">
           <div className="nkh-data-tools">
             <label>
-              Search rows
+              Search loaded items
               <input
                 placeholder={`Search ${dimension.name.toLowerCase()}`}
                 value={tableQuery}
@@ -1036,7 +1063,12 @@ function DimensionView({
                 </label>
               ))}
             <span className="nkh-chip">
-              Showing {rows.length} of {dimension.count ?? rows.length}
+              {tableQuery ||
+              facetValue !== "all" ||
+              confidenceValue !== "all" ||
+              Object.values(crossFilterValues).some((value) => value !== "all")
+                ? "Filtered source view"
+                : "Loaded source view"}
             </span>
             <button className="nkh-export" type="button" onClick={exportCsv}>
               Export CSV
@@ -1150,8 +1182,8 @@ function DimensionView({
       {tab === "evidence" ? (
         <div>
           <p className="nkh-tab-intro">
-            Source inventory behind this dimension: file, load date, row count,
-            loader metadata, and what each source supports.
+            Source inventory behind this dimension: file, load date, loader
+            metadata, and what each source supports.
           </p>
           <SourceInventoryTable
             dataSet={dataSet}
@@ -1257,7 +1289,7 @@ function EnterpriseOverview({
       <section className="nkh-at-glance" aria-label="Enterprise at a glance">
         <div className="nkh-inline-head">
           <div className="nkh-kicker">Enterprise at a glance</div>
-          <span>selected facts · every metric traceable to evidence</span>
+          <span>selected signals · every metric traceable to evidence</span>
         </div>
         <div className="nkh-fact-grid">
           {executiveFacts.slice(0, 6).map((fact, index) => (
@@ -1275,7 +1307,7 @@ function EnterpriseOverview({
           <div className="nkh-kicker">Context concentration</div>
           <h2>Where the enterprise story is strongest</h2>
           <p>
-            The largest loaded domains show where Nexus can already orient a
+            The strongest covered domains show where Nexus can already orient a
             C-suite conversation. Thin or directional domains should become the
             next evidence requests before value, sourcing, or operating-model
             claims are treated as decision-grade.
@@ -1428,14 +1460,14 @@ function SixQuestionsLanding({
         Boolean(dimension),
       );
     if (!matched.length) return null;
-    const totalRecords = matched.reduce(
+    const totalCoverage = matched.reduce(
       (sum, dimension) => sum + (dimension.count ?? 0),
       0,
     );
     const decisionGrade = matched.filter(
       (dimension) => dimension.status === "source-backed",
     ).length;
-    return { ...question, matched, totalRecords, decisionGrade };
+    return { ...question, matched, totalCoverage, decisionGrade };
   }).filter((card): card is NonNullable<typeof card> => Boolean(card));
 
   if (!cards.length) return null;
@@ -1458,10 +1490,9 @@ function SixQuestionsLanding({
             onClick={() => onSelectDimension(card.matched[0].key)}
           >
             <span className="nkh-six-question-title">{card.question}</span>
-            <strong>{card.totalRecords.toLocaleString()} records</strong>
+            <strong>{coveragePosture(card.totalCoverage)}</strong>
             <span className="nkh-six-question-meta">
-              {card.decisionGrade} of {card.matched.length} dimension
-              {card.matched.length === 1 ? "" : "s"} decision-grade ·{" "}
+              {decisionGradePosture(card.decisionGrade, card.matched.length)} ·{" "}
               {card.matched.map((dimension) => dimension.name).join(", ")}
             </span>
           </button>
@@ -1802,10 +1833,8 @@ function AiSuccessThesis({
   const gaps = narrativeString(pack, "evidence_gaps_summary");
   const proof = narrativeString(pack, "proof_summary");
   const apps = factText(pack, "Applications", "loaded");
-  const evidenceItems = factText(
-    pack,
-    "Evidence items",
-    `${pack.design_slots.EVIDENCE?.length ?? 0}`,
+  const evidenceItems = evidencePosture(
+    pack.design_slots.EVIDENCE?.length ?? 0,
   );
   const aiCandidates = factText(
     pack,
@@ -1833,11 +1862,14 @@ function AiSuccessThesis({
           aria-label="Context layer proof points"
         >
           {[
-            ["Context areas", `${dimensions.length}`],
-            ["Evidence items", evidenceItems],
-            ["Applications", apps],
-            ["AI candidates", aiCandidates],
-            ["Risk/control signals", risks],
+            [
+              "Context map",
+              dimensions.length >= 19 ? "Complete map" : "In progress",
+            ],
+            ["Evidence support", evidenceItems],
+            ["Technology estate", coveragePosture(apps)],
+            ["AI agenda", coveragePosture(aiCandidates)],
+            ["Risk/control view", coveragePosture(risks)],
           ].map(([label, value]) => (
             <div key={label}>
               <strong>{value}</strong>
@@ -1852,7 +1884,7 @@ function AiSuccessThesis({
           <p>
             Home is the investment committee for context: it separates AI bets
             that are ready to explore from market-pattern hypotheses and flags
-            which missing facts would make a recommendation unsafe.
+            which missing evidence would make a recommendation unsafe.
           </p>
         </article>
         <article>
@@ -2112,10 +2144,10 @@ function RowDetail({
 }) {
   const refs = evidenceRefs(row.evidence_id ?? row.evidence_refs);
   return (
-    <aside className="nkh-drawer" aria-label="Selected row detail">
+    <aside className="nkh-drawer" aria-label="Selected context detail">
       <div className="nkh-drawer-head">
         <div>
-          <span>Selected row</span>
+          <span>Selected context item</span>
           <h3>{rowTitle(row)}</h3>
         </div>
         <button type="button" onClick={onClose}>
@@ -2324,7 +2356,7 @@ function DimensionVolumeChart({
   return (
     <div
       className="nkh-volume-chart"
-      aria-label="Loaded context by dimension"
+      aria-label="Context coverage by dimension"
       data-testid="home-knowledge-dimension-volume-recharts"
     >
       <ResponsiveContainer width="100%" height={314}>
@@ -2335,12 +2367,7 @@ function DimensionVolumeChart({
           barCategoryGap={10}
         >
           <CartesianGrid horizontal={false} stroke={HOME_CHART_COLORS.line} />
-          <XAxis
-            type="number"
-            tick={{ fill: HOME_CHART_COLORS.ink3, fontSize: 11 }}
-            axisLine={false}
-            tickLine={false}
-          />
+          <XAxis type="number" hide axisLine={false} tickLine={false} />
           <YAxis
             type="category"
             dataKey="name"
@@ -2353,10 +2380,10 @@ function DimensionVolumeChart({
             axisLine={false}
             tickLine={false}
           />
-          <Tooltip content={<HomeChartTooltip valueLabel="Records" />} />
+          <Tooltip content={<HomeChartTooltip valueLabel="Coverage items" />} />
           <Bar
             dataKey="count"
-            name="Records"
+            name="Coverage"
             radius={[0, 8, 8, 0]}
             isAnimationActive={false}
           >
@@ -2435,9 +2462,9 @@ function CategoricalCrossTabHeatmap({
       <div className="nkh-crosstab-head">
         <strong>{title}</strong>
         <span>
-          {evidenced.length} of {rows.length} rows evidenced for both{" "}
-          {fieldA.label.toLowerCase()} and {fieldB.label.toLowerCase()}
-          {pending > 0 ? ` · ${pending} pending evidence` : ""}
+          Coverage shown where both {fieldA.label.toLowerCase()} and{" "}
+          {fieldB.label.toLowerCase()} are supported
+          {pending > 0 ? ` · some items still need evidence` : ""}
         </span>
       </div>
       <div
@@ -2464,9 +2491,11 @@ function CategoricalCrossTabHeatmap({
                   key={`${a}-${b}`}
                   className="nkh-crosstab-cell"
                   style={{ background: cellFill(count) }}
-                  title={`${a.replaceAll("_", " ")} × ${b.replaceAll("_", " ")}: ${count}`}
+                  title={`${a.replaceAll("_", " ")} × ${b.replaceAll("_", " ")}: ${
+                    count ? "supported" : "not yet supported"
+                  }`}
                 >
-                  {count || ""}
+                  {count ? "✓" : ""}
                 </div>
               );
             })}
@@ -2724,7 +2753,7 @@ function RelationshipDimensionGraphSection({
       ) : (
         <EmptyState
           title="Relationship graph is not loaded yet"
-          body="The Relationships dimension has rows, but no validated source-to-target edges are available for a graph view yet."
+          body="The Relationships dimension has source material, but the validated connection pairs are not ready for a graph view yet."
         />
       )}
       <RelationshipArtOfPossible
@@ -2804,16 +2833,16 @@ function RelationshipArtOfPossible({
         <strong>What this graph unlocks</strong>
         <span>
           {edges.length
-            ? `${edges.length} validated edges are visible today across ${mappedCount} relationship families.`
-            : `${rowCount.toLocaleString()} relationship rows are loaded, but graph-ready edge pairs still need projection.`}
+            ? `Validated connections are visible today across ${mappedCount} relationship families.`
+            : `${coveragePosture(rowCount)} exists, but graph-ready connection pairs still need projection.`}
         </span>
       </div>
       <p>
-        A board-grade context layer should not just list records. It should show
-        how ownership, systems, data, vendors, risks, initiatives, and outcomes
-        move together. That is what lets Intelligence answer better than a
-        generic LLM, Moves scope change realistically, Source target the right
-        evidence, and Tower explain value realization.
+        A board-grade context layer should not just inventory the enterprise. It
+        should show how ownership, systems, data, vendors, risks, initiatives,
+        and outcomes move together. That is what lets Intelligence answer better
+        than a generic LLM, Moves scope change realistically, Source target the
+        right evidence, and Tower explain value realization.
       </p>
       <div className="nkh-relationship-gap-callout">
         <span>Current expansion signal</span>
@@ -2869,11 +2898,9 @@ function RelationshipTopologyGraph({
       <div className="nkh-crosstab-head">
         <strong>How systems actually connect</strong>
         <span>
-          {edges.length} evidenced connection{edges.length === 1 ? "" : "s"}{" "}
-          derived from loaded integration, vendor, and use-case data
-          {showingSubset
-            ? ` · showing ${topology.sourceCount} of ${topology.totalSources} sources, ${topology.targetCount} of ${topology.totalTargets} targets they connect to`
-            : ""}
+          Evidenced connections derived from integration, vendor, and use-case
+          material
+          {showingSubset ? " · showing the most material path first" : ""}
         </span>
       </div>
       <div className="nkh-topology-canvas">
@@ -3020,7 +3047,7 @@ function HomeChartTooltip({
         </span>
       ))}
       {typeof row.share === "number" ? (
-        <em>{row.share}% of loaded rows</em>
+        <em>{row.share}% of covered material</em>
       ) : null}
     </div>
   );
@@ -3054,7 +3081,7 @@ function UseCasePortfolioScatter({
     return (
       <EmptyState
         title="Use-case portfolio scores not loaded"
-        body="The approved pack has use cases, but not enough scored rows to render the value/readiness matrix."
+        body="The approved pack has use cases, but not enough scored evidence to render the value/readiness matrix."
       />
     );
   }
@@ -3336,14 +3363,18 @@ function KnowledgeLayerProofVisual({
             <strong>{node}</strong>
             <em>
               {index === 0
-                ? `${evidence.length} source cards`
+                ? evidence.length
+                  ? "Source evidence present"
+                  : "Source evidence pending"
                 : index === 1
-                  ? `${dimensions.length} dimensions`
+                  ? "Enterprise dimensions"
                   : index === 2
-                    ? "facts · gaps · relationships"
+                    ? "evidence · gaps · relationships"
                     : index === 3
                       ? "Home · Intelligence · Moves · Source · Tower"
-                      : `${nextEvidence.length} evidence requests`}
+                      : nextEvidence.length
+                        ? "Evidence requests queued"
+                        : "Evidence requests to define"}
             </em>
           </div>
         ))}
@@ -3367,7 +3398,7 @@ function ProofStageRechart({
   nextEvidence: HomeKnowledgeRecord[];
 }) {
   const data = [
-    { name: "Evidence", value: evidence.length, detail: "source cards" },
+    { name: "Evidence", value: evidence.length, detail: "source evidence" },
     { name: "Dimensions", value: dimensions.length, detail: "context domains" },
     {
       name: "Decision-grade",
@@ -3460,12 +3491,12 @@ function EvidenceCard({
       <p>{evidence.supports}</p>
       <dl>
         <div>
-          <dt>Rows</dt>
-          <dd>{evidence.rows ?? "—"}</dd>
+          <dt>Source material</dt>
+          <dd>{evidence.rows ? "Captured" : "—"}</dd>
         </div>
         <div>
-          <dt>Facts</dt>
-          <dd>{evidence.facts ?? "—"}</dd>
+          <dt>Business support</dt>
+          <dd>{evidence.facts ? "Mapped" : "—"}</dd>
         </div>
         <div>
           <dt>Status</dt>
@@ -3495,11 +3526,13 @@ function sourceInventoryRows({
       size: "Not captured",
       loaded_at: dataSet.refreshed_at ?? "Not captured",
       loaded_by: "Not captured",
-      rows: dataSet.row_count ?? dimension.count ?? dataSet.rows.length,
+      loaded_items: coveragePosture(
+        dataSet.row_count ?? dimension.count ?? dataSet.rows.length,
+      ),
       status: sourceStatus(dimension.status),
       supports:
-        dataSet.source_layer ?? dimension.summary ?? "Dimension source rows",
-      gaps: "Use row-level evidence and gaps tabs for validation boundaries",
+        dataSet.source_layer ?? dimension.summary ?? "Dimension source view",
+      gaps: "Use evidence and gaps tabs for validation boundaries",
     });
   }
 
@@ -3510,7 +3543,7 @@ function sourceInventoryRows({
       size: "Not captured",
       loaded_at: item.date ?? "Not captured",
       loaded_by: "Not captured",
-      rows: item.rows ?? "Not captured",
+      loaded_items: item.rows ? "Captured" : "Not captured",
       status: sourceStatus(item.st ?? item.status),
       supports: item.supports ?? item.facts ?? "Supporting evidence",
       gaps: item.missing ?? "No source-specific gap captured",
@@ -3535,7 +3568,7 @@ function SourceInventoryTable({
     return (
       <EmptyState
         title="No source inventory surfaced"
-        body="The loaded rows still carry row-level evidence identifiers where available, but this approved pack did not include file metadata for this dimension."
+        body="The approved pack includes business context, but it did not include file-level metadata for this dimension."
       />
     );
   }
@@ -3561,8 +3594,8 @@ function SourceInventoryTable({
                     {asText(row.type)}
                   </span>
                   <span>
-                    <em>Rows</em>
-                    {asText(row.rows)}
+                    <em>Coverage</em>
+                    {asText(row.loaded_items)}
                   </span>
                   <span>
                     <em>Loaded</em>
@@ -4009,7 +4042,7 @@ const styles = `
   color: #6d675f;
 }
 .nkh-six-question-card strong {
-  font: 700 22px var(--serif, serif);
+  font: 800 17px var(--sans);
   color: #161411;
 }
 .nkh-six-question-meta {
@@ -5229,7 +5262,7 @@ const styles = `
 }
 .nkh-dashboard-tile strong {
   color: #17202e;
-  font: 700 24px var(--serif);
+  font: 800 18px var(--sans);
 }
 .nkh-dashboard-split {
   display: grid;
@@ -5661,7 +5694,7 @@ const styles = `
 .nkh-fact-card strong {
   color: #050b14;
   font-family: var(--serif);
-  font-size: 23px;
+  font-size: 20px;
   line-height: 1.08;
 }
 .nkh-fact-card p {
@@ -5856,6 +5889,9 @@ const styles = `
 .nkh-kpi-card strong {
   color: #050b14;
   font-family: var(--serif);
+}
+.nkh-dashboard-tile strong {
+  font: 800 18px var(--sans);
 }
 .nkh-confidence-panel {
   padding-bottom: 24px;
