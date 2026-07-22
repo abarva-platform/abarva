@@ -5,6 +5,7 @@ let artifact: Record<string, unknown> | null = null;
 let artifactSiblings: Record<string, unknown>[] = [];
 let registryArtifact: Record<string, unknown> | null = null;
 let artifactStateBody: string | null = null;
+let blobDownloads: Array<{ bucket: string; path: string }> = [];
 
 jest.mock("@/lib/auth/tenancy", () => ({
   requireTenancy: jest.fn(async () => tenancy),
@@ -19,7 +20,12 @@ jest.mock("@/lib/source/file-cabinet/repository", () => ({
   listSourceArtifacts: jest.fn(async () => artifactSiblings),
 }));
 jest.mock("@/lib/source/file-cabinet/blob-store", () => ({
-  downloadArtifactBytes: jest.fn(async () => Buffer.from("PK docx bytes")),
+  downloadArtifactBytes: jest.fn(
+    async (args: { bucket: string; path: string }) => {
+      blobDownloads.push(args);
+      return Buffer.from(`PK ${args.path}`);
+    },
+  ),
 }));
 jest.mock("@/lib/active-client", () => ({
   getActiveClientRow: jest.fn(async () => ({ key: "skyharbor" })),
@@ -75,6 +81,7 @@ beforeEach(() => {
   artifactSiblings = [];
   registryArtifact = null;
   artifactStateBody = null;
+  blobDownloads = [];
 });
 
 describe("GET /api/v1/source/artifacts/[artifactId]/download", () => {
@@ -103,6 +110,161 @@ describe("GET /api/v1/source/artifacts/[artifactId]/download", () => {
     expect(res.headers.get("x-source-artifact-format")).toBe("docx");
     const buf = Buffer.from(await res.arrayBuffer());
     expect(buf.subarray(0, 2).toString("latin1")).toBe("PK");
+  });
+
+  it("substitutes a stale generated artifact id with the authoritative client-final sibling", async () => {
+    artifact = {
+      blobContainer: "source-artifacts",
+      blobPath: "draft.docx",
+      fileName: "Generated RFP Pack.docx",
+      fileFormat: "docx",
+      version: 1,
+      sourceEventId: "event-1",
+      sourcingStage: "rfp",
+      artifactType: "d09_rfp_pack",
+      artifactGroup: "generated",
+      status: "draft",
+      lifecycleState: "current",
+      isClientFinal: false,
+      isCurrentAuthoritative: false,
+      updatedAt: "2026-07-03T00:00:00.000Z",
+      createdAt: "2026-07-03T00:00:00.000Z",
+    };
+    artifactSiblings = [
+      {
+        id: "client-final",
+        blobContainer: "source-artifacts",
+        blobPath: "client-final.docx",
+        fileName: "Client Final RFP Pack.docx",
+        fileFormat: "docx",
+        version: 4,
+        sourceEventId: "event-1",
+        sourcingStage: "rfp",
+        artifactType: "d09_rfp_pack",
+        artifactGroup: "upload",
+        status: "client_final",
+        lifecycleState: "current",
+        isClientFinal: true,
+        isCurrentAuthoritative: true,
+        clientFinalAcceptedAt: "2026-07-04T00:00:00.000Z",
+        updatedAt: "2026-07-04T00:00:00.000Z",
+        createdAt: "2026-07-04T00:00:00.000Z",
+      },
+    ];
+
+    const res = await GET(req(), params("generated-draft"));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-source-artifact-id")).toBe("client-final");
+    expect(res.headers.get("x-source-artifact-authoritative")).toBe(
+      "substituted-authoritative",
+    );
+    expect(res.headers.get("x-source-requested-artifact-id")).toBe(
+      "generated-draft",
+    );
+    expect(res.headers.get("x-source-artifact-substituted")).toBe("true");
+    expect(blobDownloads).toEqual([
+      { bucket: "source-artifacts", path: "client-final.docx" },
+    ]);
+  });
+
+  it("preserves the requested stale artifact when includeHistory is explicit", async () => {
+    artifact = {
+      blobContainer: "source-artifacts",
+      blobPath: "draft.docx",
+      fileName: "Generated RFP Pack.docx",
+      fileFormat: "docx",
+      version: 1,
+      sourceEventId: "event-1",
+      sourcingStage: "rfp",
+      artifactType: "d09_rfp_pack",
+      artifactGroup: "generated",
+      status: "draft",
+      lifecycleState: "current",
+      isClientFinal: false,
+      isCurrentAuthoritative: false,
+    };
+    artifactSiblings = [
+      {
+        id: "client-final",
+        blobContainer: "source-artifacts",
+        blobPath: "client-final.docx",
+        fileName: "Client Final RFP Pack.docx",
+        fileFormat: "docx",
+        version: 4,
+        sourceEventId: "event-1",
+        sourcingStage: "rfp",
+        artifactType: "d09_rfp_pack",
+        artifactGroup: "upload",
+        status: "client_final",
+        lifecycleState: "current",
+        isClientFinal: true,
+        isCurrentAuthoritative: true,
+      },
+    ];
+
+    const res = await GET(
+      req(
+        "https://app.abarva.ai/api/v1/source/artifacts/generated-draft/download?includeHistory=1",
+      ),
+      params("generated-draft"),
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-source-artifact-id")).toBe("generated-draft");
+    expect(res.headers.get("x-source-artifact-authoritative")).toBe(
+      "as-requested",
+    );
+    expect(res.headers.get("x-source-artifact-substituted")).toBeNull();
+    expect(blobDownloads).toEqual([
+      { bucket: "source-artifacts", path: "draft.docx" },
+    ]);
+  });
+
+  it("does not substitute a generated download with a different-format generated preview", async () => {
+    artifact = {
+      blobContainer: "source-artifacts",
+      blobPath: "draft.docx",
+      fileName: "Generated RFP Pack.docx",
+      fileFormat: "docx",
+      version: 1,
+      sourceEventId: "event-1",
+      sourcingStage: "rfp",
+      artifactType: "d09_rfp_pack",
+      artifactGroup: "generated",
+      status: "draft",
+      lifecycleState: "current",
+      updatedAt: "2026-07-03T00:00:00.000Z",
+    };
+    artifactSiblings = [
+      {
+        id: "generated-preview",
+        blobContainer: "source-artifacts",
+        blobPath: "preview.html",
+        fileName: "Generated RFP Pack.html",
+        fileFormat: "html",
+        version: 3,
+        sourceEventId: "event-1",
+        sourcingStage: "rfp",
+        artifactType: "d09_rfp_pack__preview",
+        artifactGroup: "generated",
+        status: "draft",
+        lifecycleState: "current",
+        updatedAt: "2026-07-04T00:00:00.000Z",
+      },
+    ];
+
+    const res = await GET(req(), params("generated-draft"));
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("x-source-artifact-id")).toBe("generated-draft");
+    expect(res.headers.get("x-source-artifact-authoritative")).toBe(
+      "as-requested",
+    );
+    expect(res.headers.get("x-source-artifact-substituted")).toBeNull();
+    expect(blobDownloads).toEqual([
+      { bucket: "source-artifacts", path: "draft.docx" },
+    ]);
   });
 
   it("streams unicode filenames with a byte-safe fallback and UTF-8 filename", async () => {

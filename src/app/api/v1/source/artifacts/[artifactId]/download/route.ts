@@ -10,6 +10,7 @@ import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence
 import { getObjectStorageAdapter } from "@/lib/data-plane/objectStorage";
 import { getAzureWriteFluentClient } from "@/lib/data-plane/postgresCompat";
 import { getSourceArtifactRegistryRecord } from "@/lib/source/artifact-registry";
+import { resolveAuthoritativeArtifactSlots } from "@/lib/source/client-final-artifacts";
 import {
   getSourceArtifact,
   listSourceArtifacts,
@@ -64,13 +65,27 @@ export async function GET(
     const record = await getSourceArtifact(artifactId, ctx.clientId);
     if (!record) return streamRegistryArtifact(artifactId);
 
+    const authority = await resolveDownloadAuthorityRecord({
+      record,
+      clientId: ctx.clientId,
+      includeHistory: shouldIncludeHistory(req),
+    });
+    const effectiveRecord = authority.record;
+
     if (requestedFormat === "md") {
-      return streamMarkdownSourceFromArtifactState(record);
+      return streamMarkdownSourceFromArtifactState(
+        effectiveRecord,
+        authority.audit,
+      );
     }
 
     const targetRecord = requestedFormat
-      ? await resolveFormatRecord(record, requestedFormat, ctx.clientId)
-      : record;
+      ? await resolveFormatRecord(
+          effectiveRecord,
+          requestedFormat,
+          ctx.clientId,
+        )
+      : effectiveRecord;
     if (!targetRecord) {
       return Response.json(
         {
@@ -80,7 +95,7 @@ export async function GET(
         { status: 404 },
       );
     }
-    return streamFileCabinetRecord(targetRecord);
+    return streamFileCabinetRecord(targetRecord, authority.audit);
   } catch (err) {
     try {
       return tenancyErrorResponse(err);
@@ -103,8 +118,66 @@ function parseRequestedFormat(
   return raw as ArtifactFileFormat;
 }
 
+function shouldIncludeHistory(req: NextRequest): boolean {
+  const value = req.nextUrl.searchParams.get("includeHistory")?.toLowerCase();
+  return value === "1" || value === "true";
+}
+
 function baseArtifactType(artifactType: string): string {
   return artifactType.replace(/__(preview|source|companion)$/i, "");
+}
+
+function artifactAuthoritySlotKey(record: SourceArtifactRecord): string {
+  return `${record.sourcingStage ?? "unknown"}::${baseArtifactType(
+    record.artifactType,
+  )}`;
+}
+
+interface DownloadAuthorityAudit {
+  requestedArtifactId: string;
+  substituted: boolean;
+}
+
+async function resolveDownloadAuthorityRecord(args: {
+  record: SourceArtifactRecord;
+  clientId: string;
+  includeHistory: boolean;
+}): Promise<{ record: SourceArtifactRecord; audit: DownloadAuthorityAudit }> {
+  const audit = {
+    requestedArtifactId: args.record.id,
+    substituted: false,
+  };
+  if (args.includeHistory) return { record: args.record, audit };
+
+  const slotKey = artifactAuthoritySlotKey(args.record);
+  const artifacts = await listSourceArtifacts(
+    args.record.sourceEventId,
+    args.clientId,
+    {
+      includeHistory: true,
+    },
+  );
+  const sameSlot = [args.record, ...artifacts].filter(
+    (candidate, index, candidates) =>
+      artifactAuthoritySlotKey(candidate) === slotKey &&
+      candidate.fileFormat === args.record.fileFormat &&
+      candidates.findIndex((item) => item.id === candidate.id) === index,
+  );
+  const slot = resolveAuthoritativeArtifactSlots(
+    sameSlot,
+    artifactAuthoritySlotKey,
+  )[0];
+  const authoritative = slot?.authoritative;
+  if (!authoritative || authoritative.id === args.record.id) {
+    return { record: args.record, audit };
+  }
+  return {
+    record: authoritative,
+    audit: {
+      requestedArtifactId: args.record.id,
+      substituted: true,
+    },
+  };
 }
 
 async function resolveFormatRecord(
@@ -129,6 +202,7 @@ async function resolveFormatRecord(
 
 async function streamFileCabinetRecord(
   record: SourceArtifactRecord,
+  audit: DownloadAuthorityAudit,
 ): Promise<Response> {
   const bytes = await downloadArtifactBytes({
     bucket: record.blobContainer,
@@ -148,12 +222,22 @@ async function streamFileCabinetRecord(
       "x-source-artifact-id": record.id,
       "x-source-artifact-version": String(record.version),
       "x-source-artifact-format": record.fileFormat,
+      "x-source-artifact-authoritative": audit.substituted
+        ? "substituted-authoritative"
+        : "as-requested",
+      ...(audit.substituted
+        ? {
+            "x-source-requested-artifact-id": audit.requestedArtifactId,
+            "x-source-artifact-substituted": "true",
+          }
+        : {}),
     },
   });
 }
 
 async function streamMarkdownSourceFromArtifactState(
   record: SourceArtifactRecord,
+  audit: DownloadAuthorityAudit,
 ): Promise<Response> {
   const artifactCode = baseArtifactType(record.artifactType);
   const { data, error } = await getAzureWriteFluentClient()
@@ -187,6 +271,15 @@ async function streamMarkdownSourceFromArtifactState(
       "x-source-artifact-version": String(record.version),
       "x-source-artifact-format": "md",
       "x-source-artifact-internal-source": "true",
+      "x-source-artifact-authoritative": audit.substituted
+        ? "substituted-authoritative"
+        : "as-requested",
+      ...(audit.substituted
+        ? {
+            "x-source-requested-artifact-id": audit.requestedArtifactId,
+            "x-source-artifact-substituted": "true",
+          }
+        : {}),
     },
   });
 }
