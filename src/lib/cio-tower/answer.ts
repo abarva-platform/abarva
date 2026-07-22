@@ -333,7 +333,11 @@ export function validateVisibleAnswer(text: string): string[] {
     ["visible_scaffold_label", /(^|\n)\s*(Read|Evidence|Implication|Next move):/i],
     [
       "internal_data_plane_language",
-      /\b(loaded evidence|tenant evidence|evidence ledger|semantic packet|retrieved context|source signals|rows)\b/i,
+      /\b(loaded evidence|tenant evidence|evidence ledger|semantic packet|retrieved context|source signals|metric records|value records|active signals|usage signals|rows)\b/i,
+    ],
+    [
+      "technical_count_as_evidence",
+      /\b\d[\d,]*(?:\.\d+)?\s+(?:source\s+signals?|usage\s+signals?|active\s+signals?|metric\s+records?|value\s+records?|facts?|rows?|edges?|nodes?|citations?|relationships?)\b/i,
     ],
     ["code_fence_or_hidden_visual_payload", /```|abarva-canvas|chart\s*json|"\s*(?:type|data|series|x|y)\s*"\s*:/i],
     ["markdown_table_in_answer_field", /^\s*\|.+\|\s*$/m],
@@ -577,6 +581,8 @@ export function buildCioTowerClaudePrompt(
     "- Lead with the actual answer, judgment, or recommendation.",
     "- Do not open with filler, a summary of the question, or a template.",
     "- Do not mention internal retrieval, evidence machinery, semantic packets, database rows, table names, JSON, source keys, record IDs, UUIDs, or debug terms.",
+    "- Do not use technical quantity counts as evidence. Never say things like '300 rows', '500 facts', '800 edges', '42 nodes', 'metric records', 'value records', 'source signals', or 'active signals' in user-visible prose.",
+    "- Translate internal coverage into executive meaning: say whether proof is broad enough, thin, fragmented, finance-attestation pending, usage-instrumentation missing, or source-backed enough for a decision.",
     '- Do not use visible scaffolding labels like "Read:", "Evidence:", "Implication:", or "Next move:".',
     "- Do not mention Atlas. The agent is aVa.",
     "- If the data is incomplete, state the specific missing business field in plain English.",
@@ -1112,13 +1118,13 @@ function buildTowerV3FallbackAnswer(
 
   let answer: string;
   if (intent === "value_gap") {
-    answer = `Use Tower as a value-governance view, not an outcome scoreboard. ${view.tenantName} has ${view.valueRecordCount} value records and ${gateSummary}, so the executive move is to rank forecast value while closing baseline, owner, and finance-attestation gaps. The CIO can use this to sequence measurement work; the CFO should hold board claims until the claim gates clear.`;
+    answer = `Use Tower as a value-governance view, not an outcome scoreboard. The current context supports a measurement agenda, but ${gateSummary}, so the executive move is to rank forecast value while closing baseline, owner, and finance-attestation gaps. The CIO can use this to sequence measurement work; the CFO should hold board claims until the claim gates clear.`;
   } else if (intent === "run_drivers" || intent === "vendor_exposure") {
     answer = `Tower can point to the service and vendor evidence blockers, but it should not rank commercial exposure from bridge diagnostics alone. The strongest current blocker is ${topGap?.title ?? "contract and service evidence"}. Send contract economics, SLA/KPI schedules, renewal windows, and vendor performance evidence to Source before turning this into a commercial-benefit case.`;
   } else if (intent === "program_budget" || intent === "budget_mix") {
-    answer = `This is a funding-control question. Tower has ${view.metricCount} metric records and ${view.valueRecordCount} value records from the governed context pack, but the budget and value cuts are still planning-grade until finance-controlled actuals and baselines are reconciled. I would fund measurement design first, then move only the best-evidenced programs into Moves.`;
+    answer = `This is a funding-control question. Tower has enough budget and value context to frame the decision, but the cuts are still planning-grade until finance-controlled actuals and baselines are reconciled. I would fund measurement design first, then move only the best-evidenced programs into Moves.`;
   } else if (intent === "evidence_gap") {
-    answer = `The board-readiness issue is claim discipline, not another dashboard. ${view.tenantName} has ${view.metricCount} metric records, ${view.valueRecordCount} value records, and ${gateSummary}; that is enough to design the measurement agenda, but not enough to make outcome-proof claims. I would have the CIO inspect ${cioTitle} first while the CFO locks ${cfoTitle}.`;
+    answer = `The board-readiness issue is claim discipline, not another dashboard. ${view.tenantName} has enough context to design the measurement agenda, but ${gateSummary}; that is not enough to make outcome-proof claims. I would have the CIO inspect ${cioTitle} first while the CFO locks ${cfoTitle}.`;
   } else {
     answer = `Tower is ready to guide measurement, readiness, and executive action, but not to certify outcomes. The CIO should focus on platform and operating-model gates; the CFO should focus on baselines, actuals, and claim discipline. The decision is not whether the dashboard is attractive; it is whether the claim gates are strong enough for the next executive meeting.`;
   }
