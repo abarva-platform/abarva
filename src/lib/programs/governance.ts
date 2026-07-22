@@ -470,6 +470,7 @@ export async function evaluateGate(
   const failedChecks: GateCheck['failedChecks'] = [];
   for (const c of rule.checks) {
     let pass = false;
+    let failureReason = c.describe;
     switch (c.key) {
       case 'program_seed_recorded':
         // Initial Setup approval only unlocks P0. P0 -> P1 needs the
@@ -544,6 +545,16 @@ export async function evaluateGate(
           !/\b(do not advance|kill|stop|unresolved hard gap)\b/.test(phaseCaptureText) &&
           phaseModulesCompleted(fromPhase)
         );
+        if (!pass && discoveryReportRow && discoveryReportHasHardGap) {
+          failureReason =
+            'The signed Discovery Report still contains unresolved hard-gap, hold, unverified, or not-yet-attested language. Upload a client-approved replacement or regenerate/edit the Discovery Report so it explicitly clears P2 or carries only non-blocking P3 design caveats.';
+        } else if (!pass && /\bconditional proceed\b/.test(latestDiscoveryReportText)) {
+          failureReason =
+            'The signed Discovery Report says conditional proceed. Replace it with a client-approved decision that either clears P2 or records a hold/discontinue decision.';
+        } else if (!pass && !discoveryReportRow) {
+          failureReason =
+            'No signed Discovery Report is available for P2 readiness. Approve or upload the client-approved Discovery Report in Files & Evidence, then rerun Approve & Build.';
+        }
         break;
       case 'discovery_notes_ingested':
         pass = isPresent(findDeliverable('discovery_notes', 'meeting_notes', 'workshop_notes')) ||
@@ -671,7 +682,7 @@ export async function evaluateGate(
         break;
       default: pass = false;
     }
-    if (!pass) failedChecks.push({ check: c.key, reason: c.describe, severity: c.severity });
+    if (!pass) failedChecks.push({ check: c.key, reason: failureReason, severity: c.severity });
   }
 
   const hardFails = failedChecks.some((f) => f.severity === 'hard');
