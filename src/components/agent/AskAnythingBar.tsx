@@ -304,10 +304,7 @@ export function AskAnythingBar({
                     {error ? (
                       <span style={{ color: '#c0392b' }}>Error: {error}</span>
                     ) : responseParts.length > 0 ? (
-                      <div style={{ display: 'grid', gap: 10 }}>
-                        {response ? <div>{response}</div> : null}
-                        <AgentResponseParts parts={responseParts} />
-                      </div>
+                      <AgentResponseParts parts={responseParts} />
                     ) : (
                       response || <span style={{ opacity: 0.4 }}>…</span>
                     )}

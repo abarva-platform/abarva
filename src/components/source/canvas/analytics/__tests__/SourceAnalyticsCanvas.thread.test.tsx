@@ -78,8 +78,13 @@ describe("SourceAnalyticsCanvas — live conversation thread", () => {
       ok: true,
       json: async () => ({
         summary:
-          "Volumetrics and the sponsor letter are still outstanding for Scope.",
+          "RAW_CHART_PAYLOAD {\"type\":\"bar\",\"data\":[{\"domain\":\"Scope\"}]}",
         agentResponseParts: [
+          {
+            type: "text",
+            title: "Advisor answer",
+            text: "Volumetrics and the sponsor letter are still outstanding for Scope.",
+          },
           {
             type: "table",
             title: "Open scope evidence",
@@ -135,6 +140,7 @@ describe("SourceAnalyticsCanvas — live conversation thread", () => {
         ),
       ).toBeInTheDocument();
     });
+    expect(screen.queryByText(/RAW_CHART_PAYLOAD/)).not.toBeInTheDocument();
     expect(screen.getByTestId("agent-response-table")).toBeInTheDocument();
     expect(screen.getByTestId("agent-response-bar-chart")).toBeInTheDocument();
     expect(screen.getByText("Open scope evidence")).toBeInTheDocument();

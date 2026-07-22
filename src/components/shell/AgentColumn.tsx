@@ -656,12 +656,7 @@ function AgentResponseBody({
   responseParts?: AgentResponsePart[];
 }) {
   if (responseParts && responseParts.length > 0) {
-    return (
-      <div style={{ display: "grid", gap: 10 }}>
-        {text ? <AgentMarkdown text={text} /> : null}
-        <AgentResponseParts parts={responseParts} />
-      </div>
-    );
+    return <AgentResponseParts parts={responseParts} />;
   }
   return (
     <>
