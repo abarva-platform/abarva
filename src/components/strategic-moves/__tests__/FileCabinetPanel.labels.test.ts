@@ -134,7 +134,10 @@ describe("FileCabinetPanel artifact labels", () => {
     expect(model?.excluded).toHaveLength(1);
     expect(model?.gaps).toHaveLength(0);
     expect(model?.gatheredMessage).toContain("Candidate preview data stayed out");
-    expect(model?.nextPhaseMessage).toContain("P1 can proceed");
+    expect(model?.nextPhaseMessage).toContain("P1 has usable attached evidence");
+    expect(model?.nextPhaseMessage).toContain(
+      "phase advancement still requires the governed Approve & Build gate",
+    );
     expect(model?.coverageItems).toEqual([
       "it systems landscape: 1",
       "kpi baseline: 1",
