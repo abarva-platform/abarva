@@ -10,7 +10,6 @@ import {
   CartesianGrid,
   Cell,
   LabelList,
-  Legend,
   ReferenceArea,
   ReferenceLine,
   Scatter,
@@ -5131,45 +5130,32 @@ function TowerMartCommandCenter({
               })}
             </div>
             {renderCommandStep()}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                borderTop: `1px solid ${T.RULE}`,
-                marginTop: 18,
-                paddingTop: 14,
-                paddingRight: 84,
-              }}
-            >
-              <button
-                type="button"
-                disabled={commandStep === 1}
-                onClick={() => setCommandStep(commandStep === 3 ? 2 : 1)}
-                style={
-                  commandStep === 1
-                    ? towerGhostButtonDisabledStyle
-                    : towerGhostButtonStyle
-                }
+            {/* The footer used to carry back/forward buttons that did exactly
+                what the segmented control at the top of the page already does,
+                and that duplicated block was the last 89px keeping the Command
+                Center from fitting on one screen. What it uniquely offered was
+                the hand-off out of the command center at the end of the story,
+                so only that survives, and only on the final step. */}
+            {commandStep === 3 ? (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  borderTop: `1px solid ${T.RULE}`,
+                  marginTop: 18,
+                  paddingTop: 14,
+                  paddingRight: 84,
+                }}
               >
-                ← {commandStep === 3 ? "Signals" : "Posture"}
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  commandStep < 3
-                    ? setCommandStep((commandStep + 1) as 1 | 2 | 3)
-                    : setActiveSection("actions")
-                }
-                style={towerPrimaryButtonStyle}
-              >
-                {commandStep === 1
-                  ? "Signals"
-                  : commandStep === 2
-                    ? "Decide"
-                    : "See recommended actions"}{" "}
-                →
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveSection("actions")}
+                  style={towerPrimaryButtonStyle}
+                >
+                  See recommended actions →
+                </button>
+              </div>
+            ) : null}
           </>
         ) : null}
         {activeSection === "value" ? (
@@ -5648,22 +5634,6 @@ const towerPrimaryButtonStyle: CSSProperties = {
   padding: "12px 18px",
   fontWeight: 900,
   cursor: "pointer",
-};
-
-const towerGhostButtonStyle: CSSProperties = {
-  border: `1px solid ${T.RULE_STRONG}`,
-  borderRadius: 9,
-  background: "#fff",
-  color: T.INK,
-  padding: "12px 18px",
-  fontWeight: 900,
-  cursor: "pointer",
-};
-
-const towerGhostButtonDisabledStyle: CSSProperties = {
-  ...towerGhostButtonStyle,
-  opacity: 0.35,
-  cursor: "not-allowed",
 };
 
 function towerSectionDescription(section: TowerMartSection): string {
@@ -7454,6 +7424,17 @@ function TowerMartAiPortfolioDesign({
   const proofGapRows = allRows.filter(
     (row) => row.financeValidatedValueUsd <= 0 && row.usageActual === null,
   );
+  // Reachability net. The chapters filter on money, proof, and candidate
+  // flags; nothing guarantees those three cover the set. Anything they miss is
+  // surfaced explicitly instead of silently vanishing from every chapter.
+  const coveredKeys = new Set(
+    [...plottedRows, ...fundedRows, ...partialProofRows, ...candidateRows].map(
+      (row) => row.aiPortfolioKey,
+    ),
+  );
+  const uncoveredRows = allRows.filter(
+    (row) => !coveredKeys.has(row.aiPortfolioKey),
+  );
   // The section is one argument told in five chapters rather than one long
   // scroll: where the bets sit, where the money actually is, what is proven,
   // what is still only an idea, and which tools the claims trace back to.
@@ -7571,10 +7552,10 @@ function TowerMartAiPortfolioDesign({
                 Plotting the {plottedRows.length} funded and embedded AI items
                 that carry spend, funding, or promised value.{" "}
                 {unplottedCount === 1
-                  ? "One further AI item — a candidate idea with no approved funding — is"
-                  : `${unplottedCount.toLocaleString()} further AI items — mostly candidate ideas with no approved funding — are`}{" "}
-                held in the Candidate pipeline chapter rather than plotted, so
-                the quadrant stays readable. Nothing is dropped.
+                  ? "One further AI item — carrying no approved funding — is"
+                  : `${unplottedCount.toLocaleString()} further AI items — mostly candidate ideas carrying no approved funding — are`}{" "}
+                listed in the other chapters rather than plotted, so the
+                quadrant stays readable. Nothing is dropped.
               </p>
             ) : null}
             <div
@@ -7784,6 +7765,42 @@ function TowerMartAiPortfolioDesign({
             testId="tower-ai-candidate-list"
             emptyCopy="No candidate AI opportunities are loaded for this tenant."
           />
+          {/* Anything the money/proof/candidate filters did not claim. These
+              are not candidates and must not be labelled as such, but they are
+              carried in the portfolio, so they get a stated home rather than
+              disappearing from every chapter. */}
+          {uncoveredRows.length > 0 ? (
+            <div
+              data-testid="tower-ai-uncovered"
+              style={{
+                marginTop: 20,
+                borderTop: `1px solid ${T.RULE}`,
+                paddingTop: 16,
+              }}
+            >
+              <div style={towerTinyLabelStyle}>Other portfolio items</div>
+              <p
+                style={{
+                  margin: "8px 0 12px",
+                  color: T.INK_2,
+                  fontSize: 12.5,
+                  lineHeight: 1.45,
+                  maxWidth: 760,
+                }}
+              >
+                {formatWholeNumber(uncoveredRows.length)} AI item
+                {uncoveredRows.length === 1 ? " is" : "s are"} carried in the
+                portfolio with no approved or embedded spend, no usage or
+                finance signal, and no candidate flag. They are shown here so
+                nothing in the portfolio is unreachable.
+              </p>
+              <TowerAiItemList
+                rows={uncoveredRows.slice(0, CANDIDATE_RENDER_LIMIT)}
+                testId="tower-ai-uncovered-list"
+                emptyCopy=""
+              />
+            </div>
+          ) : null}
           {candidateRows.length > CANDIDATE_RENDER_LIMIT ? (
             <p
               style={{
