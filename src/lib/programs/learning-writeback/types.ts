@@ -163,6 +163,11 @@ export interface MovesLearningReadinessDraft {
   readonly backfill_reason: string;
 }
 
+export type MovesLearningReadinessRow = Omit<
+  MovesLearningReadinessDraft,
+  "canonical_record_id"
+>;
+
 export interface MovesLearningWritebackSkip {
   readonly sourceBasis: MovesLearningSourceBasis | "unknown";
   readonly sourceId: string;
