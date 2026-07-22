@@ -1,29 +1,13 @@
 "use client";
 
-// MovePhaseExplorer — persistent left-side phase explorer for the Moves
-// phase workspace. Ports Source's CanvasGateSidebar pattern (a Stripe-style
-// deterministic step list: every stage visible at once, with a live
-// met/total tally, so progress and what's left are never a guess).
-//
-// Purely presentational: it renders the tallies it is given. Rows for
-// phases already reached are links (jump back to review); the current
-// phase and phases not yet reached render as plain rows — you cannot skip
-// ahead, so making those look clickable would only invite a locked-phase
-// redirect.
-//
-// MOVES-UI-001 (Phase 1-2): a Finder-style visual rebuild lives behind the
-// `moves_finder_shell_v1` flag (default off, tenant opt-in — see
-// src/lib/features/registry.ts). When the flag is off this component must
-// render EXACTLY what it rendered before that work started — the legacy
-// tree below is untouched, byte-for-byte, on purpose. See
-// docs/specs/programs/moves-phase-shell-ui-backend-reconciliation.md for
-// which fields in the new rail are real vs. presentational-only today.
+// MovePhaseExplorer — persistent left-side phase explorer for Moves surfaces.
+// The Finder-style rail is now the only supported shell; the previous
+// legacy rail was retired after P0-P5 live smoke proof.
 
 import Link from "next/link";
-import { Component, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import styles from "./MovePhaseExplorer.module.css";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
-import { useFeature } from "@/lib/features/use-feature";
 
 export interface MovePhaseExplorerProps {
   moveId: string;
@@ -31,15 +15,12 @@ export interface MovePhaseExplorerProps {
   tallies: PhaseTallyRow[];
   /**
    * Phases that have an authoritative-but-not-yet-final AI draft pending
-   * review (renders an amber dot next to the phase label). Optional and
-   * additive — only consumed by the `moves_finder_shell_v1` rail; the
-   * caller must already have this computed, nothing here fetches it.
+   * review (renders an amber dot next to the phase label).
    */
   draftPendingPhases?: ReadonlyArray<number>;
   /**
    * Phases that are currently gate-blocked, with the human-readable block
    * reason (renders an amber subtitle line under the phase label).
-   * Optional and additive — same rule as `draftPendingPhases` above.
    */
   blockedPhases?: ReadonlyArray<{ phase: number; reason: string }>;
 }
@@ -51,110 +32,11 @@ const WORKSPACE_GROUP_ITEMS = [
 ] as const;
 
 export function MovePhaseExplorer(props: MovePhaseExplorerProps) {
-  // The flag check resolves the active tenant via useClientContext(), which
-  // depends on Clerk's useUser(). Every real page renders under the app's
-  // <ClerkProvider> (src/app/layout.tsx), so this always resolves in
-  // production. Some call sites render this component in isolation (unit
-  // tests, storybook-style harnesses) without that provider — rather than
-  // hard-crash the whole rail in that situation, fall back to the legacy
-  // rail, which has no such dependency. This keeps the flag-off guarantee
-  // intact even when the flag itself can't be evaluated.
-  return (
-    <FeatureGateErrorBoundary fallback={<MovePhaseExplorerLegacy {...props} />}>
-      <MovePhaseExplorerFlagGate {...props} />
-    </FeatureGateErrorBoundary>
-  );
-}
-
-function MovePhaseExplorerFlagGate(props: MovePhaseExplorerProps) {
-  const finderShellEnabled = useFeature("moves_finder_shell_v1");
-  if (finderShellEnabled) {
-    return <MovePhaseExplorerFinderShell {...props} />;
-  }
-  return <MovePhaseExplorerLegacy {...props} />;
-}
-
-class FeatureGateErrorBoundary extends Component<
-  { children: ReactNode; fallback: ReactNode },
-  { hasError: boolean }
-> {
-  state = { hasError: false };
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  render() {
-    return this.state.hasError ? this.props.fallback : this.props.children;
-  }
+  return <MovePhaseExplorerFinderShell {...props} />;
 }
 
 // ---------------------------------------------------------------------------
-// Legacy rail — unchanged. This is the exact tree that rendered before
-// MOVES-UI-001; do not "improve" it in place, add a new component above
-// instead, so the flag-off path stays a byte-for-byte guarantee.
-// ---------------------------------------------------------------------------
-
-function MovePhaseExplorerLegacy({
-  moveId,
-  currentPhase,
-  tallies,
-}: MovePhaseExplorerProps) {
-  return (
-    <aside
-      className={styles.explorer}
-      aria-label={`Move journey: phase ${currentPhase} of ${tallies.length - 1}`}
-    >
-      <div className={styles.head}>Journey</div>
-      <div className={styles.rows}>
-        {tallies.map((row) => {
-          const isCurrent = row.state === "current";
-          const isDone = row.state === "done";
-          const rowClasses = [
-            styles.row,
-            isCurrent ? styles.rowCurrent : "",
-            isDone ? styles.rowDone : "",
-          ]
-            .filter(Boolean)
-            .join(" ");
-          const inner = (
-            <>
-              <span className={styles.dot} aria-hidden>
-                {isDone ? "✓" : ""}
-              </span>
-              <span className={styles.label}>{row.label}</span>
-              <span className={styles.tally}>
-                {row.total > 0 ? `${row.met} of ${row.total}` : "—"}
-              </span>
-            </>
-          );
-          return row.state === "done" ? (
-            <Link
-              key={row.phase}
-              href={`/strategic-moves/${moveId}/phase/${row.phase}`}
-              className={rowClasses}
-            >
-              {inner}
-            </Link>
-          ) : (
-            <div key={row.phase} className={rowClasses}>
-              {inner}
-            </div>
-          );
-        })}
-        <div
-          className={styles.towerRow}
-          aria-label="Hands off to Control Tower after P5"
-        >
-          <span aria-hidden>&rarr;</span> Tower
-        </div>
-      </div>
-    </aside>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Finder shell — MOVES-UI-001 Phase 1-2, gated behind moves_finder_shell_v1.
+// Finder shell.
 // Grouped rail (Phases, then Workspace), collapse/expand to an icon-only
 // rail, soft-blue selection tint, connector-line tree styling, amber
 // draft-not-final dot, amber blocked-reason subtitle.

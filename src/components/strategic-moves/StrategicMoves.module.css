@@ -4369,18 +4369,9 @@
 
 /* ---------------------------------------------------------------------
    MOVES-UI-004 — Finder-shell visual pass on the P0 Origination main
-   content (StrategicMoveOriginateClient.tsx), gated behind
-   moves_finder_shell_v1 via .finderShellOn, which that component only
-   adds to the root #orig-page wrapper when the flag resolves true.
-
-   This is additive/scoped-only, mirroring the .mxw-finder-on precedent
-   in MovesPhaseStandaloneClient.tsx: every rule below is nested under
-   .finderShellOn and targets an existing class by name — none of it
-   edits a bare .p0-, .scaffold-, or .origin-prefixed selector above, so the flag-off
-   render of every other consumer of this shared stylesheet
-   (MoveApprovalsOverview, the phase-workspace pages, etc.) stays
-   byte-for-byte identical. Tokens match the merged
-   MovePhaseExplorer.module.css palette (navy/blue/teal/amber).
+   content (StrategicMoveOriginateClient.tsx). This class is retained for
+   older markup references, but the live P0 shell no longer relies on a
+   feature-flagged legacy fallback.
    --------------------------------------------------------------------- */
 
 .finderShellOn {
