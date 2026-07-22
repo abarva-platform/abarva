@@ -95,7 +95,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
         filterSummary.length > 0
           ? ` Portfolio filters: ${filterSummary.join(', ')}.`
           : ' Portfolio filters: none.';
-      const context = `Surface: source/events. Agent: ${SOURCE_AGENT.name}.${portfolioContextLine} The user is asking within the AbarVa platform.`;
+      const context = `Surface: /source/events. Agent: ${SOURCE_AGENT.name}.${portfolioContextLine} The user is asking within the AbarVa platform.`;
 
       let acc = '';
       try {
@@ -105,7 +105,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
           body: JSON.stringify({
             message: messageForRuntime,
             context,
-            surface: 'source/events',
+            surface: '/source/events',
             agentName: SOURCE_RUNTIME_AGENT_NAME,
           }),
         });
@@ -177,7 +177,7 @@ export function SourceEventsAgentDockView({ workspace, filterStage, filterStatus
   return (
     <AgentDock
       agent={SOURCE_AGENT}
-      surface="source/events"
+      surface="/source/events"
       defaultMode="side-rail"
       defaultLeftPercent={30}
       minLeftPx={300}

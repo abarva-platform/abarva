@@ -2,6 +2,7 @@
 
 import { useState, useRef, type CSSProperties, type KeyboardEvent } from 'react';
 import { AgentResponseParts } from '@/components/agent/AgentResponseParts';
+import { AgentAnswerRenderer } from '@/components/agent-answer/AgentAnswerRenderer';
 import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
 import type { ChatMessage, SuggestedAction } from '@/components/agent/AgentDock';
 import { CANVAS } from './canvas-tokens';
@@ -90,6 +91,14 @@ export function AvaBottomBar({
                     {msg.parts?.length ? (
                       <div style={AGENT_PARTS_STYLE}>
                         <AgentResponseParts parts={msg.parts} />
+                      </div>
+                    ) : null}
+                    {msg.agentAnswer ? (
+                      <div style={AGENT_PARTS_STYLE}>
+                        <AgentAnswerRenderer
+                          answer={msg.agentAnswer}
+                          showProse={false}
+                        />
                       </div>
                     ) : null}
                   </div>
