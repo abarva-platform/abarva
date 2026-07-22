@@ -62,16 +62,29 @@ field below is fed from a governed column. A thin view-model transform
 
 ### Already covered by earlier schema (v2/v3)
 
-| Design section | Pack source |
+> **CORRECTION (2026-07-22 groundability audit).** An earlier draft of this doc
+> listed several v3-backed sources as "covered". That was wrong: **all eight v3
+> tables are orphaned — the generator created the schema but never populated
+> them.** The rows below are corrected to point at what is actually written.
+> The v3 tables (`enterprise_model_items`, `operating_model_items`,
+> `strategic_narratives`, `dimension_visual_specs`, `relationship_explanations`,
+> `module_implications`, `next_evidence_requests`, `executive_takeaways`) and
+> the v3 columns (`dimensions.strategic_interpretation`/`evidence_gap_summary`,
+> `use_cases.category`/`office_segment`, `packs.unresolved_questions`) hold no
+> data until a generator wires them. `next_evidence_requests` **is now wired**
+> (this v5 PR); the rest remain orphaned pending a generator.
+
+| Design section | Pack source (corrected) |
 |---|---|
-| `priorities[]` (06, ranked+weighted) | `home_knowledge_use_cases` (priority_rank, total_priority_score, name, desc) |
-| `runDifferently` / current→future / `r.gate` (05) | `use_cases` operating_model_change / change_strategy / evidence_gate |
-| `divisions[]` (02) | `home_knowledge_enterprise_model_items` (item_type=division) — v3 |
-| `office` front/middle/back (03) | `enterprise_model_items` (office_segment) + `operating_model_items` — v3 |
-| relationship map / `graphEl` (03) | `home_knowledge_relationship_nodes` / `_edges` |
-| `coverage[]` (07) | `home_knowledge_dimensions` confidence_status / pct |
-| `topSystems[]` (04) | apps dimension rows |
-| dimension detail: `dimWhy`, `dimLead`, `dimRows`, evidence table, quotes, gaps | `home_knowledge_dimensions` + `_rows` + `_evidence_sources` + v3 visual_specs / relationship_explanations |
+| `priorities[]` (06, ranked+weighted) | `home_knowledge_use_cases` (priority_rank, total_priority_score, name, desc) — **populated** |
+| `runDifferently` / current→future / `r.gate` (05) | `use_cases.operating_model_change` (current) → `change_strategy` (future) / `evidence_gate` — **populated**. NOTE: read the change-thesis exhibit from `use_cases`, NOT `strategic_narratives` (orphaned). |
+| `divisions[]` (02) | ~~`enterprise_model_items`~~ **orphaned — no source data either** (see groundability audit §6). Divisions must come from a source that names them; the packs don't. |
+| `office` front/middle/back (03) | **NOT GROUNDABLE — no source data.** `"front office"`/`"middle office"`/`"back office"` = 0 matches in every pack. See §6. |
+| relationship map / `graphEl` (03) | `home_knowledge_relationship_nodes` / `_edges` — **populated** (6 node classes today) |
+| `coverage[]` (07) | `home_knowledge_dimensions` confidence_status / pct — **populated** |
+| `topSystems[]` (04) | apps dimension rows (`dimension_rows`) — **populated** |
+| dimension zero-states / collection routes (07, review #12) | `home_knowledge_next_evidence_requests` (title, unlocks_narrative, requesting_role_hint, **collection_route**) — **now wired, deterministic** (this v5 PR) |
+| dimension detail: `dimWhy`, `dimLead`, `dimRows`, evidence table, quotes, gaps | `home_knowledge_dimensions` + `_rows` + `_evidence_sources` — **populated**. (v3 `dimension_visual_specs` / `relationship_explanations` are orphaned — do not rely on them yet.) |
 
 ### Still not modeled (design binds it; nothing produces it yet)
 
@@ -205,7 +218,33 @@ marked GAP until its data lands — draw the honest zero-state instead.**
 - **GAP-3 · value-stream flow edges** — typed from→to flow so the Operating Model Sankey has real magnitude behind it, or an explicit decision to keep the band form.
 - **GAP-4 · interview-signal scales** (review #4) — emit per-signal `{ axis, scale_type, value, label }` with the CORRECT semantic ramp per axis: mentions = limited/repeated/dominant; urgency = low/moderate/immediate; alignment = fragmented/mixed/strong; sentiment = concerned/neutral/positive (**diverging**, not a maturity ramp). Today the design reuses nascent/developing/mature for all four, which is wrong for sentiment especially.
 - **GAP-5 · graph projection modes + expanded node taxonomy** (review #9) — the graph is one 6-class overview. Add a `mode` tag to edges (enterprise-structure / operating-model / technology-dependency / change-impact / value-flow / evidence-lineage) and widen node types (capabilities, value streams, processes, roles, data domains, integrations, platforms, vendors, contracts, programs, use cases, metrics, controls, evidence, change theses). The selected-node drawer is already fed by v3 `relationship_explanations`. **Keep the short-opaque-id rule** — raw entity names as ids already caused a zero-edges production bug.
-- **GAP-6 · dimension-specific collection routes** (review #10/#12) — add a `collection_route` to v3 `next_evidence_requests` so a zero-state gives the right route per dimension (capability→workshop, industry→governed corpus, decision-rights→DoA docs, process→workflow data, benefits→Tower metrics + finance attestation) instead of a generic "upload a client export". Also: industry movements should be primarily corpus-fed, not a tenant upload dimension.
+- ~~**GAP-6 · dimension-specific collection routes**~~ — **DONE (this v5 PR).** `next_evidence_requests` is now wired deterministically from the source `NEXT_EVIDENCE` + per-dimension `DGAPS`, each with a `collection_route` (capability→workshop, industry→governed corpus, decision-rights→DoA docs, process→workflow data, benefits→Tower metrics + finance attestation). No fabrication — pure source→table.
+
+---
+
+## 6. Groundability audit (2026-07-22) — what the source data can and cannot honestly back
+
+This is the load-bearing finding. Several exhibits the design already renders
+have **no source data behind them** and are currently fabricated in the mockup.
+Building them for real would require the generator to invent numbers/segments —
+exactly what the governance rules forbid. Verdicts, with the source evidence:
+
+| Requested exhibit / data | Verdict | Why |
+|---|---|---|
+| **Front / middle / back-office segmentation** (Enterprise + Operating Model, review-praised) | **NOT GROUNDABLE** | `"front office"`/`"middle office"`/`"back office"` = **0 matches** in every source pack. Functions carry owner_role and processes, but no office tag. The v3 schema *anticipated* it (`enterprise_model_items.item_type='office_segment'`, `use_cases.office_segment`) but there is nothing to fill it. **The mockup's office columns are invented.** Either add office segmentation to the source (a real data task with a human classifier) or drop the office lens. |
+| **Value-stream / process Sankey** (Operating Model) | **NOT GROUNDABLE (as a quantitative Sankey)** | Tenant-inconsistent: SkyHarbor's `rel` is a typed directed edge list but `relationship_strength` is **ordinal** (tier1/2/3, critical/high/medium), not a flow volume; Meridian's `rel` isn't an edge list at all (it's a use-case × risk table). No flow magnitude anywhere. Render the honest left→right value-stream **band**, never a Sankey with invented volumes. |
+| **Interview-signal heatmap scales** (mentions / urgency / alignment / sentiment) | **NOT GROUNDABLE** | The `SIGNALS` slot is **free-text only** ({role, quote} or {title, body}); no numeric/categorical scores for any of the four axes. A sentiment/urgency ramp would be model-judged from prose = fabrication. Show the quotes with correct axis *labels*; don't manufacture scores. |
+| **Evidence loaded→parsed→indexed→cited→agent-ready pipeline** (Evidence & Trust) | **NOT GROUNDABLE by the pack generator — wrong owner** | Source evidence carries only a flat `status` ("source-backed") + owner, no lifecycle. The real pipeline is already owned by `src/lib/governance/context-corpus-policy.ts` (`index_state`, `agent_readiness_status`, `indexed_at`, `cited_render_verified_at`). Home should **read/reference** those governed states, not have the offline generator invent them. |
+| **Divisions** (Enterprise Model) | **NOT GROUNDABLE** | No source names enterprise divisions; the mockup's "five divisions" are invented. Same remedy as office segmentation. |
+| Expanded graph node classes (processes, roles, data-domains, integrations, platforms, vendors, programs, use-cases, evidence) | **GROUNDABLE** | All have real source rows across the 19 dims. Safe for a later graph-taxonomy pass (GAP-5). `value streams` and `controls` do **not** have a dedicated source and should not become node classes. |
+| Collection routes / next-evidence (§5) | **GROUNDABLE — done this PR** | `NEXT_EVIDENCE` + `DGAPS` map 1:1. |
+
+**Net:** four of the design's exhibits (office segmentation, divisions, the
+Sankey, the signal-scale heatmap) plus the evidence pipeline are either not in
+the source or owned elsewhere. They should be flagged in the mockup as
+illustrative-only and either (a) removed, (b) replaced with the honest
+alternative noted above, or (c) scheduled as real source-data / governance
+work — not shipped as if the pack backs them.
 
 ### Already handled by this PR's generation (review #7, #5, partial #6)
 
