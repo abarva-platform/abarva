@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-and-azure-readback-proven`
 
 ## Plain-English Summary
 
@@ -39,9 +39,12 @@ Adds the first governed Moves learning loop. A completed or in-progress Move can
 - Pass: `npx jest --runTestsByPath src/lib/programs/learning-writeback/__tests__/moves-learning-writeback.test.ts --runInBand` passed with coverage for planning, persistence payload shape, and readback promotion-leak detection.
 - Pass: `npx eslint src/lib/programs/learning-writeback src/scripts/programs/writeback-move-learning-to-enterprise-context.ts src/scripts/programs/verify-move-learning-writeback-readback.ts` passed with no reported errors.
 - Blocked: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` is blocked by pre-existing Home graph optional dependency resolution errors for `@xyflow/react` and `@dagrejs/dagre`, outside the Moves learning-writeback files.
+- Pass: GitHub `Typecheck + reasoning-layer tests` passed for PR #5349.
 - Pass: `npm run release:check` passed after the release-record wording update.
 - Pass: `git diff --check` passed.
-- Blocked: local dry-run/apply proof is blocked on this operator machine because no `ABARVA_AZURE_DATABASE_URL` or `DATABASE_URL` is available locally. Use the private ACA operator-job lane for Azure read/write proof.
+- Pass: Private ACA operator dry-run for sandbox First Capital Move `4bf889aa-d4ee-4c1d-936b-51574614d191` found 7 approved evidence rows, 3 signed-off deliverables, 1 gate decision, and 11 eligible writeback records/facts/readiness rows.
+- Pass: Private ACA operator apply for the same Move wrote 11 `enterprise_context_records`, 11 `enterprise_context_facts`, and 11 `governed_object_readiness` rows.
+- Pass: Private ACA operator readback independently confirmed 11 records, 11 facts, 11 readiness rows, 0 missing facts, 0 missing readiness rows, and 0 active-promotion violations. All readiness rows remained `not_reviewed / committed_not_indexed / pending`.
 
 ## Rollout Plan
 
@@ -90,13 +93,18 @@ Revert the PR and redeploy. If `--apply` has been run, rollback is a tenant-scop
 
 ## Audit Evidence
 
-Pending:
-
-- PR URL
-- CI checks
-- Dry-run report path
-- Optional apply report path
-- ACA runtime invariant proof after deploy
+- PR #5338 — initial Moves learning writeback planner/persistence/operator path.
+- PR #5342 — Move-scoped resolver fix for historical tenant alias drift.
+- PR #5345 — readiness schema alignment fix after ACA apply caught `canonical_record_id` drift.
+- PR #5349 — read-only Azure readback verifier.
+- Final deployed merge SHA: `8869cc555bc91cd5c8b2f5fa4fb2230686ce7b7b`.
+- Final ACA revision: `ca-abarva-web-lab-eastus--m8869cc55`.
+- Final ACA digest: `sha256:467604d61e1eb5c11ebda693a63f0586c43bf17b8254853fa290e0ab1cff292e`.
+- Runtime invariant proof: `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/91-moves-learning-readback-runtime`.
+- Final dry-run proof: `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/89-moves-learning-writeback-final-dry-run`.
+- Final apply proof: `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/90-moves-learning-writeback-final-apply`.
+- Final readback proof: `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/92-moves-learning-writeback-readback-aca`.
+- Readback result: `records=11`, `facts=11`, `readinessRows=11`, `activePromotionViolations=0`, readiness status `not_reviewed / committed_not_indexed / pending`.
 
 ## Known Gaps
 
