@@ -130,6 +130,20 @@ describe("buildSourceContextWritebackPlan", () => {
     expect(a.records[0].payload_hash).toBe(b.records[0].payload_hash);
   });
 
+  it("accepts numeric values returned from Postgres as strings", () => {
+    const plan = buildSourceContextWritebackPlan({
+      event,
+      facts: [fact({ value_numeric: "8400000" as unknown as number })],
+      committedAt: "2026-07-22T13:00:00.000Z",
+    });
+    expect(plan.skippedFacts).toEqual([]);
+    expect(plan.factDrafts[0]).toMatchObject({
+      fact_type: "number",
+      fact_value: { value: 8400000, unit: "usd" },
+      fact_text: "8400000 usd",
+    });
+  });
+
   it("does not promote wrong-client, stale, valueless, or uncited facts", () => {
     const plan = buildSourceContextWritebackPlan({
       event,

@@ -32,6 +32,7 @@ Source now has a governed writeback path that can project eligible typed Source 
 - `package.json`: Adds `source:enterprise-context:writeback`.
 - `src/lib/source/context-writeback/__tests__/source-context-writeback.test.ts`: Regression coverage for eligibility, deterministic replay IDs, readiness status, persistence mapping, and store failure handling.
 - Follow-up runtime fix: the operator script uses a narrow Source event resolver instead of importing the full route query module, so the deployed ACA job runtime does not trip `server-only` under `tsx`.
+- Follow-up data-shape fix: the writeback planner accepts finite numeric values returned from Azure/Postgres as strings, so valid cited numeric facts are not skipped as `missing_value`.
 
 ## QA / Validation
 
@@ -43,6 +44,12 @@ Source now has a governed writeback path that can project eligible typed Source 
 - FAIL — `az containerapp exec ... npm run source:enterprise-context:writeback -- --client-key apex-retail --event-id apex-retail-ams-outsourcing-2026`: dry-run command failed before data access because the first merged script imported `src/lib/source/queries.ts`, which pulls a `server-only` dependency under `tsx` in the deployed operator runtime. Follow-up fix replaces that import with a narrow resolver.
 - PASS — Follow-up fix validation: `npx eslint src/scripts/source/writeback-source-facts-to-enterprise-context.ts` passed.
 - PASS — Follow-up fix validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` passed.
+- PASS — Runtime dry-run after the operator import fix: `az containerapp exec ... npm run source:enterprise-context:writeback -- --client-key lakeshore --event-id c05872d8-0465-4bc8-8eeb-ff3d42ac6761` executed on revision `ca-abarva-web-lab-eastus--m45aee006` with no `server-only` error and no `--apply` mutation, but returned `factsRead=14`, `eligible=0`, `skipped=14`.
+- FAIL — Follow-up investigation found the 14 facts were valid cited numeric facts; Azure/Postgres returned `value_numeric` as strings (for example `"8400000"`), while the planner only accepted JavaScript numbers.
+- PASS — Numeric coercion fix validation: `npx jest src/lib/source/context-writeback/__tests__/source-context-writeback.test.ts --runInBand` passed, 8/8 tests. Jest also emitted existing duplicate-manual-mock warnings unrelated to this release.
+- PASS — Numeric coercion fix validation: `npx eslint src/lib/source/context-writeback` passed.
+- PASS — Numeric coercion fix validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` passed.
+- PASS — Numeric coercion fix validation: `npm run release:check` passed.
 - NOT RUN — Operator dry-run against live Azure/Postgres: expected to run from a VNet-visible ACA/operator context if local network cannot reach the private data plane.
 
 ## Rollout Plan
