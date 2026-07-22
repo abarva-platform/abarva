@@ -580,7 +580,7 @@ updated 19 d ago` on the proof event).
   an actual table, only prose.
 - **Severity**: P3 (real capability gap, highest-leverage item from the 6-area UX audit)
 - **Workstream**: Analytics / aVa chat
-- **Status**: `Shipped — candidate, live-proof pending`. First slice built: vendor
+- **Status**: `Shipped — deployed and live-proven`. First slice built: vendor
   response-coverage only (value waterfall and artifact-quality answers are explicit follow-on,
   not in this slice). See
   `docs/releases/records/2026-07-22-source-vendor-coverage-governed-chat-answer.md` for the
@@ -725,8 +725,8 @@ maturity) is deliberately out of scope for the authority-layer work entirely.
 ## Ready / in progress
 
 `SOURCE-UX-DECLUTTER-001` batch 1 is merged and live-proven; `SOURCE-ANALYTICS-CHAT-001`
-(vendor-response-coverage governed chat answer) is merged, deployed, and live-verify in
-progress as of this reconciliation. `SOURCE-ARTIFACT-AUTHORITY-001` is next — start with the
+(vendor-response-coverage governed chat answer) is merged, deployed, and live-proven on
+`app.abarva.ai` as of 2026-07-22. `SOURCE-ARTIFACT-AUTHORITY-001` is next — start with the
 `#1 + #2` slice (`SOURCE-ARTIFACT-AUTHORITY-001a`: rebase and ship the existing
 `/Users/anand/Projects/nexus-source-artifact-governance-20260722` worktree diff), per its own
 reconciliation table and recommended-PR section above. After that: `SOURCE-ARTIFACT-QUALITY-001`,
