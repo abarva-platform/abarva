@@ -1,4 +1,5 @@
 import {
+  buildMovesLearningPromotionPreview,
   buildMovesLearningReviewPacket,
   buildMovesLearningWritebackPlan,
   getMovesLearningReviewQueue,
@@ -419,6 +420,55 @@ describe("Moves learning review queue", () => {
     expect(packet.safeNextStep).toContain("Promotion remains separate");
   });
 
+  it("builds a promotion preview that explains why a reviewable candidate is not active-context ready", () => {
+    const queue = summarizeMovesLearningReviewCandidates("arcturus", [
+      {
+        id: "rec-1",
+        tenant_key: "first-capital",
+        canonical_record_id: "moves-learning-move-1-approved_evidence-ev-1",
+        record_subtype: "approved_evidence",
+        title: "Loan onboarding baseline",
+        source_record_id: "ev-1",
+        payload: {
+          moveId: "move-1",
+          moveName: "Commercial Lending Agent Assist",
+          phase: 2,
+          sourceBasis: "approved_evidence",
+          sourceId: "ev-1",
+          title: "Loan onboarding baseline",
+          summary: "Cycle time is 11.8 days and KYC rework is 27%.",
+          evidenceRefs: ["ev-1", "artifact-input-1"],
+          confidenceLevel: "high",
+        },
+        agent_readiness_status: "not_reviewed",
+        retrievability: "committed_not_indexed",
+        policy_validation_status: "pending",
+      },
+    ]);
+
+    const preview = buildMovesLearningPromotionPreview(queue.candidates[0]!);
+
+    expect(preview.status).toBe("blocked");
+    expect(preview.statusLabel).toBe("Not ready");
+    expect(preview.summary).toContain("not ready for active enterprise context");
+    expect(preview.checks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ label: "Source lineage", status: "pass" }),
+        expect.objectContaining({ label: "Context policy", status: "blocked" }),
+        expect.objectContaining({
+          label: "Azure retrieval index",
+          status: "blocked",
+        }),
+        expect.objectContaining({
+          label: "Citation rendering proof",
+          status: "pending",
+        }),
+        expect.objectContaining({ label: "Steward decision", status: "blocked" }),
+      ]),
+    );
+    expect(preview.nextAction).toContain("cite-render verification");
+  });
+
   it("flags any already active-looking Moves learning row as an investigation", () => {
     const queue = summarizeMovesLearningReviewCandidates("arcturus", [
       {
@@ -450,6 +500,51 @@ describe("Moves learning review queue", () => {
     expect(packet.action).toBe("investigate_active_promotion_violation");
     expect(packet.actionLabel).toBe("Investigate before use");
     expect(packet.safeNextStep).toContain("explicit steward decision");
+  });
+
+  it("promotion preview flags active-looking candidates for investigation", () => {
+    const queue = summarizeMovesLearningReviewCandidates("arcturus", [
+      {
+        id: "rec-1",
+        tenant_key: "first-capital",
+        canonical_record_id: "moves-learning-move-1-gate_decision-gate-1",
+        record_subtype: "gate_decision",
+        title: "Phase Gate Decision",
+        source_record_id: "gate-1",
+        payload: {
+          moveId: "move-1",
+          moveName: "Commercial Lending Agent Assist",
+          phase: 2,
+          sourceBasis: "gate_decision",
+          sourceId: "gate-1",
+          title: "Phase Gate Decision",
+          summary: "P2 approved with carried gaps.",
+          evidenceRefs: ["gate-1"],
+          confidenceLevel: "medium",
+        },
+        agent_readiness_status: "agent_ready",
+        retrievability: "search_indexed",
+        policy_validation_status: "pass",
+      },
+    ]);
+
+    const preview = buildMovesLearningPromotionPreview(queue.candidates[0]!);
+
+    expect(preview.status).toBe("investigate");
+    expect(preview.statusLabel).toBe("Investigate");
+    expect(preview.checks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: "Azure retrieval index",
+          status: "investigate",
+        }),
+        expect.objectContaining({
+          label: "Steward decision",
+          status: "investigate",
+        }),
+      ]),
+    );
+    expect(preview.nextAction).toContain("Audit the promotion trail");
   });
 
   it("reads using canonical and legacy tenant aliases", async () => {
