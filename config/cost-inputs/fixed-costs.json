@@ -1,0 +1,62 @@
+{
+  "$comment": [
+    "Declared, non-metered costs. Anything that cannot be pulled from a provider",
+    "billing API lives here so the total-cost view is complete and auditable.",
+    "",
+    "RULES:",
+    "  - Every entry needs a source: a real invoice or billing page, not a memory.",
+    "  - `verified_on` is the date the amount was last checked against that source.",
+    "    The digest flags any entry older than 90 days as stale rather than",
+    "    silently reporting a number nobody has confirmed this quarter.",
+    "  - `amount_usd` is per `period`. Annual plans are recorded annually and",
+    "    amortized by the renderer, not pre-divided here.",
+    "  - `gross_usd` records metered consumption that is currently absorbed by an",
+    "    included allowance. It is NOT money today, but it is the leading",
+    "    indicator of money tomorrow. Never add gross to a spend total; track its",
+    "    trend and its headroom instead.",
+    "  - Set `active: false` rather than deleting, so history stays reconstructable.",
+    "",
+    "TO ADD A COST: copy an entry, fill it in, set verified_on to today."
+  ],
+
+  "fixed_costs": [
+    {
+      "id": "claude-max-seat",
+      "provider": "anthropic",
+      "label": "Claude Max plan (Claude Code seat)",
+      "category": "ai-development",
+      "amount_usd": 213.2,
+      "period": "monthly",
+      "active": true,
+      "verified_on": "2026-07-22",
+      "source": "claude.ai billing — invoices 2026-06-19 and 2026-07-19, both $213.20",
+      "notes": "Flat seat. Claude Code token volume is worth ~$6,071/mo at API list price, so this returns ~28x. Not a cost lever; track capacity instead."
+    },
+    {
+      "id": "clerk",
+      "provider": "clerk",
+      "label": "Clerk authentication",
+      "category": "platform",
+      "amount_usd": 26.65,
+      "period": "monthly",
+      "active": true,
+      "verified_on": "2026-07-22",
+      "source": "Clerk billing — invoices 2026-05-07, 2026-06-07, 2026-07-07, all $26.65 paid",
+      "notes": "Flat and stable across three consecutive months. Not an optimization target at this size; re-check if MAU growth pushes it into a higher tier."
+    },
+    {
+      "id": "github",
+      "provider": "github",
+      "label": "GitHub (abarva-platform org, metered usage)",
+      "category": "platform",
+      "amount_usd": 0.0,
+      "gross_usd": 561.25,
+      "gross_period": "month-to-date",
+      "period": "monthly",
+      "active": true,
+      "verified_on": "2026-07-22",
+      "source": "github.com/organizations/abarva-platform/settings/billing/usage — Jul 1-22 2026: gross $561.27 cumulative, billed amount $0.00 on every single day",
+      "notes": "WATCH THIS. Metered consumption (Actions minutes, storage) is real and growing but currently fully absorbed by the included allowance, so billed cost is zero. Daily gross averaged $21.89 Jul 1-11 vs $33.61 Jul 18-22 — a 1.5x rise, trending to roughly $1,000/month of gross consumption at the recent pace. The moment it exceeds the allowance it converts to real spend with no warning. Track headroom, not just the $0."
+    }
+  ]
+}

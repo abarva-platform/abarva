@@ -4291,7 +4291,7 @@ function TowerMartDecisionLanes({
                 ))}
                 {laneRows.length === 0 ? (
                   <div style={{ color: T.GRAY_DK, fontSize: 13 }}>
-                    No current mart rows in this lane.
+                    No programs sit in this lane today.
                   </div>
                 ) : null}
               </div>
@@ -6140,7 +6140,7 @@ function TowerMartDecisionLanesDesign({
                         >
                           {row.towerClaimAllowed === "partial"
                             ? "partly validated"
-                            : (row.valueClaimStatus ?? "no value case")}
+                            : towerValueClaimLabel(row.valueClaimStatus)}
                         </span>
                         <span
                           style={{
@@ -6192,7 +6192,7 @@ function TowerMartDecisionLanesDesign({
                       padding: "12px 0",
                     }}
                   >
-                    No current mart rows in this lane.
+                    No programs sit in this lane today.
                   </div>
                 )}
                 {laneRows.length > 4 ? (
@@ -6266,6 +6266,27 @@ function humanizeTowerToken(value: string | null | undefined): string {
     .replace(/\s+/g, " ")
     .trim()
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+/**
+ * Executive-facing label for a value-claim status. The mart stores these as
+ * upper-snake enum values; rendering them raw put strings like
+ * "FUNDED_NO_VALUE_CASE" in front of a CXO. Unknown values fall through to the
+ * generic humanizer rather than being hidden, so a new enum member surfaces as
+ * readable text instead of disappearing.
+ */
+function towerValueClaimLabel(status: string | null | undefined): string {
+  if (!status) return "no value case";
+  const known: Record<string, string> = {
+    PROMISED_ONLY: "promised, not proven",
+    FUNDED_NO_VALUE_CASE: "funded, no value case",
+    NO_VALUE_CASE: "no value case",
+    PARTIALLY_VALIDATED: "partly validated",
+    VALIDATED: "validated",
+  };
+  return (
+    known[status.toUpperCase()] ?? humanizeTowerToken(status).toLowerCase()
+  );
 }
 
 function cleanAiPortfolioName(row: TowerMartAiPortfolioItem): string {
@@ -7014,6 +7035,204 @@ function buildAiPortfolioDisplayRows(
   });
 }
 
+/**
+ * Sub-tab nav for a Tower analysis section. Deliberately styled as a
+ * subordinate pill row, not a second underline bar, so the eye reads the
+ * top-level section tabs as the primary axis and these as chapters within
+ * one story. Counts are shown when a chapter has a countable population so a
+ * CXO can see the shape of the section before clicking into it.
+ */
+function TowerSubTabs<K extends string>({
+  tabs,
+  active,
+  onSelect,
+  label,
+}: {
+  tabs: ReadonlyArray<{ key: K; label: string; count?: number }>;
+  active: K;
+  onSelect: (key: K) => void;
+  label: string;
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label={label}
+      data-testid="tower-sub-tabs"
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap: 6,
+        margin: "0 0 18px",
+        padding: 4,
+        background: "rgba(255,255,255,.72)",
+        border: `1px solid ${T.RULE}`,
+        borderRadius: 999,
+        width: "fit-content",
+        maxWidth: "100%",
+      }}
+    >
+      {tabs.map((tab) => {
+        const selected = tab.key === active;
+        return (
+          <button
+            key={tab.key}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            onClick={() => onSelect(tab.key)}
+            style={{
+              border: "none",
+              borderRadius: 999,
+              background: selected ? T.INK : "transparent",
+              color: selected ? "#fff" : T.GRAY_DK,
+              padding: "8px 14px",
+              fontSize: 13,
+              fontWeight: selected ? 850 : 650,
+              fontFamily: T.SANS,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {tab.label}
+            {tab.count !== undefined ? (
+              <span
+                style={{
+                  marginLeft: 6,
+                  fontSize: 11,
+                  color: selected ? "rgba(255,255,255,.72)" : T.GRAY,
+                }}
+              >
+                {tab.count}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Shared numbered list of AI portfolio items. Extracted so each sub-tab shows
+ * the same row anatomy (rank, name, lane badge, vendor, proof state, reason)
+ * over a different population, rather than three near-copies drifting apart.
+ * `emptyCopy` states why a chapter is empty instead of rendering a blank card.
+ */
+function TowerAiItemList({
+  rows,
+  emptyCopy,
+  testId,
+}: {
+  rows: ReadonlyArray<TowerAiPortfolioDisplayRow>;
+  emptyCopy: string;
+  testId?: string;
+}) {
+  if (rows.length === 0) {
+    return (
+      <p
+        data-testid={testId}
+        style={{ color: T.INK_2, fontSize: 13, lineHeight: 1.5, margin: 0 }}
+      >
+        {emptyCopy}
+      </p>
+    );
+  }
+  return (
+    <div data-testid={testId} style={{ display: "grid", gap: 8 }}>
+      {rows.map((row, index) => {
+        const tone = martLaneTone(row.decisionLane);
+        return (
+          <div
+            key={row.aiPortfolioKey}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "30px minmax(0, 1fr)",
+              gap: 9,
+              alignItems: "start",
+              borderTop: `1px solid ${T.RULE}`,
+              paddingTop: 10,
+            }}
+          >
+            <span
+              style={{
+                width: 24,
+                height: 24,
+                borderRadius: 999,
+                display: "grid",
+                placeItems: "center",
+                background: tone.fg,
+                color: "#fff",
+                fontSize: 12,
+                fontWeight: 900,
+              }}
+            >
+              {index + 1}
+            </span>
+            <span>
+              <span
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                }}
+              >
+                <strong style={{ minWidth: 0, lineHeight: 1.2 }}>
+                  {row.displayName}
+                </strong>
+                <span
+                  style={{
+                    borderRadius: 999,
+                    background: tone.bg,
+                    color: tone.fg,
+                    fontWeight: 900,
+                    fontSize: 11,
+                    padding: "4px 7px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {row.displayAction}
+                </span>
+              </span>
+              <span
+                style={{
+                  display: "block",
+                  color: T.GRAY_DK,
+                  fontSize: 11,
+                  marginTop: 2,
+                }}
+              >
+                {row.vendorName ??
+                  row.systemName ??
+                  humanizeTowerToken(row.aiSpendCategory)}
+                {" · "}
+                {row.financeValidatedValueUsd > 0
+                  ? `${formatMoneyGap(row.financeValidatedValueUsd)} validated`
+                  : row.usageActual !== null
+                    ? `usage ${formatWholeNumber(row.usageActual)}`
+                    : "proof gap"}
+              </span>
+              <span
+                style={{
+                  display: "block",
+                  color: T.INK_2,
+                  fontSize: 12,
+                  lineHeight: 1.35,
+                  marginTop: 5,
+                }}
+              >
+                {row.displayReason}
+              </span>
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+type TowerAiSubTab = "position" | "funded" | "proof" | "candidates" | "tools";
+
 function TowerMartAiPortfolioDesign({
   rows,
   programRows,
@@ -7053,6 +7272,40 @@ function TowerMartAiPortfolioDesign({
     .sort((a, b) => economicWeight(b) - economicWeight(a))
     .slice(0, PLOT_LIMIT);
   const unplottedCount = displayRows.length - plottedRows.length;
+  const proofGapRows = displayRows.filter(
+    (row) => row.financeValidatedValueUsd <= 0 && row.usageActual === null,
+  );
+  // The section is one argument told in five chapters rather than one long
+  // scroll: where the bets sit, where the money actually is, what is proven,
+  // what is still only an idea, and which tools the claims trace back to.
+  const [subTab, setSubTab] = useState<TowerAiSubTab>("position");
+  const subTabs: ReadonlyArray<{
+    key: TowerAiSubTab;
+    label: string;
+    count?: number;
+  }> = [
+    { key: "position", label: "Position", count: plottedRows.length },
+    { key: "funded", label: "Funded & embedded", count: fundedRows.length },
+    { key: "proof", label: "Proof status", count: partialProofRows.length },
+    {
+      key: "candidates",
+      label: "Candidate pipeline",
+      count: candidateRows.length,
+    },
+    { key: "tools", label: "Active tools", count: toolRows.length },
+  ];
+  const chapterIntro: Record<TowerAiSubTab, string> = {
+    position:
+      "Where each funded or embedded AI bet sits on value against readiness, and which of the four capital lanes it belongs in.",
+    funded:
+      "The AI spend that is already committed inside approved platform, program, governance, and enablement budgets.",
+    proof:
+      "Which AI items carry finance-validated value or a usage signal, and which are still asserting benefit without evidence.",
+    candidates:
+      "Discovery backlog. These carry no approved funding and must not be read as committed spend or promised value.",
+    tools:
+      "Tool-level trace behind the AI claims, so any figure above can be inspected back to its source.",
+  };
   return (
     <>
       <TowerMartBackButton
@@ -7068,104 +7321,144 @@ function TowerMartAiPortfolioDesign({
         what can scale with proof, what needs evidence fixed, and what must stay
         held until gates clear?
       </p>
-      <div
+      <TowerSubTabs
+        tabs={subTabs}
+        active={subTab}
+        onSelect={setSubTab}
+        label="AI portfolio chapters"
+      />
+      <p
+        data-testid="tower-ai-portfolio-chapter-intro"
         style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 420px)",
-          gap: 18,
-          alignItems: "start",
+          margin: "0 0 18px",
+          color: T.INK_2,
+          fontSize: 13.5,
+          lineHeight: 1.5,
+          maxWidth: 760,
         }}
       >
-        <section
-          data-testid="tower-ai-portfolio-matrix"
+        {chapterIntro[subTab]}
+      </p>
+      {subTab === "position" ? (
+        <div
           style={{
-            ...towerBoardCardStyle,
-            minHeight: 0,
-            position: "relative",
-            paddingBottom: 18,
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 420px)",
+            gap: 18,
+            alignItems: "start",
           }}
         >
-          <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>
-            Value vs. readiness
-          </div>
-          <p
+          <section
+            data-testid="tower-ai-portfolio-matrix"
             style={{
-              margin: "8px 0 0",
-              color: T.INK_2,
-              fontSize: 13,
-              lineHeight: 1.45,
-              maxWidth: 690,
+              ...towerBoardCardStyle,
+              minHeight: 0,
+              position: "relative",
+              paddingBottom: 18,
             }}
           >
-            Each numbered point maps to the watchlist. Placement is lane-aware:
-            scale with proof, fix adoption, fund readiness, or stop/re-scope.
-          </p>
-          <TowerAiPortfolioRechart rows={plottedRows} />
-          {/* Honest disclosure: the quadrant plots only items carrying real
+            <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>
+              Value vs. readiness
+            </div>
+            <p
+              style={{
+                margin: "8px 0 0",
+                color: T.INK_2,
+                fontSize: 13,
+                lineHeight: 1.45,
+                maxWidth: 690,
+              }}
+            >
+              Each numbered point maps to the watchlist. Placement is
+              lane-aware: scale with proof, fix adoption, fund readiness, or
+              stop/re-scope.
+            </p>
+            <TowerAiPortfolioRechart rows={plottedRows} />
+            {/* Honest disclosure: the quadrant plots only items carrying real
               economics, so the CXO reads a legible set instead of a cloud of
               overlapping candidate dots. Everything excluded is stated and
               still reachable in the watchlist/candidate list below — nothing is
               silently truncated. */}
-          {unplottedCount > 0 ? (
-            <p
-              data-testid="tower-ai-portfolio-plot-scope"
-              style={{
-                margin: "8px 0 0",
-                color: T.GRAY_DK,
-                fontSize: 12,
-                lineHeight: 1.4,
-              }}
-            >
-              Plotting the {plottedRows.length} funded and embedded AI items
-              that carry spend, funding, or promised value.{" "}
-              {unplottedCount.toLocaleString()} further portfolio row
-              {unplottedCount === 1 ? "" : "s"} — mostly candidate ideas with no
-              approved funding — are listed below rather than plotted, so the
-              quadrant stays readable.
-            </p>
-          ) : null}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-              gap: 8,
-              marginTop: 10,
-            }}
-          >
-            {[
-              ["Scale with proof", "Protect or scale with proof", T.GREEN],
-              ["Fix", "Resolve proof or adoption gaps", T.AMBER],
-              ["Hold", "Keep gated until readiness improves", T.PURPLE],
-              ["Stop", "Re-scope before more funding", T.RED],
-            ].map(([label, copy, color]) => (
-              <div
-                key={label}
+            {unplottedCount > 0 ? (
+              <p
+                data-testid="tower-ai-portfolio-plot-scope"
                 style={{
-                  border: `1px solid ${T.RULE}`,
-                  borderRadius: 10,
-                  padding: "9px 10px",
-                  background: "rgba(255,255,255,.72)",
+                  margin: "8px 0 0",
+                  color: T.GRAY_DK,
+                  fontSize: 12,
+                  lineHeight: 1.4,
                 }}
               >
-                <strong style={{ color }}>{label}</strong>
+                Plotting the {plottedRows.length} funded and embedded AI items
+                that carry spend, funding, or promised value.{" "}
+                {unplottedCount === 1
+                  ? "One further AI item — a candidate idea with no approved funding — is"
+                  : `${unplottedCount.toLocaleString()} further AI items — mostly candidate ideas with no approved funding — are`}{" "}
+                held in the Candidate pipeline chapter rather than plotted, so
+                the quadrant stays readable. Nothing is dropped.
+              </p>
+            ) : null}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                gap: 8,
+                marginTop: 10,
+              }}
+            >
+              {[
+                ["Scale with proof", "Protect or scale with proof", T.GREEN],
+                ["Fix", "Resolve proof or adoption gaps", T.AMBER],
+                ["Hold", "Keep gated until readiness improves", T.PURPLE],
+                ["Stop", "Re-scope before more funding", T.RED],
+              ].map(([label, copy, color]) => (
                 <div
+                  key={label}
                   style={{
-                    color: T.INK_2,
-                    fontSize: 11.5,
-                    lineHeight: 1.3,
-                    marginTop: 2,
+                    border: `1px solid ${T.RULE}`,
+                    borderRadius: 10,
+                    padding: "9px 10px",
+                    background: "rgba(255,255,255,.72)",
                   }}
                 >
-                  {copy}
+                  <strong style={{ color }}>{label}</strong>
+                  <div
+                    style={{
+                      color: T.INK_2,
+                      fontSize: 11.5,
+                      lineHeight: 1.3,
+                      marginTop: 2,
+                    }}
+                  >
+                    {copy}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
-        <section
-          data-testid="tower-ai-watchlist"
-          style={{ ...towerBoardCardStyle, minHeight: 0, overflow: "hidden" }}
-        >
+              ))}
+            </div>
+          </section>
+          <section
+            data-testid="tower-ai-watchlist"
+            style={{ ...towerBoardCardStyle, minHeight: 0, overflow: "hidden" }}
+          >
+            <div style={towerTinyLabelStyle}>Plotted items</div>
+            <p
+              style={{ margin: "8px 0 14px", color: T.INK_2, lineHeight: 1.45 }}
+            >
+              The numbers below match the numbered points on the quadrant. Only
+              AI items carrying spend, approved funding, or promised value are
+              plotted — a candidate idea with no money attached has no
+              defensible position on a value-versus-readiness axis.
+            </p>
+            <TowerAiItemList
+              rows={plottedRows}
+              testId="tower-ai-plotted-list"
+              emptyCopy="No AI item currently carries approved funding, embedded spend, or promised value, so there is nothing to place on the quadrant. Load program economics to populate it."
+            />
+          </section>
+        </div>
+      ) : null}
+      {subTab === "funded" ? (
+        <section style={{ ...towerBoardCardStyle, minHeight: 0 }}>
           <div style={towerTinyLabelStyle}>AI spend lens</div>
           <div
             style={{
@@ -7177,7 +7470,14 @@ function TowerMartAiPortfolioDesign({
           >
             {formatMoneyGap(command.aiTaggedSpendFy26NonAdditive)}
           </div>
-          <p style={{ margin: "8px 0 16px", color: T.INK_2, lineHeight: 1.45 }}>
+          <p
+            style={{
+              margin: "8px 0 16px",
+              color: T.INK_2,
+              lineHeight: 1.45,
+              maxWidth: 760,
+            }}
+          >
             Non-additive; already inside approved platform, program, governance,
             and enablement spend. Candidate ideas are not approved funding.
           </p>
@@ -7186,18 +7486,19 @@ function TowerMartAiPortfolioDesign({
               display: "grid",
               gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
               gap: 8,
-              marginBottom: 14,
+              marginBottom: 18,
+              maxWidth: 760,
             }}
           >
             <TowerMartCompactCard
               label="Funded lens"
               value={formatWholeNumber(fundedRows.length)}
-              detail="Rows with approved or embedded spend"
+              detail="Carrying approved or embedded spend"
             />
             <TowerMartCompactCard
               label="Proof signal"
               value={formatWholeNumber(partialProofRows.length)}
-              detail="Rows with usage or finance validation"
+              detail="Carrying usage or finance validation"
             />
             <TowerMartCompactCard
               label="Candidate pool"
@@ -7205,299 +7506,275 @@ function TowerMartAiPortfolioDesign({
               detail="Discovery only"
             />
           </div>
-          <div style={{ display: "grid", gap: 8 }}>
-            {displayRows.map((row, index) => {
-              const tone = martLaneTone(row.decisionLane);
-              return (
-                <div
-                  key={row.aiPortfolioKey}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "30px minmax(0, 1fr)",
-                    gap: 9,
-                    alignItems: "start",
-                    borderTop: `1px solid ${T.RULE}`,
-                    paddingTop: 10,
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: 999,
-                      display: "grid",
-                      placeItems: "center",
-                      background: tone.fg,
-                      color: "#fff",
-                      fontSize: 12,
-                      fontWeight: 900,
-                    }}
-                  >
-                    {index + 1}
-                  </span>
-                  <span>
-                    <span
-                      style={{
-                        display: "flex",
-                        gap: 8,
-                        alignItems: "flex-start",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <strong style={{ minWidth: 0, lineHeight: 1.2 }}>
-                        {row.displayName}
-                      </strong>
-                      <span
-                        style={{
-                          borderRadius: 999,
-                          background: tone.bg,
-                          color: tone.fg,
-                          fontWeight: 900,
-                          fontSize: 11,
-                          padding: "4px 7px",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {row.displayAction}
-                      </span>
-                    </span>
-                    <span
-                      style={{
-                        display: "block",
-                        color: T.GRAY_DK,
-                        fontSize: 11,
-                        marginTop: 2,
-                      }}
-                    >
-                      {row.vendorName ??
-                        row.systemName ??
-                        humanizeTowerToken(row.aiSpendCategory)}
-                      {" · "}
-                      {row.financeValidatedValueUsd > 0
-                        ? `${formatMoneyGap(row.financeValidatedValueUsd)} validated`
-                        : row.usageActual !== null
-                          ? `usage ${formatWholeNumber(row.usageActual)}`
-                          : "proof gap"}
-                    </span>
-                    <span
-                      style={{
-                        display: "block",
-                        color: T.INK_2,
-                        fontSize: 12,
-                        lineHeight: 1.35,
-                        marginTop: 5,
-                      }}
-                    >
-                      {row.displayReason}
-                    </span>
-                  </span>
-                </div>
-              );
-            })}
-            {candidateRows.length > 0 ? (
-              <div
-                style={{
-                  borderTop: `1px solid ${T.RULE}`,
-                  paddingTop: 10,
-                  color: T.INK_2,
-                  fontSize: 12.5,
-                  lineHeight: 1.45,
-                }}
-              >
-                Candidate AI is intentionally visible here, but it remains a
-                discovery backlog until budget ties, usage baselines, control
-                gates, and finance evidence are loaded.
-              </div>
-            ) : null}
-          </div>
+          <TowerAiItemList
+            rows={fundedRows}
+            testId="tower-ai-funded-list"
+            emptyCopy="No AI item in this mart carries approved or embedded spend. Until program budgets are tied to AI items, the funded lens stays empty rather than borrowing figures from the candidate pool."
+          />
         </section>
-      </div>
-      <section
-        data-testid="tower-active-ai-tools"
-        style={{
-          ...towerBoardCardStyle,
-          minHeight: 0,
-          marginTop: 18,
-          padding: 0,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 14,
-            padding: "20px 22px 14px",
-            borderBottom: `1px solid ${T.RULE}`,
-          }}
-        >
-          <div>
-            <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>
-              Active AI Tools
+      ) : null}
+      {subTab === "proof" ? (
+        <div style={{ display: "grid", gap: 18 }}>
+          <section style={{ ...towerBoardCardStyle, minHeight: 0 }}>
+            <div style={{ ...towerTinyLabelStyle, color: T.GREEN }}>
+              Carrying evidence
             </div>
-            <h3
+            <p
               style={{
-                margin: "6px 0 0",
-                fontFamily: T.SERIF,
-                fontSize: 28,
-                lineHeight: 1.05,
-                color: T.INK,
+                margin: "8px 0 14px",
+                color: T.INK_2,
+                lineHeight: 1.45,
+                maxWidth: 760,
               }}
             >
-              Tool spend, usage, value proof, and claim gates
-            </h3>
-          </div>
-          <div style={{ color: T.GRAY_DK, fontSize: 12, textAlign: "right" }}>
-            Double-click a row for the investment trace.
-            <br />
-            Loaded mart rows override the Day-1 reference pack.
-          </div>
+              These AI items have finance-validated value, a usage signal, or
+              both. Tower still reports the value as partial, not realized —
+              realized value stays gated until the claim gates clear.
+            </p>
+            <TowerAiItemList
+              rows={partialProofRows}
+              testId="tower-ai-proof-list"
+              emptyCopy="No AI item currently carries finance validation or a usage signal. Usage telemetry has not been loaded for this tenant, so adoption cannot be evidenced yet."
+            />
+          </section>
+          <section style={{ ...towerBoardCardStyle, minHeight: 0 }}>
+            <div style={{ ...towerTinyLabelStyle, color: T.AMBER }}>
+              Asserting value without evidence
+            </div>
+            <p
+              style={{
+                margin: "8px 0 14px",
+                color: T.INK_2,
+                lineHeight: 1.45,
+                maxWidth: 760,
+              }}
+            >
+              These claim benefit but carry neither validated finance value nor
+              a usage signal. They are the working list for the next evidence
+              cycle, not a reason to stop funding today.
+            </p>
+            <TowerAiItemList
+              rows={proofGapRows}
+              testId="tower-ai-proof-gap-list"
+              emptyCopy="Every AI item in this mart carries at least one form of evidence."
+            />
+          </section>
         </div>
-        <div style={{ overflowX: "auto" }}>
-          <table
-            data-testid="tower-active-ai-tools-table"
-            style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
+      ) : null}
+      {subTab === "candidates" ? (
+        <section style={{ ...towerBoardCardStyle, minHeight: 0 }}>
+          <div style={towerTinyLabelStyle}>Discovery backlog</div>
+          <p
+            style={{
+              margin: "8px 0 16px",
+              color: T.INK_2,
+              lineHeight: 1.45,
+              maxWidth: 760,
+            }}
           >
-            <thead>
-              <tr>
-                {[
-                  "Tool · Function",
-                  "Active",
-                  "Adoption",
-                  "Promised",
-                  "Validated",
-                  "Claim State",
-                  "Inspect",
-                ].map((head) => (
-                  <th
-                    key={head}
-                    style={{
-                      textAlign:
-                        head === "Tool · Function" || head === "Claim State"
-                          ? "left"
-                          : "right",
-                      padding: "14px 16px 12px",
-                      fontFamily: T.MONO,
-                      fontSize: 9,
-                      letterSpacing: "1.3px",
-                      color: T.GRAY_DK,
-                      textTransform: "uppercase",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {head}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {toolRows.map((row) => (
-                <tr
-                  key={row.key}
-                  data-testid={`tower-ai-tool-row-${row.key}`}
-                  onDoubleClick={() => setSelectedTool(row)}
-                  style={{
-                    borderTop: `1px solid ${T.RULE}`,
-                    cursor: "zoom-in",
-                  }}
-                >
-                  <td style={{ padding: "16px" }}>
-                    <strong style={{ fontFamily: T.SERIF, fontSize: 18 }}>
-                      {row.name}
-                    </strong>
-                    <div
-                      style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 4 }}
-                    >
-                      {row.functionLabel}
-                    </div>
-                  </td>
-                  <td
-                    style={{
-                      padding: "16px",
-                      textAlign: "right",
-                      fontWeight: 850,
-                    }}
-                  >
-                    {row.activeUsers}
-                  </td>
-                  <td
-                    style={{
-                      padding: "16px",
-                      textAlign: "right",
-                      fontWeight: 850,
-                    }}
-                  >
-                    {row.adoption}
-                  </td>
-                  <td
-                    style={{
-                      padding: "16px",
-                      textAlign: "right",
-                      fontWeight: 850,
-                    }}
-                  >
-                    {row.promisedValue}
-                  </td>
-                  <td
-                    style={{
-                      padding: "16px",
-                      textAlign: "right",
-                      fontWeight: 850,
-                    }}
-                  >
-                    {row.financeValidated}
-                  </td>
-                  <td style={{ padding: "16px" }}>
-                    <span
+            Candidate AI is intentionally visible, but it remains a discovery
+            backlog until budget ties, usage baselines, control gates, and
+            finance evidence are loaded. Nothing here is committed spend.
+          </p>
+          <TowerAiItemList
+            rows={candidateRows}
+            testId="tower-ai-candidate-list"
+            emptyCopy="No candidate AI opportunities are loaded for this tenant."
+          />
+        </section>
+      ) : null}
+      {subTab === "tools" ? (
+        <section
+          data-testid="tower-active-ai-tools"
+          style={{
+            ...towerBoardCardStyle,
+            minHeight: 0,
+            marginTop: 18,
+            padding: 0,
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 14,
+              padding: "20px 22px 14px",
+              borderBottom: `1px solid ${T.RULE}`,
+            }}
+          >
+            <div>
+              <div style={{ ...towerTinyLabelStyle, color: T.GOLD }}>
+                Active AI Tools
+              </div>
+              <h3
+                style={{
+                  margin: "6px 0 0",
+                  fontFamily: T.SERIF,
+                  fontSize: 28,
+                  lineHeight: 1.05,
+                  color: T.INK,
+                }}
+              >
+                Tool spend, usage, value proof, and claim gates
+              </h3>
+            </div>
+            <div style={{ color: T.GRAY_DK, fontSize: 12, textAlign: "right" }}>
+              Double-click a row for the investment trace.
+              <br />
+              Loaded mart rows override the Day-1 reference pack.
+            </div>
+          </div>
+          <div style={{ overflowX: "auto" }}>
+            <table
+              data-testid="tower-active-ai-tools-table"
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: 13,
+              }}
+            >
+              <thead>
+                <tr>
+                  {[
+                    "Tool · Function",
+                    "Active",
+                    "Adoption",
+                    "Promised",
+                    "Validated",
+                    "Claim State",
+                    "Inspect",
+                  ].map((head) => (
+                    <th
+                      key={head}
                       style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 7,
-                        borderRadius: 999,
-                        background: gateDotBg(row.status),
-                        color: gateDotColor(row.status),
-                        padding: "6px 9px",
-                        fontWeight: 900,
-                        fontSize: 12,
+                        textAlign:
+                          head === "Tool · Function" || head === "Claim State"
+                            ? "left"
+                            : "right",
+                        padding: "14px 16px 12px",
+                        fontFamily: T.MONO,
+                        fontSize: 9,
+                        letterSpacing: "1.3px",
+                        color: T.GRAY_DK,
+                        textTransform: "uppercase",
                         whiteSpace: "nowrap",
                       }}
                     >
-                      <span
-                        aria-hidden="true"
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: 999,
-                          background: gateDotColor(row.status),
-                        }}
-                      />
-                      {row.claimState}
-                    </span>
-                  </td>
-                  <td style={{ padding: "16px", textAlign: "right" }}>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedTool(row)}
+                      {head}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {toolRows.map((row) => (
+                  <tr
+                    key={row.key}
+                    data-testid={`tower-ai-tool-row-${row.key}`}
+                    onDoubleClick={() => setSelectedTool(row)}
+                    style={{
+                      borderTop: `1px solid ${T.RULE}`,
+                      cursor: "zoom-in",
+                    }}
+                  >
+                    <td style={{ padding: "16px" }}>
+                      <strong style={{ fontFamily: T.SERIF, fontSize: 18 }}>
+                        {row.name}
+                      </strong>
+                      <div
+                        style={{ color: T.GRAY_DK, fontSize: 12, marginTop: 4 }}
+                      >
+                        {row.functionLabel}
+                      </div>
+                    </td>
+                    <td
                       style={{
-                        border: `1px solid ${T.RULE_STRONG}`,
-                        borderRadius: 999,
-                        background: "#fff",
-                        color: T.INK,
-                        padding: "7px 11px",
+                        padding: "16px",
+                        textAlign: "right",
                         fontWeight: 850,
-                        cursor: "pointer",
                       }}
                     >
-                      Inspect
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+                      {row.activeUsers}
+                    </td>
+                    <td
+                      style={{
+                        padding: "16px",
+                        textAlign: "right",
+                        fontWeight: 850,
+                      }}
+                    >
+                      {row.adoption}
+                    </td>
+                    <td
+                      style={{
+                        padding: "16px",
+                        textAlign: "right",
+                        fontWeight: 850,
+                      }}
+                    >
+                      {row.promisedValue}
+                    </td>
+                    <td
+                      style={{
+                        padding: "16px",
+                        textAlign: "right",
+                        fontWeight: 850,
+                      }}
+                    >
+                      {row.financeValidated}
+                    </td>
+                    <td style={{ padding: "16px" }}>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 7,
+                          borderRadius: 999,
+                          background: gateDotBg(row.status),
+                          color: gateDotColor(row.status),
+                          padding: "6px 9px",
+                          fontWeight: 900,
+                          fontSize: 12,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: 999,
+                            background: gateDotColor(row.status),
+                          }}
+                        />
+                        {row.claimState}
+                      </span>
+                    </td>
+                    <td style={{ padding: "16px", textAlign: "right" }}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTool(row)}
+                        style={{
+                          border: `1px solid ${T.RULE_STRONG}`,
+                          borderRadius: 999,
+                          background: "#fff",
+                          color: T.INK,
+                          padding: "7px 11px",
+                          fontWeight: 850,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Inspect
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
       {selectedTool ? (
         <TowerAiToolTraceDrawer
           row={selectedTool}
@@ -7829,7 +8106,7 @@ function TowerMartEvidencePosture({
       label: "What evidence exists",
       headline: `${formatWholeNumber(rows.length)} traced`,
       body: sourceFiles.size
-        ? `Every displayed figure carries a lineage row back to ${formatWholeNumber(sourceFiles.size)} source file${sourceFiles.size === 1 ? "" : "s"}.`
+        ? `Every displayed figure traces back to ${formatWholeNumber(sourceFiles.size)} source file${sourceFiles.size === 1 ? "" : "s"}.`
         : "Lineage rows are present but no source file is named on them yet.",
     },
     {
@@ -7936,8 +8213,9 @@ function TowerMartEvidenceDesign({
           fontWeight: 750,
         }}
       >
-        Every number in Tower traces to a mart fact, a formula posture, and a
-        source row. Tower displays and narrates; it does not invent values.
+        Every number in Tower traces to a governed figure, a stated formula, and
+        the source record it came from. Tower displays and narrates; it does not
+        invent values.
       </div>
       {/* Evidence posture, before the raw trace table. A CXO should not have to
           read a lineage table to learn what is missing, who owes it, and what
