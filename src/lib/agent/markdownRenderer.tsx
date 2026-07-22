@@ -21,8 +21,8 @@
 
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
-import type { ComponentPropsWithoutRef, ReactNode } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
+import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeSanitize from "rehype-sanitize";
@@ -65,6 +65,50 @@ interface ChartHint {
   note?: string;
 }
 
+function SafeMarkdownResponsiveContainer({
+  children,
+}: {
+  children: ReactElement;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const update = () => {
+      const rect = node.getBoundingClientRect();
+      setReady(rect.width > 0 && rect.height > 0);
+    };
+    update();
+    if (typeof ResizeObserver === "undefined") {
+      const frame = window.requestAnimationFrame(update);
+      return () => window.cancelAnimationFrame(frame);
+    }
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      style={{ width: "100%", height: "100%", minWidth: 1, minHeight: 1 }}
+    >
+      {ready ? (
+        <ResponsiveContainer
+          height="100%"
+          minHeight={1}
+          minWidth={1}
+          width="100%"
+        >
+          {children}
+        </ResponsiveContainer>
+      ) : null}
+    </div>
+  );
+}
+
 function renderChartBody(
   hint: ChartHint,
   fmtVal: (v: unknown) => string,
@@ -77,7 +121,7 @@ function renderChartBody(
 
   if (type === "horizontal-bar") {
     return (
-      <ResponsiveContainer width="100%" height="100%">
+      <SafeMarkdownResponsiveContainer>
         <BarChart
           data={data}
           layout="vertical"
@@ -121,12 +165,12 @@ function renderChartBody(
             }}
           />
         </BarChart>
-      </ResponsiveContainer>
+      </SafeMarkdownResponsiveContainer>
     );
   }
   if (type === "bar") {
     return (
-      <ResponsiveContainer width="100%" height="100%">
+      <SafeMarkdownResponsiveContainer>
         <BarChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
           <CartesianGrid
             strokeDasharray="3 3"
@@ -153,12 +197,12 @@ function renderChartBody(
           <Bar dataKey={yKey} fill={color} radius={[3, 3, 0, 0]} />
           {yKey2 && <Bar dataKey={yKey2} fill={color2} radius={[3, 3, 0, 0]} />}
         </BarChart>
-      </ResponsiveContainer>
+      </SafeMarkdownResponsiveContainer>
     );
   }
   if (type === "line") {
     return (
-      <ResponsiveContainer width="100%" height="100%">
+      <SafeMarkdownResponsiveContainer>
         <LineChart
           data={data}
           margin={{ top: 4, right: 8, bottom: 0, left: 0 }}
@@ -203,12 +247,12 @@ function renderChartBody(
             />
           )}
         </LineChart>
-      </ResponsiveContainer>
+      </SafeMarkdownResponsiveContainer>
     );
   }
   if (type === "area") {
     return (
-      <ResponsiveContainer width="100%" height="100%">
+      <SafeMarkdownResponsiveContainer>
         <AreaChart
           data={data}
           margin={{ top: 4, right: 8, bottom: 0, left: 0 }}
@@ -267,7 +311,7 @@ function renderChartBody(
             />
           )}
         </AreaChart>
-      </ResponsiveContainer>
+      </SafeMarkdownResponsiveContainer>
     );
   }
   if (type === "pie") {
@@ -280,7 +324,7 @@ function renderChartBody(
       "#857B6F",
     ];
     return (
-      <ResponsiveContainer width="100%" height="100%">
+      <SafeMarkdownResponsiveContainer>
         <PieChart>
           <Pie
             data={data}
@@ -301,7 +345,7 @@ function renderChartBody(
             contentStyle={tStyle}
           />
         </PieChart>
-      </ResponsiveContainer>
+      </SafeMarkdownResponsiveContainer>
     );
   }
   return null;
