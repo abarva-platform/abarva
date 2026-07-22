@@ -117,7 +117,14 @@ const getArg = (name, fallback = null) => {
   return found ? found.slice(prefix.length) : fallback;
 };
 
-const requestedTenant = getArg("--tenant", "all");
+// HOME_PACK_TENANT takes precedence over the CLI flag so a single tenant can be
+// re-run through the operator job without editing the npm script (which pins
+// --tenant=all). This matters operationally: the Claude layer is generated over
+// two API calls and the forward-looking one can transiently fail, leaving that
+// tenant held at 'candidate' by the completeness gate. Without a per-tenant
+// override the only way to retry one tenant is to regenerate all of them, which
+// re-rolls the dice on tenants that already passed.
+const requestedTenant = process.env.HOME_PACK_TENANT || getArg("--tenant", "all");
 const writeDb = args.has("--write-db");
 const useClaude = args.has("--use-claude");
 const approve = args.has("--approve");
