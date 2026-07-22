@@ -240,6 +240,7 @@ async function renderArtifact(
       "x-source-event-code": responseEventCode,
       "x-source-artifact-format": result.format,
       "x-source-artifact-kind": kind,
+      "x-source-artifact-authoritative": "generated-fallback",
       ...(variantParam ? { "x-source-artifact-variant": variantParam } : {}),
       ...dispositionHeader,
     },
@@ -269,7 +270,14 @@ async function streamClientFinalIfAvailable(args: {
     artifacts.filter((artifact) => artifact.artifactType === args.artifactCode),
   );
   if (!authoritative || !authoritative.isClientFinal) return null;
-  if (authoritative.fileFormat !== requestedFileFormat) return null;
+  if (authoritative.fileFormat !== requestedFileFormat) {
+    return clientFinalFormatMismatchResponse(authoritative, {
+      eventCode: args.eventCode,
+      artifactCode: args.artifactCode,
+      requestedArtifactCode: args.requestedArtifactCode,
+      requestedFormat: requestedFileFormat,
+    });
+  }
   return streamFileCabinetRecord(authoritative, {
     eventCode: args.eventCode,
     artifactCode: args.artifactCode,
@@ -289,6 +297,46 @@ function deliverableFormatToFileFormat(
     return format;
   }
   return null;
+}
+
+function clientFinalFormatMismatchResponse(
+  record: SourceArtifactRecord,
+  audit: {
+    eventCode: string;
+    artifactCode: string;
+    requestedArtifactCode: string;
+    requestedFormat: ArtifactFileFormat;
+  },
+): Response {
+  return Response.json(
+    {
+      error: "client_final_format_mismatch",
+      detail:
+        "A client-final artifact is the authoritative deliverable of record, but it is stored in a different format than this render request.",
+      artifactId: record.id,
+      artifactCode: audit.artifactCode,
+      requestedArtifactCode: audit.requestedArtifactCode,
+      availableFormat: record.fileFormat,
+      requestedFormat: audit.requestedFormat,
+      fileName: record.fileName,
+    },
+    {
+      status: 409,
+      headers: {
+        "cache-control": "private, no-store",
+        "x-source-artifact-id": record.id,
+        "x-source-artifact-code": audit.artifactCode,
+        ...(audit.requestedArtifactCode !== audit.artifactCode
+          ? { "x-source-requested-artifact-code": audit.requestedArtifactCode }
+          : {}),
+        "x-source-event-code": audit.eventCode,
+        "x-source-artifact-version": String(record.version),
+        "x-source-client-final-format": record.fileFormat,
+        "x-source-requested-artifact-format": audit.requestedFormat,
+        "x-source-artifact-authoritative": "client-final-format-mismatch",
+      },
+    },
+  );
 }
 
 async function streamFileCabinetRecord(
