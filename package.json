@@ -548,7 +548,8 @@
     "audit:home-v3-preview-columns": "npx tsx scripts/tenant-v3/audit-home-v3-runtime-reachability.ts",
     "audit:tower-governed-candidate-load": "npx tsx scripts/audit/build-tower-governed-candidate-load.ts",
     "report:meridian-data-plane-layout": "node scripts/tenant-v3/build-meridian-data-plane-layout-report.mjs",
-    "report:meridian-page-fact-lineage": "node scripts/tenant-v3/build-meridian-page-fact-lineage-report.mjs"
+    "report:meridian-page-fact-lineage": "node scripts/tenant-v3/build-meridian-page-fact-lineage-report.mjs",
+    "home:knowledge-pack-v2:verify": "node scripts/knowledge/verify-home-knowledge-pack-content.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",
