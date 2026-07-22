@@ -191,11 +191,13 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   artifact as final and why, independent of the separate gate-approval record.
 - **Severity**: P4 (approval/authority/lineage controls)
 - **Workstream**: Approval/authority/lineage controls
-- **Status**: `App code candidate — migration not yet applied`. PR open with the full schema,
-  repository, route, resolver integration, and UI. Requires the governed migration lane
-  (`db-migration-lab.yml`) — the highest-scrutiny category in this repo's governance model —
-  to be dispatched separately (`mode=status` then `mode=apply`) with explicit user
-  confirmation before it's live.
+- **Status**: `Merged — live-proven`. Migration applied through the governed
+  `db-migration-lab.yml` lane with explicit user confirmation (`mode=status` then
+  `mode=apply`, both succeeded, all steps including the new repository-readback step and the
+  post-migration health check passed). Live signed-in proof performed: a real artifact was
+  accepted on a real production event, with the real "Artifact status" panel confirming the
+  real rationale, real Clerk accepted-by id, and real gate-precondition selection persisted
+  and rendered back.
 - **Dependencies**: none remaining — schema built using the field list from the mockup's
   design-contract page as the source of truth. Investigation found 2 of the 11 fields
   (`artifact_origin`, `supersedes_artifact_id`) already exist as exact-match columns on
@@ -209,13 +211,14 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   honest never-accepted state, with an Accept form; the existing "Stage gate" panel
   (`SOURCE-SHELL-003`) unchanged, placed alongside; `resolveAuthoritativeArtifact()` gains one
   new optional, backward-compatible pool. Plain-language UI copy only — no "Track A"/"Track B"
-  anywhere on screen. All met in app code; migration apply + live proof pending.
+  anywhere on screen. All met, migration applied, live-proven.
 - **Required tests**: `artifact-acceptances.test.ts` (7 cases), the accept route's own test
   suite (6 cases), 2 new `client-final-artifacts.test.ts` cases for the new resolver pool, and
   `ArtifactAcceptancePanel.test.tsx` (5 cases). Full adjacent-suite regression sweep confirmed
   zero regressions against a clean `origin/main` baseline (byte-identical failing-suite set
   before/after, via `git stash`).
-- **PR**: to be recorded on merge.
+- **PR**: [#5264](https://github.com/abarva-platform/abarva/pull/5264), squash-merged as
+  `539ae678a9cb6cf0b93878894673c4d0f3b22437`.
 - **Discovered from**: user-directed follow-up after reviewing the mockup's Track A/B
   prototype; UI copy explicitly must NOT say "Track A"/"Track B" on screen — plain language
   ("Artifact status"/"Stage gate") per direct user feedback.
