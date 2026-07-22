@@ -122,16 +122,18 @@ async function resolveClient(clientKey: string): Promise<ClientRow> {
 }
 
 async function readMove(opts: {
-  client: ClientRow;
+  client: ClientRow | null;
   clientKey: string;
   moveId: string;
 }): Promise<MovesLearningMove> {
-  const { data, error } = await getAzureReadFluentClient()
+  let query = getAzureReadFluentClient()
     .from("engagements")
     .select("id,client_id,name,current_phase,function_pack_key,program_archetype")
-    .eq("id", opts.moveId)
-    .eq("client_id", opts.client.id)
-    .maybeSingle<{
+    .eq("id", opts.moveId);
+  if (opts.client?.id) {
+    query = query.eq("client_id", opts.client.id);
+  }
+  const { data, error } = await query.maybeSingle<{
       id: string;
       client_id: string;
       name: string | null;
@@ -161,7 +163,6 @@ async function readApprovedEvidence(opts: {
   const { data: reviews, error: reviewError } = await db
     .from("program_evidence_reviews")
     .select("evidence_id,decision,reviewed_at,updated_at,created_at")
-    .in("tenant_key", tenantAliasesFor(opts.clientKey))
     .eq("program_id", opts.moveId)
     .eq("decision", "approved")
     .order("updated_at", { ascending: false })
@@ -186,7 +187,7 @@ async function readApprovedEvidence(opts: {
     const review = reviewById.get(id);
     return {
       id,
-      tenantKey: String(row.tenant_key ?? opts.clientKey),
+      tenantKey: opts.clientKey,
       clientId: opts.clientId,
       moveId: String(row.program_id ?? opts.moveId),
       phase: typeof row.phase === "number" ? row.phase : null,
@@ -295,7 +296,6 @@ async function readGateDecisions(opts: {
     .select(
       "artifact_id,move_id,tenant_key,phase,artifact_type,title,status,source_basis,generated_at,metadata",
     )
-    .in("tenant_key", tenantAliasesFor(opts.clientKey))
     .eq("move_id", opts.moveId)
     .eq("artifact_type", "phase_gate_decision")
     .eq("status", "approved")
@@ -304,7 +304,7 @@ async function readGateDecisions(opts: {
   if (error) throw new Error(error.message);
   return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
     id: String(row.artifact_id),
-    tenantKey: String(row.tenant_key ?? opts.clientKey),
+    tenantKey: opts.clientKey,
     clientId: opts.clientId,
     moveId: String(row.move_id ?? opts.moveId),
     phase: typeof row.phase === "number" ? row.phase : null,
@@ -351,7 +351,7 @@ function emitProofBundle(outDir: string): void {
 async function main() {
   const opts = parseArgs();
   const generatedAt = new Date().toISOString();
-  const client = await resolveClient(opts.clientKey);
+  const client = await resolveClient(opts.clientKey).catch(() => null);
   const move = await readMove({
     client,
     clientKey: opts.clientKey,
