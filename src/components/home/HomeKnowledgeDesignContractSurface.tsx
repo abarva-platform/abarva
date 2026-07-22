@@ -1,15 +1,19 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, type CSSProperties, useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
+  ReferenceLine,
   ResponsiveContainer,
+  Scatter,
+  ScatterChart,
   Tooltip,
   XAxis,
   YAxis,
+  ZAxis,
 } from "recharts";
 import dagre from "@dagrejs/dagre";
 import {
@@ -1168,14 +1172,11 @@ function EnterpriseOverview({
   const title = narrativeString(pack, "enterprise_brief_title");
   const summary = narrativeString(pack, "enterprise_brief_summary");
   const executiveFacts = executiveAtGlanceFacts(pack);
+  const enterpriseBrief = pack.enterprise_brief;
 
   return (
     <div className="nkh-section nkh-enterprise-overview">
-      <AiSuccessThesis
-        dimensions={dimensions}
-        pack={pack}
-        useCases={useCases}
-      />
+      <EnterpriseBriefExecutiveRead pack={pack} />
 
       <section className="nkh-story-card nkh-boardroom-brief">
         <div className="nkh-kicker">Enterprise Brief</div>
@@ -1214,6 +1215,25 @@ function EnterpriseOverview({
         </div>
       </section>
 
+      <EnterpriseBriefSignalBand pack={pack} />
+
+      <section className="nkh-intel-canvas-card">
+        <div className="nkh-canvas-copy">
+          <div className="nkh-kicker">Strategic agenda</div>
+          <h2>Which use cases deserve leadership oxygen?</h2>
+          <p>
+            The portfolio view plots value against readiness and sizes each
+            opportunity by approved priority. It is a planning view, not a claim
+            that value has been realized.
+          </p>
+        </div>
+        <UseCasePortfolioScatter useCases={useCases} />
+      </section>
+
+      {enterpriseBrief?.strategicNarratives?.length ? (
+        <StrategicNarrativeChapters pack={pack} />
+      ) : null}
+
       <section className="nkh-at-glance" aria-label="Enterprise at a glance">
         <div className="nkh-inline-head">
           <div className="nkh-kicker">Enterprise at a glance</div>
@@ -1243,6 +1263,12 @@ function EnterpriseOverview({
         </div>
         <DimensionVolumeChart dimensions={dimensions} />
       </section>
+
+      <AiSuccessThesis
+        dimensions={dimensions}
+        pack={pack}
+        useCases={useCases}
+      />
 
       <SixQuestionsLanding
         dimensions={dimensions}
@@ -1422,6 +1448,272 @@ function SixQuestionsLanding({
         ))}
       </div>
     </section>
+  );
+}
+
+function EnterpriseBriefExecutiveRead({
+  pack,
+}: {
+  pack: HomeKnowledgeDesignContractPack;
+}) {
+  const executive = pack.enterprise_brief?.executiveRead;
+  const tier = pack.enterprise_brief?.packTier;
+  if (!executive) return null;
+
+  const confidence = Math.max(
+    0,
+    Math.min(100, Number(executive.contextConfidencePct ?? 0)),
+  );
+  const strengths = executive.strengths
+    .map((item) => asText(item.text ?? item))
+    .filter(Boolean)
+    .slice(0, 3);
+  const constraints = executive.constraints
+    .map((item) => asText(item.text ?? item))
+    .filter(Boolean)
+    .slice(0, 3);
+
+  return (
+    <section className="nkh-exec-read-v2" aria-label="Executive read">
+      <div className="nkh-exec-read-copy">
+        <div className="nkh-kicker">01 · Executive read</div>
+        <h2>{executive.tensionHeadline || pack.tenant_name}</h2>
+        <p className="nkh-exec-one">
+          {executive.oneSentence ||
+            "The approved Home Knowledge Pack is loaded, but the executive read is pending."}
+        </p>
+        {executive.archetype ? (
+          <span className="nkh-archetype-pill">{executive.archetype}</span>
+        ) : null}
+      </div>
+      <aside className="nkh-exec-confidence-card">
+        <div
+          className="nkh-confidence-ring"
+          style={{ "--pct": `${confidence}%` } as CSSProperties}
+        >
+          <strong>{confidence}%</strong>
+          <span>context confidence</span>
+        </div>
+        <p>{executive.contextConfidenceNote}</p>
+        {tier ? (
+          <div className="nkh-tier-strip">
+            <span>{tier.tierLabel || tier.tier || "Planning-grade"}</span>
+            <strong>{tier.tierTitle || "Context tier"}</strong>
+            <em>{tier.tierBody || tier.tierBasis}</em>
+          </div>
+        ) : null}
+      </aside>
+      <div className="nkh-exec-evidence-grid">
+        <article>
+          <span>Source-backed strengths</span>
+          <ul>
+            {strengths.map((item, index) => (
+              <li key={`${item}-${index}`}>{item}</li>
+            ))}
+          </ul>
+        </article>
+        <article className="is-warn">
+          <span>Structural constraints</span>
+          <ul>
+            {constraints.map((item, index) => (
+              <li key={`${item}-${index}`}>{item}</li>
+            ))}
+          </ul>
+        </article>
+      </div>
+    </section>
+  );
+}
+
+function EnterpriseBriefSignalBand({
+  pack,
+}: {
+  pack: HomeKnowledgeDesignContractPack;
+}) {
+  const executive = pack.enterprise_brief?.executiveRead;
+  const readiness = pack.enterprise_brief?.aiReadiness ?? [];
+  if (!executive && !readiness.length) return null;
+  const pairs = Math.min(
+    executive?.industryForces.length ?? 0,
+    executive?.tenantReality.length ?? 0,
+  );
+  return (
+    <section className="nkh-brief-signal-band">
+      <div className="nkh-inline-head">
+        <div>
+          <div className="nkh-kicker">Industry force × tenant reality</div>
+          <h2>
+            The difference between generic AI advice and this client’s agenda
+          </h2>
+        </div>
+        <span>Approved pack · rendered deterministically</span>
+      </div>
+      {pairs ? (
+        <div className="nkh-force-reality-grid">
+          {Array.from({ length: Math.min(pairs, 4) }).map((_, index) => (
+            <article key={index}>
+              <span>Industry force</span>
+              <p>{executive?.industryForces[index]}</p>
+              <i />
+              <span>Tenant reality</span>
+              <p>{executive?.tenantReality[index]}</p>
+            </article>
+          ))}
+        </div>
+      ) : null}
+      {readiness.length ? <AiReadinessBars readiness={readiness} /> : null}
+    </section>
+  );
+}
+
+function AiReadinessBars({
+  readiness,
+}: {
+  readiness: NonNullable<
+    HomeKnowledgeDesignContractPack["enterprise_brief"]
+  >["aiReadiness"];
+}) {
+  const data = readiness.slice(0, 6).map((item) => ({
+    name: item.readinessDimension,
+    score: item.scorePct,
+    basis: item.basis ?? "",
+    fill:
+      item.tone === "green"
+        ? HOME_CHART_COLORS.teal
+        : item.tone === "red"
+          ? HOME_CHART_COLORS.red
+          : HOME_CHART_COLORS.amber,
+  }));
+  return (
+    <div className="nkh-ai-readiness-panel">
+      <div>
+        <h3>AI readiness by dimension</h3>
+        <p>
+          Scores are only displayed when the generated pack includes a stated
+          basis; this is a readiness signal, not a production certification.
+        </p>
+      </div>
+      <ResponsiveContainer width="100%" height={230}>
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 8, right: 24, bottom: 6, left: 170 }}
+          barCategoryGap={10}
+        >
+          <CartesianGrid horizontal={false} stroke={HOME_CHART_COLORS.line} />
+          <XAxis type="number" domain={[0, 100]} hide />
+          <YAxis
+            type="category"
+            dataKey="name"
+            width={170}
+            tick={{
+              fill: HOME_CHART_COLORS.ink2,
+              fontSize: 11,
+              fontWeight: 700,
+            }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <ReferenceLine
+            x={70}
+            stroke={HOME_CHART_COLORS.ink3}
+            strokeDasharray="4 4"
+          />
+          <Tooltip
+            content={<HomeChartTooltip valueLabel="Readiness" suffix="%" />}
+          />
+          <Bar dataKey="score" radius={[0, 8, 8, 0]} isAnimationActive={false}>
+            {data.map((entry) => (
+              <Cell key={entry.name} fill={entry.fill} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function StrategicNarrativeChapters({
+  pack,
+}: {
+  pack: HomeKnowledgeDesignContractPack;
+}) {
+  const narratives = pack.enterprise_brief?.strategicNarratives ?? [];
+  const newWays = narratives
+    .filter((item) => item.narrativeType === "new_way_of_operating")
+    .slice(0, 5);
+  const industry = narratives
+    .filter((item) => item.narrativeType === "industry_movement")
+    .slice(0, 3);
+  const theses = narratives
+    .filter((item) => item.narrativeType === "change_thesis")
+    .slice(0, 3);
+
+  return (
+    <section className="nkh-strategic-narratives">
+      <div className="nkh-inline-head">
+        <div>
+          <div className="nkh-kicker">New ways of operating</div>
+          <h2>How the business should run differently</h2>
+        </div>
+        <span>{narratives.length} approved strategic narratives</span>
+      </div>
+      <div className="nkh-operating-cards">
+        {newWays.map((item, index) => (
+          <article key={`${item.title}-${index}`}>
+            <strong>{String(index + 1).padStart(2, "0")}</strong>
+            <div>
+              <h3>{item.title}</h3>
+              <p>{item.executiveNarrative}</p>
+              <dl>
+                {item.currentState ? (
+                  <div>
+                    <dt>Current</dt>
+                    <dd>{item.currentState}</dd>
+                  </div>
+                ) : null}
+                {item.targetStateOrRelevance ? (
+                  <div>
+                    <dt>Shift</dt>
+                    <dd>{item.targetStateOrRelevance}</dd>
+                  </div>
+                ) : null}
+              </dl>
+            </div>
+          </article>
+        ))}
+      </div>
+      <div className="nkh-narrative-columns">
+        <NarrativeMiniList title="Industry movements" items={industry} />
+        <NarrativeMiniList title="Change theses" items={theses} />
+      </div>
+    </section>
+  );
+}
+
+function NarrativeMiniList({
+  items,
+  title,
+}: {
+  items: NonNullable<
+    HomeKnowledgeDesignContractPack["enterprise_brief"]
+  >["strategicNarratives"];
+  title: string;
+}) {
+  return (
+    <article className="nkh-narrative-mini">
+      <h3>{title}</h3>
+      {items.map((item, index) => (
+        <div key={`${item.title}-${index}`}>
+          <strong>{item.title}</strong>
+          <p>
+            {item.recommendedNextAction ||
+              item.evidenceGate ||
+              item.executiveNarrative}
+          </p>
+        </div>
+      ))}
+    </article>
   );
 }
 
@@ -1895,7 +2187,9 @@ function UseCasesView({
             {useCases.map((useCase, index) => (
               <tr key={`${useCase.name}-${index}`}>
                 <td>{asText(useCase.name)}</td>
-                <td>{asText(useCase.fn) || asText(useCase.business_function)}</td>
+                <td>
+                  {asText(useCase.fn) || asText(useCase.business_function)}
+                </td>
                 <td>
                   <span className="nkh-pill">{asText(useCase.stage)}</span>
                 </td>
@@ -2540,6 +2834,7 @@ function HomeChartTooltip({
   active,
   label,
   payload,
+  suffix = "",
   valueLabel = "Value",
 }: {
   active?: boolean;
@@ -2550,6 +2845,7 @@ function HomeChartTooltip({
     value?: string | number;
     payload?: Record<string, unknown>;
   }>;
+  suffix?: string;
   valueLabel?: string;
 }) {
   if (!active || !payload?.length) return null;
@@ -2562,12 +2858,152 @@ function HomeChartTooltip({
       {payload.map((item) => (
         <span key={`${item.name ?? valueLabel}-${item.value ?? ""}`}>
           <i style={{ background: item.color ?? HOME_CHART_COLORS.teal }} />
-          {item.name ?? valueLabel}: <b>{item.value}</b>
+          {item.name ?? valueLabel}:{" "}
+          <b>
+            {item.value}
+            {suffix}
+          </b>
         </span>
       ))}
       {typeof row.share === "number" ? (
         <em>{row.share}% of loaded rows</em>
       ) : null}
+    </div>
+  );
+}
+
+function UseCasePortfolioScatter({
+  useCases,
+}: {
+  useCases: HomeKnowledgeRecord[];
+}) {
+  const data = useCases
+    .map((useCase, index) => ({
+      name: asText(useCase.name) || `Use case ${index + 1}`,
+      x: Number(asText(useCase.readiness_score)) || 0,
+      y: Number(asText(useCase.value_score)) || 0,
+      z: Math.max(80, Number(asText(useCase.total_priority_score)) * 18 || 90),
+      evidence: Number(asText(useCase.evidence_score)) || 0,
+      gate:
+        asText(useCase.evidence_gate) ||
+        asText(useCase.readiness_barrier) ||
+        "Evidence gate required before scale.",
+      rationale:
+        asText(useCase.priority_rationale) ||
+        asText(useCase.client_context_signal) ||
+        asText(useCase.change_strategy),
+    }))
+    .filter((item) => item.x || item.y)
+    .slice(0, 10);
+
+  if (!data.length) {
+    return (
+      <EmptyState
+        title="Use-case portfolio scores not loaded"
+        body="The approved pack has use cases, but not enough scored rows to render the value/readiness matrix."
+      />
+    );
+  }
+
+  return (
+    <div
+      className="nkh-usecase-scatter"
+      aria-label="Value readiness use case portfolio"
+      data-testid="home-knowledge-usecase-scatter-recharts"
+    >
+      <ResponsiveContainer width="100%" height={360}>
+        <ScatterChart margin={{ top: 22, right: 30, bottom: 34, left: 34 }}>
+          <CartesianGrid stroke={HOME_CHART_COLORS.line} />
+          <XAxis
+            type="number"
+            dataKey="x"
+            name="Readiness"
+            domain={[0, 10]}
+            tick={{ fill: HOME_CHART_COLORS.ink3, fontSize: 11 }}
+            label={{
+              value: "Execution readiness",
+              position: "insideBottom",
+              offset: -18,
+              fill: HOME_CHART_COLORS.ink3,
+              fontSize: 11,
+            }}
+          />
+          <YAxis
+            type="number"
+            dataKey="y"
+            name="Value"
+            domain={[0, 10]}
+            tick={{ fill: HOME_CHART_COLORS.ink3, fontSize: 11 }}
+            label={{
+              value: "Strategic value",
+              angle: -90,
+              position: "insideLeft",
+              fill: HOME_CHART_COLORS.ink3,
+              fontSize: 11,
+            }}
+          />
+          <ZAxis type="number" dataKey="z" range={[100, 420]} />
+          <ReferenceLine
+            x={5}
+            stroke={HOME_CHART_COLORS.ink3}
+            strokeDasharray="5 5"
+          />
+          <ReferenceLine
+            y={5}
+            stroke={HOME_CHART_COLORS.ink3}
+            strokeDasharray="5 5"
+          />
+          <Tooltip content={<UseCaseScatterTooltip />} />
+          <Scatter name="Use cases" data={data} isAnimationActive={false}>
+            {data.map((item) => (
+              <Cell
+                key={item.name}
+                fill={
+                  item.evidence >= 7
+                    ? HOME_CHART_COLORS.teal
+                    : item.evidence >= 4
+                      ? HOME_CHART_COLORS.amber
+                      : HOME_CHART_COLORS.red
+                }
+              />
+            ))}
+          </Scatter>
+        </ScatterChart>
+      </ResponsiveContainer>
+      <div className="nkh-scatter-quadrants" aria-hidden="true">
+        <span>Validate later</span>
+        <span>Fund carefully</span>
+        <span>Do not scale yet</span>
+        <span>Best first bets</span>
+      </div>
+      <p>
+        Bubble size is approved priority. Color is evidence strength. This is a
+        decision conversation starter, not a realized-value claim.
+      </p>
+    </div>
+  );
+}
+
+function UseCaseScatterTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload?: Record<string, unknown> }>;
+}) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0]?.payload ?? {};
+  return (
+    <div className="nkh-chart-tooltip is-wide">
+      <strong>{asText(row.name)}</strong>
+      <span>
+        Value: <b>{asText(row.y)}/10</b> · Readiness: <b>{asText(row.x)}/10</b>
+      </span>
+      <span>
+        Evidence strength: <b>{asText(row.evidence)}/10</b>
+      </span>
+      {row.gate ? <em>{asText(row.gate)}</em> : null}
+      {row.rationale ? <em>{asText(row.rationale)}</em> : null}
     </div>
   );
 }
@@ -2596,7 +3032,10 @@ function UseCasePriorityCards({
           className="nkh-usecase-priority"
         >
           <div className="nkh-usecase-rank">
-            {String(asText(useCase.priority_rank) || index + 1).padStart(2, "0")}
+            {String(asText(useCase.priority_rank) || index + 1).padStart(
+              2,
+              "0",
+            )}
           </div>
           <div>
             <span>
@@ -2639,10 +3078,16 @@ function UseCasePriorityRechart({
 }) {
   const data = useCases.slice(0, 5).map((useCase, index) => ({
     name: asText(useCase.name) || `Use case ${index + 1}`,
-    score: Number(asText(useCase.total_priority_score)) || Math.max(1, 5 - index),
-    function: asText(useCase.fn) || asText(useCase.business_function) || "Enterprise",
-    gate: asText(useCase.evidence_gate) || asText(useCase.gate) || "Evidence gate required",
-    value: asText(useCase.value_thesis) || asText(useCase.value) || "not certified",
+    score:
+      Number(asText(useCase.total_priority_score)) || Math.max(1, 5 - index),
+    function:
+      asText(useCase.fn) || asText(useCase.business_function) || "Enterprise",
+    gate:
+      asText(useCase.evidence_gate) ||
+      asText(useCase.gate) ||
+      "Evidence gate required",
+    value:
+      asText(useCase.value_thesis) || asText(useCase.value) || "not certified",
   }));
   if (!data.length) return null;
   return (
@@ -5903,6 +6348,297 @@ const styles = `
 .nkh-source-inventory tr:last-child td {
   border-bottom: 0;
 }
+.nkh-exec-read-v2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, .62fr);
+  gap: 18px;
+  border: 1px solid rgba(13, 42, 81, .12);
+  border-radius: 18px;
+  background: linear-gradient(135deg, #fffdf8 0%, #f2f8f5 100%);
+  padding: 26px;
+}
+.nkh-exec-read-copy {
+  min-width: 0;
+}
+.nkh-exec-read-v2 h2 {
+  max-width: 980px;
+  margin: 8px 0 12px;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: clamp(30px, 3.2vw, 52px);
+  line-height: .98;
+  letter-spacing: 0;
+}
+.nkh-exec-one {
+  max-width: 920px;
+  color: var(--ink-2);
+  font-size: 16px;
+  line-height: 1.55;
+}
+.nkh-archetype-pill {
+  display: inline-flex;
+  margin-top: 14px;
+  border: 1px solid rgba(21, 127, 116, .22);
+  border-radius: 999px;
+  background: rgba(21, 127, 116, .08);
+  color: var(--teal);
+  padding: 7px 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.nkh-exec-confidence-card {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  border: 1px solid rgba(13, 42, 81, .12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .72);
+  padding: 18px;
+}
+.nkh-confidence-ring {
+  display: grid;
+  place-items: center;
+  width: 138px;
+  height: 138px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at center, #fff 0 58%, transparent 59%),
+    conic-gradient(var(--teal) 0 var(--pct), rgba(13, 42, 81, .10) var(--pct) 100%);
+  color: var(--ink);
+}
+.nkh-confidence-ring strong {
+  font-family: var(--serif);
+  font-size: 31px;
+  line-height: 1;
+}
+.nkh-confidence-ring span {
+  max-width: 78px;
+  margin-top: -34px;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .09em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.nkh-exec-confidence-card p,
+.nkh-tier-strip em {
+  color: var(--ink-2);
+  font-size: 12.5px;
+  font-style: normal;
+  line-height: 1.5;
+}
+.nkh-tier-strip {
+  display: grid;
+  gap: 5px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.nkh-tier-strip span {
+  color: var(--teal);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.nkh-tier-strip strong {
+  color: var(--ink);
+  font-size: 14px;
+}
+.nkh-exec-evidence-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.nkh-exec-evidence-grid article {
+  min-width: 0;
+  border: 1px solid rgba(21, 127, 116, .16);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .64);
+  padding: 16px 18px;
+}
+.nkh-exec-evidence-grid article.is-warn {
+  border-color: rgba(169, 109, 22, .24);
+}
+.nkh-exec-evidence-grid span {
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.nkh-exec-evidence-grid ul {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+.nkh-exec-evidence-grid li {
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.nkh-brief-signal-band,
+.nkh-strategic-narratives {
+  display: grid;
+  gap: 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  padding: 22px;
+}
+.nkh-force-reality-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.nkh-force-reality-grid article {
+  min-width: 0;
+  border: 1px solid rgba(13, 42, 81, .10);
+  border-radius: 14px;
+  background: var(--surface-2);
+  padding: 14px;
+}
+.nkh-force-reality-grid span,
+.nkh-ai-readiness-panel h3,
+.nkh-narrative-mini h3 {
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.nkh-force-reality-grid p {
+  margin: 6px 0 0;
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.42;
+}
+.nkh-force-reality-grid i {
+  display: block;
+  height: 1px;
+  margin: 12px 0;
+  background: linear-gradient(90deg, transparent, var(--teal), transparent);
+}
+.nkh-ai-readiness-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, .38fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.nkh-ai-readiness-panel p,
+.nkh-usecase-scatter p {
+  color: var(--ink-3);
+  font-size: 12.5px;
+  line-height: 1.48;
+}
+.nkh-operating-cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+.nkh-operating-cards article {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+  border-top: 3px solid var(--teal);
+  border-radius: 14px;
+  background: var(--surface-2);
+  padding: 15px;
+}
+.nkh-operating-cards article > strong {
+  color: var(--muted);
+  font-family: var(--serif);
+  font-size: 30px;
+  line-height: 1;
+}
+.nkh-operating-cards h3 {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.25;
+}
+.nkh-operating-cards p,
+.nkh-operating-cards dd,
+.nkh-narrative-mini p {
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+.nkh-operating-cards dl {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+}
+.nkh-operating-cards dt {
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.nkh-narrative-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.nkh-narrative-mini {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .72);
+  padding: 16px;
+}
+.nkh-narrative-mini div + div {
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+.nkh-narrative-mini strong {
+  display: block;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.3;
+}
+.nkh-usecase-scatter {
+  position: relative;
+  min-width: 0;
+}
+.nkh-scatter-quadrants {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 14px;
+  margin-top: -16px;
+  color: var(--ink-3);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.nkh-scatter-quadrants span:nth-child(even) {
+  text-align: right;
+}
+.nkh-chart-tooltip.is-wide {
+  max-width: 320px;
+}
+.nkh-chart-tooltip.is-wide em {
+  color: var(--ink-3);
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1.35;
+}
 @media (max-width: 1100px) {
   .nexus-home-contract { grid-template-columns: 1fr; }
   .nkh-rail { position: static; height: auto; }
@@ -5910,6 +6646,12 @@ const styles = `
   .nkh-hero,
   .nkh-proof-hero,
   .nkh-brief-grid,
+  .nkh-exec-read-v2,
+  .nkh-exec-evidence-grid,
+  .nkh-force-reality-grid,
+  .nkh-ai-readiness-panel,
+  .nkh-operating-cards,
+  .nkh-narrative-columns,
   .nkh-split-section,
   .nkh-support-grid,
   .nkh-observed-split,
