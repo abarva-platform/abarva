@@ -2508,7 +2508,7 @@ function PhaseBody({
             </p>
           </article>
         </div>
-        {!isHistoricalPhase ? (
+        {!isHistoricalPhase && phase.phase >= 3 ? (
           <DecisionOptionsActionPanel
             moveId={move.id}
             moveName={move.name}
@@ -2614,7 +2614,7 @@ function PhaseBody({
           </div>
         ) : null}
       </section>
-      {!isHistoricalPhase ? (
+      {phase.phase === 0 && !isHistoricalPhase ? (
         <section className="mxw-gate">
           <header>
             <div>
@@ -2684,58 +2684,173 @@ function PhaseBody({
           )}
         </section>
       ) : null}
-      <section className="mxw-readiness">
-        <h2>Next: {readinessPack.nextPhaseLabel} readiness</h2>
-        <p>
-          {readinessPack.isFullyReady
-            ? "No required evidence gaps are open for the next phase. It can start with what's already on file."
-            : "Bring these before the next phase starts, so it never opens cold."}
-        </p>
-        {readinessPack.openNeeds.length > 0 ? (
-          <div className="mxw-readiness-needs">
-            {readinessPack.openNeeds.map((need) => (
-              <article
-                className={`mxw-readiness-need ${need.priority}`}
-                key={need.evidenceSlot}
-              >
-                <header>
-                  <strong>{need.evidenceSlot}</strong>
-                  <span>{need.priority}</span>
-                </header>
-                <p>{need.whyItMatters}</p>
-                <div className="mxw-rn-meta">
-                  <span>Format: {need.acceptedFormats.join(", ")}</span>
-                  <span>Template: {need.exampleTemplate}</span>
+      {phase.phase >= 1 ? (
+        <div
+          className="mxw-approval-disclosures"
+          aria-label={`${phase.code} approval supporting detail`}
+        >
+          {!isHistoricalPhase ? (
+            <details>
+              <summary>
+                <span>Gate criteria</span>
+                <strong>
+                  {
+                    hardGateCriteria.filter((criterion) => criterion.completed)
+                      .length
+                  }{" "}
+                  of {hardGateCriteria.length || move.gateCriteria.length} hard
+                  met
+                </strong>
+              </summary>
+              {move.gateCriteria.length > 0 ? (
+                <>
+                  <div className="mxw-gate-group compact">
+                    <span className="mxw-gate-group-label">
+                      Blocking hard gate
+                    </span>
+                    {(hardGateCriteria.length
+                      ? hardGateCriteria
+                      : move.gateCriteria
+                    ).map((criterion) => (
+                      <span
+                        className={criterion.completed ? "met" : ""}
+                        key={criterion.id}
+                      >
+                        {criterion.completed ? "✓" : "○"} {criterion.label}
+                      </span>
+                    ))}
+                  </div>
+                  {softGateCriteria.length > 0 ? (
+                    <div className="mxw-gate-group compact">
+                      <span className="mxw-gate-group-label">
+                        Carry-forward soft criteria
+                      </span>
+                      {softGateCriteria.map((criterion) => (
+                        <span
+                          className={
+                            criterion.completed ? "met" : "soft-open"
+                          }
+                          key={criterion.id}
+                        >
+                          {criterion.completed ? "✓" : "○"} {criterion.label}
+                          {!criterion.completed ? (
+                            <em>Can carry as a caveat</em>
+                          ) : null}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <p>No gate criteria are configured for this transition.</p>
+              )}
+            </details>
+          ) : null}
+          <details>
+            <summary>
+              <span>Next: {readinessPack.nextPhaseLabel} readiness</span>
+              <strong>
+                {readinessPack.openNeeds.length === 0
+                  ? "No required gaps"
+                  : `${readinessPack.openNeeds.length} prep item${
+                      readinessPack.openNeeds.length === 1 ? "" : "s"
+                    }`}
+              </strong>
+            </summary>
+            <p>
+              {readinessPack.isFullyReady
+                ? "No required evidence gaps are open for the next phase. It can start with what's already on file."
+                : "Bring these before the next phase starts, so it never opens cold."}
+            </p>
+            {readinessPack.openNeeds.length > 0 ? (
+              <div className="mxw-readiness-needs compact">
+                {readinessPack.openNeeds.map((need) => (
+                  <article
+                    className={`mxw-readiness-need ${need.priority}`}
+                    key={need.evidenceSlot}
+                  >
+                    <header>
+                      <strong>{need.evidenceSlot}</strong>
+                      <span>{need.priority}</span>
+                    </header>
+                    <p>{need.whyItMatters}</p>
+                    <div className="mxw-rn-meta">
+                      <span>Format: {need.acceptedFormats.join(", ")}</span>
+                      <span>Template: {need.exampleTemplate}</span>
+                    </div>
+                    <em>{need.nextAction}</em>
+                  </article>
+                ))}
+              </div>
+            ) : null}
+            {readinessPack.carriesForwardContent.length > 0 ? (
+              <div className="mxw-readiness-carries">
+                <h3>Carries forward from this phase&apos;s generated work</h3>
+                {readinessPack.carriesForwardContent.map((signal) => (
+                  <article className="mxw-readiness-carry" key={signal.key}>
+                    <strong>{signal.heading}</strong>
+                    <p>{signal.snippet}</p>
+                  </article>
+                ))}
+              </div>
+            ) : null}
+            {readinessPack.suggestedSessions.length > 0 ? (
+              <div className="mxw-readiness-sessions">
+                <h3>
+                  Suggested working sessions for {readinessPack.nextPhaseLabel}
+                </h3>
+                <div>
+                  {readinessPack.suggestedSessions.map((session) => (
+                    <span key={session}>{session}</span>
+                  ))}
                 </div>
-                <em>{need.nextAction}</em>
-              </article>
-            ))}
-          </div>
-        ) : null}
-        {readinessPack.carriesForwardContent.length > 0 ? (
-          <div className="mxw-readiness-carries">
-            <h3>Carries forward from this phase&apos;s generated work</h3>
-            {readinessPack.carriesForwardContent.map((signal) => (
-              <article className="mxw-readiness-carry" key={signal.key}>
-                <strong>{signal.heading}</strong>
-                <p>{signal.snippet}</p>
-              </article>
-            ))}
-          </div>
-        ) : null}
-        {readinessPack.suggestedSessions.length > 0 ? (
-          <div className="mxw-readiness-sessions">
-            <h3>
-              Suggested working sessions for {readinessPack.nextPhaseLabel}
-            </h3>
-            <div>
-              {readinessPack.suggestedSessions.map((session) => (
-                <span key={session}>{session}</span>
+              </div>
+            ) : null}
+          </details>
+        </div>
+      ) : (
+        <section className="mxw-readiness">
+          <h2>Next: {readinessPack.nextPhaseLabel} readiness</h2>
+          <p>
+            {readinessPack.isFullyReady
+              ? "No required evidence gaps are open for the next phase. It can start with what's already on file."
+              : "Bring these before the next phase starts, so it never opens cold."}
+          </p>
+          {readinessPack.openNeeds.length > 0 ? (
+            <div className="mxw-readiness-needs">
+              {readinessPack.openNeeds.map((need) => (
+                <article
+                  className={`mxw-readiness-need ${need.priority}`}
+                  key={need.evidenceSlot}
+                >
+                  <header>
+                    <strong>{need.evidenceSlot}</strong>
+                    <span>{need.priority}</span>
+                  </header>
+                  <p>{need.whyItMatters}</p>
+                  <div className="mxw-rn-meta">
+                    <span>Format: {need.acceptedFormats.join(", ")}</span>
+                    <span>Template: {need.exampleTemplate}</span>
+                  </div>
+                  <em>{need.nextAction}</em>
+                </article>
               ))}
             </div>
-          </div>
-        ) : null}
-      </section>
+          ) : null}
+          {readinessPack.suggestedSessions.length > 0 ? (
+            <div className="mxw-readiness-sessions">
+              <h3>
+                Suggested working sessions for {readinessPack.nextPhaseLabel}
+              </h3>
+              <div>
+                {readinessPack.suggestedSessions.map((session) => (
+                  <span key={session}>{session}</span>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </section>
+      )}
     </>
   );
 }
@@ -3829,7 +3944,7 @@ function MovesStandaloneStyles() {
 .mxw-contextbar span{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--blue);font-weight:900}
 .mxw-contextbar strong{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34vw}
 .mxw-contextbar em{font-style:normal;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}
-.mxw-surface{display:grid;grid-template-columns:264px minmax(0,1fr);min-height:calc(100% - 44px)}
+.mxw-surface{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:calc(100% - 44px)}
 .mxw-side{border-right:1px solid var(--line);background:#faf9f7;padding:20px 16px 28px;position:sticky;top:44px;height:calc(100vh - 108px);overflow-y:auto;display:flex;flex-direction:column}
 .mxw-move{padding:0 8px 15px;border-bottom:1px solid var(--line);margin-bottom:14px}
 .mxw-back{font-size:12px;color:var(--muted);display:inline-flex;margin-bottom:12px}
@@ -3862,7 +3977,7 @@ function MovesStandaloneStyles() {
 .mxw-lib-link span{width:22px;height:22px;border-radius:6px;background:var(--card);border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
 .mxw-foot{margin-top:auto;padding:14px 8px 0;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint);line-height:1.6}
 .mxw-foot b{color:var(--muted);font-weight:600}
-.mxw-shell{width:100%;max-width:none;margin:0;padding:26px clamp(32px,4vw,56px) 60px}
+.mxw-shell{width:100%;max-width:none;margin:0;padding:24px clamp(24px,2.6vw,44px) 60px}
 .mxw-crumb{font-size:12px;color:var(--muted);margin-bottom:14px}
 .mxw-crumb a,.mxw-crumb button{color:var(--muted);background:none;border:0;font:inherit;cursor:pointer}
 .mxw-crumb a:hover,.mxw-crumb button:hover{color:var(--ink)}
@@ -4078,6 +4193,17 @@ function MovesStandaloneStyles() {
 .mxw-gate-table .met,.mxw-gate-table .pending{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:900;white-space:nowrap}
 .mxw-gate-table .met{border:1px solid rgba(29,143,104,.35);background:var(--green-tint);color:var(--green)}
 .mxw-gate-table .pending{border:1px solid var(--line-2);background:var(--soft);color:var(--muted)}
+.mxw-approval-disclosures{display:grid;gap:9px;margin:14px 0 0}
+.mxw-approval-disclosures details{border:1px solid var(--line);border-radius:12px;background:var(--soft);overflow:hidden}
+.mxw-approval-disclosures summary{display:flex;align-items:center;justify-content:space-between;gap:14px;list-style:none;cursor:pointer;padding:11px 13px}
+.mxw-approval-disclosures summary::-webkit-details-marker{display:none}
+.mxw-approval-disclosures summary span{font-size:12.5px;color:var(--ink);font-weight:850}
+.mxw-approval-disclosures summary strong{font-size:11.5px;color:var(--muted);font-weight:850;white-space:nowrap}
+.mxw-approval-disclosures details[open] summary{border-bottom:1px solid var(--line);background:#fff}
+.mxw-approval-disclosures details>p{font-size:12.8px;color:var(--ink-2);line-height:1.45;margin:12px 13px}
+.mxw-gate-group.compact{margin:12px 13px}
+.mxw-readiness-needs.compact{margin:12px 13px}
+.mxw-readiness-needs.compact .mxw-readiness-need{background:#fff}
 .mxw-kdd{margin:15px 0;border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden}
 .mxw-kdd summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:160px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;background:var(--soft)}
 .mxw-kdd summary::-webkit-details-marker{display:none}
