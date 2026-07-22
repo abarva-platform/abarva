@@ -20,6 +20,7 @@ import {
   ZAxis,
 } from "recharts";
 import { AppShell } from "@/components/shell/AppShell";
+import { TowerCommandCenterContract } from "@/components/tower/TowerCommandCenterContract";
 import { MetricProvenance } from "@/components/tower/MetricProvenance";
 import { ExecutiveActionQueuePanel } from "@/components/tower/ExecutiveActionQueuePanel";
 import {
@@ -13613,7 +13614,7 @@ export function TowerIndexPage({
                 closeHref={closeDetailHref}
               />
             ) : towerMartView ? (
-              <TowerMartCommandCenter model={towerMartView} />
+              <TowerCommandCenterContract model={towerMartView} />
             ) : cxoView ? (
               <CxoGovernedCommandCenter
                 model={cxoView}
