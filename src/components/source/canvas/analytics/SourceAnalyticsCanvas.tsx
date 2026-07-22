@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  useEffect,
   useMemo,
   useState,
   type CSSProperties,
@@ -75,6 +76,8 @@ interface SourceAnalyticsCanvasProps {
   avaLauncher?: AvaLauncherView;
   /** Latest "accept as authoritative" record per artifact (SOURCE-SHELL-004), plain array — a server->client prop must be JSON-serializable, so this is built into a Map only once it's in the client component. */
   latestArtifactAcceptances?: readonly ArtifactAcceptanceRecord[];
+  /** Initial workspace selected by the route, e.g. from ?workspace=approvals. */
+  initialWorkspace?: SourceShellWorkspace;
 }
 
 const MAIN_STYLE: CSSProperties = {
@@ -186,10 +189,18 @@ export function SourceAnalyticsCanvas({
   approvalLedger = [],
   guidebook = null,
   latestArtifactAcceptances = [],
+  initialWorkspace,
 }: SourceAnalyticsCanvasProps) {
   const router = useRouter();
-  const [workspace, setWorkspace] = useState<SourceShellWorkspace>("steps");
+  const resolvedInitialWorkspace = initialWorkspace ?? "steps";
+  const [workspace, setWorkspace] = useState<SourceShellWorkspace>(
+    resolvedInitialWorkspace,
+  );
   const [avaOpen, setAvaOpen] = useState(false);
+
+  useEffect(() => {
+    setWorkspace(resolvedInitialWorkspace);
+  }, [event.id, resolvedInitialWorkspace, viewStage]);
 
   const latestArtifactAcceptancesById = useMemo(
     () => new Map(latestArtifactAcceptances.map((rec) => [rec.artifactId, rec])),
@@ -425,23 +436,27 @@ function SourceShellRail({
       >
         <RailLabel>Workspace</RailLabel>
         <WorkspaceButton
+          workspaceKey="files"
           label="Files & deliverables"
           active={workspace === "files"}
           onClick={() => onWorkspaceChange("files")}
         />
         <WorkspaceButton
+          workspaceKey="intelligence"
           label="Intelligence Explorer"
           badge={workspace === "intelligence" ? "open" : "hidden"}
           active={workspace === "intelligence"}
           onClick={() => onWorkspaceChange("intelligence")}
         />
         <WorkspaceButton
+          workspaceKey="approvals"
           label="Approvals"
           active={workspace === "approvals"}
           onClick={() => onWorkspaceChange("approvals")}
         />
         {view.guidebook.available ? (
           <WorkspaceButton
+            workspaceKey="guidebook"
             label="Guidebook"
             active={workspace === "guidebook"}
             onClick={() => onWorkspaceChange("guidebook")}
@@ -2342,11 +2357,13 @@ function WorkspaceTitle({
 }
 
 function WorkspaceButton({
+  workspaceKey,
   label,
   badge,
   active,
   onClick,
 }: {
+  workspaceKey: SourceShellWorkspace;
   label: string;
   badge?: string;
   active: boolean;
@@ -2355,6 +2372,8 @@ function WorkspaceButton({
   return (
     <button
       type="button"
+      aria-label={label}
+      data-testid={`source-shell-workspace-${workspaceKey}`}
       onClick={onClick}
       style={{
         width: "100%",
