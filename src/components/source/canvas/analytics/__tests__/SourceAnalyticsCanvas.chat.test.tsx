@@ -184,6 +184,23 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
   });
 
+  it("opens directly to a route-selected workspace", () => {
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Lakeshore"
+        initialWorkspace="approvals"
+      />,
+    );
+
+    expect(screen.getByTestId("source-shell-v2-approvals")).toBeInTheDocument();
+    expect(screen.getByTestId("source-shell-workspace-approvals")).toHaveAttribute(
+      "aria-label",
+      "Approvals",
+    );
+  });
+
   it("labels file-ledger generated drafts and client finals from artifact state", () => {
     render(
       <SourceAnalyticsCanvas

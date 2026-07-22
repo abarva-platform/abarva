@@ -31,7 +31,10 @@ import {
   buildStrategyStageView,
   deriveStrategyIntakeFacts,
 } from "@/lib/source/facts/view/strategy-stage-builder";
-import { mergeSourceShellArtifactsWithArtifactStateBodies } from "@/lib/source/source-event-shell-v2";
+import {
+  mergeSourceShellArtifactsWithArtifactStateBodies,
+  type SourceShellWorkspace,
+} from "@/lib/source/source-event-shell-v2";
 import { getLatestArtifactAcceptancesByArtifactIds } from "@/lib/source/artifact-acceptances";
 import { getSourceStageGuidebook } from "@/lib/source/stage-guidebooks/repository";
 import { requireTenancy } from "@/lib/auth/tenancy";
@@ -77,6 +80,8 @@ export default async function SourceEventDetailPage({
     (SOURCE_STAGE_ORDER.includes(event.currentStageKey)
       ? event.currentStageKey
       : "strategy");
+  const workspaceParam = typeof sp.workspace === "string" ? sp.workspace : null;
+  const initialWorkspace = normalizeSourceShellWorkspace(workspaceParam);
 
   // ── Source event shell v2 · archived legacy event-canvas fallback ──────────
   // Every tenant uses the redesigned analytics canvas. The retired event shell is
@@ -418,8 +423,24 @@ export default async function SourceEventDetailPage({
         approvalLedger={analyticsApprovalLedger}
         guidebook={analyticsGuidebook}
         latestArtifactAcceptances={analyticsLatestAcceptances}
+        initialWorkspace={initialWorkspace}
       />
     );
+  }
+}
+
+function normalizeSourceShellWorkspace(
+  value: string | null,
+): SourceShellWorkspace | undefined {
+  switch (value) {
+    case "steps":
+    case "files":
+    case "intelligence":
+    case "approvals":
+    case "guidebook":
+      return value;
+    default:
+      return undefined;
   }
 }
 
