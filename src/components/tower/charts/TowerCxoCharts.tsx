@@ -248,8 +248,13 @@ export function ValueBridgeChart({
         ) : null}
       </div>
 
-      <div style={{ height: 300, maxWidth: 594 }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div style={{ height: 300, maxWidth: 594, minWidth: 1 }}>
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          minWidth={1}
+          minHeight={1}
+        >
           <BarChart
             data={data}
             margin={{ top: 34, right: 6, left: 6, bottom: 8 }}
@@ -426,10 +431,14 @@ export function ValueProvenBarChart({
 
   return (
     <div>
-      <ChartEyebrow>Finance validation vs. promised — top programs</ChartEyebrow>
+      <ChartEyebrow>
+        Finance validation vs. promised — top programs
+      </ChartEyebrow>
       <ResponsiveContainer
         width="100%"
         height={Math.max(220, chartRows.length * 48)}
+        minWidth={1}
+        minHeight={1}
       >
         <BarChart
           data={chartRows}
@@ -713,6 +722,8 @@ export function BudgetRunChangeChart({
       <ResponsiveContainer
         width="100%"
         height={Math.max(240, chartRows.length * 46)}
+        minWidth={1}
+        minHeight={1}
       >
         <BarChart
           data={chartRows}
@@ -997,23 +1008,26 @@ export function BenchmarkRadarChart({
   if (cards.length === 0) return null;
 
   const maxBudget = Math.max(...cards.map((c) => c.totalBudget), 1);
-  const radarData = ["Budget", "Run share", "Value validated", "Change share"].map(
-    (axis) => {
-      const point: Record<string, number | string> = { axis };
-      for (const card of cards) {
-        const value =
-          axis === "Budget"
-            ? Math.round((card.totalBudget / maxBudget) * 100)
-            : axis === "Run share"
-              ? card.runPct
-              : axis === "Value validated"
-                ? card.valueProvenPct
-                : card.changePct;
-        point[card.label] = value;
-      }
-      return point;
-    },
-  );
+  const radarData = [
+    "Budget",
+    "Run share",
+    "Value validated",
+    "Change share",
+  ].map((axis) => {
+    const point: Record<string, number | string> = { axis };
+    for (const card of cards) {
+      const value =
+        axis === "Budget"
+          ? Math.round((card.totalBudget / maxBudget) * 100)
+          : axis === "Run share"
+            ? card.runPct
+            : axis === "Value validated"
+              ? card.valueProvenPct
+              : card.changePct;
+      point[card.label] = value;
+    }
+    return point;
+  });
 
   return (
     <div>
@@ -1031,7 +1045,7 @@ export function BenchmarkRadarChart({
           apples to apples.
         </span>
       </div>
-      <ResponsiveContainer width="100%" height={340}>
+      <ResponsiveContainer width="100%" height={340} minWidth={1} minHeight={1}>
         <RadarChart data={radarData} outerRadius="72%">
           <PolarGrid stroke={CT.RULE} />
           <PolarAngleAxis
@@ -1111,7 +1125,9 @@ export function BenchmarkPeer2x2Chart({
 
   return (
     <div>
-      <ChartEyebrow>Peer benchmark · value proof versus change spend</ChartEyebrow>
+      <ChartEyebrow>
+        Peer benchmark · value proof versus change spend
+      </ChartEyebrow>
       <div
         style={{
           display: "grid",
@@ -1304,7 +1320,7 @@ export function BenchmarkComparisonChart({
       <ChartEyebrow>
         Every measure, one shape — Lakeshore against the peer set
       </ChartEyebrow>
-      <ResponsiveContainer width="100%" height={280}>
+      <ResponsiveContainer width="100%" height={280} minWidth={1} minHeight={1}>
         <BarChart
           data={chartRows}
           margin={{ top: 8, right: 16, left: 4, bottom: 4 }}
