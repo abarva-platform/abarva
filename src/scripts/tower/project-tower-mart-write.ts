@@ -53,6 +53,40 @@ async function upsert(
   return written;
 }
 
+/**
+ * Derive cio_tower.source_registry rows from the distinct source_keys the facts
+ * carry. Facts with a null source_key (tower_* telemetry) contribute nothing.
+ * source_file mirrors the key (the V3 CSV filename); source_system comes from
+ * the fact's attributes so lineage stays accurate. trust_tier is synthetic_demo
+ * for the V3 template pack.
+ */
+function buildSourceRegistryRows(
+  tenantKey: string,
+  facts: readonly CioTowerFactRow[],
+): Array<Record<string, unknown>> {
+  const bySourceKey = new Map<string, { system: string }>();
+  for (const fact of facts) {
+    if (!fact.source_key) continue;
+    if (bySourceKey.has(fact.source_key)) continue;
+    let system = "V3 template";
+    try {
+      const attrs = JSON.parse(fact.attributes) as { source_system?: string };
+      if (attrs.source_system) system = attrs.source_system;
+    } catch {
+      // keep default
+    }
+    bySourceKey.set(fact.source_key, { system });
+  }
+  return [...bySourceKey.entries()].map(([source_key, { system }]) => ({
+    source_key,
+    tenant_key: tenantKey,
+    source_system: system,
+    source_file: source_key,
+    source_kind: "file",
+    trust_tier: "synthetic_demo",
+  }));
+}
+
 export async function runInTransactionWithTracking(
   client: Client,
   identity: CioTowerTenantIdentity,
@@ -114,7 +148,9 @@ export async function runInTransactionWithTracking(
       source_run_id: runId,
     }));
 
-    // Replace this tenant's mart + facts (idempotent full refresh).
+    // Replace this tenant's mart + facts (idempotent full refresh). Order
+    // matters for FKs: delete facts before source_registry (facts.source_key
+    // REFERENCES source_registry.source_key).
     for (const table of [
       "cio_tower.mart_required_field_gaps",
       "cio_tower.mart_evidence_lineage",
@@ -124,11 +160,21 @@ export async function runInTransactionWithTracking(
       "cio_tower.mart_value_funnel",
       "cio_tower.mart_command_center",
       "cio_tower.facts",
+      "cio_tower.source_registry",
     ]) {
       await client.query(`DELETE FROM ${table} WHERE tenant_key = $1`, [
         tenantKey,
       ]);
     }
+
+    // Populate source_registry BEFORE facts: facts.source_key REFERENCES it, so
+    // the parent rows must exist first. Derived from the distinct source_keys
+    // the facts carry (V3 CSV filenames); tower_* telemetry facts have a null
+    // source_key and need no registry row.
+    const sourceRows = buildSourceRegistryRows(tenantKey, facts);
+    await upsert(client, "cio_tower.source_registry", sourceRows, [
+      "source_key",
+    ]);
 
     await upsert(
       client,
