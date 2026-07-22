@@ -5919,6 +5919,24 @@ const towerDetailIntroStyle: CSSProperties = {
   maxWidth: 1040,
 };
 
+/**
+ * The single next action for a program lane. Prefers the first open required
+ * gate because that is a concrete, assignable ask ("Load promised value or mark
+ * as no-value spend"); falls back to the lane rationale. Never invents an
+ * action — if the mart carries neither, it says so, and that absence is itself
+ * the signal that this program has no defined next step.
+ */
+function towerLaneNextAction(row: TowerMartProgramLane): string {
+  const gates = Array.isArray(row.requiredGates) ? row.requiredGates : [];
+  for (const gate of gates) {
+    if (!gate || typeof gate !== "object") continue;
+    const ask = (gate as { ask?: unknown }).ask;
+    if (typeof ask === "string" && ask.trim()) return ask.trim();
+  }
+  if (row.decisionRationale?.trim()) return row.decisionRationale.trim();
+  return "No next action recorded in the mart for this program.";
+}
+
 function TowerMartDecisionLanesDesign({
   rows,
 }: {
@@ -6038,12 +6056,90 @@ function TowerMartDecisionLanesDesign({
                           {formatMoneyGap(row.approvedFundingUsd)}
                         </span>
                       </div>
+                      {/* Owner + money. An absent owner is stated as a gap,
+                          never blanked, because "who owns this" is itself a
+                          decision blocker. */}
                       <div
                         style={{ color: T.GRAY_DK, fontSize: 11, marginTop: 5 }}
                       >
                         {row.ownerRole ?? "owner gap"} ·{" "}
                         {formatMoneyGap(row.promisedValueUsd)} promised ·{" "}
                         {formatMoneyGap(row.financeValidatedValueUsd)} validated
+                      </div>
+                      {/* Proof status + usage signal. These are the two things a
+                          CXO needs before acting on a lane, and both must read
+                          honestly: if usage telemetry was never ingested we say
+                          so rather than implying zero adoption. */}
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 6,
+                          marginTop: 7,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontFamily: T.MONO,
+                            fontSize: 9.5,
+                            letterSpacing: ".06em",
+                            textTransform: "uppercase",
+                            padding: "3px 6px",
+                            borderRadius: 999,
+                            border: `1px solid ${T.RULE}`,
+                            color:
+                              row.towerClaimAllowed === "partial"
+                                ? T.GREEN
+                                : T.GRAY_DK,
+                            background:
+                              row.towerClaimAllowed === "partial"
+                                ? T.GREEN_BG
+                                : "transparent",
+                          }}
+                        >
+                          {row.towerClaimAllowed === "partial"
+                            ? "partly validated"
+                            : (row.valueClaimStatus ?? "no value case")}
+                        </span>
+                        <span
+                          style={{
+                            fontFamily: T.MONO,
+                            fontSize: 9.5,
+                            letterSpacing: ".06em",
+                            textTransform: "uppercase",
+                            padding: "3px 6px",
+                            borderRadius: 999,
+                            border: `1px solid ${T.RULE}`,
+                            color:
+                              row.usageActual !== null ? T.INK_2 : T.GRAY_DK,
+                          }}
+                        >
+                          {row.usageActual !== null
+                            ? `${row.usageMetric ?? "usage"} ${formatWholeNumber(row.usageActual)}${
+                                row.adoptionRatePct !== null
+                                  ? ` · ${Math.round(row.adoptionRatePct)}% adopted`
+                                  : ""
+                              }`
+                            : "usage not loaded"}
+                        </span>
+                      </div>
+                      {/* Next action — the single thing to do about this
+                          program. Prefer the first open gate (concrete ask);
+                          fall back to the lane rationale. */}
+                      <div
+                        style={{
+                          color: T.INK_2,
+                          fontSize: 11,
+                          lineHeight: 1.35,
+                          marginTop: 7,
+                          paddingTop: 6,
+                          borderTop: `1px dashed ${T.RULE}`,
+                        }}
+                      >
+                        <span style={{ color: tone.fg, fontWeight: 800 }}>
+                          Next:{" "}
+                        </span>
+                        {towerLaneNextAction(row)}
                       </div>
                     </div>
                   ))
@@ -7661,6 +7757,117 @@ function TowerMartActionsDesign({
   );
 }
 
+/**
+ * Answers the four questions an executive actually has about evidence, before
+ * the audit table: what exists, what is missing, who must provide it, and what
+ * stays blocked until it arrives. Every figure is counted from the mart
+ * (evidenceLineage + requiredFieldGaps) — when a section has nothing, it says
+ * so plainly rather than rendering an empty flourish.
+ */
+function TowerMartEvidencePosture({
+  rows,
+  gaps,
+}: {
+  rows: ReadonlyArray<TowerMartEvidenceLineage>;
+  gaps: ReadonlyArray<TowerMartRequiredFieldGap>;
+}) {
+  const blocking = gaps.filter((gap) => gap.blocking);
+  const sourceFiles = new Set(
+    rows.map((row) => row.sourceFile).filter((file): file is string => !!file),
+  );
+  // Who owes the evidence — grouped by the owner the mart names. Gaps with no
+  // named owner are their own finding: unassigned evidence never arrives.
+  const byOwner = new Map<string, number>();
+  for (const gap of gaps) {
+    const owner = gap.ownerHint?.trim() || "Unassigned";
+    byOwner.set(owner, (byOwner.get(owner) ?? 0) + 1);
+  }
+  const owners = [...byOwner.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const panels: Array<{ label: string; headline: string; body: string }> = [
+    {
+      label: "What evidence exists",
+      headline: `${formatWholeNumber(rows.length)} traced`,
+      body: sourceFiles.size
+        ? `Every displayed figure carries a lineage row back to ${formatWholeNumber(sourceFiles.size)} source file${sourceFiles.size === 1 ? "" : "s"}.`
+        : "Lineage rows are present but no source file is named on them yet.",
+    },
+    {
+      label: "What is missing",
+      headline: `${formatWholeNumber(gaps.length)} gap${gaps.length === 1 ? "" : "s"}`,
+      body: gaps.length
+        ? `${formatWholeNumber(blocking.length)} blocking, ${formatWholeNumber(gaps.length - blocking.length)} advisory. Missing fields are reported, never substituted.`
+        : "No required field is currently missing for the loaded records.",
+    },
+    {
+      label: "Who must provide it",
+      headline: owners.length ? owners[0][0] : "—",
+      body: owners.length
+        ? owners
+            .map(([owner, count]) => `${owner} (${formatWholeNumber(count)})`)
+            .join(" · ")
+        : "No outstanding evidence requests.",
+    },
+    {
+      label: "What stays blocked",
+      headline: blocking.length
+        ? `${formatWholeNumber(blocking.length)} blocked`
+        : "Nothing blocked",
+      body: blocking.length
+        ? (blocking[0]?.remediationAction ??
+          "Blocking gaps must clear before these values can be claimed.")
+        : "No blocking gap is holding a decision today; claim gates still apply.",
+    },
+  ];
+  return (
+    <div
+      data-testid="tower-evidence-posture"
+      style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+        gap: 12,
+        margin: "0 0 16px",
+      }}
+    >
+      {panels.map((panel) => (
+        <section
+          key={panel.label}
+          style={{
+            border: `1px solid ${T.RULE}`,
+            borderRadius: 12,
+            background: T.CREAM_2,
+            padding: "12px 13px",
+          }}
+        >
+          <div style={{ ...towerTinyLabelStyle, color: T.GRAY_DK }}>
+            {panel.label}
+          </div>
+          <div
+            style={{
+              fontFamily: T.SERIF,
+              fontSize: 21,
+              color: T.INK,
+              margin: "6px 0 5px",
+              lineHeight: 1.15,
+            }}
+          >
+            {panel.headline}
+          </div>
+          <p
+            style={{
+              margin: 0,
+              color: T.INK_2,
+              fontSize: 12,
+              lineHeight: 1.4,
+            }}
+          >
+            {panel.body}
+          </p>
+        </section>
+      ))}
+    </div>
+  );
+}
+
 function TowerMartEvidenceDesign({
   rows,
   gaps,
@@ -7691,6 +7898,12 @@ function TowerMartEvidenceDesign({
         Every number in Tower traces to a mart fact, a formula posture, and a
         source row. Tower displays and narrates; it does not invent values.
       </div>
+      {/* Evidence posture, before the raw trace table. A CXO should not have to
+          read a lineage table to learn what is missing, who owes it, and what
+          it blocks — those four answers come first; the table is the audit
+          backing. All counts come from the mart (evidenceLineage +
+          requiredFieldGaps); nothing is inferred. */}
+      <TowerMartEvidencePosture rows={rows} gaps={gaps} />
       <section
         style={{
           ...towerBoardCardStyle,
