@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed and live-proven`
 
 ## Plain-English Summary
 
@@ -39,23 +39,24 @@ This is a read-only clarification. It does not repair old rows, promote any cand
 - Pass: `npx eslint src/lib/programs/learning-writeback`.
 - Pass: `npm run release:check`.
 - Pass: `git diff --check`.
-- Pending: GitHub PR checks.
-- Pending: ACA runtime invariant proof.
-- Pending: Signed-in FS Demo browser proof on `/admin/context-layer/approval-queue`.
+- Pass: GitHub PR checks for PR #5378, including Typecheck + reasoning-layer tests, Chrome Firefox Safari mobile smoke, release record, production readiness, and hygiene gate.
+- Pass: ACA main deploy run `29960589740` for merge SHA `dd7292166012c3b0a2e74c226af830e8f6f8dddc`.
+- Pass: Final ACA runtime invariant proof after later main deploy run `29961001346` in `proof/117-moves-learning-legacy-agent-blocker-final-runtime`.
+- Pass: Signed-in FS Demo browser proof on `/admin/context-layer/approval-queue` in `proof/118-moves-learning-legacy-agent-blocker-final-browser`.
 
 ## Rollout Plan
 
-Open a PR, merge through the protected PR-only path, deploy via the repo-owned ACA main workflow, verify the ACA runtime invariant, then prove the updated blocker text in a signed-in FS Demo admin session.
+Completed. PR #5378 was squash-merged to `main`, deployed through the repo-owned ACA main workflow, and verified in a signed-in FS Demo admin session. A later main deploy for PR #5379 also completed successfully; final runtime proof confirms the live revision includes the Moves blocker copy.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: Required because this changes runtime Admin copy.
 - Shared runtime mutators: None outside the repo-owned deploy workflow.
-- Approved image digest: Pending deploy.
-- ACA runtime invariant: Pending deploy.
+- Approved image digest: `sha256:6b0275246190e7c6fae7bda9f907ea5af0aed579a630502b347b8d5627a6d5ae` on final active revision.
+- ACA runtime invariant: Passed. Template image and 100%-traffic active revision image match the approved digest.
 - Worker image invariant: No worker job change.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Yes.
+- Live signed-in proof required: Passed.
 
 ## Rollback Plan
 
@@ -63,14 +64,15 @@ Revert the PR and redeploy through the ACA main workflow. No data rollback is re
 
 ## Audit Evidence
 
-Pending:
-
-- PR URL
-- Merge SHA
-- ACA deploy run
-- ACA revision and digest
-- Runtime invariant proof
-- Signed-in browser proof
+- PR URL: https://github.com/abarva-platform/abarva/pull/5378
+- Merge SHA: `dd7292166012c3b0a2e74c226af830e8f6f8dddc`
+- Moves deploy run: `29960589740`
+- Final active main deploy run: `29961001346`
+- Final active ACA revision: `ca-abarva-web-lab-eastus--m52785c4c`
+- Final active ACA digest: `sha256:6b0275246190e7c6fae7bda9f907ea5af0aed579a630502b347b8d5627a6d5ae`
+- Runtime invariant proof: `proof/117-moves-learning-legacy-agent-blocker-final-runtime`
+- Signed-in browser proof: `proof/118-moves-learning-legacy-agent-blocker-final-browser`
+- Browser proof details: approval queue returned HTTP 200; legacy/non-canonical copy, canonical id hint, and specific legacy values `moves, intelligence` were visible; material failed requests were 0.
 
 ## Known Gaps
 
