@@ -38,8 +38,9 @@ Moves now tells the user when Approve & Build generated a phase draft but the ph
   - Bridges a generated Move artifact into the governed deliverables source of truth.
   - Preserves tenant checks, program checks, authority checks, and source lineage.
   - Aligns P1 client approval with the existing P1 gate authority behavior: when no sponsor participant exists yet, the current governed user is recorded as sponsor before approval. Later phases still require approver/sponsor authority.
+  - Uses the shared Moves program-access policy (`canApproveGates`) so tenant-pinned Moves admins and approved automation personas can perform the same governed client-approval action they can perform on phase gates.
   - Writes only Move-scoped authoritative deliverable state.
-- Tests updated for gate-blocker feedback, sponsor-review route gating, and generated-draft client approval detection.
+- Tests updated for gate-blocker feedback, sponsor-review route gating, generated-draft client approval detection, and policy-authorized client approval.
 
 ## QA / Validation
 
@@ -55,6 +56,7 @@ Candidate validation:
 - Follow-up live finding after PR #5282: saved FS sandbox agent could reach P1 gate approval but received `403 approver authority or higher required` on the new client-approval bridge. This follow-up aligns the P1 bridge with the existing P1 phase-gate authority initialization path.
 - Follow-up live finding after PR #5283: authority initialization was present but ran after the early authorization check. The route now verifies Move-scoped artifact and deliverable phase first, initializes P1 sponsor authority when needed, then enforces the normal approver/sponsor check.
 - Follow-up live finding after PR #5284: P1 generated charter cards are labeled as charter deliverables in the Move File Cabinet, but the underlying orchestrator persistence stores Moves outputs as the generic `move_board_pack` artifact container. The client-approval bridge now resolves the registered deliverable key from artifact metadata / renderable document fields first, then applies a narrow title fallback for `move_board_pack` outputs.
+- Follow-up live finding after PR #5285: the saved FS sandbox automation persona has the existing Moves program-access policy needed to approve gates, but the new client-approval route still depended only on participant-row `approval_authority`. The route now accepts the same `canApproveGates` policy used by phase-gate approval while preserving participant-row approval as an alternate path.
 
 ## Rollout Plan
 
