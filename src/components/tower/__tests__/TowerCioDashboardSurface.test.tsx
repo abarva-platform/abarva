@@ -3,7 +3,7 @@
  */
 
 import "@testing-library/jest-dom";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import {
   TOWER_CIO_ENTERPRISE_STARTER_QUESTIONS,
@@ -958,7 +958,7 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
     expect(screen.queryByText("cio_tower")).not.toBeInTheDocument();
   });
 
-  it("renders the Tower command mart ahead of legacy or bridge views", () => {
+  it("renders the Tower command center contract ahead of legacy or bridge views", () => {
     const candidateSeed = TOWER_MART_VIEW.aiPortfolio[1]!;
     const candidateFirstTowerMart: TowerMartCommandViewModel = {
       ...TOWER_MART_VIEW,
@@ -983,134 +983,56 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       />,
     );
 
-    const commandMart = screen.getByTestId("tower-command-mart");
-    expect(commandMart).toHaveStyle({ margin: "0px", overflow: "hidden" });
-    expect(commandMart.getAttribute("style")).not.toContain("-32px");
-    expect(
-      screen.getByLabelText("Investment control tower navigation"),
-    ).toHaveStyle({
-      minWidth: "0",
-    });
-    // The step nav is a segmented control, not three static tiles: it exposes
-    // tab semantics and marks exactly one segment selected, so it reads and
-    // behaves as navigation.
-    const stepper = screen.getByTestId("tower-command-stepper");
-    expect(stepper).toHaveStyle({
-      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    });
-    expect(stepper).toHaveAttribute("role", "tablist");
-    const steps = screen.getAllByRole("tab", {
-      name: /Posture|Signals|Decide/,
-    });
-    expect(steps).toHaveLength(3);
-    expect(
-      steps.filter((step) => step.getAttribute("aria-selected") === "true"),
-    ).toHaveLength(1);
-    expect(screen.getByTestId("tower-budget-posture-card")).toHaveStyle({
-      minHeight: "0",
-    });
+    const commandMart = screen.getByTestId("tower-command-center-contract");
+    expect(commandMart).toBeInTheDocument();
     expect(screen.getByTestId("agent-dock-collapsed-chip")).toBeInTheDocument();
-    expect(
-      screen.getAllByText("AI Value Realization Control Tower").length,
-    ).toBeGreaterThan(0);
     expect(screen.getByText("Active portfolio context")).toBeInTheDocument();
+    expect(
+      screen.getByText("Funded ahead of proof. Value is the constraint."),
+    ).toBeInTheDocument();
     expect(screen.getByText("$650.0M")).toBeInTheDocument();
-    expect(screen.getByText("$53.7M")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Decision Lanes/ }));
-    expect(
-      screen.getAllByText("M365 Copilot Productivity").length,
-    ).toBeGreaterThan(0);
-    // The board is the default chapter; each lane opens as its own chapter so
-    // programs beyond the board preview stay reachable rather than stranded.
-    expect(screen.getByTestId("tower-lanes-chapter-intro")).toHaveTextContent(
-      "Missing fields become blockers",
-    );
-    fireEvent.click(screen.getByRole("tab", { name: /^Fund/ }));
-    expect(screen.getByTestId("tower-lane-chapter-fund")).toBeInTheDocument();
-    expect(screen.getByTestId("tower-lanes-chapter-intro")).toHaveTextContent(
-      "protect or scale",
-    );
-    fireEvent.click(screen.getByRole("tab", { name: /All lanes/ }));
-    fireEvent.click(screen.getByRole("button", { name: /AI Portfolio/ }));
-    expect(screen.getByTestId("tower-ai-portfolio-story")).toHaveTextContent(
-      "This is not an AI shopping list",
-    );
-    expect(screen.getByTestId("tower-ai-portfolio-matrix")).toHaveTextContent(
-      "Scale with proof",
-    );
-    // Position is the default chapter: quadrant plus the list of plotted items.
-    expect(screen.getByTestId("tower-ai-plotted-list")).toBeInTheDocument();
-    expect(
-      screen.getAllByText("M365 Copilot Productivity").length,
-    ).toBeGreaterThan(0);
-    expect(screen.getByText("Fix proof")).toBeInTheDocument();
-    expect(screen.getByText(/\$2\.1M validated/)).toBeInTheDocument();
-    // The AI spend lens now lives in its own chapter rather than one long page.
-    fireEvent.click(screen.getByRole("tab", { name: /Funded & embedded/ }));
-    expect(screen.getByTestId("tower-ai-funded-list")).toBeInTheDocument();
-    expect(
-      screen.getByText(/Candidate ideas are not approved funding/),
-    ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", { name: /Candidate pipeline/ }));
-    expect(screen.getByTestId("tower-ai-candidate-list")).toBeInTheDocument();
-    expect(
-      screen.getAllByText("Hold until gates clear").length,
-    ).toBeGreaterThan(0);
-    expect(
-      screen.getAllByText(/Member Service AI Assist/).length,
-    ).toBeGreaterThan(0);
-    expect(screen.queryByText("not_approved")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", { name: /Active tools/ }));
-    expect(screen.getByTestId("tower-active-ai-tools")).toHaveTextContent(
-      "Tool spend, usage, value proof, and claim gates",
-    );
-    expect(screen.getByTestId("tower-active-ai-tools-table")).toHaveTextContent(
-      "Microsoft 365 Copilot",
-    );
-    expect(screen.getByTestId("tower-active-ai-tools-table")).toHaveTextContent(
-      "GitHub Copilot & Codex",
-    );
-    fireEvent.doubleClick(
-      screen.getByTestId("tower-ai-tool-row-reference:m365-copilot"),
-    );
-    expect(screen.getByTestId("tower-ai-tool-trace-drawer")).toHaveTextContent(
-      "Microsoft 365 Copilot",
-    );
-    expect(screen.getByTestId("tower-ai-tool-trace-drawer")).toHaveTextContent(
-      "Finance: $2.1M partial validation of $14.0M promised",
-    );
     fireEvent.click(
-      screen.getByRole("button", { name: /Recommended Actions/ }),
+      within(commandMart).getByRole("button", { name: /Decision Lanes/ }),
+    );
+    expect(screen.getByText("Portfolio Decision Lanes")).toBeInTheDocument();
+    expect(screen.getAllByText("Program table").length).toBeGreaterThan(0);
+    fireEvent.click(
+      within(commandMart).getByRole("button", { name: /AI Portfolio/ }),
     );
     expect(
-      screen.getByText("Fix Copilot adoption before expansion"),
+      screen.getByText("Which AI is real, embedded, or just an idea"),
     ).toBeInTheDocument();
+    expect(screen.getByText("Value vs. readiness")).toBeInTheDocument();
+    expect(screen.getByText("AI spend lens")).toBeInTheDocument();
+    expect(screen.getByText("$53.7M")).toBeInTheDocument();
+    fireEvent.click(
+      within(commandMart).getByRole("button", { name: /Recommended Actions/ }),
+    );
+    expect(screen.getByText("What must happen next")).toBeInTheDocument();
     expect(screen.queryByText("$2.6B")).not.toBeInTheDocument();
-    // Evidence opens on posture, not on the raw lineage table.
-    fireEvent.click(screen.getByRole("button", { name: "Evidence" }));
+    fireEvent.click(
+      within(commandMart).getByRole("button", { name: "Evidence" }),
+    );
     expect(
-      screen.getByTestId("tower-evidence-chapter-intro"),
-    ).toHaveTextContent("which decisions stay blocked");
-    expect(screen.getByTestId("tower-evidence-posture")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("tab", { name: /Full trace/ }));
-    expect(
-      screen.getByTestId("tower-evidence-chapter-intro"),
-    ).toHaveTextContent("full audit backing");
+      screen.getByText("Why the dashboard is allowed to say this"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("What evidence exists?")).toBeInTheDocument();
+    expect(screen.getByText("What is missing?")).toBeInTheDocument();
   });
 
-  it("restores the reference tool-spend drill-in for FS Demo and Airline mart tenants", () => {
+  it("uses the mart-backed AI portfolio instead of the archived reference-pack drill-in", () => {
     const tenants = [
       {
         tenantName: "FS Demo",
         tenantKey: "first-capital",
         clientId: "client-first-capital",
-        expectedTool: "IT Incident Root-Cause Copilot",
+        archivedReferenceTool: "IT Incident Root-Cause Copilot",
       },
       {
         tenantName: "Airline Demo",
         tenantKey: "skyharbor-air",
         clientId: "client-skyharbor",
-        expectedTool: "Customer Recovery Agent Assist",
+        archivedReferenceTool: "Customer Recovery Agent Assist",
       },
     ];
 
@@ -1138,13 +1060,13 @@ describe("TowerIndexPage · CIO dashboard surface", () => {
       );
 
       fireEvent.click(screen.getByRole("button", { name: /AI Portfolio/ }));
-      fireEvent.click(screen.getByRole("tab", { name: /Active tools/ }));
       expect(
-        screen.getByTestId("tower-active-ai-tools-table"),
-      ).toHaveTextContent(tenant.expectedTool);
+        screen.getByText("Which AI is real, embedded, or just an idea"),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Value vs. readiness")).toBeInTheDocument();
       expect(
-        screen.getByTestId("tower-active-ai-tools-table"),
-      ).toHaveTextContent("Microsoft 365 Copilot");
+        screen.queryByText(tenant.archivedReferenceTool),
+      ).not.toBeInTheDocument();
       unmount();
     });
   });
