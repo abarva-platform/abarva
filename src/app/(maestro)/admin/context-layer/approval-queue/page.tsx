@@ -1,6 +1,7 @@
 import { getActiveClientRow } from "@/lib/active-client";
 import { getTenantPendingChunks } from "@/lib/context-ingestion/tenant-context-read-model";
 import {
+  buildMovesLearningPromotionPreview,
   buildMovesLearningReviewPacket,
   getMovesLearningReviewQueue,
   type MovesLearningReviewCandidate,
@@ -124,6 +125,8 @@ function MovesLearningQueueSection({
         <div style={{ display: "grid", gap: 10 }}>
           {queue.candidates.map((candidate) => {
             const reviewPacket = buildMovesLearningReviewPacket(candidate);
+            const promotionPreview =
+              buildMovesLearningPromotionPreview(candidate);
             return (
               <article
                 key={candidate.id}
@@ -293,6 +296,144 @@ function MovesLearningQueueSection({
                     {candidate.confidenceRationale}
                   </p>
                 ) : null}
+
+                <div
+                  style={{
+                    border: "1px solid #e3decf",
+                    borderRadius: 8,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      alignItems: "center",
+                      background:
+                        promotionPreview.status === "investigate"
+                          ? "#fff7e8"
+                          : promotionPreview.status === "preview_ready"
+                            ? "#ecfdf5"
+                            : "#fffdf8",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      padding: 12,
+                    }}
+                  >
+                    <div>
+                      <strong>Promotion readiness preview</strong>
+                      <p
+                        style={{
+                          color: "#514c43",
+                          fontSize: 13,
+                          lineHeight: 1.45,
+                          margin: "4px 0 0",
+                        }}
+                      >
+                        {promotionPreview.summary}
+                      </p>
+                    </div>
+                    <span
+                      style={{
+                        border: "1px solid #d8d2c4",
+                        borderRadius: 999,
+                        color:
+                          promotionPreview.status === "preview_ready"
+                            ? "#047857"
+                            : promotionPreview.status === "investigate"
+                              ? "#8a4b00"
+                              : "#514c43",
+                        padding: "5px 9px",
+                        whiteSpace: "nowrap",
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {promotionPreview.statusLabel}
+                    </span>
+                  </div>
+                  <table
+                    style={{
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      fontSize: 13,
+                    }}
+                  >
+                    <thead>
+                      <tr>
+                        {["Check", "Status", "Meaning"].map((head) => (
+                          <th
+                            key={head}
+                            style={{
+                              borderTop: "1px solid #e3decf",
+                              borderBottom: "1px solid #e3decf",
+                              color: "#6b665c",
+                              fontSize: 11,
+                              letterSpacing: 0,
+                              padding: 9,
+                              textAlign: "left",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            {head}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {promotionPreview.checks.map((check) => (
+                        <tr key={check.label}>
+                          <td
+                            style={{
+                              borderBottom: "1px solid #eee7d8",
+                              fontWeight: 700,
+                              padding: 9,
+                              width: "22%",
+                            }}
+                          >
+                            {check.label}
+                          </td>
+                          <td
+                            style={{
+                              borderBottom: "1px solid #eee7d8",
+                              color:
+                                check.status === "pass"
+                                  ? "#047857"
+                                  : check.status === "investigate"
+                                    ? "#8a4b00"
+                                    : "#7c2d12",
+                              fontWeight: 700,
+                              padding: 9,
+                              textTransform: "capitalize",
+                              width: "14%",
+                            }}
+                          >
+                            {check.status}
+                          </td>
+                          <td
+                            style={{
+                              borderBottom: "1px solid #eee7d8",
+                              color: "#514c43",
+                              padding: 9,
+                            }}
+                          >
+                            {check.detail}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p
+                    style={{
+                      color: "#435166",
+                      fontSize: 13,
+                      lineHeight: 1.45,
+                      margin: 0,
+                      padding: 12,
+                    }}
+                  >
+                    {promotionPreview.nextAction}
+                  </p>
+                </div>
               </article>
             );
           })}

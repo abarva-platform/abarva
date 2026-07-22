@@ -55,6 +55,25 @@ export interface MovesLearningReviewPacket {
   readonly safeNextStep: string;
 }
 
+export type MovesLearningPromotionPreviewStatus =
+  | "blocked"
+  | "investigate"
+  | "preview_ready";
+
+export interface MovesLearningPromotionPreviewCheck {
+  readonly label: string;
+  readonly status: "pass" | "blocked" | "pending" | "investigate";
+  readonly detail: string;
+}
+
+export interface MovesLearningPromotionPreview {
+  readonly status: MovesLearningPromotionPreviewStatus;
+  readonly statusLabel: string;
+  readonly summary: string;
+  readonly checks: readonly MovesLearningPromotionPreviewCheck[];
+  readonly nextAction: string;
+}
+
 interface MovesLearningReviewRow {
   readonly id?: string | null;
   readonly tenant_key?: string | null;
@@ -242,6 +261,95 @@ export function buildMovesLearningReviewPacket(
     blockers,
     safeNextStep:
       "Run the read-only context/corpus promotion preview. Do not mark agent-ready without steward sign-off and retrieval proof.",
+  };
+}
+
+export function buildMovesLearningPromotionPreview(
+  candidate: MovesLearningReviewCandidate,
+): MovesLearningPromotionPreview {
+  const hasLineage =
+    isKnownLearningSourceBasis(candidate.sourceBasis) &&
+    Boolean(candidate.sourceId) &&
+    candidate.evidenceRefs.length > 0;
+  const policyPassed = candidate.policyValidationStatus === "pass";
+  const retrievalReady = candidate.retrievability === "search_indexed";
+  const agentReady = candidate.readinessStatus === "agent_ready";
+  const activeLooking = agentReady || retrievalReady;
+
+  const checks: MovesLearningPromotionPreviewCheck[] = [
+    {
+      label: "Source lineage",
+      status: hasLineage ? "pass" : "blocked",
+      detail: hasLineage
+        ? "Move, source artifact, and evidence references are present."
+        : "Move source, source artifact, or evidence references are missing.",
+    },
+    {
+      label: "Context policy",
+      status: policyPassed ? "pass" : "blocked",
+      detail: policyPassed
+        ? "Context/corpus policy status is pass."
+        : `Policy status is ${candidate.policyValidationStatus}; steward review is required.`,
+    },
+    {
+      label: "Azure retrieval index",
+      status: retrievalReady ? "pass" : "blocked",
+      detail: retrievalReady
+        ? "Candidate reports search-indexed retrievability."
+        : `Retrievability is ${candidate.retrievability}; it is not citeable by agents yet.`,
+    },
+    {
+      label: "Citation rendering proof",
+      status: "pending",
+      detail:
+        "No cite-render proof is recorded on the Moves learning candidate yet.",
+    },
+    {
+      label: "Steward decision",
+      status: agentReady ? "pass" : "blocked",
+      detail: agentReady
+        ? "Candidate is marked agent-ready; verify the approval audit trail before use."
+        : `Readiness is ${candidate.readinessStatus}; active context use is blocked.`,
+    },
+  ];
+
+  if (activeLooking) {
+    return {
+      status: "investigate",
+      statusLabel: "Investigate",
+      summary:
+        "This candidate already has an active-use signal. Verify explicit steward approval, retrieval proof, and citation proof before any agent consumes it.",
+      checks: checks.map((check) =>
+        check.label === "Azure retrieval index" || check.label === "Steward decision"
+          ? { ...check, status: "investigate" }
+          : check,
+      ),
+      nextAction:
+        "Audit the promotion trail. If approval, indexing, and cite-render proof are missing, remove active-use signals before release.",
+    };
+  }
+
+  const blocked = checks.some((check) => check.status === "blocked");
+  if (blocked) {
+    return {
+      status: "blocked",
+      statusLabel: "Not ready",
+      summary:
+        "This candidate is safely persisted for stewardship, but it is not ready for active enterprise context or model retrieval.",
+      checks,
+      nextAction:
+        "Complete source review, policy validation, indexing, cite-render verification, and steward approval as separate controlled steps.",
+    };
+  }
+
+  return {
+    status: "preview_ready",
+    statusLabel: "Preview ready",
+    summary:
+      "All deterministic checks are present for a read-only promotion preview. Do not mark agent-ready until a steward signs off.",
+    checks,
+    nextAction:
+      "Run a read-only promotion preview and capture retrieval/citation proof before any active-context update.",
   };
 }
 
