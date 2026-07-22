@@ -496,6 +496,8 @@ export function HomeKnowledgeDesignContractSurface({
     setSelectedRowIndex(null);
   }
 
+  const showDemoPill = !/\bdemo\b/i.test(pack.tenant_name);
+
   return (
     <div className="nexus-home-contract" data-source={selectedSource ?? ""}>
       <aside className="nkh-rail" aria-label="Knowledge navigation">
@@ -621,8 +623,13 @@ export function HomeKnowledgeDesignContractSurface({
               ) : null}
             </div>
             <h1>
-              <span>{pack.tenant_name}</span>{" "}
-              <span className="nkh-demo-pill">Demo</span>
+              <span>{pack.tenant_name}</span>
+              {showDemoPill ? (
+                <>
+                  {" "}
+                  <span className="nkh-demo-pill">Demo</span>
+                </>
+              ) : null}
             </h1>
             <p>{enterpriseHeroSummary(pack)}</p>
           </div>
@@ -6365,8 +6372,8 @@ const styles = `
   margin: 8px 0 12px;
   color: var(--ink);
   font-family: var(--serif);
-  font-size: clamp(28px, 2.55vw, 42px);
-  line-height: 1.06;
+  font-size: clamp(24px, 1.95vw, 32px);
+  line-height: 1.14;
   letter-spacing: 0;
 }
 .nkh-exec-one {
