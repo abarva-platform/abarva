@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { EventApprovalCard } from "../EventApprovalCard";
 
 const pushMock = jest.fn();
@@ -78,6 +78,20 @@ describe("EventApprovalCard", () => {
     ).not.toBeNull();
   });
 
+  it("puts the approval brief first and moves supporting detail behind disclosures", () => {
+    render(<EventApprovalCard {...baseProps} />);
+
+    expect(screen.getByTestId("source-approval-brief")).not.toBeNull();
+    expect(screen.getByText("What you are approving")).not.toBeNull();
+    expect(screen.getByText("Next required step")).not.toBeNull();
+    expect(
+      screen.getByTestId("source-approval-evidence-disclosure"),
+    ).not.toBeNull();
+    expect(screen.getByText("Evidence reviewed · 5 facts")).not.toBeNull();
+    expect(screen.getByText("Intake audit trail · 1 turn")).not.toBeNull();
+    expect(screen.getByText("Routing and audit details")).not.toBeNull();
+  });
+
   it("enables actions only after rationale and human confirmation", () => {
     render(<EventApprovalCard {...baseProps} />);
 
@@ -145,8 +159,7 @@ describe("EventApprovalCard", () => {
     fireEvent.click(screen.getByTestId("source-approval-confirmation"));
     fireEvent.click(screen.getByTestId("source-approval-approve"));
 
-    await Promise.resolve();
-    await Promise.resolve();
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
     const [, requestInit] = (global.fetch as jest.Mock).mock.calls[0];
     const body = JSON.parse(requestInit.body as string);
@@ -169,8 +182,7 @@ describe("EventApprovalCard", () => {
     fireEvent.click(screen.getByTestId("source-approval-confirmation"));
     fireEvent.click(screen.getByTestId("source-approval-approve"));
 
-    await Promise.resolve();
-    await Promise.resolve();
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
 
     const [, requestInit] = (global.fetch as jest.Mock).mock.calls[0];
     const body = JSON.parse(requestInit.body as string);

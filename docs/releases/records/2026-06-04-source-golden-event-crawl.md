@@ -57,6 +57,16 @@ Additional validation:
 
 Merge the PR to `main`. The change becomes active as the updated QA contract in the repository. No data migration or runtime rollout is required.
 
+## Deployment Authority
+
+- Repo-owned deploy workflow: Not applicable for the original test-contract-only crawl record.
+- Shared runtime mutators: None.
+- Approved image digest: Not applicable.
+- ACA runtime invariant: Not applicable for the original test-contract-only crawl record.
+- Worker image invariant: Not applicable.
+- Feature/env flag update path: None.
+- Live signed-in proof required: Yes for any later runtime Source approval UX release; not required for this original crawl-record-only contract update.
+
 ## Rollback Plan
 
 Revert the PR to restore the prior Golden Event skip annotations and selector behavior. No database or infrastructure rollback is required.
@@ -72,3 +82,28 @@ Revert the PR to restore the prior Golden Event skip annotations and selector be
 Production still lacks the following Golden Event proof surfaces before Stages 3 through 11 can be unskipped: RFP and Pricing AI Draft labels, Responses and BAFO vendor visibility, Evaluation gate-advance control, Executive Decision Evidence section and full decision brief proof, Selection award-letter download, Transition APX-CDP-2026 dependency reference, and Value Ledger baseline/projected/realized columns with decision linkbacks.
 
 The default full Golden Event run also needs a separate Stage 1 follow-up: either restore the expected strategy artifact editor slots in prod or update the Stage 1 mutating test to the current DB-backed document workflow. That is outside this Stage 3 through Stage 11 incremental crawl PR.
+
+## 2026-07-22 Golden Event Extension Addendum
+
+### Scope
+
+The SRC-004 Apex Retail AMS golden-event spec now adds explicit coverage for the four Source shell features shipped after the original June crawl:
+
+- `SOURCE-SHELL-003`: stage-keyed approvals ledger records Strategy, Scope, and RFP gate approvals through the real approval API and expects an 11-row approvals workspace.
+- `SOURCE-SHELL-004`: artifact acceptance is exercised through the Files workspace and remains separate from the stage approval ledger.
+- `SOURCE-SHELL-005`: Responses stage asserts the real vendor-response coverage UI, including per-vendor lever coverage, instead of the old Scope sample fallback.
+- `SOURCE-SHELL-006/007`: future-stage shell previews assert stage-matched content or honest placeholders rather than silent Scope fallback content.
+
+### QA / Validation
+
+- `npx eslint tests/e2e/source/golden-event-apex-ams.spec.ts` — passed for the extended spec.
+- `SOURCE_AUTH_REFRESH=1 npx playwright test tests/e2e/source/golden-event-apex-ams.spec.ts --grep "SOURCE-SHELL" --workers=1 --timeout=120000` — blocked locally before governed crawl completion because the developer machine cannot resolve the private Azure Postgres lab hostname used by the Source test-reset and acknowledgment paths: `getaddrinfo ENOTFOUND pg-abarva-context-lab-001.postgres.database.azure.com`.
+- `az postgres flexible-server show --name pg-abarva-context-lab-001 --resource-group rg-abarva-database-lab-eastus2 --query "{publicNetworkAccess:network.publicNetworkAccess,privateDnsZoneArmResourceId:network.privateDnsZoneArmResourceId,fullyQualifiedDomainName:fullyQualifiedDomainName}" -o json` — confirmed `publicNetworkAccess` is `Disabled` and the server is bound to the private DNS zone `privatelink.postgres.database.azure.com`.
+
+### Current Status
+
+The new golden-event assertions are committed as the next test contract, but they are not claimed green from this laptop. A real governed crawl must run from an environment with private Azure Postgres reachability, or after deploying this branch through an approved runtime that can reach the private data plane.
+
+### UX Note
+
+The P1 approval workflow also needs a focused UX simplification pass. Recommendations are captured in `docs/codex-handoff/SOURCE_P1_APPROVAL_UX_RECOMMENDATIONS_2026-07-22.md`; that note intentionally does not change product UI in this test-only branch.

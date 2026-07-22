@@ -93,6 +93,16 @@ export function EventApprovalCard({
     currentUserId && createdBy.userId && currentUserId === createdBy.userId,
   );
   const ageLabel = useMemo(() => formatAge(createdAt), [createdAt]);
+  const briefFacts = capturedFacts.slice(0, 5);
+  const blockerLabel = !currentUserCanApprove
+    ? "You do not have approval rights for this event."
+    : !reasonReady
+      ? `Add an audit rationale of at least ${SOURCE_APPROVAL_REASON_MIN_LENGTH} characters.`
+      : !gateReady
+        ? generateMemoOnApprove
+          ? "Confirm all three strategy-gate checks."
+          : "Confirm the accountable human decision."
+        : "Ready to approve.";
 
   async function submitAction(action: ApprovalAction) {
     if (!actionReady) return;
@@ -212,17 +222,56 @@ export function EventApprovalCard({
 
       <section style={GRID_STYLE}>
         <div style={LEFT_COL_STYLE}>
-          <IntakeFactsReview facts={capturedFacts} />
-          <IntakeChatTrail turns={intakeChatTurns} />
+          <section data-testid="source-approval-brief" style={BRIEF_CARD_STYLE}>
+            <div style={SECTION_HEADER_STYLE}>
+              <div>
+                <div style={EYEBROW_STYLE}>Approval brief</div>
+                <h2 style={SECTION_TITLE_STYLE}>What you are approving</h2>
+              </div>
+              <span style={READY_CHIP_STYLE}>{actionReady ? "Ready" : "Needs input"}</span>
+            </div>
+            <div style={FACT_GRID_STYLE}>
+              {briefFacts.map((fact) => (
+                <article key={fact.id} style={FACT_TILE_STYLE}>
+                  <div style={FACT_LABEL_STYLE}>{fact.label}</div>
+                  <div style={FACT_VALUE_STYLE}>{fact.value}</div>
+                </article>
+              ))}
+            </div>
+            <div style={actionReady ? READY_STRIP_STYLE : BLOCKER_STRIP_STYLE}>
+              <strong>Next required step</strong>
+              <span>{blockerLabel}</span>
+            </div>
+          </section>
+
+          <details data-testid="source-approval-evidence-disclosure" style={DISCLOSURE_STYLE}>
+            <summary style={DISCLOSURE_SUMMARY_STYLE}>
+              Evidence reviewed · {capturedFacts.length} facts
+            </summary>
+            <div style={DISCLOSURE_BODY_STYLE}>
+              <IntakeFactsReview facts={capturedFacts} />
+            </div>
+          </details>
+
+          <details data-testid="source-approval-audit-disclosure" style={DISCLOSURE_STYLE}>
+            <summary style={DISCLOSURE_SUMMARY_STYLE}>
+              Intake audit trail · {intakeChatTurns.length} turn{intakeChatTurns.length === 1 ? "" : "s"}
+            </summary>
+            <div style={DISCLOSURE_BODY_STYLE}>
+              <IntakeChatTrail turns={intakeChatTurns} />
+            </div>
+          </details>
         </div>
 
         <aside style={RIGHT_PANEL_STYLE}>
-          <ApprovalRoutingPanel
-            sponsor={sponsor}
-            coApprover={coApprover}
-            lifecycleState={lifecycleState}
-            currentUserCanApprove={currentUserCanApprove}
-          />
+          <section style={ACTION_PANEL_HEADER_STYLE}>
+            <div style={EYEBROW_STYLE}>Decision</div>
+            <h2 style={ACTION_TITLE_STYLE}>Approve or send back</h2>
+            <p style={ACTION_COPY_STYLE}>
+              Complete only the controls needed for this step. Supporting
+              evidence stays available on the left.
+            </p>
+          </section>
 
           {isSelfApproval && pilotMode ? (
             <div style={SELF_NOTICE_STYLE}>
@@ -356,21 +405,32 @@ export function EventApprovalCard({
           {error ? <div style={ERROR_STYLE}>{error}</div> : null}
           {notice ? <div style={NOTICE_STYLE}>{notice}</div> : null}
 
-          <div style={NEXT_STYLE}>
-            <strong>What happens next</strong>
-            <span>
-              {generateMemoOnApprove
-                ? "Approve: the strategy gate is cleared here — the event advances to Scope and the memo drafts."
-                : "Approve: event unlocks at Stage 1 Strategy."}
-            </span>
-            <span>Co-approve: the event stays on this page until routed.</span>
-            <span>
-              Request changes: the intake reopens with the current facts.
-            </span>
-            <span>
-              Reject: event closes and the audit log keeps the record.
-            </span>
-          </div>
+          <details style={PANEL_DISCLOSURE_STYLE}>
+            <summary style={DISCLOSURE_SUMMARY_STYLE}>Routing and audit details</summary>
+            <div style={PANEL_DISCLOSURE_BODY_STYLE}>
+              <ApprovalRoutingPanel
+                sponsor={sponsor}
+                coApprover={coApprover}
+                lifecycleState={lifecycleState}
+                currentUserCanApprove={currentUserCanApprove}
+              />
+              <div style={NEXT_STYLE}>
+                <strong>What happens next</strong>
+                <span>
+                  {generateMemoOnApprove
+                    ? "Approve: the strategy gate is cleared here — the event advances to Scope and the memo drafts."
+                    : "Approve: event unlocks at Stage 1 Strategy."}
+                </span>
+                <span>Co-approve: the event stays on this page until routed.</span>
+                <span>
+                  Request changes: the intake reopens with the current facts.
+                </span>
+                <span>
+                  Reject: event closes and the audit log keeps the record.
+                </span>
+              </div>
+            </div>
+          </details>
         </aside>
       </section>
     </main>
@@ -495,6 +555,97 @@ const LEFT_COL_STYLE: CSSProperties = {
   gap: 16,
 };
 
+const BRIEF_CARD_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 16,
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 8,
+  background: SHELL.CARD_WHITE,
+  padding: 18,
+  boxShadow: "0 12px 34px rgba(15,23,42,0.05)",
+};
+
+const SECTION_HEADER_STYLE: CSSProperties = {
+  display: "flex",
+  alignItems: "flex-start",
+  justifyContent: "space-between",
+  gap: 16,
+};
+
+const SECTION_TITLE_STYLE: CSSProperties = {
+  margin: "6px 0 0",
+  fontFamily: SHELL.SERIF,
+  fontSize: 28,
+  fontWeight: 400,
+  lineHeight: 1.05,
+  letterSpacing: 0,
+  color: SHELL.INK,
+};
+
+const READY_CHIP_STYLE: CSSProperties = {
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 999,
+  background: SHELL.PAPER,
+  color: SHELL.INK_SOFT,
+  fontFamily: SHELL.MONO,
+  fontSize: 10,
+  fontWeight: 700,
+  padding: "5px 9px",
+  whiteSpace: "nowrap",
+};
+
+const FACT_GRID_STYLE: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+  gap: 10,
+};
+
+const FACT_TILE_STYLE: CSSProperties = {
+  minHeight: 82,
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 8,
+  background: SHELL.PAPER,
+  padding: 12,
+};
+
+const FACT_LABEL_STYLE: CSSProperties = {
+  fontFamily: SHELL.MONO,
+  fontSize: 10,
+  fontWeight: 700,
+  color: SHELL.INK_MUTED,
+};
+
+const FACT_VALUE_STYLE: CSSProperties = {
+  marginTop: 7,
+  fontFamily: SHELL.SANS,
+  fontSize: 14,
+  fontWeight: 700,
+  lineHeight: 1.35,
+  color: SHELL.INK,
+};
+
+const BLOCKER_STRIP_STYLE: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 12,
+  border: `1px solid ${SHELL.PEACH_LINE}`,
+  borderRadius: 8,
+  background: SHELL.PEACH_BG,
+  color: SHELL.PEACH_TEXT,
+  padding: "11px 13px",
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  lineHeight: 1.35,
+};
+
+const READY_STRIP_STYLE: CSSProperties = {
+  ...BLOCKER_STRIP_STYLE,
+  border: `1px solid ${SHELL.MINT_LINE}`,
+  background: SHELL.MINT_BG,
+  color: SHELL.MINT_TEXT,
+};
+
 const RIGHT_PANEL_STYLE: CSSProperties = {
   position: "sticky",
   top: 20,
@@ -505,6 +656,29 @@ const RIGHT_PANEL_STYLE: CSSProperties = {
   background: SHELL.CARD_WHITE,
   padding: 18,
   boxShadow: "0 18px 50px rgba(15,23,42,0.08)",
+};
+
+const ACTION_PANEL_HEADER_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 6,
+};
+
+const ACTION_TITLE_STYLE: CSSProperties = {
+  margin: 0,
+  fontFamily: SHELL.SERIF,
+  fontSize: 30,
+  fontWeight: 400,
+  lineHeight: 1.05,
+  letterSpacing: 0,
+  color: SHELL.INK,
+};
+
+const ACTION_COPY_STYLE: CSSProperties = {
+  margin: 0,
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  lineHeight: 1.45,
+  color: SHELL.INK_SOFT,
 };
 
 const SELF_NOTICE_STYLE: CSSProperties = {
@@ -581,6 +755,40 @@ const MORE_MENU_STYLE: CSSProperties = {
   display: "flex",
   gap: 8,
   marginTop: 8,
+};
+
+const DISCLOSURE_STYLE: CSSProperties = {
+  border: `1px solid ${SHELL.CARD_LINE}`,
+  borderRadius: 8,
+  background: SHELL.CARD_WHITE,
+  overflow: "hidden",
+};
+
+const DISCLOSURE_SUMMARY_STYLE: CSSProperties = {
+  cursor: "pointer",
+  padding: "12px 14px",
+  fontFamily: SHELL.SANS,
+  fontSize: 13,
+  fontWeight: 700,
+  color: SHELL.INK,
+};
+
+const DISCLOSURE_BODY_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 14,
+  borderTop: `1px solid ${SHELL.CARD_LINE}`,
+  padding: 14,
+};
+
+const PANEL_DISCLOSURE_STYLE: CSSProperties = {
+  borderTop: `1px solid ${SHELL.CARD_LINE}`,
+  paddingTop: 4,
+};
+
+const PANEL_DISCLOSURE_BODY_STYLE: CSSProperties = {
+  display: "grid",
+  gap: 14,
+  paddingTop: 12,
 };
 
 const BASE_BUTTON_STYLE: CSSProperties = {
