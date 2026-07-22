@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, type CSSProperties, type KeyboardEvent } from 'react';
+import { AgentResponseParts } from '@/components/agent/AgentResponseParts';
 import { AgentMarkdown } from '@/lib/agent/markdownRenderer';
 import type { ChatMessage, SuggestedAction } from '@/components/agent/AgentDock';
 import { CANVAS } from './canvas-tokens';
@@ -86,6 +87,11 @@ export function AvaBottomBar({
                   <span style={AGENT_ICON_STYLE}>aVa</span>
                   <div style={AGENT_BUBBLE_STYLE}>
                     <AgentMarkdown text={msg.body} />
+                    {msg.parts?.length ? (
+                      <div style={AGENT_PARTS_STYLE}>
+                        <AgentResponseParts parts={msg.parts} />
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               ),
@@ -262,6 +268,10 @@ const AGENT_BUBBLE_STYLE: CSSProperties = {
   color: CANVAS.INK,
   lineHeight: 1.6,
   minWidth: 0,
+};
+
+const AGENT_PARTS_STYLE: CSSProperties = {
+  marginTop: 12,
 };
 
 const CHIPS_ROW_STYLE: CSSProperties = {
