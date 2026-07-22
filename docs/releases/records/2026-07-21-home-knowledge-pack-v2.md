@@ -6,7 +6,7 @@
 
 ## Status
 
-`deployed-schema-applied-writer-fix-candidate`
+`live-proven-db-populated`
 
 ## Plain-English Summary
 
@@ -57,18 +57,28 @@ Adds a governed Azure/Postgres read-model design for the Home / Knowledge CXO co
   Meridian Health System `19 / 3627 / 51 / 37`,
   Airline Demo `19 / 2090 / 495 / 322`.
 - `pending` — deploy writer fix, rerun Azure data population through the private ACA operator job, then rerun signed-in Home smoke.
+- `pass` — PR #5253 merged as `65992e7b4cdc869505ab996ecb16e980024b57f1`; ACA main deploy workflow `29880190888` deployed digest `sha256:896fac05c4fe8c2c606ff7ecab89b6f85f24057d5d95b33fe9bde3df9eef4d2a` to revision `ca-abarva-web-lab-eastus--m65992e7b` at 100% traffic; runtime invariant and health passed.
+- `pass` — fixed Azure data-write operator execution `job-abarva-private-operator-eus-ouob2et` succeeded using image `acrabarvalab001.azurecr.io/abarva/web@sha256:896fac05c4fe8c2c606ff7ecab89b6f85f24057d5d95b33fe9bde3df9eef4d2a`; operator job restored to idle and idle verification passed.
+- `pass` — Azure pack population results:
+  Retail Demo `written:29bd2d34-aa67-41a3-83c2-4a1fe0e40c7d` with `19 dimensions / 1304 rows / 8 use cases / 19 evidence sources / 390 nodes / 337 edges`,
+  FS Demo `written:c007ba14-6bc9-405c-8624-f7a427887770` with `19 / 1585 / 8 / 19 / 378 / 337`,
+  Lakeshore Holdings `written:270725e3-9e2c-4e3b-ad58-512a7ce9e8f1` with `19 / 507 / 8 / 19 / 351 / 281`,
+  Meridian Health System `written:225fa13e-c013-48a1-8715-a282749cc79d` with `19 / 3627 / 5 / 12 / 51 / 37`,
+  Airline Demo `written:74fc4bae-eb55-4508-bfa5-4bfffce24b2d` with `19 / 2090 / 8 / 19 / 495 / 322`; all reported `validation_status='pass'` and no validation issues.
+- `pass` — signed-in Home smoke after Azure pack population rendered `/home` for Meridian Health System, Airline Demo, and FS Demo from `https://app.abarva.ai/home`; screenshots saved under `/tmp/home-pack-v2-live-proof-final-20260721/`.
+- `blocked` — Lakeshore signed-in smoke remains blocked by expired local Clerk storage state redirecting to `/sign-in?redirect=%2Fhome`; Azure pack population for Lakeshore itself succeeded.
 
 ## Rollout Plan
 
-Merged through PR #5250, deployed through the repo-owned ACA main lane, and applied through the governed lab database migration workflow. PR #5252 exposed the deployed operator script and proved the main runtime image. Home continues to render from approved JSON if the database pack is absent. The remaining rollout step is to deploy the writer serialization/idempotency fix, then run `home:knowledge-pack-v2:write` through the private ACA operator job with the approved `DATABASE_URL` secret.
+Merged through PR #5250, deployed through the repo-owned ACA main lane, and applied through the governed lab database migration workflow. PR #5252 exposed the deployed operator script and proved the main runtime image. PR #5253 fixed the writer serialization/idempotency defect found in the first operator run. The final private ACA operator execution populated approved Home Knowledge Pack v2 rows for all five available tenants. Home continues to render from approved JSON if a database pack is absent.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: Azure Container Apps main deploy workflow after merge.
 - Shared runtime mutators: None in this PR outside normal deploy/migration lane.
-- Approved image digest: schema/read-model deploy `sha256:0df6c8d2db959fbb263f558291d775b84ac2b37fa9252b33e584dde4e1917ac6`; operator-script deploy `sha256:000e31e507e8d819acba1ed04de8c1318baa69b6f6f0c1da2f6f4d44bb8f3775`.
-- ACA runtime invariant: Passed in workflows `29877796657` and `29879194324`.
-- Worker image invariant: Migration operator job restored idle after workflow `29878286172`; first pack-write operator job restored idle after failed execution `job-abarva-private-operator-eus-ckm0dz7`; writer-fix operator rerun pending.
+- Approved image digest: schema/read-model deploy `sha256:0df6c8d2db959fbb263f558291d775b84ac2b37fa9252b33e584dde4e1917ac6`; operator-script deploy `sha256:000e31e507e8d819acba1ed04de8c1318baa69b6f6f0c1da2f6f4d44bb8f3775`; final writer-fix deploy `sha256:896fac05c4fe8c2c606ff7ecab89b6f85f24057d5d95b33fe9bde3df9eef4d2a`.
+- ACA runtime invariant: Passed in workflows `29877796657`, `29879194324`, and `29880190888`.
+- Worker image invariant: Migration operator job restored idle after workflow `29878286172`; first pack-write operator job restored idle after failed execution `job-abarva-private-operator-eus-ckm0dz7`; final pack-write operator execution `job-abarva-private-operator-eus-ouob2et` succeeded and restored idle.
 - Feature/env flag update path: None.
 - Live signed-in proof required: Yes, Home tab proof for each tenant after deploy/population.
 
@@ -82,7 +92,10 @@ Runtime rollback: revert to the previous ACA revision. Data rollback: do not app
 - Builder JSON: `reports/home-knowledge-pack-v2/summary.json`
 - Per-tenant prompt packets: `reports/home-knowledge-pack-v2/<tenant>/claude-strategy-prompt.json`
 - Per-tenant normalized pack dumps: `reports/home-knowledge-pack-v2/<tenant>/home-knowledge-pack-v2.json`
+- ACA deploy evidence: `/tmp/aca-deploy-29880190888-home-pack-jsonb-writer/`
+- Azure operator write evidence: `/tmp/home-pack-v2-write-20260721-operator-fixed/`
+- Signed-in Home smoke evidence: `/tmp/home-pack-v2-live-proof-final-20260721/`
 
 ## Known Gaps
 
-The current shell does not expose `ANTHROPIC_API_KEY`; the pack builder therefore generates approved deterministic/approved-pack artifacts and Claude prompt packets rather than calling Claude locally. Azure schema apply is complete. The first Azure pack-write run found a writer serialization bug and did not complete; the fix is locally reproduced against isolated Postgres and awaits deploy plus operator rerun.
+The current shell does not expose `ANTHROPIC_API_KEY`; the pack builder therefore generates approved deterministic/approved-pack artifacts and Claude prompt packets rather than calling Claude locally. Azure schema apply and Azure pack population are complete. Lakeshore browser proof needs a refreshed local Clerk storage state; the database pack itself was populated successfully for Lakeshore.
