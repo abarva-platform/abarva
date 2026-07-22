@@ -29,6 +29,7 @@ Adds the first governed Moves learning loop. A completed or in-progress Move can
 
 - `src/lib/programs/learning-writeback/*`: Pure planner, Azure/Postgres persistence seam, exports, and tests.
 - `src/scripts/programs/writeback-move-learning-to-enterprise-context.ts`: Dry-run/apply operator script, with CLI args for local planning and `MOVES_WRITEBACK_*` env vars plus proof-bundle emission for the private ACA operator job lane. The reader resolves the Move by ID and then uses Move-scoped evidence/gate queries, so enterprise-context writeback does not depend on fragile historical client alias strings.
+- `src/lib/programs/learning-writeback/persist.ts`: Converts planner-only `canonical_record_id` helper fields into live `governed_object_readiness.object_id` rows before persistence. ACA apply proof caught the schema mismatch before any active-context promotion path existed.
 - `package.json`: Adds `npm run moves:enterprise-context:writeback`.
 - `docs/releases/records/2026-07-22-moves-learning-writeback.md`: This release record.
 

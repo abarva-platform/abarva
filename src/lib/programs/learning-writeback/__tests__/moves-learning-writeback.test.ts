@@ -145,6 +145,7 @@ describe("buildMovesLearningWritebackPlan", () => {
 describe("writeMovesLearningToEnterpriseContext", () => {
   it("persists records, facts, and readiness rows through the injected store", async () => {
     const calls: string[] = [];
+    const readinessPayloads: Array<Record<string, unknown>> = [];
     const store: MovesLearningWritebackStore = {
       async upsertRecords(rows) {
         calls.push(`records:${rows.length}`);
@@ -156,6 +157,7 @@ describe("writeMovesLearningToEnterpriseContext", () => {
       },
       async upsertReadiness(rows) {
         calls.push(`readiness:${rows.length}`);
+        readinessPayloads.push(...rows);
         return rows.length;
       },
     };
@@ -193,5 +195,8 @@ describe("writeMovesLearningToEnterpriseContext", () => {
       }),
     );
     expect(calls).toEqual(["records:1", "facts:1", "readiness:1"]);
+    expect(readinessPayloads).toHaveLength(1);
+    expect(readinessPayloads[0]?.object_id).toBe("rec-0");
+    expect(readinessPayloads[0]).not.toHaveProperty("canonical_record_id");
   });
 });

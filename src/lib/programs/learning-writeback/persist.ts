@@ -13,7 +13,7 @@ import {
   type MovesLearningEvidenceInput,
   type MovesLearningGateDecisionInput,
   type MovesLearningMove,
-  type MovesLearningReadinessDraft,
+  type MovesLearningReadinessRow,
   type MovesLearningWritebackResult,
 } from "./types";
 
@@ -32,7 +32,7 @@ export interface MovesLearningWritebackStore {
     rows: readonly MovesLearningEnterpriseContextRecordRow[],
   ): Promise<Map<string, string>>;
   upsertFacts(rows: readonly MovesLearningEnterpriseContextFactRow[]): Promise<number>;
-  upsertReadiness(rows: readonly MovesLearningReadinessDraft[]): Promise<number>;
+  upsertReadiness(rows: readonly MovesLearningReadinessRow[]): Promise<number>;
 }
 
 function azureMovesLearningWritebackStore(
@@ -136,10 +136,12 @@ export async function writeMovesLearningToEnterpriseContext(
         void _canonicalRecordId;
         return [{ ...row, record_id: recordId }];
       });
-    const readinessRows = plan.readinessDrafts.flatMap((row) => {
+    const readinessRows: MovesLearningReadinessRow[] = plan.readinessDrafts.flatMap((row) => {
       const recordId = idMap.get(row.canonical_record_id);
       if (!recordId) return [];
-      return [{ ...row, object_id: recordId }];
+      const { canonical_record_id: _canonicalRecordId, ...readinessRow } = row;
+      void _canonicalRecordId;
+      return [{ ...readinessRow, object_id: recordId }];
     });
 
     const factsWritten = await store.upsertFacts(factRows);
