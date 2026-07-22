@@ -6,7 +6,7 @@ import {
   type SourceContextWritebackStore,
   type SourceEnterpriseContextFactRow,
   type SourceEnterpriseContextRecordRow,
-  type SourceGovernedReadinessDraft,
+  type SourceGovernedReadinessRow,
 } from "../index";
 
 function fact(overrides: Partial<SourceEventFactRow> = {}): SourceEventFactRow {
@@ -46,11 +46,11 @@ function fakeStore(
 ): SourceContextWritebackStore & {
   records: SourceEnterpriseContextRecordRow[];
   facts: SourceEnterpriseContextFactRow[];
-  readiness: SourceGovernedReadinessDraft[];
+  readiness: SourceGovernedReadinessRow[];
 } {
   const records: SourceEnterpriseContextRecordRow[] = [];
   const facts: SourceEnterpriseContextFactRow[] = [];
-  const readiness: SourceGovernedReadinessDraft[] = [];
+  const readiness: SourceGovernedReadinessRow[] = [];
   return {
     records,
     facts,
@@ -221,6 +221,7 @@ describe("writeSourceFactsToEnterpriseContext", () => {
     expect(store.records).toHaveLength(1);
     expect(store.facts[0].record_id).toBe("record-1");
     expect(store.readiness[0].object_id).toBe("record-1");
+    expect(store.readiness[0]).not.toHaveProperty("canonical_record_id");
   });
 
   it("skips cleanly when no fact is eligible", async () => {
