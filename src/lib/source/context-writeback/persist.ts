@@ -12,7 +12,7 @@ import {
   type SourceContextWritebackResult,
   type SourceEnterpriseContextFactRow,
   type SourceEnterpriseContextRecordRow,
-  type SourceGovernedReadinessDraft,
+  type SourceGovernedReadinessRow,
 } from "./types";
 
 type DbResult<T> = { data: T | null; error: { message: string } | null };
@@ -30,9 +30,7 @@ export interface SourceContextWritebackStore {
     rows: readonly SourceEnterpriseContextRecordRow[],
   ): Promise<Map<string, string>>;
   upsertFacts(rows: readonly SourceEnterpriseContextFactRow[]): Promise<number>;
-  upsertReadiness(
-    rows: readonly SourceGovernedReadinessDraft[],
-  ): Promise<number>;
+  upsertReadiness(rows: readonly SourceGovernedReadinessRow[]): Promise<number>;
 }
 
 function azureSourceContextWritebackStore(
@@ -133,11 +131,15 @@ export async function writeSourceFactsToEnterpriseContext(
         return [{ ...row, record_id: recordId }];
       },
     );
-    const readinessRows = plan.readinessDrafts.flatMap((row) => {
-      const recordId = idMap.get(row.canonical_record_id);
-      if (!recordId) return [];
-      return [{ ...row, object_id: recordId }];
-    });
+    const readinessRows: SourceGovernedReadinessRow[] =
+      plan.readinessDrafts.flatMap((row) => {
+        const recordId = idMap.get(row.canonical_record_id);
+        if (!recordId) return [];
+        const { canonical_record_id: _canonicalRecordId, ...readinessRow } =
+          row;
+        void _canonicalRecordId;
+        return [{ ...readinessRow, object_id: recordId }];
+      });
 
     const factsWritten = await store.upsertFacts(factRows);
     const readinessRowsWritten = await store.upsertReadiness(readinessRows);

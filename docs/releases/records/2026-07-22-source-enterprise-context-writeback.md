@@ -34,6 +34,7 @@ Source now has a governed writeback path that can project eligible typed Source 
 - Follow-up runtime fix: the operator script uses a narrow Source event resolver instead of importing the full route query module, so the deployed ACA job runtime does not trip `server-only` under `tsx`.
 - Follow-up data-shape fix: the writeback planner accepts finite numeric values returned from Azure/Postgres as strings, so valid cited numeric facts are not skipped as `missing_value`.
 - Follow-up operator-job fix: the script accepts `SOURCE_WRITEBACK_CLIENT_KEY`, `SOURCE_WRITEBACK_EVENT_ID`, `SOURCE_WRITEBACK_APPLY`, and `SOURCE_WRITEBACK_OUT_DIR` env vars so the approved ACA operator-job wrapper can run dry-run/apply without unsupported npm pass-through arguments.
+- Follow-up readiness-row fix: the persistence seam strips the planner-only `canonical_record_id` helper before upserting into `governed_object_readiness`, matching the live table schema while still using the helper to resolve the real `enterprise_context_records.id`.
 
 ## QA / Validation
 
@@ -56,7 +57,14 @@ Source now has a governed writeback path that can project eligible typed Source 
 - PASS — Operator-job env support validation: `npx eslint src/scripts/source/writeback-source-facts-to-enterprise-context.ts` passed.
 - PASS — Operator-job env support validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` passed.
 - PASS — Operator-job env support validation: `npm run release:check` passed.
-- NOT RUN — Operator-job apply after env support: pending merge/deploy of the env-driven script. Apply must run through the approved ACA operator-job lane, not web-container exec.
+- PASS — Operator-job env support deployed through ACA main deploy run `29942312349` at revision `ca-abarva-web-lab-eastus--m2c737b6e`; independent runtime invariant passed with digest `sha256:057ed04ab9164459415e921818d24d4be595dc94dc72534ee71eecc4cbb5a852`, 100% traffic, and healthy `/api/health`.
+- PASS — ACA operator-job dry-run with durable `DATABASE_URL` secret binding succeeded: execution `job-abarva-private-operator-eus-u88ppoo`, `factsRead=14`, `eligible=14`, `skipped=0`, `writeStatus=not_applied`.
+- FAIL — ACA operator-job apply execution `job-abarva-private-operator-eus-6ptzz1p` returned `writeStatus=failed`. Readback proved the first two layers were committed (`14` `enterprise_context_records`, `14` `enterprise_context_facts`) and the failure was isolated to `0` readiness rows.
+- FAIL ROOT CAUSE — Read-only live probe showed `governed_object_readiness upsert: column "canonical_record_id" of relation "governed_object_readiness" does not exist`; this candidate fixes that row-shape mismatch.
+- PASS — Readiness-row fix validation: `npx jest src/lib/source/context-writeback/__tests__/source-context-writeback.test.ts --runInBand` passed after adding a regression assertion that persisted readiness payloads do not carry `canonical_record_id`.
+- PASS — Readiness-row fix validation: `npx eslint src/lib/source/context-writeback src/scripts/source/writeback-source-facts-to-enterprise-context.ts` passed.
+- PASS — Readiness-row fix validation: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` passed.
+- PASS — Readiness-row fix validation: `npm run release:check` passed.
 
 ## Rollout Plan
 

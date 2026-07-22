@@ -103,6 +103,11 @@ export interface SourceGovernedReadinessDraft {
   readonly backfill_reason: string;
 }
 
+export type SourceGovernedReadinessRow = Omit<
+  SourceGovernedReadinessDraft,
+  "canonical_record_id"
+>;
+
 export interface SourceContextWritebackPlan {
   readonly records: readonly SourceEnterpriseContextRecordRow[];
   readonly factDrafts: readonly SourceEnterpriseContextFactDraft[];
