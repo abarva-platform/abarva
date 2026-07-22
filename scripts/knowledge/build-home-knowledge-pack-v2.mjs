@@ -90,7 +90,7 @@ const writeDb = args.has("--write-db");
 const useClaude = args.has("--use-claude");
 const approve = args.has("--approve");
 const dryRun = args.has("--dry-run") || !writeDb;
-const model = getArg("--model", process.env.HOME_KNOWLEDGE_CLAUDE_MODEL ?? "claude-opus-4-20250514");
+const model = getArg("--model", process.env.HOME_KNOWLEDGE_CLAUDE_MODEL ?? "claude-opus-4-8");
 
 function sha256(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
@@ -220,6 +220,135 @@ function buildPromptPacket(pack) {
       gaps: slots.GAPS ?? [],
     },
   };
+}
+
+const CLAUDE_NARRATIVE_TOOL_NAME = "submit_home_knowledge_pack_v2_narratives";
+
+function claudeSystemPrompt() {
+  return [
+    "You are a senior strategy consultant writing the CXO-facing narrative layer for the Nexus Home Knowledge Pack.",
+    "Audience: CXO / EVP / CIO / CDAO. Write like a top-tier strategy consultant synthesizing an enterprise context review, not product documentation.",
+    "",
+    "Data boundary:",
+    "- Every fact in the supplied context is synthetic, PHI-free, planning-grade demo context. Do not claim real production data, audited realized savings, achieved ROI, production AI readiness, or a completed platform build.",
+    "- AWS and Databricks (where present) are future/target foundation direction unless the context explicitly says otherwise.",
+    "- Never invent a fact, number, owner, or system that is not present in the supplied context. If a claim would outrun the evidence, replace it with a caveat or a lower-grain supported statement.",
+    "",
+    "Language rules:",
+    "- Product name is Nexus. Never use \"AbarVa\", \"guidebook\", \"definition\", \"not loaded\", \"runtime\", \"packet\", \"substrate\", or raw record/evidence IDs in prose.",
+    "- Do not define dimensions generically. Every sentence must say what this tenant's context implies.",
+    "- Executive grain: issue, implication, decision, evidence gate. No product help copy.",
+    "- Short, scannable sentences. No giant paragraphs.",
+    "",
+    "Word budgets (hard limits, do not exceed):",
+    "- narratives.enterprise_brief, narratives.operating_model, narratives.relationship_map, narratives.use_cases, narratives.evidence_boundary: 75-130 words each.",
+    "- use_cases[].client_context_signal, why_now, operating_model_change, change_strategy, readiness_barrier, evidence_gate, priority_rationale: 22-45 words each.",
+    "- use_cases[].industry_pattern, value_thesis: 22-42 words each.",
+    "- use_cases[].module_next_step: a short executive-readable fragment, under 15 words.",
+    "",
+    `You must call the ${CLAUDE_NARRATIVE_TOOL_NAME} tool exactly once with your complete output. Echo each use case's "name" field back verbatim (character-for-character) from the input context so it can be matched to its source record.`,
+  ].join("\n");
+}
+
+function claudeNarrativeTool() {
+  const strategyFieldNames = [
+    "industry_pattern", "client_context_signal", "why_now", "operating_model_change",
+    "change_strategy", "value_thesis", "readiness_barrier", "evidence_gate",
+    "priority_rationale", "module_next_step",
+  ];
+  const strategyFields = Object.fromEntries(strategyFieldNames.map((key) => [key, { type: "string" }]));
+  return {
+    name: CLAUDE_NARRATIVE_TOOL_NAME,
+    description: "Submit the CXO strategy narratives and use-case strategy enrichment for this tenant's Home Knowledge Pack v2.",
+    input_schema: {
+      type: "object",
+      required: ["narratives", "use_cases"],
+      properties: {
+        narratives: {
+          type: "object",
+          required: ["enterprise_brief", "operating_model", "relationship_map", "use_cases", "evidence_boundary"],
+          properties: {
+            enterprise_brief: { type: "string" },
+            operating_model: { type: "string" },
+            relationship_map: { type: "string" },
+            use_cases: { type: "string" },
+            evidence_boundary: { type: "string" },
+          },
+        },
+        use_cases: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["name", ...strategyFieldNames],
+            properties: { name: { type: "string" }, ...strategyFields },
+          },
+        },
+      },
+    },
+  };
+}
+
+async function callClaudeForPack(promptPacket) {
+  if (!useClaude) return null;
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error("ANTHROPIC_API_KEY is required for --use-claude; refusing to fabricate narrative content.");
+  }
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
+  const client = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+    timeout: Number(process.env.HOME_KNOWLEDGE_CLAUDE_TIMEOUT_MS || 180000),
+  });
+  const tool = claudeNarrativeTool();
+  const maxAttempts = 3;
+  let lastError = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const message = await client.messages.create({
+        model,
+        max_tokens: Number(process.env.HOME_KNOWLEDGE_CLAUDE_MAX_TOKENS || 8000),
+        system: claudeSystemPrompt(),
+        messages: [{ role: "user", content: JSON.stringify(promptPacket) }],
+        tools: [tool],
+        tool_choice: { type: "tool", name: tool.name },
+      });
+      const toolUse = message.content.find((block) => block.type === "tool_use" && block.name === tool.name);
+      if (!toolUse) throw new Error("Claude response did not include the expected tool_use block.");
+      return toolUse.input;
+    } catch (error) {
+      lastError = error;
+      const retryable = error?.status === 429 || (typeof error?.status === "number" && error.status >= 500);
+      if (!retryable || attempt === maxAttempts) break;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
+    }
+  }
+  throw new Error(`Claude call failed for narrative generation after ${maxAttempts} attempt(s): ${lastError?.message ?? lastError}`);
+}
+
+function mergeClaudeNarrativesIntoPack(pack, claudeResult) {
+  if (!claudeResult) return { matched: 0, total: (pack.design_slots?.USE_CASES ?? []).length };
+  pack.narrative_sections = { ...(pack.narrative_sections ?? {}), ...(claudeResult.narratives ?? {}) };
+  pack.generated_model = `${pack.generated_model ?? "approved-json-pack"} + claude:${model}`;
+  const useCaseItems = pack.design_slots?.USE_CASES ?? [];
+  const byName = new Map(
+    useCaseItems.map((item) => [
+      firstText(item, ["name", "use_case_name", "ai_use_case", "business_name"]).toLowerCase().trim(),
+      item,
+    ]),
+  );
+  let matched = 0;
+  for (const entry of asArray(claudeResult.use_cases)) {
+    const target = byName.get(asText(entry.name).toLowerCase().trim());
+    if (!target) continue;
+    matched += 1;
+    for (const key of [
+      "industry_pattern", "client_context_signal", "why_now", "operating_model_change",
+      "change_strategy", "value_thesis", "readiness_barrier", "evidence_gate",
+      "priority_rationale", "module_next_step",
+    ]) {
+      if (asText(entry[key]).trim()) target[key] = entry[key];
+    }
+  }
+  return { matched, total: useCaseItems.length };
 }
 
 function industryPatternFor(useCase, pack) {
@@ -366,13 +495,15 @@ function buildNodesAndEdges(pack) {
   };
 }
 
-function normalizePack(pack, sourceFile, sourceText) {
+async function normalizePack(pack, sourceFile, sourceText) {
   const sourceHash = sha256(sourceText);
   const promptPacket = buildPromptPacket(pack);
   const promptText = [
     "HOME KNOWLEDGE PACK V2 CLAUDE STRATEGY PROMPT",
     JSON.stringify(promptPacket, null, 2),
   ].join("\n\n");
+  const claudeResult = await callClaudeForPack(promptPacket);
+  const claudeMatch = mergeClaudeNarrativesIntoPack(pack, claudeResult);
   const useCases = enrichUseCases(pack);
   const graph = buildNodesAndEdges(pack);
   const renderPack = {
@@ -482,6 +613,14 @@ function normalizePack(pack, sourceFile, sourceText) {
   };
   if (!useCases.every((u) => u.industry_pattern && u.client_context_signal && u.change_strategy)) {
     quality.warnings.push("one_or_more_use_cases_missing_strategy_fields");
+  }
+  if (useClaude) {
+    quality.claude_use_case_match = `${claudeMatch.matched}/${claudeMatch.total}`;
+    if (!claudeResult) {
+      quality.warnings.push("claude_requested_but_no_result");
+    } else if (claudeMatch.matched < claudeMatch.total) {
+      quality.warnings.push(`claude_use_case_narrative_partial_match:${claudeMatch.matched}/${claudeMatch.total}`);
+    }
   }
   const normalized = {
     pack: {
@@ -657,7 +796,7 @@ async function main() {
     for (const item of files) {
       const sourceText = fs.readFileSync(item.file, "utf8");
       const pack = JSON.parse(sourceText);
-      const normalized = normalizePack(pack, item.file, sourceText);
+      const normalized = await normalizePack(pack, item.file, sourceText);
       writeArtifacts(normalized);
       let dbStatus = dryRun ? "artifact-only" : "pending";
       if (client) {
