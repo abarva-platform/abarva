@@ -4,9 +4,11 @@ import fs from "node:fs";
 import path from "node:path";
 const repoRoot = process.cwd();
 const reportDir = path.join(repoRoot, "reports/home-knowledge-pack-v2");
-const promptVersion = "home-knowledge-pack-v2-cxo-strategy-20260721";
-const generatorVersion = "home-pack-v2-builder-20260721";
+const promptVersion = "home-knowledge-pack-v3-story-architecture-20260722";
+const generatorVersion = "home-pack-v3-story-builder-20260722";
 const artifactType = "NexusHomeKnowledgePackV2";
+const NARRATIVE_TYPES = new Set(["industry_movement", "new_way_of_operating", "change_thesis"]);
+const CLASSIFICATIONS = new Set(["loaded_fact", "derived_measure", "industry_pattern", "strategic_inference", "missing_evidence"]);
 
 const jsonColumnsByTable = new Map([
   ["home_knowledge_packs", new Set(["source_context", "render_pack", "quality_report", "validation_issues"])],
@@ -186,6 +188,13 @@ function evidenceRefs(record) {
 
 function discoverPackFiles() {
   const root = path.join(repoRoot, "datasets/tenant-inputs");
+  const tenantOrder = new Map([
+    ["meridian-health", 1],
+    ["first-capital", 2],
+    ["lakeshore-holdings", 3],
+    ["skyharbor-air", 4],
+    ["apex-retail", 5],
+  ]);
   if (!fs.existsSync(root)) return [];
   return fs.readdirSync(root)
     .map((tenant) => ({
@@ -194,23 +203,311 @@ function discoverPackFiles() {
     }))
     .filter((item) => fs.existsSync(item.file))
     .filter((item) => requestedTenant === "all" || item.tenant === requestedTenant)
-    .sort((a, b) => a.tenant.localeCompare(b.tenant));
+    .sort((a, b) => (tenantOrder.get(a.tenant) ?? 99) - (tenantOrder.get(b.tenant) ?? 99) || a.tenant.localeCompare(b.tenant));
+}
+
+const TECHNICAL_NARRATIVE_KEYS = new Set([
+  "render_contract",
+  "visual_block_contract",
+  "content_generation_prompt_path",
+  "content_generation_response_path",
+  "executive_overview_prompt_path",
+  "executive_overview_response_path",
+  "design_contract_fidelity",
+]);
+
+const BUSINESS_COUNT_DIMENSIONS = new Map([
+  ["apps", "applications"],
+  ["vendors", "vendors"],
+  ["programs", "approved or candidate programs"],
+  ["ai", "AI and automation opportunities"],
+  ["budget", "budget and value items"],
+  ["functions", "business functions"],
+  ["workforce", "workforce roles"],
+  ["infra", "infrastructure platforms"],
+]);
+
+const CLIENT_VISIBLE_PROHIBITED = [
+  { level: "P0", name: "raw id", re: /\b(?:record[_\s-]?id|evidence[_\s-]?id|source[_\s-]?id|MER-V\d|FC-V\d|SKY-V\d|LAK-V\d|APX-V\d)\b/i },
+  { level: "P0", name: "file or path", re: /\b(?:datasets\/|reports\/|\.csv\b|\.json\b|prompt_path|response_path|source_file|storage_uri)\b/i },
+  { level: "P0", name: "technical object", re: /\b(?:json|database|render_pack|design_slots|dimension_rows|home_knowledge_|relationship_nodes|relationship_edges|derivation_method|payload|runtime|packet)\b/i },
+  { level: "P1", name: "internal table language", re: /\b(?:database table|raw table|source table|table schema|schema table)\b/i },
+  { level: "P1", name: "ingestion count", re: /\b\d[\d,]*\s+(?:source\s+)?(?:rows?|records?|facts?|evidence references?|relationship rows?|candidate rows?)\b/i },
+  { level: "P1", name: "technical graph count", re: /\b\d[\d,]*\s+(?:nodes?|edges?)\b/i },
+  { level: "P1", name: "unsupported top ranking", re: /\btop\s+\d+\b/i },
+  {
+    level: "P1",
+    name: "overclaim",
+    re: /\b(?:fully loaded|production-ready|realized savings|achieved ROI|value is real|proven\s+value(?!-))\b/i,
+    ignore: (text) =>
+      /\b(?:not|not yet|no|none|nothing|without|lacks?|missing|absent|unproven|cannot|should not|must not)\b.{0,80}\b(?:fully loaded|production-ready|realized savings|achieved ROI|proven value)\b/i.test(text) ||
+      /\b(?:fully loaded|production-ready|realized savings|achieved ROI|proven value)\b.{0,80}\b(?:not|not yet|no|none|nothing|without|lacks?|missing|absent|unproven|cannot|should not|must not)\b/i.test(text) ||
+      /\b(?:aspirational|hypothesis|directional|planning-grade)\b.{0,80}\brather than\b.{0,40}\b(?:fully loaded|production-ready|realized savings|achieved ROI|proven value)\b/i.test(text) ||
+      /\bwhether\b.{0,80}\bvalue is real\b.{0,80}\bnot\s+(?:yet\s+)?confirmed\b/i.test(text) ||
+      /\bdoes\s+not\s+(?:yet\s+)?confirm\b.{0,100}\bvalue is real\b/i.test(text) ||
+      /\bnothing\b.{0,80}\b(?:realized savings|proven value)\b/i.test(text),
+  },
+];
+
+function cleanExecutiveText(value) {
+  let text = asText(value).trim();
+  if (!text) return "";
+  text = text
+    .replace(/\b\d[\d,]*\s+source\s+rows?\b/gi, "a broad source base")
+    .replace(/\b\d[\d,]*\s+evidence\s+references?\b/gi, "a broad evidence base")
+    .replace(/\b\d[\d,]*\s+relationship\s+rows?\b/gi, "material relationship paths")
+    .replace(/\b\d[\d,]*\s+candidate\s+rows?\b/gi, "planning-grade items")
+    .replace(/\b\d[\d,]*\s+candidates?\b/gi, "planning-grade items")
+    .replace(/\b\d[\d,]*\s+(?:rows?|records?|facts?)\b/gi, "loaded business context")
+    .replace(/\b(?:MER|FC|SKY|LAK|APX)-V\d-[A-Z0-9-]+\b/gi, "")
+    .replace(/\b(?:record[_\s-]?id|evidence[_\s-]?id|source[_\s-]?id|source_file|render_pack|design_slots|runtime|packet|substrate)\b/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  return text;
+}
+
+function cleanStringArray(values, limit = 8) {
+  return asArray(values).map(cleanExecutiveText).filter(Boolean).slice(0, limit);
+}
+
+function businessScaleFromDimensions(dimensions) {
+  return dimensions
+    .filter((dimension) => BUSINESS_COUNT_DIMENSIONS.has(dimension.key) && Number(dimension.count) > 0)
+    .map((dimension) => ({
+      measure: BUSINESS_COUNT_DIMENSIONS.get(dimension.key),
+      value: Number(dimension.count),
+      business_meaning: cleanExecutiveText(dimension.summary),
+    }));
+}
+
+function clientSafeRow(row, keys) {
+  return Object.fromEntries(
+    keys
+      .map((key) => [key, cleanExecutiveText(row?.[key])])
+      .filter(([, value]) => value),
+  );
+}
+
+function buildDimensionReads(slots, dimensions) {
+  return dimensions.map((dimension) => {
+    const story = slots.STORY?.[dimension.key] ?? {};
+    const insight = slots.INSIGHTS?.[dimension.key] ?? {};
+    return {
+      dimension_key: dimension.key,
+      display_name: dimension.name,
+      business_scale: BUSINESS_COUNT_DIMENSIONS.has(dimension.key) && Number(dimension.count) > 0
+        ? { label: BUSINESS_COUNT_DIMENSIONS.get(dimension.key), value: Number(dimension.count) }
+        : null,
+      loaded_business_context: [
+        cleanExecutiveText(dimension.summary),
+        cleanExecutiveText(story.meaning),
+        cleanExecutiveText(story.observed),
+      ].filter(Boolean).slice(0, 4),
+      evidence_maturity: cleanExecutiveText(dimension.status) || "directional",
+      material_constraints: cleanStringArray(slots.DGAPS?.[dimension.key]?.map((gap) => firstText(gap, ["missing", "blocks", "needed"])) ?? [], 5),
+      strategic_implications: cleanStringArray([story.matters, story.supports, ...(insight.findings ?? [])], 5),
+      supporting_ref_keys: [
+        ...new Set([
+          ...evidenceRefs(dimension),
+          ...asArray(slots.EVID?.[dimension.key]).flatMap(evidenceRefs),
+        ]),
+      ].slice(0, 12),
+    };
+  });
+}
+
+function buildMaterialRelationshipPaths(slots) {
+  const rel = slots.REL ?? {};
+  const fromRel = Object.entries(rel).flatMap(([dimensionKey, value]) => {
+    const chain = asArray(value?.chain).map(cleanExecutiveText).filter(Boolean);
+    const note = cleanExecutiveText(value?.note);
+    if (!chain.length && !note) return [];
+    return [{
+      path_key: `${dimensionKey}-relationship-path`,
+      dimension_key: dimensionKey,
+      path: chain.slice(0, 6),
+      business_meaning: note || chain[0],
+      confidence: "directional",
+      supporting_ref_keys: [],
+    }];
+  });
+  return fromRel.slice(0, 24);
+}
+
+function buildEvidenceRead(slots, dimensions) {
+  const sourceBacked = dimensions.filter((dimension) => /source|high|ready|backed/i.test(asText(dimension.status))).slice(0, 6);
+  const weak = dimensions.filter((dimension) => /need|gap|partial|low|candidate/i.test(`${asText(dimension.status)} ${asText(dimension.summary)}`)).slice(0, 8);
+  return {
+    strongest_areas: sourceBacked.map((dimension) => cleanExecutiveText(`${dimension.name}: ${dimension.summary}`)).filter(Boolean),
+    weakest_areas: weak.map((dimension) => cleanExecutiveText(`${dimension.name}: ${dimension.summary}`)).filter(Boolean),
+    conflicts: cleanStringArray(slots.GAPS?.map((gap) => firstText(gap, ["title", "blocks", "missing"])) ?? [], 6),
+    priority_requests: cleanStringArray(slots.NEXT_EVIDENCE?.map((item) => firstText(item, ["item", "title", "missing", "narrative"])) ?? [], 8),
+  };
+}
+
+function buildStrategicCandidates(slots) {
+  const sourceUseCases = asArray(slots.USE_CASES);
+  const genericUseCases =
+    sourceUseCases.length > 0 &&
+    sourceUseCases.every((item) => /^ai opportunity$/i.test(asText(item.name).trim()) || !asText(item.name).trim());
+  const candidateSource = genericUseCases
+    ? asArray(slots.DATA?.industry?.rows)
+        .map((row) => ({
+          name: cleanExecutiveText(asText(row.pattern_name).replace(/\s+industry pattern$/i, "")),
+          fn: cleanExecutiveText(firstText(row, ["business_function", "function", "process_area"])),
+          context_item: cleanExecutiveText(firstText(row, ["industry_context", "signals", "known_gaps", "context_item"])),
+          value_hypothesis: "",
+          evidence_gate: cleanExecutiveText(firstText(row, ["known_gaps", "evidence_gate", "required_evidence"])),
+          evidence_refs: evidenceRefs(row),
+        }))
+        .filter((row) => row.name)
+        .slice(0, sourceUseCases.length || 8)
+    : sourceUseCases;
+  return candidateSource.slice(0, 12).map((item, index) => ({
+    candidate_key: stableKey(firstText(item, ["name", "use_case_name", "ai_use_case", "business_name"]) || `candidate-${index + 1}`),
+    name: cleanExecutiveText(firstText(item, ["name", "use_case_name", "ai_use_case", "business_name"]) || `Strategic change ${index + 1}`),
+    business_function: cleanExecutiveText(firstText(item, ["fn", "business_function", "process_area"])),
+    current_signal: cleanExecutiveText(firstText(item, ["context_item", "summary", "current_state_notes", "client_context_signal"])),
+    value_hypothesis: cleanExecutiveText(firstText(item, ["value", "value_hypothesis", "target_or_promise"])),
+    evidence_gate: cleanExecutiveText(firstText(item, ["gate", "evidence_gate", "evidence_needed", "required_data", "risk_controls"])),
+    supporting_ref_keys: evidenceRefs(item).slice(0, 8),
+  }));
+}
+
+function promoteStrategicCandidatesToUseCases(pack, candidates) {
+  const sourceUseCases = asArray(pack.design_slots?.USE_CASES);
+  if (!sourceUseCases.length || !asArray(candidates).length) return false;
+  const genericUseCases = sourceUseCases.every((item) => {
+    const name = asText(item.name || item.use_case_name || item.ai_use_case).trim();
+    return !name || /^ai opportunity$/i.test(name);
+  });
+  if (!genericUseCases) return false;
+  pack.design_slots = {
+    ...(pack.design_slots ?? {}),
+    USE_CASES: asArray(candidates).map((candidate, index) => ({
+      ...(sourceUseCases[index] ?? {}),
+      candidate_key: asText(candidate.candidate_key) || stableKey(candidate.name || `candidate-${index + 1}`),
+      name: asText(candidate.name) || `Strategic change ${index + 1}`,
+      fn: asText(candidate.business_function),
+      business_function: asText(candidate.business_function),
+      context_item: asText(candidate.current_signal),
+      value_hypothesis: asText(candidate.value_hypothesis),
+      gate: asText(candidate.evidence_gate),
+      evidence_gate: asText(candidate.evidence_gate),
+      evidence_refs: asArray(candidate.supporting_ref_keys).map(asText).filter(Boolean),
+    })),
+  };
+  return true;
+}
+
+function buildIndustryPatterns(slots) {
+  return asArray(slots.DATA?.industry?.rows).slice(0, 14).map((row) =>
+    clientSafeRow(row, ["pattern_name", "industry_context", "signals", "business_function", "relevance", "context_item", "summary"]),
+  ).filter((row) => Object.keys(row).length);
+}
+
+function scanVisibleText(value, pathPrefix = "root", findings = []) {
+  if (value == null) return findings;
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    const text = asText(value);
+    for (const rule of CLIENT_VISIBLE_PROHIBITED) {
+      if (rule.ignore?.(text)) continue;
+      if (rule.re.test(text)) {
+        findings.push({ level: rule.level, rule: rule.name, path: pathPrefix, sample: text.slice(0, 280) });
+      }
+      rule.re.lastIndex = 0;
+    }
+    return findings;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => scanVisibleText(item, `${pathPrefix}[${index}]`, findings));
+    return findings;
+  }
+  if (typeof value === "object") {
+    for (const [key, child] of Object.entries(value)) {
+      if (/evidence_refs|supporting_ref|audit_refs|source_payload|display_payload|lineage|metadata/i.test(key)) continue;
+      scanVisibleText(child, `${pathPrefix}.${key}`, findings);
+    }
+  }
+  return findings;
+}
+
+function clientVisibleQualityFindings(normalized, storyArchitecture) {
+  return [
+    ...scanVisibleText(normalized.pack.render_pack?.narrative_sections, "render_pack.narrative_sections"),
+    ...scanVisibleText(normalized.dimensions.map((row) => ({
+      executive_summary: row.executive_summary,
+      cxo_meaning: row.cxo_meaning,
+      why_it_matters: row.why_it_matters,
+    })), "home_knowledge_dimensions"),
+    ...scanVisibleText(normalized.use_cases.map((row) => ({
+      name: row.name,
+      industry_pattern: row.industry_pattern,
+      client_context_signal: row.client_context_signal,
+      why_now: row.why_now,
+      operating_model_change: row.operating_model_change,
+      change_strategy: row.change_strategy,
+      value_thesis: row.value_thesis,
+      readiness_barrier: row.readiness_barrier,
+      evidence_gate: row.evidence_gate,
+      priority_rationale: row.priority_rationale,
+      module_next_step: row.module_next_step,
+    })), "home_knowledge_use_cases"),
+    ...scanVisibleText(normalized.narratives.map((row) => row.narrative), "home_knowledge_narratives"),
+    ...scanVisibleText(normalized.executive_read, "home_knowledge_executive_read"),
+    ...scanVisibleText(normalized.pack_tier, "home_knowledge_pack_tier"),
+    ...scanVisibleText(normalized.ai_readiness.map((row) => ({
+      readiness_dimension: row.readiness_dimension,
+      label: row.label,
+      basis: row.basis,
+    })), "home_knowledge_ai_readiness"),
+    ...scanVisibleText(normalized.dimension_module_implications.map((row) => row.implication), "home_knowledge_dimension_module_implications"),
+    ...scanVisibleText(normalized.next_evidence_requests.map((row) => ({
+      title: row.title,
+      narrative: row.narrative,
+      unlocks_narrative: row.unlocks_narrative,
+      requesting_role_hint: row.requesting_role_hint,
+      collection_route: row.collection_route,
+    })), "home_knowledge_next_evidence_requests"),
+    ...scanVisibleText(normalized.strategic_narratives.map((row) => ({
+      title: row.title,
+      executive_narrative: row.executive_narrative,
+      current_state: row.current_state,
+      target_state_or_relevance: row.target_state_or_relevance,
+      value_hypothesis: row.value_hypothesis,
+      dependencies: row.dependencies,
+      evidence_gate: row.evidence_gate,
+      recommended_next_action: row.recommended_next_action,
+    })), "home_knowledge_strategic_narratives"),
+    ...scanVisibleText(storyArchitecture, "story_architecture"),
+  ];
 }
 
 function buildPromptPacket(pack) {
   const slots = pack.design_slots ?? {};
   const dimensions = slots.DIMS ?? [];
   return {
-    role: "senior strategy consultant creating the Nexus Home CXO context cockpit",
+    role: "senior enterprise strategy advisor creating the governed Nexus Home executive brief",
     prompt_version: promptVersion,
     tenant: {
       key: pack.tenant_key,
       name: pack.tenant_name,
-      boundary: pack.source_context?.boundary,
+      industry: cleanExecutiveText(pack.source_context?.industry ?? slots.DATA?.industry?.rows?.[0]?.industry ?? ""),
+      context_boundary: cleanExecutiveText(pack.source_context?.boundary ?? "Synthetic, planning-grade demo context"),
     },
     objective:
-      "Combine tenant-loaded context with industry movement to explain how the business should run differently, what AI/change bets matter most, and what evidence gates must clear before scale.",
+      "Use the executive-safe business context to determine the strategy story: what is distinctive, what industry forces matter, how work may need to change, what choices leadership faces, and what evidence gates must clear.",
     required_output_contract: {
+      story_architecture: [
+        "central_question",
+        "governing_thesis",
+        "strategic_tensions",
+        "chapters",
+        "leadership_choices",
+        "sequence",
+        "decisions_required",
+        "evidence_required",
+      ],
       use_cases: [
         "name",
         "industry_pattern",
@@ -235,57 +532,202 @@ function buildPromptPacket(pack) {
       ],
     },
     ranking_rule:
-      "Do not rank by row order. Rank by strategic value, industry urgency, client fit, data/system readiness, risk/control maturity, sponsorship evidence, and dependency leverage.",
+      "Do not originate a rank. Use priority_rank only when a governed rank or judgment basis is supplied; otherwise use candidate strategic changes.",
     style:
-      "Boardroom-ready strategy language. No product jargon, no raw IDs, no generic AI hype, no unsupported realized value claims.",
+      "Answer-first senior strategy language. The dimensions are evidence behind the story; they are not the storyline.",
     context: {
-      narrative_sections: pack.narrative_sections ?? {},
-      dimensions: dimensions.map((dimension) => ({
-        key: dimension.key,
-        name: dimension.name,
-        count: dimension.count,
-        status: dimension.status,
-        summary: dimension.summary,
-        covers: dimension.covers,
-      })),
-      existing_use_cases: slots.USE_CASES ?? [],
-      industry_rows: slots.DATA?.industry?.rows?.slice(0, 30) ?? [],
-      ai_rows: slots.DATA?.ai?.rows?.slice(0, 30) ?? [],
-      system_rows: slots.DATA?.apps?.rows?.slice(0, 30) ?? [],
-      data_rows: slots.DATA?.data?.rows?.slice(0, 30) ?? [],
-      risk_rows: slots.DATA?.risks?.rows?.slice(0, 30) ?? [],
-      relationship_rows: slots.DATA?.rel?.rows?.slice(0, 50) ?? [],
-      evidence_rows: slots.EVIDENCE ?? [],
-      gaps: slots.GAPS ?? [],
+      enterprise_scale: businessScaleFromDimensions(dimensions),
+      enterprise_model: {
+        business_segments: cleanStringArray(slots.DATA?.functions?.rows?.map((row) => firstText(row, ["business_function", "function_name", "domain", "business_name"])) ?? [], 12),
+        functions: cleanStringArray(slots.DATA?.functions?.rows?.map((row) => firstText(row, ["function_name", "business_function", "context_item"])) ?? [], 12),
+        owners: cleanStringArray(slots.DATA?.org?.rows?.map((row) => firstText(row, ["owner", "leader", "business_owner", "context_item"])) ?? [], 12),
+        workforce_signals: cleanStringArray(slots.DATA?.workforce?.rows?.map((row) => firstText(row, ["role", "role_name", "context_item", "summary"])) ?? [], 12),
+      },
+      dimension_reads: buildDimensionReads(slots, dimensions),
+      material_relationship_paths: buildMaterialRelationshipPaths(slots),
+      evidence_read: buildEvidenceRead(slots, dimensions),
+      strategic_candidates: buildStrategicCandidates(slots),
+      industry_patterns: buildIndustryPatterns(slots),
+      prohibited_claims: [
+        "Do not describe ingestion rows, records, facts, evidence-reference counts, relationship-row counts, nodes, or edges in executive narrative.",
+        "Do not present target-state platforms as current production capability.",
+        "Do not present industry patterns as tenant facts.",
+        "Do not present value hypotheses as realized value.",
+      ],
+      audit_refs: {
+        note: "Hidden traceability only. Do not reproduce in narrative text.",
+        prompt_source_hash: sha256(JSON.stringify(pack.source_context ?? {})).slice(0, 16),
+      },
     },
   };
 }
 
 const CLAUDE_NARRATIVE_TOOL_NAME = "submit_home_knowledge_pack_v2_narratives";
+const CLAUDE_STORY_TOOL_NAME = "submit_home_knowledge_story_architecture";
+
+function claudeStoryArchitectSystemPrompt() {
+  return [
+    "NON-NEGOTIABLE PROMPT-FIRST AUTHORSHIP CONTRACT",
+    "You are the sole author of all client-visible language returned by this generation. The product will render your client-visible output exactly as returned.",
+    "No downstream component will rewrite, shorten, sanitize, summarize, supplement, replace, repair, or complete your output. Do not rely on the renderer or any post-processing step to improve, correct or complete your output.",
+    "",
+    "STORY ARCHITECT ROLE",
+    "You are the senior partner responsible for determining the executive story, not drafting every page.",
+    "Do not summarize dimensions one by one. The dimensions are evidence, not the storyline.",
+    "",
+    "Your task is to determine the single most important strategic argument that emerges from the enterprise facts, industry movements, executive signals, relationships, constraints and evidence gaps.",
+    "",
+    "FIRST, ANSWER THESE QUESTIONS",
+    "1. What is distinctive about this enterprise?",
+    "2. What external forces are changing its economics or operating model?",
+    "3. What advantage does its current context create?",
+    "4. What structural tension or constraint prevents leadership from capturing that advantage?",
+    "5. What choices does leadership face?",
+    "6. What sequence is most defensible?",
+    "7. What cannot yet be concluded safely?",
+    "",
+    "GOVERNING THESIS",
+    "Produce one governing thesis of no more than 60 words. It must contain the enterprise's distinctive position, the central strategic tension, and the resulting leadership implication. Do not write a generic AI-readiness statement.",
+    "",
+    "STORY STRUCTURE",
+    "Build no more than six chapters. Every chapter must advance the governing thesis, answer a different executive question, have an answer-first conclusion headline, contain 2-4 supporting proof points, identify the best exhibit, state the executive implication, state the evidence boundary, and lead logically to the next chapter.",
+    "",
+    "STRATEGIC TENSION",
+    "Identify no more than three tensions, such as ambition versus foundation, strategic importance versus execution readiness, enterprise scale versus fragmented ownership, platform investment versus operating-model change, or adoption versus validated value.",
+    "",
+    "CHOICES",
+    "State the real choices leadership faces. Do not reduce choices to invest or do not invest. Good choices include improve the current process versus redesign the operating model, build a shared foundation first versus prove a bounded workflow first, centralize versus federate ownership, modernize the existing platform versus introduce a new one, or scale now versus gate until evidence improves.",
+    "",
+    "EXHIBIT REQUIREMENT",
+    "For each chapter specify exhibit title, executive question, visual type, entities or measures required, conclusion the exhibit must prove, two or three annotations, and unavailable evidence that could invalidate the conclusion.",
+    "",
+    "FINAL SEQUENCE",
+    "End with Act now, Build next, Scale later, Decisions required, and Evidence required.",
+    "",
+    "OUTPUT",
+    "Return structured JSON only through the tool. Do not write final executive prose. Do not fill dimension pages. Do not enumerate all available facts. Do not expose evidence IDs or internal references in visible language.",
+    `Call the ${CLAUDE_STORY_TOOL_NAME} tool exactly once.`,
+  ].join("\n");
+}
+
+function claudeStoryTool() {
+  const stringArray = { type: "array", items: { type: "string" } };
+  return {
+    name: CLAUDE_STORY_TOOL_NAME,
+    description: "Submit the story architecture for the Home executive brief before page-level writing begins.",
+    input_schema: {
+      type: "object",
+      required: ["central_question", "governing_thesis", "strategic_tensions", "chapters", "leadership_choices", "sequence", "decisions_required", "evidence_required"],
+      properties: {
+        central_question: { type: "string" },
+        governing_thesis: { type: "string" },
+        strategic_tensions: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["title", "meaning"],
+            properties: {
+              title: { type: "string" },
+              meaning: { type: "string" },
+              supporting_refs: stringArray,
+            },
+          },
+        },
+        chapters: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["chapter_number", "executive_question", "answer_headline", "proof_points", "strategic_implication", "exhibit", "evidence_boundary"],
+            properties: {
+              chapter_number: { type: "integer" },
+              executive_question: { type: "string" },
+              answer_headline: { type: "string" },
+              proof_points: stringArray,
+              strategic_implication: { type: "string" },
+              exhibit: {
+                type: "object",
+                required: ["visual_type", "title", "conclusion_to_prove"],
+                properties: {
+                  visual_type: { type: "string" },
+                  title: { type: "string" },
+                  executive_question: { type: "string" },
+                  entities_or_measures_required: stringArray,
+                  conclusion_to_prove: { type: "string" },
+                  annotations: stringArray,
+                  unavailable_evidence_that_could_invalidate: stringArray,
+                },
+              },
+              evidence_boundary: { type: "string" },
+              supporting_refs: stringArray,
+            },
+          },
+        },
+        leadership_choices: stringArray,
+        sequence: {
+          type: "object",
+          required: ["act_now", "build_next", "scale_later"],
+          properties: {
+            act_now: stringArray,
+            build_next: stringArray,
+            scale_later: stringArray,
+          },
+        },
+        decisions_required: stringArray,
+        evidence_required: stringArray,
+      },
+    },
+  };
+}
 
 function claudeSystemPrompt() {
   return [
-    "You are a senior strategy consultant writing the CXO-facing narrative layer for the Nexus Home Knowledge Pack.",
-    "Audience: CXO / EVP / CIO / CDAO. Write like a top-tier strategy consultant synthesizing an enterprise context review, not product documentation.",
+    "NON-NEGOTIABLE PROMPT-FIRST AUTHORSHIP CONTRACT",
+    "You are the sole author of all client-visible language returned by this generation. The product will render your client-visible output exactly as returned.",
+    "No downstream component will rewrite your prose, shorten your prose, summarize your prose, remove inconvenient caveats, replace technical language with business language, invent fallback narrative, create a substitute table from your prose, add a recommendation you did not return, repair an unsupported claim, change your ranking rationale, convert an inference into a fact, remove an evidence boundary, or add a visual conclusion not present in your response.",
+    "Therefore, your response must already be complete, client-safe, executive-readable, evidence-grounded, structurally valid, within the stated length limits, and ready for verbatim display.",
     "",
-    "Data boundary:",
-    "- Every fact in the supplied context is synthetic, PHI-free, planning-grade demo context. Do not claim real production data, audited realized savings, achieved ROI, production AI readiness, or a completed platform build.",
-    "- AWS and Databricks (where present) are future/target foundation direction unless the context explicitly says otherwise.",
-    "- Never invent a fact, number, owner, or system that is not present in the supplied context. If a claim would outrun the evidence, replace it with a caveat or a lower-grain supported statement.",
+    "ROLE",
+    "You are a senior enterprise strategy advisor creating the governed Nexus Home / Knowledge executive brief.",
+    "Your job is not to summarize database contents, uploaded files, rows, records, graph objects, evidence inventories, or the source data model.",
+    "Your job is to explain what kind of enterprise this is, how it operates, which strengths and constraints matter, how relevant industry movements could affect it, where the business may need to operate differently, which strategic changes deserve leadership attention, what dependencies and evidence gates must be resolved, and what the executive should investigate next.",
     "",
-    "Language rules:",
-    "- Product name is Nexus. Never use \"AbarVa\", \"guidebook\", \"definition\", \"not loaded\", \"runtime\", \"packet\", \"substrate\", or raw record/evidence IDs in prose.",
-    "- Do not define dimensions generically. Every sentence must say what this tenant's context implies.",
-    "- Executive grain: issue, implication, decision, evidence gate. No product help copy.",
-    "- Short, scannable sentences. No giant paragraphs.",
+    "INPUT CONTRACT",
+    "The supplied packet has already been converted into executive-safe business context. It contains tenant facts, business-scale measures, executive interview signals, dimension-level interpretations, material relationship paths, evidence maturity, industry patterns, strategic candidates, missing evidence, and hidden audit references.",
+    "Treat audit references as hidden traceability metadata. Never reproduce them inside narrative text.",
     "",
-    "Overclaim ban (this context is a synthetic demo scenario -- claims must not read as validated real-client production assertions):",
-    "- Never write \"proven\", \"value is real\", \"fully loaded\", \"realized savings\", \"achieved ROI\", or \"production-ready\" as an assertion of fact.",
-    "- A strength shows something WORKING IN THE LOADED SCENARIO, not a validated outcome. Phrase strengths as \"source-backed within the loaded context\" / \"adoption indicated in the loaded scenario\", not \"proven and adopted\".",
-    "- Distinguish four truth levels every time it matters: a loaded fact, a derived measure, an industry pattern, and a strategic inference. A mature capability is only \"better positioned to convert a value hypothesis into a measurable outcome\" -- realized value still requires operational and finance validation. Never say value \"is real\".",
-    "- Confidence describes breadth of loaded context, not verified outcomes. 'Rich' may describe breadth; it never means every required dimension is complete.",
+    "CLIENT-VISIBLE LANGUAGE RULES",
+    "Your output will be rendered verbatim to a CEO, CFO, CIO, COO or other business executive.",
+    "Never emit source IDs, evidence IDs, filenames, directories, storage paths, JSON, SQL, database, table, schema, prompt, response, renderer, payload, runtime, packet, rows, records, facts, candidate-row counts, relationship_nodes, relationship_edges, derivation_method, source_file, internal field names, raw lifecycle codes, or generic statements about data being loaded.",
+    "Do not repeat prohibited language even if it appears in supporting context. Translate technical information into enterprise meaning.",
+    "Bad: 3,987 source rows and 208 evidence references are loaded.",
+    "Good: Enterprise structure and the system estate are well evidenced; process performance and realized value remain less certain.",
+    "Bad: 298 relationship rows connect 241 application records.",
+    "Good: The major platforms are connected to priority business domains, but several ownership and dependency paths remain unvalidated.",
     "",
-    "Word budgets (hard limits, do not exceed):",
+    "NUMBER RULE",
+    "A number may appear only when it describes a recognizable enterprise object or business measure, materially helps an executive understand scale, concentration, performance or exposure, and uses a client-friendly unit.",
+    "Permitted examples: 241 applications, 96 vendors, $650M IT budget, 12 approved programs, 75/25 run/change posture.",
+    "Prohibited examples: 241 rows, 500 records, 208 evidence references, 222 candidate rows, 298 relationship rows.",
+    "",
+    "TRUTH CLASSIFICATION",
+    "Every material conclusion must be classified internally as one of loaded_fact, derived_measure, executive_signal, industry_pattern, strategic_inference, or missing_evidence.",
+    "Never present an industry pattern as a tenant fact, a strategic inference as confirmed current state, a value hypothesis as realized value, a target-state platform as production capability, or an interview statement as an approved enterprise decision.",
+    "Every strategic inference must identify the loaded facts, executive signals or industry patterns that support it.",
+    "",
+    "WRITING STANDARD",
+    "Use answer-first executive language. Every major section should have a conclusion headline, concise executive read, two or three supporting points, evidence boundary, and next leadership action.",
+    "Avoid generic AI enthusiasm, generic unlock value language, repetitive caveats, product promotion, narration of the underlying data model, unsupported certainty, and 19-dimension tours.",
+    "",
+    "STORY ARCHITECTURE",
+    "Use the supplied story_architecture as the governing argument. The dimensions are evidence behind the story; they are not the storyline. Every narrative section must advance the governing thesis.",
+    "",
+    "OUTPUT BLOCKING",
+    "If the requested output cannot be completed within the available evidence or response budget, return generation_status = blocked, blocked_reason, missing_evidence, incomplete_sections, and recommended_regeneration_scope through the tool fields where available. Never return a silently truncated or partially completed pack.",
+    "",
+    "SELF-CHECK BEFORE RETURNING",
+    "Silently verify: one governing thesis; every section advances it; tenant facts are supported; industry patterns are separated from tenant facts; strategic inferences are classified; target-state capability is separated from current state; value hypotheses are separated from realized outcomes; rankings are governed; raw IDs/files/paths/technical object names are absent; raw row/record/fact/candidate counts are absent; relationship explanations are business-readable; evidence gaps tie to blocked decisions; visual specifications are supported; every required field is complete; content is tenant-specific; every chapter answers so what; there is a clear leadership choice or next action.",
+    "",
+    "WORD BUDGETS (hard limits, do not exceed):",
     "- narratives.enterprise_brief, narratives.operating_model, narratives.relationship_map, narratives.use_cases, narratives.evidence_boundary: 75-130 words each.",
     "- use_cases[].client_context_signal, why_now, operating_model_change, change_strategy, readiness_barrier, evidence_gate, priority_rationale: 22-45 words each.",
     "- use_cases[].industry_pattern, value_thesis: 22-42 words each.",
@@ -302,7 +744,7 @@ function claudeSystemPrompt() {
     "- context_confidence_pct: integer 0-100 reflecting how load-complete and evidence-backed the context is. context_confidence_note: one short sentence explaining it.",
     "- data_foundation_summary: 40-90 words on the data & AI foundation state, honest about what is certified vs aspirational.",
     "",
-    "Load tier (tier) -- lets one template serve rich and thin tenants honestly:",
+    "LOAD TIER",
     "- tier: 'thin' | 'partial' | 'rich' based on evidence depth across dimensions. tier_label: a short human label. tier_title + tier_body: what this tier means for the reader. tier_conditions[]: ordered { text } list of what evidence would move it to the next tier. tier_basis: one sentence on why this tier was assigned. Be honest -- a thin tenant must read as thin, not be dressed up as rich.",
     "",
     "AI readiness (ai_readiness) -- ONLY emit a score you can defend:",
@@ -311,17 +753,11 @@ function claudeSystemPrompt() {
     "Per-dimension module implications (dimension_module_implications):",
     "- For material dimensions, 1-3 entries each { dimension_key (echo verbatim from the input dimensions), module: 'intelligence'|'moves'|'source'|'tower', implication (one sentence tying THIS dimension's context to what that module can do), evidence_refs }.",
     "",
-    `You must call the ${CLAUDE_NARRATIVE_TOOL_NAME} tool exactly once with your complete output. Echo each use case's "name" field and each dimension's "key" back verbatim (character-for-character) from the input context so they can be matched to their source records.`,
+    `You must call the ${CLAUDE_NARRATIVE_TOOL_NAME} tool exactly once with your complete executive brief output. Do not return dimension stories, relationship reads, evidence-read objects, use-case qualifications, or strategic narratives in this call; those are authored by separate scoped calls.`,
   ].join("\n");
 }
 
 function claudeNarrativeTool() {
-  const strategyFieldNames = [
-    "industry_pattern", "client_context_signal", "why_now", "operating_model_change",
-    "change_strategy", "value_thesis", "readiness_barrier", "evidence_gate",
-    "priority_rationale", "module_next_step",
-  ];
-  const strategyFields = Object.fromEntries(strategyFieldNames.map((key) => [key, { type: "string" }]));
   const textWithEvidence = {
     type: "object",
     required: ["text"],
@@ -332,11 +768,16 @@ function claudeNarrativeTool() {
   };
   return {
     name: CLAUDE_NARRATIVE_TOOL_NAME,
-    description: "Submit the CXO strategy narratives, use-case enrichment, executive-read block, load tier, AI readiness, and per-dimension module implications for this tenant's Home Knowledge Pack.",
+    description: "Submit the CXO executive brief narratives, executive-read block, load tier, AI readiness, and per-dimension module implications for this tenant's Home Knowledge Pack.",
     input_schema: {
       type: "object",
-      required: ["narratives", "use_cases", "executive_read"],
+      required: ["narratives", "executive_read"],
       properties: {
+        generation_status: { type: "string", enum: ["complete", "blocked"] },
+        blocked_reason: { type: "string" },
+        missing_evidence: { type: "array", items: { type: "string" } },
+        incomplete_sections: { type: "array", items: { type: "string" } },
+        recommended_regeneration_scope: { type: "string" },
         narratives: {
           type: "object",
           required: ["enterprise_brief", "operating_model", "relationship_map", "use_cases", "evidence_boundary"],
@@ -346,14 +787,6 @@ function claudeNarrativeTool() {
             relationship_map: { type: "string" },
             use_cases: { type: "string" },
             evidence_boundary: { type: "string" },
-          },
-        },
-        use_cases: {
-          type: "array",
-          items: {
-            type: "object",
-            required: ["name", ...strategyFieldNames],
-            properties: { name: { type: "string" }, ...strategyFields },
           },
         },
         executive_read: {
@@ -436,16 +869,21 @@ const CLAUDE_STRATEGIC_TOOL_NAME = "submit_home_knowledge_strategic_narratives";
 
 function claudeStrategicSystemPrompt() {
   return [
+    "NON-NEGOTIABLE PROMPT-FIRST AUTHORSHIP CONTRACT",
+    "You are the sole author of all client-visible language returned by this generation. The product will render your client-visible output exactly as returned.",
+    "No downstream component will rewrite, shorten, sanitize, summarize, supplement, replace, repair, or complete your output. Do not rely on the renderer or any post-processing step to improve, correct or complete your output.",
+    "",
     "You are a senior C-suite strategy consultant (think top-tier firm) writing the forward-looking layer of an enterprise knowledge brief for a board pre-read.",
     "Audience: CEO / CFO / CIO / CDAO / COO. This is the 'where the industry is going, how we could operate differently, and what change theses to weigh' section.",
     "",
-    "Ground EVERYTHING in THIS tenant's supplied context -- its systems, data, vendors, functions, use cases, constraints, interview signals, and industry rows. Name specific tenant systems/functions/use cases. No generic strategy-deck filler.",
+    "Ground EVERYTHING in THIS tenant's executive-safe packet -- its systems, data, vendors, functions, strategic candidates, constraints, interview signals, industry patterns, material relationship paths, and story architecture. Name specific tenant systems/functions/strategic candidates when they are present. No generic strategy-deck filler.",
     "",
     "Data boundary (synthetic, PHI-free, planning-grade demo context):",
     "- Never claim realized savings, achieved ROI, production readiness, or a completed platform. AWS/Databricks (where present) are target direction, not current.",
     "- Never invent a fact, system, owner, or number not in the supplied context.",
     "- Never write 'proven', 'value is real', 'fully loaded', or 'production-ready' as an assertion. Value is always a HYPOTHESIS until operational + finance validation.",
-    "- Product name is Nexus. No 'AbarVa', no raw record/evidence IDs in prose, no product jargon.",
+    "- Product name is Nexus. No AbarVa, raw record/evidence IDs, filenames, paths, JSON, SQL, database/table/schema terms, rows, records, facts, relationship rows, node/edge counts, runtime, packet, payload, or product jargon in prose.",
+    "- Use the governing thesis and chapter logic from story_architecture. The dimensions are evidence behind the story; do not write a 19-dimension tour.",
     "",
     "Produce three kinds of strategic narrative (all in one strategic_narratives array, each tagged with narrative_type):",
     "",
@@ -456,6 +894,7 @@ function claudeStrategicSystemPrompt() {
     "3. change_thesis (3-5). classification = 'strategic_inference'. A supported change thesis: current enterprise condition -> target operating condition, with the industry force behind it. Fill current_state, target_state_or_relevance, affected_entities, value_hypothesis, dependencies, evidence_gate, recommended_next_action.",
     "",
     "Every entry: executive_narrative = 2-4 crisp sentences (issue -> implication -> decision); confidence = 0-1 honest about supporting evidence; evidence_refs from the context where they exist. Boardroom-grade, tenant-specific, calm, credible, no hype, no unsupported realized-value claims.",
+    "The executive_narrative field is mandatory for every entry and is the only long client-visible paragraph for the entry. Do not put the narrative only in current_state, target_state_or_relevance, value_hypothesis, or recommended_next_action.",
     "",
     `Call the ${CLAUDE_STRATEGIC_TOOL_NAME} tool exactly once with your complete strategic_narratives array (aim for 9-15 entries total across the three types).`,
   ].join("\n");
@@ -499,6 +938,268 @@ function claudeStrategicTool() {
   };
 }
 
+const CLAUDE_USE_CASE_TOOL_NAME = "submit_home_knowledge_use_case_qualifications";
+const CLAUDE_DIMENSION_TOOL_NAME = "submit_home_knowledge_dimension_stories";
+const CLAUDE_RELATIONSHIP_TOOL_NAME = "submit_home_knowledge_relationship_reads";
+const CLAUDE_EVIDENCE_TOOL_NAME = "submit_home_knowledge_evidence_read";
+
+function promptFirstContractBlock() {
+  return [
+    "NON-NEGOTIABLE PROMPT-FIRST AUTHORSHIP CONTRACT",
+    "You are the sole author of all client-visible language returned by this generation.",
+    "The product will render your client-visible output exactly as returned.",
+    "No downstream component will rewrite, shorten, sanitize, summarize, supplement, replace, repair, or complete your output.",
+    "Do not rely on the renderer or any post-processing step to improve, correct or complete your output.",
+    "Never emit audit references, source IDs, evidence IDs, filenames, file paths, storage locations, prompt/response paths, database/schema/table terminology, JSON keys, internal lifecycle codes, derivation methods, renderer terminology, packet terminology, rows, records, facts, candidate-row counts, graph node/edge counts, or raw graph object names in client-visible strings.",
+    "Never use phrases such as grounding packet, evidence packet, render packet, graph node, graph edge, source object, payload, JSON, schema, table, file, row, record, fact count, or ID in client-visible strings.",
+    "Use structured evidence_refs fields only for machine-readable traceability.",
+  ].join("\n");
+}
+
+function claudeUseCaseSystemPrompt() {
+  return [
+    promptFirstContractBlock(),
+    "",
+    "USE-CASE QUALIFIER ROLE",
+    "You are qualifying strategic change candidates for a C-suite Home brief.",
+    "Do not force every candidate to become a qualified use case. Classify each item as strategic_foundation, operating_model_change_thesis, qualified_use_case, early_idea, or evidence_request.",
+    "Do not originate ranks. If no governed rank is supplied, use leadership-attention language rather than top/best/highest-priority language.",
+    "If a number lacks currency, unit, period or validation status, omit it from client-visible prose.",
+    "For every supplied candidate return exactly one item with the exact candidate_key and current name.",
+    `Call the ${CLAUDE_USE_CASE_TOOL_NAME} tool exactly once.`,
+  ].join("\n");
+}
+
+function claudeUseCaseTool() {
+  return {
+    name: CLAUDE_USE_CASE_TOOL_NAME,
+    description: "Submit scoped qualification for the supplied strategic change candidates.",
+    input_schema: {
+      type: "object",
+      required: ["use_cases"],
+      properties: {
+        use_cases: {
+          type: "array",
+          items: {
+            type: "object",
+            required: [
+              "candidate_key",
+              "name",
+              "classification",
+              "industry_pattern",
+              "client_context_signal",
+              "why_now",
+              "operating_model_change",
+              "change_strategy",
+              "value_thesis",
+              "readiness_barrier",
+              "evidence_gate",
+              "priority_rationale",
+              "module_next_step",
+            ],
+            properties: {
+              candidate_key: { type: "string" },
+              name: { type: "string" },
+              classification: {
+                type: "string",
+                enum: ["strategic_foundation", "operating_model_change_thesis", "qualified_use_case", "early_idea", "evidence_request"],
+              },
+              business_workflow_or_decision: { type: "string" },
+              industry_pattern: { type: "string" },
+              client_context_signal: { type: "string" },
+              current_operating_condition: { type: "string" },
+              future_operating_condition: { type: "string" },
+              human_role_change: { type: "string" },
+              systems_data_control_requirements: { type: "array", items: { type: "string" } },
+              why_now: { type: "string" },
+              operating_model_change: { type: "string" },
+              change_strategy: { type: "string" },
+              value_thesis: { type: "string" },
+              readiness_barrier: { type: "string" },
+              evidence_gate: { type: "string" },
+              priority_rationale: { type: "string" },
+              module_next_step: { type: "string" },
+              pilot_probability_band: { type: "string" },
+              scale_probability_band: { type: "string" },
+              reference_class_basis: { type: "string" },
+              baseline_metrics_required: { type: "array", items: { type: "string" } },
+              evidence_refs: { type: "array", items: { type: "string" } },
+            },
+          },
+        },
+      },
+    },
+  };
+}
+
+function claudeDimensionSystemPrompt() {
+  return [
+    promptFirstContractBlock(),
+    "",
+    "DIMENSION WRITER ROLE",
+    "You are writing the Knowledge Explorer dimension-level executive reads.",
+    "Return exactly one dimension_stories entry for every supplied dimension key. Do not omit thin dimensions.",
+    "For each dimension explain what is known, what cannot yet be concluded, why it matters, the specific evidence request, and the next responsible owner/source.",
+    "Do not summarize database contents. Translate context into executive meaning.",
+    "Never say value is real, proven value, realized savings, production-ready, or fully loaded unless the supplied evidence explicitly proves realized business outcomes or production status. When evidence is incomplete, say the hypothesis is attractive or decision-relevant, not real.",
+    `Call the ${CLAUDE_DIMENSION_TOOL_NAME} tool exactly once.`,
+  ].join("\n");
+}
+
+function claudeDimensionTool() {
+  return {
+    name: CLAUDE_DIMENSION_TOOL_NAME,
+    description: "Submit exact dimension-level executive stories for the supplied dimension batch.",
+    input_schema: {
+      type: "object",
+      required: ["dimension_stories"],
+      properties: {
+        dimension_stories: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["dimension_key", "answer_headline", "executive_read", "why_it_matters", "evidence_boundary", "next_action"],
+            properties: {
+              dimension_key: { type: "string" },
+              answer_headline: { type: "string" },
+              executive_read: { type: "string" },
+              why_it_matters: { type: "string" },
+              material_strengths: { type: "array", items: { type: "string" } },
+              material_constraints: { type: "array", items: { type: "string" } },
+              strategic_implications: { type: "array", items: { type: "string" } },
+              evidence_boundary: { type: "string" },
+              next_action: { type: "string" },
+              visual_specification: {
+                type: "object",
+                properties: {
+                  answer_first_title: { type: "string" },
+                  visual_type: { type: "string" },
+                  conclusion_to_prove: { type: "string" },
+                  annotations: { type: "array", items: { type: "string" } },
+                  empty_state_behavior: { type: "string" },
+                },
+              },
+              module_implications: {
+                type: "array",
+                items: {
+                  type: "object",
+                  required: ["module", "implication"],
+                  properties: {
+                    module: { type: "string", enum: ["intelligence", "moves", "source", "tower"] },
+                    implication: { type: "string" },
+                  },
+                },
+              },
+              evidence_refs: { type: "array", items: { type: "string" } },
+            },
+          },
+        },
+      },
+    },
+  };
+}
+
+function claudeRelationshipSystemPrompt() {
+  return [
+    promptFirstContractBlock(),
+    "",
+    "RELATIONSHIP WRITER ROLE",
+    "You are authoring material enterprise graph projections for a CXO Knowledge cockpit.",
+    "Do not narrate graph size, nodes, edges, or raw relationships. Generate a small number of material graph projections: enterprise structure, operating model, technology dependency, change impact, value realization, and evidence lineage where supported.",
+    "For each projection explain the business meaning, what it enables, dependencies, constraints, unresolved relationships, affected changes, evidence boundary, and next action.",
+    `Call the ${CLAUDE_RELATIONSHIP_TOOL_NAME} tool exactly once.`,
+  ].join("\n");
+}
+
+function claudeRelationshipTool() {
+  return {
+    name: CLAUDE_RELATIONSHIP_TOOL_NAME,
+    description: "Submit material relationship projections for the Home graph/relationship tabs.",
+    input_schema: {
+      type: "object",
+      required: ["relationship_reads"],
+      properties: {
+        relationship_reads: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["projection_key", "answer_headline", "business_meaning", "evidence_boundary", "next_action"],
+            properties: {
+              projection_key: { type: "string" },
+              projection_type: { type: "string" },
+              dimension_key: { type: "string" },
+              answer_headline: { type: "string" },
+              material_path: { type: "array", items: { type: "string" } },
+              business_meaning: { type: "string" },
+              enables: { type: "array", items: { type: "string" } },
+              dependencies: { type: "array", items: { type: "string" } },
+              constraints: { type: "array", items: { type: "string" } },
+              unresolved_relationships: { type: "array", items: { type: "string" } },
+              affected_changes: { type: "array", items: { type: "string" } },
+              evidence_boundary: { type: "string" },
+              next_action: { type: "string" },
+              evidence_refs: { type: "array", items: { type: "string" } },
+            },
+          },
+        },
+      },
+    },
+  };
+}
+
+function claudeEvidenceSystemPrompt() {
+  return [
+    promptFirstContractBlock(),
+    "",
+    "EVIDENCE WRITER ROLE",
+    "You are writing the executive evidence boundary for the Home cockpit.",
+    "Do not narrate files, rows, IDs, ingestion status, or source inventory mechanics.",
+    "Explain strongest areas, weakest areas, freshness, conflicts, unsupported assumptions, client-to-confirm items, priority requests, owner/source for each request, decision blocked by every missing item, and impact on Intelligence, Moves, Source and Tower.",
+    `Call the ${CLAUDE_EVIDENCE_TOOL_NAME} tool exactly once.`,
+  ].join("\n");
+}
+
+function claudeEvidenceTool() {
+  return {
+    name: CLAUDE_EVIDENCE_TOOL_NAME,
+    description: "Submit the executive evidence read and priority requests.",
+    input_schema: {
+      type: "object",
+      required: ["evidence_read"],
+      properties: {
+        evidence_read: {
+          type: "object",
+          required: ["answer_headline", "strongest_areas", "weakest_areas", "priority_requests"],
+          properties: {
+            answer_headline: { type: "string" },
+            strongest_areas: { type: "array", items: { type: "string" } },
+            weakest_areas: { type: "array", items: { type: "string" } },
+            freshness: { type: "string" },
+            conflicts: { type: "array", items: { type: "string" } },
+            unsupported_assumptions: { type: "array", items: { type: "string" } },
+            client_to_confirm: { type: "array", items: { type: "string" } },
+            priority_requests: {
+              type: "array",
+              items: {
+                type: "object",
+                required: ["request", "why_it_matters", "decision_blocked"],
+                properties: {
+                  request: { type: "string" },
+                  why_it_matters: { type: "string" },
+                  decision_blocked: { type: "string" },
+                  owner_hint: { type: "string" },
+                  source_hint: { type: "string" },
+                  module_impact: { type: "array", items: { type: "string" } },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+}
+
 function anthropicClient(Anthropic) {
   return new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
@@ -512,6 +1213,7 @@ async function invokeClaudeTool(client, { tool, system, promptPacket, maxTokens 
   let lastError = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
+      console.error(`[home-pack-v3] ${tool.name} attempt ${attempt} start`);
       const message = await client.messages.create({
         model,
         max_tokens: maxTokens,
@@ -522,6 +1224,23 @@ async function invokeClaudeTool(client, { tool, system, promptPacket, maxTokens 
       });
       const toolUse = message.content.find((block) => block.type === "tool_use" && block.name === tool.name);
       if (!toolUse) throw new Error(`Claude response did not include the expected tool_use block (${tool.name}).`);
+      console.error(`[home-pack-v3] ${tool.name} attempt ${attempt} complete stop=${message.stop_reason}`);
+      if (toolUse.input && typeof toolUse.input === "object") {
+        Object.defineProperty(toolUse.input, "__provider_metadata", {
+          enumerable: false,
+          value: {
+            response_id: message.id,
+            model: message.model,
+            role: message.role,
+            stop_reason: message.stop_reason,
+            stop_sequence: message.stop_sequence ?? null,
+            usage: message.usage ?? null,
+            tool_name: tool.name,
+            tool_use_id: toolUse.id ?? null,
+            tool_input_keys: Object.keys(toolUse.input ?? {}),
+          },
+        });
+      }
       return toolUse.input;
     } catch (error) {
       lastError = error;
@@ -539,6 +1258,201 @@ async function invokeClaudeTool(client, { tool, system, promptPacket, maxTokens 
   throw new Error(`Claude call failed for ${tool.name} after ${maxAttempts} attempt(s): ${lastError?.message ?? lastError}`);
 }
 
+function providerMetadata(value) {
+  return value && typeof value === "object" ? value.__provider_metadata ?? null : null;
+}
+
+function attachProviderMetadata(value, metadata) {
+  if (!value || typeof value !== "object" || !metadata) return value;
+  Object.defineProperty(value, "__provider_metadata", {
+    enumerable: false,
+    value: metadata,
+  });
+  return value;
+}
+
+function missingExpectedKeys(rows, expectedKeys, keyField) {
+  const found = new Set(asArray(rows).map((row) => asText(row?.[keyField]).trim()).filter(Boolean));
+  return asArray(expectedKeys).map(asText).filter(Boolean).filter((key) => !found.has(key));
+}
+
+function visibleStrategicNarratives(rows) {
+  return asArray(rows).filter((row) =>
+    NARRATIVE_TYPES.has(asText(row.narrative_type).trim()) &&
+    asText(row.title).trim() &&
+    asText(row.executive_narrative).trim(),
+  );
+}
+
+async function callClaudeForStoryArchitecture(promptPacket) {
+  if (!useClaude || !process.env.ANTHROPIC_API_KEY) return null;
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
+  const result = await invokeClaudeTool(anthropicClient(Anthropic), {
+    tool: claudeStoryTool(),
+    system: claudeStoryArchitectSystemPrompt(),
+    promptPacket,
+    maxTokens: Number(process.env.HOME_KNOWLEDGE_STORY_MAX_TOKENS || 8000),
+  });
+  return result;
+}
+
+async function callClaudeForUseCaseQualifications(promptPacket) {
+  if (!useClaude || !process.env.ANTHROPIC_API_KEY) return [];
+  const candidates = asArray(promptPacket.context?.strategic_candidates);
+  if (!candidates.length) return [];
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
+  const result = await invokeClaudeTool(anthropicClient(Anthropic), {
+    tool: claudeUseCaseTool(),
+    system: claudeUseCaseSystemPrompt(),
+    promptPacket: {
+      tenant: promptPacket.tenant,
+      story_architecture: promptPacket.story_architecture,
+      industry_patterns: promptPacket.context?.industry_patterns,
+      evidence_read: promptPacket.context?.evidence_read,
+      strategic_candidates: candidates,
+      expected_manifest: {
+        expected_candidate_count: candidates.length,
+        candidate_keys: candidates.map((candidate) => candidate.candidate_key),
+      },
+    },
+    maxTokens: Number(process.env.HOME_KNOWLEDGE_USE_CASE_MAX_TOKENS || 10000),
+  });
+  return attachProviderMetadata(asArray(result?.use_cases), providerMetadata(result));
+}
+
+const DIMENSION_BATCHES = [
+  {
+    batch_key: "enterprise_people",
+    dimension_keys: ["profile", "functions", "org", "workforce"],
+  },
+  {
+    batch_key: "technology_ecosystem",
+    dimension_keys: ["apps", "data", "infra", "vendors", "ms"],
+  },
+  {
+    batch_key: "change_value",
+    dimension_keys: ["budget", "programs", "ai", "metrics"],
+  },
+  {
+    batch_key: "risk_trust_interpretation",
+    dimension_keys: ["risks", "rel", "evidence", "industry", "lenses", "opev"],
+  },
+];
+
+async function callClaudeForDimensionStories(promptPacket) {
+  if (!useClaude || !process.env.ANTHROPIC_API_KEY) return [];
+  const allDimensions = asArray(promptPacket.context?.dimension_reads);
+  if (!allDimensions.length) return [];
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
+  const all = [];
+  for (const batch of DIMENSION_BATCHES) {
+    const dimensions = allDimensions.filter((dimension) => batch.dimension_keys.includes(asText(dimension.dimension_key)));
+    if (!dimensions.length) continue;
+    const expectedKeys = dimensions.map((dimension) => asText(dimension.dimension_key));
+    let acceptedRows = [];
+    let acceptedMetadata = null;
+    let previousFindings = [];
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      const result = await invokeClaudeTool(anthropicClient(Anthropic), {
+        tool: claudeDimensionTool(),
+        system: claudeDimensionSystemPrompt(),
+        promptPacket: {
+          tenant: promptPacket.tenant,
+          story_architecture: promptPacket.story_architecture,
+          batch_key: batch.batch_key,
+          dimensions,
+          material_relationship_paths: promptPacket.context?.material_relationship_paths,
+          evidence_read: promptPacket.context?.evidence_read,
+          expected_manifest: {
+            expected_dimension_story_count: dimensions.length,
+            dimension_keys: expectedKeys,
+          },
+          previous_attempt_missing_dimension_keys:
+            attempt === 1 ? [] : missingExpectedKeys(acceptedRows, expectedKeys, "dimension_key"),
+          previous_attempt_client_visible_findings: previousFindings,
+        },
+        maxTokens: Number(process.env.HOME_KNOWLEDGE_DIMENSION_MAX_TOKENS || 9000),
+      });
+      acceptedRows = asArray(result?.dimension_stories);
+      acceptedMetadata = providerMetadata(result);
+      const missing = missingExpectedKeys(acceptedRows, expectedKeys, "dimension_key");
+      previousFindings = scanVisibleText(
+        acceptedRows.map((row) => ({
+          dimension_key: row.dimension_key,
+          answer_headline: row.answer_headline,
+          executive_read: row.executive_read,
+          why_it_matters: row.why_it_matters,
+          material_strengths: row.material_strengths,
+          material_constraints: row.material_constraints,
+          strategic_implications: row.strategic_implications,
+          evidence_boundary: row.evidence_boundary,
+          next_action: row.next_action,
+        })),
+        `${batch.batch_key}.dimension_stories`,
+      ).filter((finding) => finding.level === "P0" || finding.level === "P1");
+      if (missing.length === 0 && previousFindings.length === 0) break;
+      console.error(`[dimension-stories] ${batch.batch_key} attempt ${attempt} incomplete; missing=${missing.join(",") || "none"} findings=${JSON.stringify(previousFindings.slice(0, 3))}`);
+    }
+    all.push(...acceptedRows);
+    if (acceptedMetadata) {
+      all.__provider_metadata = [
+        ...(all.__provider_metadata ?? []),
+        acceptedMetadata,
+      ];
+    }
+  }
+  return all;
+}
+
+async function callClaudeForRelationshipReads(promptPacket) {
+  if (!useClaude || !process.env.ANTHROPIC_API_KEY) return [];
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
+  const result = await invokeClaudeTool(anthropicClient(Anthropic), {
+    tool: claudeRelationshipTool(),
+    system: claudeRelationshipSystemPrompt(),
+    promptPacket: {
+      tenant: promptPacket.tenant,
+      story_architecture: promptPacket.story_architecture,
+      material_relationship_paths: promptPacket.context?.material_relationship_paths,
+      strategic_candidates: promptPacket.context?.strategic_candidates,
+      evidence_read: promptPacket.context?.evidence_read,
+      expected_manifest: {
+        required_projection_types: [
+          "enterprise_structure",
+          "operating_model",
+          "technology_dependency",
+          "change_impact",
+          "value_realization",
+          "evidence_lineage",
+        ],
+      },
+    },
+    maxTokens: Number(process.env.HOME_KNOWLEDGE_RELATIONSHIP_MAX_TOKENS || 8000),
+  });
+  return attachProviderMetadata(asArray(result?.relationship_reads), providerMetadata(result));
+}
+
+async function callClaudeForEvidenceRead(promptPacket) {
+  if (!useClaude || !process.env.ANTHROPIC_API_KEY) return null;
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
+  const result = await invokeClaudeTool(anthropicClient(Anthropic), {
+    tool: claudeEvidenceTool(),
+    system: claudeEvidenceSystemPrompt(),
+    promptPacket: {
+      tenant: promptPacket.tenant,
+      story_architecture: promptPacket.story_architecture,
+      evidence_read: promptPacket.context?.evidence_read,
+      dimension_reads: promptPacket.context?.dimension_reads,
+      strategic_candidates: promptPacket.context?.strategic_candidates,
+      expected_manifest: {
+        required_singletons: ["evidence_read"],
+      },
+    },
+    maxTokens: Number(process.env.HOME_KNOWLEDGE_EVIDENCE_MAX_TOKENS || 8000),
+  });
+  return attachProviderMetadata(result?.evidence_read ?? null, providerMetadata(result));
+}
+
 // Dedicated forward-looking call: industry movements, new ways of operating,
 // change theses. Kept separate from the main pack call so it gets the full
 // token budget and a focused C-suite prompt. Never blocks the pack -- a
@@ -547,17 +1461,40 @@ async function callClaudeForStrategicNarratives(promptPacket) {
   if (!useClaude || !process.env.ANTHROPIC_API_KEY) return [];
   try {
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
-    const result = await invokeClaudeTool(anthropicClient(Anthropic), {
-      tool: claudeStrategicTool(),
-      system: claudeStrategicSystemPrompt(),
-      promptPacket,
-      maxTokens: Number(process.env.HOME_KNOWLEDGE_STRATEGIC_MAX_TOKENS || 12000),
-    });
-    const arr = asArray(result?.strategic_narratives);
-    if (process.env.HOME_KNOWLEDGE_DEBUG) {
-      console.error(`[strategic-narratives] returned ${arr.length} entries; keys=${result ? Object.keys(result).join(",") : "null"}`);
+    let acceptedRows = [];
+    let acceptedMetadata = null;
+    let previousMissing = [];
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      const result = await invokeClaudeTool(anthropicClient(Anthropic), {
+        tool: claudeStrategicTool(),
+        system: claudeStrategicSystemPrompt(),
+        promptPacket: {
+          ...promptPacket,
+          previous_attempt_missing_required_fields: previousMissing,
+        },
+        maxTokens: Number(process.env.HOME_KNOWLEDGE_STRATEGIC_MAX_TOKENS || 12000),
+      });
+      acceptedRows = asArray(result?.strategic_narratives);
+      acceptedMetadata = providerMetadata(result);
+      const visibleRows = visibleStrategicNarratives(acceptedRows);
+      previousMissing = acceptedRows
+        .map((row, index) => ({
+          index,
+          title: asText(row.title),
+          missing: [
+            asText(row.narrative_type).trim() ? "" : "narrative_type",
+            asText(row.title).trim() ? "" : "title",
+            asText(row.executive_narrative).trim() ? "" : "executive_narrative",
+          ].filter(Boolean),
+        }))
+        .filter((row) => row.missing.length);
+      if (process.env.HOME_KNOWLEDGE_DEBUG) {
+        console.error(`[strategic-narratives] attempt ${attempt} returned ${acceptedRows.length} entries; storable=${visibleRows.length}`);
+      }
+      if (visibleRows.length >= 6 && previousMissing.length === 0) break;
+      console.error(`[strategic-narratives] attempt ${attempt} incomplete: storable=${visibleRows.length}, missing=${JSON.stringify(previousMissing.slice(0, 5))}`);
     }
-    return arr;
+    return attachProviderMetadata(acceptedRows, acceptedMetadata);
   } catch (error) {
     console.error(`[strategic-narratives] generation failed (non-fatal): ${error?.message ?? error}`);
     return [];
@@ -576,6 +1513,7 @@ async function callClaudeForPack(promptPacket) {
   let lastError = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
+      console.error(`[home-pack-v3] ${tool.name} attempt ${attempt} start`);
       const message = await client.messages.create({
         model,
         max_tokens: Number(process.env.HOME_KNOWLEDGE_CLAUDE_MAX_TOKENS || 12000),
@@ -586,6 +1524,23 @@ async function callClaudeForPack(promptPacket) {
       });
       const toolUse = message.content.find((block) => block.type === "tool_use" && block.name === tool.name);
       if (!toolUse) throw new Error("Claude response did not include the expected tool_use block.");
+      console.error(`[home-pack-v3] ${tool.name} attempt ${attempt} complete stop=${message.stop_reason}`);
+      if (toolUse.input && typeof toolUse.input === "object") {
+        Object.defineProperty(toolUse.input, "__provider_metadata", {
+          enumerable: false,
+          value: {
+            response_id: message.id,
+            model: message.model,
+            role: message.role,
+            stop_reason: message.stop_reason,
+            stop_sequence: message.stop_sequence ?? null,
+            usage: message.usage ?? null,
+            tool_name: tool.name,
+            tool_use_id: toolUse.id ?? null,
+            tool_input_keys: Object.keys(toolUse.input ?? {}),
+          },
+        });
+      }
       return toolUse.input;
     } catch (error) {
       lastError = error;
@@ -608,6 +1563,9 @@ function mergeClaudeNarrativesIntoPack(pack, claudeResult) {
   // not deterministically derived, so they only exist when Claude ran.
   pack.brief_model = {
     executive_read: claudeResult.executive_read ?? null,
+    dimension_stories: asArray(claudeResult.dimension_stories),
+    relationship_reads: asArray(claudeResult.relationship_reads),
+    evidence_read: claudeResult.evidence_read ?? null,
     tier: claudeResult.tier ?? null,
     ai_readiness: asArray(claudeResult.ai_readiness),
     dimension_module_implications: asArray(claudeResult.dimension_module_implications),
@@ -626,6 +1584,11 @@ function mergeClaudeNarrativesIntoPack(pack, claudeResult) {
     const key = firstText(item, ["name", "use_case_name", "ai_use_case", "business_name"]).toLowerCase().trim();
     nameCounts.set(key, (nameCounts.get(key) ?? 0) + 1);
   }
+  const byCandidateKey = new Map(
+    useCaseItems
+      .map((item) => [asText(item.candidate_key || item.use_case_key).toLowerCase().trim(), item])
+      .filter(([key]) => key),
+  );
   const byUniqueName = new Map(
     useCaseItems
       .map((item) => [firstText(item, ["name", "use_case_name", "ai_use_case", "business_name"]).toLowerCase().trim(), item])
@@ -645,14 +1608,20 @@ function mergeClaudeNarrativesIntoPack(pack, claudeResult) {
   const usePositional =
     claudeUseCases.length === useCaseItems.length && (claudeNamesUnique || sourceNamesAllCollide);
   const strategyKeys = [
+    "classification", "business_workflow_or_decision",
     "industry_pattern", "client_context_signal", "why_now", "operating_model_change",
+    "current_operating_condition", "future_operating_condition", "human_role_change",
+    "systems_data_control_requirements",
     "change_strategy", "value_thesis", "readiness_barrier", "evidence_gate",
-    "priority_rationale", "module_next_step",
+    "priority_rationale", "module_next_step", "pilot_probability_band",
+    "scale_probability_band", "reference_class_basis", "baseline_metrics_required",
   ];
   let matched = 0;
   let matchMode = "name";
   claudeUseCases.forEach((entry, index) => {
-    let target = byUniqueName.get(asText(entry.name).toLowerCase().trim());
+    let target = byCandidateKey.get(asText(entry.candidate_key).toLowerCase().trim());
+    if (target) matchMode = "candidate_key";
+    if (!target) target = byUniqueName.get(asText(entry.name).toLowerCase().trim());
     if (!target && usePositional) {
       target = useCaseItems[index];
       matchMode = "positional";
@@ -666,6 +1635,9 @@ function mergeClaudeNarrativesIntoPack(pack, claudeResult) {
     // generic placeholder, so the design shows real titles not "AI opportunity".
     if (asText(entry.name).trim() && matchMode === "positional") {
       target.name = entry.name;
+    }
+    if (asText(entry.candidate_key).trim()) {
+      target.candidate_key = entry.candidate_key;
     }
   });
   pack.brief_model.use_case_match_mode = matchMode;
@@ -719,29 +1691,50 @@ function enrichUseCases(pack) {
     const total = Number((valueScore * 0.35 + evidenceScore * 0.2 + readinessScore * 0.2 + dependencyRiskScore * 0.25).toFixed(2));
     return {
       sourceIndex: index,
-      use_case_key: stableKey(firstText(item, ["name", "use_case_name", "ai_use_case"]) || `use-case-${index + 1}`),
+      use_case_key: stableKey(firstText(item, ["candidate_key", "name", "use_case_name", "ai_use_case"]) || `use-case-${index + 1}`),
       name: firstText(item, ["name", "use_case_name", "ai_use_case", "business_name"]) || `Use case ${index + 1}`,
+      classification: asText(item.classification) || "qualified_use_case",
+      business_workflow_or_decision: asText(item.business_workflow_or_decision),
       business_function: fn || "Owner to confirm",
       owner_hint: firstText(item, ["owner", "owner_hint", "business_owner", "technology_owner"]) || "Owner to confirm",
       stage: firstText(item, ["stage", "current_status", "use_case_status", "readiness_status"]) || "Planning-grade",
-      industry_pattern: asText(item.industry_pattern) || industryPatternFor(item, pack),
-      client_context_signal: asText(item.client_context_signal) || `${fn || "The relevant business area"} appears in the loaded context; confirm source-owner evidence before scaling.`,
-      why_now: asText(item.why_now) || "Industry adoption pressure is rising, but the tenant evidence gate determines whether this is a near-term move or a staged dependency.",
-      operating_model_change: asText(item.operating_model_change) || "Shift from isolated pilots to governed workflow ownership, data accountability, and measurable adoption gates.",
-      change_strategy: asText(item.change_strategy) || "Start with a bounded pilot only where data, owner, control, and metric evidence can be certified; route the scale plan through Moves.",
+      industry_pattern: asText(item.industry_pattern) || (useClaude ? "" : industryPatternFor(item, pack)),
+      client_context_signal: asText(item.client_context_signal) || (useClaude ? "" : `${fn || "The relevant business area"} appears in the loaded context; confirm source-owner evidence before scaling.`),
+      current_operating_condition: asText(item.current_operating_condition),
+      future_operating_condition: asText(item.future_operating_condition),
+      human_role_change: asText(item.human_role_change),
+      systems_data_control_requirements: asArray(item.systems_data_control_requirements).map(asText).filter(Boolean),
+      why_now: asText(item.why_now) || (useClaude ? "" : "Industry adoption pressure is rising, but the tenant evidence gate determines whether this is a near-term move or a staged dependency."),
+      operating_model_change: asText(item.operating_model_change) || (useClaude ? "" : "Shift from isolated pilots to governed workflow ownership, data accountability, and measurable adoption gates."),
+      change_strategy: asText(item.change_strategy) || (useClaude ? "" : "Start with a bounded pilot only where data, owner, control, and metric evidence can be certified; route the scale plan through Moves."),
       value_thesis: valueText || "Value hypothesis needs validation.",
-      readiness_barrier: asText(item.readiness_barrier) || gate || "Evidence gate must be confirmed before scale.",
-      evidence_gate: gate || "Confirm data, systems, controls, owners, and value evidence.",
+      readiness_barrier: asText(item.readiness_barrier) || gate || (useClaude ? "" : "Evidence gate must be confirmed before scale."),
+      evidence_gate: gate || (useClaude ? "" : "Confirm data, systems, controls, owners, and value evidence."),
       value_score: Number(valueScore.toFixed(2)),
       readiness_score: Number(readinessScore.toFixed(2)),
       evidence_score: Number(evidenceScore.toFixed(2)),
       dependency_risk_score: Number(dependencyRiskScore.toFixed(2)),
       total_priority_score: total,
       priority_rationale: asText(item.priority_rationale || item.why_this_is_top_5) ||
-        "Ranked by combined value signal, industry urgency, tenant fit, readiness, evidence depth, and dependency leverage.",
-      module_next_step: asText(item.module_next_step) || moduleForUseCase(item),
+        (useClaude ? "" : "Ranked by combined value signal, industry urgency, tenant fit, readiness, evidence depth, and dependency leverage."),
+      module_next_step: asText(item.module_next_step) || (useClaude ? "" : moduleForUseCase(item)),
+      pilot_probability_band: asText(item.pilot_probability_band),
+      scale_probability_band: asText(item.scale_probability_band),
+      reference_class_basis: asText(item.reference_class_basis),
+      baseline_metrics_required: asArray(item.baseline_metrics_required).map(asText).filter(Boolean),
       supporting_dimensions: ["ai", "industry", "apps", "data", "risks", "evidence"],
-      required_context: { gate },
+      required_context: {
+        gate,
+        business_workflow_or_decision: asText(item.business_workflow_or_decision),
+        current_operating_condition: asText(item.current_operating_condition),
+        future_operating_condition: asText(item.future_operating_condition),
+        human_role_change: asText(item.human_role_change),
+        systems_data_control_requirements: asArray(item.systems_data_control_requirements).map(asText).filter(Boolean),
+        pilot_probability_band: asText(item.pilot_probability_band),
+        scale_probability_band: asText(item.scale_probability_band),
+        reference_class_basis: asText(item.reference_class_basis),
+        baseline_metrics_required: asArray(item.baseline_metrics_required).map(asText).filter(Boolean),
+      },
       evidence_refs: evidenceRefs(item),
       source_payload: item,
     };
@@ -781,22 +1774,35 @@ function collectionRouteFor(dimensionKey) {
 // source pack's already-authored NEXT_EVIDENCE (enterprise-level) and DGAPS
 // (per-dimension) data. Fully deterministic -- no model authoring, no
 // fabrication. Every request carries a deterministic collection_route.
-function buildNextEvidenceRequests(pack) {
+function buildNextEvidenceRequests(pack, evidenceRead = null) {
+  const authoredRequests = asArray(evidenceRead?.priority_requests)
+    .map((item, index) => ({
+      title: cleanExecutiveText(firstText(item, ["request", "title", "item"])),
+      narrative: cleanExecutiveText(firstText(item, ["why_it_matters", "narrative", "needed"])) || null,
+      requesting_dimension_key: null,
+      unlocks_narrative: cleanExecutiveText(firstText(item, ["decision_blocked", "unlocks", "blocks"])) || null,
+      requesting_role_hint: cleanExecutiveText(firstText(item, ["owner_hint", "owner", "requesting_role_hint"])) || null,
+      collection_route: cleanExecutiveText(firstText(item, ["source_hint", "collection_route"])) || collectionRouteFor(null),
+      sort_order: index + 1,
+    }))
+    .filter((row) => row.title);
+  if (authoredRequests.length) return authoredRequests;
+
   const rows = [];
   let order = 0;
   for (const item of pack.design_slots?.NEXT_EVIDENCE ?? []) {
     const title = firstText(item, ["item", "title", "missing"]);
     if (!title) continue;
     order += 1;
-    rows.push({
-      title,
-      narrative: firstText(item, ["narrative", "blocks"]) || null,
-      requesting_dimension_key: null,
-      unlocks_narrative: firstText(item, ["unlocks", "unlocks_narrative"]) || null,
-      requesting_role_hint: firstText(item, ["owner_hint", "handoff", "owner"]) || null,
-      collection_route: collectionRouteFor(null),
-      sort_order: order,
-    });
+      rows.push({
+        title: cleanExecutiveText(title),
+        narrative: cleanExecutiveText(firstText(item, ["narrative", "blocks"])) || null,
+        requesting_dimension_key: null,
+        unlocks_narrative: cleanExecutiveText(firstText(item, ["unlocks", "unlocks_narrative"])) || null,
+        requesting_role_hint: cleanExecutiveText(firstText(item, ["owner_hint", "handoff", "owner"])) || null,
+        collection_route: collectionRouteFor(null),
+        sort_order: order,
+      });
   }
   const dgaps = pack.design_slots?.DGAPS ?? {};
   for (const [dimensionKey, entries] of Object.entries(dgaps)) {
@@ -805,11 +1811,11 @@ function buildNextEvidenceRequests(pack) {
       if (!title) continue;
       order += 1;
       rows.push({
-        title,
-        narrative: firstText(entry, ["needed", "blocks", "narrative"]) || null,
+        title: cleanExecutiveText(title),
+        narrative: cleanExecutiveText(firstText(entry, ["needed", "blocks", "narrative"])) || null,
         requesting_dimension_key: dimensionKey,
-        unlocks_narrative: firstText(entry, ["unlocks", "blocks"]) || null,
-        requesting_role_hint: firstText(entry, ["handoff", "owner_hint", "owner"]) || null,
+        unlocks_narrative: cleanExecutiveText(firstText(entry, ["unlocks", "blocks"])) || null,
+        requesting_role_hint: cleanExecutiveText(firstText(entry, ["handoff", "owner_hint", "owner"])) || null,
         collection_route: collectionRouteFor(dimensionKey),
         sort_order: order,
       });
@@ -891,26 +1897,135 @@ function buildNodesAndEdges(pack) {
 
 async function normalizePack(pack, sourceFile, sourceText) {
   const sourceHash = sha256(sourceText);
-  const promptPacket = buildPromptPacket(pack);
+  const executivePromptPacket = buildPromptPacket(pack);
+  const storyArchitecture = await callClaudeForStoryArchitecture(executivePromptPacket);
+  const promptPacket = {
+    ...executivePromptPacket,
+    story_architecture: storyArchitecture,
+  };
+  const promotedStrategicCandidates = promoteStrategicCandidatesToUseCases(
+    pack,
+    promptPacket.context?.strategic_candidates,
+  );
   const promptText = [
-    "HOME KNOWLEDGE PACK V2 CLAUDE STRATEGY PROMPT",
+    "HOME KNOWLEDGE PACK V3 EXECUTIVE-SAFE CLAUDE PROMPTS",
+    "STORY ARCHITECT SYSTEM PROMPT",
+    claudeStoryArchitectSystemPrompt(),
+    "WRITER SYSTEM PROMPT",
+    claudeSystemPrompt(),
+    "EXECUTIVE-SAFE PACKET",
     JSON.stringify(promptPacket, null, 2),
   ].join("\n\n");
-  const claudeResult = await callClaudeForPack(promptPacket);
+  const useCaseQualifications = await callClaudeForUseCaseQualifications(promptPacket);
+  const executiveResult = await callClaudeForPack(promptPacket);
+  const dimensionStoriesResult = await callClaudeForDimensionStories(promptPacket);
+  const relationshipReadsResult = await callClaudeForRelationshipReads(promptPacket);
+  const evidenceReadResult = await callClaudeForEvidenceRead(promptPacket);
+  const claudeResult = {
+    ...(executiveResult ?? {}),
+    use_cases: useCaseQualifications,
+    dimension_stories: dimensionStoriesResult,
+    relationship_reads: relationshipReadsResult,
+    evidence_read: evidenceReadResult,
+  };
   const claudeMatch = mergeClaudeNarrativesIntoPack(pack, claudeResult);
   // Dedicated forward-looking call (industry movements, new ways of operating,
   // change theses). Only runs when the main pack call produced brief_model.
+  let strategicNarrativesResult = [];
   if (pack.brief_model) {
-    pack.brief_model.strategic_narratives = await callClaudeForStrategicNarratives(promptPacket);
+    strategicNarrativesResult = await callClaudeForStrategicNarratives(promptPacket);
+    pack.brief_model.strategic_narratives = strategicNarrativesResult;
   }
+  const brief = pack.brief_model ?? {};
+  const dimensionStoryByKey = new Map(asArray(brief.dimension_stories).map((story) => [asText(story.dimension_key), story]));
+  const authoredStorySlots = Object.fromEntries(
+    (pack.design_slots?.DIMS ?? []).map((dimension) => {
+      const authored = dimensionStoryByKey.get(dimension.key);
+      if (!authored) return [dimension.key, pack.design_slots?.STORY?.[dimension.key] ?? {}];
+      return [dimension.key, {
+        observed: asText(authored.answer_headline),
+        meaning: asText(authored.executive_read),
+        matters: asText(authored.why_it_matters),
+        supports: [asText(authored.evidence_boundary), asText(authored.next_action)].filter(Boolean).join(" "),
+      }];
+    }),
+  );
+  const authoredInsightSlots = Object.fromEntries(
+    (pack.design_slots?.DIMS ?? []).map((dimension) => {
+      const authored = dimensionStoryByKey.get(dimension.key);
+      if (!authored) return [dimension.key, pack.design_slots?.INSIGHTS?.[dimension.key] ?? {}];
+      return [dimension.key, {
+        findings: [
+          ...asArray(authored.material_strengths),
+          ...asArray(authored.material_constraints),
+          ...asArray(authored.strategic_implications),
+        ].map(asText).filter(Boolean).slice(0, 6),
+      }];
+    }),
+  );
+  const relationshipReadsByDimension = new Map();
+  for (const read of asArray(brief.relationship_reads)) {
+    const key = asText(read.dimension_key || "rel") || "rel";
+    if (!relationshipReadsByDimension.has(key)) relationshipReadsByDimension.set(key, []);
+    relationshipReadsByDimension.get(key).push(read);
+  }
+  const authoredRelationshipSlots = {
+    ...(pack.design_slots?.REL ?? {}),
+    ...Object.fromEntries(Array.from(relationshipReadsByDimension.entries()).map(([key, reads]) => [key, {
+      chain: reads.flatMap((read) => [
+        asText(read.answer_headline),
+        asText(read.business_meaning),
+        ...asArray(read.enables),
+        ...asArray(read.dependencies),
+        ...asArray(read.constraints),
+      ]).map(cleanExecutiveText).filter(Boolean).slice(0, 8),
+      note: reads.map((read) => [asText(read.business_meaning), asText(read.evidence_boundary)].filter(Boolean).join(" ")).filter(Boolean).join(" "),
+    }])),
+  };
   const useCases = enrichUseCases(pack);
   const graph = buildNodesAndEdges(pack);
+  const clientNarrativeSections = Object.fromEntries(
+    Object.entries(pack.narrative_sections ?? {}).filter(([key]) => !TECHNICAL_NARRATIVE_KEYS.has(key)),
+  );
+  if (claudeResult?.narratives?.enterprise_brief) {
+    clientNarrativeSections.enterprise_brief_summary = asText(claudeResult.narratives.enterprise_brief);
+    clientNarrativeSections.context_confidence_summary = asText(brief.executive_read?.one_sentence || claudeResult.narratives.enterprise_brief);
+  }
+  if (claudeResult?.narratives?.operating_model) {
+    clientNarrativeSections.operating_model_summary = asText(claudeResult.narratives.operating_model);
+  }
+  if (claudeResult?.narratives?.relationship_map) {
+    clientNarrativeSections.proof_relationship_visual = {
+      caption: asText(claudeResult.narratives.relationship_map),
+    };
+  }
+  if (claudeResult?.narratives?.use_cases) {
+    clientNarrativeSections.use_cases_summary = asText(claudeResult.narratives.use_cases);
+    clientNarrativeSections.use_cases_portfolio_view = asText(claudeResult.narratives.use_cases);
+  }
+  if (brief.evidence_read?.answer_headline || claudeResult?.narratives?.evidence_boundary) {
+    clientNarrativeSections.evidence_gaps_summary = [
+      asText(brief.evidence_read?.answer_headline),
+      asText(claudeResult?.narratives?.evidence_boundary),
+    ].filter(Boolean).join(" ");
+    clientNarrativeSections.proof_summary = clientNarrativeSections.evidence_gaps_summary;
+  }
   const renderPack = {
     ...pack,
+    generation_metadata: {
+      generator: "claude",
+      model,
+      prompt_version: promptVersion,
+      source_snapshot_hash: sourceHash,
+      validation_report_uri: `reports/home-knowledge-pack-v2/${pack.tenant_key}/client-visible-quality-findings.json`,
+    },
     prompt_version: promptVersion,
     generated_model: `${pack.generated_model ?? "approved-json-pack"} + ${generatorVersion}`,
     design_slots: {
       ...(pack.design_slots ?? {}),
+      STORY: authoredStorySlots,
+      INSIGHTS: authoredInsightSlots,
+      REL: authoredRelationshipSlots,
       USE_CASES: useCases.map((useCase) => ({
         ...useCase.source_payload,
         name: useCase.name,
@@ -932,7 +2047,7 @@ async function normalizePack(pack, sourceFile, sourceText) {
       })),
     },
     narrative_sections: {
-      ...(pack.narrative_sections ?? {}),
+      ...clientNarrativeSections,
       use_cases_portfolio_view:
         pack.narrative_sections?.use_cases_portfolio_view ??
         "Prioritization combines tenant-specific current state, industry pressure, evidence readiness, and dependency risk. Each use case remains planning-grade until its source-owner evidence gate clears.",
@@ -940,22 +2055,25 @@ async function normalizePack(pack, sourceFile, sourceText) {
   };
   const packVersion = `home-pack-v2-${pack.tenant_key}-20260721-${sourceHash.slice(0, 8)}`;
   const generatedAt = new Date().toISOString();
-  const dimensions = (pack.design_slots?.DIMS ?? []).map((dimension, index) => ({
-    dimension_key: dimension.key,
-    display_name: dimension.name,
-    record_count: Number(dimension.count ?? 0),
-    evidence_count: Number(dimension.evCount ?? 0),
-    confidence_status: asText(dimension.status) || "directional",
-    pct: asText(dimension.pct),
-    executive_summary: asText(dimension.summary),
-    cxo_meaning: asText(pack.design_slots?.STORY?.[dimension.key]?.meaning ?? dimension.summary),
-    why_it_matters: asText(pack.design_slots?.STORY?.[dimension.key]?.matters),
-    visual_type: asText(pack.design_slots?.VISUAL_BLOCKS?.[dimension.key]?.[0]?.type) || "context_snapshot",
-    covers: dimension.covers ?? [],
-    sources: dimension.sources ?? [],
-    metadata: dimension,
-    sort_order: index + 1,
-  }));
+  const dimensions = (pack.design_slots?.DIMS ?? []).map((dimension, index) => {
+    const authored = dimensionStoryByKey.get(dimension.key);
+    return {
+      dimension_key: dimension.key,
+      display_name: dimension.name,
+      record_count: Number(dimension.count ?? 0),
+      evidence_count: Number(dimension.evCount ?? 0),
+      confidence_status: asText(dimension.status) || "directional",
+      pct: asText(dimension.pct),
+      executive_summary: asText(authored?.answer_headline || dimension.summary),
+      cxo_meaning: asText(authored?.executive_read || pack.design_slots?.STORY?.[dimension.key]?.meaning || dimension.summary),
+      why_it_matters: asText(authored?.why_it_matters || pack.design_slots?.STORY?.[dimension.key]?.matters),
+      visual_type: asText(pack.design_slots?.VISUAL_BLOCKS?.[dimension.key]?.[0]?.type) || "context_snapshot",
+      covers: dimension.covers ?? [],
+      sources: dimension.sources ?? [],
+      metadata: { ...dimension, claude_dimension_story: authored ?? null },
+      sort_order: index + 1,
+    };
+  });
   const dimensionRows = Object.entries(pack.design_slots?.DATA ?? {}).flatMap(([dimensionKey, dataSet]) =>
     (dataSet.rows ?? []).slice(0, 250).map((row, index) => ({
       dimension_key: dimensionKey,
@@ -986,7 +2104,7 @@ async function normalizePack(pack, sourceFile, sourceText) {
     known_gaps: firstText(item, ["missing", "known_gaps"]),
     source_payload: item,
   }));
-  const narratives = Object.entries(pack.narrative_sections ?? {})
+  const narratives = Object.entries(renderPack.narrative_sections ?? {})
     .filter(([, value]) => typeof value === "string" && value.trim())
     .map(([sectionKey, narrative], index) => ({
       section_key: sectionKey,
@@ -1003,7 +2121,6 @@ async function normalizePack(pack, sourceFile, sourceText) {
   // is set by mergeClaudeNarrativesIntoPack); a deterministic-only build leaves
   // these empty, so the new tables stay unpopulated rather than filled with
   // fabricated executive content.
-  const brief = pack.brief_model ?? {};
   const executiveReadRows = brief.executive_read
     ? [{
         archetype: asText(brief.executive_read.archetype) || null,
@@ -1069,9 +2186,7 @@ async function normalizePack(pack, sourceFile, sourceText) {
       seenDimModule.add(key);
       return true;
     });
-  const nextEvidenceRequestRows = buildNextEvidenceRequests(pack);
-  const NARRATIVE_TYPES = new Set(["industry_movement", "new_way_of_operating", "change_thesis"]);
-  const CLASSIFICATIONS = new Set(["loaded_fact", "derived_measure", "industry_pattern", "strategic_inference", "missing_evidence"]);
+  const nextEvidenceRequestRows = buildNextEvidenceRequests(pack, brief.evidence_read);
   const strategicNarrativeRows = asArray(brief.strategic_narratives)
     .map((row, index) => ({
       narrative_type: asText(row.narrative_type).trim(),
@@ -1109,6 +2224,9 @@ async function normalizePack(pack, sourceFile, sourceText) {
     tier: packTierRows[0]?.tier ?? null,
     warnings: [],
   };
+  if (promotedStrategicCandidates) {
+    quality.promoted_strategic_candidates_to_use_cases = true;
+  }
   if (!useCases.every((u) => u.industry_pattern && u.client_context_signal && u.change_strategy)) {
     quality.warnings.push("one_or_more_use_cases_missing_strategy_fields");
   }
@@ -1131,8 +2249,15 @@ async function normalizePack(pack, sourceFile, sourceText) {
     if (executiveReadRows.length === 0) claudeContentMissing.push("executive_read");
     if (strategicNarrativeRows.length === 0) claudeContentMissing.push("strategic_narratives");
     if (aiReadinessRows.length === 0) claudeContentMissing.push("ai_readiness");
+    if (asArray(brief.dimension_stories).length < (pack.design_slots?.DIMS ?? []).length) {
+      claudeContentMissing.push(`dimension_stories:${asArray(brief.dimension_stories).length}/${(pack.design_slots?.DIMS ?? []).length}`);
+    }
+    if (asArray(brief.relationship_reads).length === 0) claudeContentMissing.push("relationship_reads");
+    if (!brief.evidence_read) claudeContentMissing.push("evidence_read");
+    if (asText(claudeResult?.generation_status) === "blocked") claudeContentMissing.push("claude_generation_blocked");
+    if (!storyArchitecture) claudeContentMissing.push("story_architecture");
   }
-  const approveThisTenant = approve && claudeContentMissing.length === 0;
+  let approveThisTenant = approve && claudeContentMissing.length === 0;
   if (approve && claudeContentMissing.length > 0) {
     quality.warnings.push(`held_as_candidate_missing_claude_content:${claudeContentMissing.join("+")}`);
   }
@@ -1176,8 +2301,52 @@ async function normalizePack(pack, sourceFile, sourceText) {
     dimension_module_implications: dimensionModuleImplicationRows,
     next_evidence_requests: nextEvidenceRequestRows,
     strategic_narratives: strategicNarrativeRows,
+    story_architecture: storyArchitecture,
     claude_prompt: promptPacket,
+    claude_prompts: {
+      story_architect_system_prompt: claudeStoryArchitectSystemPrompt(),
+      writer_system_prompt: claudeSystemPrompt(),
+      strategic_system_prompt: claudeStrategicSystemPrompt(),
+      executive_safe_packet: executivePromptPacket,
+      writer_packet: promptPacket,
+    },
+    claude_responses: {
+      story_architecture: storyArchitecture,
+      executive: executiveResult,
+      use_case_qualifications: useCaseQualifications,
+      dimension_stories: dimensionStoriesResult,
+      relationship_reads: relationshipReadsResult,
+      evidence_read: evidenceReadResult,
+      narrative: claudeResult,
+      strategic_narratives: strategicNarrativesResult,
+    },
+    claude_provider_metadata: {
+      story_architecture: providerMetadata(storyArchitecture),
+      executive: providerMetadata(executiveResult),
+      use_case_qualifications: providerMetadata(useCaseQualifications),
+      dimension_stories: providerMetadata(dimensionStoriesResult),
+      relationship_reads: providerMetadata(relationshipReadsResult),
+      evidence_read: providerMetadata(evidenceReadResult),
+      strategic_narratives: providerMetadata(strategicNarrativesResult),
+    },
   };
+  const visibleFindings = clientVisibleQualityFindings(normalized, storyArchitecture);
+  const hardFindings = visibleFindings.filter((finding) => finding.level === "P0" || finding.level === "P1");
+  quality.client_visible_findings = visibleFindings;
+  quality.p0_findings = visibleFindings.filter((finding) => finding.level === "P0").length;
+  quality.p1_findings = visibleFindings.filter((finding) => finding.level === "P1").length;
+  quality.p2_score = hardFindings.length === 0 ? 0.88 : 0.55;
+  if (hardFindings.length > 0) {
+    quality.warnings.push(`held_as_candidate_client_visible_quality:${quality.p0_findings}P0_${quality.p1_findings}P1`);
+    approveThisTenant = false;
+    normalized.pack.status = "candidate";
+    normalized.pack.approved_by = null;
+    normalized.pack.approved_at = null;
+    normalized.pack.effective_from = null;
+  }
+  normalized.pack.quality_score = quality.warnings.length ? 0.82 : 0.94;
+  normalized.pack.validation_status = quality.warnings.length ? "warn" : "pass";
+  normalized.pack.validation_issues = quality.warnings;
   normalized.pack.content_hash = sha256(JSON.stringify({
     dimensions,
     dimensionRows,
@@ -1191,6 +2360,8 @@ async function normalizePack(pack, sourceFile, sourceText) {
     dimensionModuleImplicationRows,
     nextEvidenceRequestRows,
     strategicNarrativeRows,
+    storyArchitecture,
+    visibleFindings,
   }));
   return normalized;
 }
@@ -1200,6 +2371,20 @@ function writeArtifacts(normalized) {
   fs.mkdirSync(tenantDir, { recursive: true });
   fs.writeFileSync(path.join(tenantDir, "home-knowledge-pack-v2.json"), JSON.stringify(normalized));
   fs.writeFileSync(path.join(tenantDir, "claude-strategy-prompt.json"), JSON.stringify(normalized.claude_prompt, null, 2));
+  fs.writeFileSync(path.join(tenantDir, "claude-executive-safe-packet.json"), JSON.stringify(normalized.claude_prompts?.executive_safe_packet ?? null, null, 2));
+  fs.writeFileSync(path.join(tenantDir, "claude-story-architect-system-prompt.txt"), normalized.claude_prompts?.story_architect_system_prompt ?? "");
+  fs.writeFileSync(path.join(tenantDir, "claude-writer-system-prompt.txt"), normalized.claude_prompts?.writer_system_prompt ?? "");
+  fs.writeFileSync(path.join(tenantDir, "claude-strategic-system-prompt.txt"), normalized.claude_prompts?.strategic_system_prompt ?? "");
+  fs.writeFileSync(path.join(tenantDir, "claude-story-architecture-response.json"), JSON.stringify(normalized.claude_responses?.story_architecture ?? null, null, 2));
+  fs.writeFileSync(path.join(tenantDir, "claude-executive-response.json"), JSON.stringify(normalized.claude_responses?.executive ?? null, null, 2));
+  fs.writeFileSync(path.join(tenantDir, "claude-use-case-qualifications-response.json"), JSON.stringify(normalized.claude_responses?.use_case_qualifications ?? [], null, 2));
+  fs.writeFileSync(path.join(tenantDir, "claude-dimension-stories-response.json"), JSON.stringify(normalized.claude_responses?.dimension_stories ?? [], null, 2));
+  fs.writeFileSync(path.join(tenantDir, "claude-relationship-reads-response.json"), JSON.stringify(normalized.claude_responses?.relationship_reads ?? [], null, 2));
+  fs.writeFileSync(path.join(tenantDir, "claude-evidence-read-response.json"), JSON.stringify(normalized.claude_responses?.evidence_read ?? null, null, 2));
+  fs.writeFileSync(path.join(tenantDir, "claude-narrative-response.json"), JSON.stringify(normalized.claude_responses?.narrative ?? null, null, 2));
+  fs.writeFileSync(path.join(tenantDir, "claude-strategic-response.json"), JSON.stringify(normalized.claude_responses?.strategic_narratives ?? [], null, 2));
+  fs.writeFileSync(path.join(tenantDir, "claude-provider-metadata.json"), JSON.stringify(normalized.claude_provider_metadata ?? {}, null, 2));
+  fs.writeFileSync(path.join(tenantDir, "client-visible-quality-findings.json"), JSON.stringify(normalized.pack.quality_report?.client_visible_findings ?? [], null, 2));
   fs.writeFileSync(path.join(tenantDir, "use-cases.csv"), [
     "rank,name,total_priority_score,industry_pattern,client_context_signal,change_strategy,evidence_gate,module_next_step",
     ...normalized.use_cases.map((u) => [

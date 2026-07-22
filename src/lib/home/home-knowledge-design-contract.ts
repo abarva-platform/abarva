@@ -74,6 +74,9 @@ export interface HomeKnowledgeEvidence {
   st?: string;
   status?: string;
   fields?: string;
+  size?: string;
+  loaded_by?: string;
+  source_owner?: string;
   supports?: string;
   missing?: string;
   evidence_refs?: string[];
@@ -327,6 +330,12 @@ function textFromUnknown(value: unknown): string {
   return "";
 }
 
+function recordFromUnknown(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
 function readEvidenceRefs(value: unknown): string[] {
   return jsonArray(value)
     .map((item) => String(item ?? "").trim())
@@ -549,34 +558,66 @@ async function enrichHomeEnterpriseBriefPack(
   }
 
   const typedUseCases: HomeKnowledgeRecord[] = overlay.useCases.map(
-    (row: Record<string, unknown>) => ({
-      key: row.use_case_key as string,
-      name: row.name as string,
-      title: row.name as string,
-      fn: row.business_function as string | null,
-      business_function: row.business_function as string | null,
-      owner_hint: row.owner_hint as string | null,
-      stage: row.stage as string | null,
-      industry_pattern: row.industry_pattern as string | null,
-      client_context_signal: row.client_context_signal as string | null,
-      why_now: row.why_now as string | null,
-      operating_model_change: row.operating_model_change as string | null,
-      change_strategy: row.change_strategy as string | null,
-      value_thesis: row.value_thesis as string | null,
-      readiness_barrier: row.readiness_barrier as string | null,
-      evidence_gate: row.evidence_gate as string | null,
-      priority_rank: row.priority_rank as number,
-      value_score: row.value_score as number,
-      readiness_score: row.readiness_score as number,
-      evidence_score: row.evidence_score as number,
-      dependency_risk_score: row.dependency_risk_score as number,
-      total_priority_score: row.total_priority_score as number,
-      priority_rationale: row.priority_rationale as string | null,
-      module_next_step: row.module_next_step as string | null,
-      supporting_dimensions: stringArray(row.supporting_dimensions),
-      required_context: row.required_context as Record<string, unknown>,
-      evidence_refs: readEvidenceRefs(row.evidence_refs),
-    }),
+    (row: Record<string, unknown>) => {
+      const sourcePayload = recordFromUnknown(row.source_payload);
+      const requiredContext = recordFromUnknown(row.required_context);
+      const contextValue = (key: string) =>
+        row[key] ?? sourcePayload[key] ?? requiredContext[key];
+      return {
+        key: row.use_case_key as string,
+        name: row.name as string,
+        title: row.name as string,
+        classification: contextValue("classification") as string | null,
+        business_workflow_or_decision: contextValue(
+          "business_workflow_or_decision",
+        ) as string | null,
+        fn: row.business_function as string | null,
+        business_function: row.business_function as string | null,
+        owner_hint: row.owner_hint as string | null,
+        stage: row.stage as string | null,
+        industry_pattern: row.industry_pattern as string | null,
+        client_context_signal: row.client_context_signal as string | null,
+        current_operating_condition: contextValue(
+          "current_operating_condition",
+        ) as string | null,
+        future_operating_condition: contextValue(
+          "future_operating_condition",
+        ) as string | null,
+        human_role_change: contextValue("human_role_change") as string | null,
+        systems_data_control_requirements: stringArray(
+          contextValue("systems_data_control_requirements"),
+        ),
+        why_now: row.why_now as string | null,
+        operating_model_change: row.operating_model_change as string | null,
+        change_strategy: row.change_strategy as string | null,
+        value_thesis: row.value_thesis as string | null,
+        readiness_barrier: row.readiness_barrier as string | null,
+        evidence_gate: row.evidence_gate as string | null,
+        pilot_probability_band: contextValue("pilot_probability_band") as
+          | string
+          | null,
+        scale_probability_band: contextValue("scale_probability_band") as
+          | string
+          | null,
+        reference_class_basis: contextValue("reference_class_basis") as
+          | string
+          | null,
+        baseline_metrics_required: stringArray(
+          contextValue("baseline_metrics_required"),
+        ),
+        priority_rank: row.priority_rank as number,
+        value_score: row.value_score as number,
+        readiness_score: row.readiness_score as number,
+        evidence_score: row.evidence_score as number,
+        dependency_risk_score: row.dependency_risk_score as number,
+        total_priority_score: row.total_priority_score as number,
+        priority_rationale: row.priority_rationale as string | null,
+        module_next_step: row.module_next_step as string | null,
+        supporting_dimensions: stringArray(row.supporting_dimensions),
+        required_context: requiredContext,
+        evidence_refs: readEvidenceRefs(row.evidence_refs),
+      };
+    },
   );
 
   const typedEvidence: HomeKnowledgeEvidence[] = overlay.evidenceSources.map(
@@ -591,6 +632,9 @@ async function enrichHomeEnterpriseBriefPack(
       st: String(row.source_status ?? ""),
       status: String(row.source_status ?? ""),
       fields: String(row.file_name ?? ""),
+      size: String(row.byte_size ?? ""),
+      loaded_by: String(row.loaded_by ?? ""),
+      source_owner: String(row.source_owner ?? ""),
       supports: stringArray(row.parsed_into_dimensions).join(", "),
       missing: String(row.known_gaps ?? ""),
     }),
