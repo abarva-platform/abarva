@@ -5,7 +5,7 @@ export const PUBLIC_ANSWER_FORBIDDEN_LANGUAGE_RE =
   /\b(cannot be characterized|cannot be identified|I found|source support|missing source support|supporting material|evidence ledger|supporting material ledger|Current-state read|current-state context|loaded context|source context|loaded source context|loaded evidence|loaded sources|loaded tenant sources|tenant evidence|Evidence points|\bevidence points?\b|\bsource signals?\b|\bcontext dimensions?\b|\bdimensions loaded\b|\bloaded with \d[\d,]*\b|\btrust\s+\d{1,3}\b|\btrust\s+\d{1,3}%\b|\bevidence\s+refs?\b|\brows?\b|home_know|intelligence-v2|semantic packet|\bpacket\b|dossier|binder|fragment lookup|edge rows|source rows|no blocking gap|quality gate|answer boundary|curated semantic|semantic source|semantic evidence|\bsemantic\b|typed facts?|loaded facts?|canonical entities|relationship maps?|relationship paths?|debug|session memory|earlier turns|previous conversation|last\s+\w+\s+(?:turns?|times)|all session|same answer(?: as)?|answer is the same|answer hasn'?t (?:changed|moved)|substrate|not loaded|candidate_move|move_id|phase_id|artifact_id|evidence_id|source_record_id|program_evidence_items|move_artifacts|context_pack_id|tenant_id|client_id|\/Users\/|localhost)\b|\bV\d+(?:[_-][A-Za-z0-9./-]+|\s+(?:substrate|data\s+layer|context\s+layer))\b|^\s*(Read|Evidence):/i;
 
 export const PUBLIC_ANSWER_INTERNAL_COUNT_RE =
-  /\b\d[\d,]*\s+(?:canonical\s+)?(?:entities|facts|relationships|citations|rows|evidence points?|context dimensions?)\b/i;
+  /\b\d[\d,]*\s+(?:canonical\s+)?(?:entities|facts|relationships|citations|rows|edges|nodes|evidence points?|context dimensions?)\b/i;
 
 export function publicAnswerLeakIssues(text: string): string[] {
   const issues: string[] = [];
@@ -41,14 +41,26 @@ export function scrubInternalVisibleAvaTerms(value: string): string {
 
 export function scrubVisibleAvaDataStateLanguage(value: string): string {
   return value
-    .replace(/\bThe loaded tenant sources show\b/gi, "The available business context shows")
-    .replace(/\bThe loaded sources show\b/gi, "The available evidence indicates")
+    .replace(
+      /\bThe loaded tenant sources show\b/gi,
+      "The available business context shows",
+    )
+    .replace(
+      /\bThe loaded sources show\b/gi,
+      "The available evidence indicates",
+    )
     .replace(/\bThe loaded evidence shows\b/gi, "The available evidence shows")
     .replace(/\bnot_loaded\b/gi, "not yet evidenced")
     .replace(/\bnot loaded\b/gi, "not yet evidenced")
     .replace(/\bnot yet available\b/gi, "not yet evidenced")
-    .replace(/\bnot present in loaded sources\b/gi, "not supported by the available evidence")
-    .replace(/\bnot shown in loaded sources\b/gi, "not supported by the available evidence")
+    .replace(
+      /\bnot present in loaded sources\b/gi,
+      "not supported by the available evidence",
+    )
+    .replace(
+      /\bnot shown in loaded sources\b/gi,
+      "not supported by the available evidence",
+    )
     .replace(/\bloaded context\b/gi, "active enterprise context")
     .replace(/\bloaded source context\b/gi, "available source material")
     .replace(/\bloaded sources\b/gi, "supporting sources")
@@ -57,7 +69,10 @@ export function scrubVisibleAvaDataStateLanguage(value: string): string {
     .replace(/\bloaded tenant evidence\b/gi, "available business context")
     .replace(/\bloaded facts?\b/gi, "available details")
     .replace(/\bthe loaded context\b/gi, "the active enterprise context")
-    .replace(/\bavailable business context show\b/gi, "available business context shows");
+    .replace(
+      /\bavailable business context show\b/gi,
+      "available business context shows",
+    );
 }
 
 export function operationalEvidenceInsufficiencyLead(
@@ -129,18 +144,37 @@ export function scrubPublicAvaAnswerText(value: string): string {
       /\bSame answer,?\s+and\s+(?:the\s+)?(?:tenant evidence|business context|available business material)\s+(?:keeps\s+)?(?:making it airtight|making it concrete|making the case cleanly|supporting it|pointing here):\s*/gi,
       "",
     )
-    .replace(
-      /\bHere(?:'|’)s why this keeps being the right answer\.?\s*/gi,
-      "",
-    )
+    .replace(/\bHere(?:'|’)s why this keeps being the right answer\.?\s*/gi, "")
     .replace(/\bHere(?:'|’)s why the evidence keeps pointing here\.?\s*/gi, "")
     .replace(/\bHere(?:'|’)s why the evidence is this clean\.?\s*/gi, "")
     .replace(/\bWhy:\s+(?=[a-z])/g, "")
     .replace(/\bHere(?:'|’)s the logic(?: in plain terms)?\.?\s*/gi, "")
-    .replace(/\bcurated semantic (?:evidence|source context)?\s*source\b/gi, "available business material")
-    .replace(/\bsemantic (?:evidence|source context)?\s*source\b/gi, "available business material")
+    .replace(
+      /\bcurated semantic (?:evidence|source context)?\s*source\b/gi,
+      "available business material",
+    )
+    .replace(
+      /\bsemantic (?:evidence|source context)?\s*source\b/gi,
+      "available business material",
+    )
     .replace(/\bcurated semantic context\b/gi, "available business material")
     .replace(/\bsemantic(?:ally)?\b/gi, "business")
+    .replace(/\b\d[\d,]*\s+(?:canonical\s+)?entities\b/gi, "business objects")
+    .replace(
+      /\b\d[\d,]*\s+(?:typed\s+|loaded\s+|field\s+|canonical\s+)?facts\b/gi,
+      "business details",
+    )
+    .replace(
+      /\b\d[\d,]*\s+(?:source\s+|table\s+|edge\s+|field\s+|loaded\s+)?rows\b/gi,
+      "business records",
+    )
+    .replace(/\b\d[\d,]*\s+(?:graph\s+)?nodes\b/gi, "relationship context")
+    .replace(
+      /\b\d[\d,]*\s+(?:relationship\s+|graph\s+)?edges\b/gi,
+      "relationship context",
+    )
+    .replace(/\b\d[\d,]*\s+relationships\b/gi, "source-supported connections")
+    .replace(/\b\d[\d,]*\s+citations\b/gi, "source support")
     .replace(/\bcontext dimensions?\b/gi, "business areas")
     .replace(/\bdimensions loaded\b/gi, "business areas represented")
     .replace(/\bloaded with \d[\d,]*\s*/gi, "supported by ")
@@ -150,8 +184,14 @@ export function scrubPublicAvaAnswerText(value: string): string {
     .replace(/\bcurrent-state context\b/gi, "current picture")
     .replace(/\bloaded source context\b/gi, "available source material")
     .replace(/\bloaded context\b/gi, "active enterprise context")
-    .replace(/\bThe loaded tenant sources show\b/gi, "The available business context shows")
-    .replace(/\bThe loaded sources show\b/gi, "The available evidence indicates")
+    .replace(
+      /\bThe loaded tenant sources show\b/gi,
+      "The available business context shows",
+    )
+    .replace(
+      /\bThe loaded sources show\b/gi,
+      "The available evidence indicates",
+    )
     .replace(/\bloaded tenant sources\b/gi, "available business context")
     .replace(/\bloaded evidence\b/gi, "available evidence")
     .replace(/\bloaded sources\b/gi, "supporting sources")
@@ -250,7 +290,10 @@ export function scrubPublicAvaSourceText(value: string): string {
     .replace(/\bintelligence_v\d+\b/gi, "enterprise context")
     .replace(/\bnot_loaded\b/gi, "not yet evidenced")
     .replace(/\bsynthetic_demo_manifest_gated\b/gi, "demo validation gate")
-    .replace(/\bsynthetic\s+demo\s+manifest\s+gated\b/gi, "demo validation gate");
+    .replace(
+      /\bsynthetic\s+demo\s+manifest\s+gated\b/gi,
+      "demo validation gate",
+    );
 
   return scrubPublicAvaAnswerText(sourceReady)
     .replace(/\bdemo\s+manifest\s+gated\b/gi, "demo validation gate")
@@ -290,8 +333,7 @@ function stripInternalEvidenceAppendix(value: string): string {
     const startsEvidenceHeader =
       /^source\s+type\s+confidence\s+how\s+(?:it\s+)?supports\s+the\s+answer$/i.test(
         line.replace(/\s+/g, " "),
-      ) &&
-      /\b(evidence|tables?|supporting material)\b/.test(previousWindow);
+      ) && /\b(evidence|tables?|supporting material)\b/.test(previousWindow);
     const startsSourcePanel =
       /^this panel lists the material used for the answer/i.test(line);
 
@@ -311,7 +353,9 @@ export function enforcePublicAvaParagraphCap(
 ): string {
   return value
     .split(/\n{2,}/)
-    .flatMap((paragraph) => splitParagraphBySentenceCap(paragraph, maxSentences))
+    .flatMap((paragraph) =>
+      splitParagraphBySentenceCap(paragraph, maxSentences),
+    )
     .join("\n\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();

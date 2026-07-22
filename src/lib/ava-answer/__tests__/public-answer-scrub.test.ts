@@ -36,8 +36,12 @@ Tenant evidence`);
       "Here's the logic: the supporting material ledger shows three distinct value pools — IROPS agentic recovery ($270M), customer AI/Digital Concierge ($180M), and data estate rationalization ($122M).",
     );
 
-    expect(cleaned).toContain("business context shows three distinct value pools");
-    expect(cleaned).not.toMatch(/supporting material|evidence ledger|source signals/i);
+    expect(cleaned).toContain(
+      "business context shows three distinct value pools",
+    );
+    expect(cleaned).not.toMatch(
+      /supporting material|evidence ledger|source signals/i,
+    );
   });
 
   it("does not rewrite normal executive evidence or fact language", () => {
@@ -53,6 +57,17 @@ Tenant evidence`);
     expect(cleaned).not.toContain("business context is strong enough");
   });
 
+  it("removes numeric substrate counts from executive prose", () => {
+    const cleaned = scrubPublicAvaAnswerText(
+      "The answer has 300 rows, 500 facts, 800 edges, and 42 nodes. The real issue is budget pressure and unproven AI value.",
+    );
+
+    expect(cleaned).toContain("The real issue is budget pressure");
+    expect(cleaned).not.toMatch(
+      /\b\d[\d,]*\s+(?:rows?|facts?|edges?|nodes?)\b/i,
+    );
+  });
+
   it("preserves natural read language", () => {
     const cleaned = scrubPublicAvaAnswerText(
       "My read is simple: scale the IROPS bet only after the data gate is owned.",
@@ -66,13 +81,15 @@ Tenant evidence`);
   it("cleans live SkyHarbor orphan fragments without changing the answer", () => {
     const cleaned = scrubPublicAvaAnswerText(
       [
-        'The single best AI investment SkyHarbor should make next is certified operational data products.',
-        '" Here\'s why this is the right answer: the business context shows three distinct value pools. The $270M IROPS pool is the largest single bet, and the explicit loaded constraint is uncertified operational data, not model capability or vendor availability. 6 vs.',
+        "The single best AI investment SkyHarbor should make next is certified operational data products.",
+        "\" Here's why this is the right answer: the business context shows three distinct value pools. The $270M IROPS pool is the largest single bet, and the explicit loaded constraint is uncertified operational data, not model capability or vendor availability. 6 vs.",
       ].join("\n\n"),
     );
 
     expect(cleaned).toContain("Here's why this is the right answer");
-    expect(cleaned).toContain("the explicit constraint is uncertified operational data");
+    expect(cleaned).toContain(
+      "the explicit constraint is uncertified operational data",
+    );
     expect(cleaned).not.toContain('" Here');
     expect(cleaned).not.toContain("6 vs.");
     expect(cleaned).not.toContain("explicit loaded constraint");
@@ -86,7 +103,9 @@ Tenant evidence`);
     expect(cleaned).toBe(
       "certified operational data products. The available business context shows an operational-data gap.",
     );
-    expect(cleaned).not.toMatch(/last two turns|Here's the logic|loaded tenant evidence|evidence base gap/i);
+    expect(cleaned).not.toMatch(
+      /last two turns|Here's the logic|loaded tenant evidence|evidence base gap/i,
+    );
   });
 
   it("cleans repeated-session evidence phrasing from production SkyHarbor answers", () => {
@@ -127,7 +146,9 @@ Tenant evidence`);
     expect(cleaned).toContain(
       "certified operational data products is the single best AI investment SkyHarbor can make next.",
     );
-    expect(cleaned).toContain("The available evidence indicates three distinct value pools");
+    expect(cleaned).toContain(
+      "The available evidence indicates three distinct value pools",
+    );
     expect(cleaned).toContain(
       "The integration handles 5M daily events and is flagged for migration.",
     );
