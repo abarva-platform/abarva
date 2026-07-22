@@ -1,0 +1,56 @@
+{
+  "$comment": [
+    "Declared, non-metered costs. Anything that cannot be pulled from a provider",
+    "billing API lives here so the total-cost view is complete and auditable.",
+    "",
+    "RULES:",
+    "  - Every entry needs a source: a real invoice or billing page, not a memory.",
+    "  - `verified_on` is the date the amount was last checked against that source.",
+    "    The digest flags any entry older than 90 days as stale rather than",
+    "    silently reporting a number nobody has confirmed this quarter.",
+    "  - `amount_usd` is per `period`. Annual plans are recorded annually and",
+    "    amortized by the renderer, not pre-divided here.",
+    "  - Set `active: false` rather than deleting, so history stays reconstructable.",
+    "",
+    "TO ADD A COST: copy an entry, fill it in, set verified_on to today."
+  ],
+
+  "fixed_costs": [
+    {
+      "id": "claude-max-seat",
+      "provider": "anthropic",
+      "label": "Claude Max plan (Claude Code seat)",
+      "category": "ai-development",
+      "amount_usd": 213.2,
+      "period": "monthly",
+      "active": true,
+      "verified_on": "2026-07-22",
+      "source": "claude.ai billing — invoices 2026-06-19 and 2026-07-19, both $213.20",
+      "notes": "Flat seat. Claude Code token volume is worth ~$6,071/mo at API list price, so this returns ~28x. Not a cost lever; track capacity instead."
+    },
+    {
+      "id": "clerk",
+      "provider": "clerk",
+      "label": "Clerk authentication",
+      "category": "platform",
+      "amount_usd": null,
+      "period": "monthly",
+      "active": true,
+      "verified_on": null,
+      "source": "TODO — dashboard.clerk.com → billing. No public billing API.",
+      "notes": "Amount not yet supplied. The digest reports this as UNDECLARED and excludes it from the total rather than assuming zero."
+    },
+    {
+      "id": "github",
+      "provider": "github",
+      "label": "GitHub (plan + Actions + storage)",
+      "category": "platform",
+      "amount_usd": null,
+      "period": "monthly",
+      "active": true,
+      "verified_on": null,
+      "source": "TODO — github.com/settings/billing. API needs a token with `user` scope (current token has gist/read:org/repo/workflow) or org-level billing read.",
+      "notes": "Actions minutes are usage-based, so this varies. If it moves materially month to month, promote it to a collector once a scoped token exists."
+    }
+  ]
+}

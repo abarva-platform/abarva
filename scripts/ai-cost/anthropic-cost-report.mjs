@@ -85,6 +85,38 @@ function num(value) {
 }
 
 /**
+ * Cost amounts arrive as a DECIMAL STRING, and the unit is not self-evident
+ * from the payload — it may be the smallest currency unit (cents) rather than
+ * dollars. Getting this wrong is a silent 100x error in every figure we
+ * publish, so:
+ *
+ *   1. The raw string is preserved verbatim on every row (`amountRaw`).
+ *   2. Both interpretations are computed and carried in the snapshot.
+ *   3. `--reconcile <usd>` asserts the chosen interpretation against a figure
+ *      read off the Console, and refuses to continue on a mismatch.
+ *
+ * Do not "simplify" this to a bare Number(). The ambiguity is the point until
+ * a live run has been reconciled.
+ */
+const COST_UNIT = process.env.ANTHROPIC_COST_UNIT ?? "dollars"; // "dollars" | "minor"
+
+function parseAmount(raw) {
+  // Parse without losing precision to float rounding on aggregation: work in
+  // integer minor units where possible, then divide once at the end.
+  const text = String(raw ?? "0").trim();
+  const asNumber = Number(text);
+  if (!Number.isFinite(asNumber)) {
+    return { raw: text, dollars: 0, minorUnits: 0 };
+  }
+  return {
+    raw: text,
+    dollars: COST_UNIT === "minor" ? asNumber / 100 : asNumber,
+    // Kept so a post-hoc reinterpretation never requires re-fetching.
+    minorUnits: COST_UNIT === "minor" ? asNumber : asNumber * 100,
+  };
+}
+
+/**
  * Normalize the usage report into one row per (day, model, api_key, workspace).
  * Field names are read defensively: the report has gained fields over time
  * (1h vs 5m cache creation split, server tool use), and an older or newer
@@ -135,6 +167,7 @@ function normalizeCost(pages) {
     for (const bucket of page.data ?? []) {
       const day = String(bucket.starting_at ?? "").slice(0, 10);
       for (const r of bucket.results ?? []) {
+        const amount = parseAmount(r.amount);
         rows.push({
           day,
           workspaceId: r.workspace_id ?? null,
@@ -143,7 +176,10 @@ function normalizeCost(pages) {
           tokenType: r.token_type ?? null,
           serviceTier: r.service_tier ?? null,
           currency: r.currency ?? "USD",
-          amountUsd: num(r.amount),
+          // billed — this is provider truth, never an internal allocation.
+          billedCostUsd: amount.dollars,
+          amountRaw: amount.raw,
+          amountMinorUnits: amount.minorUnits,
         });
       }
     }
@@ -219,8 +255,9 @@ async function main() {
     windowDays: days,
     startingAt,
     endingAt,
+    costUnitInterpretation: COST_UNIT,
     totals: {
-      costUsd: cost.reduce((sum, r) => sum + r.amountUsd, 0),
+      billedCostUsd: cost.reduce((sum, r) => sum + r.billedCostUsd, 0),
       uncachedInputTokens: usage.reduce(
         (s, r) => s + r.uncachedInputTokens,
         0,
@@ -230,12 +267,16 @@ async function main() {
       cacheReadTokens: usage.reduce((s, r) => s + r.cacheReadTokens, 0),
       outputTokens: usage.reduce((s, r) => s + r.outputTokens, 0),
     },
-    costByDay: rollup(cost, (r) => r.day, (r) => r.amountUsd),
-    costByDescription: rollup(cost, (r) => r.description, (r) => r.amountUsd),
+    costByDay: rollup(cost, (r) => r.day, (r) => r.billedCostUsd),
+    costByDescription: rollup(
+      cost,
+      (r) => r.description,
+      (r) => r.billedCostUsd,
+    ),
     costByWorkspace: rollup(
       cost,
       (r) => r.workspaceId ?? "default",
-      (r) => r.amountUsd,
+      (r) => r.billedCostUsd,
     ),
     outputTokensByModel: rollup(
       usage,
@@ -255,6 +296,32 @@ async function main() {
     usageRows: usage,
     costRows: cost,
   };
+
+  // Reconciliation gate. Until a live run has been checked against the Console,
+  // the cost-unit interpretation is an assumption, not a fact.
+  const reconcileIdx = args.indexOf("--reconcile");
+  if (reconcileIdx >= 0) {
+    const expected = Number(args[reconcileIdx + 1]);
+    const actual = snapshot.totals.billedCostUsd;
+    const drift = Math.abs(actual - expected);
+    const tolerance = Math.max(0.02, expected * 0.005);
+    console.error(
+      `reconcile: expected ${expected.toFixed(2)}, collector ${actual.toFixed(2)}, ` +
+        `unit=${COST_UNIT}`,
+    );
+    if (drift > tolerance) {
+      console.error(
+        `RECONCILIATION FAILED (drift ${drift.toFixed(2)} > tolerance ${tolerance.toFixed(2)}).\n` +
+          (Math.abs(actual / 100 - expected) < tolerance
+            ? "Ratio looks like 100x: re-run with ANTHROPIC_COST_UNIT=minor.\n"
+            : Math.abs(actual * 100 - expected) < tolerance
+              ? "Ratio looks like 1/100x: re-run with ANTHROPIC_COST_UNIT=dollars.\n"
+              : "Not a clean 100x ratio — inspect with --raw before trusting output.\n"),
+      );
+      process.exit(3);
+    }
+    console.error("reconcile: PASS");
+  }
 
   if (outDir) {
     await mkdir(outDir, { recursive: true });

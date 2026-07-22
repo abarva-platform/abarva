@@ -177,7 +177,7 @@ function renderAnthropic(snap, day) {
   const byDay = snap.costByDay ?? {};
   const today = byDay[day] ?? 0;
   const t = trend(byDay, day);
-  const total = snap.totals?.costUsd ?? 0;
+  const total = snap.totals?.billedCostUsd ?? snap.totals?.costUsd ?? 0;
 
   const trendLine = t
     ? `<span style="color:${t.deltaPct >= 0 ? BRAND.up : BRAND.down};font-size:13px">${t.deltaPct >= 0 ? "▲" : "▼"} ${Math.abs(t.deltaPct).toFixed(0)}% vs 7-day avg ${usd(t.mean)}</span>`
