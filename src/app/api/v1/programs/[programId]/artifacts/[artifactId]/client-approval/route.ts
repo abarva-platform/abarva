@@ -133,8 +133,12 @@ function registryKeyFromMoveBoardPackTitle(title: string): string | null {
 
   const titleHints: Array<[RegExp, string]> = [
     [/\b(program )?charter\b/, "charter"],
-    [/\broot cause\b/, "root_cause_worksheet"],
+    // Ambiguous P2 board-pack titles often include both "Discovery" and
+    // "Root Cause Diagnostic". P2 gates read signed `discovery_report` rows,
+    // while exact "Root Cause Analysis Worksheet" titles are already handled
+    // by the exact-title match above.
     [/\b(discovery|diagnosis|diagnostic)\b/, "discovery_report"],
+    [/\broot cause\b/, "root_cause_worksheet"],
     [/\b(target state|reference) architecture\b/, "target_state_architecture"],
     [/\bsolution design\b/, "solution_design"],
     [/\boperating model\b/, "operating_model_design"],
