@@ -5249,7 +5249,12 @@ function TowerBudgetSplitRechart({
       style={{ width: "100%", height: 142 }}
       data-testid="tower-budget-recharts"
     >
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        minWidth={1}
+        minHeight={1}
+      >
         <BarChart
           data={data}
           layout="vertical"
@@ -5334,11 +5339,16 @@ function TowerValueFunnelRechart({
       style={{ width: "100%", height: 292 }}
       data-testid="tower-value-funnel-recharts"
     >
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        minWidth={1}
+        minHeight={1}
+      >
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ top: 8, right: 28, bottom: 6, left: 132 }}
+          margin={{ top: 8, right: 84, bottom: 6, left: 132 }}
           barCategoryGap={14}
         >
           <CartesianGrid horizontal={false} stroke={T.BORDER} />
@@ -5414,7 +5424,12 @@ function TowerAiPortfolioRechart({
       style={{ width: "100%", height: 430 }}
       data-testid="tower-ai-portfolio-recharts"
     >
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer
+        width="100%"
+        height="100%"
+        minWidth={1}
+        minHeight={1}
+      >
         <ScatterChart margin={{ top: 24, right: 34, bottom: 34, left: 26 }}>
           <CartesianGrid stroke={T.BORDER} strokeDasharray="3 6" />
           <XAxis
