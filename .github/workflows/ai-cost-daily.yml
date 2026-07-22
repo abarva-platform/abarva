@@ -1,0 +1,88 @@
+name: AI spend · daily digest
+
+# Pulls the Anthropic Admin API cost + usage reports, commits the daily
+# snapshot to reports/ai-cost/daily/, and emails the digest.
+#
+# This job covers the PRODUCT half only — the metered ANTHROPIC_API_KEY that
+# carries Nexus runtime inference. The Claude Code development half is
+# collected on the workstation (~/.claude/projects does not exist on a runner);
+# see scripts/ai-cost/README.md for the local launchd schedule.
+#
+# The snapshot is committed to the repo rather than written to Postgres because
+# the control-plane Postgres sits on a private VNet that a GitHub-hosted runner
+# cannot reach. `supabase/migrations/20260723090000_ai_cost_daily.sql` is the
+# durable target for when this moves to an ACA job inside the VNet.
+
+on:
+  schedule:
+    # 11:00 UTC daily = 06:00 US-Central. Late enough that the prior UTC day is
+    # closed in Anthropic's reporting, early enough to land before the workday.
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Lookback window in days"
+        required: false
+        default: "30"
+
+permissions:
+  contents: write
+
+jobs:
+  digest:
+    name: Collect Anthropic spend and email digest
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_ADMIN_KEY: ${{ secrets.ANTHROPIC_ADMIN_KEY }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      AI_COST_DIGEST_TO: ${{ secrets.AI_COST_DIGEST_TO }}
+      AI_COST_DIGEST_FROM: ${{ secrets.AI_COST_DIGEST_FROM }}
+      LOOKBACK_DAYS: ${{ inputs.days || '30' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Guard · required secrets must be set
+        run: |
+          missing=0
+          for name in ANTHROPIC_ADMIN_KEY RESEND_API_KEY AI_COST_DIGEST_TO AI_COST_DIGEST_FROM; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name secret missing. Add it in Settings → Secrets → Actions."
+              missing=1
+            fi
+          done
+          exit $missing
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Collect Anthropic Admin API cost + usage
+        run: |
+          node scripts/ai-cost/anthropic-cost-report.mjs \
+            --days "$LOOKBACK_DAYS" \
+            --out reports/ai-cost/daily > /dev/null
+
+      - name: Render and send digest
+        run: |
+          DAY="$(date -u -d 'yesterday' +%F)"
+          TODAY="$(date -u +%F)"
+          node scripts/ai-cost/render-digest.mjs \
+            --anthropic "reports/ai-cost/daily/${TODAY}-anthropic.json" \
+            --day "$DAY" \
+            --out "reports/ai-cost/daily/${TODAY}-digest.html" \
+            --send
+
+      - name: Commit snapshot
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add reports/ai-cost/daily
+          if git diff --cached --quiet; then
+            echo "No snapshot change to commit."
+            exit 0
+          fi
+          git commit -m "chore(ai-cost): daily spend snapshot $(date -u +%F)"
+          git push
