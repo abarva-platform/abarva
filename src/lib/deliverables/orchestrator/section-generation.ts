@@ -9,7 +9,7 @@
 // (quality-validator.ts `countUnsupportedClaims`) so a section the gate would block for an
 // uncited figure is deterministically repaired to a surfaced placeholder — never fabricated.
 
-import 'server-only';
+import "server-only";
 
 import type {
   DeliverableIntelligenceRequest,
@@ -20,9 +20,9 @@ import type {
   RenderableSection,
   RenderableTable,
   SourceRegisterEntry,
-} from './types';
-import { deliverableKeyForOrchestratorType } from '@/lib/deliverables/quality/deliverable-key-map';
-import { DELIVERABLE_PROFILES } from '@/lib/deliverables/profiles/registry';
+} from "./types";
+import { deliverableKeyForOrchestratorType } from "@/lib/deliverables/quality/deliverable-key-map";
+import { DELIVERABLE_PROFILES } from "@/lib/deliverables/profiles/registry";
 
 /** Bounded-concurrency map that preserves input order. */
 export async function mapWithConcurrency<T, R>(
@@ -45,14 +45,16 @@ export async function mapWithConcurrency<T, R>(
 }
 
 // Mirror of quality-validator.ts countUnsupportedClaims — keep in lockstep.
-const FACT_LIKE = /(\$\s?\d|\b\d{1,3}(?:,\d{3})+\b|\b\d+%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/;
-const SUPPORTED = /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING/;
+const FACT_LIKE =
+  /(\$\s?\d|\b\d{1,3}(?:,\d{3})+\b|\b\d+%|\bFY?20\d\d\b|\b\d{4}-\d{2}-\d{2}\b)/;
+const SUPPORTED =
+  /\[\d+\]|\[ASSUMPTION TO VALIDATE|\[CLIENT TO COMPLETE|\[EVIDENCE MISSING/;
 
 export interface UnsupportedFigureClaim {
   sectionKey: string;
   sectionTitle: string;
   claim: string;
-  treatment: 'assumption_to_validate' | 'open_input_required';
+  treatment: "assumption_to_validate" | "open_input_required";
 }
 
 export function extractUnsupportedFigureClaims(markdown: string): string[] {
@@ -79,20 +81,23 @@ export function repairUncitedFigures(markdown: string): string {
       changed = true;
       return s.replace(
         /\s*$/,
-        ' [ASSUMPTION TO VALIDATE: numeric/date/value claim requires client confirmation or cited source before it is treated as committed.]',
+        " [ASSUMPTION TO VALIDATE: numeric/date/value claim requires client confirmation or cited source before it is treated as committed.]",
       );
     }
     return s;
   });
-  return changed ? repaired.join(' ') : markdown;
+  return changed ? repaired.join(" ") : markdown;
 }
 
 // Mirror of transformation-gates.ts checkOpenInputs PLACEHOLDER_PATTERNS — keep in lockstep.
-const OPEN_INPUT_PLACEHOLDER_SOURCES: ReadonlyArray<{ source: string; flags: string }> = [
-  { source: '\\[CLIENT TO COMPLETE[^\\]]*\\]', flags: 'gi' },
-  { source: '\\bclient[-\\s]to[-\\s]complete\\b', flags: 'gi' },
-  { source: '\\bTBC\\b', flags: 'g' },
-  { source: '\\bto be confirmed\\b', flags: 'gi' },
+const OPEN_INPUT_PLACEHOLDER_SOURCES: ReadonlyArray<{
+  source: string;
+  flags: string;
+}> = [
+  { source: "\\[CLIENT TO COMPLETE[^\\]]*\\]", flags: "gi" },
+  { source: "\\bclient[-\\s]to[-\\s]complete\\b", flags: "gi" },
+  { source: "\\bTBC\\b", flags: "g" },
+  { source: "\\bto be confirmed\\b", flags: "gi" },
 ];
 
 export interface ConsolidatedOpenInput {
@@ -122,8 +127,12 @@ export function consolidateOpenInputPlaceholders(
     let body = s.bodyMarkdown;
     for (const { source, flags } of OPEN_INPUT_PLACEHOLDER_SOURCES) {
       body = body.replace(new RegExp(source, flags), (match) => {
-        harvested.push({ sectionKey: s.key, sectionTitle: s.title, detail: match });
-        return '(open input — see Open Inputs Required)';
+        harvested.push({
+          sectionKey: s.key,
+          sectionTitle: s.title,
+          detail: match,
+        });
+        return "(open input — see Open Inputs Required)";
       });
     }
     return body === s.bodyMarkdown ? s : { ...s, bodyMarkdown: body };
@@ -132,8 +141,14 @@ export function consolidateOpenInputPlaceholders(
 }
 
 /** A one-line summary of a section for the synthesis pass (titles + a clipped body). */
-export function summariseSection(s: RenderableSection): { title: string; summary: string } {
-  return { title: s.title, summary: s.bodyMarkdown.replace(/\s+/g, ' ').slice(0, 400) };
+export function summariseSection(s: RenderableSection): {
+  title: string;
+  summary: string;
+} {
+  return {
+    title: s.title,
+    summary: s.bodyMarkdown.replace(/\s+/g, " ").slice(0, 400),
+  };
 }
 
 /**
@@ -164,20 +179,24 @@ export interface SynthesisResult {
   recommendation?: string;
   nextActions?: string[];
   tables?: RenderableTable[];
-  clientCompleteChecklist?: RenderableDeliverable['clientCompleteChecklist'];
+  clientCompleteChecklist?: RenderableDeliverable["clientCompleteChecklist"];
 }
 
-function honestTitle(req: DeliverableIntelligenceRequest, synth: SynthesisResult): string {
-  const fallback = `${req.deliverableType.replace(/_/g, ' ')} — ${req.initiativeDisplayName}`;
-  const modelTitle = synth.title && synth.title.trim() ? synth.title.trim() : fallback;
-  if (req.module !== 'moves') return modelTitle;
+function honestTitle(
+  req: DeliverableIntelligenceRequest,
+  synth: SynthesisResult,
+): string {
+  const fallback = `${req.deliverableType.replace(/_/g, " ")} — ${req.initiativeDisplayName}`;
+  const modelTitle =
+    synth.title && synth.title.trim() ? synth.title.trim() : fallback;
+  if (req.module !== "moves") return modelTitle;
   switch (req.deliverableType) {
-    case 'business_case':
+    case "business_case":
       return `Business Case Readiness Memo — ${req.initiativeDisplayName}`;
-    case 'estimate_model':
-    case 'financial_model':
+    case "estimate_model":
+    case "financial_model":
       return `Financial Model Input Register — ${req.initiativeDisplayName}`;
-    case 'value_measurement_contract':
+    case "value_measurement_contract":
       return `Value Measurement Contract — Measurement Framework`;
     default:
       return modelTitle;
@@ -190,36 +209,39 @@ function openInputsTable(
 ): RenderableTable | null {
   const rows: string[][] = [];
   for (const m of req.missingEvidence ?? []) {
-    rows.push([
-      m.label,
-      m.whyItMatters,
-      m.completionPath,
-      'Open input',
-    ]);
+    rows.push([m.label, m.whyItMatters, m.completionPath, "Open input"]);
   }
   for (const c of unsupportedClaims) {
     rows.push([
       c.sectionTitle,
       c.claim,
-      c.treatment === 'assumption_to_validate'
-        ? 'Confirm the assumption or replace it with a cited source.'
-        : 'Provide supporting source evidence before asserting this as fact.',
-      c.treatment === 'assumption_to_validate'
-        ? 'Labeled assumption in draft'
-        : 'Open input required',
+      c.treatment === "assumption_to_validate"
+        ? "Confirm the assumption or replace it with a cited source."
+        : "Provide supporting source evidence before asserting this as fact.",
+      c.treatment === "assumption_to_validate"
+        ? "Labeled assumption in draft"
+        : "Open input required",
     ]);
   }
   if (rows.length === 0) return null;
   return {
-    key: 'open_inputs_required',
-    title: 'Open Inputs Required',
-    columns: ['Area', 'Input needed', 'How to close', 'Treatment in this artifact'],
+    key: "open_inputs_required",
+    title: "Open Inputs Required",
+    columns: [
+      "Area",
+      "Input needed",
+      "How to close",
+      "Treatment in this artifact",
+    ],
     rows,
-    targetFormat: 'docx',
+    targetFormat: "docx",
   };
 }
 
-function expectedExhibitsForProfile(req: DeliverableIntelligenceRequest, brief?: DeliverableArtifactBrief): RenderableExhibit[] {
+function expectedExhibitsForProfile(
+  req: DeliverableIntelligenceRequest,
+  brief?: DeliverableArtifactBrief,
+): RenderableExhibit[] {
   const byKey = new Map<string, RenderableExhibit>();
   for (const ex of brief?.expectedExhibits ?? []) {
     byKey.set(ex.key, {
@@ -237,15 +259,125 @@ function expectedExhibitsForProfile(req: DeliverableIntelligenceRequest, brief?:
       if (!byKey.has(key)) {
         byKey.set(key, {
           key,
-          title: key.replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase()),
-          kind: key.includes('roadmap') || key.includes('calendar') ? 'timeline' : key.includes('map') || key.includes('flow') ? 'flow' : 'matrix',
+          title: key
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (m) => m.toUpperCase()),
+          kind:
+            key.includes("roadmap") || key.includes("calendar")
+              ? "timeline"
+              : key.includes("map") || key.includes("flow")
+                ? "flow"
+                : "matrix",
           description: `Profile-required view for ${profile.title}; populated from cited evidence, assumptions, and open inputs.`,
-          targetFormat: profile.defaultFormat === 'xlsx' ? 'xlsx' : 'docx',
+          targetFormat: profile.defaultFormat === "xlsx" ? "xlsx" : "docx",
         });
       }
     }
   }
   return [...byKey.values()];
+}
+
+function fallbackRecommendation(
+  req: DeliverableIntelligenceRequest,
+  sections: readonly RenderableSection[],
+  synth: SynthesisResult,
+): string {
+  const supplied = synth.recommendation?.trim();
+  if (supplied && supplied.split(/\s+/).length >= 12) return supplied;
+
+  const recommendationSection = sections.find((s) =>
+    /recommendation|handoff|decision/i.test(`${s.key} ${s.title}`),
+  );
+  const firstSentence = recommendationSection?.bodyMarkdown
+    .replace(/[#*_`>|-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(/(?<=[.!?])\s+/)
+    .find((sentence) =>
+      /\brecommend|approve|hold|proceed|p2\b/i.test(sentence),
+    );
+  if (firstSentence && firstSentence.split(/\s+/).length >= 12) {
+    return firstSentence;
+  }
+
+  if (req.module === "moves" && req.deliverableType === "charter") {
+    return `We recommend the sponsor review this concise Charter and approve P2 Discovery only with the stated scope, decision rights, evidence plan, assumptions, and caveats carried forward as the governed source of truth.`;
+  }
+
+  return `We recommend sponsor review of this artifact before the next governed phase decision, with unresolved evidence gaps and client-complete items carried forward explicitly.`;
+}
+
+function fallbackRiskTable(
+  req: DeliverableIntelligenceRequest,
+  tables: readonly RenderableTable[],
+): RenderableTable | null {
+  if (!req.qualityBar.requiresRiskTable) return null;
+  if (tables.some((t) => /risk|issue|dependenc/i.test(t.title))) return null;
+
+  const rows: string[][] = [];
+  for (const m of req.missingEvidence ?? []) {
+    rows.push([
+      m.label,
+      "Dependency",
+      m.whyItMatters,
+      "Evidence owner",
+      m.completionPath,
+    ]);
+  }
+  for (const c of req.clientCompleteItems ?? []) {
+    rows.push([
+      c.label,
+      "Open decision",
+      c.reason,
+      c.owner,
+      "Confirm during sponsor review before phase advancement.",
+    ]);
+  }
+
+  if (
+    rows.length === 0 &&
+    req.module === "moves" &&
+    req.deliverableType === "charter"
+  ) {
+    rows.push(
+      [
+        "Sponsor cadence and decision attendance",
+        "Risk",
+        "P2 can lose momentum if accountable roles are not present for working sessions and gates.",
+        "Executive sponsor / Move lead",
+        "Confirm sponsor cadence and operating-owner attendance before P2 close.",
+      ],
+      [
+        "Evidence readiness for P2 Discovery",
+        "Dependency",
+        "Current-state findings should not be finalized until uploaded evidence is reviewed and accepted.",
+        "Evidence owners",
+        "Use the P2 evidence plan and Files & Evidence review before Approve & Build.",
+      ],
+      [
+        "Scope expansion beyond the charter boundary",
+        "Issue",
+        "Uncontrolled expansion can turn Discovery into solution design before facts are proven.",
+        "Move lead / operating owner",
+        "Hold out-of-scope requests as P3 options unless the sponsor revises the Charter.",
+      ],
+    );
+  }
+
+  if (rows.length === 0) return null;
+  return {
+    key: "risk_register",
+    title: "Risk / Issues / Dependencies",
+    columns: [
+      "Item",
+      "Type",
+      "Implication",
+      "Owner",
+      "Mitigation / next action",
+    ],
+    rows: rows.slice(0, 5),
+    targetFormat: "docx",
+  };
 }
 
 /**
@@ -263,14 +395,15 @@ export function assembleDeliverable(
     unsupportedClaims?: readonly UnsupportedFigureClaim[];
   } = {},
 ): RenderableDeliverable {
-  const { sections: cleanedSections, harvested } = consolidateOpenInputPlaceholders(sections);
+  const { sections: cleanedSections, harvested } =
+    consolidateOpenInputPlaceholders(sections);
   const combinedClaims: UnsupportedFigureClaim[] = [
     ...(options.unsupportedClaims ?? []),
     ...harvested.map((h) => ({
       sectionKey: h.sectionKey,
       sectionTitle: h.sectionTitle,
       claim: h.detail,
-      treatment: 'open_input_required' as const,
+      treatment: "open_input_required" as const,
     })),
   ];
   const openInputs = openInputsTable(req, combinedClaims);
@@ -278,6 +411,8 @@ export function assembleDeliverable(
   if (openInputs && !tables.some((t) => t.key === openInputs.key)) {
     tables.push(openInputs);
   }
+  const riskTable = fallbackRiskTable(req, tables);
+  if (riskTable) tables.push(riskTable);
   const checklist =
     synth.clientCompleteChecklist && synth.clientCompleteChecklist.length > 0
       ? synth.clientCompleteChecklist
@@ -293,7 +428,7 @@ export function assembleDeliverable(
     sourceRegister: buildSourceRegister(evidence, cleanedSections),
     assumptions: req.approvedAssumptions ?? [],
     clientCompleteChecklist: checklist,
-    recommendation: synth.recommendation ?? '',
+    recommendation: fallbackRecommendation(req, cleanedSections, synth),
     nextActions: synth.nextActions ?? [],
   };
 }
