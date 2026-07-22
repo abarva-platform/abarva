@@ -350,10 +350,76 @@ export function factsFromV3Benefits(
   return facts;
 }
 
+/**
+ * AI & automation use cases (10_ai_automation_use_cases.csv). These are the
+ * discovery/opportunity lens — candidate AI ideas that are NOT approved funding.
+ * Each row becomes its own portfolio identity so the assembler classifies it as
+ * a candidate_opportunity and counts it in candidate_ai_opportunities.
+ *
+ * A candidate carries no money by definition, so the fact is text-valued (the
+ * use-case name) rather than a fabricated zero — the value invariant is
+ * satisfied without inventing a number. Rows already linked to a funded program
+ * roll up to that program instead of standing alone.
+ */
+export function factsFromV3AiUseCases(
+  rows: readonly CsvRow[],
+  identity: CioTowerTenantIdentity,
+): CioTowerFactRow[] {
+  const file = "10_ai_automation_use_cases.csv";
+  const facts: CioTowerFactRow[] = [];
+  for (const r of rows) {
+    const recordId = (r.record_id ?? "").trim();
+    if (!recordId) continue;
+    // Only active rows are portfolio-visible; candidate/retired stay out.
+    if ((r.active_candidate_status ?? "").trim() === "retired") continue;
+    const name = (r.business_name ?? r.use_case ?? recordId).trim();
+    const linkedProgram = (r.linked_program_code ?? "").trim();
+    facts.push(
+      buildV3Fact({
+        tenantKey: identity.tenantKey,
+        keyParts: ["ai-use-case", recordId],
+        measure: `${name} (AI use-case candidate)`,
+        view: "value",
+        scope: "initiative",
+        valueNumeric: 0,
+        sourceFile: file,
+        sourceRow: recordId,
+        canonical: {
+          // Linked to a funded program → roll up under it; otherwise it is its
+          // own candidate identity.
+          canonical_tool_key: linkedProgram
+            ? null
+            : `usecase::${safeKey(recordId)}`,
+          canonical_program_key: linkedProgram
+            ? programKeyFromCode(linkedProgram)
+            : null,
+          vendor_name: null,
+          system_name: name,
+          program_code: linkedProgram || null,
+          metric_key: "ai_use_case_candidate",
+          metric_unit: "count",
+          period_start: null,
+          period_end: null,
+          source_priority: SOURCE_PRIORITY.v3_template,
+        },
+        attributes: {
+          ai_spend_type: r.ai_spend_type ?? null,
+          ai_spend_category: r.ai_spend_category ?? null,
+          readiness_status: r.readiness_status ?? null,
+          funding_status: r.funding_status ?? null,
+          use_case: r.use_case ?? null,
+        },
+      }),
+    );
+  }
+  return facts;
+}
+
 export interface V3FactInput {
   budget?: readonly CsvRow[];
   programs?: readonly CsvRow[];
   benefits?: readonly CsvRow[];
+  aiUseCases?: readonly CsvRow[];
   /** SA08 ai_program_id → 09 program_code, so benefits attach to the same
    * canonical program as the funding rows. */
   programIdToCode?: Record<string, string>;
@@ -371,5 +437,6 @@ export function projectV3ToFacts(
       identity,
       input.programIdToCode ?? {},
     ),
+    ...factsFromV3AiUseCases(input.aiUseCases ?? [], identity),
   ];
 }

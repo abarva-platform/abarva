@@ -274,6 +274,7 @@ async function main(): Promise<void> {
       {
         budget: readV3Csv(args.v3Dir, "08_it_budget_spend_value.csv"),
         programs: readV3Csv(args.v3Dir, "09_programs_initiatives.csv"),
+        aiUseCases: readV3Csv(args.v3Dir, "10_ai_automation_use_cases.csv"),
         benefits: readV3Csv(
           args.v3Dir,
           "SA08_AI_Benefits_Realization_Usage_Ledger.csv",

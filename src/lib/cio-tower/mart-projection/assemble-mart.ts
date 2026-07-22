@@ -550,9 +550,19 @@ export function assembleMartFromFacts(
           ? "No value case loaded; treat as spend, not value."
           : "Value is promised, not finance-validated; not claimable as realized.";
 
-    // Only funded bets become decision lanes; raw tools without a funding
-    // case are portfolio usage_benefit rows, surfaced but not lane-managed.
-    if (agg.isProgram || (agg.approvedFunding ?? 0) > 0) {
+    // Only bets with real economics become decision lanes — you cannot decide
+    // to fund/fix/freeze/stop something that carries no funding, promised, or
+    // validated value. A program identity alone is not enough (an AI use case
+    // may reference a program code that has no funding row); those surface as
+    // portfolio candidates instead, so lanes stay a short, decidable list.
+    const hasProgramEconomics =
+      (agg.approvedFunding ?? 0) > 0 ||
+      (agg.promisedValue ?? 0) > 0 ||
+      (agg.financeValidatedValue ?? 0) > 0;
+    if (
+      (agg.isProgram && hasProgramEconomics) ||
+      (agg.approvedFunding ?? 0) > 0
+    ) {
       const laneKey = `${tenantKey}::lane::${agg.identityKey}`.slice(0, 240);
       lanes.push({
         lane_key: laneKey,
