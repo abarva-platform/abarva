@@ -36,6 +36,7 @@ import {
   type ArchitectureContractSignals,
 } from "@/lib/visual-system/architecture-html-renderer";
 import type { ArchitectureModel } from "@/lib/visual-system/architecture-model";
+import { sanitizeClientFacingArtifactHtml } from "@/lib/deliverables/client-facing-artifact-sanitize";
 import {
   renderDeckHtml,
   deckExhibits,
@@ -213,6 +214,8 @@ export async function persistDeliverable(
       );
     }
   }
+
+  html = sanitizeClientFacingArtifactHtml(html);
 
   // ── Stage 5: Deliverable Quality Contract (blocking gate before persistence) ──
   // Always runs and records the result state. When enforcement is on, a

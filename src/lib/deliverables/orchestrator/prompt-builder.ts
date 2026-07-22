@@ -97,6 +97,8 @@ export function buildSystemPrompt(req: DeliverableIntelligenceRequest): string {
     `- Use ONE consolidated Open Inputs Required table for missing inputs. Do not scatter [CLIENT TO COMPLETE] tags through the narrative.`,
     `- Where a client fact is missing, write [EVIDENCE MISSING: <what>], [ASSUMPTION TO VALIDATE: <what>], or [CLIENT TO COMPLETE: <what>] — never fabricate.`,
     `- Never expose internal source ids, chunk ids, table names, fact keys, or system status words in the body.`,
+    `- Do not use internal phase shorthand (P0, P1, P2, P3, P4, P5) in client prose. Write "origination", "charter", "discovery", "design", "roadmap/business-case planning", or "handoff" instead. If ranking priority, write "Priority 1", not "P1".`,
+    `- Use "Source Register" only as the appendix/evidence-register heading. In the narrative body, say "cited evidence", "evidence appendix", or "what the evidence shows".`,
     conciseInstrument
       ? `- This artifact is a concise approval instrument with an enforced length ceiling. Respect brevity as a quality requirement: use compact tables, remove repetition, and do not expand into later-phase analysis.`
       : `- Do not optimize for short documents. Optimize for high-quality, decision-grade artifacts.`,
@@ -396,7 +398,7 @@ export function buildPassPrompt(
       user = [
         context,
         ``,
-        `PASS 3 — FULL DRAFT. Using the approved plan below, write the FULL document in senior consulting style. Use governed evidence (cited [n]) for client facts; use expert knowledge for structure, framing, standard sections, exhibits, and professional language. Clearly mark every missing client fact with the correct placeholder tag. Include the required decision tables, risk/issues/dependencies table, client-to-complete checklist, source register, and a clear recommendation with next steps. Write in Markdown with numbered headings.`,
+        `PASS 3 — FULL DRAFT. Using the approved plan below, write the FULL document in senior consulting style. Use governed evidence (cited [n]) for client facts; use expert knowledge for structure, framing, standard sections, exhibits, and professional language. Clearly mark every missing client fact with the correct placeholder tag. Include the required decision tables, risk/issues/dependencies table, client-to-complete checklist, evidence appendix/register, and a clear recommendation with next steps. Write in Markdown with numbered headings.`,
         conciseInstrumentDraftInstruction(req),
         `APPROVED PLAN:`,
         inputs.approvedPlanJson ?? "(plan missing)",
@@ -416,7 +418,7 @@ export function buildPassPrompt(
       user = [
         context,
         ``,
-        `PASS 5 — BOARD-GRADE REWRITE. Revise the draft to board-grade quality using the critique. Strengthen synthesis, implications, the decision ask, tables, exhibits, placeholders, and source discipline. Remove generic language and mechanical template-following. DO NOT add unsupported client facts — every client-specific claim stays cited, an approved assumption, or a placeholder. Return the full revised document in Markdown.`,
+        `PASS 5 — BOARD-GRADE REWRITE. Revise the draft to board-grade quality using the critique. Strengthen synthesis, implications, the decision ask, tables, exhibits, placeholders, and source discipline. Remove generic language and mechanical template-following. Replace any P0/P1/P2/P3/P4/P5 shorthand in body prose with human phase names, and reserve "Source Register" for the appendix/evidence-register heading only. DO NOT add unsupported client facts — every client-specific claim stays cited, an approved assumption, or a placeholder. Return the full revised document in Markdown.`,
         conciseInstrumentDraftInstruction(req),
         ``,
         `CRITIQUE TO ADDRESS:`,
@@ -428,7 +430,7 @@ export function buildPassPrompt(
       break;
     case "render_package":
       user = [
-        `Convert the final board-grade document into the structured render package below. Preserve all content, citations [n], placeholders, tables, exhibits, the source register, assumptions, the client-to-complete checklist, the recommendation, and next actions. Wide datasets should be expressed as tables with targetFormat "xlsx".`,
+        `Convert the final board-grade document into the structured render package below. Preserve all content, citations [n], placeholders, tables, exhibits, assumptions, the client-to-complete checklist, the recommendation, and next actions. Keep evidence traceability in the appendix/register, not repeated in the narrative body. Wide datasets should be expressed as tables with targetFormat "xlsx".`,
         RENDER_SCHEMA_HINT,
         ``,
         `FINAL DOCUMENT:`,
