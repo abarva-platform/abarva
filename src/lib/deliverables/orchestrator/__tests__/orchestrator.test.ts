@@ -192,6 +192,37 @@ describe("multi-pass prompt builder", () => {
       expect(prompt).not.toMatch(/DORA|AI Tooling Adoption|Phase Roadmap/i);
     }
   });
+
+  it("section draft prompts enforce the exact P1 charter section budget", () => {
+    const charterReq = amsRfpRequest({
+      module: "moves",
+      useCaseArchetype: "AI_PDLC",
+      deliverableType: "charter",
+      qualityBar: resolveQualityBar("moves", "charter"),
+    });
+    const charterBrief = getArtifactBrief(charterReq);
+    const p = buildPassPrompt("section_draft", {
+      req: charterReq,
+      brief: charterBrief,
+      evidence: charterReq.governedEvidenceBundle.slice(0, 1),
+      outlineSummary: "1. Executive Summary & Decision Ask",
+      section: {
+        key: "exec_summary",
+        title: "Executive Summary & Decision Ask",
+        groundingMode: "mixed",
+        evidenceCitations: [1],
+        assumptionsUsed: [],
+        placeholders: [],
+        rationale: "Frame the approval decision.",
+      },
+    });
+    expect(p.user).toMatch(/CONCISE SECTION RULES/);
+    expect(p.user).toMatch(/Hard cap for this section: 150 body words/);
+    expect(p.user).toMatch(/WRITE ONLY THIS SECTION/);
+    expect(p.user).toMatch(/do NOT write any other section/i);
+    expect(p.user).toMatch(/Do not write P2 current-state findings/i);
+    expect(p.user).not.toMatch(/DORA|AI Tooling Adoption|Phase Roadmap/i);
+  });
 });
 
 describe("plan validation (gate before drafting)", () => {
