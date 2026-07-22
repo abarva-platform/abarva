@@ -359,13 +359,21 @@ export function buildSourceEventShellView(
     ),
   );
   const lifecycle = buildSourceArtifactLifecycleSummary(input.artifacts ?? []);
-  const approvals = Array.from(input.approvalItems ?? []);
+  // The raw inbox is cross-tenant ("everything waiting on you across every
+  // event" — the portfolio-level /source/approvals page is where that
+  // belongs). This per-event canvas must only ever show THIS event's items.
+  const thisEventApprovals = Array.from(input.approvalItems ?? []).filter(
+    (item) => item.eventId === input.event.id,
+  );
   const currentStageItem =
-    approvals.find(
-      (item) =>
-        item.eventId === input.event.id &&
-        item.stageKey === input.event.currentStageKey,
+    thisEventApprovals.find(
+      (item) => item.stageKey === input.event.currentStageKey,
     ) ?? null;
+  // currentStageItem already renders featured above the list — exclude it
+  // here so it doesn't also render a second time inside the list.
+  const approvals = thisEventApprovals.filter(
+    (item) => item !== currentStageItem,
+  );
   const stepInsight = input.stepInsight ?? input.stageView.stepInsight ?? null;
   const intelSourceBasis = intelligenceBasis(
     input.stageView.intel.provenance,

@@ -243,6 +243,40 @@ describe("buildSourceEventShellView", () => {
     expect(view.stage.gateReadinessLine).toContain("approval workspace");
   });
 
+  it("scopes the Approvals workspace to this event only, and never renders the featured item twice", () => {
+    // Regression test: the raw inbox is cross-tenant ("everything waiting on
+    // you across every event" — the portfolio-level /source/approvals page
+    // is where that belongs). A per-event canvas previously rendered every
+    // other event's pending items too, AND rendered its own featured item a
+    // second time in the list below it.
+    const otherEventItem: ApprovalsInboxItem = {
+      ...APPROVAL,
+      eventId: "other-event",
+      ask: "Approve advancing a different event.",
+    };
+    const secondItemSameEvent: ApprovalsInboxItem = {
+      ...APPROVAL,
+      stageKey: "value",
+      ask: "Approve a different, non-current stage of this same event.",
+    };
+    const view = buildSourceEventShellView({
+      event: EVENT,
+      tenantName: "FS Demo",
+      viewedStageKey: "scope",
+      stageView: SAMPLE_SCOPE_STAGE as StageAnalyticsView,
+      approvalItems: [otherEventItem, APPROVAL, secondItemSameEvent],
+    });
+
+    expect(view.approvals.currentStageItem).toBe(APPROVAL);
+    // The list must exclude the featured item (no duplicate) and any other
+    // event's items, but keep this event's other real items.
+    expect(view.approvals.items).toEqual([secondItemSameEvent]);
+    expect(view.approvals.items).not.toContain(APPROVAL);
+    expect(
+      view.approvals.items.some((item) => item.eventId === "other-event"),
+    ).toBe(false);
+  });
+
   it("marks guidebook unavailable and returns an empty-state message when no guidebook is authored for the viewed stage", () => {
     const view = buildSourceEventShellView({
       event: EVENT,

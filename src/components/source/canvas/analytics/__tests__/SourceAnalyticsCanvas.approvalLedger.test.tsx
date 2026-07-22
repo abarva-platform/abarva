@@ -36,6 +36,7 @@ jest.mock("@clerk/nextjs", () => ({
 
 import { SourceAnalyticsCanvas } from "../SourceAnalyticsCanvas";
 import { buildApprovalLedger } from "@/lib/source/approval-ledger-model";
+import type { ApprovalsInboxItem } from "@/lib/source/approvals-inbox";
 import type { SourcingEventSummary } from "@/lib/source/types";
 
 function makeEvent(): SourcingEventSummary {
@@ -124,6 +125,66 @@ describe("SourceAnalyticsCanvas — approval ledger (SOURCE-SHELL-003)", () => {
       "source-shell-approval-ledger-row-value",
     );
     expect(within(valueRow).getByText("Locked")).toBeInTheDocument();
+  });
+
+  it("scopes the Approvals workspace to this event only, never renders the featured item twice, and its CTA switches to Steps instead of a same-page nav", () => {
+    // Regression test: the raw inbox is cross-tenant by design (the
+    // portfolio-level /source/approvals page is where that belongs), but a
+    // per-event canvas previously rendered every other event's pending
+    // items too, AND rendered its own featured item a second time in the
+    // list below it, AND its CTA linked to the exact page already open
+    // (looked like a dead click).
+    const featured: ApprovalsInboxItem = {
+      kind: "stage_gate",
+      eventId: "evt-1",
+      eventCode: "MERI-EHR-2026",
+      eventName: "Healthcare Demo EHR event",
+      ask: "Approve advancing out of RFP.",
+      readiness: "2 of 3 gate items met.",
+      status: "ready_with_gaps",
+      stageKey: "rfp",
+      stageLabel: "RFP",
+      estimatedValueUsd: 1_000_000,
+      href: "/source/events/evt-1?stage=rfp",
+      actionLabel: "Review & decide",
+    };
+    const otherEventItem: ApprovalsInboxItem = {
+      ...featured,
+      eventId: "evt-other",
+      eventCode: "APEX-OTHER-2026",
+      ask: "Approve advancing a different event.",
+    };
+
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="rfp"
+        tenantName="Healthcare Demo"
+        approvalItems={[otherEventItem, featured]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Approvals/i }));
+
+    // Only one instance of the featured item's ask text — not rendered
+    // twice, and the other event's item never appears here at all.
+    expect(screen.getAllByText("Approve advancing out of RFP.")).toHaveLength(1);
+    expect(
+      screen.queryByText("Approve advancing a different event."),
+    ).not.toBeInTheDocument();
+
+    // The featured card's CTA is a real button that switches workspace tabs,
+    // not a <Link> to the page already open.
+    expect(
+      screen.queryByTestId("source-approval-card-go-to-steps"),
+    ).not.toBeNull();
+    expect(
+      screen.queryByTestId("source-shell-v2-steps"),
+    ).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByTestId("source-approval-card-go-to-steps"),
+    );
+    expect(screen.getByTestId("source-shell-v2-steps")).toBeInTheDocument();
   });
 
   it("renders nothing extra when no ledger is supplied (empty array, e.g. read failure)", () => {

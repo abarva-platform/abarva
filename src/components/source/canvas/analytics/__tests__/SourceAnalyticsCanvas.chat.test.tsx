@@ -257,6 +257,12 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /^files$/i }));
+    // This test checks rows across multiple stages (scope + rfp) at once —
+    // the lifecycle matrix defaults to the viewed stage only, so expand to
+    // all 11 stages to keep exercising the full cross-stage matrix here.
+    fireEvent.click(
+      screen.getByTestId("source-artifact-lifecycle-scope-toggle"),
+    );
 
     const files = screen.getByTestId("source-shell-v2-files");
     expect(files).toHaveTextContent(SOURCE_AI_DRAFT_GOVERNANCE_LABEL);
@@ -415,6 +421,11 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: /^files$/i }));
+    // Viewing "scope" but this artifact is stageKey "rfp" — the lifecycle
+    // matrix defaults to the viewed stage only, so expand to see it.
+    fireEvent.click(
+      screen.getByTestId("source-artifact-lifecycle-scope-toggle"),
+    );
     fireEvent.click(
       screen.getByTestId("source-accept-client-final-toggle-d09_rfp_pack"),
     );

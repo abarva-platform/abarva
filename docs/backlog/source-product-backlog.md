@@ -519,13 +519,62 @@ updated 19 d ago` on the proof event).
   it passes, update the "Ready / in progress" section below to reflect closure, or note
   honestly what's still open if a criterion doesn't pass and isn't a small fix.
 
+### SOURCE-UX-DECLUTTER-001 — P0 approvals bugs + first Stripe-style declutter pass
+
+- **Problem statement**: a broad 5-area UI/UX audit (UI/UX quality, aVa chat analytics
+  capability, artifact narrative quality, guidebook content, upload/persistence) found real
+  bugs and clutter in the Source event canvas. This entry covers batch 1: two confirmed P0
+  bugs in the per-event Approvals workspace, and a first Stripe-style decluttering pass
+  (reduce repeated/redundant content, keep all functionality) per direct user instruction to
+  fix incrementally rather than batch everything into one large change.
+- **User/business impact**: the Approvals tab showed other events' pending items mixed in with
+  no explanation and rendered its own featured card twice — undermines trust in the one
+  surface that most needs to be unimpeachable. The Evidence ledger repeated an internal QA
+  sentence 25+ times and always showed all 11 stages/33 artifact standards regardless of which
+  stage the user was viewing — reads as noise and alarm rather than progress.
+- **Severity**: P0 (approvals bugs) / P2 (declutter)
+- **Workstream**: Workspace UX
+- **Status**: `Merged` — see PR below.
+- **Dependencies**: none.
+- **Acceptance criteria**: Approvals workspace shows only this event's items, never renders
+  the featured item twice; the featured stage-gate card's CTA switches to Steps instead of
+  linking to the page already open; the Evidence ledger's per-row "not scored" boilerplate is
+  shown once (already-existing summary line) instead of per-row; the artifact-standards table
+  defaults to the viewed stage with a one-click "show all 11 stages" toggle; the quality-score
+  KPI leads with a stage-relative "N of M artifacts due so far are registered" line. All met.
+- **Required tests**: new regression test in `source-event-shell-v2.test.ts` (cross-event
+  exclusion + no duplicate); new test in `SourceAnalyticsCanvas.approvalLedger.test.tsx` (real
+  render, CTA behavior); 2 existing `SourceAnalyticsCanvas.chat.test.tsx` cases updated for
+  the new default stage-scoping (not weakened — they now explicitly toggle to all-stages,
+  matching what they were actually testing).
+- **PR**: to be recorded on merge.
+- **Discovered from**: 5 parallel-agent audits launched from a direct user request to evaluate
+  UI/UX quality, aVa chat analytics capability, artifact narrative quality, guidebook content,
+  and upload/persistence. One reported finding (the "✦ Intelligence" tab silently redirecting
+  out of Source) was live-tested and disproven before any code was touched — recorded in the
+  release record so it isn't rediscovered as a false lead later.
+- **Notes / remaining gaps**: this is batch 1 of a larger incremental sequence. Follow-on
+  batches, not yet started: `SOURCE-UX-002` (Files tab / lifecycle matrix further polish if
+  needed after live use), `SOURCE-ANALYTICS-CHAT-001` (wire aVa chat to the existing
+  `AgentAnswerRenderer`/Recharts pipeline — infrastructure already proven on Home/Intelligence/
+  Tower, just unused by Source), `SOURCE-ARTIFACT-QUALITY-001` (expand the narrative-quality
+  LLM-judge rubric beyond the one hard-gated artifact code), `SOURCE-GUIDEBOOK-004`
+  (per-client guidebook content using the already-existing but unused `client_key` override
+  column), `SOURCE-INGEST-001` (dedicated workshop/session-notes capture surface + a
+  parse worker for PDF/XLSX/PPTX uploads currently stuck at `parse_status: "pending"` with no
+  consumer).
+
 ---
 
 ## Ready / in progress
 
-No Source approval UX slices are currently ready/in progress. `SOURCE-APPROVAL-UX-001`
-through `004` are merged and live-proven; any next slice should be opened from a fresh
-verified UX finding.
+`SOURCE-UX-DECLUTTER-001` batch 1 is merged. Next batches from the same audit, in
+recommended order: `SOURCE-ANALYTICS-CHAT-001` (highest leverage — infrastructure already
+exists, Source just isn't wired to it), then `SOURCE-ARTIFACT-QUALITY-001`,
+`SOURCE-GUIDEBOOK-004`, `SOURCE-INGEST-001`. Continue the same standing authority already
+established this session: merge, deploy, and live-verify each batch without pausing for
+confirmation between batches unless a real stop condition applies (migration needed,
+permission/payload semantics change, or an unfixable validation failure).
 
 ## Blocked
 
