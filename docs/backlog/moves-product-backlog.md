@@ -715,7 +715,8 @@ worked examples from the design conversation.
   onto this same shell model with phase-specific step/data bindings."
 - **Severity**: P8 (cosmetic/UX — no data-model or security impact)
 - **Workstream**: Files/workspace UX
-- **Status**: `In Progress` — P1 done, P2-P5 remain
+- **Status**: `In Progress` — P0-P4 live on the universal shell, legacy pages retired; P5
+  unreachable pending a Move that actually reaches it
 - **Progress**:
   - **P1 Charter**: `Runtime Proven` (2026-07-21). PR #5231 (port), #5234 (fix: opens on the
     first guided input — "Sponsor commitment" — not the old summary card), #5236 (release
@@ -727,9 +728,26 @@ worked examples from the design conversation.
     `sha256:d4765788e572a5f9408a7d30c7ef8def58faf46dd915b26af99443a5a6ec2802`, independently
     verified (runtime invariant + live signed-in check on `/phase/1`, real content matching the
     reported screenshot, no console errors).
-  - **P2 Understand Current State, P3 Choose the Approach, P4 Build the Plan, P5 Prepare to
-    Execute**: not yet ported. Next slice is P2, same design bar, same flag-gating discipline,
-    no workflow regression — per owner's own framing.
+  - **Legacy shell retirement**: `Runtime Proven` (2026-07-22). PR #5256, merge `01723ef01`
+    ("Retire legacy Moves phase shell"). Independently verified in this session:
+    (1) runtime invariant — `az containerapp show` confirms the ACA template image
+    `sha256:10a29f9136e82606f8af3e1a54478184768375656db0682ab857c14511ab37c0` matches the
+    100%-traffic revision `ca-abarva-web-lab-eastus--m01723ef0` exactly; (2) commit ancestry —
+    `git merge-base --is-ancestor 01723ef0 origin/main` confirms this genuinely landed and
+    wasn't superseded/reverted; (3) live signed-in check — `/strategic-moves/new` renders the
+    new P0 Originate contract shell (FRAME/GOVERN/READINESS/APPROVE, Steps/Files/Intelligence
+    tabs, no console errors); `/strategic-moves/[id]/phase/2` on the real "AI MEMBER ASSIST
+    TRANSFORMATION" Move renders the full universal shell (rail with all 6 phases, Workspace
+    section, Steps/Files/Intelligence tabs, WORKFLOW stage list), no legacy markers, no console
+    errors. No mutating action was taken against this real Move — verification was read-only
+    navigation, per the standing rule against live phase transitions on client-named Moves.
+  - **P2 Understand Current State, P3 Choose the Approach, P4 Build the Plan**: per the owner's
+    latest report, these now render the new shell in production as well (confirmed live above
+    for P2); not yet independently spot-checked phase-by-phase for P3/P4 content-binding
+    correctness beyond the absence of legacy markers.
+  - **P5 Prepare to Execute**: correctly redirects to P4 with `phaseLocked=5` when the Move
+    hasn't reached it yet (per owner's report) — not yet independently observed on a Move that
+    has actually reached P5.
 - **Scope**: port P1 Charter, P2 Understand Current State, P3 Choose the Approach, P4 Build
   the Plan, and P5 Prepare to Execute onto the exact shell model P0 now uses — real content
   styling (not just rail/step-menu chrome), with each phase's own step/data bindings. This
