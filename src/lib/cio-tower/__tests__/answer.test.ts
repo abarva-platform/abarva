@@ -383,6 +383,8 @@ describe('cio tower answer contract', () => {
     expect(prompt).toContain('Valid JSON is more important than a longer answer');
     expect(prompt).toContain('Do not duplicate table content inside answer. Use tables[] only.');
     expect(prompt).toContain('Never use markdown code fences');
+    expect(prompt).toContain('Do not use technical quantity counts as evidence');
+    expect(prompt).toContain('Translate internal coverage into executive meaning');
     expect(prompt).toContain('"ROI"');
     expect(prompt).toContain('"measured outcome"');
     expect(prompt).toContain('finance-attestation gate');
@@ -491,6 +493,16 @@ describe('cio tower answer contract', () => {
     expect(validateVisibleAnswer('Evidence: show the row-level proof.')).toContain(
       'visible_scaffold_label',
     );
+    expect(
+      validateVisibleAnswer(
+        'Tower has 300 rows, 500 facts, 800 edges, and 42 nodes to support the answer.',
+      ),
+    ).toContain('technical_count_as_evidence');
+    expect(
+      validateVisibleAnswer(
+        'The AI usage signal count is 8 active signals against the candidate backlog.',
+      ),
+    ).toEqual(expect.arrayContaining(['internal_data_plane_language', 'technical_count_as_evidence']));
     expect(
       validateVisibleAnswer('```chart\n{"type":"bar","data":[{"label":"Run","value":10}]}\n```'),
     ).toContain('code_fence_or_hidden_visual_payload');
@@ -986,9 +998,10 @@ describe('cio tower answer contract', () => {
 
     expect(fallback.answer).toContain('claim discipline');
     expect(fallback.answer).not.toContain('My read:');
-    expect(fallback.answer).toContain('140 metric records');
-    expect(fallback.answer).toContain('79 value records');
-    expect(fallback.answer).toContain('79 value-claim gates: 0 allowed, 79 caveated, 0 blocked');
+    expect(fallback.answer).toContain('enough context to design the measurement agenda');
+    expect(fallback.answer).toContain('0 allowed, 79 caveated, 0 blocked');
+    expect(fallback.answer).not.toContain('140 metric records');
+    expect(fallback.answer).not.toContain('79 value records');
     expect(fallback.answer).toContain('CIO');
     expect(fallback.answer).toContain('CFO');
     expect(fallback.tables?.[0]?.title).toBe('Board-readiness inspection path');
@@ -1007,6 +1020,9 @@ describe('cio tower answer contract', () => {
       'Should Tower turn "Baseline metrics need validation" into a 30-day measurement plan with owners and evidence requests?',
     );
     expect(visible).not.toMatch(/valid Tower answer contract|No fallback answer|JSON|source key|record ID/i);
+    expect(visible).not.toMatch(
+      /\b\d[\d,]*(?:\.\d+)?\s+(?:source\s+signals?|usage\s+signals?|active\s+signals?|metric\s+records?|value\s+records?|facts?|rows?|edges?|nodes?|citations?|relationships?)\b/i,
+    );
     expect(visible).not.toMatch(/\bROI\b|savings|achieved|realized value|measured outcome|proven value|delivered value|value captured/i);
     expect(visible).not.toMatch(/\b(Read|Evidence|Implication|Next move|Next):/i);
   });
