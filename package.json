@@ -95,6 +95,7 @@
     "audit:meridian-v3-cio-tower-projection": "node scripts/tower/audit-meridian-v3-cio-tower-projection.mjs --report-dir=reports/meridian-v3-cio-tower-projection",
     "project:tower-mart": "npx tsx src/scripts/tower/project-tower-mart.ts --dry-run",
     "project:tower-mart:write-job": "npx tsx src/scripts/tower/project-tower-mart.ts --write",
+    "project:tower-mart:meridian:write-job": "npx tsx src/scripts/tower/project-tower-mart.ts --write --emit-proof-bundle --tenant meridian-health --v3-dir datasets/tenant-inputs/meridian-health/standard-2026-07-v3 --out-dir /tmp/tower-mart-projection-meridian-health",
     "verify:phs-health-plan-corpus": "npx tsx src/scripts/corpus/verify-phs-health-plan-corpus.ts",
     "generate:meridian-vnext-context": "python3 scripts/enterprise-context/generate-meridian-vnext.py",
     "verify:northstar-context-layer": "node scripts/verify/northstar-context-layer-scaffold.mjs",
