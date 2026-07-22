@@ -2427,6 +2427,46 @@ function PhaseBody({
   const openHardCriteria = hardGateCriteria.filter(
     (criterion) => !criterion.completed,
   );
+  const hardMetCount = hardGateCriteria.filter(
+    (criterion) => criterion.completed,
+  ).length;
+  const hardTotal = hardGateCriteria.length || move.gateCriteria.length;
+  const openSoftCriteria = softGateCriteria.filter(
+    (criterion) => !criterion.completed,
+  );
+  const isGateBlocked = openHardCriteria.length > 0;
+  const approvalDecisionTitle = isHistoricalPhase
+    ? terminalComplete
+      ? "Move handed off to Tower"
+      : `${phase.code} is already approved`
+    : gateApproved
+      ? `${phase.code} approved`
+      : isGateBlocked
+        ? `${phase.code} cannot advance yet`
+        : `${phase.code} is ready for Approve & Build`;
+  const approvalDecisionText = isHistoricalPhase
+    ? terminalComplete
+      ? "Tower is now the execution and value-tracking surface for this Move."
+      : `The approved output is carrying forward into ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title}.`
+    : gateApproved
+      ? "The governed build and gate record are on file. Review artifacts in Files & Evidence before using them externally."
+      : isGateBlocked
+        ? `Resolve ${openHardCriteria.length} hard gate blocker${openHardCriteria.length === 1 ? "" : "s"} before advancing. Soft items can carry as caveats.`
+        : "Inputs, evidence posture, and hard gates are aligned. Run Approve & Build to create the governed package and submit the gate.";
+  const approvalDecisionState = isHistoricalPhase || gateApproved
+    ? "complete"
+    : isGateBlocked
+      ? "blocked"
+      : "ready";
+  const nextActionLabel = isHistoricalPhase
+    ? terminalComplete
+      ? "Open Tower"
+      : `Continue to ${nextOpenPhaseContract.code}`
+    : gateApproved
+      ? "Review generated artifacts"
+      : isGateBlocked
+        ? "Clear hard blockers"
+        : "Run Approve & Build";
   const p0ApprovalGeneratedCriteria = new Set([
     "program_seed_recorded",
     "value_hypothesis_seed",
@@ -2510,62 +2550,67 @@ function PhaseBody({
             on file. The approved version is what carries forward.
           </p>
         )}
-        <div className="mxw-exec-readout">
-          <article>
-            <span className="mxw-exec-label">
-              What Nexus learned this phase
-            </span>
-            {readinessPack.carriesForwardContent.length > 0 ? (
-              <p>
-                {readinessPack.carriesForwardContent.length} item
-                {readinessPack.carriesForwardContent.length === 1
-                  ? ""
-                  : "s"}{" "}
-                generated this phase. Full detail is in Next phase readiness
-                below.
-              </p>
-            ) : (
-              <p>No generated content is on file yet for this phase.</p>
-            )}
+        <div
+          className={`mxw-decision-surface ${approvalDecisionState}`}
+          data-testid="mxw-decision-surface"
+        >
+          <article className="mxw-decision-primary">
+            <span className="mxw-exec-label">Decision</span>
+            <h3>{approvalDecisionTitle}</h3>
+            <p>{approvalDecisionText}</p>
+            <div className="mxw-decision-chips">
+              <span>{hardMetCount}/{hardTotal} hard gates met</span>
+              <span>
+                {evidenceCount} evidence item{evidenceCount === 1 ? "" : "s"}
+              </span>
+              <span>{nextActionLabel}</span>
+            </div>
           </article>
           <article>
-            <span className="mxw-exec-label">What evidence supports it</span>
+            <span className="mxw-exec-label">Evidence</span>
+            <strong>
+              {evidenceCount} approved or agent-ready item
+              {evidenceCount === 1 ? "" : "s"}
+            </strong>
             <p>
-              {evidenceCount} approved or agent-ready evidence item
-              {evidenceCount === 1 ? "" : "s"} used by the gate ·{" "}
-              {hardGateCriteria.filter((c) => c.completed).length} of{" "}
-              {hardGateCriteria.length || move.gateCriteria.length} hard gate
-              criteria met.
+              Uploaded files only influence the gate after review. Gaps and
+              caveats remain visible so aVa and generation do not silently fill
+              them in.
             </p>
           </article>
           <article>
-            <span className="mxw-exec-label">What remains uncertain</span>
-            {openHardCriteria.length > 0 ||
-            softGateCriteria.some((c) => !c.completed) ? (
+            <span className="mxw-exec-label">Open blockers</span>
+            {isGateBlocked || openSoftCriteria.length > 0 ? (
               <ul>
-                {openHardCriteria.map((criterion) => (
-                  <li key={criterion.id}>{criterion.label} — blocking</li>
+                {openHardCriteria.slice(0, 3).map((criterion) => (
+                  <li key={criterion.id}>
+                    <strong>Hard:</strong> {criterion.label}
+                  </li>
                 ))}
-                {softGateCriteria
-                  .filter((criterion) => !criterion.completed)
-                  .map((criterion) => (
-                    <li key={criterion.id}>
-                      {criterion.label} — carries as a caveat
-                    </li>
-                  ))}
+                {openHardCriteria.length > 3 ? (
+                  <li>
+                    <strong>Hard:</strong> {openHardCriteria.length - 3} more
+                  </li>
+                ) : null}
+                {openSoftCriteria.slice(0, 2).map((criterion) => (
+                  <li key={criterion.id}>
+                    <strong>Caveat:</strong> {criterion.label}
+                  </li>
+                ))}
               </ul>
             ) : (
-              <p>No open gate criteria — nothing is blocking this approval.</p>
+              <p>No open gate criteria are blocking this phase.</p>
             )}
           </article>
           <article>
-            <span className="mxw-exec-label">What happens next</span>
+            <span className="mxw-exec-label">Next phase readiness</span>
+            <strong>{readinessPack.nextPhaseLabel}</strong>
             <p>
               {readinessPack.isFullyReady
-                ? `${readinessPack.nextPhaseLabel} has no required evidence gaps open — it can start with what's already on file.`
-                : `${readinessPack.openNeeds.length} evidence item${
+                ? "No required evidence gaps are open; the next phase can start from the approved record."
+                : `${readinessPack.openNeeds.length} prep item${
                     readinessPack.openNeeds.length === 1 ? "" : "s"
-                  } to bring before ${readinessPack.nextPhaseLabel} starts.`}
+                  } should be carried into the next phase plan.`}
             </p>
           </article>
         </div>
@@ -2576,28 +2621,37 @@ function PhaseBody({
             phase={phase.phase}
           />
         ) : null}
-        <table className="mxw-gate-table">
-          <thead>
-            <tr>
-              <th>Gate item</th>
-              <th>What it means</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {gateAttestationRows.map((item) => (
-              <tr key={item.item}>
-                <td>{item.item}</td>
-                <td>{item.meaning}</td>
-                <td>
-                  <span className={item.met ? "met" : "pending"}>
-                    {item.met ? "Complete" : "Open"}
-                  </span>
-                </td>
+        <details className="mxw-gate-detail">
+          <summary>
+            <span>Gate execution checklist</span>
+            <strong>
+              {gateAttestationRows.filter((item) => item.met).length}/
+              {gateAttestationRows.length} complete
+            </strong>
+          </summary>
+          <table className="mxw-gate-table">
+            <thead>
+              <tr>
+                <th>Gate item</th>
+                <th>What it means</th>
+                <th>Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {gateAttestationRows.map((item) => (
+                <tr key={item.item}>
+                  <td>{item.item}</td>
+                  <td>{item.meaning}</td>
+                  <td>
+                    <span className={item.met ? "met" : "pending"}>
+                      {item.met ? "Complete" : "Open"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </details>
         {gateApprovalMessage ? (
           <div className={`mxw-gate-message ${gateApprovalStatus}`}>
             {gateApprovalMessage}
@@ -4553,6 +4607,29 @@ function MovesStandaloneStyles() {
 .mxw-exec-readout ul{margin:0;padding-left:16px;display:grid;gap:5px}
 .mxw-exec-readout li{font-size:12.8px;line-height:1.4;color:var(--ink-2)}
 .mxw-exec-label{display:block;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--faint);font-weight:800;margin-bottom:8px}
+.mxw-decision-surface{display:grid;grid-template-columns:minmax(0,1.25fr) repeat(3,minmax(0,1fr));gap:12px;margin:16px 0 14px;align-items:stretch}
+.mxw-decision-surface article{border:1px solid var(--line);border-radius:12px;background:var(--soft);padding:14px 16px;min-width:0}
+.mxw-decision-surface.blocked{border-left:3px solid var(--amber);padding-left:12px}
+.mxw-decision-surface.ready{border-left:3px solid var(--green);padding-left:12px}
+.mxw-decision-surface.complete{border-left:3px solid var(--blue);padding-left:12px}
+.mxw-decision-primary{background:linear-gradient(180deg,#fff,var(--soft) 90%)!important}
+.mxw-decision-primary h3{font-family:Fraunces, Georgia, serif;font-size:22px;line-height:1.1;letter-spacing:-.45px;margin:0;color:var(--ink)}
+.mxw-decision-surface strong{display:block;font-size:14px;line-height:1.3;color:var(--ink);margin-bottom:6px}
+.mxw-decision-surface p{font-size:12.8px;line-height:1.45;color:var(--ink-2);margin:7px 0 0}
+.mxw-decision-surface ul{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.mxw-decision-surface li{font-size:12.5px;line-height:1.38;color:var(--ink-2)}
+.mxw-decision-surface li strong{display:inline;font-size:inherit;margin:0;color:var(--ink)}
+.mxw-decision-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.mxw-decision-chips span{border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:10.5px;font-weight:900;padding:5px 8px;white-space:nowrap}
+.mxw-decision-surface.blocked .mxw-decision-chips span:first-child{border-color:rgba(176,115,15,.32);background:var(--amber-tint);color:var(--amber)}
+.mxw-decision-surface.ready .mxw-decision-chips span:first-child,.mxw-decision-surface.complete .mxw-decision-chips span:first-child{border-color:rgba(29,143,104,.32);background:var(--green-tint);color:var(--green)}
+.mxw-gate-detail{border:1px solid var(--line);border-radius:12px;background:var(--soft);margin:14px 0;overflow:hidden}
+.mxw-gate-detail summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px}
+.mxw-gate-detail summary::-webkit-details-marker{display:none}
+.mxw-gate-detail summary span{font-size:12.5px;color:var(--ink);font-weight:850}
+.mxw-gate-detail summary strong{font-size:11.5px;color:var(--muted);font-weight:850;white-space:nowrap}
+.mxw-gate-detail[open] summary{background:#fff;border-bottom:1px solid var(--line)}
+.mxw-gate-detail .mxw-gate-table{border:0;border-radius:0;margin:0}
 .mxw-gate-table{width:100%;border-collapse:separate;border-spacing:0;margin:15px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
 .mxw-gate-table th{background:var(--soft);border-bottom:1px solid var(--line);color:var(--faint);font-size:10px;letter-spacing:.7px;text-transform:uppercase;text-align:left;padding:10px 12px}
 .mxw-gate-table td{border-bottom:1px solid var(--line);font-size:12.8px;line-height:1.42;color:var(--ink-2);padding:11px 12px;vertical-align:top}
@@ -4724,7 +4801,7 @@ function MovesStandaloneStyles() {
 .mxw-ava-composer textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;font-size:12.5px;color:var(--ink);background:#fff}
 .mxw-ava-composer button{flex:none;border:0;background:var(--ink);color:#fff;border-radius:9px;padding:8px 14px;font-size:12.5px;font-weight:600;cursor:pointer}
 .mxw-ava-composer button:disabled{opacity:.5;cursor:default}
-@media (max-width:980px){.mxw-lanes,.mxw-value-grid,.mxw-exec-readout,.mxw-intel-grid{grid-template-columns:1fr}}
+@media (max-width:980px){.mxw-lanes,.mxw-value-grid,.mxw-exec-readout,.mxw-decision-surface,.mxw-intel-grid{grid-template-columns:1fr}}
 @media (max-width:900px){
   .mxw-surface{grid-template-columns:1fr}
   .mxw-side{display:none}
