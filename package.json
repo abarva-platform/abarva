@@ -188,6 +188,7 @@
     "db:migrate:mark-applied": "npx tsx src/scripts/run-migrations.ts --mark-all-applied",
     "db:migrate:ledger": "npx tsx src/scripts/print-migration-ledger.ts",
     "db:verify:source-stage-guidebooks": "npx tsx src/lib/source/stage-guidebooks/verify-repository-readback.ts",
+    "db:verify:source-artifact-acceptances": "npx tsx src/lib/source/verify-artifact-acceptances-readback.ts",
     "db:verify:tenant-keys": "npx tsx scripts/verify-tenant-key-canonical.ts",
     "db:cleanup:tenant-keys": "npx tsx scripts/tenant-canonical-cleanup.ts",
     "db:verify:canonical-tenants": "npx tsx scripts/verify-canonical-tenants.ts",

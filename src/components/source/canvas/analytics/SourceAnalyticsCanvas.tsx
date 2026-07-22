@@ -36,6 +36,8 @@ import {
 } from "@/lib/source/constants";
 import type { SourceStageKey, SourcingEventSummary } from "@/lib/source/types";
 import type { SourceStageGuidebookRecord } from "@/lib/source/stage-guidebooks/types";
+import type { ArtifactAcceptanceRecord } from "@/lib/source/artifact-acceptances";
+import { ArtifactAcceptancePanel } from "./ArtifactAcceptancePanel";
 import { ANALYTICS } from "./analytics-tokens";
 import { IntelPanel } from "./IntelPanel";
 import { TaskProvideUpload } from "./TaskChecklist";
@@ -71,6 +73,8 @@ interface SourceAnalyticsCanvasProps {
   guidebook?: SourceStageGuidebookRecord | null;
   /** Legacy prop retained for route compatibility; the duplicate launcher is no longer rendered. */
   avaLauncher?: AvaLauncherView;
+  /** Latest "accept as authoritative" record per artifact (SOURCE-SHELL-004), plain array — a server->client prop must be JSON-serializable, so this is built into a Map only once it's in the client component. */
+  latestArtifactAcceptances?: readonly ArtifactAcceptanceRecord[];
 }
 
 const MAIN_STYLE: CSSProperties = {
@@ -181,10 +185,16 @@ export function SourceAnalyticsCanvas({
   approvalItems = [],
   approvalLedger = [],
   guidebook = null,
+  latestArtifactAcceptances = [],
 }: SourceAnalyticsCanvasProps) {
   const router = useRouter();
   const [workspace, setWorkspace] = useState<SourceShellWorkspace>("steps");
   const [avaOpen, setAvaOpen] = useState(false);
+
+  const latestArtifactAcceptancesById = useMemo(
+    () => new Map(latestArtifactAcceptances.map((rec) => [rec.artifactId, rec])),
+    [latestArtifactAcceptances],
+  );
 
   const baseStageView = useMemo(
     () => stageView ?? sampleStageViewFor(viewStage),
@@ -209,6 +219,7 @@ export function SourceAnalyticsCanvas({
         activeWorkspace: workspace,
         intelligenceOpen: workspace === "intelligence",
         guidebook,
+        latestArtifactAcceptancesById,
       }),
     [
       approvalItems,
@@ -216,6 +227,7 @@ export function SourceAnalyticsCanvas({
       artifacts,
       event,
       guidebook,
+      latestArtifactAcceptancesById,
       resolvedStageView,
       stepInsight,
       tenantName,
@@ -1224,7 +1236,12 @@ function FilesWorkspace({
                 }}
               >
                 {group.items.map((item) => (
-                  <FileCard key={item.id} item={item} />
+                  <FileCard
+                    key={item.id}
+                    item={item}
+                    eventId={view.event.id}
+                    onAccepted={onClientFinalAccepted}
+                  />
                 ))}
               </div>
             </section>
@@ -2119,7 +2136,15 @@ function AskAvaLauncher({
   );
 }
 
-function FileCard({ item }: { item: SourceShellFileItem }) {
+function FileCard({
+  item,
+  eventId,
+  onAccepted,
+}: {
+  item: SourceShellFileItem;
+  eventId: string;
+  onAccepted: () => void;
+}) {
   return (
     <div
       data-testid={`source-shell-file-card-${item.id}`}
@@ -2208,6 +2233,13 @@ function FileCard({ item }: { item: SourceShellFileItem }) {
           {item.complianceReviewMessage}
         </div>
       ) : null}
+      <ArtifactAcceptancePanel
+        eventId={eventId}
+        artifactCode={item.artifactCode}
+        artifactName={item.name}
+        latestAcceptance={item.latestAcceptance}
+        onAccepted={onAccepted}
+      />
     </div>
   );
 }

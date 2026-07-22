@@ -191,19 +191,39 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   artifact as final and why, independent of the separate gate-approval record.
 - **Severity**: P4 (approval/authority/lineage controls)
 - **Workstream**: Approval/authority/lineage controls
-- **Status**: `Proposed` — not started. Requires a real database migration through the
-  governed migration lane (`db-migration-lab.yml`) — the highest-scrutiny category in this
-  repo's governance model.
-- **Dependencies**: schema design using the field list already specified in the mockup's own
-  design-contract page (`artifact_role`, `artifact_origin`, `artifact_state`,
-  `authoritative_version_id`, `supersedes_artifact_id`, `diff_summary`, `drift_status`,
-  `accepted_by`/`accepted_at`, `approval_rationale`, `gate_precondition_status`,
-  `downstream_context_policy`) as the source of truth rather than an invented shape.
-- **Acceptance criteria**: TBD on start — will list explicit criteria including the governed
-  migration plan/apply/evidence sequence before implementation.
+- **Status**: `App code candidate — migration not yet applied`. PR open with the full schema,
+  repository, route, resolver integration, and UI. Requires the governed migration lane
+  (`db-migration-lab.yml`) — the highest-scrutiny category in this repo's governance model —
+  to be dispatched separately (`mode=status` then `mode=apply`) with explicit user
+  confirmation before it's live.
+- **Dependencies**: none remaining — schema built using the field list from the mockup's
+  design-contract page as the source of truth. Investigation found 2 of the 11 fields
+  (`artifact_origin`, `supersedes_artifact_id`) already exist as exact-match columns on
+  `source_artifacts` — reused via join, not duplicated. `artifact_role` was reconciled with an
+  existing computed-only UI concept (`SourceShellFileItem.artifactRole`) rather than creating a
+  second, colliding vocabulary. See the release record for the full field-by-field accounting.
+- **Acceptance criteria**: new `source_artifact_acceptances` table (append-only); `POST
+  .../artifacts/:artifactCode/accept` route, `artifactState`/`artifactRole` computed
+  server-side (never trusted from the client), requires a non-empty `approvalRationale`; an
+  "Artifact status" panel on each File Cabinet card showing the latest real acceptance or an
+  honest never-accepted state, with an Accept form; the existing "Stage gate" panel
+  (`SOURCE-SHELL-003`) unchanged, placed alongside; `resolveAuthoritativeArtifact()` gains one
+  new optional, backward-compatible pool. Plain-language UI copy only — no "Track A"/"Track B"
+  anywhere on screen. All met in app code; migration apply + live proof pending.
+- **Required tests**: `artifact-acceptances.test.ts` (7 cases), the accept route's own test
+  suite (6 cases), 2 new `client-final-artifacts.test.ts` cases for the new resolver pool, and
+  `ArtifactAcceptancePanel.test.tsx` (5 cases). Full adjacent-suite regression sweep confirmed
+  zero regressions against a clean `origin/main` baseline (byte-identical failing-suite set
+  before/after, via `git stash`).
+- **PR**: to be recorded on merge.
 - **Discovered from**: user-directed follow-up after reviewing the mockup's Track A/B
   prototype; UI copy explicitly must NOT say "Track A"/"Track B" on screen — plain language
   ("Artifact status"/"Stage gate") per direct user feedback.
+- **Notes / remaining gaps**: `downstream_context_policy` is captured but not yet enforced by
+  `buildValidatedAgentContextBundle` — a real hook for the mandatory Context & Corpus
+  Governance policy (AGENTS.md), flagged as separate follow-up work. No backfill of historical
+  acceptances for already-approved artifacts, matching the same honesty pattern
+  `SOURCE-SHELL-003` established.
 
 ### SOURCE-SHELL-005 — Real per-vendor coverage in the Responses step body
 
