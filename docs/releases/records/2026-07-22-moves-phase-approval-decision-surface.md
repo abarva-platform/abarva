@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`released`
 
 ## Plain-English Summary
 
@@ -40,7 +40,14 @@ The First Capital sandbox end-to-end run showed that P2 could truthfully block o
   - Result: 44 passed / 44 total.
   - Notes: Existing duplicate Jest mock warnings and the existing `EvidenceUploadControl` act warning still appear.
 - Pass: `npx eslint src/components/strategic-moves/MovesPhaseStandaloneClient.tsx src/components/strategic-moves/__tests__/MovesPhaseStandaloneClient.test.tsx`
+- Pass: `npm run release:check`
 - Pass: `git diff --check`
+- Pass: GitHub PR checks on PR #5291, including typecheck, release record, architecture rules, route/disclaimer, browser smoke, and production-readiness gates.
+- Pass: signed-in First Capital sandbox proof on `https://app.abarva.ai/strategic-moves/4bf889aa-d4ee-4c1d-936b-51574614d191/phase/2`.
+  - The P2 Approve & Build tab rendered the decision-first surface.
+  - Visible proof showed `P2 cannot advance yet`, `3/5 hard gates met`, `6 evidence items`, `OPEN BLOCKERS`, `NEXT PHASE READINESS`, and the collapsed/expandable `Gate execution checklist`.
+  - The stale `100% ready · Approve & Build` copy was absent.
+  - Browser proof captured zero console errors and zero failed non-prefetch network requests.
 
 ## Rollout Plan
 
@@ -50,11 +57,14 @@ Merge through PR to `main`. The repo-owned ACA deploy workflow should build and 
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: None outside the repo-owned deploy workflow.
-- Approved image digest: Pending deploy.
-- ACA runtime invariant: Pending deploy.
-- Worker image invariant: Not affected.
+- Merge SHA: `c77df5ba156a8d59566b8104b44ce4f39622403e`.
+- ACA deploy workflow run: `29915437829`.
+- ACA revision: `ca-abarva-web-lab-eastus--mc77df5ba`.
+- Approved image digest: `sha256:cdd734ae407e6b829af55d0cf3041379f89f448d4cc3e87f4956c4abf1a62efe`.
+- ACA runtime invariant: Pass. `ca-abarva-web-lab-eastus--mc77df5ba` receives 100% traffic and runs the digest above.
+- Worker image invariant: Pass in deploy workflow; worker jobs were updated to the same image by the repo-owned deploy lane.
 - Feature/env flag update path: Not affected.
-- Live signed-in proof required: Yes, First Capital sandbox Move P2 Approve & Build page.
+- Live signed-in proof required: Complete, First Capital sandbox Move P2 Approve & Build page.
 
 ## Rollback Plan
 
@@ -62,9 +72,14 @@ Revert this PR or remove the merged commit from the next ACA image. Backend evid
 
 ## Audit Evidence
 
-- PR URL: Pending.
-- ACA deployment proof: Pending.
-- Signed-in browser proof after deploy: Pending.
+- PR URL: https://github.com/abarva-platform/abarva/pull/5291
+- ACA deployment proof: https://github.com/abarva-platform/abarva/actions/runs/29915437829
+- Runtime invariant: `ca-abarva-web-lab-eastus--mc77df5ba`, 100% traffic, digest `sha256:cdd734ae407e6b829af55d0cf3041379f89f448d4cc3e87f4956c4abf1a62efe`.
+- Health proof: `https://app.abarva.ai/api/health` returned `ok: true`, with Postgres and direct Postgres checks true.
+- Signed-in browser proof after deploy:
+  - `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/50-post-decision-surface-p2-approve-build-proof.json`
+  - `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/50-post-decision-surface-p2-approve-build.png`
+  - `/private/tmp/nexus-moves-approval-ux-20260722/proof/firstcapital-e2e-synthetic-20260722/51-post-decision-surface-gate-checklist-expanded.png`
 
 ## Known Gaps
 
