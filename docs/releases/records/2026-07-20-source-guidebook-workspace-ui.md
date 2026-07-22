@@ -6,18 +6,16 @@
 
 ## Status
 
-`candidate` — corrected 2026-07-21 to separate distinct proof states rather than one
-blended "deployed and live" status, which risked implying more than was actually
-verified:
+`live-proven` — updated 2026-07-21. All four proof states below are now closed;
+`SOURCE-GUIDEBOOK-002` is resolved (see Audit Evidence for the signed-in proof that
+closes the row that was previously pending):
 
 | Proof state | Status |
 |---|---|
 | Migration + seed applied to the live database | **Proven** — real apply run 29789097644, real repository readback (see `2026-07-20-db-migration-lab-workflow.md`) |
 | Component rendering (real RTL tests, real props, no mocks on the code under test) | **Proven** — 13/13 tests passing, see QA / Validation |
-| Deployment invariant (image built, pushed, serving traffic) | **Proven** — ACA revision `ca-abarva-web-lab-eastus--m4a429034` confirmed matching the merge commit |
-| Signed-in, live server-to-database rendering (a real user opening the tab and seeing real content) | **PENDING** — attempted via claude-in-chrome, blocked by Clerk's one-time-email-code sign-in with no inbox access available to this agent. Not claimed, not observed. Tracked as `SOURCE-GUIDEBOOK-002`. |
-
-Do not describe this feature as "Runtime Proven" until the fourth row is closed.
+| Deployment invariant (image built, pushed, serving traffic) | **Proven** — ACA revision `ca-abarva-web-lab-eastus--m4a429034` confirmed matching the merge commit at ship time; re-confirmed live at the current runtime (`ca-abarva-web-lab-eastus--m01723ef0`, commit `01723ef0123a4e7d85716f1133ae67cd58f72263`, `Healthy`) as of the 2026-07-21 signed-in proof below |
+| Signed-in, live server-to-database rendering (a real user opening the tab and seeing real content) | **Proven** 2026-07-21 — real signed-in session (Anand Sundaram · Healthcare Demo tenant), real Source event `cea10d0a-6d5d-49d2-8522-173c2d6fd520`, Strategy stage. See Audit Evidence. |
 
 ## Plain-English Summary
 
@@ -100,17 +98,33 @@ undecided).
   `SourceAnalyticsCanvas.thread.test.tsx`) — zero regressions introduced.
 - `pass` — `node scripts/release-check.mjs --base origin/main --head HEAD` — all gates
   pass.
-- `NOT PERFORMED` — **live signed-in browser proof.** Attempted via the claude-in-chrome
-  browser: `app.abarva.ai/source/portfolio` redirected to `/sign-in`, which requires a
-  Clerk one-time email code. No inbox access is available to retrieve that code, and
-  entering credentials/completing an auth flow on the user's behalf is out of scope
-  for this agent regardless. **This claim is honestly left open, not asserted.** The
-  code path itself is covered by real RTL render tests (see above) — those confirm the
-  component tree renders correctly given real props; they do not confirm the live
-  server-side `getSourceStageGuidebook()` call wires through correctly against the
-  real Postgres data. A human (or an agent with real Source-tenant sign-in access)
-  should visit a Strategy-stage Source event and confirm the Guidebook tab appears and
-  renders the seeded content before this is considered fully proven end-to-end.
+- `pass` (2026-07-21) — **live signed-in browser proof**, `SOURCE-GUIDEBOOK-002`
+  closed. Performed via an already-authenticated `claude-in-chrome` session (Anand
+  Sundaram, Healthcare Demo tenant — the same session used to live-verify
+  `SOURCE-SHELL-006`/`007` earlier the same day), which sidestepped the Clerk
+  one-time-email-code wall that blocked the original attempt above (no credentials
+  were entered by the agent; the session was already signed in). Acceptance criteria
+  from the backlog entry, all met:
+  1. Authenticated via existing signed-in session. ✓
+  2. Opened Source event `cea10d0a-6d5d-49d2-8522-173c2d6fd520` ("Healthcare Demo In:
+     EHR application management and integration engine support") at the Strategy
+     stage. ✓
+  3. "Guidebook" workspace tab visible in the left rail, alongside Files &
+     deliverables / Intelligence Explorer / Approvals. ✓
+  4. Rendered title reads exactly "Strategy Gate Review". ✓
+  5. All five authored sections render with real content: "What this session is for",
+     "Agenda (20 min)", "Facilitator talking points", "Decision to record", "Failure
+     modes to watch for". ✓
+  6. Navigated to the Scope stage (no guidebook authored) for the same event — the
+     Guidebook tab is absent entirely from the workspace list (Files & deliverables /
+     Intelligence Explorer / Approvals only) — confirms the tab is hidden, not
+     shown-and-empty, for stages without content. ✓
+  7. Deployed commit at verification time: `01723ef0123a4e7d85716f1133ae67cd58f72263`
+     (ACA revision `ca-abarva-web-lab-eastus--m01723ef0`, `Healthy`, 100% traffic —
+     later than the shipping commit `4a4290345db4624bbcee08e4f66f98574b82c5fe`
+     because unrelated work merged to `main` in between; the guidebook code path is
+     unchanged since ship). ✓
+  8. This entry is the evidence record. ✓
 
 ## Rollout Plan
 
@@ -132,7 +146,7 @@ without a guidebook (the tab simply doesn't render).
   `4a4290345db4624bbcee08e4f66f98574b82c5fe`).
 - Worker image invariant: N/A — no worker code touched.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes — **not yet performed**, see QA / Validation.
+- Live signed-in proof required: yes — **performed 2026-07-21**, see QA / Validation.
 
 ## Rollback Plan
 
@@ -164,6 +178,5 @@ workspace or on the underlying `source_stage_guidebooks` data.
   formatting).
 - **No authoring/edit UI** — matches the foundation record's own stated scope; this
   release is read-only.
-- **Live signed-in browser proof not yet performed** — see QA / Validation. Tracked as
-  `SOURCE-GUIDEBOOK-002` in `docs/backlog/source-product-backlog.md`, status `Ready /
-  Blocked only on authenticated test access`.
+- **Live signed-in browser proof performed 2026-07-21** — see QA / Validation.
+  `SOURCE-GUIDEBOOK-002` closed in `docs/backlog/source-product-backlog.md`.
