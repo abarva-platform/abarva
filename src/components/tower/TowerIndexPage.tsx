@@ -226,6 +226,49 @@ const T = {
   MONO: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
 } as const;
 
+function TowerSafeResponsiveContainer({
+  height,
+  children,
+}: {
+  height: number | string;
+  children: ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const update = () => {
+      const rect = node.getBoundingClientRect();
+      setReady(rect.width > 0 && rect.height > 0);
+    };
+    update();
+    if (typeof ResizeObserver === "undefined") {
+      const frame = window.requestAnimationFrame(update);
+      return () => window.cancelAnimationFrame(frame);
+    }
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} style={{ width: "100%", height, minWidth: 1, minHeight: 1 }}>
+      {ready ? (
+        <ResponsiveContainer
+          width="100%"
+          height="100%"
+          minWidth={1}
+          minHeight={1}
+        >
+          {children}
+        </ResponsiveContainer>
+      ) : null}
+    </div>
+  );
+}
+
 export const TOWER_CIO_HOLDCO_STARTER_QUESTIONS = [
   "Show the holding-company IT budget by portfolio company and shared services.",
   "Which funded programs have the largest gap between promised and measured value?",
@@ -5249,12 +5292,7 @@ function TowerBudgetSplitRechart({
       style={{ width: "100%", height: 142 }}
       data-testid="tower-budget-recharts"
     >
-      <ResponsiveContainer
-        width="100%"
-        height="100%"
-        minWidth={1}
-        minHeight={1}
-      >
+      <TowerSafeResponsiveContainer height="100%">
         <BarChart
           data={data}
           layout="vertical"
@@ -5311,7 +5349,7 @@ function TowerBudgetSplitRechart({
             />
           </Bar>
         </BarChart>
-      </ResponsiveContainer>
+      </TowerSafeResponsiveContainer>
     </div>
   );
 }
@@ -5339,12 +5377,7 @@ function TowerValueFunnelRechart({
       style={{ width: "100%", height: 292 }}
       data-testid="tower-value-funnel-recharts"
     >
-      <ResponsiveContainer
-        width="100%"
-        height="100%"
-        minWidth={1}
-        minHeight={1}
-      >
+      <TowerSafeResponsiveContainer height="100%">
         <BarChart
           data={data}
           layout="vertical"
@@ -5389,7 +5422,7 @@ function TowerValueFunnelRechart({
             />
           </Bar>
         </BarChart>
-      </ResponsiveContainer>
+      </TowerSafeResponsiveContainer>
     </div>
   );
 }
@@ -5424,12 +5457,7 @@ function TowerAiPortfolioRechart({
       style={{ width: "100%", height: 430 }}
       data-testid="tower-ai-portfolio-recharts"
     >
-      <ResponsiveContainer
-        width="100%"
-        height="100%"
-        minWidth={1}
-        minHeight={1}
-      >
+      <TowerSafeResponsiveContainer height="100%">
         <ScatterChart margin={{ top: 24, right: 34, bottom: 34, left: 26 }}>
           <CartesianGrid stroke={T.BORDER} strokeDasharray="3 6" />
           <XAxis
@@ -5550,7 +5578,7 @@ function TowerAiPortfolioRechart({
             />
           </Scatter>
         </ScatterChart>
-      </ResponsiveContainer>
+      </TowerSafeResponsiveContainer>
     </div>
   );
 }
