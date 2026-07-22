@@ -279,4 +279,49 @@ describe("POST /api/v1/programs/[programId]/artifacts/[artifactId]/client-approv
       }),
     );
   });
+
+  it("maps ambiguous P2 discovery and root-cause diagnostic titles to the discovery report gate artifact", async () => {
+    mockGetProgramById.mockResolvedValue({ id: "prog-1", currentPhase: 2 });
+    mockGetGeneratedArtifactById.mockResolvedValue({
+      ...generatedArtifact,
+      sourceArtifactRef: "move:prog-1:phase:2",
+      metadata: {
+        renderableDoc: {
+          title:
+            "Commercial Onboarding & KYC-Evidence Agent-Assist — Discovery & Root Cause Diagnostic",
+          recommendation:
+            "Proceed to P3 draft shaping after sponsor review; no unresolved hard gaps remain.",
+          generatedSections: [
+            {
+              title: "Diagnosis",
+              bodyMarkdown:
+                "Current-state workshops, baseline metrics, stakeholder map, and source-of-record notes indicate the diagnosis is ready for Design.",
+            },
+          ],
+        },
+      },
+    });
+    const { POST } = await import("../route");
+
+    const res = await POST(
+      request({ reason: "Client accepts the reviewed discovery diagnostic." }) as never,
+      { params },
+    );
+    const json = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(200);
+    expect(json).toMatchObject({
+      ok: true,
+      deliverableTypeKey: "discovery_report",
+    });
+    expect(mockDraftModuleDeliverable).toHaveBeenCalledWith(
+      ctx,
+      expect.objectContaining({
+        programId: "prog-1",
+        moduleKey: "diagnose",
+        deliverableTypeKey: "discovery_report",
+      }),
+    );
+    expect(mockSignOffDeliverable).toHaveBeenCalled();
+  });
 });
