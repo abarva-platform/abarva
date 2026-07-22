@@ -22,6 +22,8 @@ import { ATLAS_SYNTHESIS_TURN_ID } from "@/lib/shell/atlas-page-state";
 import { useAtlasPageState } from "@/hooks/useAtlasPageState";
 import { AgentMarkdown } from "@/lib/agent/markdownRenderer";
 import { AgentResponseParts } from "@/components/agent/AgentResponseParts";
+import { AgentAnswerRenderer } from "@/components/agent-answer/AgentAnswerRenderer";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import {
   parseAgentResponseParts,
   type AgentChartSpec,
@@ -376,6 +378,7 @@ export function AgentColumn({
             role={turn.role}
             text={turn.text}
             responseParts={turn.responseParts}
+            agentAnswer={turn.agentAnswer}
             label={
               turn.role === "user"
                 ? "You"
@@ -586,11 +589,13 @@ function ChatBubble({
   role,
   text,
   responseParts,
+  agentAnswer,
   label,
 }: {
   role: "user" | "agent";
   text: string;
   responseParts?: AgentResponsePart[];
+  agentAnswer?: AvaAnswerPacket;
   label: string;
 }) {
   const isUser = role === "user";
@@ -641,7 +646,17 @@ function ChatBubble({
         {isUser ? (
           text
         ) : (
-          <AgentResponseBody text={text} responseParts={responseParts} />
+          <>
+            <AgentResponseBody text={text} responseParts={responseParts} />
+            {agentAnswer ? (
+              <div style={{ marginTop: 12 }}>
+                <AgentAnswerRenderer
+                  answer={agentAnswer}
+                  showProse={false}
+                />
+              </div>
+            ) : null}
+          </>
         )}
       </div>
     </div>

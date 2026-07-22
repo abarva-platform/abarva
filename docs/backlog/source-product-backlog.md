@@ -586,7 +586,15 @@ updated 19 d ago` on the proof event).
   `docs/releases/records/2026-07-22-source-vendor-coverage-governed-chat-answer.md` for the
   full build record, including the honest `retrievability: "not_indexed"` /
   `requireAgentReady: false` limitation this data class hits under the current governance
-  model. Below is the original architecture-decision grounding this build resolved:
+  model. **Correction (same day, caught during live-verify)**: the initial client wiring
+  targeted `UniversalCanvasShell.tsx`/`AvaBottomBar.tsx`, which turned out to be unmounted
+  dead code — the real live Source event chat is the platform-wide
+  `AtlasPageStateProvider`/`AgentColumn` (rendered by `AppShell` on every page). See
+  `docs/releases/records/2026-07-22-source-vendor-coverage-live-surface-fix.md` for the
+  follow-up that moves the NDJSON request + `AgentAnswerRenderer` rendering to the real
+  surface; `UniversalCanvasShell`/`AvaBottomBar` remain in the tree as confirmed dead code,
+  flagged as cleanup debt, not deleted in this pass. Below is the original
+  architecture-decision grounding this build resolved:
   1. **No dormant transport exists.** Source's chat calls `/api/chat/agent`
      (`src/app/api/chat/agent/route.ts`, ~3630 lines, shared by many non-Source surfaces) —
      this route streams plain text only, with no NDJSON `agent-answer` event mechanism. The

@@ -46,6 +46,7 @@ import type { AgentResponsePart } from "@/lib/agent/response-parts";
 // imports are erased at compile time so this never traverses the
 // client bundle's webpack graph.
 import type { BrokerMode, ContextBundle } from "@/lib/knowledge/context-broker";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 
 /**
  * Wave 1 inline attachment — client-side text extracted via FileReader.
@@ -80,6 +81,13 @@ export interface ChatTurn {
    * citations, and next actions.
    */
   responseParts?: AgentResponsePart[];
+  /**
+   * Optional governed AvaAnswerPacket — the AgentAnswerRenderer table/chart/
+   * graph pipeline already live on Home/Intelligence/Tower. Present only when
+   * the surface's ask() opted into NDJSON and the route returned an
+   * `agent-answer` line (e.g. Source vendor-response-coverage questions).
+   */
+  agentAnswer?: AvaAnswerPacket;
 }
 
 export interface SuggestedAction {
