@@ -35,17 +35,19 @@ if (typeof global.ReadableStream === "undefined") {
   ).ReadableStream = ReadableStream;
 }
 
-// MOVES-UI-001: `useFeature` resolves the active tenant via
-// `useClientContext()`, which needs Clerk's `useUser()` + Next's router
-// hooks. This test file renders the component with none of that provider
-// stack, so without a mock the hook would throw and the component's own
-// FinderShellErrorBoundary would (correctly) fall back to flag-off — which
-// is exactly what we want for every existing test in this file (flag-off
-// parity). The flag-on assertions below override this mock per-test.
-const mockUseFeature = jest.fn<boolean, [string]>(() => false);
-jest.mock("@/lib/features/use-feature", () => ({
-  useFeature: (key: string) => mockUseFeature(key),
-}));
+function contractStepButton(name: RegExp | string): HTMLElement {
+  const matches = within(screen.getByTestId("mxw-contract-card")).getAllByRole(
+    "button",
+    { name },
+  );
+  const stepButton = matches.find((button) =>
+    button.classList.contains("mxw-contract-step"),
+  );
+  if (!stepButton) {
+    throw new Error(`Contract step button not found: ${String(name)}`);
+  }
+  return stepButton;
+}
 
 jest.mock("next/link", () => {
   return function MockLink({
@@ -197,8 +199,6 @@ describe("MovesPhaseStandaloneClient", () => {
   beforeEach(() => {
     window.scrollTo = jest.fn();
     window.open = jest.fn(() => ({}) as Window);
-    mockUseFeature.mockReset();
-    mockUseFeature.mockImplementation(() => false);
     uploadedEvidenceArtifacts = [];
     global.fetch = jest.fn(
       async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -348,9 +348,8 @@ describe("MovesPhaseStandaloneClient", () => {
     jest.restoreAllMocks();
   });
 
-  describe("MOVES-UI-001 finder-shell flag (moves_finder_shell_v1)", () => {
-    it("renders exactly the legacy markup when the flag is off — no finder-shell class or data attribute", () => {
-      mockUseFeature.mockImplementation(() => false);
+  describe("retired legacy shell paths", () => {
+    it("renders the Finder contract shell even when the old feature flag mock is false", () => {
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -362,15 +361,15 @@ describe("MovesPhaseStandaloneClient", () => {
       );
 
       const root = screen.getByTestId("moves-phase-standalone");
-      expect(root.className).toBe("mxw");
-      expect(root).not.toHaveClass("mxw-finder-on");
-      expect(root).not.toHaveAttribute("data-finder-shell");
+      expect(root).toHaveClass("mxw", "mxw-finder-on");
+      expect(root).toHaveAttribute("data-finder-shell", "on");
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("tablist", { name: "Phase steps" }),
+      ).not.toBeInTheDocument();
     });
 
-    it("falls back to the legacy render when useFeature throws (no Clerk/router context)", () => {
-      mockUseFeature.mockImplementation(() => {
-        throw new Error("useUser must be used within <ClerkProvider>");
-      });
+    it("renders the new shell without any feature-flag fallback dependency", () => {
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -382,12 +381,12 @@ describe("MovesPhaseStandaloneClient", () => {
       );
 
       const root = screen.getByTestId("moves-phase-standalone");
-      expect(root.className).toBe("mxw");
-      expect(root).not.toHaveClass("mxw-finder-on");
+      expect(root).toHaveClass("mxw", "mxw-finder-on");
+      expect(root).toHaveAttribute("data-finder-shell", "on");
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
     });
 
-    it("adds the finder-shell class and data attribute when the flag is on, without changing tab/phase structure", () => {
-      mockUseFeature.mockImplementation(() => true);
+    it("renders the Finder shell class and data attribute with the expected tab/phase structure", () => {
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -402,9 +401,6 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(root).toHaveClass("mxw", "mxw-finder-on");
       expect(root).toHaveAttribute("data-finder-shell", "on");
 
-      // The tab/step control structure and phase nav are untouched — only
-      // presentation (CSS scoped under .mxw-finder-on) changes, per the
-      // "no restructuring" constraint.
       expect(
         screen.getByRole("tablist", { name: "Move workspace views" }),
       ).toBeInTheDocument();
@@ -413,10 +409,7 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
-    it("flag on, P1: renders the P0-style contract canvas while preserving real workflow controls", () => {
-      mockUseFeature.mockImplementation(
-        (key: string) => key === "moves_finder_shell_v1",
-      );
+    it("P1 renders the contract canvas while preserving real workflow controls", () => {
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -465,9 +458,8 @@ describe("MovesPhaseStandaloneClient", () => {
     });
   });
 
-  describe("MOVES-UI-003 rail collapse/expand toggle (moves_finder_shell_v1)", () => {
-    it("flag off: no collapse toggle renders at all, and the rail is byte-parity with pre-existing (expanded-only) behavior", () => {
-      mockUseFeature.mockImplementation(() => false);
+  describe("MOVES-UI-003 rail collapse/expand toggle", () => {
+    it("keeps the collapse toggle available even when the old feature flag mock is false", () => {
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -478,23 +470,16 @@ describe("MovesPhaseStandaloneClient", () => {
         />,
       );
 
-      expect(
-        screen.queryByRole("button", { name: /collapse phase rail/i }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole("button", { name: /expand phase rail/i }),
-      ).not.toBeInTheDocument();
-
       const rail = screen.getByRole("complementary", { name: "Move phases" });
       expect(rail).not.toHaveClass("mxw-side-collapsed");
-      // Labels are always present — the collapsed, icon-only code path is
-      // unreachable when the flag is off.
+      expect(
+        screen.getByRole("button", { name: /collapse phase rail/i }),
+      ).toBeInTheDocument();
       expect(screen.getByText("Understand Current State")).toBeInTheDocument();
       expect(screen.getByText("Stage workspace")).toBeInTheDocument();
     });
 
-    it("flag on: renders a collapse toggle; clicking it collapses the rail to an icon-only strip (real DOM/class change), and clicking again expands it back", () => {
-      mockUseFeature.mockImplementation(() => true);
+    it("renders a collapse toggle; clicking it collapses the rail to an icon-only strip (real DOM/class change), and clicking again expands it back", () => {
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -540,8 +525,7 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
     });
 
-    it("flag on, collapsed: a reachable phase's icon is still a real link to its phase route (navigation survives collapse)", () => {
-      mockUseFeature.mockImplementation(() => true);
+    it("collapsed: a reachable phase's icon is still a real link to its phase route (navigation survives collapse)", () => {
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -574,9 +558,8 @@ describe("MovesPhaseStandaloneClient", () => {
     });
   });
 
-  describe("MOVES-UI-002 approvals overview (moves_approvals_overview_v1)", () => {
-    it("flag off: the rail's Approvals link behaves exactly as before — jumps straight into the current phase's approve substep, no overview rendered", () => {
-      mockUseFeature.mockImplementation(() => false);
+  describe("MOVES-UI-002 approvals overview", () => {
+    it("opens the overview even when the old feature flag mock is false", () => {
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -592,18 +575,12 @@ describe("MovesPhaseStandaloneClient", () => {
       );
 
       expect(
-        screen.getByRole("tab", { name: /Approve & Build/i }),
-      ).toHaveAttribute("aria-selected", "true");
-      expect(screen.queryByText("Approvals overview")).not.toBeInTheDocument();
-      expect(
-        screen.queryByLabelText("Approvals overview"),
-      ).not.toBeInTheDocument();
+        screen.getByRole("heading", { name: "Approvals overview" }),
+      ).toBeInTheDocument();
+      expect(screen.getByLabelText("Approvals overview")).toBeInTheDocument();
     });
 
-    it("flag on: opens the overview list instead, with every row reproducible from the mocked getMovePhaseTallies output alone", () => {
-      mockUseFeature.mockImplementation(
-        (key: string) => key === "moves_approvals_overview_v1",
-      );
+    it("opens the overview list with every row reproducible from the mocked getMovePhaseTallies output alone", () => {
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -637,10 +614,7 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(within(overview).getAllByText("Sponsor").length).toBe(6);
     });
 
-    it("flag on, current-phase row: Review & approve returns to the phase workspace at the approve substep", () => {
-      mockUseFeature.mockImplementation(
-        (key: string) => key === "moves_approvals_overview_v1",
-      );
+    it("current-phase row: Review & approve returns to the phase workspace at the approve substep", () => {
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -659,16 +633,14 @@ describe("MovesPhaseStandaloneClient", () => {
         within(overview).getByRole("button", { name: /Review & approve/i }),
       );
 
-      expect(
-        screen.getByRole("tab", { name: /Approve & Build/i }),
-      ).toHaveAttribute("aria-selected", "true");
+      expect(contractStepButton(/Approve & Build/i)).toHaveClass(
+        "mxw-contract-step",
+        "active",
+      );
       expect(screen.queryByText("Approvals overview")).not.toBeInTheDocument();
     });
 
-    it("flag on, another reachable phase row: Review & approve is a real link to that phase's route", () => {
-      mockUseFeature.mockImplementation(
-        (key: string) => key === "moves_approvals_overview_v1",
-      );
+    it("another reachable phase row: Review & approve is a real link to that phase's route", () => {
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -719,11 +691,9 @@ describe("MovesPhaseStandaloneClient", () => {
         name: "Review the captured Move brief and approve the gate",
       }),
     ).toBeInTheDocument();
-    // Single primary CTA (the step-navigation bar) drives progress here now —
-    // the P0 handoff card no longer renders its own duplicate button/link.
     expect(
-      screen.getByRole("button", { name: "Continue to Frame →" }),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: "Continue to Frame →" }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Review P0 gate →" }),
     ).not.toBeInTheDocument();
@@ -833,10 +803,10 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByRole("link", { name: /Prepare to Execute\s+2 of 2/i }),
     ).toBeInTheDocument();
+    expect(screen.getByText("Open Tower →")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Open Tower →" }),
+      screen.getByText(/P5 is already approved and handed off to Tower/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("Tower handoff complete")).toBeInTheDocument();
     expect(screen.queryByText(/Complete this phase/i)).not.toBeInTheDocument();
     expect(
       screen.queryByText(/Attest and advance to Tower handoff/i),
@@ -988,7 +958,7 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.getByRole("heading", { name: "Files to upload" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Continue to Approve & Build →" }),
+      contractStepButton(/Approve & Build/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Charter inputs" }),
@@ -1039,12 +1009,14 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
+    fireEvent.click(contractStepButton(/Charter Inputs/i));
     expect(
       screen.getByRole("heading", { name: "Charter inputs" }),
     ).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Sponsor commitment"), {
       target: { value: "" },
     });
+    fireEvent.click(contractStepButton(/Approve & Build/i));
 
     const buildButton = screen.getByRole("button", {
       name: /Complete phase inputs before build/i,
@@ -1160,7 +1132,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: /Approve & Build/i }));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
 
     expect(
       screen.getByText(/Next: P4 Build the Plan readiness/i),
@@ -1196,7 +1168,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: /Approve & Build/i }));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
 
     expect(
       screen.getByText("Carries forward from this phase's generated work"),
@@ -1218,7 +1190,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: /Approve & Build/i }));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
 
     expect(
       screen.queryByText("Carries forward from this phase's generated work"),
@@ -1226,7 +1198,6 @@ describe("MovesPhaseStandaloneClient", () => {
   });
 
   it("renders P3 in the contract shell instead of the older prepare wall", () => {
-    mockUseFeature.mockImplementation(() => true);
     render(
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
@@ -1296,7 +1267,6 @@ describe("MovesPhaseStandaloneClient", () => {
   });
 
   it("renders P4 in the contract shell instead of the older prepare wall", () => {
-    mockUseFeature.mockImplementation(() => true);
     render(
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
@@ -1376,7 +1346,6 @@ describe("MovesPhaseStandaloneClient", () => {
   });
 
   it("renders P5 in the contract shell instead of the older prepare wall", () => {
-    mockUseFeature.mockImplementation(() => true);
     render(
       <MovesPhaseStandaloneClient
         carriesForwardContent={[]}
@@ -1474,7 +1443,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: /Review Findings/i }));
+    fireEvent.click(contractStepButton(/Review Findings/i));
 
     expect(screen.getByText("Current-state readiness")).toBeInTheDocument();
     expect(screen.getByText(/0% collected/i)).toBeInTheDocument();
@@ -1494,8 +1463,8 @@ describe("MovesPhaseStandaloneClient", () => {
       screen.queryByRole("button", { name: "Continue to Approve & Build" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Continue to Approve & Build →" }),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: "Continue to Approve & Build →" }),
+    ).not.toBeInTheDocument();
   });
 
   it("does not load the legacy facilitated session playbook on the Prepare tab", () => {
@@ -1594,7 +1563,7 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("tab", { name: /Record Decision/i }));
+    fireEvent.click(contractStepButton(/Record Decision/i));
 
     expect(
       screen.getByRole("heading", { name: "Decide the approach" }),
@@ -1605,7 +1574,7 @@ describe("MovesPhaseStandaloneClient", () => {
       }),
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: /Approve & Build/i }));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
 
     expect(
       screen.getByRole("heading", { name: "Gate approval" }),
@@ -1731,10 +1700,10 @@ describe("MovesPhaseStandaloneClient", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /CANARY - SkyHarbor/i }),
     );
-    fireEvent.click(screen.getByRole("tab", { name: /Approve & Build/i }));
+    fireEvent.click(contractStepButton(/Approve & Build/i));
     expect(
-      screen.getByRole("button", { name: /Review governed build/i }),
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: /Review governed build/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Approve & advance/i }),
     ).not.toBeInTheDocument();
@@ -1862,9 +1831,8 @@ describe("MovesPhaseStandaloneClient", () => {
     expect((textarea as HTMLTextAreaElement).value).toBe("");
   });
 
-  describe("MOVES-UI-001 Steps two-column view (moves_finder_shell_v1)", () => {
-    it("flag off: renders no two-column steps view, and the legacy horizontal stepper still drives substep navigation", () => {
-      mockUseFeature.mockImplementation(() => false);
+  describe("MOVES-UI-001 Steps contract view", () => {
+    it("retired legacy path: renders the contract-card shell, not the old horizontal stepper", () => {
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -1880,16 +1848,19 @@ describe("MovesPhaseStandaloneClient", () => {
 
       expect(screen.queryByTestId("mxw-finder-steps")).not.toBeInTheDocument();
       expect(
-        screen.getByRole("tablist", { name: "Phase steps" }),
-      ).toBeInTheDocument();
-      fireEvent.click(screen.getByRole("tab", { name: /Upload & Review/i }));
+        screen.queryByRole("tablist", { name: "Phase steps" }),
+      ).not.toBeInTheDocument();
+      expect(screen.getByTestId("mxw-contract-card")).toBeInTheDocument();
+      const menu = screen.getByLabelText("P2 steps");
+      fireEvent.click(
+        within(menu).getByRole("button", { name: /Upload & Review/i }),
+      );
       expect(
         screen.getByRole("heading", { name: "Evidence checklist" }),
       ).toBeInTheDocument();
     });
 
-    it("flag on: renders the contract-card Steps view sourced only from getPhaseCaptureSections/phaseCaptureValues — no fabricated section names", () => {
-      mockUseFeature.mockImplementation(() => true);
+    it("renders the contract-card Steps view sourced only from getPhaseCaptureSections/phaseCaptureValues — no fabricated section names", () => {
       const move = makeMove({
         currentPhase: 2,
         phaseLabel: "P2 Understand Current State",
@@ -1931,7 +1902,6 @@ describe("MovesPhaseStandaloneClient", () => {
     });
 
     it("clicking a phase-input row updates the detail pane to that section's real captured value; clicking a workflow row restores the real substep content", () => {
-      mockUseFeature.mockImplementation(() => true);
       const move = makeMove({
         currentPhase: 2,
         phaseLabel: "P2 Understand Current State",
@@ -1979,7 +1949,6 @@ describe("MovesPhaseStandaloneClient", () => {
     });
 
     it("citation toggle: absent by default (no captured source), then appears and actually reveals/hides the source caption once a real source is captured", () => {
-      mockUseFeature.mockImplementation(() => true);
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -2040,7 +2009,6 @@ describe("MovesPhaseStandaloneClient", () => {
     });
 
     it("upload-type workflow step: the real file input reachable from the two-column detail pane invokes the same existing upload wiring (no new handler built)", async () => {
-      mockUseFeature.mockImplementation(() => true);
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -2086,7 +2054,6 @@ describe("MovesPhaseStandaloneClient", () => {
     });
 
     it("'Coming up' card: collapsed by default, expands/collapses the real readiness-pack chips in the DOM, and is bound only to real evidence-need packets", () => {
-      mockUseFeature.mockImplementation(() => true);
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}

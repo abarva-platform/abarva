@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import {
-  Component,
   useCallback,
   useEffect,
   useMemo,
@@ -20,7 +19,6 @@ import {
 } from "@/components/strategic-moves/FileCabinetPanel";
 import { PhaseApproveAndBuild } from "@/components/strategic-moves/PhaseApproveAndBuild";
 import { PhaseIntelligencePanel } from "@/components/strategic-moves/PhaseIntelligencePanel";
-import { useFeature } from "@/lib/features/use-feature";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import {
   getPhaseCaptureSections,
@@ -346,95 +344,6 @@ function moneyRange(valueAtStake: StrategicMove["valueAtStake"]): string {
   return `${formatter.format(projected.low)}-${formatter.format(projected.high)}`;
 }
 
-// ---------------------------------------------------------------------------
-// MOVES-UI-001 finder-shell flag gate.
-//
-// Ports MovePhaseExplorer.tsx's same guard: `useFeature()` resolves the
-// active tenant via `useClientContext()`, which depends on Clerk's
-// `useUser()` and Next's router hooks. Every real page render sits under
-// the app's <ClerkProvider>/app-router tree, so this always resolves in
-// production. Isolated renders (unit tests, storybook-style harnesses)
-// don't have that provider stack — rather than crash the whole workspace,
-// fall back to the pre-existing (flag-off) rendering, which has no such
-// dependency. This keeps the "flag off -> byte-for-byte legacy render"
-// guarantee intact even when the flag itself can't be evaluated.
-//
-// Purely presentational: `finderShellEnabled` only toggles CSS class names
-// added in this file's <style> block. It does not touch workspaceView
-// state, tab-switching logic, or any data fetch.
-// ---------------------------------------------------------------------------
-
-class FinderShellErrorBoundary extends Component<
-  { children: ReactNode; fallback: ReactNode },
-  { hasError: boolean }
-> {
-  state = { hasError: false };
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  render() {
-    return this.state.hasError ? this.props.fallback : this.props.children;
-  }
-}
-
-function FinderShellFlagReader({
-  children,
-}: {
-  children: (finderShellEnabled: boolean) => ReactNode;
-}) {
-  const finderShellEnabled = useFeature("moves_finder_shell_v1");
-  return <>{children(finderShellEnabled)}</>;
-}
-
-function FinderShellGate({
-  children,
-}: {
-  children: (finderShellEnabled: boolean) => ReactNode;
-}) {
-  return (
-    <FinderShellErrorBoundary fallback={<>{children(false)}</>}>
-      <FinderShellFlagReader>{children}</FinderShellFlagReader>
-    </FinderShellErrorBoundary>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// MOVES-UI-002 approvals-overview flag gate.
-//
-// Second, independent flag (`moves_approvals_overview_v1`) so the new
-// cross-phase Approvals overview can be rolled back without touching the
-// Finder-shell CSS/flag machinery above. Mirrors the exact same
-// error-boundary-wrapped useFeature() pattern — reuses
-// `FinderShellErrorBoundary` since that component is flag-agnostic (it just
-// renders `children` and falls back to `fallback` on error). When the flag
-// can't be evaluated (no Clerk/router provider stack, e.g. isolated unit
-// tests), this falls back to `false`, which keeps the rail's Approvals link
-// byte-for-byte identical to its pre-MOVES-UI-002 behavior.
-// ---------------------------------------------------------------------------
-
-function ApprovalsOverviewFlagReader({
-  children,
-}: {
-  children: (approvalsOverviewEnabled: boolean) => ReactNode;
-}) {
-  const approvalsOverviewEnabled = useFeature("moves_approvals_overview_v1");
-  return <>{children(approvalsOverviewEnabled)}</>;
-}
-
-function ApprovalsOverviewGate({
-  children,
-}: {
-  children: (approvalsOverviewEnabled: boolean) => ReactNode;
-}) {
-  return (
-    <FinderShellErrorBoundary fallback={<>{children(false)}</>}>
-      <ApprovalsOverviewFlagReader>{children}</ApprovalsOverviewFlagReader>
-    </FinderShellErrorBoundary>
-  );
-}
-
 export function MovesPhaseStandaloneClient({
   move,
   phaseNum,
@@ -450,26 +359,24 @@ export function MovesPhaseStandaloneClient({
   const isHistoricalPhase = terminalComplete || phase.phase < currentPhase;
   const nextOpenPhase = Math.min(currentPhase, 5);
   const nextOpenPhaseContract = phaseFor(nextOpenPhase);
-  const initialSubstepIndex = Math.max(
-    0,
-    phase.substeps.findIndex((item) => item.key === initialSubstepKey),
+  const initialSubstepIndex = getInitialSubstepIndex(
+    phase,
+    initialSubstepKey,
+    terminalComplete,
   );
   const [workspaceView, setWorkspaceView] = useState<WorkspaceView>("phase");
   const [substepIndex, setSubstepIndex] = useState(initialSubstepIndex);
-  // MOVES-UI-003: rail collapse/expand. Only ever consulted/rendered when
-  // moves_finder_shell_v1 resolves true (see collapsedRail at the JSX root,
-  // gated on the `finderShellEnabled` render-prop value) — the flag-off
-  // legacy rail never reads this state, so it stays byte-for-byte unchanged.
+  // Rail collapse/expand is part of the universal Moves shell.
   const [railCollapsed, setRailCollapsed] = useState(false);
-  // MOVES-UI-001 Steps two-column view (moves_finder_shell_v1 only). Which
-  // left-menu row is showing in the right detail pane: a real phase-capture
-  // section key, or null to fall back to the current substep's existing
-  // PhaseBody render (the same component/props the flag-off stepper uses —
-  // reused, not duplicated). Independent of substepIndex so browsing a
-  // capture section never disturbs the real substep/gate state.
+  // Which left-menu row is showing in the right detail pane: a real
+  // phase-capture section key, or null for the current workflow step.
+  // Independent of substepIndex so browsing a capture section never disturbs
+  // the real substep/gate state.
   const [finderSelectedSectionKey, setFinderSelectedSectionKey] = useState<
     string | null
-  >(() => getInitialFinderSectionKey(phase.phase));
+  >(() =>
+    getInitialFinderSectionKey(phase.phase, initialSubstepKey, isHistoricalPhase),
+  );
   const [finderComingUpOpen, setFinderComingUpOpen] = useState(false);
   const [avaOpen, setAvaOpen] = useState(false);
   const [avaThread, setAvaThread] = useState<AvaChatMessage[]>([]);
@@ -490,8 +397,6 @@ export function MovesPhaseStandaloneClient({
   const progressPct = Math.round(
     ((substepIndex + 1) / phase.substeps.length) * 100,
   );
-  const isFinalSubstep = substepIndex === phase.substeps.length - 1;
-  const nextSubstep = phase.substeps[substepIndex + 1] ?? null;
   const phaseProgressDone =
     isHistoricalPhase || gateApproved
       ? phase.substeps.length
@@ -506,19 +411,6 @@ export function MovesPhaseStandaloneClient({
         : workspaceView === "approvals"
           ? "Approvals overview"
           : "Phase Intelligence";
-  const primaryActionLabel = isHistoricalPhase
-    ? terminalComplete
-      ? "Open Tower →"
-      : `Continue to ${nextOpenPhaseContract.code} ${nextOpenPhaseContract.title} →`
-    : isFinalSubstep
-      ? phase.phase === 0
-        ? gateApprovalStatus === "approving"
-          ? "Approving..."
-          : "Approve gate →"
-        : "Review governed build →"
-      : nextSubstep
-        ? `Continue to ${nextSubstep.label} →`
-        : "Continue →";
   const supportLine = useMemo(() => {
     const industry = move.tenant.industryCode
       ? move.tenant.industryCode.toUpperCase()
@@ -605,8 +497,14 @@ export function MovesPhaseStandaloneClient({
     [phase.phase],
   );
   useEffect(() => {
-    setFinderSelectedSectionKey(getInitialFinderSectionKey(phase.phase));
-  }, [phase.phase]);
+    setFinderSelectedSectionKey(
+      getInitialFinderSectionKey(
+        phase.phase,
+        initialSubstepKey,
+        isHistoricalPhase,
+      ),
+    );
+  }, [initialSubstepKey, isHistoricalPhase, phase.phase]);
   const phaseCaptureCompleteCount = useMemo(
     () =>
       phaseCaptureSections.filter((section) =>
@@ -648,9 +546,6 @@ export function MovesPhaseStandaloneClient({
       phase.phase,
     ],
   );
-  const openHardGateCount = move.gateCriteria.filter(
-    (criterion) => criterion.severity === "hard" && !criterion.completed,
-  ).length;
   const setPhaseCaptureValue = useCallback((key: string, value: string) => {
     setPhaseCaptureValues((prev) => ({ ...prev, [key]: value }));
   }, []);
@@ -764,21 +659,9 @@ export function MovesPhaseStandaloneClient({
     ],
   );
 
-  function continueStep() {
-    if (workspaceView !== "phase") return;
-    setSubstepIndex((idx) => Math.min(idx + 1, phase.substeps.length - 1));
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
   function openFilesWorkspace() {
     setWorkspaceView("files");
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function focusGateAction() {
-    document
-      .getElementById("mxw-approve-build-action")
-      ?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   function continueToCurrentPhase() {
@@ -948,14 +831,10 @@ export function MovesPhaseStandaloneClient({
   }
 
   return (
-    <FinderShellGate>
-      {(finderShellEnabled) => (
-        <ApprovalsOverviewGate>
-          {(approvalsOverviewEnabled) => (
             <main
-              className={`mxw${finderShellEnabled ? " mxw-finder-on" : ""}`}
+              className="mxw mxw-finder-on"
               data-testid="moves-phase-standalone"
-              {...(finderShellEnabled ? { "data-finder-shell": "on" } : {})}
+              data-finder-shell="on"
             >
               <MovesStandaloneStyles />
               <div className="mxw-contextbar" aria-label="Move context">
@@ -972,10 +851,7 @@ export function MovesPhaseStandaloneClient({
                 </div>
               </div>
               {(() => {
-                // MOVES-UI-003: collapse/expand only ever applies when the
-                // finder-shell rail itself is on — flag-off keeps the
-                // legacy rail with no toggle and no collapsed code path.
-                const collapsedRail = finderShellEnabled && railCollapsed;
+                const collapsedRail = railCollapsed;
                 return (
                   <div
                     className={`mxw-surface${collapsedRail ? " mxw-surface-rail-collapsed" : ""}`}
@@ -984,22 +860,20 @@ export function MovesPhaseStandaloneClient({
                       className={`mxw-side${collapsedRail ? " mxw-side-collapsed" : ""}`}
                       aria-label="Move phases"
                     >
-                      {finderShellEnabled && (
-                        <button
-                          type="button"
-                          className="mxw-rail-toggle"
-                          onClick={() => setRailCollapsed((prev) => !prev)}
-                          aria-expanded={!railCollapsed}
-                          aria-label={
-                            railCollapsed
-                              ? "Expand phase rail"
-                              : "Collapse phase rail"
-                          }
-                          title={railCollapsed ? "Expand" : "Collapse"}
-                        >
-                          {railCollapsed ? "»" : "«"}
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        className="mxw-rail-toggle"
+                        onClick={() => setRailCollapsed((prev) => !prev)}
+                        aria-expanded={!railCollapsed}
+                        aria-label={
+                          railCollapsed
+                            ? "Expand phase rail"
+                            : "Collapse phase rail"
+                        }
+                        title={railCollapsed ? "Expand" : "Collapse"}
+                      >
+                        {railCollapsed ? "»" : "«"}
+                      </button>
                       {!collapsedRail && (
                         <div className="mxw-move">
                           <Link className="mxw-back" href="/strategic-moves">
@@ -1127,23 +1001,10 @@ export function MovesPhaseStandaloneClient({
                         </button>
                         <button
                           className={`mxw-lib-link ${
-                            approvalsOverviewEnabled
-                              ? workspaceView === "approvals"
-                                ? "viewing"
-                                : ""
-                              : workspaceView === "phase" &&
-                                  substep.key === "approve"
-                                ? "viewing"
-                                : ""
+                            workspaceView === "approvals" ? "viewing" : ""
                           }`}
                           onClick={() => {
-                            if (approvalsOverviewEnabled) {
-                              setWorkspaceView("approvals");
-                              window.scrollTo({ top: 0, behavior: "smooth" });
-                              return;
-                            }
-                            setWorkspaceView("phase");
-                            setSubstepIndex(phase.substeps.length - 1);
+                            setWorkspaceView("approvals");
                             window.scrollTo({ top: 0, behavior: "smooth" });
                           }}
                           title={collapsedRail ? "Approvals" : undefined}
@@ -1262,6 +1123,7 @@ export function MovesPhaseStandaloneClient({
                             onReviewCurrentPhase={() => {
                               setWorkspaceView("phase");
                               setSubstepIndex(phase.substeps.length - 1);
+                              setFinderSelectedSectionKey(null);
                               window.scrollTo({ top: 0, behavior: "smooth" });
                             }}
                           />
@@ -1307,8 +1169,7 @@ export function MovesPhaseStandaloneClient({
                             onSelect={setWorkspaceView}
                           />
 
-                          {finderShellEnabled ? (
-                            phase.phase >= 1 && phase.phase <= 5 ? (
+                          {phase.phase >= 1 && phase.phase <= 5 ? (
                               <PhaseContractStepsCanvas
                                 comingUpExpanded={finderComingUpOpen}
                                 onPhaseCaptureValueChange={setPhaseCaptureValue}
@@ -1370,7 +1231,7 @@ export function MovesPhaseStandaloneClient({
                                 }
                                 substepIndex={substepIndex}
                               />
-                            ) : (
+                          ) : (
                               <FinderStepsColumns
                                 comingUpExpanded={finderComingUpOpen}
                                 onPhaseCaptureValueChange={setPhaseCaptureValue}
@@ -1432,103 +1293,6 @@ export function MovesPhaseStandaloneClient({
                                 }
                                 substepIndex={substepIndex}
                               />
-                            )
-                          ) : (
-                            <>
-                              <div className="mxw-stage-bar">
-                                <div className="mxw-progress">
-                                  <span className="mxw-track">
-                                    <span
-                                      style={{ width: `${progressPct}%` }}
-                                    />
-                                  </span>
-                                  <span className="mxw-step-label">
-                                    <b>
-                                      Step {substepIndex + 1} of{" "}
-                                      {phase.substeps.length}
-                                    </b>{" "}
-                                    · {substep.label}
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div
-                                className="mxw-substeps"
-                                role="tablist"
-                                aria-label="Phase steps"
-                              >
-                                {phase.substeps.map((item, index) => (
-                                  <button
-                                    aria-selected={index === substepIndex}
-                                    className={`mxw-substep ${
-                                      index < substepIndex
-                                        ? "done"
-                                        : index === substepIndex
-                                          ? "cur"
-                                          : "up"
-                                    }`}
-                                    key={item.key}
-                                    onClick={() => setSubstepIndex(index)}
-                                    role="tab"
-                                    type="button"
-                                  >
-                                    <span>
-                                      {index < substepIndex ? "✓" : index + 1}
-                                    </span>
-                                    <b>{item.label}</b>
-                                  </button>
-                                ))}
-                              </div>
-
-                              <PhaseWorkflowGuide
-                                actionLabel={primaryActionLabel}
-                                evidenceCount={evidenceCount}
-                                gateOpenCount={openHardGateCount}
-                                nextLabel={nextSubstep?.label ?? null}
-                                onAction={
-                                  isHistoricalPhase
-                                    ? continueToCurrentPhase
-                                    : isFinalSubstep
-                                      ? phase.phase === 0
-                                        ? () => void approveP0Gate()
-                                        : focusGateAction
-                                      : continueStep
-                                }
-                                phase={phase}
-                                substep={substep.key}
-                              />
-
-                              <PhaseBody
-                                carriesForwardContent={carriesForwardContent}
-                                currentStateReadiness={currentStateReadiness}
-                                evidenceCount={evidenceCount}
-                                evidenceNeedPackets={evidenceNeedPackets}
-                                gateApproved={gateApproved}
-                                gateApprovalMessage={gateApprovalMessage}
-                                gateApprovalStatus={gateApprovalStatus}
-                                isHistoricalPhase={isHistoricalPhase}
-                                move={move}
-                                onApproveAfterBuild={approvePhaseGateAfterBuild}
-                                onContinueCurrentPhase={continueToCurrentPhase}
-                                onApproveP0Gate={approveP0Gate}
-                                onFinalizePhaseCapture={finalizePhaseCapture}
-                                onOpenFiles={openFilesWorkspace}
-                                onPhaseCaptureValueChange={setPhaseCaptureValue}
-                                onSelectOption={setSelectedOption}
-                                nextOpenPhaseContract={nextOpenPhaseContract}
-                                p3OptionSet={p3OptionSet}
-                                phase={phase}
-                                phaseCaptureBlocker={phaseCaptureBlocker}
-                                phaseCaptureCompleteCount={
-                                  phaseCaptureCompleteCount
-                                }
-                                phaseCaptureSections={phaseCaptureSections}
-                                phaseCaptureValues={phaseCaptureValues}
-                                selectedOption={selectedOption}
-                                substep={substep.key}
-                                terminalComplete={terminalComplete}
-                              />
-                            </>
                           )}
                         </>
                       )}
@@ -1636,10 +1400,6 @@ export function MovesPhaseStandaloneClient({
                 </form>
               </aside>
             </main>
-          )}
-        </ApprovalsOverviewGate>
-      )}
-    </FinderShellGate>
   );
 }
 
@@ -1778,7 +1538,7 @@ function ApprovalsOverview({
 }
 
 // ---------------------------------------------------------------------------
-// MOVES-UI-001 Phase 3b — Steps two-column view (moves_finder_shell_v1 only).
+// Moves universal Steps view.
 //
 // Replaces the horizontal substep tab strip with a macOS-Finder-style
 // left sub-menu + right detail pane, per the owner-approved reference. Real
@@ -1790,20 +1550,43 @@ function ApprovalsOverview({
 //     count already uses.
 //   - "Workflow" rows = `phase.substeps`, the SAME array driving the legacy
 //     stepper's done/current/upcoming state (`substepIndex`) — one source of
-//     truth, not a second one. Selecting a row renders `substepBody`, which
-//     the caller builds from the EXACT SAME <PhaseBody> element/props used in
-//     the flag-off path (see call site), so every substep-specific real
-//     control (upload inputs, decision panels, gate approval) keeps working
-//     unmodified.
+//     truth, not a second one. Selecting a workflow row renders `substepBody`,
+//     which the caller builds from the existing <PhaseBody> element/props, so
+//     every substep-specific real control (upload inputs, decision panels,
+//     gate approval) keeps working unmodified.
 //   - "What {phase} will need" = `buildNextPhaseReadinessPack` output,
 //     already computed from real evidence-need packets — no new fetch.
 // ---------------------------------------------------------------------------
 
-function getInitialFinderSectionKey(phaseNum: number): string | null {
+function getInitialFinderSectionKey(
+  phaseNum: number,
+  initialSubstepKey?: SubstepKey,
+  isHistoricalPhase = false,
+): string | null {
   if (phaseNum < 1 || phaseNum > 5) {
     return null;
   }
+  if (initialSubstepKey || isHistoricalPhase) {
+    return null;
+  }
   return getPhaseCaptureSections(phaseNum)[0]?.key ?? null;
+}
+
+function getInitialSubstepIndex(
+  phase: PhaseContract,
+  initialSubstepKey: SubstepKey | undefined,
+  terminalComplete: boolean,
+): number {
+  const requestedIndex = phase.substeps.findIndex(
+    (item) => item.key === initialSubstepKey,
+  );
+  if (requestedIndex >= 0) {
+    return requestedIndex;
+  }
+  if (terminalComplete && phase.phase === 5) {
+    return Math.max(phase.substeps.length - 1, 0);
+  }
+  return 0;
 }
 
 function finderSectionHasValue(
@@ -3229,190 +3012,6 @@ function buildPhaseCaptureItems({
   );
 }
 
-function workflowCopyFor(
-  phase: PhaseContract,
-  substep: SubstepKey,
-): {
-  outcome: string;
-  action: string;
-  proof: string;
-} {
-  if (phase.phase === 0) {
-    if (substep === "approve") {
-      return {
-        outcome:
-          "Approve the captured Originate brief as the source of truth for Charter.",
-        action:
-          "Review the seven saved answers, then approve only if sponsor role, scope, value, evidence, and readiness assumptions are clear.",
-        proof:
-          "P1 opens with the brief carried forward and the gate decision recorded.",
-      };
-    }
-    return {
-      outcome:
-        "Confirm the Move is framed clearly enough to become governed work.",
-      action:
-        "Use the captured brief as the record; edit in Start a Move if the problem, name, archetype, sponsor role, scope, evidence, value, or readiness is wrong.",
-      proof: "All seven origination fields are present before gate approval.",
-    };
-  }
-
-  if (substep === "prepare") {
-    return {
-      outcome:
-        phase.phase === 1
-          ? "Complete the Charter fields that the P1 gate will approve."
-          : `Orient the team to what ${phase.code} requires before evidence is uploaded or reviewed.`,
-      action:
-        phase.phase === 1
-          ? "Review and edit scope, success criteria, stakeholder roles, decision rights, and the evidence plan in the fields below."
-          : "Use the session/template cards below to decide which workshop outputs or source files must be gathered for this phase.",
-      proof:
-        phase.phase === 1
-          ? "Six Charter inputs are filled and ready to be paired with uploaded decision evidence."
-          : "The team knows which sessions to run, which templates to complete, and which evidence will feed the gate.",
-    };
-  }
-
-  if (substep === "decide") {
-    return {
-      outcome:
-        phase.phase === 1
-          ? "Attach the Charter decision files before P1 approval."
-          : "Capture the human decision and its evidence before the design is approved.",
-      action:
-        phase.phase === 1
-          ? "Upload sponsor review notes, scope workshop files, success metric decisions, stakeholder maps, or completed Charter templates. Multiple files are allowed."
-          : "Confirm the preferred approach with SMEs, then upload the decision summary, tradeoffs, and caveats.",
-      proof:
-        "Uploaded files appear immediately here and in Files & Evidence as Move evidence that still requires review.",
-    };
-  }
-
-  if (substep === "current" || substep === "findings") {
-    return {
-      outcome:
-        "Turn uploaded evidence into a reviewable current-state diagnosis.",
-      action:
-        substep === "current"
-          ? "Open Files & Evidence to add or review the documents this phase needs, then return here to inspect readiness."
-          : "Review the findings lanes, challenge unsupported claims, and keep missing facts as explicit gaps.",
-      proof:
-        "Process, systems, data, controls, workforce, and value claims are backed by evidence or marked as gaps.",
-    };
-  }
-
-  if (substep === "options") {
-    return {
-      outcome:
-        "Compare feasible solution paths using the evidence carried from P2.",
-      action:
-        "Review the deterministic scores, readiness gaps, building blocks, and recommendation before selecting or overriding an option.",
-      proof:
-        "The chosen approach is traceable to P2 evidence, constraints, and open gaps.",
-    };
-  }
-
-  if (
-    substep === "canvas" ||
-    substep === "workstreams" ||
-    substep === "value"
-  ) {
-    return {
-      outcome:
-        substep === "value"
-          ? "Shape the value case leadership can inspect."
-          : "Translate the approved direction into the work products the next gate will carry forward.",
-      action:
-        substep === "value"
-          ? "Check projected value, cost, assumptions, sensitivity, and evidence posture before approval."
-          : "Review the lanes, workstreams, dependencies, controls, owners, and Tower handoff implications.",
-      proof:
-        "The gate package can explain what will be done, by whom, in what sequence, with what evidence.",
-    };
-  }
-
-  return {
-    outcome: "Run the full phase close, not just a visual approval.",
-    action:
-      "Approve & Build only after inputs and evidence are ready. AbarVa will create the context extract, queue deliverables, record the gate decision, and prepare the next phase handoff.",
-    proof:
-      "The final row moves from Open to Complete only when the governed build has executed.",
-  };
-}
-
-function PhaseWorkflowGuide({
-  actionLabel,
-  evidenceCount,
-  gateOpenCount,
-  nextLabel,
-  onAction,
-  phase,
-  substep,
-}: {
-  actionLabel: string;
-  evidenceCount: number;
-  gateOpenCount: number;
-  nextLabel: string | null;
-  onAction: () => void;
-  phase: PhaseContract;
-  substep: SubstepKey;
-}) {
-  const guide = workflowCopyFor(phase, substep);
-  const stepIndex =
-    Math.max(
-      0,
-      phase.substeps.findIndex((item) => item.key === substep),
-    ) + 1;
-  return (
-    <section
-      className="mxw-workflow-guide"
-      aria-label="Current phase workflow guidance"
-    >
-      <div className="mxw-guide-head">
-        <div>
-          <span>
-            {phase.code} step {stepIndex}
-          </span>
-          <strong>
-            {phase.substeps[stepIndex - 1]?.label ?? "Current step"}
-          </strong>
-          <em>{nextLabel ? `Next: ${nextLabel}` : "Final step"}</em>
-        </div>
-        <button
-          className="mxw-btn mxw-primary"
-          onClick={onAction}
-          type="button"
-        >
-          {actionLabel}
-        </button>
-      </div>
-      <div className="mxw-guide-table">
-        <div>
-          <span>Purpose</span>
-          <p>{guide.outcome}</p>
-        </div>
-        <div>
-          <span>Do now</span>
-          <p>{guide.action}</p>
-        </div>
-        <div>
-          <span>Done when</span>
-          <p>{guide.proof}</p>
-        </div>
-        <div>
-          <span>Live state</span>
-          <p>
-            {evidenceCount} evidence item{evidenceCount === 1 ? "" : "s"}{" "}
-            visible · {gateOpenCount} hard gate{gateOpenCount === 1 ? "" : "s"}{" "}
-            open
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function statusLabel(status: MoveEvidenceNeedPacket["status"]): string {
   if (status === "covered") return "Covered";
   if (status === "partial") return "Partial";
@@ -3452,7 +3051,7 @@ function PhasePreparePanel({
           <h2>
             {terminalComplete
               ? "Tower handoff complete"
-              : "What this phase needs"}
+              : "Phase operating brief"}
           </h2>
           <p>
             {terminalComplete
@@ -4282,7 +3881,6 @@ function MovesStandaloneStyles() {
 .mxw-surface-tabs button:hover{color:var(--ink);background:rgba(255,255,255,.62)}
 .mxw-surface-tabs button.active{color:var(--ink);background:#fff;box-shadow:0 1px 2px rgba(12,26,58,.08)}
 .mxw-surface-tabs button.active::before{content:none}
-.mxw-stage-bar{display:flex;align-items:center;gap:20px;padding:0 0 10px;margin-bottom:0;background:var(--bg)}
 .mxw-progress{display:flex;align-items:center;gap:14px;flex:1}
 .mxw-track{flex:1;height:6px;border-radius:3px;background:rgba(20,20,19,.07);overflow:hidden;max-width:260px}
 .mxw-track span{display:block;height:100%;background:var(--green);border-radius:3px;transition:width .35s ease}
@@ -4291,17 +3889,6 @@ function MovesStandaloneStyles() {
 .mxw-btn{padding:10px 18px;border-radius:9px;font-size:14px;font-weight:600;border:1px solid transparent;cursor:pointer}
 .mxw-primary{background:var(--ink);color:#fff}
 .mxw-primary:hover{background:#000}
-.mxw-substeps{display:flex;align-items:flex-end;gap:4px;margin:0;border-bottom:1px solid var(--line-2);overflow-x:auto}
-.mxw-substep{position:relative;display:flex;align-items:center;gap:9px;min-height:48px;padding:11px 18px 12px;background:transparent;border:1px solid transparent;border-bottom:0;border-radius:11px 11px 0 0;cursor:pointer;color:var(--muted);white-space:nowrap;transition:background .16s ease,border-color .16s ease,color .16s ease}
-.mxw-substep:hover{background:rgba(255,255,255,.72);color:var(--ink)}
-.mxw-substep.cur{z-index:1;background:#fff;border-color:var(--line-2);box-shadow:0 -1px 0 #fff inset;color:var(--ink)}
-.mxw-substep.cur::before{content:"";position:absolute;left:14px;right:14px;top:0;height:3px;border-radius:999px;background:var(--blue)}
-.mxw-substep.done{color:var(--ink)}
-.mxw-substep.done::before{content:"";position:absolute;left:14px;right:14px;top:0;height:3px;border-radius:999px;background:var(--green)}
-.mxw-substep span{width:23px;height:23px;border-radius:50%;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;background:var(--card);border:1.5px solid var(--line-2);color:var(--faint);flex:0 0 auto}
-.mxw-substep.done span{background:var(--green);border-color:var(--green);color:#fff}
-.mxw-substep.cur span{background:var(--blue);border-color:var(--blue);color:#fff}
-.mxw-substep b{font-size:13px;font-weight:800;line-height:1.1}
 .mxw-workflow-guide{border:1px solid var(--line-2);border-top:0;border-radius:0 0 13px 13px;background:var(--card);box-shadow:var(--shadow);padding:16px;margin:0 0 18px}
 .mxw-guide-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
 .mxw-guide-head>div{display:flex;align-items:baseline;gap:10px;min-width:0;flex-wrap:wrap}
@@ -4664,7 +4251,6 @@ function MovesStandaloneStyles() {
   .mxw-options dl{grid-template-columns:1fr}
   .mxw-p0-brief-grid{grid-template-columns:1fr}
   .mxw-p0-brief-review header{flex-direction:column}
-  .mxw-stage-bar{align-items:flex-start;flex-direction:column}
   .mxw-action-panel{grid-template-columns:1fr;align-items:flex-start}
   .mxw-upload,.mxw-inline-upload{align-items:flex-start;flex-direction:column}
   .mxw-upload-control{justify-content:flex-start;width:100%}
@@ -4674,11 +4260,7 @@ function MovesStandaloneStyles() {
   .mxw-options dl,.mxw-option-meta,.mxw-option-blocks,.mxw-option-caution{grid-column:2}
 }
 /*
- * MOVES-UI-001 finder-shell visual polish — gated by .mxw-finder-on, which
- * MovesPhaseStandaloneClient only adds to the root <main> when the
- * moves_finder_shell_v1 flag resolves true. Every rule below is additive:
- * none of it touches a bare .mxw-* selector, so the flag-off render stays
- * byte-for-byte identical to the tree above. Tokens match the merged
+ * Finder-shell visual polish. Tokens match the merged
  * MovePhaseExplorer.module.css palette (navy/blue/teal/amber).
  */
 .mxw-finder-on .mxw-phase-name{color:#0c1a3a}
@@ -4687,13 +4269,9 @@ function MovesStandaloneStyles() {
 .mxw-finder-on .mxw-phase.viewing:before{content:none}
 .mxw-finder-on .mxw-surface-tabs button.active::before{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:2px;border-radius:999px;background:#2a5aa8}
 /*
- * MOVES-UI-003 rail collapse/expand — the .mxw-rail-toggle button and
- * .mxw-surface-rail-collapsed / .mxw-side-collapsed classes are only ever
- * added to the DOM when moves_finder_shell_v1 resolves true (see the
- * collapsedRail / finderShellEnabled gating at the call site), so these
- * selectors can never affect the flag-off legacy rail. Width/padding reuse
- * the reference collapsed-state values from MovePhaseExplorer.module.css's
- * .finderShellCollapsed (58px / 6px) and .finderCollapseToggle (22x22).
+ * Rail collapse/expand. Width/padding reuse the reference collapsed-state
+ * values from MovePhaseExplorer.module.css's .finderShellCollapsed
+ * (58px / 6px) and .finderCollapseToggle (22x22).
  */
 .mxw-surface-rail-collapsed{grid-template-columns:58px minmax(0,1fr)}
 .mxw-side-collapsed{padding:20px 6px 28px;align-items:center}
@@ -4707,10 +4285,8 @@ function MovesStandaloneStyles() {
 .mxw-side-collapsed .mxw-rail-extra{width:100%;display:flex;flex-direction:column;align-items:center}
 .mxw-side-collapsed .mxw-lib-link{justify-content:center;padding:8px;width:auto}
 /*
- * MOVES-UI-001 Steps two-column view — <FinderStepsColumns>, mounted only
- * when moves_finder_shell_v1 resolves true (see call site). Same token set
- * as the finder-shell polish rules above (navy/blue/teal/amber); no new
- * colors introduced.
+ * Steps two-column view. Same token set as the finder-shell polish rules above
+ * (navy/blue/teal/amber); no new colors introduced.
  */
 .mxw-finder-steps{display:flex;gap:24px;align-items:flex-start}
 .mxw-finder-steps-menu{width:280px;flex:0 0 280px;display:flex;flex-direction:column;gap:18px}
@@ -4784,11 +4360,9 @@ function MovesStandaloneStyles() {
   .mxw-contract-detail-top em,.mxw-contract-detail-top b{justify-self:start}
 }
 /*
- * MOVES-UI-002 approvals overview — gated behind moves_approvals_overview_v1,
- * not moves_finder_shell_v1. Rendered only when workspaceView === "approvals",
- * so these rules are additive and never touch the byte-for-byte legacy
- * render either. Tokens match the Finder-shell palette above (navy labels,
- * blue accents, teal approved, amber not-ready).
+ * Approvals overview. Rendered only when workspaceView === "approvals".
+ * Tokens match the Finder-shell palette above (navy labels, blue accents,
+ * teal approved, amber not-ready).
  */
 .mxw-approvals-overview{border:1px solid rgba(12,26,58,.14);border-radius:12px;background:#fff;overflow:hidden}
 .mxw-approvals-row{display:grid;grid-template-columns:1.1fr 1.1fr 1.6fr .9fr 1.3fr;gap:12px;align-items:center;padding:13px 16px;border-bottom:1px solid rgba(12,26,58,.10)}

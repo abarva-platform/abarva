@@ -123,9 +123,7 @@ div.row:not(.rowCurrent):not(.rowDone) .label {
 }
 
 /* ---------------------------------------------------------------------
-   Finder shell — MOVES-UI-001 Phase 1-2, gated behind moves_finder_shell_v1
-   (src/lib/features/registry.ts). Scoped entirely under .finderShell so it
-   cannot leak into the legacy rail above or any other product surface.
+   Finder shell — universal Moves phase explorer.
 
    Fonts: reuses the app's already-loaded next/font vars set on <html> in
    src/app/layout.tsx (--font-fraunces, --font-inter, --font-jetbrains-mono)
