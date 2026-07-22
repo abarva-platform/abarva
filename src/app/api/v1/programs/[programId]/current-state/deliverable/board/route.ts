@@ -13,8 +13,8 @@ import {
 import { buildCurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
 import { buildCurrentStatePlan } from "@/lib/programs/current-state-plan";
 import { generateDeliverable } from "@/lib/programs/deliverable-refinement";
-import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
 import { getStrategicMoveById } from "@/lib/programs/queries";
+import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 import { getDeliverableContract } from "@/lib/programs/deliverables/contracts";
 import {
   generateBoardDeliverable,
@@ -58,21 +58,13 @@ export async function GET(
     // Resolve the Move row first (best-effort) so the archetype comes from the
     // Move's own data, not a hardcoded default.
     let moveName = tenantDisplayName(ctx.clientKey ?? "") + " initiative";
-    let archetype = resolveProgramArchetype({});
     try {
       const move = await getStrategicMoveById(ctx, programId);
       if (move?.name) moveName = move.name;
-      if (move) {
-        archetype = resolveProgramArchetype({
-          archetype: move.archetype,
-          classification: (move.charter as { classification?: string } | null)
-            ?.classification,
-          name: move.name,
-        });
-      }
     } catch {
-      /* best-effort */
+      /* moveName is best-effort */
     }
+    const archetype = await resolveMoveArchetypeForProgram(ctx, programId);
 
     const profile = await inferMoveProfile(ctx);
     const readiness = await resolveCurrentStateReadiness(

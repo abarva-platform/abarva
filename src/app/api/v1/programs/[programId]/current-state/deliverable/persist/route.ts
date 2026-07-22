@@ -17,8 +17,8 @@ import {
   generateDeliverable,
   type GeneratedDeliverable,
 } from "@/lib/programs/deliverable-refinement";
-import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
 import { getStrategicMoveById } from "@/lib/programs/queries";
+import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 import { draftModuleDeliverable } from "@/lib/programs/nexus";
 import {
   resolveSourceLabel,
@@ -74,21 +74,13 @@ export async function POST(
     // Archetype resolved from the Move's own row (best-effort) — never a
     // hardcoded default for a Move we can read.
     let moveName = programId;
-    let archetype = resolveProgramArchetype({});
     try {
       const move = await getStrategicMoveById(ctx, programId);
       if (move?.name) moveName = move.name;
-      if (move) {
-        archetype = resolveProgramArchetype({
-          archetype: move.archetype,
-          classification: (move.charter as { classification?: string } | null)
-            ?.classification,
-          name: move.name,
-        });
-      }
     } catch {
-      /* best-effort */
+      /* moveName is best-effort */
     }
+    const archetype = await resolveMoveArchetypeForProgram(ctx, programId);
     const spec = archetype.deliverablePack.find((d) => d.key === key);
     if (!spec) {
       return Response.json({ error: "unknown_deliverable" }, { status: 404 });

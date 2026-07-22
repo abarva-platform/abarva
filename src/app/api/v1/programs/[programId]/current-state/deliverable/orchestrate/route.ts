@@ -13,10 +13,10 @@ import {
 import { buildCurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
 import { buildCurrentStatePlan } from "@/lib/programs/current-state-plan";
 import { generateDeliverable } from "@/lib/programs/deliverable-refinement";
-import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
 import { PHASE_NUMBER } from "@/lib/programs/archetypes/types";
 import { getStrategicMoveById } from "@/lib/programs/queries";
 import { draftModuleDeliverable } from "@/lib/programs/nexus";
+import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 
 // Map archetype deliverable keys → a REGISTERED deliverable_types.type_key (FK).
 // Unregistered types fall back to the generic "markdown" type.
@@ -68,21 +68,13 @@ export async function GET(
     // Resolve the Move row first (best-effort) so the archetype comes from the
     // Move's own data, not a hardcoded default.
     let moveName = tenantDisplayName(ctx.clientKey ?? "") + " initiative";
-    let archetype = resolveProgramArchetype({});
     try {
       const move = await getStrategicMoveById(ctx, programId);
       if (move?.name) moveName = move.name;
-      if (move) {
-        archetype = resolveProgramArchetype({
-          archetype: move.archetype,
-          classification: (move.charter as { classification?: string } | null)
-            ?.classification,
-          name: move.name,
-        });
-      }
     } catch {
-      /* best-effort */
+      /* moveName is best-effort */
     }
+    const archetype = await resolveMoveArchetypeForProgram(ctx, programId);
 
     const spec =
       archetype.deliverablePack.find((d) => d.key === key) ??

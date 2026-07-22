@@ -11,8 +11,7 @@ import {
   resolveCurrentStateReadiness,
 } from "@/lib/programs/current-state-readiness";
 import { buildCurrentStateRecommendation } from "@/lib/programs/current-state-maturity";
-import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
-import { getStrategicMoveById } from "@/lib/programs/queries";
+import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 import {
   buildDiagnoseQuestions,
   recordDiagnoseAnswer,
@@ -29,22 +28,7 @@ export async function GET(
   try {
     const { programId } = await params;
     const ctx = await requireTenancy();
-    // Archetype resolved from the Move's own row (best-effort) — never a
-    // hardcoded default for a Move we can read.
-    let archetype = resolveProgramArchetype({});
-    try {
-      const move = await getStrategicMoveById(ctx, programId);
-      if (move) {
-        archetype = resolveProgramArchetype({
-          archetype: move.archetype,
-          classification: (move.charter as { classification?: string } | null)
-            ?.classification,
-          name: move.name,
-        });
-      }
-    } catch {
-      /* best-effort */
-    }
+    const archetype = await resolveMoveArchetypeForProgram(ctx, programId);
     const profile = await inferMoveProfile(ctx);
     const readiness = await resolveCurrentStateReadiness(
       ctx,
