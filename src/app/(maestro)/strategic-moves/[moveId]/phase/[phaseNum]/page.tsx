@@ -26,7 +26,7 @@ import {
   resolveCurrentStateReadiness,
   type ReadinessReport,
 } from "@/lib/programs/current-state-readiness";
-import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
+import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 
 export const dynamic = "force-dynamic";
 
@@ -112,12 +112,7 @@ export default async function StrategicMovePhaseWorkspacePage({
   let currentStateReadiness: ReadinessReport | null = null;
   try {
     const tctx = await requireTenancy();
-    const archetype = resolveProgramArchetype({
-      archetype: move.archetype,
-      classification: (move.charter as { classification?: string } | null)
-        ?.classification,
-      name: move.name,
-    });
+    const archetype = await resolveMoveArchetypeForProgram(tctx, moveId);
     const profile = await inferMoveProfile(tctx);
     currentStateReadiness = await resolveCurrentStateReadiness(
       tctx,

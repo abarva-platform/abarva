@@ -9,43 +9,11 @@ import {
   inferMoveProfile,
   resolveCurrentStateReadiness,
 } from "@/lib/programs/current-state-readiness";
-import { resolveProgramArchetype } from "@/lib/programs/archetypes/registry";
 import { getProgramById } from "@/lib/programs/queries";
+import { resolveMoveArchetypeForProgram } from "@/lib/programs/move-archetype-resolution";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function textFromUnknown(value: unknown): string | null {
-  if (typeof value === "string" && value.trim()) return value.trim();
-  if (!value || typeof value !== "object") return null;
-
-  const record = value as Record<string, unknown>;
-  const parts = [
-    record.archetype,
-    record.classification,
-    record.label,
-    record.name,
-    record.title,
-    record.summary,
-  ].filter(
-    (part): part is string =>
-      typeof part === "string" && part.trim().length > 0,
-  );
-
-  return parts.length ? parts.join(" ") : null;
-}
-
-function scaffoldText(
-  charter: Record<string, unknown> | null,
-  key: string,
-): string | null {
-  if (!charter) return null;
-  const direct = textFromUnknown(charter[key]);
-  if (direct) return direct;
-  const scaffold = charter.scaffold;
-  if (!scaffold || typeof scaffold !== "object") return null;
-  return textFromUnknown((scaffold as Record<string, unknown>)[key]);
-}
 
 export async function GET(
   req: NextRequest,
@@ -61,33 +29,17 @@ export async function GET(
       return Response.json({ error: "invalid_phase" }, { status: 400 });
     }
 
-    // Archetype resolved from the raw Move row/charter (best-effort). Do not
-    // use the display view model here; readiness gates need the P0 scaffold
-    // classification exactly as captured.
-    let archetype = resolveProgramArchetype({});
-    try {
-      const program = await getProgramById(ctx, programId);
-      if (program) {
-        const charter = program.charter ?? null;
-        const classification = [
-          scaffoldText(charter, "archetype"),
-          scaffoldText(charter, "classification"),
-          scaffoldText(charter, "resolved_program_archetype"),
-          scaffoldText(charter, "problem_statement"),
-          scaffoldText(charter, "scope_boundary"),
-          scaffoldText(charter, "evidence_family"),
-        ]
-          .filter((part): part is string => Boolean(part))
-          .join(" ");
+    // Archetype resolved from durable Move capture, not just the latest charter
+    // blob. Later phase deliverables can replace `charter`; P0/P1 capture is
+    // the durable business-context spine for readiness binding.
+    const program = await getProgramById(ctx, programId);
+    if (!program) return Response.json({ error: "not_found" }, { status: 404 });
 
-        archetype = resolveProgramArchetype({
-          archetype: program.archetype,
-          classification,
-          name: program.name,
-        });
-      }
+    let archetype;
+    try {
+      archetype = await resolveMoveArchetypeForProgram(ctx, programId, program);
     } catch {
-      /* best-effort */
+      archetype = await resolveMoveArchetypeForProgram(ctx, programId, null);
     }
     const profile = await inferMoveProfile(ctx);
     const report = await resolveCurrentStateReadiness(

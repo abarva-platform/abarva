@@ -4,6 +4,7 @@ import {
   DEFAULT_ARCHETYPE_ID,
   AI_OPERATIONS_DECISION_SUPPORT,
   AI_PRODUCT_DEVELOPMENT_LIFECYCLE,
+  COMMERCIAL_LENDING_AGENT_ASSIST,
   CONTACT_CENTER_AGENT_ASSIST,
   IT_SOURCING_EVENT,
 } from "../registry";
@@ -50,6 +51,17 @@ describe("resolveProgramArchetype — per-Move archetype resolution", () => {
         name: "MEMBER AI ASSIST",
       }).id,
     ).toBe("CONTACT_CENTER_AGENT_ASSIST");
+  });
+
+  it("routes commercial lending Agent Assist capture text to the banking archetype even with incidental source/vendor wording", () => {
+    expect(
+      resolveProgramArchetype({
+        archetype: "ai_product_enablement",
+        classification:
+          "Commercial Lending Agent Assist for loan onboarding, KYC evidence collection, credit memo support, policy knowledge, core banking handoffs, source files, vendor/contract cost lines, and human credit approval.",
+        name: "Codex Proof First Capital E2E 20260721",
+      }).id,
+    ).toBe("COMMERCIAL_LENDING_AGENT_ASSIST");
   });
 
   it("routes pdlc/sdlc/software language to AI-PDLC", () => {
@@ -236,6 +248,59 @@ describe("CONTACT_CENTER_AGENT_ASSIST — registry shape", () => {
       CONTACT_CENTER_AGENT_ASSIST.evidenceFamilies.map((f) => f.key),
     );
     for (const phase of CONTACT_CENTER_AGENT_ASSIST.phaseModel) {
+      for (const r of phase.requiredEvidence) {
+        expect(declared.has(r.family)).toBe(true);
+      }
+    }
+  });
+});
+
+describe("COMMERCIAL_LENDING_AGENT_ASSIST — registry shape", () => {
+  it("is registered and resolvable by id", () => {
+    expect(getArchetype("COMMERCIAL_LENDING_AGENT_ASSIST")?.name).toBe(
+      "Commercial Lending Agent Assist",
+    );
+  });
+
+  it("does NOT require DORA, CI/CD, ITSM, or engineering SDLC evidence for P2", () => {
+    const familyKeys = COMMERCIAL_LENDING_AGENT_ASSIST.evidenceFamilies.map(
+      (f) => f.key,
+    );
+    expect(familyKeys).not.toContain("eng_performance_dora");
+    expect(familyKeys).not.toContain("delivery_quality_itsm");
+    const diagnose = COMMERCIAL_LENDING_AGENT_ASSIST.phaseModel.find(
+      (p) => p.phase === "diagnose",
+    )!;
+    const required = diagnose.requiredEvidence.map((r) => r.family);
+    expect(required).not.toContain("eng_performance_dora");
+    expect(required).not.toContain("delivery_quality_itsm");
+    expect(required).toEqual(
+      expect.arrayContaining([
+        "commercial_lending_process_map",
+        "commercial_lending_metrics_baseline",
+        "kyc_document_defect_log",
+        "lending_systems_data_landscape",
+        "credit_policy_knowledge_inventory",
+        "banking_controls_human_approval",
+      ]),
+    );
+  });
+
+  it("keeps delivery-estimation context optional, not a P2 hard blocker", () => {
+    const diagnose = COMMERCIAL_LENDING_AGENT_ASSIST.phaseModel.find(
+      (p) => p.phase === "diagnose",
+    )!;
+    const byFamily = Object.fromEntries(
+      diagnose.requiredEvidence.map((r) => [r.family, r.severity]),
+    );
+    expect(byFamily["solution_delivery_estimation_context"]).toBe("soft");
+  });
+
+  it("every required family at every phase is declared in evidenceFamilies", () => {
+    const declared = new Set(
+      COMMERCIAL_LENDING_AGENT_ASSIST.evidenceFamilies.map((f) => f.key),
+    );
+    for (const phase of COMMERCIAL_LENDING_AGENT_ASSIST.phaseModel) {
       for (const r of phase.requiredEvidence) {
         expect(declared.has(r.family)).toBe(true);
       }

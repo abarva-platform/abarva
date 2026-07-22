@@ -1249,6 +1249,228 @@ export const CONTACT_CENTER_AGENT_ASSIST: StrategicMoveArchetype = {
   },
 };
 
+// ── COMMERCIAL_LENDING_AGENT_ASSIST ─────────────────────────────────────────
+// Specialized operations archetype for banking/commercial-lending Agent Assist.
+// It deliberately does not inherit AI-PDLC evidence such as DORA/CI-CD. Those
+// inputs can matter later for implementation sizing, but P2 discovery should
+// be grounded in lending process, KYC/control, policy, systems, and value data.
+
+const COMMERCIAL_LENDING_AGENT_ASSIST_FAMILIES: EvidenceFamilySpec[] = [
+  {
+    key: "commercial_lending_process_map",
+    label: "Commercial lending process and handoff map",
+    kind: "qualitative",
+    whyNeeded:
+      "Shows how bankers, credit analysts, KYC reviewers, collateral teams, operations, and servicing move a loan package from intake to booking today.",
+    sourceDocHint: "Current-state workflow, SOP, workshop notes, or process observation notes",
+    acceptedFormats: ["docx", "pdf", "pptx"],
+    feedsMethods: ["two_gap", "leverage_ranking"],
+  },
+  {
+    key: "commercial_lending_metrics_baseline",
+    label: "Loan onboarding performance baseline",
+    kind: "metric_baseline",
+    whyNeeded:
+      "Cycle time, queue aging, application volume, touch time, rework, document defect rate, KYC completion, credit memo turnaround, and booking exceptions anchor the value case.",
+    sourceDocHint: "Loan operations KPI export, dashboard extract, or baseline metrics workbook",
+    acceptedFormats: ["csv", "xlsx", "pdf"],
+    feedsMethods: ["maturity_scoring", "leverage_ranking"],
+  },
+  {
+    key: "kyc_document_defect_log",
+    label: "KYC, document, and control defect log",
+    kind: "qualitative",
+    whyNeeded:
+      "Reveals the defect patterns, missing evidence, policy exceptions, rework loops, and control constraints the assistant must respect.",
+    sourceDocHint: "KYC exception log, document defect sample, audit finding extract, or compliance notes",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["two_gap", "leverage_ranking"],
+  },
+  {
+    key: "lending_systems_data_landscape",
+    label: "Lending systems and data landscape",
+    kind: "inventory",
+    whyNeeded:
+      "Identifies the systems and data sources the assistant must read from or link to: CRM, loan origination, core banking, document management, KYC/sanctions, policy, workflow, and data platform.",
+    sourceDocHint: "Application inventory, data-source inventory, integration map, or architecture notes",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf", "pptx"],
+    feedsMethods: ["maturity_scoring", "leverage_ranking"],
+  },
+  {
+    key: "credit_policy_knowledge_inventory",
+    label: "Credit policy and knowledge inventory",
+    kind: "inventory",
+    whyNeeded:
+      "Agent Assist can only support consistent banker/operations decisions if credit policy, KYC guidance, document checklists, covenant rules, and source-of-truth ownership are known.",
+    sourceDocHint: "Policy inventory, knowledge-base export, checklist catalog, or content ownership matrix",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["two_gap"],
+  },
+  {
+    key: "banking_controls_human_approval",
+    label: "Banking controls and human-approval boundaries",
+    kind: "qualitative",
+    whyNeeded:
+      "Defines privacy, audit trail, role-based access, model limitations, credit authority, adverse-action boundaries, and where the assistant must inform rather than decide.",
+    sourceDocHint: "Risk/control matrix, compliance review notes, credit authority policy, or model-risk guardrails",
+    acceptedFormats: ["docx", "pdf", "xlsx"],
+    feedsMethods: ["maturity_scoring"],
+  },
+  {
+    key: "stakeholder_map",
+    label: "Stakeholder and decision-rights map",
+    kind: "qualitative",
+    whyNeeded:
+      "Names the sponsor role, commercial banking owner, loan operations owner, credit risk owner, KYC/AML owner, technology/data owner, finance owner, and change owner.",
+    sourceDocHint: "Stakeholder map, RACI, sponsor notes, or governance workshop output",
+    acceptedFormats: ["csv", "xlsx", "docx", "pptx"],
+  },
+  {
+    key: "lending_org_change_readiness",
+    label: "Lending org and change readiness",
+    kind: "org",
+    whyNeeded:
+      "Shows role impacts, adoption risks, training needs, decision rights, and operating ownership for bankers, credit, KYC, collateral, operations, and servicing.",
+    sourceDocHint: "Org chart, change-readiness assessment, training plan, or stakeholder workshop notes",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["maturity_scoring"],
+  },
+  {
+    key: "solution_delivery_estimation_context",
+    label: "Solution delivery estimation context",
+    kind: "qualitative",
+    whyNeeded:
+      "Optional later-phase context for ROM sizing: delivery cadence, change controls, integration team capacity, vendor/platform constraints, and release windows. Useful for estimates, not a P2 hard strategy blocker.",
+    sourceDocHint: "Optional delivery/ITSM/SDLC notes or implementation-capacity input",
+    acceptedFormats: ["csv", "xlsx", "docx", "pdf"],
+    feedsMethods: ["workpackage_roadmap_estimate"],
+  },
+];
+
+const COMMERCIAL_LENDING_AGENT_ASSIST_PHASES: PhaseRequirements[] = [
+  {
+    phase: "originate",
+    requiredEvidence: [],
+    analysisMethods: [],
+    deliverables: ["origination_brief"],
+    gateRequirements: [
+      {
+        key: "program_seed_recorded",
+        describe: "Brief signed off with commercial-lending Agent Assist archetype",
+        severity: "hard",
+      },
+      {
+        key: "value_hypothesis_seed",
+        describe: "Value hypothesis names loan-onboarding trigger + outcome",
+        severity: "hard",
+      },
+    ],
+  },
+  {
+    phase: "charter",
+    requiredEvidence: [
+      { family: "commercial_lending_process_map", severity: "hard" },
+      { family: "commercial_lending_metrics_baseline", severity: "hard" },
+      { family: "lending_systems_data_landscape", severity: "hard" },
+      { family: "stakeholder_map", severity: "hard" },
+      { family: "lending_org_change_readiness", severity: "soft" },
+    ],
+    analysisMethods: ["maturity_scoring", "two_gap", "leverage_ranking"],
+    deliverables: ["program_charter"],
+    gateRequirements: [
+      {
+        key: "charter_signed_off",
+        describe: "Charter signed off by commercial-lending sponsor",
+        severity: "hard",
+      },
+    ],
+  },
+  {
+    phase: "diagnose",
+    requiredEvidence: [
+      { family: "commercial_lending_process_map", severity: "hard" },
+      { family: "commercial_lending_metrics_baseline", severity: "hard" },
+      { family: "kyc_document_defect_log", severity: "hard" },
+      { family: "lending_systems_data_landscape", severity: "hard" },
+      { family: "credit_policy_knowledge_inventory", severity: "hard" },
+      { family: "banking_controls_human_approval", severity: "hard" },
+      { family: "lending_org_change_readiness", severity: "soft" },
+      { family: "solution_delivery_estimation_context", severity: "soft" },
+    ],
+    analysisMethods: [
+      "maturity_scoring",
+      "two_gap",
+      "leverage_ranking",
+      "workpackage_roadmap_estimate",
+    ],
+    deliverables: ["discovery_report"],
+    gateRequirements: [
+      {
+        key: "baseline_evidence_committed",
+        describe: "Commercial-lending current-state baseline committed + cited",
+        severity: "hard",
+      },
+    ],
+  },
+];
+
+export const COMMERCIAL_LENDING_AGENT_ASSIST: StrategicMoveArchetype = {
+  id: "COMMERCIAL_LENDING_AGENT_ASSIST",
+  name: "Commercial Lending Agent Assist",
+  description:
+    "Design and scale an AI-assisted workflow for commercial loan onboarding, grounded in loan operations, KYC/control evidence, credit policy, lending systems, data readiness, and human approval boundaries.",
+  version: "0.1.0",
+  status: "draft",
+  applicableIndustries: ["financial services", "banking"],
+  applicableFunctions: [
+    "commercial lending",
+    "loan operations",
+    "credit operations",
+    "kyc aml",
+    "banking operations",
+  ],
+  phaseModel: COMMERCIAL_LENDING_AGENT_ASSIST_PHASES,
+  evidenceFamilies: COMMERCIAL_LENDING_AGENT_ASSIST_FAMILIES,
+  analysisMethods: [
+    "maturity_scoring",
+    "two_gap",
+    "leverage_ranking",
+    "workpackage_roadmap_estimate",
+  ],
+  deliverablePack: AI_OPERATIONS_DECISION_SUPPORT.deliverablePack,
+  valueModel: {
+    key: "commercial_lending_agent_assist_value",
+    label: "Commercial lending productivity, control quality, and cycle-time uplift",
+    method: "leverage_ranking",
+    baselineFamilies: [
+      "commercial_lending_metrics_baseline",
+      "kyc_document_defect_log",
+    ],
+    ratifiedAtPhase: "charter",
+  },
+  riskModel: {
+    key: "commercial_lending_agent_assist_risk",
+    label: "Commercial lending Agent Assist operating and control risk",
+    dimensions: [
+      "credit-authority and adverse-action boundaries",
+      "KYC/AML and document-control evidence quality",
+      "auditability, access controls, and source citation",
+      "banker/credit/operations adoption",
+      "lending-system integration reliability",
+    ],
+  },
+  agentGuidance: {
+    systemFraming:
+      "This Move is a Commercial Lending Agent Assist archetype. Reason over loan-onboarding process, commercial lending metrics, KYC/document defects, lending systems, credit policy/knowledge, banking controls, and human credit authority. Do not require DORA, CI/CD, or engineering SDLC evidence for P2 strategy discovery; those are optional later-phase delivery-estimation inputs only.",
+    keyQuestions: [
+      "Which loan-onboarding workflow, metric, KYC/control, system, policy, or ownership evidence is missing?",
+      "Which document defects, rework loops, KYC exceptions, and handoffs create the strongest Agent Assist value opportunity?",
+      "Which data, policy, control, and human-approval foundations must be ready before scaling?",
+    ],
+    requiresGroundedAnswer: true,
+  },
+};
+
 // ── Registry ─────────────────────────────────────────────────────────────────
 
 export const ARCHETYPE_REGISTRY: Record<string, StrategicMoveArchetype> = {
@@ -1256,6 +1478,7 @@ export const ARCHETYPE_REGISTRY: Record<string, StrategicMoveArchetype> = {
   [IT_SOURCING_EVENT.id]: IT_SOURCING_EVENT,
   [AI_OPERATIONS_DECISION_SUPPORT.id]: AI_OPERATIONS_DECISION_SUPPORT,
   [CONTACT_CENTER_AGENT_ASSIST.id]: CONTACT_CENTER_AGENT_ASSIST,
+  [COMMERCIAL_LENDING_AGENT_ASSIST.id]: COMMERCIAL_LENDING_AGENT_ASSIST,
 };
 
 export const DEFAULT_ARCHETYPE_ID = AI_PRODUCT_DEVELOPMENT_LIFECYCLE.id;
@@ -1291,8 +1514,13 @@ export function resolveProgramArchetype(input: {
     .join(" ")
     .toLowerCase();
 
-  if (/sourcing|vendor|renegoti/.test(haystack)) {
-    return IT_SOURCING_EVENT;
+  if (
+    /commercial lending|loan onboarding|loan origination|credit memo|credit analyst|credit policy|kyc|aml|covenant|collateral|core banking/.test(
+      haystack,
+    ) &&
+    /agent assist|ai-assisted|assistant|workflow|onboarding/.test(haystack)
+  ) {
+    return COMMERCIAL_LENDING_AGENT_ASSIST;
   }
   if (
     /contact center|call center|agent assist|member service|member experience|member ai assist|member.*assist|benefits|eligibility|prior auth|prior authorization/.test(
@@ -1300,6 +1528,9 @@ export function resolveProgramArchetype(input: {
     )
   ) {
     return CONTACT_CENTER_AGENT_ASSIST;
+  }
+  if (/sourcing|vendor|renegoti/.test(haystack)) {
+    return IT_SOURCING_EVENT;
   }
   // Strong operations tokens outrank PDLC: an IROPS Move whose classification
   // happens to mention "product development" must still resolve to ops
