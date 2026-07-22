@@ -41,6 +41,7 @@
  * tests document the gap and are annotated `test.skip()`.
  */
 // Crawl 2026-07-22: SOURCE-SHELL-003/004/005/006-007 coverage added; governed local run blocked by private Azure Postgres DNS.
+import dns from 'node:dns/promises';
 import {
   auditedTest as test,
   expect,
@@ -50,7 +51,6 @@ import {
   captureArtifact,
 } from './_audit-harness';
 import { signInAs } from './_auth';
-import { getAzureReadFluentClient } from '@/lib/data-plane/postgresCompat';
 import {
   RESPONSIBLE_AI_ACKNOWLEDGMENT_ROUTE,
   RESPONSIBLE_AI_ACKNOWLEDGMENT_VERSION,
@@ -71,6 +71,55 @@ const WORKED_STAGE_CONFIRMATIONS = {
   exclusionsReviewed: true,
   stageFinal: true,
 } as const;
+
+const LOCAL_E2E_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
+
+async function goldenEventEnvironmentBlocker(): Promise<string | null> {
+  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
+  const baseHost = new URL(baseUrl).hostname;
+  if (!LOCAL_E2E_HOSTS.has(baseHost)) {
+    return (
+      `Golden-event reset is non-production only; refusing the mutating serial ` +
+      `SRC-004 run against ${baseUrl}.`
+    );
+  }
+
+  const databaseUrl =
+    process.env.DATABASE_URL ||
+    process.env.AZURE_LAB_DATABASE_URL ||
+    process.env.ABARVA_AZURE_DATABASE_URL ||
+    process.env.TARGET_DATABASE_URL ||
+    '';
+  if (!databaseUrl.trim()) {
+    return 'Golden-event E2E requires DATABASE_URL or AZURE_LAB_DATABASE_URL.';
+  }
+
+  let databaseHost: string;
+  try {
+    databaseHost = new URL(databaseUrl).hostname;
+  } catch {
+    return 'Golden-event E2E database URL is not parseable.';
+  }
+
+  if (!databaseHost.endsWith('.postgres.database.azure.com')) {
+    return null;
+  }
+
+  try {
+    await dns.lookup(databaseHost);
+    return null;
+  } catch (error) {
+    const code =
+      error && typeof error === 'object' && 'code' in error
+        ? String(error.code)
+        : 'unknown';
+    return (
+      `Golden-event E2E requires Azure/Postgres private DNS for ` +
+      `${databaseHost}; local lookup failed with ${code}. Run from the ` +
+      `approved VNet-connected test runner.`
+    );
+  }
+}
 
 // ─── Selectors (mirror tests/e2e source canvas conventions) ────────────────
 const SEL = {
@@ -133,7 +182,11 @@ async function approveCurrentStageViaApi(
   page: import('@playwright/test').Page,
   stageKey: string,
   runId: string,
-): Promise<unknown> {
+): Promise<{
+  ok: boolean;
+  action: string;
+  stageAdvancedTo: string | null;
+}> {
   const note = `${runId} · approve ${stageKey} gate via golden-event E2E.`;
   const response = await page.request.post(
     `/api/v1/source/events/${APEX_AMS_EVENT_UUID}/approve`,
@@ -150,40 +203,35 @@ async function approveCurrentStageViaApi(
   expect(response.status(), text).toBe(200);
   const payload = text ? JSON.parse(text) : null;
   expect(payload).toMatchObject({ ok: true, action: 'approve' });
-  return payload;
+  return payload as {
+    ok: boolean;
+    action: string;
+    stageAdvancedTo: string | null;
+  };
 }
 
 async function approveStagesViaApi(
   page: import('@playwright/test').Page,
   stages: string[],
   runId: string,
-): Promise<void> {
-  for (const stageKey of stages) {
-    await approveCurrentStageViaApi(page, stageKey, runId);
-  }
-}
-
-async function approvalRowsForRun(runId: string): Promise<
+): Promise<
   Array<{
-    stage_key: string | null;
-    action: string | null;
-    notes: string | null;
-    created_at: string | null;
+    approvedStage: string;
+    stageAdvancedTo: string | null;
   }>
 > {
-  const { data, error } = await getAzureReadFluentClient()
-    .from('source_event_approvals')
-    .select('stage_key, action, notes, created_at')
-    .eq('event_id', APEX_AMS_EVENT_UUID)
-    .order('created_at', { ascending: false })
-    .limit(80);
-  expect(error?.message ?? null, 'source_event_approvals read').toBeNull();
-  return ((data ?? []) as Array<{
-    stage_key: string | null;
-    action: string | null;
-    notes: string | null;
-    created_at: string | null;
-  }>).filter((row) => row.notes?.includes(runId));
+  const approvals: Array<{
+    approvedStage: string;
+    stageAdvancedTo: string | null;
+  }> = [];
+  for (const stageKey of stages) {
+    const payload = await approveCurrentStageViaApi(page, stageKey, runId);
+    approvals.push({
+      approvedStage: stageKey,
+      stageAdvancedTo: payload.stageAdvancedTo,
+    });
+  }
+  return approvals;
 }
 
 async function openSourceShellWorkspace(
@@ -698,8 +746,15 @@ function attachNavigationTrace(page: import('@playwright/test').Page): Array<str
 test.describe('Apex AMS Sourcing — Golden Event', () => {
   test.describe.configure({ mode: 'serial' });
 
+  let environmentBlocker: string | null = null;
+
+  test.beforeAll(async () => {
+    environmentBlocker = await goldenEventEnvironmentBlocker();
+  });
+
   test.beforeEach(async ({ page }) => {
     test.setTimeout(120000);
+    test.skip(Boolean(environmentBlocker), environmentBlocker ?? '');
     await signInAs(page, 'apex-vp-sourcing');
     await resetGoldenEventToStrategy(page);
     await openGoldenEventStage(page, 'strategy');
@@ -900,21 +955,18 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
     const runId = `SOURCE-SHELL-003-${Date.now()}`;
 
     await step(page, 'Approve Strategy, Scope, and RFP through the real gate API', async () => {
-      await approveStagesViaApi(page, ['strategy', 'scope', 'rfp'], runId);
-      const rows = await approvalRowsForRun(runId);
+      const approvals = await approveStagesViaApi(page, ['strategy', 'scope', 'rfp'], runId);
       await captureArtifact(page, 'approvals-ledger', 'stage-approval-rows.json', {
         navigationTrace: [
           `runId=${runId}`,
-          ...rows.map((row) => JSON.stringify(row)),
+          ...approvals.map((approval) => JSON.stringify(approval)),
         ],
       });
-      expect(rows).toHaveLength(3);
-      expect(rows.map((row) => row.stage_key).sort()).toEqual([
-        'rfp',
-        'scope',
-        'strategy',
+      expect(approvals).toEqual([
+        { approvedStage: 'strategy', stageAdvancedTo: 'scope' },
+        { approvedStage: 'scope', stageAdvancedTo: 'rfp' },
+        { approvedStage: 'rfp', stageAdvancedTo: 'responses' },
       ]);
-      expect(rows.every((row) => row.action === 'admin_review')).toBeTruthy();
     });
 
     await step(page, 'Approvals workspace renders the 11-row ledger from real event state', async () => {
@@ -924,9 +976,9 @@ test.describe('Apex AMS Sourcing — Golden Event', () => {
       await expect(ledger).toBeVisible({ timeout: 15000 });
       await expect(page.locator('[data-testid^="source-shell-approval-ledger-row-"]')).toHaveCount(11);
       for (const stageKey of ['strategy', 'scope', 'rfp']) {
-        await expect(
-          page.locator(`[data-testid="source-shell-approval-ledger-row-${stageKey}"]`),
-        ).toContainText(/Approved|approved/i);
+        const row = page.locator(`[data-testid="source-shell-approval-ledger-row-${stageKey}"]`);
+        await expect(row).toContainText(/Approved|approved/i);
+        await expect(row).toContainText(/Approved by|approver not recorded/i);
       }
       await expect(
         page.locator('[data-testid="source-shell-approval-ledger-row-responses"]'),
