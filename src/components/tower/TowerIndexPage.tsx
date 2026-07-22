@@ -5978,21 +5978,166 @@ function towerLaneNextAction(row: TowerMartProgramLane): string {
   return "No next action recorded in the mart for this program.";
 }
 
+type TowerLaneKey = "fund" | "fix" | "freeze" | "stop";
+type TowerLaneSubTab = "board" | TowerLaneKey;
+
+const TOWER_DECISION_LANES: ReadonlyArray<
+  readonly [TowerLaneKey, string, string]
+> = [
+  ["fund", "Fund", "Evidence-backed enough to protect or scale."],
+  ["fix", "Fix", "Promising but blocked by evidence, owner, or baseline gaps."],
+  ["freeze", "Freeze", "Hold funding until proof boundaries are cleared."],
+  ["stop", "Stop", "Stop or re-scope before more attention is consumed."],
+] as const;
+
+/**
+ * One program's decision card. Extracted from the lane board so the compact
+ * board view and the full-width lane chapter render exactly the same anatomy
+ * (money, owner, proof status, usage signal, next action) instead of drifting
+ * into two versions of the truth.
+ */
+function TowerLaneCard({
+  row,
+  tone,
+}: {
+  row: TowerMartProgramLane;
+  tone: { bg: string; fg: string };
+}) {
+  return (
+    <div
+      style={{
+        border: `1px solid ${T.RULE}`,
+        borderRadius: 12,
+        background: "rgba(255,255,255,.86)",
+        padding: 10,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 10,
+          alignItems: "baseline",
+        }}
+      >
+        <strong style={{ fontSize: 13.5, lineHeight: 1.2 }}>
+          {row.programName}
+        </strong>
+        <span
+          style={{
+            color: tone.fg,
+            fontWeight: 900,
+            fontSize: 13,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {formatMoneyGap(row.approvedFundingUsd)}
+        </span>
+      </div>
+      {/* Owner + money. An absent owner is stated as a gap, never blanked,
+          because "who owns this" is itself a decision blocker. */}
+      <div style={{ color: T.GRAY_DK, fontSize: 11, marginTop: 5 }}>
+        {row.ownerRole ?? "owner gap"} · {formatMoneyGap(row.promisedValueUsd)}{" "}
+        promised · {formatMoneyGap(row.financeValidatedValueUsd)} validated
+      </div>
+      {/* Proof status + usage signal. These are the two things a CXO needs
+          before acting on a lane, and both must read honestly: if usage
+          telemetry was never ingested we say so rather than implying zero
+          adoption. */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 7 }}>
+        <span
+          style={{
+            fontFamily: T.MONO,
+            fontSize: 9.5,
+            letterSpacing: ".06em",
+            textTransform: "uppercase",
+            padding: "3px 6px",
+            borderRadius: 999,
+            border: `1px solid ${T.RULE}`,
+            color: row.towerClaimAllowed === "partial" ? T.GREEN : T.GRAY_DK,
+            background:
+              row.towerClaimAllowed === "partial" ? T.GREEN_BG : "transparent",
+          }}
+        >
+          {row.towerClaimAllowed === "partial"
+            ? "partly validated"
+            : towerValueClaimLabel(row.valueClaimStatus)}
+        </span>
+        <span
+          style={{
+            fontFamily: T.MONO,
+            fontSize: 9.5,
+            letterSpacing: ".06em",
+            textTransform: "uppercase",
+            padding: "3px 6px",
+            borderRadius: 999,
+            border: `1px solid ${T.RULE}`,
+            color: row.usageActual !== null ? T.INK_2 : T.GRAY_DK,
+          }}
+        >
+          {row.usageActual !== null
+            ? `${row.usageMetric ?? "usage"} ${formatWholeNumber(row.usageActual)}${
+                row.adoptionRatePct !== null
+                  ? ` · ${Math.round(row.adoptionRatePct)}% adopted`
+                  : ""
+              }`
+            : "usage not loaded"}
+        </span>
+      </div>
+      {/* Next action — the single thing to do about this program. Prefer the
+          first open gate (concrete ask); fall back to the lane rationale. */}
+      <div
+        style={{
+          color: T.INK_2,
+          fontSize: 11,
+          lineHeight: 1.35,
+          marginTop: 7,
+          paddingTop: 6,
+          borderTop: `1px dashed ${T.RULE}`,
+        }}
+      >
+        <span style={{ color: tone.fg, fontWeight: 800 }}>Next: </span>
+        {towerLaneNextAction(row)}
+      </div>
+    </div>
+  );
+}
+
 function TowerMartDecisionLanesDesign({
   rows,
 }: {
   rows: ReadonlyArray<TowerMartProgramLane>;
 }) {
-  const lanes = [
-    ["fund", "Fund", "Evidence-backed enough to protect or scale."],
-    [
-      "fix",
-      "Fix",
-      "Promising but blocked by evidence, owner, or baseline gaps.",
-    ],
-    ["freeze", "Freeze", "Hold funding until proof boundaries are cleared."],
-    ["stop", "Stop", "Stop or re-scope before more attention is consumed."],
-  ] as const;
+  // The board answers "what is the shape of the portfolio"; each lane chapter
+  // answers "what do I actually do here". The board deliberately shows only
+  // the first few cards per lane — four narrow columns cannot carry a dozen
+  // programs legibly — and routes the rest into the lane's own chapter rather
+  // than leaving them unreachable behind a "+N more" label.
+  const BOARD_PREVIEW = 4;
+  const [subTab, setSubTab] = useState<TowerLaneSubTab>("board");
+  const laneRowsFor = (lane: TowerLaneKey) =>
+    rows.filter((row) => row.decisionLane === lane);
+  const subTabs: ReadonlyArray<{
+    key: TowerLaneSubTab;
+    label: string;
+    count?: number;
+  }> = [
+    { key: "board", label: "All lanes", count: rows.length },
+    ...TOWER_DECISION_LANES.map(([lane, label]) => ({
+      key: lane as TowerLaneSubTab,
+      label,
+      count: laneRowsFor(lane).length,
+    })),
+  ];
+  const chapterIntro: Record<TowerLaneSubTab, string> = {
+    board:
+      "Every loaded program placed into a decision lane from budget ties, value evidence, usage evidence, and claim status. Missing fields become blockers, not substitutions.",
+    fund: "Programs with enough evidence behind them to protect or scale. These are where proof already exists.",
+    fix: "Programs worth keeping that are blocked by a specific, nameable gap — evidence, owner, or baseline.",
+    freeze:
+      "Programs held until proof boundaries clear. Freezing is a funding posture, not a judgement that the work is wrong.",
+    stop: "Programs that should stop or be re-scoped before they consume more attention and capital.",
+  };
   return (
     <>
       <TowerMartBackButton
@@ -6009,204 +6154,157 @@ function TowerMartDecisionLanesDesign({
         value evidence, usage evidence, and claim status. Missing fields become
         blockers, not substitutions.
       </p>
-      <div
+      <TowerSubTabs
+        tabs={subTabs}
+        active={subTab}
+        onSelect={setSubTab}
+        label="Decision lane chapters"
+      />
+      <p
+        data-testid="tower-lanes-chapter-intro"
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-          gap: 12,
+          margin: "0 0 18px",
+          color: T.INK_2,
+          fontSize: 13.5,
+          lineHeight: 1.5,
+          maxWidth: 760,
         }}
       >
-        {lanes.map(([lane, label, definition]) => {
-          const laneRows = rows.filter((row) => row.decisionLane === lane);
-          const tone = martLaneTone(lane);
-          return (
-            <section
-              key={lane}
-              style={{
-                border: `1px solid ${T.RULE_STRONG}`,
-                borderRadius: 18,
-                background: tone.bg,
-                padding: 14,
-                minHeight: 0,
-              }}
-            >
-              <div
+        {chapterIntro[subTab]}
+      </p>
+      {subTab === "board" ? (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+            gap: 12,
+          }}
+        >
+          {TOWER_DECISION_LANES.map(([lane, label, definition]) => {
+            const laneRows = laneRowsFor(lane);
+            const tone = martLaneTone(lane);
+            return (
+              <section
+                key={lane}
                 style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  justifyContent: "space-between",
-                  gap: 10,
+                  border: `1px solid ${T.RULE_STRONG}`,
+                  borderRadius: 18,
+                  background: tone.bg,
+                  padding: 14,
+                  minHeight: 0,
                 }}
               >
-                <div>
-                  <h3 style={{ margin: 0, fontFamily: T.SERIF, fontSize: 23 }}>
-                    {label}
-                  </h3>
-                  <p
-                    style={{
-                      margin: "4px 0 0",
-                      color: T.INK_2,
-                      fontSize: 12.5,
-                      lineHeight: 1.35,
-                    }}
-                  >
-                    {definition}
-                  </p>
-                </div>
-                <span
+                <div
                   style={{
-                    color: tone.fg,
-                    fontWeight: 950,
-                    whiteSpace: "nowrap",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    justifyContent: "space-between",
+                    gap: 10,
                   }}
                 >
-                  {laneRows.length}
-                </span>
-              </div>
-              <div style={{ display: "grid", gap: 8, marginTop: 13 }}>
-                {laneRows.length > 0 ? (
-                  laneRows.slice(0, 4).map((row) => (
-                    <div
-                      key={row.laneKey}
+                  <div>
+                    <h3
+                      style={{ margin: 0, fontFamily: T.SERIF, fontSize: 23 }}
+                    >
+                      {label}
+                    </h3>
+                    <p
                       style={{
-                        border: `1px solid ${T.RULE}`,
-                        borderRadius: 12,
-                        background: "rgba(255,255,255,.86)",
-                        padding: 10,
+                        margin: "4px 0 0",
+                        color: T.INK_2,
+                        fontSize: 12.5,
+                        lineHeight: 1.35,
                       }}
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          gap: 10,
-                          alignItems: "baseline",
-                        }}
-                      >
-                        <strong style={{ fontSize: 13.5, lineHeight: 1.2 }}>
-                          {row.programName}
-                        </strong>
-                        <span
-                          style={{
-                            color: tone.fg,
-                            fontWeight: 900,
-                            fontSize: 13,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {formatMoneyGap(row.approvedFundingUsd)}
-                        </span>
-                      </div>
-                      {/* Owner + money. An absent owner is stated as a gap,
-                          never blanked, because "who owns this" is itself a
-                          decision blocker. */}
-                      <div
-                        style={{ color: T.GRAY_DK, fontSize: 11, marginTop: 5 }}
-                      >
-                        {row.ownerRole ?? "owner gap"} ·{" "}
-                        {formatMoneyGap(row.promisedValueUsd)} promised ·{" "}
-                        {formatMoneyGap(row.financeValidatedValueUsd)} validated
-                      </div>
-                      {/* Proof status + usage signal. These are the two things a
-                          CXO needs before acting on a lane, and both must read
-                          honestly: if usage telemetry was never ingested we say
-                          so rather than implying zero adoption. */}
-                      <div
-                        style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 6,
-                          marginTop: 7,
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontFamily: T.MONO,
-                            fontSize: 9.5,
-                            letterSpacing: ".06em",
-                            textTransform: "uppercase",
-                            padding: "3px 6px",
-                            borderRadius: 999,
-                            border: `1px solid ${T.RULE}`,
-                            color:
-                              row.towerClaimAllowed === "partial"
-                                ? T.GREEN
-                                : T.GRAY_DK,
-                            background:
-                              row.towerClaimAllowed === "partial"
-                                ? T.GREEN_BG
-                                : "transparent",
-                          }}
-                        >
-                          {row.towerClaimAllowed === "partial"
-                            ? "partly validated"
-                            : towerValueClaimLabel(row.valueClaimStatus)}
-                        </span>
-                        <span
-                          style={{
-                            fontFamily: T.MONO,
-                            fontSize: 9.5,
-                            letterSpacing: ".06em",
-                            textTransform: "uppercase",
-                            padding: "3px 6px",
-                            borderRadius: 999,
-                            border: `1px solid ${T.RULE}`,
-                            color:
-                              row.usageActual !== null ? T.INK_2 : T.GRAY_DK,
-                          }}
-                        >
-                          {row.usageActual !== null
-                            ? `${row.usageMetric ?? "usage"} ${formatWholeNumber(row.usageActual)}${
-                                row.adoptionRatePct !== null
-                                  ? ` · ${Math.round(row.adoptionRatePct)}% adopted`
-                                  : ""
-                              }`
-                            : "usage not loaded"}
-                        </span>
-                      </div>
-                      {/* Next action — the single thing to do about this
-                          program. Prefer the first open gate (concrete ask);
-                          fall back to the lane rationale. */}
-                      <div
-                        style={{
-                          color: T.INK_2,
-                          fontSize: 11,
-                          lineHeight: 1.35,
-                          marginTop: 7,
-                          paddingTop: 6,
-                          borderTop: `1px dashed ${T.RULE}`,
-                        }}
-                      >
-                        <span style={{ color: tone.fg, fontWeight: 800 }}>
-                          Next:{" "}
-                        </span>
-                        {towerLaneNextAction(row)}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div
+                      {definition}
+                    </p>
+                  </div>
+                  <span
                     style={{
-                      color: T.GRAY_DK,
-                      fontSize: 13,
-                      padding: "12px 0",
+                      color: tone.fg,
+                      fontWeight: 950,
+                      whiteSpace: "nowrap",
                     }}
                   >
-                    No programs sit in this lane today.
-                  </div>
-                )}
-                {laneRows.length > 4 ? (
-                  <div
-                    style={{ color: tone.fg, fontSize: 12, fontWeight: 900 }}
-                  >
-                    +{laneRows.length - 4} more in this lane
-                  </div>
-                ) : null}
-              </div>
-            </section>
-          );
-        })}
-      </div>
+                    {laneRows.length}
+                  </span>
+                </div>
+                <div style={{ display: "grid", gap: 8, marginTop: 13 }}>
+                  {laneRows.length > 0 ? (
+                    laneRows
+                      .slice(0, BOARD_PREVIEW)
+                      .map((row) => (
+                        <TowerLaneCard
+                          key={row.laneKey}
+                          row={row}
+                          tone={tone}
+                        />
+                      ))
+                  ) : (
+                    <div
+                      style={{
+                        color: T.GRAY_DK,
+                        fontSize: 13,
+                        padding: "12px 0",
+                      }}
+                    >
+                      No programs sit in this lane today.
+                    </div>
+                  )}
+                  {laneRows.length > BOARD_PREVIEW ? (
+                    <button
+                      type="button"
+                      onClick={() => setSubTab(lane)}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        padding: 0,
+                        textAlign: "left",
+                        color: tone.fg,
+                        fontSize: 12,
+                        fontWeight: 900,
+                        fontFamily: T.SANS,
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                      }}
+                    >
+                      Open all {laneRows.length} in {label}
+                    </button>
+                  ) : null}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      ) : (
+        <section
+          data-testid={`tower-lane-chapter-${subTab}`}
+          style={{ display: "grid", gap: 12 }}
+        >
+          {laneRowsFor(subTab).length > 0 ? (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+                gap: 12,
+              }}
+            >
+              {laneRowsFor(subTab).map((row) => (
+                <TowerLaneCard
+                  key={row.laneKey}
+                  row={row}
+                  tone={martLaneTone(subTab)}
+                />
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: T.INK_2, fontSize: 13, lineHeight: 1.5 }}>
+              No programs sit in this lane today. That is a real result from the
+              loaded evidence, not a missing view.
+            </p>
+          )}
+        </section>
+      )}
     </>
   );
 }
@@ -8193,6 +8291,22 @@ function TowerMartEvidenceDesign({
   rows: ReadonlyArray<TowerMartEvidenceLineage>;
   gaps: ReadonlyArray<TowerMartRequiredFieldGap>;
 }) {
+  // Posture first, audit table last. A CXO opening Evidence wants to know what
+  // exists, what is missing, and what that blocks — not to page through a
+  // lineage table. The table stays one click away as the audit backing.
+  const [subTab, setSubTab] = useState<"posture" | "gaps" | "trace">("posture");
+  const subTabs = [
+    { key: "posture" as const, label: "Posture" },
+    { key: "gaps" as const, label: "What is missing", count: gaps.length },
+    { key: "trace" as const, label: "Full trace", count: rows.length },
+  ];
+  const chapterIntro: Record<"posture" | "gaps" | "trace", string> = {
+    posture:
+      "What evidence exists behind the numbers, what is missing, who must provide it, and which decisions stay blocked until it arrives.",
+    gaps: "Each required field the mart could not find, the template it should come from, and the action that closes it.",
+    trace:
+      "The full audit backing: every displayed figure, the source it came from, and any caveat attached to it.",
+  };
   return (
     <>
       <TowerMartBackButton
@@ -8202,125 +8316,160 @@ function TowerMartEvidenceDesign({
         <div style={towerEyebrowStyle}>Trace</div>
         <h2 style={towerDetailTitleStyle}>Evidence</h2>
       </div>
-      <div
+      <TowerSubTabs
+        tabs={subTabs}
+        active={subTab}
+        onSelect={setSubTab}
+        label="Evidence chapters"
+      />
+      <p
+        data-testid="tower-evidence-chapter-intro"
         style={{
-          border: `1px solid ${T.GREEN}`,
-          background: T.GREEN_BG,
-          borderRadius: 13,
-          padding: 14,
-          margin: "16px 0",
-          color: T.INK,
-          fontWeight: 750,
+          margin: "0 0 16px",
+          color: T.INK_2,
+          fontSize: 13.5,
+          lineHeight: 1.5,
+          maxWidth: 760,
         }}
       >
-        Every number in Tower traces to a governed figure, a stated formula, and
-        the source record it came from. Tower displays and narrates; it does not
-        invent values.
-      </div>
-      {/* Evidence posture, before the raw trace table. A CXO should not have to
+        {chapterIntro[subTab]}
+      </p>
+      {subTab === "posture" ? (
+        <>
+          <div
+            style={{
+              border: `1px solid ${T.GREEN}`,
+              background: T.GREEN_BG,
+              borderRadius: 13,
+              padding: 14,
+              margin: "16px 0",
+              color: T.INK,
+              fontWeight: 750,
+            }}
+          >
+            Every number in Tower traces to a governed figure, a stated formula,
+            and the source record it came from. Tower displays and narrates; it
+            does not invent values.
+          </div>
+          {/* Evidence posture, before the raw trace table. A CXO should not have to
           read a lineage table to learn what is missing, who owes it, and what
           it blocks — those four answers come first; the table is the audit
           backing. All counts come from the mart (evidenceLineage +
           requiredFieldGaps); nothing is inferred. */}
-      <TowerMartEvidencePosture rows={rows} gaps={gaps} />
-      <section
-        style={{
-          ...towerBoardCardStyle,
-          minHeight: 0,
-          padding: 0,
-          overflow: "hidden",
-        }}
-      >
-        <div style={{ overflowX: "auto" }}>
-          <table
-            style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}
-          >
-            <thead>
-              <tr style={{ background: "#faf9f4" }}>
-                {["Fact", "Value", "Source", "Caveat"].map((head) => (
-                  <th
-                    key={head}
-                    style={{
-                      ...towerTinyLabelStyle,
-                      textAlign: head === "Value" ? "right" : "left",
-                      padding: "14px 16px",
-                    }}
-                  >
-                    {head}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr
-                  key={row.lineageKey}
-                  style={{ borderTop: `1px solid ${T.RULE}` }}
-                >
-                  <td style={{ padding: "14px 16px", fontWeight: 900 }}>
-                    {row.displayedFact}
-                  </td>
-                  <td
-                    style={{
-                      padding: "14px 16px",
-                      textAlign: "right",
-                      fontWeight: 900,
-                    }}
-                  >
-                    {row.displayedValueText ??
-                      formatMoneyGap(row.displayedValueNumeric)}
-                  </td>
-                  <td style={{ padding: "14px 16px", color: T.INK_2 }}>
-                    {row.sourceFile}
-                    {row.sourceRow ? ` · ${row.sourceRow}` : ""}
-                  </td>
-                  <td style={{ padding: "14px 16px", color: T.INK_2 }}>
-                    {row.caveat}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-      {gaps.length > 0 ? (
+          <TowerMartEvidencePosture rows={rows} gaps={gaps} />
+        </>
+      ) : null}
+      {subTab === "trace" ? (
         <section
-          style={{ ...towerBoardCardStyle, minHeight: 0, marginTop: 16 }}
+          style={{
+            ...towerBoardCardStyle,
+            minHeight: 0,
+            padding: 0,
+            overflow: "hidden",
+          }}
         >
-          <div style={towerTinyLabelStyle}>Required field gaps</div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-              gap: 10,
-              marginTop: 12,
-            }}
-          >
-            {gaps.map((gap) => (
-              <div
-                key={gap.gapKey}
-                style={{
-                  border: `1px solid ${gap.blocking ? "rgba(163,45,45,.28)" : T.RULE}`,
-                  borderRadius: 12,
-                  padding: 12,
-                  background: gap.blocking ? T.RED_BG : "#fff",
-                }}
-              >
-                <strong>{gap.requiredField}</strong>
-                <div
-                  style={{
-                    color: T.INK_2,
-                    fontSize: 12.5,
-                    lineHeight: 1.45,
-                    marginTop: 5,
-                  }}
-                >
-                  {gap.sourceTemplate} · {gap.remediationAction}
-                </div>
-              </div>
-            ))}
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: 13,
+              }}
+            >
+              <thead>
+                <tr style={{ background: "#faf9f4" }}>
+                  {["Fact", "Value", "Source", "Caveat"].map((head) => (
+                    <th
+                      key={head}
+                      style={{
+                        ...towerTinyLabelStyle,
+                        textAlign: head === "Value" ? "right" : "left",
+                        padding: "14px 16px",
+                      }}
+                    >
+                      {head}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr
+                    key={row.lineageKey}
+                    style={{ borderTop: `1px solid ${T.RULE}` }}
+                  >
+                    <td style={{ padding: "14px 16px", fontWeight: 900 }}>
+                      {row.displayedFact}
+                    </td>
+                    <td
+                      style={{
+                        padding: "14px 16px",
+                        textAlign: "right",
+                        fontWeight: 900,
+                      }}
+                    >
+                      {row.displayedValueText ??
+                        formatMoneyGap(row.displayedValueNumeric)}
+                    </td>
+                    <td style={{ padding: "14px 16px", color: T.INK_2 }}>
+                      {row.sourceFile}
+                      {row.sourceRow ? ` · ${row.sourceRow}` : ""}
+                    </td>
+                    <td style={{ padding: "14px 16px", color: T.INK_2 }}>
+                      {row.caveat}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
+      ) : null}
+      {subTab === "gaps" ? (
+        gaps.length > 0 ? (
+          <section
+            style={{ ...towerBoardCardStyle, minHeight: 0, marginTop: 16 }}
+          >
+            <div style={towerTinyLabelStyle}>Required field gaps</div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: 10,
+                marginTop: 12,
+              }}
+            >
+              {gaps.map((gap) => (
+                <div
+                  key={gap.gapKey}
+                  style={{
+                    border: `1px solid ${gap.blocking ? "rgba(163,45,45,.28)" : T.RULE}`,
+                    borderRadius: 12,
+                    padding: 12,
+                    background: gap.blocking ? T.RED_BG : "#fff",
+                  }}
+                >
+                  <strong>{gap.requiredField}</strong>
+                  <div
+                    style={{
+                      color: T.INK_2,
+                      fontSize: 12.5,
+                      lineHeight: 1.45,
+                      marginTop: 5,
+                    }}
+                  >
+                    {gap.sourceTemplate} · {gap.remediationAction}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : (
+          <p style={{ color: T.INK_2, fontSize: 13, lineHeight: 1.5 }}>
+            No required field is missing for this tenant. Every field the mart
+            needs to place a program and state its value posture was found.
+          </p>
+        )
       ) : null}
     </>
   );
