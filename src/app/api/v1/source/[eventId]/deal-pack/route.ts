@@ -25,7 +25,13 @@ import {
   isSkyHarborContractOptimizationEvent,
   renderContractOptimizationDealPackHtml,
 } from "@/lib/source/contract-optimization";
-import { assembleDealPack } from "@/lib/source/exports/deal-pack/assemble-deal-pack";
+import {
+  assembleDealPack,
+  type DealPackLoadedArtifactBody,
+} from "@/lib/source/exports/deal-pack/assemble-deal-pack";
+import { downloadArtifactBytes } from "@/lib/source/file-cabinet/blob-store";
+import { listSourceArtifacts } from "@/lib/source/file-cabinet/repository";
+import type { SourceArtifactRecord } from "@/lib/source/file-cabinet/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -148,10 +154,12 @@ async function handleGet(req: NextRequest, { params }: RouteCtx) {
       status: 200,
       headers: {
         "content-type": "text/html; charset=utf-8",
-        "content-disposition": `attachment; filename="${contractOptimizationDealPackFilename({
-          eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
-          generatedAt,
-        })}"`,
+        "content-disposition": `attachment; filename="${contractOptimizationDealPackFilename(
+          {
+            eventCode: "SKYH-AMS-CONTRACT-OPT-2026",
+            generatedAt,
+          },
+        )}"`,
         "cache-control": "no-store",
         "x-source-event-code": "SKYH-AMS-CONTRACT-OPT-2026",
         "x-source-deal-pack-format": "html",
@@ -162,7 +170,15 @@ async function handleGet(req: NextRequest, { params }: RouteCtx) {
 
   let result;
   try {
-    result = await assembleDealPack(ctx, generatedAt);
+    const fileCabinetArtifacts = tenancy
+      ? await listSourceArtifacts(ctx.event.id, tenancy.clientId, {
+          includeHistory: true,
+        })
+      : [];
+    result = await assembleDealPack(ctx, generatedAt, {
+      fileCabinetArtifacts,
+      loadArtifactBody: loadDealPackFileCabinetArtifactBody,
+    });
   } catch (err) {
     console.error(
       "[GET /api/v1/source/:eventId/deal-pack] assemble error",
@@ -189,4 +205,54 @@ async function handleGet(req: NextRequest, { params }: RouteCtx) {
       "x-source-deal-pack-format": "html",
     },
   });
+}
+
+async function loadDealPackFileCabinetArtifactBody(
+  artifact: SourceArtifactRecord,
+): Promise<DealPackLoadedArtifactBody | null> {
+  const bytes = await downloadArtifactBytes({
+    bucket: artifact.blobContainer,
+    path: artifact.blobPath,
+  });
+
+  if (artifact.fileFormat === "md" || artifact.fileFormat === "json") {
+    return {
+      body: bytes.toString("utf8"),
+      bodyFormat: "markdown",
+    };
+  }
+  if (artifact.fileFormat === "html") {
+    return {
+      body: htmlToReadableMarkdown(bytes.toString("utf8")),
+      bodyFormat: "markdown",
+    };
+  }
+  if (artifact.fileFormat === "docx") {
+    const mammoth = (await import("mammoth")).default;
+    const extracted = await mammoth.extractRawText({ buffer: bytes });
+    const body = extracted.value.trim();
+    if (!body) return null;
+    return {
+      body: [`# ${artifact.title}`, "", body].join("\n"),
+      bodyFormat: "markdown",
+    };
+  }
+
+  return null;
+}
+
+function htmlToReadableMarkdown(html: string): string {
+  return html
+    .replace(/<\s*br\s*\/?>/gi, "\n")
+    .replace(/<\/(p|div|li|h[1-6]|tr)>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }

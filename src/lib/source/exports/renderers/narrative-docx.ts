@@ -49,6 +49,20 @@ export interface NarrativeDocxPayload {
   body: string;
   /** True when the body is authored content; false = canonical scaffold. */
   bodyIsAuthored: boolean;
+  /** Optional lineage note for surfaces that assemble multiple artifacts. */
+  sourceAuthority?: {
+    label: string;
+    artifactId: string;
+    requestedArtifactId?: string | null;
+    fileName?: string | null;
+    version?: number | null;
+    history?: Array<{
+      artifactId: string;
+      label: string;
+      fileName?: string | null;
+      version?: number | null;
+    }>;
+  };
 }
 
 /** Per-artifact config that customizes the cover + headers. */
