@@ -466,7 +466,11 @@ describe('evaluateGate', () => {
       expect.arrayContaining([
         expect.objectContaining({ check: 'discovery_baseline_attested', severity: 'hard' }),
         expect.objectContaining({ check: 'discovery_stakeholders_named', severity: 'hard' }),
-        expect.objectContaining({ check: 'p2_readiness_cleared', severity: 'hard' }),
+        expect.objectContaining({
+          check: 'p2_readiness_cleared',
+          reason: expect.stringContaining('signed Discovery Report still contains unresolved hard-gap'),
+          severity: 'hard',
+        }),
       ]),
     );
     expect(result.requiresApproval).toBe(false);
