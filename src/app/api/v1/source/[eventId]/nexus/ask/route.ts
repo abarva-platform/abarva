@@ -39,9 +39,22 @@ import {
 } from "@/lib/source/contract-optimization/mve-profile";
 import { enforceSourceExistingEventWriteTruth } from "@/lib/source/ava/answer-quality-gate";
 import { buildSourceArtifactStandardsContext } from "@/lib/source/artifact-lifecycle-matrix";
+import { buildVendorCoverageGovernedAnswer } from "@/lib/source/ava/vendor-coverage-governed-answer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/** Mirrors the intent-heuristic pattern in structured-exhibits.ts (a keyword
+ * regex, not a new NLU system) — matches a question about vendor response
+ * coverage on this event's value levers. */
+function looksLikeVendorCoverageQuestion(prompt: string | undefined): boolean {
+  if (!prompt) return false;
+  const q = prompt.toLowerCase();
+  return /\b(vendor|vendors|bidder|bidders|proposal|proposals)\b/.test(q) &&
+    /\b(coverage|addressed|dodged|respond|responded|response|responses|answer|answered|cover|covered)\b/.test(
+      q,
+    );
+}
 
 function formatContractEvidenceMetricValue(
   metric: ContractEvidenceMetricSummary,
@@ -208,6 +221,39 @@ export async function POST(
     const response = guardedClaudeSummary
       ? { ...stubResponse, summary: guardedClaudeSummary, noModel: false }
       : stubResponse;
+
+    // Opt-in structured-answer branch (mirrors /api/intelligence/ask's
+    // Accept: application/x-ndjson convention). Every existing caller sends
+    // the default Accept header and gets the exact unchanged JSON response
+    // above — this branch only engages for a caller that explicitly asks for
+    // NDJSON, and even then it always still carries the prose summary as its
+    // first line so nothing about today's chat behavior is lost.
+    const wantsNdjson =
+      request.headers.get("accept")?.includes("application/x-ndjson") ??
+      false;
+    if (wantsNdjson) {
+      let agentAnswer = null;
+      if (eventId && looksLikeVendorCoverageQuestion(normalizedBody.prompt)) {
+        agentAnswer = await buildVendorCoverageGovernedAnswer({
+          eventId,
+          clientKey: activeClientKey,
+          tenantId: tenancy.clientId ?? null,
+          question: normalizedBody.prompt ?? "",
+          eventType: liveEventDetail?.archetype ?? null,
+        }).catch(() => null);
+      }
+      const lines = [JSON.stringify({ type: "summary", ...response })];
+      if (agentAnswer) {
+        lines.push(JSON.stringify({ type: "agent-answer", answer: agentAnswer }));
+      }
+      return new Response(lines.join("\n") + "\n", {
+        status: response.httpStatus,
+        headers: {
+          "Content-Type": "application/x-ndjson",
+          "Cache-Control": "no-cache",
+        },
+      });
+    }
 
     return Response.json(response, { status: response.httpStatus });
   } catch (error) {

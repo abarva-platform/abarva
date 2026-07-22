@@ -41,6 +41,15 @@ export interface ComposeAvaAnswerInput {
   caveats?: AvaCaveat[];
   nextSteps?: AvaNextStep[];
   retrievalSummary?: AvaRetrievalSummary;
+  /**
+   * Whether a real governed-context check (e.g. buildValidatedAgentContextBundle)
+   * actually ran and passed for this answer's evidence. Optional and defaults to
+   * `true` so every existing caller (Home, Intelligence, Tower) keeps its exact
+   * current behavior — none of them derive this from a real check today. Callers
+   * that DO run a real gate should pass the gate's real outcome here rather than
+   * relying on the default, which is an unverified assumption, not a passed check.
+   */
+  tenantFencePassed?: boolean;
 }
 
 export function composeAvaAnswer(
@@ -117,7 +126,7 @@ export function composeAvaAnswer(
     nextSteps: input.nextSteps ?? [],
     quality,
     safety: {
-      tenantFencePassed: true,
+      tenantFencePassed: input.tenantFencePassed ?? true,
       rawIdsSuppressed: true,
       forbiddenLanguagePassed: true,
       unsupportedClaimsBlocked: true,

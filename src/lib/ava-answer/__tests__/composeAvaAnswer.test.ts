@@ -129,4 +129,35 @@ describe("composeAvaAnswer", () => {
     expect(answer.prose?.split(/\n{2,}/).length).toBeGreaterThanOrEqual(3);
     expect(answer.tables).toHaveLength(1);
   });
+
+  it("defaults safety.tenantFencePassed to true when the caller omits it (Home/Intelligence/Tower unchanged)", () => {
+    const answer = composeAvaAnswer({
+      surface: "intelligence",
+      mode: "ANALYZE",
+      tenantKey: "apex-retail",
+      question: "What is loaded?",
+      intent: "lookup",
+      status: "answered",
+      directAnswer: "Loaded.",
+    });
+
+    expect(answer.safety.tenantFencePassed).toBe(true);
+  });
+
+  it("honors an explicit tenantFencePassed: false from a caller that ran a real governance gate", () => {
+    const answer = composeAvaAnswer({
+      surface: "source",
+      mode: "SOURCE",
+      tenantKey: "apex-retail",
+      question: "How is vendor response coverage looking?",
+      intent: "vendor_response_coverage",
+      status: "blocked",
+      tenantFencePassed: false,
+    });
+
+    expect(answer.safety.tenantFencePassed).toBe(false);
+    expect(answer.safety.rawIdsSuppressed).toBe(true);
+    expect(answer.safety.forbiddenLanguagePassed).toBe(true);
+    expect(answer.safety.unsupportedClaimsBlocked).toBe(true);
+  });
 });

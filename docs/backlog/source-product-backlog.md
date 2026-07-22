@@ -580,8 +580,13 @@ updated 19 d ago` on the proof event).
   an actual table, only prose.
 - **Severity**: P3 (real capability gap, highest-leverage item from the 6-area UX audit)
 - **Workstream**: Analytics / aVa chat
-- **Status**: `Investigated — plan pending`. Deep grounding (not just the original audit pass)
-  found this is a real architecture decision, not a simple wiring task:
+- **Status**: `Shipped — candidate, live-proof pending`. First slice built: vendor
+  response-coverage only (value waterfall and artifact-quality answers are explicit follow-on,
+  not in this slice). See
+  `docs/releases/records/2026-07-22-source-vendor-coverage-governed-chat-answer.md` for the
+  full build record, including the honest `retrievability: "not_indexed"` /
+  `requireAgentReady: false` limitation this data class hits under the current governance
+  model. Below is the original architecture-decision grounding this build resolved:
   1. **No dormant transport exists.** Source's chat calls `/api/chat/agent`
      (`src/app/api/chat/agent/route.ts`, ~3630 lines, shared by many non-Source surfaces) —
      this route streams plain text only, with no NDJSON `agent-answer` event mechanism. The
@@ -589,7 +594,10 @@ updated 19 d ago` on the proof event).
      `/api/intelligence/ask` NDJSON route (Home + Intelligence), which Source does not call.
      Building this means either retrofitting the large shared route (broad blast radius) or
      adding a new Source branch to the Intelligence-ask route (new code, not flipping on
-     something latent) — both are real builds, not toggles.
+     something latent) — both are real builds, not toggles. **Resolved**: neither — the
+     event-canvas chat calls its own `/api/v1/source/[eventId]/nexus/ask` route (not
+     `/api/chat/agent`), which got a new opt-in NDJSON branch instead, leaving both existing
+     shared routes untouched.
   2. **A real governance gap was found and deliberately NOT fixed here** — see
      `docs/governance/CONTEXT_CORPUS_ENFORCEMENT_TRACKER_2026-06-08.md`'s "Known gap
      (2026-07-22)" section: Home/Intelligence's actual live packet-building path

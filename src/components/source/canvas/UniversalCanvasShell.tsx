@@ -120,6 +120,7 @@ import type {
   ChatMessage,
   SuggestedAction,
 } from "@/components/agent/AgentDock";
+import type { AvaAnswerPacket } from "@/lib/ava-answer/contract";
 import { EventIdStrip } from "./EventIdStrip";
 import { EventStepRail } from "./EventStepRail";
 import { EventWorkspace, type WorkspaceTabKey } from "./EventWorkspace";
@@ -960,7 +961,10 @@ export function UniversalCanvasShell({
     try {
       const res = await fetch(`/api/v1/source/${event.id}/nexus/ask`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          accept: "application/x-ndjson",
+        },
         body: JSON.stringify({
           prompt: trimmed,
           mode: "event",
@@ -968,22 +972,69 @@ export function UniversalCanvasShell({
           selectedAttachmentIds: attachmentIds,
         }),
       });
-      const payload = (await res.json().catch(() => null)) as {
+
+      type SourceAskSummaryLine = {
+        type: "summary";
         summary?: string;
         agentResponseParts?: AgentResponsePart[];
         nexusSummary?: { summary?: string } | null;
         error?: { message?: string };
-      } | null;
+      };
+      type SourceAskAgentAnswerLine = {
+        type: "agent-answer";
+        answer?: AvaAnswerPacket;
+      };
+
+      let summaryLine: SourceAskSummaryLine | null = null;
+      let agentAnswer: AvaAnswerPacket | undefined;
+
+      const reader = res.body?.getReader();
+      if (reader) {
+        const dec = new TextDecoder();
+        let buf = "";
+        const applyLine = (raw: string) => {
+          const s = raw.trim();
+          if (!s) return;
+          let evt: SourceAskSummaryLine | SourceAskAgentAnswerLine;
+          try {
+            evt = JSON.parse(s);
+          } catch {
+            return;
+          }
+          if (evt.type === "summary") {
+            summaryLine = evt;
+          } else if (evt.type === "agent-answer" && evt.answer) {
+            agentAnswer = evt.answer;
+          }
+        };
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          let nl: number;
+          while ((nl = buf.indexOf("\n")) >= 0) {
+            applyLine(buf.slice(0, nl));
+            buf = buf.slice(nl + 1);
+          }
+        }
+        applyLine(buf);
+      } else {
+        summaryLine = (await res.json().catch(() => null)) as
+          | SourceAskSummaryLine
+          | null;
+      }
+
       const body =
-        payload?.summary ??
-        payload?.nexusSummary?.summary ??
-        payload?.error?.message ??
+        summaryLine?.summary ??
+        summaryLine?.nexusSummary?.summary ??
+        summaryLine?.error?.message ??
         `${displayAgentName(dockAgent)} could not produce a response right now.`;
       const agentTurn: ChatMessage = {
         id: nextMessageId("a"),
         role: "agent",
         body,
-        parts: payload?.agentResponseParts,
+        parts: summaryLine?.agentResponseParts,
+        agentAnswer,
       };
       setThread((t) => [...t, agentTurn]);
     } catch (err) {

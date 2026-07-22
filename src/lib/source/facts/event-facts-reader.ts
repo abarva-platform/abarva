@@ -20,7 +20,11 @@
 
 import { getAzureWriteFluentClient } from '@/lib/data-plane/postgresCompat';
 import { isCatalogFactKey } from './fact-catalog';
-import type { FactSourceCitation, SourceEventFactRow } from './fact-types';
+import type {
+  FactConfidence,
+  FactSourceCitation,
+  SourceEventFactRow,
+} from './fact-types';
 import type { EvaluatorInputs } from './evaluators/types';
 
 /** The two shapes the analytics adapter consumes from one facts read. */
@@ -416,6 +420,81 @@ export async function readVendorLeverResponses(input: {
   }
 
   return { signalPresent, statusByVendorLever, vendors };
+}
+
+/** One vendor-lever response fact, with the provenance a governed candidate needs. */
+export interface VendorLeverResponseFact {
+  id: string;
+  vendorId: string;
+  leverKey: string;
+  status: ResponseStatus;
+  sourceCitation: FactSourceCitation | null;
+  confidence: FactConfidence;
+  capturedAt: string;
+}
+
+/**
+ * Sibling to `readVendorLeverResponses`: same rows, same (vendor, lever)
+ * newest-wins dedup, but keeps the per-row `id` / `source_citation` /
+ * `confidence` that function drops — exactly what's needed to build honest
+ * `GovernedCandidate`s (a governed answer must cite a real fact row, not a
+ * derived aggregate with no provenance). Kept separate rather than widening
+ * `readVendorLeverResponses`'s return shape, which existing callers depend on.
+ */
+export async function readVendorLeverResponseFacts(input: {
+  eventId: string;
+  clientKey: string;
+}): Promise<VendorLeverResponseFact[]> {
+  const { eventId, clientKey } = input;
+  const supabase = getAzureWriteFluentClient();
+
+  const { data, error } = await supabase
+    .from('source_event_facts')
+    .select('id, entity_ref, value_numeric, source_citation, confidence, captured_at')
+    .eq('source_event_id', eventId)
+    .eq('client_key', clientKey)
+    .eq('fact_key', 'response_addressed')
+    .eq('entity_kind', 'vendor_lever')
+    .eq('is_stale', false)
+    .order('captured_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+
+  const rows = (data ?? []) as Array<
+    Pick<
+      SourceEventFactRow,
+      'id' | 'entity_ref' | 'value_numeric' | 'source_citation' | 'confidence' | 'captured_at'
+    >
+  >;
+
+  const facts: VendorLeverResponseFact[] = [];
+  const cellSeen = new Set<string>();
+
+  for (const row of rows) {
+    const ref = row.entity_ref?.trim();
+    if (!ref) continue;
+    const sep = ref.indexOf('::');
+    if (sep <= 0 || sep >= ref.length - 2) continue;
+    const vendorId = ref.slice(0, sep).trim();
+    const leverKey = ref.slice(sep + 2).trim();
+    if (!vendorId || !leverKey) continue;
+
+    const cellKey = `${vendorId}::${leverKey}`;
+    if (cellSeen.has(cellKey)) continue;
+    cellSeen.add(cellKey);
+
+    facts.push({
+      id: row.id,
+      vendorId,
+      leverKey,
+      status: responseStatusOf(Number(row.value_numeric)),
+      sourceCitation: row.source_citation,
+      confidence: row.confidence,
+      capturedAt: row.captured_at,
+    });
+  }
+
+  return facts;
 }
 
 /** One vendor's should-cost bid inputs, newest-non-stale per fact key. */
