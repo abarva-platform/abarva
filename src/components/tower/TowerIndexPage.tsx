@@ -7115,6 +7115,13 @@ function aiProgramLaneToPortfolioItem(
 function buildAiPortfolioDisplayRows(
   rows: ReadonlyArray<TowerMartAiPortfolioItem>,
   programRows: ReadonlyArray<TowerMartProgramLane> = [],
+  // The cap exists to keep the value/readiness quadrant readable, which is a
+  // concern of the Position chapter alone. Chapters that list a named
+  // population (candidates, funded, proof) must be able to draw on the whole
+  // set, or a chapter titled "Candidate pipeline" ends up showing whatever
+  // candidates happen to survive a ranking by economic weight - which is
+  // almost none, because candidates carry no money by definition.
+  limit: number = 12,
 ): TowerAiPortfolioDisplayRow[] {
   const byName = new Map<string, TowerMartAiPortfolioItem>();
   const portfolioRows = [
@@ -7137,7 +7144,7 @@ function buildAiPortfolioDisplayRows(
 
   const sorted = [...byName.values()]
     .sort((a, b) => aiPortfolioRowWeight(b) - aiPortfolioRowWeight(a))
-    .slice(0, 12);
+    .slice(0, limit);
 
   const laneOffsets: Record<string, number> = {};
   return sorted.map((row) => {
@@ -7399,17 +7406,24 @@ function TowerMartAiPortfolioDesign({
   const [selectedTool, setSelectedTool] = useState<TowerAiToolTraceRow | null>(
     null,
   );
-  const displayRows = buildAiPortfolioDisplayRows(rows, programRows);
+  // Two populations, deliberately: the ranked top slice that the quadrant and
+  // the tool trace work from, and the full set every named chapter lists.
+  const allRows = buildAiPortfolioDisplayRows(
+    rows,
+    programRows,
+    Number.POSITIVE_INFINITY,
+  );
+  const displayRows = allRows.slice(0, 12);
   const toolRows = mergeTowerToolTraceRows(displayRows, command);
-  const fundedRows = displayRows.filter(
+  const fundedRows = allRows.filter(
     (row) => row.aiTaggedSpendUsd > 0 || row.approvedFundingUsd > 0,
   );
-  const candidateRows = displayRows.filter(
+  const candidateRows = allRows.filter(
     (row) =>
       row.fundingStatus === "not_approved" ||
       row.itemKind.includes("candidate"),
   );
-  const partialProofRows = displayRows.filter(
+  const partialProofRows = allRows.filter(
     (row) => row.financeValidatedValueUsd > 0 || row.usageActual !== null,
   );
   // The quadrant is a capital-control instrument, not an inventory. Plot only
@@ -7419,14 +7433,17 @@ function TowerMartAiPortfolioDesign({
   // into an unreadable cloud. Candidates are surfaced by count and listed
   // below instead. Ordered by economic weight so the biggest bets read first.
   const PLOT_LIMIT = 14;
+  // Candidates can run to hundreds; render a readable page of them and say so
+  // rather than dumping the whole backlog or silently truncating it.
+  const CANDIDATE_RENDER_LIMIT = 60;
   const economicWeight = (row: TowerAiPortfolioDisplayRow): number =>
     row.aiTaggedSpendUsd + row.approvedFundingUsd + row.promisedValueUsd;
-  const plottedRows = displayRows
+  const plottedRows = allRows
     .filter((row) => economicWeight(row) > 0)
     .sort((a, b) => economicWeight(b) - economicWeight(a))
     .slice(0, PLOT_LIMIT);
-  const unplottedCount = displayRows.length - plottedRows.length;
-  const proofGapRows = displayRows.filter(
+  const unplottedCount = allRows.length - plottedRows.length;
+  const proofGapRows = allRows.filter(
     (row) => row.financeValidatedValueUsd <= 0 && row.usageActual === null,
   );
   // The section is one argument told in five chapters rather than one long
@@ -7730,11 +7747,48 @@ function TowerMartAiPortfolioDesign({
             backlog until budget ties, usage baselines, control gates, and
             finance evidence are loaded. Nothing here is committed spend.
           </p>
+          {/* Two different numbers meet here and must not be conflated: the
+              command center counts every candidate opportunity in the mart,
+              while this chapter lists the ones carried in the AI portfolio
+              itself. Stating both is the honest reading; silently showing the
+              smaller one under a headline of the larger one is not. */}
+          {command.candidateAiOpportunities > candidateRows.length ? (
+            <p
+              data-testid="tower-ai-candidate-scope"
+              style={{
+                margin: "0 0 16px",
+                color: T.GRAY_DK,
+                fontSize: 12,
+                lineHeight: 1.45,
+                maxWidth: 760,
+              }}
+            >
+              The AI portfolio carries {formatWholeNumber(candidateRows.length)}{" "}
+              candidate item
+              {candidateRows.length === 1 ? "" : "s"}. The command center counts{" "}
+              {formatWholeNumber(command.candidateAiOpportunities)} candidate
+              opportunities across the whole mart — the wider figure includes
+              ideas that have not been promoted into the portfolio.
+            </p>
+          ) : null}
           <TowerAiItemList
-            rows={candidateRows}
+            rows={candidateRows.slice(0, CANDIDATE_RENDER_LIMIT)}
             testId="tower-ai-candidate-list"
             emptyCopy="No candidate AI opportunities are loaded for this tenant."
           />
+          {candidateRows.length > CANDIDATE_RENDER_LIMIT ? (
+            <p
+              style={{
+                margin: "12px 0 0",
+                color: T.GRAY_DK,
+                fontSize: 12,
+                lineHeight: 1.45,
+              }}
+            >
+              Showing the first {formatWholeNumber(CANDIDATE_RENDER_LIMIT)} of{" "}
+              {formatWholeNumber(candidateRows.length)}, ordered by weight.
+            </p>
+          ) : null}
         </section>
       ) : null}
       {subTab === "tools" ? (
