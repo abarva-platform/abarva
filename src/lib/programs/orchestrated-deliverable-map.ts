@@ -37,9 +37,12 @@ import {
 const REGISTRY_TO_ORCHESTRATOR: Readonly<Record<string, string>> = {
   // P1
   charter: "charter",
-  // P2 — both discovery documents lean on the discovery_report structure
+  // P2 — discovery and root-cause are different client artifacts. Root cause
+  // must keep its own issue-tree structure and quality profile; routing it
+  // through discovery_report produced a second discovery binder instead of a
+  // concise root-cause readout.
   discovery_report: "discovery_report",
-  root_cause_worksheet: "discovery_report",
+  root_cause_worksheet: "root_cause_worksheet",
   // P3 — architecture/solution → target_architecture; org design → operating_model;
   //      sourcing brief has no dedicated structure, uses the generic board brief
   target_state_architecture: "target_architecture",

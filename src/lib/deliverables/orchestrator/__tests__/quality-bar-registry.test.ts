@@ -34,6 +34,16 @@ describe("resolveQualityBar", () => {
     expect(qb.enforceMaxAsBlocker).toBeFalsy();
   });
 
+  it("gives Root-Cause Worksheet a concise hard-blocking issue-tree band", () => {
+    const qb = resolveQualityBar("moves", "root_cause_worksheet");
+    expect(qb.minSections).toBe(5);
+    expect(qb.minBodyWords).toBe(1_200);
+    expect(qb.targetBodyWordsMax).toBe(3_200);
+    expect(qb.enforceMaxAsBlocker).toBe(true);
+    expect(qb.requiresCentralTension).toBe(true);
+    expect(qb.requiresEvidenceGapsNoted).toBe(true);
+  });
+
   it("falls back to the shared default for an artifact type with no override", () => {
     const qb = resolveQualityBar("moves", "some_future_artifact_type");
     expect(qb.minSections).toBe(6);

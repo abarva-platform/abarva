@@ -74,6 +74,16 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     enforceMaxAsBlocker: false,
     requiresEvidenceGapsNoted: true,
   },
+  "moves::root_cause_worksheet": {
+    // Diagnostic decision artifact — it should be an issue-tree readout, not a
+    // second discovery report. Hard ceiling because the value is synthesis.
+    minSections: 5,
+    minBodyWords: 1_200, // ~3 pages plus tables/diagram
+    targetBodyWordsMax: 3_200, // ~7 pages; beyond this it is no longer a worksheet
+    enforceMaxAsBlocker: true,
+    requiresCentralTension: true,
+    requiresEvidenceGapsNoted: true,
+  },
   "moves::operating_model": {
     minSections: 7,
     minBodyWords: 6_500, // ~15 pages
