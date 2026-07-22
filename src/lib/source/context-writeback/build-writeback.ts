@@ -52,6 +52,15 @@ function evidencePointerOf(fact: SourceEventFactRow): string {
     : `source-event-fact://${fact.source_event_id}/${fact.id}#${encodeURIComponent(doc)}`;
 }
 
+function finiteNumericValue(raw: unknown): number | null {
+  if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
+  if (typeof raw === "string" && raw.trim()) {
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 function canonicalRecordIdOf(fact: SourceEventFactRow): string {
   return `source-event-fact-${fact.source_event_id}-${fact.id}`;
 }
@@ -61,11 +70,12 @@ function valueForFact(fact: SourceEventFactRow): {
   factValue: Record<string, unknown>;
   factText: string | null;
 } | null {
-  if (fact.value_numeric !== null && Number.isFinite(fact.value_numeric)) {
+  const numericValue = finiteNumericValue(fact.value_numeric);
+  if (numericValue !== null) {
     return {
       factType: "number",
-      factValue: { value: fact.value_numeric, unit: fact.unit },
-      factText: `${fact.value_numeric} ${fact.unit}`,
+      factValue: { value: numericValue, unit: fact.unit },
+      factText: `${numericValue} ${fact.unit}`,
     };
   }
   if (fact.value_text !== null && fact.value_text.trim()) {
