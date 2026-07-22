@@ -10,7 +10,7 @@
 
 ## Plain-English Summary
 
-Adds the first governed Moves learning loop. A completed or in-progress Move can now be dry-run or explicitly applied into the enterprise context layer as reviewable learning candidates. The writeback only uses approved evidence, signed-off/client-approved deliverables, and approved phase gate decisions. It does not turn AI drafts, unreviewed uploads, suggested context, excluded context, or gaps into enterprise truth.
+Adds the first governed Moves learning loop. A completed or in-progress Move can now be dry-run or explicitly applied into the enterprise context layer as reviewable learning candidates. The writeback only uses approved evidence, signed-off/client-approved deliverables, and approved phase gate decisions. It does not turn AI drafts, unreviewed uploads, suggested context, excluded context, or gaps into enterprise truth. The release also includes a read-only verifier that independently reads Azure/Postgres after apply and fails if Move-derived candidates are missing facts/readiness rows or have been silently promoted to `agent_ready`.
 
 ## Layer Impact
 
@@ -29,14 +29,15 @@ Adds the first governed Moves learning loop. A completed or in-progress Move can
 
 - `src/lib/programs/learning-writeback/*`: Pure planner, Azure/Postgres persistence seam, exports, and tests.
 - `src/scripts/programs/writeback-move-learning-to-enterprise-context.ts`: Dry-run/apply operator script, with CLI args for local planning and `MOVES_WRITEBACK_*` env vars plus proof-bundle emission for the private ACA operator job lane. The reader resolves the Move by ID and then uses Move-scoped evidence/gate queries, so enterprise-context writeback does not depend on fragile historical client alias strings.
+- `src/scripts/programs/verify-move-learning-writeback-readback.ts`: Read-only verifier for post-apply Azure readback. It confirms Move learning records, facts, and readiness sidecars exist and remain `not_reviewed` / `committed_not_indexed` / `pending` until a separate governance promotion occurs.
 - `src/lib/programs/learning-writeback/persist.ts`: Converts planner-only `canonical_record_id` helper fields into live `governed_object_readiness.object_id` rows before persistence. ACA apply proof caught the schema mismatch before any active-context promotion path existed.
-- `package.json`: Adds `npm run moves:enterprise-context:writeback`.
+- `package.json`: Adds `npm run moves:enterprise-context:writeback` and `npm run moves:enterprise-context:verify-writeback`.
 - `docs/releases/records/2026-07-22-moves-learning-writeback.md`: This release record.
 
 ## QA / Validation
 
-- Pass: `npx jest --runTestsByPath src/lib/programs/learning-writeback/__tests__/moves-learning-writeback.test.ts --runInBand` passed with 3 tests.
-- Pass: `npx eslint src/lib/programs/learning-writeback src/scripts/programs/writeback-move-learning-to-enterprise-context.ts` passed with no reported errors.
+- Pass: `npx jest --runTestsByPath src/lib/programs/learning-writeback/__tests__/moves-learning-writeback.test.ts --runInBand` passed with coverage for planning, persistence payload shape, and readback promotion-leak detection.
+- Pass: `npx eslint src/lib/programs/learning-writeback src/scripts/programs/writeback-move-learning-to-enterprise-context.ts src/scripts/programs/verify-move-learning-writeback-readback.ts` passed with no reported errors.
 - Blocked: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` is blocked by pre-existing Home graph optional dependency resolution errors for `@xyflow/react` and `@dagrejs/dagre`, outside the Moves learning-writeback files.
 - Pass: `npm run release:check` passed after the release-record wording update.
 - Pass: `git diff --check` passed.
@@ -64,6 +65,14 @@ MOVES_WRITEBACK_MOVE_ID=<move-id>
 MOVES_WRITEBACK_APPLY=true
 MOVES_WRITEBACK_EMIT_PROOF_BUNDLE=true
 ```
+
+After apply, run the read-only verifier:
+
+```bash
+npm run moves:enterprise-context:verify-writeback -- --client-key arcturus --move-id <move-id>
+```
+
+For the private ACA operator job lane, use the same `MOVES_WRITEBACK_CLIENT_KEY`, `MOVES_WRITEBACK_MOVE_ID`, `MOVES_WRITEBACK_OUT_DIR`, and `MOVES_WRITEBACK_EMIT_PROOF_BUNDLE=true` values.
 
 ## Deployment Authority
 

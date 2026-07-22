@@ -1,5 +1,6 @@
 import {
   buildMovesLearningWritebackPlan,
+  summarizeMovesLearningReadback,
   writeMovesLearningToEnterpriseContext,
   type MovesLearningMove,
   type MovesLearningWritebackStore,
@@ -198,5 +199,120 @@ describe("writeMovesLearningToEnterpriseContext", () => {
     expect(readinessPayloads).toHaveLength(1);
     expect(readinessPayloads[0]?.object_id).toBe("rec-0");
     expect(readinessPayloads[0]).not.toHaveProperty("canonical_record_id");
+  });
+});
+
+describe("summarizeMovesLearningReadback", () => {
+  it("passes only when records, facts, and unpromoted readiness rows align", () => {
+    const report = summarizeMovesLearningReadback({
+      clientKey: "arcturus",
+      moveId: "move-1",
+      records: [
+        {
+          id: "rec-1",
+          tenant_key: "arcturus",
+          canonical_record_id: "moves-learning-move-1-approved_evidence-ev-1",
+          record_type: "moves_learning",
+          record_subtype: "approved_evidence",
+          source_system: "moves_learning_ledger",
+          source_record_id: "ev-1",
+          lifecycle_state: "active",
+          payload: {
+            moveId: "move-1",
+            moveName: "Commercial Lending Agent Assist",
+            tenantKey: "arcturus",
+            phase: 2,
+            sourceBasis: "approved_evidence",
+            sourceId: "ev-1",
+            claimType: "evidence",
+            title: "Evidence",
+            summary: "Approved evidence",
+            evidenceRefs: ["ev-1"],
+            confidenceLevel: "high",
+            writebackSchemaVersion: 1,
+          },
+        },
+      ],
+      facts: [
+        {
+          id: "fact-1",
+          record_id: "rec-1",
+          tenant_key: "arcturus",
+          source_system: "moves_learning_ledger",
+          source_record_id: "ev-1",
+          lifecycle_state: "active",
+        },
+      ],
+      readinessRows: [
+        {
+          object_table: "enterprise_context_records",
+          object_id: "rec-1",
+          client_key: "arcturus",
+          source_layer: "tenant_context",
+          source_basis: "approved_evidence",
+          agent_readiness_status: "not_reviewed",
+          retrievability: "committed_not_indexed",
+          policy_validation_status: "pending",
+          provenance: { moveId: "move-1" },
+        },
+      ],
+    });
+
+    expect(report.status).toBe("pass");
+    expect(report.counts).toEqual({ records: 1, facts: 1, readinessRows: 1 });
+    expect(report.bySourceBasis).toEqual({ approved_evidence: 1 });
+    expect(report.activePromotionViolations).toEqual([]);
+  });
+
+  it("fails if a Move learning row has already been promoted to agent-ready context", () => {
+    const report = summarizeMovesLearningReadback({
+      clientKey: "arcturus",
+      moveId: "move-1",
+      records: [
+        {
+          id: "rec-1",
+          tenant_key: "arcturus",
+          canonical_record_id: "moves-learning-move-1-approved_evidence-ev-1",
+          record_type: "moves_learning",
+          record_subtype: "approved_evidence",
+          source_system: "moves_learning_ledger",
+          source_record_id: "ev-1",
+          lifecycle_state: "active",
+          payload: { moveId: "move-1" },
+        },
+      ],
+      facts: [
+        {
+          record_id: "rec-1",
+          tenant_key: "arcturus",
+          source_system: "moves_learning_ledger",
+          source_record_id: "ev-1",
+          lifecycle_state: "active",
+        },
+      ],
+      readinessRows: [
+        {
+          object_table: "enterprise_context_records",
+          object_id: "rec-1",
+          client_key: "arcturus",
+          source_layer: "tenant_context",
+          source_basis: "approved_evidence",
+          agent_readiness_status: "agent_ready",
+          retrievability: "search_indexed",
+          policy_validation_status: "pass",
+          provenance: { moveId: "move-1" },
+        },
+      ],
+    });
+
+    expect(report.status).toBe("fail");
+    expect(report.activePromotionViolations).toEqual([
+      {
+        objectId: "rec-1",
+        agentReadinessStatus: "agent_ready",
+        retrievability: "search_indexed",
+        policyValidationStatus: "pass",
+      },
+    ]);
   });
 });
