@@ -170,20 +170,6 @@ export async function POST(
     const program = await getProgramById(ctx, programId, { supabase });
     if (!program) return Response.json({ error: "not_found" }, { status: 404 });
 
-    const canApprove =
-      (await hasAuthority(ctx, programId, "approver", { supabase })) ||
-      ctx.role === "founder" ||
-      ctx.role === "maestro";
-    if (!canApprove) {
-      return Response.json(
-        {
-          error: "forbidden",
-          detail: "approver authority or higher required",
-        },
-        { status: 403 },
-      );
-    }
-
     const artifact = await getGeneratedArtifactById(artifactId, {
       clientId: ctx.clientId,
     });
@@ -223,6 +209,19 @@ export async function POST(
 
     if (phase === 1) {
       await ensureSponsorAuthorityForP1ClientApproval(supabase, programId, ctx);
+    }
+    const canApprove =
+      (await hasAuthority(ctx, programId, "approver", { supabase })) ||
+      ctx.role === "founder" ||
+      ctx.role === "maestro";
+    if (!canApprove) {
+      return Response.json(
+        {
+          error: "forbidden",
+          detail: "approver authority or higher required",
+        },
+        { status: 403 },
+      );
     }
 
     const doc = renderableDocFromGeneratedArtifact(artifact);

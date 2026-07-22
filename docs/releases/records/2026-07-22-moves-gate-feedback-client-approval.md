@@ -53,6 +53,7 @@ Candidate validation:
 - Pending: PR checks.
 - Pending: ACA deploy and signed-in sandbox proof.
 - Follow-up live finding after PR #5282: saved FS sandbox agent could reach P1 gate approval but received `403 approver authority or higher required` on the new client-approval bridge. This follow-up aligns the P1 bridge with the existing P1 phase-gate authority initialization path.
+- Follow-up live finding after PR #5283: authority initialization was present but ran after the early authorization check. The route now verifies Move-scoped artifact and deliverable phase first, initializes P1 sponsor authority when needed, then enforces the normal approver/sponsor check.
 
 ## Rollout Plan
 
