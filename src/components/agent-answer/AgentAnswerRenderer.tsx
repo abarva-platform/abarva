@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  cloneElement,
   useEffect,
   useRef,
   useState,
@@ -16,7 +17,6 @@ import {
   Line,
   LineChart,
   ReferenceLine,
-  ResponsiveContainer,
   Scatter,
   ScatterChart,
   Tooltip,
@@ -612,14 +612,18 @@ function SafeAgentResponsiveContainer({
   children: ReactElement;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [ready, setReady] = useState(false);
+  const [size, setSize] = useState<{ width: number; height: number } | null>(
+    null,
+  );
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
     const update = () => {
       const rect = node.getBoundingClientRect();
-      setReady(rect.width > 0 && rect.height > 0);
+      const width = Math.floor(rect.width);
+      const height = Math.floor(rect.height);
+      setSize(width > 0 && height > 0 ? { width, height } : null);
     };
     update();
     if (typeof ResizeObserver === "undefined") {
@@ -636,16 +640,7 @@ function SafeAgentResponsiveContainer({
       ref={ref}
       style={{ width: "100%", height: "100%", minWidth: 1, minHeight: 1 }}
     >
-      {ready ? (
-        <ResponsiveContainer
-          height="100%"
-          minHeight={1}
-          minWidth={1}
-          width="100%"
-        >
-          {children}
-        </ResponsiveContainer>
-      ) : null}
+      {size ? cloneElement(children, size) : null}
     </div>
   );
 }

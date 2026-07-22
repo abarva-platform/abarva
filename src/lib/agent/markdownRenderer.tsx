@@ -21,7 +21,7 @@
 
 "use client";
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { cloneElement, useMemo, useState, useEffect, useRef } from "react";
 import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -40,7 +40,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
 } from "recharts";
 import { BrandColors, BrandTypography } from "@/lib/shell/brand-tokens";
 import {
@@ -71,14 +70,18 @@ function SafeMarkdownResponsiveContainer({
   children: ReactElement;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
-  const [ready, setReady] = useState(false);
+  const [size, setSize] = useState<{ width: number; height: number } | null>(
+    null,
+  );
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
     const update = () => {
       const rect = node.getBoundingClientRect();
-      setReady(rect.width > 0 && rect.height > 0);
+      const width = Math.floor(rect.width);
+      const height = Math.floor(rect.height);
+      setSize(width > 0 && height > 0 ? { width, height } : null);
     };
     update();
     if (typeof ResizeObserver === "undefined") {
@@ -95,16 +98,7 @@ function SafeMarkdownResponsiveContainer({
       ref={ref}
       style={{ width: "100%", height: "100%", minWidth: 1, minHeight: 1 }}
     >
-      {ready ? (
-        <ResponsiveContainer
-          height="100%"
-          minHeight={1}
-          minWidth={1}
-          width="100%"
-        >
-          {children}
-        </ResponsiveContainer>
-      ) : null}
+      {size ? cloneElement(children, size) : null}
     </div>
   );
 }
