@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate-follow-up`
+`deployed-and-browser-proven`
 
 ## Plain-English Summary
 
@@ -43,8 +43,10 @@ Makes persisted Moves learning candidates visible to administrators in the Conte
 - Blocked: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` is blocked by pre-existing Home graph optional dependency resolution errors for `@xyflow/react` and `@dagrejs/dagre`, outside the Moves learning-review files.
 - Pass: GitHub checks for PR #5359, including `Typecheck + reasoning-layer tests`, `ESLint`, `Production readiness gate`, `Release record and impact note`, and `Chrome Firefox Safari mobile smoke`.
 - Pass: ACA deploy for PR #5359 to revision `ca-abarva-web-lab-eastus--m6b4f1777`, digest `sha256:0d7c4812683db092d01f3242d8fdbc4ecc3fce517f2bc1bfb7a0e9790c226698`, 100% traffic.
-- Blocked: First signed-in browser proof reached `/admin?from=%2Fadmin%2Fcontext-layer%2Fapproval-queue` because the production proxy only allowed a narrow set of active Admin subroutes. This follow-up release adds the queue route to that allowlist.
-- Not-run yet: signed-in browser proof after the proxy follow-up deploy.
+- Blocked then fixed: First signed-in browser proof reached `/admin?from=%2Fadmin%2Fcontext-layer%2Fapproval-queue` because the production proxy only allowed a narrow set of active Admin subroutes. Follow-up PR #5363 added the queue route to that allowlist.
+- Pass: Follow-up unit and focused regression tests for the proxy route and review queue passed.
+- Pass: ACA deploy for PR #5363 to revision `ca-abarva-web-lab-eastus--mac68c2bc`, digest `sha256:c026c95c19dc0b9fb5f065461c68597ff617f3796b9c5a2abdc7dc925a2a5653`, 100% traffic.
+- Pass: Signed-in browser proof after the proxy follow-up reached the exact route `/admin/context-layer/approval-queue`, rendered the Moves learning queue for First Capital, showed 11 review-required candidates, preserved the explicit `not indexed` / `not agent-ready` / `not consumed by Nexus` copy, showed the pending embedding chunks section separately, and had no console errors or material request failures.
 
 ## Rollout Plan
 
@@ -54,11 +56,11 @@ Merge through PR to `main`, deploy through the repo-owned ACA main workflow, ver
 
 - Repo-owned deploy workflow: Required, because this changes a runtime Admin page.
 - Shared runtime mutators: None outside the repo-owned deploy workflow.
-- Approved image digest: Captured by ACA deploy after merge.
-- ACA runtime invariant: Required before claiming deployed.
+- Approved image digest: `sha256:c026c95c19dc0b9fb5f065461c68597ff617f3796b9c5a2abdc7dc925a2a5653`.
+- ACA runtime invariant: Verified for revision `ca-abarva-web-lab-eastus--mac68c2bc` at 100% traffic.
 - Worker image invariant: No worker job change.
 - Feature/env flag update path: None.
-- Live signed-in proof required: Required before claiming browser-visible.
+- Live signed-in proof required: Completed for First Capital / FS Demo Admin Context Approval Queue.
 
 ## Rollback Plan
 
@@ -72,9 +74,12 @@ Revert the PR and redeploy through the ACA main workflow. No data rollback is ne
 - ACA digest: `sha256:0d7c4812683db092d01f3242d8fdbc4ecc3fce517f2bc1bfb7a0e9790c226698`.
 - Runtime invariant proof: `/private/tmp/nexus-moves-learning-review-20260722-2/proof/94-moves-learning-review-queue-runtime`.
 - First signed-in browser proof: `/private/tmp/nexus-moves-learning-review-20260722-2/proof/95-moves-learning-review-queue-browser`.
-- Follow-up PR URL: Pending.
-- Follow-up merge SHA: Pending.
-- Follow-up signed-in browser proof: Pending.
+- Follow-up PR URL: `https://github.com/abarva-platform/abarva/pull/5363`.
+- Follow-up merge SHA: `ac68c2bc9ed95de0de80e88be9f0d3653069ee1b`.
+- Follow-up ACA revision: `ca-abarva-web-lab-eastus--mac68c2bc`.
+- Follow-up ACA digest: `sha256:c026c95c19dc0b9fb5f065461c68597ff617f3796b9c5a2abdc7dc925a2a5653`.
+- Follow-up runtime invariant proof: `/private/tmp/nexus-moves-learning-review-20260722-2/proof/96-moves-learning-review-admin-route-runtime`.
+- Follow-up signed-in browser proof: `/private/tmp/nexus-moves-learning-review-20260722-2/proof/98-moves-learning-review-queue-browser-corrected`.
 
 ## Known Gaps
 
