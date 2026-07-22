@@ -9,6 +9,7 @@ import "server-only";
 
 import { NextRequest } from "next/server";
 import { requireTenancy, tenancyErrorResponse } from "../../../../_auth";
+import { loadUserProgramAccessPolicy } from "@/lib/auth/program-access-policy";
 import { getProgramById } from "@/lib/programs/queries";
 import { getProgramsRouteSupabase } from "@/lib/programs/programs-auth-mode-server";
 import { hasAuthority } from "@/lib/programs/governance";
@@ -289,7 +290,9 @@ export async function POST(
     if (phase === 1) {
       await ensureSponsorAuthorityForP1ClientApproval(supabase, programId, ctx);
     }
+    const accessPolicy = await loadUserProgramAccessPolicy(ctx, { programId });
     const canApprove =
+      accessPolicy.canApproveGates ||
       (await hasAuthority(ctx, programId, "approver", { supabase })) ||
       ctx.role === "founder" ||
       ctx.role === "maestro";
