@@ -31,6 +31,7 @@ import {
   isCanonicalClientKey,
   type ConfidenceLevel,
 } from '@/lib/governance/context-corpus-policy';
+import { canonicalTenantKey } from '@/lib/tenant/aliases';
 import {
   readEventFacts,
   readVendorLeverResponseFacts,
@@ -118,12 +119,27 @@ export function avaCitationsFromGovernedCandidates(
 
 export interface BuildVendorCoverageGovernedAnswerInput {
   eventId: string;
-  /** Canonical tenant key — validated against CANONICAL_TENANT_KEYS before use. */
+  /**
+   * Source data-plane client key. Many Source tables still use app-era aliases
+   * such as `meridian`; governance candidates must use the canonical tenant key.
+   */
   clientKey: string;
   tenantId: string | null;
   question: string;
   /** The event's raw event_type, used to resolve the value archetype. */
   eventType?: string | null;
+}
+
+/**
+ * Normalize an app/data-plane client key to the canonical governance key. Source
+ * fact reads must still use the raw app key, but `GovernedCandidate.client_key`
+ * is validated against `CANONICAL_TENANT_KEYS`.
+ */
+export function governedClientKeyForSourceClientKey(
+  clientKey: string,
+): string | null {
+  const governedClientKey = canonicalTenantKey(clientKey);
+  return isCanonicalClientKey(governedClientKey) ? governedClientKey : null;
 }
 
 /**
@@ -142,14 +158,18 @@ export async function buildVendorCoverageGovernedAnswer(
         step,
         eventId: input.eventId,
         clientKey: input.clientKey,
+        governedClientKey:
+          detail.governedClientKey ??
+          governedClientKeyForSourceClientKey(input.clientKey),
         eventType: input.eventType,
         ...detail,
       }),
     );
   };
 
-  if (!isCanonicalClientKey(input.clientKey)) {
-    trace('not_canonical_client_key', {});
+  const governedClientKey = governedClientKeyForSourceClientKey(input.clientKey);
+  if (!governedClientKey) {
+    trace('not_governable_client_key', {});
     return null;
   }
 
@@ -200,7 +220,7 @@ export async function buildVendorCoverageGovernedAnswer(
 
   const candidates = vendorLeverFacts.map((fact) =>
     governedCandidateFromVendorLeverFact(fact, {
-      clientKey: input.clientKey,
+      clientKey: governedClientKey,
       tenantId: input.tenantId,
     }),
   );
@@ -212,7 +232,7 @@ export async function buildVendorCoverageGovernedAnswer(
     return composeAvaAnswer({
       surface: 'source',
       mode: 'SOURCE',
-      tenantKey: input.clientKey,
+      tenantKey: governedClientKey,
       question: input.question,
       intent: 'vendor_response_coverage',
       status: 'blocked',
@@ -268,7 +288,7 @@ export async function buildVendorCoverageGovernedAnswer(
   return composeAvaAnswer({
     surface: 'source',
     mode: 'SOURCE',
-    tenantKey: input.clientKey,
+    tenantKey: governedClientKey,
     question: input.question,
     intent: 'vendor_response_coverage',
     status: 'answered',

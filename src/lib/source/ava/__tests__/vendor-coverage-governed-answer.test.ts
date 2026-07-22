@@ -1,10 +1,29 @@
 import {
   avaCitationsFromGovernedCandidates,
+  buildVendorCoverageGovernedAnswer,
   factConfidenceToConfidenceLevel,
+  governedClientKeyForSourceClientKey,
   governedCandidateFromVendorLeverFact,
 } from '@/lib/source/ava/vendor-coverage-governed-answer';
 import { buildValidatedAgentContextBundle } from '@/lib/governance/agent-context-bundle';
+import {
+  readEventFacts,
+  readVendorLeverResponseFacts,
+  readVendorLeverResponses,
+} from '@/lib/source/facts/event-facts-reader';
 import type { VendorLeverResponseFact } from '@/lib/source/facts/event-facts-reader';
+
+jest.mock('@/lib/source/facts/event-facts-reader', () => ({
+  readEventFacts: jest.fn(),
+  readVendorLeverResponseFacts: jest.fn(),
+  readVendorLeverResponses: jest.fn(),
+}));
+
+const mockReadEventFacts = jest.mocked(readEventFacts);
+const mockReadVendorLeverResponses = jest.mocked(readVendorLeverResponses);
+const mockReadVendorLeverResponseFacts = jest.mocked(
+  readVendorLeverResponseFacts,
+);
 
 function fact(
   overrides: Partial<VendorLeverResponseFact> = {},
@@ -26,6 +45,24 @@ describe('factConfidenceToConfidenceLevel', () => {
     expect(factConfidenceToConfidenceLevel('low')).toBe('low');
     expect(factConfidenceToConfidenceLevel('med')).toBe('medium');
     expect(factConfidenceToConfidenceLevel('high')).toBe('high');
+  });
+});
+
+describe('governedClientKeyForSourceClientKey', () => {
+  it('maps legacy Source data-plane client keys to canonical governance tenant keys', () => {
+    expect(governedClientKeyForSourceClientKey('meridian')).toBe(
+      'meridian-health',
+    );
+    expect(governedClientKeyForSourceClientKey('apexretail')).toBe(
+      'apex-retail',
+    );
+    expect(governedClientKeyForSourceClientKey('first-capital')).toBe(
+      'first-capital',
+    );
+  });
+
+  it('fails closed for unknown client keys before building governed candidates', () => {
+    expect(governedClientKeyForSourceClientKey('unknown-client')).toBeNull();
   });
 });
 
@@ -140,5 +177,61 @@ describe('buildValidatedAgentContextBundle over mapped candidates (the real gate
     expect(bundle.decision).toBe('block');
     expect(bundle.usable).toHaveLength(0);
     expect(bundle.blocked).toHaveLength(1);
+  });
+});
+
+describe('buildVendorCoverageGovernedAnswer', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  it('reads Source facts with the legacy client key but emits a canonical governed answer', async () => {
+    mockReadEventFacts.mockResolvedValue({ inputs: {}, citations: {} });
+    mockReadVendorLeverResponses.mockResolvedValue({
+      signalPresent: true,
+      vendors: ['Vendor Alpha'],
+      statusByVendorLever: new Map([
+        [
+          'Vendor Alpha',
+          new Map([
+            ['AMS.VOLUME_BAND_PRICING', 'addressed'],
+            ['AMS.ENHANCEMENT_LEAKAGE', 'partial'],
+          ]),
+        ],
+      ]),
+    });
+    mockReadVendorLeverResponseFacts.mockResolvedValue([
+      fact({
+        id: 'fact-alpha-volume',
+        vendorId: 'Vendor Alpha',
+        leverKey: 'AMS.VOLUME_BAND_PRICING',
+        sourceCitation: {
+          doc: 'RESPONSE_COVERAGE_V1',
+          locator: "row 2",
+        },
+      }),
+    ]);
+
+    const answer = await buildVendorCoverageGovernedAnswer({
+      eventId: 'event-1',
+      clientKey: 'meridian',
+      tenantId: 'tenant-meridian',
+      question: 'How are vendors doing on response coverage?',
+      eventType: 'infrastructure',
+    });
+
+    expect(readEventFacts).toHaveBeenCalledWith({
+      eventId: 'event-1',
+      clientKey: 'meridian',
+    });
+    expect(readVendorLeverResponses).toHaveBeenCalledWith({
+      eventId: 'event-1',
+      clientKey: 'meridian',
+    });
+    expect(answer).not.toBeNull();
+    expect(answer!.tenantKey).toBe('meridian-health');
+    expect(answer!.status).toBe('answered');
+    expect(answer!.artifacts[0]?.artifact).toBe('table');
+    expect(answer!.citations[0]?.recordId).toBe('fact-alpha-volume');
   });
 });
