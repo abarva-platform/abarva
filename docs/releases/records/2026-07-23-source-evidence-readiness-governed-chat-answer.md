@@ -6,7 +6,8 @@
 
 ## Status
 
-`candidate`
+`released` — merged in PR #5477, deployed by the repo-owned ACA main workflow, independently
+runtime-invariant checked, and signed-in proven on `app.abarva.ai`.
 
 ## Plain-English Summary
 
@@ -73,26 +74,66 @@ learned over time.
 - `pass` — `npm run release:check -- --base origin/main --head HEAD`.
   - Azure deployment lane, no-legacy-tenant-inputs, release control, deploy authority, and pilot
     data-loader gates passed.
-- `not-run` — PR checks pending.
-- `not-run` — repo-owned ACA main deploy pending.
-- `not-run` — independent ACA runtime invariant pending.
-- `not-run` — signed-in production proof pending.
+- `pass` — hosted PR checks for #5477.
+  - AI surface control catalog, agent context broker boundary, no-auto-action boundary, Azure /
+    Anthropic rules, backend load, coverage floor, browser smoke, ESLint, Gitleaks, Lighthouse,
+    migration drift, bundle budget, production readiness, public axe, release control, routes and
+    disclaimers, hygiene, typecheck/reasoning, tenant allowlist, Wave 0, and npm audit passed.
+- `pass` — repo-owned ACA main deploy run `30018168714`.
+  - Head SHA: `cc74d791d0f3bdcb86b25cda0d82210408efe7a6`.
+  - Completed successfully at `2026-07-23T15:03:32Z`.
+- `pass` — independent ACA runtime invariant.
+  - Checked at `2026-07-23T15:03:58.671Z`.
+  - Active revision: `ca-abarva-web-lab-eastus--mcc74d791`.
+  - Active/template image:
+    `acrabarvalab001.azurecr.io/abarva/web@sha256:b5d5ec75a0a4a1c91c2ad970ea505ab334de1066468711d7b5aa7aeaee5fe47c`.
+  - Traffic: 100% to the active revision.
+  - Health: `ok=true`, Postgres and direct Postgres checks true, Azure graph on Postgres.
+  - Worker jobs `job-abarva-deliv-worker` and `job-abarva-deliv-worker-event` use the same digest.
+- `pass` — signed-in production proof on `https://app.abarva.ai`.
+  - Storage states refreshed with the sanctioned agent-auth harness:
+    `npx tsx scripts/auth/prime-agent-client-auth-states.ts --base-url https://app.abarva.ai --client apexretail --refresh`
+    and `--client lakeshore --refresh`.
+  - Apex page probe:
+    `/source/events/apex-retail-ams-outsourcing-2026?stage=files` returned 200 and stayed on the
+    signed-in Source route.
+  - Apex NDJSON probe:
+    `POST /api/v1/source/apex-retail-ams-outsourcing-2026/nexus/ask` with `Accept:
+    application/x-ndjson`.
+  - Apex result: HTTP 200, two NDJSON lines,
+    `agent-answer.intent=evidence_processing_readiness`, `status=no_data`, chart present, table
+    present, tenant fence passed, and no internal data-layer language in the direct answer.
+  - Lakeshore page probe:
+    `/source/events/c05872d8-0465-4bc8-8eeb-ff3d42ac6761?stage=files` returned 200 and stayed on
+    the signed-in Source route.
+  - Lakeshore NDJSON probe:
+    `POST /api/v1/source/c05872d8-0465-4bc8-8eeb-ff3d42ac6761/nexus/ask` with `Accept:
+    application/x-ndjson`.
+  - Lakeshore result: HTTP 200, two NDJSON lines,
+    `agent-answer.intent=evidence_processing_readiness`, `status=answered`, chart present, table
+    present, 8 citations, tenant fence passed, forbidden-language safety passed, and no internal
+    data-layer language in the direct answer.
+  - Lakeshore direct answer:
+    `9 Source files are stored. 0 are parsed, 0 are search-ready, 9 are parser-ready, and 0 need attention.`
+  - The chart separated `Stored`, `Parser-ready`, `Parsed`, `Search-ready`, `Graph-projected`, and
+    `Needs attention`; the table showed parser-ready items with the read-only no-parser-run note.
 
 ## Rollout Plan
 
-Open a PR and merge by squash after local validation and hosted checks are eligible. The repo-owned
-ACA main deploy workflow must build and deploy the digest-pinned image for the merge SHA before this
-is claimed live on `app.abarva.ai`.
+Completed via PR #5477. The repo-owned ACA main deploy workflow built and deployed the digest-
+pinned image for merge SHA `cc74d791d0f3bdcb86b25cda0d82210408efe7a6`, shifted 100% traffic to
+the new revision, and production proof was captured against `app.abarva.ai`.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: none from this PR.
-- Approved image digest: pending repo-owned ACA main deploy.
-- ACA runtime invariant: pending.
+- Approved image digest:
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:b5d5ec75a0a4a1c91c2ad970ea505ab334de1066468711d7b5aa7aeaee5fe47c`.
+- ACA runtime invariant: passed independently at `2026-07-23T15:03:58.671Z`.
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
-- Live signed-in proof required: yes, because this is user-facing Source chat behavior.
+- Live signed-in proof required: yes — passed against Apex and Lakeshore Source events.
 
 ## Rollback Plan
 
@@ -102,11 +143,14 @@ available according to the reverted code state. No migration rollback is require
 
 ## Audit Evidence
 
-- PR: pending.
-- Merge SHA: pending.
-- ACA deploy run: pending.
-- Runtime invariant: pending.
-- Signed-in proof: pending.
+- PR: https://github.com/abarva-platform/abarva/pull/5477.
+- Merge SHA: `cc74d791d0f3bdcb86b25cda0d82210408efe7a6`.
+- ACA deploy run: https://github.com/abarva-platform/abarva/actions/runs/30018168714.
+- Runtime invariant: local evidence under
+  `audit-artifacts/source-evidence-readiness-chat-004-aca-invariant/`.
+- Signed-in proof: local evidence under
+  `audit-artifacts/source-evidence-readiness-chat-004-live-proof/`.
+- PR audit comment: https://github.com/abarva-platform/abarva/pull/5477#issuecomment-5060042337.
 - Local evidence: focused test, lint, typecheck, and release-check commands listed above as they
   complete.
 
