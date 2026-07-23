@@ -115,10 +115,15 @@ const OVERRIDES: Record<string, QualityBarOverride> = {
     requiresEvidenceGapsNoted: true,
   },
   "moves::operating_model": {
-    minSections: 7,
-    minBodyWords: 6_500, // ~15 pages
-    targetBodyWordsMax: 13_500, // ~30 pages
-    enforceMaxAsBlocker: false,
+    // Canonical orchestrator key used by the P3 `operating_model_design`
+    // registry artifact. It must resolve to the same concise control as the
+    // registry-facing alias above.
+    minSections: 8,
+    minBodyWords: 2_400,
+    targetBodyWordsMax: 4_600,
+    enforceMaxAsBlocker: true,
+    requiresCentralTension: true,
+    requiresEvidenceGapsNoted: true,
   },
   "moves::roadmap": {
     minSections: 6,

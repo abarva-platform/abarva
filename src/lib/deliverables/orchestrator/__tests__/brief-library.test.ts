@@ -78,7 +78,7 @@ describe('deliverable structures', () => {
 
   it.each([
     ['solution_design', 8, ['experience_flow', 'component_interaction', 'exception_control_flow']],
-    ['operating_model_design', 8, ['human_ai_work_split', 'decision_rights']],
+    ['operating_model', 8, ['human_ai_work_split', 'decision_rights']],
     ['sourcing_strategy', 7, ['sourcing_options_matrix']],
   ] as const)(
     '%s has a fixed, purpose-specific structure instead of the generic Moves binder',
