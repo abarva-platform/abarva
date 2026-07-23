@@ -13,7 +13,10 @@ import {
 import type { ReactNode } from "react";
 import { TextDecoder, TextEncoder } from "util";
 import { ReadableStream } from "stream/web";
-import { MovesPhaseStandaloneClient } from "../MovesPhaseStandaloneClient";
+import {
+  MovesPhaseStandaloneClient,
+  movesPhaseCopyAuditBlocks,
+} from "../MovesPhaseStandaloneClient";
 import type { MoveEvidenceNeedPacket } from "@/lib/programs/evidence-readiness/move-evidence-need-packet";
 import type { ReadinessReport } from "@/lib/programs/current-state-readiness";
 import type { PhaseTallyRow } from "@/lib/programs/phase-explorer-tallies";
@@ -247,7 +250,10 @@ describe("MovesPhaseStandaloneClient", () => {
       async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input);
 
-        if (url.includes("/current-state/ingest-doc") && init?.method === "POST") {
+        if (
+          url.includes("/current-state/ingest-doc") &&
+          init?.method === "POST"
+        ) {
           const form = init.body as FormData;
           const file = form.get("file") as File;
           currentStateFamilyIngests.push({
@@ -1027,9 +1033,7 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByRole("heading", { name: "Files to upload" }),
     ).toBeInTheDocument();
-    expect(
-      contractStepButton(/Approve & Build/i),
-    ).toBeInTheDocument();
+    expect(contractStepButton(/Approve & Build/i)).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Charter inputs" }),
     ).not.toBeInTheDocument();
@@ -1308,7 +1312,7 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(
       screen.getByText(/Next: P4 Build the Plan readiness/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("Cost baseline")).toBeInTheDocument();
+    expect(screen.getAllByText("Cost baseline").length).toBeGreaterThan(0);
     expect(screen.getByText(/Format: CSV, XLSX/i)).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -1656,7 +1660,9 @@ describe("MovesPhaseStandaloneClient", () => {
 
     fireEvent.click(contractStepButton(/Review Findings/i));
 
-    expect(screen.getByText("1 awaiting review · 0 approved")).toBeInTheDocument();
+    expect(
+      screen.getByText("1 awaiting review · 0 approved"),
+    ).toBeInTheDocument();
     expect(
       screen.getByText("1 parsed document awaiting review"),
     ).toBeInTheDocument();
@@ -1708,9 +1714,9 @@ describe("MovesPhaseStandaloneClient", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Phase progress")).toHaveTextContent(
-      "Gate blocked · 1/2 hard met",
-    );
+    const progressCard = screen.getByLabelText("Phase progress");
+    expect(progressCard).toHaveTextContent("Gate");
+    expect(progressCard).toHaveTextContent("Blocked · 1/2 hard met");
     expect(screen.getByLabelText("Phase progress")).not.toHaveTextContent(
       "100% ready · Approve & Build",
     );
@@ -1723,9 +1729,7 @@ describe("MovesPhaseStandaloneClient", () => {
     expect(screen.getByTestId("mxw-decision-surface")).toHaveTextContent(
       "Hard: Discovery synthesis signed off",
     );
-    expect(
-      screen.getByText("Gate execution checklist"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Gate execution checklist")).toBeInTheDocument();
   });
 
   it("does not load the legacy facilitated session playbook on the Prepare tab", () => {
@@ -2069,7 +2073,9 @@ describe("MovesPhaseStandaloneClient", () => {
         screen.getByText(/Build completed, but the phase gate is blocked/i),
       ).toBeInTheDocument();
     });
-    expect(screen.getAllByText(/Charter signed off by sponsor/i).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/Charter signed off by sponsor/i).length,
+    ).toBeGreaterThan(0);
     expect(
       screen.getByText(/approve or upload the client-approved deliverable/i),
     ).toBeInTheDocument();
@@ -2248,6 +2254,13 @@ describe("MovesPhaseStandaloneClient", () => {
         (screen.getByLabelText("Current-state findings") as HTMLTextAreaElement)
           .value,
       ).toContain(move.name);
+      expect(screen.queryByText("Provide")).not.toBeInTheDocument();
+      expect(document.querySelector(".mxw-contract-captured")).toBeNull();
+      expect(
+        screen
+          .getAllByText(move.name)
+          .filter((node) => node.classList.contains("mxw-contract-captured")),
+      ).toHaveLength(0);
       expect(
         screen.queryByRole("heading", { name: "What this phase needs" }),
       ).not.toBeInTheDocument();
@@ -2262,6 +2275,62 @@ describe("MovesPhaseStandaloneClient", () => {
       ).toBeInTheDocument();
       expect(
         screen.queryByRole("heading", { name: "Current-state findings" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("marks exactly one owning workflow row active while a phase input is selected", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Understand Current State",
+          })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const menu = screen.getByLabelText("P2 steps");
+      fireEvent.click(
+        within(menu).getByRole("button", { name: /Baseline metrics/i }),
+      );
+
+      const workflowButtons = [
+        within(menu).getByRole("button", { name: /Prepare/i }),
+        within(menu).getByRole("button", { name: /Upload & Review/i }),
+        within(menu).getByRole("button", { name: /Review Findings/i }),
+        within(menu).getByRole("button", { name: /Approve & Build/i }),
+      ];
+      expect(
+        workflowButtons.filter((button) => button.classList.contains("active")),
+      ).toHaveLength(1);
+      expect(
+        within(menu).getByRole("button", { name: /Upload & Review/i }),
+      ).toHaveClass("active");
+    });
+
+    it("splits phase progress into workflow, gate, and stage rows instead of one run-on label", () => {
+      render(
+        <MovesPhaseStandaloneClient
+          carriesForwardContent={[]}
+          evidenceNeedPackets={[]}
+          move={makeMove({
+            currentPhase: 2,
+            phaseLabel: "P2 Understand Current State",
+          })}
+          phaseNum={2}
+          phaseTallies={[...phaseTallies]}
+        />,
+      );
+
+      const progressCard = screen.getByLabelText("Phase progress");
+      expect(within(progressCard).getByText("Workflow")).toBeInTheDocument();
+      expect(within(progressCard).getByText("Gate")).toBeInTheDocument();
+      expect(within(progressCard).getByText("Stage")).toBeInTheDocument();
+      expect(
+        within(progressCard).queryByText(/workflow · .*hard met ·/i),
       ).not.toBeInTheDocument();
     });
 
@@ -2370,7 +2439,7 @@ describe("MovesPhaseStandaloneClient", () => {
       });
     });
 
-    it("'Coming up' card: collapsed by default, expands/collapses the real readiness-pack chips in the DOM, and is bound only to real evidence-need packets", () => {
+    it("'Coming up' card: opens by default when real readiness-pack chips exist, then collapses and reopens the same real data", () => {
       render(
         <MovesPhaseStandaloneClient
           carriesForwardContent={[]}
@@ -2420,12 +2489,6 @@ describe("MovesPhaseStandaloneClient", () => {
       const toggle = within(comingUp).getByRole("button", {
         name: "What P3 Choose the Approach will need",
       });
-      expect(toggle).toHaveAttribute("aria-expanded", "false");
-      expect(
-        screen.queryByTestId("mxw-contract-comingup-chips"),
-      ).not.toBeInTheDocument();
-
-      fireEvent.click(toggle);
       expect(toggle).toHaveAttribute("aria-expanded", "true");
       expect(
         within(screen.getByTestId("mxw-contract-comingup-chips")).getByText(
@@ -2438,6 +2501,26 @@ describe("MovesPhaseStandaloneClient", () => {
       expect(
         screen.queryByTestId("mxw-contract-comingup-chips"),
       ).not.toBeInTheDocument();
+
+      fireEvent.click(toggle);
+      expect(toggle).toHaveAttribute("aria-expanded", "true");
+      expect(
+        within(screen.getByTestId("mxw-contract-comingup-chips")).getByText(
+          "Systems inventory",
+        ),
+      ).toBeInTheDocument();
+    });
+
+    it("keeps phase lede, question, and aVa context sentences under the Phase 0 copy length guard", () => {
+      const longSentences = movesPhaseCopyAuditBlocks().flatMap((block) =>
+        block
+          .split(/[.!?]/)
+          .map((sentence) => sentence.trim())
+          .filter(Boolean)
+          .filter((sentence) => sentence.split(/\s+/).length > 20),
+      );
+
+      expect(longSentences).toEqual([]);
     });
   });
 });
