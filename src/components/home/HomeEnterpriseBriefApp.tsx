@@ -764,7 +764,6 @@ export function HomeEnterpriseBriefApp({
             <span>{group.title}</span>
             {group.items.map((item) => {
               const active = item.key === view;
-              const navDimension = byDimension(pack, item.measure);
               return (
                 <button
                   className={active ? "is-active" : ""}
@@ -773,9 +772,6 @@ export function HomeEnterpriseBriefApp({
                   onClick={() => setView(item.key)}
                 >
                   <b>{item.label}</b>
-                  {navDimension?.count ? (
-                    <em>{formatNumber(navDimension.count)}</em>
-                  ) : null}
                 </button>
               );
             })}
@@ -912,9 +908,8 @@ export function HomeEnterpriseBriefApp({
         .heb-nav-group button {
           width: 100%;
           display: grid;
-          grid-template-columns: minmax(0, 1fr) auto;
+          grid-template-columns: minmax(0, 1fr);
           align-items: center;
-          gap: 8px;
           border: 0;
           border-left: 3px solid transparent;
           border-radius: 6px;

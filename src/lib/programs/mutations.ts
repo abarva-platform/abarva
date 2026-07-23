@@ -574,7 +574,9 @@ export async function ensurePhaseGateDeliverable(
   const deliverableTypeKey = input.deliverableTypeKey.trim();
   const title = input.title.trim();
   if (!deliverableTypeKey)
-    throw new Error("[ensurePhaseGateDeliverable] deliverableTypeKey is required");
+    throw new Error(
+      "[ensurePhaseGateDeliverable] deliverableTypeKey is required",
+    );
   if (!title) throw new Error("[ensurePhaseGateDeliverable] title is required");
 
   await ensureDeliverableType(sb, deliverableTypeKey);
@@ -610,15 +612,17 @@ export async function ensurePhaseGateDeliverable(
 
   const content = input.content?.trim();
   if (content) {
-    const { error: versionError } = await sb.from("deliverable_versions").insert({
-      deliverable_id: deliverableId,
-      version: 1,
-      content,
-      structured_data: {
-        source: "phase_capture",
-        generated_by: "phase_capture_route",
-      },
-    });
+    const { error: versionError } = await sb
+      .from("deliverable_versions")
+      .insert({
+        deliverable_id: deliverableId,
+        version: 1,
+        content,
+        structured_data: {
+          source: "phase_capture",
+          generated_by: "phase_capture_route",
+        },
+      });
     if (versionError) throw versionError;
   }
 
@@ -761,7 +765,8 @@ export async function signOffDeliverable(
       eventType: "submitted_for_review",
       reviewerName: reviewerNameForContext(ctx),
       reviewerRoleCode: reviewerRoleForContext(ctx),
-      approvalScope: "Client uploaded replacement submitted through sign-off flow.",
+      approvalScope:
+        "Client uploaded replacement submitted through sign-off flow.",
     });
   } else {
     await appendDeliverableLifecycleEvent(sb, {
@@ -771,7 +776,8 @@ export async function signOffDeliverable(
       origin: "ai_generated",
       reviewerName: reviewerNameForContext(ctx),
       reviewerRoleCode: "artifact_owner",
-      approvalScope: "Existing AI-generated draft approved as-is through sign-off flow.",
+      approvalScope:
+        "Existing AI-generated draft approved as-is through sign-off flow.",
     });
     await appendDeliverableLifecycleEvent(sb, {
       deliverableId,
@@ -779,7 +785,8 @@ export async function signOffDeliverable(
       eventType: "submitted_for_review",
       reviewerName: reviewerNameForContext(ctx),
       reviewerRoleCode: reviewerRoleForContext(ctx),
-      approvalScope: "Existing AI-generated draft submitted through sign-off flow.",
+      approvalScope:
+        "Existing AI-generated draft submitted through sign-off flow.",
     });
   }
   await appendDeliverableLifecycleEvent(sb, {
@@ -794,7 +801,10 @@ export async function signOffDeliverable(
     decision: "approved",
     decidedAt: new Date().toISOString(),
   });
-  if (priorAuthoritativeVersion && priorAuthoritativeVersion !== approvedVersion) {
+  if (
+    priorAuthoritativeVersion &&
+    priorAuthoritativeVersion !== approvedVersion
+  ) {
     await appendDeliverableLifecycleEvent(sb, {
       deliverableId,
       version: priorAuthoritativeVersion,
@@ -1136,21 +1146,22 @@ export async function completeDeliverable(
     };
     deliverableId = existingRow.id;
     priorAuthoritativeVersion = existingRow.signed_off_version ?? null;
-    nextVersion =
-      (existingRow.current_version ?? 0) + 1;
+    nextVersion = (existingRow.current_version ?? 0) + 1;
     const { error } = await sb
       .from("deliverables_v2")
       .update({
         title,
         current_version: nextVersion,
         status: input.signOff === false ? "draft" : "signed_off",
-        signed_off_version: input.signOff === false ? null : nextVersion,
         signed_off_by: input.signOff === false ? null : ctx.userId,
         signed_off_at: input.signOff === false ? null : now,
-        signed_off_version: input.signOff === false ? priorAuthoritativeVersion : nextVersion,
+        signed_off_version:
+          input.signOff === false ? priorAuthoritativeVersion : nextVersion,
         approved_artifact_id: input.signOff === false ? undefined : null,
-        authoritative_lifecycle_state: input.signOff === false ? undefined : "human_approved",
-        authoritative_flag_source: input.signOff === false ? undefined : "normal_flow",
+        authoritative_lifecycle_state:
+          input.signOff === false ? undefined : "human_approved",
+        authoritative_flag_source:
+          input.signOff === false ? undefined : "normal_flow",
         requires_revalidation: input.signOff === false ? undefined : false,
         updated_at: now,
       })
@@ -1166,7 +1177,6 @@ export async function completeDeliverable(
         title,
         status: input.signOff === false ? "draft" : "signed_off",
         current_version: 1,
-        signed_off_version: input.signOff === false ? null : 1,
         // Actor fields should identify the signed-in user/person. Nexus
         // authorship is recorded in structured provenance below.
         created_by: ctx.userId,
@@ -1174,8 +1184,10 @@ export async function completeDeliverable(
         signed_off_at: input.signOff === false ? null : now,
         signed_off_version: input.signOff === false ? null : 1,
         approved_artifact_id: null,
-        authoritative_lifecycle_state: input.signOff === false ? null : "human_approved",
-        authoritative_flag_source: input.signOff === false ? null : "normal_flow",
+        authoritative_lifecycle_state:
+          input.signOff === false ? null : "human_approved",
+        authoritative_flag_source:
+          input.signOff === false ? null : "normal_flow",
         requires_revalidation: false,
       })
       .select("id")
@@ -1228,7 +1240,8 @@ export async function completeDeliverable(
       eventType: "submitted_for_review",
       reviewerName: reviewerNameForContext(ctx),
       reviewerRoleCode: reviewerRoleForContext(ctx),
-      approvalScope: "Generated deliverable submitted through explicit acceptance flow.",
+      approvalScope:
+        "Generated deliverable submitted through explicit acceptance flow.",
     });
     await appendDeliverableLifecycleEvent(sb, {
       deliverableId,
@@ -1236,11 +1249,15 @@ export async function completeDeliverable(
       eventType: "approval_granted",
       reviewerName: reviewerNameForContext(ctx),
       reviewerRoleCode: reviewerRoleForContext(ctx),
-      approvalScope: "Approved generated deliverable through explicit acceptance flow.",
+      approvalScope:
+        "Approved generated deliverable through explicit acceptance flow.",
       decision: "approved",
       decidedAt: now,
     });
-    if (priorAuthoritativeVersion && priorAuthoritativeVersion !== nextVersion) {
+    if (
+      priorAuthoritativeVersion &&
+      priorAuthoritativeVersion !== nextVersion
+    ) {
       await appendDeliverableLifecycleEvent(sb, {
         deliverableId,
         version: priorAuthoritativeVersion,
