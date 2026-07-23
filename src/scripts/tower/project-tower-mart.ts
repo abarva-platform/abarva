@@ -154,16 +154,16 @@ async function resolveTenant(
   const res = await client.query<{ id: string; name: string }>(
     `SELECT id, name
        FROM public.clients
-      WHERE key = ANY($1::text[])
-         OR tenant_key = ANY($1::text[])
+      WHERE tenant_key = ANY($1::text[])
          OR slug = ANY($1::text[])
+         OR lower(name) = ANY($3::text[])
       ORDER BY CASE
         WHEN tenant_key = $2 THEN 0
-        WHEN key = ANY($1::text[]) THEN 1
+        WHEN slug = $2 THEN 1
         ELSE 2
       END
       LIMIT 1`,
-    [aliases, canonicalTenantKey],
+    [aliases, canonicalTenantKey, tenantNameLookupAliases(canonicalTenantKey, tenantNameFallback)],
   );
   const row = res.rows[0];
   return {
@@ -193,6 +193,23 @@ function tenantLookupAliases(
   if (normalized === "lakeshore-holdings") {
     aliases.add("lakeshore");
     aliases.add("lakeshore-industries");
+  }
+  return [...aliases].filter(Boolean);
+}
+
+function tenantNameLookupAliases(canonicalTenantKey: string, tenantNameFallback: string): string[] {
+  const aliases = new Set([tenantNameFallback.trim().toLowerCase()]);
+  const normalized = canonicalTenantKey.trim().toLowerCase();
+  if (normalized === "meridian-health") {
+    aliases.add("meridian");
+    aliases.add("meridian health");
+    aliases.add("healthcare demo");
+  }
+  if (normalized === "skyharbor-air") aliases.add("skyharbor air");
+  if (normalized === "first-capital-financial") {
+    aliases.add("first capital");
+    aliases.add("first capital financial");
+    aliases.add("fs demo");
   }
   return [...aliases].filter(Boolean);
 }
