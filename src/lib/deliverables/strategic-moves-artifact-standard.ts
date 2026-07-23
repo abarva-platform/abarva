@@ -542,8 +542,9 @@ Required sections:
 - Open inputs and implementation decisions
 
 Length discipline:
-- Target 3,500-5,200 rendered words / approximately 7-10 visual-first pages.
-- Stop before 5,200 rendered words, including source register and appendix overhead.
+- Target 3,200-4,800 body words so the final rendered package remains under 5,200 words
+  after title page, status block, source register, and appendix overhead.
+- Stop before 4,800 body words. Use exhibits and tables instead of expanded prose.
 - Do not repeat the full architecture, operating model, sourcing strategy, or evidence register.
 - Prefer exhibits and concise captions over architecture essays.`;
 }

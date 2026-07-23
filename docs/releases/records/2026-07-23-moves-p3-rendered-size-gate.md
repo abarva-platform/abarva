@@ -32,6 +32,7 @@ Live First Capital P3 proof showed that the P3 architecture chain could generate
 - Opt in concise Moves decision artifacts: `charter`, `solution_design`, `operating_model_design`, and `sourcing_strategy`.
 - Preserve advisory-only maximums for deeper architecture artifacts such as `target_state_architecture`.
 - Reduce P3 solution, operating-model, and sourcing section budgets to account for final rendered artifact overhead.
+- Further reduce Solution Design authoring budgets after live v16 proof showed the final rendered artifact still exceeded the 5,200-word executive ceiling by 197 words.
 - Add regression tests for advisory versus blocking maximum-word behavior and updated P3 budget contracts.
 
 ## QA / Validation
@@ -42,7 +43,8 @@ Live First Capital P3 proof showed that the P3 architecture chain could generate
 - Pending: `npm run release:check` after this QA status update.
 - Pass: `git diff --check`.
 - Pending: ACA deploy and runtime-invariant proof.
-- Pending: signed-in First Capital P3 generation proof on disposable Move `4bf889aa-d4ee-4c1d-936b-51574614d191`.
+- Partial: signed-in First Capital P3 v16 generation proof on disposable Move `4bf889aa-d4ee-4c1d-936b-51574614d191` generated all four artifacts; Operating Model and Sourcing fit their rendered ceilings, while Solution Design rendered at 5,397 words against a 5,200-word ceiling and required this follow-up headroom reduction.
+- Pending: signed-in First Capital P3 v17 proof after the follow-up Solution Design budget reduction.
 
 ## Rollout Plan
 
@@ -65,6 +67,7 @@ Rollback by reverting this PR and redeploying the prior ACA image through the re
 ## Audit Evidence
 
 - Live failed/partial proof: `/Users/anand/Downloads/moves-p3-architecture-live-proof-v15-2026-07-23T13-49-08Z/11-artifact-content-audit.json`
+- Live partial proof: `/Users/anand/Downloads/moves-p3-architecture-live-proof-v16-2026-07-23T14-40-56Z/11-artifact-content-audit.json`
 - PR URL: pending
 - Merge SHA: pending
 - ACA deploy proof: pending

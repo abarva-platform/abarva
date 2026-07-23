@@ -101,14 +101,14 @@ describe('deliverable structures', () => {
   it('keeps solution-design authoring budgets below the hard export ceiling', () => {
     const structure = getDeliverableStructure('moves', 'solution_design')!;
     expect(structure.sections.map((section) => section.expertLatitude)).toEqual([
-      'Keep under 350 words; lead with the decision and do not restate the full architecture.',
-      'Keep under 550 words plus one workflow exhibit.',
-      'Keep under 650 words plus a component interaction exhibit.',
-      'Keep under 600 words; use a compact contract table.',
-      'Keep under 550 words plus one exception/control exhibit.',
-      'Keep under 550 words; distinguish confirmed requirements from open decisions.',
-      'Keep under 550 words using concise tables.',
-      'Keep under 200 words.',
+      'Keep under 300 words; lead with the decision and do not restate the full architecture.',
+      'Keep under 450 words plus one workflow exhibit.',
+      'Keep under 550 words plus a component interaction exhibit.',
+      'Keep under 500 words; use a compact contract table.',
+      'Keep under 450 words plus one exception/control exhibit.',
+      'Keep under 450 words; distinguish confirmed requirements from open decisions.',
+      'Keep under 450 words using concise tables.',
+      'Keep under 150 words.',
     ]);
   });
 
