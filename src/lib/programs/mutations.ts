@@ -36,6 +36,12 @@ import {
 } from "@/lib/programs/discovery/extraction-planner";
 import type { ExtractedProgramEvidence } from "@/lib/programs/evidence-ingestion";
 import { resolveDataPlane } from "@/lib/data-plane/read-adapters/resolveDataPlane";
+import {
+  appendDeliverableLifecycleEvent,
+  getAuthoritativeVersion as resolveAuthoritativeVersion,
+  type AuthoritativeVersion,
+  type ReviewerRoleCode,
+} from "@/lib/programs/deliverable-lifecycle";
 
 /**
  * Resolve the programs write adapter, threading any route-scoped Supabase
@@ -69,6 +75,20 @@ async function assertProgramTenancy(
   });
   if (!program)
     throw new Error(`[programs/mutations] program ${programId} not accessible`);
+}
+
+function reviewerNameForContext(ctx: TenancyCtx): string {
+  return ctx.email ?? ctx.userId;
+}
+
+function reviewerRoleForContext(ctx: TenancyCtx): ReviewerRoleCode {
+  const role = (ctx as TenancyCtx & { role?: string | null }).role;
+  if (role === "client_authority" || role === "executive_sponsor") return role;
+  if (role === "finance") return "finance";
+  if (role === "security" || role === "risk") return role;
+  if (role === "technology_owner" || role === "architecture") return role;
+  if (role === "business_owner") return role;
+  return "abarva_quality";
 }
 
 export function resolveProgramIndustryCode(
@@ -649,14 +669,18 @@ export async function signOffDeliverable(
 
   const { data: existing, error: readError } = await sb
     .from("deliverables_v2")
-    .select("current_version")
+    .select("current_version, signed_off_version")
     .eq("id", deliverableId)
     .eq("engagement_id", programId)
     .maybeSingle();
   if (readError) throw readError;
   if (!existing) return false;
-  const currentVersion = (existing as { current_version: number | null })
-    .current_version ?? 0;
+  const existingPointer = existing as {
+    current_version: number | null;
+    signed_off_version: number | null;
+  };
+  const currentVersion = existingPointer.current_version ?? 0;
+  const priorAuthoritativeVersion = existingPointer.signed_off_version ?? null;
   let approvedVersion = currentVersion;
   const approvedContent = opts.approvedContent?.content.trim();
 
@@ -668,6 +692,7 @@ export async function signOffDeliverable(
         deliverable_id: deliverableId,
         version: approvedVersion,
         content: approvedContent,
+        origin: "client_uploaded",
         structured_data: {
           source: "client_approved_upload",
           approved_artifact_id: opts.approvedArtifactId ?? null,
@@ -701,6 +726,9 @@ export async function signOffDeliverable(
       // signed-off version until a newer version is approved.
       signed_off_version: approvedVersion,
       approved_artifact_id: opts.approvedArtifactId ?? null,
+      authoritative_lifecycle_state: "human_approved",
+      authoritative_flag_source: "normal_flow",
+      requires_revalidation: false,
       updated_at: new Date().toISOString(),
     })
     .eq("id", deliverableId)
@@ -714,7 +742,279 @@ export async function signOffDeliverable(
     .select("id")
     .maybeSingle();
   if (error) throw error;
-  return Boolean(data);
+  const signed = Boolean(data);
+  if (!signed) return false;
+
+  if (approvedContent) {
+    await appendDeliverableLifecycleEvent(sb, {
+      deliverableId,
+      version: approvedVersion,
+      eventType: "version_created",
+      origin: "client_uploaded",
+      reviewerName: reviewerNameForContext(ctx),
+      reviewerRoleCode: reviewerRoleForContext(ctx),
+      approvalScope: opts.approvedContent?.fileName ?? null,
+    });
+    await appendDeliverableLifecycleEvent(sb, {
+      deliverableId,
+      version: approvedVersion,
+      eventType: "submitted_for_review",
+      reviewerName: reviewerNameForContext(ctx),
+      reviewerRoleCode: reviewerRoleForContext(ctx),
+      approvalScope: "Client uploaded replacement submitted through sign-off flow.",
+    });
+  } else {
+    await appendDeliverableLifecycleEvent(sb, {
+      deliverableId,
+      version: approvedVersion,
+      eventType: "version_created",
+      origin: "ai_generated",
+      reviewerName: reviewerNameForContext(ctx),
+      reviewerRoleCode: "artifact_owner",
+      approvalScope: "Existing AI-generated draft approved as-is through sign-off flow.",
+    });
+    await appendDeliverableLifecycleEvent(sb, {
+      deliverableId,
+      version: approvedVersion,
+      eventType: "submitted_for_review",
+      reviewerName: reviewerNameForContext(ctx),
+      reviewerRoleCode: reviewerRoleForContext(ctx),
+      approvalScope: "Existing AI-generated draft submitted through sign-off flow.",
+    });
+  }
+  await appendDeliverableLifecycleEvent(sb, {
+    deliverableId,
+    version: approvedVersion,
+    eventType: "approval_granted",
+    reviewerName: reviewerNameForContext(ctx),
+    reviewerRoleCode: reviewerRoleForContext(ctx),
+    approvalScope: approvedContent
+      ? "Approved client-uploaded replacement."
+      : "Approved AI-generated draft as-is.",
+    decision: "approved",
+    decidedAt: new Date().toISOString(),
+  });
+  if (priorAuthoritativeVersion && priorAuthoritativeVersion !== approvedVersion) {
+    await appendDeliverableLifecycleEvent(sb, {
+      deliverableId,
+      version: priorAuthoritativeVersion,
+      eventType: "authority_replaced",
+      reviewerName: reviewerNameForContext(ctx),
+      reviewerRoleCode: reviewerRoleForContext(ctx),
+      relatedVersion: approvedVersion,
+    });
+    await appendDeliverableLifecycleEvent(sb, {
+      deliverableId,
+      version: priorAuthoritativeVersion,
+      eventType: "superseded",
+      reviewerName: reviewerNameForContext(ctx),
+      reviewerRoleCode: reviewerRoleForContext(ctx),
+      relatedVersion: approvedVersion,
+    });
+  }
+  return true;
+}
+
+export async function getAuthoritativeVersion(
+  ctx: TenancyCtx,
+  programId: string,
+  deliverableId: string,
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<AuthoritativeVersion | null> {
+  assertTenancy(ctx);
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
+  await assertProgramTenancy(ctx, programId, { supabase: sb });
+  const { data: deliverable, error } = await sb
+    .from("deliverables_v2")
+    .select("id")
+    .eq("id", deliverableId)
+    .eq("engagement_id", programId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!deliverable) return null;
+  return resolveAuthoritativeVersion(sb, deliverableId);
+}
+
+export async function supersedeDeliverableVersion(
+  ctx: TenancyCtx,
+  programId: string,
+  deliverableId: string,
+  input: {
+    priorVersion: number;
+    replacementVersion: number;
+    reason?: string;
+  },
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<boolean> {
+  assertTenancy(ctx);
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
+  await assertProgramTenancy(ctx, programId, { supabase: sb });
+  const { data: deliverable, error } = await sb
+    .from("deliverables_v2")
+    .select("id")
+    .eq("id", deliverableId)
+    .eq("engagement_id", programId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!deliverable) return false;
+  if (input.priorVersion === input.replacementVersion) {
+    throw new Error("supersession_requires_distinct_versions");
+  }
+
+  await appendDeliverableLifecycleEvent(sb, {
+    deliverableId,
+    version: input.priorVersion,
+    eventType: "authority_replaced",
+    reviewerName: reviewerNameForContext(ctx),
+    reviewerRoleCode: reviewerRoleForContext(ctx),
+    approvalScope: input.reason ?? "Authoritative version replaced.",
+    relatedVersion: input.replacementVersion,
+  });
+  await appendDeliverableLifecycleEvent(sb, {
+    deliverableId,
+    version: input.priorVersion,
+    eventType: "superseded",
+    reviewerName: reviewerNameForContext(ctx),
+    reviewerRoleCode: reviewerRoleForContext(ctx),
+    approvalScope: input.reason ?? "Authoritative version superseded.",
+    relatedVersion: input.replacementVersion,
+  });
+  return true;
+}
+
+export async function uploadApprovedFinalReplacement(
+  ctx: TenancyCtx,
+  programId: string,
+  deliverableId: string,
+  input: {
+    content: string;
+    fileName: string;
+    mimeType: string;
+    parseMethod: string;
+    sourceFileChecksum: string;
+    approvingAuthorityName: string;
+    approvalDate: string;
+    approvalBasisReference: string;
+    approvedArtifactId?: string | null;
+    confirmedAuthoritative: boolean;
+  },
+  opts: { supabase?: SupabaseClient } = {},
+): Promise<{ version: number }> {
+  assertTenancy(ctx);
+  if (!input.confirmedAuthoritative) {
+    throw new Error("confirmed_authoritative_required");
+  }
+  if (!input.approvingAuthorityName.trim()) {
+    throw new Error("approving_authority_required");
+  }
+  if (!input.approvalBasisReference.trim()) {
+    throw new Error("approval_basis_required");
+  }
+  if (!input.sourceFileChecksum.trim()) {
+    throw new Error("source_file_checksum_required");
+  }
+  const content = input.content.trim();
+  if (!content) throw new Error("approved_final_content_required");
+
+  const sb = opts.supabase ?? getAzureWriteFluentClient();
+  await assertProgramTenancy(ctx, programId, { supabase: sb });
+  const { data: existing, error: readError } = await sb
+    .from("deliverables_v2")
+    .select("current_version, signed_off_version")
+    .eq("id", deliverableId)
+    .eq("engagement_id", programId)
+    .maybeSingle();
+  if (readError) throw readError;
+  if (!existing) throw new Error("deliverable not found in this program");
+  const row = existing as {
+    current_version: number | null;
+    signed_off_version: number | null;
+  };
+  const nextVersion = (row.current_version ?? 0) + 1;
+  const priorAuthoritativeVersion = row.signed_off_version ?? null;
+
+  const { error: versionError } = await sb.from("deliverable_versions").insert({
+    deliverable_id: deliverableId,
+    version: nextVersion,
+    content,
+    origin: "client_uploaded",
+    structured_data: {
+      source: "upload_as_approved_final_exception",
+      uploaded_file_name: input.fileName,
+      mime_type: input.mimeType,
+      parse_method: input.parseMethod,
+      approved_artifact_id: input.approvedArtifactId ?? null,
+      approving_authority_name: input.approvingAuthorityName,
+      approval_basis_reference: input.approvalBasisReference,
+      approved_by: ctx.userId,
+      approved_by_email: ctx.email ?? null,
+      client_final: true,
+    },
+    quality_issues: null,
+    generated_from_context_hash: null,
+  });
+  if (versionError) throw versionError;
+
+  const now = new Date().toISOString();
+  const { data: updated, error: updateError } = await sb
+    .from("deliverables_v2")
+    .update({
+      status: "signed_off",
+      current_version: nextVersion,
+      signed_off_by: ctx.userId,
+      signed_off_at: now,
+      signed_off_version: nextVersion,
+      approved_artifact_id: input.approvedArtifactId ?? null,
+      authoritative_lifecycle_state: "client_final",
+      authoritative_flag_source: "upload_as_approved_final_exception",
+      requires_revalidation: false,
+      updated_at: now,
+    })
+    .eq("id", deliverableId)
+    .eq("engagement_id", programId)
+    .select("id")
+    .maybeSingle();
+  if (updateError) throw updateError;
+  if (!updated) throw new Error("deliverable update failed");
+
+  await appendDeliverableLifecycleEvent(sb, {
+    deliverableId,
+    version: nextVersion,
+    eventType: "version_created",
+    origin: "client_uploaded",
+    reviewerName: reviewerNameForContext(ctx),
+    reviewerRoleCode: "client_authority",
+    approvalScope: input.fileName,
+    sourceFileChecksum: input.sourceFileChecksum,
+  });
+  await appendDeliverableLifecycleEvent(sb, {
+    deliverableId,
+    version: nextVersion,
+    eventType: "marked_authoritative",
+    origin: "client_uploaded",
+    reviewerName: input.approvingAuthorityName,
+    reviewerRoleCode: "client_authority",
+    approvalScope: input.approvalBasisReference,
+    decision: "client_final",
+    exceptionFlag: true,
+    exceptionBasis: input.approvalBasisReference,
+    sourceFileChecksum: input.sourceFileChecksum,
+    decidedAt: input.approvalDate,
+  });
+  if (priorAuthoritativeVersion && priorAuthoritativeVersion !== nextVersion) {
+    await supersedeDeliverableVersion(
+      ctx,
+      programId,
+      deliverableId,
+      {
+        priorVersion: priorAuthoritativeVersion,
+        replacementVersion: nextVersion,
+        reason: "Approved final replacement became authoritative.",
+      },
+      { supabase: sb },
+    );
+  }
+  return { version: nextVersion };
 }
 
 export interface CompleteDeliverableInput {
@@ -819,7 +1119,7 @@ export async function completeDeliverable(
   await ensureDeliverableType(sb, deliverableTypeKey);
   const { data: existing, error: existingError } = await sb
     .from("deliverables_v2")
-    .select("id, current_version")
+    .select("id, current_version, signed_off_version")
     .eq("engagement_id", programId)
     .eq("deliverable_type_key", deliverableTypeKey)
     .maybeSingle();
@@ -827,12 +1127,17 @@ export async function completeDeliverable(
 
   let deliverableId: string;
   let nextVersion = 1;
+  let priorAuthoritativeVersion: number | null = null;
   if (existing) {
-    deliverableId = (existing as { id: string; current_version: number | null })
-      .id;
+    const existingRow = existing as {
+      id: string;
+      current_version: number | null;
+      signed_off_version: number | null;
+    };
+    deliverableId = existingRow.id;
+    priorAuthoritativeVersion = existingRow.signed_off_version ?? null;
     nextVersion =
-      ((existing as { current_version: number | null }).current_version ?? 0) +
-      1;
+      (existingRow.current_version ?? 0) + 1;
     const { error } = await sb
       .from("deliverables_v2")
       .update({
@@ -842,6 +1147,11 @@ export async function completeDeliverable(
         signed_off_version: input.signOff === false ? null : nextVersion,
         signed_off_by: input.signOff === false ? null : ctx.userId,
         signed_off_at: input.signOff === false ? null : now,
+        signed_off_version: input.signOff === false ? priorAuthoritativeVersion : nextVersion,
+        approved_artifact_id: input.signOff === false ? undefined : null,
+        authoritative_lifecycle_state: input.signOff === false ? undefined : "human_approved",
+        authoritative_flag_source: input.signOff === false ? undefined : "normal_flow",
+        requires_revalidation: input.signOff === false ? undefined : false,
         updated_at: now,
       })
       .eq("id", deliverableId)
@@ -862,6 +1172,11 @@ export async function completeDeliverable(
         created_by: ctx.userId,
         signed_off_by: input.signOff === false ? null : ctx.userId,
         signed_off_at: input.signOff === false ? null : now,
+        signed_off_version: input.signOff === false ? null : 1,
+        approved_artifact_id: null,
+        authoritative_lifecycle_state: input.signOff === false ? null : "human_approved",
+        authoritative_flag_source: input.signOff === false ? null : "normal_flow",
+        requires_revalidation: false,
       })
       .select("id")
       .single();
@@ -870,7 +1185,7 @@ export async function completeDeliverable(
   }
 
   let versionId: string | null = null;
-  const content = input.content?.trim();
+  const content = input.content?.trim() || title;
   if (content) {
     const { data: version, error } = await sb
       .from("deliverable_versions")
@@ -878,6 +1193,7 @@ export async function completeDeliverable(
         deliverable_id: deliverableId,
         version: nextVersion,
         content,
+        origin: "ai_generated",
         structured_data: {
           ...(input.structuredData ?? {}),
           module_key: input.moduleKey ?? null,
@@ -894,6 +1210,54 @@ export async function completeDeliverable(
       .single();
     if (error) throw error;
     versionId = (version as { id: string }).id;
+  }
+
+  await appendDeliverableLifecycleEvent(sb, {
+    deliverableId,
+    version: nextVersion,
+    eventType: "version_created",
+    origin: "ai_generated",
+    reviewerName: reviewerNameForContext(ctx),
+    reviewerRoleCode: "artifact_owner",
+    approvalScope: "Generated by Nexus complete_deliverable tool.",
+  });
+  if (input.signOff !== false) {
+    await appendDeliverableLifecycleEvent(sb, {
+      deliverableId,
+      version: nextVersion,
+      eventType: "submitted_for_review",
+      reviewerName: reviewerNameForContext(ctx),
+      reviewerRoleCode: reviewerRoleForContext(ctx),
+      approvalScope: "Generated deliverable submitted through explicit acceptance flow.",
+    });
+    await appendDeliverableLifecycleEvent(sb, {
+      deliverableId,
+      version: nextVersion,
+      eventType: "approval_granted",
+      reviewerName: reviewerNameForContext(ctx),
+      reviewerRoleCode: reviewerRoleForContext(ctx),
+      approvalScope: "Approved generated deliverable through explicit acceptance flow.",
+      decision: "approved",
+      decidedAt: now,
+    });
+    if (priorAuthoritativeVersion && priorAuthoritativeVersion !== nextVersion) {
+      await appendDeliverableLifecycleEvent(sb, {
+        deliverableId,
+        version: priorAuthoritativeVersion,
+        eventType: "authority_replaced",
+        reviewerName: reviewerNameForContext(ctx),
+        reviewerRoleCode: reviewerRoleForContext(ctx),
+        relatedVersion: nextVersion,
+      });
+      await appendDeliverableLifecycleEvent(sb, {
+        deliverableId,
+        version: priorAuthoritativeVersion,
+        eventType: "superseded",
+        reviewerName: reviewerNameForContext(ctx),
+        reviewerRoleCode: reviewerRoleForContext(ctx),
+        relatedVersion: nextVersion,
+      });
+    }
   }
 
   const { error: logErr } = await sb.from("module_state_log").insert({

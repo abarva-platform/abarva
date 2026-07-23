@@ -23,9 +23,11 @@ import { DELIVERABLE_REGISTRY } from "../deliverable-registry";
 const CTX = { clientId: "client-1", userId: "person-1", email: "approver@example.com" };
 
 function selectApprovals(rows: unknown[]) {
+  const result = Promise.resolve({ data: rows, error: null });
   return {
     select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockResolvedValue({ data: rows, error: null }),
+    eq: jest.fn().mockReturnThis(),
+    then: result.then.bind(result),
   };
 }
 
@@ -36,6 +38,18 @@ function selectDeliverableExists(result: unknown) {
     maybeSingle: jest.fn().mockResolvedValue(result),
   };
 }
+
+const deliverablePointer = (patch: Record<string, unknown> = {}) => ({
+  data: {
+    id: "deliverable-1",
+    deliverable_type_key: "business_case",
+    created_by: "author-1",
+    current_version: 3,
+    signed_off_version: 2,
+    ...patch,
+  },
+  error: null,
+});
 
 describe("REQUIRED_APPROVAL_ROLES registry", () => {
   it("requires business+finance for a business case, technology+risk_security for a target state architecture", () => {
@@ -88,6 +102,7 @@ describe("getRoleApprovalSummary", () => {
 
   it("synthesizes 'pending' for required roles with no recorded decision yet", async () => {
     fromMock.mockImplementation((table: string) => {
+      if (table === "deliverables_v2") return selectDeliverableExists(deliverablePointer());
       if (table === "deliverable_role_approvals") return selectApprovals([]);
       throw new Error(`Unexpected table ${table}`);
     });
@@ -110,11 +125,13 @@ describe("getRoleApprovalSummary", () => {
 
   it("reports allRequiredApproved only when EVERY required role is approved", async () => {
     fromMock.mockImplementation((table: string) => {
+      if (table === "deliverables_v2") return selectDeliverableExists(deliverablePointer());
       if (table === "deliverable_role_approvals")
         return selectApprovals([
           {
             role: "business",
             status: "approved",
+            version: 2,
             approver_user_id: "person-1",
             approver_name: "Jane Doe, CFO",
             outstanding_conditions: null,
@@ -123,6 +140,7 @@ describe("getRoleApprovalSummary", () => {
           {
             role: "finance",
             status: "reviewed",
+            version: 2,
             approver_user_id: "person-2",
             approver_name: null,
             outstanding_conditions: "Awaiting FY26 budget confirmation",
@@ -136,11 +154,13 @@ describe("getRoleApprovalSummary", () => {
     expect(partial.allRequiredApproved).toBe(false);
 
     fromMock.mockImplementation((table: string) => {
+      if (table === "deliverables_v2") return selectDeliverableExists(deliverablePointer());
       if (table === "deliverable_role_approvals")
         return selectApprovals([
           {
             role: "business",
             status: "approved",
+            version: 2,
             approver_user_id: "person-1",
             approver_name: "Jane Doe, CFO",
             outstanding_conditions: null,
@@ -149,6 +169,7 @@ describe("getRoleApprovalSummary", () => {
           {
             role: "finance",
             status: "approved",
+            version: 2,
             approver_user_id: "person-2",
             approver_name: "John Smith, CFO",
             outstanding_conditions: null,
@@ -163,11 +184,16 @@ describe("getRoleApprovalSummary", () => {
 
   it("flags anyRejected when a required role is explicitly rejected", async () => {
     fromMock.mockImplementation((table: string) => {
+      if (table === "deliverables_v2")
+        return selectDeliverableExists(
+          deliverablePointer({ deliverable_type_key: "target_state_architecture" }),
+        );
       if (table === "deliverable_role_approvals")
         return selectApprovals([
           {
             role: "technology",
             status: "rejected",
+            version: 2,
             approver_user_id: "person-3",
             approver_name: "Enterprise Architect",
             outstanding_conditions: "Guardrail gap on data residency",
@@ -188,12 +214,40 @@ describe("getRoleApprovalSummary", () => {
 
   it("returns an empty required set for an artifact type with no role requirement", async () => {
     fromMock.mockImplementation((table: string) => {
+      if (table === "deliverables_v2")
+        return selectDeliverableExists(deliverablePointer({ deliverable_type_key: "charter" }));
       if (table === "deliverable_role_approvals") return selectApprovals([]);
       throw new Error(`Unexpected table ${table}`);
     });
     const summary = await getRoleApprovalSummary(CTX, "move-1", "deliverable-1", "charter");
     expect(summary.requiredRoles).toEqual([]);
     expect(summary.allRequiredApproved).toBe(false); // vacuous requirement is never "satisfied", just moot
+  });
+
+  it("filters approvals to the current signed-off version", async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === "deliverables_v2") return selectDeliverableExists(deliverablePointer());
+      if (table === "deliverable_role_approvals")
+        return selectApprovals([
+          {
+            role: "business",
+            status: "approved",
+            version: 2,
+            approver_user_id: "person-1",
+            approver_name: "Business Owner",
+            outstanding_conditions: null,
+            decided_at: "2026-07-20T00:00:00Z",
+          },
+        ]);
+      throw new Error(`Unexpected table ${table}`);
+    });
+    const summary = await getRoleApprovalSummary(CTX, "move-1", "deliverable-1", "business_case");
+    expect(summary.records).toEqual(
+      expect.arrayContaining([expect.objectContaining({ role: "business", version: 2 })]),
+    );
+    expect(summary.records).toEqual(
+      expect.arrayContaining([expect.objectContaining({ role: "finance", version: 2, status: "pending" })]),
+    );
   });
 });
 
@@ -207,18 +261,21 @@ describe("recordRoleApprovalDecision", () => {
   it("upserts a role decision keyed on (deliverable_id, role)", async () => {
     let upsertPayload: { decided_at: string | null } | null = null;
     fromMock.mockImplementation((table: string) => {
-      if (table === "deliverables_v2") return selectDeliverableExists({ data: { id: "deliverable-1" }, error: null });
+      if (table === "deliverables_v2") return selectDeliverableExists(deliverablePointer());
       if (table === "deliverable_role_approvals") {
+        const approvalCalls = fromMock.mock.calls.filter(([t]) => t === "deliverable_role_approvals").length;
+        if (approvalCalls === 1) return selectApprovals([]);
         return {
           upsert: jest.fn((payload, opts) => {
             upsertPayload = payload;
-            expect(opts).toEqual({ onConflict: "deliverable_id,role" });
+            expect(opts).toEqual({ onConflict: "deliverable_id,role,version" });
             return {
               select: jest.fn().mockReturnThis(),
               single: jest.fn().mockResolvedValue({
                 data: {
                   role: payload.role,
                   status: payload.status,
+                  version: payload.version,
                   approver_user_id: payload.approver_user_id,
                   approver_name: payload.approver_name,
                   outstanding_conditions: payload.outstanding_conditions,
@@ -247,6 +304,7 @@ describe("recordRoleApprovalDecision", () => {
         deliverable_id: "deliverable-1",
         role: "finance",
         status: "approved",
+        version: 2,
         approver_user_id: "person-1",
         approver_name: "Jane Doe, CFO",
       }),
@@ -258,7 +316,7 @@ describe("recordRoleApprovalDecision", () => {
   it("does not stamp decided_at for a 'reviewed' (non-terminal) decision", async () => {
     let upsertPayload: { decided_at: string | null } | null = null;
     fromMock.mockImplementation((table: string) => {
-      if (table === "deliverables_v2") return selectDeliverableExists({ data: { id: "deliverable-1" }, error: null });
+      if (table === "deliverables_v2") return selectDeliverableExists(deliverablePointer());
       if (table === "deliverable_role_approvals") {
         return {
           upsert: jest.fn((payload) => {
@@ -266,7 +324,7 @@ describe("recordRoleApprovalDecision", () => {
             return {
               select: jest.fn().mockReturnThis(),
               single: jest.fn().mockResolvedValue({
-                data: { role: payload.role, status: payload.status, approver_user_id: payload.approver_user_id, approver_name: payload.approver_name, outstanding_conditions: payload.outstanding_conditions, decided_at: payload.decided_at },
+                data: { role: payload.role, status: payload.status, version: payload.version, approver_user_id: payload.approver_user_id, approver_name: payload.approver_name, outstanding_conditions: payload.outstanding_conditions, decided_at: payload.decided_at },
                 error: null,
               }),
             };
@@ -294,5 +352,46 @@ describe("recordRoleApprovalDecision", () => {
         status: "approved",
       }),
     ).rejects.toThrow(/not found/i);
+  });
+
+  it("rejects self-approval against the deliverable creator", async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === "deliverables_v2")
+        return selectDeliverableExists(deliverablePointer({ created_by: CTX.userId }));
+      throw new Error(`Unexpected table ${table}`);
+    });
+    await expect(
+      recordRoleApprovalDecision(CTX, "move-1", "deliverable-1", {
+        role: "business",
+        status: "approved",
+      }),
+    ).rejects.toThrow("self_approval_violation");
+  });
+
+  it("rejects the same reviewer approving two required roles on one version", async () => {
+    fromMock.mockImplementation((table: string) => {
+      if (table === "deliverables_v2") return selectDeliverableExists(deliverablePointer());
+      if (table === "deliverable_role_approvals") {
+        return selectApprovals([
+          {
+            role: "business",
+            status: "approved",
+            version: 2,
+            approver_user_id: CTX.userId,
+            approver_name: "Jane Doe",
+            outstanding_conditions: null,
+            decided_at: "2026-07-20T00:00:00Z",
+          },
+        ]);
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+    await expect(
+      recordRoleApprovalDecision(CTX, "move-1", "deliverable-1", {
+        role: "finance",
+        status: "approved",
+        approverName: "Jane Doe",
+      }),
+    ).rejects.toThrow("separation_of_duties_violation");
   });
 });

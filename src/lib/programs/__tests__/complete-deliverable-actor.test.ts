@@ -71,6 +71,7 @@ describe('completeDeliverable actor attribution', () => {
     const deliverableTypePayloads: unknown[] = [];
     const deliverablePayloads: unknown[] = [];
     const versionPayloads: unknown[] = [];
+    const lifecyclePayloads: unknown[] = [];
     const moduleLogPayloads: unknown[] = [];
 
     fromMock.mockImplementation((table: string) => {
@@ -91,6 +92,9 @@ describe('completeDeliverable actor attribution', () => {
           { data: { id: 'version-1' }, error: null },
           versionPayloads,
         );
+      }
+      if (table === 'deliverable_lifecycle_events') {
+        return makeInsertOnlyBuilder(lifecyclePayloads);
       }
       if (table === 'module_state_log') {
         return makeInsertOnlyBuilder(moduleLogPayloads);
@@ -127,12 +131,20 @@ describe('completeDeliverable actor attribution', () => {
     );
     expect(versionPayloads[0]).toEqual(
       expect.objectContaining({
+        origin: 'ai_generated',
         structured_data: expect.objectContaining({
           completed_by_tool: true,
           generated_by_agent: 'Nexus',
           signed_off: true,
         }),
       }),
+    );
+    expect(lifecyclePayloads).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ event_type: 'version_created', origin: 'ai_generated' }),
+        expect.objectContaining({ event_type: 'submitted_for_review' }),
+        expect.objectContaining({ event_type: 'approval_granted', decision: 'approved' }),
+      ]),
     );
   });
 });

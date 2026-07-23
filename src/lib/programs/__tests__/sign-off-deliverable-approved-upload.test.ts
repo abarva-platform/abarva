@@ -62,19 +62,21 @@ describe("signOffDeliverable", () => {
   it("turns an uploaded client-approved replacement into the signed-off authoritative version", async () => {
     const versionPayloads: unknown[] = [];
     const updatePayloads: unknown[] = [];
+    const lifecycleEvents: unknown[] = [];
 
     fromMock.mockImplementation((table: string) => {
       if (table === "deliverables_v2") {
         const deliverableCalls = fromMock.mock.calls.filter(([t]) => t === "deliverables_v2").length;
         if (deliverableCalls === 1) {
           return selectDeliverable({
-            data: { current_version: 2 },
+            data: { current_version: 2, signed_off_version: 1 },
             error: null,
           });
         }
         return updateDeliverable(updatePayloads);
       }
       if (table === "deliverable_versions") return insertVersion(versionPayloads);
+      if (table === "deliverable_lifecycle_events") return insertVersion(lifecycleEvents);
       throw new Error(`Unexpected table ${table}`);
     });
 
@@ -103,6 +105,7 @@ describe("signOffDeliverable", () => {
       expect.objectContaining({
         deliverable_id: "deliverable-1",
         version: 3,
+        origin: "client_uploaded",
         content: "Client-approved charter text after human edits.",
         structured_data: expect.objectContaining({
           source: "client_approved_upload",
@@ -119,7 +122,18 @@ describe("signOffDeliverable", () => {
         current_version: 3,
         signed_off_version: 3,
         approved_artifact_id: "artifact-approved-1",
+        authoritative_lifecycle_state: "human_approved",
+        authoritative_flag_source: "normal_flow",
+        requires_revalidation: false,
       }),
+    );
+    expect(lifecycleEvents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ event_type: "version_created", origin: "client_uploaded", version: 3 }),
+        expect.objectContaining({ event_type: "submitted_for_review", version: 3 }),
+        expect.objectContaining({ event_type: "approval_granted", decision: "approved", version: 3 }),
+        expect.objectContaining({ event_type: "superseded", version: 1, related_version: 3 }),
+      ]),
     );
   });
 
@@ -132,6 +146,7 @@ describe("signOffDeliverable", () => {
     // first one.
     const versionPayloads: unknown[] = [];
     const updatePayloads: unknown[] = [];
+    const lifecycleEvents: unknown[] = [];
 
     fromMock.mockImplementation((table: string) => {
       if (table === "deliverables_v2") {
@@ -139,15 +154,19 @@ describe("signOffDeliverable", () => {
         // Odd calls (1st, 3rd) are the read-current_version select; even calls
         // (2nd, 4th) are the update.
         if (deliverableCalls % 2 === 1) {
-          const priorApprovals = Math.floor(deliverableCalls / 2);
+          const readIndex = Math.floor(deliverableCalls / 2);
           return selectDeliverable({
-            data: { current_version: 2 + priorApprovals },
+            data: {
+              current_version: 2 + readIndex,
+              signed_off_version: deliverableCalls === 1 ? null : 3,
+            },
             error: null,
           });
         }
         return updateDeliverable(updatePayloads);
       }
       if (table === "deliverable_versions") return insertVersion(versionPayloads);
+      if (table === "deliverable_lifecycle_events") return insertVersion(lifecycleEvents);
       throw new Error(`Unexpected table ${table}`);
     });
 
