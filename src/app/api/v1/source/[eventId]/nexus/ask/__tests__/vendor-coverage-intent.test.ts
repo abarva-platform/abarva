@@ -55,11 +55,11 @@ describe('looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)', () => {
     );
     expect(
       ROUTE_SOURCE.indexOf(
-        'looksLikeEvidenceReadinessQuestion(normalizedBody.prompt)',
+        'looksLikeArtifactQualityQuestion(normalizedBody.prompt)',
       ),
     ).toBeLessThan(
       ROUTE_SOURCE.indexOf(
-        'looksLikeArtifactQualityQuestion(normalizedBody.prompt)',
+        'looksLikeEvidenceReadinessQuestion(normalizedBody.prompt)',
       ),
     );
   });

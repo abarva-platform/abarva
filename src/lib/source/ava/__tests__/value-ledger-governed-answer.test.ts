@@ -77,6 +77,11 @@ describe("looksLikeValueLedgerQuestion", () => {
     expect(looksLikeValueLedgerQuestion("Are the client final files ready?")).toBe(
       false,
     );
+    expect(
+      looksLikeValueLedgerQuestion(
+        "Which uploaded evidence is parsed, search-ready, parser-ready, graph-projected, or blocked?",
+      ),
+    ).toBe(false);
   });
 });
 

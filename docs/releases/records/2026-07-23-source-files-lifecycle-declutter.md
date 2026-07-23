@@ -6,7 +6,9 @@
 
 ## Status
 
-`candidate`
+`released` — merged in PR #5437, deployed by the repo-owned ACA main workflow,
+independently superseded by later healthy main revisions, and signed-in proven on
+`app.abarva.ai`.
 
 ## Plain-English Summary
 
@@ -41,17 +43,29 @@ This is a small UI hierarchy change. It does not remove evidence, lifecycle rows
 - `npx eslint src/components/source/canvas/analytics/SourceAnalyticsCanvas.tsx src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.chat.test.tsx` — pass.
 - `npm run release:check -- --base origin/main --head HEAD` — pass.
 - `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` — blocked by pre-existing missing optional Home graph packages in unrelated files: `@xyflow/react` and `@dagrejs/dagre`.
+- `pass` — proof-closure rerun on current `main`: `npm test -- --runTestsByPath src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.chat.test.tsx --runInBand`
+  passed 16/16 on 2026-07-23. Jest printed the same pre-existing duplicate manual mock warnings.
+- `pass` — signed-in production proof on `https://app.abarva.ai/source/events/c05872d8-0465-4bc8-8eeb-ff3d42ac6761?workspace=files`
+  with Lakeshore agent auth. The Files workspace showed `ARTIFACT LIFECYCLE`, the execution
+  line `2 of 8 artifacts due through Scope are registered`, the four default metrics (`Due so
+  far`, `Registered`, `Missing required`, `Client finals`), standards CSV export, the all-stage
+  toggle, and `Show audit metrics`; after one click the audit detail surfaced `Hard fails` and
+  `Gate B`. No upload or mutation was performed.
 
 ## Rollout Plan
 
-Merge through PR into `main`; the repo-owned ACA main deploy workflow builds and deploys the digest-pinned image to `app.abarva.ai`. After deploy, verify the ACA runtime invariant and complete signed-in Source Files workspace proof.
+Completed via PR #5437. The repo-owned ACA main workflow deployed merge SHA
+`fef10108e283e8140ed9f292ba5299c40ec60f93`; later healthy main revisions supersede that
+image and still contain the slice.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: required for production rollout.
 - Shared runtime mutators: none in this PR.
-- Approved image digest: to be recorded after ACA main deploy completes.
-- ACA runtime invariant: required after deploy.
+- Approved image digest: assigned by ACA main deploy run `29984083764`; current production
+  proof should use the latest superseding healthy main revision.
+- ACA runtime invariant: passed in the original deployment lane and again through later
+  superseding Source proof closures.
 - Worker image invariant: no worker image changes expected.
 - Feature/env flag update path: none.
 - Live signed-in proof required: yes, Source Files workspace should show the four execution metrics by default and full audit metrics after one click.
@@ -62,10 +76,12 @@ Revert the PR and redeploy through the repo-owned ACA main workflow. That restor
 
 ## Audit Evidence
 
-- PR URL: to be added after PR creation.
-- Merge SHA: to be added after merge.
-- ACA deploy run / digest: to be added after deployment.
-- Signed-in browser proof: to be added after deployment.
+- PR URL: https://github.com/abarva-platform/abarva/pull/5437.
+- Merge SHA: `fef10108e283e8140ed9f292ba5299c40ec60f93`.
+- ACA deploy run: https://github.com/abarva-platform/abarva/actions/runs/29984083764.
+- Signed-in browser proof: local proof bundle under
+  `audit-artifacts/source-ux-002-text-proof-20260723/` and screenshot proof under
+  `audit-artifacts/source-proof-closure-live-proof-20260723-rerun/`.
 
 ## Known Gaps
 

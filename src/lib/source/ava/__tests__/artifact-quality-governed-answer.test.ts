@@ -81,6 +81,11 @@ describe("looksLikeArtifactQualityQuestion", () => {
     expect(
       looksLikeArtifactQualityQuestion("Are the client final documents ready?"),
     ).toBe(true);
+    expect(
+      looksLikeArtifactQualityQuestion(
+        "Assess artifact lifecycle posture, client-final readiness, consulting quality, and required deliverable standards.",
+      ),
+    ).toBe(true);
   });
 
   it("does not capture unrelated Source chat turns", () => {

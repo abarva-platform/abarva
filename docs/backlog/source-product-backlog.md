@@ -850,7 +850,13 @@ updated 19 d ago` on the proof event).
   first-paint clutter.
 - **Severity**: P6 (workspace UX / information density).
 - **Workstream**: Workspace UX.
-- **Status**: `Candidate` — code-only, no migration and no production data mutation.
+- **Status**: `Shipped — deployed and signed-in proven` — code-only, no migration and no
+  production data mutation. Merged in PR #5437 as
+  `fef10108e283e8140ed9f292ba5299c40ec60f93`, deployed by ACA main run
+  `29984083764`, and re-proven on `app.abarva.ai` during the 2026-07-23 proof-closure
+  pass: the Files workspace shows the execution-first `ARTIFACT LIFECYCLE` panel,
+  `Due so far`, `Registered`, `Missing required`, `Client finals`, standards CSV export,
+  all-stage toggle, and audit metrics behind one click. No upload or mutation was performed.
 - **Dependencies**: existing Source Files lifecycle matrix and artifact-quality summary; no
   schema or data dependency.
 - **Acceptance criteria**: the lifecycle panel defaults to four execution-oriented metrics
@@ -939,7 +945,13 @@ updated 19 d ago` on the proof event).
   grounded in the same lifecycle matrix the Files workspace uses.
 - **Severity**: P3 (analytics / aVa chat capability gap).
 - **Workstream**: Analytics / aVa chat.
-- **Status**: `Candidate` — code-only, no migration and no production data mutation.
+- **Status**: `Regression fix in progress` — base artifact-quality/lifecycle packet merged
+  in PR #5441 as `ae3f20568e6ea576a8e5cd3f1d32b7490b9eb58d`, followed by event-id
+  routing and slug-safe read fixes in PR #5444 and PR #5445. A 2026-07-23 signed-in
+  proof-closure pass found a remaining intent-priority bug: broad lifecycle/readiness
+  wording can be captured by the evidence-processing branch before artifact quality runs.
+  Tracked in
+  `docs/releases/records/2026-07-23-source-chat-intent-priority-fix.md`.
 - **Dependencies**: existing Source artifact registry repository, existing
   `buildSourceArtifactLifecycleSummary()`, existing `AvaAnswerPacket` / `AgentAnswerRenderer`
   pipeline, and the mandatory `buildValidatedAgentContextBundle()` gate.
@@ -1004,8 +1016,11 @@ updated 19 d ago` on the proof event).
   mistake uploaded files for learned context.
 - **Severity**: P3 (analytics / aVa chat capability gap; evidence-layer integrity).
 - **Workstream**: Analytics / aVa chat, Source ingest readiness.
-- **Status**: `Candidate` — code-only, read-only, no migration, no production data mutation, no
-  parser/indexer/OCR/transcription/promotion job.
+- **Status**: `Shipped — deployed and live-proven` — code-only, read-only, no migration, no
+  production data mutation, no parser/indexer/OCR/transcription/promotion job. Merged in
+  PR #5477 as `cc74d791d0f3bdcb86b25cda0d82210408efe7a6`, deployed by ACA main run
+  `30018168714`, independently runtime-invariant checked, and signed-in proven on
+  `app.abarva.ai` against Apex and Lakeshore Source events.
 - **Dependencies**: existing Source artifact registry repository, existing
   `buildSourceArtifactParseBacklogReport()`, existing `AvaAnswerPacket` / `AgentAnswerRenderer`
   pipeline, and the mandatory `buildValidatedAgentContextBundle()` gate.
