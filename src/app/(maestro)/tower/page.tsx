@@ -15,7 +15,7 @@
 import { Suspense } from "react";
 
 import { AppShell } from "@/components/shell/AppShell";
-import { TowerCommandCenter } from "@/components/tower/command-center/TowerCommandCenter";
+import { TowerCommandCenterAvaShell } from "@/components/tower/command-center/TowerCommandCenterAvaShell";
 import { TowerLegacySurface } from "@/components/tower/TowerLegacySurface";
 import {
   getActiveClientRow,
@@ -91,6 +91,11 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
     }),
     null,
   );
+  const commandCenterView = buildTowerCommandCenterView(martView, {
+    tenantName,
+  });
+  const towerChatClientId =
+    client?.id ?? client?.key ?? requestedClient ?? null;
 
   return (
     <AppShell
@@ -103,9 +108,10 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
       }}
     >
       <Suspense fallback={null}>
-        <TowerCommandCenter
-          view={buildTowerCommandCenterView(martView, { tenantName })}
+        <TowerCommandCenterAvaShell
+          view={commandCenterView}
           tenantName={tenantName}
+          clientId={towerChatClientId}
           refreshedOn={new Date().toISOString().slice(0, 10)}
         />
       </Suspense>

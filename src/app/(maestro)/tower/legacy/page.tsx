@@ -5,9 +5,8 @@
 // the previous surface stays reachable for side-by-side comparison and as a
 // verifiable rollback target.
 //
-// This is the ONLY place today that still mounts `AtlasChatPanel` for Tower —
-// the approved Command Center design has no chat slot. Do not remove this route
-// until that is resolved.
+// The Command Center also mounts the governed Tower aVa launcher; this route
+// keeps the previous full surface intact as a side-by-side fallback.
 
 import { TowerLegacySurface } from "@/components/tower/TowerLegacySurface";
 

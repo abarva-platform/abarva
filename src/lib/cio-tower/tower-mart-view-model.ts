@@ -1,8 +1,8 @@
-import { azureRead } from '@/lib/data-plane/azureRead';
+import { azureRead } from "@/lib/data-plane/azureRead";
 import {
   canonicalCioTowerTenantKey,
   formatCioTowerMoney,
-} from '@/lib/cio-tower/metric-packet';
+} from "@/lib/cio-tower/metric-packet";
 
 export interface TowerMartCommandCenter {
   commandCenterKey: string;
@@ -49,7 +49,7 @@ export interface TowerMartProgramLane {
   programName: string;
   ownerRole: string | null;
   financeOwnerRole: string | null;
-  decisionLane: 'fund' | 'fix' | 'freeze' | 'stop';
+  decisionLane: "fund" | "fix" | "freeze" | "stop";
   decisionRationale: string;
   approvedFundingUsd: number;
   aiTaggedSpendUsd: number;
@@ -75,7 +75,7 @@ export interface TowerMartAiPortfolioItem {
   aiSpendType: string | null;
   aiSpendCategory: string | null;
   fundingStatus: string | null;
-  decisionLane: 'fund' | 'fix' | 'freeze' | 'stop';
+  decisionLane: "fund" | "fix" | "freeze" | "stop";
   approvedFundingUsd: number;
   aiTaggedSpendUsd: number;
   promisedValueUsd: number;
@@ -129,8 +129,17 @@ export interface TowerMartRequiredFieldGap {
   blocking: boolean;
 }
 
+export interface TowerMartAiPortfolioCounts {
+  total: number;
+  candidate: number;
+  active: number;
+  funded: number;
+  embeddedOrUsage: number;
+  attributedSpendUsd: number;
+}
+
 export interface TowerMartCommandViewModel {
-  generatedFrom: 'cio_tower_mart';
+  generatedFrom: "cio_tower_mart";
   headline: string;
   command: TowerMartCommandCenter;
   valueFunnel: TowerMartValueFunnelStage[];
@@ -139,6 +148,7 @@ export interface TowerMartCommandViewModel {
   cxoActions: TowerMartCxoAction[];
   evidenceLineage: TowerMartEvidenceLineage[];
   requiredFieldGaps: TowerMartRequiredFieldGap[];
+  aiPortfolioCounts?: TowerMartAiPortfolioCounts;
 }
 
 interface CommandRow {
@@ -178,9 +188,9 @@ function nullableNum(value: string | number | null | undefined): number | null {
 }
 
 function towerMartStageLabel(value: string | null | undefined): string {
-  const label = String(value ?? '');
-  return label.toLowerCase() === 'realized value allowed'
-    ? 'Claimable value allowed'
+  const label = String(value ?? "");
+  return label.toLowerCase() === "realized value allowed"
+    ? "Claimable value allowed"
     : label;
 }
 
@@ -194,7 +204,10 @@ export async function loadTowerMartCommandView(args: {
   const tenantKeys = Array.from(
     new Set(
       args.tenantKeyCandidates
-        .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+        .filter(
+          (value): value is string =>
+            typeof value === "string" && value.trim().length > 0,
+        )
         .map((value) => canonicalCioTowerTenantKey(value)),
     ),
   );
@@ -208,43 +221,63 @@ export async function loadTowerMartCommandView(args: {
         order by updated_at desc
         limit 1`,
       [tenantKey],
-      { missingTable: 'empty' },
+      { missingTable: "empty" },
     );
     if (!command) continue;
 
-    const [valueFunnel, programLanes, aiPortfolio, cxoActions, evidenceLineage, requiredFieldGaps] =
-      await Promise.all([
-        azureRead.query<Record<string, unknown>>(
-          `select * from cio_tower.mart_value_funnel where tenant_key = $1 order by sequence`,
-          [tenantKey],
-          { missingTable: 'empty' },
-        ),
-        azureRead.query<Record<string, unknown>>(
-          `select * from cio_tower.mart_program_decision_lanes where tenant_key = $1 order by decision_lane, approved_funding_usd desc, program_name`,
-          [tenantKey],
-          { missingTable: 'empty' },
-        ),
-        azureRead.query<Record<string, unknown>>(
-          `select * from cio_tower.mart_ai_portfolio where tenant_key = $1 order by item_kind, value_score desc, readiness_score desc, item_name limit 80`,
-          [tenantKey],
-          { missingTable: 'empty' },
-        ),
-        azureRead.query<Record<string, unknown>>(
-          `select * from cio_tower.mart_cxo_actions where tenant_key = $1 order by sequence`,
-          [tenantKey],
-          { missingTable: 'empty' },
-        ),
-        azureRead.query<Record<string, unknown>>(
-          `select * from cio_tower.mart_evidence_lineage where tenant_key = $1 order by surface_section, displayed_fact`,
-          [tenantKey],
-          { missingTable: 'empty' },
-        ),
-        azureRead.query<Record<string, unknown>>(
-          `select * from cio_tower.mart_required_field_gaps where tenant_key = $1 order by blocking desc, severity, source_template, required_field`,
-          [tenantKey],
-          { missingTable: 'empty' },
-        ),
-      ]);
+    const [
+      valueFunnel,
+      programLanes,
+      aiPortfolio,
+      aiPortfolioCountRows,
+      cxoActions,
+      evidenceLineage,
+      requiredFieldGaps,
+    ] = await Promise.all([
+      azureRead.query<Record<string, unknown>>(
+        `select * from cio_tower.mart_value_funnel where tenant_key = $1 order by sequence`,
+        [tenantKey],
+        { missingTable: "empty" },
+      ),
+      azureRead.query<Record<string, unknown>>(
+        `select * from cio_tower.mart_program_decision_lanes where tenant_key = $1 order by decision_lane, approved_funding_usd desc, program_name`,
+        [tenantKey],
+        { missingTable: "empty" },
+      ),
+      azureRead.query<Record<string, unknown>>(
+        `select * from cio_tower.mart_ai_portfolio where tenant_key = $1 order by item_kind, value_score desc, readiness_score desc, item_name limit 80`,
+        [tenantKey],
+        { missingTable: "empty" },
+      ),
+      azureRead.query<Record<string, unknown>>(
+        `select
+              count(*)::int as total,
+              count(*) filter (where item_kind = 'candidate_opportunity')::int as candidate,
+              count(*) filter (where item_kind <> 'candidate_opportunity')::int as active,
+              count(*) filter (where item_kind = 'funded_program')::int as funded,
+              count(*) filter (where item_kind in ('embedded_platform', 'usage_benefit'))::int as embedded_or_usage,
+              coalesce(sum(ai_tagged_spend_usd), 0) as attributed_spend_usd
+             from cio_tower.mart_ai_portfolio
+            where tenant_key = $1`,
+        [tenantKey],
+        { missingTable: "empty" },
+      ),
+      azureRead.query<Record<string, unknown>>(
+        `select * from cio_tower.mart_cxo_actions where tenant_key = $1 order by sequence`,
+        [tenantKey],
+        { missingTable: "empty" },
+      ),
+      azureRead.query<Record<string, unknown>>(
+        `select * from cio_tower.mart_evidence_lineage where tenant_key = $1 order by surface_section, displayed_fact`,
+        [tenantKey],
+        { missingTable: "empty" },
+      ),
+      azureRead.query<Record<string, unknown>>(
+        `select * from cio_tower.mart_required_field_gaps where tenant_key = $1 order by blocking desc, severity, source_template, required_field`,
+        [tenantKey],
+        { missingTable: "empty" },
+      ),
+    ]);
 
     const mappedCommand: TowerMartCommandCenter = {
       commandCenterKey: command.command_center_key,
@@ -257,9 +290,13 @@ export async function loadTowerMartCommandView(args: {
       runBudgetFy26: num(command.run_budget_fy26),
       changeBudgetFy26: num(command.change_budget_fy26),
       approvedProgramBudgetFy26: num(command.approved_program_budget_fy26),
-      aiTaggedSpendFy26NonAdditive: num(command.ai_tagged_spend_fy26_non_additive),
+      aiTaggedSpendFy26NonAdditive: num(
+        command.ai_tagged_spend_fy26_non_additive,
+      ),
       promisedValueFy26: num(command.promised_value_fy26),
-      partialFinanceValidatedValueYtd: num(command.partial_finance_validated_value_ytd),
+      partialFinanceValidatedValueYtd: num(
+        command.partial_finance_validated_value_ytd,
+      ),
       realizedValueYtdAllowed: num(command.realized_value_ytd_allowed),
       candidateAiOpportunities: Number(command.candidate_ai_opportunities ?? 0),
       watchPressureSignals: Number(command.watch_pressure_signals ?? 0),
@@ -272,19 +309,39 @@ export async function loadTowerMartCommandView(args: {
     };
 
     return {
-      generatedFrom: 'cio_tower_mart',
+      generatedFrom: "cio_tower_mart",
       headline: `${mappedCommand.tenantName} Tower mart shows ${towerMartMoney(mappedCommand.totalItBudgetFy26)} FY26 technology budget, ${towerMartMoney(mappedCommand.aiTaggedSpendFy26NonAdditive)} AI-tagged spend, and ${towerMartMoney(mappedCommand.partialFinanceValidatedValueYtd)} partial finance-validated value. Claimable value remains blocked at ${towerMartMoney(mappedCommand.realizedValueYtdAllowed)}.`,
       command: mappedCommand,
+      aiPortfolioCounts: (() => {
+        const [row] = aiPortfolioCountRows;
+        if (!row) return undefined;
+        return {
+          total: Number(row.total ?? 0),
+          candidate: Number(row.candidate ?? 0),
+          active: Number(row.active ?? 0),
+          funded: Number(row.funded ?? 0),
+          embeddedOrUsage: Number(row.embedded_or_usage ?? 0),
+          attributedSpendUsd: num(
+            row.attributed_spend_usd as string | number | null,
+          ),
+        };
+      })(),
       valueFunnel: valueFunnel.map((row) => ({
         funnelKey: String(row.funnel_key),
         sequence: Number(row.sequence ?? 0),
         stageKey: String(row.stage_key),
-        stageLabel: towerMartStageLabel(row.stage_label ? String(row.stage_label) : null),
+        stageLabel: towerMartStageLabel(
+          row.stage_label ? String(row.stage_label) : null,
+        ),
         valueNumeric: num(row.value_numeric as string | number | null),
-        denominatorStageKey: row.denominator_stage_key ? String(row.denominator_stage_key) : null,
-        conversionRatio: nullableNum(row.conversion_ratio as string | number | null),
+        denominatorStageKey: row.denominator_stage_key
+          ? String(row.denominator_stage_key)
+          : null,
+        conversionRatio: nullableNum(
+          row.conversion_ratio as string | number | null,
+        ),
         claimStatus: String(row.claim_status),
-        caveat: String(row.caveat ?? ''),
+        caveat: String(row.caveat ?? ""),
         sourceFile: row.source_file ? String(row.source_file) : null,
         sourceRow: row.source_row ? String(row.source_row) : null,
       })),
@@ -293,20 +350,34 @@ export async function loadTowerMartCommandView(args: {
         programCode: row.program_code ? String(row.program_code) : null,
         programName: String(row.program_name),
         ownerRole: row.owner_role ? String(row.owner_role) : null,
-        financeOwnerRole: row.finance_owner_role ? String(row.finance_owner_role) : null,
-        decisionLane: String(row.decision_lane) as TowerMartProgramLane['decisionLane'],
+        financeOwnerRole: row.finance_owner_role
+          ? String(row.finance_owner_role)
+          : null,
+        decisionLane: String(
+          row.decision_lane,
+        ) as TowerMartProgramLane["decisionLane"],
         decisionRationale: String(row.decision_rationale),
-        approvedFundingUsd: num(row.approved_funding_usd as string | number | null),
-        aiTaggedSpendUsd: num(row.ai_tagged_spend_usd as string | number | null),
+        approvedFundingUsd: num(
+          row.approved_funding_usd as string | number | null,
+        ),
+        aiTaggedSpendUsd: num(
+          row.ai_tagged_spend_usd as string | number | null,
+        ),
         promisedValueUsd: num(row.promised_value_usd as string | number | null),
-        financeValidatedValueUsd: num(row.finance_validated_value_usd as string | number | null),
+        financeValidatedValueUsd: num(
+          row.finance_validated_value_usd as string | number | null,
+        ),
         usageMetric: row.usage_metric ? String(row.usage_metric) : null,
         usageActual: nullableNum(row.usage_actual as string | number | null),
-        adoptionRatePct: nullableNum(row.adoption_rate_pct as string | number | null),
+        adoptionRatePct: nullableNum(
+          row.adoption_rate_pct as string | number | null,
+        ),
         valueClaimStatus: String(row.value_claim_status),
         towerClaimAllowed: String(row.tower_claim_allowed),
-        requiredGates: Array.isArray(row.required_gates) ? row.required_gates as Array<Record<string, unknown>> : [],
-        caveat: String(row.caveat ?? ''),
+        requiredGates: Array.isArray(row.required_gates)
+          ? (row.required_gates as Array<Record<string, unknown>>)
+          : [],
+        caveat: String(row.caveat ?? ""),
         sourceFile: row.source_file ? String(row.source_file) : null,
         sourceRow: row.source_row ? String(row.source_row) : null,
       })),
@@ -317,23 +388,35 @@ export async function loadTowerMartCommandView(args: {
         vendorName: row.vendor_name ? String(row.vendor_name) : null,
         systemName: row.system_name ? String(row.system_name) : null,
         aiSpendType: row.ai_spend_type ? String(row.ai_spend_type) : null,
-        aiSpendCategory: row.ai_spend_category ? String(row.ai_spend_category) : null,
+        aiSpendCategory: row.ai_spend_category
+          ? String(row.ai_spend_category)
+          : null,
         fundingStatus: row.funding_status ? String(row.funding_status) : null,
-        decisionLane: String(row.decision_lane) as TowerMartAiPortfolioItem['decisionLane'],
-        approvedFundingUsd: num(row.approved_funding_usd as string | number | null),
-        aiTaggedSpendUsd: num(row.ai_tagged_spend_usd as string | number | null),
+        decisionLane: String(
+          row.decision_lane,
+        ) as TowerMartAiPortfolioItem["decisionLane"],
+        approvedFundingUsd: num(
+          row.approved_funding_usd as string | number | null,
+        ),
+        aiTaggedSpendUsd: num(
+          row.ai_tagged_spend_usd as string | number | null,
+        ),
         promisedValueUsd: num(row.promised_value_usd as string | number | null),
-        financeValidatedValueUsd: num(row.finance_validated_value_usd as string | number | null),
+        financeValidatedValueUsd: num(
+          row.finance_validated_value_usd as string | number | null,
+        ),
         usageMetric: row.usage_metric ? String(row.usage_metric) : null,
         usageActual: nullableNum(row.usage_actual as string | number | null),
-        adoptionRatePct: nullableNum(row.adoption_rate_pct as string | number | null),
+        adoptionRatePct: nullableNum(
+          row.adoption_rate_pct as string | number | null,
+        ),
         valueScore: Number(row.value_score ?? 0),
         readinessScore: Number(row.readiness_score ?? 0),
         riskScore: Number(row.risk_score ?? 0),
         duplicateRisk: row.duplicate_risk ? String(row.duplicate_risk) : null,
         valueClaimStatus: String(row.value_claim_status),
         towerClaimAllowed: String(row.tower_claim_allowed),
-        caveat: String(row.caveat ?? ''),
+        caveat: String(row.caveat ?? ""),
         sourceFile: row.source_file ? String(row.source_file) : null,
         sourceRow: row.source_row ? String(row.source_row) : null,
       })),
@@ -350,12 +433,16 @@ export async function loadTowerMartCommandView(args: {
         lineageKey: String(row.lineage_key),
         surfaceSection: String(row.surface_section),
         displayedFact: String(row.displayed_fact),
-        displayedValueText: row.displayed_value_text ? String(row.displayed_value_text) : null,
-        displayedValueNumeric: nullableNum(row.displayed_value_numeric as string | number | null),
+        displayedValueText: row.displayed_value_text
+          ? String(row.displayed_value_text)
+          : null,
+        displayedValueNumeric: nullableNum(
+          row.displayed_value_numeric as string | number | null,
+        ),
         sourceFile: row.source_file ? String(row.source_file) : null,
         sourceRow: row.source_row ? String(row.source_row) : null,
         sourceSystem: row.source_system ? String(row.source_system) : null,
-        caveat: String(row.caveat ?? ''),
+        caveat: String(row.caveat ?? ""),
       })),
       requiredFieldGaps: requiredFieldGaps.map((row) => ({
         gapKey: String(row.gap_key),
@@ -363,7 +450,9 @@ export async function loadTowerMartCommandView(args: {
         martRecordKey: String(row.mart_record_key),
         requiredField: String(row.required_field),
         sourceTemplate: String(row.source_template),
-        sourceRecordId: row.source_record_id ? String(row.source_record_id) : null,
+        sourceRecordId: row.source_record_id
+          ? String(row.source_record_id)
+          : null,
         severity: String(row.severity),
         ownerHint: row.owner_hint ? String(row.owner_hint) : null,
         remediationAction: String(row.remediation_action),

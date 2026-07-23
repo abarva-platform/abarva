@@ -16,7 +16,9 @@ Tower gets a new Command Center surface that reproduces the approved design at
 It is the same six sections the current Tower already ships (Command Center, Value Proof, Decision
 Lanes, AI Portfolio, Evidence, Recommended Actions), rebuilt at much higher density and with real
 interaction: three sub-views inside Decision Lanes, four inside AI Portfolio, five charts, and four
-detail drawers that open from any row, card or chart point.
+detail drawers that open from any row, card or chart point. The Command Center also keeps the
+existing governed Tower aVa behavior through the same `AtlasChatPanel` / `AgentDock` launcher and
+`/api/tower/cio-chat` response path used by the previous Tower surface.
 
 **This is tenant-gated.** `/tower` serves the new Command Center only when
 `tower_command_center_v2` is explicitly enabled for the tenant. With the flag off, `/tower` serves
@@ -61,20 +63,17 @@ can be mounted from both `/tower` (as the flag-off fallback) and `/tower/legacy`
 `loadCioTowerCxoView`, `listTowerBudgetRollupsForClient`, the V3 runtime view and Claude story
 blocks — is unchanged.
 
+The Command Center is mounted through `TowerCommandCenterAvaShell`, which preserves the same
+collapsed Tower aVa launcher pattern as the previous surface. aVa remains advisory only: the page
+still renders the governance caption _"aVa proposes · you approve · nothing acts on its own"_, and
+chat responses continue to flow through the governed Tower CIO chat API rather than a new route.
+
 **Rollback is a one-line, no-deploy change:** remove the tenant from `includeTenants` (or clear the
 env allowlist) and the previous Tower returns on the next request.
 
-### Two gaps blocking platform default-on
+### Remaining gate before platform default-on
 
-1. **The Command Center has no aVa/Atlas chat.** The approved design references aVa exactly once —
-   the "Decisions waiting on you" caption _"aVa proposes · you approve · nothing acts on its own"_
-   (design file line 769), which the page renders. But it has no chat panel, input or launcher
-   anywhere. The shipped previous surface mounts `AtlasChatPanel` plus a floating aVa launcher, so
-   enabling this flag removes Tower's conversational agent surface for that tenant.
-   `/tower/legacy` is currently the only place Tower mounts it. **Open decision** — the cheapest
-   resolution is to mount the existing floating aVa launcher as an overlay, which needs no layout
-   slot and so does not deviate from the design's fixed-viewport contract.
-2. **Not yet live-proven.** This surface has rendered locally against the test fixture and harness.
+1. **Not yet live-proven.** This surface has rendered locally against the test fixture and harness.
    The live read-back predicts three thin sections on the Healthcare Composite Demo tenant
    (see the live read-back section): a 75%-empty Evidence tab, ~80 bubble-matrix points against a
    design drawn for ~8, and 3 of 5 empty owner columns. This is contrary to the repo's own

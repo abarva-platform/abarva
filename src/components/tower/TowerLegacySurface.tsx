@@ -12,9 +12,9 @@
 //   • /tower             — only when `tower_command_center_v2` is OFF for the
 //                          tenant. That flag is the promotion/rollback switch.
 //
-// Do not delete this until the Command Center is live-proven on every tenant
-// AND the aVa/Atlas chat question is resolved — this surface is currently the
-// only place Tower mounts AtlasChatPanel.
+// Do not delete this until the Command Center is live-proven on every tenant.
+// The Command Center has its own governed aVa shell; this path remains the
+// intact previous surface and rollback target.
 
 import { TowerIndexPage } from "@/components/tower/TowerIndexPage";
 import {
