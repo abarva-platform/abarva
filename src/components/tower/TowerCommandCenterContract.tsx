@@ -1,13 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import {
+  Bar,
+  BarChart,
   CartesianGrid,
   Cell,
   LabelList,
   ReferenceLine,
-  ResponsiveContainer,
   Scatter,
   ScatterChart,
   Tooltip,
@@ -413,11 +414,9 @@ function AiPortfolioView({
   model: TowerMartCommandViewModel;
   summary: TowerSummary;
 }) {
-  const plotted = model.aiPortfolio
-    .slice()
-    .sort((a, b) => b.valueScore + b.readinessScore - (a.valueScore + a.readinessScore))
-    .slice(0, 16)
-    .map((row, index) => ({ ...row, plotId: index + 1, z: Math.max(row.aiTaggedSpendUsd, row.approvedFundingUsd, 1) }));
+  const plotted = useMemo(() => buildAiPlotRows(model.aiPortfolio), [model.aiPortfolio]);
+  const categories = useMemo(() => buildAiCategorySpend(model.aiPortfolio), [model.aiPortfolio]);
+  const watchRows = plotted.slice(0, 10);
 
   return (
     <section style={{ display: "grid", gap: 24 }}>
@@ -431,7 +430,7 @@ function AiPortfolioView({
         <Panel>
           <div style={goldEyebrowStyle}>Value vs. readiness</div>
           <p style={panelLeadStyle}>
-            Numbers map to the watchlist. The upper-right is scale with proof; lower-right is fund readiness; lower-left stays in discovery.
+            Numbered bubbles show the most material AI programs and candidates. The position is a decision posture, not a realized-value claim.
           </p>
           <AiMatrix rows={plotted} />
         </Panel>
@@ -443,13 +442,18 @@ function AiPortfolioView({
             <MiniStat label="Proof signal" value={formatWhole(summary.usageSignalCount)} />
             <MiniStat label="Candidate pool" value={formatWhole(model.command.candidateAiOpportunities)} />
           </div>
+          <AiCategoryBars rows={categories} />
+          <div style={watchHeaderStyle}>
+            <span>Watchlist</span>
+            <small>{formatWhole(watchRows.length)} plotted of {formatWhole(model.aiPortfolio.length)}</small>
+          </div>
           <div style={watchListStyle}>
-            {plotted.slice(0, 8).map((row) => (
+            {watchRows.map((row) => (
               <div key={row.aiPortfolioKey} style={watchRowStyle}>
                 <span style={{ ...decisionNumberStyle, background: laneMeta[row.decisionLane].color }}>{row.plotId}</span>
                 <div>
-                  <b>{row.itemName}</b>
-                  <p>{row.vendorName ?? row.systemName ?? "Owner pending"} - {money(row.financeValidatedValueUsd)} validated</p>
+                  <b>{row.displayName}</b>
+                  <p>{row.vendorName ?? row.systemName ?? row.aiSpendCategory ?? "Owner pending"} - {row.proofLabel}</p>
                 </div>
                 <strong style={{ color: laneMeta[row.decisionLane].color }}>{laneMeta[row.decisionLane].verb}</strong>
               </div>
@@ -468,22 +472,34 @@ function EvidenceView({
   model: TowerMartCommandViewModel;
   summary: TowerSummary;
 }) {
-  const sources = Array.from(new Set(model.evidenceLineage.map((row) => row.sourceFile).filter(Boolean)));
+  const evidencePosture = useMemo(() => buildEvidencePosture(model, summary), [model, summary]);
   return (
     <section style={{ display: "grid", gap: 24 }}>
       <ViewHeading
         eyebrow="Evidence boundary"
         title="Why the dashboard is allowed to say this"
-        copy="The page must reconcile every executive claim back to the mart and source template. Missing proof stays visible."
+        copy="Tower explains which claims are source-backed, what still needs proof, who must provide it, and which decisions stay blocked."
       />
       <div style={evidenceGridStyle}>
-        <QuestionCard title="What evidence exists?" body={`${formatWhole(sources.length)} source packages support the displayed Tower posture.`} />
-        <QuestionCard title="What is missing?" body={`${formatWhole(model.requiredFieldGaps.length)} required fields or evidence gates remain open.`} />
-        <QuestionCard title="Who provides it?" body={`${formatWhole(summary.ownerGroups.length)} owner group${summary.ownerGroups.length === 1 ? "" : "s"} are named or need assignment.`} />
-        <QuestionCard title="What stays blocked?" body="Realized value and ROI language remain blocked until source rows explicitly allow claimable value." />
+        <QuestionCard title="What evidence exists?" body={evidencePosture.exists} />
+        <QuestionCard title="What is missing?" body={evidencePosture.missing} />
+        <QuestionCard title="Who provides it?" body={evidencePosture.owners} />
+        <QuestionCard title="What stays blocked?" body={evidencePosture.blocked} />
       </div>
       <Panel>
-        <div style={goldEyebrowStyle}>Source trace</div>
+        <div style={goldEyebrowStyle}>Source packages in use</div>
+        <div style={sourcePackageGridStyle}>
+          {evidencePosture.sources.map((source) => (
+            <div key={source.label} style={sourcePackageStyle}>
+              <b>{source.label}</b>
+              <span>{formatWhole(source.count)} traced claim{source.count === 1 ? "" : "s"}</span>
+            </div>
+          ))}
+        </div>
+      </Panel>
+      <Panel>
+        <div style={goldEyebrowStyle}>Audit trace</div>
+        <p style={panelLeadStyle}>Raw lineage stays here for inspection. The executive read above should not require parsing file names.</p>
         <div style={traceListStyle}>
           {model.evidenceLineage.slice(0, 14).map((row) => (
             <div key={row.lineageKey} style={traceRowStyle}>
@@ -491,7 +507,7 @@ function EvidenceView({
                 <b>{row.displayedFact}</b>
                 <p>{row.caveat || "Evidence supports the displayed posture."}</p>
               </div>
-              <span>{row.sourceFile ?? "source pending"}</span>
+              <span>{friendlySourceLabel(row.sourceFile)}</span>
             </div>
           ))}
         </div>
@@ -644,18 +660,22 @@ function ProgramProofRows({ rows }: { rows: TowerMartProgramLane[] }) {
   );
 }
 
-function AiMatrix({ rows }: { rows: Array<TowerMartAiPortfolioItem & { plotId: number; z: number }> }) {
+interface AiPlotRow extends TowerMartAiPortfolioItem {
+  plotId: number;
+  z: number;
+  valuePlot: number;
+  readinessPlot: number;
+  displayName: string;
+  proofLabel: string;
+}
+
+function AiMatrix({ rows }: { rows: AiPlotRow[] }) {
   if (rows.length === 0) return <EmptyState text="No AI portfolio item is available in the mart." />;
-  const normalized = rows.map((row) => ({
-    ...row,
-    valuePlot: normalizeScore(row.valueScore),
-    readinessPlot: normalizeScore(row.readinessScore),
-  }));
   return (
     <>
-      <div style={{ height: 420, marginTop: 24 }}>
-        <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
-          <ScatterChart margin={{ top: 18, right: 22, bottom: 28, left: 24 }}>
+      <SafeChartFrame height={440} style={{ marginTop: 24 }}>
+        {(width, height) => (
+          <ScatterChart width={width} height={height} margin={{ top: 18, right: 22, bottom: 28, left: 24 }}>
             <CartesianGrid stroke={theme.softRule} />
             <ReferenceLine x={50} stroke={theme.rule} strokeWidth={2} />
             <ReferenceLine y={50} stroke={theme.rule} strokeWidth={2} />
@@ -682,23 +702,89 @@ function AiMatrix({ rows }: { rows: Array<TowerMartAiPortfolioItem & { plotId: n
                 if (name === "z") return money(Number(value));
                 return String(value);
               }}
-              labelFormatter={(_, payload) => payload?.[0]?.payload?.itemName ?? "AI item"}
+              labelFormatter={(_, payload) => payload?.[0]?.payload?.displayName ?? "AI item"}
             />
-            <Scatter data={normalized}>
-              {normalized.map((row) => (
+            <Scatter data={rows}>
+              {rows.map((row) => (
                 <Cell key={row.aiPortfolioKey} fill={laneMeta[row.decisionLane].color} />
               ))}
               <LabelList dataKey="plotId" position="center" fill="#fff" fontSize={12} fontWeight={900} />
             </Scatter>
           </ScatterChart>
-        </ResponsiveContainer>
-      </div>
+        )}
+      </SafeChartFrame>
       <div style={matrixCaptionStyle}>
         <span>Upper-right: scale with proof</span>
-        <span>Lower-right: fund readiness</span>
-        <span>Lower-left: discovery only</span>
+        <span>Upper-left: fix adoption</span>
+        <span>Lower-left: discovery or hold</span>
       </div>
     </>
+  );
+}
+
+function AiCategoryBars({ rows }: { rows: AiCategorySpendRow[] }) {
+  if (rows.length === 0) return <EmptyState text="AI spend is not categorized in the mart yet." />;
+  const height = Math.max(220, rows.length * 42 + 44);
+  return (
+    <div style={categoryChartStyle}>
+      <div style={goldEyebrowStyle}>AI spend by category</div>
+      <SafeChartFrame height={height}>
+        {(width, frameHeight) => (
+          <BarChart width={width} height={frameHeight} data={rows} layout="vertical" margin={{ top: 8, right: 28, bottom: 8, left: 8 }}>
+            <CartesianGrid stroke={theme.softRule} horizontal={false} />
+            <XAxis type="number" hide domain={[0, "dataMax"]} />
+            <YAxis
+              type="category"
+              dataKey="label"
+              width={150}
+              tick={{ fill: theme.text, fontSize: 12, fontWeight: 700 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip formatter={(value) => money(Number(value))} labelStyle={{ color: theme.ink }} />
+            <Bar dataKey="spend" radius={[0, 8, 8, 0]} barSize={18}>
+              {rows.map((row) => (
+                <Cell key={row.key} fill={row.color} />
+              ))}
+              <LabelList dataKey="displayValue" position="right" fill={theme.ink} fontSize={12} fontWeight={900} />
+            </Bar>
+          </BarChart>
+        )}
+      </SafeChartFrame>
+    </div>
+  );
+}
+
+function SafeChartFrame({
+  height,
+  style,
+  children,
+}: {
+  height: number;
+  style?: CSSProperties;
+  children: (width: number, height: number) => ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return undefined;
+    const update = () => setWidth(Math.max(0, Math.floor(node.getBoundingClientRect().width)));
+    update();
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", update);
+      return () => window.removeEventListener("resize", update);
+    }
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} style={{ width: "100%", minWidth: 280, height, ...style }}>
+      {width > 24 ? children(width, height) : null}
+    </div>
   );
 }
 
@@ -884,6 +970,184 @@ function claimAllowed(value: string | null | undefined): boolean {
   return text === "allowed" || text.includes("claimable");
 }
 
+function buildAiPlotRows(rows: TowerMartAiPortfolioItem[]): AiPlotRow[] {
+  const materialRows = rows
+    .slice()
+    .sort((a, b) => {
+      const bMaterial = aiEconomicSignal(b) + b.valueScore * 10 + b.readinessScore * 8;
+      const aMaterial = aiEconomicSignal(a) + a.valueScore * 10 + a.readinessScore * 8;
+      return bMaterial - aMaterial;
+    })
+    .slice(0, 14);
+
+  return materialRows.map((row, index) => {
+    const fallback = lanePlotFallback(row.decisionLane);
+    const baseX = row.readinessScore > 0 ? normalizeScore(row.readinessScore) : fallback.readiness;
+    const baseY = row.valueScore > 0 ? normalizeScore(row.valueScore) : fallback.value;
+    const offset = collisionOffset(index, row.aiPortfolioKey);
+    return {
+      ...row,
+      plotId: index + 1,
+      displayName: shortAiName(row.itemName),
+      proofLabel: aiProofLabel(row),
+      z: Math.max(aiEconomicSignal(row), 1),
+      readinessPlot: clamp(baseX + offset.x, 8, 92),
+      valuePlot: clamp(baseY + offset.y, 8, 92),
+    };
+  });
+}
+
+interface AiCategorySpendRow {
+  key: string;
+  label: string;
+  spend: number;
+  count: number;
+  displayValue: string;
+  color: string;
+}
+
+function buildAiCategorySpend(rows: TowerMartAiPortfolioItem[]): AiCategorySpendRow[] {
+  const byCategory = new Map<string, { spend: number; count: number }>();
+  for (const row of rows) {
+    const spend = Math.max(row.aiTaggedSpendUsd, row.approvedFundingUsd, 0);
+    if (spend <= 0) continue;
+    const key = row.aiSpendCategory || row.aiSpendType || "ai_spend_uncategorized";
+    const current = byCategory.get(key) ?? { spend: 0, count: 0 };
+    current.spend += spend;
+    current.count += 1;
+    byCategory.set(key, current);
+  }
+  const palette = [theme.teal, theme.navy, theme.green, theme.amber, "#5b7cfa", "#9567cf", "#475569"];
+  return Array.from(byCategory.entries())
+    .map(([key, value], index) => ({
+      key,
+      label: shortChartLabel(humanize(key)),
+      spend: value.spend,
+      count: value.count,
+      displayValue: money(value.spend),
+      color: palette[index % palette.length],
+    }))
+    .sort((a, b) => b.spend - a.spend)
+    .slice(0, 7);
+}
+
+function aiEconomicSignal(row: TowerMartAiPortfolioItem): number {
+  return Math.max(row.aiTaggedSpendUsd, row.approvedFundingUsd, row.promisedValueUsd, row.financeValidatedValueUsd, 0);
+}
+
+function lanePlotFallback(lane: DecisionLane): { readiness: number; value: number } {
+  if (lane === "fund") return { readiness: 72, value: 76 };
+  if (lane === "fix") return { readiness: 42, value: 70 };
+  if (lane === "freeze") return { readiness: 35, value: 42 };
+  return { readiness: 24, value: 30 };
+}
+
+function collisionOffset(index: number, key: string): { x: number; y: number } {
+  const ring = index % 8;
+  const radius = 5 + (index % 3) * 3;
+  const angle = (ring / 8) * Math.PI * 2;
+  const nudge = (stableHash(key) % 5) - 2;
+  return {
+    x: Math.cos(angle) * radius + nudge,
+    y: Math.sin(angle) * radius - nudge,
+  };
+}
+
+function stableHash(value: string): number {
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  }
+  return hash;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function aiProofLabel(row: TowerMartAiPortfolioItem): string {
+  if (row.financeValidatedValueUsd > 0) return `${money(row.financeValidatedValueUsd)} finance-validated`;
+  if (row.usageActual !== null || row.adoptionRatePct !== null) return "usage signal loaded";
+  if (row.approvedFundingUsd > 0 || row.aiTaggedSpendUsd > 0) return "funded, proof pending";
+  return "candidate, not funded";
+}
+
+function shortAiName(value: string): string {
+  return value
+    .replace(/^Application Owners\s*\/\s*Business Applications:\s*/i, "")
+    .replace(/^Business Applications:\s*/i, "")
+    .replace(/\s+Opportunity$/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function shortChartLabel(value: string): string {
+  const normalized = value
+    .replace(/^ai /i, "AI ")
+    .replace(/\bplatform\b/gi, "platform")
+    .replace(/\bproductivity\b/gi, "productivity")
+    .trim();
+  if (normalized.length <= 24) return normalized;
+  const words = normalized.split(" ");
+  const compact = words.slice(0, 3).join(" ");
+  return compact.length <= 24 ? compact : `${compact.slice(0, 21)}...`;
+}
+
+interface EvidencePosture {
+  exists: string;
+  missing: string;
+  owners: string;
+  blocked: string;
+  sources: Array<{ label: string; count: number }>;
+}
+
+function buildEvidencePosture(model: TowerMartCommandViewModel, summary: TowerSummary): EvidencePosture {
+  const sourceCounts = new Map<string, number>();
+  for (const row of model.evidenceLineage) {
+    const label = friendlySourceLabel(row.sourceFile);
+    sourceCounts.set(label, (sourceCounts.get(label) ?? 0) + 1);
+  }
+  const sources = Array.from(sourceCounts.entries())
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8);
+  const topSources = sources.slice(0, 3).map((source) => source.label).join(", ");
+  const topMissing = model.requiredFieldGaps
+    .filter((gap) => gap.blocking)
+    .slice(0, 2)
+    .map((gap) => humanize(gap.requiredField))
+    .join("; ");
+  const ownerNames = summary.ownerGroups.filter((owner) => owner && owner !== "Unassigned").slice(0, 3);
+
+  return {
+    exists: topSources
+      ? `${topSources} support the budget, portfolio, and value-proof posture shown here.`
+      : "No source package is traced for this Tower posture yet.",
+    missing: topMissing
+      ? `${topMissing} still need evidence before Tower can upgrade planning signals into claims.`
+      : "No blocking evidence gap is marked in the current Tower mart.",
+    owners: ownerNames.length > 0
+      ? `${ownerNames.join(", ")} are the first owners to chase; unassigned gaps need a named accountable owner.`
+      : "No named evidence owner is loaded; assign ownership before treating this as board-ready.",
+    blocked: model.command.realizedValueYtdAllowed > 0
+      ? "Some value is claimable, but every claim still traces through the value gate."
+      : "Realized value, ROI, savings, and achieved-benefit language stay blocked until finance-validated outcome rows allow it.",
+    sources,
+  };
+}
+
+function friendlySourceLabel(value: string | null | undefined): string {
+  const source = String(value ?? "").toLowerCase();
+  if (source.includes("08_it_budget")) return "Budget and spend template";
+  if (source.includes("09_program")) return "Programs and initiatives template";
+  if (source.includes("10_ai_automation")) return "AI opportunity template";
+  if (source.includes("sa08")) return "AI benefits and usage ledger";
+  if (source.includes("14_metrics")) return "Metrics and outcomes template";
+  if (source.includes("07_vendor")) return "Vendors and contracts template";
+  if (!source || source === "null") return "Source pending";
+  return humanize(source.replace(/\.csv$/i, ""));
+}
+
 function normalizeScore(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return value <= 10 ? Math.max(0, Math.min(value * 10, 100)) : Math.max(0, Math.min(value, 100));
@@ -1022,7 +1286,7 @@ const redDotStyle: CSSProperties = {
 
 const kpiGridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(4, minmax(220px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
   gap: 14,
 };
 
@@ -1081,7 +1345,7 @@ const metricRowStyle: CSSProperties = {
 
 const commandGridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1.55fr) minmax(360px, 0.85fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
   gap: 20,
 };
 
@@ -1188,13 +1452,13 @@ const decisionLaneStyle: CSSProperties = {
 
 const twoColumnStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, .9fr) minmax(0, 1.1fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
   gap: 20,
 };
 
 const twoColumnWideStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "minmax(0, 1.25fr) minmax(420px, .75fr)",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 520px), 1fr))",
   gap: 20,
 };
 
@@ -1257,7 +1521,7 @@ const proofBarWrapStyle: CSSProperties = { minWidth: 160 };
 
 const laneBoardStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(4, minmax(260px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
   gap: 18,
 };
 
@@ -1297,7 +1561,7 @@ const programTopStyle: CSSProperties = {
 
 const aiPillsStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(116px, 1fr))",
   gap: 10,
   margin: "22px 0",
 };
@@ -1310,16 +1574,37 @@ const miniStatStyle: CSSProperties = {
   gap: 8,
 };
 
+const categoryChartStyle: CSSProperties = {
+  borderTop: `1px solid ${theme.softRule}`,
+  borderBottom: `1px solid ${theme.softRule}`,
+  padding: "18px 0",
+  marginBottom: 12,
+};
+
+const watchHeaderStyle: CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 12,
+  alignItems: "baseline",
+  color: theme.text,
+  fontFamily: theme.mono,
+  fontSize: 11,
+  fontWeight: 900,
+  letterSpacing: 2,
+  textTransform: "uppercase",
+  marginTop: 14,
+};
+
 const watchListStyle: CSSProperties = {
   display: "grid",
   gap: 0,
-  maxHeight: 480,
+  maxHeight: 420,
   overflow: "auto",
 };
 
 const watchRowStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "32px minmax(0, 1fr) auto",
+  gridTemplateColumns: "32px minmax(0, 1fr) minmax(92px, auto)",
   gap: 12,
   padding: "14px 0",
   borderTop: `1px solid ${theme.softRule}`,
@@ -1337,7 +1622,7 @@ const matrixCaptionStyle: CSSProperties = {
 
 const evidenceGridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(4, minmax(190px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
   gap: 14,
 };
 
@@ -1346,6 +1631,22 @@ const questionCardStyle: CSSProperties = {
   border: `1px solid ${theme.rule}`,
   borderRadius: 14,
   padding: 18,
+};
+
+const sourcePackageGridStyle: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: 12,
+  marginTop: 18,
+};
+
+const sourcePackageStyle: CSSProperties = {
+  border: `1px solid ${theme.softRule}`,
+  borderRadius: 12,
+  padding: 14,
+  display: "grid",
+  gap: 8,
+  background: "#fbfaf6",
 };
 
 const traceListStyle: CSSProperties = {
@@ -1365,7 +1666,7 @@ const traceRowStyle: CSSProperties = {
 
 const actionGridStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(3, minmax(280px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
   gap: 16,
 };
 
