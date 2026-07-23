@@ -826,16 +826,11 @@ updated 19 d ago` on the proof event).
   and upload/persistence. One reported finding (the "✦ Intelligence" tab silently redirecting
   out of Source) was live-tested and disproven before any code was touched — recorded in the
   release record so it isn't rediscovered as a false lead later.
-- **Notes / remaining gaps**: this is batch 1 of a larger incremental sequence. Follow-on
-  batches, not yet started: `SOURCE-UX-002` (Files tab / lifecycle matrix further polish if
-  needed after live use), `SOURCE-ANALYTICS-CHAT-001` (wire aVa chat to the existing
-  `AgentAnswerRenderer`/Recharts pipeline — infrastructure already proven on Home/Intelligence/
-  Tower, just unused by Source), `SOURCE-ARTIFACT-QUALITY-001` (expand the narrative-quality
-  LLM-judge rubric beyond the one hard-gated artifact code), `SOURCE-GUIDEBOOK-004`
-  (per-client guidebook content using the already-existing but unused `client_key` override
-  column), `SOURCE-INGEST-001` (dedicated workshop/session-notes capture surface + a
-  parse worker for PDF/XLSX/PPTX uploads currently stuck at `parse_status: "pending"` with no
-  consumer).
+- **Notes / remaining gaps**: this was batch 1 of a larger incremental sequence. Follow-on
+  batches now closed below include `SOURCE-UX-002`, `SOURCE-ANALYTICS-CHAT-001` through
+  `004`, `SOURCE-ARTIFACT-QUALITY-001`, `SOURCE-GUIDEBOOK-004`, and the safe
+  `SOURCE-INGEST-001` verifier/capture/readiness slices. The remaining ingest frontier is the
+  governed worker/index/promotion family, which still requires explicit job/data-build approval.
 
 ### SOURCE-UX-002 — Files lifecycle matrix execution-first declutter
 
@@ -945,13 +940,13 @@ updated 19 d ago` on the proof event).
   grounded in the same lifecycle matrix the Files workspace uses.
 - **Severity**: P3 (analytics / aVa chat capability gap).
 - **Workstream**: Analytics / aVa chat.
-- **Status**: `Regression fix in progress` — base artifact-quality/lifecycle packet merged
-  in PR #5441 as `ae3f20568e6ea576a8e5cd3f1d32b7490b9eb58d`, followed by event-id
-  routing and slug-safe read fixes in PR #5444 and PR #5445. A 2026-07-23 signed-in
-  proof-closure pass found a remaining intent-priority bug: broad lifecycle/readiness
-  wording can be captured by the evidence-processing branch before artifact quality runs.
-  Tracked in
-  `docs/releases/records/2026-07-23-source-chat-intent-priority-fix.md`.
+- **Status**: `Shipped — deployed and live-proven` — base artifact-quality/lifecycle packet
+  merged in PR #5441 as `ae3f20568e6ea576a8e5cd3f1d32b7490b9eb58d`, followed by event-id
+  routing and slug-safe read fixes in PR #5444 and PR #5445. The final overlapping-intent
+  priority fix merged in PR #5498 as `3956858600e4ffce115a917e8d4a5bee06a2c4a9`, deployed
+  by ACA main run `30031601221`, and signed-in production proof confirmed artifact lifecycle
+  prompts now return `intent=artifact_quality_lifecycle` with chart/table while evidence
+  processing prompts return `intent=evidence_processing_readiness` with chart/table.
 - **Dependencies**: existing Source artifact registry repository, existing
   `buildSourceArtifactLifecycleSummary()`, existing `AvaAnswerPacket` / `AgentAnswerRenderer`
   pipeline, and the mandatory `buildValidatedAgentContextBundle()` gate.

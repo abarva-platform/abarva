@@ -6,9 +6,9 @@
 
 ## Status
 
-`released with follow-up fix pending` — base implementation merged in PR #5441 and deployed
-by ACA main run `29985449807`; event-id routing was fixed in PR #5444. A proof-closure pass
-found a remaining overlapping-intent priority bug, tracked and fixed in
+`released` — base implementation merged in PR #5441 and deployed by ACA main run
+`29985449807`; event-id routing was fixed in PR #5444; the remaining overlapping-intent
+priority bug was fixed, deployed, and signed-in proven in
 `2026-07-23-source-chat-intent-priority-fix`.
 
 ## Plain-English Summary
@@ -76,16 +76,14 @@ repair, regenerate, index, OCR, transcribe, or promote anything into enterprise 
   value-ledger, and route-intent tests passed 4 suites / 23 tests after adding the intent-priority
   fix. Jest printed pre-existing duplicate manual mock warnings.
 - `pass` — proof-closure lint rerun on the touched aVa builders, tests, and Source nexus/ask route.
-- `blocked until follow-up deploy` — pre-fix signed-in proof reproduced an overlapping-intent
-  bug: broad artifact lifecycle/readiness wording returned the evidence-processing packet instead
-  of the artifact-quality packet. The follow-up fix is recorded in
-  `2026-07-23-source-chat-intent-priority-fix`.
+- `pass` — follow-up deploy in `2026-07-23-source-chat-intent-priority-fix` confirmed broad
+  artifact lifecycle/readiness wording now returns `intent=artifact_quality_lifecycle` with one
+  chart, one table, 8 citations, tenant fence passed, and forbidden-language safety passed.
 
 ## Rollout Plan
 
-Base rollout completed via PR #5441 and PR #5444. Complete the remaining proof by merging and
-deploying `2026-07-23-source-chat-intent-priority-fix`, then rerun signed-in artifact-quality
-chat proof.
+Base rollout completed via PR #5441 and PR #5444. Final overlapping-intent proof completed via
+`2026-07-23-source-chat-intent-priority-fix`.
 
 ## Deployment Authority
 
@@ -93,7 +91,7 @@ chat proof.
 - Shared runtime mutators: none from this PR.
 - Approved image digest: assigned by ACA main deploy run `29985449807`; follow-up fix digest to
   be recorded in `2026-07-23-source-chat-intent-priority-fix`.
-- ACA runtime invariant: required after the follow-up fix deploy.
+- ACA runtime invariant: passed after the follow-up fix deploy.
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
 - Live signed-in proof required: yes.
@@ -112,7 +110,8 @@ available according to the reverted code state. No migration rollback is require
 - Hotfix merge SHA: `467936122bd462610339dcc1e1e502d61e368dcf`.
 - ACA deploy run: https://github.com/abarva-platform/abarva/actions/runs/29985449807.
 - Event-id hotfix deploy run: https://github.com/abarva-platform/abarva/actions/runs/29986365431.
-- Intent-priority follow-up: `2026-07-23-source-chat-intent-priority-fix`.
+- Intent-priority follow-up: `2026-07-23-source-chat-intent-priority-fix` — deployed and
+  signed-in proven.
 - Local evidence: focused test, lint, and pre-fix signed-in proof commands listed above.
 
 ## Known Gaps
