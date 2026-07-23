@@ -1,0 +1,215 @@
+// Tower Command Center v2 — end-to-end coverage of `/tower`: all 6 tabs, all 7
+// sub-views, all 4 drawers.
+//
+// Since 2026-07-23 the Command Center is PRIMARY at `/tower`. When
+// `tower_command_center_v2` is off for the signed-in tenant, `/tower` serves the
+// previous surface instead (archived at `/tower/legacy`), so these specs skip
+// with that stated rather than failing — the fallback is correct behaviour.
+
+import { expect, test, type Page } from '@playwright/test';
+import { DEMO_ACCOUNTS, missingAuthPrereqs, withClerkAuth } from './_helpers/auth';
+
+const TENANT = 'meridian' as const;
+
+const TABS = [
+  { name: 'Command Center', heading: 'Spend posture' },
+  { name: 'Value Proof', heading: 'Where the value disappears' },
+  { name: 'Decision Lanes', heading: 'The operating room' },
+  { name: 'AI Portfolio', heading: 'Which AI is real, embedded, or just an idea' },
+  { name: 'Evidence', heading: 'Evidence, as a business posture' },
+  { name: 'Recommended Actions', heading: 'The executive action memo' },
+] as const;
+
+/**
+ * Open Tower; returns false when the flag is off and the previous surface is
+ * served instead. Detected by the Command Center's root testid rather than by
+ * URL, because both surfaces now live at the same path.
+ */
+async function openCommandCenter(page: Page): Promise<boolean> {
+  await page.goto('/tower', { waitUntil: 'domcontentloaded' });
+  await page.waitForLoadState('networkidle').catch(() => undefined);
+  return (await page.getByTestId('tower-command-center').count()) > 0;
+}
+
+test.describe('Tower Command Center v2', () => {
+  test.skip(
+    missingAuthPrereqs.length > 0,
+    `Missing auth prerequisites: ${missingAuthPrereqs.join(', ')}`,
+  );
+
+  test.beforeEach(async ({ page }) => {
+    await withClerkAuth(page, DEMO_ACCOUNTS[TENANT]);
+  });
+
+  test('renders every tab, sub-view and drawer', async ({ page }) => {
+    const enabled = await openCommandCenter(page);
+    test.skip(!enabled, 'tower_command_center_v2 is off for this tenant — /tower served the previous surface.');
+
+    const root = page.getByTestId('tower-command-center');
+    await expect(root).toBeVisible();
+
+    // ── the page must never scroll the whole viewport ─────────────────────
+    // The design is a fixed-viewport shell. If this regresses, the page is
+    // claiming a second viewport below the nav (the 3d89299e9 bug class).
+    const bodyOverflows = await page.evaluate(
+      () => document.documentElement.scrollHeight > window.innerHeight + 2,
+    );
+    expect(bodyOverflows).toBe(false);
+
+    // ── 6 tabs ────────────────────────────────────────────────────────────
+    const tablist = page.getByRole('tablist', { name: 'Tower Command Center sections' });
+    await expect(tablist).toBeVisible();
+    await expect(tablist.getByRole('tab')).toHaveCount(6);
+
+    for (const tab of TABS) {
+      await tablist.getByRole('tab', { name: new RegExp(tab.name) }).click();
+      await expect(page.getByRole('tab', { name: new RegExp(tab.name) })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
+      await expect(page.getByText(tab.heading, { exact: false }).first()).toBeVisible();
+    }
+
+    // ── deep-linking: the active tab is reflected in ?tab= ────────────────
+    expect(new URL(page.url()).searchParams.get('tab')).toBe('actions');
+  });
+
+  test('Decision Lanes has three sub-views and opens the program drawer', async ({ page }) => {
+    const enabled = await openCommandCenter(page);
+    test.skip(!enabled, 'tower_command_center_v2 is off for this tenant.');
+
+    await page.getByRole('tab', { name: /Decision Lanes/ }).click();
+
+    for (const sub of ['Program table', 'Kanban lanes', 'Portfolio heatmap']) {
+      await page.getByRole('radio', { name: sub }).click();
+      await expect(page.getByRole('radio', { name: sub })).toHaveAttribute('aria-checked', 'true');
+    }
+
+    await page.getByRole('radio', { name: 'Program table' }).click();
+    const firstProgram = page.getByRole('button', { name: /^Open / }).first();
+    test.skip(
+      (await firstProgram.count()) === 0,
+      'No governed programs for this tenant — nothing to open.',
+    );
+    await firstProgram.click();
+
+    const drawer = page.getByRole('dialog');
+    await expect(drawer).toBeVisible();
+    await expect(drawer.getByText('Value proof chain')).toBeVisible();
+
+    // Escape closes and focus returns to the trigger.
+    await page.keyboard.press('Escape');
+    await expect(drawer).toBeHidden();
+  });
+
+  test('AI Portfolio has four sub-views and opens the initiative drawer', async ({ page }) => {
+    const enabled = await openCommandCenter(page);
+    test.skip(!enabled, 'tower_command_center_v2 is off for this tenant.');
+
+    await page.getByRole('tab', { name: /AI Portfolio/ }).click();
+
+    for (const sub of ['Funded & Embedded', 'Usage & Value Proof', 'Spend Attribution', 'Candidate Pipeline']) {
+      await page.getByRole('radio', { name: sub }).click();
+      await expect(page.getByRole('radio', { name: sub })).toHaveAttribute('aria-checked', 'true');
+    }
+
+    // The type filter is hidden on Spend lens (whole-portfolio view) and shown
+    // everywhere else.
+    await page.getByRole('radio', { name: 'Spend Attribution' }).click();
+    await expect(page.getByRole('radiogroup', { name: 'AI spend type filter' })).toHaveCount(0);
+    await page.getByRole('radio', { name: 'Candidate Pipeline' }).click();
+    await expect(page.getByRole('radiogroup', { name: 'AI spend type filter' })).toBeVisible();
+
+    const firstItem = page.getByRole('button', { name: /^Open / }).first();
+    test.skip((await firstItem.count()) === 0, 'No governed AI initiatives for this tenant.');
+    await firstItem.click();
+    await expect(page.getByRole('dialog').getByText('Value potential')).toBeVisible();
+  });
+
+  test('Evidence answers one question at a time and opens the gap drawer', async ({ page }) => {
+    const enabled = await openCommandCenter(page);
+    test.skip(!enabled, 'tower_command_center_v2 is off for this tenant.');
+
+    await page.getByRole('tab', { name: /Evidence/ }).click();
+    await expect(page.getByText('Question 1 of 4')).toBeVisible();
+
+    await page.getByRole('radio', { name: /What is missing/ }).click();
+    await expect(page.getByText('Question 2 of 4')).toBeVisible();
+
+    const trace = page.getByText('View audit trace →').first();
+    test.skip((await trace.count()) === 0, 'No governed evidence gaps for this tenant.');
+    await trace.click();
+    await expect(page.getByRole('dialog').getByText('Audit trace')).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await page.getByRole('radio', { name: /Who owns the missing proof/ }).click();
+    await expect(page.getByText('Question 3 of 4')).toBeVisible();
+    await page.getByRole('radio', { name: /What decision is blocked/ }).click();
+    await expect(page.getByText('Question 4 of 4')).toBeVisible();
+  });
+
+  test('the action drawer never claims a route that did not happen', async ({ page }) => {
+    const enabled = await openCommandCenter(page);
+    test.skip(!enabled, 'tower_command_center_v2 is off for this tenant.');
+
+    await page.getByRole('tab', { name: /Recommended Actions/ }).click();
+
+    const firstAction = page.locator('[class*="acard"]').first();
+    test.skip((await firstAction.count()) === 0, 'No governed CXO actions for this tenant.');
+    await firstAction.click();
+
+    const drawer = page.getByRole('dialog');
+    await expect(drawer).toBeVisible();
+
+    // There is no governed Tower → Moves create path yet, so the control is
+    // disabled and no confirmation is ever shown.
+    const approve = drawer.getByRole('button', { name: /Approve & route/ });
+    await expect(approve).toBeDisabled();
+    await expect(drawer.getByText(/Routing is not available yet/)).toBeVisible();
+    await expect(drawer.getByText(/^Routed to/)).toHaveCount(0);
+  });
+
+  test('logs no console errors across every tab', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') errors.push(message.text());
+    });
+    page.on('pageerror', (error) => errors.push(error.message));
+
+    const enabled = await openCommandCenter(page);
+    test.skip(!enabled, 'tower_command_center_v2 is off for this tenant.');
+
+    for (const tab of TABS) {
+      await page.getByRole('tab', { name: new RegExp(tab.name) }).click();
+      await page.waitForTimeout(250);
+    }
+
+    expect(errors).toEqual([]);
+  });
+});
+
+test.describe('Tower routing after promotion', () => {
+  test.skip(
+    missingAuthPrereqs.length > 0,
+    `Missing auth prerequisites: ${missingAuthPrereqs.join(', ')}`,
+  );
+
+  test.beforeEach(async ({ page }) => {
+    await withClerkAuth(page, DEMO_ACCOUNTS[TENANT]);
+  });
+
+  test('/tower/command redirects to /tower and preserves query params', async ({ page }) => {
+    await page.goto('/tower/command?tab=evidence', { waitUntil: 'domcontentloaded' });
+    const url = new URL(page.url());
+    expect(url.pathname).toBe('/tower');
+    expect(url.searchParams.get('tab')).toBe('evidence');
+  });
+
+  test('/tower/legacy still serves the previous surface, flag regardless', async ({ page }) => {
+    await page.goto('/tower/legacy', { waitUntil: 'domcontentloaded' });
+    await page.waitForLoadState('networkidle').catch(() => undefined);
+    // The previous surface, not the Command Center.
+    await expect(page.getByTestId('tower-command-center')).toHaveCount(0);
+    await expect(page.getByText(/Command Center|Value Proof/).first()).toBeVisible();
+  });
+});

@@ -92,7 +92,8 @@ export type FeatureFlagKey =
   | "moves_pattern_assembly"
   | "moves_ava_chat_hardening"
   | "moves_finder_shell_v1"
-  | "moves_approvals_overview_v1";
+  | "moves_approvals_overview_v1"
+  | "tower_command_center_v2";
 
 export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
   {
@@ -129,6 +130,13 @@ export const FEATURE_FLAGS: ReadonlyArray<FeatureFlagDefinition> = [
       "2026-07-21: cross-phase Approvals overview inside the Moves phase workspace (MovesPhaseStandaloneClient) — a read-only list, one row per phase, built entirely from the existing getMovePhaseTallies() output (met/total gate criteria, done/current/upcoming state) already threaded through the component as the phaseTallies prop. Approver column is a static 'Sponsor' label (the current constant GATE_RULES approverRole in governance.ts) — no per-role rows, no requires_revalidation state, no new fetch or API route. 'Review & approve' reuses the existing per-phase navigation (the rail's phase Link hrefs, or the local substep jump for the phase already open). Gates the rail's 'Approvals' link: when off, that link behaves byte-for-byte as before (jumps straight to the current phase's approve substep); when on, it opens this overview instead. Closes out MOVES-UI-001 Phase 5 (MOVES-UI-002). Cross-tenant proof: Lakeshore, SkyHarbor, Meridian, First Capital all live-verified 2026-07-21. Promoted to default-on for all tenants 2026-07-21, same rationale as moves_finder_shell_v1. Env: ABARVA_FEATURE_MOVES_APPROVALS_OVERVIEW_V1_TENANTS (now an exclude-list if ever needed).",
     policy: "platform",
     excludeTenants: [],
+  },
+  {
+    key: "tower_command_center_v2",
+    summary:
+      "2026-07-23: the rebuilt Tower Command Center — a density and interaction rebuild of the six Tower tabs (Command Center, Value Proof, Decision Lanes, AI Portfolio, Evidence, Recommended Actions) against the approved design at docs/design/tower/command-center-2026-07-23/tower-command-center-design.html. /tower serves the Command Center only when this flag is explicitly enabled for the tenant, and the previous surface when it is off. The previous surface is archived intact at /tower/legacy (component: TowerLegacySurface) and is always reachable there; TowerIndexPage.tsx was never edited. /tower/command is a permanent alias that redirects to /tower. Every string and number is read from the governed cio_tower.mart_* read models via loadTowerMartCommandView(); the design file's banking mock dataset ships only as a typed test fixture. Five presentation fields the mart does not persist yet (usage-supported, claimable, blocked, evidence maturity, proof level) are derived in src/lib/tower/command-center/derive.ts and unit-tested — Tower read models own every value; Claude calculates nothing here. Rollout posture: tenant-gated. First enabled tenant is meridian (Healthcare Demo) on 2026-07-23, so the owner can review the surface live and give tab-by-tab UI/UX feedback; scoping to their own tenant keeps an un-reviewed surface away from every other client. Widen via includeTenants, and only flip to policy 'platform' after review plus signed-in proof. Two known gaps remain before platform default-on: (1) this surface has no conversational aVa/Atlas chat — the approved design has only the governed aVa output caption, and /tower/legacy is currently the only place Tower mounts AtlasChatPanel; (2) live Healthcare Composite Demo read-back predicts a 75%-empty Evidence tab, ~80 bubble-matrix points against a design drawn for ~8, and 3 of 5 empty owner columns. ROLLBACK: remove the tenant from includeTenants (or clear the env allowlist) — the previous Tower returns on the next request with no deploy. Env: ABARVA_FEATURE_TOWER_COMMAND_CENTER_V2_TENANTS.",
+    policy: "tenant",
+    includeTenants: ["meridian"],
   },
   {
     key: "moves_phase_workspace_v2",

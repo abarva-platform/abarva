@@ -1,25 +1,36 @@
-import { TowerIndexPage } from "@/components/tower/TowerIndexPage";
+// Tower — primary route.
+//
+// As of 2026-07-23 this serves the **Command Center** (the rebuilt page against
+// `docs/design/tower/command-center-2026-07-23/`) when `tower_command_center_v2`
+// is enabled for the tenant, and the previous surface when it is not.
+//
+// The flag is the promotion and rollback switch, and it is the whole rollback
+// plan: turning it off for a tenant restores the previous Tower for that tenant
+// on the next request, with no deploy. The previous surface is archived intact
+// at `/tower/legacy` and is always reachable there for side-by-side comparison,
+// regardless of the flag.
+//
+// `TowerIndexPage.tsx` was not modified to make this change.
+
+import { Suspense } from "react";
+
+import { AppShell } from "@/components/shell/AppShell";
+import { TowerCommandCenter } from "@/components/tower/command-center/TowerCommandCenter";
+import { TowerLegacySurface } from "@/components/tower/TowerLegacySurface";
 import {
   getActiveClientRow,
   hasLockedTenantSession,
 } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
-import { loadCioTowerCxoView } from "@/lib/cio-tower/cxo-view-model";
 import { loadTowerMartCommandView } from "@/lib/cio-tower/tower-mart-view-model";
-import { buildTowerV3ContextPackFromTenantInputs } from "@/lib/enterprise-knowledge/tower/tower-v3-context-pack-from-tenant-inputs";
 import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
-import { applyTowerCxoClaudeStory } from "@/lib/tower/tower-cxo-claude-story";
-import { listTowerBudgetRollupsForClient } from "@/lib/tower/tower-budget-rollups";
-import {
-  isTowerV3ContextRuntimeEnabled,
-  isMeridianTowerRuntimeTenant,
-} from "@/lib/tower/tower-v3-runtime-flag";
-import { buildTowerV3RuntimeViewModel } from "@/lib/tower/tower-v3-runtime-view";
+import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
 
 export const metadata = { title: "Tower · AbarVa" };
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+/** Same budget the legacy surface uses. */
 const TOWER_READ_TIMEOUT_MS = 8_000;
 
 interface TowerPageProps {
@@ -51,94 +62,53 @@ async function withTowerReadTimeout<T>(
 }
 
 export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
-  const rawRequestedClient = firstSearchValue((await searchParams)?.client);
+  const resolved = await searchParams;
+  const rawRequestedClient = firstSearchValue(resolved?.client);
   const requestedClient = (await hasLockedTenantSession())
     ? rawRequestedClient
     : null;
   const client = await getActiveClientRow(requestedClient).catch(() => null);
+  const clientKey = client?.key ?? requestedClient ?? null;
+
+  // Flag off → the previous Tower, unchanged, with its own data loading.
+  if (
+    !isFeatureEnabled(
+      { clientKey, clientId: client?.id },
+      "tower_command_center_v2",
+    )
+  ) {
+    return <TowerLegacySurface searchParams={searchParams} />;
+  }
+
   const tenantName =
     canonicalClientDisplayName({ key: client?.key, name: client?.name }) ??
     client?.name ??
     "AbarVa Client";
 
-  const [towerMartView, cxoView, budgetRollups] = await Promise.all([
-    withTowerReadTimeout(
-      loadTowerMartCommandView({
-        tenantKeyCandidates: [client?.key, requestedClient, client?.id],
-      }),
-      null,
-    ),
-    withTowerReadTimeout(
-      loadCioTowerCxoView({
-        tenantKeyCandidates: [client?.key, requestedClient, client?.id],
-        tenantName,
-      }),
-      null,
-    ),
-    withTowerReadTimeout(
-      listTowerBudgetRollupsForClient({
-        clientId: client?.id ?? "",
-        tenantKey: client?.key ?? requestedClient,
-      }),
-      [],
-    ),
-  ]);
-  let towerV3RuntimeView =
-    isTowerV3ContextRuntimeEnabled() &&
-    (isMeridianTowerRuntimeTenant(client?.key) ||
-      isMeridianTowerRuntimeTenant(requestedClient) ||
-      isMeridianTowerRuntimeTenant(client?.name))
-      ? (() => {
-          const { contextPack } = buildTowerV3ContextPackFromTenantInputs({
-            tenantKey: "meridian-health",
-            tenantName,
-            activeInputRoot:
-              "datasets/tenant-inputs/active/meridian-health/current",
-          });
-          return buildTowerV3RuntimeViewModel({
-            tenantName,
-            contextPack,
-          });
-        })()
-      : null;
-
-  if (
-    towerV3RuntimeView &&
-    isFeatureEnabled(
-      { clientKey: client?.key ?? requestedClient ?? towerV3RuntimeView.tenantKey },
-      "tower_cxo_claude_story_blocks",
-    )
-  ) {
-    const { contextPack } = buildTowerV3ContextPackFromTenantInputs({
-      tenantKey: "meridian-health",
-      tenantName,
-      activeInputRoot: "datasets/tenant-inputs/active/meridian-health/current",
-    });
-    const claudeStory = await withTowerReadTimeout(
-      applyTowerCxoClaudeStory({
-        view: towerV3RuntimeView,
-        contextPack,
-        tenantName,
-      }),
-      {
-        used: false,
-        view: towerV3RuntimeView,
-        issues: ["Tower Claude story enrichment timed out; deterministic view rendered."],
-      },
-    );
-    towerV3RuntimeView = claudeStory.view;
-  }
+  const martView = await withTowerReadTimeout(
+    loadTowerMartCommandView({
+      tenantKeyCandidates: [client?.key, requestedClient, client?.id],
+    }),
+    null,
+  );
 
   return (
-    <TowerIndexPage
-      tenantName={tenantName}
-      context={`Portfolio Command Center · ${tenantName}`}
-      towerToday={new Date().toISOString().slice(0, 10)}
-      clientId={client?.id}
-      towerMartView={towerMartView}
-      cxoView={cxoView}
-      towerV3RuntimeView={towerV3RuntimeView}
-      budgetRollups={budgetRollups}
-    />
+    <AppShell
+      surface="tower"
+      topBarProps={{
+        tenantName,
+        preserveTenantName: true,
+        showLocked: true,
+        context: `Command Center · ${tenantName}`,
+      }}
+    >
+      <Suspense fallback={null}>
+        <TowerCommandCenter
+          view={buildTowerCommandCenterView(martView, { tenantName })}
+          tenantName={tenantName}
+          refreshedOn={new Date().toISOString().slice(0, 10)}
+        />
+      </Suspense>
+    </AppShell>
   );
 }
