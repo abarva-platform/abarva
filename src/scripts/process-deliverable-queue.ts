@@ -257,7 +257,7 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
         return;
       }
       const { loadCurrentMoveContextExtractFreshness } = await import(
-        "@/lib/programs/move-context-extract"
+        "@/lib/programs/move-context-extract-freshness"
       );
       const freshness = await loadCurrentMoveContextExtractFreshness({
         tenantKey: run.tenantKey,
@@ -374,6 +374,10 @@ async function runClaimed(run: DeliverableRunRecord, workerId: string): Promise<
           },
     );
   } catch (err) {
+    console.error(
+      `[process-deliverable-queue] run ${run.id} failed`,
+      err instanceof Error ? err.stack ?? err.message : err,
+    );
     await completeDeliverableRun(run.id, {
       status: "failed",
       error: (err instanceof Error ? err.message : String(err)).slice(0, 600),
