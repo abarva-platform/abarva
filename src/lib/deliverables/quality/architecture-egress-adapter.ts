@@ -26,5 +26,7 @@ export const governedArchitectureToolCall: GovernedToolCall = async (params) => 
   return {
     toolInput: toolUse ? (toolUse as { input: unknown }).input : null,
     modelId: response.model,
+    stopReason: response.stop_reason,
+    outputTokens: response.usage.output_tokens,
   };
 };

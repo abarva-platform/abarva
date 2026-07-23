@@ -82,9 +82,9 @@ describe("architecture generation pass (governed, tenant-agnostic)", () => {
   });
 
   it("passes the tool + system contract to the governed call (forced output)", async () => {
-    let seen: { tool?: unknown; system?: string } = {};
+    let seen: { tool?: unknown; system?: string; maxTokens?: number } = {};
     const call: GovernedToolCall = async (p) => {
-      seen = { tool: p.tool, system: p.system };
+      seen = { tool: p.tool, system: p.system, maxTokens: p.maxTokens };
       return { toolInput: FIRST_CAPITAL_ARCHITECTURE, modelId: "m" };
     };
     await generateArchitectureModel(
@@ -93,6 +93,31 @@ describe("architecture generation pass (governed, tenant-agnostic)", () => {
     );
     expect(seen.tool).toBe(ARCHITECTURE_TOOL);
     expect(seen.system).toMatch(/never a generic default/i);
+    expect(seen.maxTokens).toBe(32_000);
+  });
+
+  it("reports output truncation explicitly instead of misclassifying partial architecture", async () => {
+    const call: GovernedToolCall = async () => ({
+      toolInput: {
+        engagement: "Commercial Lending Agent Assist",
+        client: "First Capital Financial",
+        currentStateFlow: [{ id: "s1", label: "Intake" }],
+      },
+      modelId: "m",
+      stopReason: "max_tokens",
+      outputTokens: 8_000,
+    });
+
+    await expect(
+      generateArchitectureModel(
+        {
+          engagement: "Commercial Lending Agent Assist",
+          client: "First Capital Financial",
+          contextText: "grounded context",
+        },
+        call,
+      ),
+    ).rejects.toThrow(/truncated.*32,?000-token output limit.*8000 output tokens/i);
   });
 
   it("builds a grounded user message", () => {
