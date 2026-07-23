@@ -57,7 +57,7 @@ Revert the PR and deploy through the repo-owned ACA main workflow. No data rollb
 
 ## Audit Evidence
 
-- PR URL: https://github.com/abarva-platform/abarva/pull/5448.
+- PR URL: https://github.com/abarva-platform/abarva/pull/5449.
 - Failed pre-fix safety proof: `/private/tmp/source-artifact-registry-slug-or-fix-live-proof-202607230731`.
 - Post-deploy invariant and signed-in proof: pending after merge/deploy.
 
