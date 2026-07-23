@@ -493,7 +493,7 @@ function EvidenceView({
           {evidencePosture.sources.map((source) => (
             <div key={source.label} style={sourcePackageStyle}>
               <b>{source.label}</b>
-              <span>{formatWhole(source.count)} traced claim{source.count === 1 ? "" : "s"}</span>
+              <span>{sourcePackageRole(source.label)}</span>
             </div>
           ))}
         </div>
@@ -1189,6 +1189,17 @@ function friendlySourceLabel(value: string | null | undefined): string {
   if (source.includes("07_vendor")) return "Vendors and contracts template";
   if (!source || source === "null") return "Source pending";
   return humanize(source.replace(/\.csv$/i, ""));
+}
+
+function sourcePackageRole(label: string): string {
+  const normalized = label.toLowerCase();
+  if (normalized.includes("budget")) return "Supports spend posture and run/change allocation.";
+  if (normalized.includes("program")) return "Supports funded portfolio and owner posture.";
+  if (normalized.includes("opportunity")) return "Supports candidate AI and embedded AI lens.";
+  if (normalized.includes("benefits") || normalized.includes("usage")) return "Supports usage, promise, and validation boundary.";
+  if (normalized.includes("metrics")) return "Supports baseline and outcome-readiness posture.";
+  if (normalized.includes("vendor")) return "Supports commercial exposure and renewal posture.";
+  return "Supports the evidence boundary shown above.";
 }
 
 function evidenceFactLabel(row: TowerMartEvidenceLineage): string {
