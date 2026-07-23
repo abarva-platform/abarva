@@ -238,7 +238,12 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   conservative readiness rows are actually present.
 - **Severity**: P3 (data-layer integrity / enterprise-context promotion readiness).
 - **Workstream**: Ingestion / data persistence.
-- **Status**: `Candidate` — code-only, read-only, no migration and no production data mutation.
+- **Status**: `Shipped — deployed and runtime-proven` — code-only, read-only, no migration
+  and no production data mutation. Merged in PR #5465, deployed by ACA main run
+  `30009823928`, independently invariant-checked on revision
+  `ca-abarva-web-lab-eastus--m68b1570e`, and read-only VNet-proven against an existing
+  Lakeshore Source writeback with 14 records, 14 facts, 14 readiness rows, and 0 premature
+  promotion violations.
 - **Dependencies**: existing Source enterprise-context writeback module and existing
   `enterprise_context_records`, `enterprise_context_facts`, and `governed_object_readiness`
   tables. No new schema or data-build job is required.
