@@ -23,7 +23,10 @@ import {
   withCanonicalIdentity,
   SOURCE_PRIORITY,
 } from "./facts-schema";
-import { BUDGET_METRIC_KEYS, PROGRAM_METRIC_KEYS } from "./mart-metric-keys";
+import {
+  BUDGET_METRIC_KEYS,
+  PROGRAM_METRIC_KEYS,
+} from "./mart-metric-keys";
 
 const FORMULA_VERSION = "v3_template_to_facts_v1";
 
@@ -37,6 +40,14 @@ function num(value: string | undefined | null): number {
   if (!cleaned || cleaned === "not_provided") return 0;
   const parsed = Number(cleaned);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function firstNumber(...values: Array<string | undefined | null>): number {
+  for (const value of values) {
+    const parsed = num(value);
+    if (parsed > 0) return parsed;
+  }
+  return 0;
 }
 
 /** Deterministic canonical program key from a V3 program_code, so the crosswalk
@@ -124,17 +135,40 @@ export function factsFromV3Budget(
   const atomic = rows.filter(
     (r) => r.budget_row_level === "atomic_budget_fact",
   );
+  const universal = atomic.length
+    ? []
+    : rows.filter((r) => firstNumber(r.annual_spend_usd, r.amount_usd) > 0);
   let total = 0;
   let run = 0;
   let change = 0;
   let aiTagged = 0;
-  for (const r of atomic) {
-    total += num(r.budget_amount_usd);
-    run += num(r.run_budget_usd);
-    change += num(r.change_budget_usd);
-    aiTagged += num(r.ai_tagged_budget_usd);
+  if (atomic.length > 0) {
+    for (const r of atomic) {
+      total += num(r.budget_amount_usd);
+      run += num(r.run_budget_usd);
+      change += num(r.change_budget_usd);
+      aiTagged += num(r.ai_tagged_budget_usd);
+    }
+  } else {
+    for (const r of universal) {
+      const amount = firstNumber(r.annual_spend_usd, r.amount_usd);
+      total += amount;
+      const split = (r.run_change_transform_split ?? "").toLowerCase();
+      if (split.includes("run")) run += amount;
+      else if (split.includes("change") || split.includes("transform"))
+        change += amount;
+      else {
+        run += amount * 0.7;
+        change += amount * 0.3;
+      }
+      if ((r.ai_spend_flag ?? "").toLowerCase() === "true") {
+        aiTagged += amount;
+      }
+      aiTagged += num(r.ai_tagged_budget_usd);
+    }
   }
-  const file = "08_it_budget_spend_value.csv";
+  const file =
+    atomic.length > 0 ? "08_it_budget_spend_value.csv" : "08_spend_value.csv";
   const facts: CioTowerFactRow[] = [];
   if (total > 0) {
     facts.push(
@@ -146,7 +180,10 @@ export function factsFromV3Budget(
         scope: "enterprise_envelope",
         valueNumeric: total,
         sourceFile: file,
-        sourceRow: `sum(atomic_budget_fact) n=${atomic.length}`,
+        sourceRow:
+          atomic.length > 0
+            ? `sum(atomic_budget_fact) n=${atomic.length}`
+            : `sum(annual_spend_usd) n=${universal.length}`,
         canonical: budgetCanonical(BUDGET_METRIC_KEYS.total),
       }),
       buildV3Fact({
@@ -157,7 +194,10 @@ export function factsFromV3Budget(
         scope: "enterprise_envelope",
         valueNumeric: run,
         sourceFile: file,
-        sourceRow: `sum(run_budget_usd) n=${atomic.length}`,
+        sourceRow:
+          atomic.length > 0
+            ? `sum(run_budget_usd) n=${atomic.length}`
+            : `sum(run annual_spend_usd) n=${universal.length}`,
         canonical: budgetCanonical(BUDGET_METRIC_KEYS.run),
       }),
       buildV3Fact({
@@ -168,7 +208,10 @@ export function factsFromV3Budget(
         scope: "enterprise_envelope",
         valueNumeric: change,
         sourceFile: file,
-        sourceRow: `sum(change_budget_usd) n=${atomic.length}`,
+        sourceRow:
+          atomic.length > 0
+            ? `sum(change_budget_usd) n=${atomic.length}`
+            : `sum(change/transform annual_spend_usd) n=${universal.length}`,
         canonical: budgetCanonical(BUDGET_METRIC_KEYS.change),
       }),
     );
@@ -187,7 +230,10 @@ export function factsFromV3Budget(
         scope: "enterprise_envelope",
         valueNumeric: aiTagged,
         sourceFile: file,
-        sourceRow: `sum(ai_tagged_budget_usd) n=${atomic.length}`,
+        sourceRow:
+          atomic.length > 0
+            ? `sum(ai_tagged_budget_usd) n=${atomic.length}`
+            : `sum(ai tagged annual_spend_usd) n=${universal.length}`,
         canonical: budgetCanonical(BUDGET_METRIC_KEYS.aiTagged),
       }),
     );
@@ -229,9 +275,15 @@ export function factsFromV3Programs(
   for (const r of rows) {
     const code = (r.program_code ?? "").trim();
     if (!code) continue;
-    const funding = num(r.approved_funding_usd);
+    const isCandidateStatus = /candidate/i.test(
+      r.active_candidate_status ?? "",
+    );
+    const funding = firstNumber(
+      r.approved_funding_usd,
+      isCandidateStatus ? null : r.budget_usd,
+    );
     if (funding <= 0) continue;
-    const name = (r.business_name ?? code).trim();
+    const name = (r.business_name ?? r.program_name ?? code).trim();
     facts.push(
       buildV3Fact({
         tenantKey: identity.tenantKey,
@@ -279,7 +331,11 @@ export function factsFromV3Programs(
         }),
       );
     }
-    const planned = num(r.planned_value_usd) || num(r.target_value_usd);
+    const planned = firstNumber(
+      r.planned_value_usd,
+      r.target_value_usd,
+      isCandidateStatus ? null : r.expected_value_usd,
+    );
     if (planned > 0) {
       facts.push(
         buildV3Fact({
@@ -342,6 +398,25 @@ export function factsFromV3Benefits(
           attributes: {
             vendor_name: r.vendor_name ?? null,
             tool_name: r.tool_name ?? null,
+          },
+        }),
+      );
+      facts.push(
+        buildV3Fact({
+          tenantKey: identity.tenantKey,
+          keyParts: ["benefit-ai-tagged-spend", code],
+          measure: `${name} AI-tagged funded spend`,
+          view: "app_run_cost",
+          scope: "initiative",
+          valueNumeric: fundedSpend,
+          sourceFile: file,
+          sourceRow: r.source_record_id ?? programId,
+          canonical: programCanonical(code, name, "program_ai_tagged_spend_usd"),
+          attributes: {
+            vendor_name: r.vendor_name ?? null,
+            tool_name: r.tool_name ?? null,
+            additive_status: r.additive_status ?? null,
+            tower_claim_allowed: r.tower_claim_allowed ?? null,
           },
         }),
       );
