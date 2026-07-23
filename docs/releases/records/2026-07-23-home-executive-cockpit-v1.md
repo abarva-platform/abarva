@@ -1,29 +1,31 @@
-# 2026-07-23-home-executive-cockpit-v1 — Home Executive Cockpit Replacement
+# 2026-07-23-home-enterprise-brief-app — Home Enterprise Brief Replacement
 
 ## Release ID
 
-`2026-07-23-home-executive-cockpit-v1`
+`2026-07-23-home-enterprise-brief-app`
 
 ## Status
 
-`candidate — follow-up CXO polish pending merge/deploy`
+`candidate — brand-new replacement pending PR, deploy, and signed-in proof`
 
 ## Plain-English Summary
 
-Replaces the legacy Home knowledge page with a new executive cockpit built from the governed Home knowledge pack. The new surface is designed as a CXO context cockpit: compact navigation, executive brief, operating-model story, relationship graph, technology lens, change thesis, evidence boundary, and per-dimension drilldowns.
+Replaces the transitional Home cockpit with a brand-new Enterprise Brief app modeled on the supplied `Home Enterprise Brief (offline).html` reference. This is not an incremental patch to the old page. The Home route now renders a clean executive briefing surface with a simple Mac/Finder-style context explorer, page-style executive sections, Recharts visuals, a business-readable relationship graph, evidence inventory, and dimension drilldowns.
 
-Follow-up correction: tightens the surface toward the supplied offline Home Enterprise Brief reference by using numbered page headers, a more compact main canvas, graph legend plus instruction callout, business-readable relationship labels, and no raw relationship IDs in the CXO graph.
+This release also sunsets the old Home rendering surfaces from the active route. The legacy tabbed surface and React Flow relationship test are removed so the product cannot drift back to the older page.
 
 ## Layer Impact
 
 - `global-control-lane`: changes the shared Home route and client-visible Home UX for approved knowledge packs.
-- Home read model: continues to read approved Home packs from the existing Postgres-first loader with JSON fallback, then renders the approved pack through the new cockpit component.
-- Client-visible rendering: removes the old approved-pack surface from the Home route and uses business-readable labels instead of source mechanics.
+- Home read model: continues to read approved Home packs from the existing Postgres-first loader with JSON fallback.
+- Client-visible rendering: replaces the old cockpit component with `HomeEnterpriseBriefApp`.
+- Visual layer: uses Recharts for dashboard charts and a governed SVG relationship map for the Enterprise Brief graph.
+- Data layer: no schema migration and no data mutation in this PR.
 
 ## Client Applicability
 
 - All clients: active tenants with an approved Home knowledge pack.
-- Specific clients: none.
+- Specific proof target: Meridian Health System and FS Demo / Arcturus.
 - Internal only: no.
 - Public/demo only: no.
 - Feature flag: none.
@@ -31,32 +33,38 @@ Follow-up correction: tightens the surface toward the supplied offline Home Ente
 ## Changes Included
 
 - `src/app/(maestro)/home/page.tsx`
-- `src/components/home/HomeExecutiveCockpit.tsx`
-- Follow-up polish in `src/components/home/HomeExecutiveCockpit.tsx`: section header model, relationship graph label governance, graph legend/callout, and cockpit typography sizing.
+- `src/components/home/HomeEnterpriseBriefApp.tsx`
+- `src/components/home/HomeExecutiveCockpit.tsx` removed
+- `src/components/home/HomeKnowledgeDesignContractSurface.tsx` removed
+- `src/components/home/__tests__/buildRelationshipTopology.test.ts` removed
+- `package.json` / `package-lock.json`: removed old React Flow / Dagre graph dependencies no longer used by Home.
+- Home route and integration tests updated to require the new component and reject old Home surfaces.
 
 ## QA / Validation
 
-- `npx eslint 'src/app/(maestro)/home/page.tsx' src/components/home/HomeExecutiveCockpit.tsx` — passed locally.
-- `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false --incremental false` — passed locally.
-- `npm run release:check` — passed locally.
-- `NODE_OPTIONS=--max-old-space-size=8192 npm run build` — passed locally with existing broad dynamic file-pattern warnings.
-- `npx jest 'src/app/(maestro)/home/__tests__/home-admin-boundary-contract.test.ts' 'src/__tests__/integration/home/home-v2-all-client-binding.test.ts' --runInBand` — passed locally with existing duplicate mock warnings.
-- First deploy proof on PR #5429: Meridian and FS Demo signed-in checks passed for new cockpit presence, old tab absence, relationship graph presence, evidence rows, and Recharts cards. Visual review found raw relationship IDs still visible, so this follow-up correction is required before final acceptance.
-- Follow-up local validation: eslint and full TypeScript passed; focused Home Jest passed with existing duplicate mock warnings.
-- Follow-up signed-in browser proof on deployed ACA for Meridian and FS Demo — pending after merge and deploy.
+- Focused ESLint — pass locally.
+- Focused Home Jest tests — pass locally with existing duplicate manual mock warnings.
+- `git diff --check` — pass locally.
+- Full TypeScript — pass locally.
+- `npm run release:check` — pass locally.
+- Production build — pass locally with existing broad dynamic file-pattern warnings.
+- Signed-in browser proof for Meridian and FS Demo / Arcturus after ACA deploy — not-run until deploy.
+
+Prior related evidence:
+
+- PR #5429 replaced the first legacy Home route and deployed to ACA revision `ca-abarva-web-lab-eastus--m5c1b1775` with digest `sha256:314f58a1e1ac40a7075439a0df15c2b7b5b6c71396eec16ca519760e1bacc514`.
+- PR #5433 was merged but its ACA deploy was cancelled after product direction changed to a brand-new reference app.
 
 ## Rollout Plan
 
-Open a follow-up PR against `main`, merge through the repository lane, deploy through the repo-owned Azure Container Apps main workflow, verify the ACA runtime invariant, then run signed-in browser proof for Meridian and FS Demo.
+Open this PR against `main`, merge through the repository lane, deploy through the repo-owned Azure Container Apps main workflow, verify the ACA runtime invariant, then run signed-in browser proof for Meridian and FS Demo / Arcturus.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`
 - Shared runtime mutators: none in this PR.
-- Prior deployed image digest from PR #5429: `sha256:314f58a1e1ac40a7075439a0df15c2b7b5b6c71396eec16ca519760e1bacc514`.
-- Prior ACA revision from PR #5429: `ca-abarva-web-lab-eastus--m5c1b1775`.
-- Approved image digest: pending follow-up ACA deploy.
-- ACA runtime invariant: pending follow-up ACA deploy.
+- Approved image digest: pending ACA deploy.
+- ACA runtime invariant: pending ACA deploy.
 - Worker image invariant: not changed.
 - Feature/env flag update path: none.
 - Live signed-in proof required: yes.
@@ -67,14 +75,13 @@ Revert the PR and redeploy the prior known-good ACA image through the repo-owned
 
 ## Audit Evidence
 
-- First PR URL: https://github.com/abarva-platform/abarva/pull/5429
-- First ACA revision and image digest: `ca-abarva-web-lab-eastus--m5c1b1775`, `sha256:314f58a1e1ac40a7075439a0df15c2b7b5b6c71396eec16ca519760e1bacc514`.
-- First signed-in proof bundle: `/tmp/home-executive-cockpit-v1-proof/results.json`.
-- Follow-up PR URL: pending.
-- Follow-up CI run: pending.
-- Follow-up ACA revision and image digest: pending.
-- Follow-up signed-in screenshots and DOM proof: pending.
+- Previous PR URL: https://github.com/abarva-platform/abarva/pull/5429
+- Cancelled interim PR URL: https://github.com/abarva-platform/abarva/pull/5433
+- Current PR URL: pending.
+- Current CI run: pending.
+- Current ACA revision and image digest: pending.
+- Current signed-in screenshots and DOM proof: pending.
 
 ## Known Gaps
 
-- Follow-up browser proof must confirm the new cockpit is visible for Meridian and FS Demo, relationship graph renders as a graph, old duplicate tab/page mechanics are gone, and no raw internal relationship IDs such as source keys appear in the graph.
+- Browser proof must confirm the new Enterprise Brief app is visible for Meridian and FS Demo / Arcturus, the left explorer is simple and elegant, the relationship view renders as a graph, the old duplicate tabs are gone, and raw source mechanics are not visible in the CXO surface.

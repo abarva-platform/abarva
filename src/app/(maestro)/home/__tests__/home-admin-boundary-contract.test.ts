@@ -11,16 +11,18 @@ describe("Home/Admin boundary contract", () => {
   it("keeps the canonical /home entry on the insight surface", () => {
     const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
     const homeSource = readRepoFile(
-      "src/components/home/HomeExecutiveCockpit.tsx",
+      "src/components/home/HomeEnterpriseBriefApp.tsx",
     );
 
-    expect(pageSource).toContain("import { HomeExecutiveCockpit }");
+    expect(pageSource).toContain("import { HomeEnterpriseBriefApp }");
     expect(pageSource).not.toMatch(
-      /HomeOverviewV2|HomeIndexPage|StewardOrientationBlock/,
+      /HomeExecutiveCockpit|HomeOverviewV2|HomeIndexPage|StewardOrientationBlock/,
     );
 
-    expect(pageSource).toContain("<HomeExecutiveCockpit");
-    expect(homeSource).toContain("HomeExecutiveCockpit");
+    expect(pageSource).toContain("<HomeEnterpriseBriefApp");
+    expect(homeSource).toContain("HomeEnterpriseBriefApp");
+    expect(homeSource).toContain("Context Explorer");
+    expect(homeSource).toContain("Enterprise relationship map");
     expect(pageSource).not.toMatch(
       /ImpactInsightsHome|HomeOverviewV2|HomeIndexPage|StewardOrientationBlock/,
     );

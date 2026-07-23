@@ -18,14 +18,9 @@ import type {
 // No fabrication: an edge only exists here because a loaded row's own text
 // says so.
 //
-// PURE, CLIENT-SAFE ONLY. HomeKnowledgeDesignContractSurface.tsx ("use
-// client") imports deriveHomeRelationshipEdges directly -- this file must
-// never import node:fs/node:path or anything else Node-only, or Turbopack
-// fails the client bundle with "the chunking context does not support
-// external modules (request: node:fs)". The filesystem-reading counterpart
-// (readDerivedRelationshipGraphEdges) lives in
-// read-derived-relationship-graph.ts, a server-only module imported only by
-// home/page.tsx.
+// PURE, CLIENT-SAFE ONLY. This file must never import node:fs/node:path or
+// anything else Node-only. The filesystem-reading counterpart
+// (readDerivedRelationshipGraphEdges) lives in read-derived-relationship-graph.ts.
 // =============================================================================
 
 export interface HomeRelationshipEdge {

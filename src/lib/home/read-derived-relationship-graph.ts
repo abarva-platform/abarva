@@ -11,21 +11,15 @@ import {
 // -----------------------------------------------------------------------------
 // A separate, richer graph derivation job already runs for some tenants and
 // writes datasets/tenant-inputs/<tenant>/derived/relationship-graph.json --
-// a real, evidence-cited node/edge graph (confirmed for meridian-health:
-// 1,668 nodes / 2,670 edges across 14 node types and 17 relationship types,
-// generated 2026-07-17). This was never wired into the Home Knowledge
-// cockpit. When present, it is dramatically richer than
+// a real, evidence-cited relationship graph. When present, it is richer than
 // deriveHomeRelationshipEdges()'s field-parsing fallback and should be
 // preferred.
 //
 // SERVER-ONLY. This module reads the filesystem, so it must only be
 // imported from a Server Component (see home/page.tsx) and the result
-// passed down as a prop -- never import this from
-// HomeKnowledgeDesignContractSurface.tsx ("use client"), or Turbopack fails
-// the client bundle with "the chunking context does not support external
-// modules (request: node:fs)". This split exists specifically to prevent
-// that: derive-relationship-edges.ts stays pure/client-safe, this file
-// carries the node:fs/node:path dependency alone.
+// passed down as a prop. Client components must not import this file, or
+// Turbopack will fail the browser bundle on node:fs/node:path. The pure
+// fallback parser lives in derive-relationship-edges.ts.
 // =============================================================================
 
 interface RawRelationshipGraphEdge {
