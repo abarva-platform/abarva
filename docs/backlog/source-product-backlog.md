@@ -762,6 +762,38 @@ updated 19 d ago` on the proof event).
   deep-grounded before implementation per this session's established discipline (verify
   before building, especially for anything touching the mandatory governance gate).
 
+### SOURCE-ANALYTICS-CHAT-002 — Artifact quality/lifecycle governed chat answer
+
+- **Problem statement**: the first Source structured aVa answer shipped only vendor response
+  coverage. Artifact quality and lifecycle posture still required users to leave chat, open the
+  Files workspace, and interpret the lifecycle matrix manually.
+- **User/business impact**: a reviewer should be able to ask "which artifacts are missing?",
+  "how is artifact quality?", or "are the client finals ready?" and get a rendered chart/table
+  grounded in the same lifecycle matrix the Files workspace uses.
+- **Severity**: P3 (analytics / aVa chat capability gap).
+- **Workstream**: Analytics / aVa chat.
+- **Status**: `Candidate` — code-only, no migration and no production data mutation.
+- **Dependencies**: existing Source artifact registry repository, existing
+  `buildSourceArtifactLifecycleSummary()`, existing `AvaAnswerPacket` / `AgentAnswerRenderer`
+  pipeline, and the mandatory `buildValidatedAgentContextBundle()` gate.
+- **Acceptance criteria**: Source's opt-in NDJSON event-chat route recognizes artifact
+  quality/lifecycle questions; returns a governed `AvaAnswerPacket` with a rendered posture
+  chart and action table; uses real `source_artifacts` rows for citations when present; reports
+  an honest no-data/canonical-standards zero state when no artifacts are registered; does not
+  claim OCR, transcription, vector indexing, or enterprise-context promotion unless those
+  existing statuses are already present.
+- **Required tests**:
+  `src/lib/source/ava/__tests__/artifact-quality-governed-answer.test.ts`,
+  `src/app/api/v1/source/[eventId]/nexus/ask/__tests__/vendor-coverage-intent.test.ts`.
+- **Release record**:
+  `docs/releases/records/2026-07-23-source-artifact-quality-governed-chat-answer.md`.
+- **Discovered from**: the standing `SOURCE-ANALYTICS-CHAT-001` follow-on list and the
+  6-area Source audit's request for aVa to render impactful analytics/insights, not prose-only
+  answers.
+- **Notes / remaining gaps**: value-waterfall chat answers remain a separate follow-on; async
+  parse worker, OCR/transcription, vector indexing, and enterprise-context promotion remain
+  governed ingest/data-build slices.
+
 ---
 
 ### SOURCE-ARTIFACT-AUTHORITY-001 — One authoritative artifact per event+slot, consumed everywhere downstream
