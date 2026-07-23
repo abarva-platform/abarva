@@ -99,6 +99,20 @@ describe("transformation gates (W1)", () => {
     expect(r).toHaveLength(0);
   });
 
+  it("does not flag period-delimited evidence/source register appendix headings", () => {
+    for (const heading of [
+      "Appendix B. Evidence Register",
+      "Appendix B. Source Register",
+    ]) {
+      const r = scanMachinery(
+        base({
+          narrativeText: `Recommendation: proceed with the approved option. ${heading} This register lists cited evidence.`,
+        }),
+      );
+      expect(r).toHaveLength(0);
+    }
+  });
+
   it("still scans body machinery before a flattened register appendix", () => {
     const r = scanMachinery(
       base({

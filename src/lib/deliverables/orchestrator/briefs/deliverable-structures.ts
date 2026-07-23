@@ -696,9 +696,13 @@ const MOVES_SOLUTION_DESIGN: DeliverableStructure = {
   ],
 };
 
-const MOVES_OPERATING_MODEL_DESIGN: DeliverableStructure = {
+const MOVES_OPERATING_MODEL: DeliverableStructure = {
   module: "moves",
-  deliverableType: "operating_model_design",
+  // The Moves registry key `operating_model_design` intentionally routes to
+  // the orchestrator's canonical `operating_model` key. Keep the premium P3
+  // contract on the canonical key so the live worker cannot fall through to a
+  // generic operating-model binder.
+  deliverableType: "operating_model",
   purpose:
     "Define the human, AI, governance, and service-management model required to operate the accepted solution safely.",
   decisionToSupport:
@@ -789,72 +793,6 @@ const MOVES_SOURCING_STRATEGY: DeliverableStructure = {
     "evaluation_commercial",
     "delivery_governance",
     "risks_open",
-    "recommendation",
-  ],
-};
-
-const MOVES_OPERATING_MODEL: DeliverableStructure = {
-  module: "moves",
-  deliverableType: "operating_model",
-  purpose:
-    "Define the human and agent operating model required to run the move safely.",
-  decisionToSupport:
-    "Approve ownership, governance, RACI, controls, and run-state roles.",
-  sections: [
-    s(
-      "exec_summary",
-      "Executive Summary",
-      "Operating model decision in brief.",
-      "mixed",
-    ),
-    s(
-      "current_state",
-      "Current Operating Baseline",
-      "Recorded ownership and process baseline.",
-      "governed_facts",
-    ),
-    s(
-      "future_roles",
-      "Future Roles & RACI",
-      "Humans, agents, SI, and retained owners.",
-      "mixed",
-    ),
-    s(
-      "governance",
-      "Governance & Decision Rights",
-      "Forums, approvals, escalation, and audit.",
-      "mixed",
-    ),
-    s(
-      "controls",
-      "Responsible AI & Control Points",
-      "Human approval and monitoring controls.",
-      "mixed",
-    ),
-    s(
-      "change",
-      "Business-Process Change, Adoption & Training",
-      "The concrete to-be business-process / operating-model changes that ENABLE each success-criteria outcome (which process change drives which outcome/metric), how people adopt them, and the enablement to capture the metrics post-deployment. This is the people-and-process lever the outcome depends on — make it specific, not a generic change-management paragraph.",
-      "mixed",
-    ),
-    s(
-      "risks",
-      "Risks, Issues & Dependencies",
-      "Operating risks and mitigations.",
-      "mixed",
-    ),
-    s(
-      "recommendation",
-      "Recommendation & Next Actions",
-      "Approve the operating model.",
-      "mixed",
-    ),
-  ],
-  requiredSectionKeys: [
-    "exec_summary",
-    "current_state",
-    "future_roles",
-    "governance",
     "recommendation",
   ],
 };
@@ -1334,9 +1272,8 @@ export const DELIVERABLE_STRUCTURES: DeliverableStructure[] = [
   MOVES_ROOT_CAUSE_WORKSHEET,
   MOVES_TARGET_ARCHITECTURE,
   MOVES_SOLUTION_DESIGN,
-  MOVES_OPERATING_MODEL_DESIGN,
-  MOVES_SOURCING_STRATEGY,
   MOVES_OPERATING_MODEL,
+  MOVES_SOURCING_STRATEGY,
   MOVES_ESTIMATE,
   MOVES_VALUE,
   MOVES_MOBILIZATION,

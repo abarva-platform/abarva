@@ -60,6 +60,13 @@ describe("resolveQualityBar", () => {
     },
   );
 
+  it("applies the P3 operating-model ceiling to the canonical orchestrator key", () => {
+    const qb = resolveQualityBar("moves", "operating_model");
+    expect(qb.minSections).toBe(8);
+    expect(qb.targetBodyWordsMax).toBe(4_600);
+    expect(qb.enforceMaxAsBlocker).toBe(true);
+  });
+
   it("falls back to the shared default for an artifact type with no override", () => {
     const qb = resolveQualityBar("moves", "some_future_artifact_type");
     expect(qb.minSections).toBe(6);
