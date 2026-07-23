@@ -94,9 +94,9 @@ const DEPTH_BY_ARTIFACT: Partial<
     maxTokens: 30000,
   },
   sourcing_strategy: {
-    targetWords: "1,800-3,600",
+    targetWords: "1,800-3,400",
     minWords: 1800,
-    maxTokens: 26000,
+    maxTokens: 24000,
   },
   execution_roadmap: {
     targetWords: "3,000-5,000",
