@@ -100,6 +100,12 @@ export interface SourceShellFileItem {
   needsComplianceReview: boolean;
   complianceReviewLabel: string | null;
   complianceReviewMessage: string | null;
+  /** First-mile extraction status from the durable Source artifact row. */
+  parseStatus: string | null;
+  /** Search/vector readiness status from the durable Source artifact row. */
+  embeddingStatus: string | null;
+  /** Graph/entity projection status from the durable Source artifact row. */
+  graphStatus: string | null;
   /**
    * The most recent explicit "accept as authoritative" record for this
    * artifact (SOURCE-SHELL-004), or null if it has never been accepted.
@@ -220,6 +226,9 @@ export interface SourceShellArtifactLike {
   bodyMarkdown?: string | null;
   renderedText?: string | null;
   plainTextSummary?: string | null;
+  parseStatus?: string | null;
+  embeddingStatus?: string | null;
+  graphStatus?: string | null;
   /**
    * Registry note (source_artifacts.description). Only ever read here to
    * derive the client-safe `needsComplianceReview` flag on the resulting
@@ -582,6 +591,9 @@ function toFileItem(
     complianceReviewMessage: needsComplianceReview
       ? SOURCE_COMPLIANCE_REVIEW_FLAG_MESSAGE
       : null,
+    parseStatus: artifact.parseStatus ?? null,
+    embeddingStatus: artifact.embeddingStatus ?? null,
+    graphStatus: artifact.graphStatus ?? null,
     latestAcceptance,
   };
 }
