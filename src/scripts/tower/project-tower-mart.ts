@@ -55,6 +55,7 @@ const FORMULA_VERSION = "unified_facts_v1";
 interface CliArgs {
   tenant: string;
   v3Dir: string;
+  supplementalDir: string | null;
   dryRun: boolean;
   noDb: boolean;
   emitProofBundle: boolean;
@@ -81,6 +82,9 @@ function parseArgs(argv: readonly string[]): CliArgs {
   return {
     tenant,
     v3Dir: path.resolve(process.cwd(), v3Dir),
+    supplementalDir: get("--supplemental-dir")
+      ? path.resolve(process.cwd(), get("--supplemental-dir")!)
+      : null,
     dryRun: args.includes("--dry-run") || !args.includes("--write"),
     // Local pure-pipeline run: skip the DB entirely (V3 CSVs only, no tower_*
     // telemetry, no alias crosswalk). Proves the projection without the VNet.
@@ -135,6 +139,23 @@ function readV3Csv(dir: string, file: string): CsvRow[] {
   const full = path.join(dir, file);
   if (!fs.existsSync(full)) return [];
   return parseCsv(fs.readFileSync(full, "utf8"));
+}
+
+function readV3Csvs(dirs: readonly string[], file: string): CsvRow[] {
+  return dirs.flatMap((dir) => readV3Csv(dir, file));
+}
+
+function existingV3Files(
+  dirs: readonly string[],
+  files: readonly string[],
+): string[] {
+  const found: string[] = [];
+  for (const dir of dirs) {
+    for (const file of files) {
+      if (fs.existsSync(path.join(dir, file))) found.push(file);
+    }
+  }
+  return [...new Set(found)];
 }
 
 async function resolveTenant(
@@ -326,15 +347,22 @@ async function main(): Promise<void> {
 
   try {
     const identity = await resolveTenant(client, args.tenant, args.tenant);
+    const csvDirs = [args.v3Dir, args.supplementalDir].filter(
+      Boolean,
+    ) as string[];
+    const primaryCsvDirs = [args.v3Dir];
 
     // 1. V3 facts (local CSVs)
     const v3Facts = projectV3ToFacts(
       {
-        budget: readV3Csv(args.v3Dir, "08_it_budget_spend_value.csv"),
-        programs: readV3Csv(args.v3Dir, "09_programs_initiatives.csv"),
-        aiUseCases: readV3Csv(args.v3Dir, "10_ai_automation_use_cases.csv"),
-        benefits: readV3Csv(
-          args.v3Dir,
+        budget: [
+          ...readV3Csvs(csvDirs, "08_it_budget_spend_value.csv"),
+          ...readV3Csvs(csvDirs, "08_spend_value.csv"),
+        ],
+        programs: readV3Csvs(primaryCsvDirs, "09_programs_initiatives.csv"),
+        aiUseCases: readV3Csvs(primaryCsvDirs, "10_ai_automation_use_cases.csv"),
+        benefits: readV3Csvs(
+          primaryCsvDirs,
           "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
         ),
       },
@@ -360,10 +388,15 @@ async function main(): Promise<void> {
       sourceStandard: path.basename(args.v3Dir),
       crosswalk,
       sourceFiles: [
-        "08_it_budget_spend_value.csv",
-        "09_programs_initiatives.csv",
-        "10_ai_automation_use_cases.csv",
-        "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+        ...existingV3Files(csvDirs, [
+          "08_it_budget_spend_value.csv",
+          "08_spend_value.csv",
+        ]),
+        ...existingV3Files(primaryCsvDirs, [
+          "09_programs_initiatives.csv",
+          "10_ai_automation_use_cases.csv",
+          "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
+        ]),
       ],
     });
 

@@ -112,6 +112,31 @@ describe("factsFromV3Budget", () => {
       ),
     ).toBe(false);
   });
+
+  it("projects universal rich 08 spend rows into the budget envelope", () => {
+    const rows: CsvRow[] = [
+      {
+        annual_spend_usd: "70",
+        run_change_transform_split: "run",
+        record_id: "s1",
+      },
+      {
+        annual_spend_usd: "30",
+        run_change_transform_split: "change",
+        record_id: "s2",
+      },
+    ];
+    const facts = factsFromV3Budget(rows, ID);
+    const byMetric = new Map(
+      facts.map((f) => [readCanonicalIdentity(f)!.metric_key, f.value_numeric]),
+    );
+    expect(byMetric.get("it_budget_total_usd")).toBe(100);
+    expect(byMetric.get("it_budget_run_usd")).toBe(70);
+    expect(byMetric.get("it_budget_change_usd")).toBe(30);
+    expect(
+      facts.every((f) => f.source_key === "08_spend_value.csv"),
+    ).toBe(true);
+  });
 });
 
 describe("factsFromV3Programs", () => {
@@ -215,6 +240,7 @@ describe("factsFromV3Benefits", () => {
       [
         "ai_tool_active_users",
         "ai_tool_seat_utilization",
+        "program_ai_tagged_spend_usd",
         "program_approved_funding_usd",
         "program_finance_validated_value_usd",
         "program_promised_value_usd",
@@ -245,6 +271,21 @@ describe("factsFromV3Benefits", () => {
           "program_finance_validated_value_usd",
       ),
     ).toBe(false);
+  });
+
+  it("also emits funded AI spend as program AI-tagged spend", () => {
+    const facts = factsFromV3Benefits(rows, ID, {
+      "AIP-DEV": "PROG-DEV-PRODUCTIVITY",
+    });
+    const devAiSpend = facts.find(
+      (f) =>
+        readCanonicalIdentity(f)!.program_code ===
+          "PROG-DEV-PRODUCTIVITY" &&
+        readCanonicalIdentity(f)!.metric_key === "program_ai_tagged_spend_usd",
+    );
+    expect(devAiSpend?.value_numeric).toBe(2_900_000);
+    expect(devAiSpend?.view).toBe("app_run_cost");
+    expect(devAiSpend?.scope).toBe("initiative");
   });
 });
 
@@ -279,7 +320,7 @@ describe("projectV3ToFacts", () => {
       },
       ID,
     );
-    // 3 budget + 1 funding + 1 benefit-promised
+    // 3 budget + 1 program funding + 1 benefit-promised
     expect(facts.length).toBe(5);
   });
 });
