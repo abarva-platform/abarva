@@ -36,6 +36,13 @@ describe("Source artifact upload contract", () => {
         requestedFamily: "pricing_workbook",
       }),
     ).toBe("pricing_workbook");
+    expect(
+      inferSourceArtifactFamily({
+        stageKey: "scope",
+        filename: "generic-session-file.md",
+        requestedFamily: "workshop_output",
+      }),
+    ).toBe("workshop_output");
   });
 
   it("infers Source families from sourcing filenames before falling back to stage", () => {

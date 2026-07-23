@@ -571,6 +571,7 @@ export async function POST(
         artifact,
         dataProtection,
         ...(landing ? { landing } : {}),
+        substrateSync,
         ...(parseWarnings.length > 0 ? { parseWarnings } : {}),
       },
       { status: 200 },

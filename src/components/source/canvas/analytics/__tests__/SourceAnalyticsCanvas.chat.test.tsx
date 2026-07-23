@@ -470,6 +470,65 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     ).toBeInTheDocument();
   });
 
+  it("posts workshop/session evidence with explicit governed upload metadata", async () => {
+    const fetchMock = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        artifact: {
+          id: "artifact-workshop-1",
+          originalName: "scope-workshop-output.md",
+          parseStatus: "parsed",
+        },
+        substrateSync: {
+          evidence: null,
+          criteria: [],
+        },
+      }),
+    });
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    render(
+      <SourceAnalyticsCanvas
+        event={makeEvent()}
+        viewStage="scope"
+        tenantName="Lakeshore"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /^files$/i }));
+    expect(screen.getByTestId("source-session-evidence-capture")).toHaveTextContent(
+      "Session evidence",
+    );
+
+    fireEvent.change(
+      screen.getByTestId("source-session-evidence-input-workshop_output"),
+      {
+        target: {
+          files: [
+            new File(["decision: Scope is fixed"], "scope-workshop-output.md", {
+              type: "text/markdown",
+            }),
+          ],
+        },
+      },
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(String(fetchMock.mock.calls[0][0])).toBe(
+      "/api/v1/source/evt-1/artifacts/upload",
+    );
+    const request = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(request.credentials).toBe("include");
+    const body = request.body as FormData;
+    expect(body.get("stageKey")).toBe("scope");
+    expect(body.get("artifactFamily")).toBe("workshop_output");
+    expect(body.get("artifactKind")).toBe("source_workshop_output");
+    expect(body.get("dataClassification")).toBe("Internal");
+    expect(await screen.findByText(/Captured scope-workshop-output.md/i)).toBeInTheDocument();
+    expect(mockRouterRefresh).toHaveBeenCalledTimes(1);
+  });
+
   it("does not tell users that event approval belongs in the old Source Approvals page", () => {
     render(
       <SourceAnalyticsCanvas

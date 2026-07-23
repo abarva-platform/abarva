@@ -158,6 +158,40 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
   surface, async parse worker, OCR/transcription, vector indexing, or enterprise-context
   promotion job. Those remain follow-on `SOURCE-INGEST-001` slices.
 
+### SOURCE-INGEST-001b — Dedicated workshop/session-notes capture surface
+
+- **Problem statement**: the Files workspace had a registry-backed upload path, but workshop
+  output and meeting notes were still hidden inside generic file upload behavior. Users could
+  attach session evidence, but they were not guided to classify it as `meeting_notes` or
+  `workshop_output`, so the upload relied on filename inference and made the Source evidence
+  layer feel accidental instead of intentional.
+- **User/business impact**: sourcing teams need a simple, repeatable place to capture session
+  notes, workshop outputs, and client review notes into the Azure/Postgres-backed Source data
+  layer. aVa can only answer better over time if those notes enter the governed registry with
+  explicit family, kind, stage, classification, parse state, and evidence-sync receipt.
+- **Severity**: P2 (evidence-layer integrity and workflow clarity).
+- **Workstream**: Ingestion / workspace UX.
+- **Status**: `Candidate` — code-only, no migration and no production data mutation.
+- **Dependencies**: existing Source Files workspace, existing `/api/v1/source/:eventId/artifacts/upload`
+  route, existing `source_artifacts` registry, existing synchronous first-mile parser, and
+  existing upload-to-canvas-substrate sync.
+- **Acceptance criteria**: the Files workspace shows a dedicated session-evidence capture panel;
+  Meeting Notes uploads post `artifactFamily=meeting_notes` and `artifactKind=source_session_notes`;
+  Workshop Output uploads post `artifactFamily=workshop_output` and
+  `artifactKind=source_workshop_output`; upload receipts honestly show parse/substrate-sync status
+  without claiming OCR, transcription, vector indexing, or enterprise-context promotion.
+- **Required tests**:
+  `src/components/source/canvas/analytics/__tests__/SourceAnalyticsCanvas.chat.test.tsx`,
+  `src/lib/source/artifact-registry/__tests__/upload-contract.test.ts`.
+- **Release record**:
+  `docs/releases/records/2026-07-23-source-session-evidence-capture.md`.
+- **Discovered from**: the 6-area Source audit and the standing ingest gap under
+  `SOURCE-INGEST-001a`.
+- **Notes / remaining gaps**: this does not add the async parse worker, OCR/transcription,
+  vector indexing, or enterprise-context promotion/backfill job. Those remain follow-on
+  governed slices because they may require worker/job operations, indexing policy, or data
+  promotion approval.
+
 ### SOURCE-SHELL-001 — Stage header lead-agent label was hardcoded
 
 - **Problem statement**: found while comparing a user-provided Source Event Shell redesign
