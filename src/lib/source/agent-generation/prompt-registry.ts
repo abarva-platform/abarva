@@ -253,6 +253,45 @@ const PRICING_TRAP_CATEGORIES = [
   "contract exception with price impact",
 ] as const;
 
+const VENDOR_RESPONSE_INTAKE_FIELDS = [
+  "vendor legal name",
+  "submission receipt timestamp",
+  "submitted artifact list",
+  "response checklist status",
+  "mandatory-answer completeness",
+  "pricing workbook received",
+  "commercial exceptions declared",
+  "assumptions / exclusions declared",
+  "evidence references supplied",
+  "late / nonconforming submission flags",
+] as const;
+
+const VENDOR_QA_LOG_FIELDS = [
+  "question id",
+  "vendor / bidder alias",
+  "question text",
+  "related RFP section",
+  "authoritative answer",
+  "binding status",
+  "published to all vendors",
+  "answer owner",
+  "published date or gate-relative deadline",
+  "addendum required",
+] as const;
+
+const RESPONSE_COMPLETENESS_DIMENSIONS = [
+  "mandatory response sections",
+  "vendor claim register",
+  "automation / productivity commitment table",
+  "structured pricing workbook",
+  "staffing and location model",
+  "SLA commitment table",
+  "assumptions and exclusions log",
+  "transition plan template",
+  "commercial exceptions table",
+  "evidence pointers and file references",
+] as const;
+
 function formatVendorResponseControlSections(): string {
   return VENDOR_RESPONSE_CONTROL_SECTIONS.map((section, index) =>
     [
@@ -278,6 +317,24 @@ function formatPricingCostSections(): string {
 function formatPricingTrapCategories(): string {
   return PRICING_TRAP_CATEGORIES.map(
     (category, index) => `${index + 1}. ${category}`,
+  ).join("\n");
+}
+
+function formatVendorResponseIntakeFields(): string {
+  return VENDOR_RESPONSE_INTAKE_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatVendorQaLogFields(): string {
+  return VENDOR_QA_LOG_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatResponseCompletenessDimensions(): string {
+  return RESPONSE_COMPLETENESS_DIMENSIONS.map(
+    (dimension, index) => `${index + 1}. ${dimension}`,
   ).join("\n");
 }
 
@@ -896,6 +953,266 @@ Writing and format requirements:
         "Draft the Vendor Response Control Pack per the system prompt. Bind it to this event and scope, include all eight required response-control components, include the response-compliance mandate, and make the future commercial leverage checks possible without claiming perfect downstream proposal parsing.",
       );
 
+      return lines.join("\n");
+    },
+  },
+
+  d13_vendor_responses: {
+    artifactCode: "d13_vendor_responses",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: 48_000,
+    upstreamRequired: ["d09_rfp_pack", "d11_response_checklist"],
+    upstreamOptional: ["d01_strategy_memo", "d05_scope_memo", "d14_qa_log"],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Vendor Response Pack (artifact d13_vendor_responses). This is the buyer-side response intake dashboard: it converts received vendor submissions into a disciplined receipt record, completeness snapshot, claim register, exceptions view, and evidence map. It is not a narrative summary of proposals and it must not pretend messy proposal parsing is perfect.
+
+Required structural sections:
+## §1 · Response intake status
+## §2 · Vendor-by-vendor submission inventory
+## §3 · Completeness and nonconformance flags
+## §4 · Key claims by vendor
+## §5 · Commercial exceptions and assumptions
+## §6 · Evidence file map
+## §7 · Clarifications needed before evaluation
+
+Required intake fields:
+${formatVendorResponseIntakeFields()}
+
+Response-control mandate that must govern this pack:
+${SOURCE_VENDOR_RESPONSE_CONTROL_MANDATE}
+
+Writing and format requirements:
+- §1 opens with a crisp status call: ready for completeness review / partial intake / blocked.
+- §2 must include a vendor table: Vendor | Receipt status | Files received | Checklist status | Pricing workbook | Evidence pointers | Exceptions submitted | Nonconformance flags.
+- §3 must flag missing mandatory response sections, missing pricing workbook fields, missing signatures, late/nonconforming files, and unsupported claims. Do not mark a vendor complete because a narrative response exists.
+- §4 must summarize key vendor claims by type and evidence status; never promote unsupported productivity, AI, automation, transformation, or SLA claims as facts.
+- §5 must list every declared assumption, exclusion, commercial exception, and change-order exposure that should flow to d15, d19, d20, and d22.
+- §6 maps friendly evidence file names to the response areas they support. If evidence is not available, show the gap with owner/action rather than inventing evidence.
+- §7 produces precise clarification questions for each vendor gap. These are buyer-side questions; do not imply they have been issued unless evidence says so.
+- Internal buyer/procurement language only. Do not expose raw tenant ids, database table names, routing keys, model/provider names, or implementation labels.
+- Markdown only. Tables are expected. Keep this as a compact dashboard an evaluator can actually use.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
+        `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "RFP Package (d09_rfp_pack):",
+        upstream.d09_rfp_pack ??
+          "(MISSING — do not fabricate response requirements; surface as a blocker)",
+        "",
+        "Vendor Response Control Pack (d11_response_checklist):",
+        upstream.d11_response_checklist ??
+          "(MISSING — do not fabricate checklist expectations; surface as a blocker)",
+        "",
+      ].filter((line): line is string => line !== null);
+
+      if (upstream.d01_strategy_memo) {
+        lines.push("Sourcing Strategy Memo (d01_strategy_memo):");
+        lines.push(upstream.d01_strategy_memo);
+        lines.push("");
+      }
+      if (upstream.d05_scope_memo) {
+        lines.push("Scope Memo (d05_scope_memo):");
+        lines.push(upstream.d05_scope_memo);
+        lines.push("");
+      }
+      if (upstream.d14_qa_log) {
+        lines.push("Q&A Log (d14_qa_log) — use only if already published/evidenced:");
+        lines.push(upstream.d14_qa_log);
+        lines.push("");
+      }
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— PARSED UPLOADED RESPONSE EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+      );
+
+      if (ctx.archetypeAdvisory) {
+        lines.push(
+          "— SOURCING-ADVISOR PLAYBOOK (archetype-specific commercial intelligence) —",
+          "",
+          ctx.archetypeAdvisory,
+          "",
+        );
+      }
+
+      lines.push(
+        "Draft the Vendor Response Pack per the system prompt. Treat uploaded vendor files as intake evidence, not as automatically complete proposals. If no vendor response files are present, produce the dashboard structure with explicit missing-response gaps and owner actions; do not invent vendors, prices, claims, or completeness.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d14_qa_log: {
+    artifactCode: "d14_qa_log",
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d09_rfp_pack"],
+    upstreamOptional: ["d11_response_checklist", "d13_vendor_responses"],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Q&A Parity Log (artifact d14_qa_log). This is the controlled bidder-communication record: every vendor question gets one authoritative answer, the same answer is published to all eligible vendors, and any binding scope/pricing change is carried into addenda and downstream evaluation.
+
+Required structural sections:
+## §1 · Publication control status
+## §2 · Q&A log
+## §3 · Binding addenda and RFP changes
+## §4 · Open questions and owner actions
+## §5 · Downstream impact on response completeness and scoring
+
+Required Q&A fields:
+${formatVendorQaLogFields()}
+
+Writing and format requirements:
+- This artifact is potentially vendor-facing. Use equal-information language and do not reveal internal scoring, budget sensitivity, preferred vendor views, negotiation posture, or buyer-side risk ratings.
+- §1 states whether the log is ready to publish, partially drafted, or blocked by missing answers.
+- §2 must include a table: Question ID | Vendor/Alias | Question | RFP section | Authoritative answer | Binding status | Published to all | Owner | Publish deadline | Addendum required.
+- §3 lists every answer that changes scope, pricing, timeline, response format, evaluation criteria, contractual terms, or evidence requirements.
+- §4 names unanswered or ambiguous questions with owner/action/deadline. Do not invent answers where the evidence is missing.
+- §5 explains how published answers affect d13 response intake, d15 completeness, d16 evaluation, d19 pricing, and d20 trap detection.
+- No internal agent names, raw ids, routing keys, model/provider names, table names, or implementation labels.
+- Markdown only. Keep it crisp enough for procurement to publish after human/legal review.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
+        `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "RFP Package (d09_rfp_pack):",
+        upstream.d09_rfp_pack ??
+          "(MISSING — do not fabricate published Q&A; surface as a blocker)",
+        "",
+      ].filter((line): line is string => line !== null);
+
+      if (upstream.d11_response_checklist) {
+        lines.push("Vendor Response Control Pack (d11_response_checklist):");
+        lines.push(upstream.d11_response_checklist);
+        lines.push("");
+      }
+      if (upstream.d13_vendor_responses) {
+        lines.push("Vendor Response Pack (d13_vendor_responses) — use only for evidenced follow-up questions:");
+        lines.push(upstream.d13_vendor_responses);
+        lines.push("");
+      }
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— UPLOADED Q&A / ADDENDUM EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "Draft the Q&A Parity Log per the system prompt. If no vendor-question evidence is present, create the controlled log shell with explicit missing question/answer inputs and publication controls; do not invent vendor questions or authoritative answers.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d15_response_completeness: {
+    artifactCode: "d15_response_completeness",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d11_response_checklist", "d13_vendor_responses"],
+    upstreamOptional: ["d09_rfp_pack", "d14_qa_log"],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Response Completeness Report (artifact d15_response_completeness). This is the gate-defining buyer-side decision record that says whether each vendor response is complete enough to enter evaluation. It is not the evaluation scorecard and it must not rank vendors on merit; it only gates completeness, evidence, and comparable inputs.
+
+Required structural sections:
+## §1 · Completeness gate decision
+## §2 · Vendor completeness matrix
+## §3 · Mandatory missing items
+## §4 · Evidence and claim-support gaps
+## §5 · Commercial / pricing readiness gaps
+## §6 · Clarification actions before evaluation
+## §7 · Evaluation handoff rule
+
+Completeness dimensions:
+${formatResponseCompletenessDimensions()}
+
+Writing and format requirements:
+- §1 makes a direct gate call: all vendors ready / selected vendors conditionally ready / blocked until gaps close.
+- §2 must include a table: Vendor | Overall completeness | Mandatory sections | Pricing workbook | Claim evidence | SLA commitments | Exceptions | Assumptions/exclusions | Clarifications open | Gate disposition.
+- §3 lists missing mandatory fields by vendor and source requirement. Do not convert unknowns into passes.
+- §4 separates unsupported claims from merely missing evidence pointers. Unsupported transformation, AI, automation, productivity, SLA, or cost-reduction claims must remain gaps until evidenced.
+- §5 names the pricing/commercial fields that d19 and d20 need. If missing, show downstream impact on pricing normalization and trap detection.
+- §6 gives precise clarification actions with owner, recipient/vendor, due date or gate-relative deadline, and downstream artifact affected.
+- §7 states exactly what can be handed to d16 evaluation and what must stay excluded/conditional until corrected.
+- Internal buyer/procurement language only. Do not expose raw tenant ids, database table names, routing keys, model/provider names, or implementation labels.
+- Markdown only. Tables are expected. Keep the artifact tight and operational.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
+        `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Vendor Response Control Pack (d11_response_checklist):",
+        upstream.d11_response_checklist ??
+          "(MISSING — do not fabricate response-control requirements; surface as a blocker)",
+        "",
+        "Vendor Response Pack (d13_vendor_responses):",
+        upstream.d13_vendor_responses ??
+          "(MISSING — do not fabricate vendor submissions; surface as a blocker)",
+        "",
+      ].filter((line): line is string => line !== null);
+
+      if (upstream.d09_rfp_pack) {
+        lines.push("RFP Package (d09_rfp_pack):");
+        lines.push(upstream.d09_rfp_pack);
+        lines.push("");
+      }
+      if (upstream.d14_qa_log) {
+        lines.push("Q&A Log (d14_qa_log) — use for binding addenda / changed response requirements:");
+        lines.push(upstream.d14_qa_log);
+        lines.push("");
+      }
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— UPLOADED RESPONSE EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "Draft the Response Completeness Report per the system prompt. Make the evaluation gate decision explicit, conservative, and vendor-specific. Do not rank vendors, score merit, invent missing submissions, or treat unsupported claims as complete.",
+      );
       return lines.join("\n");
     },
   },
