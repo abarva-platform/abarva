@@ -143,3 +143,35 @@ only. Proceed through the sanctioned ACA operator job's apply mode, capture the 
 proof-bundle discipline as the dry-run, and confirm post-apply that `deliverables_v2.status`
 reads identically to pre-apply for every existing caller (per the design doc's own compatibility
 plan, §5) before considering this closed.
+
+## Addendum (same day) — Authorized lifecycle apply executed and idempotency proven
+
+The authorized apply was executed through the sanctioned ACA operator job using the live
+digest-pinned web image
+`acrabarvalab001.azurecr.io/abarva/web@sha256:a2759de6ef44923dceb31ceeb852883de7fb85d971a0d014a705a2359506e481`.
+The first attempt failed mechanically because the operator job did not receive a database URL; it
+made no data change and the job template was restored to idle. The corrected run supplied
+`DATABASE_URL` from the approved operator secret and succeeded.
+
+**Apply proof**: `/tmp/moves-lifecycle-apply-authorized-20260723T170036Z-db/proof/local-20260723T070210304Z`.
+The proof bundle reports `status=PASS`, `mode=apply`, the approved workflow run
+`local-20260723T070210304Z`, the reviewed report id `local-20260723T070210304Z`, the approved
+migration hash `ff49c850a9bfe18ac837e7dfab19256d8cfe51f22cb01f86dbd0bdf014dabfcb`, and
+`counts.backfilled=12`.
+
+CSV proof confirms the applied rows remained conservative: 12 rows total; `skyharbor-air=7`,
+`first-capital=5`, `meridian-health=0`; confidence `high=2`, `inferred=10`;
+`requires_revalidation=false` only for the 2 high-confidence rows and `true` for the 10 inferred
+rows; every row is `proposed_lifecycle_current_state=human_approved`; every row has
+`authoritative_designation=true:legacy_backfill`. No row inferred `client_final`.
+
+**Idempotency proof**:
+`/tmp/moves-lifecycle-apply-idempotency-20260723T170259Z-db/proof/local-20260723T070210304Z`.
+The same approved workflow id was rerun through the operator job and reported
+`counts.skipped:already_processed_for_workflow_run=12`, proving the apply does not silently
+duplicate lifecycle rows.
+
+Compatibility note: both the apply and idempotency proof runs discovered the same 12 legacy rows
+through the script's legacy `deliverables_v2.status = 'signed_off'` candidate query, so existing
+status-based readers remain compatible with the Phase 1 lifecycle backfill. This does not mean
+phase gates consume the lifecycle model yet; gate integration remains separate future work.
