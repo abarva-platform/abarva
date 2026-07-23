@@ -196,6 +196,49 @@ describe("Source artifact lifecycle matrix", () => {
     expect(evaluationRows).not.toContain("No dedicated prompt");
   });
 
+  it("derives transition-stage prompt-backed labels from the generation registry", () => {
+    const summary = buildSourceArtifactLifecycleSummary();
+
+    const transitionPlan = summary.rows.find(
+      (row) => row.code === "d29_transition_plan",
+    );
+    const checkpointLog = summary.rows.find(
+      (row) => row.code === "d30_checkpoint_log",
+    );
+    const ktEvidence = summary.rows.find(
+      (row) => row.code === "d31_kt_evidence",
+    );
+
+    expect(transitionPlan?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Opus",
+      maxTokensLabel: "48k max",
+    });
+    expect(checkpointLog?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Sonnet",
+      maxTokensLabel: "24k max",
+    });
+    expect(ktEvidence?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Opus",
+      maxTokensLabel: "24k max",
+    });
+
+    const csv = buildSourceArtifactStandardsCsv(summary.rows);
+    const transitionRows = csv
+      .split("\n")
+      .filter((row) =>
+        /d29_transition_plan|d30_checkpoint_log|d31_kt_evidence/.test(row),
+      )
+      .join("\n");
+
+    expect(transitionRows).toContain('"Yes"');
+    expect(transitionRows).toContain('"Claude Opus"');
+    expect(transitionRows).toContain('"Claude Sonnet"');
+    expect(transitionRows).not.toContain("No dedicated prompt");
+  });
+
   it("scores rendered artifact body text when content is available", () => {
     const summary = buildSourceArtifactLifecycleSummary([
       {

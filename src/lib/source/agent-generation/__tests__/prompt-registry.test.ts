@@ -65,6 +65,9 @@ describe("Source artifact prompt registry provider config", () => {
         "d19_pricing_workbook",
         "d20_trap_log",
         "d21_assumption_set",
+        "d29_transition_plan",
+        "d30_checkpoint_log",
+        "d31_kt_evidence",
       ]),
     );
   });
@@ -333,6 +336,120 @@ describe("Source artifact prompt registry provider config", () => {
     expect(message).toContain("No mandatory failure evidenced");
     expect(message).toContain("Pass/fail thresholds locked");
     expect(message).toContain("do not invent eliminated vendors");
+  });
+
+  it("configures the transition-stage prompts as a governed workflow", () => {
+    const d29 = getPromptTemplate("d29_transition_plan");
+    const d30 = getPromptTemplate("d30_checkpoint_log");
+    const d31 = getPromptTemplate("d31_kt_evidence");
+
+    expect(d29).not.toBeNull();
+    expect(d30).not.toBeNull();
+    expect(d31).not.toBeNull();
+    expect(d29?.upstreamRequired).toEqual([
+      "d27_selection_memo",
+      "d28_contract_record",
+    ]);
+    expect(d30?.upstreamRequired).toEqual(["d29_transition_plan"]);
+    expect(d31?.upstreamRequired).toEqual(["d29_transition_plan"]);
+    expect(d29?.systemPrompt).toContain("Transition Roadmap");
+    expect(d29?.systemPrompt).toContain("parallel-run entry and exit gates");
+    expect(d30?.systemPrompt).toContain("Transition Checkpoint Cockpit");
+    expect(d30?.systemPrompt).toContain("must not convert planned milestones into completed decisions");
+    expect(d31?.systemPrompt).toContain("Knowledge-Transfer Evidence");
+    expect(d31?.systemPrompt).toContain("not a meeting-attendance summary");
+  });
+
+  it("blocks transition roadmap generation until selection and contract records exist", () => {
+    const d29 = getPromptTemplate("d29_transition_plan");
+    const ctx = makeD09Context(["Signed_Contract.pdf"]);
+
+    expect(findMissingUpstreamCodes(d29!, ctx)).toEqual([
+      "d27_selection_memo",
+      "d28_contract_record",
+    ]);
+
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d27_selection_memo",
+        "# Selection\n\nSponsor signed Northstar selection.",
+      ),
+      makeArtifactState(
+        "d28_contract_record",
+        "# Contract\n\nEffective date and transition obligations on file.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d29!, ctx)).toEqual([]);
+  });
+
+  it("binds transition evidence and upstream controls into the transition roadmap prompt", () => {
+    const d29 = getPromptTemplate("d29_transition_plan");
+    const ctx = makeD09Context([
+      "Signed_Contract.pdf",
+      "Transition_Blackout_Calendar.csv",
+      "Vendor_KT_Plan.docx",
+    ]);
+
+    const message = d29?.buildUserMessage(ctx, {
+      d27_selection_memo:
+        "# Selection\n\nSponsor signed Northstar selection.",
+      d28_contract_record:
+        "# Contract\n\nService start 2026-10-01; KT is contractually required.",
+      d19_pricing_workbook:
+        "# Pricing\n\nTransition fee is milestone-linked.",
+      d20_trap_log:
+        "# Trap Log\n\nOpen transition-fee trap must be tracked.",
+    });
+
+    expect(message).toContain("Company: SkyHarbor Air");
+    expect(message).toContain("Transition Roadmap");
+    expect(message).toContain("Selection Memo (d27_selection_memo)");
+    expect(message).toContain("Contract Record (d28_contract_record)");
+    expect(message).toContain("Transition_Blackout_Calendar.csv");
+    expect(message).toContain("milestone-linked commercial obligations");
+    expect(message).toContain(
+      "do not invent vendor obligations, dates, systems, or go-live milestones",
+    );
+  });
+
+  it("keeps checkpoint and KT evidence prompts honest about missing completion proof", () => {
+    const d30 = getPromptTemplate("d30_checkpoint_log");
+    const d31 = getPromptTemplate("d31_kt_evidence");
+    const ctx = makeD09Context([
+      "Transition_Checkpoint_Notes.md",
+      "KT_Workshop_Attendance.xlsx",
+      "Runbook_Review_Notes.docx",
+    ]);
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d29_transition_plan",
+        "# Transition\n\nMobilization milestones planned.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d30!, ctx)).toEqual([]);
+    expect(findMissingUpstreamCodes(d31!, ctx)).toEqual([]);
+
+    const checkpointMessage = d30?.buildUserMessage(ctx, {
+      d29_transition_plan:
+        "# Transition\n\nCutover checkpoint planned; no go/no-go yet.",
+      d31_kt_evidence:
+        "# KT\n\nKT sessions planned but not signed off.",
+    });
+    const ktMessage = d31?.buildUserMessage(ctx, {
+      d29_transition_plan:
+        "# Transition\n\nKT required for billing and ticket systems.",
+      d30_checkpoint_log:
+        "# Checkpoints\n\nCutover is blocked pending runbook verification.",
+    });
+
+    expect(checkpointMessage).toContain("Transition Checkpoint Cockpit");
+    expect(checkpointMessage).toContain("Transition_Checkpoint_Notes.md");
+    expect(checkpointMessage).toContain("do not invent actual dates, decisions, or completed status");
+    expect(ktMessage).toContain("Knowledge-Transfer Evidence");
+    expect(ktMessage).toContain("Runbook_Review_Notes.docx");
+    expect(ktMessage).toContain("do not invent sessions, attendees, runbook verification, or receiving-team sign-off");
   });
 
   it("uses client-facing company language for strategy and scope drafts", () => {

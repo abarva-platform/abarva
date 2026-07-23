@@ -326,6 +326,42 @@ const DISQUALIFICATION_LOG_FIELDS = [
   "downstream scoring treatment",
 ] as const;
 
+const TRANSITION_PLAN_COMPONENTS = [
+  "mobilization governance and named owners",
+  "migration milestones",
+  "knowledge-transfer schedule",
+  "cutover dates and blackout windows",
+  "parallel-run entry and exit gates",
+  "hypercare period and service acceptance",
+  "risk / dependency controls",
+  "milestone-linked commercial obligations",
+] as const;
+
+const TRANSITION_CHECKPOINT_FIELDS = [
+  "checkpoint id",
+  "planned date",
+  "actual date",
+  "milestone / workstream",
+  "RAG status",
+  "go / no-go decision",
+  "blocker or dependency",
+  "decision owner",
+  "next action",
+  "evidence reference",
+] as const;
+
+const KNOWLEDGE_TRANSFER_EVIDENCE_FIELDS = [
+  "system / service name",
+  "KT topic",
+  "session date",
+  "attendees and receiving team",
+  "competency check",
+  "runbook verified",
+  "recording / notes / evidence reference",
+  "open KT gap",
+  "signatory",
+] as const;
+
 function formatVendorResponseControlSections(): string {
   return VENDOR_RESPONSE_CONTROL_SECTIONS.map((section, index) =>
     [
@@ -386,6 +422,24 @@ function formatEvaluationWeightLogFields(): string {
 
 function formatDisqualificationLogFields(): string {
   return DISQUALIFICATION_LOG_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatTransitionPlanComponents(): string {
+  return TRANSITION_PLAN_COMPONENTS.map(
+    (component, index) => `${index + 1}. ${component}`,
+  ).join("\n");
+}
+
+function formatTransitionCheckpointFields(): string {
+  return TRANSITION_CHECKPOINT_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatKnowledgeTransferEvidenceFields(): string {
+  return KNOWLEDGE_TRANSFER_EVIDENCE_FIELDS.map(
     (field, index) => `${index + 1}. ${field}`,
   ).join("\n");
 }
@@ -2139,6 +2193,277 @@ If the scorecard (d16) or pricing workbook (d19) has not been authored, DO NOT f
 
       lines.push('Draft the Atlas Decision Brief per the system prompt requirements.');
       return lines.join('\n');
+    },
+  },
+
+  d29_transition_plan: {
+    artifactCode: "d29_transition_plan",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: 48_000,
+    upstreamRequired: ["d27_selection_memo", "d28_contract_record"],
+    upstreamOptional: [
+      "d24_decision_brief",
+      "d25_risk_attestation",
+      "d26_signoff_packet",
+      "d19_pricing_workbook",
+      "d20_trap_log",
+      "d22_bafo_question_pack",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Transition Roadmap (artifact d29_transition_plan). This is the client-facing operating plan that converts a signed sourcing decision into a controlled transition: mobilization, knowledge transfer, cutover, parallel run, hypercare, and go/no-go governance. It is not a generic project plan and must not invent contract dates, vendor obligations, system lists, or cutover milestones.
+
+Required structural sections:
+## §1 · Transition answer
+## §2 · Mobilization governance
+## §3 · Milestone roadmap
+## §4 · Knowledge-transfer plan
+## §5 · Cutover, blackout, and parallel-run controls
+## §6 · Hypercare and service acceptance
+## §7 · Risk, dependency, and decision log
+## §8 · Open inputs before mobilization
+
+Transition plan components:
+${formatTransitionPlanComponents()}
+
+Writing and format requirements:
+- §1 states the transition posture: ready to mobilize / conditionally ready / blocked. Name the exact missing contract, owner, date, or dependency when blocked.
+- §2 names workstream owners, governance cadence, escalation path, and decision rights from the selection memo and contract record.
+- §3 must include a milestone table: Milestone | Planned date/window | Owner | Vendor obligation | Company dependency | Exit criteria | Evidence | Risk.
+- §4 ties KT sessions to systems/services, receiving teams, runbooks, recordings/notes, and competency checks. Do not treat attendance alone as competency transfer.
+- §5 includes cutover dates, blackout windows, parallel-run entry/exit criteria, rollback rule, and business-continuity guardrails.
+- §6 defines hypercare period, service acceptance criteria, SLA baseline handoff, defect triage, and exit-to-run owner.
+- §7 lists transition risks and dependencies that flow into d30 checkpoint logging and d31 KT evidence.
+- §8 is a single open-inputs table with owner/action/date; no bracketed placeholders.
+- Client-facing language. Do not expose raw tenant ids, database table names, routing keys, model/provider names, internal agent names, or implementation labels.
+- Markdown only. Use tables where they sharpen ownership and go/no-go decisions.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
+        `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Selection Memo (d27_selection_memo):",
+        upstream.d27_selection_memo ??
+          "(MISSING — do not fabricate selected vendor, sponsor sign-off, or transition authority; surface as a blocker)",
+        "",
+        "Contract Record (d28_contract_record):",
+        upstream.d28_contract_record ??
+          "(MISSING — do not fabricate contract dates, obligations, service start, transition fees, or vendor commitments; surface as a blocker)",
+        "",
+        "— OPTIONAL UPSTREAM EVENT CHAIN —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer missing transition facts from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d24_decision_brief", "Decision Brief", "award rationale and conditions");
+      bindOptional("d25_risk_attestation", "Risk Attestation", "accepted residual risk and controls");
+      bindOptional("d26_signoff_packet", "Sign-off Packet", "sponsor/legal/finance approvals");
+      bindOptional("d19_pricing_workbook", "Pricing Workbook", "transition fees and assumptions");
+      bindOptional("d20_trap_log", "Pricing Trap Log", "commercial traps that survive into transition");
+      bindOptional("d22_bafo_question_pack", "BAFO Question Pack", "vendor commitments from final negotiations");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— TRANSITION EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED TRANSITION EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "— REQUIRED TRANSITION PLAN COMPONENTS —",
+        formatTransitionPlanComponents(),
+        "",
+        "Draft the Transition Roadmap per the system prompt. If contract or selection evidence is missing, produce the roadmap shell with explicit blockers and owner actions; do not invent vendor obligations, dates, systems, or go-live milestones.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d30_checkpoint_log: {
+    artifactCode: "d30_checkpoint_log",
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d29_transition_plan"],
+    upstreamOptional: [
+      "d27_selection_memo",
+      "d28_contract_record",
+      "d31_kt_evidence",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Transition Checkpoint Cockpit (artifact d30_checkpoint_log). This is the real-time internal control log for transition go/no-go decisions. It tracks each checkpoint's status, blockers, owner, evidence, and next action; it must not convert planned milestones into completed decisions.
+
+Required structural sections:
+## §1 · Checkpoint control status
+## §2 · Checkpoint log
+## §3 · Missed / deferred decisions
+## §4 · Open blockers and owner actions
+## §5 · Value-stage readiness impact
+
+Required checkpoint fields:
+${formatTransitionCheckpointFields()}
+
+Writing and format requirements:
+- §1 states whether checkpoint governance is current / at risk / blocked.
+- §2 must include a table: Checkpoint ID | Milestone | Planned date | Actual date | RAG | Go/no-go decision | Evidence | Blocker | Owner | Next action.
+- Planned or not-started checkpoints must stay planned; do not mark decisions made unless evidence says so.
+- §3 names missed or deferred checkpoints and their impact on cutover, hypercare, KT, service acceptance, and d32 value measurement.
+- §4 includes owner/action/deadline for every blocker.
+- §5 says exactly what can or cannot move to Value until checkpoints and KT evidence are complete.
+- Internal delivery/procurement language only. Do not expose raw tenant ids, database table names, routing keys, model/provider names, or implementation labels.
+- Markdown only. Keep this as a concise cockpit an operator can update every week.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Transition Roadmap (d29_transition_plan):",
+        upstream.d29_transition_plan ??
+          "(MISSING — do not fabricate transition milestones or checkpoint decisions; surface as a blocker)",
+        "",
+        "— OPTIONAL UPSTREAM CONTEXT —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer missing checkpoint evidence from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d27_selection_memo", "Selection Memo", "selected-vendor and transition authority");
+      bindOptional("d28_contract_record", "Contract Record", "contractual milestone obligations");
+      bindOptional("d31_kt_evidence", "Knowledge-Transfer Evidence", "KT completion evidence that affects go/no-go");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— TRANSITION CHECKPOINT EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED CHECKPOINT EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "Draft the Transition Checkpoint Cockpit per the system prompt. If checkpoint evidence is missing, keep decisions planned or blocked with owner actions; do not invent actual dates, decisions, or completed status.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d31_kt_evidence: {
+    artifactCode: "d31_kt_evidence",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d29_transition_plan"],
+    upstreamOptional: [
+      "d27_selection_memo",
+      "d28_contract_record",
+      "d30_checkpoint_log",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Knowledge-Transfer Evidence record (artifact d31_kt_evidence). This is the proof pack that receiving teams can operate the transitioned services: sessions held, runbooks verified, competency checks completed, and open KT gaps owned. It is not a meeting-attendance summary.
+
+Required structural sections:
+## §1 · KT evidence answer
+## §2 · System/service KT matrix
+## §3 · Session evidence
+## §4 · Competency and runbook verification
+## §5 · Open KT gaps
+## §6 · Sign-off and Value handoff
+
+Required KT evidence fields:
+${formatKnowledgeTransferEvidenceFields()}
+
+Writing and format requirements:
+- §1 states whether KT evidence is complete / conditionally complete / blocked.
+- §2 must include a table: System/service | KT topic | Session date | Receiving team | Attendees | Competency check | Runbook verified | Evidence reference | Open gap | Signatory.
+- §3 maps session notes, recordings, attendance, and workshop outputs to the systems/services they cover. Do not treat a session as sufficient unless competency and runbook checks are evidenced.
+- §4 separates completed verification from planned verification.
+- §5 names open KT gaps with owner, due date or gate-relative deadline, operational risk, and Value-stage impact.
+- §6 states whether the transition can hand off to value measurement and what remains conditional.
+- Internal delivery/risk language only. Do not expose raw tenant ids, database table names, routing keys, model/provider names, or implementation labels.
+- Markdown only. Tables are expected; narrative should be concise and evidence-first.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Transition Roadmap (d29_transition_plan):",
+        upstream.d29_transition_plan ??
+          "(MISSING — do not fabricate KT scope, sessions, systems, or handoff rules; surface as a blocker)",
+        "",
+        "— OPTIONAL UPSTREAM CONTEXT —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer missing KT evidence from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d27_selection_memo", "Selection Memo", "selected-vendor and scope handoff");
+      bindOptional("d28_contract_record", "Contract Record", "KT obligations and service-start dates");
+      bindOptional("d30_checkpoint_log", "Transition Checkpoint Cockpit", "go/no-go decisions and blockers");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— KT EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED KT / WORKSHOP EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "— REQUIRED KT EVIDENCE FIELDS —",
+        formatKnowledgeTransferEvidenceFields(),
+        "",
+        "Draft the Knowledge-Transfer Evidence record per the system prompt. If KT session notes, runbooks, competency checks, or sign-offs are missing, produce the evidence structure with explicit gaps and owner actions; do not invent sessions, attendees, runbook verification, or receiving-team sign-off.",
+      );
+      return lines.join("\n");
     },
   },
 };
