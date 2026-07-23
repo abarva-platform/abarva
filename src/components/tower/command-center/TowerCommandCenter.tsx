@@ -84,6 +84,7 @@ export function TowerCommandCenter({
   const [lanesView, setLanesView] = useState<LanesSubView>("table");
   const [aiView, setAiView] = useState<AiSubView>("overview");
   const [aiFilter, setAiFilter] = useState<AiFilter>("all");
+  const [aiSearch, setAiSearch] = useState("");
   const [evidenceQ, setEvidenceQ] = useState<EvidenceQuestion>("exists");
   const [drawer, setDrawer] = useState<DrawerState>(null);
 
@@ -203,6 +204,8 @@ export function TowerCommandCenter({
             onSubView={setAiView}
             filter={aiFilter}
             onFilter={setAiFilter}
+            search={aiSearch}
+            onSearch={setAiSearch}
             onOpenAi={(n) => setDrawer({ kind: "ai", n })}
           />
         );

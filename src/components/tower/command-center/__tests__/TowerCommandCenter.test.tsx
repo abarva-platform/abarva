@@ -270,6 +270,56 @@ describe("TowerCommandCenter", () => {
     expect(cards).toHaveLength(designFixtureMart().cxoActions.length);
   });
 
+  it("reaches beyond the Top-10 default via All initiatives + search", () => {
+    renderPage();
+    fireEvent.click(tab(/AI Portfolio/));
+
+    // The executive default caps the matrix at 10. Table mode must expose the
+    // whole portfolio, otherwise rows 11+ are unreachable in the UI even
+    // though the mart holds them.
+    fireEvent.click(screen.getByRole("radio", { name: "All initiatives" }));
+    const rows = within(screen.getByRole("table")).getAllByRole("button", {
+      name: /^Open /,
+    });
+    expect(rows.length).toBeGreaterThan(10);
+
+    // Search narrows to a specific initiative without scrolling the table.
+    fireEvent.change(
+      screen.getByRole("searchbox", { name: "Search AI initiatives" }),
+      { target: { value: "fraud graph" } },
+    );
+    const narrowed = within(screen.getByRole("table")).getAllByRole("button", {
+      name: /^Open /,
+    });
+    expect(narrowed).toHaveLength(1);
+    expect(narrowed[0]).toHaveAccessibleName("Open Fraud Graph Analytics v2");
+  });
+
+  it("searches vendor and system, not just the initiative name", () => {
+    renderPage();
+    fireEvent.click(tab(/AI Portfolio/));
+    fireEvent.click(screen.getByRole("radio", { name: "All initiatives" }));
+    fireEvent.change(
+      screen.getByRole("searchbox", { name: "Search AI initiatives" }),
+      { target: { value: "Vendor H" } },
+    );
+    const hits = within(screen.getByRole("table")).getAllByRole("button", {
+      name: /^Open /,
+    });
+    expect(hits).toHaveLength(1);
+    expect(hits[0]).toHaveAccessibleName("Open Cloud AI Services");
+  });
+
+  it("reports how much of the portfolio a search matched", () => {
+    renderPage();
+    fireEvent.click(tab(/AI Portfolio/));
+    fireEvent.change(
+      screen.getByRole("searchbox", { name: "Search AI initiatives" }),
+      { target: { value: "copilot" } },
+    );
+    expect(screen.getByText(/of \d+ initiatives match/)).toBeInTheDocument();
+  });
+
   it("opens the program drawer with its value proof chain, and closes on Escape", () => {
     renderPage();
     fireEvent.click(tab(/Decision Lanes/));

@@ -320,6 +320,17 @@ export interface TowerCommandCenterView {
   programs: readonly TowerProgramView[];
   ai: readonly TowerAiView[];
   candidates: readonly TowerCandidateView[];
+  /**
+   * Every AI portfolio row the mart carries — funded, embedded, governance,
+   * platform AND candidates — uncapped and unsorted by policy.
+   *
+   * `ai` and `candidates` are the *executive defaults*: the matrix plots the
+   * top 10 and the candidate pipeline lists the top 10, so a 232-row portfolio
+   * stays readable. Without this collection those caps would make rows 11+
+   * unreachable in the UI even though the mart holds them. Table mode reads
+   * this so the full portfolio is always available behind search and filters.
+   */
+  allInitiatives: readonly TowerAiView[];
   portfolioCounts: TowerPortfolioCountReconciliation;
   spendLens: readonly TowerSpendLensRow[];
   /** Business evidence gaps — what proof is missing before value can be claimed. */
