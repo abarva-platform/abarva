@@ -876,6 +876,42 @@ cells are stale and superseded by that resolution).
 
 ---
 
+### MOVES-ARTIFACT-002 — P3 artifact size/duplicate-heading gate, live-proven
+
+- **Problem statement**: the 2026-07-22 artifact-digestion audit found the P2 discovery report
+  bloated (19,245 words, 136 headings, 14 duplicate section titles, zero TOC) and root-caused it
+  to a missing assembly-time dedup check plus no per-artifact size/section budget. This item
+  closes that gap for the P3 profiles (Target Architecture, Solution Design, Operating Model
+  Design, Sourcing Strategy) as the first proven slice of Track B/C from
+  `MOVES_ARTIFACT_DIGESTION_PROMPTING_LAYOUT_PROMPT_2026-07-22.md`.
+- **Resolution**: PR #5478 ("Tighten Moves P3 solution design headroom"), #5481 ("Tighten Moves
+  P3 sourcing size headroom"), #5485 ("Record Moves P3 size gate live proof"). Merge
+  `47b3745d17da615e420919675b753d2c34bab22c`, ACA revision
+  `ca-abarva-web-lab-eastus--m47b3745d`, digest
+  `sha256:c69406aed934d732725c691e44a489f30ebe563f057b79e2573f122c92c28c4e`.
+- **Independent verification this session**: (1) runtime invariant — ACA template image matches
+  the 100%-traffic revision exactly; (2) commit ancestry — all three merge commits confirmed
+  ancestors of `origin/main` via `git merge-base --is-ancestor`; (3) real proof-bundle inspection
+  (not a self-report) — pulled `11-artifact-content-audit.json` from the proof folder
+  (`~/Downloads/moves-p3-architecture-live-proof-v18-2026-07-23T15-51-51Z/`) and directly
+  confirmed all four P3 artifacts (Target Architecture 5,189 words; Solution Design 4,513;
+  Operating Model Design 4,254; Sourcing Strategy 2,930) show `duplicateSectionHeadings: []` and
+  `bannedLanguage: []`, real HTTP 200 downloads, and `sourceRef` correctly scoped to the
+  disposable sandbox Move ("Codex Proof First Capital E2E 20260721",
+  `4bf889aa-d4ee-4c1d-936b-51574614d191`) — not any real client Move. No P3 gate was approved
+  and the sandbox Move was not advanced to P4 (generation/artifact-quality proof only, per the
+  report).
+- **Status**: `Runtime Proven` (2026-07-23)
+- **Scope remaining**: this closes the size/dedup gate for 4 of 14 deliverable profiles
+  (Target Architecture, Solution Design, Operating Model Design, Sourcing Strategy). The other
+  10 profiles (Charter, Discovery & Diagnostic Readout, Root-Cause Readout, Execution Roadmap,
+  Business Case, Financial Model, Value & Metrics Model, Executive Handoff, Value Measurement
+  Contract, and Root-Cause Worksheet) have not yet been independently confirmed against this
+  same size/dedup standard — do not assume they're covered by this entry.
+- **Discovered from**: 2026-07-22 artifact-digestion audit, Track B/C.
+
+---
+
 ## Architecture decisions (reference — see design doc for full detail)
 
 Recorded here for durability; full rationale lives in
