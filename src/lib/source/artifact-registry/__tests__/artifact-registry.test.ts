@@ -62,14 +62,15 @@ interface InsertCapture {
   table: string;
   payload: Record<string, unknown>;
 }
+type FilterCapture = { kind: 'eq' | 'is' | 'or'; col: string; value: unknown };
 interface UpdateCapture {
   table: string;
   payload: Record<string, unknown>;
-  filters: Array<{ kind: 'eq' | 'is'; col: string; value: unknown }>;
+  filters: FilterCapture[];
 }
 interface SelectCapture {
   table: string;
-  filters: Array<{ kind: 'eq' | 'is'; col: string; value: unknown }>;
+  filters: FilterCapture[];
 }
 
 const insertCaptures: InsertCapture[] = [];
@@ -90,7 +91,7 @@ let nextList: () => Promise<{ data: Row[]; error: unknown }> = async () => ({
 });
 
 function makeBuilder(table: string): FakeBuilder {
-  const filters: Array<{ kind: 'eq' | 'is'; col: string; value: unknown }> = [];
+  const filters: SelectCapture['filters'] = [];
   let mode: 'insert' | 'update' | 'select' | null = null;
   const builder: FakeBuilder = {
     insert: jest.fn((payload: Record<string, unknown>) => {
@@ -115,7 +116,7 @@ function makeBuilder(table: string): FakeBuilder {
       return builder;
     }),
     or: jest.fn((value: string) => {
-      filters.push({ kind: 'eq', col: 'or', value });
+      filters.push({ kind: 'or', col: 'or', value });
       return builder;
     }),
     is: jest.fn((col: string, value: unknown) => {
@@ -150,6 +151,7 @@ import {
   buildSourceArtifactBlobPath,
   getSourceArtifactRegistryRecord,
   listSourceArtifactsForEvent,
+  listSourceArtifactsForSourceEventId,
   listSourceArtifactsForSourceEventIdWithContent,
   listSourceArtifactsForStage,
   readSourceArtifactRegistryTextContent,
@@ -492,6 +494,50 @@ describe('source artifact queries', () => {
     expect(selectCaptures[0].filters).toEqual(
       expect.arrayContaining([
         { kind: 'eq', col: 'stage_key', value: 'orals_bafo' },
+      ]),
+    );
+  });
+
+  it('lists artifacts for stable event slugs without querying the UUID row column', async () => {
+    nextList = async () => ({ data: [baseRow], error: null });
+
+    await listSourceArtifactsForSourceEventId(
+      'apex-retail-ams-outsourcing-2026',
+    );
+
+    expect(selectCaptures[0].table).toBe('source_artifacts');
+    expect(selectCaptures[0].filters).toEqual(
+      expect.arrayContaining([
+        {
+          kind: 'or',
+          col: 'or',
+          value: 'source_event_id.eq.apex-retail-ams-outsourcing-2026',
+        },
+        { kind: 'is', col: 'deleted_at', value: null },
+      ]),
+    );
+    expect(selectCaptures[0].filters).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          value: expect.stringContaining('source_event_row_id.eq.apex-retail-ams-outsourcing-2026'),
+        }),
+      ]),
+    );
+  });
+
+  it('lists artifacts for UUID event ids across legacy and row-id columns', async () => {
+    nextList = async () => ({ data: [baseRow], error: null });
+    const eventUuid = '522eedf2-ff6b-4307-b312-3e0903c6fd42';
+
+    await listSourceArtifactsForSourceEventId(eventUuid);
+
+    expect(selectCaptures[0].filters).toEqual(
+      expect.arrayContaining([
+        {
+          kind: 'or',
+          col: 'or',
+          value: `source_event_id.eq.${eventUuid},source_event_row_id.eq.${eventUuid}`,
+        },
       ]),
     );
   });

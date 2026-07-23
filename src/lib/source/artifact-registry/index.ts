@@ -42,6 +42,13 @@ import type {
   ArtifactStatus,
 } from "../file-cabinet/types";
 
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string): boolean {
+  return UUID_REGEX.test(value);
+}
+
 export type {
   SourceArtifactApprovalState,
   SourceArtifactEvidenceState,
@@ -525,12 +532,13 @@ export async function listSourceArtifactsForSourceEventId(
   if (!sourceEventId)
     throw new Error("[source-artifacts] sourceEventId is required");
   const supabase = getAzureWriteFluentClient();
+  const eventFilter = isUuid(sourceEventId)
+    ? `source_event_id.eq.${sourceEventId},source_event_row_id.eq.${sourceEventId}`
+    : `source_event_id.eq.${sourceEventId}`;
   const { data, error } = await supabase
     .from("source_artifacts")
     .select(SELECT_COLUMNS)
-    .or(
-      `source_event_id.eq.${sourceEventId},source_event_row_id.eq.${sourceEventId}`,
-    )
+    .or(eventFilter)
     .is("deleted_at", null)
     .order("updated_at", { ascending: false });
 
