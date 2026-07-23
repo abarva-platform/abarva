@@ -13,7 +13,7 @@
 // the artifact gets the consultant-grade section flow rather than the generic one.
 //
 // Structure keys present for module 'moves' (deliverable-structures.ts):
-//   charter · business_case · roadmap · discovery_report · target_architecture ·
+//   charter · business_case · roadmap · discovery_report · target_state_architecture ·
 //   operating_model · estimate_model · value_model · mobilization_plan ·
 //   handoff_pack · executive_playback
 //
@@ -47,7 +47,7 @@ const REGISTRY_TO_ORCHESTRATOR: Readonly<Record<string, string>> = {
   // its own profile so its five workflow/control exhibits are generated and
   // evaluated in the same key space. Org design → operating_model; sourcing uses
   // the generic board brief.
-  target_state_architecture: "target_architecture",
+  target_state_architecture: "target_state_architecture",
   solution_design: "solution_design",
   operating_model_design: "operating_model",
   sourcing_strategy: "sourcing_strategy",
