@@ -97,28 +97,21 @@ function isBinder(profile: DeliverableProfile): boolean {
 }
 
 function narrativeBodyForMachineryScan(text: string): string {
-  const appendixStart = text.search(
-    /(?:^|\n|\s)(?:appendix\s+[a-z0-9]+(?:\s*[—-]\s*|\s+))?(?:source|evidence)\s+register\b/i,
+  const headingBoundary = text.search(
+    /(?:^|\n)\s*#{0,6}\s*(?:(?:appendix\s+[a-z0-9]+(?:\s*[—-]\s*|\s+))(?:source|evidence)\s+register|(?:source|evidence)\s+register)\b/i,
   );
-  if (appendixStart < 0) return text;
-  const before = text.slice(0, appendixStart);
-  const marker = text.slice(Math.max(0, appendixStart - 30), appendixStart + 80);
-  const flattenedRegister = text.slice(appendixStart, appendixStart + 180);
+  const flattenedBoundary = text.search(
+    /(?:source|evidence)\s+register\s+(?:\[n\]|citation(?:\s+number)?)\s+(?:source\s+)?family\s+confidence(?:\s+as\s+of)?\b/i,
+  );
   // "Source Register" in a sentence like "tie this to the Source Register" is
   // client-body machinery and must still be flagged. Only strip explicit register
   // headings/appendix starts. HTML-to-text flattens a rendered register table onto
   // one line, so its column signature is also an explicit appendix boundary.
-  const explicitRegisterBoundary =
-    /(?:^|\n|\s)appendix\s+[a-z0-9]+|(?:^|\n)\s*#{0,6}\s*(?:source|evidence)\s+register\b/i.test(
-      marker,
-    ) ||
-    /^\s*(?:source|evidence)\s+register\s+(?:\[n\]|citation(?:\s+number)?)\s+(?:source\s+)?family\s+confidence(?:\s+as\s+of)?\b/i.test(
-      flattenedRegister,
-    );
-  if (!explicitRegisterBoundary) {
-    return text;
-  }
-  return before;
+  const boundaries = [headingBoundary, flattenedBoundary].filter(
+    (index) => index >= 0,
+  );
+  if (!boundaries.length) return text;
+  return text.slice(0, Math.min(...boundaries));
 }
 
 /** Gate 1 — machinery vocabulary in the client narrative. */

@@ -99,6 +99,7 @@ export function buildSystemPrompt(req: DeliverableIntelligenceRequest): string {
     `- Never expose internal source ids, chunk ids, table names, fact keys, or system status words in the body.`,
     `- Do not use internal phase shorthand (P0, P1, P2, P3, P4, P5) in client prose. Write "origination", "charter", "discovery", "design", "roadmap/business-case planning", or "handoff" instead. If ranking priority, write "Priority 1", not "P1".`,
     `- Use "Source Register" only as the appendix/evidence-register heading. In the narrative body, say "cited evidence", "evidence appendix", or "what the evidence shows".`,
+    `- Citation and evidence-handling rules are invisible authoring controls. Never explain, restate, or summarize these rules in the client artifact, and never write that a claim is "tied to" a Source Register or evidence register. Simply comply with the rules.`,
     conciseInstrument
       ? `- This artifact is a concise approval instrument with an enforced length ceiling. Respect brevity as a quality requirement: use compact tables, remove repetition, and do not expand into later-phase analysis.`
       : `- Do not optimize for short documents. Optimize for high-quality, decision-grade artifacts.`,
@@ -398,7 +399,7 @@ export function buildPassPrompt(
       user = [
         context,
         ``,
-        `PASS 3 — FULL DRAFT. Using the approved plan below, write the FULL document in senior consulting style. Use governed evidence (cited [n]) for client facts; use expert knowledge for structure, framing, standard sections, exhibits, and professional language. Clearly mark every missing client fact with the correct placeholder tag. Include the required decision tables, risk/issues/dependencies table, client-to-complete checklist, evidence appendix/register, and a clear recommendation with next steps. Write in Markdown with numbered headings.`,
+        `PASS 3 — FULL DRAFT. Using the approved plan below, write the FULL document in senior consulting style. Use governed evidence (cited [n]) for client facts; use expert knowledge for structure, framing, standard sections, exhibits, and professional language. Clearly mark every missing client fact with the correct placeholder tag. Include the required decision tables, risk/issues/dependencies table, client-to-complete checklist, evidence appendix/register, and a clear recommendation with next steps. Write in Markdown with numbered headings. Apply citation and evidence rules silently; do not describe those authoring rules in the document body.`,
         conciseInstrumentDraftInstruction(req),
         `APPROVED PLAN:`,
         inputs.approvedPlanJson ?? "(plan missing)",
@@ -418,7 +419,7 @@ export function buildPassPrompt(
       user = [
         context,
         ``,
-        `PASS 5 — BOARD-GRADE REWRITE. Revise the draft to board-grade quality using the critique. Strengthen synthesis, implications, the decision ask, tables, exhibits, placeholders, and source discipline. Remove generic language and mechanical template-following. Replace any P0/P1/P2/P3/P4/P5 shorthand in body prose with human phase names, and reserve "Source Register" for the appendix/evidence-register heading only. DO NOT add unsupported client facts — every client-specific claim stays cited, an approved assumption, or a placeholder. Return the full revised document in Markdown.`,
+        `PASS 5 — BOARD-GRADE REWRITE. Revise the draft to board-grade quality using the critique. Strengthen synthesis, implications, the decision ask, tables, exhibits, placeholders, and source discipline. Remove generic language and mechanical template-following. Replace any P0/P1/P2/P3/P4/P5 shorthand in body prose with human phase names, and reserve "Source Register" for the appendix/evidence-register heading only. Apply citation and evidence rules silently: remove any sentence that explains those authoring rules or says claims are tied to a Source Register or evidence register. DO NOT add unsupported client facts — every client-specific claim stays cited, an approved assumption, or a placeholder. Return the full revised document in Markdown.`,
         conciseInstrumentDraftInstruction(req),
         ``,
         `CRITIQUE TO ADDRESS:`,

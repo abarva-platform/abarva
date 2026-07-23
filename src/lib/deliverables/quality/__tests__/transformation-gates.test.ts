@@ -89,6 +89,17 @@ describe("transformation gates (W1)", () => {
     expect(r).toHaveLength(0);
   });
 
+  it("still scans body machinery before a flattened register appendix", () => {
+    const r = scanMachinery(
+      base({
+        narrativeText:
+          "Each claim is tied to the evidence register. Source Register [n] Source Family Confidence As of [1] Discovery KYC Controls high 2026-07-23",
+      }),
+    );
+    expect(r).toHaveLength(1);
+    expect(r[0].detail).toEqual(["evidence register ×1"]);
+  });
+
   it("still flags Source Register when the body discusses the machinery", () => {
     const r = scanMachinery(
       base({
