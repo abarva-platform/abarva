@@ -103,11 +103,18 @@ function narrativeBodyForMachineryScan(text: string): string {
   const flattenedBoundary = text.search(
     /(?:source|evidence)\s+register\s+(?:\[n\]|citation(?:\s+number)?)\s+(?:source\s+)?family\s+confidence(?:\s+as\s+of)?\b/i,
   );
+  const inlineAppendixBoundary = text.search(
+    /\bappendix\s+[a-z0-9]+\s*[—-]\s*(?:source|evidence)\s+register\b/i,
+  );
   // "Source Register" in a sentence like "tie this to the Source Register" is
   // client-body machinery and must still be flagged. Only strip explicit register
   // headings/appendix starts. HTML-to-text flattens a rendered register table onto
   // one line, so its column signature is also an explicit appendix boundary.
-  const boundaries = [headingBoundary, flattenedBoundary].filter(
+  const boundaries = [
+    headingBoundary,
+    flattenedBoundary,
+    inlineAppendixBoundary,
+  ].filter(
     (index) => index >= 0,
   );
   if (!boundaries.length) return text;
