@@ -10,6 +10,8 @@ const DEFAULTS = {
   containerAppName: 'ca-abarva-web-lab-eastus',
   resourceGroup: 'rg-abarva-controlplane-lab-eastus',
   productionBaseUrl: 'https://app.abarva.ai',
+  workerJobNames: ['job-abarva-deliv-worker', 'job-abarva-deliv-worker-event'],
+  workerContainerName: 'worker',
 };
 
 const FORBIDDEN_TAG_PREFIXES = [
@@ -86,6 +88,14 @@ const productionBaseUrl = argValue(
 ).replace(/\/$/, '');
 const outDir = argValue('--out-dir', process.env.ACA_DRIFT_OUT_DIR || 'audit-artifacts/aca-runtime-drift');
 const skipHealth = boolArg('--skip-health') || process.env.SKIP_HEALTH_CHECK === 'true';
+const workerJobNames = argValue(
+  '--worker-job-names',
+  process.env.WORKER_JOB_NAMES || DEFAULTS.workerJobNames.join(','),
+).split(/[\s,]+/).filter(Boolean);
+const workerContainerName = argValue(
+  '--worker-container-name',
+  process.env.WORKER_CONTAINER_NAME || DEFAULTS.workerContainerName,
+);
 
 const errors = [];
 mkdirSync(outDir, { recursive: true });
@@ -208,6 +218,44 @@ if (!skipHealth) {
   }
 }
 
+const workerJobs = [];
+for (const jobName of workerJobNames) {
+  let job;
+  try {
+    job = parseJson(
+      `worker job ${jobName}`,
+      runAz([
+        'containerapp',
+        'job',
+        'show',
+        '--name',
+        jobName,
+        '--resource-group',
+        resourceGroup,
+        '--output',
+        'json',
+      ]),
+    );
+  } catch (error) {
+    fail(errors, `Required worker job ${jobName} could not be read: ${error.message}`);
+    workerJobs.push({ name: jobName, image: null, passed: false });
+    continue;
+  }
+  writeFileSync(path.join(outDir, `worker-${jobName}.json`), `${JSON.stringify(job, null, 2)}\n`);
+  const container = (job.properties?.template?.containers ?? []).find(
+    (item) => item.name === workerContainerName,
+  );
+  const image = container?.image ?? '';
+  const passed = Boolean(image.includes('@sha256:') && (!expectedImage || image === expectedImage));
+  if (!image.includes('@sha256:')) {
+    fail(errors, `Worker job ${jobName} image must be digest-pinned; actual=${image || '<empty>'}`);
+  }
+  if (expectedImage && image !== expectedImage) {
+    fail(errors, `Worker job ${jobName} image drift: expected=${expectedImage} actual=${image || '<empty>'}`);
+  }
+  workerJobs.push({ name: jobName, containerName: workerContainerName, image, passed });
+}
+
 const proof = {
   checkedAt: new Date().toISOString(),
   containerAppName,
@@ -221,6 +269,7 @@ const proof = {
   activeDigestTags: manifest?.tags ?? [],
   traffic,
   health,
+  workerJobs,
   passed: errors.length === 0,
   errors,
 };

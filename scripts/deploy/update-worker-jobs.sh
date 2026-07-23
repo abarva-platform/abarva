@@ -22,6 +22,7 @@ IMAGE="${1:-${IMAGE:-}}"
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-abarva-controlplane-lab-eastus}"
 # Space-separated. Cron fallback + KEDA event-triggered worker.
 WORKER_JOB_NAMES="${WORKER_JOB_NAMES:-job-abarva-deliv-worker job-abarva-deliv-worker-event}"
+WORKER_CONTAINER_NAME="${WORKER_CONTAINER_NAME:-worker}"
 
 if [[ -z "$IMAGE" ]]; then
   echo "ERROR: IMAGE is required (arg 1 or \$IMAGE)." >&2
@@ -48,9 +49,31 @@ for job in $WORKER_JOB_NAMES; do
   if az containerapp job update \
       --name "$job" \
       --resource-group "$RESOURCE_GROUP" \
+      --container-name "$WORKER_CONTAINER_NAME" \
       --image "$IMAGE" \
       --output none; then
-    echo "  ✓ $job updated"
+    verified=false
+    for attempt in $(seq 1 12); do
+      actual_image="$(az containerapp job show \
+        --name "$job" \
+        --resource-group "$RESOURCE_GROUP" \
+        --query "properties.template.containers[?name=='$WORKER_CONTAINER_NAME'].image | [0]" \
+        --output tsv 2>/dev/null || true)"
+      if [[ "$actual_image" == "$IMAGE" ]]; then
+        verified=true
+        break
+      fi
+      echo "  waiting for $job image readback ($attempt/12): ${actual_image:-<empty>}"
+      sleep 5
+    done
+    if [[ "$verified" == "true" ]]; then
+      echo "  ✓ $job updated and read back at $IMAGE"
+    else
+      echo "::error::$job image readback did not match the approved digest" >&2
+      echo "expected=$IMAGE" >&2
+      echo "actual=${actual_image:-<empty>}" >&2
+      failed=1
+    fi
   else
     echo "::error::failed to update worker job '$job'" >&2
     failed=1
