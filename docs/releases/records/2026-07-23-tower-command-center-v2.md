@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`meridian-live-proven`
 
 ## Plain-English Summary
 
@@ -71,15 +71,17 @@ chat responses continue to flow through the governed Tower CIO chat API rather t
 **Rollback is a one-line, no-deploy change:** remove the tenant from `includeTenants` (or clear the
 env allowlist) and the previous Tower returns on the next request.
 
-### Remaining gate before platform default-on
+### Meridian live proof and remaining platform gate
 
-1. **Not yet live-proven.** This surface has rendered locally against the test fixture and harness.
-   The live read-back predicts three thin sections on the Healthcare Composite Demo tenant
+1. **Meridian signed-in proof passed on 2026-07-23.** The merged Command Center+aVa revision was
+   deployed through `.github/workflows/aca-main-deploy.yml`, the ACA runtime invariant passed, and
+   a signed-in Meridian browser session proved `/tower`, `/tower/command`, `/tower/legacy`, the
+   Command Center root, the governed aVa launcher, and a real `/api/tower/cio-chat` response.
+2. **Platform default-on is still not approved.** The surface remains scoped only to Meridian. The
+   live read-back still predicts three thin sections on the Healthcare Composite Demo tenant
    (see the live read-back section): a 75%-empty Evidence tab, ~80 bubble-matrix points against a
-   design drawn for ~8, and 3 of 5 empty owner columns. This is contrary to the repo's own
-   precedent to promote platform default-on only _after_ cross-tenant live proof. **Required next
-   step:** deploy through the ACA main workflow, capture Meridian signed-in proof, and do not widen
-   beyond Meridian until that proof is clean.
+   design drawn for ~8, and 3 of 5 empty owner columns. Do not widen beyond Meridian until those
+   tenant-shape concerns and cross-tenant signed-in proof are clean.
 
 ## Layer Impact
 
@@ -206,10 +208,12 @@ That is part of the live-proof step, not local validation.
 ## Rollout Plan
 
 1. Merge the PR to `main` (squash). Meridian is the only enabled tenant; every other tenant still
-   receives the previous Tower surface.
+   receives the previous Tower surface. **Completed:** PR #5466 merged as `38b8e3dd`.
 2. `.github/workflows/aca-main-deploy.yml` builds the digest-pinned image and deploys it. No
-   ad-hoc `az acr build`, no ad-hoc `az containerapp update`, no Vercel.
+   ad-hoc `az acr build`, no ad-hoc `az containerapp update`, no Vercel. **Completed:** workflow
+   run `30011196596` succeeded.
 3. Capture the Meridian live signed-in proof bundle before this record moves past `candidate`.
+   **Completed:** see `reports/tower-command-center-ava-live-proof/`.
 4. Any future env update or tenant-widening must pass the digest-pinned `--image` alongside the
    change so ACA cannot rebuild a revision from a stale template.
 
@@ -219,15 +223,19 @@ That is part of the live-proof step, not local validation.
   shift shared Product/Lab web traffic.
 - Shared runtime mutators: none in this change. No branch or local Azure command touches the shared
   Container App.
-- Approved image digest: not yet built — assigned by the main deploy workflow on merge.
-- ACA runtime invariant: **not yet proven.** Template image, 100%-traffic revision image and worker
-  job images must all match the approved `@sha256:` digest before any `live-proven` claim.
+- Approved image digest for the Tower/aVa deploy:
+  `sha256:56a0e1dfba15dbe2e71426de85ab9b6b27c6979dd8c301037650e3f0023ddc0a`
+  (`main-38b8e3dd`).
+- ACA runtime invariant: **passed** at `2026-07-23T13:35:19.426Z`. Template image and 100%-traffic
+  revision image both pointed at
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:56a0e1dfba15dbe2e71426de85ab9b6b27c6979dd8c301037650e3f0023ddc0a`;
+  100% traffic was on `ca-abarva-web-lab-eastus--m38b8e3dd`; `/api/health` returned `ok: true`.
 - Worker image invariant: unaffected — no worker job changes.
 - Feature/env flag update path: registry `includeTenants`, or
   `ABARVA_FEATURE_TOWER_COMMAND_CENTER_V2_TENANTS`. Any `az containerapp update` that sets it must
   also pass the currently approved digest-pinned `--image`.
-- Live signed-in proof required: **yes**, on `https://app.abarva.ai`, for each tenant the flag is
-  enabled for.
+- Live signed-in proof required: **passed for Meridian** on `https://app.abarva.ai`. Still required
+  for any future tenant before widening the flag.
 
 ## Rollback Plan
 
@@ -241,8 +249,13 @@ existing Tower page depends on. No migration, so no migration rollback.
 
 ## Audit Evidence
 
-- PR: _to be added on open._
-- CI run: _to be added._
+- PR: https://github.com/abarva-platform/abarva/pull/5466.
+- Merge commit: `38b8e3dd1a12e6e17170913acced7833c047bc61`.
+- PR checks: 21/21 passed before merge, including `Production readiness gate` and
+  `Typecheck + reasoning-layer tests`.
+- ACA main deploy: workflow run `30011196596`, success.
+- ACA runtime invariant proof:
+  `audit-artifacts/aca-runtime-drift/tower-command-center-ava-20260723/runtime-invariant-proof.json`.
 - Design contract: `docs/design/tower/command-center-2026-07-23/` (the runnable design file, the
   untouched original artifact bundle so the unpacking can be re-verified, and a README).
 - Build instructions: `docs/codex-handoff/TOWER_COMMAND_CENTER_NEW_PAGE_PROMPT_2026-07-23.md`.
@@ -250,9 +263,29 @@ existing Tower page depends on. No migration, so no migration rollback.
   `__tests__/derive.test.ts`.
 - Existing Tower proof bundle, for the "same six tabs" claim:
   `proof/tower-e2e-qa-20260723/01-command-center.png` … `06-recommended-actions.png`.
-- Proof bundle for this release: `proof/tower-command-center-v2-<date>/` — **not yet captured.**
-  Must contain one screenshot per tab and per sub-view, one per drawer, and a console log showing
-  no errors.
+- Live signed-in proof bundle:
+  - `reports/tower-command-center-ava-live-proof/2026-07-23-isolation/proof.json`
+  - `reports/tower-command-center-ava-live-proof/2026-07-23-chat/proof.json`
+  - screenshots in the same directories.
+
+### Live signed-in proof — 2026-07-23
+
+Run from a workstation with `.auth/agent-meridian.json` against `https://app.abarva.ai`.
+
+Passed:
+
+- `/tower?client=meridian` resolved to `/tower`, did not redirect to sign-in, and rendered
+  `data-testid="tower-command-center"`.
+- The governed aVa collapsed launcher rendered on the Command Center.
+- Opening the launcher rendered the shared `AgentDock` composer and the Command Center opener copy.
+- The governance caption remained visible: _"aVa proposes · you approve · nothing acts on its own"_.
+- `/tower/command?tab=evidence&client=meridian` redirected to `/tower?tab=evidence` and selected
+  the Evidence tab.
+- `/tower/legacy?client=meridian` remained available, did not render the Command Center root, and
+  still mounted AgentDock.
+- A real Command Center aVa UI question posted to `/api/tower/cio-chat`, returned HTTP 200 with
+  `application/x-ndjson`, rendered an agent answer, and did not show error fallback copy.
+- The isolated live probes recorded zero console errors and zero page errors.
 
 ## Live VNet read-back — 2026-07-23
 
