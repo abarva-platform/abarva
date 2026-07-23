@@ -33,6 +33,7 @@ Live First Capital P3 proof showed that the P3 architecture chain could generate
 - Preserve advisory-only maximums for deeper architecture artifacts such as `target_state_architecture`.
 - Reduce P3 solution, operating-model, and sourcing section budgets to account for final rendered artifact overhead.
 - Further reduce Solution Design authoring budgets after live v16 proof showed the final rendered artifact still exceeded the 5,200-word executive ceiling by 197 words.
+- Further reduce Sourcing Strategy authoring budgets after live v17 proof showed the final rendered artifact still exceeded the 3,600-word executive ceiling by 64 words.
 - Add regression tests for advisory versus blocking maximum-word behavior and updated P3 budget contracts.
 
 ## QA / Validation
@@ -42,9 +43,9 @@ Live First Capital P3 proof showed that the P3 architecture chain could generate
 - Pass: `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json`.
 - Pending: `npm run release:check` after this QA status update.
 - Pass: `git diff --check`.
-- Pending: ACA deploy and runtime-invariant proof.
+- Partial: ACA deploy and runtime-invariant proof passed for PR #5478 / merge SHA `2a4864280d0330483b5215e43f84505c9c402a4f`; this follow-up sourcing headroom change still needs deploy.
 - Partial: signed-in First Capital P3 v16 generation proof on disposable Move `4bf889aa-d4ee-4c1d-936b-51574614d191` generated all four artifacts; Operating Model and Sourcing fit their rendered ceilings, while Solution Design rendered at 5,397 words against a 5,200-word ceiling and required this follow-up headroom reduction.
-- Pending: signed-in First Capital P3 v17 proof after the follow-up Solution Design budget reduction.
+- Partial: signed-in First Capital P3 v17 generation proof on disposable Move `4bf889aa-d4ee-4c1d-936b-51574614d191` generated all four artifacts with zero browser errors; Solution Design rendered at 4,519 words against a 5,200-word ceiling, Operating Model rendered at 4,567 words against a 4,600-word ceiling, and Sourcing Strategy rendered at 3,664 words against a 3,600-word ceiling. This follow-up tightens Sourcing Strategy body headroom.
 
 ## Rollout Plan
 
@@ -68,10 +69,10 @@ Rollback by reverting this PR and redeploying the prior ACA image through the re
 
 - Live failed/partial proof: `/Users/anand/Downloads/moves-p3-architecture-live-proof-v15-2026-07-23T13-49-08Z/11-artifact-content-audit.json`
 - Live partial proof: `/Users/anand/Downloads/moves-p3-architecture-live-proof-v16-2026-07-23T14-40-56Z/11-artifact-content-audit.json`
-- PR URL: pending
-- Merge SHA: pending
-- ACA deploy proof: pending
-- Signed-in P3 v16 proof: pending
+- PR URL: https://github.com/abarva-platform/abarva/pull/5478
+- Merge SHA: `2a4864280d0330483b5215e43f84505c9c402a4f`
+- ACA deploy proof for PR #5478: `/tmp/aca-proof-30019244639.n65btr/runtime-invariant/runtime-invariant-proof.json`
+- Signed-in P3 v17 partial proof: `/Users/anand/Downloads/moves-p3-architecture-live-proof-v17-2026-07-23T15-18-51Z/11-artifact-content-audit.json`
 
 ## Known Gaps
 
