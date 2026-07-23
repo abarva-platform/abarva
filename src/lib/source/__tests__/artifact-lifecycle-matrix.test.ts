@@ -157,6 +157,45 @@ describe("Source artifact lifecycle matrix", () => {
     expect(responseRows).not.toContain("No dedicated prompt");
   });
 
+  it("derives evaluation-stage prompt-backed labels from the generation registry", () => {
+    const summary = buildSourceArtifactLifecycleSummary();
+
+    const scorecard = summary.rows.find((row) => row.code === "d16_scorecard");
+    const weightLog = summary.rows.find((row) => row.code === "d17_weight_log");
+    const disqualificationLog = summary.rows.find(
+      (row) => row.code === "d18_disqualification_log",
+    );
+
+    expect(scorecard?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Opus",
+      maxTokensLabel: "48k max",
+    });
+    expect(weightLog?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Sonnet",
+      maxTokensLabel: "24k max",
+    });
+    expect(disqualificationLog?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Opus",
+      maxTokensLabel: "24k max",
+    });
+
+    const csv = buildSourceArtifactStandardsCsv(summary.rows);
+    const evaluationRows = csv
+      .split("\n")
+      .filter((row) =>
+        /d16_scorecard|d17_weight_log|d18_disqualification_log/.test(row),
+      )
+      .join("\n");
+
+    expect(evaluationRows).toContain('"Yes"');
+    expect(evaluationRows).toContain('"Claude Opus"');
+    expect(evaluationRows).toContain('"Claude Sonnet"');
+    expect(evaluationRows).not.toContain("No dedicated prompt");
+  });
+
   it("scores rendered artifact body text when content is available", () => {
     const summary = buildSourceArtifactLifecycleSummary([
       {

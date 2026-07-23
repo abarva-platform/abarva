@@ -59,6 +59,9 @@ describe("Source artifact prompt registry provider config", () => {
         "d13_vendor_responses",
         "d14_qa_log",
         "d15_response_completeness",
+        "d16_scorecard",
+        "d17_weight_log",
+        "d18_disqualification_log",
         "d19_pricing_workbook",
         "d20_trap_log",
         "d21_assumption_set",
@@ -219,6 +222,117 @@ describe("Source artifact prompt registry provider config", () => {
     expect(message).toContain(
       "treat unsupported claims as complete",
     );
+  });
+
+  it("configures the evaluation-stage prompts as a governed workflow", () => {
+    const d16 = getPromptTemplate("d16_scorecard");
+    const d17 = getPromptTemplate("d17_weight_log");
+    const d18 = getPromptTemplate("d18_disqualification_log");
+
+    expect(d16).not.toBeNull();
+    expect(d17).not.toBeNull();
+    expect(d18).not.toBeNull();
+    expect(d17?.upstreamRequired).toEqual(["d09_rfp_pack"]);
+    expect(d16?.upstreamRequired).toEqual([
+      "d17_weight_log",
+      "d13_vendor_responses",
+      "d15_response_completeness",
+    ]);
+    expect(d18?.upstreamRequired).toEqual([
+      "d15_response_completeness",
+    ]);
+    expect(d17?.systemPrompt).toContain("locked before vendor scoring");
+    expect(d16?.systemPrompt).toContain("evidence-cited scoring workbook");
+    expect(d16?.systemPrompt).toContain("two-rater coverage");
+    expect(d18?.systemPrompt).toContain("no evidenced disqualifications");
+    expect(d18?.systemPrompt).toContain("do not invent one");
+  });
+
+  it("blocks the evaluation scorecard until weights, responses, and completeness exist", () => {
+    const d16 = getPromptTemplate("d16_scorecard");
+    const ctx = makeD09Context([
+      "Vendor_A_Response.docx",
+      "Vendor_B_Response.docx",
+      "Evaluator_Scores.csv",
+    ]);
+
+    expect(findMissingUpstreamCodes(d16!, ctx)).toEqual([
+      "d17_weight_log",
+      "d13_vendor_responses",
+      "d15_response_completeness",
+    ]);
+
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d17_weight_log",
+        "# Weight Governance\n\nCriteria locked before scoring.",
+      ),
+      makeArtifactState(
+        "d13_vendor_responses",
+        "# Vendor Responses\n\nVendor A and Vendor B submitted files.",
+      ),
+      makeArtifactState(
+        "d15_response_completeness",
+        "# Completeness\n\nBoth vendors conditionally admitted.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d16!, ctx)).toEqual([]);
+  });
+
+  it("binds score evidence and upstream controls into the evaluation scorecard prompt", () => {
+    const d16 = getPromptTemplate("d16_scorecard");
+    const ctx = makeD09Context([
+      "Evaluation_Criteria_Weights_APPROVED.csv",
+      "Evaluator_1_Scores.xlsx",
+      "Evaluator_2_Scores.xlsx",
+    ]);
+
+    const message = d16?.buildUserMessage(ctx, {
+      d17_weight_log:
+        "# Weight Governance\n\nCriteria weighted 30/25/20/15/10 and locked.",
+      d13_vendor_responses:
+        "# Vendor Responses\n\nVendor A submitted SLA evidence.",
+      d15_response_completeness:
+        "# Completeness\n\nVendor A admitted; Vendor B conditionally admitted.",
+      d18_disqualification_log:
+        "# Disqualification\n\nNo evidenced disqualification.",
+    });
+
+    expect(message).toContain("Company: SkyHarbor Air");
+    expect(message).toContain("Evaluation Scorecard");
+    expect(message).toContain("Weight Governance Record (d17_weight_log)");
+    expect(message).toContain("Vendor A admitted");
+    expect(message).toContain("Evaluator_1_Scores.xlsx");
+    expect(message).toContain("evidence citations");
+    expect(message).toContain(
+      "do not invent scores, vendors, rankings, or evidence citations",
+    );
+  });
+
+  it("documents disqualification controls without inventing eliminated vendors", () => {
+    const d18 = getPromptTemplate("d18_disqualification_log");
+    const ctx = makeD09Context(["Vendor_A_Response.docx"]);
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d15_response_completeness",
+        "# Completeness\n\nNo mandatory failure evidenced.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d18!, ctx)).toEqual([]);
+
+    const message = d18?.buildUserMessage(ctx, {
+      d15_response_completeness:
+        "# Completeness\n\nNo mandatory failure evidenced.",
+      d17_weight_log:
+        "# Weight Governance\n\nPass/fail thresholds locked.",
+    });
+
+    expect(message).toContain("Disqualification Rationale");
+    expect(message).toContain("No mandatory failure evidenced");
+    expect(message).toContain("Pass/fail thresholds locked");
+    expect(message).toContain("do not invent eliminated vendors");
   });
 
   it("uses client-facing company language for strategy and scope drafts", () => {
