@@ -312,7 +312,35 @@ P2 evidence-specific requirements:
 - Keep draft/final gates honest; do not mark P2 final or ready for P3 if readiness remains partial.`;
 }
 
-function p3FutureStateAssignment(): string {
+function p3FutureStateAssignment(ctx?: SolutionContext): string {
+  const moveReference = ctx ? clientMoveReference(ctx) : "this Move";
+  const useCaseText = [
+    ctx?.useCase,
+    ctx?.useCaseCandidate,
+    ctx?.problemSeed,
+    ctx?.scope,
+    ...(ctx?.constraints ?? []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  const isCommercialLending =
+    /financial|bank|banking|commercial.?lend|loan|lending|credit|kyc|sanctions?|collateral|covenant|booking|servicing|relationship.?manager|los|core.?bank/.test(
+      useCaseText,
+    );
+  const domainExamples = isCommercialLending
+    ? `Domain-specific evidence priorities for commercial lending Agent Assist:
+- loan onboarding cycle time, manual touch time, queue age, rework, defect, and exception baselines
+- banker, relationship-manager, credit analyst, KYC/sanctions, collateral, operations, and servicing handoffs
+- LOS, CRM, document-management, KYC/sanctions, credit-policy, covenant, collateral, core-banking, and servicing systems
+- document completeness, data-quality, semantic-layer, API/search, IAM, audit-log, and model-risk controls
+- human-owned credit, KYC, sanctions, collateral, covenant, and booking/servicing decision rights`
+    : `Domain-specific evidence priorities:
+- the exact baseline metrics, volumes, queues, cycle times, quality signals, and cost/value facts in the evidence packet
+- the named process, system, data, control, owner, and workforce findings from the current-state diagnostic
+- the specific systems of record, integration paths, semantic-layer/data-product dependencies, control hooks, and adoption constraints
+- the human-owned decisions and no-automation-yet boundaries that are explicit in the Move evidence`;
+
   return `PHASE-SPECIFIC ASSIGNMENT — P3 FUTURE-STATE BLUEPRINT DRAFT
 Purpose: shape the future-state direction from the approved P2 diagnostic without pretending P2
 or P3 is final. This is a design-shaping artifact, not a detailed implementation plan.
@@ -327,21 +355,23 @@ AbarVa boundary:
 - AbarVa helps define the new way of working, future-state direction, human + AI roles, control
   points, work packages, governance, and value tracking.
 - Client and delivery teams own detailed process redesign, BPMN/workflow design, system
-  configuration, ERP/AP changes, data engineering build, implementation, training rollout,
+  configuration, system changes, data engineering build, implementation, training rollout,
   adoption execution, and run-state operations.
 - Use terms such as Future-State Direction, New Way of Working Blueprint, Target Operating
   Concept, and Implementation work packages for client/delivery teams.
 - Do not imply AbarVa implements, executes, configures systems, trains users, runs operations,
   or completes end-to-end automation.
 
+Context discipline:
+- This artifact is for ${moveReference}. Do not import example facts, metrics, systems, control
+  labels, or industry-specific language from unrelated Moves.
+- Use only the business problem, P2 diagnostic, uploaded evidence, context extract, and phase
+  capture content bound in this request.
+- If a useful metric or system detail is absent, mark it as missing evidence or a decision needed;
+  do not fill it from a prior example.
+
 Evidence that must drive the thesis when present:
-- 1,872 monthly exceptions
-- 2,345 manual touch hours per month
-- 7.4 average resolution days
-- exception categories and owner/risk signals
-- payment holds
-- duplicate-payment/control implications
-- process, data, control, ownership, and AI-fit findings
+${domainExamples}
 
 The artifact must answer:
 - what P2 evidence implies for the future state
@@ -365,10 +395,10 @@ Required structures:
   A. rules-led workflow cleanup first
   B. AI-assisted triage and routing
   C. exception command center/control tower
-- Control / Governance Matrix covering duplicate-payment, payment hold governance, audit trail,
-  segregation of duties, override policy, model/human review checkpoints, and evidence before scaling
-- Data and system dependency map covering ERP/AP data quality, PO/receipt/invoice match data,
-  vendor master quality, exception status taxonomy, workflow/case tracking, OCR intake, audit trail,
+- Control / Governance Matrix covering audit trail, segregation of duties, override policy,
+  model/human review checkpoints, compliance controls, and evidence required before scaling
+- Data and system dependency map covering systems of record, data quality, document/intake
+  quality, case/workflow tracking, semantic layer, API/search integration, IAM, audit trail,
   lineage, and reporting baseline
 - Adoption / Culture / Workforce implications
 - Implementation Work Package table: objective, likely owner, key outputs, dependencies,
@@ -380,6 +410,11 @@ Visual requirements:
 - Current-to-future operating concept diagram
 - Human + AI role model diagram
 - Governance / control model diagram
+- The artifact must contain explicitly labeled Conceptual Architecture, Logical Architecture,
+  and Physical Architecture sections. These can be concise, but each must state the design pattern,
+  systems/data/control implications, and unresolved evidence gaps.
+- The executive story spine must be visible: current evidence → design implication → target-state
+  option → control/adoption caveat → P4 planning decision.
 - Use inline SVGs and real tables, not prose-only sections.`;
 }
 
@@ -396,10 +431,11 @@ function genericPhaseAssignment(phase: number): string {
 export function phaseAssignmentForArtifact(args: {
   artifact: DeliverableKey;
   phase: number;
+  context?: SolutionContext;
 }): string {
   if (args.artifact === "charter" || args.phase === 1) return p1Assignment();
   if (args.artifact === "discovery_report" || args.phase === 2) return p2Assignment();
-  if (args.artifact === "target_state_architecture" || args.phase === 3) return p3FutureStateAssignment();
+  if (args.artifact === "target_state_architecture" || args.phase === 3) return p3FutureStateAssignment(args.context);
   return genericPhaseAssignment(args.phase);
 }
 
@@ -457,7 +493,7 @@ ${missingInputsActionBlock(ctx)}
 - Final artifacts require capture complete, sponsor/owner conditions satisfied, evidence covered or waived, gate approval, golden-bar pass, and no hard blockers.
 
 5. Phase-specific assignment
-${phaseAssignmentForArtifact({ artifact: args.artifact, phase: args.phase })}
+${phaseAssignmentForArtifact({ artifact: args.artifact, phase: args.phase, context: ctx })}
 
 6. Deliverable package standard
 ${renderPhaseDeliverablePackagePrompt({ artifact: args.artifact, phase: args.phase })}

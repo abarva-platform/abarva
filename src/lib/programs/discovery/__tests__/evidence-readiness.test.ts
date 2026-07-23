@@ -138,6 +138,30 @@ describe("discovery evidence readiness", () => {
     ).toBe("contact_center_kpis");
   });
 
+  it("uses a financial-services lending Agent Assist blueprint before the broad agent-assist matcher", () => {
+    const lendingBlueprint = getDiscoveryBlueprint(
+      "First Capital commercial lending agent assist for loan onboarding, KYC, sanctions, collateral, credit policy, LOS, CRM, document management, and core banking handoffs",
+    );
+
+    expect(lendingBlueprint.blueprintId).toBe(
+      "financial_services_commercial_lending_agent_assist",
+    );
+    expect(lendingBlueprint.evidenceFamilies.map((family) => family.id)).toEqual(
+      expect.arrayContaining([
+        "commercial_lending_workflow_map",
+        "loan_onboarding_kpis",
+        "los_crm_core_system_map",
+        "kyc_sanctions_credit_policy_controls",
+        "document_intake_quality",
+        "decision_rights_human_review_model",
+        "finance_baseline_value_plan",
+      ]),
+    );
+    expect(lendingBlueprint.blueprintId).not.toBe(
+      "healthcare_contact_center_agent_assist",
+    );
+  });
+
   it("builds blueprint input from plain Move classification and problem context", () => {
     const blueprintInput = buildDiscoveryBlueprintInputFromProgram({
       functionPackKey: null,
