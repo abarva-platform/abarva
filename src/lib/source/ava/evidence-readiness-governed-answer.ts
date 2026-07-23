@@ -46,6 +46,14 @@ export function looksLikeEvidenceReadinessQuestion(
 ): boolean {
   if (!prompt) return false;
   const q = prompt.toLowerCase();
+  const isArtifactQualityQuestion =
+    /\b(quality|lifecycle|gate b|client final|client-final|deliverable standards)\b/.test(
+      q,
+    ) &&
+    /\b(artifact|artifacts|deliverable|deliverables|document|documents|draft|drafts|client final|client-final|quality|lifecycle)\b/.test(
+      q,
+    );
+  if (isArtifactQualityQuestion) return false;
   return (
     /\b(evidence|upload|uploads|uploaded|file|files|artifact|artifacts|workshop|session|notes|parse|parsed|parser|parsing|ingest|ingested|index|indexed|embedding|search-ready|search ready|graph|promoted|promotion|enterprise context|agent-ready|agent_ready|ocr|transcription)\b/.test(
       q,

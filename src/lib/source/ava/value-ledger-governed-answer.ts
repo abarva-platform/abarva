@@ -44,10 +44,12 @@ export function looksLikeValueLedgerQuestion(
 ): boolean {
   if (!prompt) return false;
   const q = prompt.toLowerCase();
-  return (
-    /\b(value|savings?|benefit|benefits|financial|finance|roi|waterfall|ledger|realized|realised|projected|committed|measured|claimable)\b/.test(
+  const hasStrongValueSignal =
+    /\b(value|savings?|benefit|benefits|financial|finance|roi|waterfall|ledger|realized|realised|claimable|at stake|how much)\b/.test(
       q,
-    ) &&
+    );
+  return (
+    hasStrongValueSignal &&
     /\b(waterfall|ledger|value|savings?|benefit|benefits|projected|realized|realised|committed|measured|claimable|show|chart|table|status|at stake|how much)\b/.test(
       q,
     )

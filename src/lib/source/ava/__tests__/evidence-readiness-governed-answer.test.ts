@@ -92,6 +92,11 @@ describe("looksLikeEvidenceReadinessQuestion", () => {
     );
     expect(
       looksLikeEvidenceReadinessQuestion(
+        "Assess artifact lifecycle posture, client-final readiness, consulting quality, and required deliverable standards.",
+      ),
+    ).toBe(false);
+    expect(
+      looksLikeEvidenceReadinessQuestion(
         "How are vendors doing on response coverage?",
       ),
     ).toBe(false);

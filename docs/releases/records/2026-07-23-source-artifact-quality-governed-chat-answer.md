@@ -6,8 +6,10 @@
 
 ## Status
 
-`candidate` — implementation and focused validation complete locally; PR, merge, ACA deploy,
-runtime invariant, and live signed-in proof still pending.
+`released with follow-up fix pending` — base implementation merged in PR #5441 and deployed
+by ACA main run `29985449807`; event-id routing was fixed in PR #5444. A proof-closure pass
+found a remaining overlapping-intent priority bug, tracked and fixed in
+`2026-07-23-source-chat-intent-priority-fix`.
 
 ## Plain-English Summary
 
@@ -70,19 +72,28 @@ repair, regenerate, index, OCR, transcribe, or promote anything into enterprise 
   - Remaining errors are outside this Source slice:
     - `src/lib/programs/mutations.ts(1150,9): TS1117 duplicate property`
     - `src/lib/programs/mutations.ts(1175,9): TS1117 duplicate property`
+- `pass` — proof-closure regression rerun on current `main`: artifact-quality, evidence-readiness,
+  value-ledger, and route-intent tests passed 4 suites / 23 tests after adding the intent-priority
+  fix. Jest printed pre-existing duplicate manual mock warnings.
+- `pass` — proof-closure lint rerun on the touched aVa builders, tests, and Source nexus/ask route.
+- `blocked until follow-up deploy` — pre-fix signed-in proof reproduced an overlapping-intent
+  bug: broad artifact lifecycle/readiness wording returned the evidence-processing packet instead
+  of the artifact-quality packet. The follow-up fix is recorded in
+  `2026-07-23-source-chat-intent-priority-fix`.
 
 ## Rollout Plan
 
-Open a PR, squash-merge to `main` after hosted checks pass, let the repo-owned ACA main deploy
-workflow build and deploy the digest-pinned image, run an independent ACA runtime invariant,
-then capture signed-in `app.abarva.ai` proof on a Source event Files/chat workflow.
+Base rollout completed via PR #5441 and PR #5444. Complete the remaining proof by merging and
+deploying `2026-07-23-source-chat-intent-priority-fix`, then rerun signed-in artifact-quality
+chat proof.
 
 ## Deployment Authority
 
 - Repo-owned deploy workflow: `.github/workflows/aca-main-deploy.yml`.
 - Shared runtime mutators: none from this PR.
-- Approved image digest: to be recorded after merge/deploy.
-- ACA runtime invariant: required after deploy.
+- Approved image digest: assigned by ACA main deploy run `29985449807`; follow-up fix digest to
+  be recorded in `2026-07-23-source-chat-intent-priority-fix`.
+- ACA runtime invariant: required after the follow-up fix deploy.
 - Worker image invariant: N/A.
 - Feature/env flag update path: none.
 - Live signed-in proof required: yes.
@@ -95,11 +106,14 @@ available according to the reverted code state. No migration rollback is require
 
 ## Audit Evidence
 
-- PR: pending.
-- ACA deploy run: pending.
-- Runtime invariant: pending.
-- Signed-in proof: pending.
-- Local evidence: focused test and lint commands listed above.
+- PR: https://github.com/abarva-platform/abarva/pull/5441.
+- Hotfix PR: https://github.com/abarva-platform/abarva/pull/5444.
+- Merge SHA: `ae3f20568e6ea576a8e5cd3f1d32b7490b9eb58d`.
+- Hotfix merge SHA: `467936122bd462610339dcc1e1e502d61e368dcf`.
+- ACA deploy run: https://github.com/abarva-platform/abarva/actions/runs/29985449807.
+- Event-id hotfix deploy run: https://github.com/abarva-platform/abarva/actions/runs/29986365431.
+- Intent-priority follow-up: `2026-07-23-source-chat-intent-priority-fix`.
+- Local evidence: focused test, lint, and pre-fix signed-in proof commands listed above.
 
 ## Known Gaps
 
