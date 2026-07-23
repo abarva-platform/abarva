@@ -395,11 +395,36 @@ quality, (6) workspace UX, (7) automation and efficiency, (8) cosmetic.
 - **Discovered from**: user-directed follow-up after reviewing the mockup's Track A/B
   prototype; UI copy explicitly must NOT say "Track A"/"Track B" on screen — plain language
   ("Artifact status"/"Stage gate") per direct user feedback.
-- **Notes / remaining gaps**: `downstream_context_policy` is captured but not yet enforced by
-  `buildValidatedAgentContextBundle` — a real hook for the mandatory Context & Corpus
-  Governance policy (AGENTS.md), flagged as separate follow-up work. No backfill of historical
-  acceptances for already-approved artifacts, matching the same honesty pattern
-  `SOURCE-SHELL-003` established.
+- **Notes / remaining gaps**: `downstream_context_policy` is now enforced at
+  `buildValidatedAgentContextBundle` by SOURCE-SHELL-004a: `exclude` is blocked, `restricted`
+  is blocked unless a caller explicitly opts into restricted downstream use, and `include`
+  remains eligible for the normal Context & Corpus gate. No backfill of historical acceptances
+  for already-approved artifacts, matching the same honesty pattern `SOURCE-SHELL-003`
+  established.
+
+### SOURCE-SHELL-004a — Enforce accepted-artifact downstream context policy
+
+- **Status**: Candidate — code complete on `codex/source-next-safe-backlog-1336`; awaiting PR,
+  repo-owned ACA deploy, runtime invariant, and focused live/read-only proof.
+- **Problem statement**: SOURCE-SHELL-004 captured `downstream_context_policy` when a human
+  accepted an artifact, but the central governed context gate ignored that field. A default
+  `restricted` acceptance could therefore become indistinguishable from explicitly included
+  context once mapped into a `GovernedCandidate`.
+- **User/business impact**: client-final and workshop artifacts need a trustworthy path into
+  enterprise context over time, but Source must not over-promote reviewed artifacts just because
+  a row exists. This makes "include", "restricted", and "exclude" mean something at the shared
+  agent-context boundary.
+- **Implementation scope**: add optional `downstream_context_policy` support to
+  `GovernedCandidate`; block `exclude`; block `restricted` unless
+  `allowRestrictedDownstreamContext` is set by a caller performing explicit downstream review;
+  preserve the policy through the enterprise bundle adapter when present. No schema changes,
+  migrations, data-build jobs, vector indexing, or production data mutation.
+- **Acceptance criteria**: focused regression proves `exclude` never enters usable model
+  context, `restricted` is blocked by default and only allowed with explicit opt-in, `include`
+  flows through the normal governance gate, and adapter mapping does not drop the policy field.
+- **Required tests**: `npm test -- --runTestsByPath
+  src/lib/governance/__tests__/agent-context-bundle.test.ts`; `npx eslint src/lib/governance`;
+  `npx tsc --noEmit`; `npm run release:check`.
 
 ### SOURCE-SHELL-005 — Real per-vendor coverage in the Responses step body
 

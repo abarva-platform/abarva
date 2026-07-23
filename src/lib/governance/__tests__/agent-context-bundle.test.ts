@@ -123,6 +123,54 @@ describe("buildValidatedAgentContextBundle", () => {
     expect(advisory.blocked[0].errors.join(" ")).toMatch(/require agent_ready/);
   });
 
+  it("blocks Source artifacts whose acceptance policy excludes downstream context", () => {
+    const b = buildValidatedAgentContextBundle([
+      candidate({
+        id: "accepted-artifact",
+        downstream_context_policy: "exclude",
+      }),
+    ]);
+
+    expect(b.usable).toHaveLength(0);
+    expect(b.blocked).toHaveLength(1);
+    expect(b.blocked[0].errors.join(" ")).toMatch(
+      /downstream_context_policy is "exclude"/,
+    );
+  });
+
+  it("blocks restricted Source artifact context unless a caller explicitly opts in", () => {
+    const restricted = candidate({
+      id: "restricted-artifact",
+      downstream_context_policy: "restricted",
+    });
+
+    const defaultBundle = buildValidatedAgentContextBundle([restricted]);
+    expect(defaultBundle.usable).toHaveLength(0);
+    expect(defaultBundle.blocked).toHaveLength(1);
+    expect(defaultBundle.blocked[0].errors.join(" ")).toMatch(
+      /explicit downstream review is required/,
+    );
+
+    const reviewedBundle = buildValidatedAgentContextBundle([restricted], {
+      allowRestrictedDownstreamContext: true,
+    });
+    expect(reviewedBundle.usable.map((c) => c.id)).toEqual([
+      "restricted-artifact",
+    ]);
+  });
+
+  it("allows Source artifacts explicitly accepted for downstream context", () => {
+    const b = buildValidatedAgentContextBundle([
+      candidate({
+        id: "included-artifact",
+        downstream_context_policy: "include",
+      }),
+    ]);
+
+    expect(b.usable.map((c) => c.id)).toEqual(["included-artifact"]);
+    expect(b.blocked).toHaveLength(0);
+  });
+
   it("decision is block when every candidate is blocked", () => {
     const b = buildValidatedAgentContextBundle([
       candidate({ tenant_id: null }),
@@ -183,6 +231,28 @@ describe("bundle-shape adapters", () => {
     // restricted item is fenced; the internal kpi is usable.
     expect(b.usable.map((c) => c.id)).toContain("i1");
     expect(b.usable.some((c) => c.id === "i2")).toBe(false);
+  });
+
+  it("preserves downstream context policy from enterprise bundle items", () => {
+    const candidates = fromEnterpriseBundle(
+      {
+        tenantKey: "lakeshore-holdings",
+        items: [
+          {
+            id: "source-artifact-1",
+            dataClassification: "internal",
+            downstreamContextPolicy: "exclude",
+          },
+        ],
+      },
+      "lakeshore-holdings",
+      "lakeshore-holdings",
+    );
+
+    expect(candidates[0].downstream_context_policy).toBe("exclude");
+    const b = buildValidatedAgentContextBundle(candidates);
+    expect(b.usable).toHaveLength(0);
+    expect(b.blocked[0].errors.join(" ")).toMatch(/exclude/);
   });
 
   it("maps AskSource confidence to a confidence level", () => {

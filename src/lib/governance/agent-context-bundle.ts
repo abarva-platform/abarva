@@ -41,6 +41,12 @@ export interface GovernedCandidate {
   cited_render_verified_at: string | null;
   title?: string;
   citations?: string[];
+  /**
+   * Optional artifact-acceptance policy from Source. When present, it expresses
+   * whether a human accepted artifact may flow into downstream model context.
+   * Undefined means the candidate did not originate from that acceptance hook.
+   */
+  downstream_context_policy?: DownstreamContextPolicy;
 }
 
 export interface BlockedCandidate {
@@ -62,6 +68,8 @@ export interface ValidatedAgentContextBundle {
   warnings: string[];
   policy_version: string;
 }
+
+export type DownstreamContextPolicy = "include" | "restricted" | "exclude";
 
 /** Lift a candidate to a full GovernedObject (conservative defaults) and gate it. */
 function evaluateCandidate(c: GovernedCandidate) {
@@ -121,6 +129,12 @@ export interface BuildBundleOptions {
    * visible in diagnostics as blocked context.
    */
   requireAgentReady?: boolean;
+  /**
+   * Restricted Source artifact acceptances are intentionally not model-visible
+   * by default. Callers must opt in after their own review when they are
+   * deliberately building a restricted/diagnostic context packet.
+   */
+  allowRestrictedDownstreamContext?: boolean;
 }
 
 /**
@@ -139,6 +153,27 @@ export function buildValidatedAgentContextBundle(
   let agentReadyCount = 0;
 
   for (const c of candidates) {
+    if (c.downstream_context_policy === "exclude") {
+      blocked.push({
+        candidate: c,
+        errors: [
+          'downstream_context_policy is "exclude"; candidate may not enter an agent bundle',
+        ],
+      });
+      continue;
+    }
+    if (
+      c.downstream_context_policy === "restricted" &&
+      !options.allowRestrictedDownstreamContext
+    ) {
+      blocked.push({
+        candidate: c,
+        errors: [
+          'downstream_context_policy is "restricted"; explicit downstream review is required',
+        ],
+      });
+      continue;
+    }
     if (
       !options.allowSensitive &&
       SENSITIVE_CLASSIFICATIONS.has(c.classification)
