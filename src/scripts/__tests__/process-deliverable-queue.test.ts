@@ -32,7 +32,7 @@ jest.mock('@/lib/programs/queries', () => ({
 jest.mock('@/lib/programs/approved-solution-approach', () => ({
   loadApprovedSolutionApproach: jest.fn(),
 }));
-jest.mock('@/lib/programs/move-context-extract', () => ({
+jest.mock('@/lib/programs/move-context-extract-freshness', () => ({
   loadCurrentMoveContextExtractFreshness: jest.fn(),
 }));
 jest.mock('@/lib/deliverables/orchestrator/tenant-invariant', () => ({
@@ -66,7 +66,7 @@ const invariant = jest.requireMock('@/lib/deliverables/orchestrator/tenant-invar
 const approvedApproach = jest.requireMock('@/lib/programs/approved-solution-approach') as {
   loadApprovedSolutionApproach: jest.Mock;
 };
-const contextExtract = jest.requireMock('@/lib/programs/move-context-extract') as {
+const contextExtract = jest.requireMock('@/lib/programs/move-context-extract-freshness') as {
   loadCurrentMoveContextExtractFreshness: jest.Mock;
 };
 const { sweepStaleDeliverableRuns, claimNextDeliverableRun, completeDeliverableRun } = repo;

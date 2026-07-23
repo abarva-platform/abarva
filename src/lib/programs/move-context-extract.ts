@@ -22,6 +22,16 @@ import {
   sourceDisplayLabelFor,
   technicalSourceFileFor,
 } from "@/lib/enterprise-data/source-display-labels";
+import {
+  parseMoveContextExtractFreshness,
+  type MoveContextExtractFreshness,
+  type MoveContextExtractFreshnessStatus,
+} from "@/lib/programs/move-context-extract-freshness";
+export {
+  loadCurrentMoveContextExtractFreshness,
+  type MoveContextExtractFreshness,
+  type MoveContextExtractFreshnessStatus,
+} from "@/lib/programs/move-context-extract-freshness";
 
 export const MOVE_CONTEXT_EXTRACT_EVIDENCE_TYPE =
   "move_context_extract_attached";
@@ -79,25 +89,6 @@ export interface MoveContextExtractItem {
   canonicalRecordId?: string;
   sourceSegmentId?: string;
   confidence?: number;
-}
-
-export type MoveContextExtractFreshnessStatus =
-  | "fresh"
-  | "stale"
-  | "rebuild_required";
-
-export interface MoveContextExtractFreshness {
-  extractId: string | null;
-  moveId: string;
-  tenantKey: string;
-  evidenceFingerprint: string;
-  attachedEvidenceCount: number;
-  acceptedEvidenceCount: number;
-  latestEvidenceUpdatedAt: string | null;
-  blueprintId: string;
-  blueprintVersion: string;
-  createdAt: string;
-  freshnessStatus: MoveContextExtractFreshnessStatus;
 }
 
 export interface MoveContextExtractResult {
@@ -548,44 +539,7 @@ function existingResultFromMetadata(args: {
 }
 
 function existingFreshness(value: ExistingMoveContextExtract | null): MoveContextExtractFreshness | null {
-  const extract = objectValue(value?.metadata.moveContextExtract);
-  const freshness = objectValue(extract.freshness);
-  const evidenceFingerprintValue = stringOrNull(freshness.evidenceFingerprint);
-  const blueprintId = stringOrNull(freshness.blueprintId);
-  const blueprintVersion = stringOrNull(freshness.blueprintVersion);
-  if (!evidenceFingerprintValue || !blueprintId || !blueprintVersion) return null;
-  return {
-    extractId: stringOrNull(freshness.extractId),
-    moveId: stringOrNull(freshness.moveId) ?? "",
-    tenantKey: stringOrNull(freshness.tenantKey) ?? "",
-    evidenceFingerprint: evidenceFingerprintValue,
-    attachedEvidenceCount: numberOrNull(freshness.attachedEvidenceCount) ?? 0,
-    acceptedEvidenceCount: numberOrNull(freshness.acceptedEvidenceCount) ?? 0,
-    latestEvidenceUpdatedAt: stringOrNull(freshness.latestEvidenceUpdatedAt),
-    blueprintId,
-    blueprintVersion,
-    createdAt: stringOrNull(freshness.createdAt) ?? value?.createdAt ?? "",
-    freshnessStatus:
-      freshness.freshnessStatus === "fresh" ||
-      freshness.freshnessStatus === "stale" ||
-      freshness.freshnessStatus === "rebuild_required"
-        ? freshness.freshnessStatus
-        : "rebuild_required",
-  };
-}
-
-/** Read the current persisted extract fingerprint without rebuilding or mutating the Move. */
-export async function loadCurrentMoveContextExtractFreshness(args: {
-  tenantKey: string;
-  moveId: string;
-  phase: number;
-}): Promise<MoveContextExtractFreshness | null> {
-  const existing = await defaultExistingExtract({
-    tenantKey: args.tenantKey,
-    moveId: args.moveId,
-    artifactType: artifactTypeForPhase(args.phase),
-  });
-  return existingFreshness(existing);
+  return parseMoveContextExtractFreshness(value);
 }
 
 function isExistingFresh(args: {
