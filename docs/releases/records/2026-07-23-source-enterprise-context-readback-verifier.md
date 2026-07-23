@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-runtime-proven`
 
 ## Plain-English Summary
 
@@ -40,8 +40,10 @@ Adds a read-only Source enterprise-context verifier. After a governed Source wri
 - PASS — `NODE_OPTIONS=--max-old-space-size=8192 npx tsc --noEmit --pretty false -p tsconfig.json` passed.
 - PASS — `npm run source:enterprise-context:verify-writeback -- --help` printed read-only verifier usage and exited 0.
 - PASS — `npm run release:check` passed.
-- PENDING — PR, merge, ACA main deploy, independent ACA runtime invariant.
-- PENDING — Runtime read-only verifier proof from VNet/ACA. This requires an event with previously applied Source writeback rows.
+- PASS — PR #5465 merged as `68b1570ebf4e7707346c8a68b1bf3e16193c2b79` after all GitHub checks passed.
+- PASS — Repo-owned ACA main deploy run `30009823928` completed successfully for merge SHA `68b1570ebf4e7707346c8a68b1bf3e16193c2b79`.
+- PASS — Independent ACA runtime invariant passed at `2026-07-23T13:15:47.752Z`: active revision `ca-abarva-web-lab-eastus--m68b1570e`, 100% traffic, digest `sha256:aa03c1ccd1f7f6704aff762b98706bb80b96188373e425d9d3e649493ef37ed3`, health OK, and both worker jobs on the same digest.
+- PASS — Runtime read-only verifier proof from ACA/VNet passed on revision `ca-abarva-web-lab-eastus--m68b1570e` for Lakeshore event `LAKE-AMS-2026-C1402EFD` (`c05872d8-0465-4bc8-8eeb-ff3d42ac6761`): `records=14`, `facts=14`, `readinessRows=14`, `activePromotionViolations=0`, report path `/tmp/source-enterprise-context-readback-proof/readback.json`. The command did not use `--apply`.
 
 ## Rollout Plan
 
@@ -63,10 +65,10 @@ Revert the PR and redeploy through the repo-owned ACA main deploy workflow. No d
 
 ## Audit Evidence
 
-- PR: pending.
-- CI/release check: pending.
-- ACA runtime proof: pending.
-- Operator readback proof: pending.
+- PR: #5465.
+- CI/release check: local `npm run release:check` passed; all GitHub PR checks passed before merge.
+- ACA runtime proof: repo-owned ACA main deploy run `30009823928`; independent invariant active revision `ca-abarva-web-lab-eastus--m68b1570e`, digest `sha256:aa03c1ccd1f7f6704aff762b98706bb80b96188373e425d9d3e649493ef37ed3`.
+- Operator readback proof: read-only ACA exec on revision `ca-abarva-web-lab-eastus--m68b1570e` returned pass with 14 records, 14 facts, 14 readiness rows, and 0 active-promotion violations for Lakeshore event `c05872d8-0465-4bc8-8eeb-ff3d42ac6761`.
 
 ## Known Gaps
 
