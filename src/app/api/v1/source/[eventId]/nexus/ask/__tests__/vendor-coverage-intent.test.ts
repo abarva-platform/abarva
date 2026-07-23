@@ -39,9 +39,18 @@ describe('looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)', () => {
     );
     expect(ROUTE_SOURCE).toContain('wantsNdjson');
     expect(ROUTE_SOURCE).toContain('buildVendorCoverageGovernedAnswer');
+    expect(ROUTE_SOURCE).toContain('buildValueLedgerGovernedAnswer');
+    expect(ROUTE_SOURCE).toContain('looksLikeValueLedgerQuestion');
     expect(ROUTE_SOURCE).toContain('buildArtifactQualityGovernedAnswer');
     expect(ROUTE_SOURCE).toContain('looksLikeArtifactQualityQuestion');
     expect(ROUTE_SOURCE).toContain('eventId: liveEventDetail?.id ?? eventId');
+    expect(
+      ROUTE_SOURCE.indexOf('looksLikeValueLedgerQuestion(normalizedBody.prompt)'),
+    ).toBeLessThan(
+      ROUTE_SOURCE.indexOf(
+        'looksLikeArtifactQualityQuestion(normalizedBody.prompt)',
+      ),
+    );
   });
 
   it('matches real vendor-response-coverage questions', () => {
