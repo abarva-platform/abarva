@@ -1304,7 +1304,7 @@ function validateClosedEnums(candidate) {
         });
       }
       const requiredFields =
-        visualType === "relationship_graph" && keyName === "graph_display_contract"
+        visualType === "relationship_graph"
           ? requiredRelationshipGraphFields
           : requiredVisualFields;
       for (const field of requiredFields) {
