@@ -2,48 +2,20 @@ import type { Metadata } from "next";
 import { currentUser } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 
-import { HomeKnowledgeDesignContractSurface } from "@/components/home/HomeKnowledgeDesignContractSurface";
-import { HomeSurface } from "@/components/home/HomeSurface";
-import { cachedInventorySnapshot } from "@/app/(maestro)/admin/_cached-helpers";
+import { HomeExecutiveCockpit } from "@/components/home/HomeExecutiveCockpit";
 import { AppShell } from "@/components/shell/AppShell";
 import { getActiveClientRow } from "@/lib/active-client";
-import { buildAdminSetupControlReadModel } from "@/lib/admin/setup-control";
-import { getTenantSourceFiles } from "@/lib/context-ingestion/tenant-context-read-model";
 import {
   canonicalClientDisplayName,
   getClientOption,
   inferClientKeyFromEmail,
 } from "@/lib/client-config";
 import { ACTIVE_CLIENT_COOKIE } from "@/lib/tenant/resolveTenant";
-import { clientKeyToInventorySubstrateKey } from "@/lib/agent/tools/intelligence/_shared";
-import { buildHomeDataQualityModel } from "@/lib/home/home-data-quality";
-import { buildHomeEnglishSummary } from "@/lib/home/home-english-summary";
-import { applyHomeSummaryClaudeRender } from "@/lib/home/home-summary-claude-render";
-import {
-  buildHomeSummarySnapshot,
-  buildHomeSummarySnapshotFromModuleContext,
-} from "@/lib/home/home-summary-snapshot";
 import {
   readHomeKnowledgeDesignContractForTenant,
   readHomeKnowledgeDesignContractForTenantFromPostgres,
 } from "@/lib/home/home-knowledge-design-contract";
 import { readDerivedRelationshipGraphEdges } from "@/lib/home/read-derived-relationship-graph";
-import { getLocalCxoRuntimeBrowser } from "@/lib/home/local-cxo-runtime";
-import { getHomeV6ContextBrowser } from "@/lib/home/v6-context-browser";
-import { getHomeV7ContextBrowser } from "@/lib/home/v7-context-browser";
-import { getIntelligenceBindingPayload } from "@/lib/intelligence/binding/binding-payload";
-import type {
-  ModuleContextReadRequest,
-  ModuleContextRequestedDomain,
-} from "@/lib/enterprise-data/contracts/module-context-apis";
-import {
-  explainModuleContext,
-  getModuleContext,
-} from "@/lib/enterprise-data/module-context-serving/module-context-serving";
-import {
-  applyStoredKnowledgeDimensionNarratives,
-  getStoredKnowledgeHomeInsightSummary,
-} from "@/lib/enterprise-knowledge/narratives/knowledge-narrative-store";
 
 export const metadata: Metadata = {
   title: "Knowledge · Enterprise Context | AbarVa",
@@ -55,14 +27,11 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const HOME_OPTIONAL_DATA_TIMEOUT_MS = 3_000;
-const HOME_OPTIONAL_RENDER_TIMEOUT_MS = 4_500;
 
 type HomePageProps = {
   searchParams?: Promise<{
     client?: string | string[];
     dimension?: string | string[];
-    tab?: string | string[];
-    candidatePreview?: string | string[];
   }>;
 };
 
@@ -140,26 +109,10 @@ async function withHomePageTimeout<T>(
   }
 }
 
-const HOME_KNOWLEDGE_DOMAINS: ModuleContextRequestedDomain[] = [
-  "enterprise_profile",
-  "functions",
-  "applications_systems",
-  "vendors_contracts",
-  "data_assets_integrations",
-  "programs_priorities",
-  "risks_controls",
-  "metrics_outcomes",
-  "relationships",
-  "evidence_sources",
-];
-
 export default async function HomePage({ searchParams }: HomePageProps) {
   const params = await searchParams;
   const requestedClient = firstSearchParam(params?.client);
   const requestedDimension = firstSearchParam(params?.dimension);
-  const requestedTab = firstSearchParam(params?.tab);
-  const candidatePreviewParam = firstSearchParam(params?.candidatePreview);
-  const candidatePreviewEnabled = candidatePreviewParam === "true";
   const [activeClient, clerkUser, cookieStore] = await Promise.all([
     getActiveClientRow(requestedClient).catch(() => null),
     currentUser().catch(() => null),
@@ -224,163 +177,23 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         hasTenantKey={Boolean(activeClient?.key)}
       >
         <main
+          className="home-executive-page"
           style={{
             flex: 1,
             minHeight: 0,
             overflowY: "auto",
-            background: "#FBFAF7",
+            background: "#f5f1eb",
           }}
         >
-          <HomeKnowledgeDesignContractSurface
+          <HomeExecutiveCockpit
             pack={designContract.pack}
             selectedDimension={requestedDimension}
-            selectedSource={designContract.diagnostics.selectedSource}
-            selectedTab={requestedTab}
-            derivedRelationshipEdges={readDerivedRelationshipGraphEdges(
-              homeTenantKey,
-            )}
+            relationshipEdges={readDerivedRelationshipGraphEdges(homeTenantKey)}
           />
         </main>
       </AppShell>
     );
   }
-
-  const binding = getIntelligenceBindingPayload(homeTenantKey);
-  const moduleContextRequest =
-    homeTenantKey || activeClient?.key || requestedClient
-      ? ({
-          tenantKey:
-            homeTenantKey ??
-            bindingTenantKey(activeClient?.key ?? requestedClient) ??
-            activeClient?.key ??
-            requestedClient ??
-            "skyharbor-air",
-          moduleKey: "home",
-          purpose: "context_summary",
-          mode: candidatePreviewEnabled ? "candidate_preview" : "active",
-          requestedDomains: HOME_KNOWLEDGE_DOMAINS,
-          evidencePolicy: "lineage_required",
-          relationshipPolicy: "validated_and_candidates",
-          actorKey: "home-knowledge-default",
-        } satisfies ModuleContextReadRequest)
-      : null;
-  const moduleContextBundle = moduleContextRequest
-    ? await withHomePageTimeout(
-        "module context",
-        Promise.all([
-          getModuleContext(moduleContextRequest, { repoRoot: process.cwd() }),
-          explainModuleContext(moduleContextRequest, {
-            repoRoot: process.cwd(),
-          }),
-        ]),
-        null,
-      )
-    : null;
-  const moduleContext = moduleContextBundle?.[0] ?? null;
-  const moduleContextExplanation = moduleContextBundle?.[1] ?? null;
-  const localBrowser = getLocalCxoRuntimeBrowser(
-    activeClient?.key ?? homeTenantKey,
-  );
-  const preferredLocalBrowser =
-    localBrowser?.cxoContentSource === "canonical-v3-approved-content" ||
-    localBrowser?.runtimeSource === "local-v3-active"
-      ? localBrowser
-      : null;
-  const v7Browser = preferredLocalBrowser
-    ? null
-    : await withHomePageTimeout(
-        "V7 context browser",
-        getHomeV7ContextBrowser({
-          tenantKey: activeClient?.key ?? homeTenantKey,
-        }),
-        null,
-      );
-  const browser =
-    preferredLocalBrowser ??
-    v7Browser ??
-    localBrowser ??
-    getHomeV6ContextBrowser(activeClient?.key ?? homeTenantKey);
-  const [inventorySnapshot, sourceFiles] =
-    clientOption && activeClient?.key
-      ? await Promise.all([
-          withHomePageTimeout(
-            "inventory snapshot",
-            cachedInventorySnapshot(
-              clientKeyToInventorySubstrateKey(clientOption.id),
-            ),
-            null,
-          ),
-          withHomePageTimeout(
-            "tenant source files",
-            getTenantSourceFiles(activeClient.id),
-            [],
-          ),
-        ])
-      : [null, []];
-  const setupControl =
-    clientOption && activeClient?.key
-      ? buildAdminSetupControlReadModel({
-          tenantKey: clientOption.id,
-          displayName: activeTenantName,
-          coverName: clientOption.name,
-          snapshot: inventorySnapshot,
-          sourceFiles,
-        })
-      : null;
-  const dataQuality = buildHomeDataQualityModel({
-    tenantKey: activeClient?.key ?? homeTenantKey,
-    tenantDisplayName: activeTenantName,
-    candidatePreviewEnabled,
-    setupControl,
-    browser,
-  });
-  const englishSummary = buildHomeEnglishSummary(dataQuality);
-  const baseSummarySnapshot =
-    moduleContext && moduleContextExplanation
-      ? buildHomeSummarySnapshotFromModuleContext({
-          tenantId: activeClient?.id ?? null,
-          tenantKey:
-            homeTenantKey ??
-            bindingTenantKey(activeClient?.key ?? requestedClient) ??
-            activeClient?.key ??
-            requestedClient ??
-            moduleContext.tenantKey,
-          displayName: activeTenantName,
-          industry: clientOption?.vertical ?? null,
-          moduleContext,
-          moduleContextExplanation,
-          repoRoot: process.cwd(),
-        })
-      : buildHomeSummarySnapshot({
-          repoRoot: process.cwd(),
-          tenantId: activeClient?.id ?? null,
-          tenantKey: homeTenantKey ?? activeClient?.key ?? requestedClient,
-          displayName: activeTenantName,
-          industry: clientOption?.vertical ?? null,
-          mode: candidatePreviewEnabled
-            ? "candidate_preview"
-            : "active_home_context",
-          browser,
-          setupControl,
-          dataQuality,
-          englishSummary,
-        });
-  const renderedSummarySnapshot =
-    candidatePreviewEnabled || !moduleContext
-      ? baseSummarySnapshot
-      : await withHomePageTimeout(
-          "Claude summary render",
-          applyHomeSummaryClaudeRender({ snapshot: baseSummarySnapshot }),
-          baseSummarySnapshot,
-          HOME_OPTIONAL_RENDER_TIMEOUT_MS,
-        );
-  const summarySnapshot = applyStoredKnowledgeDimensionNarratives(
-    renderedSummarySnapshot,
-    homeTenantKey ?? activeClient?.key ?? requestedClient,
-  );
-  const homeInsightSummary = getStoredKnowledgeHomeInsightSummary(
-    homeTenantKey ?? activeClient?.key ?? requestedClient,
-  );
 
   return (
     <AppShell
@@ -395,31 +208,34 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       hasTenantKey={Boolean(activeClient?.key)}
     >
       <main
+        className="home-executive-page home-executive-page--empty"
         style={{
           flex: 1,
           minHeight: 0,
           overflowY: "auto",
-          background: "#FBFAF7",
+          background: "#f5f1eb",
+          display: "grid",
+          placeItems: "center",
+          padding: 48,
         }}
       >
-        <HomeSurface
-          candidatePreviewEnabled={candidatePreviewEnabled}
-          clientKey={activeClient?.key ?? homeTenantKey}
-          moduleContext={moduleContext}
-          moduleContextExplanation={moduleContextExplanation}
-          knowledgeCutover={{
-            defaultUsesKnowledgeLayer: Boolean(moduleContext),
-            fallbackUsed: !moduleContext,
-            sourceMode: moduleContext?.sourceMode ?? "active_not_available",
+        <section
+          style={{
+            maxWidth: 620,
+            border: "1px solid #ddd3c6",
+            borderRadius: 14,
+            background: "#fffdf8",
+            padding: 32,
           }}
-          payload={binding}
-          setupControl={setupControl}
-          dataQuality={dataQuality}
-          englishSummary={englishSummary}
-          homeInsightSummary={homeInsightSummary}
-          summarySnapshot={summarySnapshot}
-          v6Browser={browser}
-        />
+        >
+          <span>Knowledge pack unavailable</span>
+          <h1>{activeTenantName}</h1>
+          <p>
+            This tenant does not have an approved Home knowledge pack available
+            yet. Generate and approve the governed pack before this surface is
+            shown to client users.
+          </p>
+        </section>
       </main>
     </AppShell>
   );

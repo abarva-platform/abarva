@@ -10,32 +10,33 @@ function readRepoFile(relativePath: string): string {
 describe("Home/Admin boundary contract", () => {
   it("keeps the canonical /home entry on the insight surface", () => {
     const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
-    const homeSource = readRepoFile("src/components/home/HomeSurface.tsx");
+    const homeSource = readRepoFile(
+      "src/components/home/HomeExecutiveCockpit.tsx",
+    );
 
-    expect(pageSource).toContain("import { HomeSurface }");
+    expect(pageSource).toContain("import { HomeExecutiveCockpit }");
     expect(pageSource).not.toMatch(
       /HomeOverviewV2|HomeIndexPage|StewardOrientationBlock/,
     );
 
-    expect(pageSource).toContain("<HomeSurface");
-    expect(homeSource).toContain("HomeSurface");
+    expect(pageSource).toContain("<HomeExecutiveCockpit");
+    expect(homeSource).toContain("HomeExecutiveCockpit");
     expect(pageSource).not.toMatch(
       /ImpactInsightsHome|HomeOverviewV2|HomeIndexPage|StewardOrientationBlock/,
     );
   });
 
-  it("bounds optional Knowledge enrichment so /home can render", () => {
+  it("bounds optional Knowledge pack lookup so /home can render", () => {
     const pageSource = readRepoFile("src/app/(maestro)/home/page.tsx");
 
     expect(pageSource).toContain("withHomePageTimeout");
     expect(pageSource).toContain("HOME_OPTIONAL_DATA_TIMEOUT_MS");
-    expect(pageSource).toContain("HOME_OPTIONAL_RENDER_TIMEOUT_MS");
-    expect(pageSource).toContain('"module context"');
-    expect(pageSource).toContain('"V7 context browser"');
-    expect(pageSource).toContain('"inventory snapshot"');
-    expect(pageSource).toContain('"tenant source files"');
-    expect(pageSource).toContain('"Claude summary render"');
-    expect(pageSource).toContain("buildHomeSummarySnapshot({");
+    expect(pageSource).toContain('"Home Knowledge Pack v2"');
+    expect(pageSource).toContain(
+      "readHomeKnowledgeDesignContractForTenantFromPostgres",
+    );
+    expect(pageSource).toContain("Knowledge pack unavailable");
+    expect(pageSource).not.toContain("HomeSurface");
     expect(pageSource).not.toContain("buildHomeRuntimeSummarySnapshot");
   });
 
@@ -61,9 +62,7 @@ describe("Home/Admin boundary contract", () => {
     expect(proxySource).toContain(
       'request.nextUrl.pathname.startsWith("/home/connectors/")',
     );
-    expect(proxySource).toContain(
-      'new URL("/admin" + request.nextUrl.search',
-    );
+    expect(proxySource).toContain('new URL("/admin" + request.nextUrl.search');
     expect(proxySource).toContain('request.nextUrl.pathname === "/setup"');
     expect(proxySource).toContain(
       'NextResponse.redirect(new URL("/admin", request.url), 301)',

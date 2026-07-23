@@ -6,9 +6,11 @@ const HOME_DATA_ROUTE = "src/app/api/home/v2-data/route.ts";
 const HOME_V2_DATA = "src/lib/home-v2/data.ts";
 const HOME_V2_PUBLIC_DIR = "public/home-v2";
 const FEATURE_REGISTRY = "src/lib/features/registry.ts";
-const HOME_SURFACE = "src/components/home/HomeSurface.tsx";
-const RETIRED_ENTERPRISE_HOME = "src/components/home/EnterpriseLandscapeHome.tsx";
-const RETIRED_ENTERPRISE_HOME_CSS = "src/components/home/EnterpriseLandscapeHome.module.css";
+const HOME_SURFACE = "src/components/home/HomeExecutiveCockpit.tsx";
+const RETIRED_ENTERPRISE_HOME =
+  "src/components/home/EnterpriseLandscapeHome.tsx";
+const RETIRED_ENTERPRISE_HOME_CSS =
+  "src/components/home/EnterpriseLandscapeHome.module.css";
 const HOME_ASK = "src/components/home/know/HomeKnowAsk.tsx";
 const HOME_ENGINE = "src/lib/home/know/home-know-engine.ts";
 
@@ -22,7 +24,7 @@ describe("Home KNOW runtime has no legacy Home v2 fallback", () => {
   it("mounts the React Home KNOW surface directly under the canonical app shell", () => {
     expect(pageSource).toContain("<AppShell");
     expect(pageSource).toContain('surface="home"');
-    expect(pageSource).toContain("<HomeSurface");
+    expect(pageSource).toContain("<HomeExecutiveCockpit");
     expect(pageSource).toContain("getActiveClientRow(requestedClient)");
     expect(pageSource).not.toContain("v2-frame");
     expect(pageSource).not.toContain("iframe");
@@ -40,21 +42,29 @@ describe("Home KNOW runtime has no legacy Home v2 fallback", () => {
 
   it("removes the rollout flag that could switch Home back to the old surface", () => {
     expect(registrySource).not.toContain("home_react_surface");
-    expect(registrySource).not.toContain("ABARVA_FEATURE_HOME_REACT_SURFACE_TENANTS");
+    expect(registrySource).not.toContain(
+      "ABARVA_FEATURE_HOME_REACT_SURFACE_TENANTS",
+    );
     expect(pageSource).not.toContain("isFeatureEnabled");
   });
 
   it("keeps Home ask on the Home KNOW endpoint and not the old browser answer code", () => {
-    expect(surfaceSource).toContain("/api/home/know/ask");
-    expect(surfaceSource).toContain('data-testid="home-context-explorer"');
-    expect(surfaceSource).toContain('data-testid="home-context-detail"');
-    expect(surfaceSource).toContain('data-testid="home-context-rail"');
+    expect(pageSource).toContain(
+      "readHomeKnowledgeDesignContractForTenantFromPostgres",
+    );
+    expect(surfaceSource).toContain("RelationshipMap");
+    expect(surfaceSource).toContain("EvidenceBoundary");
+    expect(surfaceSource).toContain("DimensionCockpit");
     expect(askSource).toContain("/api/home/know/ask");
     expect(askSource).toContain("AvaAskMark");
     expect(pageSource).not.toContain("EnterpriseLandscapeHome");
     expect(pageSource).not.toContain("getEnterpriseLandscapeViewModel");
-    expect(`${pageSource}\n${surfaceSource}\n${askSource}`).not.toContain("answerForAsk");
-    expect(`${pageSource}\n${surfaceSource}\n${askSource}`).not.toContain("bestAskFacts");
+    expect(`${pageSource}\n${surfaceSource}\n${askSource}`).not.toContain(
+      "answerForAsk",
+    );
+    expect(`${pageSource}\n${surfaceSource}\n${askSource}`).not.toContain(
+      "bestAskFacts",
+    );
   });
 
   it("blocks mechanical answer templates from Home KNOW prose", () => {
