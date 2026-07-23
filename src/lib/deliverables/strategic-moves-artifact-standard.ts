@@ -84,9 +84,19 @@ const DEPTH_BY_ARTIFACT: Partial<
     maxTokens: 36000,
   },
   solution_design: {
-    targetWords: "3,500-6,000",
+    targetWords: "3,500-5,200",
     minWords: 2500,
     maxTokens: 36000,
+  },
+  operating_model_design: {
+    targetWords: "2,400-4,600",
+    minWords: 2400,
+    maxTokens: 30000,
+  },
+  sourcing_strategy: {
+    targetWords: "1,800-3,600",
+    minWords: 1800,
+    maxTokens: 26000,
   },
   execution_roadmap: {
     targetWords: "3,000-5,000",
@@ -145,19 +155,29 @@ export function premiumGoldenBarOptionsForArtifact(
 ): {
   minimumWordCount?: number;
   maximumWordCount?: number;
+  enforceMaximumWordCount?: boolean;
   forbiddenLanguage?: readonly string[];
   requiredExactEvidenceTerms?: readonly string[];
   requiredTaxonomyTerms?: readonly string[];
   forbidClientFacingRawIds?: boolean;
 } {
-  // A concision ceiling (informational — see GoldenBarOptions.maximumWordCount)
-  // applies to every artifact type; only the checks below vary by type.
+  // A concision ceiling applies to every artifact type; concise executive
+  // artifacts opt into enforcement once their rendered wrapper overhead is known.
   const maximumWordCount = maximumWordCountForArtifact(artifact);
+  const enforceMaximumWordCount = (
+    [
+      "charter",
+      "solution_design",
+      "operating_model_design",
+      "sourcing_strategy",
+    ] as readonly DeliverableKey[]
+  ).includes(artifact);
 
   if (artifact === "charter" || artifact === "discovery_report") {
     return {
       minimumWordCount: depthStandardForArtifact(artifact).minWords,
       maximumWordCount,
+      enforceMaximumWordCount,
       forbiddenLanguage: STRATEGIC_MOVES_FORBIDDEN_ARTIFACT_TERMS,
       ...(artifact === "discovery_report" && context
         ? {
@@ -182,7 +202,26 @@ export function premiumGoldenBarOptionsForArtifact(
         : {}),
     };
   }
-  return { maximumWordCount };
+  if (
+    artifact === "solution_design" ||
+    artifact === "operating_model_design" ||
+    artifact === "sourcing_strategy"
+  ) {
+    return {
+      minimumWordCount: depthStandardForArtifact(artifact).minWords,
+      maximumWordCount,
+      enforceMaximumWordCount,
+      forbiddenLanguage: P3_FUTURE_STATE_FORBIDDEN_ARTIFACT_TERMS,
+      ...(context
+        ? {
+            requiredExactEvidenceTerms: exactEvidenceTermsForGoldenBar(context),
+            requiredTaxonomyTerms: taxonomyTermsForGoldenBar(context),
+            forbidClientFacingRawIds: true,
+          }
+        : {}),
+    };
+  }
+  return { maximumWordCount, enforceMaximumWordCount };
 }
 
 function list(values: readonly string[] | undefined, fallback: string): string {
@@ -503,7 +542,8 @@ Required sections:
 - Open inputs and implementation decisions
 
 Length discipline:
-- Target 3,500-6,000 words / approximately 8-12 visual-first pages.
+- Target 3,500-5,200 rendered words / approximately 7-10 visual-first pages.
+- Stop before 5,200 rendered words, including source register and appendix overhead.
 - Do not repeat the full architecture, operating model, sourcing strategy, or evidence register.
 - Prefer exhibits and concise captions over architecture essays.`;
 }
@@ -530,8 +570,9 @@ Required sections:
 - Measures, review triggers, and unresolved inputs
 
 Length discipline:
-- Target 1,800-3,000 words / approximately 6-10 table-rich pages.
-- Stop at 3,000 words. Do not reproduce the architecture, detailed workflow specification,
+- Target 2,400-4,600 rendered words / approximately 5-8 table-rich pages.
+- Stop before 4,600 rendered words, including source register and appendix overhead.
+- Do not reproduce the architecture, detailed workflow specification,
   sourcing options, implementation roadmap, or source register in the body.
 - Use plain operating language; avoid governance-legal and generic PMO prose.`;
 }
@@ -560,8 +601,9 @@ Evidence discipline:
 - Any planning range must be labeled [ASSUMPTION TO VALIDATE]; client facts require [n].
 
 Length discipline:
-- Target 1,800-3,000 words / approximately 5-8 pages.
-- Stop at 3,000 words. Do not repeat the full target architecture or operating model.`;
+- Target 1,800-3,600 rendered words / approximately 4-6 pages.
+- Stop before 3,600 rendered words, including source register and appendix overhead.
+- Do not repeat the full target architecture or operating model.`;
 }
 
 function genericPhaseAssignment(phase: number): string {

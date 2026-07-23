@@ -98,30 +98,44 @@ describe('deliverable structures', () => {
     },
   );
 
+  it('keeps solution-design authoring budgets below the hard export ceiling', () => {
+    const structure = getDeliverableStructure('moves', 'solution_design')!;
+    expect(structure.sections.map((section) => section.expertLatitude)).toEqual([
+      'Keep under 350 words; lead with the decision and do not restate the full architecture.',
+      'Keep under 550 words plus one workflow exhibit.',
+      'Keep under 650 words plus a component interaction exhibit.',
+      'Keep under 600 words; use a compact contract table.',
+      'Keep under 550 words plus one exception/control exhibit.',
+      'Keep under 550 words; distinguish confirmed requirements from open decisions.',
+      'Keep under 550 words using concise tables.',
+      'Keep under 200 words.',
+    ]);
+  });
+
   it('keeps operating-model authoring budgets below the hard export ceiling', () => {
     const structure = getDeliverableStructure('moves', 'operating_model')!;
     expect(structure.sections.map((section) => section.expertLatitude)).toEqual([
-      'Keep under 350 words.',
-      'Keep under 600 words plus one exhibit.',
-      'Keep under 700 words using role and RACI tables.',
-      'Keep under 650 words plus one decision-rights exhibit.',
-      'Keep under 600 words using a cadence table.',
-      'Keep under 550 words; tie each action to the changed process and measure.',
-      'Keep under 500 words using concise tables.',
-      'Keep under 150 words.',
+      'Keep under 300 words.',
+      'Keep under 500 words plus one exhibit.',
+      'Keep under 600 words using role and RACI tables.',
+      'Keep under 550 words plus one decision-rights exhibit.',
+      'Keep under 500 words using a cadence table.',
+      'Keep under 450 words; tie each action to the changed process and measure.',
+      'Keep under 400 words using concise tables.',
+      'Keep under 120 words.',
     ]);
   });
 
   it('keeps sourcing-strategy authoring budgets below the hard export ceiling', () => {
     const structure = getDeliverableStructure('moves', 'sourcing_strategy')!;
     expect(structure.sections.map((section) => section.expertLatitude)).toEqual([
-      'Keep under 350 words.',
-      'Keep under 500 words using a capability table.',
-      'Keep under 650 words plus one options matrix.',
-      'Keep under 550 words using compact criteria and guardrail tables.',
-      'Keep under 500 words.',
-      'Keep under 450 words using a single table.',
-      'Keep under 150 words.',
+      'Keep under 250 words.',
+      'Keep under 400 words using a capability table.',
+      'Keep under 525 words plus one options matrix.',
+      'Keep under 450 words using compact criteria and guardrail tables.',
+      'Keep under 400 words.',
+      'Keep under 350 words using a single table.',
+      'Keep under 100 words.',
     ]);
   });
 });
