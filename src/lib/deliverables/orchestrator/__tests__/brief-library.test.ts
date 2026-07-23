@@ -97,6 +97,20 @@ describe('deliverable structures', () => {
       );
     },
   );
+
+  it('keeps operating-model authoring budgets below the hard export ceiling', () => {
+    const structure = getDeliverableStructure('moves', 'operating_model')!;
+    expect(structure.sections.map((section) => section.expertLatitude)).toEqual([
+      'Keep under 350 words.',
+      'Keep under 600 words plus one exhibit.',
+      'Keep under 700 words using role and RACI tables.',
+      'Keep under 650 words plus one decision-rights exhibit.',
+      'Keep under 600 words using a cadence table.',
+      'Keep under 550 words; tie each action to the changed process and measure.',
+      'Keep under 500 words using concise tables.',
+      'Keep under 150 words.',
+    ]);
+  });
 });
 
 describe('composition — same deliverable type differs by archetype', () => {
