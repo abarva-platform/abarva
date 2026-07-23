@@ -2,6 +2,11 @@
 
 **Date**: 2026-07-22
 **Requested by**: Anand Sundaram
+**Update (same day)**: added Track D — a follow-up format-gap audit of this same pipeline found
+that 4 of the 14 profiles declare PPTX as their intended format but no PPTX renderer exists
+anywhere in the orchestrator, and that the actual full-engagement cross-phase narrative artifact
+(the Master Move Dossier, separate from these 14 profiles) exists in HTML only with no Word/PDF/
+PPTX variant. See Track D at the end of this document.
 **Context**: A real First Capital E2E proof bundle (client-provided zip,
 `first-capital-moves-e2e-audit-bundle-2026-07-22`) was inspected directly — every claim below is
 grounded in the actual downloaded artifacts and DOCX content, not the backlog's self-reported
@@ -274,9 +279,101 @@ unless all 14 were actually verified against a real regenerated artifact.
 
 ---
 
+## Track D — PPTX rendering, and giving the Master Move Dossier real Word/PDF/PPTX variants
+
+Grounded in a follow-up format-gap audit of the same pipeline (published separately as a table
+this session): 4 of the 14 deliverable profiles declare `pptx` as their intended default or
+supporting format (`discovery_report`, `root_cause_worksheet`, `execution_roadmap`,
+`handoff_package`), but **no PPTX renderer exists** for the orchestrator — the download route
+silently falls back to DOCX. Separately, the actual full-engagement, cross-phase narrative
+artifact — the **Master Move Dossier** (not one of the 14 profiles; a distinct system) — exists
+in **HTML only**, with no Word, PDF, or PPTX variant.
+
+### D.1 Build a real PPTX renderer for the 14-profile orchestrator
+
+**Problem, confirmed**: `src/app/api/v1/artifacts/[artifactId]/route.ts:36-44` has an explicit
+fallback — a comment on lines 36-38 stating "'pptx' has no renderer here yet," and line 43,
+`if (out === "pptx") return "docx";`. `renderers.tsx` has `renderDeliverableDocx`/
+`renderDeliverableHtml`/`renderDeliverablePdf`/`renderDeliverableExcelCompanion`, all consuming
+the shared `RenderableDeliverable` type (`src/lib/deliverables/orchestrator/types.ts:368-381` —
+`title`, `subtitle?`, `clientDisplayName`, `initiativeDisplayName`, `generatedSections:
+RenderableSection[]`, `tables: RenderableTable[]`, `exhibits: RenderableExhibit[]`,
+`sourceRegister`, `assumptions`, `clientCompleteChecklist`, `recommendation`, `nextActions`) —
+but no PPTX equivalent.
+
+`pptxgenjs` (already an installed dependency) is used successfully in three unrelated places —
+read all three before writing any code, they are real reference points, not from-scratch work:
+- `src/lib/visual-system/storyline-deck.ts:192-326`, `renderStorylineDeckPptx(deck:
+  StorylineDeck): Promise<Buffer>` — **the best structural model**: simplest of the three, a
+  single generic slide-loop over `deck.slides[]`, clean separation of governing message / points
+  / exhibit-placeholder / speaker notes per slide. It explicitly documents (comment lines
+  187-190) that exhibit SVGs are meant to be swapped in later — the same task this item faces.
+- `src/lib/source/exports/cxo-report/source-cxo-narrative-pptx.ts:27-52` — a cover-slide +
+  reusable content-slide pattern with metric-row cards, a footer/header chrome, and native
+  `addTable` usage — useful for slide-chrome patterns, but its input type is Source-specific.
+- `src/lib/programs/expert-kernel/exports/board-grade/pptx-renderer.ts:1486-1515` — the most
+  complex of the three (1515 lines, 12 hardcoded slide-builder functions, no parameterized
+  input). Useful only as a reference for `rasteriseSvg`-based chart/exhibit rendering technique
+  (already imported in `renderers.tsx:33` and reusable directly) — not a call-site pattern to
+  copy, since it isn't parameterized by a generic deliverable shape at all.
+
+**Task**: build `renderDeliverablePptx(doc: RenderableDeliverable): Promise<Buffer>` in
+`renderers.tsx` (or a sibling file it imports from, matching the existing file organization),
+modeled structurally on `storyline-deck.ts`'s slide-loop approach: one slide per
+`RenderableSection` (governing point + condensed bullets, not the full section prose — a deck
+slide is not a paragraph dump), a dedicated slide for each `RenderableExhibit` using
+`rasteriseSvg` for the actual image, and a closing recommendation/next-actions slide. Remove the
+`pptx → docx` fallback in `route.ts:43` once the real renderer exists, gating it so unaffected
+formats/profiles are unchanged.
+
+**Acceptance criteria**: regenerate the four PPTX-declared profiles
+(`discovery_report`, `root_cause_worksheet`, `execution_roadmap`, `handoff_package`) as real
+`.pptx` files against the sandbox Move; confirm they open in PowerPoint/Keynote, contain fewer
+words per slide than the DOCX equivalent (a deck is "flashy, not deep" per the original ask —
+verify this isn't just the DOCX prose pasted onto slides), and that exhibits render as real
+images, not placeholder boxes. `execution_roadmap` is the strongest first candidate — it's
+fundamentally a sequencing/timeline artifact, which a deck tells far better than DOCX prose.
+
+### D.2 Give the Master Move Dossier real Word/PDF/PPTX variants
+
+**Files**: `src/app/api/v1/moves/board-grade-master-dossier/route.ts` (219 lines — both the real-
+Move mode via `loadMoveBusinessCaseInput`/`renderMoveMasterDossierHtml`, lines 76-164, and the
+Apex-reference mode via `renderApexMasterDossierHtml`, lines 166-219) return `text/html` only;
+`src/lib/programs/expert-kernel/exports/board-grade/move-master-dossier-renderer.ts` (1021
+lines) is the actual template — 8 sections (cover, executive answer, decision timeline,
+economics, roadmap & Tower handoff, evidence & gaps, an "assembled book" grid linking every
+sibling deck for the Move, and recommendation/kill-triggers), reusing its own `deck-shell`/
+`svg-charts` helpers (`coverSlide`, `slideShell`, `heroExhibit`, `economicsStrip`,
+`investmentWaterfall`, `scenarioRangeChart`, `sensitivityTornado`, `evidenceGapMatrix` — all in
+the same `board-grade/` directory). This is a genuinely dense, board-grade artifact — comparable
+to an 8-10 page/slide executive deck, not a long-form document — and it has **no shared code
+path** with the 14-profile orchestrator's `RenderableDeliverable`/`renderers.tsx` system at all.
+**Confirmed there is no HTML-to-DOCX or HTML-to-PDF utility anywhere in this repo** (no
+puppeteer/playwright/html-to-docx in `package.json`) — every existing DOCX/PDF renderer in this
+codebase builds natively from structured data (`docx`/`@react-pdf/renderer`), never by
+converting an HTML string. Do not introduce a new HTML-conversion dependency as the first
+option.
+**Task**: build DOCX, PDF, and PPTX variants of the Master Move Dossier the same way
+`renderApexCostedBusinessCasePptx` (`pptx-renderer.ts`) built its PPTX — as a **parallel
+structured renderer working directly off the same underlying view-model**
+(`MoveMasterDossier`/`MoveMasterDossierResult` from `./move-master-dossier-model`), reusing the
+`docx`/`@react-pdf/renderer`/`rasteriseSvg` primitives already in `renderers.tsx`, not by
+converting the existing HTML. Each of the three new renderers should cover the same 8 sections
+as the HTML version, adapted to its medium (PPTX: one slide per section, matching D.1's
+approach; DOCX/PDF: a long-form board-grade document, following the same content-model pattern
+`renderDeliverableDocx`/`renderDeliverablePdf` already use elsewhere in this codebase). Wire the
+new formats into `board-grade-master-dossier/route.ts` via a format query param, matching the
+convention the 14-profile artifact download route already uses.
+**Acceptance criteria**: `GET /api/v1/moves/board-grade-master-dossier?moveId=<sandbox>&format=
+docx` (and `=pdf`, `=pptx`) each return a real, openable file covering the same 8 sections as the
+existing HTML version, with the same underlying numbers (investment/return figures, phase
+verdicts, Tower handoff metrics) — not a re-derived or approximated version of the content.
+
+---
+
 ## Report format
 
-For each of the three tracks: PR number(s), what changed (file:line), and — critically — an
+For each of the three tracks (plus Track D): PR number(s), what changed (file:line), and — critically — an
 actual before/after comparison of a real regenerated DOCX artifact (word count, heading count,
 duplicate-heading count, embedded-image count, presence of a real TOC), inspected the same way
 this handoff's grounding was produced (python-docx or equivalent), not just "tests pass." Update
