@@ -30,9 +30,58 @@ import { ChartTooltip, HEX, scatterDatum, toM } from "./chart-kit";
 interface BubblePoint {
   x: number;
   y: number;
+  rawX: number;
+  rawY: number;
   z: number;
   n: number;
   name: string;
+  kind: TowerAiKind;
+}
+
+const COLLISION_BUCKET_SIZE = 8;
+const COLLISION_SPREAD = 4.5;
+
+function clampScore(value: number): number {
+  return Math.max(0, Math.min(100, value));
+}
+
+function collisionKey(point: Pick<BubblePoint, "rawX" | "rawY">): string {
+  return [
+    Math.round(point.rawX / COLLISION_BUCKET_SIZE),
+    Math.round(point.rawY / COLLISION_BUCKET_SIZE),
+  ].join(":");
+}
+
+export function buildBubblePoints(
+  items: readonly TowerAiView[],
+  sizeMode: "spend" | "constant" = "spend",
+): BubblePoint[] {
+  const points = items.map((item) => ({
+    x: item.readinessScore,
+    y: item.valueScore,
+    rawX: item.readinessScore,
+    rawY: item.valueScore,
+    z: sizeMode === "constant" ? 1 : Math.max(toM(item.aiSpendUsd), 0.01),
+    n: item.n,
+    name: item.name,
+    kind: item.kind,
+  }));
+  const collisions = new Map<string, BubblePoint[]>();
+  for (const point of points) {
+    const key = collisionKey(point);
+    collisions.set(key, [...(collisions.get(key) ?? []), point]);
+  }
+  for (const cluster of collisions.values()) {
+    if (cluster.length <= 1) continue;
+    cluster
+      .sort((a, b) => a.n - b.n)
+      .forEach((point, index) => {
+        const angle = (Math.PI * 2 * index) / cluster.length - Math.PI / 2;
+        point.x = clampScore(point.rawX + Math.cos(angle) * COLLISION_SPREAD);
+        point.y = clampScore(point.rawY + Math.sin(angle) * COLLISION_SPREAD);
+      });
+  }
+  return points;
 }
 
 export function AiBubbleMatrixChart({
@@ -45,16 +94,11 @@ export function AiBubbleMatrixChart({
   onSelect: (n: number) => void;
 }) {
   const byKind = new Map<TowerAiKind, BubblePoint[]>();
-  for (const item of items) {
-    const points = byKind.get(item.kind) ?? [];
-    points.push({
-      x: item.readinessScore,
-      y: item.valueScore,
-      z: sizeMode === "constant" ? 1 : Math.max(toM(item.aiSpendUsd), 0.01),
-      n: item.n,
-      name: item.name,
-    });
-    byKind.set(item.kind, points);
+  const points = buildBubblePoints(items, sizeMode);
+  for (const point of points) {
+    const kindPoints = byKind.get(point.kind) ?? [];
+    kindPoints.push(point);
+    byKind.set(point.kind, kindPoints);
   }
 
   return (
@@ -114,7 +158,7 @@ export function AiBubbleMatrixChart({
         <ZAxis
           type="number"
           dataKey="z"
-          range={sizeMode === "constant" ? [260, 260] : [120, 900]}
+          range={sizeMode === "constant" ? [620, 620] : [120, 900]}
           name={sizeMode === "constant" ? "Constant radius" : "AI spend"}
         />
         <ReferenceLine x={50} stroke={HEX.borderStrong} strokeDasharray="3 3" />
@@ -128,7 +172,7 @@ export function AiBubbleMatrixChart({
             fill={AI_KIND_HEX[kind]}
             fillOpacity={0.82}
             stroke="#fff"
-            strokeWidth={1.5}
+            strokeWidth={2}
             isAnimationActive={false}
             style={{ cursor: "pointer" }}
             onClick={(arg: unknown) => {
@@ -141,7 +185,7 @@ export function AiBubbleMatrixChart({
               position="center"
               style={{
                 fontFamily: "var(--abarva-mono)",
-                fontSize: 10.5,
+                fontSize: 11,
                 fontWeight: 700,
                 fill: "#fff",
                 pointerEvents: "none",
