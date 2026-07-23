@@ -30,10 +30,12 @@ describe("strategy-stage authoring (d02_value_target, d03_archetype_decision)", 
     expect(codes).toContain("d03_archetype_decision");
   });
 
-  it("reserves the consulting-grade gate for d09 (RFP-specific rubric); d02/d03 generate single-pass", () => {
-    // The gate's rubric is RFP-specific, so only d09 runs it. d02/d03 are short
-    // strategy docs that generate single-pass on the board-grade model.
+  it("keeps d02/d03 single-pass while flagship narrative artifacts run Gate B", () => {
     expect(requiresSourceConsultingGradeGate("d09_rfp_pack")).toBe(true);
+    expect(requiresSourceConsultingGradeGate("d01_strategy_memo")).toBe(true);
+    expect(requiresSourceConsultingGradeGate("d05_scope_memo")).toBe(true);
+    expect(requiresSourceConsultingGradeGate("d24_decision_brief")).toBe(true);
+    expect(requiresSourceConsultingGradeGate("d27_selection_memo")).toBe(true);
     expect(requiresSourceConsultingGradeGate("d02_value_target")).toBe(false);
     expect(requiresSourceConsultingGradeGate("d03_archetype_decision")).toBe(
       false,

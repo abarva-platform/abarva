@@ -13,6 +13,7 @@ import {
   SOURCE_CLIENT_FINAL_GOVERNANCE_MESSAGE,
 } from "@/lib/source/artifact-governance";
 import { getPromptTemplate } from "@/lib/source/agent-generation";
+import { requiresSourceConsultingGradeGate } from "@/lib/source/agent-generation/quality-review";
 import {
   getSourceArtifactProfile,
   type SourceArtifactProfile,
@@ -40,6 +41,7 @@ export interface SourceArtifactLifecycleArtifact {
   bodyMarkdown?: string | null;
   renderedText?: string | null;
   plainTextSummary?: string | null;
+  bodyGenerationMetadata?: Record<string, unknown> | null;
 }
 
 export interface SourceArtifactLifecyclePromptContract {
@@ -79,6 +81,22 @@ export interface SourceArtifactContentQualityAssessment {
   nextAction: string;
 }
 
+export type SourceArtifactConsultingGateState =
+  | "not_required"
+  | "required_not_run"
+  | "passed"
+  | "failed";
+
+export interface SourceArtifactConsultingGateAssessment {
+  required: boolean;
+  state: SourceArtifactConsultingGateState;
+  label: string;
+  standardLabel: string;
+  scoreLabel: string;
+  findings: string[];
+  nextAction: string;
+}
+
 export interface SourceArtifactLifecycleRow {
   code: string;
   name: string;
@@ -100,6 +118,7 @@ export interface SourceArtifactLifecycleRow {
   governanceMessage: string;
   quality: SourceArtifactQualityAssessment;
   contentQuality: SourceArtifactContentQualityAssessment;
+  consultingGate: SourceArtifactConsultingGateAssessment;
 }
 
 export interface SourceArtifactQualitySummary {
@@ -113,6 +132,10 @@ export interface SourceArtifactQualitySummary {
   contentScoredCount: number;
   contentBlockerCount: number;
   contentWarningCount: number;
+  consultingGateRequiredCount: number;
+  consultingGatePassedCount: number;
+  consultingGateFailedCount: number;
+  consultingGatePendingCount: number;
   label: string;
   scopeLabel: string;
 }
@@ -164,6 +187,9 @@ const ARTIFACT_STANDARDS_CSV_COLUMNS = [
   "Content QA status",
   "Content QA score",
   "Content QA findings",
+  "Consulting Gate B",
+  "Consulting Gate B score",
+  "Consulting Gate B findings",
   "Governance note",
 ] as const;
 
@@ -276,6 +302,9 @@ export function buildSourceArtifactStandardsCsv(
       row.contentQuality.score === null ? "Not scored" : String(row.contentQuality.score),
       [...row.contentQuality.blockers, ...row.contentQuality.warnings].join("; ") ||
         row.contentQuality.nextAction,
+      row.consultingGate.label,
+      row.consultingGate.scoreLabel,
+      row.consultingGate.findings.join("; ") || row.consultingGate.nextAction,
       row.governanceMessage,
     ].map(csvCell).join(","),
   );
@@ -304,6 +333,10 @@ function buildLifecycleRow(
     content: artifactContentFor(matchingArtifacts),
     spec,
   });
+  const consultingGate = consultingGateAssessmentFor({
+    artifactCode: spec.code,
+    artifacts: matchingArtifacts,
+  });
   return {
     code: spec.code,
     name: spec.name,
@@ -327,6 +360,7 @@ function buildLifecycleRow(
     governanceMessage: governanceMessageFor(lifecycleState),
     quality,
     contentQuality,
+    consultingGate,
   };
 }
 
@@ -371,6 +405,18 @@ function buildQualitySummary(
     (total, row) => total + row.contentQuality.warnings.length,
     0,
   );
+  const consultingGateRequiredCount = rows.filter(
+    (row) => row.consultingGate.required,
+  ).length;
+  const consultingGatePassedCount = rows.filter(
+    (row) => row.consultingGate.state === "passed",
+  ).length;
+  const consultingGateFailedCount = rows.filter(
+    (row) => row.consultingGate.state === "failed",
+  ).length;
+  const consultingGatePendingCount = rows.filter(
+    (row) => row.consultingGate.state === "required_not_run",
+  ).length;
 
   return {
     score,
@@ -383,6 +429,10 @@ function buildQualitySummary(
     contentScoredCount,
     contentBlockerCount,
     contentWarningCount,
+    consultingGateRequiredCount,
+    consultingGatePassedCount,
+    consultingGateFailedCount,
+    consultingGatePendingCount,
     label:
       hardFailCount > 0
         ? "Hard fails present"
@@ -391,8 +441,68 @@ function buildQualitySummary(
           : "Lifecycle ready",
     scopeLabel:
       contentScoredCount > 0
-        ? "Scores lifecycle and approval hard gates, plus rendered body text where Source has artifact content available."
-        : "Scores lifecycle and approval hard gates only; rendered body text is not available in this registry view yet, so prose, visuals, citations, and exhibit quality are not claimed.",
+        ? `Scores lifecycle and approval hard gates, rendered body text where Source has artifact content available, and ${consultingGateRequiredCount} flagship consulting-grade Gate B contract(s).`
+        : `Scores lifecycle and approval hard gates plus ${consultingGateRequiredCount} flagship consulting-grade Gate B contract(s); rendered body text is not available in this registry view yet, so prose, visuals, citations, and exhibit quality are not claimed.`,
+  };
+}
+
+function consultingGateAssessmentFor(args: {
+  artifactCode: string;
+  artifacts: readonly SourceArtifactLifecycleArtifact[];
+}): SourceArtifactConsultingGateAssessment {
+  if (!requiresSourceConsultingGradeGate(args.artifactCode)) {
+    return {
+      required: false,
+      state: "not_required",
+      label: "Gate B not required",
+      standardLabel: "Not required for this artifact class",
+      scoreLabel: "N/A",
+      findings: [],
+      nextAction:
+        "Use deterministic content QA and human review for this artifact.",
+    };
+  }
+
+  const gate = latestConsultingGateMetadata(args.artifacts);
+  const standardLabel = "Partner-grade consulting deliverable v1";
+  if (!gate) {
+    return {
+      required: true,
+      state: "required_not_run",
+      label: "Gate B required",
+      standardLabel,
+      scoreLabel: "Not run",
+      findings: [
+        "No persisted consulting-grade review receipt is available for this artifact.",
+      ],
+      nextAction:
+        "Run Claude generation/review or attach a client-final artifact with separate human acceptance before claiming narrative quality.",
+    };
+  }
+
+  const passed = gate.passed === true;
+  const score =
+    typeof gate.overallScore === "number" && Number.isFinite(gate.overallScore)
+      ? `${gate.overallScore}/10`
+      : typeof gate.finalSummary === "string" && gate.finalSummary.trim()
+        ? gate.finalSummary.trim()
+        : "Recorded";
+  const findings = [
+    typeof gate.finalSummary === "string" ? gate.finalSummary : null,
+    ...stringArray(gate.unsupportedClaims).map((claim) => `Unsupported: ${claim}`),
+    ...stringArray(gate.missingEvidence).map((gap) => `Missing evidence: ${gap}`),
+  ].filter((item): item is string => Boolean(item?.trim()));
+
+  return {
+    required: true,
+    state: passed ? "passed" : "failed",
+    label: passed ? "Gate B passed" : "Gate B failed",
+    standardLabel,
+    scoreLabel: score,
+    findings,
+    nextAction: passed
+      ? "Keep the Gate B receipt with the generated artifact lineage."
+      : "Repair or regenerate the artifact until every consulting-grade dimension scores at least 8/10.",
   };
 }
 
@@ -615,8 +725,28 @@ function formatArtifactStandardsExcerpt(
     `Page guidance: ${row.pageGuidanceLabel}.`,
     `Controls: ${row.controlsLabel}.`,
     generation,
+    `Consulting-grade Gate B: ${row.consultingGate.label}; ${row.consultingGate.standardLabel}; score ${row.consultingGate.scoreLabel}.`,
     `Lifecycle state for this event: ${row.lifecycleLabel}. Approval rule: ${row.approvalLabel}. ${row.governanceMessage}`,
   ].join(" ");
+}
+
+function latestConsultingGateMetadata(
+  artifacts: readonly SourceArtifactLifecycleArtifact[],
+): Record<string, unknown> | null {
+  for (const artifact of artifacts) {
+    const metadata = artifact.bodyGenerationMetadata;
+    if (!metadata || typeof metadata !== "object") continue;
+    const gate = metadata.qualityGate;
+    if (gate && typeof gate === "object") {
+      return gate as Record<string, unknown>;
+    }
+  }
+  return null;
+}
+
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string");
 }
 
 function profileFor(code: string): SourceArtifactProfile | null {

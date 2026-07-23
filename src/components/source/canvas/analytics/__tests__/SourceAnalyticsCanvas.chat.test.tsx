@@ -309,14 +309,26 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
       "Content blockers",
     );
+    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+      "Gate B required",
+    );
+    expect(screen.getByTestId("source-artifact-lifecycle-matrix")).toHaveTextContent(
+      "Gate B pending",
+    );
     expect(screen.getByTestId("source-artifact-quality-scope")).toHaveTextContent(
-      "plus rendered body text",
+      "rendered body text where Source has artifact content available",
     );
     expect(
       screen.getByTestId("source-artifact-content-quality-d09_rfp_pack"),
     ).toHaveTextContent("Content QA");
+    expect(
+      screen.getByTestId("source-artifact-consulting-gate-d09_rfp_pack"),
+    ).toHaveTextContent("Gate B required");
     expect(screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack")).toHaveTextContent(
       "Content blockers",
+    );
+    expect(screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack")).toHaveTextContent(
+      "No persisted consulting-grade review receipt",
     );
     expect(screen.getByTestId("source-artifact-lifecycle-row-d09_rfp_pack")).toHaveTextContent(
       "Vendor-facing document contains internal commercial or scoring details",
@@ -338,7 +350,10 @@ describe("SourceAnalyticsCanvas — AskAnythingBar reachability", () => {
     expect(decodedCsv).toContain('"Quality findings"');
     expect(decodedCsv).toContain('"Content QA status"');
     expect(decodedCsv).toContain('"Content QA findings"');
+    expect(decodedCsv).toContain('"Consulting Gate B"');
+    expect(decodedCsv).toContain('"Consulting Gate B score"');
     expect(decodedCsv).toContain('"Content blockers"');
+    expect(decodedCsv).toContain('"Gate B required","Not run"');
     expect(decodedCsv).toContain("Mechanical/banned terms");
     expect(decodedCsv).toContain(
       "AI-prepared drafts are not final and require human review before external use.",
