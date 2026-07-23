@@ -63,6 +63,7 @@ export type RoleApprovalStatus =
 export interface RoleApprovalRecord {
   role: ApprovalRole;
   status: RoleApprovalStatus;
+  version: number;
   approverUserId: string | null;
   approverName: string | null;
   outstandingConditions: string | null;
@@ -82,6 +83,7 @@ export interface RoleApprovalSummary {
 interface RoleApprovalRow {
   role: ApprovalRole;
   status: RoleApprovalStatus;
+  version: number;
   approver_user_id: string | null;
   approver_name: string | null;
   outstanding_conditions: string | null;
@@ -92,11 +94,40 @@ function toRecord(row: RoleApprovalRow): RoleApprovalRecord {
   return {
     role: row.role,
     status: row.status,
+    version: row.version,
     approverUserId: row.approver_user_id,
     approverName: row.approver_name,
     outstandingConditions: row.outstanding_conditions,
     decidedAt: row.decided_at,
   };
+}
+
+interface DeliverableApprovalPointer {
+  id: string;
+  deliverable_type_key: string;
+  created_by: string | null;
+  current_version: number | null;
+  signed_off_version: number | null;
+}
+
+function resolveApprovalVersion(row: DeliverableApprovalPointer): number {
+  return row.signed_off_version ?? row.current_version ?? 1;
+}
+
+async function readDeliverableApprovalPointer(
+  sb: SupabaseClient,
+  programId: string,
+  deliverableId: string,
+): Promise<DeliverableApprovalPointer> {
+  const { data: deliverable, error } = await sb
+    .from("deliverables_v2")
+    .select("id, deliverable_type_key, created_by, current_version, signed_off_version")
+    .eq("id", deliverableId)
+    .eq("engagement_id", programId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!deliverable) throw new Error("deliverable not found in this program");
+  return deliverable as DeliverableApprovalPointer;
 }
 
 /**
@@ -117,13 +148,16 @@ export async function getRoleApprovalSummary(
   await assertProgramTenancy(ctx, programId, { supabase: sb });
 
   const requiredRoles = requiredApprovalRolesFor(deliverableTypeKey);
+  const deliverable = await readDeliverableApprovalPointer(sb, programId, deliverableId);
+  const version = resolveApprovalVersion(deliverable);
 
   const { data, error } = await sb
     .from("deliverable_role_approvals")
     .select(
-      "role, status, approver_user_id, approver_name, outstanding_conditions, decided_at",
+      "role, status, version, approver_user_id, approver_name, outstanding_conditions, decided_at",
     )
-    .eq("deliverable_id", deliverableId);
+    .eq("deliverable_id", deliverableId)
+    .eq("version", version);
   if (error) throw error;
 
   const existing = new Map(
@@ -135,6 +169,7 @@ export async function getRoleApprovalSummary(
       existing.get(role) ?? {
         role,
         status: "pending",
+        version,
         approverUserId: null,
         approverName: null,
         outstandingConditions: null,
@@ -177,14 +212,37 @@ export async function recordRoleApprovalDecision(
   const sb = opts.supabase ?? getAzureWriteFluentClient();
   await assertProgramTenancy(ctx, programId, { supabase: sb });
 
-  const { data: deliverable, error: readError } = await sb
-    .from("deliverables_v2")
-    .select("id")
-    .eq("id", deliverableId)
-    .eq("engagement_id", programId)
-    .maybeSingle();
-  if (readError) throw readError;
-  if (!deliverable) throw new Error("deliverable not found in this program");
+  const deliverable = await readDeliverableApprovalPointer(sb, programId, deliverableId);
+  const version = resolveApprovalVersion(deliverable);
+
+  if (decision.status === "approved" && deliverable.created_by === ctx.userId) {
+    throw new Error("self_approval_violation");
+  }
+
+  const requiredRoles = requiredApprovalRolesFor(deliverable.deliverable_type_key);
+  if (decision.status === "approved" && requiredRoles.length >= 2) {
+    const { data: existingApprovals, error: existingApprovalsError } = await sb
+      .from("deliverable_role_approvals")
+      .select("role, approver_user_id, approver_name, status")
+      .eq("deliverable_id", deliverableId)
+      .eq("version", version);
+    if (existingApprovalsError) throw existingApprovalsError;
+    const sameReviewerOtherRole = (
+      (existingApprovals ?? []) as Array<{
+        role: ApprovalRole;
+        approver_user_id: string | null;
+        approver_name: string | null;
+        status: RoleApprovalStatus;
+      }>
+    ).some(
+      (row) =>
+        row.status === "approved" &&
+        row.role !== decision.role &&
+        (row.approver_user_id === ctx.userId ||
+          (decision.approverName && row.approver_name === decision.approverName)),
+    );
+    if (sameReviewerOtherRole) throw new Error("separation_of_duties_violation");
+  }
 
   const decidedAt =
     decision.status === "approved" || decision.status === "rejected"
@@ -198,16 +256,17 @@ export async function recordRoleApprovalDecision(
         deliverable_id: deliverableId,
         role: decision.role,
         status: decision.status,
+        version,
         approver_user_id: ctx.userId,
         approver_name: decision.approverName ?? null,
         outstanding_conditions: decision.outstandingConditions ?? null,
         decided_at: decidedAt,
         updated_at: new Date().toISOString(),
       },
-      { onConflict: "deliverable_id,role" },
+      { onConflict: "deliverable_id,role,version" },
     )
     .select(
-      "role, status, approver_user_id, approver_name, outstanding_conditions, decided_at",
+      "role, status, version, approver_user_id, approver_name, outstanding_conditions, decided_at",
     )
     .single();
   if (error) throw error;

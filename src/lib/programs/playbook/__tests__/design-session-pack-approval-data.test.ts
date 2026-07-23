@@ -61,6 +61,7 @@ describe("renderDesignSessionPackHtml — approval_page real-data binding", () =
           {
             role: "business",
             status: "approved",
+            version: 2,
             approverUserId: "p-1",
             approverName: "Jane Doe, CEO",
             outstandingConditions: null,
@@ -69,6 +70,7 @@ describe("renderDesignSessionPackHtml — approval_page real-data binding", () =
           {
             role: "finance",
             status: "reviewed",
+            version: 2,
             approverUserId: "p-2",
             approverName: null,
             outstandingConditions: "Awaiting FY26 budget confirmation",
@@ -104,6 +106,7 @@ describe("renderDesignSessionPackHtml — approval_page real-data binding", () =
             {
               role: "business",
               status: "approved",
+              version: 2,
               approverUserId: "p-1",
               approverName: "Jane Doe",
               outstandingConditions: null,
@@ -136,6 +139,23 @@ describe("fetchApprovalPageData", () => {
   it("resolves real deliverable rows and returns their role-approval summary, keyed by type", async () => {
     fromMock.mockImplementation((table: string) => {
       if (table === "deliverables_v2") {
+        const deliverableCalls = fromMock.mock.calls.filter(([t]) => t === "deliverables_v2").length;
+        if (deliverableCalls > 1) {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            maybeSingle: jest.fn().mockResolvedValue({
+              data: {
+                id: "biz-case-1",
+                deliverable_type_key: "business_case",
+                created_by: "author-1",
+                current_version: 2,
+                signed_off_version: 2,
+              },
+              error: null,
+            }),
+          };
+        }
         return {
           select: jest.fn().mockReturnThis(),
           eq: jest.fn().mockReturnThis(),
@@ -146,21 +166,24 @@ describe("fetchApprovalPageData", () => {
         };
       }
       if (table === "deliverable_role_approvals") {
+        const result = Promise.resolve({
+          data: [
+            {
+              role: "business",
+              status: "approved",
+              version: 2,
+              approver_user_id: "p-1",
+              approver_name: "Jane Doe",
+              outstanding_conditions: null,
+              decided_at: "2026-07-20T00:00:00Z",
+            },
+          ],
+          error: null,
+        });
         return {
           select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockResolvedValue({
-            data: [
-              {
-                role: "business",
-                status: "approved",
-                approver_user_id: "p-1",
-                approver_name: "Jane Doe",
-                outstanding_conditions: null,
-                decided_at: "2026-07-20T00:00:00Z",
-              },
-            ],
-            error: null,
-          }),
+          eq: jest.fn().mockReturnThis(),
+          then: result.then.bind(result),
         };
       }
       throw new Error(`Unexpected table ${table}`);
