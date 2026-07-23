@@ -2,6 +2,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -184,6 +185,22 @@ function writeJson(file, value) {
 function writeText(file, value) {
   ensureDir(path.dirname(file));
   fs.writeFileSync(file, value);
+}
+
+function emitAcaProofBundleIfRequested(bundleDir) {
+  if (process.env.EMIT_ACA_PROOF_BUNDLE !== "true") return;
+  const tmpDir = fs.mkdtempSync(path.join("/tmp", "home-v4-review-proof-"));
+  const tarPath = path.join(tmpDir, "proof.tgz");
+  const tar = spawnSync("tar", ["-czf", tarPath, "-C", path.dirname(bundleDir), path.basename(bundleDir)], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  if (tar.status !== 0) {
+    throw new Error(tar.stderr || tar.stdout || "home v4 review proof bundle tar failed");
+  }
+  process.stdout.write("\n__SEMANTIC2_PROOF_TGZ_BEGIN__\n");
+  process.stdout.write(fs.readFileSync(tarPath).toString("base64"));
+  process.stdout.write("\n__SEMANTIC2_PROOF_TGZ_END__\n");
 }
 
 function asText(value) {
@@ -1411,6 +1428,7 @@ async function main() {
     "- Relationship visuals must be reviewed as graph-native executive artifacts, not row-count summaries.",
   ].join("\n");
   writeText(path.join(outDir, "PROMPT_AND_OUTPUT_REVIEW_DIGEST.md"), `${digest}\n`);
+  emitAcaProofBundleIfRequested(outDir);
   console.log(`[home-v4] complete ${outDir}`);
 }
 
