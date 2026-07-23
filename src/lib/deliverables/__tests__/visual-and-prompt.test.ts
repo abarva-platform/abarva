@@ -27,7 +27,9 @@ describe("VisualArtifactContract — richness as a contract", () => {
     expect(c.requiredVisuals.join(" ")).toMatch(/native/);
     expect(c.requiredVisuals.join(" ")).toMatch(/human \+ AI role model/);
     expect(c.requiredTables.join(" ")).toMatch(/current-to-future logic table/);
-    expect(c.requiredTables.join(" ")).toMatch(/implementation work package table/);
+    expect(c.requiredTables.join(" ")).toMatch(
+      /implementation work package table/,
+    );
   });
 
   it("current-state/gap requires current-state diagram + data flow + gap matrix", () => {
@@ -49,7 +51,11 @@ describe("VisualArtifactContract — richness as a contract", () => {
   it("PASSES when the required exhibits are present", () => {
     const r = checkVisualArtifactContract("solution_approach_options", {
       visuals: ["approach arc / increments"],
-      tables: ["solution-options matrix", "tradeoff table", "recommendation scorecard"],
+      tables: [
+        "solution-options matrix",
+        "tradeoff table",
+        "recommendation scorecard",
+      ],
     });
     expect(r.pass).toBe(true);
   });
@@ -59,7 +65,14 @@ function richContext(): SolutionContext {
   let ctx = emptySolutionContext("m1", "skyharbor");
   ctx = applyPhaseDigest(ctx, {
     useCase: "unify clinical + claims to drive VBC",
-    kpis: [{ name: "30-day readmissions", baseline: "15.8%", target: "13%", domain: "clinical" }],
+    kpis: [
+      {
+        name: "30-day readmissions",
+        baseline: "15.8%",
+        target: "13%",
+        domain: "clinical",
+      },
+    ],
     currentState: "Epic Clarity/Caboodle on SQL Server, Tableau",
     gaps: ["no unified member spine", "no ML path"],
     chosenOption: "Option C — Databricks Lakehouse",
@@ -69,7 +82,11 @@ function richContext(): SolutionContext {
 
 describe("solution-prompt-factory — simple prompt, rich context", () => {
   it("binds the real SolutionContext into the prompt (no DATA GAP stubs)", () => {
-    const p = buildArtifactPrompt({ artifact: "target_state_architecture", phase: 3, context: richContext() });
+    const p = buildArtifactPrompt({
+      artifact: "target_state_architecture",
+      phase: 3,
+      context: richContext(),
+    });
     expect(p.outputFormat).toBe("html");
     expect(p.user).toContain("unify clinical + claims");
     expect(p.user).toContain("Epic Clarity/Caboodle on SQL Server");
@@ -79,22 +96,34 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
   });
 
   it("architecture prompt uses the approved chosenOption", () => {
-    const p = buildArtifactPrompt({ artifact: "target_state_architecture", phase: 3, context: richContext() });
+    const p = buildArtifactPrompt({
+      artifact: "target_state_architecture",
+      phase: 3,
+      context: richContext(),
+    });
     expect(p.user).toContain("Option C — Databricks Lakehouse");
     expect(p.user).toMatch(/Do NOT choose the solution approach here/);
   });
 
   it("architecture prompt STOPS when no option has been approved", () => {
     const ctx = emptySolutionContext("m1", "t");
-    const p = buildArtifactPrompt({ artifact: "target_state_architecture", phase: 3, context: ctx });
+    const p = buildArtifactPrompt({
+      artifact: "target_state_architecture",
+      phase: 3,
+      context: ctx,
+    });
     expect(p.user).toMatch(/STOP and request P3a approval/);
   });
 
   it("P3 draft prompt shapes a Future-State Blueprint without selecting a final option", () => {
     const ctx = applyPhaseDigest(emptySolutionContext("m1", "lakeshore"), {
       useCase: "AP exception redesign",
-      currentState: "Average monthly invoice exceptions, 1872; Manual touch hours per month, 2345; Average resolution days, 7.4.",
-      gaps: ["payment hold governance inconsistent", "duplicate-payment control risk"],
+      currentState:
+        "Average monthly invoice exceptions, 1872; Manual touch hours per month, 2345; Average resolution days, 7.4.",
+      gaps: [
+        "payment hold governance inconsistent",
+        "duplicate-payment control risk",
+      ],
       metricsThatMatter: [
         { label: "Monthly invoice exceptions", value: "1,872" },
         { label: "Manual touch hours per month", value: "2,345" },
@@ -109,7 +138,9 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
       draftCaveat: "P2 approved only for P3 draft shaping.",
     });
     expect(p.user).toContain("P3 FUTURE-STATE BLUEPRINT DRAFT");
-    expect(p.user).toContain("P3 Draft — based on approved P2 diagnostic for design shaping");
+    expect(p.user).toContain(
+      "P3 Draft — based on approved P2 diagnostic for design shaping",
+    );
     expect(p.user).toContain("P2 is not final. P3 is not final");
     expect(p.user).toContain("No final option has been selected");
     expect(p.user).toContain("1,872");
@@ -117,7 +148,9 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(p.user).toContain("7.4");
     expect(p.user).toContain("Human + AI Role Model table");
     expect(p.user).toContain("Implementation Work Package table");
-    expect(p.user).toContain("Client and delivery teams own detailed process redesign");
+    expect(p.user).toContain(
+      "Client and delivery teams own detailed process redesign",
+    );
   });
 
   it("P3 commercial lending Agent Assist prompt does not import unrelated AP/payment examples", () => {
@@ -128,7 +161,10 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
         "Loan onboarding, document intake, KYC/sanctions review, credit-policy support, LOS, CRM, document management, and core banking read paths.",
       currentState:
         "Commercial lending teams work across LOS, CRM, document management, KYC/sanctions, credit policy, collateral, and core banking handoffs.",
-      gaps: ["No unified semantic layer", "Manual document completeness checks"],
+      gaps: [
+        "No unified semantic layer",
+        "Manual document completeness checks",
+      ],
       metricsThatMatter: [
         { label: "Median onboarding cycle time", value: "18.6 days" },
         { label: "Manual touch hours per loan", value: "11.4 hours" },
@@ -157,9 +193,57 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(p.user).not.toContain("vendor master");
   });
 
+  it.each([
+    [
+      "solution_design",
+      "SOLUTION DESIGN SPECIFICATION",
+      "Experience Flow",
+      "Target 3,500-6,000 words",
+    ],
+    [
+      "operating_model_design",
+      "OPERATING MODEL DESIGN",
+      "Decision Rights Matrix",
+      "Stop at 3,000 words",
+    ],
+    [
+      "sourcing_strategy",
+      "SOURCING STRATEGY BRIEF",
+      "Options Matrix",
+      "Stop at 3,000 words",
+    ],
+  ] as const)(
+    "uses an artifact-specific P3 brief for %s",
+    (artifact, assignment, requiredExhibit, lengthRule) => {
+      const ctx = applyPhaseDigest(emptySolutionContext("m1", "firstcapital"), {
+        useCase: "Commercial Lending Agent Assist",
+        currentState:
+          "Loan onboarding work crosses LOS, CRM, KYC, and document systems.",
+      });
+      const p = buildArtifactPrompt({
+        artifact,
+        phase: 3,
+        context: ctx,
+        generationMode: "draft",
+      });
+
+      expect(p.user).toContain(assignment);
+      expect(p.user).toContain(requiredExhibit);
+      expect(p.user).toContain(lengthRule);
+      expect(p.user).not.toContain("P3 FUTURE-STATE BLUEPRINT DRAFT");
+      expect(p.user).toContain(
+        "Every client-facing sentence containing a number, date, dollar amount, or percentage",
+      );
+    },
+  );
+
   it("marks missing required context as a blocking input, not invented", () => {
     const ctx = emptySolutionContext("m1", "t");
-    const p = buildArtifactPrompt({ artifact: "discovery_report", phase: 2, context: ctx });
+    const p = buildArtifactPrompt({
+      artifact: "discovery_report",
+      phase: 2,
+      context: ctx,
+    });
     expect(p.user).toMatch(/\[MISSING/);
     expect(p.user).toMatch(/Do not invent facts/);
   });
@@ -176,7 +260,9 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
     expect(p.user).toContain("Scope In / Out / Adjacent table");
     expect(p.user).toContain("Decision Rights by Role/Title table");
     expect(p.user).toContain("Target depth: 700-1,200 words");
-    expect(p.user).toContain("Do not invent current-state process, system landscape");
+    expect(p.user).toContain(
+      "Do not invent current-state process, system landscape",
+    );
     expect(p.user).toContain("To validate in P2");
   });
 
@@ -221,11 +307,17 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
       phase: 2,
       context: richContext(),
     });
-    expect(p.user).toContain("PHASE-SPECIFIC ASSIGNMENT — P2 CURRENT WORK DIAGNOSTIC");
+    expect(p.user).toContain(
+      "PHASE-SPECIFIC ASSIGNMENT — P2 CURRENT WORK DIAGNOSTIC",
+    );
     expect(p.user).toContain("Current-State Handoff Map");
     expect(p.user).toContain("Evidence Coverage table");
-    expect(p.user).toContain("Process vs Data vs Policy vs Ownership vs AI Matrix");
-    expect(p.user).toContain("Word-ready Current State Process Document structure");
+    expect(p.user).toContain(
+      "Process vs Data vs Policy vs Ownership vs AI Matrix",
+    );
+    expect(p.user).toContain(
+      "Word-ready Current State Process Document structure",
+    );
     expect(p.user).toContain("Workshop Agenda and Session Notes appendix");
     expect(p.user).toContain("leadership, teams, decision rights, locations");
   });
@@ -270,7 +362,9 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
       artifact: "discovery_report",
       phase: 2,
     });
-    expect(prompt).toContain("The HTML artifact is the visual review companion");
+    expect(prompt).toContain(
+      "The HTML artifact is the visual review companion",
+    );
     expect(prompt).toContain("executive summary, storyline, narrative arc");
     expect(prompt).toContain("Required workshop/session evidence");
     expect(prompt).toContain(
@@ -318,13 +412,21 @@ describe("solution-prompt-factory — simple prompt, rich context", () => {
       phase: 2,
       context: ctx,
     });
-    expect(p.user).toContain("Metrics that must be foregrounded when available");
+    expect(p.user).toContain(
+      "Metrics that must be foregrounded when available",
+    );
     expect(p.user).toContain("Client-facing move reference:");
-    expect(p.user).toContain("Internal move id, audit only, do NOT display in the client-facing artifact body");
+    expect(p.user).toContain(
+      "Internal move id, audit only, do NOT display in the client-facing artifact body",
+    );
     expect(p.user).toContain("Monthly invoice exceptions: 1,872");
     expect(p.user).toContain("Manual touch hours per month: 2,345");
-    expect(p.user).toContain("Finance validation required before funding approval");
-    expect(p.user).toContain("Missing PO | volume=420 | risk=Medium | owner=Accounts Payable");
+    expect(p.user).toContain(
+      "Finance validation required before funding approval",
+    );
+    expect(p.user).toContain(
+      "Missing PO | volume=420 | risk=Medium | owner=Accounts Payable",
+    );
     expect(p.user).toContain("Needed: AP/procurement systems landscape");
     expect(p.user).toMatch(/If the evidence packet contains exact metrics/);
   });
