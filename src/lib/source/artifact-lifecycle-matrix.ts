@@ -12,6 +12,7 @@ import {
   SOURCE_AI_DRAFT_GOVERNANCE_MESSAGE,
   SOURCE_CLIENT_FINAL_GOVERNANCE_MESSAGE,
 } from "@/lib/source/artifact-governance";
+import { getPromptTemplate } from "@/lib/source/agent-generation";
 import {
   getSourceArtifactProfile,
   type SourceArtifactProfile,
@@ -165,23 +166,6 @@ const ARTIFACT_STANDARDS_CSV_COLUMNS = [
   "Content QA findings",
   "Governance note",
 ] as const;
-
-const DEFAULT_PROMPT_TOKENS = "24k max";
-
-const PROMPT_CONTRACTS: Record<
-  string,
-  { modelLabel: string; maxTokensLabel: string }
-> = {
-  d01_strategy_memo: { modelLabel: "Claude Sonnet", maxTokensLabel: DEFAULT_PROMPT_TOKENS },
-  d02_value_target: { modelLabel: "Claude Opus", maxTokensLabel: "12k max" },
-  d03_archetype_decision: { modelLabel: "Claude Opus", maxTokensLabel: "12k max" },
-  d04_app_inv: { modelLabel: "Claude Sonnet", maxTokensLabel: DEFAULT_PROMPT_TOKENS },
-  d05_scope_memo: { modelLabel: "Claude Sonnet", maxTokensLabel: DEFAULT_PROMPT_TOKENS },
-  d07_ticket_synth: { modelLabel: "Claude Sonnet", maxTokensLabel: DEFAULT_PROMPT_TOKENS },
-  d09_rfp_pack: { modelLabel: "Claude Opus", maxTokensLabel: "128k max" },
-  d11_response_checklist: { modelLabel: "Claude Opus", maxTokensLabel: "48k max" },
-  d24_decision_brief: { modelLabel: "Claude Sonnet", maxTokensLabel: DEFAULT_PROMPT_TOKENS },
-};
 
 const GUIDELINES_BY_CODE: Partial<Record<string, string>> = {
   d01_strategy_memo: "Strategy decision, why-now, value target, archetype, rigor.",
@@ -694,15 +678,35 @@ function lifecycleStateFor(
 }
 
 function promptContractFor(code: string): SourceArtifactLifecyclePromptContract {
-  const contract = PROMPT_CONTRACTS[code];
-  if (!contract) {
+  const template = getPromptTemplate(code);
+  if (!template) {
     return {
       supported: false,
       modelLabel: "No dedicated prompt",
       maxTokensLabel: "N/A",
     };
   }
-  return { supported: true, ...contract };
+  return {
+    supported: true,
+    modelLabel: modelLabelFor(template.model),
+    maxTokensLabel: maxTokensLabelFor(template.maxTokens),
+  };
+}
+
+function modelLabelFor(model: string): string {
+  const normalized = model.toLowerCase();
+  if (normalized.includes("opus")) return "Claude Opus";
+  if (normalized.includes("sonnet")) return "Claude Sonnet";
+  if (normalized.includes("haiku")) return "Claude Haiku";
+  return model;
+}
+
+function maxTokensLabelFor(maxTokens: number): string {
+  if (!Number.isFinite(maxTokens) || maxTokens <= 0) return "N/A";
+  if (maxTokens >= 1000 && maxTokens % 1000 === 0) {
+    return `${maxTokens / 1000}k max`;
+  }
+  return `${maxTokens.toLocaleString("en-US")} max`;
 }
 
 function exportFormatsFor(code: string): string {
