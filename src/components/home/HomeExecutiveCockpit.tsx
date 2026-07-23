@@ -76,6 +76,47 @@ const SECTION_ITEMS: Array<{
   { key: "evidence", label: "Source Proof", eyebrow: "Boundary" },
 ];
 
+const SECTION_COPY: Record<
+  Exclude<SectionKey, "dimension">,
+  { index: string; title: string; lead: string }
+> = {
+  brief: {
+    index: "01",
+    title: "Home Enterprise Brief",
+    lead: "The executive read: what is known about the enterprise, what is still uncertain, and where AI or transformation decisions should focus first.",
+  },
+  model: {
+    index: "02",
+    title: "Enterprise model",
+    lead: "A business-language view of the enterprise shape before any AI, sourcing, or operating-model decision is treated as board-ready.",
+  },
+  operating: {
+    index: "03",
+    title: "Operating model implications",
+    lead: "How work, decision rights, and module handoffs need to change if the loaded context is used as the enterprise system of intelligence.",
+  },
+  relationships: {
+    index: "04",
+    title: "Enterprise relationship map",
+    lead: "Click-path thinking starts here: divisions, functions, systems, priorities and constraints should be visible as one enterprise graph.",
+  },
+  technology: {
+    index: "05",
+    title: "Technology and ecosystem",
+    lead: "The systems, vendors, platforms, data products, and evidence gaps that shape what can be automated, modernized, sourced, or measured.",
+  },
+  change: {
+    index: "06",
+    title: "Change thesis",
+    lead: "The practical change strategy implied by the tenant context and by what is happening in the industry.",
+  },
+  evidence: {
+    index: "07",
+    title: "Source proof",
+    lead: "The business-readable proof layer: what source material supports the context, who owns it, and what is still missing.",
+  },
+};
+
 const DIMENSION_GROUPS: Array<{
   title: string;
   keys: string[];
@@ -130,9 +171,11 @@ function isRawLabel(value: unknown) {
   const text = asText(value).trim();
   if (!text) return true;
   if (/^fact:/i.test(text)) return true;
-  if (/\b(?:MER|FC|SKY|LAK|APX)-[A-Z0-9-]*\d[A-Z0-9-]*\b/i.test(text)) {
+  if (/\b(?:MER|FC|SKY|LAK|APX|SA\d*)-[A-Z0-9-]*\d[A-Z0-9-]*\b/i.test(text)) {
     return true;
   }
+  if (/^[A-Z]{2,}\d{1,3}-[A-Z0-9-]+-\d+$/i.test(text)) return true;
+  if (/^[A-Z]{2,}\d{1,3}-[A-Z0-9-]+$/i.test(text)) return true;
   if (/^(?:APP|SYS|VND|EVID|INT|REL)-\d+$/i.test(text)) return true;
   if (/^[a-z0-9]+(?:_[a-z0-9]+){2,}$/i.test(text)) return true;
   return false;
@@ -148,6 +191,27 @@ function displayRelationshipLabel(value: string, type?: string) {
       .trim();
   }
   const normalizedType = asText(type).toLowerCase();
+  if (normalizedType.includes("benefit") || normalizedType.includes("value")) {
+    return "Expected value outcome";
+  }
+  if (normalizedType.includes("control") || normalizedType.includes("gate")) {
+    return "Evidence gate";
+  }
+  if (
+    normalizedType.includes("priority") ||
+    normalizedType.includes("initiative")
+  ) {
+    return "Strategic priority";
+  }
+  if (normalizedType.includes("owner") || normalizedType.includes("role")) {
+    return "Accountable owner";
+  }
+  if (
+    normalizedType.includes("function") ||
+    normalizedType.includes("process")
+  ) {
+    return "Business function";
+  }
   if (normalizedType.includes("interview")) return "Executive interview signal";
   if (normalizedType.includes("use")) return "AI use case";
   if (normalizedType.includes("metric")) return "Outcome measure";
@@ -370,8 +434,23 @@ function selectedEdges(
       !/\bsource\s+rows?\b|\bactive\s+rows?\b|\bfact:/i.test(rawText)
     );
   });
+  const usefulDerivedLabelCount = new Set(
+    cleanDerivedEdges.flatMap((edge) => [
+      displayRelationshipLabel(edge.from, edge.fromType),
+      displayRelationshipLabel(edge.to, edge.sourceField),
+    ]),
+  ).size;
+  const genericDerivedLabelCount = cleanDerivedEdges.filter((edge) =>
+    [edge.from, edge.to].some(
+      (value) => displayRelationshipLabel(value) === "Enterprise context item",
+    ),
+  ).length;
   const edges =
-    cleanDerivedEdges.length >= 8 ? cleanDerivedEdges : fallbackEdges;
+    cleanDerivedEdges.length >= 8 &&
+    usefulDerivedLabelCount >= 8 &&
+    genericDerivedLabelCount <= 2
+      ? cleanDerivedEdges
+      : fallbackEdges;
   return edges
     .filter(
       (edge) =>
@@ -514,6 +593,19 @@ export function HomeExecutiveCockpit({
   const activeEvidence = activeDimension
     ? evidenceForDimension(pack, activeDimension.key)
     : [];
+  const activePage =
+    activeSection === "dimension" && activeDimension
+      ? {
+          index: "08",
+          title: activeDimension.name,
+          lead: sentence(
+            activeDimension.summary,
+            "Open the dimension to understand the loaded business context, available evidence, implications, and gaps.",
+          ),
+        }
+      : activeSection === "dimension"
+        ? SECTION_COPY.brief
+        : SECTION_COPY[activeSection];
 
   const openDimension = (key: string) => {
     setActiveDimensionKey(key);
@@ -582,24 +674,19 @@ export function HomeExecutiveCockpit({
       </aside>
 
       <main className="hek-main">
-        <header className="hek-header">
-          <div>
-            <span className="hek-kicker">Home · Enterprise Knowledge</span>
-            <h1>{pack.tenant_name}</h1>
-            <p>
-              {sentence(
-                executive?.oneSentence ??
-                  pack.narrative_sections?.enterprise_hero_summary,
-                "This cockpit turns tenant context into an executive view of what is known, what is uncertain, and what should change next.",
-              )}
-            </p>
-          </div>
-          <aside>
+        <header className="hek-page-head">
+          <span>
+            {activePage.index} · {activePage.title}
+          </span>
+          <h1>{activePage.title}</h1>
+          <p>{activePage.lead}</p>
+          <div className="hek-page-status">
+            <b>{pack.tenant_name}</b>
             <i />
-            <strong>Active Knowledge context</strong>
-            <span>{formatSourceDate(pack.generated_at)}</span>
-            <span>{tier?.tierLabel ?? "Planning-grade context"}</span>
-          </aside>
+            <em>{tier?.tierLabel ?? "Planning-grade context"}</em>
+            <i />
+            <em>Updated {formatSourceDate(pack.generated_at)}</em>
+          </div>
         </header>
 
         {activeSection === "brief" ? (
@@ -713,7 +800,7 @@ export function HomeExecutiveCockpit({
           padding: 0 8px 14px;
         }
         .hek-rail-label i,
-        .hek-header aside i {
+        .hek-page-status i {
           width: 10px;
           height: 10px;
           border-radius: 999px;
@@ -776,20 +863,25 @@ export function HomeExecutiveCockpit({
           color: rgba(255, 255, 255, 0.72);
         }
         .hek-main {
-          max-width: 1180px;
+          max-width: 980px;
           width: 100%;
-          margin: 0 auto;
-          padding: 28px 40px 64px;
+          margin: 0;
+          padding: 30px 48px 72px;
         }
-        .hek-header {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) 320px;
-          gap: 32px;
+        .hek-page-head {
           border-bottom: 1px solid ${COLORS.line};
-          padding-bottom: 26px;
-          margin-bottom: 28px;
+          padding-bottom: 22px;
+          margin-bottom: 24px;
         }
-        .hek-header h1,
+        .hek-page-head > span {
+          display: block;
+          color: ${COLORS.faint};
+          font-size: 11px;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          margin-bottom: 14px;
+        }
+        .hek-page-head h1,
         .hek-hero h2,
         .hek-page-title,
         .hek-relationship-title {
@@ -797,51 +889,48 @@ export function HomeExecutiveCockpit({
           letter-spacing: 0;
           color: ${COLORS.ink};
         }
-        .hek-header h1 {
-          font-size: clamp(34px, 4vw, 52px);
-          line-height: 1.02;
-          margin: 12px 0 10px;
+        .hek-page-head h1 {
+          font-size: clamp(28px, 3vw, 36px);
+          line-height: 1.08;
+          margin: 0 0 10px;
         }
-        .hek-header p {
+        .hek-page-head p {
           color: ${COLORS.muted};
-          font-size: 17px;
-          line-height: 1.55;
-          max-width: 780px;
-          margin: 0;
-        }
-        .hek-header aside {
-          background: ${COLORS.surface};
-          border: 1px solid ${COLORS.line};
-          border-radius: 12px;
-          padding: 18px;
-          display: grid;
-          gap: 8px;
-          align-self: start;
-          box-shadow: 0 10px 30px rgba(40, 37, 32, 0.05);
-        }
-        .hek-header aside strong {
           font-size: 15px;
+          line-height: 1.55;
+          max-width: 74ch;
+          margin: 0 0 16px;
         }
-        .hek-header aside span,
-        .hek-header aside small {
+        .hek-page-status {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 9px;
           color: ${COLORS.muted};
           font-size: 13px;
         }
+        .hek-page-status b {
+          color: ${COLORS.ink};
+        }
+        .hek-page-status i {
+          width: 5px;
+          height: 5px;
+        }
         .hek-section {
-          margin: 28px 0;
+          margin: 22px 0;
         }
         .hek-hero {
           border: 1px solid ${COLORS.line};
-          border-radius: 14px;
+          border-radius: 10px;
           background: ${COLORS.surface};
-          padding: 28px;
+          padding: 24px;
           display: grid;
           grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
-          gap: 28px;
+          gap: 24px;
         }
         .hek-hero h2 {
-          font-size: clamp(28px, 3vw, 42px);
-          line-height: 1.08;
+          font-size: clamp(24px, 2.4vw, 32px);
+          line-height: 1.12;
           margin: 10px 0 14px;
         }
         .hek-copy {
@@ -1032,14 +1121,49 @@ export function HomeExecutiveCockpit({
         }
         .hek-relationship-visual {
           border: 1px solid ${COLORS.line};
-          border-radius: 14px;
+          border-radius: 10px;
           background: ${COLORS.surface};
           padding: 16px;
           overflow: hidden;
         }
-        .hek-relationship-title {
-          font-size: 32px;
-          margin: 0 0 8px;
+        .hek-graph-legend {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 16px;
+          margin: 8px 0 14px;
+          color: ${COLORS.muted};
+          font-size: 13px;
+        }
+        .hek-graph-legend span {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+        }
+        .hek-graph-legend i,
+        .hek-graph-note i {
+          width: 10px;
+          height: 10px;
+          border-radius: 999px;
+          display: inline-block;
+          flex: none;
+        }
+        .hek-graph-note {
+          display: flex;
+          align-items: flex-start;
+          gap: 11px;
+          background: ${COLORS.surface};
+          border: 1px solid ${COLORS.line};
+          border-radius: 10px;
+          padding: 14px 16px;
+          color: ${COLORS.muted};
+          font-size: 14px;
+          line-height: 1.5;
+          margin-bottom: 10px;
+        }
+        .hek-graph-note i {
+          margin-top: 5px;
+          background: ${COLORS.teal};
         }
         .hek-graph-svg {
           width: 100%;
@@ -1437,14 +1561,29 @@ function RelationshipMap({
     .slice(0, 38);
   return (
     <section className="hek-section">
-      <h2 className="hek-relationship-title">
-        The digital enterprise, connected
-      </h2>
-      <p className="hek-copy is-muted">
-        Click-path thinking starts here: functions, systems, vendors, priorities
-        and constraints should be visible as one enterprise graph, not separate
-        spreadsheets.
-      </p>
+      <div className="hek-graph-legend" aria-label="Relationship map legend">
+        {[
+          ["Enterprise", "enterprise"],
+          ["Systems", "system"],
+          ["Data", "data"],
+          ["AI use cases", "use case"],
+          ["Constraints", "risk"],
+          ["Functions", "function"],
+        ].map(([label, type]) => (
+          <span key={label}>
+            <i style={{ background: nodeColor(type) }} />
+            {label}
+          </span>
+        ))}
+      </div>
+      <div className="hek-graph-note">
+        <i />
+        <span>
+          Click any node to trace its connections across the enterprise:
+          business functions, systems, priorities, risks, evidence gates and the
+          constraints that shape AI execution.
+        </span>
+      </div>
       <div className="hek-relationship-visual">
         <svg
           className="hek-graph-svg"
