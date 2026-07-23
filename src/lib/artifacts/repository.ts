@@ -150,6 +150,35 @@ export async function saveGeneratedArtifact(
   if (error)
     throw new Error(`generated_artifacts insert failed: ${error.message}`);
   const record = rowToRecord(data as Record<string, unknown>);
+
+  // Supersede any prior, still-active artifact of the SAME logical deliverable
+  // (same client + same Move + same canonical deliverableTypeKey). Without this,
+  // every regeneration of e.g. "target_architecture" for a Move inserts a brand
+  // new row under whatever title the model happened to author that run, and the
+  // vault accumulates unbounded near-duplicates with no way to tell which is
+  // current. Best-effort: a failure here must never fail the save that already
+  // succeeded — the new artifact is real and correct even if the old one didn't
+  // get marked.
+  const deliverableTypeKey = extraMetadata.deliverableTypeKey;
+  if (typeof deliverableTypeKey === "string" && deliverableTypeKey.length > 0) {
+    await supersedePriorDeliverableVersions({
+      clientId: input.clientId,
+      sourceArtifactRef: rendered.sourceArtifactRef,
+      deliverableTypeKey,
+      supersededById: record.id,
+    }).catch((supersessionError) => {
+      console.warn("[generated-artifacts] supersession step failed", {
+        clientId: input.clientId,
+        deliverableTypeKey,
+        newArtifactId: record.id,
+        error:
+          supersessionError instanceof Error
+            ? supersessionError.message
+            : String(supersessionError),
+      });
+    });
+  }
+
   await recordContextRefreshEvent({
     clientId: input.clientId,
     triggeredBy: "move_artifact",
@@ -170,6 +199,51 @@ export async function saveGeneratedArtifact(
     });
   });
   return record;
+}
+
+/**
+ * Marks every prior, still-active (`superseded_by IS NULL`) artifact of the same
+ * logical deliverable — same client, same Move (`sourceArtifactRef`), same
+ * canonical `deliverableTypeKey` (stored in `metadata`, since it is not an
+ * indexed column) — as superseded by the newly-persisted artifact. Excludes the
+ * new record itself (it cannot match its own predecessor query, since it did not
+ * exist yet at query time, but the exclusion is explicit for clarity and safety
+ * against any future refactor). Never throws on a "nothing to supersede" result
+ * — that is the normal case for a deliverable's first-ever generation.
+ */
+async function supersedePriorDeliverableVersions(args: {
+  clientId: string;
+  sourceArtifactRef: string;
+  deliverableTypeKey: string;
+  supersededById: string;
+}): Promise<void> {
+  const client = getAzureWriteFluentClient();
+  const { data: priorRows, error: lookupError } = await client
+    .from("generated_artifacts")
+    .select("id")
+    .eq("client_id", args.clientId)
+    .eq("source_artifact_ref", args.sourceArtifactRef)
+    .contains("metadata", { deliverableTypeKey: args.deliverableTypeKey })
+    .is("superseded_by", null);
+  if (lookupError)
+    throw new Error(
+      `generated_artifacts supersession lookup failed: ${lookupError.message}`,
+    );
+
+  const priorIds = ((priorRows as Record<string, unknown>[] | null) ?? [])
+    .map((row) => String(row.id))
+    .filter((id) => id !== args.supersededById);
+  if (priorIds.length === 0) return;
+
+  const { error: updateError } = await client
+    .from("generated_artifacts")
+    .update({ superseded_by: args.supersededById })
+    .eq("client_id", args.clientId)
+    .in("id", priorIds);
+  if (updateError)
+    throw new Error(
+      `generated_artifacts supersession update failed: ${updateError.message}`,
+    );
 }
 
 export async function generateAndSaveBoardPack(
