@@ -14,6 +14,8 @@ Replaces the transitional Home cockpit with a brand-new Enterprise Brief app mod
 
 This release also sunsets the old Home rendering surfaces from the active route. The legacy tabbed surface and React Flow relationship test are removed so the product cannot drift back to the older page.
 
+Follow-up polish: the left explorer is now pure navigation, with the count badges removed to better match a simple Mac/Finder-style explorer.
+
 ## Layer Impact
 
 - `global-control-lane`: changes the shared Home route and client-visible Home UX for approved knowledge packs.
