@@ -19,12 +19,11 @@ import type {
   AnswerTable,
   AvaAnswerPacket,
 } from "@/lib/ava-answer/contract";
-import { getSourceValueLedger } from "@/lib/source/queries";
-import type {
-  SourceValueLedgerSnapshot,
-  ValueConfidence,
-  ValueLedgerEntry,
-} from "@/lib/source/types";
+import {
+  readCommittedValueLevers,
+  readRealizedValueLevers,
+} from "@/lib/source/facts/event-facts-reader";
+import type { ValueConfidence, ValueLedgerEntry } from "@/lib/source/types";
 import { formatUsd, sumLedger } from "@/lib/source/value-ledger";
 import {
   avaCitationsFromGovernedCandidates,
@@ -33,7 +32,8 @@ import {
 
 export interface BuildValueLedgerGovernedAnswerInput {
   eventId: string;
-  eventAliases?: readonly string[];
+  /** Display name for the event, used only in prose — never used to scope the read. */
+  eventName?: string | null;
   clientKey: string;
   tenantId: string | null;
   question: string;
@@ -81,7 +81,8 @@ export function governedCandidateFromValueLedgerEntry(
     source_layer: "financial",
     source_basis: entry.note || entry.label,
     classification: "confidential",
-    retrievability: entry.evidenceCount > 0 ? "committed_not_indexed" : "not_indexed",
+    retrievability:
+      entry.evidenceCount > 0 ? "committed_not_indexed" : "not_indexed",
     agent_readiness_status:
       entry.evidenceCount > 0 ? "committed_not_indexed" : "not_reviewed",
     confidence_level: valueConfidenceToConfidenceLevel(entry.confidence),
@@ -91,28 +92,67 @@ export function governedCandidateFromValueLedgerEntry(
   };
 }
 
-function normalizeAlias(value: string | null | undefined): string | null {
-  const normalized = value?.trim().toLowerCase();
-  return normalized ? normalized : null;
-}
+/**
+ * Build event-scoped ledger entries straight from `source_event_facts` —
+ * the same real-facts seam `vendor-coverage-governed-answer.ts` reads,
+ * never the mock event catalog. `committed_value_usd` rows back the
+ * "projected" band (each lever's negotiated-and-evidenced value); `
+ * realized_value_usd` rows back the "realized" band. Both are per-lever
+ * `value_lever` facts, one row per canonical lever key — see
+ * `readCommittedValueLevers`/`readRealizedValueLevers` in
+ * `event-facts-reader.ts` for the exact read shape and staleness rules.
+ * Never fabricates: an absent fact simply means that lever contributes
+ * nothing to either band.
+ */
+async function readEntriesFromFacts(input: {
+  eventId: string;
+  clientKey: string;
+  eventName: string;
+}): Promise<{ entries: ValueLedgerEntry[]; signalPresent: boolean }> {
+  const [committed, realized] = await Promise.all([
+    readCommittedValueLevers({
+      eventId: input.eventId,
+      clientKey: input.clientKey,
+    }),
+    readRealizedValueLevers({
+      eventId: input.eventId,
+      clientKey: input.clientKey,
+    }),
+  ]);
 
-function eventAliasSet(input: BuildValueLedgerGovernedAnswerInput): Set<string> {
-  return new Set(
-    [input.eventId, ...(input.eventAliases ?? [])]
-      .map(normalizeAlias)
-      .filter((value): value is string => Boolean(value)),
-  );
-}
+  const entries: ValueLedgerEntry[] = [];
+  for (const [leverKey, amountUsd] of committed.committedByLeverKey) {
+    entries.push({
+      id: `committed:${input.eventId}:${leverKey}`,
+      eventId: input.eventId,
+      eventName: input.eventName,
+      kind: "projected",
+      label: leverKey,
+      stageKey: null,
+      amountUsd,
+      confidence: "high",
+      evidenceCount: 1,
+      note: "Committed value fact captured for this event (committed_value_usd).",
+    });
+  }
+  for (const [leverKey, amountUsd] of realized.realizedByLeverKey) {
+    entries.push({
+      id: `realized:${input.eventId}:${leverKey}`,
+      eventId: input.eventId,
+      eventName: input.eventName,
+      kind: "realized",
+      label: leverKey,
+      stageKey: null,
+      amountUsd,
+      confidence: "high",
+      evidenceCount: 1,
+      note: "Realized-to-date value fact captured for this event (realized_value_usd).",
+    });
+  }
 
-function scopedEntries(
-  snapshot: SourceValueLedgerSnapshot,
-  aliases: Set<string>,
-): { projected: ValueLedgerEntry[]; realized: ValueLedgerEntry[] } {
-  const matches = (entry: ValueLedgerEntry) =>
-    aliases.has(entry.eventId.trim().toLowerCase());
   return {
-    projected: snapshot.projected.filter(matches),
-    realized: snapshot.realized.filter(matches),
+    entries,
+    signalPresent: committed.signalPresent || realized.signalPresent,
   };
 }
 
@@ -185,8 +225,7 @@ function buildValueLedgerTable(args: {
       evidence: entry.evidenceCount,
       note: entry.note,
     })),
-    note:
-      "This table is event-scoped and mirrors the Source value ledger; it does not create new value claims.",
+    note: "This table is event-scoped and mirrors the Source value ledger; it does not create new value claims.",
     citationIds: args.citationIds,
   };
 }
@@ -204,15 +243,22 @@ function citationIdsForEntries(
 export async function buildValueLedgerGovernedAnswer(
   input: BuildValueLedgerGovernedAnswerInput,
 ): Promise<AvaAnswerPacket | null> {
-  const governedClientKey = governedClientKeyForSourceClientKey(input.clientKey);
+  const governedClientKey = governedClientKeyForSourceClientKey(
+    input.clientKey,
+  );
   if (!governedClientKey) return null;
 
-  const snapshot = await getSourceValueLedger();
-  const aliases = eventAliasSet(input);
-  const scoped = scopedEntries(snapshot, aliases);
-  const entries = [...scoped.projected, ...scoped.realized];
+  const { entries, signalPresent } = await readEntriesFromFacts({
+    eventId: input.eventId,
+    clientKey: input.clientKey,
+    eventName: input.eventName ?? input.eventId,
+  });
+  const scoped = {
+    projected: entries.filter((entry) => entry.kind === "projected"),
+    realized: entries.filter((entry) => entry.kind === "realized"),
+  };
 
-  if (entries.length === 0) {
+  if (!signalPresent || entries.length === 0) {
     return composeAvaAnswer({
       surface: "source",
       mode: "SOURCE",

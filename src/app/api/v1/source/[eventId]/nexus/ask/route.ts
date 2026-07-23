@@ -275,12 +275,13 @@ export async function POST(
           );
           return null;
         });
-      } else if (eventId && looksLikeValueLedgerQuestion(normalizedBody.prompt)) {
+      } else if (
+        eventId &&
+        looksLikeValueLedgerQuestion(normalizedBody.prompt)
+      ) {
         agentAnswer = await buildValueLedgerGovernedAnswer({
           eventId,
-          eventAliases: [liveEventDetail?.id, liveEventDetail?.code].filter(
-            (value): value is string => Boolean(value),
-          ),
+          eventName: liveEventDetail?.name ?? null,
           clientKey: activeClientKey,
           tenantId: tenancy.clientId ?? null,
           question: normalizedBody.prompt ?? "",
