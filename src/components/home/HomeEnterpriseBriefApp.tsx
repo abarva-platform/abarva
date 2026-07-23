@@ -1115,7 +1115,7 @@ export function HomeEnterpriseBriefApp({
         .heb-shell {
           min-height: calc(100vh - 64px);
           display: grid;
-          grid-template-columns: 282px minmax(0, 1fr);
+          grid-template-columns: 264px minmax(0, 1fr);
           background: ${COLORS.page};
           color: ${COLORS.ink};
           font-family:
@@ -1268,8 +1268,8 @@ export function HomeEnterpriseBriefApp({
           line-height: 1.45;
         }
         .heb-main {
-          width: min(100%, 1160px);
-          padding: 38px 48px 72px;
+          width: min(100%, 1280px);
+          padding: 32px 44px 68px;
         }
         .heb-page-head {
           border-bottom: 1px solid ${COLORS.line};
@@ -1284,9 +1284,9 @@ export function HomeEnterpriseBriefApp({
           letter-spacing: 0;
         }
         .heb-page-head h1 {
-          font-size: clamp(40px, 4.3vw, 54px);
-          line-height: 0.98;
-          margin: 0 0 12px;
+          font-size: clamp(34px, 3.4vw, 46px);
+          line-height: 1;
+          margin: 0 0 10px;
         }
         .heb-page-head p,
         .heb-current-section p {
@@ -1316,15 +1316,16 @@ export function HomeEnterpriseBriefApp({
         .heb-page-kicker {
           font-family: Fraunces, Georgia, serif;
           font-style: italic;
-          font-size: 22px !important;
+          font-size: 18px !important;
           color: #4b4740 !important;
-          margin: 14px 0 28px !important;
+          margin: 12px 0 22px !important;
         }
         .heb-section-tabs {
           display: flex;
           align-items: center;
-          gap: 20px;
-          overflow-x: auto;
+          flex-wrap: wrap;
+          gap: 8px 16px;
+          overflow: visible;
           padding-bottom: 0;
           border-bottom: 0;
         }
@@ -1338,10 +1339,10 @@ export function HomeEnterpriseBriefApp({
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          padding: 9px 0 12px;
+          padding: 7px 0 10px;
           white-space: nowrap;
           font: inherit;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
         }
         .heb-section-tabs button.is-active {
@@ -1359,7 +1360,7 @@ export function HomeEnterpriseBriefApp({
           font-weight: 900;
         }
         .heb-current-section {
-          margin-bottom: 20px;
+          margin-bottom: 18px;
         }
         .heb-current-section > span {
           display: block;
@@ -1388,7 +1389,7 @@ export function HomeEnterpriseBriefApp({
           color: ${COLORS.ink};
         }
         .heb-section {
-          margin: 22px 0;
+          margin: 18px 0;
         }
         .heb-read-intro {
           margin: 18px 0 18px;
@@ -1408,10 +1409,10 @@ export function HomeEnterpriseBriefApp({
           font-family: Fraunces, Georgia, serif;
           color: ${COLORS.ink};
           letter-spacing: 0;
-          font-size: clamp(32px, 3.7vw, 44px);
-          line-height: 1.05;
-          max-width: 980px;
-          margin: 14px 0 14px;
+          font-size: clamp(27px, 2.45vw, 36px);
+          line-height: 1.08;
+          max-width: 1040px;
+          margin: 12px 0 12px;
         }
         .heb-context-line {
           display: flex;
@@ -1433,8 +1434,8 @@ export function HomeEnterpriseBriefApp({
           background: ${COLORS.surface};
         }
         .heb-metric-table .heb-fact {
-          min-height: 74px;
-          padding: 14px 16px;
+          min-height: 66px;
+          padding: 12px 14px;
           border-right: 1px solid ${COLORS.line};
           border-bottom: 1px solid ${COLORS.line};
         }
@@ -1447,9 +1448,9 @@ export function HomeEnterpriseBriefApp({
         .heb-metric-table strong {
           display: block;
           font-family: Fraunces, Georgia, serif;
-          font-size: 27px;
+          font-size: 23px;
           line-height: 1;
-          margin: 0 0 7px;
+          margin: 0 0 6px;
         }
         .heb-metric-table span {
           display: block;
