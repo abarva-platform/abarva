@@ -55,6 +55,13 @@ const AI_FILTERS: ReadonlyArray<readonly [AiFilter, string]> = [
 ];
 
 const AI_MATRIX_DISPLAY_LIMIT = 10;
+const AI_VENDOR_DISPLAY_LIMIT = 3;
+
+interface AiVendorAttribution {
+  vendor: string;
+  spendUsd: number;
+  systems: readonly string[];
+}
 
 function applyFilter(
   items: readonly TowerAiView[],
@@ -74,6 +81,39 @@ function topMatrixItems(items: readonly TowerAiView[]): TowerAiView[] {
         a.name.localeCompare(b.name),
     )
     .slice(0, AI_MATRIX_DISPLAY_LIMIT);
+}
+
+export function topVendorAttribution(
+  items: readonly TowerAiView[],
+  limit = AI_VENDOR_DISPLAY_LIMIT,
+): AiVendorAttribution[] {
+  const vendors = new Map<
+    string,
+    { vendor: string; spendUsd: number; systems: Set<string> }
+  >();
+  for (const item of items) {
+    const vendor = item.vendor?.trim();
+    if (!vendor || item.aiSpendUsd <= 0) continue;
+    const current = vendors.get(vendor) ?? {
+      vendor,
+      spendUsd: 0,
+      systems: new Set<string>(),
+    };
+    current.spendUsd += item.aiSpendUsd;
+    const system = item.system?.trim();
+    if (system) current.systems.add(system);
+    vendors.set(vendor, current);
+  }
+  return [...vendors.values()]
+    .sort((a, b) => b.spendUsd - a.spendUsd || a.vendor.localeCompare(b.vendor))
+    .slice(0, limit)
+    .map((entry) => ({
+      vendor: entry.vendor,
+      spendUsd: entry.spendUsd,
+      systems: [...entry.systems]
+        .sort((a, b) => a.localeCompare(b))
+        .slice(0, 2),
+    }));
 }
 
 // ── pieces ─────────────────────────────────────────────────────────────────
@@ -208,6 +248,40 @@ function SpendUnattributed({ aiTagged }: { aiTagged: string }) {
   );
 }
 
+function VendorAttributionStrip({
+  vendors,
+}: {
+  vendors: readonly AiVendorAttribution[];
+}) {
+  if (vendors.length === 0) {
+    return (
+      <p className={styles.lhSub}>
+        Vendor attribution is not yet populated for the current portfolio.
+      </p>
+    );
+  }
+  return (
+    <div className={styles.vendorStrip} aria-label="Top attributed AI vendors">
+      <div className={styles.vendorStripHead}>
+        <span>Top attributed vendors</span>
+        <small>from governed AI portfolio rows</small>
+      </div>
+      <div className={styles.vendorStripRows}>
+        {vendors.map((entry) => (
+          <div key={entry.vendor} className={styles.vendorStripRow}>
+            <span>
+              <b>{entry.vendor}</b>
+              {entry.systems.length > 0 ? (
+                <small>{entry.systems.join(" / ")}</small>
+              ) : null}
+            </span>
+            <strong>{formatUsdM(entry.spendUsd)}</strong>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /**
  * Free-text search across the fields an executive would actually type: the
@@ -240,7 +314,11 @@ function AllInitiativesTable({
   onOpenAi: (n: number) => void;
 }) {
   if (items.length === 0) {
-    return <p className={styles.lhSub}>No initiatives match the current filter or search.</p>;
+    return (
+      <p className={styles.lhSub}>
+        No initiatives match the current filter or search.
+      </p>
+    );
   }
   return (
     <table className={styles.tbl}>
@@ -250,18 +328,20 @@ function AllInitiativesTable({
           <th scope="col">Spend type</th>
           <th scope="col">Vendor</th>
           <th scope="col">System</th>
-          <th scope="col" className={styles.num}>Value</th>
-          <th scope="col" className={styles.num}>Readiness</th>
-          <th scope="col" style={{ textAlign: "right" }}>Posture</th>
+          <th scope="col" className={styles.num}>
+            Value
+          </th>
+          <th scope="col" className={styles.num}>
+            Readiness
+          </th>
+          <th scope="col" style={{ textAlign: "right" }}>
+            Posture
+          </th>
         </tr>
       </thead>
       <tbody>
         {items.map((a) => (
-          <tr
-            key={a.id}
-            className={styles.click}
-            onClick={() => onOpenAi(a.n)}
-          >
+          <tr key={a.id} className={styles.click} onClick={() => onOpenAi(a.n)}>
             <td>
               <button
                 type="button"
@@ -333,13 +413,17 @@ export function AiPortfolioView({
   const matrixItems = topMatrixItems(filtered);
   // Table mode reads the UNCAPPED portfolio, so search + filters can reach
   // every row the mart holds — not just the top 10 the matrix plots.
-  const allFiltered = applyFilter(applySearch(view.allInitiatives, search), filter);
+  const allFiltered = applyFilter(
+    applySearch(view.allInitiatives, search),
+    filter,
+  );
   const showChips =
     subView === "overview" || subView === "bubble" || subView === "all";
   const aiTagged = formatUsdM(view.summary.aiTaggedUsd);
   const sizeMode = view.summary.aiSpendUnattributed ? "constant" : "spend";
   const fundedCount = view.ai.filter((a) => a.kind === "funded").length;
   const embeddedCount = view.ai.filter((a) => a.kind === "embedded").length;
+  const topVendors = topVendorAttribution(view.allInitiatives);
   const candidateRight = `${view.portfolioCounts.displayCandidateCount} shown of ${view.portfolioCounts.totalCandidateCount} candidates`;
   const matrixCountRight =
     filtered.length > matrixItems.length
@@ -391,9 +475,12 @@ export function AiPortfolioView({
             {view.summary.aiSpendUnattributed ? (
               <SpendUnattributed aiTagged={aiTagged} />
             ) : (
-              <div className={styles.chartwrap}>
-                <AiSpendLensChart rows={view.spendLens} />
-              </div>
+              <>
+                <div className={styles.chartwrap}>
+                  <AiSpendLensChart rows={view.spendLens} />
+                </div>
+                <VendorAttributionStrip vendors={topVendors} />
+              </>
             )}
           </Card>
           <Card
@@ -475,6 +562,7 @@ export function AiPortfolioView({
             <p id="tcc-lens-alt" className={styles.srOnly}>
               {spendLensTextAlternative(view.spendLens)}
             </p>
+            <VendorAttributionStrip vendors={topVendors} />
           </>
         )}
         <div className={styles.legend} style={{ marginTop: 12 }}>
@@ -538,7 +626,12 @@ export function AiPortfolioView({
       </ViewHead>
 
       <div
-        style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}
+        style={{
+          display: "flex",
+          gap: 10,
+          flexWrap: "wrap",
+          alignItems: "center",
+        }}
       >
         <input
           type="search"
@@ -550,7 +643,8 @@ export function AiPortfolioView({
         />
         {search.trim() ? (
           <span className={styles.vhint}>
-            {allFiltered.length} of {view.allInitiatives.length} initiatives match
+            {allFiltered.length} of {view.allInitiatives.length} initiatives
+            match
           </span>
         ) : null}
       </div>

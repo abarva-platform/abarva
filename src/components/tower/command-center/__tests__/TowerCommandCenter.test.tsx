@@ -10,9 +10,11 @@ import "@testing-library/jest-dom";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 
 import { designFixtureMart } from "@/lib/tower/command-center/__fixtures__/design-fixture";
+import { formatUsdM } from "@/lib/tower/command-center/format";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
 
 import { TowerCommandCenter } from "../TowerCommandCenter";
+import { topVendorAttribution } from "../views/AiPortfolioView";
 
 const replace = jest.fn();
 
@@ -318,6 +320,19 @@ describe("TowerCommandCenter", () => {
       { target: { value: "copilot" } },
     );
     expect(screen.getByText(/of \d+ initiatives match/)).toBeInTheDocument();
+  });
+
+  it("surfaces vendor attribution on the default AI Portfolio overview", () => {
+    renderPage();
+    fireEvent.click(tab(/AI Portfolio/));
+
+    const vendorStrip = screen.getByLabelText("Top attributed AI vendors");
+    const [topVendor] = topVendorAttribution(view!.allInitiatives);
+    expect(vendorStrip).toBeInTheDocument();
+    expect(within(vendorStrip).getByText(topVendor.vendor)).toBeInTheDocument();
+    expect(
+      within(vendorStrip).getByText(formatUsdM(topVendor.spendUsd)),
+    ).toBeInTheDocument();
   });
 
   it("opens the program drawer with its value proof chain, and closes on Escape", () => {
