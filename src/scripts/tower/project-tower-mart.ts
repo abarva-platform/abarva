@@ -43,6 +43,7 @@ import {
   buildToolProgramCrosswalk,
   type ToolIdentityAlias,
 } from "../../lib/cio-tower/mart-projection/tool-identity-crosswalk";
+import { canonicalCioTowerTenantKey } from "../../lib/cio-tower/metric-packet";
 import type {
   CioTowerFactRow,
   CioTowerTenantIdentity,
@@ -141,19 +142,59 @@ async function resolveTenant(
   tenantKey: string,
   tenantNameFallback: string,
 ): Promise<CioTowerTenantIdentity> {
+  const canonicalTenantKey = canonicalCioTowerTenantKey(tenantKey);
   if (!client) {
-    return { tenantKey, clientId: null, tenantName: tenantNameFallback };
+    return {
+      tenantKey: canonicalTenantKey,
+      clientId: null,
+      tenantName: tenantNameFallback,
+    };
   }
+  const aliases = tenantLookupAliases(canonicalTenantKey, tenantKey);
   const res = await client.query<{ id: string; name: string }>(
-    `SELECT id, name FROM public.clients WHERE tenant_key = $1 LIMIT 1`,
-    [tenantKey],
+    `SELECT id, name
+       FROM public.clients
+      WHERE key = ANY($1::text[])
+         OR tenant_key = ANY($1::text[])
+         OR slug = ANY($1::text[])
+      ORDER BY CASE
+        WHEN tenant_key = $2 THEN 0
+        WHEN key = ANY($1::text[]) THEN 1
+        ELSE 2
+      END
+      LIMIT 1`,
+    [aliases, canonicalTenantKey],
   );
   const row = res.rows[0];
   return {
-    tenantKey,
+    tenantKey: canonicalTenantKey,
     clientId: row?.id ?? null,
     tenantName: row?.name ?? tenantNameFallback,
   };
+}
+
+function tenantLookupAliases(
+  canonicalTenantKey: string,
+  requestedTenantKey: string,
+): string[] {
+  const aliases = new Set([canonicalTenantKey, requestedTenantKey]);
+  const normalized = canonicalTenantKey.trim().toLowerCase();
+  if (normalized === "meridian-health") aliases.add("meridian");
+  if (normalized === "skyharbor-air") aliases.add("skyharbor");
+  if (normalized === "first-capital-financial") {
+    aliases.add("first-capital");
+    aliases.add("firstcapital");
+    aliases.add("arcturus");
+  }
+  if (normalized === "apex-retail") {
+    aliases.add("apex");
+    aliases.add("apexretail");
+  }
+  if (normalized === "lakeshore-holdings") {
+    aliases.add("lakeshore");
+    aliases.add("lakeshore-industries");
+  }
+  return [...aliases].filter(Boolean);
 }
 
 async function readTowerFacts(
@@ -304,6 +345,7 @@ async function main(): Promise<void> {
       sourceFiles: [
         "08_it_budget_spend_value.csv",
         "09_programs_initiatives.csv",
+        "10_ai_automation_use_cases.csv",
         "SA08_AI_Benefits_Realization_Usage_Ledger.csv",
       ],
     });

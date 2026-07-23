@@ -52,6 +52,8 @@ interface BuildV3FactArgs {
   view: CioTowerFactView;
   scope: CioTowerFactScope;
   valueNumeric: number;
+  unit?: CioTowerFactRow["unit"];
+  basis?: CioTowerFactRow["basis"];
   sourceFile: string;
   sourceRow: string | null;
   canonical: CanonicalIdentity;
@@ -68,13 +70,13 @@ function buildV3Fact(args: BuildV3FactArgs): CioTowerFactRow {
     scope: args.scope,
     view: args.view,
     amount_type: args.view === "app_run_cost" ? "run" : "none",
-    basis: "committed",
+    basis: args.basis ?? "committed",
     period: "fy26",
     value_numeric: args.valueNumeric,
     value_text: null,
     value_date: null,
     value_bool: null,
-    unit: "usd",
+    unit: args.unit ?? "usd",
     value_source: "synthetic",
     confidence: "medium",
     source_key: args.sourceFile,
@@ -295,6 +297,30 @@ export function factsFromV3Benefits(
     const code = programIdToCode[programId] ?? programId;
     const name = (r.program_name ?? code).trim();
     const promised = num(r.promised_value_usd);
+    const fundedSpend = num(r.funded_spend_usd);
+    if (fundedSpend > 0) {
+      facts.push(
+        buildV3Fact({
+          tenantKey: identity.tenantKey,
+          keyParts: ["benefit-funded-spend", code],
+          measure: `${name} funded spend`,
+          view: "initiative_budget",
+          scope: "initiative",
+          valueNumeric: fundedSpend,
+          sourceFile: file,
+          sourceRow: r.source_record_id ?? programId,
+          canonical: programCanonical(
+            code,
+            name,
+            PROGRAM_METRIC_KEYS.approvedFunding,
+          ),
+          attributes: {
+            vendor_name: r.vendor_name ?? null,
+            tool_name: r.tool_name ?? null,
+          },
+        }),
+      );
+    }
     if (promised > 0) {
       facts.push(
         buildV3Fact({
@@ -312,6 +338,60 @@ export function factsFromV3Benefits(
             PROGRAM_METRIC_KEYS.promisedValue,
           ),
           attributes: {
+            vendor_name: r.vendor_name ?? null,
+            tool_name: r.tool_name ?? null,
+          },
+        }),
+      );
+    }
+    const usageActual = num(r.usage_actual);
+    if (usageActual > 0) {
+      facts.push(
+        buildV3Fact({
+          tenantKey: identity.tenantKey,
+          keyParts: ["benefit-usage-actual", code],
+          measure: `${name} active usage`,
+          view: "adoption",
+          scope: "initiative",
+          valueNumeric: usageActual,
+          unit: "count",
+          basis: "actual",
+          sourceFile: file,
+          sourceRow: r.source_record_id ?? programId,
+          canonical: {
+            ...programCanonical(code, name, "ai_tool_active_users"),
+            metric_unit: "count",
+          },
+          attributes: {
+            usage_metric: r.usage_metric ?? null,
+            vendor_name: r.vendor_name ?? null,
+            tool_name: r.tool_name ?? null,
+          },
+        }),
+      );
+    }
+    const adoptionRatePct = num(r.adoption_rate_pct) || num(r.usage_rate_pct);
+    if (adoptionRatePct > 0) {
+      facts.push(
+        buildV3Fact({
+          tenantKey: identity.tenantKey,
+          keyParts: ["benefit-adoption-rate", code],
+          measure: `${name} adoption rate`,
+          view: "adoption",
+          scope: "initiative",
+          valueNumeric: adoptionRatePct / 100,
+          unit: "ratio",
+          basis: "actual",
+          sourceFile: file,
+          sourceRow: r.source_record_id ?? programId,
+          canonical: {
+            ...programCanonical(code, name, "ai_tool_seat_utilization"),
+            metric_unit: "ratio",
+          },
+          attributes: {
+            source_metric: r.adoption_rate_pct
+              ? "adoption_rate_pct"
+              : "usage_rate_pct",
             vendor_name: r.vendor_name ?? null,
             tool_name: r.tool_name ?? null,
           },
