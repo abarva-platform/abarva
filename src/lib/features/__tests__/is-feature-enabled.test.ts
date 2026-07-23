@@ -75,7 +75,7 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
       ).toBe(true);
     });
 
-    it("enables the Tower Command Center only for controlled demo tenants", () => {
+    it("keeps the Tower Command Center on as the platform Tower surface", () => {
       expect(
         isFeatureEnabled({ clientKey: "meridian" }, "tower_command_center_v2"),
       ).toBe(true);
@@ -102,13 +102,13 @@ describe("isFeatureEnabled · A3 feature-flag contract", () => {
           { clientKey: "apexretail" },
           "tower_command_center_v2",
         ),
-      ).toBe(false);
+      ).toBe(true);
       expect(
         isFeatureEnabled(
           { clientKey: "lakeshore" },
           "tower_command_center_v2",
         ),
-      ).toBe(false);
+      ).toBe(true);
     });
 
     it("is off when the context is missing a tenant key", () => {
