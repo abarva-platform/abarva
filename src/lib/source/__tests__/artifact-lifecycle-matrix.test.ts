@@ -116,6 +116,57 @@ describe("Source artifact lifecycle matrix", () => {
     expect(pricingRows).not.toContain("No dedicated prompt");
   });
 
+  it("derives remaining scope/RFP prompt-backed labels from the generation registry", () => {
+    const summary = buildSourceArtifactLifecycleSummary();
+
+    const exclusionLog = summary.rows.find(
+      (row) => row.code === "d06_excl_log",
+    );
+    const premortem = summary.rows.find(
+      (row) => row.code === "d08_premortem",
+    );
+    const rfiSummary = summary.rows.find(
+      (row) => row.code === "d10_rfi_summary",
+    );
+    const vendorShortlist = summary.rows.find(
+      (row) => row.code === "d12_vendor_shortlist",
+    );
+
+    expect(exclusionLog?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Sonnet",
+      maxTokensLabel: "24k max",
+    });
+    expect(premortem?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Sonnet",
+      maxTokensLabel: "24k max",
+    });
+    expect(rfiSummary?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Sonnet",
+      maxTokensLabel: "24k max",
+    });
+    expect(vendorShortlist?.prompt).toMatchObject({
+      supported: true,
+      modelLabel: "Claude Opus",
+      maxTokensLabel: "24k max",
+    });
+
+    const csv = buildSourceArtifactStandardsCsv(summary.rows);
+    const earlyMidRows = csv
+      .split("\n")
+      .filter((row) =>
+        /d06_excl_log|d08_premortem|d10_rfi_summary|d12_vendor_shortlist/.test(row),
+      )
+      .join("\n");
+
+    expect(earlyMidRows).toContain('"Yes"');
+    expect(earlyMidRows).toContain('"Claude Sonnet"');
+    expect(earlyMidRows).toContain('"Claude Opus"');
+    expect(earlyMidRows).not.toContain("No dedicated prompt");
+  });
+
   it("derives BAFO-stage prompt-backed labels from the generation registry", () => {
     const summary = buildSourceArtifactLifecycleSummary();
 

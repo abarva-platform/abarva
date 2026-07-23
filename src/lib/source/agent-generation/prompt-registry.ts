@@ -328,6 +328,52 @@ const CONTRACT_RECORD_FIELDS = [
   "repository / evidence reference",
 ] as const;
 
+const EXCLUSION_LOG_FIELDS = [
+  "exclusion id",
+  "excluded application / service / region / capability",
+  "exclusion category",
+  "rationale",
+  "business owner",
+  "vendor pricing implication",
+  "risk if misunderstood",
+  "sponsor review status",
+  "evidence reference",
+] as const;
+
+const SCOPE_PREMORTEM_FIELDS = [
+  "failure mode",
+  "trigger / early warning signal",
+  "scope area affected",
+  "impact on price / transition / service",
+  "mitigation",
+  "owner",
+  "decision needed",
+  "evidence gap",
+] as const;
+
+const RFI_SUMMARY_FIELDS = [
+  "vendor / market participant",
+  "capability signal",
+  "commercial signal",
+  "transition or delivery signal",
+  "risk or caveat",
+  "fit with scope",
+  "shortlist implication",
+  "evidence reference",
+] as const;
+
+const VENDOR_SHORTLIST_FIELDS = [
+  "vendor / bidder",
+  "shortlist status",
+  "rationale",
+  "coverage fit",
+  "commercial posture",
+  "risk / disqualification note",
+  "approval owner",
+  "condition to invite",
+  "evidence reference",
+] as const;
+
 const VENDOR_RESPONSE_INTAKE_FIELDS = [
   "vendor legal name",
   "submission receipt timestamp",
@@ -525,6 +571,30 @@ function formatSelectionMemoFields(): string {
 
 function formatContractRecordFields(): string {
   return CONTRACT_RECORD_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatExclusionLogFields(): string {
+  return EXCLUSION_LOG_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatScopePremortemFields(): string {
+  return SCOPE_PREMORTEM_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatRfiSummaryFields(): string {
+  return RFI_SUMMARY_FIELDS.map(
+    (field, index) => `${index + 1}. ${field}`,
+  ).join("\n");
+}
+
+function formatVendorShortlistFields(): string {
+  return VENDOR_SHORTLIST_FIELDS.map(
     (field, index) => `${index + 1}. ${field}`,
   ).join("\n");
 }
@@ -942,6 +1012,163 @@ Tone: precise, business-facing, list-heavy, and operational. Start with an execu
     },
   },
 
+  d06_excl_log: {
+    artifactCode: "d06_excl_log",
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d05_scope_memo"],
+    upstreamOptional: ["d04_app_inv", "d07_ticket_synth", "d01_strategy_memo"],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Exclusion Log (artifact d06_excl_log). This is the sponsor-reviewed boundary control for scope: the applications, services, geographies, capabilities, data obligations, retained responsibilities, and transition activities explicitly outside the sourcing event. It is not a leftover list and it must not contradict the Scope Memo.
+
+Required structural sections:
+## §1 · Exclusion answer
+## §2 · Exclusion register
+## §3 · Pricing and proposal implications
+## §4 · Residual risks and owner actions
+## §5 · Sponsor review and changes to carry into RFP
+
+Required exclusion log fields:
+${formatExclusionLogFields()}
+
+Writing and format requirements:
+- §1 states whether the exclusion log is ready for sponsor review / conditionally ready / blocked.
+- §2 must be a table: Exclusion ID | Excluded item | Category | Rationale | Owner | Pricing/proposal implication | Risk if misunderstood | Sponsor review status | Evidence reference.
+- Derive exclusions from the Scope Memo, inventory, ticket/service evidence, and uploaded source files. Do not invent excluded apps, services, regions, responsibilities, or sponsor decisions.
+- Anything ambiguous in d05 must become an explicit owner action; do not silently classify it as excluded.
+- §3 turns exclusions into vendor-facing implications for the RFP and response templates, without exposing internal sensitivity or raw system ids that are not already client-safe.
+- Markdown only. Make the log crisp enough that a sponsor can approve the boundary and vendors can price consistently.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.owner ? `Scope owner: ${ctx.event.owner}` : null,
+        `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Scope Memo (d05_scope_memo):",
+        upstream.d05_scope_memo ??
+          "(MISSING — do not fabricate exclusions; this artifact is blocked until scope exists)",
+        "",
+        "— OPTIONAL SCOPE BASIS —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer exclusions from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d04_app_inv", "Application Inventory", "application/service list and tiering");
+      bindOptional("d07_ticket_synth", "Ticket History Synthesis", "service demand and support-boundary signals");
+      bindOptional("d01_strategy_memo", "Sourcing Strategy Memo", "event rationale and scope intent");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— SCOPE EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED SCOPE EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "— REQUIRED EXCLUSION LOG FIELDS —",
+        formatExclusionLogFields(),
+        "",
+        "Draft the Exclusion Log per the system prompt. Do not invent excluded items or sponsor review status; turn ambiguity into owner actions.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d08_premortem: {
+    artifactCode: "d08_premortem",
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d05_scope_memo"],
+    upstreamOptional: ["d06_excl_log", "d04_app_inv", "d07_ticket_synth"],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Pre-mortem on Scope Risk (artifact d08_premortem). This is the working-session output that asks, before RFP launch, "what could make this scope fail?" It should expose the few scope failures that would distort price, transition, service quality, or governance. It is not generic workshop notes.
+
+Required structural sections:
+## §1 · Pre-mortem answer
+## §2 · Top scope failure modes
+## §3 · Mitigations and owner actions
+## §4 · RFP / response-control implications
+## §5 · Open decisions before RFP launch
+
+Required scope pre-mortem fields:
+${formatScopePremortemFields()}
+
+Writing and format requirements:
+- §1 states whether scope risk is low / manageable with actions / blocking before RFP.
+- §2 must list the top 5 risks unless the evidence supports fewer; do not pad with generic risks.
+- Each failure mode must trace to the Scope Memo, Exclusion Log, inventory/ticket evidence, or an explicit missing evidence gap.
+- Separate workshop concerns from approved scope changes. A concern is not a decision; a mitigation is not done until an owner and evidence path exist.
+- §4 states what must change in d09 RFP Package and d11 Vendor Response Control Pack so vendors answer the risk, price it, or commit around it.
+- Markdown only. Use a compact risk table plus a short executive synthesis.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.owner ? `Scope owner: ${ctx.event.owner}` : null,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Scope Memo (d05_scope_memo):",
+        upstream.d05_scope_memo ??
+          "(MISSING — do not fabricate scope risks; this artifact is blocked until scope exists)",
+        "",
+        "— OPTIONAL SCOPE RISK BASIS —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer workshop findings from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d06_excl_log", "Exclusion Log", "boundary risks and sponsor-review gaps");
+      bindOptional("d04_app_inv", "Application Inventory", "systems/towers that create scope ambiguity");
+      bindOptional("d07_ticket_synth", "Ticket History Synthesis", "service-demand risks and workload evidence");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— SCOPE EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED WORKSHOP EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "— REQUIRED SCOPE PRE-MORTEM FIELDS —",
+        formatScopePremortemFields(),
+        "",
+        "Draft the Scope Risk Pre-mortem per the system prompt. Do not invent workshop decisions, completed mitigations, owners, or evidence; keep concerns and approved scope changes separate.",
+      );
+      return lines.join("\n");
+    },
+  },
+
   d09_rfp_pack: {
     artifactCode: "d09_rfp_pack",
     version: 10,
@@ -1086,6 +1313,164 @@ Quality requirement: produce a draft that can pass the partner-grade quality rev
 
       lines.push(
         "Draft the RFP Package per the system prompt requirements. Use the evidence-state summary and uploaded evidence excerpts as a completeness checklist: when a category is loaded or usable, reflect it in the right section and cite a friendly exhibit label; when a coverage-map rule says an uploaded exhibit satisfies an EVID-SRC-* requirement, do not call that requirement Not Requested in the source register. When a category is missing or low confidence, add it to the client-to-complete register with accountable role/action/why-it-matters instead of filling with generic text. This is a governed vendor-facing draft, not an issued final; do not use bracketed client fill-in markers. If exact human names or calendar dates are missing, use accountable role names and gate-relative target triggers. Keep the draft compact and section-complete: every section §1 through §11 must appear, §7–§11 must not be sacrificed for long baseline prose, §9 must include weights/scoring/disqualification controls, §10 must include risk owners/mitigations, §11 must include a blocking-gap closure table with accountable role, target date or trigger, blocking gate, and downstream impact for every unresolved item, and the final line must confirm the draft is complete pending registered gap closure.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d10_rfi_summary: {
+    artifactCode: "d10_rfi_summary",
+    version: 1,
+    model: DEFAULT_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d05_scope_memo"],
+    upstreamOptional: ["d09_rfp_pack", "d12_vendor_shortlist", "d01_strategy_memo"],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the RFI Summary (artifact d10_rfi_summary). This is the market-sensing record used when a pre-RFI or informal market scan was run before final vendor shortlist. It should convert vendor landscape signals into sourcing implications. It is not a substitute for vendor responses and must not pretend non-binding RFI signals are commitments.
+
+Required structural sections:
+## §1 · Market scan answer
+## §2 · Vendor / market signal matrix
+## §3 · Capability, commercial, and delivery implications
+## §4 · Shortlist implications
+## §5 · Gaps to resolve in RFP or vendor response templates
+
+Required RFI summary fields:
+${formatRfiSummaryFields()}
+
+Writing and format requirements:
+- §1 states whether an RFI was run / informal market scan only / no market evidence available.
+- §2 must be a table: Vendor/participant | Capability signal | Commercial signal | Transition/delivery signal | Risk/caveat | Fit with scope | Shortlist implication | Evidence reference.
+- Treat RFI content as directional, not binding. Do not invent vendor interest, capability, price, legal acceptance, or shortlisted status.
+- If no RFI evidence exists, produce an honest market-scan shell with explicit evidence gaps and owner actions rather than a fake vendor landscape.
+- §5 carries precise questions into d09 RFP Package, d11 Vendor Response Control Pack, or d12 Vendor Shortlist.
+- Markdown only. Keep it concise and decision-useful.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "Scope Memo (d05_scope_memo):",
+        upstream.d05_scope_memo ??
+          "(MISSING — do not fabricate market fit or vendor landscape; this artifact is blocked until scope exists)",
+        "",
+        "— OPTIONAL MARKET / RFP CONTEXT —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer market or shortlist facts from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d09_rfp_pack", "RFP Package", "issued requirements that market signals must map to");
+      bindOptional("d12_vendor_shortlist", "Vendor Shortlist", "shortlist implications if already drafted");
+      bindOptional("d01_strategy_memo", "Sourcing Strategy Memo", "event mandate and market posture");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— RFP-STAGE EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED RFI EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "— REQUIRED RFI SUMMARY FIELDS —",
+        formatRfiSummaryFields(),
+        "",
+        "Draft the RFI Summary per the system prompt. Treat RFI signals as directional, not binding; do not invent vendor interest, capability, price, legal acceptance, or shortlisted status.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d12_vendor_shortlist: {
+    artifactCode: "d12_vendor_shortlist",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d09_rfp_pack"],
+    upstreamOptional: ["d10_rfi_summary", "d05_scope_memo", "d06_excl_log", "d11_response_checklist"],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Vendor Shortlist (artifact d12_vendor_shortlist). This is the approved vendor invitation list with rationale, coverage fit, disqualification notes, conditions to invite, and approval owner. It gates the move from RFP to Responses. It must not invent vendors, approvals, or disqualifications.
+
+Required structural sections:
+## §1 · Shortlist answer
+## §2 · Approved vendor list
+## §3 · Excluded / not-invited vendor rationale
+## §4 · Coverage, commercial, and risk fit
+## §5 · Conditions before release to vendors
+## §6 · Approval owner and audit trail
+
+Required vendor shortlist fields:
+${formatVendorShortlistFields()}
+
+Writing and format requirements:
+- §1 states locked / conditionally locked / blocked. If approval is missing, say the shortlist is draft pending approval.
+- §2 must be a table: Vendor | Shortlist status | Rationale | Coverage fit | Commercial posture | Risk/disqualification note | Approval owner | Condition to invite | Evidence reference.
+- Use RFP requirements, RFI/market evidence, scope boundaries, exclusions, and uploaded evidence. Do not invent vendor names, vendor qualifications, conflict checks, approvals, disqualification rationale, or invitation status.
+- If the RFI Summary does not exist, do not fake market-scan evidence; instead state the shortlist basis is RFP/scope/evidence only and list the resulting confidence gap.
+- §5 must carry unresolved conditions into d13 vendor-response intake and d15 response completeness rather than burying them.
+- Markdown only. This should read like a procurement-ready approval record, not a vendor marketing comparison.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.owner ? `Sourcing owner: ${ctx.event.owner}` : null,
+        "",
+        "— REQUIRED UPSTREAM CONTEXT —",
+        "",
+        "RFP Package (d09_rfp_pack):",
+        upstream.d09_rfp_pack ??
+          "(MISSING — do not fabricate shortlist status or vendor invitations; this artifact is blocked until the RFP exists)",
+        "",
+        "— OPTIONAL SHORTLIST BASIS —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer shortlist facts from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d10_rfi_summary", "RFI Summary", "market-scan signals and shortlist implications");
+      bindOptional("d05_scope_memo", "Scope Memo", "coverage fit and scope boundary");
+      bindOptional("d06_excl_log", "Exclusion Log", "boundary conditions and vendor pricing caveats");
+      bindOptional("d11_response_checklist", "Vendor Response Control Pack", "conditions vendors must satisfy");
+
+      const evidenceBlock = formatDraftEvidenceContext(ctx);
+      if (evidenceBlock) {
+        lines.push(evidenceBlock);
+        lines.push("");
+      }
+
+      lines.push(
+        "— RFP-STAGE EVIDENCE STATE SUMMARY —",
+        formatEvidenceStates(ctx),
+        "",
+        "— UPLOADED / PARSED SHORTLIST EVIDENCE —",
+        formatUploadedEvidence(ctx),
+        "",
+        "— REQUIRED VENDOR SHORTLIST FIELDS —",
+        formatVendorShortlistFields(),
+        "",
+        "Draft the Vendor Shortlist per the system prompt. Do not invent vendor names, qualifications, approvals, disqualifications, or invitation status.",
       );
       return lines.join("\n");
     },
