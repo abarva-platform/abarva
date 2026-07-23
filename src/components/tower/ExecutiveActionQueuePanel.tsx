@@ -14,7 +14,7 @@ import {
   type ExecutiveActionQueue,
 } from '@/lib/tower/action-queue/executive-action-queue';
 
-// Tokens mirror the locked Tower palette used across TowerIndexPage.
+// Tokens mirror the locked Tower palette used across the Command Center.
 const C = {
   PAGE_BG: '#F8F7F4',
   CARD: '#ffffff',

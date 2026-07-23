@@ -7,7 +7,7 @@ const root = process.cwd();
 
 const checks = [
   {
-    file: 'src/components/tower/TowerIndexPage.tsx',
+    file: 'src/components/tower/command-center/TowerCommandCenterAvaShell.tsx',
     forbidden: [
       '/api/v1/atlas/chat',
       'aVa could not answer that right now',

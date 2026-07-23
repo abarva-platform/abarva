@@ -1,2 +1,4 @@
 file
-src/components/tower/TowerLegacySurface.tsx
+src/components/tower/__tests__/TowerCioDashboardSurface.test.tsx
+src/components/tower/TowerCommandCenterContract.tsx
+src/components/tower/TowerIndexPage.tsx

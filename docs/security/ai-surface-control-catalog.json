@@ -629,16 +629,16 @@
       "reason": "The control is deterministic/no-live-benchmark limitation copy, not a formal confidence control yet."
     },
     {
-      "key": "generated-ui|Tower|Atlas observations and chat opener|citation",
+      "key": "generated-ui|Tower|aVa Command Center chat opener|citation",
       "status": "deferred",
       "controlKind": "citation",
-      "reason": "Tower provenance exists, but visible Atlas recommendation labeling still needs closer surface-level control coverage."
+      "reason": "Tower answer packets preserve trace/evidence fields when available, but committed artifact reuse still needs explicit AI-assisted labeling."
     },
     {
-      "key": "generated-ui|Tower|Atlas observations and chat opener|confidence",
+      "key": "generated-ui|Tower|aVa Command Center chat opener|confidence",
       "status": "deferred",
       "controlKind": "confidence",
-      "reason": "Tower low-confidence fallback exists, but the badge is not yet consistently visible beside the opener."
+      "reason": "The Command Center aVa shell has unavailable/timeout states, but a formal confidence badge for advisory answers remains follow-on."
     },
     {
       "key": "generated-ui|Tower|Atlas synthesis API response|citation",

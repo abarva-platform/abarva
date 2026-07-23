@@ -135,6 +135,6 @@ describe("buildTowerLensTabsView", () => {
 
 // The TOWER4 component file probe (TowerLensTabs.tsx) was removed when that
 // orphaned component was deleted — it was never wired to a live route,
-// superseded by TowerIndexPage's CXO command center. tower-lens-tabs-view.ts
-// itself stays live (TowerIndexPage still uses its TowerTabKey type/helpers),
+// superseded by the Tower Command Center. tower-lens-tabs-view.ts
+// itself stays live for compatibility helpers,
 // so the coverage above this comment remains.
