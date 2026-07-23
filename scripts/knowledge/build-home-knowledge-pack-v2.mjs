@@ -9,6 +9,33 @@ const generatorVersion = "home-pack-v3-story-builder-20260722";
 const artifactType = "NexusHomeKnowledgePackV2";
 const NARRATIVE_TYPES = new Set(["industry_movement", "new_way_of_operating", "change_thesis"]);
 const CLASSIFICATIONS = new Set(["loaded_fact", "derived_measure", "industry_pattern", "strategic_inference", "missing_evidence"]);
+const VISUAL_TYPES = new Set([
+  "horizontal_bar",
+  "stacked_bar",
+  "scatter_2x2",
+  "heatmap",
+  "waterfall",
+  "line_trend",
+  "area_trend",
+  "radar",
+  "treemap",
+  "relationship_graph",
+  "evidence_timeline",
+  "executive_scorecard",
+]);
+const VISUAL_TYPE_GUIDANCE = [
+  "horizontal_bar: rank 3-7 categories with source-backed or clearly directional values.",
+  "stacked_bar: show composition across 2-5 groups only when category composition is supported.",
+  "scatter_2x2: prioritize options across two axes such as value and readiness; no more than 8 points.",
+  "heatmap: show readiness/gap/risk intensity across a compact matrix; no more than 5 rows and 5 columns.",
+  "waterfall: explain value movement from baseline to opportunity/constraint only when value components exist.",
+  "line_trend / area_trend: show movement over time only when dated trend evidence exists.",
+  "radar: compare 4-6 capabilities with directional scores; use sparingly.",
+  "treemap: show concentration/exposure by size when categorical magnitude is supported.",
+  "relationship_graph: show entity-to-entity pathways for relationships, ownership, lineage, or dependencies.",
+  "evidence_timeline: show source/event chronology, maturity, and what remains to validate.",
+  "executive_scorecard: show 3-6 leadership decisions/statuses when a chart would overstate evidence.",
+];
 
 const jsonColumnsByTable = new Map([
   ["home_knowledge_packs", new Set(["source_context", "render_pack", "quality_report", "validation_issues"])],
@@ -604,7 +631,8 @@ function claudeStoryArchitectSystemPrompt() {
     "State the real choices leadership faces. Do not reduce choices to invest or do not invest. Good choices include improve the current process versus redesign the operating model, build a shared foundation first versus prove a bounded workflow first, centralize versus federate ownership, modernize the existing platform versus introduce a new one, or scale now versus gate until evidence improves.",
     "",
     "EXHIBIT REQUIREMENT",
-    "For each chapter specify exhibit title, executive question, visual type, entities or measures required, conclusion the exhibit must prove, two or three annotations, and unavailable evidence that could invalidate the conclusion.",
+    `For each chapter specify exhibit title, executive question, visual_type, entities or measures required, conclusion the exhibit must prove, two or three annotations, and unavailable evidence that could invalidate the conclusion. visual_type must be exactly one of: ${Array.from(VISUAL_TYPES).join(", ")}.`,
+    "Visuals must be compact, Recharts-friendly, and executive-readable: fewer than seven visible marks where possible, no dense labels, no raw row/record/node/edge/file counts, and no visual type aliases.",
     "",
     "FINAL SEQUENCE",
     "End with Act now, Build next, Scale later, Decisions required, and Evidence required.",
@@ -653,7 +681,10 @@ function claudeStoryTool() {
                 type: "object",
                 required: ["visual_type", "title", "conclusion_to_prove"],
                 properties: {
-                  visual_type: { type: "string" },
+                  visual_type: {
+                    type: "string",
+                    enum: Array.from(VISUAL_TYPES),
+                  },
                   title: { type: "string" },
                   executive_question: { type: "string" },
                   entities_or_measures_required: stringArray,
@@ -725,6 +756,13 @@ function claudeSystemPrompt() {
     "",
     "STORY ARCHITECTURE",
     "Use the supplied story_architecture as the governing argument. The dimensions are evidence behind the story; they are not the storyline. Every narrative section must advance the governing thesis.",
+    "",
+    "VISUAL COMMUNICATION CONTRACT",
+    `Any visual_type you author must be exactly one of: ${Array.from(VISUAL_TYPES).join(", ")}.`,
+    "Do not invent aliases such as graph_topology, topology_graph, network_topology, dependency_graph, status_heatmap, readiness_heatmap, risk_matrix, priority_grid, landscape, or severity_matrix.",
+    "Every visual spec should be understandable by a C-suite reader in one glance: fewer labels, short labels, one conclusion, one evidence boundary.",
+    "Use charts only when the supplied context supports the measures or categories. If evidence is directional, use executive_scorecard or heatmap with classification strategic_inference or industry_pattern.",
+    `Visual type guidance: ${VISUAL_TYPE_GUIDANCE.join(" ")}`,
     "",
     "OUTPUT BLOCKING",
     "If the requested output cannot be completed within the available evidence or response budget, return generation_status = blocked, blocked_reason, missing_evidence, incomplete_sections, and recommended_regeneration_scope through the tool fields where available. Never return a silently truncated or partially completed pack.",
@@ -968,6 +1006,10 @@ function claudeUseCaseSystemPrompt() {
     "USE-CASE QUALIFIER ROLE",
     "You are qualifying strategic change candidates for a C-suite Home brief.",
     "Do not force every candidate to become a qualified use case. Classify each item as strategic_foundation, operating_model_change_thesis, qualified_use_case, early_idea, or evidence_request.",
+    "For every candidate, include what peers or the industry are realizing in the industry_pattern field, but clearly separate it from this tenant's loaded facts.",
+    "Industry realization language must be practical and executive-useful: name the operating pattern, value mechanism, common proof points, and common failure mode where the supplied industry context supports it. Do not invent external benchmarks or cite unsupplied studies.",
+    "Then connect that external pattern to this tenant's context in client_context_signal, why_now, operating_model_change, readiness_barrier, and evidence_gate.",
+    "Never present industry realization as tenant achievement. If industry movement is relevant but tenant evidence is thin, say it is a reference class or market pattern, not current-state proof.",
     "Do not originate ranks. If no governed rank is supplied, use leadership-attention language rather than top/best/highest-priority language.",
     "If a number lacks currency, unit, period or validation status, omit it from client-visible prose.",
     "For every supplied candidate return exactly one item with the exact candidate_key and current name.",
@@ -1011,6 +1053,10 @@ function claudeUseCaseTool() {
               },
               business_workflow_or_decision: { type: "string" },
               industry_pattern: { type: "string" },
+              industry_realization_classification: {
+                type: "string",
+                enum: ["industry_pattern"],
+              },
               client_context_signal: { type: "string" },
               current_operating_condition: { type: "string" },
               future_operating_condition: { type: "string" },
@@ -1047,6 +1093,10 @@ function claudeDimensionSystemPrompt() {
     "For each dimension explain what is known, what cannot yet be concluded, why it matters, the specific evidence request, and the next responsible owner/source.",
     "Do not summarize database contents. Translate context into executive meaning.",
     "Never say value is real, proven value, realized savings, production-ready, or fully loaded unless the supplied evidence explicitly proves realized business outcomes or production status. When evidence is incomplete, say the hypothesis is attractive or decision-relevant, not real.",
+    `Every visual_specification.visual_type must be exactly one of: ${Array.from(VISUAL_TYPES).join(", ")}.`,
+    "Make the primary visual meaningful and uncluttered: one executive question, one conclusion, no more than seven visible marks, short labels, no raw row/record/node/edge/file counts.",
+    "Choose relationship_graph only for relationships, dependencies, ownership paths, lineage, or operating-model connection views. For thin evidence, use executive_scorecard or heatmap rather than a fake chart.",
+    `Visual guidance: ${VISUAL_TYPE_GUIDANCE.join(" ")}`,
     `Call the ${CLAUDE_DIMENSION_TOOL_NAME} tool exactly once.`,
   ].join("\n");
 }
@@ -1078,7 +1128,10 @@ function claudeDimensionTool() {
                 type: "object",
                 properties: {
                   answer_first_title: { type: "string" },
-                  visual_type: { type: "string" },
+                  visual_type: {
+                    type: "string",
+                    enum: Array.from(VISUAL_TYPES),
+                  },
                   conclusion_to_prove: { type: "string" },
                   annotations: { type: "array", items: { type: "string" } },
                   empty_state_behavior: { type: "string" },
@@ -1641,7 +1694,7 @@ function mergeClaudeNarrativesIntoPack(pack, claudeResult) {
     claudeUseCases.length === useCaseItems.length && (claudeNamesUnique || sourceNamesAllCollide);
   const strategyKeys = [
     "classification", "business_workflow_or_decision",
-    "industry_pattern", "client_context_signal", "why_now", "operating_model_change",
+    "industry_pattern", "industry_realization_classification", "client_context_signal", "why_now", "operating_model_change",
     "current_operating_condition", "future_operating_condition", "human_role_change",
     "systems_data_control_requirements",
     "change_strategy", "value_thesis", "readiness_barrier", "evidence_gate",
@@ -1731,6 +1784,7 @@ function enrichUseCases(pack) {
       owner_hint: firstText(item, ["owner", "owner_hint", "business_owner", "technology_owner"]) || "Owner to confirm",
       stage: firstText(item, ["stage", "current_status", "use_case_status", "readiness_status"]) || "Planning-grade",
       industry_pattern: asText(item.industry_pattern) || (useClaude ? "" : industryPatternFor(item, pack)),
+      industry_realization_classification: "industry_pattern",
       client_context_signal: asText(item.client_context_signal) || (useClaude ? "" : `${fn || "The relevant business area"} appears in the loaded context; confirm source-owner evidence before scaling.`),
       current_operating_condition: asText(item.current_operating_condition),
       future_operating_condition: asText(item.future_operating_condition),
@@ -1979,6 +2033,7 @@ async function normalizePack(pack, sourceFile, sourceText) {
         meaning: asText(authored.executive_read),
         matters: asText(authored.why_it_matters),
         supports: [asText(authored.evidence_boundary), asText(authored.next_action)].filter(Boolean).join(" "),
+        visual_specification: authored.visual_specification ?? null,
       }];
     }),
   );
@@ -2081,6 +2136,7 @@ async function normalizePack(pack, sourceFile, sourceText) {
         value: useCase.value_thesis,
         gate: useCase.evidence_gate,
         industry_pattern: useCase.industry_pattern,
+        industry_realization_classification: useCase.industry_realization_classification ?? "industry_pattern",
         client_context_signal: useCase.client_context_signal,
         why_now: useCase.why_now,
         operating_model_change: useCase.operating_model_change,
@@ -2114,7 +2170,10 @@ async function normalizePack(pack, sourceFile, sourceText) {
       executive_summary: asText(authored?.answer_headline || dimension.summary),
       cxo_meaning: asText(authored?.executive_read || pack.design_slots?.STORY?.[dimension.key]?.meaning || dimension.summary),
       why_it_matters: asText(authored?.why_it_matters || pack.design_slots?.STORY?.[dimension.key]?.matters),
-      visual_type: asText(pack.design_slots?.VISUAL_BLOCKS?.[dimension.key]?.[0]?.type) || "context_snapshot",
+      visual_type:
+        VISUAL_TYPES.has(asText(authored?.visual_specification?.visual_type))
+          ? asText(authored?.visual_specification?.visual_type)
+          : asText(pack.design_slots?.VISUAL_BLOCKS?.[dimension.key]?.[0]?.type) || "executive_scorecard",
       covers: dimension.covers ?? [],
       sources: dimension.sources ?? [],
       metadata: { ...dimension, claude_dimension_story: authored ?? null },
