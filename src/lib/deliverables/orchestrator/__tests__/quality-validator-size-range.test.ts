@@ -4,6 +4,7 @@
 // signal is fuzzy heuristic text-matching, not a structural fact).
 
 import { validateDeliverableQuality } from "../quality-validator";
+import { resolveQualityBar } from "../quality-bar-registry";
 import { amsRfpRequest, goodDocument } from "../__fixtures__/ams-rfp";
 
 function longBody(words: number): string {
@@ -65,6 +66,36 @@ describe("quality validator — size range (ceiling)", () => {
     expect(res.blockers.join(" ")).not.toMatch(/too long/i);
     expect(res.warnings.join(" ")).not.toMatch(/too long/i);
   });
+
+  it.each([
+    ["business_case", 12_000],
+    ["roadmap", 12_000],
+    ["handoff_pack", 12_000],
+    ["value_measurement_contract", 5_000],
+  ] as const)(
+    "blocks oversized Moves %s artifacts instead of treating them as board-ready",
+    (deliverableType, words) => {
+      const req = amsRfpRequest({
+        module: "moves",
+        deliverableType,
+        qualityBar: {
+          ...amsRfpRequest().qualityBar,
+          ...resolveQualityBar("moves", deliverableType),
+          minBodyWords: 0,
+          requiresSourceRegister: false,
+        },
+      });
+      const doc = goodDocument();
+      doc.sourceRegister = [];
+      doc.generatedSections[0].bodyMarkdown = longBody(words);
+
+      const res = validateDeliverableQuality(doc, req);
+
+      expect(res.pass).toBe(false);
+      expect(res.blockers.join(" ")).toMatch(/too long/i);
+      expect(res.warnings.join(" ")).not.toMatch(/too long/i);
+    },
+  );
 });
 
 describe("quality validator — narrative spine (advisory)", () => {

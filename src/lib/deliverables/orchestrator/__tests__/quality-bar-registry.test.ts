@@ -26,12 +26,15 @@ describe("resolveQualityBar", () => {
     expect(qb.requiresOptionsConsidered).toBe(true);
   });
 
-  it("gives Business Case a narrative-spine requirement and a non-blocking ceiling", () => {
+  it("gives Business Case a narrative-spine requirement and a hard ceiling", () => {
     const qb = resolveQualityBar("moves", "business_case");
+    expect(qb.minSections).toBe(9);
+    expect(qb.minBodyWords).toBe(5_000);
+    expect(qb.targetBodyWordsMax).toBe(9_500);
     expect(qb.requiresCentralTension).toBe(true);
     expect(qb.requiresOptionsConsidered).toBe(true);
     expect(qb.requiresEvidenceGapsNoted).toBe(true);
-    expect(qb.enforceMaxAsBlocker).toBeFalsy();
+    expect(qb.enforceMaxAsBlocker).toBe(true);
   });
 
   it("gives Root-Cause Worksheet a concise hard-blocking issue-tree band", () => {
@@ -66,6 +69,24 @@ describe("resolveQualityBar", () => {
     expect(qb.targetBodyWordsMax).toBe(4_600);
     expect(qb.enforceMaxAsBlocker).toBe(true);
   });
+
+  it.each([
+    ["roadmap", 6, 5_000, 11_000],
+    ["handoff_pack", 6, 5_000, 11_000],
+    ["estimate_model", 6, 1_600, 4_200],
+    ["value_model", 6, 1_800, 4_600],
+    ["value_measurement_contract", 6, 1_800, 4_200],
+  ] as const)(
+    "gives %s a phase-close hard ceiling",
+    (deliverableType, minSections, minBodyWords, targetBodyWordsMax) => {
+      const qb = resolveQualityBar("moves", deliverableType);
+      expect(qb.minSections).toBe(minSections);
+      expect(qb.minBodyWords).toBe(minBodyWords);
+      expect(qb.targetBodyWordsMax).toBe(targetBodyWordsMax);
+      expect(qb.enforceMaxAsBlocker).toBe(true);
+      expect(qb.requiresEvidenceGapsNoted).toBe(true);
+    },
+  );
 
   it("falls back to the shared default for an artifact type with no override", () => {
     const qb = resolveQualityBar("moves", "some_future_artifact_type");
