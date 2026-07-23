@@ -1,5 +1,6 @@
 import "dotenv/config";
 
+import { spawnSync } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -54,15 +55,28 @@ const MIGRATION_PATH = path.join(
 
 function parseArgs(argv: string[]): Args {
   const args: Args = {
-    mode: "status",
-    tenants: [],
+    mode: (process.env.MOVES_LIFECYCLE_BACKFILL_MODE as Args["mode"]) || "status",
+    tenants: [
+      ...(process.env.MOVES_LIFECYCLE_BACKFILL_TENANT
+        ? [process.env.MOVES_LIFECYCLE_BACKFILL_TENANT]
+        : []),
+      ...(process.env.MOVES_LIFECYCLE_BACKFILL_TENANTS
+        ? process.env.MOVES_LIFECYCLE_BACKFILL_TENANTS.split(",")
+        : []),
+    ]
+      .map((tenant) => tenant.trim())
+      .filter(Boolean)
+      .map((tenant) => canonicalTenantKey(tenant)),
     workflowRunId:
+      process.env.MOVES_LIFECYCLE_WORKFLOW_RUN_ID ||
       process.env.GITHUB_RUN_ID ||
       process.env.ACA_JOB_EXECUTION_NAME ||
       `local-${new Date().toISOString().replace(/[-:.]/g, "")}`,
-    reviewedReportId: null,
-    batchSize: 200,
-    outDir: path.join(process.cwd(), "reports/moves-deliverable-lifecycle-backfill"),
+    reviewedReportId: process.env.MOVES_LIFECYCLE_REVIEWED_REPORT_ID || null,
+    batchSize: Number.parseInt(process.env.MOVES_LIFECYCLE_BACKFILL_BATCH_SIZE || "200", 10),
+    outDir:
+      process.env.MOVES_LIFECYCLE_BACKFILL_OUT_DIR ||
+      path.join(process.cwd(), "reports/moves-deliverable-lifecycle-backfill"),
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index]!;
@@ -81,7 +95,16 @@ function parseArgs(argv: string[]): Args {
     else if (arg === "--out-dir") args.outDir = next();
     else if (arg === "--help") {
       console.log(
-        "Usage: npx tsx scripts/programs/backfill-deliverable-lifecycle.ts --tenant <key> [--mode status|apply] [--reviewed-report-id <id>]",
+        [
+          "Usage: npx tsx scripts/programs/backfill-deliverable-lifecycle.ts --tenant <key> [--mode status|apply] [--reviewed-report-id <id>]",
+          "",
+          "ACA operator env:",
+          "  MOVES_LIFECYCLE_BACKFILL_TENANT=<key>",
+          "  MOVES_LIFECYCLE_BACKFILL_TENANTS=<key,key>",
+          "  MOVES_LIFECYCLE_BACKFILL_MODE=status|apply",
+          "  MOVES_LIFECYCLE_REVIEWED_REPORT_ID=<reviewed dry-run id> (apply only)",
+          "  MOVES_LIFECYCLE_EMIT_PROOF_BUNDLE=1",
+        ].join("\n"),
       );
       process.exit(0);
     } else {
@@ -100,6 +123,23 @@ function parseArgs(argv: string[]): Args {
   }
   args.tenants = Array.from(new Set(args.tenants));
   return args;
+}
+
+function emitProofBundle(outDir: string): void {
+  if (process.env.MOVES_LIFECYCLE_EMIT_PROOF_BUNDLE !== "1") return;
+  const tarPath = path.join(path.dirname(outDir), `${path.basename(outDir)}.tgz`);
+  const tar = spawnSync("tar", ["-czf", tarPath, "-C", path.dirname(outDir), path.basename(outDir)], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  if (tar.status !== 0) {
+    const stderr = tar.stderr || tar.stdout || "tar failed";
+    throw new Error(`Failed to create lifecycle proof bundle: ${stderr}`);
+  }
+  const encoded = fs.readFileSync(tarPath).toString("base64");
+  console.log("__SEMANTIC2_PROOF_TGZ_BEGIN__");
+  console.log(encoded);
+  console.log("__SEMANTIC2_PROOF_TGZ_END__");
 }
 
 function connectionString(): string {
@@ -390,6 +430,7 @@ async function main(): Promise<void> {
       ].join("\n"),
     );
     console.log(JSON.stringify(summary, null, 2));
+    emitProofBundle(outDir);
     if (summary.status !== "PASS") process.exitCode = 1;
   } finally {
     await pool.end();
