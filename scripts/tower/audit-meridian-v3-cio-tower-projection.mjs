@@ -51,6 +51,64 @@ if (failures.length) {
 
 const projection = JSON.parse(fs.readFileSync(projectionPath, "utf8"));
 
+// ── Source of record ────────────────────────────────────────────────────────
+//
+// Tool display names and usage counts are NOT pinned to literals here. They are
+// read back from SA08, the file the projection actually consumes, so these
+// checks assert RECONCILIATION (projection output == source row) rather than a
+// snapshot of whatever the synthetic packet happened to contain on the day the
+// audit was written.
+//
+// Why this changed (2026-07-23): the refreshed standard-2026-07-v3 packet
+// renamed three tools ("ServiceNow AI Agent Assist" → "ServiceNow Now Assist",
+// "Workday AI HR/Finance Assist" → "Workday AI", "GitHub Copilot Enterprise" →
+// "GitHub Copilot and Codex") and changed Copilot monthly active users from
+// 4,800 to 306. Ten audit failures followed, none of which indicated a defect
+// in the projection — the projection had faithfully carried the new source
+// through. Re-pinning to the new literals would have bought one refresh cycle
+// before the same ten failures returned.
+const V3_DIR = path.join(ROOT, "datasets/tenant-inputs/meridian-health/standard-2026-07-v3");
+const SA08_PATH = path.join(V3_DIR, "SA08_AI_Benefits_Realization_Usage_Ledger.csv");
+
+function parseCsv(filePath) {
+  const text = fs.readFileSync(filePath, "utf8");
+  const rows = [];
+  let field = "";
+  let record = [];
+  let quoted = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch === '"' && text[i + 1] === '"') { field += '"'; i += 1; }
+      else if (ch === '"') quoted = false;
+      else field += ch;
+      continue;
+    }
+    if (ch === '"') quoted = true;
+    else if (ch === ",") { record.push(field); field = ""; }
+    else if (ch === "\n") { record.push(field); rows.push(record); record = []; field = ""; }
+    else if (ch !== "\r") field += ch;
+  }
+  if (field.length || record.length) { record.push(field); rows.push(record); }
+  const [header, ...body] = rows.filter((r) => r.some((c) => c !== ""));
+  return body.map((r) => Object.fromEntries(header.map((h, i) => [h, r[i] ?? ""])));
+}
+
+let sa08Rows = [];
+if (fs.existsSync(SA08_PATH)) {
+  sa08Rows = parseCsv(SA08_PATH);
+} else {
+  fail(`Missing source of record ${SA08_PATH}`);
+}
+const sa08By = (name) => sa08Rows.find((row) => row.tool_name === name);
+const sa08ToolNames = sa08Rows.map((row) => row.tool_name).filter(Boolean);
+const sa08Copilot = sa08By("Microsoft 365 Copilot");
+
+// A caveat must carry a claim boundary — that the value is not realized/claimable
+// yet — but the exact wording belongs to the source, not to this audit.
+const CLAIM_BOUNDARY = /not realized|not claimable|candidate|unless .*validat/i;
+
+
 if (projection.tenant_key !== "meridian-health") fail(`Wrong tenant_key ${projection.tenant_key}`);
 if (projection.source_standard !== "standard-2026-07-v3") fail(`Wrong source_standard ${projection.source_standard}`);
 if (projection.truth_split?.azure_postgres_written_by_this_run !== false) fail("Dry-run projection must not claim Azure/Postgres write.");
@@ -106,16 +164,32 @@ if (!copilot) {
 } else {
   approx(copilot.approved_funding_usd, 10_500_000, "Copilot approved funding");
   approx(copilot.ai_tagged_spend_usd, 10_500_000, "Copilot AI-tagged approved funding");
-  approx(copilot.usage_actual, 4_800, "Copilot monthly active users");
+  // Reconcile to SA08 rather than to a pinned literal.
+  approx(
+    copilot.usage_actual,
+    Number(sa08Copilot?.usage_actual ?? NaN),
+    "Copilot monthly active users (must equal SA08 usage_actual)",
+  );
   approx(copilot.partial_finance_validated_value_usd, 2_100_000, "Copilot partial finance validated value");
   if (copilot.posture !== "working_partial_value") fail(`Copilot posture expected working_partial_value, found ${copilot.posture}`);
-  if (!/not yet labor-released/i.test(copilot.caveat)) fail("Copilot caveat must mention not labor-released.");
+  // Was: /not yet labor-released/. The refreshed packet replaced every per-row
+  // caveat with one generic sentence, so that specific phrase no longer exists
+  // anywhere in the source. Assert the BOUNDARY the phrase existed to protect —
+  // that the caveat denies realized value — and report the loss of per-row
+  // specificity separately (see the caveat-specificity warning below).
+  if (!CLAIM_BOUNDARY.test(copilot.caveat || "")) {
+    fail(`Copilot caveat must carry a claim boundary; found: ${copilot.caveat || "(empty)"}`);
+  }
 }
 
 const usageRows = projection.decision_lenses?.usage_and_benefits ?? [];
 if (usageRows.length !== 8) fail(`Expected 8 SA08 usage/benefit rows, found ${usageRows.length}`);
-for (const tool of ["Microsoft 365 Copilot", "ServiceNow AI Agent Assist", "Workday AI HR/Finance Assist", "GitHub Copilot Enterprise"]) {
-  if (!usageRows.some((row) => row.tool_name === tool)) fail(`Missing usage row for ${tool}`);
+// Every tool SA08 carries must appear in the usage lens — the projection may
+// not silently drop a source row, whatever it is named this refresh.
+for (const tool of sa08ToolNames) {
+  if (!usageRows.some((row) => row.tool_name === tool)) {
+    fail(`Missing usage row for ${tool} (present in SA08)`);
+  }
 }
 const candidateAssist = usageRows.find((row) => row.tool_name === "Member Service AI Assist");
 if (!candidateAssist) {
@@ -123,7 +197,13 @@ if (!candidateAssist) {
 } else {
   approx(candidateAssist.finance_validated_value_usd, 0, "Member Service AI Assist finance value");
   if (candidateAssist.tower_claim_allowed !== "no") fail("Member Service AI Assist must not allow Tower claim.");
-  if (!/Candidate only/i.test(candidateAssist.caveat)) fail("Member Service AI Assist caveat must say candidate only.");
+  // Was: /Candidate only/. That literal is gone from the refreshed source. The
+  // guarantee it protected is structural and is asserted directly above
+  // (finance value 0, tower_claim_allowed "no"); the caveat itself need only
+  // carry a claim boundary.
+  if (!CLAIM_BOUNDARY.test(candidateAssist.caveat || "")) {
+    fail(`Member Service AI Assist caveat must carry a claim boundary; found: ${candidateAssist.caveat || "(empty)"}`);
+  }
 }
 
 const candidateRows = projection.decision_lenses?.candidate_ai_opportunities ?? [];
@@ -179,15 +259,17 @@ if (!copilotLane) {
   if (!copilotLane.source_file || !copilotLane.source_row) fail("Copilot mart lane must retain source_file/source_row.");
 }
 const aiPortfolioNames = new Set((mart.ai_portfolio ?? []).map((row) => row.item_name));
-for (const item of ["Microsoft 365 Copilot", "ServiceNow AI Agent Assist", "Workday AI HR/Finance Assist", "GitHub Copilot Enterprise", "Member Service AI Assist"]) {
-  if (!aiPortfolioNames.has(item)) fail(`Missing mart AI portfolio item ${item}`);
+for (const item of sa08ToolNames) {
+  if (!aiPortfolioNames.has(item)) fail(`Missing mart AI portfolio item ${item} (present in SA08)`);
 }
 const memberAssist = (mart.ai_portfolio ?? []).find((row) => row.item_name === "Member Service AI Assist");
 if (memberAssist) {
   approx(memberAssist.approved_funding_usd, 0, "Member Service AI Assist mart approved funding");
   approx(memberAssist.finance_validated_value_usd, 0, "Member Service AI Assist mart finance value");
   if (memberAssist.tower_claim_allowed !== "no") fail("Member Service AI Assist mart row must not allow Tower claim.");
-  if (!/candidate/i.test(memberAssist.caveat || "")) fail("Member Service AI Assist mart caveat must preserve candidate boundary.");
+  if (!CLAIM_BOUNDARY.test(memberAssist.caveat || "")) {
+    fail(`Member Service AI Assist mart caveat must preserve a claim boundary; found: ${memberAssist.caveat || "(empty)"}`);
+  }
 }
 const blockingGaps = (mart.required_field_gaps ?? []).filter((row) => row.blocking === true || row.severity === "blocking");
 if (blockingGaps.length) {
@@ -224,6 +306,38 @@ for (const output of [
   "mart-required-field-gaps.csv",
 ]) {
   requireFile(path.join(reportDir, output));
+}
+
+// ── Source-quality signals ──────────────────────────────────────────────────
+//
+// These are warnings, not failures: the projection is faithful to its source in
+// both cases. They exist so the findings are visible in the audit output rather
+// than only in a side report.
+
+// (a) Per-row caveat specificity. The previous packet gave each SA08 row its own
+// caveat ("not yet labor-released", "Candidate only"). The refresh collapsed all
+// of them to one identical sentence, so the mart can no longer explain WHY a
+// given row is not claimable — only that it is not. That is a real loss of
+// governance signal even though every claim gate is still correct.
+const distinctCaveats = new Set(sa08Rows.map((row) => (row.caveat || "").trim()).filter(Boolean));
+if (sa08Rows.length > 1 && distinctCaveats.size === 1) {
+  warn(
+    `All ${sa08Rows.length} SA08 rows share one identical caveat, so no row explains its own ` +
+      `claim boundary. Per-row caveat specificity was lost in the source refresh.`,
+  );
+}
+
+// (b) SA09/SA10/SA11 are in the packet but no projection code reads them. The
+// audit would pass without them, so state it explicitly rather than let their
+// presence in the directory imply they are reconciled.
+for (const [file, unlocks] of [
+  ["SA09_AI_Tool_Usage_Feed.csv", "licensed/enabled/active/power users, usage_rate_pct, adoption_target_pct, adoption_gap_pct"],
+  ["SA10_AI_Value_Interview_Evidence.csv", "business/technical interview evidence for the evidence registry"],
+  ["SA11_AI_KPI_Operational_Outcome_Feed.csv", "operational KPI movement per program"],
+]) {
+  if (fs.existsSync(path.join(V3_DIR, file)) && !sourceFiles.has(file)) {
+    warn(`${file} is present in the source packet but is NOT consumed by the projection (would supply: ${unlocks}).`);
+  }
 }
 
 if (failures.length) {

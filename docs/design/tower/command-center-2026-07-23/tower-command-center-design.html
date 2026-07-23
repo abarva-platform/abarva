@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tower Command Center — approved design source (2026-07-23)</title>
+<!--
+  AUTHORITATIVE DESIGN SOURCE for the new Tower Command Center page.
+
+  Unpacked verbatim from the approved artifact bundle. Only three mechanical
+  changes were made so the file opens and runs standalone in any browser:
+    1. inlined @font-face woff2 blocks removed; the same three families now
+       load from Google Fonts (Fraunces / Inter / JetBrains Mono);
+    2. the AbarVa wordmark inlined as a data: URI instead of a bundle uuid;
+    3. the artifact runtime class renamed and self-bootstrapped on DOMContentLoaded.
+
+  CSS, markup, mock data, view logic, drawers and charts are unmodified.
+  This file is the pixel contract. Where this file and any written spec
+  disagree, THIS FILE WINS.
+
+  NOTE on the token block below: it is the palette the design was authored
+  against. It is NOT identical to docs/design/strategic-moves/tokens.css.
+  See the handoff prompt for the six deltas and how to scope the override.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>/* ─────────────────────────────────────────────────────────────────────
+   1 · BRAND TOKENS (locked Apr 28, 2026)
+   These are the canonical brand colors and fonts. Marketing site, investor
+   deck, contracts, and any external surface MUST use these.
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  /* Primary brand */
+  --abarva-ink-black:    #000000;       /* Headlines, body, brand wordmark "Abar" */
+  --abarva-signal-blue:  #0066CC;       /* The "Va". CTAs, links, brand accent */
+  --abarva-paper:        #faf7f1;       /* Page background. Warm, off-white. */
+
+  /* Supporting palette */
+  --abarva-navy-ink:     #0c1a3a;       /* Dark sections, patterns library, depth */
+  --abarva-stone:        #888780;       /* Tertiary text, eyebrows on paper */
+  --abarva-slate:        #5F5E5A;       /* Body de-emphasis, captions */
+
+  /* Derived (production) */
+  --abarva-signal-blue-dark: #0052a3;   /* CTA hover */
+  --abarva-rule:         rgba(136, 135, 128, 0.25); /* Hairline rules on paper */
+  --abarva-rule-strong:  rgba(136, 135, 128, 0.5);
+  --abarva-rule-onnavy:  rgba(255, 255, 255, 0.08);
+
+  /* Typography (locked) */
+  --abarva-serif: Fraunces, Georgia, "Times New Roman", serif;   /* @kind font */
+  --abarva-sans:  Inter, -apple-system, system-ui, sans-serif;   /* @kind font */
+  --abarva-mono:  "JetBrains Mono", ui-monospace, Menlo, monospace;   /* @kind font */
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   2 · CANON TOKENS (internal app surfaces)
+   The "design canon" — used inside the authenticated app for Programs,
+   Control Tower, Deliverables, Pattern detail, and /preview routes. These
+   are the colors of the *work product*, not the brand. Teal/amber/red are
+   semantic (gate status, pressure, severity), not decorative.
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  /* Surfaces */
+  --canon-bg-dark:    #0a0a0b;          /* Authenticated navbar, decision-grade contrast */
+  --canon-bg-cream:   #f5f1eb;          /* App page background (a touch warmer than paper) */
+  --canon-bg-surface: #ffffff;          /* Cards, sections, deliverable content */
+
+  /* Semantic accent — gate / status / severity */
+  --canon-teal:       #1d9e75;          /* Pass · Active · Done · Validated */
+  --canon-teal-dark:  #0f6e56;
+  --canon-teal-light: #e1f5ee;
+  --canon-amber:      #ba7517;          /* Warn · Pressure · Watch */
+  --canon-amber-light:#faeeda;
+  --canon-red:        #a32d2d;          /* Fail · Critical · Contradiction */
+  --canon-red-light:  #fceded;
+
+  /* Neutral scale */
+  --canon-gray-900:   #2c2c2a;
+  --canon-gray-700:   #444441;
+  --canon-gray-500:   #5f5e5a;
+  --canon-gray-300:   #b4b2a9;
+  --canon-gray-200:   #d3d1c7;
+  --canon-gray-100:   #f1efe8;
+
+  --canon-border:        rgba(10, 10, 11, 0.12);
+  --canon-border-strong: rgba(10, 10, 11, 0.24);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   3 · TYPE SCALE
+   Both surfaces use Fraunces (display) / Inter (UI text) / JetBrains Mono
+   (eyebrow + label + code). Sizes below apply to both.
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  /* Display — Fraunces, optical-size aware. Set with clamp() at use site. */
+  --type-display-1:  clamp(48px, 6vw, 88px);   /* Hero — 1 per page */
+  --type-display-2:  clamp(36px, 4vw, 58px);   /* Section opener */
+  --type-display-3:  clamp(28px, 3vw, 40px);   /* Subhead */
+
+  /* Body — Inter */
+  --type-lead:    19px;   /* Lead paragraph after a heading */
+  --type-body:    16px;   /* Default reading size */
+  --type-small:   14px;   /* Dense UI, table cells */
+  --type-caption: 13px;   /* Captions, footnotes */
+
+  /* Mono eyebrow — JetBrains Mono, uppercase, 0.12em tracking */
+  --type-eyebrow:    11px;
+  --type-eyebrow-sm: 10px;
+
+  /* Line heights */
+  --lh-display: 1.05;       /* @kind other */
+  --lh-heading: 1.2;        /* @kind other */
+  --lh-prose:   1.6;        /* @kind other */
+  --lh-ui:      1.5;        /* @kind other */
+  --lh-tight:   1.3;        /* @kind other */
+
+  /* Letter spacing */
+  --ls-display: -0.025em;   /* @kind other */
+  --ls-heading: -0.02em;    /* @kind other */
+  --ls-body:    0;          /* @kind other */
+  --ls-eyebrow: 0.12em;     /* @kind other */
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   4 · SPACING & RADIUS
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-7:  32px;
+  --space-8:  40px;
+  --space-9:  56px;
+  --space-10: 80px;
+  --space-11: 112px;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;        /* Buttons, chips, pressure cards */
+  --radius-lg: 8px;        /* Section cards, KPI cards */
+  --radius-xl: 12px;
+
+  --shadow-card: 0 1px 2px rgba(10, 10, 11, 0.04);
+  --shadow-pop:  0 8px 24px rgba(10, 10, 11, 0.08);
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   5 · MOTION
+   ───────────────────────────────────────────────────────────────────── */
+:root {
+  --ease-out:  cubic-bezier(0.22, 1, 0.36, 1);  /* @kind other */
+  --ease-in:   cubic-bezier(0.55, 0, 0.68, 0);  /* @kind other */
+  --dur-fast:  120ms;       /* @kind other */
+  --dur-base:  200ms;       /* @kind other */
+  --dur-slow:  320ms;       /* @kind other */
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   6 · BASE PRIMITIVES (opt-in via class — never in :where)
+   Apply .av-root to a section to inherit AbarVa typography defaults.
+   ───────────────────────────────────────────────────────────────────── */
+.av-root {
+  font-family: var(--abarva-sans);
+  font-size: var(--type-body);
+  line-height: var(--lh-prose);
+  color: var(--abarva-ink-black);
+  background: var(--abarva-paper);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.av-root.dark {
+  background: var(--abarva-navy-ink);
+  color: var(--abarva-paper);
+}
+.av-root.canon {
+  background: var(--canon-bg-cream);
+  color: var(--canon-gray-900);
+}
+
+/* Wordmark — type-set, NOT an SVG. Use this ONLY in app chrome where the
+   SVG isn't available. For all marketing/external surfaces, use the SVG. */
+.av-wordmark {
+  font-family: var(--abarva-serif);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  display: inline-flex;
+  align-items: baseline;
+}
+.av-wordmark .abar { color: var(--abarva-ink-black); }
+.av-wordmark .va   { color: var(--abarva-signal-blue); }
+.av-root.dark .av-wordmark .abar,
+.dark .av-wordmark .abar { color: var(--abarva-paper); }
+
+/* Mono eyebrow — the most distinctive AbarVa typographic gesture.
+   Never replace with sans-serif uppercase; the mono is the signature. */
+.av-eyebrow {
+  font-family: var(--abarva-mono);
+  font-size: var(--type-eyebrow);
+  font-weight: 600;
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--abarva-signal-blue);
+}
+.av-eyebrow.stone { color: var(--abarva-stone); }
+.av-eyebrow.teal  { color: var(--canon-teal); }
+.av-eyebrow.amber { color: var(--canon-amber); }
+.av-eyebrow.red   { color: var(--canon-red); }
+.av-eyebrow.paper { color: var(--abarva-paper); opacity: 0.7; }
+
+/* Display — large editorial headings, Fraunces */
+.av-display-1 { font-family: var(--abarva-serif); font-weight: 500; font-size: var(--type-display-1); line-height: var(--lh-display); letter-spacing: var(--ls-display); }
+.av-display-2 { font-family: var(--abarva-serif); font-weight: 500; font-size: var(--type-display-2); line-height: var(--lh-heading); letter-spacing: var(--ls-heading); }
+.av-display-3 { font-family: var(--abarva-serif); font-weight: 500; font-size: var(--type-display-3); line-height: var(--lh-heading); letter-spacing: var(--ls-heading); }
+
+/* Lede — the first paragraph after a display heading */
+.av-lede {
+  font-size: var(--type-lead);
+  line-height: var(--lh-prose);
+  color: var(--abarva-slate);
+  max-width: 60ch;
+  text-wrap: pretty;
+}
+.av-root.dark .av-lede { color: rgba(250, 247, 241, 0.7); }
+</style>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { background: var(--canon-bg-cream); font-family: var(--abarva-sans); color: var(--canon-gray-900); -webkit-font-smoothing: antialiased; font-size: 14px; line-height: 1.5; overflow: hidden; }
+  ::selection { background: rgba(0,102,204,0.16); }
+  a { color: var(--canon-teal-dark); text-decoration: none; } a:hover { color: var(--canon-teal); }
+  .serif { font-family: var(--abarva-serif); font-weight: 500; letter-spacing: -0.02em; }
+  .mono { font-family: var(--abarva-mono); }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; flex:none; }
+  .dot.teal{background:var(--canon-teal);} .dot.amber{background:var(--canon-amber);} .dot.red{background:var(--canon-red);} .dot.gray{background:var(--canon-gray-300);} .dot.blue{background:var(--abarva-signal-blue);}
+  .scroll { overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--canon-gray-300) transparent; }
+  .scroll::-webkit-scrollbar { width: 8px; height: 8px; } .scroll::-webkit-scrollbar-thumb { background: var(--canon-gray-300); border-radius: 8px; }
+
+  /* App shell — fixed height, no page scroll */
+  .app { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { background:#08080b; display:flex; align-items:center; padding:0 28px; height:52px; flex:none; }
+  .tb-logo { height:18px; } .tb-div { width:1px; height:19px; background:rgba(255,255,255,0.18); margin:0 15px; }
+  .tb-tenant { font-family:var(--abarva-serif); font-style:italic; font-weight:500; font-size:15px; color:rgba(255,255,255,0.82); letter-spacing:-0.01em; }
+  .tb-nav { margin-left:auto; display:flex; gap:2px; }
+  .tb-item { font-size:13.5px; font-weight:500; color:rgba(255,255,255,0.7); padding:6px 13px; border-radius:8px; cursor:pointer; }
+  .tb-item:hover { color:#fff; } .tb-item.active { background:#fff; color:#0a0a0b; font-weight:700; }
+
+  .stage { flex:1; min-height:0; display:flex; flex-direction:column; }
+  .wrap { width:100%; max-width:1560px; margin:0 auto; padding:0 34px; }
+
+  /* Standing header — compact */
+  .dash { flex:none; padding:16px 0 0; }
+  .dash-top { display:flex; align-items:center; justify-content:space-between; gap:28px; }
+  .dash-id .eyebrow { font-family:var(--abarva-mono); font-size:10.5px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--canon-teal-dark); margin-bottom:5px; }
+  .dash-id h1 { font-family:var(--abarva-serif); font-weight:500; font-size:26px; line-height:1; letter-spacing:-0.028em; }
+  .dash-id h1 .thin { color:var(--canon-gray-500); }
+  .dash-right { flex:none; text-align:right; display:flex; align-items:center; gap:16px; }
+  .dash-right .when { font-family:var(--abarva-mono); font-size:10.5px; color:var(--canon-gray-500); line-height:1.6; letter-spacing:0.02em; }
+  .flag { display:inline-flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--canon-red); background:var(--canon-red-light); padding:6px 12px; border-radius:999px; }
+
+  /* Tabs */
+  .tabs { flex:none; display:flex; gap:2px; border-bottom:1px solid var(--canon-border-strong); margin-top:14px; }
+  .tab { font-family:var(--abarva-sans); font-size:14px; font-weight:600; color:var(--canon-gray-500); background:none; border:0; padding:12px 16px; cursor:pointer; position:relative; white-space:nowrap; display:inline-flex; align-items:center; gap:8px; }
+  .tab:hover { color:var(--canon-gray-900); } .tab.on { color:var(--canon-gray-900); }
+  .tab.on::after { content:''; position:absolute; left:11px; right:11px; bottom:-1px; height:2.5px; background:var(--canon-teal); border-radius:2px; }
+  .tab .tnum { font-family:var(--abarva-mono); font-size:10.5px; color:var(--canon-gray-300); }
+  .tab .adot { width:6px; height:6px; border-radius:50%; background:var(--canon-red); }
+
+  /* Body region — fills remaining height */
+  .bodyregion { flex:1; min-height:0; }
+  .bodyregion .wrap { height:100%; padding-top:18px; padding-bottom:16px; }
+  .view { height:100%; display:flex; flex-direction:column; gap:14px; min-height:0; }
+  .view-scroll { height:100%; overflow-y:auto; padding-right:6px; }
+
+  .vhead { flex:none; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .vhead .vh { font-family:var(--abarva-serif); font-size:19px; font-weight:500; letter-spacing:-0.02em; }
+  .vhead .vsub { font-size:12.5px; color:var(--canon-gray-500); }
+  .vhead .vspace { flex:1; }
+  .vhint { font-size:11.5px; color:var(--canon-gray-500); display:inline-flex; align-items:center; gap:6px; }
+
+  .card { background:var(--canon-bg-surface); border:1px solid var(--canon-border); border-radius:13px; box-shadow:var(--shadow-card); display:flex; flex-direction:column; min-height:0; }
+  .card-h { flex:none; padding:14px 18px 12px; border-bottom:1px solid var(--canon-border); display:flex; align-items:center; gap:10px; }
+  .card-h .ch-k { font-family:var(--abarva-mono); font-size:10.5px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--canon-gray-500); }
+  .card-h .ch-t { font-family:var(--abarva-serif); font-size:16px; font-weight:500; letter-spacing:-0.015em; }
+  .card-h .ch-r { margin-left:auto; font-size:11.5px; color:var(--canon-gray-500); }
+  .card-b { flex:1; min-height:0; padding:16px 18px; }
+
+  .eyebrow2 { font-family:var(--abarva-mono); font-size:10px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--canon-gray-500); }
+
+  /* Posture tiles */
+  .ptiles { flex:none; display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .ptile { background:var(--canon-bg-surface); border:1px solid var(--canon-border); border-radius:13px; padding:13px 15px; box-shadow:var(--shadow-card); position:relative; overflow:hidden; display:flex; flex-direction:column; }
+  .ptile::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--canon-gray-200); }
+  .ptile.teal::before{background:var(--canon-teal);} .ptile.amber::before{background:var(--canon-amber);} .ptile.red::before{background:var(--canon-red);} .ptile.blue::before{background:var(--abarva-signal-blue);}
+  .pt-k { display:flex; align-items:center; gap:8px; margin-bottom:9px; }
+  .pt-k .lab { font-family:var(--abarva-mono); font-size:10px; font-weight:600; letter-spacing:0.09em; text-transform:uppercase; color:var(--canon-gray-500); }
+  .pt-k .st { margin-left:auto; font-family:var(--abarva-mono); font-size:9.5px; font-weight:700; padding:2px 6px; border-radius:5px; }
+  .st.steal{color:var(--canon-teal-dark);background:var(--canon-teal-light);} .st.samber{color:var(--canon-amber);background:var(--canon-amber-light);} .st.sred{color:var(--canon-red);background:var(--canon-red-light);}
+  .pt-hero { font-family:var(--abarva-serif); font-weight:500; font-size:27px; line-height:0.95; letter-spacing:-0.035em; }
+  .pt-hero small { font-size:0.4em; letter-spacing:0; color:var(--canon-gray-300); }
+  .ptile.teal .pt-hero{color:var(--canon-teal-dark);} .ptile.red .pt-hero{color:var(--canon-red);}
+  .pt-heron { font-size:11px; color:var(--canon-gray-500); margin-top:5px; }
+  .pt-rows { margin-top:10px; display:flex; flex-direction:column; gap:6px; }
+  .pt-row { display:flex; align-items:center; gap:10px; font-size:11.5px; }
+  .pt-row .rl { color:var(--canon-gray-500); flex:1; display:flex; align-items:center; gap:6px; }
+  .pt-row .rv { font-family:var(--abarva-mono); font-weight:600; font-variant-numeric:tabular-nums; }
+  .pt-row .rv.red{color:var(--canon-red);} .pt-row .rv.teal{color:var(--canon-teal-dark);} .pt-row .rv.amber{color:var(--canon-amber);}
+
+  /* Command lower split */
+  .cc-lower { flex:1; min-height:0; display:grid; grid-template-columns:0.92fr 1.08fr; gap:14px; }
+  @media (max-width:820px){ .cc-lower{grid-template-columns:1fr;} .ptiles{grid-template-columns:repeat(2,1fr);} }
+
+  .weekread { background:var(--canon-bg-surface); color:var(--canon-gray-900); border:1px solid var(--canon-border); border-radius:14px; padding:20px 24px; display:flex; flex-direction:column; min-height:0; overflow:hidden; box-shadow:var(--shadow-card); }
+  .weekread .wk-k { font-family:var(--abarva-mono); font-size:10.5px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--canon-teal-dark); margin-bottom:12px; }
+  .weekread .wk-line { font-family:var(--abarva-serif); font-weight:500; font-size:clamp(18px,1.7vw,24px); line-height:1.36; letter-spacing:-0.02em; text-wrap:pretty; color:var(--canon-gray-900); }
+  .weekread .wk-line .n { color:var(--canon-teal-dark); font-family:var(--abarva-mono); font-weight:600; font-size:0.84em; }
+  .weekread .wk-line .z { color:var(--canon-red); font-family:var(--abarva-mono); font-weight:600; font-size:0.84em; }
+  .weekread .wk-line .turn { color:var(--canon-gray-500); }
+  .wk-viz { flex:1; min-height:0; display:flex; flex-direction:column; justify-content:center; gap:11px; margin:16px 0 6px; }
+  .wk-bar .wb-top { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:5px; }
+  .wk-bar .wb-k { font-size:11.5px; color:rgba(255,255,255,0.66); } .wk-bar .wb-k b { color:#fff; font-weight:600; }
+  .wk-bar .wb-v { font-family:var(--abarva-mono); font-size:12px; font-weight:600; color:rgba(255,255,255,0.9); }
+  .wk-bar .wb-track { height:9px; border-radius:5px; background:rgba(255,255,255,0.08); overflow:hidden; }
+  .wk-bar .wb-track i { display:block; height:100%; border-radius:5px; }
+  .wk-bar .wb-drop { font-family:var(--abarva-mono); font-size:10px; font-weight:600; color:#e8908f; }
+  .weekread .wk-foot { margin-top:auto; padding-top:18px; border-top:1px solid var(--canon-border); display:flex; align-items:center; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--canon-gray-500); }
+  .weekread .wk-foot b { color:var(--canon-gray-900); font-weight:600; }
+  .weekread .wk-cta { margin-left:auto; font-family:var(--abarva-sans); font-size:13px; font-weight:600; color:#fff; background:var(--canon-bg-dark); border:0; border-radius:8px; padding:9px 15px; cursor:pointer; }
+  .weekread .wk-cta:hover { background:var(--canon-teal-dark); color:#fff; }
+
+  /* Decision queue */
+  .dq { display:flex; flex-direction:column; gap:9px; }
+  .dqi { display:flex; align-items:center; gap:15px; text-align:left; background:var(--canon-bg-surface); border:1px solid var(--canon-border); border-left:4px solid var(--canon-amber); border-radius:11px; padding:13px 16px; cursor:pointer; transition:box-shadow var(--dur-base) var(--ease-out); font-family:var(--abarva-sans); width:100%; }
+  .dqi:hover { box-shadow:var(--shadow-pop); }
+  .dqi.stop,.dqi.freeze{border-left-color:var(--canon-red);} .dqi.fund{border-left-color:var(--canon-teal);} .dqi.fix{border-left-color:var(--canon-amber);}
+  .dq-main { flex:1; min-width:0; }
+  .dq-title { font-family:var(--abarva-serif); font-size:15.5px; font-weight:500; letter-spacing:-0.012em; line-height:1.25; text-wrap:pretty; }
+  .dq-meta { font-size:11.5px; color:var(--canon-gray-500); margin-top:4px; display:flex; gap:10px; flex-wrap:wrap; }
+  .dq-meta b { color:var(--canon-gray-900); font-weight:600; }
+  .dq-go { font-size:12.5px; font-weight:600; color:var(--canon-gray-900); white-space:nowrap; flex:none; }
+  .dqi:hover .dq-go { color:var(--canon-teal-dark); } .dq-go::after { content:' →'; }
+  .lane-tag { font-family:var(--abarva-mono); font-size:9px; font-weight:700; letter-spacing:0.07em; text-transform:uppercase; padding:3px 7px; border-radius:5px; flex:none; }
+  .lane-tag.fund{color:var(--canon-teal-dark);background:var(--canon-teal-light);} .lane-tag.fix{color:var(--canon-amber);background:var(--canon-amber-light);} .lane-tag.freeze,.lane-tag.stop{color:var(--canon-red);background:var(--canon-red-light);}
+
+  /* chips */
+  .chip { font-size:11px; font-weight:600; padding:3px 9px; border-radius:999px; white-space:nowrap; display:inline-flex; align-items:center; gap:5px; }
+  .chip.teal{color:var(--canon-teal-dark);background:var(--canon-teal-light);} .chip.amber{color:var(--canon-amber);background:var(--canon-amber-light);} .chip.red{color:var(--canon-red);background:var(--canon-red-light);} .chip.gray{color:var(--canon-gray-700);background:var(--canon-gray-100);} .chip.blue{color:var(--abarva-signal-blue);background:rgba(0,102,204,0.09);}
+  .chip.mono{font-family:var(--abarva-mono); font-size:9.5px; letter-spacing:0.05em; text-transform:uppercase; padding:3px 7px;}
+
+  /* Tables */
+  .tbl { width:100%; border-collapse:collapse; }
+  .tbl thead th { font-family:var(--abarva-mono); font-size:10px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:var(--canon-gray-500); text-align:left; padding:0 12px 10px; border-bottom:1px solid var(--canon-border-strong); white-space:nowrap; position:sticky; top:0; background:var(--canon-bg-surface); z-index:2; }
+  .tbl thead th.num { text-align:right; }
+  .tbl tbody td { padding:12px; border-bottom:1px solid var(--canon-border); vertical-align:middle; }
+  .tbl tbody tr.click { cursor:pointer; } .tbl tbody tr.click:hover { background:rgba(0,0,0,0.02); }
+  .tbl td.num { text-align:right; font-variant-numeric:tabular-nums; }
+  .pname { font-family:var(--abarva-serif); font-size:15px; font-weight:500; letter-spacing:-0.012em; line-height:1.2; }
+  .psub { font-size:11.5px; color:var(--canon-gray-500); margin-top:3px; display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  .bignum { font-family:var(--abarva-serif); font-size:17px; font-weight:500; letter-spacing:-0.03em; }
+  .bignum.teal{color:var(--canon-teal-dark);} .bignum.red{color:var(--canon-red);} .bignum.amber{color:var(--canon-amber);} .bignum.mut{color:var(--canon-gray-300);}
+  .subnum { font-size:11px; color:var(--canon-gray-500); margin-top:2px; }
+  .tnote { flex:none; font-size:12px; color:var(--canon-gray-500); margin-top:12px; line-height:1.5; display:flex; gap:8px; } .tnote .dot{margin-top:5px;} .tnote b{color:var(--canon-gray-900); font-weight:600;}
+
+  /* proof pips */
+  .pips { display:inline-flex; gap:3px; align-items:center; }
+  .pips i { width:14px; height:5px; border-radius:2px; background:var(--canon-gray-200); display:block; }
+  .pips i.tl{background:var(--canon-teal);} .pips i.am{background:var(--canon-amber);} .pips i.rd{background:var(--canon-red);}
+
+  /* SVG */
+  .chartwrap { flex:1; min-height:170px; display:flex; }
+  .chartwrap svg { width:100%; height:100%; display:block; overflow:visible; }
+  .axlab { font-family:var(--abarva-mono); font-size:10px; fill:var(--canon-gray-500); letter-spacing:0.03em; text-transform:uppercase; }
+  .axval { font-family:var(--abarva-mono); font-size:9.5px; fill:var(--canon-gray-300); }
+  .gridln { stroke:var(--canon-border); stroke-width:1; }
+  .qbub { cursor:pointer; } .qbub:hover .qb-hit { opacity:0.12; }
+  .qb-num { font-family:var(--abarva-mono); font-size:11px; font-weight:700; }
+  .legend { flex:none; display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:var(--canon-gray-700); margin-top:8px; }
+  .legend span { display:inline-flex; align-items:center; gap:6px; } .legend i { width:11px; height:11px; border-radius:3px; flex:none; } .legend i.rd{border-radius:50%;}
+
+  /* AI spend lens */
+  .lensrow { display:grid; grid-template-columns:158px 1fr 92px; gap:12px; align-items:center; padding:6px 0; }
+  .lensrow .ll { font-size:13px; font-weight:500; display:flex; align-items:center; gap:7px; }
+  .lensrow .ltrack { height:20px; } .lensrow .ltrack i { display:block; height:100%; border-radius:3px; min-width:3px; }
+  .lensrow .lv { text-align:right; font-family:var(--abarva-mono); font-size:12.5px; font-weight:600; } .lensrow .lv small{color:var(--canon-gray-500);}
+
+  /* candidate pool */
+  .pool { display:flex; flex-direction:column; gap:8px; }
+  .poolrow { display:flex; align-items:center; gap:11px; padding:9px 11px; border:1px dashed var(--canon-border-strong); border-radius:9px; cursor:pointer; }
+  .poolrow:hover { background:rgba(0,0,0,0.02); border-color:var(--canon-gray-300); }
+  .poolrow .pr-n { font-family:var(--abarva-mono); font-size:11px; font-weight:700; color:var(--canon-gray-300); width:20px; flex:none; }
+  .poolrow .pr-nm { flex:1; font-size:13px; font-weight:500; } .poolrow .pr-nm small{display:block; color:var(--canon-gray-500); font-weight:400; font-size:11px; margin-top:2px;}
+
+  /* Decision lanes */
+  .lanes { flex:1; min-height:0; display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  @media (max-width:1080px){ .lanes{grid-template-columns:repeat(2,1fr);} }
+  .lane { background:var(--canon-bg-surface); border:1px solid var(--canon-border); border-radius:13px; box-shadow:var(--shadow-card); display:flex; flex-direction:column; overflow:hidden; min-height:0; }
+  .lane-head { flex:none; padding:13px 15px; border-top:3px solid var(--canon-gray-200); }
+  .lane.fund .lane-head{border-top-color:var(--canon-teal);} .lane.fix .lane-head{border-top-color:var(--canon-amber);} .lane.freeze .lane-head,.lane.stop .lane-head{border-top-color:var(--canon-red);}
+  .lh-t { display:flex; align-items:center; gap:8px; } .lh-name { font-family:var(--abarva-serif); font-size:17px; font-weight:500; letter-spacing:-0.02em; }
+  .lh-cnt { margin-left:auto; font-family:var(--abarva-mono); font-size:11.5px; font-weight:600; color:var(--canon-gray-500); }
+  .lh-sub { font-size:11px; color:var(--canon-gray-500); margin-top:5px; line-height:1.35; }
+  .lh-val { font-family:var(--abarva-mono); font-size:11px; font-weight:600; margin-top:7px; }
+  .lane-body { flex:1; min-height:0; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:8px; background:var(--canon-bg-cream); }
+  .pcard { background:var(--canon-bg-surface); border:1px solid var(--canon-border); border-radius:9px; padding:11px 12px; cursor:pointer; transition:box-shadow var(--dur-fast); }
+  .pcard:hover { box-shadow:var(--shadow-pop); }
+  .pc-name { font-family:var(--abarva-serif); font-size:14px; font-weight:500; line-height:1.18; }
+  .pc-owner { font-size:11px; color:var(--canon-gray-500); margin-top:3px; }
+  .pc-nums { display:flex; align-items:baseline; gap:6px; margin-top:9px; }
+  .pc-nums .f { font-family:var(--abarva-mono); font-size:12px; font-weight:600; } .pc-nums .p { font-size:11px; color:var(--canon-gray-500); }
+  .pc-proof { display:flex; gap:13px; margin-top:9px; padding-top:8px; border-top:1px solid var(--canon-border); }
+  .pc-p { display:flex; flex-direction:column; gap:4px; } .pc-p .pk { font-size:9px; font-family:var(--abarva-mono); letter-spacing:0.03em; text-transform:uppercase; color:var(--canon-gray-500); }
+  .pc-gate { font-size:11px; color:var(--canon-gray-700); margin-top:9px; padding-top:8px; border-top:1px solid var(--canon-border); display:flex; gap:6px; }
+  .pc-gate .gk { font-family:var(--abarva-mono); font-size:9px; letter-spacing:0.03em; text-transform:uppercase; color:var(--canon-gray-500); flex:none; } .pc-gate b{color:var(--canon-gray-900); font-weight:600;}
+
+  /* Evidence question cards */
+  .eqgrid { flex:1; min-height:0; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:12px; }
+  @media (max-width:1080px){ .eqgrid{grid-template-columns:1fr; grid-template-rows:none; overflow-y:auto;} }
+  .eqcard { background:var(--canon-bg-surface); border:1px solid var(--canon-border); border-radius:13px; box-shadow:var(--shadow-card); display:flex; flex-direction:column; min-height:0; overflow:hidden; }
+  .eqcard .eqh { flex:none; padding:14px 17px 12px; border-bottom:1px solid var(--canon-border); }
+  .eqcard .eqh .q { font-family:var(--abarva-serif); font-size:16px; font-weight:500; letter-spacing:-0.015em; }
+  .eqcard .eqh .m { font-size:11.5px; color:var(--canon-gray-500); margin-top:4px; } .eqcard .eqh .m b{font-weight:600;}
+  .eqcard .eqb { flex:1; min-height:0; overflow-y:auto; padding:12px 17px; display:flex; flex-direction:column; gap:9px; }
+  .eitem { display:flex; gap:10px; align-items:flex-start; font-size:12.5px; line-height:1.4; }
+  .eitem .ico { flex:none; margin-top:5px; } .eitem b{color:var(--canon-gray-900); font-weight:600;} .eitem .sub{color:var(--canon-gray-500); font-size:11.5px;}
+  .eitem .amt { margin-left:auto; font-family:var(--abarva-mono); font-size:12px; font-weight:600; flex:none; }
+
+  /* sub-nav (segmented views inside a tab) */
+  .subnav { display:inline-flex; gap:3px; background:var(--canon-gray-100); border-radius:9px; padding:3px; }
+  .subbtn { font-family:var(--abarva-sans); font-size:13px; font-weight:600; color:var(--canon-gray-500); background:none; border:0; padding:7px 13px; border-radius:6px; cursor:pointer; white-space:nowrap; }
+  .subbtn:hover { color:var(--canon-gray-900); }
+  .subbtn.on { background:var(--canon-bg-surface); color:var(--canon-teal-dark); box-shadow:0 0 0 1.5px var(--canon-teal), var(--shadow-card); }
+
+  /* Evidence — segmented one-at-a-time */
+  .evseg { flex:none; display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  @media (max-width:820px){ .evseg{grid-template-columns:1fr 1fr;} }
+  .evbtn { display:flex; align-items:center; gap:10px; text-align:left; background:var(--canon-bg-surface); border:1px solid var(--canon-border); border-radius:11px; padding:13px 15px; cursor:pointer; font-family:var(--abarva-serif); font-size:14.5px; font-weight:500; letter-spacing:-0.01em; color:var(--canon-gray-500); line-height:1.2; transition:border-color var(--dur-fast),color var(--dur-fast); }
+  .evbtn:hover { color:var(--canon-gray-900); border-color:var(--canon-border-strong); }
+  .evbtn.on { color:var(--canon-gray-900); border-color:var(--canon-gray-900); box-shadow:inset 0 0 0 1px var(--canon-gray-900); }
+  .evbtn .evn { font-family:var(--abarva-mono); font-size:11px; font-weight:700; width:22px; height:22px; border-radius:6px; background:var(--canon-gray-100); color:var(--canon-gray-500); display:inline-flex; align-items:center; justify-content:center; flex:none; }
+  .evbtn.on .evn { background:var(--canon-teal); color:#fff; }
+  .evpanel { flex:1; min-height:0; }
+  .ebig-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px 34px; }
+  @media (max-width:820px){ .ebig-grid{grid-template-columns:1fr;} }
+  .ebig { display:flex; align-items:flex-start; gap:13px; padding:16px 6px; border-bottom:1px solid var(--canon-border); }
+  .ebig-main { flex:1; min-width:0; }
+  .ebig-nm { font-family:var(--abarva-serif); font-size:16px; font-weight:500; letter-spacing:-0.012em; color:var(--canon-gray-900); line-height:1.25; text-wrap:pretty; }
+  .ebig-sub { font-size:13px; color:var(--canon-gray-700); margin-top:6px; line-height:1.5; max-width:44ch; text-wrap:pretty; }
+  .ebig-link { font-family:var(--abarva-mono); font-size:10.5px; font-weight:600; letter-spacing:0.03em; color:var(--canon-teal-dark); margin-top:8px; }
+  .ebig-right { flex:none; text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:2px; min-width:96px; }
+  .ebig-metric { font-family:var(--abarva-serif); font-size:23px; font-weight:500; letter-spacing:-0.03em; line-height:1; }
+  .ebig-unit { font-size:11px; color:var(--canon-gray-500); }
+  .ebig-tag { font-family:var(--abarva-mono); font-size:9px; font-weight:600; letter-spacing:0.05em; text-transform:uppercase; color:var(--canon-gray-500); margin-top:5px; }
+
+  /* Actions by owner */
+  .owncols { flex:1; min-height:0; display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+  @media (max-width:1200px){ .owncols{grid-template-columns:repeat(3,1fr); overflow-y:auto;} }
+  .owncol { display:flex; flex-direction:column; min-height:0; }
+  .oc-head { flex:none; padding-bottom:9px; margin-bottom:10px; border-bottom:1px solid var(--canon-border-strong); }
+  .oc-role { font-family:var(--abarva-serif); font-size:15px; font-weight:500; letter-spacing:-0.015em; }
+  .oc-cnt { font-family:var(--abarva-mono); font-size:10.5px; color:var(--canon-gray-500); margin-top:3px; }
+  .oc-body { flex:1; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:9px; padding-right:3px; }
+  .acard { background:var(--canon-bg-surface); border:1px solid var(--canon-border); border-left:3px solid var(--canon-amber); border-radius:10px; padding:12px 13px; cursor:pointer; transition:box-shadow var(--dur-fast); }
+  .acard:hover { box-shadow:var(--shadow-pop); }
+  .acard.fund{border-left-color:var(--canon-teal);} .acard.freeze,.acard.stop{border-left-color:var(--canon-red);} .acard.fix{border-left-color:var(--canon-amber);}
+  .acard .ak { font-family:var(--abarva-mono); font-size:9px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:7px; }
+  .acard.fund .ak{color:var(--canon-teal-dark);} .acard.freeze .ak,.acard.stop .ak{color:var(--canon-red);} .acard.fix .ak{color:var(--canon-amber);}
+  .acard .at { font-family:var(--abarva-serif); font-size:14px; font-weight:500; line-height:1.22; letter-spacing:-0.01em; }
+  .acard .adue { font-size:10.5px; color:var(--canon-gray-500); margin-top:8px; display:flex; align-items:center; gap:6px; font-family:var(--abarva-mono); }
+  .acard .alink { font-size:11px; color:var(--canon-gray-500); margin-top:5px; } .acard .alink b{color:var(--canon-gray-700); font-weight:500;}
+
+  /* Drawer */
+  .backdrop { position:fixed; inset:0; background:rgba(10,10,11,0.34); opacity:0; pointer-events:none; transition:opacity var(--dur-base) var(--ease-out); z-index:80; }
+  .backdrop.open { opacity:1; pointer-events:auto; }
+  .drawer { position:fixed; top:0; right:0; bottom:0; width:560px; max-width:95vw; background:var(--canon-bg-surface); z-index:90; transform:translateX(100%); transition:transform var(--dur-slow) var(--ease-out); display:flex; flex-direction:column; box-shadow:var(--shadow-pop); }
+  .drawer.open { transform:translateX(0); }
+  .dr-head { flex:none; padding:22px 28px 18px; border-bottom:1px solid var(--canon-border); }
+  .dr-eyebrow { font-family:var(--abarva-mono); font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; font-weight:600; margin-bottom:11px; display:flex; align-items:center; justify-content:space-between; color:var(--canon-teal-dark); }
+  .dr-close { cursor:pointer; color:var(--canon-gray-500); font-size:19px; background:none; border:0; line-height:1; } .dr-close:hover{color:var(--canon-gray-900);}
+  .dr-head h3 { font-family:var(--abarva-serif); font-size:23px; font-weight:500; line-height:1.16; letter-spacing:-0.02em; text-wrap:pretty; }
+  .dr-body { flex:1; overflow-y:auto; padding:22px 28px; }
+  .dr-sec { font-family:var(--abarva-mono); font-size:10.5px; color:var(--canon-gray-500); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:13px; }
+  .dr-sec:not(:first-child){ margin-top:24px; }
+  .dr-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px 22px; padding:18px 20px; background:var(--canon-bg-cream); border-radius:10px; }
+  .dr-grid .k { font-size:11.5px; color:var(--canon-gray-500); margin-bottom:6px; }
+  .dr-grid .v { font-family:var(--abarva-serif); font-size:22px; font-weight:500; letter-spacing:-0.03em; }
+  .dr-grid .v.sm { font-size:14px; font-family:var(--abarva-sans); font-weight:600; }
+  .dr-grid .v.teal{color:var(--canon-teal-dark);} .dr-grid .v.red{color:var(--canon-red);} .dr-grid .v.amber{color:var(--canon-amber);}
+  .drow { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:11px 0; border-bottom:1px solid var(--canon-border); font-size:13.5px; }
+  .drow:last-child{border-bottom:0;} .drow .dk{color:var(--canon-gray-500);} .drow .dv{font-weight:600; font-variant-numeric:tabular-nums; text-align:right;}
+  /* usage evidence bars */
+  .urow { padding:12px 0; border-bottom:1px solid var(--canon-border); } .urow:last-child{border-bottom:0;}
+  .urow .ut { display:flex; align-items:baseline; gap:8px; font-size:13.5px; } .urow .ut .un{font-weight:600;} .urow .ut .uv{margin-left:auto; font-family:var(--abarva-mono); font-weight:600; font-size:13px;}
+  .urow .ubar { height:6px; border-radius:3px; background:var(--canon-gray-100); overflow:hidden; margin-top:8px; } .urow .ubar i{display:block; height:100%; border-radius:3px;}
+  .urow .us { font-size:11.5px; color:var(--canon-gray-500); margin-top:7px; line-height:1.45; }
+  .efact { border:1px solid var(--canon-border); border-radius:8px; padding:13px 15px; margin-bottom:8px; } .efact .es{font-size:13px; line-height:1.5; margin-bottom:9px;} .efact .eloc{font-family:var(--abarva-mono); font-size:10.5px; color:var(--canon-gray-500);} .efact .eloc .file{color:var(--canon-gray-700);}
+  .rec-box { font-size:14px; line-height:1.55; color:var(--canon-gray-900); } .rec-box b{font-weight:600;}
+  .approve-note { display:flex; gap:10px; background:var(--canon-bg-cream); border:1px solid var(--canon-border); border-radius:8px; padding:13px 15px; font-size:13px; line-height:1.5; color:var(--canon-gray-700); margin-top:16px; } .approve-note .dot{margin-top:5px;} .approve-note b{color:var(--canon-gray-900); font-weight:600;}
+  .dr-plain { border-radius:10px; padding:15px 17px; margin-bottom:6px; }
+  .dr-plain.teal{background:var(--canon-teal-light);} .dr-plain.amber{background:var(--canon-amber-light);} .dr-plain.red{background:var(--canon-red-light);} .dr-plain.gray{background:var(--canon-bg-cream); border:1px solid var(--canon-border);}
+  .dr-plain .pk { font-family:var(--abarva-mono); font-size:9.5px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px; }
+  .dr-plain.teal .pk{color:var(--canon-teal-dark);} .dr-plain.amber .pk{color:var(--canon-amber);} .dr-plain.red .pk{color:var(--canon-red);} .dr-plain.gray .pk{color:var(--canon-gray-500);}
+  .dr-plain .pt { font-size:14.5px; line-height:1.55; color:var(--canon-gray-900); text-wrap:pretty; } .dr-plain .pt b{font-weight:600;}
+  .drow .dsub { font-size:11px; color:var(--canon-gray-500); margin-top:2px; font-weight:400; }
+  .drow.stacked { align-items:flex-start; } .drow.stacked .dk { display:flex; flex-direction:column; }
+  .dr-foot { flex:none; padding:16px 28px; border-top:1px solid var(--canon-border); background:var(--canon-bg-cream); display:flex; align-items:center; gap:10px; }
+  .dr-trust { font-size:12.5px; color:var(--canon-gray-500); display:flex; align-items:center; gap:8px; flex:1; }
+  .btn { padding:10px 18px; border-radius:9px; font-size:13.5px; font-weight:600; cursor:pointer; border:1px solid var(--canon-border-strong); background:transparent; color:var(--canon-gray-900); font-family:var(--abarva-sans); white-space:nowrap; }
+  .btn:hover { background:rgba(0,0,0,0.03); }
+  .btn.primary { background:var(--canon-bg-dark); color:#fff; border-color:var(--canon-bg-dark); } .btn.primary:hover{background:#000;} .btn.primary::after{content:' →';}
+  .move-done { text-align:center; padding:38px 20px; } .move-done .md{font-size:26px; color:var(--canon-teal);} .move-done h4{font-family:var(--abarva-serif); font-size:21px; font-weight:500; margin:12px 0 8px;} .move-done p{font-size:14px; color:var(--canon-gray-500); line-height:1.55; max-width:42ch; margin:0 auto;}
+
+  .footline { flex:none; padding:8px 0 10px; font-family:var(--abarva-mono); font-size:10px; letter-spacing:0.03em; color:var(--canon-gray-300); text-align:center; }
+</style>
+</head>
+<body>
+<div class="app" id="tw-root">
+  <nav class="topbar">
+    <img class="tb-logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHNoYXBlLXJlbmRlcmluZz0iZ2VvbWV0cmljUHJlY2lzaW9uIiB2aWV3Qm94PSIyNiAyODAgNjgwIDE3NSI+CjxwYXRoIGQ9IiYjeEE7TSAzMy45NDYgNDQ0LjU1MSYjeEE7QyA0MS42OTMgNDI4Ljc3NSA0OC42NTEgNDEyLjUzNiA1NS45NDUgMzk2LjU0MyYjeEE7QyA2NC4zNjcgMzc4LjA3NyA3My4wNDYgMzU5LjcyOSA4MS4zNjggMzQxLjIxOCYjeEE7QyA4Ni45ODIgMzI4LjcyOSA5Mi43MzMgMzE2LjMwNCA5OC4zNjMgMzAzLjgyNCYjeEE7QyAxMDEuMDU4IDI5Ny44NDggMTAzLjM5OSAyOTEuMjY3IDEwNi43MjkgMjg1LjYyOCYjeEE7QyAxMTMuMTI4IDI4NS4yMDkgMTE5LjU5MyAyODUuNDEgMTI2LjAwNCAyODUuMzc1JiN4QTtDIDEyOS4xNTQgMjg1LjM1OCAxMzIuOTggMjg0Ljc2IDEzNi4wNTUgMjg1LjMxNCYjeEE7QyAxNTQuNDU0IDMyMy42NTcgMTcwLjk1OSAzNjIuOTIzIDE4OS4xNDcgNDAxLjM3MiYjeEE7QyAxOTQuMjUyIDQxMi4xNjQgMTk5LjI2OSA0MjMuMDE1IDIwNC4wMzkgNDMzLjk2MSYjeEE7QyAyMDUuMzQ0IDQzNi45NTYgMjA2LjU5NiA0MzkuOTcxIDIwNy44ODUgNDQyLjk3MiYjeEE7QyAyMDguMTY4IDQ0My42MzQgMjA5LjM4MiA0NDUuMTA3IDIwOS4zMzIgNDQ1LjcwNyYjeEE7QyAyMDAuNTk3IDQ0NS4yMjEgMTkxLjc1MiA0NDUuNTQ3IDE4My4wMDQgNDQ1LjU2OSYjeEE7QyAxNzkuNjc1IDQ0NS41NzcgMTc2LjA3OCA0NDYuMDE2IDE3Mi43ODEgNDQ1LjYyNyYjeEE7QyAxNzAuMTg2IDQzNy45NDkgMTY1LjcyMSA0MzAuOTI1IDE2My4wOTUgNDIzLjI4MyYjeEE7QyAxNTAuOTE4IDQyMy41MzYgMTM4LjY4NCA0MjMuMjI4IDEyNi40OTggNDIzLjI0NSYjeEE7QyAxMjIuOTk3IDQyMy4yNSAxMTkuNDk2IDQyMy4yMzkgMTE1Ljk5NSA0MjMuMjI5JiN4QTtDIDExNC40MyA0MjMuMjI1IDExMi40NzIgNDIzLjY2MiAxMTEuMDExIDQyMy4wOTUmI3hBO0MgMTEyLjM3NCA0MTguODUyIDExNC40NzMgNDE0Ljc3MyAxMTYuMjM2IDQxMC42ODQmI3hBO0MgMTE5LjExNCA0MDQuMDA4IDEyMi4wMTEgMzk3LjMyMyAxMjQuNzc5IDM5MC42MDgmI3hBO0MgMTI5LjE4NyAzOTAuNTgzIDEzMy41OTUgMzkwLjcxIDEzOC4wMDYgMzkwLjYzMyYjeEE7QyAxNDEuNTYgMzkwLjU3MSAxNDUuMjYxIDM5MC4yODQgMTQ4Ljc5NyAzOTAuNzE1JiN4QTtDIDE0NS41NzYgMzg1LjU0MSAxNDMuNjE4IDM3OS4zMDUgMTQxLjE0NiAzNzMuNzI5JiN4QTtDIDEzNi43NzQgMzYzLjg2OSAxMzIuNDIyIDM1NC4wMDMgMTI4LjEyMiAzNDQuMTA5JiN4QTtDIDEyNi40OTEgMzQwLjM1NiAxMjQuODg0IDMzNi41OSAxMjMuMjIgMzMyLjg0OSYjeEE7QyAxMjIuODMxIDMzMS45NzQgMTIyLjMyMiAzMjkuNTA0IDEyMS4zMjggMzI5LjUmI3hBO0MgMTIwLjQxOSAzMzMuOTM1IDExNy42NzcgMzM4LjIzMiAxMTUuOTE2IDM0Mi4zODcmI3hBO0MgMTExLjc4NCAzNTIuMTM1IDEwNy4yMzQgMzYxLjcyIDEwMi45NjMgMzcxLjQwNyYjeEE7QyA5NS41ODUgMzg4LjE0MSA4Ny44MjggNDA0LjcxMSA4MC4zODEgNDIxLjQxMiYjeEE7QyA3OC4yMjUgNDI2LjI0OCA3NS45NzUgNDMxLjA0NyA3My44ODIgNDM1LjkwOSYjeEE7QyA3Mi41MjIgNDM5LjA2NyA3MS4zNTkgNDQyLjY0MyA2OS42NTggNDQ1LjYxNyYjeEE7QyA2OC41MDcgNDQ1Ljk0MyA2Ni45NTYgNDQ1LjY1OCA2NS43NjIgNDQ1LjY0NyYjeEE7QyA2My4xNzYgNDQ1LjYyMiA2MC41ODkgNDQ1LjY1NCA1OC4wMDIgNDQ1LjY2JiN4QTtDIDUyLjY3IDQ0NS42NzMgNDcuMzM3IDQ0NS42MyA0Mi4wMDUgNDQ1LjYyNiYjeEE7QyAzOS4yMjggNDQ1LjYyNCAzNi4yNTggNDQ1Ljk0OSAzMy41MDcgNDQ1LjYxNiYjeEE7QyAzMy44ODMgNDQ0LjgyNyAzMy43NTEgNDQ1LjE4NyAzMy45NDYgNDQ0LjU1MSBaIiBmaWxsPSIjRkZGRkZGIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjwvcGF0aD4KPHBhdGggZD0iJiN4QTtNIDIyMC44NjcgMzE5LjIzMyYjeEE7QyAyMjQuNzI1IDMxOC45OTQgMjI4LjYzMyAzMTkuMTkgMjMyLjUwMiAzMTkuMTU0JiN4QTtDIDIzMy41MDUgMzE5LjE0NCAyMzUuOTI0IDMxOC42NTcgMjM2LjY1NSAzMTkuMjQ0JiN4QTtDIDIzNi43MjUgMzMwLjY1NCAyMzYuNzEzIDM0Mi4wODMgMjM2Ljc1OSAzNTMuNSYjeEE7QyAyMzYuNzgyIDM1OS4yMzQgMjM3LjExNiAzNjUuMDM0IDIzNi44OSAzNzAuNzYmI3hBO0MgMjM2Ljk0IDM3MS4xOTcgMjM3Ljg0NyAzNjkuNjMyIDIzNy45NDIgMzY5LjQ4NCYjeEE7QyAyMzguNDYzIDM2OC42NjcgMjM5LjEzMyAzNjcuOTI4IDIzOS43ODEgMzY3LjIxJiN4QTtDIDI0MS43NzYgMzY1LjAwNCAyNDMuOTk1IDM2My4xMiAyNDYuNDU5IDM2MS40NiYjeEE7QyAyNTMuNzA0IDM1Ni41NzYgMjYyLjUxMyAzNTUuMDY4IDI3MS4wOTMgMzU1Ljc1MiYjeEE7QyAyNzUuNTM0IDM1Ni4xMDUgMjc5Ljk0NyAzNTcuMjIxIDI4NC4wMjYgMzU5LjAxMiYjeEE7QyAyOTkuMzM1IDM2NS43MzUgMzA3LjI1OSAzODIuODc3IDMwNy44MjkgMzk4Ljg2MyYjeEE7QyAzMDguNDM0IDQxNS44MzggMzAxLjMyNiA0MzMuNDExIDI4NS42ODEgNDQxLjQ5MiYjeEE7QyAyODEuMDk0IDQ0My44NjEgMjc2LjA1NSA0NDQuOTcxIDI3MC45NzMgNDQ1LjU3OCYjeEE7QyAyNjIuNDM3IDQ0Ni41OTYgMjUyLjc0NyA0NDQuMTI2IDI0NS43MiA0MzkuMjM3JiN4QTtDIDI0My4yNDMgNDM3LjUxNCAyNDAuODE3IDQzNS40NzkgMjM4Ljk4MiA0MzMuMDczJiN4QTtDIDIzOC4zMTcgNDMyLjIwMSAyMzcuNTk2IDQzMS4zNDkgMjM2Ljk5NCA0MzAuNDMyJiN4QTtDIDIzNi45MiA0MzAuMzE5IDIzNi4wOTggNDI5LjI5OCAyMzYuMDg5IDQyOS4zNDEmI3hBO0MgMjM1Ljg4NSA0MzAuMjczIDIzNi4zNDcgNDMxLjk0OSAyMzYuMzQ3IDQzMy4wMDYmI3hBO0MgMjM2LjM0NiA0MzYuNDczIDIzNi4zMjIgNDM5Ljk0NCAyMzYuMjg4IDQ0My40MSYjeEE7QyAyMzEuMzQ2IDQ0NC4yNCAyMjUuOTQ0IDQ0Mi45MDUgMjIwLjkyIDQ0My40NiYjeEE7QyAyMjAuNDQgNDM5LjM5MSAyMjAuODEyIDQzNS4xMDQgMjIwLjgwOSA0MzEuMDA2JiN4QTtDIDIyMC44MDIgNDIzLjE3NCAyMjAuNzU4IDQxNS4zNDEgMjIwLjc2OSA0MDcuNTA4JiN4QTtDIDIyMC43OTYgMzg3LjE3NCAyMjAuODQ5IDM2Ni44NCAyMjAuODM0IDM0Ni41MDUmI3hBO0MgMjIwLjgyNyAzMzcuNDM4IDIyMS4yMDcgMzI4LjI5IDIyMC44NjcgMzE5LjIzMyBaJiN4QTtNIDIzNi40NjQgMzk0LjYwNSYjeEE7QyAyMzUuMDE4IDQwNS45OTkgMjM3Ljg1IDQxOC40NDkgMjQ3LjEyOSA0MjUuOTY5JiN4QTtDIDI1Ny4xNjggNDM0LjEwNSAyNzMuODc1IDQzMy43NDkgMjgzLjE0NCA0MjQuNTMzJiN4QTtDIDI4Ny44NDIgNDE5Ljg2MiAyOTAuNDMyIDQxMy4xNjggMjkxLjI1OCA0MDYuNjgmI3hBO0MgMjkyLjY5NiAzOTUuMzg3IDI4OS44NCAzODEuODU5IDI3OS45ODQgMzc0LjkwOSYjeEE7QyAyNzAuNzI2IDM2OC4zODEgMjU2LjYwMiAzNjcuODEgMjQ3LjQxNiAzNzQuOTQ0JiN4QTtDIDI0MS4yMzggMzc5Ljc0IDIzNy40NDIgMzg2Ljg5IDIzNi40NjQgMzk0LjYwNSBaIiBmaWxsPSIjRkZGRkZGIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjwvcGF0aD4KPHBhdGggZD0iJiN4QTtNIDMyMi40NSA0MTUuMDk2JiN4QTtDIDMyMy4zMDEgNDExLjczMSAzMjQuMDUyIDQwOC41ODUgMzI1Ljk0OCA0MDUuNjA3JiN4QTtDIDMzNC4xODQgMzkyLjY3MyAzNTEuNDQ1IDM5Mi44NDYgMzY1LjAwNyAzOTIuNzUmI3hBO0MgMzcwLjI2NSAzOTIuNzEzIDM3NS45NDkgMzkyLjA5NCAzODEuMTY2IDM5Mi43MDQmI3hBO0MgMzgwLjcxNCAzODguMTM5IDM4MS41MDYgMzgzLjc0OSAzNzkuNjA3IDM3OS4zNjkmI3hBO0MgMzc0Ljk4OSAzNjguNzE5IDM2MC45MDQgMzY4LjczNSAzNTEuMTk0IDM3MC42ODEmI3hBO0MgMzQ5LjE0NCAzNzEuMDkyIDM0Ny4wNDkgMzcxLjU1OSAzNDUuMDggMzcyLjI3MiYjeEE7QyAzNDIuODE5IDM3My4wOTIgMzQwLjU2NyAzNzQuMDYzIDMzOC40MjIgMzc1LjE0OSYjeEE7QyAzMzYuOTc0IDM3NS44ODIgMzM1LjU2MSAzNzcuMDM1IDMzNC4wMDUgMzc3LjQ4NyYjeEE7QyAzMzIuODMgMzc0LjQzMSAzMzEuNzc4IDM3MS4zMDIgMzMwLjQyMiAzNjguMzE4JiN4QTtDIDMzMC4wMSAzNjcuNDEyIDMyOC43NiAzNjUuNjA2IDMyOS4wNzggMzY0Ljc0OSYjeEE7QyAzMzUuMDM1IDM2MC41OTQgMzQyLjM1MyAzNTguMTI5IDM0OS40MjggMzU2LjcyOCYjeEE7QyAzNTQuNzUyIDM1NS42NzQgMzYwLjIzNSAzNTUuNDA3IDM2NS42NSAzNTUuNzQ4JiN4QTtDIDM2OS42MDcgMzU1Ljk5NyAzNzMuNTc5IDM1Ni42MzIgMzc3LjMzOSAzNTcuOTE3JiN4QTtDIDM3OS45ODMgMzU4LjgyIDM4Mi41NDQgMzYwLjA3OSAzODQuODI1IDM2MS42OTgmI3hBO0MgMzk5LjU3MiAzNzIuMTY3IDM5Ny4xNSAzOTEuMTYgMzk3LjE1NCA0MDYuOTk5JiN4QTtDIDM5Ny4xNTcgNDE5LjEyIDM5Ny41MTIgNDMxLjI5MiAzOTcuMjEgNDQzLjQwNyYjeEE7QyAzOTMuODAzIDQ0My4yOTkgMzkwLjQxIDQ0My4yODQgMzg2Ljk5OSA0NDMuMjk3JiN4QTtDIDM4NS40NjkgNDQzLjMwMyAzODMuNTk5IDQ0My42MTEgMzgyLjEzNiA0NDMuMTc5JiN4QTtDIDM4Mi4wNzMgNDQwLjAzOCAzODEuODA4IDQzNi45MzQgMzgxLjk2OSA0MzMuNzgzJiN4QTtDIDM4Mi4wMDIgNDMzLjEzNCAzODIuMzY2IDQzMC44ODEgMzgxLjQ2MiA0MzEuMTE0JiN4QTtDIDM3OC41NTggNDM1LjcgMzc1LjA3NCA0MzkuNDMzIDM3MC4xODcgNDQxLjk2NiYjeEE7QyAzNTMuNTExIDQ1MC42MDkgMzI1LjkxIDQ0NS4zNzggMzIyLjU1NCA0MjQuMTU4JiN4QTtDIDMyMi4wODIgNDIxLjE3MiAzMjEuOTI0IDQxOC4wODkgMzIyLjQ1IDQxNS4wOTYgWiYjeEE7TSAzMzguNDM4IDQxNi4xMDMmI3hBO0MgMzM4LjIwNyA0MTcuNzg3IDMzOC4zMjMgNDE5LjQ4MiAzMzguNjU5IDQyMS4xNDMmI3hBO0MgMzQxLjI5MiA0MzQuMTY1IDM1OS4yODYgNDM0Ljg1NyAzNjkuMDk5IDQzMC4xNzcmI3hBO0MgMzc0LjczMSA0MjcuNDkxIDM3OS40NDMgNDIyLjE5NSAzODAuNjEgNDE1LjkxOCYjeEE7QyAzODEuMzg0IDQxMS43NTkgMzgwLjkzMSA0MDcuMzUxIDM4MS4xNTUgNDAzLjE0NyYjeEE7QyAzNzguMTI5IDQwMy4xNTYgMzc1LjEwNiA0MDMuMjg2IDM3Mi4wNzkgNDAzLjI3NyYjeEE7QyAzNjkuOTYxIDQwMy4yNyAzNjcuODQzIDQwMy4yNzEgMzY1LjcyNSA0MDMuMjc2JiN4QTtDIDM1Ni45NzcgNDAzLjI5NSAzNDQuOTM4IDQwMi42NDkgMzM5LjkyNSA0MTEuNTAxJiN4QTtDIDMzOS4wOTQgNDEyLjk2NyAzMzguODIzIDQxNC40OTUgMzM4LjQzOCA0MTYuMTAzIFoiIGZpbGw9IiNGRkZGRkYiIGZpbGwtcnVsZT0iZXZlbm9kZCI+PC9wYXRoPgo8cGF0aCBkPSImI3hBO00gNDIxLjM4MSAzNTguMDc2JiN4QTtDIDQyMS4zOTUgMzU3LjgxNCA0MjEuNDA5IDM1Ny41NTIgNDIxLjQyMyAzNTcuMjkmI3hBO0MgNDI2LjYzNiAzNTcuNTQyIDQzMS44NzQgMzU3LjM4NCA0MzcuMDkgMzU3LjM2NyYjeEE7QyA0MzcuNDYgMzU5LjY0IDQzNy4xNCAzNjIuMTk1IDQzNy4xNzUgMzY0LjUwMyYjeEE7QyA0MzcuMjQgMzY4LjgwNSA0MzcuNDI1IDM3My4xODkgNDM3LjI0NiAzNzcuNDc1JiN4QTtDIDQzOC4xNiAzNzYuODEzIDQzOC41ODMgMzc0LjYwMiA0MzkuMDYzIDM3My41NTEmI3hBO0MgNDQwLjEwOCAzNzEuMjU4IDQ0MS42NDQgMzY5LjA5MiA0NDMuMjM4IDM2Ny4xNTEmI3hBO0MgNDQ4LjA1NiAzNjEuMjgzIDQ1NC41NzUgMzU3LjExNyA0NjIuMjA3IDM1Ni4xNDQmI3hBO0MgNDY1LjI0NCAzNTUuNzU3IDQ2OC4xNjkgMzU2LjExNSA0NzEuMTg0IDM1Ni4xMjImI3hBO0MgNDcxLjY4NCAzNjEuMzg0IDQ3MC4yOTYgMzY2Ljk2OCA0NzEuMTYxIDM3Mi4xNTYmI3hBO0MgNDcwLjMxIDM3MS42NDkgNDY4LjQ5MiAzNzEuODkyIDQ2Ny41MDQgMzcxLjg3NCYjeEE7QyA0NjMuNTM0IDM3MS44MDIgNDU5LjU5OCAzNzIuMzA5IDQ1NS44NDcgMzczLjY0NCYjeEE7QyA0NTMuNjA1IDM3NC40NDIgNDUxLjQxNCAzNzUuNTcgNDQ5LjQ2OCAzNzYuOTQ1JiN4QTtDIDQzNC4yODQgMzg3LjY3OCA0MzcuMjg0IDQwOC44MjMgNDM3LjQxMiA0MjUuMDA3JiN4QTtDIDQzNy40NSA0MjkuNzE0IDQzNy41MzggNDM0LjQxNiA0MzcuNjA2IDQzOS4xMjImI3hBO0MgNDM3LjYxNyA0MzkuODgzIDQzOC4wODQgNDQyLjk5MSA0MzcuNDgzIDQ0My4zOTkmI3hBO0MgNDMyLjE4NSA0NDMuMzE3IDQyNi44ODcgNDQzLjMxNCA0MjEuNTg5IDQ0My4zNDcmI3hBO0MgNDIwLjczNSA0MjguODI3IDQyMS40NDggNDE0LjA1NSA0MjEuNDMxIDM5OS40OTYmI3hBO0MgNDIxLjQxNCAzODUuNzU4IDQyMC42MjMgMzcxLjc4OSA0MjEuMzgxIDM1OC4wNzYgWiIgZmlsbD0iI0ZGRkZGRiIgZmlsbC1ydWxlPSJldmVub2RkIj48L3BhdGg+CjxwYXRoIGQ9IiYjeEE7TSA0NzEuNzA1IDI5NC4yMzQmI3hBO0MgNDc5LjQyIDI5NC43MDEgNDg3LjI3MSAyOTQuMjYxIDQ5NS4wMDMgMjk0LjI5OSYjeEE7QyA0OTcuNzggMjk0LjMxMyA1MDEuNzUxIDI5My42MTYgNTA0LjM4NSAyOTQuNDIzJiN4QTtDIDUwNi44NzcgMzAyLjQ1MSA1MTAuMTk5IDMxMC4zNjYgNTEzLjE0MSAzMTguMjQ4JiN4QTtDIDUyMC4wMSAzMzYuNjQyIDUyNi42MSAzNTUuMTYxIDUzMy4yNTIgMzczLjYzNyYjeEE7QyA1MzYuMDA0IDM4MS4yOTIgNTM4LjY3MiAzODguOTggNTQxLjUxOSAzOTYuNiYjeEE7QyA1NDIuMjk2IDM5OC42NzkgNTQzLjA4NyA0MDAuNzU2IDU0My43OSA0MDIuODYmI3hBO0MgNTQ0LjEzOSA0MDMuOTA1IDU0NC4xMzUgNDA1LjQyIDU0NC44NzggNDA2LjI1OSYjeEE7QyA1NDYuMjQ4IDQwMi40MyA1NDcuMjU3IDM5OC40NDQgNTQ4LjYzNiAzOTQuNjA1JiN4QTtDIDU1NS4xODggMzc2LjM2NiA1NjEuODU4IDM1OC4xMTYgNTY4Ljc2NiAzNDAuMDExJiN4QTtDIDU3Mi4xMzIgMzMxLjE5IDU3NS4zMzMgMzIyLjMwOCA1NzguNjI2IDMxMy40NTkmI3hBO0MgNTgwLjk3MSAzMDcuMTU4IDU4My42MTggMzAwLjg3MyA1ODUuNTE1IDI5NC40MjImI3hBO0MgNTg4Ljg0IDI5My44MTUgNTkyLjYyMSAyOTQuMzAxIDU5Ni4wMDQgMjk0LjMxMiYjeEE7QyA2MDIuODg3IDI5NC4zMzMgNjA5Ljc3NiAyOTQuMzc4IDYxNi42NTcgMjk0LjI4NCYjeEE7QyA2MTIuNzc3IDMwNS4zMjggNjA3Ljk1MiAzMTYuMDU4IDYwMy45MTcgMzI3LjA1MSYjeEE7QyA1OTguNzU4IDM0MS4xMDcgNTkzLjQgMzU1LjExMiA1ODcuOTMxIDM2OS4wNTMmI3hBO0MgNTgwLjgyMiAzODcuMTc0IDU3NC4xIDQwNS40NSA1NjYuOTIzIDQyMy41NDYmI3hBO0MgNTY0LjE0NiA0MzAuNTUxIDU2MS43NDMgNDM3Ljc2OCA1NTguNjk5IDQ0NC42NjEmI3hBO0MgNTU2LjkxMSA0NDUuMDEyIDU1NC44MjggNDQ0LjY4NSA1NTMuMDA2IDQ0NC42NzcmI3hBO0MgNTQ5LjAwNiA0NDQuNjYxIDU0NS4wMDYgNDQ0LjY2NiA1NDEuMDA2IDQ0NC42NDUmI3hBO0MgNTM3LjcwMyA0NDQuNjI4IDUzMy41MzUgNDQ1LjMwNCA1MzAuMzM2IDQ0NC41MyYjeEE7QyA1MjcuNDY3IDQzNS44NzUgNTIzLjQ2MiA0MjcuNDgxIDUyMC4yMTIgNDE4Ljk1JiN4QTtDIDUxMi41NzcgMzk4LjkwOCA1MDQuNDc4IDM3OS4wMzkgNDk2Ljk1OCAzNTguOTU1JiN4QTtDIDQ5MS40OTQgMzQ0LjM2MyA0ODUuODUzIDMyOS44MzcgNDgwLjE2NyAzMTUuMzMyJiN4QTtDIDQ3Ny40NDggMzA4LjM5NSA0NzUuMzI2IDMwMC43NTEgNDcxLjcwNSAyOTQuMjM0IFoiIGZpbGw9IiMwMDY2Q0MiIGZpbGwtcnVsZT0iZXZlbm9kZCI+PC9wYXRoPgo8cGF0aCBkPSImI3hBO00gNjA5LjQ5MyA0MTQuNjEzJiN4QTtDIDYwOS44OTEgNDEwLjUwMyA2MTAuNTI5IDQwNi42NjEgNjEyLjE3IDQwMi44MzkmI3hBO0MgNjE5LjU2NiAzODUuNjA4IDY0MC44MDkgMzg0LjA0MyA2NTcuMDE3IDM4My44NTQmI3hBO0MgNjYwLjg0NSAzODMuODA5IDY2NC42NzQgMzgzLjc4MiA2NjguNTAzIDM4My43NjImI3hBO0MgNjcwLjIzNCAzODMuNzUzIDY3Mi40NzMgMzgzLjM1NyA2NzQuMTUxIDM4My43ODEmI3hBO0MgNjczLjkwNCAzODAuMTU3IDY3NC4yMDkgMzc2LjYzMyA2NzIuNzEzIDM3My4xOTUmI3hBO0MgNjY3LjQ0MSAzNjEuMDg1IDY1MC4xOTMgMzYyLjk5NyA2MzkuNzEyIDM2NS43NDMmI3hBO0MgNjM3LjQzOCAzNjYuMzM5IDYzNS4yMTIgMzY3LjA4MyA2MzMuMDE3IDM2Ny45MTkmI3hBO0MgNjMwLjExNyAzNjkuMDIzIDYyNy4zOTggMzcxLjAwOCA2MjQuNTM5IDM3MS45OTUmI3hBO0MgNjIzLjIzIDM2OC41MjQgNjIxLjQ3NSAzNjUuMjIxIDYxOS45OSAzNjEuODIzJiN4QTtDIDYxOC43MTYgMzU4LjkwOSA2MTcuNjQyIDM1NS43OTggNjE2LjA2NiAzNTMuMDM1JiN4QTtDIDYyMy42MTYgMzQ3Ljc4OSA2MzMuMjIgMzQ0LjY2MyA2NDIuMjQyIDM0My4zMDUmI3hBO0MgNjQ5LjQ3NiAzNDIuMjE1IDY1Ny4wMzcgMzQxLjczNyA2NjQuMzIxIDM0Mi42NjImI3hBO0MgNjY5LjQ4MiAzNDMuMzE4IDY3NC43MTMgMzQ0LjIyNyA2NzkuNDQxIDM0Ni41MDkmI3hBO0MgNjgyLjY5IDM0OC4wNzcgNjg1LjgwMyAzNTAuMDA4IDY4OC40NDIgMzUyLjQ4NiYjeEE7QyA3MDAuNTMyIDM2My44NDIgNjk5LjQ1NCAzODEuNDU2IDY5OS4zNzQgMzk2LjYwNSYjeEE7QyA2OTkuMzIxIDQwNi41NzIgNjk5LjM0IDQxNi41MzkgNjk5LjMzMiA0MjYuNTA2JiN4QTtDIDY5OS4zMjkgNDMwLjUwNiA2OTkuMzM4IDQzNC41MDUgNjk5LjMxNCA0MzguNTA1JiN4QTtDIDY5OS4zMDUgNDQwLjE3MiA2OTguODQ3IDQ0Mi41NTggNjk5LjMwNSA0NDQuMTQ4JiN4QTtDIDY5MS4zNjUgNDQ0LjAzMSA2ODMuMzk1IDQ0NC4zMDQgNjc1LjQ2NiA0NDMuOTU2JiN4QTtDIDY3NS4yNDEgNDQwLjcwMyA2NzUuNzIyIDQzNy4zODQgNjc1LjQ4OCA0MzQuMTY2JiN4QTtDIDY3NC45MTUgNDM0LjEwNCA2NzQuNzU2IDQzNC43OTUgNjc0LjQzIDQzNS4yMDEmI3hBO0MgNjczLjUyIDQzNi4zMzQgNjcyLjU4OSA0MzcuNDE3IDY3MS40OTMgNDM4LjM3OSYjeEE7QyA2NjcuNzY4IDQ0MS42NDggNjYzLjI4OSA0NDMuODI2IDY1OC41NjEgNDQ1LjIxMyYjeEE7QyA2NDAuMjM2IDQ1MC41ODkgNjE2LjA4OSA0NDQuNDA1IDYxMC42MDEgNDI0LjE3JiN4QTtDIDYwOS43NTYgNDIxLjA1MSA2MDkuMzE3IDQxNy44NTIgNjA5LjQ5MyA0MTQuNjEzIFomI3hBO00gNjM0Ljk4MiA0MTMuMTI3JiN4QTtDIDYzNC44ODQgNDE0LjYzOCA2MzUuMTA2IDQxNi4xNTMgNjM1LjM3MiA0MTcuNjM5JiN4QTtDIDYzNy4xNSA0MjcuNTcxIDY1MC4zNCA0MjguNzU3IDY1OC4yMTUgNDI2Ljc3NCYjeEE7QyA2NTkuNzUgNDI2LjM4OCA2NjEuMzA0IDQyNS45ODIgNjYyLjczOCA0MjUuMzAxJiN4QTtDIDY2NC45NzkgNDI0LjIzNiA2NjcuMzUzIDQyMi44ODUgNjY5LjA2MSA0MjEuMDU0JiN4QTtDIDY3NC4zMDMgNDE1LjQzNiA2NzQuNTA0IDQwNy4xNzEgNjc0LjE0NiAzOTkuODk0JiN4QTtDIDY2OC45ODUgMzk5LjU5OSA2NjMuNjcgMzk5Ljk0MSA2NTguNTAxIDQwMC4wNjImI3hBO0MgNjUwLjQ5OSA0MDAuMjQ5IDY0MS4wMDMgMzk5Ljg4MSA2MzYuNDQ4IDQwNy44NDUmI3hBO0MgNjM1LjQ0NyA0MDkuNTk2IDYzNS4zOTMgNDExLjIyOSA2MzQuOTgyIDQxMy4xMjcgWiIgZmlsbD0iIzAwNjZDQyIgZmlsbC1ydWxlPSJldmVub2RkIj48L3BhdGg+Cjwvc3ZnPg==" alt="AbarVa">
+    <span class="tb-div"></span>
+    <span class="tb-tenant">First Capital Financial</span>
+    <nav class="tb-nav">
+      <a class="tb-item">Home</a>
+      <a class="tb-item">Intelligence</a>
+      <a class="tb-item">Moves</a>
+      <a class="tb-item">Source</a>
+      <a class="tb-item active">Tower</a>
+    </nav>
+  </nav>
+  <div class="stage">
+    <div class="wrap dash">
+      <div class="dash-top">
+        <div class="dash-id">
+          <div class="eyebrow">IT Investment Tower · FY26 · First Capital Financial</div>
+          <h1>Funded ahead of proof. <span class="thin">Value is the constraint.</span></h1>
+        </div>
+        <div class="dash-right">
+          <div class="when">Refreshed Jun 17, 2026<br>10 programs · 12 AI initiatives</div>
+          <div class="flag"><span class="dot red"></span> Value proof — Critical</div>
+        </div>
+      </div>
+      <nav class="tabs" id="tw-tabs"></nav>
+    </div>
+    <div class="bodyregion"><div class="wrap"><div id="tw-body" style="height:100%"></div></div></div>
+  </div>
+  <div class="backdrop" id="tw-backdrop"></div>
+  <aside class="drawer" id="tw-drawer" aria-hidden="true"></aside>
+</div>
+<script type="module">
+class TowerCommandCenterDesign {
+  componentDidMount() {
+    const root = document.getElementById('tw-root');
+    if (!root) return;
+    this.root = root;
+    this.state2 = { tab: 'command', aiFilter: 'all', evQ: 'exists' };
+    this.roots = {};
+    this._charts = [];
+    this.build();
+    this.loadRecharts();
+  }
+
+  async loadRecharts() {
+    try {
+      const [React, client, RC] = await Promise.all([
+        import('https://esm.sh/react@18.2.0'),
+        import('https://esm.sh/react-dom@18.2.0/client'),
+        import('https://esm.sh/recharts@2.12.7?deps=react@18.2.0,react-dom@18.2.0'),
+      ]);
+      this._RCReact = React.default || React;
+      this._createRoot = client.createRoot;
+      this._RC = RC;
+      this.mountCharts();
+    } catch (e) { console.warn('Recharts failed to load', e); }
+  }
+
+  build() {
+    const D = this.data();
+    this.D = D;
+    this.renderTabs();
+    this.renderBody();
+    document.getElementById('tw-backdrop').onclick = () => this.closeDrawer();
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.closeDrawer(); });
+  }
+
+  // ── helpers ──
+  fmt(n) { return n === 0 ? '$0' : '$' + (Number.isInteger(n) ? n : n.toFixed(1)) + 'M'; }
+  esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  pips(level, tone) { // level 0..3
+    const t = tone || (level >= 3 ? 'tl' : level === 2 ? 'am' : level === 1 ? 'am' : 'rd');
+    let h = '<span class="pips">';
+    for (let i = 0; i < 3; i++) h += `<i class="${i < level ? t : ''}"></i>`;
+    h += '</span>';
+    return h;
+  }
+
+  // ════════════════ DATA — value-realization mart ════════════════
+  data() {
+    const CC = {
+      budget: 650, run: 442, change: 208, aiTagged: 53.7,
+      approvedPrograms: 10, candidateAi: 5,
+      promised: 35.5, usageSupported: 14.2, financeValidated: 3.8, claimable: 0, blocked: 31.7,
+      vendorConc: 62, // % of spend in top 3 vendors
+    };
+    // programs — the value chain per program
+    const PROG = [
+      { id:'P3', name:'Risk & Compliance AI', owner:'Chief Risk Officer', fn:'Risk & Compliance', lane:'fund',
+        funded:52, promised:12.4, usage:11.1, finval:3.1, claim:0, blocked:9.3,
+        usageStatus:'strong', finStatus:'partial', evid:74, stake:12.4, proof:2, gate:'Finance attestation of fraud-loss avoidance',
+        blocker:'Finance has not signed the $26M avoidance method', note:'Fraud Graph v2 shows strong usage and model performance; the benefit is measured by the model team, not yet attested by Finance.' },
+      { id:'P9', name:'Workplace AI (M365 Copilot)', owner:'CIO', fn:'Technology', lane:'fix',
+        funded:16, promised:6.8, usage:2.1, finval:0.2, claim:0, blocked:6.6,
+        usageStatus:'weak', finStatus:'none', evid:38, stake:6.8, proof:1, gate:'DLP policy filed · adoption to 60%',
+        blocker:'324 paid seats idle; Finance & Ops frozen on DLP review', note:'Copilot is funded and licensed but adoption is thin and uneven. Benefit is asserted per-seat, with no usage-linked measurement in Finance.' },
+      { id:'P4', name:'Payments Modernization', owner:'SVP Payments Tech', fn:'Operations', lane:'freeze',
+        funded:38, promised:5.2, usage:0.6, finval:0, claim:0, blocked:5.2,
+        usageStatus:'weak', finStatus:'none', evid:26, stake:5.2, proof:0, gate:'Instant-payment adoption 2% → 20%',
+        blocker:'FedNow/RTP at 2% vs 35% target — value not materializing', note:'Spend is ahead of adoption. Promised value depends on instant-payment volume that has not arrived.' },
+      { id:'P5', name:'Digital Banking & Channels', owner:'Chief Digital Officer', fn:'Digital', lane:'fix',
+        funded:28, promised:4.1, usage:1.2, finval:0.3, claim:0, blocked:3.8,
+        usageStatus:'weak', finStatus:'partial', evid:44, stake:4.1, proof:1, gate:'Account-open abandonment 58% → 30%',
+        blocker:'Recovery program early; benefit not usage-linked', note:'Account-open recovery is in build. Early usage signal is positive but well below the promised improvement.' },
+      { id:'P8', name:'Data & AI Platform', owner:'CDAO', fn:'Technology', lane:'fix',
+        funded:18, promised:3.3, usage:1.0, finval:0, claim:0, blocked:3.3,
+        usageStatus:'weak', finStatus:'none', evid:35, stake:3.3, proof:0, gate:'Data-lineage control (OCC) cleared',
+        blocker:'Lineage control deficient — gates customer AI scale', note:'The platform underpins other AI value but a lineage control finding blocks scaling anything customer-facing.' },
+      { id:'P6', name:'Enterprise HR/Finance AI', owner:'CFO', fn:'Finance', lane:'watch',
+        funded:26, promised:2.4, usage:1.8, finval:0.2, claim:0, blocked:2.2,
+        usageStatus:'strong', finStatus:'none', evid:41, stake:2.4, proof:1, gate:'Bring Workday/SAP AI into scope',
+        blocker:'Workday Illuminate deflects 34% of HR queries — untracked', note:'Embedded vendor AI is delivering deflection value that is invisible because it is not measured or attributed.' },
+      { id:'P10', name:'Wealth Advisor Copilot', owner:'SVP Wealth Tech', fn:'Wealth & Private', lane:'stop',
+        funded:10, promised:1.3, usage:0, finval:0, claim:0, blocked:1.3,
+        usageStatus:'none', finStatus:'none', evid:12, stake:1.3, proof:0, gate:'FINRA supervision gap — unresolved',
+        blocker:'Blocked by an unresolved FINRA supervision gap', note:'A shadow pilot with no verified usage and an open supervision gap. No path to claimable value.' },
+      { id:'P1', name:'Core Banking Platform', owner:'CIO', fn:'Retail Banking', lane:'watch',
+        funded:84, promised:0, usage:0, finval:0, claim:0, blocked:0,
+        usageStatus:'none', finStatus:'none', evid:20, stake:0.8, proof:0, gate:'FIS renewal decision (Feb 2027)',
+        blocker:'Run-and-sustain; no AI value promised', note:'The largest run line. No AI benefit is promised here; it matters for the renewal leverage, not the value story.' },
+    ];
+    // AI portfolio items — funded / embedded / candidate / governance / platform
+    const AI = [
+      { n:1, name:'Fraud Graph Analytics v2', type:'funded', cat:'Data/AI platform', vendor:'Databricks', system:'Fraud platform', value:92, readiness:80, spend:7.3, posture:'Scale', usageHead:'Model in production · high usage', usage:[['Alerts scored / mo','1.2M',88,'tl'],['Analyst adoption','96%',96,'tl'],['Model performance (AUC)','0.94',94,'tl']], note:'The one initiative producing verified performance. Blocked only on Finance attestation of the avoidance number.' },
+      { n:2, name:'M365 Copilot', type:'funded', cat:'Copilot', vendor:'Microsoft', system:'M365', value:64, readiness:40, spend:3.8, posture:'Fix adoption', usageHead:'Licensed broadly · adoption uneven', usage:[['Seats licensed','4,200',100,'am'],['Active seats (44%)','1,840',44,'am'],['Finance adoption','40%',40,'am'],['Ops adoption (DLP freeze)','0%',2,'rd']], note:'Funded and paid for, but 324 seats idle and two functions frozen on a DLP review. Highest-value close-narrative use is held.' },
+      { n:3, name:'GitHub Copilot', type:'embedded', cat:'Copilot', vendor:'GitHub', system:'Dev toolchain', value:58, readiness:78, spend:1.1, posture:'Measure', usageHead:'Strong developer usage', usage:[['Engineers active','590 / 640',92,'tl'],['Time saved / eng / mo','18 h',75,'tl'],['DORA lead time','−22%',70,'tl']], note:'Embedded developer productivity with strong usage. Value is real but not yet finance-attributed.' },
+      { n:4, name:'ServiceNow AI Agents', type:'embedded', cat:'ServiceNow AI', vendor:'ServiceNow', system:'ITSM', value:52, readiness:60, spend:2.2, posture:'Measure', usageHead:'Deflection climbing', usage:[['Tickets deflected','31%',62,'tl'],['Agent-assist coverage','48%',48,'am'],['CSAT delta','+4 pts',55,'tl']], note:'Embedded platform AI deflecting ITSM volume. Should be brought into the value scope, not treated as new spend.' },
+      { n:5, name:'Workday / SAP Illuminate', type:'embedded', cat:'Workday/SAP AI', vendor:'Workday · SAP', system:'HCM / ERP', value:49, readiness:55, spend:6.2, posture:'Bring in-scope', usageHead:'Deflecting HR work · untracked', usage:[['HR queries deflected','34%',68,'tl'],['Payroll anomalies caught','1,100 / q',60,'tl'],['Attribution to Finance','None',5,'rd']], note:'Delivering measurable deflection that is invisible to the value model because it is unattributed embedded spend.' },
+      { n:6, name:'AML Case Triage', type:'funded', cat:'Data/AI platform', vendor:'NICE Actimize', system:'AML', value:60, readiness:34, spend:8.9, posture:'Restructure', usageHead:'Gated by model validation', usage:[['Cases auto-triaged','12%',24,'am'],['Backlog cleared','−8%',30,'am'],['Blocking gate','SR 11-7',10,'rd']], note:'High promised value but blocked behind 12 overdue Tier-1 model validations. Restructure sequenced after governance clears.' },
+      { n:7, name:'Data Lineage & Governance', type:'governance', cat:'Governance', vendor:'Collibra', system:'Data governance', value:38, readiness:46, spend:2.6, posture:'Unblock', usageHead:'Control deficient (OCC)', usage:[['Assets with lineage','58%',58,'am'],['Tier-1 models governed','12 / 24',50,'am'],['OCC finding','Open',10,'rd']], note:'Not a value generator itself, but the control that unblocks scaling customer AI. Foundational, currently deficient.' },
+      { n:8, name:'Cloud AI Services (Bedrock/Azure)', type:'platform', cat:'Cloud AI', vendor:'AWS · Azure', system:'Cloud', value:34, readiness:52, spend:7.9, posture:'Consolidate', usageHead:'Consumption without portfolio view', usage:[['Monthly AI compute','$0.7M',60,'am'],['Projects using','14',50,'am'],['Chargeback in place','No',15,'rd']], note:'Platform consumption spread across teams with no portfolio-level chargeback or value line. Consolidate and meter.' },
+    ];
+    const CAND = [
+      { n:9, name:'Contact-Center Sentiment', reason:'No KPI defined · pilot stalled' },
+      { n:10, name:'Branch Queue Vision', reason:'Failed value gate · $0 realized' },
+      { n:11, name:'Commercial Credit Memo AI', reason:'Candidate — not funded' },
+      { n:12, name:'Mortgage Document Intelligence', reason:'Candidate — early, low usage' },
+      { n:13, name:'Marketing Content Assist', reason:'Candidate — governance review pending' },
+    ];
+    // AI spend lens by category (sums ≈ 53.7)
+    const LENS = [
+      { cat:'Cloud AI', v:14.8, type:'platform' },
+      { cat:'Data / AI platform', v:11.2, type:'funded' },
+      { cat:'Copilot (M365 + GitHub)', v:12.4, type:'funded' },
+      { cat:'Workday / SAP AI', v:6.2, type:'embedded' },
+      { cat:'ServiceNow AI', v:4.8, type:'embedded' },
+      { cat:'Governance', v:2.6, type:'governance' },
+      { cat:'Training & enablement', v:1.7, type:'platform' },
+    ];
+    // evidence gaps
+    const GAPS = [
+      { area:'Value attestation', prog:'Risk & Compliance AI', missing:'Finance sign-off on the fraud-loss avoidance method', why:'$26M of promised value cannot be claimed until Finance validates the counterfactual', decision:'Whether R&C AI value can be booked', owner:'CFO', pri:'high', due:'Jul 2026' },
+      { area:'Usage evidence', prog:'Workplace AI', missing:'Seat-level Copilot usage tied to a benefit metric', why:'324 paid seats show no measured outcome; adoption frozen in 2 functions', decision:'Freeze vs expand Copilot', owner:'CIO', pri:'high', due:'Jul 2026' },
+      { area:'Embedded attribution', prog:'Enterprise HR/Finance AI', missing:'Attribution of Workday/SAP deflection into the value model', why:'34% HR deflection is delivering value that is invisible today', decision:'Bring embedded AI in-scope', owner:'CDAO', pri:'medium', due:'Aug 2026' },
+      { area:'Control clearance', prog:'Data & AI Platform', missing:'Data-lineage control remediation (OCC finding)', why:'Deficient control blocks scaling any customer-facing AI', decision:'Approve customer AI scale', owner:'CDAO', pri:'high', due:'Sep 2026' },
+      { area:'Model governance', prog:'Risk & Compliance AI', missing:'SR 11-7 validation for 12 Tier-1 models', why:'Overdue validations block AML triage value and carry MRA exposure', decision:'Scale vs hold AML triage', owner:'Chief Model Risk Officer', pri:'high', due:'Jul 2026' },
+      { area:'Supervision', prog:'Wealth Advisor Copilot', missing:'FINRA supervision coverage for advisor AI', why:'Unresolved supervision gap makes any value non-claimable', decision:'Stop vs remediate', owner:'SVP Wealth Tech', pri:'medium', due:'Jun 2026' },
+    ];
+    // CXO actions grouped by owner role
+    const ACT = [
+      { id:'A1', role:'CFO', lane:'freeze', title:'Attest the fraud-loss avoidance method — or freeze the claim.', decision:'Validate or reject the $26M avoidance counterfactual', why:'The single largest promised value ($12.4M program) is measured by the model team and unattested by Finance. Until it is signed, $0 is claimable.', evidence:'Counterfactual method review · loss-run reconciliation', due:'By Jul 15', link:'Risk & Compliance AI', move:'Finance attestation review · fraud avoidance' },
+      { id:'A2', role:'CFO', lane:'fix', title:'Stand up a value-attribution model for embedded AI.', decision:'Approve a method to attribute Workday/SAP/ServiceNow deflection', why:'Embedded AI is delivering deflection value that never reaches the value line. Finance needs a consistent attribution rule.', evidence:'Deflection logs · rate cards · owner sign-off', due:'By Aug 31', link:'Enterprise HR/Finance AI', move:'Embedded-AI attribution method' },
+      { id:'A3', role:'CIO', lane:'fix', title:'File the DLP policy freezing Copilot in Finance & Ops.', decision:'Clear the DLP review blocking 324 idle seats', why:'The highest-value Copilot use is frozen. This converts paid-for, unused seats into measured benefit with no new spend.', evidence:'DLP assessment (GL data · PII-in-Teams)', due:'By Jul 31', link:'Workplace AI', move:'Fast-track DLP · Copilot Finance + Ops' },
+      { id:'A4', role:'CIO', lane:'freeze', title:'Freeze Payments AI expansion until adoption moves.', decision:'Hold further FedNow/RTP spend pending adoption', why:'Instant-payment adoption is 2% vs a 35% target. Funding is well ahead of the value it depends on.', evidence:'Instant-payment volume trend · merchant onboarding', due:'By Jul 31', link:'Payments Modernization', move:'Freeze Payments AI expansion' },
+      { id:'A5', role:'CDAO', lane:'fix', title:'Remediate the data-lineage control (OCC finding).', decision:'Approve the lineage remediation sprint', why:'A deficient lineage control is the gate on scaling any customer-facing AI. It blocks value across the platform.', evidence:'Lineage coverage · OCC finding closure plan', due:'By Sep 30', link:'Data & AI Platform', move:'Data-lineage remediation sprint' },
+      { id:'A6', role:'CDAO', lane:'fund', title:'Bring embedded vendor AI into the portfolio view.', decision:'Add Workday/SAP/ServiceNow AI to the AI portfolio', why:'These are not new spend — they are delivering value invisibly. Scoping them corrects the AI story and finds claimable value.', evidence:'Vendor AI usage feeds · category mapping', due:'By Aug 31', link:'AI portfolio', move:'Scope embedded AI into portfolio' },
+      { id:'A7', role:'Model Risk', lane:'fix', title:'Approve an SR 11-7 validation sprint for 12 Tier-1 models.', decision:'Sequence overdue validations by regulatory exposure', why:'12 Tier-1 models are past validation with 4 MRA-linked. This gates AML triage value and carries the control risk.', evidence:'Validation backlog · MRA linkage', due:'By Jul 15', link:'Risk & Compliance AI', move:'Tier-1 SR 11-7 validation sprint' },
+      { id:'A8', role:'Business owners', lane:'stop', title:'Stop three AI initiatives with no verified value.', decision:'Terminate stalled pilots and redirect commitment', why:'Wealth Advisor Copilot, Branch Queue Vision and Contact-Center Sentiment have failed gates or no KPI and $0 verified value.', evidence:'Gate status · realized value = $0', due:'By Jun 30', link:'Wealth Advisor Copilot +2', move:'Terminate 3 unproven AI pilots' },
+      { id:'A9', role:'Procurement', lane:'fund', title:'Meter and consolidate cloud AI consumption.', decision:'Put chargeback on $14.8M of cloud AI spend', why:'Cloud AI is the largest AI line and runs without a portfolio view or chargeback. Metering is the precondition to any value claim.', evidence:'Consumption by project · chargeback model', due:'By Sep 30', link:'Cloud AI Services', move:'Cloud AI metering & chargeback' },
+    ];
+    return { CC, PROG, AI, CAND, LENS, GAPS, ACT };
+  }
+
+  // ════════════════ TABS ════════════════
+  renderTabs() {
+    const tabs = [
+      { id:'command', label:'Command Center' },
+      { id:'funnel', label:'Value Proof', attn:true },
+      { id:'lanes', label:'Decision Lanes' },
+      { id:'ai', label:'AI Portfolio' },
+      { id:'evidence', label:'Evidence', attn:true },
+      { id:'actions', label:'Recommended Actions', n:this.D.ACT.length },
+    ];
+    const el = document.getElementById('tw-tabs');
+    el.innerHTML = tabs.map(t => `<button class="tab ${this.state2.tab===t.id?'on':''}" data-tab="${t.id}">${t.label}${t.n!=null?`<span class="tnum">${t.n}</span>`:''}${t.attn?'<span class="adot"></span>':''}</button>`).join('');
+    el.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { this.state2.tab = b.dataset.tab; this.renderTabs(); this.renderBody(); });
+  }
+
+  renderBody() {
+    const b = document.getElementById('tw-body');
+    const v = { command:'viewCommand', funnel:'viewFunnel', lanes:'viewLanes', ai:'viewAI', evidence:'viewEvidence', actions:'viewActions' }[this.state2.tab];
+    this._charts = [];
+    b.innerHTML = this[v]();
+    this.bindBody();
+    this.mountCharts();
+  }
+  bindBody() {
+    const b = document.getElementById('tw-body');
+    b.querySelectorAll('[data-prog]').forEach(el => { el.onclick = () => this.progDrawer(el.dataset.prog); el.ondblclick = () => this.progDrawer(el.dataset.prog); });
+    b.querySelectorAll('[data-ai]').forEach(el => { el.onclick = () => this.aiDrawer(el.dataset.ai); el.ondblclick = () => this.aiDrawer(el.dataset.ai); });
+    b.querySelectorAll('[data-action]').forEach(el => el.onclick = () => this.actionDrawer(el.dataset.action));
+    b.querySelectorAll('[data-gap]').forEach(el => el.onclick = () => this.gapDrawer(+el.dataset.gap));
+    b.querySelectorAll('[data-aifilter]').forEach(el => el.onclick = () => { this.state2.aiFilter = el.dataset.aifilter; this.renderBody(); });
+    b.querySelectorAll('[data-goto]').forEach(el => el.onclick = () => { this.state2.tab = el.dataset.goto; this.renderTabs(); this.renderBody(); });
+    b.querySelectorAll('[data-evq]').forEach(el => el.onclick = () => { this.state2.evQ = el.dataset.evq; this.renderBody(); });
+    b.querySelectorAll('[data-aiview]').forEach(el => el.onclick = () => { this.state2.aiView = el.dataset.aiview; this.renderBody(); });
+    b.querySelectorAll('[data-lanesview]').forEach(el => el.onclick = () => { this.state2.lanesView = el.dataset.lanesview; this.renderBody(); });
+  }
+
+  // ════════════════ COMMAND CENTER ════════════════
+  viewCommand() {
+    const c = this.D.CC;
+    const tiles = [
+      { tone:'', k:'Spend posture', st:['sgray','In view'], hero:this.fmt(c.budget), heron:'FY26 IT budget across 10 programs',
+        rows:[['Run / keep-lights', this.fmt(c.run), 'amber', `${Math.round(c.run/c.budget*100)}%`],['Change / transform', this.fmt(c.change), '', ''],['AI-tagged', this.fmt(c.aiTagged), 'teal', ''],['Top-3 vendor concentration', c.vendorConc+'%', 'amber', '']] },
+      { tone:'red', k:'Value posture', st:['sred','Unproven'], hero:this.fmt(c.claimable), heron:'is claimable today',
+        rows:[['Promised', this.fmt(c.promised), '', ''],['Usage-supported', this.fmt(c.usageSupported), 'amber', ''],['Finance-validated', this.fmt(c.financeValidated), 'amber', ''],['Blocked', this.fmt(c.blocked), 'red', '']] },
+      { tone:'amber', k:'Risk posture', st:['samber','6 open gaps'], hero:'12', heron:'Tier-1 models past validation',
+        rows:[['Evidence gaps', '6', 'amber', ''],['Owner gaps (unattested)', '3', 'red', ''],['Control blockers (OCC/DLP)', '2', 'red', ''],['MRA-linked', '4', 'red', '']] },
+      { tone:'', k:'Decision posture', st:['sgray','This week'], hero:'8', heron:'decisions waiting on a named owner',
+        rows:[['Fund', '2', 'teal', ''],['Fix', '4', 'amber', ''],['Freeze', '1', 'red', ''],['Stop', '1', 'red', '']] },
+    ];
+    const tileHtml = tiles.map(t => `<div class="ptile ${t.tone}">
+      <div class="pt-k"><span class="lab">${t.k}</span><span class="st ${t.st[0]}">${t.st[1]}</span></div>
+      <div class="pt-hero">${t.hero}</div><div class="pt-heron">${t.heron}</div>
+      <div class="pt-rows">${t.rows.map(r => `<div class="pt-row"><span class="rl">${r[0]}</span><span class="rv ${r[2]}">${r[1]}</span></div>`).join('')}</div>
+    </div>`).join('');
+
+    const dq = [
+      { lane:'freeze', prog:'P3', title:'Finance has not attested the $26M fraud-avoidance claim.', owner:'CFO', meta:['<b>$12.4M</b> promised','Blocks the largest value claim'] },
+      { lane:'fix', prog:'P9', title:'324 paid Copilot seats sit idle behind a DLP freeze.', owner:'CIO', meta:['<b>$6.8M</b> promised','Finance & Ops at 0–40%'] },
+      { lane:'freeze', prog:'P4', title:'Payments funding is running ahead of 2% adoption.', owner:'SVP Payments', meta:['<b>$5.2M</b> promised','2% vs 35% target'] },
+      { lane:'stop', prog:'P10', title:'Wealth Advisor Copilot is blocked by a FINRA gap.', owner:'SVP Wealth', meta:['<b>$1.3M</b> promised','No verified usage'] },
+    ];
+    const dqHtml = dq.map(d => `<button class="dqi ${d.lane}" data-prog="${d.prog}">
+      <span class="lane-tag ${d.lane}">${d.lane}</span>
+      <div class="dq-main"><div class="dq-title">${d.title}</div><div class="dq-meta">${d.meta.map(m=>`<span>${m}</span>`).join('')}</div></div>
+      <div class="dq-go">Review</div></button>`).join('');
+
+    return `<div class="view">
+      <div class="ptiles">${tileHtml}</div>
+      <div class="cc-lower">
+        <div class="weekread">
+          <div class="wk-k">This week's read</div>
+          <div class="wk-line"><span class="n">$650M</span> is in view. <span class="n">$53.7M</span> is AI-tagged. <span class="n">$35.5M</span> is promised value. <span class="z">$0</span> is claimable. <span class="turn">The issue is not spend visibility — it is value proof.</span></div>
+          ${this.weekViz()}
+          <div class="wk-foot"><span><span class="dot teal"></span> Primary blocker: <b>Finance attestation &amp; usage evidence</b></span><button class="wk-cta" data-goto="funnel">See the value funnel</button></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><span class="ch-t">Decisions waiting on you</span><span class="ch-r">aVa proposes · you approve · nothing acts on its own</span></div>
+          <div class="card-b scroll"><div class="dq">${dqHtml}</div></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  weekViz() {
+    return `<div class="wk-viz" style="justify-content:stretch">${this.rc('rc-week','week')}</div>`;
+  }
+
+  // ════════════════ VALUE PROOF FUNNEL ════════════════
+  viewFunnel() {
+    const chart = this.rc('rc-waterfall','waterfall');
+    // top blockers by dollar impact
+    const blockers = [...this.D.PROG].filter(p=>p.blocked>0).sort((a,b)=>b.blocked-a.blocked).slice(0,5);
+    const rows = blockers.map(p => `<tr class="click" data-prog="${p.id}">
+      <td><div class="pname">${this.esc(p.name)}</div><div class="psub">${this.esc(p.owner)}</div></td>
+      <td class="num"><div class="bignum">${this.fmt(p.promised)}</div></td>
+      <td><div style="display:flex;flex-direction:column;gap:5px"><span style="font-size:12px">${this.esc(p.blocker)}</span>${this.pips(p.proof)}</div></td>
+      <td class="num"><div class="bignum red">${this.fmt(p.blocked)}</div><div class="subnum">at risk</div></td>
+    </tr>`).join('');
+
+    return `<div class="view">
+      <div class="vhead"><div class="vh">Where the value disappears</div><div class="vsub">Promised → usage-supported → finance-validated → claimable</div><span class="vspace"></span><span class="vhint"><span class="dot gray"></span> Click a program for its proof chain &amp; usage evidence</span></div>
+      <div class="cc-lower" style="grid-template-columns:1.12fr 1fr">
+        <div class="card">
+          <div class="card-h"><span class="ch-k">Value waterfall</span><span class="ch-t" style="font-size:14px;font-family:var(--abarva-sans);font-weight:600;color:var(--canon-gray-500)">FY26 · $M</span></div>
+          <div class="card-b" style="display:flex;flex-direction:column">
+            <div class="chartwrap">${chart}</div>
+            <div class="ins red" style="margin-top:10px;padding:15px 18px"><div class="ik">The read</div><div class="itext" style="margin-top:6px;font-size:15px"><b>Most value disappears between promise and finance validation.</b> $21.3M is never usage-supported; another $10.4M has usage but no finance sign-off. Nothing is claimable.</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-h"><span class="ch-t">Top 5 blockers by dollar impact</span></div>
+          <div class="card-b scroll" style="padding-top:8px">
+            <table class="tbl"><thead><tr><th>Program</th><th class="num">Promised</th><th>Missing evidence · proof</th><th class="num">Blocked</th></tr></thead><tbody>${rows}</tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+
+
+  // ════════════════ DECISION LANES ════════════════
+  viewLanes() {
+    const lanesDef = [
+      { id:'fund', name:'Fund', sub:'Proof is emerging — invest to scale' },
+      { id:'fix', name:'Fix', sub:'Value real but blocked on evidence' },
+      { id:'freeze', name:'Freeze', sub:'Funding ahead of proof — hold' },
+      { id:'stop', name:'Stop', sub:'No verified value — terminate' },
+    ];
+    const lanesHtml = lanesDef.map(l => {
+      const items = this.D.PROG.filter(p => p.lane === l.id);
+      const total = items.reduce((a,p)=>a+p.promised,0);
+      const cards = items.map(p => `<div class="pcard" data-prog="${p.id}">
+        <div class="pc-name">${this.esc(p.name)}</div><div class="pc-owner">${this.esc(p.owner)}</div>
+        <div class="pc-nums"><span class="f">${this.fmt(p.funded)}</span><span class="p">funded · ${this.fmt(p.promised)} promised</span></div>
+        <div class="pc-proof"><div class="pc-p"><span class="pk">Proof</span>${this.pips(p.proof)}</div><div class="pc-p"><span class="pk">Usage</span><span class="chip ${p.usageStatus==='strong'?'teal':p.usageStatus==='weak'?'amber':'red'} mono">${p.usageStatus}</span></div></div>
+        <div class="pc-gate"><span class="gk">Next gate</span><span><b>${this.esc(p.gate)}</b></span></div>
+      </div>`).join('') || `<div style="font-size:12px;color:var(--canon-gray-500);padding:8px 4px">No programs in this lane.</div>`;
+      return `<div class="lane ${l.id}">
+        <div class="lane-head"><div class="lh-t"><span class="lh-name">${l.name}</span><span class="lh-cnt">${items.length}</span></div><div class="lh-sub">${l.sub}</div><div class="lh-val" style="color:${l.id==='fund'?'var(--canon-teal-dark)':l.id==='stop'||l.id==='freeze'?'var(--canon-red)':'var(--canon-amber)'}">${this.fmt(total)} promised</div></div>
+        <div class="lane-body">${cards}</div>
+      </div>`;
+    }).join('');
+    const sub = [['table','Program table'],['overview','Kanban lanes'],['heatmap','Portfolio heatmap']];
+    const lv = this.state2.lanesView || 'table';
+    const subnav = `<div class="subnav">${sub.map(s => `<button class="subbtn ${lv===s[0]?'on':''}" data-lanesview="${s[0]}">${s[1]}</button>`).join('')}</div>`;
+    const head = `<div class="vhead"><div class="vh">The operating room</div>${subnav}<span class="vspace"></span><span class="vhint"><span class="dot gray"></span> Click any program for its proof chain</span></div>`;
+
+    let body;
+    if (lv === 'overview') {
+      body = `<div class="cc-lower" style="grid-template-columns:340px 1fr;flex:1">
+        <div class="card">
+          <div class="card-h"><span class="ch-k">Portfolio heatmap</span></div>
+          <div class="card-b" style="display:flex;flex-direction:column">${this.quadrant()}</div>
+        </div>
+        <div class="lanes">${lanesHtml}</div>
+      </div>`;
+    } else if (lv === 'heatmap') {
+      body = `<div class="cc-lower" style="grid-template-columns:1fr 320px;flex:1">
+        <div class="card">
+          <div class="card-h"><span class="ch-k">Portfolio heatmap</span><span class="ch-r">value at stake × evidence maturity · colored by decision lane</span></div>
+          <div class="card-b" style="display:flex;flex-direction:column">${this.quadrant()}</div>
+        </div>
+        <div class="card">
+          <div class="card-h"><span class="ch-t">Programs</span><span class="ch-r">by lane</span></div>
+          <div class="card-b scroll" style="padding:10px 12px">${this.laneLegendList()}</div>
+        </div>
+      </div>`;
+    } else {
+      body = `<div class="card" style="flex:1">
+        <div class="card-h"><span class="ch-t">All programs — the decision table</span><span class="ch-r">funding vs. proof · click a row for the value chain</span></div>
+        <div class="card-b scroll" style="padding-top:8px">${this.laneTable()}</div>
+      </div>`;
+    }
+    return `<div class="view">${head}${body}</div>`;
+  }
+
+  laneLegendList() {
+    const col = { fund:'var(--canon-teal)', fix:'var(--canon-amber)', freeze:'var(--canon-red)', stop:'var(--canon-red)', watch:'var(--canon-gray-300)' };
+    const laneWord = { fund:'Fund', fix:'Fix', freeze:'Freeze', stop:'Stop', watch:'Watch' };
+    return ['fund','fix','freeze','stop','watch'].flatMap(l => this.D.PROG.filter(p=>p.lane===l)).map(p => `<div class="poolrow" data-prog="${p.id}" style="border-style:solid;border-color:var(--canon-border)">
+      <span class="dot" style="background:${col[p.lane]};margin-top:2px"></span>
+      <div class="pr-nm">${this.esc(p.name)}<small>${this.esc(p.owner)} · ${this.fmt(p.promised)} promised</small></div>
+      <span class="chip mono" style="color:${col[p.lane]};background:transparent;border:1px solid var(--canon-border)">${laneWord[p.lane]}</span>
+    </div>`).join('');
+  }
+
+  laneTable() {
+    const laneWord = { fund:'Fund', fix:'Fix', freeze:'Freeze', stop:'Stop', watch:'Watch' };
+    const laneChip = { fund:'teal', fix:'amber', freeze:'red', stop:'red', watch:'gray' };
+    const order = { fund:0, fix:1, freeze:2, stop:3, watch:4 };
+    const rows = [...this.D.PROG].sort((a,b)=>order[a.lane]-order[b.lane]||b.promised-a.promised).map(p => `<tr class="click" data-prog="${p.id}">
+      <td><div class="pname" style="font-size:14px">${this.esc(p.name)}</div><div class="psub">${this.esc(p.owner)}</div></td>
+      <td><span class="chip ${laneChip[p.lane]} mono">${laneWord[p.lane]}</span></td>
+      <td class="num"><span class="bignum" style="font-size:15px">${this.fmt(p.funded)}</span></td>
+      <td class="num"><span class="bignum" style="font-size:15px">${this.fmt(p.promised)}</span></td>
+      <td class="num">${this.pips(p.proof)}</td>
+      <td class="num"><span class="chip ${p.usageStatus==='strong'?'teal':p.usageStatus==='weak'?'amber':'red'} mono">${p.usageStatus}</span></td>
+      <td class="num"><span class="bignum red" style="font-size:15px">${this.fmt(p.blocked)}</span></td>
+      <td style="font-size:12px;color:var(--canon-gray-700);max-width:22ch">${this.esc(p.gate)}</td>
+    </tr>`).join('');
+    return `<table class="tbl"><thead><tr><th>Program</th><th>Lane</th><th class="num">Funded</th><th class="num">Promised</th><th class="num">Proof</th><th class="num">Usage</th><th class="num">Blocked</th><th>Next gate</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  quadrant() {
+    return `<div class="chartwrap">${this.rc('rc-quad','quad')}</div>
+      <div class="legend"><span><i class="rd" style="background:var(--canon-teal)"></i>Fund</span><span><i class="rd" style="background:var(--canon-amber)"></i>Fix</span><span><i class="rd" style="background:var(--canon-red)"></i>Freeze / Stop</span></div>`;
+  }
+
+  // ════════════════ AI PORTFOLIO ════════════════
+  viewAI() {
+    const filters = [['all','All'],['funded','Funded'],['embedded','Embedded'],['candidate','Candidate'],['governance','Governance'],['platform','Platform']];
+    const chips = filters.map(f => `<button class="chip ${this.state2.aiFilter===f[0]?'blue':'gray'}" data-aifilter="${f[0]}" style="cursor:pointer;border:1px solid ${this.state2.aiFilter===f[0]?'rgba(0,102,204,0.3)':'var(--canon-border)'}">${f[1]}</button>`).join('');
+    const pool = this.D.CAND.map(c => `<div class="poolrow" data-goto="ai" title="Not funded — candidate idea"><span class="pr-n">${c.n}</span><div class="pr-nm">${this.esc(c.name)}<small>${this.esc(c.reason)}</small></div><span class="chip gray mono">candidate</span></div>`).join('');
+
+    const sub = [['overview','Integrated'],['bubble','Bubble matrix'],['lens','Spend lens'],['table','Initiative table']];
+    const av = this.state2.aiView || 'overview';
+    const subnav = `<div class="subnav">${sub.map(s => `<button class="subbtn ${av===s[0]?'on':''}" data-aiview="${s[0]}">${s[1]}</button>`).join('')}</div>`;
+    const showChips = av !== 'lens';
+    const head = `<div class="vhead"><div class="vh">Which AI is real, embedded, or just an idea</div>${subnav}<span class="vspace"></span>${showChips?`<div style="display:flex;gap:6px;flex-wrap:wrap">${chips}</div>`:'<span class="vhint"><span class="dot gray"></span> Click a bar for its category detail</span>'}</div>`;
+
+    let body;
+    if (av === 'overview') {
+      body = `<div class="cc-lower" style="grid-template-columns:1.22fr 1fr;flex:1">
+        <div class="card">
+          <div class="card-h"><span class="ch-k">Bubble matrix</span><span class="ch-r">value × readiness · size = spend</span></div>
+          <div class="card-b" style="display:flex;flex-direction:column">${this.bubbleMatrix()}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;min-height:0">
+          <div class="card" style="flex:1.1">
+            <div class="card-h"><span class="ch-t">AI spend lens</span><span class="ch-r">$53.7M AI-tagged</span></div>
+            <div class="card-b" style="padding:12px 14px 8px">${this.rc('rc-lens','lens')}</div>
+          </div>
+          <div class="card" style="flex:1">
+            <div class="card-h"><span class="ch-k">Not funded · candidate pool</span><span class="ch-r">kept separate from approved spend</span></div>
+            <div class="card-b scroll" style="padding-top:12px"><div class="pool">${pool}</div></div>
+          </div>
+        </div>
+      </div>`;
+    } else if (av === 'bubble') {
+      body = `<div class="cc-lower" style="grid-template-columns:1fr 320px;flex:1">
+        <div class="card">
+          <div class="card-h"><span class="ch-k">Bubble matrix</span><span class="ch-r">value potential × readiness · bubble size = AI spend</span></div>
+          <div class="card-b" style="display:flex;flex-direction:column">${this.bubbleMatrix()}</div>
+        </div>
+        <div class="card">
+          <div class="card-h"><span class="ch-t">Initiatives</span><span class="ch-r">numbered on the matrix</span></div>
+          <div class="card-b scroll" style="padding:10px 12px">${this.aiLegendList()}</div>
+        </div>
+      </div>`;
+    } else if (av === 'lens') {
+      body = `<div class="card" style="flex:1">
+        <div class="card-h"><span class="ch-t">AI spend lens by category</span><span class="ch-r">$53.7M AI-tagged · Copilot · ServiceNow · Workday/SAP · data/AI platform · cloud · governance · training</span></div>
+        <div class="card-b" style="display:flex;flex-direction:column;padding:18px 22px">
+          <div class="chartwrap">${this.rc('rc-lens','lens')}</div>
+          <div class="legend" style="margin-top:12px"><span><i style="background:var(--canon-teal-dark)"></i>Funded</span><span><i style="background:var(--abarva-signal-blue)"></i>Embedded</span><span><i style="background:var(--canon-amber)"></i>Governance</span><span><i style="background:var(--canon-gray-700)"></i>Platform</span></div>
+        </div>
+      </div>`;
+    } else {
+      body = `<div class="card" style="flex:1">
+        <div class="card-h"><span class="ch-t">All AI initiatives</span><span class="ch-r">funded · embedded · candidate — click a row for usage evidence</span></div>
+        <div class="card-b scroll" style="padding-top:8px">${this.aiTable()}</div>
+      </div>`;
+    }
+    return `<div class="view">${head}${body}</div>`;
+  }
+
+  aiLegendList() {
+    const items = this.state2.aiFilter==='all' ? this.D.AI : this.D.AI.filter(a=>a.type===this.state2.aiFilter);
+    const col = { funded:'var(--canon-teal-dark)', embedded:'var(--abarva-signal-blue)', candidate:'var(--canon-gray-300)', governance:'var(--canon-amber)', platform:'var(--canon-gray-700)' };
+    return items.sort((a,b)=>a.n-b.n).map(a => `<div class="poolrow" data-ai="${a.n}" style="border-style:solid;border-color:var(--canon-border)">
+      <span class="pr-n" style="color:#fff;background:${col[a.type]};border-radius:6px;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center">${a.n}</span>
+      <div class="pr-nm">${this.esc(a.name)}<small>${this.esc(a.vendor)} · $${a.spend.toFixed(1)}M · ${this.esc(a.posture)}</small></div>
+    </div>`).join('');
+  }
+
+  aiTable() {
+    const typeWord = { funded:'Funded', embedded:'Embedded', candidate:'Candidate', governance:'Governance', platform:'Platform' };
+    const typeChip = { funded:'teal', embedded:'blue', candidate:'gray', governance:'amber', platform:'gray' };
+    const items = this.state2.aiFilter==='all' ? this.D.AI : this.D.AI.filter(a=>a.type===this.state2.aiFilter);
+    const rows = items.sort((a,b)=>b.spend-a.spend).map(a => `<tr class="click" data-ai="${a.n}">
+      <td><div class="pname" style="font-size:14px">${a.n}. ${this.esc(a.name)}</div><div class="psub">${this.esc(a.system)}</div></td>
+      <td><span class="chip ${typeChip[a.type]} mono">${typeWord[a.type]}</span></td>
+      <td>${this.esc(a.vendor)}</td>
+      <td class="num"><span class="bignum" style="font-size:15px">$${a.spend.toFixed(1)}M</span></td>
+      <td class="num">${this.miniMeter(a.value)}</td>
+      <td class="num">${this.miniMeter(a.readiness)}</td>
+      <td style="text-align:right;font-weight:600;font-size:12.5px;color:var(--canon-gray-700)">${this.esc(a.posture)}</td>
+    </tr>`).join('');
+    const cand = this.D.CAND.map(c => `<tr class="click" data-goto="ai"><td><div class="pname" style="font-size:14px;color:var(--canon-gray-500)">${c.n}. ${this.esc(c.name)}</div></td><td><span class="chip gray mono">Candidate</span></td><td colspan="4" style="font-size:12.5px;color:var(--canon-gray-500)">${this.esc(c.reason)}</td><td style="text-align:right;font-size:12.5px;color:var(--canon-gray-500)">Not funded</td></tr>`).join('');
+    return `<table class="tbl"><thead><tr><th>Initiative</th><th>Spend type</th><th>Vendor</th><th class="num">AI spend</th><th class="num">Value</th><th class="num">Readiness</th><th style="text-align:right">Posture</th></tr></thead><tbody>${rows}${this.state2.aiFilter==='all'||this.state2.aiFilter==='candidate'?cand:''}</tbody></table>`;
+  }
+
+  miniMeter(v) {
+    const col = v>=66?'var(--canon-teal)':v>=40?'var(--canon-amber)':'var(--canon-red)';
+    return `<span style="display:inline-flex;align-items:center;gap:7px;justify-content:flex-end"><span style="width:52px;height:5px;border-radius:3px;background:var(--canon-gray-100);overflow:hidden;display:inline-block"><i style="display:block;height:100%;width:${v}%;background:${col};border-radius:3px"></i></span><span style="font-family:var(--abarva-mono);font-size:11.5px;color:var(--canon-gray-700)">${v}</span></span>`;
+  }
+
+  bubbleMatrix() {
+    return `<div class="chartwrap">${this.rc('rc-bubble','bubble')}</div>
+      <div class="legend"><span><i style="background:var(--canon-teal-dark)"></i>Funded</span><span><i style="background:var(--abarva-signal-blue)"></i>Embedded</span><span><i style="background:var(--canon-amber)"></i>Governance</span><span><i style="background:var(--canon-gray-700)"></i>Platform</span></div>`;
+  }
+
+  // ════════════════ EVIDENCE ════════════════
+  viewEvidence() {
+    const exists = [
+      { nm:'Fraud model — performance & usage', detail:'AUC 0.94 · 1.2M alerts scored/mo · 96% analyst adoption. Both performance and usage are proven — only Finance attestation is missing.', metric:'0.94', unit:'model AUC', tone:'teal', tag:'Strong proof' },
+      { nm:'GitHub Copilot — developer productivity', detail:'590 of 640 engineers active · DORA lead time down 22%. A clear, measured time saving.', metric:'18h', unit:'saved / eng·mo', tone:'teal', tag:'Strong proof' },
+      { nm:'ServiceNow AI — ticket deflection', detail:'Agent-assist live on 48% of queues · CSAT up 4 points. Usage evidence is solid.', metric:'31%', unit:'tickets deflected', tone:'teal', tag:'Strong proof' },
+      { nm:'Workday / SAP — HR deflection', detail:'Measured inside the vendor tool, but never credited to the value line — so today it counts as $0 of realized value.', metric:'34%', unit:'HR queries deflected', tone:'amber', tag:'Measured · unattributed' },
+    ];
+    const missing = [
+      { nm:'Finance sign-off on the fraud-avoidance method', detail:'Model team measures the $26M avoidance; Finance has not validated the counterfactual, so none of it can be booked.', metric:'$26M', unit:'unclaimed', tone:'red', tag:'High · owner CFO', idx:0 },
+      { nm:'Seat-level Copilot usage tied to a benefit', detail:'324 paid seats show no measured outcome, and Finance & Ops are frozen on a DLP review.', metric:'324', unit:'idle seats', tone:'red', tag:'High · owner CIO', idx:1 },
+      { nm:'Attribution of embedded AI into the value model', detail:'Workday/SAP/ServiceNow deflection is real but unattributed — invisible to the value line.', metric:'34%', unit:'unattributed', tone:'amber', tag:'Medium · owner CDAO', idx:2 },
+      { nm:'Data-lineage control remediation (OCC)', detail:'A deficient lineage control blocks scaling any customer-facing AI across the platform.', metric:'OCC', unit:'open finding', tone:'red', tag:'High · owner CDAO', idx:3 },
+    ];
+    const owners = [
+      { nm:'CFO', detail:'Attest the fraud-avoidance method, then define how embedded-AI benefit is credited to the value line.', metric:'$26M', unit:'value unclaimed', tone:'red', tag:'2 gaps · both high' },
+      { nm:'CDAO', detail:'Close the OCC lineage finding and bring embedded vendor AI (Workday/SAP/ServiceNow) into portfolio scope.', metric:'$5.5M', unit:'value gated', tone:'amber', tag:'2 gaps' },
+      { nm:'CIO', detail:'Produce seat-level Copilot usage tied to a benefit metric and clear the DLP freeze.', metric:'324', unit:'idle seats', tone:'red', tag:'1 gap · high' },
+      { nm:'Model Risk / Wealth', detail:'Run the SR 11-7 sprint for 12 Tier-1 models and close the FINRA supervision gap.', metric:'12+1', unit:'items to clear', tone:'amber', tag:'2 gaps' },
+    ];
+    const blocked = [
+      { nm:'Book the $26M Risk & Compliance AI value', detail:'Held until Finance attests the fraud-avoidance counterfactual.', metric:'$26M', unit:'at stake', tone:'red', tag:'Blocked · CFO' },
+      { nm:'Freeze or expand M365 Copilot', detail:'Held until seat-level usage evidence exists for the 324 idle seats.', metric:'$6.8M', unit:'promised', tone:'red', tag:'Blocked · CIO' },
+      { nm:'Approve customer-facing AI scale', detail:'Held until the OCC data-lineage finding is closed.', metric:'OCC', unit:'finding', tone:'amber', tag:'Blocked · CDAO' },
+      { nm:'Scale or hold AML case triage', detail:'Held until 12 overdue Tier-1 model validations clear.', metric:'12', unit:'models', tone:'amber', tag:'Blocked · Model Risk' },
+    ];
+    const QS = [
+      { id:'exists', label:'What evidence exists?', meta:'<b>4 areas</b> carry real usage or performance proof today', items:exists },
+      { id:'missing', label:'What is missing?', meta:'<b>6 gaps</b> stand between promised value and a claim', items:missing },
+      { id:'owner', label:'Who owns the missing proof?', meta:'Every gap resolves to one named executive', items:owners },
+      { id:'blocked', label:'What decision is blocked until it arrives?', meta:'Each missing proof holds one decision', items:blocked },
+    ];
+    const active = QS.find(q => q.id === this.state2.evQ) || QS[0];
+    const headTone = { exists:'var(--canon-teal-dark)', missing:'var(--canon-red)', owner:'var(--canon-amber)', blocked:'var(--canon-red)' };
+    const seg = QS.map((q,i) => `<button class="evbtn ${q.id===active.id?'on':''}" data-evq="${q.id}"><span class="evn">${i+1}</span>${q.label}</button>`).join('');
+    const toneCol = { teal:'var(--canon-teal-dark)', amber:'var(--canon-amber)', red:'var(--canon-red)' };
+    const items = active.items.map(it => `<div class="ebig" ${it.idx!=null?`data-gap="${it.idx}" style="cursor:pointer"`:''}>
+      <span class="dot ${it.tone==='teal'?'teal':it.tone==='amber'?'amber':'red'}" style="margin-top:6px"></span>
+      <div class="ebig-main"><div class="ebig-nm">${this.esc(it.nm)}</div><div class="ebig-sub">${this.esc(it.detail)}</div>${it.idx!=null?'<div class="ebig-link">View audit trace →</div>':''}</div>
+      <div class="ebig-right"><div class="ebig-metric" style="color:${toneCol[it.tone]}">${this.esc(it.metric)}</div><div class="ebig-unit">${this.esc(it.unit)}</div><div class="ebig-tag">${this.esc(it.tag)}</div></div>
+    </div>`).join('');
+    return `<div class="view">
+      <div class="vhead"><div class="vh">Evidence, as a business posture</div><span class="vspace"></span><span class="vhint"><span class="dot gray"></span> Answers, not a trace log — click a gap for its audit trail</span></div>
+      <div class="evseg">${seg}</div>
+      <div class="card evpanel">
+        <div class="card-h"><span class="ch-k" style="color:${headTone[active.id]}">Question ${QS.indexOf(active)+1} of 4</span><span class="ch-t">${active.label}</span><span class="ch-r">${active.meta}</span></div>
+        <div class="card-b scroll"><div class="ebig-grid">${items}</div></div>
+      </div>
+    </div>`;
+  }
+
+  // ════════════════ RECOMMENDED ACTIONS ════════════════
+  viewActions() {
+    const roles = ['CFO','CIO','CDAO','Model Risk','Procurement'];
+    const roleOther = this.D.ACT.filter(a => !roles.includes(a.role));
+    const cols = roles.map(role => {
+      const items = this.D.ACT.filter(a => a.role === role).concat(role==='Procurement'?roleOther:[]);
+      const label = role==='Procurement' ? 'Procurement & business owners' : role==='Model Risk' ? 'Model Risk Office' : role;
+      return `<div class="owncol">
+        <div class="oc-head"><div class="oc-role">${label}</div><div class="oc-cnt">${items.length} action${items.length>1?'s':''}</div></div>
+        <div class="oc-body">${items.map(a => `<div class="acard ${a.lane}" data-action="${a.id}">
+          <div class="ak">${a.lane}</div>
+          <div class="at">${this.esc(a.title)}</div>
+          <div class="adue"><span class="dot ${a.lane==='fund'?'teal':a.lane==='stop'||a.lane==='freeze'?'red':'amber'}"></span>${this.esc(a.due)}</div>
+          <div class="alink">Linked · <b>${this.esc(a.link)}</b></div>
+        </div>`).join('')}</div>
+      </div>`;
+    }).join('');
+    return `<div class="view">
+      <div class="vhead"><div class="vh">The executive action memo</div><div class="vsub">Organized by who owns the next move — the bridge from Tower into Moves</div><span class="vspace"></span><span class="vhint"><span class="dot gray"></span> Click any action to review &amp; route</span></div>
+      <div class="owncols">${cols}</div>
+    </div>`;
+  }
+
+  // ════════════════ DRAWERS ════════════════
+  openDrawer(html) {
+    const d = document.getElementById('tw-drawer');
+    d.innerHTML = html; d.classList.add('open'); d.setAttribute('aria-hidden','false');
+    document.getElementById('tw-backdrop').classList.add('open');
+    d.querySelectorAll('[data-close]').forEach(el => el.onclick = () => this.closeDrawer());
+    const act = d.querySelector('[data-action]'); if (act) act.onclick = () => this.actionDrawer(act.dataset.action);
+    const gt = d.querySelector('[data-goto]'); if (gt) gt.onclick = () => { this.closeDrawer(); this.state2.tab = gt.dataset.goto; this.renderTabs(); this.renderBody(); };
+  }
+  closeDrawer() {
+    const d = document.getElementById('tw-drawer'); d.classList.remove('open'); d.setAttribute('aria-hidden','true');
+    document.getElementById('tw-backdrop').classList.remove('open');
+  }
+
+  plainProgram(p) {
+    const laneWord = { fund:'Fund', fix:'Fix', freeze:'Freeze', stop:'Stop', watch:'Watch' }[p.lane];
+    if (p.promised <= 0) return `No AI value is promised here — this is a run-and-sustain line. It matters for vendor renewal leverage, not the value story.`;
+    const claimTxt = p.claim > 0 ? `${this.fmt(p.claim)} of it is claimable today` : `none of it is claimable yet`;
+    const blk = p.blocker.charAt(0).toLowerCase() + p.blocker.slice(1).replace(/\.$/, '');
+    return `Of <b>${this.fmt(p.promised)}</b> in promised value, <b>${claimTxt}</b> — because ${blk}. It sits in the <b>${laneWord}</b> lane, and the next unlock is <b>${p.gate}</b>.`;
+  }
+  plainAI(a) {
+    const def = { funded:'a real, funded program with its own budget and approvals', embedded:'value delivered inside a platform you already pay for — not new AI spend', candidate:'a candidate idea, not approved spend', governance:'a control that unblocks other AI, not a value generator on its own', platform:'shared platform consumption spread across many teams' }[a.type];
+    return `This is <b>${def}</b>. Recommended move: <b>${a.posture}</b>.`;
+  }
+
+  progDrawer(id) {
+    const p = this.D.PROG.find(x => x.id === id); if (!p) return;
+    const laneWord = { fund:'Fund', fix:'Fix', freeze:'Freeze', stop:'Stop', watch:'Watch' };
+    const laneTone = { fund:'teal', fix:'amber', freeze:'red', stop:'red', watch:'gray' };
+    // find related AI usage
+    const relAI = this.D.AI.filter(a => (id==='P3'&&(a.n===1||a.n===6)) || (id==='P9'&&a.n===2) || (id==='P8'&&(a.n===7||a.n===3)) || (id==='P6'&&a.n===5) || (id==='P4'&&false));
+    const usageHtml = relAI.length ? relAI.map(a => this.usageBlock(a)).join('') :
+      `<div class="urow"><div class="ut"><span class="un">Usage evidence</span><span class="uv" style="color:var(--canon-gray-500)">Thin</span></div><div class="us">No usage-linked measurement is in place for this program yet. That absence is the reason value is not claimable.</div></div>`;
+    const chain = [
+      ['Promised', p.promised, '', 'what the business case claimed'],
+      ['Usage-supported', p.usage, p.usage>0?'teal':'red', 'backed by real adoption / usage evidence'],
+      ['Finance-validated', p.finval, p.finval>0?'teal':'red', 'Finance has signed the measurement method'],
+      ['Claimable', p.claim, 'red', 'can be booked as realized value today'],
+      ['Blocked', p.blocked, 'red', 'promised value that cannot be claimed yet'],
+    ];
+    this.openDrawer(`<div class="dr-head"><div class="dr-eyebrow" style="color:var(--${laneTone[p.lane]==='teal'?'canon-teal-dark':laneTone[p.lane]==='amber'?'canon-amber':laneTone[p.lane]==='red'?'canon-red':'canon-gray-500'})"><span>Program · ${this.esc(p.id)} · ${laneWord[p.lane]}</span><button class="dr-close" data-close>✕</button></div><h3>${this.esc(p.name)}</h3></div>
+      <div class="dr-body">
+        <div class="dr-plain ${laneTone[p.lane]}"><div class="pk">In plain terms</div><div class="pt">${this.plainProgram(p)}</div></div>
+        <div class="dr-grid">
+          <div><div class="k">Funded</div><div class="v">${this.fmt(p.funded)}</div></div>
+          <div><div class="k">Promised value</div><div class="v">${this.fmt(p.promised)}</div></div>
+          <div><div class="k">Finance-validated</div><div class="v sm ${p.finval>0?'teal':''}">${this.fmt(p.finval)}</div></div>
+          <div><div class="k">Claimable</div><div class="v sm red">${this.fmt(p.claim)}</div></div>
+        </div>
+        <div class="dr-sec">Value proof chain <span style="text-transform:none;letter-spacing:0;color:var(--canon-gray-500);font-family:var(--abarva-sans)">— where promised value leaks on the way to claimable</span></div>
+        ${chain.map(c => `<div class="drow stacked"><span class="dk">${c[0]}<span class="dsub">${c[3]}</span></span><span class="dv" style="color:${c[2]==='teal'?'var(--canon-teal-dark)':c[2]==='red'?'var(--canon-red)':'var(--canon-gray-900)'}">${this.fmt(c[1])}</span></div>`).join('')}
+        <div class="dr-sec">Usage &amp; adoption evidence</div>
+        ${usageHtml}
+        <div class="dr-sec">Owner &amp; next gate</div>
+        <div class="drow"><span class="dk">Owner</span><span class="dv">${this.esc(p.owner)}</span></div>
+        <div class="drow"><span class="dk">Function</span><span class="dv">${this.esc(p.fn)}</span></div>
+        <div class="drow"><span class="dk">Next gate</span><span class="dv" style="max-width:60%">${this.esc(p.gate)}</span></div>
+        <div class="dr-sec">The read</div>
+        <div class="efact"><div class="es">${this.esc(p.note)}</div><div class="eloc"><span class="file">SA08_ai-benefits-realization-usage</span> · ${this.esc(p.id)}</div></div>
+      </div>
+      <div class="dr-foot"><span class="dr-trust"><span class="dot ${laneTone[p.lane]}"></span>${laneWord[p.lane]} · ${this.esc(p.blocker)}</span><button class="btn" data-close>Close</button><button class="btn primary" data-goto="actions">See the action</button></div>`);
+  }
+
+  usageBlock(a) {
+    return `<div style="margin-bottom:14px"><div style="font-family:var(--abarva-serif);font-size:15px;font-weight:500;margin-bottom:2px">${this.esc(a.name)}</div><div style="font-size:11.5px;color:var(--canon-gray-500);margin-bottom:6px">${this.esc(a.usageHead)} · ${this.esc(a.vendor)}</div>
+      ${a.usage.map(u => `<div class="urow"><div class="ut"><span class="un">${this.esc(u[0])}</span><span class="uv">${this.esc(u[1])}</span></div><div class="ubar"><i style="width:${u[2]}%;background:${u[3]==='tl'?'var(--canon-teal)':u[3]==='am'?'var(--canon-amber)':'var(--canon-red)'}"></i></div></div>`).join('')}</div>`;
+  }
+
+  aiDrawer(n) {
+    const a = this.D.AI.find(x => x.n === +n); if (!a) return;
+    const typeWord = { funded:'Funded program', embedded:'Embedded platform spend', candidate:'Candidate idea', governance:'Governance', platform:'Platform' };
+    this.openDrawer(`<div class="dr-head"><div class="dr-eyebrow"><span>AI initiative ${a.n} · ${typeWord[a.type]}</span><button class="dr-close" data-close>✕</button></div><h3>${this.esc(a.name)}</h3></div>
+      <div class="dr-body">
+        <div class="dr-grid">
+          <div><div class="k">AI spend</div><div class="v">$${a.spend.toFixed(1)}M</div></div>
+          <div><div class="k">Recommended posture</div><div class="v sm">${this.esc(a.posture)}</div></div>
+          <div><div class="k">Value potential</div><div class="v sm teal">${a.value}/100</div></div>
+          <div><div class="k">Readiness</div><div class="v sm ${a.readiness>=60?'teal':'amber'}">${a.readiness}/100</div></div>
+        </div>
+        <div class="dr-plain ${a.type==='funded'?'teal':a.type==='governance'?'amber':'gray'}"><div class="pk">In plain terms</div><div class="pt">${this.plainAI(a)}</div></div>
+        <div class="dr-sec">Vendor &amp; system</div>
+        <div class="drow"><span class="dk">Vendor</span><span class="dv">${this.esc(a.vendor)}</span></div>
+        <div class="drow"><span class="dk">System</span><span class="dv">${this.esc(a.system)}</span></div>
+        <div class="drow"><span class="dk">Spend type</span><span class="dv">${typeWord[a.type]}</span></div>
+        <div class="dr-sec">Usage &amp; adoption evidence</div>
+        ${this.usageBlock(a)}
+        <div class="dr-sec">The read</div>
+        <div class="efact"><div class="es">${this.esc(a.note)}</div><div class="eloc"><span class="file">10_ai-automation-use-cases</span> · usage feed</div></div>
+      </div>
+      <div class="dr-foot"><span class="dr-trust"><span class="dot ${a.readiness>=60?'teal':'amber'}"></span>${this.esc(a.posture)}</span><button class="btn" data-close>Close</button></div>`);
+  }
+
+  gapDrawer(idx) {
+    const g = this.D.GAPS[idx]; if (!g) return;
+    this.openDrawer(`<div class="dr-head"><div class="dr-eyebrow" style="color:${g.pri==='high'?'var(--canon-red)':'var(--canon-amber)'}"><span>Evidence gap · ${this.esc(g.area)}</span><button class="dr-close" data-close>✕</button></div><h3>${this.esc(g.missing)}</h3></div>
+      <div class="dr-body">
+        <div class="dr-grid">
+          <div><div class="k">Owner</div><div class="v sm">${this.esc(g.owner)}</div></div>
+          <div><div class="k">Due window</div><div class="v sm ${g.pri==='high'?'red':'amber'}">${this.esc(g.due)}</div></div>
+          <div><div class="k">Linked program</div><div class="v sm">${this.esc(g.prog)}</div></div>
+          <div><div class="k">Priority</div><div class="v sm ${g.pri==='high'?'red':'amber'}">${g.pri[0].toUpperCase()+g.pri.slice(1)}</div></div>
+        </div>
+        <div class="dr-sec">Why it matters</div><p class="rec-box">${this.esc(g.why)}</p>
+        <div class="dr-sec">Decision blocked until it arrives</div><p class="rec-box"><b>${this.esc(g.decision)}</b></p>
+        <div class="dr-sec">Audit trace</div>
+        <div class="efact"><div class="es">Source templates: SA08_ai-benefits-realization-usage, 14_metrics-outcomes, SA02_it-finance-budget-spend.</div><div class="eloc"><span class="file">evidence_registry</span> · owner ${this.esc(g.owner)} · confidence medium · attestation pending</div></div>
+      </div>
+      <div class="dr-foot"><span class="dr-trust"><span class="dot ${g.pri==='high'?'red':'amber'}"></span>Blocks: ${this.esc(g.decision)}</span><button class="btn" data-close>Close</button><button class="btn primary" data-goto="actions">Route to action</button></div>`);
+  }
+
+  actionDrawer(id) {
+    const a = this.D.ACT.find(x => x.id === id); if (!a) return;
+    const toneMap = { fund:'teal', fix:'amber', freeze:'red', stop:'red' };
+    this.openDrawer(`<div class="dr-head"><div class="dr-eyebrow" style="color:var(--${toneMap[a.lane]==='teal'?'canon-teal-dark':toneMap[a.lane]==='amber'?'canon-amber':'canon-red'})"><span>Action · ${this.esc(a.role)} · ${a.lane}</span><button class="dr-close" data-close>✕</button></div><h3>${this.esc(a.title)}</h3></div>
+      <div class="dr-body" id="tw-dr-body">
+        <div class="dr-grid">
+          <div><div class="k">Decision required</div><div class="v sm">${this.esc(a.decision)}</div></div>
+          <div><div class="k">Due window</div><div class="v sm ${toneMap[a.lane]==='red'?'red':toneMap[a.lane]==='amber'?'amber':'teal'}">${this.esc(a.due)}</div></div>
+          <div><div class="k">Linked program</div><div class="v sm">${this.esc(a.link)}</div></div>
+          <div><div class="k">Owner</div><div class="v sm">${this.esc(a.role)}</div></div>
+        </div>
+        <div class="dr-sec">Why now</div><p class="rec-box" style="color:var(--canon-gray-700)">${this.esc(a.why)}</p>
+        <div class="dr-sec">Evidence needed</div><p class="rec-box">${this.esc(a.evidence)}</p>
+        <div class="approve-note"><span class="dot amber"></span><span><b>Human approval required.</b> Approving routes this to <b>${this.esc(a.role)}</b> as a Move — “${this.esc(a.move)}” — with its evidence chain attached. Nothing acts automatically.</span></div>
+      </div>
+      <div class="dr-foot"><span class="dr-trust"><span class="dot ${toneMap[a.lane]}"></span>Owner · ${this.esc(a.role)}</span><button class="btn" data-close>Defer</button><button class="btn primary" id="tw-approve">Approve &amp; route</button></div>`);
+    const ap = document.getElementById('tw-approve');
+    if (ap) ap.onclick = () => {
+      document.getElementById('tw-dr-body').innerHTML = `<div class="move-done"><div class="md">●</div><h4>Routed to ${this.esc(a.role)}</h4><p>Created as a Move — “${this.esc(a.move)}” — with its evidence chain attached. The owner approves activation in Strategic Moves.</p></div>`;
+      document.getElementById('tw-drawer').querySelector('.dr-foot').innerHTML = `<span class="dr-trust"><span class="dot teal"></span>Move created · awaiting owner</span><button class="btn" data-close>Close</button><button class="btn primary" data-close>View in Moves</button>`;
+      document.getElementById('tw-drawer').querySelectorAll('[data-close]').forEach(el => el.onclick = () => this.closeDrawer());
+    };
+  }
+
+  // ════════════════ RECHARTS ════════════════
+  rc(id, kind) { this._charts.push({ id, kind }); return `<div class="rc" id="${id}" style="width:100%;height:100%"></div>`; }
+
+  mountCharts() {
+    if (!this._RC || !this._createRoot || !this._RCReact) return;
+    const live = new Set(this._charts.map(c => c.id));
+    Object.keys(this.roots).forEach(id => { if (!live.has(id)) { try { this.roots[id].unmount(); } catch(e){} delete this.roots[id]; } });
+    this._charts.forEach(c => {
+      const el = document.getElementById(c.id); if (!el) return;
+      if (this.roots[c.id]) { try { this.roots[c.id].unmount(); } catch(e){} }
+      const root = this._createRoot(el); this.roots[c.id] = root;
+      root.render(this['chart_'+c.kind]());
+    });
+  }
+
+  _twoLine(props) {
+    const h = this._RCReact.createElement; const { x, y, payload } = props;
+    const parts = String(payload.value).split('|');
+    return h('text', { x, y: y+11, textAnchor:'middle', fontFamily:'var(--abarva-mono)', fontSize:9.5, fill:'#5f5e5a' },
+      parts.map((p,i) => h('tspan', { key:i, x, dy: i===0?0:11 }, p)));
+  }
+  _tip() {
+    const h = this._RCReact.createElement, R = this._RC;
+    return h(R.Tooltip, { cursor:{ fill:'rgba(0,0,0,0.03)' }, contentStyle:{ fontFamily:'var(--abarva-sans)', fontSize:12, border:'1px solid var(--canon-border-strong)', borderRadius:8, boxShadow:'var(--shadow-pop)', padding:'8px 11px' }, labelStyle:{ fontFamily:'var(--abarva-mono)', fontSize:10, textTransform:'uppercase', letterSpacing:'0.05em', color:'#5f5e5a', marginBottom:4 } });
+  }
+  get RC() { return this._RC; }
+  get h() { return this._RCReact.createElement; }
+
+  chart_week() {
+    const h = this.h, R = this.RC;
+    const data = [
+      { name:'Promised', v:35.5, fill:'#b4b2a9', lab:'$35.5M' },
+      { name:'Usage-supported', v:14.2, fill:'#1d9e75', lab:'$14.2M' },
+      { name:'Finance-validated', v:3.8, fill:'#0f6e56', lab:'$3.8M' },
+      { name:'Claimable', v:0.06, fill:'#a32d2d', lab:'$0' },
+    ];
+    return h(R.ResponsiveContainer, { width:'100%', height:'100%' },
+      h(R.BarChart, { data, layout:'vertical', margin:{ top:2, right:56, left:0, bottom:2 }, barCategoryGap:'26%' },
+        h(R.XAxis, { type:'number', hide:true, domain:[0,35.5] }),
+        h(R.YAxis, { type:'category', dataKey:'name', width:118, axisLine:false, tickLine:false, tick:{ fontSize:11, fill:'#444441', fontFamily:'var(--abarva-sans)' } }),
+        h(R.Bar, { dataKey:'v', radius:[0,4,4,0], isAnimationActive:false },
+          data.map((d,i) => h(R.Cell, { key:i, fill:d.fill })),
+          h(R.LabelList, { dataKey:'lab', position:'right', style:{ fontFamily:'var(--abarva-mono)', fontSize:11.5, fontWeight:600, fill:'#2c2c2a' } })
+        )
+      )
+    );
+  }
+
+  chart_waterfall() {
+    const h = this.h, R = this.RC;
+    const data = [
+      { name:'Promised', base:0, v:35.5, fill:'#444441', lab:'$35.5M' },
+      { name:'No|usage', base:14.2, v:21.3, fill:'#a32d2d', lab:'−$21.3M' },
+      { name:'Usage|supported', base:0, v:14.2, fill:'#1d9e75', lab:'$14.2M' },
+      { name:'No finance|sign-off', base:3.8, v:10.4, fill:'#a32d2d', lab:'−$10.4M' },
+      { name:'Finance|validated', base:0, v:3.8, fill:'#0f6e56', lab:'$3.8M' },
+      { name:'Not|attested', base:0, v:3.8, fill:'#a32d2d', lab:'−$3.8M' },
+      { name:'Claimable', base:0, v:0.12, fill:'#b4b2a9', lab:'$0' },
+    ];
+    return h(R.ResponsiveContainer, { width:'100%', height:'100%' },
+      h(R.BarChart, { data, margin:{ top:26, right:6, left:4, bottom:6 }, barCategoryGap:'18%' },
+        h(R.CartesianGrid, { vertical:false, stroke:'var(--canon-border)' }),
+        h(R.XAxis, { dataKey:'name', interval:0, tickLine:false, axisLine:{ stroke:'var(--canon-border-strong)' }, height:40, tick:this._twoLine.bind(this) }),
+        h(R.YAxis, { tickFormatter:(v)=>'$'+v, tick:{ fontSize:10, fill:'#b4b2a9', fontFamily:'var(--abarva-mono)' }, axisLine:false, tickLine:false, width:34 }),
+        h(R.Bar, { dataKey:'base', stackId:'a', fill:'transparent', isAnimationActive:false }),
+        h(R.Bar, { dataKey:'v', stackId:'a', radius:[3,3,0,0], isAnimationActive:false },
+          data.map((d,i) => h(R.Cell, { key:i, fill:d.fill })),
+          h(R.LabelList, { dataKey:'lab', position:'top', style:{ fontFamily:'var(--abarva-serif)', fontSize:12.5, fontWeight:500, fill:'#2c2c2a' } })
+        )
+      )
+    );
+  }
+
+  chart_quad() {
+    const h = this.h, R = this.RC;
+    const col = { fund:'#1d9e75', fix:'#ba7517', freeze:'#a32d2d', stop:'#a32d2d', watch:'#b4b2a9' };
+    const laneName = { fund:'Fund', fix:'Fix', freeze:'Freeze', stop:'Stop', watch:'Watch' };
+    const maxStake = Math.max(...this.D.PROG.map(p=>p.stake));
+    const byLane = {};
+    this.D.PROG.forEach(p => { (byLane[p.lane] = byLane[p.lane] || []).push({ x:p.evid, y:p.stake, z:p.stake, id:p.id, name:p.name }); });
+    const series = Object.keys(byLane).map(l => h(R.Scatter, { key:l, name:laneName[l], data:byLane[l], fill:col[l], fillOpacity:0.85, stroke:'#fff', strokeWidth:1.5, isAnimationActive:false, onClick:(pt)=>this.progDrawer(pt.id) }));
+    return h(R.ResponsiveContainer, { width:'100%', height:'100%' },
+      h(R.ScatterChart, { margin:{ top:12, right:14, left:2, bottom:20 } },
+        h(R.CartesianGrid, { stroke:'var(--canon-border)' }),
+        h(R.XAxis, { type:'number', dataKey:'x', domain:[0,100], name:'Evidence maturity', tickCount:6, tick:{ fontSize:9.5, fill:'#b4b2a9', fontFamily:'var(--abarva-mono)' }, axisLine:{ stroke:'var(--canon-border-strong)' }, tickLine:false, label:{ value:'Evidence maturity →', position:'bottom', offset:6, style:{ fontFamily:'var(--abarva-mono)', fontSize:9.5, fill:'#5f5e5a', letterSpacing:'0.04em' } } }),
+        h(R.YAxis, { type:'number', dataKey:'y', domain:[0, Math.ceil(maxStake)], name:'Value at stake', tick:{ fontSize:9.5, fill:'#b4b2a9', fontFamily:'var(--abarva-mono)' }, axisLine:false, tickLine:false, width:26, tickFormatter:(v)=>'$'+v }),
+        h(R.ZAxis, { type:'number', dataKey:'z', range:[60,620] }),
+        h(R.ReferenceLine, { x:50, stroke:'var(--canon-border-strong)', strokeDasharray:'3 3' }),
+        h(R.ReferenceLine, { y:maxStake/2, stroke:'var(--canon-border-strong)', strokeDasharray:'3 3' }),
+        this._tip(),
+        ...series
+      )
+    );
+  }
+
+  chart_bubble() {
+    const h = this.h, R = this.RC;
+    const items = this.state2.aiFilter==='all' ? this.D.AI : this.D.AI.filter(a=>a.type===this.state2.aiFilter);
+    const col = { funded:'#0f6e56', embedded:'#0066CC', candidate:'#b4b2a9', governance:'#ba7517', platform:'#444441' };
+    const byType = {};
+    items.forEach(a => { (byType[a.type] = byType[a.type] || []).push({ x:a.readiness, y:a.value, z:a.spend, n:a.n, name:a.name }); });
+    const series = Object.keys(byType).map(t => h(R.Scatter, { key:t, name:t, data:byType[t], fill:col[t], fillOpacity:0.82, stroke:'#fff', strokeWidth:1.5, isAnimationActive:false, onClick:(pt)=>this.aiDrawer(pt.n) },
+      h(R.LabelList, { dataKey:'n', position:'center', style:{ fontFamily:'var(--abarva-mono)', fontSize:10.5, fontWeight:700, fill:'#fff', pointerEvents:'none' } })));
+    return h(R.ResponsiveContainer, { width:'100%', height:'100%' },
+      h(R.ScatterChart, { margin:{ top:12, right:16, left:2, bottom:20 } },
+        h(R.CartesianGrid, { stroke:'var(--canon-border)' }),
+        h(R.XAxis, { type:'number', dataKey:'x', domain:[0,100], name:'Readiness', tick:{ fontSize:9.5, fill:'#b4b2a9', fontFamily:'var(--abarva-mono)' }, axisLine:{ stroke:'var(--canon-border-strong)' }, tickLine:false, label:{ value:'Readiness →', position:'bottom', offset:6, style:{ fontFamily:'var(--abarva-mono)', fontSize:9.5, fill:'#5f5e5a', letterSpacing:'0.04em' } } }),
+        h(R.YAxis, { type:'number', dataKey:'y', domain:[0,100], name:'Value potential', tick:{ fontSize:9.5, fill:'#b4b2a9', fontFamily:'var(--abarva-mono)' }, axisLine:false, tickLine:false, width:26, label:{ value:'Value →', angle:-90, position:'insideLeft', offset:14, style:{ fontFamily:'var(--abarva-mono)', fontSize:9.5, fill:'#5f5e5a', letterSpacing:'0.04em' } } }),
+        h(R.ZAxis, { type:'number', dataKey:'z', range:[120,900], name:'AI spend' }),
+        h(R.ReferenceLine, { x:50, stroke:'var(--canon-border-strong)', strokeDasharray:'3 3' }),
+        h(R.ReferenceLine, { y:50, stroke:'var(--canon-border-strong)', strokeDasharray:'3 3' }),
+        this._tip(),
+        ...series
+      )
+    );
+  }
+
+  chart_lens() {
+    const h = this.h, R = this.RC;
+    const col = { funded:'#0f6e56', embedded:'#0066CC', candidate:'#b4b2a9', governance:'#ba7517', platform:'#444441' };
+    const data = [...this.D.LENS].sort((a,b)=>b.v-a.v).map(l => ({ name:l.cat, v:l.v, fill:col[l.type], lab:'$'+l.v.toFixed(1)+'M' }));
+    return h(R.ResponsiveContainer, { width:'100%', height:'100%' },
+      h(R.BarChart, { data, layout:'vertical', margin:{ top:2, right:52, left:0, bottom:2 }, barCategoryGap:'22%' },
+        h(R.XAxis, { type:'number', hide:true, domain:[0, Math.ceil(Math.max(...data.map(d=>d.v)))] }),
+        h(R.YAxis, { type:'category', dataKey:'name', width:150, axisLine:false, tickLine:false, tick:{ fontSize:12, fill:'#444441', fontFamily:'var(--abarva-sans)' } }),
+        this._tip(),
+        h(R.Bar, { dataKey:'v', radius:[0,3,3,0], isAnimationActive:false },
+          data.map((d,i) => h(R.Cell, { key:i, fill:d.fill })),
+          h(R.LabelList, { dataKey:'lab', position:'right', style:{ fontFamily:'var(--abarva-mono)', fontSize:11.5, fontWeight:600, fill:'#2c2c2a' } })
+        )
+      )
+    );
+  }
+
+  renderVals() { return {}; }
+}
+
+document.addEventListener('DOMContentLoaded', () => new TowerCommandCenterDesign().componentDidMount());
+</script>
+</body>
+</html>
