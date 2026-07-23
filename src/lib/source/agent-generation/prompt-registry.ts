@@ -224,6 +224,35 @@ const COMMERCIAL_LEVERAGE_READINESS_CHECKS = [
   "Commercial exception creates buyer risk",
 ] as const;
 
+const PRICING_NORMALIZATION_COST_SECTIONS = [
+  "one-time implementation and transition charges",
+  "recurring run charges",
+  "transformation / modernization charges",
+  "tooling and platform charges",
+  "governance and reporting charges",
+  "pass-through and third-party charges",
+  "optional service charges",
+  "change-order unit rates",
+  "retained company costs",
+  "volume-based price bands",
+  "productivity credits / gainshare",
+  "SLA credits and service-credit caps",
+] as const;
+
+const PRICING_TRAP_CATEGORIES = [
+  "non-comparable scope",
+  "hidden transition fee",
+  "unpriced productivity claim",
+  "weak SLA credit economics",
+  "pass-through / third-party exposure",
+  "FX, tax, or inflation exposure",
+  "volume-band trap",
+  "rate-card or staffing-mix trap",
+  "tooling/license double count",
+  "retained-cost omission",
+  "contract exception with price impact",
+] as const;
+
 function formatVendorResponseControlSections(): string {
   return VENDOR_RESPONSE_CONTROL_SECTIONS.map((section, index) =>
     [
@@ -237,6 +266,18 @@ function formatVendorResponseControlSections(): string {
 function formatCommercialLeverageReadinessChecks(): string {
   return COMMERCIAL_LEVERAGE_READINESS_CHECKS.map(
     (check, index) => `${index + 1}. ${check}`,
+  ).join("\n");
+}
+
+function formatPricingCostSections(): string {
+  return PRICING_NORMALIZATION_COST_SECTIONS.map(
+    (section, index) => `${index + 1}. ${section}`,
+  ).join("\n");
+}
+
+function formatPricingTrapCategories(): string {
+  return PRICING_TRAP_CATEGORIES.map(
+    (category, index) => `${index + 1}. ${category}`,
   ).join("\n");
 }
 
@@ -983,6 +1024,306 @@ Requirements:
 
       lines.push(
         "Draft the Ticket History Synthesis per the system prompt requirements. Prioritize uploaded SLA performance, incident log, and ITSM evidence; where that evidence exists, derive every SLA figure and volume from it. Where it is absent, construct a plausible baseline from the event context and mark every row [ASSUMED — client to validate]. Do not expose internal product terms.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d21_assumption_set: {
+    artifactCode: "d21_assumption_set",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d05_scope_memo"],
+    upstreamOptional: [
+      "d01_strategy_memo",
+      "d02_value_target",
+      "d04_app_inv",
+      "d07_ticket_synth",
+      "d09_rfp_pack",
+      "d11_response_checklist",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Locked Assumptions Record (artifact d21_assumption_set). This is the commercial control document that must be approved before pricing normalization can be trusted. It is not a generic assumption list; it is the sponsor/finance basis that lets every vendor price be compared on the same field.
+
+Required structural sections:
+## §1 · Lock decision and approval status
+## §2 · Normalization assumptions table
+## §3 · Scope and volume basis
+## §4 · Commercial treatment rules
+## §5 · Evidence basis and unresolved gaps
+## §6 · Change-control rule after lock
+
+Required assumption families:
+- Time horizon and TCO view: 3-year / 5-year basis, run/change treatment, transition period.
+- Currency / tax / FX: currency basis, rate snapshot date, tax handling, FX sensitivity rule.
+- Escalators: annual caps, index reference, labor/rate-card escalation, tool/license escalation.
+- Volume bands: ticket volume, users, devices, applications, servers, sites, storage, consumption units, and above/below-band treatment.
+- Scope-tied assumptions: service hours, on-call premiums, geography/language coverage, retained team, third-party/pass-through treatment.
+- Productivity and SLA economics: productivity-credit treatment, service-credit cap, excluded-cost treatment.
+
+Writing requirements:
+- Lead with the lock decision: what is ready to lock, what is conditional, and who must approve it.
+- §2 must be a table: Assumption | Locked value / rule | Evidence basis | Owner | Impact if changed | Status.
+- Use exact values only when present in upstream artifacts or uploaded evidence. If a value is missing, mark it "Open — owner to confirm" and explain the downstream pricing impact.
+- Do not fabricate vendor prices, market benchmarks, FX rates, or volume numbers.
+- End with a change-control rule: any post-lock change must create a named pricing adjustment and a sponsor/finance approval trail.
+- Internal working artifact language is acceptable, but do not expose raw product implementation terms such as tenant keys, table names, artifact ids, chunks, or model/provider names.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        ctx.event.estimatedValueUsd
+          ? `Intake value estimate: $${ctx.event.estimatedValueUsd.toLocaleString()}`
+          : "Intake value estimate: (not provided)",
+        "",
+        `Trigger / why-now: ${ctx.event.triggerDescription ?? "(not provided)"}`,
+        `Scope description: ${ctx.event.scopeDescription || "(not provided)"}`,
+        "",
+        "— REQUIRED UPSTREAM —",
+        "Scope Memo (d05_scope_memo) — primary source for scope-tied assumptions:",
+        upstream.d05_scope_memo ??
+          "(NOT YET AUTHORED — do not fabricate; this artifact should be blocked until scope exists)",
+        "",
+        "— OPTIONAL UPSTREAM CONTEXT —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; treat related assumptions as open unless uploaded evidence supports them)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d01_strategy_memo", "Sourcing Strategy Memo", "mandate and rigor");
+      bindOptional("d02_value_target", "Value Target Brief", "value mechanics and confidence");
+      bindOptional("d04_app_inv", "Application Inventory", "application/system counts and criticality");
+      bindOptional("d07_ticket_synth", "Ticket History Synthesis", "volume and SLA basis");
+      bindOptional("d09_rfp_pack", "RFP Package", "pricing instructions already issued");
+      bindOptional("d11_response_checklist", "Vendor Response Control Pack", "required pricing fields");
+
+      lines.push("— PRICING EVIDENCE STATE SUMMARY —");
+      lines.push(formatEvidenceStates(ctx));
+      lines.push("");
+      lines.push("— UPLOADED / PARSED PRICING EVIDENCE —");
+      lines.push(formatUploadedEvidence(ctx));
+      lines.push("");
+
+      if (ctx.archetypeAdvisory) {
+        lines.push(
+          "— SOURCING-ADVISOR PLAYBOOK (archetype-specific commercial intelligence) —",
+          "",
+          ctx.archetypeAdvisory,
+          "",
+        );
+      }
+
+      lines.push(
+        "Draft the Locked Assumptions Record per the system prompt. Make it usable by finance and sourcing as the approval basis for the Pricing Normalization Workbook. Do not invent missing values; convert missing values into named owner actions with downstream pricing impact.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d19_pricing_workbook: {
+    artifactCode: "d19_pricing_workbook",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: 48_000,
+    upstreamRequired: ["d21_assumption_set"],
+    upstreamOptional: [
+      "d01_strategy_memo",
+      "d02_value_target",
+      "d05_scope_memo",
+      "d09_rfp_pack",
+      "d11_response_checklist",
+      "d13_vendor_responses",
+      "d15_response_completeness",
+      "d16_scorecard",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Pricing Normalization Workbook (artifact d19_pricing_workbook). This is the finance-grade comparison spine for the event: it converts vendor pricing into normalized TCO, exposes adjustment logic, and makes commercial tradeoffs ready for evaluation, BAFO, and the decision brief.
+
+Required structural sections:
+## §1 · Executive pricing readout
+## §2 · Locked assumption basis
+## §3 · Per-vendor normalized TCO matrix
+## §4 · Cost-category bridge
+## §5 · Normalization adjustments
+## §6 · Sensitivity and scenario view
+## §7 · Pricing gaps and BAFO implications
+## §8 · Finance sign-off readiness
+
+Cost sections the workbook must explicitly cover:
+${formatPricingCostSections()}
+
+Writing requirements:
+- §1 leads with the pricing insight: which vendor appears strongest, which price is not comparable yet, and what the next commercial move should be.
+- §3 must be a table: Vendor | Submitted TCO | Normalized TCO | One-time | Run | Transition | Transformation/tooling | Retained/pass-through | Adjustments | Confidence.
+- §4 must bridge submitted price to normalized TCO by cost category; include "not provided" rather than guessing.
+- §5 must explain each adjustment with rationale, evidence basis, owner, and whether it is a correction, assumption alignment, or commercial challenge.
+- §6 must include scenario sensitivity: base case, volume downside/upside, escalator/FX exposure, transition overrun, productivity-credit realization.
+- §7 must produce BAFO-ready commercial questions for every material gap or trap.
+- Never invent vendor names, vendor prices, TCO, rates, FX, or savings. Use only upstream/vendor-response/uploaded evidence; otherwise state the gap and what must be collected.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.rigor ? `Rigor: ${ctx.event.rigor}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        ctx.event.estimatedValueUsd
+          ? `Intake value estimate: $${ctx.event.estimatedValueUsd.toLocaleString()}`
+          : "Intake value estimate: (not provided)",
+        "",
+        "— REQUIRED UPSTREAM —",
+        "Locked Assumptions Record (d21_assumption_set):",
+        upstream.d21_assumption_set ??
+          "(NOT YET AUTHORED — do not fabricate; pricing normalization must be blocked until assumptions are locked)",
+        "",
+        "— OPTIONAL UPSTREAM EVENT CHAIN —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer missing pricing facts from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d01_strategy_memo", "Sourcing Strategy Memo", "mandate and value at stake");
+      bindOptional("d02_value_target", "Value Target Brief", "value target and confidence bands");
+      bindOptional("d05_scope_memo", "Scope Memo", "scope and service boundary");
+      bindOptional("d09_rfp_pack", "RFP Package", "pricing instructions issued to vendors");
+      bindOptional("d11_response_checklist", "Vendor Response Control Pack", "pricing fields required");
+      bindOptional("d13_vendor_responses", "Vendor Responses", "submitted price evidence");
+      bindOptional("d15_response_completeness", "Response Completeness Report", "missing response fields");
+      bindOptional("d16_scorecard", "Evaluation Scorecard", "non-price context for BAFO questions");
+
+      lines.push("— PRICING EVIDENCE STATE SUMMARY —");
+      lines.push(formatEvidenceStates(ctx));
+      lines.push("");
+      lines.push("— UPLOADED / PARSED PRICING EVIDENCE —");
+      lines.push(formatUploadedEvidence(ctx));
+      lines.push("");
+      lines.push("— REQUIRED COST SECTIONS —");
+      lines.push(formatPricingCostSections());
+      lines.push("");
+
+      if (ctx.archetypeAdvisory) {
+        lines.push(
+          "— SOURCING-ADVISOR PLAYBOOK (archetype-specific commercial intelligence) —",
+          "",
+          ctx.archetypeAdvisory,
+          "",
+        );
+      }
+
+      lines.push(
+        "Draft the Pricing Normalization Workbook per the system prompt. If vendor pricing evidence is not present, produce the workbook structure with explicit gaps, owner actions, and BAFO questions; do not invent prices or rankings.",
+      );
+      return lines.join("\n");
+    },
+  },
+
+  d20_trap_log: {
+    artifactCode: "d20_trap_log",
+    version: 1,
+    model: BOARD_GRADE_MODEL,
+    maxTokens: DEFAULT_MAX_TOKENS,
+    upstreamRequired: ["d21_assumption_set", "d19_pricing_workbook"],
+    upstreamOptional: [
+      "d05_scope_memo",
+      "d11_response_checklist",
+      "d13_vendor_responses",
+      "d15_response_completeness",
+      "d16_scorecard",
+    ],
+    systemPrompt: `${AVA_SOURCE_ADVISOR_VOICE}
+
+You are drafting the Pricing Trap Log (artifact d20_trap_log). This is the commercial-risk control for the pricing stage: it identifies the pricing issues that can distort vendor ranking, create BAFO leverage, or hide post-award leakage.
+
+Required structural sections:
+## §1 · Trap summary and decision impact
+## §2 · Open pricing traps
+## §3 · Resolved / accepted traps
+## §4 · Trap-to-BAFO map
+## §5 · Watchlist and post-award leakage controls
+
+Trap categories to consider:
+${formatPricingTrapCategories()}
+
+Writing requirements:
+- §1 states the two or three traps most likely to change the decision, not a long generic risk list.
+- §2 must be a table: Trap ID | Vendor | Category | Severity P0/P1/P2 | Evidence basis | Estimated materiality | Decision impact | Resolution path | Owner | Status.
+- P0 means materially changes ranking or award viability; P1 means meaningful BAFO/commercial impact; P2 means monitor or contract-control item.
+- Every trap must tie to the pricing workbook, locked assumption set, vendor response evidence, or an explicit missing evidence gap. No unsupported traps.
+- §4 maps each open P0/P1 trap to a precise BAFO question or commercial ask.
+- §5 names traps that should become contract controls if accepted rather than resolved.`,
+    buildUserMessage: (ctx, upstream) => {
+      const lines: string[] = [
+        `Company: ${ctx.tenantName}`,
+        `Event: ${ctx.event.name} (${ctx.event.code})`,
+        ctx.event.archetype ? `Archetype: ${ctx.event.archetype}` : null,
+        ctx.event.owner ? `Decision owner: ${ctx.event.owner}` : null,
+        "",
+        "— REQUIRED UPSTREAM —",
+        "Locked Assumptions Record (d21_assumption_set):",
+        upstream.d21_assumption_set ??
+          "(NOT YET AUTHORED — do not fabricate; trap log must be blocked until assumptions exist)",
+        "",
+        "Pricing Normalization Workbook (d19_pricing_workbook):",
+        upstream.d19_pricing_workbook ??
+          "(NOT YET AUTHORED — do not fabricate; trap log must be blocked until normalized pricing exists)",
+        "",
+        "— OPTIONAL UPSTREAM CONTEXT —",
+      ].filter((line): line is string => line !== null);
+
+      const bindOptional = (code: string, label: string, note: string) => {
+        lines.push(`${label} (${code}) — ${note}:`);
+        lines.push(
+          upstream[code] ??
+            "(not authored; do not infer missing trap evidence from this artifact)",
+        );
+        lines.push("");
+      };
+
+      bindOptional("d05_scope_memo", "Scope Memo", "scope ambiguity and change-order risk");
+      bindOptional("d11_response_checklist", "Vendor Response Control Pack", "required fields vendors were asked to complete");
+      bindOptional("d13_vendor_responses", "Vendor Responses", "submitted claims and exceptions");
+      bindOptional("d15_response_completeness", "Response Completeness Report", "missing response fields");
+      bindOptional("d16_scorecard", "Evaluation Scorecard", "non-price tradeoffs that affect trap severity");
+
+      lines.push("— PRICING EVIDENCE STATE SUMMARY —");
+      lines.push(formatEvidenceStates(ctx));
+      lines.push("");
+      lines.push("— UPLOADED / PARSED PRICING EVIDENCE —");
+      lines.push(formatUploadedEvidence(ctx));
+      lines.push("");
+      lines.push("— TRAP CATEGORIES TO TEST —");
+      lines.push(formatPricingTrapCategories());
+      lines.push("");
+
+      if (ctx.archetypeAdvisory) {
+        lines.push(
+          "— SOURCING-ADVISOR PLAYBOOK (archetype-specific commercial intelligence) —",
+          "",
+          ctx.archetypeAdvisory,
+          "",
+        );
+      }
+
+      lines.push(
+        "Draft the Pricing Trap Log per the system prompt. Rank by decision impact and BAFO leverage. If pricing evidence is thin, make the missing data itself a trap with owner, materiality unknown, and a resolution path rather than inventing materiality.",
       );
       return lines.join("\n");
     },

@@ -56,6 +56,9 @@ describe("Source artifact prompt registry provider config", () => {
         "d05_scope_memo",
         "d09_rfp_pack",
         "d11_response_checklist",
+        "d19_pricing_workbook",
+        "d20_trap_log",
+        "d21_assumption_set",
       ]),
     );
   });
@@ -178,6 +181,105 @@ describe("Source artifact prompt registry provider config", () => {
     );
     expect(message).toContain("every section §1 through §11 must appear");
     expect(message).toContain("§7–§11 must not be sacrificed");
+  });
+
+  it("configures the pricing-stage prompts as a sequenced workflow", () => {
+    const d21 = getPromptTemplate("d21_assumption_set");
+    const d19 = getPromptTemplate("d19_pricing_workbook");
+    const d20 = getPromptTemplate("d20_trap_log");
+
+    expect(d21).not.toBeNull();
+    expect(d19).not.toBeNull();
+    expect(d20).not.toBeNull();
+    expect(d21?.upstreamRequired).toEqual(["d05_scope_memo"]);
+    expect(d19?.upstreamRequired).toEqual(["d21_assumption_set"]);
+    expect(d20?.upstreamRequired).toEqual([
+      "d21_assumption_set",
+      "d19_pricing_workbook",
+    ]);
+    expect(d21?.systemPrompt).toContain("Lock decision and approval status");
+    expect(d19?.systemPrompt).toContain("Per-vendor normalized TCO matrix");
+    expect(d19?.systemPrompt).toContain("productivity credits / gainshare");
+    expect(d20?.systemPrompt).toContain("Trap-to-BAFO map");
+    expect(d20?.systemPrompt).toContain("unpriced productivity claim");
+  });
+
+  it("blocks pricing workbook generation until assumptions are locked", () => {
+    const d19 = getPromptTemplate("d19_pricing_workbook");
+    const ctx = makeD09Context([
+      "Vendor_A_Pricing_Response.xlsx",
+      "Vendor_B_Pricing_Response.xlsx",
+    ]);
+    ctx.artifactStates = [
+      makeArtifactState("d05_scope_memo", "# Scope\n\nApproved scope."),
+    ];
+
+    expect(findMissingUpstreamCodes(d19!, ctx)).toEqual([
+      "d21_assumption_set",
+    ]);
+
+    ctx.artifactStates.push(
+      makeArtifactState(
+        "d21_assumption_set",
+        "# Locked Assumptions\n\nApproved finance basis.",
+      ),
+    );
+    expect(findMissingUpstreamCodes(d19!, ctx)).toEqual([]);
+  });
+
+  it("binds pricing evidence and upstream controls into the pricing workbook prompt", () => {
+    const d19 = getPromptTemplate("d19_pricing_workbook");
+    const ctx = makeD09Context([
+      "Vendor_A_Pricing_Response.xlsx",
+      "Vendor_B_Pricing_Response.xlsx",
+    ]);
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d21_assumption_set",
+        "# Locked Assumptions\n\n3-year TCO and volume bands locked.",
+      ),
+    ];
+
+    const message = d19?.buildUserMessage(ctx, {
+      d21_assumption_set:
+        "# Locked Assumptions\n\n3-year TCO and volume bands locked.",
+      d11_response_checklist:
+        "# Vendor Response Control Pack\n\nStructured pricing workbook required.",
+      d13_vendor_responses:
+        "# Vendor Responses\n\nVendor A and Vendor B submitted pricing files.",
+    });
+
+    expect(message).toContain("Company: SkyHarbor Air");
+    expect(message).toContain("Locked Assumptions Record (d21_assumption_set)");
+    expect(message).toContain("Vendor Response Control Pack");
+    expect(message).toContain("Vendor_A_Pricing_Response.xlsx");
+    expect(message).toContain("EVID-SRC-PRICE-ASSUMPTIONS");
+    expect(message).toContain("volume-based price bands");
+    expect(message).toContain(
+      "If vendor pricing evidence is not present, produce the workbook structure with explicit gaps",
+    );
+  });
+
+  it("requires the pricing workbook before drafting the trap log", () => {
+    const d20 = getPromptTemplate("d20_trap_log");
+    const ctx = makeD09Context([]);
+    ctx.artifactStates = [
+      makeArtifactState("d21_assumption_set", "# Assumptions\n\nLocked."),
+    ];
+
+    expect(findMissingUpstreamCodes(d20!, ctx)).toEqual([
+      "d19_pricing_workbook",
+    ]);
+
+    const message = d20?.buildUserMessage(ctx, {
+      d21_assumption_set: "# Assumptions\n\nLocked.",
+      d19_pricing_workbook:
+        "# Pricing Workbook\n\nVendor A has unpriced transition fees.",
+    });
+    expect(message).toContain("Pricing Trap Log");
+    expect(message).toContain("Trap categories to test".toUpperCase());
+    expect(message).toContain("hidden transition fee");
+    expect(message).toContain("Vendor A has unpriced transition fees");
   });
 });
 
