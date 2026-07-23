@@ -799,6 +799,39 @@ worked examples from the design conversation.
 
 ---
 
+### MOVES-UI-008 — aVa chat rich-answer rendering (charts/tables in Moves chat)
+
+- **Problem statement**: Moves' "Ask aVa" chat rendered every turn as plain text, discarding a
+  structured `artifacts` payload the shared agent route already returned — a real,
+  production-proven chart/table rendering pipeline (`AgentAnswerRenderer`/`composeAvaAnswer`,
+  already live on Tower/Intelligence) existed and was simply never wired to Moves. Identified in
+  the 2026-07-22 six-dimension Moves audit (`MOVES_E2E_AUDIT_REMEDIATION_PROMPT_2026-07-22.md`,
+  Phase 1 item 1.3).
+- **Resolution**: PR #5419 ("Moves aVa rich answer rendering") added the packet builder and
+  client-side rendering; live proof surfaced a real streaming bug (renderer waited for the
+  stream to close before showing the chart/table), fixed by PR #5424 ("Moves rich aVa answer
+  visible during streaming") — chart/table now render while the answer is still streaming in.
+  Merge `06d0ea39a`, ACA revision `ca-abarva-web-lab-eastus--m06d0ea39`, digest
+  `sha256:f39cd85ce48ff07dba56e33ed7da255aab05cb5c079cdb72cb0b868ecccffbd3`.
+- **Independent verification this session**: (1) runtime invariant — ACA template image matches
+  the 100%-traffic revision exactly; (2) commit ancestry —
+  `git merge-base --is-ancestor 06d0ea39a27f7b189727b50b5dcf21d48228265f origin/main` confirmed;
+  (3) live signed-in check — on a **different tenant/Move than Codex's own proof** (Healthcare
+  Provider tenant, "AI MEMBER ASSIST TRANSFORMATION", P2), asked "How close is this phase to
+  passing the gate, broken down by criteria?" and got back a real, honest structured answer: a
+  criteria table (5 real gate criteria, matching known live gate state — "Discovery synthesis
+  report signed off: Open"), a horizontal-bar "Gate readiness by phase" chart across all 6
+  phases, a "Phase readiness scorecard" decision table (Met/Total/Open per phase), and a real
+  P3-evidence-needs table — plus an honest caveat ("the evidence panel shows zero uploaded
+  items") rather than fabricated confidence. No console errors. Cross-tenant reproduction is
+  stronger evidence than re-checking Codex's own proof Move would have been.
+- **Status**: `Runtime Proven` (2026-07-23)
+- **Explicit non-goals carried forward**: no schema/gate-logic change, no data-plane mutation, no
+  tenant active-pointer work (per Codex's own report).
+- **Discovered from**: 2026-07-22 six-dimension Moves audit, Phase 1 item 1.3.
+
+---
+
 ## Architecture decisions (reference — see design doc for full detail)
 
 Recorded here for durability; full rationale lives in
