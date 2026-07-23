@@ -453,7 +453,7 @@ function AiPortfolioView({
                 <span style={{ ...decisionNumberStyle, background: laneMeta[row.decisionLane].color }}>{row.plotId}</span>
                 <div>
                   <b>{row.displayName}</b>
-                  <p>{row.vendorName ?? row.systemName ?? row.aiSpendCategory ?? "Owner pending"} - {row.proofLabel}</p>
+                  <p>{row.domainLabel} - {row.proofLabel}</p>
                 </div>
                 <strong style={{ color: laneMeta[row.decisionLane].color }}>{laneMeta[row.decisionLane].verb}</strong>
               </div>
@@ -666,6 +666,7 @@ interface AiPlotRow extends TowerMartAiPortfolioItem {
   valuePlot: number;
   readinessPlot: number;
   displayName: string;
+  domainLabel: string;
   proofLabel: string;
 }
 
@@ -989,6 +990,7 @@ function buildAiPlotRows(rows: TowerMartAiPortfolioItem[]): AiPlotRow[] {
       ...row,
       plotId: index + 1,
       displayName: shortAiName(row.itemName),
+      domainLabel: aiDomainLabel(row),
       proofLabel: aiProofLabel(row),
       z: Math.max(aiEconomicSignal(row), 1),
       readinessPlot: clamp(baseX + offset.x, 8, 92),
@@ -1018,7 +1020,7 @@ function buildAiCategorySpend(rows: TowerMartAiPortfolioItem[]): AiCategorySpend
     byCategory.set(key, current);
   }
   const palette = [theme.teal, theme.navy, theme.green, theme.amber, "#5b7cfa", "#9567cf", "#475569"];
-  return Array.from(byCategory.entries())
+  const spendRows = Array.from(byCategory.entries())
     .map(([key, value], index) => ({
       key,
       label: shortChartLabel(humanize(key)),
@@ -1029,6 +1031,24 @@ function buildAiCategorySpend(rows: TowerMartAiPortfolioItem[]): AiCategorySpend
     }))
     .sort((a, b) => b.spend - a.spend)
     .slice(0, 7);
+  if (spendRows.length > 0) return spendRows;
+
+  const byLens = new Map<string, number>();
+  for (const row of rows) {
+    const label = candidatePortfolioLens(row);
+    byLens.set(label, (byLens.get(label) ?? 0) + 1);
+  }
+  return Array.from(byLens.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 7)
+    .map(([label, count], index) => ({
+      key: label,
+      label: shortChartLabel(label),
+      spend: count,
+      count,
+      displayValue: `${formatWhole(count)} item${count === 1 ? "" : "s"}`,
+      color: palette[index % palette.length],
+    }));
 }
 
 function aiEconomicSignal(row: TowerMartAiPortfolioItem): number {
@@ -1070,6 +1090,28 @@ function aiProofLabel(row: TowerMartAiPortfolioItem): string {
   if (row.usageActual !== null || row.adoptionRatePct !== null) return "usage signal loaded";
   if (row.approvedFundingUsd > 0 || row.aiTaggedSpendUsd > 0) return "funded, proof pending";
   return "candidate, not funded";
+}
+
+function aiDomainLabel(row: TowerMartAiPortfolioItem): string {
+  const vendorOrSystem = row.vendorName ?? row.systemName;
+  if (vendorOrSystem && !/application owners|business applications/i.test(vendorOrSystem)) {
+    return vendorOrSystem;
+  }
+  if (row.aiSpendCategory && row.aiSpendCategory !== "not_ai") return humanize(row.aiSpendCategory);
+  if (row.aiSpendType && row.aiSpendType !== "none") return humanize(row.aiSpendType);
+  return candidatePortfolioLens(row);
+}
+
+function candidatePortfolioLens(row: TowerMartAiPortfolioItem): string {
+  const name = `${row.itemName} ${row.systemName ?? ""} ${row.vendorName ?? ""}`.toLowerCase();
+  if (/contact|member|call center|crm/.test(name)) return "Member and contact center";
+  if (/clinical|ehr|claims|pharmacy|prior auth|authorization/.test(name)) return "Clinical and claims";
+  if (/finance|close|payment|cost|workday|erp/.test(name)) return "Finance and ERP";
+  if (/data|lakehouse|governance|llm|analytics|bi/.test(name)) return "Data and AI foundation";
+  if (/developer|code|sdlc|github|copilot/.test(name)) return "Developer productivity";
+  if (/service|itsm|snow|incident/.test(name)) return "Service operations";
+  if (/cyber|security|identity|phi|risk|control/.test(name)) return "Risk and controls";
+  return "Candidate opportunity";
 }
 
 function shortAiName(value: string): string {
