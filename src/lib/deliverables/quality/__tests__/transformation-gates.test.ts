@@ -79,6 +79,16 @@ describe("transformation gates (W1)", () => {
     expect(r).toHaveLength(0);
   });
 
+  it("does not flag a rendered register table flattened into visible text", () => {
+    const r = scanMachinery(
+      base({
+        narrativeText:
+          "Recommend proceeding with the governed design. Source Register [n] Source Family Confidence As of [1] Discovery KYC Controls high 2026-07-23",
+      }),
+    );
+    expect(r).toHaveLength(0);
+  });
+
   it("still flags Source Register when the body discusses the machinery", () => {
     const r = scanMachinery(
       base({
