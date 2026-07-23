@@ -185,6 +185,7 @@ const GUIDELINES_BY_CODE: Partial<Record<string, string>> = {
   d29_transition_plan: "Milestones, KT, go/no-go checkpoints, owner and risk controls.",
   d31_kt_evidence: "Session evidence; attendees, receiving-team signoff, open KT gaps.",
   d32_value_ledger: "Projected to committed to measured value, owner, evidence, Tower handoff.",
+  d33_governance_review: "Quarterly value/SLA review, issues, decisions, rebaseline triggers.",
 };
 
 export function buildSourceArtifactLifecycleSummary(

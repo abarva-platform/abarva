@@ -68,6 +68,8 @@ describe("Source artifact prompt registry provider config", () => {
         "d29_transition_plan",
         "d30_checkpoint_log",
         "d31_kt_evidence",
+        "d32_value_ledger",
+        "d33_governance_review",
       ]),
     );
   });
@@ -450,6 +452,106 @@ describe("Source artifact prompt registry provider config", () => {
     expect(ktMessage).toContain("Knowledge-Transfer Evidence");
     expect(ktMessage).toContain("Runbook_Review_Notes.docx");
     expect(ktMessage).toContain("do not invent sessions, attendees, runbook verification, or receiving-team sign-off");
+  });
+
+  it("configures the value-stage prompts as a governed workflow", () => {
+    const d32 = getPromptTemplate("d32_value_ledger");
+    const d33 = getPromptTemplate("d33_governance_review");
+
+    expect(d32).not.toBeNull();
+    expect(d33).not.toBeNull();
+    expect(d32?.upstreamRequired).toEqual(["d29_transition_plan"]);
+    expect(d33?.upstreamRequired).toEqual(["d32_value_ledger"]);
+    expect(d32?.systemPrompt).toContain("Value Realization Ledger");
+    expect(d32?.systemPrompt).toContain("projected value is not committed value");
+    expect(d32?.systemPrompt).toContain("Tower handoff");
+    expect(d33?.systemPrompt).toContain("Quarterly Governance Note");
+    expect(d33?.systemPrompt).toContain("must not pretend a review period has closed");
+    expect(d33?.systemPrompt).toContain("does not approve a rebaseline");
+  });
+
+  it("blocks value ledger generation until the transition roadmap exists", () => {
+    const d32 = getPromptTemplate("d32_value_ledger");
+    const ctx = makeD09Context(["Value_Baseline.xlsx"]);
+
+    expect(findMissingUpstreamCodes(d32!, ctx)).toEqual([
+      "d29_transition_plan",
+    ]);
+
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d29_transition_plan",
+        "# Transition\n\nTransition handoff to value measurement is conditional.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d32!, ctx)).toEqual([]);
+  });
+
+  it("binds value evidence without inventing realized value or Tower ingestion", () => {
+    const d32 = getPromptTemplate("d32_value_ledger");
+    const ctx = makeD09Context([
+      "Value_Baseline.xlsx",
+      "Finance_Measurement_Window.md",
+      "Tower_Handoff_Checklist.csv",
+    ]);
+
+    const message = d32?.buildUserMessage(ctx, {
+      d29_transition_plan:
+        "# Transition\n\nService acceptance complete; first measurement window pending.",
+      d02_value_target:
+        "# Value Target\n\nProjected value range is $4M-$7M; medium confidence.",
+      d19_pricing_workbook:
+        "# Pricing\n\nNormalized run-rate baseline is pending finance sign-off.",
+      d31_kt_evidence:
+        "# KT\n\nRunbook verified for billing workflow; reporting handoff open.",
+    });
+
+    expect(message).toContain("Company: SkyHarbor Air");
+    expect(message).toContain("Value Realization Ledger");
+    expect(message).toContain("Transition Roadmap (d29_transition_plan)");
+    expect(message).toContain("Value_Baseline.xlsx");
+    expect(message).toContain("Tower_Handoff_Checklist.csv");
+    expect(message).toContain("projected → committed → measured → realized");
+    expect(message).toContain(
+      "do not invent committed, measured, or realized value",
+    );
+    expect(message).toContain(
+      "Do not claim Tower has ingested the value unless evidence says it has",
+    );
+  });
+
+  it("requires the value ledger before drafting the governance review note", () => {
+    const d33 = getPromptTemplate("d33_governance_review");
+    const ctx = makeD09Context(["Quarterly_Review_Notes.md"]);
+
+    expect(findMissingUpstreamCodes(d33!, ctx)).toEqual([
+      "d32_value_ledger",
+    ]);
+
+    ctx.artifactStates = [
+      makeArtifactState(
+        "d32_value_ledger",
+        "# Value Ledger\n\nProjected value exists; no closed measurement window yet.",
+      ),
+    ];
+
+    expect(findMissingUpstreamCodes(d33!, ctx)).toEqual([]);
+
+    const message = d33?.buildUserMessage(ctx, {
+      d32_value_ledger:
+        "# Value Ledger\n\nProjected value exists; no closed measurement window yet.",
+      d30_checkpoint_log:
+        "# Checkpoints\n\nHypercare issue remains open.",
+    });
+
+    expect(message).toContain("Quarterly Governance Note");
+    expect(message).toContain("Value Realization Ledger (d32_value_ledger)");
+    expect(message).toContain("Quarterly_Review_Notes.md");
+    expect(message).toContain("no closed measurement window yet");
+    expect(message).toContain(
+      "do not invent SLA results, realized value, or rebaseline approvals",
+    );
   });
 
   it("uses client-facing company language for strategy and scope drafts", () => {
