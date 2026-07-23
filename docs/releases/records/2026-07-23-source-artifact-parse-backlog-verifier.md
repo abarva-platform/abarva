@@ -6,7 +6,7 @@
 
 ## Status
 
-`candidate`
+`deployed-runtime-proven`
 
 ## Plain-English Summary
 
@@ -44,8 +44,12 @@ This release does not parse files, repair artifacts, run a worker or backfill, c
 - Blocked — first `npm run release:check` run rejected this release record because the QA section used `Pending` instead of explicit pass/fail/not-run/blocked status language.
 - Pass — rerun `npm run release:check` after this QA status correction passed.
 - Blocked — local read-only tenant/event probe (`npm run source:artifact-parse:verify-backlog -- --client-key lakeshore --event-id c05872d8-0465-4bc8-8eeb-ff3d42ac6761`) could not reach Azure/Postgres because this worktree environment has no `ABARVA_AZURE_DATABASE_URL` or `DATABASE_URL`; runtime VNet proof remains required after deploy.
-- Not-run — PR checks.
-- Not-run after merge — repo-owned ACA main deploy or a superseding main deploy that contains the merge SHA, independent ACA runtime invariant, and read-only runtime command proof where safe data exists.
+- Pass — PR #5475 merged as `7ed2f371817b3aebb5305ffc150c569aa3304a49` after GitHub checks passed.
+- Pass — repo-owned ACA main deploy run `30015900379` completed successfully for merge SHA `7ed2f371817b3aebb5305ffc150c569aa3304a49`.
+- Pass — current superseding ACA main deploy run `30022213407` completed successfully for `c6fbb7ff0ef205f5789b602ef1da56ebcb28d65b`, which contains PR #5475.
+- Pass — independent ACA runtime invariant passed at `2026-07-23T16:03:20.101Z`: active revision `ca-abarva-web-lab-eastus--mc6fbb7ff`, 100% traffic, digest `sha256:95832144a70e85cd2f87d3b87ddba50d8cf066cb04900de2b40bbe8f2891f88a`, health OK, and both worker jobs on the same digest.
+- Pass — runtime read-only verifier proof from ACA/VNet passed on digest `sha256:95832144a70e85cd2f87d3b87ddba50d8cf066cb04900de2b40bbe8f2891f88a` for Lakeshore event `LAKE-AMS-2026-C1402EFD` (`c05872d8-0465-4bc8-8eeb-ff3d42ac6761`): `artifacts=9`, `parsed=0`, `parserReady=9`, `searchReady=0`, `graphProjected=0`, `attention=0`, report path `/tmp/source-artifact-parse-backlog-proof/parse-backlog.json`.
+- Pass — ACA private operator job proof run `job-abarva-private-operator-eus-7swni78` restored the job to the documented idle image and `/bin/true` command after the read-only verifier completed.
 
 ## Rollout Plan
 
@@ -55,8 +59,8 @@ Merge through PR into `main`; the repo-owned ACA main deploy workflow builds and
 
 - Repo-owned deploy workflow: required after merge (`.github/workflows/aca-main-deploy.yml`).
 - Shared runtime mutators: none from this PR.
-- Approved image digest: pending ACA main deploy.
-- ACA runtime invariant: required after deploy.
+- Approved image digest: current superseding main deploy digest `sha256:95832144a70e85cd2f87d3b87ddba50d8cf066cb04900de2b40bbe8f2891f88a`.
+- ACA runtime invariant: passed on revision `ca-abarva-web-lab-eastus--mc6fbb7ff`.
 - Worker image invariant: not affected.
 - Feature/env flag update path: none.
 - Live signed-in proof required: no user-facing UI change. Runtime proof should verify the command exists and, where safe data exists, read-only artifact backlog readback succeeds.
@@ -67,11 +71,11 @@ Revert the PR and redeploy through the repo-owned ACA main deploy workflow. No d
 
 ## Audit Evidence
 
-- PR: pending.
-- Merge SHA: pending.
-- Local validation: pending.
-- ACA deploy proof: pending.
-- Runtime read-only proof: pending.
+- PR: #5475.
+- Merge SHA: `7ed2f371817b3aebb5305ffc150c569aa3304a49`.
+- Local validation: focused Jest, help command, ESLint, TypeScript, and `npm run release:check` passed before merge.
+- ACA deploy proof: repo-owned ACA main deploy run `30015900379`; current superseding deploy run `30022213407`; independent invariant active revision `ca-abarva-web-lab-eastus--mc6fbb7ff`, digest `sha256:95832144a70e85cd2f87d3b87ddba50d8cf066cb04900de2b40bbe8f2891f88a`.
+- Runtime read-only proof: ACA/VNet operator job execution `job-abarva-private-operator-eus-7swni78` returned `status=ok` with 9 Lakeshore Source artifacts, all parser-ready and none parsed/search-ready/graph-projected/promoted; operator job idle restoration verified.
 
 ## Known Gaps
 
