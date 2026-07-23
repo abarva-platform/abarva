@@ -24,6 +24,12 @@ const packetOnly = process.argv.includes("--packet-only");
 // paying for another full tenant generation.
 const replayTarget = getArg("--validate-candidate", null);
 const replayMode = Boolean(replayTarget);
+// Offline cost ledger: every stored response already carries its `usage` block,
+// so the true call/token/cost accounting of a past run can be reconstructed
+// without rerunning anything. A paid run should never be authorised against an
+// estimate when the measurement is sitting on disk.
+const ledgerTarget = getArg("--cost-ledger", null);
+const ledgerMode = Boolean(ledgerTarget);
 
 const canonicalTenantOrder = [
   "meridian-health",
@@ -1758,7 +1764,151 @@ async function runReplay() {
   if (failed.length > 0) process.exitCode = 1;
 }
 
+// Published Opus list pricing, USD per million tokens. Override with
+// HOME_V4_PRICE_* when a negotiated rate applies.
+const pricePerMillion = {
+  input: Number(process.env.HOME_V4_PRICE_INPUT ?? 15),
+  cache_write: Number(process.env.HOME_V4_PRICE_CACHE_WRITE ?? 18.75),
+  cache_read: Number(process.env.HOME_V4_PRICE_CACHE_READ ?? 1.5),
+  output: Number(process.env.HOME_V4_PRICE_OUTPUT ?? 75),
+};
+
+function emptyLedgerBucket() {
+  return {
+    calls: 0,
+    repaired_calls: 0,
+    empty_response_attempts: 0,
+    input_tokens: 0,
+    cache_creation_input_tokens: 0,
+    cache_read_input_tokens: 0,
+    output_tokens: 0,
+    elapsed_ms: 0,
+  };
+}
+
+function addUsage(bucket, response) {
+  const usage = response.usage ?? {};
+  bucket.calls += 1;
+  if (response.repaired) bucket.repaired_calls += 1;
+  bucket.input_tokens += usage.input_tokens ?? 0;
+  bucket.cache_creation_input_tokens += usage.cache_creation_input_tokens ?? 0;
+  bucket.cache_read_input_tokens += usage.cache_read_input_tokens ?? 0;
+  bucket.output_tokens += usage.output_tokens ?? 0;
+  bucket.elapsed_ms += response.elapsed_ms ?? 0;
+}
+
+function bucketCostUsd(bucket) {
+  return (
+    (bucket.input_tokens / 1e6) * pricePerMillion.input +
+    (bucket.cache_creation_input_tokens / 1e6) * pricePerMillion.cache_write +
+    (bucket.cache_read_input_tokens / 1e6) * pricePerMillion.cache_read +
+    (bucket.output_tokens / 1e6) * pricePerMillion.output
+  );
+}
+
+function runCostLedger() {
+  const root = path.resolve(ledgerTarget);
+  if (!fs.existsSync(root)) throw new Error(`--cost-ledger path does not exist: ${root}`);
+  const responseFiles = [];
+  const walkDir = (dir, depth) => {
+    if (depth > 6) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const entryPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) walkDir(entryPath, depth + 1);
+      else if (entry.name.endsWith(".json") && path.basename(dir) === "responses") {
+        responseFiles.push(entryPath);
+      }
+    }
+  };
+  walkDir(root, 0);
+
+  const total = emptyLedgerBucket();
+  const byTenant = new Map();
+  const byPass = new Map();
+  for (const file of responseFiles.sort()) {
+    let response;
+    try {
+      response = JSON.parse(fs.readFileSync(file, "utf8"));
+    } catch {
+      continue;
+    }
+    const tenant = path.basename(path.dirname(path.dirname(file)));
+    // Empty-response and raw-message files record wasted attempts, not billed
+    // successful passes; count them separately so retry waste stays visible.
+    if (/empty-response-attempt|raw-message/.test(path.basename(file))) {
+      const bucket = byTenant.get(tenant) ?? emptyLedgerBucket();
+      bucket.empty_response_attempts += 1;
+      byTenant.set(tenant, bucket);
+      total.empty_response_attempts += 1;
+      continue;
+    }
+    if (!response?.usage) continue;
+    const tenantBucket = byTenant.get(tenant) ?? emptyLedgerBucket();
+    addUsage(tenantBucket, response);
+    byTenant.set(tenant, tenantBucket);
+    const passKey = response.pass ?? response.id ?? "unknown";
+    const passBucket = byPass.get(passKey) ?? emptyLedgerBucket();
+    addUsage(passBucket, response);
+    byPass.set(passKey, passBucket);
+    addUsage(total, response);
+  }
+
+  const cachedInput = total.cache_read_input_tokens;
+  const uncachedInput = total.input_tokens;
+  const ledger = {
+    measured_at: new Date().toISOString(),
+    source: root,
+    price_per_million_usd: pricePerMillion,
+    total: { ...total, cost_usd: Number(bucketCostUsd(total).toFixed(2)) },
+    by_tenant: Object.fromEntries(
+      Array.from(byTenant.entries()).map(([key, bucket]) => [
+        key,
+        { ...bucket, cost_usd: Number(bucketCostUsd(bucket).toFixed(2)) },
+      ]),
+    ),
+    by_pass_type: Object.fromEntries(
+      Array.from(byPass.entries()).map(([key, bucket]) => [
+        key,
+        { ...bucket, cost_usd: Number(bucketCostUsd(bucket).toFixed(2)) },
+      ]),
+    ),
+    prompt_cache_utilisation:
+      uncachedInput + cachedInput === 0 ? null : cachedInput / (uncachedInput + cachedInput),
+  };
+
+  ensureDir(outDir);
+  writeJson(path.join(outDir, "cost-ledger.json"), ledger);
+  console.table(
+    Object.entries(ledger.by_tenant).map(([tenant, bucket]) => ({
+      tenant,
+      calls: bucket.calls,
+      repaired: bucket.repaired_calls,
+      empty: bucket.empty_response_attempts,
+      input: bucket.input_tokens,
+      cache_read: bucket.cache_read_input_tokens,
+      output: bucket.output_tokens,
+      minutes: Number((bucket.elapsed_ms / 60000).toFixed(1)),
+      usd: bucket.cost_usd,
+    })),
+  );
+  console.log("");
+  console.log(`HOME_V4_COST_LEDGER: calls=${total.calls} cost_usd=${ledger.total.cost_usd}`);
+  console.log(
+    `HOME_V4_CACHE_UTILISATION: ${ledger.prompt_cache_utilisation === null ? "n/a" : `${(ledger.prompt_cache_utilisation * 100).toFixed(1)}%`}`,
+  );
+  if (ledger.prompt_cache_utilisation === 0) {
+    console.log(
+      "[home-v4-ledger] WARNING: zero prompt-cache reads. Every call re-sent its full context at full input price.",
+    );
+  }
+  console.log(`[home-v4-ledger] artifacts in ${outDir}`);
+}
+
 async function main() {
+  if (ledgerMode) {
+    runCostLedger();
+    return;
+  }
   if (replayMode) {
     await runReplay();
     return;
