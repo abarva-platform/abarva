@@ -1,10 +1,8 @@
 // Tower Command Center v2 — end-to-end coverage of `/tower`: all 6 tabs, all 7
 // sub-views, all 4 drawers.
 //
-// Since 2026-07-23 the Command Center is PRIMARY at `/tower`. When
-// `tower_command_center_v2` is off for the signed-in tenant, `/tower` serves the
-// previous surface instead (archived at `/tower/legacy`), so these specs skip
-// with that stated rather than failing — the fallback is correct behaviour.
+// Since 2026-07-23 the Command Center is PRIMARY at `/tower`. Legacy Tower
+// pages are retired from runtime and stale legacy links redirect here.
 
 import { expect, test, type Page } from '@playwright/test';
 import { DEMO_ACCOUNTS, missingAuthPrereqs, withClerkAuth } from './_helpers/auth';
@@ -21,9 +19,7 @@ const TABS = [
 ] as const;
 
 /**
- * Open Tower; returns false when the flag is off and the previous surface is
- * served instead. Detected by the Command Center's root testid rather than by
- * URL, because both surfaces now live at the same path.
+ * Open Tower and confirm the Command Center root rendered.
  */
 async function openCommandCenter(page: Page): Promise<boolean> {
   await page.goto('/tower', { waitUntil: 'domcontentloaded' });
@@ -43,7 +39,7 @@ test.describe('Tower Command Center v2', () => {
 
   test('renders every tab, sub-view and drawer', async ({ page }) => {
     const enabled = await openCommandCenter(page);
-    test.skip(!enabled, 'tower_command_center_v2 is off for this tenant — /tower served the previous surface.');
+    expect(enabled).toBe(true);
 
     const root = page.getByTestId('tower-command-center');
     await expect(root).toBeVisible();
@@ -76,7 +72,7 @@ test.describe('Tower Command Center v2', () => {
 
   test('Decision Lanes has three sub-views and opens the program drawer', async ({ page }) => {
     const enabled = await openCommandCenter(page);
-    test.skip(!enabled, 'tower_command_center_v2 is off for this tenant.');
+    expect(enabled).toBe(true);
 
     await page.getByRole('tab', { name: /Decision Lanes/ }).click();
 
@@ -104,7 +100,7 @@ test.describe('Tower Command Center v2', () => {
 
   test('AI Portfolio has four sub-views and opens the initiative drawer', async ({ page }) => {
     const enabled = await openCommandCenter(page);
-    test.skip(!enabled, 'tower_command_center_v2 is off for this tenant.');
+    expect(enabled).toBe(true);
 
     await page.getByRole('tab', { name: /AI Portfolio/ }).click();
 
@@ -128,7 +124,7 @@ test.describe('Tower Command Center v2', () => {
 
   test('Evidence answers one question at a time and opens the gap drawer', async ({ page }) => {
     const enabled = await openCommandCenter(page);
-    test.skip(!enabled, 'tower_command_center_v2 is off for this tenant.');
+    expect(enabled).toBe(true);
 
     await page.getByRole('tab', { name: /Evidence/ }).click();
     await expect(page.getByText('Question 1 of 4')).toBeVisible();
@@ -150,7 +146,7 @@ test.describe('Tower Command Center v2', () => {
 
   test('the action drawer never claims a route that did not happen', async ({ page }) => {
     const enabled = await openCommandCenter(page);
-    test.skip(!enabled, 'tower_command_center_v2 is off for this tenant.');
+    expect(enabled).toBe(true);
 
     await page.getByRole('tab', { name: /Recommended Actions/ }).click();
 
@@ -177,7 +173,7 @@ test.describe('Tower Command Center v2', () => {
     page.on('pageerror', (error) => errors.push(error.message));
 
     const enabled = await openCommandCenter(page);
-    test.skip(!enabled, 'tower_command_center_v2 is off for this tenant.');
+    expect(enabled).toBe(true);
 
     for (const tab of TABS) {
       await page.getByRole('tab', { name: new RegExp(tab.name) }).click();
@@ -205,11 +201,10 @@ test.describe('Tower routing after promotion', () => {
     expect(url.searchParams.get('tab')).toBe('evidence');
   });
 
-  test('/tower/legacy still serves the previous surface, flag regardless', async ({ page }) => {
+  test('/tower/legacy redirects to the primary Command Center', async ({ page }) => {
     await page.goto('/tower/legacy', { waitUntil: 'domcontentloaded' });
     await page.waitForLoadState('networkidle').catch(() => undefined);
-    // The previous surface, not the Command Center.
-    await expect(page.getByTestId('tower-command-center')).toHaveCount(0);
-    await expect(page.getByText(/Command Center|Value Proof/).first()).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe('/tower');
+    await expect(page.getByTestId('tower-command-center')).toBeVisible();
   });
 });

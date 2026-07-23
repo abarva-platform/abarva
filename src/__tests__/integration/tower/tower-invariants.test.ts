@@ -5,15 +5,18 @@ const TOWER_PAGE = "src/app/(maestro)/tower/page.tsx";
 describe("Tower invariants", () => {
   const pageSource = readFileSync(TOWER_PAGE, "utf8");
 
-  it("opens the CXO command center surface, not the retired AI Control Tower board", () => {
-    expect(pageSource).toContain("TowerIndexPage");
+  it("opens the Command Center surface, not retired Tower boards", () => {
+    expect(pageSource).toContain("TowerCommandCenterAvaShell");
+    expect(pageSource).toContain("buildTowerCommandCenterView");
+    expect(pageSource).not.toContain("TowerLegacySurface");
+    expect(pageSource).not.toContain("TowerIndexPage");
     expect(pageSource).not.toContain("AiControlTowerPage");
     expect(pageSource).not.toContain("getAiControlTowerReadModel");
   });
 
   it("sources its data from the governed cio_tower substrate", () => {
-    expect(pageSource).toContain("loadCioTowerCxoView");
-    expect(pageSource).toContain("listTowerBudgetRollupsForClient");
+    expect(pageSource).toContain("loadTowerMartCommandView");
+    expect(pageSource).toContain("buildTowerCommandCenterView");
   });
 
   it("removes legacy Tower route files that can show retired views", () => {
@@ -36,6 +39,7 @@ describe("Tower invariants", () => {
       "src/app/(maestro)/tower/staff-aug/page.tsx",
       "src/app/(maestro)/tower/tech-stack/page.tsx",
       "src/app/(maestro)/tower/volumetrics/page.tsx",
+      "src/components/tower/TowerLegacySurface.tsx",
       "src/components/tower/AiControlTowerPage.tsx",
       "src/components/tower/TowerLensTabs.tsx",
       "src/lib/ai-control-tower/read-model.ts",

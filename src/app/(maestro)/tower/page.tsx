@@ -1,36 +1,26 @@
 // Tower — primary route.
 //
-// As of 2026-07-23 this serves the **Command Center** (the rebuilt page against
-// `docs/design/tower/command-center-2026-07-23/`) when `tower_command_center_v2`
-// is enabled for the tenant, and the previous surface when it is not.
-//
-// The flag is the promotion and rollback switch, and it is the whole rollback
-// plan: turning it off for a tenant restores the previous Tower for that tenant
-// on the next request, with no deploy. The previous surface is archived intact
-// at `/tower/legacy` and is always reachable there for side-by-side comparison,
-// regardless of the flag.
-//
-// `TowerIndexPage.tsx` was not modified to make this change.
+// As of 2026-07-23 this always serves the **Command Center** (the rebuilt page
+// against `docs/design/tower/command-center-2026-07-23/`). The previous Tower
+// page is no longer a runtime fallback.
 
 import { Suspense } from "react";
 
 import { AppShell } from "@/components/shell/AppShell";
 import { TowerCommandCenterAvaShell } from "@/components/tower/command-center/TowerCommandCenterAvaShell";
-import { TowerLegacySurface } from "@/components/tower/TowerLegacySurface";
 import {
   getActiveClientRow,
   hasLockedTenantSession,
 } from "@/lib/active-client";
 import { canonicalClientDisplayName } from "@/lib/client-config";
 import { loadTowerMartCommandView } from "@/lib/cio-tower/tower-mart-view-model";
-import { isFeatureEnabled } from "@/lib/features/is-feature-enabled";
 import { buildTowerCommandCenterView } from "@/lib/tower/command-center/view-model";
 
 export const metadata = { title: "Tower · AbarVa" };
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-/** Same budget the legacy surface uses. */
+/** Keep the mart read bounded so sparse/private data states still render. */
 const TOWER_READ_TIMEOUT_MS = 8_000;
 
 interface TowerPageProps {
@@ -68,17 +58,6 @@ export default async function TowerPage({ searchParams }: TowerPageProps = {}) {
     ? rawRequestedClient
     : null;
   const client = await getActiveClientRow(requestedClient).catch(() => null);
-  const clientKey = client?.key ?? requestedClient ?? null;
-
-  // Flag off → the previous Tower, unchanged, with its own data loading.
-  if (
-    !isFeatureEnabled(
-      { clientKey, clientId: client?.id },
-      "tower_command_center_v2",
-    )
-  ) {
-    return <TowerLegacySurface searchParams={searchParams} />;
-  }
 
   const tenantName =
     canonicalClientDisplayName({ key: client?.key, name: client?.name }) ??
