@@ -194,6 +194,7 @@
     "db:verify:source-stage-guidebooks": "npx tsx src/lib/source/stage-guidebooks/verify-repository-readback.ts",
     "db:verify:source-artifact-acceptances": "npx tsx src/lib/source/verify-artifact-acceptances-readback.ts",
     "source:enterprise-context:writeback": "npx tsx src/scripts/source/writeback-source-facts-to-enterprise-context.ts",
+    "source:enterprise-context:verify-writeback": "npx tsx src/scripts/source/verify-source-enterprise-context-readback.ts",
     "moves:enterprise-context:writeback": "npx tsx src/scripts/programs/writeback-move-learning-to-enterprise-context.ts",
     "moves:enterprise-context:verify-writeback": "npx tsx src/scripts/programs/verify-move-learning-writeback-readback.ts",
     "db:verify:tenant-keys": "npx tsx scripts/verify-tenant-key-canonical.ts",
