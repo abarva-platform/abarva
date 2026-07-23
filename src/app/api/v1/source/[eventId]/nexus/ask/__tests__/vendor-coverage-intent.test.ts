@@ -39,6 +39,8 @@ describe('looksLikeVendorCoverageQuestion (nexus/ask NDJSON gate)', () => {
     );
     expect(ROUTE_SOURCE).toContain('wantsNdjson');
     expect(ROUTE_SOURCE).toContain('buildVendorCoverageGovernedAnswer');
+    expect(ROUTE_SOURCE).toContain('buildArtifactQualityGovernedAnswer');
+    expect(ROUTE_SOURCE).toContain('looksLikeArtifactQualityQuestion');
   });
 
   it('matches real vendor-response-coverage questions', () => {

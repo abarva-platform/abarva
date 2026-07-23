@@ -41,6 +41,10 @@ import { enforceSourceExistingEventWriteTruth } from "@/lib/source/ava/answer-qu
 import { buildSourceArtifactStandardsContext } from "@/lib/source/artifact-lifecycle-matrix";
 import { buildVendorCoverageGovernedAnswer } from "@/lib/source/ava/vendor-coverage-governed-answer";
 import {
+  buildArtifactQualityGovernedAnswer,
+  looksLikeArtifactQualityQuestion,
+} from "@/lib/source/ava/artifact-quality-governed-answer";
+import {
   resolveAuthoritativeArtifactSlots,
   type AuthoritativeArtifactCandidate,
 } from "@/lib/source/client-final-artifacts";
@@ -257,6 +261,27 @@ export async function POST(
               eventId,
               clientKey: activeClientKey,
               eventType: liveEventDetail?.archetype ?? null,
+              message: err instanceof Error ? err.message : String(err),
+              stack: err instanceof Error ? err.stack : undefined,
+            }),
+          );
+          return null;
+        });
+      } else if (
+        eventId &&
+        looksLikeArtifactQualityQuestion(normalizedBody.prompt)
+      ) {
+        agentAnswer = await buildArtifactQualityGovernedAnswer({
+          eventId,
+          clientKey: activeClientKey,
+          tenantId: tenancy.clientId ?? null,
+          question: normalizedBody.prompt ?? "",
+        }).catch((err) => {
+          console.error(
+            "[source.nexus-ask.artifact-quality-governed-answer.failed]",
+            JSON.stringify({
+              eventId,
+              clientKey: activeClientKey,
               message: err instanceof Error ? err.message : String(err),
               stack: err instanceof Error ? err.stack : undefined,
             }),
