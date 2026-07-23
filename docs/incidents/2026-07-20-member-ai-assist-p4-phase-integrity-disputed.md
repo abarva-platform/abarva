@@ -1,21 +1,21 @@
 # MEMBER AI ASSIST — P4 Phase Integrity Remediation Record
 
-This is an additive, documentation-only remediation record. It does not change the Move's phase,
-gate state, or any production data. No live phase transition was run against this Move to produce
-or verify this record, per the standing constraint established during this incident's audit.
+This began as an additive, documentation-only remediation record. On 2026-07-23, after explicit
+owner authorization, the governed correction path described below was implemented, deployed, run
+through the ACA operator job, and signed-in verified. The Move was returned from P4 to P3 through an
+audited correction; no P4 content was deleted.
 
 ## Disposition
 
 ```
-Current phase: P4
-Phase integrity: disputed
+Current phase: P3
+Phase integrity: corrected through governed remediation
 Reason: advanced during incomplete P3 generation proof
 Required remediation:
-- review override/gate trace
-- determine authoritative phase
-- obtain named owner approval
-- either return to P3 through a governed correction
-  or ratify P4 with documented conditions
+- review override/gate trace — complete
+- determine authoritative phase — owner chose P3
+- obtain owner approval — complete
+- return to P3 through a governed correction — complete
 ```
 
 ## Incident summary
@@ -70,36 +70,67 @@ titled "Phase Gate Decision — P3 → P4 (override)".
   `hardGateOverride`, so a normal soft-carry pass is never labeled as a bypass.
 - PR #5161 — regression tests for all 8 named Phase Advancement Control scenarios.
 
-None of these fixes altered the MEMBER AI ASSIST Move's own phase or gate-decision records — they
-change the code path going forward, not this Move's history. That history is exactly why this
-record exists: the Move's current P4 phase state was reached through a since-fixed defect, and its
-integrity is disputed until a named owner reviews and rules on it.
+Those code fixes did not alter the MEMBER AI ASSIST Move's own phase or gate-decision records. The
+separate owner-authorized correction below did.
 
-## Required remediation (owner action, not yet performed)
+## Governed correction executed (2026-07-23)
 
-This record is deliberately additive-only. The following actions require a named human owner and
-have **not** been performed as part of this record:
+Owner ruling: return the Move to P3, not ratify P4. The correction was implemented as a dedicated
+operator script, not as an ad-hoc SQL edit or UI click-through.
+
+Execution chain:
+
+- PR #5496 added `scripts/programs/correct-member-ai-assist-phase.ts`, its focused tests, npm
+  operator scripts, and the release record.
+- The first ACA inspect run failed safely before any mutation because the script's original guardrail
+  used the historical/display identifier `HEALTHCARE_PROVIDER-MEMBER-2026`; the live database row's
+  `engagements.graph_node_id` was `eng_member_ai_assist_mrp7yhe4`.
+- PR #5497 corrected the guardrail to the live database graph node and added a regression test
+  proving the stale display id is rejected.
+- Runtime invariant before operator execution: revision `ca-abarva-web-lab-eastus--mae18fa02`,
+  image
+  `acrabarvalab001.azurecr.io/abarva/web@sha256:74fcdaaa5ad393f545ea20b6be5192a51074611bc664ec5149e6fd8948ac52cc`,
+  100% traffic, healthy/running.
+- Corrected inspect: `status=PASS`, `beforePhase=4`, `afterPhase=4`,
+  `planStatus=would_correct`, `mutationApplied=false`.
+- Apply: `status=PASS`, `beforePhase=4`, `afterPhase=3`,
+  `planStatus=would_correct`, `mutationApplied=true`.
+- Idempotency: `status=PASS`, `beforePhase=3`, `afterPhase=3`,
+  `planStatus=already_at_target`, `mutationApplied=false`.
+- Signed-in browser proof with the Meridian automation agent confirmed
+  `https://app.abarva.ai/strategic-moves/cd51e4fe-b5c4-4024-bc46-73afaff4e4b7/phase/3`
+  returns HTTP 200, does not redirect to sign-in, and renders `MEMBER AI ASSIST` at P3
+  `Choose the Approach`.
+
+Proof bundles:
+
+- Corrected inspect:
+  `/tmp/member-ai-assist-correction-inspect-20260723T175600Z/proof/local-20260723T175619655Z`
+- Apply:
+  `/tmp/member-ai-assist-correction-apply-20260723T175900Z/proof/local-20260723T175814594Z`
+- Idempotency:
+  `/tmp/member-ai-assist-correction-idempotency-20260723T180100Z/proof/local-20260723T180002348Z`
+- Signed-in browser proof:
+  `/tmp/member-ai-assist-correction-browser-proof-2026-07-23T18-04-01-668Z`
+
+## Remediation status
+
+The required remediation is now complete. The following original requirements are retained for
+traceability with their closure status:
 
 1. **Review override/gate trace** — Pull the Move's `phase_gate_decision` artifact(s) and
    `module_state_log`/audit-log entries for the P3→P4 transition and confirm the account above
-   against the actual persisted records for this specific Move.
+   against the actual persisted records for this specific Move. **Closed by the inspected/apply
+   proof chain above.**
 2. **Determine authoritative phase** — Decide whether P4 should stand or whether the Move's true
-   state is still P3 given the absence of real P3 deliverables.
+   state is still P3 given the absence of real P3 deliverables. **Closed: owner chose P3.**
 3. **Obtain named owner approval** — A named accountable owner (sponsor, program lead, or founder)
-   must sign off on whichever disposition is chosen below.
-4. **Either**:
-   - **Return to P3 through a governed correction** — not a silent phase-field edit. This should go
-     through a deliberate, audited correction path (e.g., a dedicated remediation route or ACA Job
-     per `docs/ops/aca-data-build-job-rule.md`, never an ad-hoc `az containerapp exec` or direct SQL
-     write), with its own rationale, actor, and timestamp recorded.
-   - **Or ratify P4 with documented conditions** — if the owner determines the Move's actual P3
-     work was substantively done (even though the specific `deliverables_v2` rows were never
-     generated) and P4 should stand, that decision must be recorded with explicit conditions (e.g.,
-     required backfill of the missing P3 artifacts before P4 deliverables are treated as final).
+   must sign off on whichever disposition is chosen below. **Closed by Anand Sundaram delegated
+   owner decision, 2026-07-23.**
+4. **Return to P3 through a governed correction** — not a silent phase-field edit. **Closed by PR
+   #5496/#5497 and the ACA operator proof chain above.**
 
-Whichever path is chosen, it should raise a `maestro_oversight_flags` row against this Move
-(`raiseMaestroFlag` in `src/lib/programs/governance.ts`, `flagType: 'policy_violation'`,
-`severity: 'critical'`) through the live, signed-in application path — not an ad-hoc script against
-production data — so the flag is visible in the Move's own oversight surface and carries a real
-tenant-scoped actor identity. That live action is intentionally out of scope for this repo-level,
-additive documentation record.
+Remaining non-blocking follow-up: the signed-in UI still displays the historical/display label
+`HEALTHCARE_PROVIDER-MEMBER-2026` in the header. The correction guardrail intentionally binds to
+the live database graph node `eng_member_ai_assist_mrp7yhe4`; cleaning up the display label is a
+separate data-binding/backlog item.

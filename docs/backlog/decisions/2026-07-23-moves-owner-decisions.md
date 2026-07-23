@@ -98,14 +98,16 @@ reverting is more work. Every other ambiguous call resolved in this decision rou
 the stricter, trust-preserving reading; this is the same principle applied to an actual
 disputed Move rather than a hypothetical policy question.
 
-**Execution constraint — this decision does NOT authorize me to execute the correction
-directly.** Consistent with the standing rule established after this exact incident ("no live
-mutating action against any Move other than a confirmed sandbox," repeated in every Codex
-handoff this session), the actual phase correction must be implemented as a real, governed,
-tested mutation path — not an ad-hoc database write or a UI click-through — with its own audit
-trail, tests, and a release record, the same as every other piece of Moves work this program
-has produced. This decision authorizes that implementation work to proceed; it is not the
-correction itself.
+**Execution constraint at decision time**: this decision did not authorize an ad-hoc database write
+or UI click-through. It authorized a real, governed, tested mutation path with its own audit trail,
+tests, release record, and signed-in proof.
+
+**Execution closure (2026-07-23)**: that governed correction is now complete. PR #5496 implemented
+the correction script/tests/release record; PR #5497 corrected the identity guardrail to the live
+database graph node `eng_member_ai_assist_mrp7yhe4`. ACA operator proof shows inspect
+`beforePhase=4/afterPhase=4`, apply `beforePhase=4/afterPhase=3`, and idempotency
+`beforePhase=3/afterPhase=3`. Signed-in browser proof confirms `MEMBER AI ASSIST` opens on P3
+`Choose the Approach`.
 
 ## What this unblocks
 
@@ -114,7 +116,8 @@ correction itself.
   blocked on MOVES-ARTIFACT-001, can now be implemented as part of the same Phase 1 work.
 - `MOVES-TEST-001` provisioning can proceed once Phase 1 lands.
 - `MOVES-QUALITY-002` (live E2E proof) can proceed once the test tenant exists.
-- `MOVES-REMEDIATION-001`'s governed correction can now be implemented and executed.
+- `MOVES-REMEDIATION-001`'s governed correction has been implemented and executed; remaining work
+  shifts back to isolated P0-P5 proof and the open artifact-quality profile sweep.
 
 See `docs/codex-handoff/MOVES_ARTIFACT_LIFECYCLE_AND_REMEDIATION_PROMPT_2026-07-23.md` for the
 grounded implementation handoff covering all of the above.
